@@ -589,14 +589,16 @@ const ModernCarbonDashboard: React.FC = () => {
                 </HStack>
                 <VStack spacing={1}>
                   <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                    {Math.abs(effectiveNetCarbon).toFixed(1)}
+                    {effectiveNetCarbon > 0 ? '+' : ''}
+                    {effectiveNetCarbon.toFixed(1)}
                   </Text>
                   <Text fontSize="sm" color={mutedColor}>
                     kg CO₂e effective
                   </Text>
                   {effectiveOffsets !== totalOffsets && (
                     <Text fontSize="xs" color="orange.500">
-                      ({Math.abs(netCarbon).toFixed(1)} raw)
+                      ({netCarbon > 0 ? '+' : ''}
+                      {netCarbon.toFixed(1)} raw)
                     </Text>
                   )}
                 </VStack>
@@ -925,65 +927,117 @@ const ModernCarbonDashboard: React.FC = () => {
                         </Td>
                         <Td>
                           <VStack align="start" spacing={1}>
-                            <Badge
-                              colorScheme={entry.usda_verified ? 'green' : 'yellow'}
-                              variant="subtle">
-                              {entry.usda_verified ? 'VERIFIED' : 'PENDING'}
-                            </Badge>
-                            {entry.type === 'offset' && entry.verification_level && (
+                            {/* Main Status Badge - Always Show */}
+                            <Tooltip
+                              label={
+                                entry.verification_status === 'verified'
+                                  ? 'VERIFIED: This entry has passed all verification checks and anti-gaming rules'
+                                  : entry.verification_status === 'rejected'
+                                  ? 'REJECTED: This entry failed verification due to high-risk violations or registry verification failure'
+                                  : 'PENDING: This entry is awaiting verification or has incomplete requirements'
+                              }
+                              placement="top"
+                              hasArrow
+                              bg="gray.800"
+                              color="white"
+                              fontSize="sm"
+                              px={3}
+                              py={2}
+                              borderRadius="md">
                               <Badge
-                                size="sm"
                                 colorScheme={
-                                  entry.verification_level === 'certified_project'
+                                  entry.verification_status === 'verified'
                                     ? 'green'
-                                    : entry.verification_level === 'community_verified'
-                                    ? 'blue'
-                                    : 'orange'
-                                }
-                                variant="outline">
-                                {entry.verification_level === 'self_reported'
-                                  ? 'Self Reported'
-                                  : entry.verification_level === 'community_verified'
-                                  ? 'Community'
-                                  : entry.verification_level === 'certified_project'
-                                  ? 'Certified'
-                                  : 'Standard'}
-                              </Badge>
-                            )}
-                            {/* Enhanced verification badges */}
-                            {entry.type === 'offset' && entry.audit_status && (
-                              <Badge
-                                size="sm"
-                                colorScheme={
-                                  entry.audit_status === 'passed'
-                                    ? 'green'
-                                    : entry.audit_status === 'failed'
+                                    : entry.verification_status === 'rejected'
                                     ? 'red'
-                                    : entry.audit_status === 'scheduled'
-                                    ? 'blue'
-                                    : 'gray'
+                                    : 'yellow'
                                 }
-                                variant="subtle">
-                                {entry.audit_status === 'passed'
-                                  ? 'Audit Passed'
-                                  : entry.audit_status === 'failed'
-                                  ? 'Audit Failed'
-                                  : entry.audit_status === 'scheduled'
-                                  ? 'Audit Scheduled'
-                                  : entry.audit_status === 'in_progress'
-                                  ? 'Under Review'
-                                  : 'Pending Audit'}
+                                variant="subtle"
+                                cursor="help">
+                                {entry.verification_status === 'verified'
+                                  ? 'VERIFIED'
+                                  : entry.verification_status === 'rejected'
+                                  ? 'REJECTED'
+                                  : 'PENDING'}
                               </Badge>
+                            </Tooltip>
+
+                            {/* Verification Type Badge - Only for Offsets */}
+                            {entry.type === 'offset' && (
+                              <Tooltip
+                                label={
+                                  entry.verification_level === 'self_reported'
+                                    ? 'SELF REPORTED: User-reported data with 50% trust score. Internal verification only.'
+                                    : entry.verification_level === 'community_verified'
+                                    ? 'COMMUNITY VERIFIED: Verified by local community with 75% trust score.'
+                                    : entry.verification_level === 'certified_project'
+                                    ? entry.verification_status === 'verified'
+                                      ? 'CERTIFIED PROJECT: Successfully verified through third-party registries (VCS, Gold Standard, etc.) with 100% trust score.'
+                                      : 'CERTIFIED PROJECT: Failed third-party registry verification. Registry ID not found or invalid.'
+                                    : 'STANDARD: Basic verification level with standard trust scoring.'
+                                }
+                                placement="top"
+                                hasArrow
+                                bg="gray.800"
+                                color="white"
+                                fontSize="sm"
+                                px={3}
+                                py={2}
+                                borderRadius="md">
+                                <Badge
+                                  size="sm"
+                                  colorScheme={
+                                    entry.verification_level === 'certified_project'
+                                      ? entry.verification_status === 'verified'
+                                        ? 'green'
+                                        : 'red'
+                                      : entry.verification_level === 'community_verified'
+                                      ? 'blue'
+                                      : 'orange'
+                                  }
+                                  variant="outline"
+                                  cursor="help">
+                                  {entry.verification_level === 'self_reported'
+                                    ? 'Self Reported'
+                                    : entry.verification_level === 'community_verified'
+                                    ? 'Community Verified'
+                                    : entry.verification_level === 'certified_project'
+                                    ? entry.verification_status === 'verified'
+                                      ? 'Third-Party Verified'
+                                      : 'Registry Failed'
+                                    : 'Standard'}
+                                </Badge>
+                              </Tooltip>
                             )}
-                            {entry.type === 'offset' && entry.registry_verification_id && (
-                              <Badge size="sm" colorScheme="purple" variant="outline">
-                                Registry Verified
-                              </Badge>
-                            )}
-                            {entry.type === 'offset' && entry.additionality_verified && (
-                              <Badge size="sm" colorScheme="teal" variant="outline">
-                                Additional
-                              </Badge>
+
+                            {/* Trust Score Indicator - Only for important cases */}
+                            {entry.type === 'offset' && entry.trust_score && (
+                              <Tooltip
+                                label={`Trust Score: ${Math.round(
+                                  entry.trust_score * 100
+                                )}% - This affects the effective carbon amount after buffer pool deductions.`}
+                                placement="top"
+                                hasArrow
+                                bg="gray.800"
+                                color="white"
+                                fontSize="sm"
+                                px={3}
+                                py={2}
+                                borderRadius="md">
+                                <Badge
+                                  size="sm"
+                                  colorScheme={
+                                    entry.trust_score >= 0.9
+                                      ? 'green'
+                                      : entry.trust_score >= 0.7
+                                      ? 'blue'
+                                      : 'orange'
+                                  }
+                                  variant="subtle"
+                                  cursor="help">
+                                  {Math.round(entry.trust_score * 100)}% Trust
+                                </Badge>
+                              </Tooltip>
                             )}
                           </VStack>
                         </Td>

@@ -814,7 +814,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
               <Tab>
                 <HStack>
                   <Icon as={FiAward} />
-                  <Text>Certified Projects</Text>
+                  <Text>ICR Verification</Text>
                 </HStack>
               </Tab>
             </TabList>
@@ -952,8 +952,8 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                                 </Text>
                                 <Text fontSize="xs" color="blue.600">
                                   For large or frequent offset claims, use{' '}
-                                  <strong>Certified Projects</strong> tab which provides 90%
-                                  effective credit with no gaming restrictions.
+                                  <strong>ICR Verification</strong> tab which provides 90% effective
+                                  credit with no gaming restrictions.
                                 </Text>
                               </Box>
                             </VStack>
@@ -1192,165 +1192,256 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                 </VStack>
               </TabPanel>
 
-              {/* Certified Projects */}
+              {/* ICR Verification Tab */}
               <TabPanel p={0}>
                 <VStack spacing={6} align="stretch">
-                  <Alert status="success" borderRadius="md">
+                  <Alert status="info" borderRadius="md">
                     <AlertIcon />
                     <Box>
-                      <AlertTitle>Certified Carbon Credits</AlertTitle>
+                      <AlertTitle>ICR Third-Party Verification</AlertTitle>
                       <AlertDescription>
-                        Purchase verified carbon credits from certified projects worldwide.
+                        Submit your farm-generated offsets to ICR (International Carbon Registry)
+                        for third-party verification. ICR verified offsets receive 90% effective
+                        credit (100% trust score - 10% buffer pool).
                       </AlertDescription>
                     </Box>
                   </Alert>
 
-                  {isLoadingProjects ? (
-                    <Text color={mutedColor} textAlign="center" py={8}>
-                      Loading certified projects...
-                    </Text>
-                  ) : certifiedProjects.length > 0 ? (
-                    <VStack spacing={4} align="stretch">
-                      {certifiedProjects.map((project) => (
-                        <Card
-                          key={project.id}
-                          cursor="pointer"
-                          border={selectedProject?.id === project.id ? '2px solid' : '1px solid'}
-                          borderColor={
-                            selectedProject?.id === project.id ? 'green.500' : borderColor
-                          }
-                          onClick={() => setSelectedProject(project)}
-                          _hover={{ borderColor: 'green.300' }}>
-                          <CardBody>
-                            <VStack align="stretch" spacing={3}>
-                              <HStack justify="space-between">
-                                <VStack align="start" spacing={1}>
-                                  <HStack>
-                                    <Text fontWeight="bold">{project.name}</Text>
-                                    {project.featured && (
-                                      <Badge colorScheme="yellow">
-                                        <HStack spacing={1}>
-                                          <Icon as={FiStar} boxSize={3} />
-                                          <Text>Featured</Text>
-                                        </HStack>
-                                      </Badge>
-                                    )}
-                                    {project.trazo_verified && (
-                                      <Badge colorScheme="green">
-                                        <HStack spacing={1}>
-                                          <Icon as={FiShield} boxSize={3} />
-                                          <Text>Trazo Verified</Text>
-                                        </HStack>
-                                      </Badge>
-                                    )}
-                                  </HStack>
-                                  <Text fontSize="sm" color={mutedColor}>
-                                    {project.country}, {project.region} • {project.developer}
-                                  </Text>
-                                </VStack>
-                                <VStack align="end" spacing={1}>
-                                  <Text fontWeight="bold" fontSize="lg" color="green.500">
-                                    ${project.price_per_credit}/credit
-                                  </Text>
-                                  <Text fontSize="xs" color={mutedColor}>
-                                    {project.available_credits.toLocaleString()} available
-                                  </Text>
-                                </VStack>
-                              </HStack>
-
-                              <Text fontSize="sm">{project.description}</Text>
-
-                              <HStack justify="space-between">
-                                <HStack spacing={2}>
-                                  <Badge colorScheme={project.verification_badge.color}>
-                                    {project.verification_badge.text}
-                                  </Badge>
-                                  <Badge variant="outline">
-                                    {project.project_type.replace('_', ' ')}
-                                  </Badge>
-                                  <Badge variant="outline">{project.vintage_year}</Badge>
-                                </HStack>
-                                <Button size="xs" variant="ghost" rightIcon={<FiExternalLink />}>
-                                  View Details
-                                </Button>
-                              </HStack>
-
-                              {project.co_benefits.length > 0 && (
-                                <HStack spacing={2} flexWrap="wrap">
-                                  <Text fontSize="xs" color={mutedColor}>
-                                    Co-benefits:
-                                  </Text>
-                                  {project.co_benefits.slice(0, 3).map((benefit) => (
-                                    <Badge key={benefit} size="sm" variant="subtle">
-                                      {benefit.replace('_', ' ')}
-                                    </Badge>
-                                  ))}
-                                </HStack>
-                              )}
-                            </VStack>
-                          </CardBody>
-                        </Card>
+                  <FormControl isRequired>
+                    <FormLabel>Offset Activity</FormLabel>
+                    <Select
+                      placeholder="Select offset activity"
+                      value={formData.source_id}
+                      onChange={(e) => setFormData({ ...formData, source_id: e.target.value })}>
+                      {onFarmOffsets.map((offset) => (
+                        <option key={offset.id} value={offset.id}>
+                          {offset.name} - {offset.description}
+                        </option>
                       ))}
-                    </VStack>
-                  ) : (
-                    <Text color={mutedColor} textAlign="center" py={8}>
-                      No certified projects available at this time.
-                    </Text>
-                  )}
+                    </Select>
+                  </FormControl>
 
-                  {selectedProject && (
-                    <Card>
-                      <CardBody>
-                        <VStack spacing={4} align="stretch">
-                          <Text fontWeight="medium">Purchase Details</Text>
-                          <SimpleGrid columns={2} spacing={4}>
-                            <FormControl isRequired>
-                              <FormLabel>Credits to Purchase</FormLabel>
-                              <NumberInput
-                                value={formData.amount}
-                                onChange={(value) => setFormData({ ...formData, amount: value })}
-                                min={0.001}
-                                max={selectedProject.available_credits}
-                                precision={3}
-                                step={0.1}>
-                                <NumberInputField />
-                                <NumberInputStepper>
-                                  <NumberIncrementStepper />
-                                  <NumberDecrementStepper />
-                                </NumberInputStepper>
-                              </NumberInput>
-                              <FormHelperText>
-                                1 credit = 1 tonne CO₂e (1000 kg CO₂e)
-                              </FormHelperText>
-                            </FormControl>
-                            <VStack align="start" spacing={2}>
-                              <Text fontSize="sm" fontWeight="medium">
-                                Cost Breakdown
-                              </Text>
-                              <HStack justify="space-between" w="full">
-                                <Text fontSize="sm">Credits:</Text>
-                                <Text fontSize="sm">{formData.amount || 0}</Text>
-                              </HStack>
-                              <HStack justify="space-between" w="full">
-                                <Text fontSize="sm">Price per credit:</Text>
-                                <Text fontSize="sm">${selectedProject.price_per_credit}</Text>
-                              </HStack>
-                              <Divider />
-                              <HStack justify="space-between" w="full">
-                                <Text fontWeight="medium">Total:</Text>
-                                <Text fontWeight="medium" color="green.500">
-                                  $
-                                  {(
-                                    (parseFloat(formData.amount) || 0) *
-                                    selectedProject.price_per_credit
-                                  ).toFixed(2)}
+                  <SimpleGrid columns={2} spacing={4}>
+                    <FormControl isRequired>
+                      <FormLabel>Amount (kg CO₂e)</FormLabel>
+                      <NumberInput
+                        value={formData.amount}
+                        onChange={(value) => setFormData({ ...formData, amount: value || '' })}
+                        min={0}
+                        precision={2}>
+                        <NumberInputField />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
+                    </FormControl>
+
+                    <FormControl>
+                      <FormLabel>Verification Level</FormLabel>
+                      <Select
+                        value={formData.verification_level}
+                        onChange={(e) =>
+                          setFormData({ ...formData, verification_level: e.target.value })
+                        }>
+                        <option value="certified_project">ICR Verified (90% effective)</option>
+                      </Select>
+                      <FormHelperText>Third-party verification through ICR registry</FormHelperText>
+                    </FormControl>
+                  </SimpleGrid>
+
+                  <FormControl isRequired>
+                    <FormLabel>ICR Registry ID</FormLabel>
+                    <Input
+                      placeholder="Enter ICR registry verification ID (e.g., ICR-2024-001)"
+                      value={formData.registry_verification_id || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, registry_verification_id: e.target.value })
+                      }
+                    />
+                    <FormHelperText>
+                      The ICR registry ID for your verified offset project
+                    </FormHelperText>
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Additionality Evidence</FormLabel>
+                    <Textarea
+                      placeholder="Describe why this offset is additional (required for ICR verification)"
+                      value={formData.additionality_evidence || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, additionality_evidence: e.target.value })
+                      }
+                      rows={3}
+                    />
+                    <FormHelperText>
+                      Explain how this offset goes beyond business-as-usual practices
+                    </FormHelperText>
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel>Permanence Plan</FormLabel>
+                    <Textarea
+                      placeholder="Describe your plan to ensure permanent carbon sequestration"
+                      value={formData.permanence_plan || ''}
+                      onChange={(e) =>
+                        setFormData({ ...formData, permanence_plan: e.target.value })
+                      }
+                      rows={3}
+                    />
+                    <FormHelperText>
+                      How will you ensure the carbon remains sequestered long-term?
+                    </FormHelperText>
+                  </FormControl>
+
+                  {/* Photo Upload */}
+                  <FormControl>
+                    <FormLabel>Evidence Photos</FormLabel>
+                    <VStack align="start" spacing={3}>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handlePhotoUpload}
+                        display="none"
+                        ref={(el) => {
+                          if (el) photoInputRef.current = el;
+                        }}
+                      />
+                      <Button
+                        leftIcon={<Icon as={FiCamera} />}
+                        onClick={() => photoInputRef.current?.click()}
+                        variant="outline"
+                        size="sm">
+                        Upload Photos
+                      </Button>
+
+                      {formData.evidence_photos && formData.evidence_photos.length > 0 && (
+                        <SimpleGrid columns={3} spacing={2} w="100%">
+                          {formData.evidence_photos.map((photo, index) => (
+                            <Box key={index} position="relative">
+                              <Image
+                                src={photo}
+                                alt={`Evidence ${index + 1}`}
+                                borderRadius="md"
+                                objectFit="cover"
+                                h="60px"
+                                w="100%"
+                              />
+                              <IconButton
+                                icon={<Icon as={FiX} />}
+                                size="xs"
+                                position="absolute"
+                                top="1"
+                                right="1"
+                                onClick={() => removePhoto(index)}
+                                aria-label="Remove photo"
+                              />
+                            </Box>
+                          ))}
+                        </SimpleGrid>
+                      )}
+                    </VStack>
+                    <FormHelperText>
+                      Upload photos of your sustainable farming practices
+                    </FormHelperText>
+                  </FormControl>
+
+                  {/* Document Upload */}
+                  <FormControl>
+                    <FormLabel>Supporting Documents</FormLabel>
+                    <VStack align="start" spacing={3}>
+                      <Input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.txt"
+                        multiple
+                        onChange={handleDocumentUpload}
+                        display="none"
+                        ref={(el) => {
+                          if (el) documentInputRef.current = el;
+                        }}
+                      />
+                      <Button
+                        leftIcon={<Icon as={FiUpload} />}
+                        onClick={() => documentInputRef.current?.click()}
+                        variant="outline"
+                        size="sm">
+                        Upload Documents
+                      </Button>
+
+                      {formData.evidence_documents && formData.evidence_documents.length > 0 && (
+                        <VStack align="start" spacing={1} w="100%">
+                          {formData.evidence_documents.map((doc, index) => (
+                            <HStack key={index} justify="space-between" w="100%">
+                              <HStack>
+                                <Icon as={FiFile} />
+                                <Text fontSize="sm" noOfLines={1}>
+                                  Document {index + 1}
                                 </Text>
                               </HStack>
-                            </VStack>
-                          </SimpleGrid>
+                              <IconButton
+                                icon={<Icon as={FiX} />}
+                                size="xs"
+                                onClick={() => removeDocument(index)}
+                                aria-label="Remove document"
+                              />
+                            </HStack>
+                          ))}
                         </VStack>
-                      </CardBody>
-                    </Card>
+                      )}
+                    </VStack>
+                    <FormHelperText>
+                      Upload soil tests, methodology documents, or other supporting evidence
+                    </FormHelperText>
+                  </FormControl>
+
+                  {/* Error Display */}
+                  {createOffsetError && (
+                    <Alert status="error" borderRadius="md">
+                      <AlertIcon />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>
+                        {createOffsetError && 'data' in createOffsetError && createOffsetError.data
+                          ? JSON.stringify(createOffsetError.data)
+                          : 'An error occurred while creating the offset'}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Amount-based Requirements Alert */}
+                  {currentAmount > 0 && (
+                    <Alert status="info" borderRadius="md">
+                      <AlertIcon />
+                      <VStack align="start" spacing={1}>
+                        <Text fontWeight="medium">
+                          ICR Verification for {currentAmount} kg CO₂e
+                        </Text>
+                        <Text fontSize="sm">
+                          Your farm-generated offset will be submitted to ICR for third-party
+                          verification. Verified offsets receive 90% effective credit (100% trust -
+                          10% buffer pool).
+                        </Text>
+
+                        <Box
+                          mt={2}
+                          p={2}
+                          bg={useColorModeValue('gray.50', 'gray.700')}
+                          borderRadius="md"
+                          w="100%">
+                          <Text fontSize="xs" fontWeight="semibold" mb={1}>
+                            Credit Calculation:
+                          </Text>
+                          <HStack spacing={4} fontSize="xs">
+                            <Text>Claimed: {currentAmount} kg CO₂e</Text>
+                            <Text>Trust Score: 100%</Text>
+                            <Text>Buffer Pool: -10%</Text>
+                            <Text fontWeight="bold" color="green.600">
+                              Effective: {(currentAmount * 0.9).toFixed(1)} kg CO₂e
+                            </Text>
+                          </HStack>
+                        </Box>
+                      </VStack>
+                    </Alert>
                   )}
                 </VStack>
               </TabPanel>
@@ -1419,8 +1510,8 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
               isDisabled={
                 !formData.amount ||
                 parseFloat(formData.amount) <= 0 ||
-                (activeTab === 0 && !formData.source_id) ||
-                (activeTab === 2 && !selectedProject)
+                !formData.source_id ||
+                (activeTab === 1 && !formData.registry_verification_id) // ICR tab requires registry ID
               }>
               Create Offset
             </Button>
