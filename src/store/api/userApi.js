@@ -3,6 +3,13 @@ import baseApi from './baseApi';
 
 export const userApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getMe: builder.query({
+      query: () => ({
+        url: 'users/me/',
+        credentials: 'include'
+      }),
+      providesTags: ['User']
+    }),
     updateUser: builder.mutation({
       query: ({ userId, userData }) => {
         const formData = new FormData();

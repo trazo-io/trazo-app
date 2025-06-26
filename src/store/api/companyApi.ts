@@ -155,7 +155,11 @@ const companyApi = baseApi.injectEndpoints({
           method: 'GET',
           credentials: 'include'
         };
-      }
+      },
+      providesTags: (result, error, { establishmentId, productionId }) => [
+        { type: 'CarbonSummary', id: establishmentId || productionId },
+        'CarbonSummary'
+      ]
     }),
     addEstablishmentCarbonFootprint: build.mutation({
       query: ({ establishmentId, footprintData }) => ({
@@ -284,7 +288,11 @@ const companyApi = baseApi.injectEndpoints({
           method: 'GET',
           credentials: 'include'
         };
-      }
+      },
+      providesTags: (result, error, { establishmentId }) => [
+        { type: 'CarbonSummary', id: establishmentId },
+        'CarbonSummary'
+      ]
     }),
     // Public endpoint for consumer-facing establishment view
     getPublicEstablishment: build.query({
@@ -344,6 +352,67 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       providesTags: ['CropType']
+    }),
+    // Get certified carbon offset projects
+    getCertifiedProjects: build.query<
+      {
+        projects: Array<{
+          id: string;
+          name: string;
+          description: string;
+          project_type: string;
+          verification_standard: string;
+          verification_badge: {
+            color: string;
+            text: string;
+            icon: string;
+          };
+          country: string;
+          region: string;
+          developer: string;
+          price_per_credit: number;
+          available_credits: number;
+          vintage_year: number;
+          co_benefits: string[];
+          featured: boolean;
+          trazo_verified: boolean;
+          registry_url?: string;
+        }>;
+      },
+      void
+    >({
+      query: () => ({
+        url: '/carbon/offsets/certified_projects/',
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: ['CarbonSummary']
+    }),
+    // Create carbon offset entry
+    createCarbonOffset: build.mutation<
+      { trust_score: number; effective_amount: number; id: number },
+      {
+        amount: number;
+        source_id?: string;
+        offset_project_type: 'on_farm' | 'local_community' | 'certified_marketplace';
+        verification_level: 'self_reported' | 'community_verified' | 'certified_project';
+        evidence_photos?: string[];
+        evidence_documents?: string[];
+        gps_coordinates?: any;
+        verification_notes?: string;
+        certified_project_id?: string | null;
+        type: 'offset';
+        year: number;
+        establishment: string;
+      }
+    >({
+      query: (offsetData) => ({
+        url: '/carbon/offsets/',
+        method: 'POST',
+        body: offsetData,
+        credentials: 'include'
+      }),
+      invalidatesTags: ['CarbonSummary']
     })
   }),
   overrideExisting: false
@@ -375,5 +444,7 @@ export const {
   useGetPublicEstablishmentQuery,
   useStartProductionMutation,
   useGetCropTypesQuery,
-  useGetCropTypesDropdownQuery
+  useGetCropTypesDropdownQuery,
+  useGetCertifiedProjectsQuery,
+  useCreateCarbonOffsetMutation
 } = companyApi;

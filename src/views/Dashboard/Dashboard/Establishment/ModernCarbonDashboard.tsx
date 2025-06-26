@@ -116,12 +116,14 @@ import {
   useCreateOffsetMutation,
   useGetQRCodeSummaryQuery
 } from 'store/api/carbonApi';
+import ModernOffsetModal from './components/ModernOffsetModal';
 
 // Types
 interface CarbonEntry {
   id: number;
   type: 'emission' | 'offset';
   amount: number;
+  effective_amount?: number; // Trust-score-adjusted amount for offsets
   source: {
     id: number;
     name: string;
@@ -131,6 +133,12 @@ interface CarbonEntry {
   description: string;
   usda_verified: boolean;
   verification_status: string;
+  verification_level?: string;
+  trust_score?: number;
+  audit_status?: string;
+  registry_verification_id?: string;
+  additionality_verified?: boolean;
+  created_at?: string;
 }
 
 interface CarbonCertification {
@@ -208,13 +216,18 @@ const ModernCarbonDashboard: React.FC = () => {
   const {
     data: carbonSummary,
     isLoading: isSummaryLoading,
-    error: summaryError
+    error: summaryError,
+    refetch: refetchCarbonSummary
   } = useGetCarbonFootprintSummaryQuery({
     establishmentId: parseInt(establishmentId || '0'),
     year: currentYear
   });
 
-  const { data: carbonEntries, isLoading: isEntriesLoading } = useGetCarbonEntriesQuery({
+  const {
+    data: carbonEntries,
+    isLoading: isEntriesLoading,
+    refetch: refetchCarbonEntries
+  } = useGetCarbonEntriesQuery({
     establishmentId: parseInt(establishmentId || '0'),
     year: currentYear
   });
@@ -224,8 +237,11 @@ const ModernCarbonDashboard: React.FC = () => {
       establishmentId: establishmentId || ''
     });
 
-  const { data: establishmentSummary, isLoading: isEstablishmentSummaryLoading } =
-    useGetEstablishmentCarbonSummaryQuery(establishmentId || '');
+  const {
+    data: establishmentSummary,
+    isLoading: isEstablishmentSummaryLoading,
+    refetch: refetchEstablishmentSummary
+  } = useGetEstablishmentCarbonSummaryQuery(establishmentId || '');
 
   // Mutations
   const [createOffset, { isLoading: isCreatingOffset }] = useCreateOffsetMutation();
@@ -270,10 +286,25 @@ const ModernCarbonDashboard: React.FC = () => {
   // Calculate key metrics from real data only
   const totalEmissions =
     carbonSummary?.total_emissions || establishmentSummary?.total_emissions || 0;
-  const totalOffsets = carbonSummary?.total_offsets || establishmentSummary?.total_offsets || 0;
+
+  // Calculate effective offsets (with trust score discounts) - this should be the primary total
+  const effectiveOffsets =
+    carbonEntries?.reduce((total: number, entry: any) => {
+      if (entry.type === 'offset') {
+        return total + (entry.effective_amount || entry.amount || 0);
+      }
+      return total;
+    }, 0) || 0;
+
+  // Use effective offsets as the main total offsets value
+  const totalOffsets =
+    effectiveOffsets || carbonSummary?.total_offsets || establishmentSummary?.total_offsets || 0;
   const netCarbon = carbonSummary?.net_carbon || totalEmissions - totalOffsets;
   const carbonScore = carbonSummary?.carbon_score || establishmentSummary?.carbon_score || 0;
   const hasData = (carbonEntries?.length ?? 0) > 0;
+
+  // Calculate actual net carbon using effective offsets
+  const effectiveNetCarbon = totalEmissions - effectiveOffsets;
   const verificationLevel = hasData ? 'verified' : 'pending';
   const eventsCount = carbonEntries?.length ?? 0;
   const verifiedEventsCount =
@@ -319,12 +350,12 @@ const ModernCarbonDashboard: React.FC = () => {
       return acc;
     }, {}) || {};
 
-  // Calculate offsets breakdown by action
+  // Calculate offsets breakdown by action - using effective amounts
   const offsetsByAction =
     carbonEntries?.reduce((acc: any, entry: any) => {
       if (entry.type === 'offset' && entry.source?.name) {
         const action = entry.source.name;
-        acc[action] = (acc[action] || 0) + entry.amount;
+        acc[action] = (acc[action] || 0) + (entry.effective_amount || entry.amount || 0);
       }
       return acc;
     }, {}) || {};
@@ -447,16 +478,20 @@ const ModernCarbonDashboard: React.FC = () => {
   }
 
   return (
-    <Container maxW="7xl" py={containerPadding} bg={bg} minH="100vh">
+    <Box minH="100vh" py={{ base: 4, md: 8 }} px={{ base: 2, md: 6 }}>
       <VStack spacing={6} align="stretch">
-        {/* Header Section - Following Standard Dashboard Pattern */}
-        <Box>
-          <HStack justify="space-between" align="center" mb={4}>
+        {/* Header */}
+        <Flex
+          direction={{ sm: 'column', md: 'row' }}
+          justify="space-between"
+          align="center"
+          gap="24px"
+          paddingTop={12}
+          w="100%">
+          {/* Header Section - Following Standard Dashboard Pattern */}
+          <HStack justify="space-between" align="center" mb={4} width="100%">
             <VStack align="start" spacing={1}>
-              <Heading size="lg" color={textColor}>
-                Carbon Transparency Dashboard
-              </Heading>
-              <Text color={mutedColor} fontSize="sm">
+              <Text color="gray.500" fontSize="md">
                 Manage your carbon footprint and optimize sustainability
               </Text>
             </VStack>
@@ -487,27 +522,27 @@ const ModernCarbonDashboard: React.FC = () => {
               </Menu>
             </HStack>
           </HStack>
+        </Flex>
 
-          {/* Quick Actions */}
-          <HStack spacing={3} mb={6}>
-            <Button leftIcon={<FaPlus />} colorScheme="green" size="sm" onClick={onOffsetModalOpen}>
-              Add Carbon Offset
-            </Button>
-            <Button leftIcon={<FaDownload />} variant="outline" size="sm">
-              Export Report
-            </Button>
-            <Button leftIcon={<FaShare />} variant="outline" size="sm">
-              Share Profile
-            </Button>
-            <Button
-              leftIcon={<FaEye />}
-              variant="outline"
-              size="sm"
-              onClick={onCertificationsModalOpen}>
-              View Certifications
-            </Button>
-          </HStack>
-        </Box>
+        {/* Quick Actions */}
+        <HStack spacing={3} mb={6}>
+          <Button leftIcon={<FaPlus />} colorScheme="green" size="sm" onClick={onOffsetModalOpen}>
+            Add Carbon Offset
+          </Button>
+          <Button leftIcon={<FaDownload />} variant="outline" size="sm">
+            Export Report
+          </Button>
+          <Button leftIcon={<FaShare />} variant="outline" size="sm">
+            Share Profile
+          </Button>
+          <Button
+            leftIcon={<FaEye />}
+            variant="outline"
+            size="sm"
+            onClick={onCertificationsModalOpen}>
+            View Certifications
+          </Button>
+        </HStack>
 
         {/* Key Metrics Cards */}
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={cardSpacing}>
@@ -548,24 +583,29 @@ const ModernCarbonDashboard: React.FC = () => {
               <VStack spacing={3}>
                 <HStack justify="space-between" w="full">
                   <Icon as={FaBalanceScale} color="blue.500" boxSize={5} />
-                  <Badge colorScheme={netCarbon > 0 ? 'red' : 'green'} variant="subtle">
-                    {netCarbon > 0 ? 'POSITIVE' : 'NEGATIVE'}
+                  <Badge colorScheme={effectiveNetCarbon > 0 ? 'red' : 'green'} variant="subtle">
+                    {effectiveNetCarbon > 0 ? 'POSITIVE' : 'NEGATIVE'}
                   </Badge>
                 </HStack>
                 <VStack spacing={1}>
                   <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                    {Math.abs(netCarbon).toFixed(1)}
+                    {Math.abs(effectiveNetCarbon).toFixed(1)}
                   </Text>
                   <Text fontSize="sm" color={mutedColor}>
-                    kg CO₂e
+                    kg CO₂e effective
                   </Text>
+                  {effectiveOffsets !== totalOffsets && (
+                    <Text fontSize="xs" color="orange.500">
+                      ({Math.abs(netCarbon).toFixed(1)} raw)
+                    </Text>
+                  )}
                 </VStack>
                 <VStack spacing={0}>
                   <Text fontWeight="medium" color={textColor}>
                     Net Footprint
                   </Text>
                   <Text fontSize="xs" color={mutedColor} textAlign="center">
-                    Total emissions minus carbon sequestration
+                    Emissions minus verified offsets
                   </Text>
                 </VStack>
               </VStack>
@@ -864,40 +904,88 @@ const ModernCarbonDashboard: React.FC = () => {
                         <Td>
                           <VStack align="start" spacing={0}>
                             <Text fontSize="sm" fontWeight="medium">
-                              {(() => {
-                                // Extract source name from description
-                                if (entry.description?.includes('IR event')) return 'Irrigation';
-                                if (entry.description?.includes('FE event'))
-                                  return 'Fertilizer Application';
-                                if (entry.description?.includes('HA event')) return 'Harvesting';
-                                if (entry.description?.includes('PR event')) return 'Production';
-                                return 'Unknown/Other';
-                              })()}
+                              {entry.source?.name || 'Unknown Source'}
                             </Text>
                             <Text fontSize="xs" color={mutedColor}>
-                              {(() => {
-                                // Extract category from description
-                                if (entry.description?.includes('IR event')) return 'Irrigation';
-                                if (entry.description?.includes('FE event'))
-                                  return 'Fertilizer Application';
-                                if (entry.description?.includes('HA event')) return 'Harvesting';
-                                if (entry.description?.includes('PR event')) return 'Production';
-                                return 'Other';
-                              })()}
+                              {entry.source?.category || 'Other'}
                             </Text>
                           </VStack>
                         </Td>
                         <Td>
-                          <Text fontSize="sm" fontWeight="medium">
-                            {entry.amount.toFixed(2)} kg CO₂e
-                          </Text>
+                          <VStack align="start" spacing={0}>
+                            <Text fontSize="sm" fontWeight="medium">
+                              {entry.amount.toFixed(2)} kg CO₂e
+                            </Text>
+                            {entry.type === 'offset' && entry.effective_amount && (
+                              <Text fontSize="xs" color="green.600">
+                                {entry.effective_amount.toFixed(1)} effective
+                              </Text>
+                            )}
+                          </VStack>
                         </Td>
                         <Td>
-                          <Badge
-                            colorScheme={entry.usda_verified ? 'green' : 'yellow'}
-                            variant="subtle">
-                            {entry.usda_verified ? 'VERIFIED' : 'PENDING'}
-                          </Badge>
+                          <VStack align="start" spacing={1}>
+                            <Badge
+                              colorScheme={entry.usda_verified ? 'green' : 'yellow'}
+                              variant="subtle">
+                              {entry.usda_verified ? 'VERIFIED' : 'PENDING'}
+                            </Badge>
+                            {entry.type === 'offset' && entry.verification_level && (
+                              <Badge
+                                size="sm"
+                                colorScheme={
+                                  entry.verification_level === 'certified_project'
+                                    ? 'green'
+                                    : entry.verification_level === 'community_verified'
+                                    ? 'blue'
+                                    : 'orange'
+                                }
+                                variant="outline">
+                                {entry.verification_level === 'self_reported'
+                                  ? 'Self Reported'
+                                  : entry.verification_level === 'community_verified'
+                                  ? 'Community'
+                                  : entry.verification_level === 'certified_project'
+                                  ? 'Certified'
+                                  : 'Standard'}
+                              </Badge>
+                            )}
+                            {/* Enhanced verification badges */}
+                            {entry.type === 'offset' && entry.audit_status && (
+                              <Badge
+                                size="sm"
+                                colorScheme={
+                                  entry.audit_status === 'passed'
+                                    ? 'green'
+                                    : entry.audit_status === 'failed'
+                                    ? 'red'
+                                    : entry.audit_status === 'scheduled'
+                                    ? 'blue'
+                                    : 'gray'
+                                }
+                                variant="subtle">
+                                {entry.audit_status === 'passed'
+                                  ? 'Audit Passed'
+                                  : entry.audit_status === 'failed'
+                                  ? 'Audit Failed'
+                                  : entry.audit_status === 'scheduled'
+                                  ? 'Audit Scheduled'
+                                  : entry.audit_status === 'in_progress'
+                                  ? 'Under Review'
+                                  : 'Pending Audit'}
+                              </Badge>
+                            )}
+                            {entry.type === 'offset' && entry.registry_verification_id && (
+                              <Badge size="sm" colorScheme="purple" variant="outline">
+                                Registry Verified
+                              </Badge>
+                            )}
+                            {entry.type === 'offset' && entry.additionality_verified && (
+                              <Badge size="sm" colorScheme="teal" variant="outline">
+                                Additional
+                              </Badge>
+                            )}
+                          </VStack>
                         </Td>
                         <Td>
                           <Text fontSize="sm">
@@ -974,219 +1062,134 @@ const ModernCarbonDashboard: React.FC = () => {
             </CardBody>
           </Card>
         )}
-      </VStack>
 
-      {/* Carbon Offset Creation Modal */}
-      <Modal isOpen={isOffsetModalOpen} onClose={onOffsetModalClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Create Carbon Offset</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4} align="stretch">
-              <FormControl isRequired>
-                <FormLabel>Offset Amount (kg CO₂e)</FormLabel>
-                <NumberInput
-                  value={offsetAmount}
-                  onChange={(_, value) => setOffsetAmount(value || 0)}
-                  min={0}
-                  step={0.1}>
-                  <NumberInputField placeholder="Enter amount to offset" />
-                  <NumberInputStepper>
-                    <NumberIncrementStepper />
-                    <NumberDecrementStepper />
-                  </NumberInputStepper>
-                </NumberInput>
-              </FormControl>
+        {/* Carbon Offset Creation Modal */}
+        {/* Modern Offset Modal */}
+        <ModernOffsetModal
+          isOpen={isOffsetModalOpen}
+          onClose={onOffsetModalClose}
+          establishmentId={establishmentId || ''}
+          onSuccess={() => {
+            // Refetch all carbon-related data after successful offset creation
+            refetchCarbonSummary();
+            refetchCarbonEntries();
+            refetchEstablishmentSummary();
+          }}
+        />
 
-              <FormControl isRequired>
-                <FormLabel>Offset Project</FormLabel>
-                <Select
-                  value={selectedOffsetProject}
-                  onChange={(e) => setSelectedOffsetProject(e.target.value)}
-                  placeholder="Select an offset project">
-                  {availableOffsetProjects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name} ({project.type}){project.usda_verified && ' ✓ USDA Verified'}
-                    </option>
-                  ))}
-                </Select>
-                {selectedOffsetProject && (
-                  <Box mt={2} p={3} bg="gray.50" borderRadius="md">
-                    {(() => {
-                      const project = availableOffsetProjects.find(
-                        (p) => p.id === selectedOffsetProject
-                      );
-                      return project ? (
-                        <VStack align="start" spacing={1}>
-                          <HStack>
-                            <Badge colorScheme={project.usda_verified ? 'green' : 'gray'}>
-                              {project.usda_verified ? 'USDA Verified' : 'Standard'}
-                            </Badge>
-                            <Badge colorScheme="blue" variant="outline">
-                              {project.type}
-                            </Badge>
-                          </HStack>
-                          <Text fontSize="sm" color="gray.600">
-                            {project.usda_verified
-                              ? 'This project meets USDA standards for carbon offset verification.'
-                              : 'This project follows standard carbon offset protocols.'}
-                          </Text>
-                        </VStack>
-                      ) : null;
-                    })()}
-                  </Box>
-                )}
-              </FormControl>
+        {/* Insights Modal */}
+        <Modal isOpen={isInsightsOpen} onClose={onInsightsClose} size="xl">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Carbon Transparency Insights</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <VStack spacing={6} align="stretch">
+                <Box>
+                  <Heading size="md" mb={3}>
+                    Why Track Carbon Footprint?
+                  </Heading>
+                  <List spacing={2}>
+                    <ListItem>
+                      <ListIcon as={FaCheckCircle} color="green.500" />
+                      Build consumer trust through transparency
+                    </ListItem>
+                    <ListItem>
+                      <ListIcon as={FaCheckCircle} color="green.500" />
+                      Access premium pricing for sustainable products
+                    </ListItem>
+                    <ListItem>
+                      <ListIcon as={FaCheckCircle} color="green.500" />
+                      Generate carbon credits for additional revenue
+                    </ListItem>
+                    <ListItem>
+                      <ListIcon as={FaCheckCircle} color="green.500" />
+                      Meet regulatory requirements and certifications
+                    </ListItem>
+                  </List>
+                </Box>
 
-              <FormControl>
-                <FormLabel>Description (Optional)</FormLabel>
-                <Textarea
-                  value={offsetDescription}
-                  onChange={(e) => setOffsetDescription(e.target.value)}
-                  placeholder="Describe the offset action..."
-                  rows={3}
-                />
-              </FormControl>
+                <Divider />
 
-              {offsetAmount > 0 && (
+                <Box>
+                  <Heading size="md" mb={3}>
+                    Getting Started
+                  </Heading>
+                  <VStack spacing={3} align="stretch">
+                    <HStack>
+                      <Badge colorScheme="blue">1</Badge>
+                      <Text fontSize="sm">
+                        Create your first production and add agricultural events
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Badge colorScheme="blue">2</Badge>
+                      <Text fontSize="sm">
+                        Our system automatically calculates carbon emissions
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Badge colorScheme="blue">3</Badge>
+                      <Text fontSize="sm">
+                        Add carbon offsets to improve your environmental score
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Badge colorScheme="blue">4</Badge>
+                      <Text fontSize="sm">Share your sustainability story with consumers</Text>
+                    </HStack>
+                  </VStack>
+                </Box>
+              </VStack>
+            </ModalBody>
+            <ModalFooter>
+              <Button colorScheme="green" onClick={onInsightsClose}>
+                Get Started
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        {/* Certifications Modal */}
+        <Modal isOpen={isCertificationsModalOpen} onClose={onCertificationsModalClose} size="lg">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Carbon Certifications</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <VStack spacing={4} align="stretch">
                 <Alert status="info" borderRadius="md">
                   <AlertIcon />
                   <VStack align="start" spacing={1}>
                     <Text fontSize="sm" fontWeight="medium">
-                      Estimated Cost: ${(offsetAmount * 15).toFixed(2)} USD
+                      Certification Management
                     </Text>
-                    <Text fontSize="xs">Based on average carbon credit price of $15/ton CO₂e</Text>
+                    <Text fontSize="xs">
+                      Upload and manage your carbon certifications to increase transparency
+                    </Text>
                   </VStack>
                 </Alert>
-              )}
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onOffsetModalClose}>
-              Cancel
-            </Button>
-            <Button
-              colorScheme="green"
-              onClick={handleCreateOffset}
-              isLoading={isCreatingOffset}
-              loadingText="Creating...">
-              Create Offset
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
 
-      {/* Insights Modal */}
-      <Modal isOpen={isInsightsOpen} onClose={onInsightsClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Carbon Transparency Insights</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={6} align="stretch">
-              <Box>
-                <Heading size="md" mb={3}>
-                  Why Track Carbon Footprint?
-                </Heading>
-                <List spacing={2}>
-                  <ListItem>
-                    <ListIcon as={FaCheckCircle} color="green.500" />
-                    Build consumer trust through transparency
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaCheckCircle} color="green.500" />
-                    Access premium pricing for sustainable products
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaCheckCircle} color="green.500" />
-                    Generate carbon credits for additional revenue
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaCheckCircle} color="green.500" />
-                    Meet regulatory requirements and certifications
-                  </ListItem>
-                </List>
-              </Box>
+                <Button
+                  leftIcon={<FaCloudUploadAlt />}
+                  colorScheme="blue"
+                  variant="outline"
+                  size="sm">
+                  Upload New Certification
+                </Button>
 
-              <Divider />
-
-              <Box>
-                <Heading size="md" mb={3}>
-                  Getting Started
-                </Heading>
-                <VStack spacing={3} align="stretch">
-                  <HStack>
-                    <Badge colorScheme="blue">1</Badge>
-                    <Text fontSize="sm">
-                      Create your first production and add agricultural events
-                    </Text>
-                  </HStack>
-                  <HStack>
-                    <Badge colorScheme="blue">2</Badge>
-                    <Text fontSize="sm">Our system automatically calculates carbon emissions</Text>
-                  </HStack>
-                  <HStack>
-                    <Badge colorScheme="blue">3</Badge>
-                    <Text fontSize="sm">
-                      Add carbon offsets to improve your environmental score
-                    </Text>
-                  </HStack>
-                  <HStack>
-                    <Badge colorScheme="blue">4</Badge>
-                    <Text fontSize="sm">Share your sustainability story with consumers</Text>
-                  </HStack>
-                </VStack>
-              </Box>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="green" onClick={onInsightsClose}>
-              Get Started
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      {/* Certifications Modal */}
-      <Modal isOpen={isCertificationsModalOpen} onClose={onCertificationsModalClose} size="lg">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Carbon Certifications</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4} align="stretch">
-              <Alert status="info" borderRadius="md">
-                <AlertIcon />
-                <VStack align="start" spacing={1}>
-                  <Text fontSize="sm" fontWeight="medium">
-                    Certification Management
-                  </Text>
-                  <Text fontSize="xs">
-                    Upload and manage your carbon certifications to increase transparency
-                  </Text>
-                </VStack>
-              </Alert>
-
-              <Button
-                leftIcon={<FaCloudUploadAlt />}
-                colorScheme="blue"
-                variant="outline"
-                size="sm">
-                Upload New Certification
-              </Button>
-
-              <Text color={mutedColor} fontSize="sm" textAlign="center">
-                No certifications uploaded yet
-              </Text>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button onClick={onCertificationsModalClose}>Close</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </Container>
+                <Text color={mutedColor} fontSize="sm" textAlign="center">
+                  No certifications uploaded yet
+                </Text>
+              </VStack>
+            </ModalBody>
+            <ModalFooter>
+              <Button onClick={onCertificationsModalClose}>Close</Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </VStack>
+    </Box>
   );
 };
 

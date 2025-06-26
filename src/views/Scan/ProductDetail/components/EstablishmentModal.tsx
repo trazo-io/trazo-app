@@ -167,8 +167,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                     fontSize="xs"
                     px={2}
                     py={1}
-                    borderRadius="full"
-                  >
+                    borderRadius="full">
                     {establishmentData.establishment_type}
                   </Badge>
                 )}
@@ -179,8 +178,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                     fontSize="xs"
                     px={2}
                     py={1}
-                    borderRadius="full"
-                  >
+                    borderRadius="full">
                     {establishmentData.farming_method}
                   </Badge>
                 )}
@@ -191,8 +189,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                     fontSize="xs"
                     px={2}
                     py={1}
-                    borderRadius="full"
-                  >
+                    borderRadius="full">
                     Active
                   </Badge>
                 )}
@@ -334,8 +331,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                       <Icon as={FaPhone} color={accentColor} />
                       <Link
                         href={`tel:${establishmentData.phone || establishmentData.contact_phone}`}
-                        color={textColor}
-                      >
+                        color={textColor}>
                         {establishmentData.phone || establishmentData.contact_phone}
                       </Link>
                     </HStack>
@@ -347,8 +343,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                         href={`mailto:${
                           establishmentData.email || establishmentData.contact_email
                         }`}
-                        color={textColor}
-                      >
+                        color={textColor}>
                         {establishmentData.email || establishmentData.contact_email}
                       </Link>
                     </HStack>
@@ -400,8 +395,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                                   colorScheme="green"
                                   variant="subtle"
                                   borderRadius="full"
-                                  size="md"
-                                >
+                                  size="md">
                                   <TagLeftIcon as={FaSeedling} />
                                   <TagLabel>{crop}</TagLabel>
                                 </Tag>
@@ -448,8 +442,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                                   colorScheme="blue"
                                   variant="subtle"
                                   borderRadius="full"
-                                  size="md"
-                                >
+                                  size="md">
                                   <TagLeftIcon as={FaLeaf} />
                                   <TagLabel>{practice}</TagLabel>
                                 </Tag>
@@ -510,8 +503,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                 bg={useColorModeValue('blue.50', 'blue.900')}
                 borderRadius="lg"
                 border="1px"
-                borderColor="blue.200"
-              >
+                borderColor="blue.200">
                 <CardBody p={6}>
                   <HStack mb={3}>
                     <Icon as={FaCheckCircle} color="blue.500" />
@@ -542,8 +534,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                         leftIcon={<FaFacebook />}
                         colorScheme="facebook"
                         variant="outline"
-                        size="sm"
-                      >
+                        size="sm">
                         Facebook
                       </Button>
                     )}
@@ -555,8 +546,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                         leftIcon={<FaInstagram />}
                         colorScheme="pink"
                         variant="outline"
-                        size="sm"
-                      >
+                        size="sm">
                         Instagram
                       </Button>
                     )}
@@ -600,8 +590,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                         border="1px"
                         borderColor={borderColor}
                         borderRadius="md"
-                        bg={useColorModeValue('white', 'gray.800')}
-                      >
+                        bg={useColorModeValue('white', 'gray.800')}>
                         <HStack justify="space-between">
                           <Text fontWeight="medium" color={textColor}>
                             {parcel.name}

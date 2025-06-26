@@ -957,7 +957,10 @@ export const carbonApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: ['CarbonSummary']
+      providesTags: (result, error, establishmentId) => [
+        { type: 'CarbonSummary', id: establishmentId },
+        'CarbonSummary'
+      ]
     }),
 
     getProductionCarbonSummary: builder.query<CarbonSummary, string>({

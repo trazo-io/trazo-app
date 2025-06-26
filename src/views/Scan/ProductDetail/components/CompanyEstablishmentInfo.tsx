@@ -170,8 +170,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                   leftIcon={<FaInfoCircle />}
                   onClick={onCompanyModalOpen}
                   borderRadius="full"
-                  fontSize="xs"
-                >
+                  fontSize="xs">
                   More Info
                 </Button>
               </HStack>
@@ -248,8 +247,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                     leftIcon={<FaInfoCircle />}
                     onClick={onEstablishmentModalOpen}
                     borderRadius="full"
-                    fontSize="xs"
-                  >
+                    fontSize="xs">
                     More Info
                   </Button>
                 </VStack>
@@ -319,8 +317,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                             borderRadius="full"
                             px={3}
                             py={1}
-                            fontSize="xs"
-                          >
+                            fontSize="xs">
                             {cert}
                           </Badge>
                         ));
