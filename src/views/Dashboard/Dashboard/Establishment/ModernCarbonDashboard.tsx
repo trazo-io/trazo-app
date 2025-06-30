@@ -117,6 +117,8 @@ import {
   useGetQRCodeSummaryQuery
 } from 'store/api/carbonApi';
 import ModernOffsetModal from './components/ModernOffsetModal';
+import EnhancedOffsetModal from '../../../../components/Carbon/EnhancedOffsetModal';
+import SecurityStatusCard from '../../../../components/Security/SecurityStatusCard';
 
 // Types
 interface CarbonEntry {
@@ -487,7 +489,8 @@ const ModernCarbonDashboard: React.FC = () => {
           align="center"
           gap="24px"
           paddingTop={12}
-          w="100%">
+          w="100%"
+        >
           {/* Header Section - Following Standard Dashboard Pattern */}
           <HStack justify="space-between" align="center" mb={4} width="100%">
             <VStack align="start" spacing={1}>
@@ -514,7 +517,8 @@ const ModernCarbonDashboard: React.FC = () => {
                     <MenuItem
                       key={prod.id}
                       onClick={() => handleProductionChange({ target: { value: prod.id } })}
-                      color="gray.500">
+                      color="gray.500"
+                    >
                       {prod.name || `Producción ${prod.id}`}
                     </MenuItem>
                   ))}
@@ -539,313 +543,556 @@ const ModernCarbonDashboard: React.FC = () => {
             leftIcon={<FaEye />}
             variant="outline"
             size="sm"
-            onClick={onCertificationsModalOpen}>
+            onClick={onCertificationsModalOpen}
+          >
             View Certifications
           </Button>
         </HStack>
 
-        {/* Key Metrics Cards */}
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={cardSpacing}>
-          {/* Carbon Score */}
-          <Card bg={cardBg} borderColor={borderColor}>
-            <CardBody>
-              <VStack spacing={3}>
-                <HStack justify="space-between" w="full">
-                  <Icon as={FaLeaf} color={successColor} boxSize={5} />
-                  <Badge colorScheme={getStatusColor(carbonScore)} variant="subtle">
-                    {carbonScore}/100
-                  </Badge>
-                </HStack>
-                <CircularProgress
-                  value={carbonScore}
-                  size="80px"
-                  color={getStatusColor(carbonScore) + '.400'}
-                  thickness="8px">
-                  <CircularProgressLabel fontSize="lg" fontWeight="bold">
-                    {carbonScore}
-                  </CircularProgressLabel>
-                </CircularProgress>
-                <VStack spacing={0}>
-                  <Text fontWeight="medium" color={textColor}>
-                    Carbon Score
-                  </Text>
-                  <Text fontSize="xs" color={mutedColor} textAlign="center">
-                    Overall environmental performance rating
-                  </Text>
-                </VStack>
-              </VStack>
-            </CardBody>
-          </Card>
-
-          {/* Net Footprint */}
-          <Card bg={cardBg} borderColor={borderColor}>
-            <CardBody>
-              <VStack spacing={3}>
-                <HStack justify="space-between" w="full">
-                  <Icon as={FaBalanceScale} color="blue.500" boxSize={5} />
-                  <Badge colorScheme={effectiveNetCarbon > 0 ? 'red' : 'green'} variant="subtle">
-                    {effectiveNetCarbon > 0 ? 'POSITIVE' : 'NEGATIVE'}
-                  </Badge>
-                </HStack>
-                <VStack spacing={1}>
-                  <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                    {effectiveNetCarbon > 0 ? '+' : ''}
-                    {effectiveNetCarbon.toFixed(1)}
-                  </Text>
-                  <Text fontSize="sm" color={mutedColor}>
-                    kg CO₂e effective
-                  </Text>
-                  {effectiveOffsets !== totalOffsets && (
-                    <Text fontSize="xs" color="orange.500">
-                      ({netCarbon > 0 ? '+' : ''}
-                      {netCarbon.toFixed(1)} raw)
-                    </Text>
-                  )}
-                </VStack>
-                <VStack spacing={0}>
-                  <Text fontWeight="medium" color={textColor}>
-                    Net Footprint
-                  </Text>
-                  <Text fontSize="xs" color={mutedColor} textAlign="center">
-                    Emissions minus verified offsets
-                  </Text>
-                </VStack>
-              </VStack>
-            </CardBody>
-          </Card>
-
-          {/* Transparency Score */}
-          <Card bg={cardBg} borderColor={borderColor}>
-            <CardBody>
-              <VStack spacing={3}>
-                <HStack justify="space-between" w="full">
-                  <Icon as={FaShieldAlt} color="purple.500" boxSize={5} />
-                  <Badge
-                    colorScheme={transparencyScore >= 80 ? 'green' : 'yellow'}
-                    variant="subtle">
-                    {transparencyScore}%
-                  </Badge>
-                </HStack>
-                <VStack spacing={1}>
-                  <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                    {transparencyScore}
-                  </Text>
-                  <Text fontSize="sm" color={mutedColor}>
-                    /100
-                  </Text>
-                </VStack>
-                <VStack spacing={0}>
-                  <Text fontWeight="medium" color={textColor}>
-                    Transparency Score
-                  </Text>
-                  <Text fontSize="xs" color={mutedColor} textAlign="center">
-                    Consumer trust and data completeness rating
-                  </Text>
-                </VStack>
-              </VStack>
-            </CardBody>
-          </Card>
-
-          {/* Verified Events */}
-          <Card bg={cardBg} borderColor={borderColor}>
-            <CardBody>
-              <VStack spacing={3}>
-                <HStack justify="space-between" w="full">
-                  <Icon as={FaCertificate} color="orange.500" boxSize={5} />
-                  <Badge colorScheme="blue" variant="subtle">
-                    {verifiedEventsCount}/{eventsCount}
-                  </Badge>
-                </HStack>
-                <VStack spacing={1}>
-                  <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                    {verifiedEventsCount}
-                  </Text>
-                  <Text fontSize="sm" color={mutedColor}>
-                    events
-                  </Text>
-                </VStack>
-                <VStack spacing={0}>
-                  <Text fontWeight="medium" color={textColor}>
-                    Verified Events
-                  </Text>
-                  <Text fontSize="xs" color={mutedColor} textAlign="center">
-                    Number of carbon events tracked this year
-                  </Text>
-                </VStack>
-              </VStack>
-            </CardBody>
-          </Card>
-
-          {/* USDA Compliance Score */}
-          <Card bg={cardBg} borderColor={borderColor}>
-            <CardBody>
-              <VStack spacing={3}>
-                <HStack justify="space-between" w="full">
-                  <Icon as={FaShieldAlt} color="blue.500" boxSize={5} />
-                  <Badge
-                    colorScheme={usdaComplianceScore >= 80 ? 'green' : 'orange'}
-                    variant="subtle">
-                    USDA {usdaComplianceScore >= 80 ? 'COMPLIANT' : 'PARTIAL'}
-                  </Badge>
-                </HStack>
-                <CircularProgress
-                  value={usdaComplianceScore}
-                  size="80px"
-                  color={usdaComplianceScore >= 80 ? 'blue.400' : 'orange.400'}
-                  thickness="8px">
-                  <CircularProgressLabel fontSize="lg" fontWeight="bold">
-                    {usdaComplianceScore}%
-                  </CircularProgressLabel>
-                </CircularProgress>
-                <VStack spacing={0}>
-                  <Text fontWeight="medium" color={textColor}>
-                    USDA Compliance
-                  </Text>
-                  <Text fontSize="xs" color={mutedColor} textAlign="center">
-                    Events using USDA emission factors
-                  </Text>
-                </VStack>
-              </VStack>
-            </CardBody>
-          </Card>
-
-          {/* Blockchain Verification */}
-          <Card bg={cardBg} borderColor={borderColor}>
-            <CardBody>
-              <VStack spacing={3}>
-                <HStack justify="space-between" w="full">
-                  <Icon
-                    as={FaCube}
-                    color={blockchainVerified ? 'green.500' : 'gray.400'}
-                    boxSize={5}
-                  />
-                  <Badge colorScheme={blockchainVerified ? 'green' : 'gray'} variant="subtle">
-                    {blockchainVerified ? 'VERIFIED' : 'PENDING'}
-                  </Badge>
-                </HStack>
-                <VStack spacing={1}>
-                  <Icon
-                    as={blockchainVerified ? FaCheckCircle : FaExclamationTriangle}
-                    boxSize={8}
-                    color={blockchainVerified ? 'green.500' : 'orange.400'}
-                  />
-                  <Text fontSize="sm" color={mutedColor} textAlign="center">
-                    {blockchainNetwork || 'Not Available'}
-                  </Text>
-                </VStack>
-                <VStack spacing={0}>
-                  <Text fontWeight="medium" color={textColor}>
-                    Blockchain Status
-                  </Text>
-                  <Text fontSize="xs" color={mutedColor} textAlign="center">
-                    Immutable carbon record verification
-                  </Text>
-                </VStack>
-                {blockchainVerified && (
-                  <Text fontSize="xs" color="green.500" textAlign="center">
-                    Records verified on {blockchainNetwork}
-                  </Text>
-                )}
-              </VStack>
-            </CardBody>
-          </Card>
-        </SimpleGrid>
-
-        {/* Carbon Insights Section */}
-        {hasData && (
-          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={cardSpacing}>
-            {/* Emissions Breakdown */}
-            <Card bg={cardBg} borderColor={borderColor}>
-              <CardHeader>
-                <HStack justify="space-between">
-                  <HStack spacing={2}>
-                    <Icon as={FaIndustry} color="red.500" />
-                    <Heading size="md">Emissions Breakdown</Heading>
+        {/* Key Metrics Cards - Improved Layout */}
+        <VStack spacing={cardSpacing} align="stretch">
+          {/* Primary Metrics Row - Most Important KPIs */}
+          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={cardSpacing}>
+            {/* Carbon Score - Primary KPI */}
+            <Card
+              bg={cardBg}
+              borderColor={borderColor}
+              position="relative"
+              overflow="hidden"
+              transition="all 0.3s ease"
+              _hover={{
+                transform: 'translateY(-2px)',
+                boxShadow: 'xl',
+                borderColor: getStatusColor(carbonScore) + '.300'
+              }}
+              cursor="pointer"
+            >
+              <CardBody>
+                <VStack spacing={3}>
+                  <HStack justify="space-between" w="full">
+                    <Icon as={FaLeaf} color={successColor} boxSize={5} />
+                    <Badge
+                      colorScheme={getStatusColor(carbonScore)}
+                      variant="subtle"
+                      fontSize="xs"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      {carbonScore}/100
+                    </Badge>
                   </HStack>
-                  <Text fontSize="sm" color={mutedColor}>
-                    {totalEmissions.toFixed(1)} kg CO₂e total
-                  </Text>
-                </HStack>
-              </CardHeader>
-              <CardBody pt={0}>
-                <VStack spacing={3} align="stretch">
-                  {Object.entries(emissionsByCategory).map(([category, amount]) => (
-                    <Box key={category}>
-                      <HStack justify="space-between" mb={1}>
-                        <Text fontSize="sm" fontWeight="medium" textTransform="capitalize">
-                          {category}
-                        </Text>
-                        <Text fontSize="sm" color={mutedColor}>
-                          {(amount as number).toFixed(1)} kg CO₂e
-                        </Text>
-                      </HStack>
-                      <Progress
-                        value={((amount as number) / totalEmissions) * 100}
-                        colorScheme="red"
-                        size="sm"
-                        borderRadius="full"
-                      />
-                    </Box>
-                  ))}
+                  <CircularProgress
+                    value={carbonScore}
+                    size="80px"
+                    color={getStatusColor(carbonScore) + '.400'}
+                    thickness="8px"
+                    transition="all 0.5s ease"
+                  >
+                    <CircularProgressLabel fontSize="lg" fontWeight="bold">
+                      {carbonScore}
+                    </CircularProgressLabel>
+                  </CircularProgress>
+                  <VStack spacing={0}>
+                    <Text fontWeight="semibold" color={textColor} fontSize="sm">
+                      Carbon Score
+                    </Text>
+                    <Text fontSize="xs" color={mutedColor} textAlign="center" opacity={0.8}>
+                      Overall environmental performance rating
+                    </Text>
+                  </VStack>
+                </VStack>
+              </CardBody>
+              {/* Primary indicator overlay with gradient */}
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                width="100%"
+                height="3px"
+                bgGradient={`linear(to-r, ${getStatusColor(carbonScore)}.400, ${getStatusColor(
+                  carbonScore
+                )}.600)`}
+              />
+            </Card>
+
+            {/* Net Footprint */}
+            <Card
+              bg={cardBg}
+              borderColor={borderColor}
+              transition="all 0.3s ease"
+              _hover={{
+                transform: 'translateY(-2px)',
+                boxShadow: 'xl',
+                borderColor: effectiveNetCarbon > 0 ? 'red.300' : 'green.300'
+              }}
+              cursor="pointer"
+            >
+              <CardBody>
+                <VStack spacing={3}>
+                  <HStack justify="space-between" w="full">
+                    <Icon as={FaBalanceScale} color="blue.500" boxSize={5} />
+                    <Badge
+                      colorScheme={effectiveNetCarbon > 0 ? 'red' : 'green'}
+                      variant="subtle"
+                      fontSize="xs"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      {effectiveNetCarbon > 0 ? 'POSITIVE' : 'NEGATIVE'}
+                    </Badge>
+                  </HStack>
+                  <VStack spacing={1}>
+                    <Text
+                      fontSize="2xl"
+                      fontWeight="bold"
+                      color={effectiveNetCarbon > 0 ? 'red.500' : 'green.500'}
+                      transition="color 0.3s ease"
+                    >
+                      {effectiveNetCarbon > 0 ? '+' : ''}
+                      {effectiveNetCarbon.toFixed(1)}
+                    </Text>
+                    <Text fontSize="sm" color={mutedColor}>
+                      kg CO₂e effective
+                    </Text>
+                    {effectiveOffsets !== totalOffsets && (
+                      <Text fontSize="xs" color="orange.500" opacity={0.8}>
+                        ({netCarbon > 0 ? '+' : ''}
+                        {netCarbon.toFixed(1)} raw)
+                      </Text>
+                    )}
+                  </VStack>
+                  <VStack spacing={0}>
+                    <Text fontWeight="semibold" color={textColor} fontSize="sm">
+                      Net Footprint
+                    </Text>
+                    <Text fontSize="xs" color={mutedColor} textAlign="center" opacity={0.8}>
+                      Emissions minus verified offsets
+                    </Text>
+                  </VStack>
                 </VStack>
               </CardBody>
             </Card>
 
-            {/* Offsets Breakdown */}
-            <Card bg={cardBg} borderColor={borderColor}>
-              <CardHeader>
-                <HStack justify="space-between">
-                  <HStack spacing={2}>
-                    <Icon as={FaTree} color="green.500" />
-                    <Heading size="md">Carbon Offsets</Heading>
+            {/* Transparency Score */}
+            <Card
+              bg={cardBg}
+              borderColor={borderColor}
+              transition="all 0.3s ease"
+              _hover={{
+                transform: 'translateY(-2px)',
+                boxShadow: 'xl',
+                borderColor: transparencyScore >= 80 ? 'green.300' : 'yellow.300'
+              }}
+              cursor="pointer"
+            >
+              <CardBody>
+                <VStack spacing={3}>
+                  <HStack justify="space-between" w="full">
+                    <Icon as={FaShieldAlt} color="purple.500" boxSize={5} />
+                    <Badge
+                      colorScheme={transparencyScore >= 80 ? 'green' : 'yellow'}
+                      variant="subtle"
+                      fontSize="xs"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      {transparencyScore}%
+                    </Badge>
                   </HStack>
-                  <Text fontSize="sm" color={mutedColor}>
-                    {totalOffsets.toFixed(1)} kg CO₂e sequestered
-                  </Text>
-                </HStack>
-              </CardHeader>
-              <CardBody pt={0}>
-                {Object.keys(offsetsByAction).length > 0 ? (
-                  <VStack spacing={3} align="stretch">
-                    {Object.entries(offsetsByAction).map(([action, amount]) => (
-                      <Box key={action}>
-                        <HStack justify="space-between" mb={1}>
-                          <Text fontSize="sm" fontWeight="medium">
-                            {action}
+                  <VStack spacing={1}>
+                    <Text
+                      fontSize="2xl"
+                      fontWeight="bold"
+                      color={transparencyScore >= 80 ? 'green.500' : 'yellow.600'}
+                      transition="color 0.3s ease"
+                    >
+                      {transparencyScore}
+                    </Text>
+                    <Text fontSize="sm" color={mutedColor}>
+                      /100
+                    </Text>
+                  </VStack>
+                  <VStack spacing={0}>
+                    <Text fontWeight="semibold" color={textColor} fontSize="sm">
+                      Transparency Score
+                    </Text>
+                    <Text fontSize="xs" color={mutedColor} textAlign="center" opacity={0.8}>
+                      Consumer trust and data completeness rating
+                    </Text>
+                  </VStack>
+                </VStack>
+              </CardBody>
+            </Card>
+
+            {/* Verified Events */}
+            <Card
+              bg={cardBg}
+              borderColor={borderColor}
+              transition="all 0.3s ease"
+              _hover={{
+                transform: 'translateY(-2px)',
+                boxShadow: 'xl',
+                borderColor: 'blue.300'
+              }}
+              cursor="pointer"
+            >
+              <CardBody>
+                <VStack spacing={3}>
+                  <HStack justify="space-between" w="full">
+                    <Icon as={FaCertificate} color="orange.500" boxSize={5} />
+                    <Badge
+                      colorScheme="blue"
+                      variant="subtle"
+                      fontSize="xs"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      {verifiedEventsCount}/{eventsCount}
+                    </Badge>
+                  </HStack>
+                  <VStack spacing={1}>
+                    <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                      {verifiedEventsCount}
+                    </Text>
+                    <Text fontSize="sm" color={mutedColor}>
+                      events
+                    </Text>
+                  </VStack>
+                  <VStack spacing={0}>
+                    <Text fontWeight="semibold" color={textColor} fontSize="sm">
+                      Verified Events
+                    </Text>
+                    <Text fontSize="xs" color={mutedColor} textAlign="center" opacity={0.8}>
+                      Number of carbon events tracked this year
+                    </Text>
+                  </VStack>
+                </VStack>
+              </CardBody>
+            </Card>
+          </SimpleGrid>
+
+          {/* Secondary Metrics Row - Compliance & Technical Status */}
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={cardSpacing}>
+            {/* Security Status Card - Enhanced with hover */}
+            <Box transition="all 0.3s ease" _hover={{ transform: 'translateY(-2px)' }}>
+              <SecurityStatusCard compact={true} />
+            </Box>
+
+            {/* USDA Compliance Score */}
+            <Card
+              bg={cardBg}
+              borderColor={borderColor}
+              transition="all 0.3s ease"
+              _hover={{
+                transform: 'translateY(-2px)',
+                boxShadow: 'xl',
+                borderColor: usdaComplianceScore >= 80 ? 'green.300' : 'orange.300'
+              }}
+              cursor="pointer"
+            >
+              <CardBody>
+                <VStack spacing={3}>
+                  <HStack justify="space-between" w="full">
+                    <Icon as={FaShieldAlt} color="blue.500" boxSize={5} />
+                    <Badge
+                      colorScheme={usdaComplianceScore >= 80 ? 'green' : 'orange'}
+                      variant="subtle"
+                      fontSize="xs"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      USDA {usdaComplianceScore >= 80 ? 'COMPLIANT' : 'PARTIAL'}
+                    </Badge>
+                  </HStack>
+                  <CircularProgress
+                    value={usdaComplianceScore}
+                    size="80px"
+                    color={usdaComplianceScore >= 80 ? 'blue.400' : 'orange.400'}
+                    thickness="8px"
+                    transition="all 0.5s ease"
+                  >
+                    <CircularProgressLabel fontSize="lg" fontWeight="bold">
+                      {usdaComplianceScore}%
+                    </CircularProgressLabel>
+                  </CircularProgress>
+                  <VStack spacing={0}>
+                    <Text fontWeight="semibold" color={textColor} fontSize="sm">
+                      USDA Compliance
+                    </Text>
+                    <Text fontSize="xs" color={mutedColor} textAlign="center" opacity={0.8}>
+                      Events using USDA emission factors
+                    </Text>
+                  </VStack>
+                </VStack>
+              </CardBody>
+            </Card>
+
+            {/* Blockchain Verification */}
+            <Card
+              bg={cardBg}
+              borderColor={borderColor}
+              transition="all 0.3s ease"
+              _hover={{
+                transform: 'translateY(-2px)',
+                boxShadow: 'xl',
+                borderColor: blockchainVerified ? 'green.300' : 'gray.300'
+              }}
+              cursor="pointer"
+            >
+              <CardBody>
+                <VStack spacing={3}>
+                  <HStack justify="space-between" w="full">
+                    <Icon
+                      as={FaCube}
+                      color={blockchainVerified ? 'green.500' : 'gray.400'}
+                      boxSize={5}
+                    />
+                    <Badge
+                      colorScheme={blockchainVerified ? 'green' : 'gray'}
+                      variant="subtle"
+                      fontSize="xs"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                    >
+                      {blockchainVerified ? 'VERIFIED' : 'PENDING'}
+                    </Badge>
+                  </HStack>
+                  <VStack spacing={1}>
+                    <Icon
+                      as={blockchainVerified ? FaCheckCircle : FaExclamationTriangle}
+                      boxSize={8}
+                      color={blockchainVerified ? 'green.500' : 'orange.400'}
+                      transition="color 0.3s ease"
+                    />
+                    <Text fontSize="sm" color={mutedColor} textAlign="center" opacity={0.8}>
+                      {blockchainNetwork || 'Not Available'}
+                    </Text>
+                  </VStack>
+                  <VStack spacing={0}>
+                    <Text fontWeight="semibold" color={textColor} fontSize="sm">
+                      Blockchain Status
+                    </Text>
+                    <Text fontSize="xs" color={mutedColor} textAlign="center" opacity={0.8}>
+                      Immutable carbon record verification
+                    </Text>
+                  </VStack>
+                  {blockchainVerified && (
+                    <Text fontSize="xs" color="green.500" textAlign="center" opacity={0.9}>
+                      Records verified on {blockchainNetwork}
+                    </Text>
+                  )}
+                </VStack>
+              </CardBody>
+            </Card>
+          </SimpleGrid>
+        </VStack>
+
+        {/* Carbon Insights Section */}
+        {hasData && (
+          <VStack spacing={6} align="stretch">
+            {/* Section Header */}
+            <Flex justify="space-between" align="center">
+              <Heading size="lg" color={textColor} fontWeight="bold">
+                Carbon Insights
+              </Heading>
+              <Text fontSize="sm" color={mutedColor} opacity={0.8}>
+                Detailed breakdown of your carbon impact
+              </Text>
+            </Flex>
+
+            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={cardSpacing}>
+              {/* Emissions Breakdown */}
+              <Card
+                bg={cardBg}
+                borderColor={borderColor}
+                transition="all 0.3s ease"
+                _hover={{
+                  transform: 'translateY(-2px)',
+                  boxShadow: 'xl',
+                  borderColor: 'red.300'
+                }}
+              >
+                <CardHeader pb={3}>
+                  <HStack justify="space-between">
+                    <HStack spacing={3}>
+                      <Box p={2} bg="red.50" borderRadius="lg" border="1px" borderColor="red.200">
+                        <Icon as={FaIndustry} color="red.500" boxSize={4} />
+                      </Box>
+                      <VStack spacing={0} align="flex-start">
+                        <Heading size="md" color={textColor}>
+                          Emissions Breakdown
+                        </Heading>
+                        <Text fontSize="xs" color={mutedColor} opacity={0.8}>
+                          By category and source
+                        </Text>
+                      </VStack>
+                    </HStack>
+                    <VStack spacing={0} align="flex-end">
+                      <Text fontSize="lg" fontWeight="bold" color="red.500">
+                        {totalEmissions.toFixed(1)}
+                      </Text>
+                      <Text fontSize="xs" color={mutedColor}>
+                        kg CO₂e total
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </CardHeader>
+                <CardBody pt={0}>
+                  <VStack spacing={4} align="stretch">
+                    {Object.entries(emissionsByCategory).map(([category, amount], index) => (
+                      <Box key={category}>
+                        <HStack justify="space-between" mb={2}>
+                          <Text
+                            fontSize="sm"
+                            fontWeight="semibold"
+                            textTransform="capitalize"
+                            color={textColor}
+                          >
+                            {category}
                           </Text>
-                          <Text fontSize="sm" color={mutedColor}>
+                          <Text fontSize="sm" color={mutedColor} fontWeight="medium">
                             {(amount as number).toFixed(1)} kg CO₂e
                           </Text>
                         </HStack>
                         <Progress
-                          value={((amount as number) / totalOffsets) * 100}
-                          colorScheme="green"
-                          size="sm"
+                          value={((amount as number) / totalEmissions) * 100}
+                          colorScheme="red"
+                          size="md"
                           borderRadius="full"
+                          bg="gray.100"
+                          hasStripe
+                          isAnimated
+                          transition="all 0.5s ease"
                         />
+                        <Text fontSize="xs" color={mutedColor} mt={1} opacity={0.7}>
+                          {(((amount as number) / totalEmissions) * 100).toFixed(1)}% of total
+                          emissions
+                        </Text>
                       </Box>
                     ))}
                   </VStack>
-                ) : (
-                  <VStack spacing={4} py={8}>
-                    <Icon as={FaTree} color="gray.400" boxSize={8} />
-                    <VStack spacing={2}>
-                      <Text color={mutedColor} textAlign="center">
-                        No carbon offsets recorded yet
+                </CardBody>
+              </Card>
+
+              {/* Offsets Breakdown */}
+              <Card
+                bg={cardBg}
+                borderColor={borderColor}
+                transition="all 0.3s ease"
+                _hover={{
+                  transform: 'translateY(-2px)',
+                  boxShadow: 'xl',
+                  borderColor: 'green.300'
+                }}
+              >
+                <CardHeader pb={3}>
+                  <HStack justify="space-between">
+                    <HStack spacing={3}>
+                      <Box
+                        p={2}
+                        bg="green.50"
+                        borderRadius="lg"
+                        border="1px"
+                        borderColor="green.200"
+                      >
+                        <Icon as={FaTree} color="green.500" boxSize={4} />
+                      </Box>
+                      <VStack spacing={0} align="flex-start">
+                        <Heading size="md" color={textColor}>
+                          Carbon Offsets
+                        </Heading>
+                        <Text fontSize="xs" color={mutedColor} opacity={0.8}>
+                          Actions and sequestration
+                        </Text>
+                      </VStack>
+                    </HStack>
+                    <VStack spacing={0} align="flex-end">
+                      <Text fontSize="lg" fontWeight="bold" color="green.500">
+                        {totalOffsets.toFixed(1)}
                       </Text>
-                      <Button
-                        leftIcon={<FaPlus />}
-                        colorScheme="green"
-                        size="sm"
-                        onClick={onOffsetModalOpen}>
-                        Add Your First Offset
-                      </Button>
+                      <Text fontSize="xs" color={mutedColor}>
+                        kg CO₂e sequestered
+                      </Text>
                     </VStack>
-                  </VStack>
-                )}
-              </CardBody>
-            </Card>
-          </SimpleGrid>
+                  </HStack>
+                </CardHeader>
+                <CardBody pt={0}>
+                  {Object.keys(offsetsByAction).length > 0 ? (
+                    <VStack spacing={4} align="stretch">
+                      {Object.entries(offsetsByAction).map(([action, amount]) => (
+                        <Box key={action}>
+                          <HStack justify="space-between" mb={2}>
+                            <Text fontSize="sm" fontWeight="semibold" color={textColor}>
+                              {action}
+                            </Text>
+                            <Text fontSize="sm" color={mutedColor} fontWeight="medium">
+                              {(amount as number).toFixed(1)} kg CO₂e
+                            </Text>
+                          </HStack>
+                          <Progress
+                            value={((amount as number) / totalOffsets) * 100}
+                            colorScheme="green"
+                            size="md"
+                            borderRadius="full"
+                            bg="gray.100"
+                            hasStripe
+                            isAnimated
+                            transition="all 0.5s ease"
+                          />
+                          <Text fontSize="xs" color={mutedColor} mt={1} opacity={0.7}>
+                            {(((amount as number) / totalOffsets) * 100).toFixed(1)}% of total
+                            offsets
+                          </Text>
+                        </Box>
+                      ))}
+                    </VStack>
+                  ) : (
+                    <VStack spacing={6} py={8}>
+                      <Box
+                        p={4}
+                        bg="gray.50"
+                        borderRadius="full"
+                        border="2px dashed"
+                        borderColor="gray.300"
+                      >
+                        <Icon as={FaTree} color="gray.400" boxSize={8} />
+                      </Box>
+                      <VStack spacing={3} textAlign="center">
+                        <Text color={textColor} fontWeight="semibold">
+                          No carbon offsets recorded yet
+                        </Text>
+                        <Text fontSize="sm" color={mutedColor} opacity={0.8} maxW="280px">
+                          Start tracking your carbon sequestration activities to build consumer
+                          trust
+                        </Text>
+                        <Button
+                          leftIcon={<FaPlus />}
+                          colorScheme="green"
+                          size="sm"
+                          onClick={onOffsetModalOpen}
+                          borderRadius="full"
+                          px={6}
+                          transition="all 0.3s ease"
+                          _hover={{
+                            transform: 'scale(1.05)',
+                            boxShadow: 'md'
+                          }}
+                        >
+                          Add Your First Offset
+                        </Button>
+                      </VStack>
+                    </VStack>
+                  )}
+                </CardBody>
+              </Card>
+            </SimpleGrid>
+          </VStack>
         )}
 
         {/* Carbon Entries Table */}
@@ -861,7 +1108,8 @@ const ModernCarbonDashboard: React.FC = () => {
                   size="sm"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  w="auto">
+                  w="auto"
+                >
                   <option value="all">All Categories</option>
                   {availableCategories.map((category) => (
                     <option key={category} value={category}>
@@ -873,7 +1121,8 @@ const ModernCarbonDashboard: React.FC = () => {
                   size="sm"
                   variant={showVerifiedOnly ? 'solid' : 'outline'}
                   colorScheme="green"
-                  onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}>
+                  onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
+                >
                   Verified Only
                 </Button>
               </HStack>
@@ -899,7 +1148,8 @@ const ModernCarbonDashboard: React.FC = () => {
                         <Td>
                           <Badge
                             colorScheme={entry.type === 'emission' ? 'red' : 'green'}
-                            variant="subtle">
+                            variant="subtle"
+                          >
                             {entry.type}
                           </Badge>
                         </Td>
@@ -943,7 +1193,8 @@ const ModernCarbonDashboard: React.FC = () => {
                               fontSize="sm"
                               px={3}
                               py={2}
-                              borderRadius="md">
+                              borderRadius="md"
+                            >
                               <Badge
                                 colorScheme={
                                   entry.verification_status === 'verified'
@@ -953,7 +1204,8 @@ const ModernCarbonDashboard: React.FC = () => {
                                     : 'yellow'
                                 }
                                 variant="subtle"
-                                cursor="help">
+                                cursor="help"
+                              >
                                 {entry.verification_status === 'verified'
                                   ? 'VERIFIED'
                                   : entry.verification_status === 'rejected'
@@ -983,7 +1235,8 @@ const ModernCarbonDashboard: React.FC = () => {
                                 fontSize="sm"
                                 px={3}
                                 py={2}
-                                borderRadius="md">
+                                borderRadius="md"
+                              >
                                 <Badge
                                   size="sm"
                                   colorScheme={
@@ -996,7 +1249,8 @@ const ModernCarbonDashboard: React.FC = () => {
                                       : 'orange'
                                   }
                                   variant="outline"
-                                  cursor="help">
+                                  cursor="help"
+                                >
                                   {entry.verification_level === 'self_reported'
                                     ? 'Self Reported'
                                     : entry.verification_level === 'community_verified'
@@ -1023,7 +1277,8 @@ const ModernCarbonDashboard: React.FC = () => {
                                 fontSize="sm"
                                 px={3}
                                 py={2}
-                                borderRadius="md">
+                                borderRadius="md"
+                              >
                                 <Badge
                                   size="sm"
                                   colorScheme={
@@ -1034,7 +1289,8 @@ const ModernCarbonDashboard: React.FC = () => {
                                       : 'orange'
                                   }
                                   variant="subtle"
-                                  cursor="help">
+                                  cursor="help"
+                                >
                                   {Math.round(entry.trust_score * 100)}% Trust
                                 </Badge>
                               </Tooltip>
@@ -1105,7 +1361,8 @@ const ModernCarbonDashboard: React.FC = () => {
                     colorScheme="green"
                     onClick={() =>
                       navigate(`/admin/dashboard/establishment/${establishmentId}/parcel`)
-                    }>
+                    }
+                  >
                     Add Production
                   </Button>
                   <Button leftIcon={<FaInfoCircle />} variant="outline" onClick={onInsightsOpen}>
@@ -1118,12 +1375,12 @@ const ModernCarbonDashboard: React.FC = () => {
         )}
 
         {/* Carbon Offset Creation Modal */}
-        {/* Modern Offset Modal */}
-        <ModernOffsetModal
+        {/* Enhanced Offset Modal with Security */}
+        <EnhancedOffsetModal
           isOpen={isOffsetModalOpen}
           onClose={onOffsetModalClose}
           establishmentId={establishmentId || ''}
-          onSuccess={() => {
+          onOffsetCreated={() => {
             // Refetch all carbon-related data after successful offset creation
             refetchCarbonSummary();
             refetchCarbonEntries();
@@ -1228,7 +1485,8 @@ const ModernCarbonDashboard: React.FC = () => {
                   leftIcon={<FaCloudUploadAlt />}
                   colorScheme="blue"
                   variant="outline"
-                  size="sm">
+                  size="sm"
+                >
                   Upload New Certification
                 </Button>
 

@@ -27,13 +27,20 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper
 } from '@chakra-ui/react';
+import {
+  StandardCard,
+  StandardButton,
+  StandardField,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { number, object, string } from 'zod';
 
 import { FaPlus } from 'react-icons/fa';
-import FormInput from 'components/Forms/FormInput';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
@@ -104,7 +111,7 @@ const getProductionDefaults = (productionType, cropType = 'general') => {
   };
 };
 
-const ProductionTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = 'general' }) => {
+const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, cropType = 'general' }) => {
   const intl = useIntl();
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -154,6 +161,14 @@ const ProductionTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType =
   // Watch the production type to update defaults
   const watchedType = watch('type');
 
+  // Watch critical fields for real-time carbon calculation updates
+  const watchedFields = watch([
+    'type',
+    'duration',
+    'area_covered',
+    'equipment_used'
+  ]);
+
   // Update defaults when production type changes
   useEffect(() => {
     if (watchedType && watchedType !== selectedProductionType) {
@@ -180,6 +195,61 @@ const ProductionTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType =
       }
     }
   }, [watchedType, selectedProductionType, cropType, setValue, watch]);
+
+  // Track previous values to prevent unnecessary API calls
+  const previousValuesRef = useRef({});
+
+  // Real-time field watching for carbon calculation updates
+  useEffect(() => {
+    console.log('[ProductionTab]: Field watching triggered', { 
+      hasOnDataChange: !!onDataChange, 
+      watchedFields, 
+      firstField: watchedFields[0] 
+    });
+    
+    // Always check if callback exists inside the timeout to avoid stale closures
+    const timeoutId = setTimeout(() => {
+      if (onDataChange && typeof onDataChange === 'function') {
+        const currentValues = mainInfoMethods.getValues();
+        
+        // Compare with previous values to avoid unnecessary calls
+        const relevantFields = ['type', 'duration', 'area_covered', 'equipment_used'];
+        const currentRelevantValues = {};
+        relevantFields.forEach(field => {
+          currentRelevantValues[field] = currentValues[field];
+        });
+        
+        const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+        
+        console.log('[ProductionTab]: Value comparison', {
+          currentValues: currentRelevantValues,
+          previousValues: previousValuesRef.current,
+          hasChanged
+        });
+        
+        // Only trigger if we have meaningful data AND values have actually changed
+        if (hasChanged && currentValues.type && (currentValues.duration || currentValues.area_covered)) {
+          console.log('[ProductionTab]: Triggering onDataChange with values', currentValues);
+          previousValuesRef.current = currentRelevantValues;
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('[ProductionTab]: Error calling onDataChange:', error);
+          }
+        } else {
+          console.log('[ProductionTab]: Not triggering', {
+            hasChanged,
+            hasType: !!currentValues.type,
+            hasDurationOrArea: !!(currentValues.duration || currentValues.area_covered)
+          });
+        }
+      } else {
+        console.log('[ProductionTab]: onDataChange not available in timeout');
+      }
+    }, 500); // Debounced to prevent excessive API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedFields, onDataChange]);
 
   // Update form values when initialValues change
   useEffect(() => {
@@ -261,23 +331,13 @@ const ProductionTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType =
             </Box>
           </Alert>
 
-          <FormControl isInvalid={!!errors.type} mb={4}>
-            <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-              {intl.formatMessage({ id: 'app.type' })} *
-            </FormLabel>
-            <ChakraSelect
+          <StandardField
+            label={`${intl.formatMessage({ id: 'app.type' })} *`}
+            required
+            error={errors.type?.message}
+          >
+            <StandardSelect
               placeholder={intl.formatMessage({ id: 'app.selectOption' })}
-              placeholderTextColor="red"
-              css={{ '&::placeholder': { color: 'red' } }}
-              mb={errors.type ? '12px' : '24px'}
-              borderColor={errors.type && 'red.500'}
-              boxShadow={errors.type && '0 0 0 1px red.500'}
-              borderWidth={errors.type && '2px'}
-              ml="4px"
-              height={'40px'}
-              borderRadius={'15px'}
-              fontSize={'0.875rem'}
-              mt="4px"
               defaultValue={formType || ''}
               {...register('type')}
             >
@@ -285,118 +345,81 @@ const ProductionTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType =
               <option value="HA">{intl.formatMessage({ id: 'app.harvesting' })}</option>
               <option value="IR">{intl.formatMessage({ id: 'app.irrigation' })}</option>
               <option value="PR">{intl.formatMessage({ id: 'app.pruning' })}</option>
-            </ChakraSelect>
-            <FormErrorMessage>{errors.type?.message}</FormErrorMessage>
-          </FormControl>
+            </StandardSelect>
+          </StandardField>
 
           <Flex gap={'20px'} mb={4}>
-            <FormControl flex={1}>
-              <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                Duration
-              </FormLabel>
+            <StandardField
+              label="Duration"
+              helpText="How long did this activity take?"
+              flex={1}
+            >
               <InputGroup>
-                <Input
-                  ms="4px"
-                  borderRadius="15px"
+                <StandardInput
                   type="text"
                   placeholder="e.g., 4 hours, 2 days"
                   {...register('duration')}
                 />
-                <InputRightAddon children="hrs" borderRadius="15px" />
+                <InputRightAddon children="hrs" borderRadius="lg" />
               </InputGroup>
-              <Text fontSize="xs" color="gray.500" mt={1} ml="4px">
-                How long did this activity take?
-              </Text>
-            </FormControl>
+            </StandardField>
 
-            <FormControl flex={1}>
-              <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                Area Covered
-              </FormLabel>
+            <StandardField
+              label="Area Covered"
+              helpText="Area where activity was performed"
+              flex={1}
+            >
               <InputGroup>
-                <Input
-                  ms="4px"
-                  borderRadius="15px"
+                <StandardInput
                   type="text"
                   placeholder="e.g., 1.5 hectares, 3 acres"
                   {...register('area_covered')}
                 />
-                <InputRightAddon children="ha" borderRadius="15px" />
+                <InputRightAddon children="ha" borderRadius="lg" />
               </InputGroup>
-              <Text fontSize="xs" color="gray.500" mt={1} ml="4px">
-                Area where activity was performed
-              </Text>
-            </FormControl>
+            </StandardField>
           </Flex>
 
-          <FormControl mb={4}>
-            <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-              Equipment Used
-            </FormLabel>
-            <Input
-              ms="4px"
-              borderRadius="15px"
+          <StandardField
+            label="Equipment Used"
+            helpText="List the main equipment or tools used"
+          >
+            <StandardInput
               type="text"
               placeholder="e.g., Tractor, Harvester, Irrigation system"
               {...register('equipment_used')}
             />
-            <Text fontSize="xs" color="gray.500" mt={1} ml="4px">
-              List the main equipment or tools used
-            </Text>
-          </FormControl>
+          </StandardField>
 
-          <FormControl mb={6}>
-            <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-              {intl.formatMessage({ id: 'app.observations' })}
-            </FormLabel>
-            <Textarea
-              fontSize="sm"
-              ms="4px"
-              borderRadius="15px"
-              type="text"
+          <StandardField
+            label={intl.formatMessage({ id: 'app.observations' })}
+            helpText="Include details about weather conditions, yield quality, equipment performance, etc."
+          >
+            <StandardTextarea
               placeholder="Detailed notes about conditions, results, challenges, or observations during this production activity"
-              mb="24px"
-              size="lg"
-              name="observation"
               defaultValue={initialValues.observation || ''}
               {...register('observation')}
             />
-            <Text fontSize="xs" color="gray.500" mt="-20px" mb="20px" ml="4px">
-              Include details about weather conditions, yield quality, equipment performance, etc.
-            </Text>
-          </FormControl>
+          </StandardField>
 
           <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
             <HStack justify="space-between">
-              <Button
+              <StandardButton
                 variant="outline"
                 onClick={onPrev}
                 leftIcon={<FaChevronLeft />}
-                size="md"
-                px={6}
-                h="42px"
-                borderRadius="lg"
-                fontWeight="600"
-                _hover={{ transform: 'translateY(-1px)' }}
-                transition="all 0.3s ease"
+                size="lg"
               >
                 {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </Button>
-              <Button
-                colorScheme="green"
+              </StandardButton>
+              <StandardButton
+                variant="primary"
                 type="submit"
                 rightIcon={<FaChevronRight />}
-                size="md"
-                px={6}
-                h="42px"
-                borderRadius="lg"
-                fontWeight="600"
-                boxShadow="lg"
-                _hover={{ boxShadow: 'xl', transform: 'translateY(-1px)' }}
-                transition="all 0.3s ease"
+                size="lg"
               >
                 {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </Button>
+              </StandardButton>
             </HStack>
           </Box>
         </Flex>

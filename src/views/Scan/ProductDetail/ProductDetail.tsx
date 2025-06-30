@@ -177,7 +177,8 @@ const EducationModal = ({
                 p={4}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderLeftColor="green.500">
+                borderLeftColor="green.500"
+              >
                 <Text fontSize="sm" fontWeight="medium">
                   💡 <strong>Did you know?</strong> Choosing products with higher carbon scores can
                   reduce your personal carbon footprint by up to 30% annually.
@@ -300,7 +301,8 @@ const EducationModal = ({
                 p={4}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderLeftColor="blue.500">
+                borderLeftColor="blue.500"
+              >
                 <Text fontSize="sm" fontWeight="medium">
                   🏛️ <strong>Government Backed:</strong> USDA verification is backed by federal
                   oversight and carries legal weight, ensuring the highest standards of
@@ -417,7 +419,8 @@ const EducationModal = ({
                 p={4}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderLeftColor="purple.500">
+                borderLeftColor="purple.500"
+              >
                 <Text fontSize="sm" fontWeight="medium">
                   🔗 <strong>Trust Through Technology:</strong> Blockchain eliminates the need to
                   "trust" claims—you can verify everything independently through the decentralized
@@ -531,7 +534,8 @@ const EducationModal = ({
                 p={4}
                 borderRadius="md"
                 borderLeft="4px solid"
-                borderLeftColor="green.500">
+                borderLeftColor="green.500"
+              >
                 <Text fontSize="sm" fontWeight="medium">
                   🌱 <strong>Regenerative Impact:</strong> These practices don't just maintain the
                   environment—they actively improve it, leaving the land healthier for future
@@ -669,7 +673,8 @@ function ProductDetail() {
               px={4}
               py={2}
               borderRadius="full"
-              textTransform="none">
+              textTransform="none"
+            >
               <HStack spacing={2}>
                 <Icon as={FaLeaf} boxSize={4} />
                 <Text fontWeight="medium">
@@ -744,13 +749,15 @@ function ProductDetail() {
         mb="60px"
         mt="-80px"
         position="relative"
-        zIndex={10}>
+        zIndex={10}
+      >
         <Card
           w={{ sm: '95%', md: '90%', lg: '85%' }}
           p={{ sm: '0px', md: '32px', lg: '48px' }}
           boxShadow="0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
           borderRadius="2xl"
-          bg={useColorModeValue('white', 'gray.800')}>
+          bg={useColorModeValue('white', 'gray.800')}
+        >
           <CardHeader mb="24px">
             <HStack spacing={3} flexWrap="wrap">
               <Badge colorScheme="green" fontSize="md" px={3} py={1} borderRadius="full">
@@ -769,7 +776,8 @@ function ProductDetail() {
                     size="xs"
                     variant="ghost"
                     colorScheme="green"
-                    onClick={() => handleEducationOpen('usda-methodology')}>
+                    onClick={() => handleEducationOpen('usda-methodology')}
+                  >
                     Learn about USDA standards
                   </Button>
                 </VStack>
@@ -883,7 +891,8 @@ function ProductDetail() {
                       volume: event.volume?.toString(),
                       concentration: event.concentration?.toString(),
                       area: event.area?.toString(),
-                      equipment: event.equipment
+                      equipment: event.equipment,
+                      carbon_data: event.carbon_data
                     }));
                     return <UltraMobileProductionJourney events={timelineEvents} />;
                   } else {

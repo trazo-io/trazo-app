@@ -86,7 +86,152 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
   const borderColor = useColorModeValue('green.200', 'green.700');
   const cardBg = useColorModeValue('white', 'gray.800');
 
-  // Generate smart suggestions based on USDA data
+  // Helper functions for seasonal intelligence
+  const getCurrentSeason = (month: number): string => {
+    if (month >= 3 && month <= 5) return 'Spring';
+    if (month >= 6 && month <= 8) return 'Summer';
+    if (month >= 9 && month <= 11) return 'Fall';
+    return 'Winter';
+  };
+
+  const isCurrentlyGrowingSeason = (crop: string, state: string, month: number): boolean => {
+    const cropSeasons: Record<string, { start: number; end: number }> = {
+      corn: { start: 4, end: 10 }, // April to October
+      soybeans: { start: 5, end: 11 }, // May to November
+      wheat: { start: 10, end: 7 }, // October to July (winter wheat)
+      citrus: { start: 1, end: 12 }, // Year-round
+      tomatoes: { start: 3, end: 10 }, // March to October
+      potatoes: { start: 3, end: 9 }, // March to September
+      lettuce: { start: 2, end: 11 }, // February to November
+      grapes: { start: 3, end: 11 }, // March to November
+      almonds: { start: 2, end: 10 }, // February to October
+      apples: { start: 3, end: 11 } // March to November
+    };
+
+    const season = cropSeasons[crop.toLowerCase()] || { start: 3, end: 10 };
+
+    // Handle cross-year seasons (like winter wheat)
+    if (season.start > season.end) {
+      return month >= season.start || month <= season.end;
+    }
+    return month >= season.start && month <= season.end;
+  };
+
+  const getSeasonalRecommendations = (
+    crop: string,
+    season: string,
+    month: number
+  ): SmartSuggestion[] => {
+    const seasonalSuggestions: SmartSuggestion[] = [];
+
+    // Spring recommendations (March-May)
+    if (season === 'Spring') {
+      if (month === 3 || month === 4) {
+        seasonalSuggestions.push({
+          id: 'spring-fertilization',
+          title: 'Spring Fertilization Window',
+          description: `Optimal timing for ${crop} fertilization - soil temperature above 50°F`,
+          carbonImpact: -0.2,
+          confidenceLevel: 'high',
+          usdaBased: true,
+          category: 'fertilization',
+          priority: 'high',
+          estimatedCost: 200,
+          timeToImplement: '2-4 hours',
+          expectedROI: '6-8 months'
+        });
+      }
+
+      if (month === 4 || month === 5) {
+        seasonalSuggestions.push({
+          id: 'pest-prevention',
+          title: 'Spring Pest Prevention',
+          description: 'Early season pest monitoring reduces later pesticide applications',
+          carbonImpact: -0.15,
+          confidenceLevel: 'high',
+          usdaBased: true,
+          category: 'pest_control',
+          priority: 'medium',
+          estimatedCost: 100,
+          timeToImplement: '1-2 hours',
+          expectedROI: '3-6 months'
+        });
+      }
+    }
+
+    // Summer recommendations (June-August)
+    if (season === 'Summer') {
+      seasonalSuggestions.push({
+        id: 'irrigation-optimization',
+        title: 'Summer Irrigation Efficiency',
+        description: 'Peak water demand season - optimize timing to reduce evaporation',
+        carbonImpact: -0.25,
+        confidenceLevel: 'high',
+        usdaBased: true,
+        category: 'irrigation',
+        priority: 'high',
+        estimatedCost: 150,
+        timeToImplement: '1-3 hours',
+        expectedROI: '2-4 months'
+      });
+    }
+
+    // Fall recommendations (September-November)
+    if (season === 'Fall') {
+      if (month === 9 || month === 10) {
+        seasonalSuggestions.push({
+          id: 'harvest-optimization',
+          title: 'Harvest Timing Optimization',
+          description: 'Optimal harvest timing reduces post-harvest losses and emissions',
+          carbonImpact: -0.1,
+          confidenceLevel: 'medium',
+          usdaBased: true,
+          category: 'harvest',
+          priority: 'high',
+          estimatedCost: 50,
+          timeToImplement: '30 minutes',
+          expectedROI: '1-2 months'
+        });
+      }
+
+      if (month === 10 || month === 11) {
+        seasonalSuggestions.push({
+          id: 'cover-crop-planting',
+          title: 'Cover Crop Window',
+          description: 'Plant cover crops now to improve soil health and sequester carbon',
+          carbonImpact: -0.4,
+          confidenceLevel: 'high',
+          usdaBased: true,
+          category: 'soil_management',
+          priority: 'medium',
+          estimatedCost: 120,
+          timeToImplement: '2-4 hours',
+          expectedROI: '12-24 months'
+        });
+      }
+    }
+
+    // Winter recommendations (December-February)
+    if (season === 'Winter') {
+      seasonalSuggestions.push({
+        id: 'winter-soil-prep',
+        title: 'Winter Soil Preparation',
+        description: 'Plan and prepare soil amendments for next growing season',
+        carbonImpact: -0.05,
+        confidenceLevel: 'medium',
+        usdaBased: true,
+        category: 'soil_management',
+        priority: 'low',
+        estimatedCost: 80,
+        timeToImplement: '1-2 hours',
+        expectedROI: '6-12 months'
+      });
+    }
+
+    return seasonalSuggestions;
+  };
+
+  // Enhanced seasonal and weather-based suggestions generator
   const generateSmartSuggestions = (): SmartSuggestion[] => {
     if (!usdaData?.success) return [];
 
@@ -94,6 +239,15 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
     const carbonIntensity = usdaData.carbon_calculation.carbon_intensity;
     const performanceRating = benchmarkData?.benchmark_comparison.performance_rating;
     const improvementPotential = benchmarkData?.benchmark_comparison.improvement_potential || 0;
+
+    // Get current season and month for timing recommendations
+    const currentMonth = new Date().getMonth() + 1; // 1-12
+    const currentSeason = getCurrentSeason(currentMonth);
+    const isGrowingSeason = isCurrentlyGrowingSeason(cropType, farmState, currentMonth);
+
+    // Add seasonal recommendations first (highest priority)
+    const seasonalSuggestions = getSeasonalRecommendations(cropType, currentSeason, currentMonth);
+    suggestions.push(...seasonalSuggestions);
 
     // High carbon intensity suggestions
     if (carbonIntensity > 0.002) {
@@ -164,7 +318,36 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
       });
     }
 
-    return suggestions.slice(0, 3); // Return top 3 suggestions
+    // Sort by priority and seasonal urgency
+    const prioritizedSuggestions = suggestions.sort((a, b) => {
+      // Seasonal suggestions get higher priority during active growing season
+      const aIsSeasonalAndActive =
+        [
+          'spring-fertilization',
+          'irrigation-optimization',
+          'harvest-optimization',
+          'cover-crop-planting'
+        ].includes(a.id) && isGrowingSeason;
+      const bIsSeasonalAndActive =
+        [
+          'spring-fertilization',
+          'irrigation-optimization',
+          'harvest-optimization',
+          'cover-crop-planting'
+        ].includes(b.id) && isGrowingSeason;
+
+      if (aIsSeasonalAndActive && !bIsSeasonalAndActive) return -1;
+      if (!aIsSeasonalAndActive && bIsSeasonalAndActive) return 1;
+
+      // Then sort by priority level
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      const aPriority = priorityOrder[a.priority] || 0;
+      const bPriority = priorityOrder[b.priority] || 0;
+
+      return bPriority - aPriority;
+    });
+
+    return prioritizedSuggestions.slice(0, 4); // Return top 4 suggestions (increased from 3)
   };
 
   const suggestions = generateSmartSuggestions();
@@ -250,6 +433,44 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
             </HStack>
           </Badge>
         </HStack>
+
+        {/* Seasonal Context */}
+        <Box
+          bg={cardBg}
+          p={4}
+          borderRadius="md"
+          boxShadow="sm"
+          borderLeft="4px solid"
+          borderLeftColor="blue.400"
+        >
+          <HStack spacing={4} justify="space-between">
+            <VStack align="start" spacing={1}>
+              <Text fontSize="sm" fontWeight="bold" color="blue.600">
+                Current Season: {new Date().toLocaleDateString('en-US', { month: 'long' })} (
+                {getCurrentSeason(new Date().getMonth() + 1)})
+              </Text>
+              <Text fontSize="xs" color="gray.600">
+                {isCurrentlyGrowingSeason(cropType, farmState, new Date().getMonth() + 1)
+                  ? `Active growing season for ${cropType} in ${farmState}`
+                  : `Off-season for ${cropType} - planning and preparation phase`}
+              </Text>
+            </VStack>
+            <Badge
+              colorScheme={
+                isCurrentlyGrowingSeason(cropType, farmState, new Date().getMonth() + 1)
+                  ? 'green'
+                  : 'orange'
+              }
+              variant="solid"
+              px={3}
+              py={1}
+            >
+              {isCurrentlyGrowingSeason(cropType, farmState, new Date().getMonth() + 1)
+                ? 'Growing Season'
+                : 'Off Season'}
+            </Badge>
+          </HStack>
+        </Box>
 
         {/* Performance Context */}
         {usdaData && (
@@ -402,12 +623,18 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
 
         {/* Footer */}
         <Box bg={cardBg} p={3} borderRadius="md" boxShadow="sm">
-          <HStack spacing={2} justify="center">
-            <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
-            <Text fontSize="xs" color="gray.600" textAlign="center">
-              Suggestions powered by real USDA NASS and EPA data for {farmState} {cropType} farms
+          <VStack spacing={2}>
+            <HStack spacing={2} justify="center">
+              <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
+              <Text fontSize="xs" color="gray.600" textAlign="center">
+                Suggestions powered by real USDA NASS and EPA data for {farmState} {cropType} farms
+              </Text>
+            </HStack>
+            <Text fontSize="xs" color="blue.600" textAlign="center" fontWeight="medium">
+              🗓️ Seasonal recommendations updated for {getCurrentSeason(new Date().getMonth() + 1)}{' '}
+              agricultural practices
             </Text>
-          </HStack>
+          </VStack>
         </Box>
       </VStack>
     </Box>

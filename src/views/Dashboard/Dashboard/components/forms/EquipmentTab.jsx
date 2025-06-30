@@ -15,11 +15,18 @@ import {
   Textarea,
   useColorModeValue
 } from '@chakra-ui/react';
+import {
+  StandardCard,
+  StandardButton,
+  StandardField,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, number } from 'zod';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import FormInput from 'components/Forms/FormInput';
 import { useIntl } from 'react-intl';
 
 const equipmentSchema = object({
@@ -34,7 +41,7 @@ const equipmentSchema = object({
   observation: string().optional()
 });
 
-const EquipmentTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
+const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
   const intl = useIntl();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
@@ -71,6 +78,52 @@ const EquipmentTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
   }, [initialValues, methods]);
 
   const { watch } = methods;
+
+  // Watch critical fields for real-time carbon calculation updates
+  const watchedFields = watch([
+    'type',
+    'fuel_amount',
+    'fuel_type',
+    'hours_used',
+    'area_covered'
+  ]);
+
+  // Real-time field watching for carbon calculation updates
+  useEffect(() => {
+    console.log('[EquipmentTab]: Field watching triggered', { 
+      hasOnDataChange: !!onDataChange, 
+      watchedFields, 
+      firstField: watchedFields[0] 
+    });
+    
+    // Always check if callback exists inside the timeout to avoid stale closures
+    const timeoutId = setTimeout(() => {
+      if (onDataChange && typeof onDataChange === 'function') {
+        const currentValues = methods.getValues();
+        console.log('[EquipmentTab]: Current values for carbon calculation', currentValues);
+        
+        // Only trigger if we have meaningful data
+        if (currentValues.type && (currentValues.fuel_amount || currentValues.hours_used)) {
+          console.log('[EquipmentTab]: Triggering onDataChange with values', currentValues);
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('[EquipmentTab]: Error calling onDataChange:', error);
+          }
+        } else {
+          console.log('[EquipmentTab]: Not triggering - insufficient data', {
+            hasType: !!currentValues.type,
+            hasFuelAmount: !!currentValues.fuel_amount,
+            hasHoursUsed: !!currentValues.hours_used
+          });
+        }
+      } else {
+        console.log('[EquipmentTab]: onDataChange not available in timeout');
+      }
+    }, 500); // Debounced to prevent excessive API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedFields, onDataChange, methods]);
   const equipmentType = watch('type');
 
   const onSubmit = (data) => {
@@ -139,19 +192,24 @@ const EquipmentTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
       <form onSubmit={methods.handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
           {/* Event Name */}
-          <FormInput
+          <StandardField
             label={intl.formatMessage({ id: 'app.eventName' }) || 'Event Name'}
-            name="name"
-            placeholder="e.g., Tractor Maintenance, Fuel Consumption"
-            isRequired
-          />
+            required
+            error={methods.formState.errors.name?.message}
+          >
+            <StandardInput
+              {...methods.register('name')}
+              placeholder="e.g., Tractor Maintenance, Fuel Consumption"
+            />
+          </StandardField>
 
           {/* Equipment Event Type */}
-          <FormControl isRequired>
-            <FormLabel fontSize="sm" fontWeight="semibold">
-              {intl.formatMessage({ id: 'app.equipmentEventType' }) || 'Equipment Event Type'}
-            </FormLabel>
-            <Select {...methods.register('type')} size="md">
+          <StandardField
+            label={intl.formatMessage({ id: 'app.equipmentEventType' }) || 'Equipment Event Type'}
+            required
+            error={methods.formState.errors.type?.message}
+          >
+            <StandardSelect {...methods.register('type')}>
               <option value="MN">
                 {intl.formatMessage({ id: 'app.maintenance' }) || 'Maintenance'}
               </option>
@@ -168,24 +226,27 @@ const EquipmentTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
               <option value="EI">
                 {intl.formatMessage({ id: 'app.inspection' }) || 'Inspection'}
               </option>
-            </Select>
-          </FormControl>
+            </StandardSelect>
+          </StandardField>
 
           {/* Equipment Name */}
-          <FormInput
+          <StandardField
             label={intl.formatMessage({ id: 'app.equipmentName' }) || 'Equipment Name'}
-            name="equipment_name"
-            placeholder="e.g., John Deere Tractor Model X"
-          />
+          >
+            <StandardInput
+              {...methods.register('equipment_name')}
+              placeholder="e.g., John Deere Tractor Model X"
+            />
+          </StandardField>
 
           {/* Fuel-specific fields */}
           {equipmentType === 'FC' && (
             <>
               <HStack spacing={4} align="end">
-                <FormControl flex="2">
-                  <FormLabel fontSize="sm" fontWeight="semibold">
-                    {intl.formatMessage({ id: 'app.fuelAmount' }) || 'Fuel Amount (L)'}
-                  </FormLabel>
+                <StandardField
+                  label={intl.formatMessage({ id: 'app.fuelAmount' }) || 'Fuel Amount (L)'}
+                  flex="2"
+                >
                   <NumberInput min={0} precision={2} step={0.1}>
                     <NumberInputField {...methods.register('fuel_amount')} placeholder="0.0" />
                     <NumberInputStepper>
@@ -193,13 +254,13 @@ const EquipmentTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
                       <NumberDecrementStepper />
                     </NumberInputStepper>
                   </NumberInput>
-                </FormControl>
+                </StandardField>
 
-                <FormControl flex="2">
-                  <FormLabel fontSize="sm" fontWeight="semibold">
-                    {intl.formatMessage({ id: 'app.fuelType' }) || 'Fuel Type'}
-                  </FormLabel>
-                  <Select {...methods.register('fuel_type')}>
+                <StandardField
+                  label={intl.formatMessage({ id: 'app.fuelType' }) || 'Fuel Type'}
+                  flex="2"
+                >
+                  <StandardSelect {...methods.register('fuel_type')}>
                     <option value="diesel">
                       {intl.formatMessage({ id: 'app.diesel' }) || 'Diesel'}
                     </option>
@@ -212,18 +273,17 @@ const EquipmentTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
                     <option value="biodiesel">
                       {intl.formatMessage({ id: 'app.biodiesel' }) || 'Biodiesel'}
                     </option>
-                  </Select>
-                </FormControl>
+                  </StandardSelect>
+                </StandardField>
               </HStack>
             </>
           )}
 
           {/* Maintenance/Repair cost */}
           {(equipmentType === 'MN' || equipmentType === 'RE' || equipmentType === 'BD') && (
-            <FormControl>
-              <FormLabel fontSize="sm" fontWeight="semibold">
-                {intl.formatMessage({ id: 'app.maintenanceCost' }) || 'Cost ($)'}
-              </FormLabel>
+            <StandardField
+              label={intl.formatMessage({ id: 'app.maintenanceCost' }) || 'Cost ($)'}
+            >
               <NumberInput min={0} precision={2} step={0.01}>
                 <NumberInputField {...methods.register('maintenance_cost')} placeholder="0.00" />
                 <NumberInputStepper>
@@ -231,15 +291,14 @@ const EquipmentTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
                   <NumberDecrementStepper />
                 </NumberInputStepper>
               </NumberInput>
-            </FormControl>
+            </StandardField>
           )}
 
           {/* Hours Used */}
           <HStack spacing={4} align="end">
-            <FormControl>
-              <FormLabel fontSize="sm" fontWeight="semibold">
-                {intl.formatMessage({ id: 'app.hoursUsed' }) || 'Hours Used'}
-              </FormLabel>
+            <StandardField
+              label={intl.formatMessage({ id: 'app.hoursUsed' }) || 'Hours Used'}
+            >
               <NumberInput min={0} precision={1} step={0.1}>
                 <NumberInputField {...methods.register('hours_used')} placeholder="0.0" />
                 <NumberInputStepper>
@@ -247,62 +306,50 @@ const EquipmentTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
                   <NumberDecrementStepper />
                 </NumberInputStepper>
               </NumberInput>
-            </FormControl>
+            </StandardField>
 
-            <FormInput
+            <StandardField
               label={intl.formatMessage({ id: 'app.areaCovered' }) || 'Area Covered'}
-              name="area_covered"
-              placeholder="e.g., 10 hectares"
-            />
+            >
+              <StandardInput
+                {...methods.register('area_covered')}
+                placeholder="e.g., 10 hectares"
+              />
+            </StandardField>
           </HStack>
 
           {/* Observations */}
-          <FormControl>
-            <FormLabel fontSize="sm" fontWeight="semibold">
-              {intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-            </FormLabel>
-            <Textarea
+          <StandardField
+            label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
+          >
+            <StandardTextarea
               {...methods.register('observation')}
               placeholder={
                 intl.formatMessage({ id: 'app.enterObservations' }) ||
                 'Enter any additional observations...'
               }
               rows={3}
-              resize="vertical"
             />
-          </FormControl>
+          </StandardField>
 
           {/* Action Buttons */}
           <HStack justify="space-between" pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-            <Button
+            <StandardButton
               variant="outline"
               onClick={onPrev}
               leftIcon={<FaChevronLeft />}
-              size="md"
-              px={6}
-              h="42px"
-              borderRadius="lg"
-              fontWeight="600"
-              _hover={{ transform: 'translateY(-1px)' }}
-              transition="all 0.3s ease"
+              size="lg"
             >
               {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-            </Button>
-            <Button
-              colorScheme="green"
+            </StandardButton>
+            <StandardButton
+              variant="primary"
               type="submit"
               rightIcon={<FaChevronRight />}
-              size="md"
-              px={6}
-              h="42px"
-              borderRadius="lg"
-              fontWeight="600"
-              boxShadow="lg"
-              _hover={{ boxShadow: 'xl', transform: 'translateY(-1px)' }}
-              transition="all 0.3s ease"
+              size="lg"
             >
               {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-            </Button>
+            </StandardButton>
           </HStack>
         </VStack>
       </form>

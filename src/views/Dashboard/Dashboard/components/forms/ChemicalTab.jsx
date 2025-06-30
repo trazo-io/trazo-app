@@ -33,6 +33,14 @@ import {
   SimpleGrid
 } from '@chakra-ui/react';
 import {
+  StandardCard,
+  StandardButton,
+  StandardField,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
+import {
   FaChevronLeft,
   FaChevronRight,
   FaInfoCircle,
@@ -41,11 +49,10 @@ import {
   FaRulerHorizontal
 } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { number, object, string } from 'zod';
 
 import { FaPlus } from 'react-icons/fa';
-import FormInput from 'components/Forms/FormInput';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
@@ -87,8 +94,40 @@ const USDA_CROP_TYPES = [
   { value: 'avocados', label: 'Avocados', usdaName: 'AVOCADOS' }
 ];
 
-// Enhanced intelligent defaults (crop type is inherited from production context)
-const getIntelligentDefaults = (chemicalType) => {
+// Enhanced intelligent defaults with crop-specific optimization (crop type is inherited from production context)
+const getIntelligentDefaults = (chemicalType, cropType = 'citrus') => {
+  const cropSpecificDefaults = {
+    citrus: {
+      FE: { volume: '75', area: '1.5', concentration: '8-8-8', way_of_application: 'fertigation' },
+      PE: { volume: '25', area: '1.0', concentration: '1.5%', way_of_application: 'spray' },
+      FU: { volume: '20', area: '1.0', concentration: '2.0%', way_of_application: 'foliar' },
+      HE: { volume: '15', area: '1.0', concentration: '2.5%', way_of_application: 'directed' }
+    },
+    corn: {
+      FE: { volume: '100', area: '4.0', concentration: '32-0-0', way_of_application: 'side_dress' },
+      PE: { volume: '30', area: '2.0', concentration: '2.0%', way_of_application: 'spray' },
+      FU: { volume: '25', area: '2.0', concentration: '1.8%', way_of_application: 'foliar' },
+      HE: { volume: '40', area: '2.0', concentration: '3.5%', way_of_application: 'broadcast' }
+    },
+    soybeans: {
+      FE: { volume: '30', area: '3.0', concentration: '0-20-20', way_of_application: 'starter' },
+      PE: { volume: '20', area: '2.0', concentration: '1.2%', way_of_application: 'spray' },
+      FU: { volume: '18', area: '2.0', concentration: '1.5%', way_of_application: 'foliar' },
+      HE: { volume: '35', area: '2.0', concentration: '3.0%', way_of_application: 'pre_emerge' }
+    },
+    tomatoes: {
+      FE: {
+        volume: '60',
+        area: '1.0',
+        concentration: '15-15-15',
+        way_of_application: 'drip_irrigation'
+      },
+      PE: { volume: '15', area: '0.5', concentration: '1.0%', way_of_application: 'spray' },
+      FU: { volume: '12', area: '0.5', concentration: '1.8%', way_of_application: 'foliar' },
+      HE: { volume: '10', area: '0.5', concentration: '2.0%', way_of_application: 'directed' }
+    }
+  };
+
   const defaults = {
     FE: {
       // Fertilizer
@@ -144,10 +183,29 @@ const getIntelligentDefaults = (chemicalType) => {
     }
   };
 
-  return defaults[chemicalType] || defaults.FE;
+  // Apply crop-specific overrides
+  const baseDefaults = defaults[chemicalType] || defaults.FE;
+  const cropSpecific = cropSpecificDefaults[cropType.toLowerCase()]?.[chemicalType];
+
+  if (cropSpecific) {
+    return {
+      ...baseDefaults,
+      ...cropSpecific
+    };
+  }
+
+  return baseDefaults;
 };
 
-const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = 'citrus' }) => {
+const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, cropType = 'citrus' }) => {
+  console.log('ChemicalTab: Component mounted/rendered with props:', {
+    hasOnSubmitHandler: !!onSubmitHandler,
+    hasOnDataChange: !!onDataChange,
+    onDataChangeType: typeof onDataChange,
+    hasOnPrev: !!onPrev,
+    cropType
+  });
+  
   const intl = useIntl();
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -169,9 +227,16 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
   };
 
   const formType = mapApiTypeToFormType(initialValues.type);
+  
+  console.log('🔍 ChemicalTab: Form initialization debug:', {
+    initialValues,
+    'initialValues.type': initialValues.type,
+    formType,
+    'formType || empty': formType || ''
+  });
 
-  // Get intelligent defaults for the current chemical type (crop type inherited from production)
-  const intelligentDefaults = getIntelligentDefaults(formType || 'FE');
+  // Get intelligent defaults for the current chemical type (crop type inherited from production)  
+  const intelligentDefaults = getIntelligentDefaults(formType || 'FE', cropType);
 
   const mainInfoMethods = useForm({
     resolver: zodResolver(formSchemaMainInfo),
@@ -202,18 +267,53 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
     formState: { errors, isSubmitSuccessful },
     register,
     setValue,
-    watch
+    watch,
+    getValues
   } = mainInfoMethods;
 
   // Watch the chemical type to update defaults
   const watchedType = watch('type');
+
+  // Watch critical fields for real-time carbon calculation updates
+  const watchedFields = watch([
+    'type',
+    'commercial_name', 
+    'volume',
+    'volume_unit',
+    'area', 
+    'area_unit',
+    'concentration',
+    'way_of_application'
+  ]);
+
+  // Debug form state periodically (now that getValues is available)
+  useEffect(() => {
+    console.log('🔍 ChemicalTab: getValues function exists?', !!getValues);
+    console.log('🔍 ChemicalTab: mainInfoMethods object:', mainInfoMethods);
+    
+    const interval = setInterval(() => {
+      try {
+        const currentValues = getValues();
+        const directWatch = watch('type');
+        console.log('🔍 ChemicalTab: Periodic form state check:', {
+          getValues: currentValues,
+          watchType: directWatch,
+          methodsType: mainInfoMethods?.getValues?.()?.type
+        });
+      } catch (error) {
+        console.error('🔍 ChemicalTab: Error checking form state:', error);
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
+  }, [getValues, watch, mainInfoMethods]);
 
   // Update defaults when chemical type changes
   useEffect(() => {
     if (watchedType && watchedType !== selectedChemicalType) {
       setSelectedChemicalType(watchedType);
 
-      const newDefaults = getIntelligentDefaults(watchedType);
+      const newDefaults = getIntelligentDefaults(watchedType, cropType);
 
       // Update fields with intelligent defaults
       Object.keys(newDefaults).forEach((field) => {
@@ -225,11 +325,67 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
     }
   }, [watchedType, selectedChemicalType, setValue, watch]);
 
+  // Track previous values to prevent unnecessary API calls
+  const previousValuesRef = useRef({});
+
+  // Real-time field watching for carbon calculation updates
+  useEffect(() => {
+    console.log('ChemicalTab: Field watching triggered', { 
+      hasOnDataChange: !!onDataChange, 
+      watchedFields, 
+      firstField: watchedFields[0],
+      watchedType: watch('type')
+    });
+    
+    // Always check if callback exists inside the timeout to avoid stale closures
+    const timeoutId = setTimeout(() => {
+      if (onDataChange && typeof onDataChange === 'function') {
+        const currentValues = getValues();
+        
+        // Compare with previous values to avoid unnecessary calls
+        const relevantFields = ['type', 'commercial_name', 'volume', 'volume_unit', 'area', 'area_unit', 'concentration', 'way_of_application'];
+        const currentRelevantValues = {};
+        relevantFields.forEach(field => {
+          currentRelevantValues[field] = currentValues[field];
+        });
+        
+        const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+        
+        console.log('ChemicalTab: Value comparison', {
+          currentValues: currentRelevantValues,
+          previousValues: previousValuesRef.current,
+          hasChanged
+        });
+        
+        // Only trigger if we have meaningful data AND values have actually changed
+        if (hasChanged && currentValues.type && (currentValues.volume || currentValues.area)) {
+          console.log('ChemicalTab: Triggering onDataChange with values', currentValues);
+          previousValuesRef.current = currentRelevantValues;
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('ChemicalTab: Error calling onDataChange:', error);
+          }
+        } else {
+          console.log('ChemicalTab: Not triggering', {
+            hasChanged,
+            hasType: !!currentValues.type,
+            hasVolumeOrArea: !!(currentValues.volume || currentValues.area)
+          });
+        }
+      } else {
+        console.log('ChemicalTab: onDataChange not available in timeout');
+      }
+    }, 500); // Debounced to prevent excessive API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedFields, onDataChange, getValues, watch]);
+
   // Update form values when initialValues change
   useEffect(() => {
     if (Object.keys(initialValues).length > 0) {
       const mappedType = mapApiTypeToFormType(initialValues.type);
-      const defaults = getIntelligentDefaults(mappedType || 'FE');
+      const defaults = getIntelligentDefaults(mappedType || 'FE', cropType);
 
       mainInfoMethods.reset({
         type: mappedType || '',
@@ -273,7 +429,7 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
 
     if (invalidFields.length > 0) {
       // Auto-fill missing fields with intelligent defaults
-      const defaults = getIntelligentDefaults(data.type);
+      const defaults = getIntelligentDefaults(data.type, cropType);
       invalidFields.forEach((field) => {
         if (defaults[field]) {
           data[field] = defaults[field];
@@ -300,7 +456,8 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
               <AlertTitle fontSize="sm">USDA Compliance & Carbon Calculation</AlertTitle>
               <AlertDescription fontSize="xs">
                 All fields marked with * are required for accurate carbon footprint calculations and
-                USDA compliance verification. Smart defaults are provided based on your selections.
+                USDA compliance verification. Smart defaults are provided based on your crop type (
+                {cropType}) and chemical type.
               </AlertDescription>
             </Box>
           </Alert>
@@ -313,26 +470,46 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <FormControl isInvalid={!!errors.type}>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  {intl.formatMessage({ id: 'app.type' })} *
-                </FormLabel>
-                <ChakraSelect
+              <StandardField
+                label={`${intl.formatMessage({ id: 'app.type' })} *`}
+                required
+                error={errors.type?.message}
+              >
+                <StandardSelect
                   placeholder="Select chemical type"
-                  ml="4px"
-                  height={'40px'}
-                  borderRadius={'15px'}
-                  fontSize={'0.875rem'}
-                  mb="24px"
                   {...register('type')}
+                  onChange={(e) => {
+                    console.log('🔥 ChemicalTab: Select onChange triggered with value:', e.target.value);
+                    
+                    // First, call the original onChange from register to update the form
+                    const registerProps = register('type');
+                    if (registerProps.onChange) {
+                      registerProps.onChange(e);
+                    }
+                    
+                    // Also manually set the value to ensure it's registered
+                    setValue('type', e.target.value);
+                    
+                    // Check what happened to the form state
+                    setTimeout(() => {
+                      const currentValues = getValues();
+                      console.log('🔥 ChemicalTab: Form state after onChange:', currentValues);
+                      
+                      // Manually trigger carbon calculation for testing
+                      if (onDataChange && e.target.value) {
+                        console.log('🔥 ChemicalTab: Manually triggering onDataChange');
+                        currentValues.type = e.target.value; // Ensure type is set
+                        onDataChange(currentValues);
+                      }
+                    }, 100);
+                  }}
                 >
                   <option value="FE">Fertilizer</option>
                   <option value="PE">Pesticide</option>
                   <option value="FU">Fungicide</option>
                   <option value="HE">Herbicide</option>
-                </ChakraSelect>
-                <FormErrorMessage>{errors.type?.message}</FormErrorMessage>
-              </FormControl>
+                </StandardSelect>
+              </StandardField>
 
               <FormControl>
                 <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
@@ -364,20 +541,17 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
               </FormControl>
             </SimpleGrid>
 
-            <FormControl isInvalid={!!errors.commercial_name}>
-              <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                {intl.formatMessage({ id: 'app.commercialName' })} *
-              </FormLabel>
-              <Input
-                ms="4px"
-                borderRadius="15px"
+            <StandardField
+              label={`${intl.formatMessage({ id: 'app.commercialName' })} *`}
+              required
+              error={errors.commercial_name?.message}
+            >
+              <StandardInput
                 type="text"
                 placeholder="e.g., Miracle-Gro All Purpose, Roundup WeatherMAX"
-                mb="24px"
                 {...register('commercial_name')}
               />
-              <FormErrorMessage>{errors.commercial_name?.message}</FormErrorMessage>
-            </FormControl>
+            </StandardField>
           </Box>
 
           {/* Section 2: Application Details */}
@@ -388,98 +562,76 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <FormControl isInvalid={!!errors.volume}>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Volume Applied *
-                </FormLabel>
+              <StandardField
+                label="Volume Applied *"
+                required
+                error={errors.volume?.message}
+              >
                 <HStack spacing={2}>
-                  <Input
+                  <StandardInput
                     flex={2}
-                    ms="4px"
-                    borderRadius="15px"
                     type="number"
                     step="0.1"
                     placeholder="50.0"
-                    mb="24px"
                     {...register('volume')}
                   />
-                  <ChakraSelect
+                  <StandardSelect
                     flex={1}
-                    height={'40px'}
-                    borderRadius={'15px'}
-                    mb="24px"
                     {...register('volume_unit')}
                   >
                     <option value="liters">Liters</option>
                     <option value="gallons">Gallons</option>
                     <option value="kg">Kilograms</option>
                     <option value="pounds">Pounds</option>
-                  </ChakraSelect>
+                  </StandardSelect>
                 </HStack>
-                <FormErrorMessage>{errors.volume?.message}</FormErrorMessage>
-              </FormControl>
+              </StandardField>
 
-              <FormControl isInvalid={!!errors.area}>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Area Treated *
-                </FormLabel>
+              <StandardField
+                label="Area Treated *"
+                required
+                error={errors.area?.message}
+              >
                 <HStack spacing={2}>
-                  <Input
+                  <StandardInput
                     flex={2}
-                    ms="4px"
-                    borderRadius="15px"
                     type="number"
                     step="0.1"
                     placeholder="2.0"
-                    mb="24px"
                     {...register('area')}
                   />
-                  <ChakraSelect
+                  <StandardSelect
                     flex={1}
-                    height={'40px'}
-                    borderRadius={'15px'}
-                    mb="24px"
                     {...register('area_unit')}
                   >
                     <option value="hectares">Hectares</option>
                     <option value="acres">Acres</option>
-                  </ChakraSelect>
+                  </StandardSelect>
                 </HStack>
-                <FormErrorMessage>{errors.area?.message}</FormErrorMessage>
-              </FormControl>
+              </StandardField>
             </SimpleGrid>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <FormControl isInvalid={!!errors.concentration}>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Concentration/NPK *
-                </FormLabel>
-                <Input
-                  ms="4px"
-                  borderRadius="15px"
+              <StandardField
+                label="Concentration/NPK *"
+                required
+                error={errors.concentration?.message}
+                helpText="For fertilizers: NPK ratio (e.g., 16-16-16). For pesticides: concentration (e.g., 2.5%)"
+              >
+                <StandardInput
                   type="text"
                   placeholder="e.g., 16-16-16, 2.5%, 1000 ppm"
-                  mb="24px"
                   {...register('concentration')}
                 />
-                <Text fontSize="xs" color="gray.500" mt="-20px" mb="20px" ml="4px">
-                  For fertilizers: NPK ratio (e.g., 16-16-16). For pesticides: concentration (e.g.,
-                  2.5%)
-                </Text>
-                <FormErrorMessage>{errors.concentration?.message}</FormErrorMessage>
-              </FormControl>
+              </StandardField>
 
-              <FormControl isInvalid={!!errors.way_of_application}>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  {intl.formatMessage({ id: 'app.wayOfApplication' })} *
-                </FormLabel>
-                <ChakraSelect
+              <StandardField
+                label={`${intl.formatMessage({ id: 'app.wayOfApplication' })} *`}
+                required
+                error={errors.way_of_application?.message}
+              >
+                <StandardSelect
                   placeholder="Select application method"
-                  ml="4px"
-                  height={'40px'}
-                  borderRadius={'15px'}
-                  fontSize={'0.875rem'}
-                  mb="24px"
                   {...register('way_of_application')}
                 >
                   <option value="broadcast">Broadcast</option>
@@ -489,9 +641,8 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
                   <option value="injection">Injection</option>
                   <option value="banded">Banded</option>
                   <option value="aerial">Aerial Application</option>
-                </ChakraSelect>
-                <FormErrorMessage>{errors.way_of_application?.message}</FormErrorMessage>
-              </FormControl>
+                </StandardSelect>
+              </StandardField>
             </SimpleGrid>
           </Box>
 
@@ -506,84 +657,58 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Weather Conditions
-                </FormLabel>
-                <Input
-                  ms="4px"
-                  borderRadius="15px"
+              <StandardField
+                label="Weather Conditions"
+                helpText="Weather during application affects chemical effectiveness and carbon impact"
+              >
+                <StandardInput
                   type="text"
                   placeholder="e.g., calm, dry conditions, 65% humidity"
-                  mb="24px"
                   {...register('weather_conditions')}
                 />
-                <Text fontSize="xs" color="gray.500" mt="-20px" mb="20px" ml="4px">
-                  Weather during application affects chemical effectiveness and carbon impact
-                </Text>
-              </FormControl>
+              </StandardField>
 
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Temperature Range
-                </FormLabel>
-                <Input
-                  ms="4px"
-                  borderRadius="15px"
+              <StandardField
+                label="Temperature Range"
+              >
+                <StandardInput
                   type="text"
                   placeholder="e.g., 18-25°C or 65-77°F"
-                  mb="24px"
                   {...register('temperature_range')}
                 />
-              </FormControl>
+              </StandardField>
             </SimpleGrid>
 
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Soil Moisture
-                </FormLabel>
-                <ChakraSelect
+              <StandardField
+                label="Soil Moisture"
+              >
+                <StandardSelect
                   placeholder="Select soil moisture"
-                  ml="4px"
-                  height={'40px'}
-                  borderRadius={'15px'}
-                  fontSize={'0.875rem'}
-                  mb="24px"
                   {...register('soil_moisture')}
                 >
                   <option value="dry">Dry</option>
                   <option value="moderate">Moderate</option>
                   <option value="moist">Moist</option>
                   <option value="wet">Wet</option>
-                </ChakraSelect>
-              </FormControl>
+                </StandardSelect>
+              </StandardField>
 
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Wind Speed
-                </FormLabel>
-                <Input
-                  ms="4px"
-                  borderRadius="15px"
+              <StandardField
+                label="Wind Speed"
+              >
+                <StandardInput
                   type="text"
                   placeholder="e.g., 5-10 mph, calm"
-                  mb="24px"
                   {...register('wind_speed')}
                 />
-              </FormControl>
+              </StandardField>
 
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Application Time
-                </FormLabel>
-                <ChakraSelect
+              <StandardField
+                label="Application Time"
+              >
+                <StandardSelect
                   placeholder="Select application time"
-                  ml="4px"
-                  height={'40px'}
-                  borderRadius={'15px'}
-                  fontSize={'0.875rem'}
-                  mb="24px"
                   {...register('time_period')}
                 >
                   <option value="early_morning">Early Morning (6-9 AM)</option>
@@ -591,60 +716,43 @@ const ChemicalTab = ({ onSubmitHandler, onPrev, initialValues = {}, cropType = '
                   <option value="afternoon">Afternoon (12-3 PM)</option>
                   <option value="evening">Evening (3-6 PM)</option>
                   <option value="night">Night Application</option>
-                </ChakraSelect>
-              </FormControl>
+                </StandardSelect>
+              </StandardField>
             </SimpleGrid>
           </Box>
 
           {/* Section 4: Additional Notes */}
           <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-              {intl.formatMessage({ id: 'app.observations' })}
-            </FormLabel>
-            <Textarea
-              fontSize="xs"
-              ms="4px"
-              borderRadius="15px"
-              type="text"
-              placeholder="Optional: Additional notes about application conditions, target pests, equipment used, etc."
-              mb="24px"
-              rows={3}
-              {...register('observation')}
-            />
+            <StandardField
+              label={intl.formatMessage({ id: 'app.observations' })}
+            >
+              <StandardTextarea
+                placeholder="Optional: Additional notes about application conditions, target pests, equipment used, etc."
+                rows={3}
+                {...register('observation')}
+              />
+            </StandardField>
           </Box>
 
           {/* Enhanced Navigation */}
           <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
             <HStack justify="space-between">
-              <Button
+              <StandardButton
                 variant="outline"
                 onClick={onPrev}
                 leftIcon={<FaChevronLeft />}
-                size="md"
-                px={6}
-                h="42px"
-                borderRadius="lg"
-                fontWeight="600"
-                _hover={{ transform: 'translateY(-1px)' }}
-                transition="all 0.3s ease"
+                size="lg"
               >
                 {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </Button>
-              <Button
-                colorScheme="green"
+              </StandardButton>
+              <StandardButton
+                variant="primary"
                 type="submit"
                 rightIcon={<FaChevronRight />}
-                size="md"
-                px={6}
-                h="42px"
-                borderRadius="lg"
-                fontWeight="600"
-                boxShadow="lg"
-                _hover={{ boxShadow: 'xl', transform: 'translateY(-1px)' }}
-                transition="all 0.3s ease"
+                size="lg"
               >
                 {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </Button>
+              </StandardButton>
             </HStack>
           </Box>
         </Flex>

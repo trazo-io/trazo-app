@@ -65,7 +65,14 @@ const companySchema = object({
   description: string().optional(),
   employeeCount: number().optional(),
   isActive: boolean().default(true),
-  industry: string().optional()
+  industry: string().optional(),
+  // New required fields for agricultural compliance
+  legalStructure: string().min(1, 'Legal structure is required'),
+  primaryCommodities: string().min(1, 'Primary agricultural focus is required'),
+  sustainabilityCommitment: string().optional(),
+  // Social media fields moved from establishment level
+  facebook: string().optional(),
+  instagram: string().optional()
 });
 
 interface CompanyFormData {
@@ -82,6 +89,13 @@ interface CompanyFormData {
   employeeCount?: number;
   isActive: boolean;
   industry?: string;
+  // New required fields for agricultural compliance
+  legalStructure: string;
+  primaryCommodities: string;
+  sustainabilityCommitment?: string;
+  // Social media fields moved from establishment level
+  facebook?: string;
+  instagram?: string;
 }
 
 interface StandardizedCompanyFormProps {
@@ -165,6 +179,8 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
   const isStepComplete = (step: number) => {
     const name = watch('name');
     const email = watch('email');
+    const legalStructure = watch('legalStructure');
+    const primaryCommodities = watch('primaryCommodities');
     const hasErrors = Object.keys(errors).length > 0;
 
     // Debug logging
@@ -172,22 +188,27 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
       step,
       name,
       email,
+      legalStructure,
+      primaryCommodities,
       hasErrors,
       errors
     });
 
     switch (step) {
       case 0:
-        const isComplete = !!name && !!email && !hasErrors;
+        const isComplete =
+          !!name && !!email && !!legalStructure && !!primaryCommodities && !hasErrors;
         console.log('Step 0 validation:', {
           name: !!name,
           email: !!email,
+          legalStructure: !!legalStructure,
+          primaryCommodities: !!primaryCommodities,
           hasErrors,
           isComplete
         });
         return isComplete;
       case 1:
-        return true; // Location is optional
+        return true; // Location and additional details are optional
       default:
         return false;
     }
@@ -306,22 +327,68 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   </StandardField>
                 </SimpleGrid>
 
+                {/* Legal Structure & Primary Commodities */}
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                  <StandardField
+                    label="Legal Structure"
+                    required
+                    error={errors.legalStructure?.message}
+                    helpText="Business legal structure for compliance"
+                  >
+                    <StandardSelect {...methods.register('legalStructure')}>
+                      <option value="">Select legal structure...</option>
+                      <option value="sole_proprietorship">Sole Proprietorship</option>
+                      <option value="partnership">Partnership</option>
+                      <option value="llc">Limited Liability Company (LLC)</option>
+                      <option value="corporation">Corporation</option>
+                      <option value="s_corporation">S Corporation</option>
+                      <option value="cooperative">Agricultural Cooperative</option>
+                      <option value="family_farm">Family Farm Corporation</option>
+                    </StandardSelect>
+                  </StandardField>
+
+                  <StandardField
+                    label="Primary Agricultural Focus"
+                    required
+                    error={errors.primaryCommodities?.message}
+                    helpText="Main crops or agricultural commodities"
+                  >
+                    <StandardSelect {...methods.register('primaryCommodities')}>
+                      <option value="">Select primary focus...</option>
+                      <option value="fruits_tree">Tree Fruits (Apples, Citrus, etc.)</option>
+                      <option value="fruits_berry">
+                        Berry Fruits (Strawberries, Grapes, etc.)
+                      </option>
+                      <option value="vegetables_field">
+                        Field Vegetables (Lettuce, Carrots, etc.)
+                      </option>
+                      <option value="vegetables_greenhouse">Greenhouse Vegetables</option>
+                      <option value="grains_cereal">Grain & Cereal Crops</option>
+                      <option value="nuts">Tree Nuts (Almonds, Walnuts, etc.)</option>
+                      <option value="livestock_cattle">Cattle & Beef</option>
+                      <option value="livestock_dairy">Dairy Operations</option>
+                      <option value="livestock_poultry">Poultry & Eggs</option>
+                      <option value="mixed_diversified">Diversified Agriculture</option>
+                    </StandardSelect>
+                  </StandardField>
+                </SimpleGrid>
+
                 {/* Industry & Employee Count */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
-                    label="Industry Type"
+                    label="Industry Classification"
                     error={errors.industry?.message}
-                    helpText="Primary agricultural focus"
+                    helpText="General agricultural industry category"
                   >
                     <StandardSelect {...methods.register('industry')}>
-                      <option value="">Select industry...</option>
-                      <option value="fruits">Fruit Production</option>
-                      <option value="vegetables">Vegetable Production</option>
-                      <option value="grains">Grain & Cereal Production</option>
-                      <option value="livestock">Livestock</option>
-                      <option value="dairy">Dairy Farming</option>
-                      <option value="organic">Organic Farming</option>
-                      <option value="mixed">Mixed Agriculture</option>
+                      <option value="">Select classification...</option>
+                      <option value="crop_production">Crop Production</option>
+                      <option value="animal_production">Animal Production</option>
+                      <option value="forestry_logging">Forestry & Logging</option>
+                      <option value="aquaculture">Aquaculture</option>
+                      <option value="agricultural_services">Agricultural Services</option>
+                      <option value="organic_certified">Certified Organic</option>
+                      <option value="sustainable_agriculture">Sustainable Agriculture</option>
                     </StandardSelect>
                   </StandardField>
 
@@ -342,6 +409,26 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                     </NumberInput>
                   </StandardField>
                 </SimpleGrid>
+
+                {/* Sustainability Commitment */}
+                <StandardField
+                  label="Sustainability Commitment"
+                  error={errors.sustainabilityCommitment?.message}
+                  helpText="Your company's approach to sustainable agriculture"
+                >
+                  <StandardSelect {...methods.register('sustainabilityCommitment')}>
+                    <option value="">Select commitment level...</option>
+                    <option value="carbon_neutral">Carbon Neutral Goals</option>
+                    <option value="regenerative">Regenerative Agriculture</option>
+                    <option value="organic_transition">Transitioning to Organic</option>
+                    <option value="water_conservation">Water Conservation Focus</option>
+                    <option value="biodiversity">Biodiversity Enhancement</option>
+                    <option value="soil_health">Soil Health Priority</option>
+                    <option value="integrated_pest">Integrated Pest Management</option>
+                    <option value="climate_smart">Climate-Smart Agriculture</option>
+                    <option value="conventional">Conventional with Efficiency</option>
+                  </StandardSelect>
+                </StandardField>
 
                 {/* Company Description */}
                 <StandardField
@@ -433,11 +520,44 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   </StandardField>
                 </SimpleGrid>
 
+                {/* Social Media & Online Presence */}
+                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={6} mb={2}>
+                  Online Presence (Optional)
+                </Text>
+                <Text fontSize="sm" color="gray.600" mb={4}>
+                  Social media presence helps consumers connect with your agricultural story and
+                  sustainability efforts.
+                </Text>
+
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                  <StandardField
+                    label="Facebook Page"
+                    error={errors.facebook?.message}
+                    helpText="Company Facebook page URL"
+                  >
+                    <StandardInput
+                      {...methods.register('facebook')}
+                      placeholder="https://facebook.com/yourfarm"
+                    />
+                  </StandardField>
+
+                  <StandardField
+                    label="Instagram Profile"
+                    error={errors.instagram?.message}
+                    helpText="Company Instagram profile URL"
+                  >
+                    <StandardInput
+                      {...methods.register('instagram')}
+                      placeholder="https://instagram.com/yourfarm"
+                    />
+                  </StandardField>
+                </SimpleGrid>
+
                 {/* Location Info Alert */}
                 <StandardAlert
                   status="info"
-                  title="Location Benefits"
-                  description="Providing location information helps us offer region-specific sustainability insights and regulatory compliance assistance."
+                  title="Location & Online Presence Benefits"
+                  description="Providing location information helps us offer region-specific sustainability insights and regulatory compliance assistance. Social media presence helps consumers connect with your agricultural story."
                 />
 
                 {/* Navigation */}

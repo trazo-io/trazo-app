@@ -72,6 +72,10 @@ interface CompanyModalProps {
     total_establishments?: number;
     total_parcels?: number;
     certifications?: string[];
+    // New agricultural compliance fields
+    legal_structure?: string;
+    primary_commodities?: string;
+    sustainability_commitment?: string;
     subscription_plan?: {
       name: string;
       tier: string;
@@ -304,6 +308,56 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
                       </Badge>
                     ))}
                   </SimpleGrid>
+                </CardBody>
+              </Card>
+            )}
+
+            {/* Agricultural Compliance */}
+            {(companyData.legal_structure ||
+              companyData.primary_commodities ||
+              companyData.sustainability_commitment) && (
+              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+                <CardBody p={6}>
+                  <Heading size="md" color={textColor} mb={4}>
+                    <HStack>
+                      <Icon as={FaLeaf} color={accentColor} />
+                      <Text>Agricultural Information</Text>
+                    </HStack>
+                  </Heading>
+                  <VStack spacing={4} align="stretch">
+                    {companyData.legal_structure && (
+                      <Box>
+                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={1}>
+                          Legal Structure
+                        </Text>
+                        <Badge colorScheme="blue" p={2} borderRadius="md">
+                          {companyData.legal_structure}
+                        </Badge>
+                      </Box>
+                    )}
+
+                    {companyData.primary_commodities && (
+                      <Box>
+                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={1}>
+                          Primary Agricultural Focus
+                        </Text>
+                        <Badge colorScheme="green" p={2} borderRadius="md">
+                          {companyData.primary_commodities}
+                        </Badge>
+                      </Box>
+                    )}
+
+                    {companyData.sustainability_commitment && (
+                      <Box>
+                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={1}>
+                          Sustainability Commitment
+                        </Text>
+                        <Badge colorScheme="orange" p={2} borderRadius="md">
+                          {companyData.sustainability_commitment}
+                        </Badge>
+                      </Box>
+                    )}
+                  </VStack>
                 </CardBody>
               </Card>
             )}

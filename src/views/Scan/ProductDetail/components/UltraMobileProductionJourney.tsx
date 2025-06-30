@@ -17,6 +17,7 @@ import {
   useBreakpointValue,
   Divider
 } from '@chakra-ui/react';
+import EnhancedEventDetailModal from 'components/Events/EnhancedEventDetailModal';
 import {
   FaWater,
   FaBolt,
@@ -30,11 +31,24 @@ import {
   FaFlask,
   FaShieldAlt,
   FaRecycle,
-  FaGlobeAmericas
+  FaGlobeAmericas,
+  FaDollarSign
 } from 'react-icons/fa';
 import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
 import { useIntl } from 'react-intl';
 import { format, parseISO } from 'date-fns';
+
+interface CarbonCalculation {
+  co2e: number;
+  efficiency_score: number;
+  usda_verified: boolean;
+  calculation_method?: string;
+  verification_confidence?: 'high' | 'medium' | 'low';
+  cost_analysis?: {
+    estimated_cost: number;
+    cost_per_co2e: number;
+  };
+}
 
 interface TimelineEvent {
   id: string;
@@ -48,6 +62,7 @@ interface TimelineEvent {
   concentration?: string;
   area?: string;
   equipment?: string;
+  carbon_data?: CarbonCalculation;
 }
 
 interface UltraMobileProductionJourneyProps {
@@ -60,11 +75,24 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   const intl = useIntl();
   const [showAll, setShowAll] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const isMobile = useBreakpointValue({ base: true, md: false });
+
+  // Event detail modal handlers
+  const handleEventClick = (event: TimelineEvent) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedEvent(null);
+  };
 
   // Get event configuration based on type
   const getEventConfig = (event: TimelineEvent) => {
@@ -226,6 +254,13 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               shadow="sm"
               borderRadius="lg"
               overflow="hidden"
+              cursor="pointer"
+              _hover={{
+                shadow: "md",
+                transform: "translateY(-1px)",
+                transition: "all 0.2s"
+              }}
+              onClick={() => handleEventClick(event)}
             >
               <CardBody p={4}>
                 {/* Single Column Mobile Layout */}
@@ -287,6 +322,94 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         {event.observation}
                       </Text>
                     </Box>
+                  )}
+
+                  {/* Carbon Impact - NEW: Show carbon data if available */}
+                  {event.carbon_data && (
+                    <>
+                      <Divider />
+                      <Box pl={10}>
+                        <VStack spacing={2} align="stretch">
+                          {/* Carbon Impact Header */}
+                          <HStack justify="space-between" align="center">
+                            <HStack spacing={2}>
+                              <Icon 
+                                as={FaLeaf} 
+                                color={event.carbon_data.co2e > 0 ? "orange.500" : "green.500"} 
+                                boxSize={3} 
+                              />
+                              <VStack spacing={0} align="start">
+                                <Text fontSize="sm" fontWeight="bold" color={textColor}>
+                                  {event.carbon_data.co2e > 0 ? '+' : ''}{event.carbon_data.co2e.toFixed(1)} kg CO₂e
+                                </Text>
+                                <Text fontSize="xs" color={mutedColor}>
+                                  {event.carbon_data.co2e > 0 ? 'Carbon footprint' : 'Carbon reduction'}
+                                </Text>
+                              </VStack>
+                            </HStack>
+                            
+                            {/* Efficiency Score */}
+                            <VStack spacing={0} align="end">
+                              <HStack spacing={1}>
+                                <Text 
+                                  fontSize="sm" 
+                                  fontWeight="bold" 
+                                  color={event.carbon_data.efficiency_score >= 80 ? "green.500" : 
+                                         event.carbon_data.efficiency_score >= 60 ? "blue.500" : 
+                                         event.carbon_data.efficiency_score >= 40 ? "yellow.500" : "red.500"}
+                                >
+                                  {Math.round(event.carbon_data.efficiency_score)}%
+                                </Text>
+                                <Icon as={FaShieldAlt} color="gray.400" boxSize={3} />
+                              </HStack>
+                              <Text fontSize="xs" color={mutedColor}>Efficiency</Text>
+                            </VStack>
+                          </HStack>
+
+                          {/* USDA Verification Badge */}
+                          {event.carbon_data.usda_verified && (
+                            <HStack spacing={2}>
+                              <Badge colorScheme="blue" size="sm" borderRadius="full">
+                                <HStack spacing={1}>
+                                  <Icon as={FaCertificate} boxSize={2} />
+                                  <Text fontSize="xs">USDA Verified</Text>
+                                </HStack>
+                              </Badge>
+                              {event.carbon_data.verification_confidence && (
+                                <Badge 
+                                  colorScheme={
+                                    event.carbon_data.verification_confidence === 'high' ? 'green' :
+                                    event.carbon_data.verification_confidence === 'medium' ? 'yellow' : 'red'
+                                  } 
+                                  size="sm" 
+                                  borderRadius="full"
+                                >
+                                  <Text fontSize="xs" textTransform="capitalize">
+                                    {event.carbon_data.verification_confidence} confidence
+                                  </Text>
+                                </Badge>
+                              )}
+                            </HStack>
+                          )}
+
+                          {/* Cost Analysis - Show if available */}
+                          {event.carbon_data.cost_analysis && (
+                            <HStack justify="space-between" fontSize="xs">
+                              <HStack spacing={1}>
+                                <Icon as={FaDollarSign} color="blue.500" boxSize={3} />
+                                <Text color={textColor} fontWeight="semibold">
+                                  ${event.carbon_data.cost_analysis.estimated_cost.toFixed(2)}
+                                </Text>
+                                <Text color={mutedColor}>estimated cost</Text>
+                              </HStack>
+                              <Text color={mutedColor}>
+                                ${event.carbon_data.cost_analysis.cost_per_co2e.toFixed(2)}/kg CO₂e
+                              </Text>
+                            </HStack>
+                          )}
+                        </VStack>
+                      </Box>
+                    </>
                   )}
 
                   {/* Metadata - Only show if exists */}
@@ -368,6 +491,15 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             </Text>
           </VStack>
         </VStack>
+      )}
+
+      {/* Enhanced Event Detail Modal */}
+      {selectedEvent && (
+        <EnhancedEventDetailModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          event={selectedEvent}
+        />
       )}
     </Box>
   );

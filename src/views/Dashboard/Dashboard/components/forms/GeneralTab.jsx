@@ -17,7 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { number, object, string } from 'zod';
 
 import { FaPlus } from 'react-icons/fa';
@@ -31,7 +31,7 @@ const formSchemaMainInfo = object({
   observation: string().optional()
 });
 
-const GeneralTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
+const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
   const intl = useIntl();
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -60,8 +60,67 @@ const GeneralTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
     handleSubmit: mainInfoSubmit,
     errors: mainInfoErrors,
     formState: { errors, isSubmitSuccessful },
-    register
+    register,
+    watch
   } = mainInfoMethods;
+
+  // Watch critical fields for real-time carbon calculation updates
+  const watchedFields = watch(['name', 'observation']);
+
+  // Track previous values to prevent unnecessary API calls
+  const previousValuesRef = useRef({});
+
+  // Real-time field watching for carbon calculation updates
+  useEffect(() => {
+    console.log('[GeneralTab]: Field watching triggered', { 
+      hasOnDataChange: !!onDataChange, 
+      watchedFields, 
+      firstField: watchedFields[0] 
+    });
+    
+    // Always check if callback exists inside the timeout to avoid stale closures
+    const timeoutId = setTimeout(() => {
+      if (onDataChange && typeof onDataChange === 'function') {
+        const currentValues = mainInfoMethods.getValues();
+        
+        // Compare with previous values to avoid unnecessary calls
+        const relevantFields = ['name', 'observation'];
+        const currentRelevantValues = {};
+        relevantFields.forEach(field => {
+          currentRelevantValues[field] = currentValues[field];
+        });
+        
+        const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+        
+        console.log('[GeneralTab]: Value comparison', {
+          currentValues: currentRelevantValues,
+          previousValues: previousValuesRef.current,
+          hasChanged
+        });
+        
+        // Only trigger if we have meaningful data AND values have actually changed
+        if (hasChanged && currentValues.name && currentValues.name.trim().length > 0) {
+          console.log('[GeneralTab]: Triggering onDataChange with values', currentValues);
+          previousValuesRef.current = currentRelevantValues;
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('[GeneralTab]: Error calling onDataChange:', error);
+          }
+        } else {
+          console.log('[GeneralTab]: Not triggering', {
+            hasChanged,
+            hasName: !!currentValues.name,
+            nameLength: currentValues.name?.trim().length || 0
+          });
+        }
+      } else {
+        console.log('[GeneralTab]: onDataChange not available in timeout');
+      }
+    }, 500); // Debounced to prevent excessive API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedFields, onDataChange]);
 
   return (
     <FormProvider {...mainInfoMethods}>
@@ -74,8 +133,8 @@ const GeneralTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
             type="text"
             placeholder={intl.formatMessage({ id: 'app.nameOfTheEvent' })}
             mb="24px"
-            name="name"
             fontSize="xs"
+            {...register('name')}
           />
           <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
             {intl.formatMessage({ id: 'app.observations' })}

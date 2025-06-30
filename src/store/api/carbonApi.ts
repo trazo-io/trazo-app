@@ -1752,6 +1752,176 @@ export const carbonApi = baseApi.injectEndpoints({
       providesTags: ['Event', 'CarbonSummary'],
       // Cache for 15 minutes since suggestions are context-dependent
       keepUnusedDataFor: 900
+    }),
+
+    // Enhanced Security Endpoints
+    createSecureCarbonOffset: builder.mutation<
+      {
+        success: boolean;
+        carbon_entry_id: number;
+        verification_status: string;
+        security_validation: any;
+      },
+      {
+        amount: number;
+        source_id: string;
+        establishment_id?: string;
+        production_id?: string;
+        additionality_evidence?: string;
+        permanence_plan?: string;
+        baseline_data?: any;
+        methodology_template?: string;
+        registry_verification_id?: string;
+        evidence_photos?: string[];
+        evidence_documents?: string[];
+      }
+    >({
+      query: (data) => ({
+        url: 'carbon/secure/create-carbon-offset/',
+        method: 'POST',
+        body: data,
+        credentials: 'include'
+      }),
+      invalidatesTags: ['CarbonSummary', 'SecurityStatus']
+    }),
+
+    validateFileUploadSecurity: builder.mutation<
+      { is_valid: boolean; validation_result: any; security_score: number },
+      { file_data: FormData; carbon_entry_id?: number }
+    >({
+      query: (data) => ({
+        url: 'carbon/secure/validate-file-upload/',
+        method: 'POST',
+        body: data.file_data,
+        credentials: 'include'
+      }),
+      invalidatesTags: ['SecurityStatus']
+    }),
+
+    getUserSecurityStatus: builder.query<
+      {
+        trust_metrics: any;
+        gaming_detection: any;
+        rate_limiting_status: any;
+        security_flags: any[];
+        overall_trust_score: number;
+      },
+      void
+    >({
+      query: () => ({
+        url: 'carbon/secure/user-security-status/',
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: ['SecurityStatus']
+    }),
+
+    // Enhanced Photo Evidence Endpoints
+    uploadEvidencePhoto: builder.mutation<
+      {
+        success: boolean;
+        photo_id: string;
+        photo_url: string;
+        metadata: any;
+        validation_status: string;
+      },
+      {
+        carbon_entry_id: number;
+        photo: File;
+        description?: string;
+        metadata?: any;
+      }
+    >({
+      query: ({ carbon_entry_id, photo, description, metadata }) => {
+        const formData = new FormData();
+        formData.append('carbon_entry_id', carbon_entry_id.toString());
+        formData.append('photo', photo);
+        if (description) formData.append('description', description);
+        if (metadata) formData.append('metadata', JSON.stringify(metadata));
+
+        return {
+          url: 'carbon/evidence/upload/',
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        };
+      },
+      invalidatesTags: ['EvidencePhotos', 'CarbonSummary']
+    }),
+
+    getEvidencePhotos: builder.query<
+      {
+        photos: Array<{
+          id: string;
+          photo_url: string;
+          description: string;
+          metadata: any;
+          upload_date: string;
+          validation_status: string;
+        }>;
+        total_count: number;
+        validation_summary: any;
+      },
+      number
+    >({
+      query: (carbonEntryId) => ({
+        url: `carbon/evidence/${carbonEntryId}/photos/`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: ['EvidencePhotos']
+    }),
+
+    validatePhotoEvidence: builder.mutation<
+      { validation_result: any; is_valid: boolean },
+      { carbon_entry_id: number }
+    >({
+      query: (data) => ({
+        url: 'carbon/evidence/validate/',
+        method: 'POST',
+        body: data,
+        credentials: 'include'
+      }),
+      invalidatesTags: ['EvidencePhotos', 'CarbonSummary']
+    }),
+
+    // Gas Optimization Endpoints
+    estimateGasCosts: builder.mutation<
+      {
+        gas_estimation: any;
+        recommended_strategy: string;
+        current_gas_prices: any;
+      },
+      {
+        operation_type: string;
+        operation_data?: any;
+      }
+    >({
+      query: (data) => ({
+        url: 'carbon/blockchain/gas-estimate/',
+        method: 'POST',
+        body: data,
+        credentials: 'include'
+      })
+    }),
+
+    optimizeTransactionGas: builder.mutation<
+      {
+        optimization_result: any;
+        gas_savings: number;
+        optimized_transactions: any[];
+      },
+      {
+        transactions: any[];
+        strategy?: string;
+      }
+    >({
+      query: (data) => ({
+        url: 'carbon/blockchain/optimize-transaction/',
+        method: 'POST',
+        body: data,
+        credentials: 'include'
+      })
     })
   })
 });
@@ -1809,5 +1979,16 @@ export const {
   useProcessVoiceEventMutation,
   useProcessVoiceEventWithAIMutation,
   // AI Smart Suggestions hook
-  useGetAIEventSuggestionsQuery
+  useGetAIEventSuggestionsQuery,
+  // Enhanced Security hooks
+  useCreateSecureCarbonOffsetMutation,
+  useValidateFileUploadSecurityMutation,
+  useGetUserSecurityStatusQuery,
+  // Photo Evidence hooks
+  useUploadEvidencePhotoMutation,
+  useGetEvidencePhotosQuery,
+  useValidatePhotoEvidenceMutation,
+  // Gas Optimization hooks
+  useEstimateGasCostsMutation,
+  useOptimizeTransactionGasMutation
 } = carbonApi;

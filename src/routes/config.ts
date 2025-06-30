@@ -1,10 +1,10 @@
-import SignInConsumer from 'views/Authentication/SignIn/SignInConsumer';
+import SignInConsumer from 'views/Authentication/SignIn/ConsumerSignIn';
 import VerifyEmailConsumer from 'views/Authentication/SignUp/VerifyEmailConsumer';
 import { CONSUMER, PRODUCER, SUPERUSER } from '../config';
 import { ComponentType } from 'react';
-import SignUpConsumer from 'views/Authentication/SignUp/SignUpConsumer';
-import SignInApp from 'views/Authentication/SignIn/SignInBasic';
-import SignUp from 'views/Authentication/SignUp/SignUpBasic';
+import SignUpConsumer from 'views/Authentication/SignUp/ConsumerSignUp';
+import SignInApp from 'views/Authentication/SignIn/AppSignIn';
+import SignUp from 'views/Authentication/SignUp/AppSignUp';
 import VerifyEmail from 'views/Authentication/SignUp/VerifyEmail';
 
 type RouteConfig = {

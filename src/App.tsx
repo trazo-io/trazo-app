@@ -19,6 +19,7 @@ import FinishProduction from 'views/Dashboard/Dashboard/Production/FinishProduct
 import NotAuthenticated from './utils/protections/NotAuthenticated';
 import ParcelView from 'views/Dashboard/Parcel';
 import Pricing from 'views/Pages/Pricing/index';
+import PrivacyPolicy from 'views/Legal/PrivacyPolicy';
 import ProductDetail from 'views/Scan/ProductDetail/ProductDetail';
 import ProductReview from 'views/Scan/ProductReview/ProductReview';
 import ProfileEstablishment from 'views/Dashboard/Dashboard/Establishment/ProfileEstablishment';
@@ -28,6 +29,7 @@ import ProfileUser from 'views/Dashboard/Dashboard/User/ProfileUser';
 import React from 'react';
 import SelectCompanyView from 'views/Dashboard/Dashboard/Company/AddCompany';
 import SettingsView from 'views/Dashboard/Settings';
+import TermsOfService from 'views/Legal/TermsOfService';
 import SignIn from 'views/Authentication/SignIn/SignInIllustration';
 import SignInApp from 'views/Authentication/SignIn/SignInBasic';
 import SignUp from 'views/Authentication/SignUp/SignUpBasic';
@@ -61,6 +63,7 @@ import { usePointsStore } from './store/pointsStore';
 import EducationDashboard from 'views/Dashboard/Education';
 import EducationFAQ from 'views/Dashboard/Education/EducationFAQ';
 import FieldInterface from 'views/Dashboard/Mobile/FieldInterface';
+import { useGetCsrfTokenQuery } from './store/api/baseApi';
 
 const App = () => {
   const location = useLocation();
@@ -68,6 +71,9 @@ const App = () => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const isLoadingAuth = useSelector((state) => state.auth.isLoading);
   const currentUser = useSelector((state) => state.userState.user);
+
+  // Initialize CSRF token on app startup
+  const {} = useGetCsrfTokenQuery();
 
   useEffect(() => {
     const host = window.location.host;
@@ -99,6 +105,14 @@ const App = () => {
       {/* Public Pricing Page - Available without authentication */}
       <Route path="/pricing" element={<AuthLayout />}>
         <Route index element={<Pricing />} />
+      </Route>
+
+      {/* Legal Pages - Available without authentication */}
+      <Route path="/terms" element={<AuthLayout />}>
+        <Route index element={<TermsOfService />} />
+      </Route>
+      <Route path="/privacy" element={<AuthLayout />}>
+        <Route index element={<PrivacyPolicy />} />
       </Route>
 
       <Route element={<CheckAuth />}>

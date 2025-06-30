@@ -16,11 +16,18 @@ import {
   Checkbox,
   useColorModeValue
 } from '@chakra-ui/react';
+import {
+  StandardCard,
+  StandardButton,
+  StandardField,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, number, boolean } from 'zod';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import FormInput from 'components/Forms/FormInput';
 import { useIntl } from 'react-intl';
 
 const pestSchema = object({
@@ -37,7 +44,7 @@ const pestSchema = object({
   observation: string().optional()
 });
 
-const PestManagementTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
+const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
   const intl = useIntl();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
@@ -80,6 +87,50 @@ const PestManagementTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
   const { watch } = methods;
   const pestType = watch('type');
 
+  // Watch critical fields for real-time carbon calculation updates
+  const watchedFields = watch([
+    'type',
+    'pest_pressure_level',
+    'damage_percentage',
+    'release_quantity',
+    'trap_count'
+  ]);
+
+  // Real-time field watching for carbon calculation updates
+  useEffect(() => {
+    console.log('[PestManagementTab]: Field watching triggered', { 
+      hasOnDataChange: !!onDataChange, 
+      watchedFields, 
+      firstField: watchedFields[0] 
+    });
+    
+    // Always check if callback exists inside the timeout to avoid stale closures
+    const timeoutId = setTimeout(() => {
+      if (onDataChange && typeof onDataChange === 'function') {
+        const currentValues = methods.getValues();
+        console.log('[PestManagementTab]: Current values for carbon calculation', currentValues);
+        
+        // Only trigger if we have meaningful data
+        if (currentValues.type) {
+          console.log('[PestManagementTab]: Triggering onDataChange with values', currentValues);
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('[PestManagementTab]: Error calling onDataChange:', error);
+          }
+        } else {
+          console.log('[PestManagementTab]: Not triggering - insufficient data', {
+            hasType: !!currentValues.type
+          });
+        }
+      } else {
+        console.log('[PestManagementTab]: onDataChange not available in timeout');
+      }
+    }, 500); // Debounced to prevent excessive API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedFields, onDataChange, methods]);
+
   const onSubmit = (data) => {
     // Convert string numbers to proper format
     const processedData = {
@@ -95,20 +146,24 @@ const PestManagementTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
       <form onSubmit={methods.handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
           {/* Event Name */}
-          <FormInput
+          <StandardField
             label={intl.formatMessage({ id: 'app.eventName' }) || 'Event Name'}
-            name="name"
-            placeholder="e.g., Pest Scouting, Beneficial Release"
-            isRequired
-          />
+            required
+            error={methods.formState.errors.name?.message}
+          >
+            <StandardInput
+              {...methods.register('name')}
+              placeholder="e.g., Pest Scouting, Beneficial Release"
+            />
+          </StandardField>
 
           {/* Pest Management Event Type */}
-          <FormControl isRequired>
-            <FormLabel fontSize="sm" fontWeight="semibold">
-              {intl.formatMessage({ id: 'app.pestManagementEventType' }) ||
-                'Pest Management Event Type'}
-            </FormLabel>
-            <Select {...methods.register('type')} size="md">
+          <StandardField
+            label={intl.formatMessage({ id: 'app.pestManagementEventType' }) || 'Pest Management Event Type'}
+            required
+            error={methods.formState.errors.type?.message}
+          >
+            <StandardSelect {...methods.register('type')}>
               <option value="SC">{intl.formatMessage({ id: 'app.scouting' }) || 'Scouting'}</option>
               <option value="BR">
                 {intl.formatMessage({ id: 'app.beneficialRelease' }) || 'Beneficial Release'}
@@ -125,24 +180,26 @@ const PestManagementTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
               <option value="IP">
                 {intl.formatMessage({ id: 'app.impImplementation' }) || 'IPM Implementation'}
               </option>
-            </Select>
-          </FormControl>
+            </StandardSelect>
+          </StandardField>
 
           {/* Pest Details */}
           {(pestType === 'SC' || pestType === 'PI' || pestType === 'TA') && (
             <>
-              <FormInput
+              <StandardField
                 label={intl.formatMessage({ id: 'app.pestSpecies' }) || 'Pest Species'}
-                name="pest_species"
-                placeholder="e.g., Aphids, Spider mites, Thrips"
-              />
+              >
+                <StandardInput
+                  {...methods.register('pest_species')}
+                  placeholder="e.g., Aphids, Spider mites, Thrips"
+                />
+              </StandardField>
 
               <HStack spacing={4} align="end">
-                <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="semibold">
-                    {intl.formatMessage({ id: 'app.pestPressureLevel' }) || 'Pest Pressure Level'}
-                  </FormLabel>
-                  <Select {...methods.register('pest_pressure_level')}>
+                <StandardField
+                  label={intl.formatMessage({ id: 'app.pestPressureLevel' }) || 'Pest Pressure Level'}
+                >
+                  <StandardSelect {...methods.register('pest_pressure_level')}>
                     <option value="Low">{intl.formatMessage({ id: 'app.low' }) || 'Low'}</option>
                     <option value="Medium">
                       {intl.formatMessage({ id: 'app.medium' }) || 'Medium'}
@@ -151,8 +208,8 @@ const PestManagementTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
                     <option value="Critical">
                       {intl.formatMessage({ id: 'app.critical' }) || 'Critical'}
                     </option>
-                  </Select>
-                </FormControl>
+                  </StandardSelect>
+                </StandardField>
 
                 <FormControl>
                   <FormLabel fontSize="sm" fontWeight="semibold">
@@ -176,17 +233,23 @@ const PestManagementTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
           {/* Beneficial Release Details */}
           {pestType === 'BR' && (
             <>
-              <FormInput
+              <StandardField
                 label={intl.formatMessage({ id: 'app.beneficialSpecies' }) || 'Beneficial Species'}
-                name="beneficial_species"
-                placeholder="e.g., Ladybugs, Lacewings, Predatory mites"
-              />
+              >
+                <StandardInput
+                  {...methods.register('beneficial_species')}
+                  placeholder="e.g., Ladybugs, Lacewings, Predatory mites"
+                />
+              </StandardField>
 
-              <FormInput
+              <StandardField
                 label={intl.formatMessage({ id: 'app.releaseQuantity' }) || 'Release Quantity'}
-                name="release_quantity"
-                placeholder="e.g., 1000 individuals per hectare"
-              />
+              >
+                <StandardInput
+                  {...methods.register('release_quantity')}
+                  placeholder="e.g., 1000 individuals per hectare"
+                />
+              </StandardField>
             </>
           )}
 
@@ -235,52 +298,37 @@ const PestManagementTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
           )}
 
           {/* Observations */}
-          <FormControl>
-            <FormLabel fontSize="sm" fontWeight="semibold">
-              {intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-            </FormLabel>
-            <Textarea
+          <StandardField
+            label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
+          >
+            <StandardTextarea
               {...methods.register('observation')}
               placeholder={
                 intl.formatMessage({ id: 'app.enterObservations' }) ||
                 'Enter any additional observations...'
               }
               rows={3}
-              resize="vertical"
             />
-          </FormControl>
+          </StandardField>
 
           {/* Action Buttons */}
           <HStack justify="space-between" pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-            <Button
+            <StandardButton
               variant="outline"
               onClick={onPrev}
               leftIcon={<FaChevronLeft />}
-              size="md"
-              px={6}
-              h="42px"
-              borderRadius="lg"
-              fontWeight="600"
-              _hover={{ transform: 'translateY(-1px)' }}
-              transition="all 0.3s ease"
+              size="lg"
             >
               {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-            </Button>
-            <Button
-              colorScheme="green"
+            </StandardButton>
+            <StandardButton
+              variant="primary"
               type="submit"
               rightIcon={<FaChevronRight />}
-              size="md"
-              px={6}
-              h="42px"
-              borderRadius="lg"
-              fontWeight="600"
-              boxShadow="lg"
-              _hover={{ boxShadow: 'xl', transform: 'translateY(-1px)' }}
-              transition="all 0.3s ease"
+              size="lg"
             >
               {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-            </Button>
+            </StandardButton>
           </HStack>
         </VStack>
       </form>

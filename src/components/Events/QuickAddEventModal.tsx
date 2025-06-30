@@ -20,7 +20,15 @@ import {
   Icon,
   SimpleGrid,
   Badge,
-  Flex
+  Flex,
+  useBreakpointValue,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerCloseButton,
+  useDisclosure
 } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
@@ -331,6 +339,10 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
   const textColor = useColorModeValue('gray.700', 'white');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
+  // Mobile optimization - use drawer on mobile, modal on desktop
+  const isMobile = useBreakpointValue({ base: true, md: false });
+  const modalSize = useBreakpointValue({ base: 'full', md: 'xl', lg: '2xl' });
+
   // Form state
   const [selectedTemplate, setSelectedTemplate] = useState<EventTemplate | null>(null);
   const [eventDate, setEventDate] = useState(
@@ -381,8 +393,8 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
           | 'pest_management'
         > = {
           0: 'weather',
-          1: 'production',
-          2: 'chemical',
+          1: 'chemical',
+          2: 'production',
           3: 'general',
           4: 'equipment',
           5: 'soil_management',
@@ -632,8 +644,203 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
     }
   };
 
+  // Mobile-optimized content renderer
+  const renderMobileContent = () => (
+    <VStack spacing={4} align="stretch" h="full">
+      {/* Step indicator for mobile */}
+      {!selectedTemplate ? (
+        <Box textAlign="center" py={2}>
+          <Text fontSize="sm" color="blue.600" fontWeight="medium">
+            Step 1 of 3: Choose Event Type
+          </Text>
+        </Box>
+      ) : (
+        <Box textAlign="center" py={2}>
+          <Text fontSize="sm" color="blue.600" fontWeight="medium">
+            Step {notes ? '3' : '2'} of 3: {notes ? 'Create Event' : 'Add Details'}
+          </Text>
+        </Box>
+      )}
+
+      {!selectedTemplate ? (
+        /* Mobile-optimized template selection */
+        <VStack spacing={3} align="stretch">
+          <Text fontSize="lg" fontWeight="bold" color={textColor} textAlign="center">
+            What happened in the field?
+          </Text>
+          <SimpleGrid columns={2} spacing={3}>
+            {eventTemplates.slice(0, 8).map((template) => (
+              <Button
+                key={template.id}
+                variant="outline"
+                colorScheme={template.color}
+                height="80px"
+                flexDirection="column"
+                justifyContent="center"
+                gap={2}
+                onClick={() => setSelectedTemplate(template)}
+                borderWidth="2px"
+                _hover={{ borderColor: `${template.color}.400`, transform: 'scale(1.02)' }}
+                transition="all 0.2s"
+              >
+                <Icon as={template.icon} boxSize={5} />
+                <Text fontSize="xs" textAlign="center" lineHeight="short">
+                  {template.name}
+                </Text>
+              </Button>
+            ))}
+          </SimpleGrid>
+          {eventTemplates.length > 8 && (
+            <Text fontSize="xs" color="gray.500" textAlign="center">
+              Tap to select • {eventTemplates.length - 8} more types available
+            </Text>
+          )}
+        </VStack>
+      ) : (
+        /* Mobile-optimized form */
+        <VStack spacing={4} align="stretch" flex="1">
+          {/* Selected template display */}
+          <Box
+            p={3}
+            bg={`${selectedTemplate.color}.50`}
+            borderRadius="lg"
+            border="1px"
+            borderColor={`${selectedTemplate.color}.200`}
+          >
+            <HStack spacing={3}>
+              <Icon
+                as={selectedTemplate.icon}
+                color={`${selectedTemplate.color}.600`}
+                boxSize={6}
+              />
+              <VStack align="start" spacing={1} flex="1">
+                <Text fontSize="md" fontWeight="bold" color={textColor}>
+                  {selectedTemplate.name}
+                </Text>
+                <Text fontSize="xs" color="gray.600">
+                  {selectedTemplate.category}
+                </Text>
+              </VStack>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedTemplate(null)}
+                _hover={{ bg: `${selectedTemplate.color}.100` }}
+              >
+                Change
+              </Button>
+            </HStack>
+          </Box>
+
+          {/* Mobile-optimized form fields */}
+          <VStack spacing={4} align="stretch">
+            <Box>
+              <Text fontSize="sm" fontWeight="semibold" mb={2} color={textColor}>
+                When did this happen?
+              </Text>
+              <Input
+                type="datetime-local"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                borderRadius="lg"
+                bg="white"
+                borderColor={borderColor}
+                _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px blue.400' }}
+              />
+            </Box>
+
+            <Box>
+              <Text fontSize="sm" fontWeight="semibold" mb={2} color={textColor}>
+                Quick notes (optional)
+              </Text>
+              <Textarea
+                placeholder={`Add details about ${selectedTemplate.name.toLowerCase()}...`}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                borderRadius="lg"
+                bg="white"
+                borderColor={borderColor}
+                _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px blue.400' }}
+                rows={3}
+                resize="none"
+              />
+            </Box>
+
+            {/* Carbon impact preview */}
+            {carbonCalculation && (
+              <Box p={3} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
+                <HStack justify="space-between" align="center">
+                  <VStack align="start" spacing={0}>
+                    <Text fontSize="xs" color="green.700" fontWeight="medium">
+                      Carbon Impact
+                    </Text>
+                    <Text fontSize="lg" fontWeight="bold" color="green.800">
+                      {carbonCalculation.co2e > 0 ? '+' : ''}
+                      {carbonCalculation.co2e.toFixed(2)} kg CO₂e
+                    </Text>
+                  </VStack>
+                  {isCalculating && <Spinner size="sm" color="green.500" />}
+                </HStack>
+              </Box>
+            )}
+          </VStack>
+
+          {/* Mobile action buttons */}
+          <VStack spacing={3} pt={4} mt="auto">
+            <Button
+              colorScheme="green"
+              size="lg"
+              width="full"
+              onClick={handleSubmit}
+              isLoading={isSubmitting || isLoading}
+              loadingText="Creating..."
+              isDisabled={!selectedTemplate || !eventDate}
+              borderRadius="xl"
+              height="50px"
+              fontSize="md"
+              fontWeight="bold"
+              _hover={{ transform: 'translateY(-1px)', boxShadow: 'lg' }}
+              transition="all 0.2s"
+            >
+              Create Event
+            </Button>
+            <Button variant="ghost" size="md" onClick={onClose} width="full" borderRadius="lg">
+              Cancel
+            </Button>
+          </VStack>
+        </VStack>
+      )}
+    </VStack>
+  );
+
+  // Render mobile-optimized drawer on small screens, modal on larger screens
+  if (isMobile) {
+    return (
+      <Drawer isOpen={isOpen} onClose={onClose} placement="bottom" size="full">
+        <DrawerOverlay bg="blackAlpha.300" />
+        <DrawerContent bg={bgColor} borderTopRadius="xl" maxH="90vh">
+          <DrawerCloseButton />
+          <DrawerHeader pb={4} borderBottom="1px" borderColor={borderColor}>
+            <VStack spacing={2} align="start">
+              <Text fontSize="lg" fontWeight="bold" color={textColor}>
+                {intl.formatMessage({ id: 'app.quickAddEvent' }) || 'Quick Add Event'}
+              </Text>
+              <Text fontSize="sm" color="gray.500">
+                Fast mobile event creation for field use
+              </Text>
+            </VStack>
+          </DrawerHeader>
+          <DrawerBody py={4} overflowY="auto">
+            {/* Mobile-optimized content will be rendered here */}
+            {renderMobileContent()}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered>
+    <Modal isOpen={isOpen} onClose={onClose} size={modalSize} isCentered>
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
       <ModalContent bg={bgColor} borderRadius="xl">
         <ModalHeader color={textColor} fontSize="xl" borderBottom="1px" borderColor={borderColor}>

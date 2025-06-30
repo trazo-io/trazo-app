@@ -21,12 +21,15 @@ function getCookie(name: string) {
 
 const baseQuery = fetchBaseQuery({
   baseUrl,
+  credentials: 'include',
   prepareHeaders: (headers) => {
-    // if (!headers.get('Accept')) headers.set('Accept', 'application/json');
-    // if (!headers.get('default-content-type'))
-    //   if (!headers.get('Content-Type')) headers.set('Content-Type', 'application/json');
+    // Set required headers for AJAX requests
+    headers.set('X-Requested-With', 'XMLHttpRequest');
+
+    // Get and set CSRF token
     const csrftoken = getCookie(CSRF_TOKEN);
     if (csrftoken) headers.set(CSRF_HEADER_KEY, csrftoken);
+
     return headers;
   }
 });

@@ -15,167 +15,341 @@
 
 */
 
-import { BsCircleFill, BsFillCloudLightningRainFill } from 'react-icons/bs';
-// Chakra imports
+import React, { useEffect, useState } from 'react';
 import {
-  Button,
-  Select as ChakraSelect,
-  Checkbox,
-  Flex,
-  FormControl,
-  FormLabel,
-  Icon,
-  Input,
-  NumberDecrementStepper,
-  NumberIncrementStepper,
+  VStack,
+  HStack,
+  SimpleGrid,
+  Switch,
   NumberInput,
   NumberInputField,
   NumberInputStepper,
-  Stack,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  Tag,
-  TagCloseButton,
-  TagLabel,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
+  useToast,
   Text,
-  Textarea,
-  useColorModeValue
+  Icon,
+  Box,
+  Badge,
+  Divider,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Grid,
+  Avatar,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Progress,
+  useColorModeValue,
+  Flex
 } from '@chakra-ui/react';
+import {
+  StandardPage,
+  StandardCard,
+  StandardField,
+  StandardInput,
+  StandardTextarea,
+  StandardSelect,
+  StandardButton,
+  StandardAlert,
+  StandardStepper,
+  StandardSelectionGrid
+} from 'components/Design/StandardComponents';
 import { FormProvider, useForm } from 'react-hook-form';
-import React, { useEffect, useReducer, useRef, useState } from 'react';
-import { clearForm, setForm } from 'store/features/formSlice';
-import { object, string } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { object, string, boolean, number, date } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-
-import Card from 'components/Card/Card';
-import CardBody from 'components/Card/CardBody';
-import CardHeader from 'components/Card/CardHeader';
-import CardWithMap from '../CardWithMap';
-import CreatableSelect from 'react-select/creatable';
-import Editor from 'components/Editor/Editor';
-import FormInput from 'components/Forms/FormInput';
-import Header from 'views/Pages/Profile/Overview/components/Header';
-import ProfileBgImage from 'assets/img/ProfileBackground.png';
-import { RocketIcon } from 'components/Icons/Icons';
-import Select from 'react-select';
-import { SlChemistry } from 'react-icons/sl';
-import { addCompanyEstablishment } from 'store/features/companySlice';
-import avatar4 from 'assets/img/avatars/avatar4.png';
-import imageMap from 'assets/img/imageMap.png';
-import { set } from 'date-fns';
+import { clearForm } from 'store/features/formSlice';
 import { setEstablishmentParcelHasProduction } from 'store/features/companySlice';
-import { useCreateEventMutation } from 'store/api/historyApi';
 import { useCreateProductionMutation } from 'store/api/historyApi';
-import { useDropzone } from 'react-dropzone';
 import { useGetEstablishmentProductsQuery } from 'store/api/productApi';
-import { useGoogleMap } from '@react-google-maps/api';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
+import CreatableSelect from 'react-select/creatable';
+import {
+  FaSeedling,
+  FaCalendarAlt,
+  FaInfoCircle,
+  FaCheckCircle,
+  FaChevronRight,
+  FaChevronLeft,
+  FaTractor,
+  FaLeaf,
+  FaWater,
+  FaCut,
+  FaWarehouse,
+  FaSearch,
+  FaAppleAlt,
+  FaCarrot,
+  FaGraduationCap,
+  FaCoffee,
+  FaTarget,
+  FaChartLine,
+  FaRecycle,
+  FaAward,
+  FaCalculator,
+  FaLightbulb
+} from 'react-icons/fa';
+import { MdLocalFlorist, MdHome, MdGrass, MdFilterVintage, MdVerified, MdTrendingDown, MdEco } from 'react-icons/md';
+import {
+  useGetUSDAEmissionFactorsQuery,
+  useGetRegionalBenchmarkQuery,
+  useGetCarbonImpactExamplesQuery
+} from 'store/api/carbonApi';
 
-// Custom components
-const styles = {
-  container: (provided, state) => ({
-    ...provided,
-    margin: '0px !important'
-  }),
+// Production type options with carbon benefits
+const productionTypeOptions = [
+  {
+    id: 'OR',
+    title: 'Organic',
+    description: 'Certified organic farming methods',
+    icon: FaLeaf,
+    color: 'green',
+    value: 'OR',
+    carbonBenefits: 'Enhanced carbon credit eligibility and soil health'
+  },
+  {
+    id: 'GA',
+    title: 'General Agriculture',
+    description: 'Conventional farming with sustainability tracking',
+    icon: FaTractor,
+    color: 'blue',
+    value: 'GA',
+    carbonBenefits: 'Transparent supply chain verification'
+  },
+  {
+    id: 'SU',
+    title: 'Sustainable',
+    description: 'Regenerative and sustainable practices',
+    icon: FaSeedling,
+    color: 'purple',
+    value: 'SU',
+    carbonBenefits: 'Premium carbon credit potential and ecosystem benefits'
+  }
+];
 
-  control: (provided, state) => ({
+// Irrigation method options for carbon impact
+const irrigationMethodOptions = [
+  { value: 'drip', label: 'Drip Irrigation', efficiency: 'High', carbonImpact: 'Low' },
+  { value: 'sprinkler', label: 'Sprinkler System', efficiency: 'Medium', carbonImpact: 'Medium' },
+  { value: 'flood', label: 'Flood Irrigation', efficiency: 'Low', carbonImpact: 'High' },
+  { value: 'micro_spray', label: 'Micro Spray', efficiency: 'High', carbonImpact: 'Low' },
+  { value: 'rainwater', label: 'Rainwater Only', efficiency: 'Variable', carbonImpact: 'Very Low' }
+];
+
+// Production method options for sustainability scoring
+const productionMethodOptions = [
+  { value: 'conventional', label: 'Conventional', carbonScore: 'Standard' },
+  { value: 'organic', label: 'Organic Certified', carbonScore: 'Enhanced' },
+  { value: 'biodynamic', label: 'Biodynamic', carbonScore: 'Premium' },
+  { value: 'regenerative', label: 'Regenerative', carbonScore: 'Premium' },
+  { value: 'permaculture', label: 'Permaculture', carbonScore: 'Enhanced' }
+];
+
+// Growing environment options
+const environmentOptions = [
+  {
+    id: 'outdoor',
+    title: 'Outdoor',
+    description: 'Open field cultivation',
+    icon: MdLocalFlorist,
+    color: 'green',
+    value: 'outdoor'
+  },
+  {
+    id: 'indoor',
+    title: 'Indoor/Greenhouse',
+    description: 'Controlled environment',
+    icon: MdHome,
+    color: 'blue',
+    value: 'indoor'
+  }
+];
+
+// Custom styles for CreatableSelect
+const selectStyles = {
+  control: (provided: any) => ({
     ...provided,
     border: '1px solid #E2E8F0',
-    borderRadius: '15px',
-    boxShadow: 'none',
-    outline: '2px solid transparent',
+    borderRadius: '8px',
     minHeight: '40px',
-    fontSize: '0.75rem;',
-    marginLeft: '4px'
+    fontSize: '14px'
+  }),
+  placeholder: (provided: any) => ({
+    ...provided,
+    color: '#A0AEC0'
   })
 };
 
-const formSchemaBasic = object({
+// Enhanced form schema with carbon goals
+const productionSchema = object({
+  productId: string().optional(),
+  productName: string().optional(),
   date: string().min(1, 'Date is required'),
-  age_of_plants: string(),
-  number_of_plants: string(),
-  soil_ph: string()
+  type: string().min(1, 'Production type is required'),
+  isOutdoor: boolean().default(true),
+  ageOfPlants: number().optional(),
+  numberOfPlants: number().optional(),
+  soilPh: number().optional(),
+  // Carbon Goals
+  carbonReductionTarget: number().optional(),
+  carbonBudget: number().optional(),
+  sustainabilityScore: number().optional(),
+  organicCertificationGoal: boolean().default(false),
+  renewableEnergyTarget: number().optional(),
+  waterEfficiencyGoal: number().optional(),
+  soilHealthTarget: number().optional(),
+  carbonOffsetPlanning: boolean().default(false),
+  // Production Planning
+  expectedHarvest: string().optional(),
+  estimatedYield: number().optional(),
+  irrigationMethod: string().optional(),
+  productionMethod: string().optional(),
+  qualityTargets: string().optional(),
+  // Enhanced blockchain fields
+  enableBlockchain: boolean().default(true)
 });
 
-function NewProduction() {
+interface ProductionFormData {
+  productId?: string;
+  productName?: string;
+  date: string;
+  type: string;
+  isOutdoor: boolean;
+  ageOfPlants?: number;
+  numberOfPlants?: number;
+  soilPh?: number;
+  // Carbon Goals
+  carbonReductionTarget?: number;
+  carbonBudget?: number;
+  sustainabilityScore?: number;
+  organicCertificationGoal?: boolean;
+  renewableEnergyTarget?: number;
+  waterEfficiencyGoal?: number;
+  soilHealthTarget?: number;
+  carbonOffsetPlanning?: boolean;
+  // Production Planning
+  expectedHarvest?: string;
+  estimatedYield?: number;
+  irrigationMethod?: string;
+  productionMethod?: string;
+  qualityTargets?: string;
+  // Enhanced blockchain fields
+  enableBlockchain?: boolean;
+}
+
+export const NewProduction: React.FC = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [productError, setProductError] = useState<string>('');
+  const [productsOptions, setProductsOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [navigateTo, setNavigateTo] = useState<string | null>(null);
+  const [carbonPreview, setCarbonPreview] = useState<any>(null);
   const intl = useIntl();
-  // Chakra color mode
-  const textColor = useColorModeValue('gray.700', 'white');
-  const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
-  const bgProfile = useColorModeValue(
-    'hsla(0,0%,100%,.8)',
-    'linear-gradient(112.83deg, rgba(255, 255, 255, 0.21) 0%, rgba(255, 255, 255, 0) 110.84%)'
-  );
-  const bgColor = useColorModeValue('white', 'gray.700');
-  const iconColor = useColorModeValue('gray.300', 'gray.700');
-  const bgActiveButton = useColorModeValue('gray.200', 'gray.700');
-  const bgButtonGroup = useColorModeValue('gray.50', 'gray.600');
-  const bgTimesIcon = useColorModeValue('gray.700', 'gray.500');
-  // const [options, setOptions] = useState([]);
-  const [value, setValue] = useState(null);
-  const [isOutdoor, setIsOutdoor] = useState(true);
-  const [productValueError, setProductValueError] = useState(null);
-  const [activeButton, setActiveButton] = useState(0);
+  const toast = useToast();
   const dispatch = useDispatch();
-  const [checkBox, setCheckBox] = useState(null);
-  const [productsOptions, setProductsOptions] = useState([]);
-  const [navigateTo, setNavigateTo] = useState(null);
 
   const navigate = useNavigate();
-
   const { parcelId, establishmentId } = useParams();
+  const currentCompany = useSelector((state: any) => state.company.currentCompany);
 
-  const currentCompany = useSelector((state) => state.company.currentCompany);
-
-  const [createProduction, { data, isSuccess: isSuccessProduction }] =
+  const [createProduction, { data, isSuccess: isSuccessProduction, isLoading }] =
     useCreateProductionMutation();
 
-  const basicMethods = useForm({
-    resolver: zodResolver(formSchemaBasic)
+  // Define steps for stepper
+  const steps = [
+    { title: 'Product Selection', description: 'Choose product & type', icon: FaSeedling },
+    { title: 'Carbon Goals', description: 'Set sustainability targets', icon: FaTarget },
+    { title: 'Production Details', description: 'Date & environment', icon: FaCalendarAlt },
+    { title: 'Review & Create', description: 'Finalize production', icon: FaCheckCircle }
+  ];
+
+  const methods = useForm<ProductionFormData>({
+    resolver: zodResolver(productionSchema),
+    defaultValues: {
+      isOutdoor: true,
+      type: 'OR',
+      ageOfPlants: 0,
+      numberOfPlants: 0,
+      soilPh: 7.0,
+      enableBlockchain: true,
+      carbonReductionTarget: 15,
+      sustainabilityScore: 75,
+      organicCertificationGoal: false,
+      renewableEnergyTarget: 25,
+      waterEfficiencyGoal: 20,
+      soilHealthTarget: 10,
+      carbonOffsetPlanning: false,
+      productionMethod: 'conventional',
+      irrigationMethod: 'drip'
+    }
   });
 
   const {
-    reset,
     handleSubmit,
-    formState: { errors, isSubmitSuccessful },
-    register
-  } = basicMethods;
+    watch,
+    reset,
+    setValue,
+    formState: { errors }
+  } = methods;
 
-  const onSubmitBasic = (data, event) => {
-    if (value === null) {
-      setProductValueError('Product is required');
+  const onSubmitForm = (data: ProductionFormData) => {
+    console.log('Form submission started:', {
+      data,
+      selectedProduct,
+      hasSelectedProduct: !!selectedProduct
+    });
+
+    // Validate product selection
+    if (!selectedProduct) {
+      setProductError('Product is required');
       return;
     }
-    setProductValueError(null);
-    if (event.nativeEvent.submitter.innerText === intl.formatMessage({ id: 'app.save' })) {
-      setNavigateTo(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`);
-    } else {
-      setNavigateTo(
-        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/event/add`
-      );
+
+    setProductError('');
+
+    try {
+      const finalData = {
+        ...data,
+        product: {
+          id: selectedProduct.value,
+          name: selectedProduct.label,
+          isNew: selectedProduct.__isNew__
+        },
+        parcel: parcelId,
+        is_outdoor: data.isOutdoor,
+        // Convert form data to backend format
+        age_of_plants: data.ageOfPlants?.toString() || '',
+        number_of_plants: data.numberOfPlants?.toString() || '',
+        soil_ph: data.soilPh?.toString() || ''
+      };
+
+      console.log('Final data to submit:', finalData);
+      createProduction(finalData);
+      
+      toast({
+        title: 'Production Created',
+        description: `Production for "${selectedProduct.label}" has been created successfully with carbon goals.`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true
+      });
+    } catch (error) {
+      console.error('Submit error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save production. Please try again.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true
+      });
     }
-    const dataProduction = {
-      ...data,
-      product: {
-        id: value.value,
-        name: value.label,
-        isNew: value.__isNew__
-      },
-      parcel: parcelId,
-      is_outdoor: isOutdoor ? true : false,
-      type: activeButton === 0 ? 'OR' : 'GA'
-    };
-    createProduction(dataProduction);
   };
 
   useEffect(() => {
     if (isSuccessProduction) {
-      // dispatch(addCompanyEstablishment(dataEstablishment));
       dispatch(clearForm());
       dispatch(
         setEstablishmentParcelHasProduction({
@@ -183,10 +357,12 @@ function NewProduction() {
           parcelId
         })
       );
-      navigate(navigateTo);
+      // Navigate based on user choice or default to parcel view
+      const defaultPath = `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`;
+      navigate(navigateTo || defaultPath);
       setNavigateTo(null);
     }
-  }, [isSuccessProduction]);
+  }, [isSuccessProduction, dispatch, establishmentId, parcelId, navigate, navigateTo]);
 
   const { data: dataProducts, isSuccess: isSuccessProducts } = useGetEstablishmentProductsQuery(
     {
@@ -227,182 +403,609 @@ function NewProduction() {
                 </Text>
               </CardHeader>
 
-              <CardBody>
-                <FormProvider {...basicMethods}>
-                  <form onSubmit={handleSubmit(onSubmitBasic)} style={{ width: '100%' }}>
-                    <Stack direction="column" spacing="20px" w="100%">
-                      <Flex direction="column" w="80%" mt="10px">
-                        <FormLabel ms="4px" fontSize="xs" fontWeight="bold" mb="4px" pl="12px">
-                          {intl.formatMessage({ id: 'app.whatKindOfProduction' })}
-                        </FormLabel>
-                      </Flex>
-                      <Flex w={'100%'} justifyContent={'center'}>
-                        <Flex bg={bgButtonGroup} borderRadius="12px" w={'fit-content'}>
-                          <Button
-                            variant="no-hover"
-                            w="135px"
-                            h="40px"
-                            fontSize="xs"
-                            boxShadow={
-                              activeButton === 0 ? '0px 2px 5.5px rgba(0, 0, 0, 0.06)' : 'none'
-                            }
-                            bg={activeButton === 0 ? bgActiveButton : 'transparent'}
-                            onClick={() => setActiveButton(0)}
-                          >
-                            {intl.formatMessage({ id: 'app.orchard' })}
-                          </Button>
-                          <Button
-                            variant="no-hover"
-                            w="135px"
-                            h="40px"
-                            fontSize="xs"
-                            boxShadow={
-                              activeButton === 1 ? '0px 2px 5.5px rgba(0, 0, 0, 0.06)' : 'none'
-                            }
-                            bg={activeButton === 1 ? bgActiveButton : 'transparent'}
-                            onClick={() => setActiveButton(1)}
-                          >
-                            {intl.formatMessage({ id: 'app.garden' })}
-                          </Button>
-                        </Flex>
-                      </Flex>
-                      <FormLabel fontSize="xs" fontWeight="bold" pl="12px">
-                        {intl.formatMessage({ id: 'app.product' })}
-                      </FormLabel>
-                      <CreatableSelect
-                        isClearable
-                        options={productsOptions}
-                        styles={styles}
-                        value={value}
-                        onChange={(newValue) => setValue(newValue)}
-                        placeholder={intl.formatMessage({ id: 'app.select' })}
-                      />
-                      {productValueError === null && (
-                        <Text fontSize="xs" color="red.500" mt={'0px'} pl={'12px'}>
-                          {productValueError}
+          {/* Step 0: Product Selection */}
+          {currentStep === 0 && (
+            <StandardCard
+              title="Product & Production Type"
+              subtitle="Select the product and farming method"
+            >
+              <VStack spacing={6} align="stretch">
+                {/* Product Selection */}
+                <StandardField
+                  label="Product"
+                  required
+                  error={productError}
+                  helpText="Search and select your crop or create a new one"
+                >
+                  <CreatableSelect
+                    value={selectedProduct}
+                    onChange={(newValue) => {
+                      setSelectedProduct(newValue);
+                      setProductError('');
+                    }}
+                    options={productsOptions}
+                    styles={selectStyles}
+                    placeholder="Select product or create new..."
+                    isClearable
+                  />
+                </StandardField>
+
+                {/* Production Type Selection */}
+                <StandardField
+                  label="Production Type"
+                  required
+                  error={errors.type?.message}
+                  helpText="Choose your farming approach for carbon tracking"
+                >
+                  <StandardSelectionGrid
+                    options={productionTypeOptions}
+                    selectedValue={watch('type')}
+                    onSelect={(value) => setValue('type', value)}
+                    columns={{ base: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' }}
+                    size="md"
+                  />
+                </StandardField>
+
+                {/* Type Benefits */}
+                {watch('type') && (
+                  <Box p={4} bg="green.50" borderRadius="lg">
+                    <HStack spacing={3} mb={2}>
+                      <Icon as={FaLeaf} color="green.600" />
+                      <Text fontWeight="semibold" color="green.700">
+                        Carbon Benefits
+                      </Text>
+                    </HStack>
+                    <Text fontSize="sm" color="green.600">
+                      {productionTypeOptions.find(option => option.value === watch('type'))?.carbonBenefits}
+                    </Text>
+                  </Box>
+                )}
+
+                {/* Navigation */}
+                <HStack spacing={3} justify="flex-end" pt={4}>
+                  <StandardButton variant="outline" onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`)}>
+                    Cancel
+                  </StandardButton>
+                  <StandardButton
+                    onClick={nextStep}
+                    rightIcon={<FaChevronRight />}
+                    disabled={!isStepComplete(0)}
+                  >
+                    Continue to Carbon Goals
+                  </StandardButton>
+                </HStack>
+              </VStack>
+            </StandardCard>
+          )}
+          {/* Step 1: Carbon Goals */}
+          {currentStep === 1 && (
+            <StandardCard
+              title="Carbon Goals & Sustainability Targets"
+              subtitle="Set your environmental objectives for this production cycle"
+            >
+              <VStack spacing={6} align="stretch">
+                {/* Carbon Reduction Target */}
+                <StandardField
+                  label="Carbon Reduction Target (%)"
+                  helpText="Percentage reduction compared to regional baseline"
+                >
+                  <NumberInput
+                    value={watch('carbonReductionTarget') || 15}
+                    onChange={(_, num) => setValue('carbonReductionTarget', num || 0)}
+                    min={0}
+                    max={100}
+                  >
+                    <NumberInputField borderRadius="lg" placeholder="15" />
+                    <NumberInputStepper>
+                      <NumberIncrementStepper />
+                      <NumberDecrementStepper />
+                    </NumberInputStepper>
+                  </NumberInput>
+                </StandardField>
+
+                {/* Carbon Budget */}
+                <StandardField
+                  label="Carbon Budget (kg CO2e)"
+                  helpText="Maximum allowable emissions for this production"
+                >
+                  <NumberInput
+                    value={watch('carbonBudget') || 0}
+                    onChange={(_, num) => setValue('carbonBudget', num || 0)}
+                    min={0}
+                  >
+                    <NumberInputField borderRadius="lg" placeholder="e.g., 5000" />
+                    <NumberInputStepper>
+                      <NumberIncrementStepper />
+                      <NumberDecrementStepper />
+                    </NumberInputStepper>
+                  </NumberInput>
+                </StandardField>
+
+                {/* Sustainability Goals Grid */}
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                  <StandardField
+                    label="Sustainability Score Target"
+                    helpText="Target sustainability rating (0-100)"
+                  >
+                    <NumberInput
+                      value={watch('sustainabilityScore') || 75}
+                      onChange={(_, num) => setValue('sustainabilityScore', num || 0)}
+                      min={0}
+                      max={100}
+                    >
+                      <NumberInputField borderRadius="lg" />
+                      <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                      </NumberInputStepper>
+                    </NumberInput>
+                  </StandardField>
+
+                  <StandardField
+                    label="Renewable Energy Target (%)"
+                    helpText="Percentage of operations powered by renewable energy"
+                  >
+                    <NumberInput
+                      value={watch('renewableEnergyTarget') || 25}
+                      onChange={(_, num) => setValue('renewableEnergyTarget', num || 0)}
+                      min={0}
+                      max={100}
+                    >
+                      <NumberInputField borderRadius="lg" />
+                      <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                      </NumberInputStepper>
+                    </NumberInput>
+                  </StandardField>
+
+                  <StandardField
+                    label="Water Efficiency Improvement (%)"
+                    helpText="Target reduction in water usage per unit"
+                  >
+                    <NumberInput
+                      value={watch('waterEfficiencyGoal') || 20}
+                      onChange={(_, num) => setValue('waterEfficiencyGoal', num || 0)}
+                      min={0}
+                      max={100}
+                    >
+                      <NumberInputField borderRadius="lg" />
+                      <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                      </NumberInputStepper>
+                    </NumberInput>
+                  </StandardField>
+
+                  <StandardField
+                    label="Soil Health Improvement (%)"
+                    helpText="Target improvement in soil organic matter"
+                  >
+                    <NumberInput
+                      value={watch('soilHealthTarget') || 10}
+                      onChange={(_, num) => setValue('soilHealthTarget', num || 0)}
+                      min={0}
+                      max={100}
+                    >
+                      <NumberInputField borderRadius="lg" />
+                      <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                      </NumberInputStepper>
+                    </NumberInput>
+                  </StandardField>
+                </SimpleGrid>
+
+                {/* Certification Goals */}
+                <Box p={6} bg="blue.50" borderRadius="xl" border="1px solid" borderColor="blue.200">
+                  <HStack spacing={3} mb={4}>
+                    <Icon as={FaAward} color="blue.600" boxSize={6} />
+                    <Text fontWeight="bold" color="blue.700" fontSize="lg">
+                      Certification & Compliance Goals
+                    </Text>
+                  </HStack>
+
+                  <VStack spacing={4} align="stretch">
+                    <HStack justify="space-between">
+                      <VStack align="start" spacing={1}>
+                        <Text fontWeight="medium" color="blue.700">
+                          Pursue Organic Certification
                         </Text>
-                      )}
-                      <Flex pt={'12px'} mt={'0px !important'}>
-                        <FormInput
-                          fontSize="xs"
-                          label={intl.formatMessage({ id: 'app.date' })}
-                          type="datetime-local"
-                          name="date"
-                          placeholder={intl.formatMessage({ id: 'app.selectDateAndTime' })}
-                        />
-                      </Flex>
-                      {activeButton === 0 ? (
-                        <>
-                          <FormInput
-                            fontSize="xs"
-                            ms="4px"
-                            borderRadius="15px"
-                            type="text"
-                            placeholder={intl.formatMessage({ id: 'app.ageOfPlants' })}
-                            name="age_of_plants"
-                            label={intl.formatMessage({ id: 'app.ageOfPlants' })}
-                          />
-                          <FormInput
-                            fontSize="xs"
-                            ms="4px"
-                            borderRadius="15px"
-                            type="text"
-                            placeholder={intl.formatMessage({ id: 'app.numberOfPlants' })}
-                            name="number_of_plants"
-                            label={intl.formatMessage({ id: 'app.numberOfPlants' })}
-                          />
-                          <FormInput
-                            fontSize="xs"
-                            ms="4px"
-                            borderRadius="15px"
-                            type="text"
-                            placeholder={intl.formatMessage({ id: 'app.averageSoilPH' })}
-                            name="soil_ph"
-                            label={intl.formatMessage({ id: 'app.averageSoilPH' })}
-                          />
-                        </>
-                      ) : activeButton === 1 ? (
-                        <>
-                          <FormInput
-                            fontSize="xs"
-                            ms="4px"
-                            borderRadius="15px"
-                            type="text"
-                            placeholder={intl.formatMessage({ id: 'app.averageSoilPH' })}
-                            name="soil_ph"
-                            label={intl.formatMessage({ id: 'app.averageSoilPH' })}
-                          />
-                        </>
-                      ) : null}
-                      <Flex direction="column" w="80%" pt="10px">
-                        <FormLabel ms="4px" fontSize="xs" fontWeight="bold" mb="4px" pl="12px">
-                          {intl.formatMessage({ id: 'app.whereTheProductionWillBe' })}
-                        </FormLabel>
-                      </Flex>
-                      <Flex w={'100%'} justifyContent={'center'}>
-                        <Flex bg={bgButtonGroup} borderRadius="12px" w={'fit-content'}>
-                          <Button
-                            variant="no-hover"
-                            w="135px"
-                            h="40px"
-                            fontSize="xs"
-                            boxShadow={isOutdoor ? '0px 2px 5.5px rgba(0, 0, 0, 0.06)' : 'none'}
-                            bg={isOutdoor ? bgActiveButton : 'transparent'}
-                            onClick={() => setIsOutdoor(true)}
-                          >
-                            {intl.formatMessage({ id: 'app.outdoor' })}
-                          </Button>
-                          <Button
-                            variant="no-hover"
-                            w="135px"
-                            h="40px"
-                            fontSize="xs"
-                            boxShadow={!isOutdoor ? '0px 2px 5.5px rgba(0, 0, 0, 0.06)' : 'none'}
-                            bg={!isOutdoor ? bgActiveButton : 'transparent'}
-                            onClick={() => setIsOutdoor(false)}
-                          >
-                            {intl.formatMessage({ id: 'app.indoor' })}
-                          </Button>
-                        </Flex>
-                      </Flex>
-                      <Flex gap={'25px'} justifyContent={'flex-end'}>
-                        <Button
-                          variant="no-hover"
-                          bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
-                          alignSelf="flex-end"
-                          mt="24px"
-                          w="fit-content"
-                          h="35px"
-                          type="submit"
-                        >
-                          <Text fontSize="xs" color="#fff" fontWeight="bold">
-                            {intl.formatMessage({ id: 'app.saveAndAddANewEvent' })}
+                        <Text fontSize="sm" color="blue.600">
+                          Meet USDA organic standards for premium carbon credits
+                        </Text>
+                      </VStack>
+                      <Switch
+                        isChecked={watch('organicCertificationGoal')}
+                        onChange={(e) => setValue('organicCertificationGoal', e.target.checked)}
+                        colorScheme="blue"
+                        size="lg"
+                      />
+                    </HStack>
+
+                    <HStack justify="space-between">
+                      <VStack align="start" spacing={1}>
+                        <Text fontWeight="medium" color="blue.700">
+                          Plan Carbon Offset Purchases
+                        </Text>
+                        <Text fontSize="sm" color="blue.600">
+                          Budget for carbon offsets if targets are not met
+                        </Text>
+                      </VStack>
+                      <Switch
+                        isChecked={watch('carbonOffsetPlanning')}
+                        onChange={(e) => setValue('carbonOffsetPlanning', e.target.checked)}
+                        colorScheme="blue"
+                        size="lg"
+                      />
+                    </HStack>
+                  </VStack>
+                </Box>
+
+                {/* Carbon Impact Preview */}
+                {(() => {
+                  const preview = calculateCarbonPreview();
+                  return preview ? (
+                    <Box p={6} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
+                      <HStack spacing={3} mb={4}>
+                        <Icon as={FaChartLine} color="green.600" boxSize={6} />
+                        <Text fontWeight="bold" color="green.700" fontSize="lg">
+                          Carbon Impact Preview
+                        </Text>
+                      </HStack>
+                      <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
+                        <VStack>
+                          <Text fontSize="2xl" fontWeight="bold" color="gray.700">
+                            {Math.round(preview.baselineEmissions)}
                           </Text>
-                        </Button>
-                        <Button
-                          variant="no-hover"
-                          bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
-                          alignSelf="flex-end"
-                          mt="24px"
-                          w="100px"
-                          h="35px"
-                          type="submit"
-                        >
-                          <Text fontSize="xs" color="#fff" fontWeight="bold">
-                            {intl.formatMessage({ id: 'app.save' })}
+                          <Text fontSize="sm" color="gray.600" textAlign="center">
+                            Baseline Emissions (kg CO2e)
                           </Text>
-                        </Button>
-                      </Flex>
-                    </Stack>
-                  </form>
-                </FormProvider>
-              </CardBody>
-            </Card>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-    </Flex>
+                        </VStack>
+                        <VStack>
+                          <Text fontSize="2xl" fontWeight="bold" color="green.600">
+                            {Math.round(preview.projectedEmissions)}
+                          </Text>
+                          <Text fontSize="sm" color="gray.600" textAlign="center">
+                            Projected Emissions (kg CO2e)
+                          </Text>
+                        </VStack>
+                        <VStack>
+                          <Text fontSize="2xl" fontWeight="bold" color="blue.600">
+                            {Math.round(preview.carbonSavings)}
+                          </Text>
+                          <Text fontSize="sm" color="gray.600" textAlign="center">
+                            Carbon Savings (kg CO2e)
+                          </Text>
+                        </VStack>
+                        <VStack>
+                          <Text fontSize="2xl" fontWeight="bold" color="purple.600">
+                            {preview.reductionPercentage}%
+                          </Text>
+                          <Text fontSize="sm" color="gray.600" textAlign="center">
+                            Reduction Target
+                          </Text>
+                        </VStack>
+                      </SimpleGrid>
+                    </Box>
+                  ) : null;
+                })()}
+
+                {/* Navigation */}
+                <HStack spacing={3} justify="space-between" pt={4}>
+                  <StandardButton
+                    variant="outline"
+                    leftIcon={<FaChevronLeft />}
+                    onClick={previousStep}
+                  >
+                    Back to Product
+                  </StandardButton>
+                  <HStack spacing={3}>
+                    <StandardButton variant="outline" onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`)}>
+                      Cancel
+                    </StandardButton>
+                    <StandardButton
+                      onClick={nextStep}
+                      rightIcon={<FaChevronRight />}
+                      disabled={!isStepComplete(1)}
+                    >
+                      Continue to Details
+                    </StandardButton>
+                  </HStack>
+                </HStack>
+              </VStack>
+            </StandardCard>
+          )}
+
+          {/* Step 2: Production Details */}
+          {currentStep === 2 && (
+            <StandardCard
+              title="Production Details"
+              subtitle="Set the date, environment, and agricultural methods"
+            >
+              <VStack spacing={6} align="stretch">
+                {/* Date Selection */}
+                <StandardField
+                  label="Production Date"
+                  required
+                  error={errors.date?.message}
+                  helpText="When did this production start?"
+                >
+                  <Input
+                    {...methods.register('date', {
+                      required: 'Production date is required'
+                    })}
+                    type="datetime-local"
+                    borderRadius="lg"
+                    borderColor="gray.300"
+                    _hover={{ borderColor: 'green.400' }}
+                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                    size="lg"
+                  />
+                </StandardField>
+
+                {/* Environment Selection */}
+                <StandardField label="Growing Environment" helpText="Indoor or outdoor cultivation">
+                  <StandardSelectionGrid
+                    options={environmentOptions}
+                    selectedValue={watch('isOutdoor') ? 'outdoor' : 'indoor'}
+                    onSelect={(value) => setValue('isOutdoor', value === 'outdoor')}
+                    columns={{ base: 'repeat(2, 1fr)' }}
+                    size="md"
+                  />
+                </StandardField>
+
+                {/* Agricultural Methods */}
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                  <StandardField
+                    label="Production Method"
+                    helpText="Choose your agricultural approach"
+                  >
+                    <StandardSelect
+                      value={watch('productionMethod')}
+                      onChange={(e) => setValue('productionMethod', e.target.value)}
+                      placeholder="Select method"
+                    >
+                      {productionMethodOptions.map((method) => (
+                        <option key={method.value} value={method.value}>
+                          {method.label}
+                        </option>
+                      ))}
+                    </StandardSelect>
+                  </StandardField>
+
+                  <StandardField
+                    label="Irrigation Method"
+                    helpText="Water management approach"
+                  >
+                    <StandardSelect
+                      value={watch('irrigationMethod')}
+                      onChange={(e) => setValue('irrigationMethod', e.target.value)}
+                      placeholder="Select irrigation"
+                    >
+                      {irrigationMethodOptions.map((irrigation) => (
+                        <option key={irrigation.value} value={irrigation.value}>
+                          {irrigation.label}
+                        </option>
+                      ))}
+                    </StandardSelect>
+                  </StandardField>
+                </SimpleGrid>
+
+                {/* Optional Plant Details */}
+                <Box p={6} bg="gray.50" borderRadius="xl">
+                  <Text fontWeight="semibold" mb={4} color="gray.700">
+                    Optional Plant Details (can be updated later)
+                  </Text>
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                    <StandardField
+                      label="Age of Plants (days)"
+                      helpText="0 for new plantings"
+                    >
+                      <NumberInput
+                        value={watch('ageOfPlants') || 0}
+                        onChange={(_, num) => setValue('ageOfPlants', num || 0)}
+                        min={0}
+                      >
+                        <NumberInputField borderRadius="lg" />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
+                    </StandardField>
+
+                    <StandardField
+                      label="Number of Plants"
+                      helpText="Approximate count"
+                    >
+                      <NumberInput
+                        value={watch('numberOfPlants') || 0}
+                        onChange={(_, num) => setValue('numberOfPlants', num || 0)}
+                        min={0}
+                      >
+                        <NumberInputField borderRadius="lg" />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
+                    </StandardField>
+
+                    <StandardField
+                      label="Soil pH"
+                      helpText="7.0 is neutral"
+                    >
+                      <NumberInput
+                        value={watch('soilPh') || 7.0}
+                        onChange={(_, num) => setValue('soilPh', num || 7.0)}
+                        min={1}
+                        max={14}
+                        step={0.1}
+                        precision={1}
+                      >
+                        <NumberInputField borderRadius="lg" />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
+                    </StandardField>
+                  </SimpleGrid>
+                </Box>
+
+                {/* Navigation */}
+                <HStack spacing={3} justify="space-between" pt={4}>
+                  <StandardButton
+                    variant="outline"
+                    leftIcon={<FaChevronLeft />}
+                    onClick={previousStep}
+                  >
+                    Back to Carbon Goals
+                  </StandardButton>
+                  <HStack spacing={3}>
+                    <StandardButton variant="outline" onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`)}>
+                      Cancel
+                    </StandardButton>
+                    <StandardButton
+                      onClick={nextStep}
+                      rightIcon={<FaChevronRight />}
+                      disabled={!isStepComplete(2)}
+                    >
+                      Review & Create
+                    </StandardButton>
+                  </HStack>
+                </HStack>
+              </VStack>
+            </StandardCard>
+          )}
+
+          {/* Step 3: Review & Create */}
+          {currentStep === 3 && (
+            <StandardCard
+              title="Review & Create Production"
+              subtitle="Review your settings and create the production with carbon goals"
+            >
+              <VStack spacing={6} align="stretch">
+                {/* Production Summary */}
+                <Box p={6} bg="green.50" borderRadius="xl" border="2px solid" borderColor="green.200">
+                  <HStack spacing={3} mb={4}>
+                    <Icon as={FaCheckCircle} color="green.500" boxSize={6} />
+                    <Text fontWeight="bold" color="green.700" fontSize="lg">
+                      Production Summary
+                    </Text>
+                  </HStack>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} fontSize="sm">
+                    <HStack>
+                      <Icon as={FaSeedling} color="green.600" />
+                      <Text>
+                        <Text as="span" fontWeight="semibold">Crop:</Text> {selectedProduct?.label || 'Not selected'}
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Icon as={watch('type') === 'OR' ? FaLeaf : FaTractor} color="green.600" />
+                      <Text>
+                        <Text as="span" fontWeight="semibold">Method:</Text> {watch('type') === 'OR' ? 'Organic' : 'General Agriculture'}
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Icon as={watch('isOutdoor') ? MdLocalFlorist : MdHome} color="green.600" />
+                      <Text>
+                        <Text as="span" fontWeight="semibold">Environment:</Text> {watch('isOutdoor') ? 'Outdoor' : 'Indoor/Greenhouse'}
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Icon as={FaCalendarAlt} color="green.600" />
+                      <Text>
+                        <Text as="span" fontWeight="semibold">Start:</Text> {watch('date') ? new Date(watch('date')).toLocaleDateString() : 'Not set'}
+                      </Text>
+                    </HStack>
+                  </SimpleGrid>
+                </Box>
+
+                {/* Carbon Goals Summary */}
+                <Box p={6} bg="blue.50" borderRadius="xl" border="1px solid" borderColor="blue.200">
+                  <HStack spacing={3} mb={4}>
+                    <Icon as={FaTarget} color="blue.600" boxSize={6} />
+                    <Text fontWeight="bold" color="blue.700" fontSize="lg">
+                      Carbon Goals
+                    </Text>
+                  </HStack>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} fontSize="sm">
+                    <HStack>
+                      <Icon as={MdTrendingDown} color="blue.600" />
+                      <Text>
+                        <Text as="span" fontWeight="semibold">Carbon Reduction:</Text> {watch('carbonReductionTarget') || 0}%
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Icon as={FaCalculator} color="blue.600" />
+                      <Text>
+                        <Text as="span" fontWeight="semibold">Sustainability Score:</Text> {watch('sustainabilityScore') || 0}/100
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Icon as={MdEco} color="blue.600" />
+                      <Text>
+                        <Text as="span" fontWeight="semibold">Renewable Energy:</Text> {watch('renewableEnergyTarget') || 0}%
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Icon as={FaWater} color="blue.600" />
+                      <Text>
+                        <Text as="span" fontWeight="semibold">Water Efficiency:</Text> {watch('waterEfficiencyGoal') || 0}% improvement
+                      </Text>
+                    </HStack>
+                  </SimpleGrid>
+                </Box>
+
+                {/* Next Steps */}
+                <StandardAlert
+                  status="info"
+                  title="Next Steps"
+                  description="After creating this production, you can start adding events and tracking your progress toward these carbon goals."
+                />
+
+                {/* Final Navigation */}
+                <HStack spacing={3} justify="space-between" pt={4}>
+                  <StandardButton
+                    variant="outline"
+                    leftIcon={<FaChevronLeft />}
+                    onClick={previousStep}
+                  >
+                    Back to Details
+                  </StandardButton>
+                  <HStack spacing={3}>
+                    <StandardButton variant="outline" onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`)}>
+                      Cancel
+                    </StandardButton>
+                    <StandardButton
+                      onClick={handleSaveOnly}
+                      variant="secondary"
+                      type="submit"
+                      isLoading={isLoading}
+                      loadingText="Creating..."
+                    >
+                      Save Production
+                    </StandardButton>
+                    <StandardButton
+                      onClick={handleSaveAndAddEvent}
+                      type="submit"
+                      isLoading={isLoading}
+                      loadingText="Creating..."
+                      leftIcon={<FaCheckCircle />}
+                    >
+                      Save & Add Event
+                    </StandardButton>
+                  </HStack>
+                </HStack>
+              </VStack>
+            </StandardCard>
+          )}
+        </form>
+      </FormProvider>
+    </StandardPage>
   );
-}
+};
 
 export default NewProduction;

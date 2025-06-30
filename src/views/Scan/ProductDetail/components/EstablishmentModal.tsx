@@ -29,12 +29,12 @@ import {
   Avatar,
   Button,
   useBreakpointValue,
+  Wrap,
+  WrapItem,
   Progress,
   Tag,
   TagLabel,
-  TagLeftIcon,
-  Wrap,
-  WrapItem
+  TagLeftIcon
 } from '@chakra-ui/react';
 import {
   FaIndustry,
@@ -80,9 +80,13 @@ interface EstablishmentModalProps {
     email?: string;
     phone?: string;
     zip_code?: string;
-    facebook?: string;
-    instagram?: string;
     certifications?: string;
+    // New operational agricultural fields
+    water_sources?: string[];
+    climate_zone?: string;
+    soil_types?: string[];
+    conservation_practices?: string[];
+    irrigation_methods?: string[];
     about?: string;
     main_activities?: string;
     location_highlights?: string;
@@ -167,7 +171,8 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                     fontSize="xs"
                     px={2}
                     py={1}
-                    borderRadius="full">
+                    borderRadius="full"
+                  >
                     {establishmentData.establishment_type}
                   </Badge>
                 )}
@@ -178,7 +183,8 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                     fontSize="xs"
                     px={2}
                     py={1}
-                    borderRadius="full">
+                    borderRadius="full"
+                  >
                     {establishmentData.farming_method}
                   </Badge>
                 )}
@@ -189,7 +195,8 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                     fontSize="xs"
                     px={2}
                     py={1}
-                    borderRadius="full">
+                    borderRadius="full"
+                  >
                     Active
                   </Badge>
                 )}
@@ -331,7 +338,8 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                       <Icon as={FaPhone} color={accentColor} />
                       <Link
                         href={`tel:${establishmentData.phone || establishmentData.contact_phone}`}
-                        color={textColor}>
+                        color={textColor}
+                      >
                         {establishmentData.phone || establishmentData.contact_phone}
                       </Link>
                     </HStack>
@@ -343,7 +351,8 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                         href={`mailto:${
                           establishmentData.email || establishmentData.contact_email
                         }`}
-                        color={textColor}>
+                        color={textColor}
+                      >
                         {establishmentData.email || establishmentData.contact_email}
                       </Link>
                     </HStack>
@@ -395,7 +404,8 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                                   colorScheme="green"
                                   variant="subtle"
                                   borderRadius="full"
-                                  size="md">
+                                  size="md"
+                                >
                                   <TagLeftIcon as={FaSeedling} />
                                   <TagLabel>{crop}</TagLabel>
                                 </Tag>
@@ -442,7 +452,8 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                                   colorScheme="blue"
                                   variant="subtle"
                                   borderRadius="full"
-                                  size="md">
+                                  size="md"
+                                >
                                   <TagLeftIcon as={FaLeaf} />
                                   <TagLabel>{practice}</TagLabel>
                                 </Tag>
@@ -503,7 +514,8 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                 bg={useColorModeValue('blue.50', 'blue.900')}
                 borderRadius="lg"
                 border="1px"
-                borderColor="blue.200">
+                borderColor="blue.200"
+              >
                 <CardBody p={6}>
                   <HStack mb={3}>
                     <Icon as={FaCheckCircle} color="blue.500" />
@@ -518,39 +530,92 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
               </Card>
             )}
 
-            {/* Social Media */}
-            {(establishmentData.facebook || establishmentData.instagram) && (
+            {/* Operational Details */}
+            {(establishmentData.water_sources?.length ||
+              establishmentData.climate_zone ||
+              establishmentData.soil_types?.length ||
+              establishmentData.conservation_practices?.length ||
+              establishmentData.irrigation_methods?.length) && (
               <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
                 <CardBody p={6}>
                   <Heading size="md" color={textColor} mb={4}>
-                    Connect With Us
+                    <HStack>
+                      <Icon as={FaTractor} color={accentColor} />
+                      <Text>Operational Details</Text>
+                    </HStack>
                   </Heading>
-                  <HStack spacing={4}>
-                    {establishmentData.facebook && (
-                      <Button
-                        as={Link}
-                        href={establishmentData.facebook}
-                        isExternal
-                        leftIcon={<FaFacebook />}
-                        colorScheme="facebook"
-                        variant="outline"
-                        size="sm">
-                        Facebook
-                      </Button>
+                  <VStack spacing={4} align="stretch">
+                    {establishmentData.climate_zone && (
+                      <Box>
+                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
+                          Climate Zone
+                        </Text>
+                        <Badge colorScheme="blue" p={2} borderRadius="md">
+                          {establishmentData.climate_zone}
+                        </Badge>
+                      </Box>
                     )}
-                    {establishmentData.instagram && (
-                      <Button
-                        as={Link}
-                        href={establishmentData.instagram}
-                        isExternal
-                        leftIcon={<FaInstagram />}
-                        colorScheme="pink"
-                        variant="outline"
-                        size="sm">
-                        Instagram
-                      </Button>
+
+                    {establishmentData.water_sources?.length > 0 && (
+                      <Box>
+                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
+                          Water Sources
+                        </Text>
+                        <Wrap spacing={2}>
+                          {establishmentData.water_sources.map((source, index) => (
+                            <Badge key={index} colorScheme="cyan" p={2} borderRadius="md">
+                              {source}
+                            </Badge>
+                          ))}
+                        </Wrap>
+                      </Box>
                     )}
-                  </HStack>
+
+                    {establishmentData.soil_types?.length > 0 && (
+                      <Box>
+                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
+                          Soil Types
+                        </Text>
+                        <Wrap spacing={2}>
+                          {establishmentData.soil_types.map((soil, index) => (
+                            <Badge key={index} colorScheme="orange" p={2} borderRadius="md">
+                              {soil}
+                            </Badge>
+                          ))}
+                        </Wrap>
+                      </Box>
+                    )}
+
+                    {establishmentData.conservation_practices?.length > 0 && (
+                      <Box>
+                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
+                          Conservation Practices
+                        </Text>
+                        <Wrap spacing={2}>
+                          {establishmentData.conservation_practices.map((practice, index) => (
+                            <Badge key={index} colorScheme="green" p={2} borderRadius="md">
+                              {practice}
+                            </Badge>
+                          ))}
+                        </Wrap>
+                      </Box>
+                    )}
+
+                    {establishmentData.irrigation_methods?.length > 0 && (
+                      <Box>
+                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
+                          Irrigation Methods
+                        </Text>
+                        <Wrap spacing={2}>
+                          {establishmentData.irrigation_methods.map((method, index) => (
+                            <Badge key={index} colorScheme="blue" p={2} borderRadius="md">
+                              {method}
+                            </Badge>
+                          ))}
+                        </Wrap>
+                      </Box>
+                    )}
+                  </VStack>
                 </CardBody>
               </Card>
             )}
@@ -590,7 +655,8 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                         border="1px"
                         borderColor={borderColor}
                         borderRadius="md"
-                        bg={useColorModeValue('white', 'gray.800')}>
+                        bg={useColorModeValue('white', 'gray.800')}
+                      >
                         <HStack justify="space-between">
                           <Text fontWeight="medium" color={textColor}>
                             {parcel.name}

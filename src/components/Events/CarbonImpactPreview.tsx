@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import {
   Box,
   Text,
@@ -61,7 +61,7 @@ interface CarbonImpactPreviewProps {
   isCalculating?: boolean;
 }
 
-export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = ({
+export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(({
   eventType,
   formData,
   calculation,
@@ -74,31 +74,41 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = ({
 
   const [showDetails, setShowDetails] = useState(false);
 
-  // Helper function to get carbon score color
-  const getCarbonScoreColor = (score: number) => {
+  // Memoized helper functions to prevent re-creation on every render
+  const getCarbonScoreColor = useMemo(() => (score: number) => {
     if (score >= 80) return 'green';
     if (score >= 60) return 'yellow';
     if (score >= 40) return 'orange';
     return 'red';
-  };
+  }, []);
 
-  // Helper function to get impact level
-  const getImpactLevel = (co2e: number) => {
+  const getImpactLevel = useMemo(() => (co2e: number) => {
     if (co2e === 0) return { level: 'None', color: 'gray' };
     if (co2e <= 5) return { level: 'Very Low', color: 'green' };
     if (co2e <= 15) return { level: 'Low', color: 'yellow' };
     if (co2e <= 30) return { level: 'Moderate', color: 'orange' };
     if (co2e <= 60) return { level: 'High', color: 'red' };
     return { level: 'Very High', color: 'red' };
-  };
+  }, []);
 
-  const formatCO2e = (amount: number) => {
+  const formatCO2e = useMemo(() => (amount: number) => {
     if (amount === 0) return '0';
     if (amount < 0.1) return '< 0.1';
     if (amount < 1) return amount.toFixed(2);
     if (amount < 10) return amount.toFixed(1);
     return Math.round(amount).toString();
-  };
+  }, []);
+
+  // Memoized calculations to prevent recalculation unless calculation changes
+  const { impactLevel, efficiencyColor, formattedCO2e } = useMemo(() => {
+    if (!calculation) return { impactLevel: null, efficiencyColor: null, formattedCO2e: null };
+    
+    return {
+      impactLevel: getImpactLevel(calculation.co2e),
+      efficiencyColor: getCarbonScoreColor(calculation.efficiency_score),
+      formattedCO2e: formatCO2e(calculation.co2e)
+    };
+  }, [calculation, getImpactLevel, getCarbonScoreColor, formatCO2e]);
 
   if (!calculation && !isCalculating) {
     return (
@@ -132,9 +142,6 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = ({
 
   if (!calculation) return null;
 
-  const impactLevel = getImpactLevel(calculation.co2e);
-  const efficiencyColor = getCarbonScoreColor(calculation.efficiency_score);
-
   return (
     <Card size="sm" bg={bgColor} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
       <CardHeader pb={2}>
@@ -165,7 +172,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = ({
             <VStack spacing={0} align="start">
               <HStack spacing={2}>
                 <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                  {formatCO2e(calculation.co2e)}
+                  {formattedCO2e}
                 </Text>
                 <Text fontSize="sm" color="gray.500">
                   kg CO₂e
@@ -335,4 +342,16 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = ({
       </CardBody>
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo
+  // Only re-render if calculation data or isCalculating state actually changes
+  return (
+    prevProps.isCalculating === nextProps.isCalculating &&
+    prevProps.calculation?.co2e === nextProps.calculation?.co2e &&
+    prevProps.calculation?.efficiency_score === nextProps.calculation?.efficiency_score &&
+    prevProps.calculation?.usda_verified === nextProps.calculation?.usda_verified &&
+    JSON.stringify(prevProps.calculation?.recommendations) === JSON.stringify(nextProps.calculation?.recommendations) &&
+    JSON.stringify(prevProps.calculation?.cost_analysis) === JSON.stringify(nextProps.calculation?.cost_analysis) &&
+    JSON.stringify(prevProps.calculation?.breakdown) === JSON.stringify(nextProps.calculation?.breakdown)
+  );
+});

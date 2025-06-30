@@ -91,8 +91,6 @@ const establishmentSchema = object({
   main_activities: string().optional(),
   location_highlights: string().optional(),
   custom_message: string().optional(),
-  facebook: string().optional(),
-  instagram: string().optional(),
   establishmentType: string().optional(),
   farmingMethod: string().optional(),
   totalAcreage: number().min(0, 'Acreage must be positive').optional(),
@@ -112,7 +110,13 @@ const establishmentSchema = object({
   contact_person: string().optional(),
   contact_phone: string().optional(),
   contact_email: string().optional(),
-  images: array(string()).optional()
+  images: array(string()).optional(),
+  // New operational agricultural fields
+  waterSources: array(string()).optional(),
+  climateZone: string().optional(),
+  soilTypes: array(string()).optional(),
+  conservationPractices: array(string()).optional(),
+  irrigationMethods: array(string()).optional()
 });
 
 interface EstablishmentFormData {
@@ -130,8 +134,6 @@ interface EstablishmentFormData {
   main_activities?: string;
   location_highlights?: string;
   custom_message?: string;
-  facebook?: string;
-  instagram?: string;
   establishmentType?: string;
   farmingMethod?: string;
   totalAcreage?: number;
@@ -148,6 +150,12 @@ interface EstablishmentFormData {
   contact_phone?: string;
   contact_email?: string;
   images?: string[];
+  // New operational agricultural fields
+  waterSources?: string[];
+  climateZone?: string;
+  soilTypes?: string[];
+  conservationPractices?: string[];
+  irrigationMethods?: string[];
 }
 
 interface StandardEstablishmentFormProps {
@@ -171,6 +179,11 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
   const [newCrop, setNewCrop] = useState('');
   const [newCertification, setNewCertification] = useState('');
   const [newPractice, setNewPractice] = useState('');
+  // New operational field states
+  const [newWaterSource, setNewWaterSource] = useState('');
+  const [newSoilType, setNewSoilType] = useState('');
+  const [newConservationPractice, setNewConservationPractice] = useState('');
+  const [newIrrigationMethod, setNewIrrigationMethod] = useState('');
   const intl = useIntl();
   const toast = useToast();
   const { uploadMultipleFiles } = useFileUpload();
@@ -200,6 +213,11 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
       sustainabilityPractices: [],
       employeeCount: 0,
       totalAcreage: 0,
+      // New operational field defaults
+      waterSources: [],
+      soilTypes: [],
+      conservationPractices: [],
+      irrigationMethods: [],
       ...initialData
     }
   });
@@ -377,6 +395,71 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
     setValue(
       'sustainabilityPractices',
       currentPractices.filter((_, i) => i !== index)
+    );
+  };
+
+  // New operational field helpers
+  const addWaterSource = () => {
+    if (newWaterSource.trim()) {
+      const currentSources = watch('waterSources') || [];
+      setValue('waterSources', [...currentSources, newWaterSource.trim()]);
+      setNewWaterSource('');
+    }
+  };
+
+  const removeWaterSource = (index: number) => {
+    const currentSources = watch('waterSources') || [];
+    setValue(
+      'waterSources',
+      currentSources.filter((_, i) => i !== index)
+    );
+  };
+
+  const addSoilType = () => {
+    if (newSoilType.trim()) {
+      const currentTypes = watch('soilTypes') || [];
+      setValue('soilTypes', [...currentTypes, newSoilType.trim()]);
+      setNewSoilType('');
+    }
+  };
+
+  const removeSoilType = (index: number) => {
+    const currentTypes = watch('soilTypes') || [];
+    setValue(
+      'soilTypes',
+      currentTypes.filter((_, i) => i !== index)
+    );
+  };
+
+  const addConservationPractice = () => {
+    if (newConservationPractice.trim()) {
+      const currentPractices = watch('conservationPractices') || [];
+      setValue('conservationPractices', [...currentPractices, newConservationPractice.trim()]);
+      setNewConservationPractice('');
+    }
+  };
+
+  const removeConservationPractice = (index: number) => {
+    const currentPractices = watch('conservationPractices') || [];
+    setValue(
+      'conservationPractices',
+      currentPractices.filter((_, i) => i !== index)
+    );
+  };
+
+  const addIrrigationMethod = () => {
+    if (newIrrigationMethod.trim()) {
+      const currentMethods = watch('irrigationMethods') || [];
+      setValue('irrigationMethods', [...currentMethods, newIrrigationMethod.trim()]);
+      setNewIrrigationMethod('');
+    }
+  };
+
+  const removeIrrigationMethod = (index: number) => {
+    const currentMethods = watch('irrigationMethods') || [];
+    setValue(
+      'irrigationMethods',
+      currentMethods.filter((_, i) => i !== index)
     );
   };
 
@@ -649,57 +732,6 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                           {...field}
                           type="tel"
                           placeholder="(555) 123-4567"
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                          size="lg"
-                        />
-                      )}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Social Media */}
-                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={6} mb={2}>
-                  Social Media (Optional)
-                </Text>
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="Facebook Page"
-                    error={errors.facebook?.message}
-                    helpText="Facebook page URL"
-                  >
-                    <Controller
-                      name="facebook"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          placeholder="https://facebook.com/greenvalleyfarm"
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                          size="lg"
-                        />
-                      )}
-                    />
-                  </StandardField>
-
-                  <StandardField
-                    label="Instagram Profile"
-                    error={errors.instagram?.message}
-                    helpText="Instagram profile URL"
-                  >
-                    <Controller
-                      name="instagram"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          placeholder="https://instagram.com/greenvalleyfarm"
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
@@ -1296,6 +1328,246 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                                     );
                                   }}
                                 />
+                              </Tag>
+                            ))}
+                          </HStack>
+                        ) : null}
+                      </VStack>
+                    )}
+                  />
+                </StandardField>
+
+                {/* Operational Details */}
+                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={6} mb={2}>
+                  Operational Details
+                </Text>
+                <Text fontSize="sm" color="gray.600" mb={4}>
+                  Provide details about your agricultural operations, resources, and methods.
+                </Text>
+
+                {/* Climate Zone */}
+                <StandardField
+                  label="Climate Zone"
+                  error={errors.climateZone?.message}
+                  helpText="Climate zone or growing region classification"
+                >
+                  <Controller
+                    name="climateZone"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <Select
+                        {...field}
+                        placeholder="Select climate zone..."
+                        borderRadius="lg"
+                        borderColor="gray.300"
+                        _hover={{ borderColor: 'green.400' }}
+                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                        size="lg"
+                      >
+                        <option value="temperate_oceanic">Temperate Oceanic</option>
+                        <option value="mediterranean">Mediterranean</option>
+                        <option value="humid_subtropical">Humid Subtropical</option>
+                        <option value="semi_arid">Semi-Arid</option>
+                        <option value="arid">Arid</option>
+                        <option value="continental">Continental</option>
+                        <option value="tropical">Tropical</option>
+                        <option value="montane">Montane</option>
+                      </Select>
+                    )}
+                  />
+                </StandardField>
+
+                {/* Water Sources */}
+                <StandardField
+                  label="Water Sources"
+                  helpText="Primary water sources for your operations"
+                >
+                  <Controller
+                    name="waterSources"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <VStack align="stretch" spacing={3}>
+                        <HStack>
+                          <Input
+                            value={newWaterSource}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              setNewWaterSource(e.target.value);
+                            }}
+                            placeholder="e.g., Well water, Surface water, Irrigation district"
+                            onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addWaterSource();
+                              }
+                            }}
+                            borderRadius="lg"
+                            borderColor="gray.300"
+                            _hover={{ borderColor: 'green.400' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            size="lg"
+                          />
+                          <StandardButton onClick={addWaterSource} leftIcon={<FaPlus />} size="sm">
+                            Add
+                          </StandardButton>
+                        </HStack>
+                        {field.value?.length ? (
+                          <HStack spacing={2} flexWrap="wrap">
+                            {field.value.map((source, index) => (
+                              <Tag key={index} size="md" variant="solid" colorScheme="cyan">
+                                <TagLabel>{source}</TagLabel>
+                                <TagCloseButton onClick={() => removeWaterSource(index)} />
+                              </Tag>
+                            ))}
+                          </HStack>
+                        ) : null}
+                      </VStack>
+                    )}
+                  />
+                </StandardField>
+
+                {/* Soil Types */}
+                <StandardField
+                  label="Soil Types"
+                  helpText="Primary soil types present on your establishment"
+                >
+                  <Controller
+                    name="soilTypes"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <VStack align="stretch" spacing={3}>
+                        <HStack>
+                          <Input
+                            value={newSoilType}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              setNewSoilType(e.target.value);
+                            }}
+                            placeholder="e.g., Clay loam, Sandy soil, Silt"
+                            onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addSoilType();
+                              }
+                            }}
+                            borderRadius="lg"
+                            borderColor="gray.300"
+                            _hover={{ borderColor: 'green.400' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            size="lg"
+                          />
+                          <StandardButton onClick={addSoilType} leftIcon={<FaPlus />} size="sm">
+                            Add
+                          </StandardButton>
+                        </HStack>
+                        {field.value?.length ? (
+                          <HStack spacing={2} flexWrap="wrap">
+                            {field.value.map((soil, index) => (
+                              <Tag key={index} size="md" variant="solid" colorScheme="brown">
+                                <TagLabel>{soil}</TagLabel>
+                                <TagCloseButton onClick={() => removeSoilType(index)} />
+                              </Tag>
+                            ))}
+                          </HStack>
+                        ) : null}
+                      </VStack>
+                    )}
+                  />
+                </StandardField>
+
+                {/* Conservation Practices */}
+                <StandardField
+                  label="Conservation Practices"
+                  helpText="Conservation and environmental practices implemented"
+                >
+                  <Controller
+                    name="conservationPractices"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <VStack align="stretch" spacing={3}>
+                        <HStack>
+                          <Input
+                            value={newConservationPractice}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              setNewConservationPractice(e.target.value);
+                            }}
+                            placeholder="e.g., Cover crops, Buffer strips, Contour farming"
+                            onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addConservationPractice();
+                              }
+                            }}
+                            borderRadius="lg"
+                            borderColor="gray.300"
+                            _hover={{ borderColor: 'green.400' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            size="lg"
+                          />
+                          <StandardButton
+                            onClick={addConservationPractice}
+                            leftIcon={<FaPlus />}
+                            size="sm"
+                          >
+                            Add
+                          </StandardButton>
+                        </HStack>
+                        {field.value?.length ? (
+                          <HStack spacing={2} flexWrap="wrap">
+                            {field.value.map((practice, index) => (
+                              <Tag key={index} size="md" variant="solid" colorScheme="green">
+                                <TagLabel>{practice}</TagLabel>
+                                <TagCloseButton onClick={() => removeConservationPractice(index)} />
+                              </Tag>
+                            ))}
+                          </HStack>
+                        ) : null}
+                      </VStack>
+                    )}
+                  />
+                </StandardField>
+
+                {/* Irrigation Methods */}
+                <StandardField
+                  label="Irrigation Methods"
+                  helpText="Irrigation techniques and methods used"
+                >
+                  <Controller
+                    name="irrigationMethods"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <VStack align="stretch" spacing={3}>
+                        <HStack>
+                          <Input
+                            value={newIrrigationMethod}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              setNewIrrigationMethod(e.target.value);
+                            }}
+                            placeholder="e.g., Drip irrigation, Sprinkler, Flood irrigation"
+                            onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addIrrigationMethod();
+                              }
+                            }}
+                            borderRadius="lg"
+                            borderColor="gray.300"
+                            _hover={{ borderColor: 'green.400' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            size="lg"
+                          />
+                          <StandardButton
+                            onClick={addIrrigationMethod}
+                            leftIcon={<FaPlus />}
+                            size="sm"
+                          >
+                            Add
+                          </StandardButton>
+                        </HStack>
+                        {field.value?.length ? (
+                          <HStack spacing={2} flexWrap="wrap">
+                            {field.value.map((method, index) => (
+                              <Tag key={index} size="md" variant="solid" colorScheme="blue">
+                                <TagLabel>{method}</TagLabel>
+                                <TagCloseButton onClick={() => removeIrrigationMethod(index)} />
                               </Tag>
                             ))}
                           </HStack>

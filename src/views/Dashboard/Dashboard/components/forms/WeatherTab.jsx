@@ -15,6 +15,14 @@ import {
   HStack,
   Box
 } from '@chakra-ui/react';
+import {
+  StandardCard,
+  StandardButton,
+  StandardField,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
 // Custom components
@@ -22,7 +30,6 @@ import React, { useState, useEffect } from 'react';
 import { number, object, string } from 'zod';
 
 import { FaPlus } from 'react-icons/fa';
-import FormInput from 'components/Forms/FormInput';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
@@ -52,7 +59,7 @@ const formSchemaMainInfo = object({
   observation: string().optional()
 });
 
-const WeatherTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
+const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
   const intl = useIntl();
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -130,6 +137,50 @@ const WeatherTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
 
   const type = watch('type', '');
 
+  // Watch critical fields for real-time carbon calculation updates
+  const watchedFields = watch([
+    'type',
+    'lower_temperature',
+    'highest_temperature',
+    'water_deficit',
+    'duration'
+  ]);
+
+  // Real-time field watching for carbon calculation updates
+  useEffect(() => {
+    console.log('[WeatherTab]: Field watching triggered', { 
+      hasOnDataChange: !!onDataChange, 
+      watchedFields, 
+      firstField: watchedFields[0] 
+    });
+    
+    // Always check if callback exists inside the timeout to avoid stale closures
+    const timeoutId = setTimeout(() => {
+      if (onDataChange && typeof onDataChange === 'function') {
+        const currentValues = mainInfoMethods.getValues();
+        console.log('[WeatherTab]: Current values for carbon calculation', currentValues);
+        
+        // Only trigger if we have meaningful data
+        if (currentValues.type) {
+          console.log('[WeatherTab]: Triggering onDataChange with values', currentValues);
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('[WeatherTab]: Error calling onDataChange:', error);
+          }
+        } else {
+          console.log('[WeatherTab]: Not triggering - insufficient data', {
+            hasType: !!currentValues.type
+          });
+        }
+      } else {
+        console.log('[WeatherTab]: onDataChange not available in timeout');
+      }
+    }, 500); // Debounced to prevent excessive API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedFields, onDataChange, mainInfoMethods]);
+
   const onSubmit = (data) => {
     switch (type) {
       case 'FR':
@@ -181,222 +232,174 @@ const WeatherTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
     <FormProvider {...mainInfoMethods}>
       <form onSubmit={mainInfoSubmit(onSubmit)} style={{ width: '100%' }}>
         <Flex direction="column" w="100%">
-          <Flex gap={'20px'}>
-            <Flex flexDir={'column'} flexGrow={1}>
-              <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                {intl.formatMessage({ id: 'app.type' })}
-              </FormLabel>
-              <ChakraSelect
-                placeholder={intl.formatMessage({ id: 'app.selectOption' })}
-                placeholderTextColor="red"
-                css={{ '&::placeholder': { color: 'red' } }}
-                mb={errors.type ? '12px' : '24px'}
-                borderColor={errors.type && 'red.500'}
-                boxShadow={errors.type && '0 0 0 1px red.500'}
-                borderWidth={errors.type && '2px'}
-                ml="4px"
-                height={'40px'}
-                borderRadius={'15px'}
-                fontSize={'0.875rem'}
-                mt="4px"
-                {...register('type')}
-              >
-                <option value="FR">{intl.formatMessage({ id: 'app.frost' })}</option>
-                <option value="DR">{intl.formatMessage({ id: 'app.drought' })}</option>
-                <option value="HL">{intl.formatMessage({ id: 'app.hailstorms' })}</option>
-                <option value="HT">{intl.formatMessage({ id: 'app.highTemperatures' })}</option>
-                <option value="TS">{intl.formatMessage({ id: 'app.tropicalStorm' })}</option>
-                <option value="HW">{intl.formatMessage({ id: 'app.highWinds' })}</option>
-                <option value="HH">{intl.formatMessage({ id: 'app.highHumidity' })}</option>
-                <option value="LH">{intl.formatMessage({ id: 'app.lowHumidity' })}</option>
-              </ChakraSelect>
-              {errors.type && (
-                <Text fontSize="sm" color="red.500" mt={'0.5rem'}>
-                  {errors.type.message}
-                </Text>
-              )}
-            </Flex>
-          </Flex>
+          <StandardField
+            label={intl.formatMessage({ id: 'app.type' })}
+            required
+            error={errors.type?.message}
+          >
+            <StandardSelect
+              placeholder={intl.formatMessage({ id: 'app.selectOption' })}
+              {...register('type')}
+            >
+              <option value="FR">{intl.formatMessage({ id: 'app.frost' })}</option>
+              <option value="DR">{intl.formatMessage({ id: 'app.drought' })}</option>
+              <option value="HL">{intl.formatMessage({ id: 'app.hailstorms' })}</option>
+              <option value="HT">{intl.formatMessage({ id: 'app.highTemperatures' })}</option>
+              <option value="TS">{intl.formatMessage({ id: 'app.tropicalStorm' })}</option>
+              <option value="HW">{intl.formatMessage({ id: 'app.highWinds' })}</option>
+              <option value="HH">{intl.formatMessage({ id: 'app.highHumidity' })}</option>
+              <option value="LH">{intl.formatMessage({ id: 'app.lowHumidity' })}</option>
+            </StandardSelect>
+          </StandardField>
           {type === 'FR' ? (
             <Flex gap={'20px'}>
-              <FormInput
-                fontSize="xs"
+              <StandardField
                 label={intl.formatMessage({ id: 'app.lowerTemperature' })}
-                ms="4px"
-                borderRadius="15px"
-                type="text"
-                placeholder={intl.formatMessage({ id: 'app.temperature' })}
-                mb="24px"
-                name="lower_temperature"
-              />
-              <FormInput
-                fontSize="xs"
+                flex={1}
+              >
+                <StandardInput
+                  type="text"
+                  placeholder={intl.formatMessage({ id: 'app.temperature' })}
+                  {...register('lower_temperature')}
+                />
+              </StandardField>
+              <StandardField
                 label={intl.formatMessage({ id: 'app.wayOfProtection' })}
-                ms="4px"
-                borderRadius="15px"
-                type="text"
-                placeholder={intl.formatMessage({ id: 'app.notNet' })}
-                mb="24px"
-                name="way_of_protection"
-              />
+                flex={1}
+              >
+                <StandardInput
+                  type="text"
+                  placeholder={intl.formatMessage({ id: 'app.notNet' })}
+                  {...register('way_of_protection')}
+                />
+              </StandardField>
             </Flex>
           ) : type === 'DR' ? (
-            <Flex gap={'20px'}>
-              <FormInput
-                fontSize="xs"
-                label={intl.formatMessage({ id: 'app.accumulatedWaterDeficit' })}
-                ms="4px"
-                borderRadius="15px"
+            <StandardField
+              label={intl.formatMessage({ id: 'app.accumulatedWaterDeficit' })}
+            >
+              <StandardInput
                 type="text"
                 placeholder={intl.formatMessage({ id: 'app.waterDeficit' })}
-                mb="24px"
-                name="water_deficit"
+                {...register('water_deficit')}
               />
-            </Flex>
+            </StandardField>
           ) : type === 'HL' ? (
             <>
               <Flex gap={'20px'}>
-                <FormInput
-                  fontSize="xs"
+                <StandardField
                   label={intl.formatMessage({ id: 'app.averageWeightOfHailstones' })}
-                  ms="4px"
-                  borderRadius="15px"
-                  type="text"
-                  placeholder={intl.formatMessage({ id: 'app.weight' })}
-                  mb="24px"
-                  name="weight"
-                />
-                <FormInput
-                  fontSize="xs"
+                  flex={1}
+                >
+                  <StandardInput
+                    type="text"
+                    placeholder={intl.formatMessage({ id: 'app.weight' })}
+                    {...register('weight')}
+                  />
+                </StandardField>
+                <StandardField
                   label={intl.formatMessage({ id: 'app.averageDiameterOfHailstones' })}
-                  ms="4px"
-                  borderRadius="15px"
-                  type="text"
-                  placeholder={intl.formatMessage({ id: 'app.diameter' })}
-                  mb="24px"
-                  name="diameter"
-                />
+                  flex={1}
+                >
+                  <StandardInput
+                    type="text"
+                    placeholder={intl.formatMessage({ id: 'app.diameter' })}
+                    {...register('diameter')}
+                  />
+                </StandardField>
               </Flex>
               <Flex gap={'20px'}>
-                <FormInput
-                  fontSize="xs"
+                <StandardField
                   label={intl.formatMessage({ id: 'app.duration' })}
-                  ms="4px"
-                  borderRadius="15px"
-                  type="text"
-                  placeholder={intl.formatMessage({ id: 'app.duration' })}
-                  mb="24px"
-                  name="duration"
-                />
-                <FormInput
-                  fontSize="xs"
+                  flex={1}
+                >
+                  <StandardInput
+                    type="text"
+                    placeholder={intl.formatMessage({ id: 'app.duration' })}
+                    {...register('duration')}
+                  />
+                </StandardField>
+                <StandardField
                   label={intl.formatMessage({ id: 'app.wayOfProtection' })}
-                  ms="4px"
-                  borderRadius="15px"
-                  type="text"
-                  placeholder={intl.formatMessage({ id: 'app.wayOfProtection' })}
-                  mb="24px"
-                  name="way_of_protection"
-                />
+                  flex={1}
+                >
+                  <StandardInput
+                    type="text"
+                    placeholder={intl.formatMessage({ id: 'app.wayOfProtection' })}
+                    {...register('way_of_protection')}
+                  />
+                </StandardField>
               </Flex>
             </>
           ) : type === 'HT' ? (
             <Flex gap={'20px'} direction={'column'}>
-              <FormInput
-                fontSize="xs"
+              <StandardField
                 label={intl.formatMessage({ id: 'app.highestTemperature' })}
-                ms="4px"
-                borderRadius="15px"
-                type="text"
-                placeholder={intl.formatMessage({ id: 'app.temperature' })}
-                mb="24px"
-                name="highest_temperature"
-              />
-              <Flex flexDir={'column'}>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
+              >
+                <StandardInput
+                  type="text"
+                  placeholder={intl.formatMessage({ id: 'app.temperature' })}
+                  {...register('highest_temperature')}
+                />
+              </StandardField>
+              <Box>
+                <Text fontSize="sm" fontWeight="semibold" mb={4}>
                   {intl.formatMessage({ id: 'app.timePeriod' })}
-                </FormLabel>
+                </Text>
                 <Flex flexDir={'row'} width={'100%'} gap={'20px'}>
-                  <Flex flexDir={'column'} flexGrow={1}>
-                    <FormLabel ms="4px" fontSize="xs" fontWeight="bold" mb={'0'} textAlign={'end'}>
-                      {intl.formatMessage({ id: 'app.from' })}
-                    </FormLabel>
-                    <FormInput
-                      fontSize="xs"
-                      ms="4px"
-                      borderRadius="15px"
+                  <StandardField
+                    label={intl.formatMessage({ id: 'app.from' })}
+                    flex={1}
+                  >
+                    <StandardInput
                       type="datetime-local"
-                      name="start_date"
                       placeholder={intl.formatMessage({ id: 'app.selectDateAndTime' })}
-                      mb="24px"
+                      {...register('start_date')}
                     />
-                  </Flex>
-                  <Flex flexDir={'column'} flexGrow={1}>
-                    <FormLabel ms="4px" fontSize="xs" fontWeight="bold" mb={'0'} textAlign={'end'}>
-                      {intl.formatMessage({ id: 'app.to' })}
-                    </FormLabel>
-                    <FormInput
-                      fontSize="xs"
-                      ms="4px"
-                      borderRadius="15px"
+                  </StandardField>
+                  <StandardField
+                    label={intl.formatMessage({ id: 'app.to' })}
+                    flex={1}
+                  >
+                    <StandardInput
                       type="datetime-local"
-                      name="end_date"
                       placeholder={intl.formatMessage({ id: 'app.selectDateAndTime' })}
-                      mb="24px"
+                      {...register('end_date')}
                     />
-                  </Flex>
+                  </StandardField>
                 </Flex>
-              </Flex>
+              </Box>
             </Flex>
           ) : (
             <></>
           )}
 
-          <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-            {intl.formatMessage({ id: 'app.observations' })}
-          </FormLabel>
-          <Textarea
-            fontSize="sm"
-            ms="4px"
-            borderRadius="15px"
-            type="text"
-            placeholder={intl.formatMessage({ id: 'app.description' })}
-            mb="24px"
-            size="lg"
-            name="observation"
-            {...register('observation')}
-          />
+          <StandardField
+            label={intl.formatMessage({ id: 'app.observations' })}
+          >
+            <StandardTextarea
+              placeholder={intl.formatMessage({ id: 'app.description' })}
+              {...register('observation')}
+            />
+          </StandardField>
           <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
             <HStack justify="space-between">
-              <Button
+              <StandardButton
                 variant="outline"
                 onClick={onPrev}
                 leftIcon={<FaChevronLeft />}
-                size="md"
-                px={6}
-                h="42px"
-                borderRadius="lg"
-                fontWeight="600"
-                _hover={{ transform: 'translateY(-1px)' }}
-                transition="all 0.3s ease"
+                size="lg"
               >
                 {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </Button>
-              <Button
-                colorScheme="green"
+              </StandardButton>
+              <StandardButton
+                variant="primary"
                 type="submit"
                 rightIcon={<FaChevronRight />}
-                size="md"
-                px={6}
-                h="42px"
-                borderRadius="lg"
-                fontWeight="600"
-                boxShadow="lg"
-                _hover={{ boxShadow: 'xl', transform: 'translateY(-1px)' }}
-                transition="all 0.3s ease"
+                size="lg"
               >
                 {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </Button>
+              </StandardButton>
             </HStack>
           </Box>
         </Flex>

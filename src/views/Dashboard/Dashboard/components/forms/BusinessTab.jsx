@@ -15,11 +15,18 @@ import {
   Textarea,
   useColorModeValue
 } from '@chakra-ui/react';
+import {
+  StandardCard,
+  StandardButton,
+  StandardField,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, number } from 'zod';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import FormInput from 'components/Forms/FormInput';
 import { useIntl } from 'react-intl';
 
 const businessSchema = object({
@@ -35,7 +42,7 @@ const businessSchema = object({
   observation: string().optional()
 });
 
-const BusinessTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
+const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
   const intl = useIntl();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
@@ -76,6 +83,51 @@ const BusinessTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
   const { watch } = methods;
   const businessType = watch('type');
 
+  // Watch critical fields for real-time carbon calculation updates
+  const watchedFields = watch([
+    'type',
+    'revenue_amount',
+    'quantity_sold',
+    'carbon_credits_earned'
+  ]);
+
+  // Real-time field watching for carbon calculation updates
+  useEffect(() => {
+    console.log('[BusinessTab]: Field watching triggered', { 
+      hasOnDataChange: !!onDataChange, 
+      watchedFields, 
+      firstField: watchedFields[0] 
+    });
+    
+    // Always check if callback exists inside the timeout to avoid stale closures
+    const timeoutId = setTimeout(() => {
+      if (onDataChange && typeof onDataChange === 'function') {
+        const currentValues = methods.getValues();
+        console.log('[BusinessTab]: Current values for carbon calculation', currentValues);
+        
+        // Only trigger if we have meaningful data
+        if (currentValues.type && (currentValues.revenue_amount || currentValues.quantity_sold)) {
+          console.log('[BusinessTab]: Triggering onDataChange with values', currentValues);
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('[BusinessTab]: Error calling onDataChange:', error);
+          }
+        } else {
+          console.log('[BusinessTab]: Not triggering - insufficient data', {
+            hasType: !!currentValues.type,
+            hasRevenueAmount: !!currentValues.revenue_amount,
+            hasQuantitySold: !!currentValues.quantity_sold
+          });
+        }
+      } else {
+        console.log('[BusinessTab]: onDataChange not available in timeout');
+      }
+    }, 500); // Debounced to prevent excessive API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedFields, onDataChange, methods]);
+
   const onSubmit = (data) => {
     // Convert string numbers to proper format
     const processedData = {
@@ -93,19 +145,24 @@ const BusinessTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
       <form onSubmit={methods.handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
           {/* Event Name */}
-          <FormInput
+          <StandardField
             label={intl.formatMessage({ id: 'app.eventName' }) || 'Event Name'}
-            name="name"
-            placeholder="e.g., Harvest Sale, Certification Audit"
-            isRequired
-          />
+            required
+            error={methods.formState.errors.name?.message}
+          >
+            <StandardInput
+              {...methods.register('name')}
+              placeholder="e.g., Harvest Sale, Certification Audit"
+            />
+          </StandardField>
 
           {/* Business Event Type */}
-          <FormControl isRequired>
-            <FormLabel fontSize="sm" fontWeight="semibold">
-              {intl.formatMessage({ id: 'app.businessEventType' }) || 'Business Event Type'}
-            </FormLabel>
-            <Select {...methods.register('type')} size="md">
+          <StandardField
+            label={intl.formatMessage({ id: 'app.businessEventType' }) || 'Business Event Type'}
+            required
+            error={methods.formState.errors.type?.message}
+          >
+            <StandardSelect {...methods.register('type')}>
               <option value="HS">
                 {intl.formatMessage({ id: 'app.harvestSale' }) || 'Harvest Sale'}
               </option>
@@ -125,8 +182,8 @@ const BusinessTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
               <option value="CM">
                 {intl.formatMessage({ id: 'app.compliance' }) || 'Compliance'}
               </option>
-            </Select>
-          </FormControl>
+            </StandardSelect>
+          </StandardField>
 
           {/* Sale Details */}
           {businessType === 'HS' && (
@@ -145,29 +202,34 @@ const BusinessTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
                   </NumberInput>
                 </FormControl>
 
-                <FormInput
+                <StandardField
                   label={intl.formatMessage({ id: 'app.quantitySold' }) || 'Quantity Sold'}
-                  name="quantity_sold"
-                  placeholder="e.g., 100 kg"
-                />
+                >
+                  <StandardInput
+                    {...methods.register('quantity_sold')}
+                    placeholder="e.g., 100 kg"
+                  />
+                </StandardField>
               </HStack>
 
-              <FormInput
+              <StandardField
                 label={intl.formatMessage({ id: 'app.buyerName' }) || 'Buyer Name'}
-                name="buyer_name"
-                placeholder="Enter buyer company or individual name"
-              />
+              >
+                <StandardInput
+                  {...methods.register('buyer_name')}
+                  placeholder="Enter buyer company or individual name"
+                />
+              </StandardField>
             </>
           )}
 
           {/* Certification Details */}
           {businessType === 'CE' && (
             <>
-              <FormControl>
-                <FormLabel fontSize="sm" fontWeight="semibold">
-                  {intl.formatMessage({ id: 'app.certificationType' }) || 'Certification Type'}
-                </FormLabel>
-                <Select {...methods.register('certification_type')}>
+              <StandardField
+                label={intl.formatMessage({ id: 'app.certificationType' }) || 'Certification Type'}
+              >
+                <StandardSelect {...methods.register('certification_type')}>
                   <option value="">
                     {intl.formatMessage({ id: 'app.selectCertificationType' }) ||
                       'Select certification type'}
@@ -193,8 +255,8 @@ const BusinessTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
                   <option value="other">
                     {intl.formatMessage({ id: 'app.other' }) || 'Other'}
                   </option>
-                </Select>
-              </FormControl>
+                </StandardSelect>
+              </StandardField>
 
               <FormControl>
                 <FormLabel fontSize="sm" fontWeight="semibold">
@@ -218,17 +280,19 @@ const BusinessTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
           {/* Inspection Details */}
           {(businessType === 'IN' || businessType === 'CM') && (
             <>
-              <FormInput
+              <StandardField
                 label={intl.formatMessage({ id: 'app.inspectorName' }) || 'Inspector Name'}
-                name="inspector_name"
-                placeholder="Enter inspector or auditor name"
-              />
+              >
+                <StandardInput
+                  {...methods.register('inspector_name')}
+                  placeholder="Enter inspector or auditor name"
+                />
+              </StandardField>
 
-              <FormControl>
-                <FormLabel fontSize="sm" fontWeight="semibold">
-                  {intl.formatMessage({ id: 'app.complianceStatus' }) || 'Compliance Status'}
-                </FormLabel>
-                <Select {...methods.register('compliance_status')}>
+              <StandardField
+                label={intl.formatMessage({ id: 'app.complianceStatus' }) || 'Compliance Status'}
+              >
+                <StandardSelect {...methods.register('compliance_status')}>
                   <option value="">
                     {intl.formatMessage({ id: 'app.selectComplianceStatus' }) ||
                       'Select compliance status'}
@@ -245,67 +309,55 @@ const BusinessTab = ({ onSubmitHandler, onPrev, initialValues = {} }) => {
                   <option value="pending">
                     {intl.formatMessage({ id: 'app.pending' }) || 'Pending'}
                   </option>
-                </Select>
-              </FormControl>
+                </StandardSelect>
+              </StandardField>
             </>
           )}
 
           {/* Contract Details */}
           {businessType === 'CT' && (
-            <FormInput
+            <StandardField
               label={intl.formatMessage({ id: 'app.buyerName' }) || 'Contract Party'}
-              name="buyer_name"
-              placeholder="Enter contract party name"
-            />
+            >
+              <StandardInput
+                {...methods.register('buyer_name')}
+                placeholder="Enter contract party name"
+              />
+            </StandardField>
           )}
 
           {/* Observations */}
-          <FormControl>
-            <FormLabel fontSize="sm" fontWeight="semibold">
-              {intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-            </FormLabel>
-            <Textarea
+          <StandardField
+            label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
+          >
+            <StandardTextarea
               {...methods.register('observation')}
               placeholder={
                 intl.formatMessage({ id: 'app.enterObservations' }) ||
                 'Enter any additional observations...'
               }
               rows={3}
-              resize="vertical"
             />
-          </FormControl>
+          </StandardField>
 
           {/* Action Buttons */}
           <HStack justify="space-between" pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-            <Button
+            <StandardButton
               variant="outline"
               onClick={onPrev}
               leftIcon={<FaChevronLeft />}
-              size="md"
-              px={6}
-              h="42px"
-              borderRadius="lg"
-              fontWeight="600"
-              _hover={{ transform: 'translateY(-1px)' }}
-              transition="all 0.3s ease"
+              size="lg"
             >
               {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-            </Button>
-            <Button
-              colorScheme="green"
+            </StandardButton>
+            <StandardButton
+              variant="primary"
               type="submit"
               rightIcon={<FaChevronRight />}
-              size="md"
-              px={6}
-              h="42px"
-              borderRadius="lg"
-              fontWeight="600"
-              boxShadow="lg"
-              _hover={{ boxShadow: 'xl', transform: 'translateY(-1px)' }}
-              transition="all 0.3s ease"
+              size="lg"
             >
               {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-            </Button>
+            </StandardButton>
           </HStack>
         </VStack>
       </form>

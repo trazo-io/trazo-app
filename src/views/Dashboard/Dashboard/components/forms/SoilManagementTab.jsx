@@ -27,6 +27,14 @@ import {
   FormErrorMessage
 } from '@chakra-ui/react';
 import {
+  StandardCard,
+  StandardButton,
+  StandardField,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
+import {
   FaChevronLeft,
   FaChevronRight,
   FaSeedling,
@@ -38,7 +46,6 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, number } from 'zod';
 import { FaPlus } from 'react-icons/fa';
-import FormInput from 'components/Forms/FormInput';
 import { useIntl } from 'react-intl';
 
 const formSchemaSoilManagement = object({
@@ -124,6 +131,7 @@ const getSoilManagementDefaults = (soilType) => {
 
 const SoilManagementTab = ({
   onSubmitHandler,
+  onDataChange,
   onPrev,
   initialValues = {},
   cropType = 'citrus'
@@ -181,6 +189,52 @@ const SoilManagementTab = ({
   } = methods;
 
   const watchedType = watch('type');
+
+  // Watch critical fields for real-time carbon calculation updates
+  const watchedFields = watch([
+    'type',
+    'area',
+    'area_unit',
+    'soil_ph',
+    'organic_matter_percentage',
+    'depth'
+  ]);
+
+  // Real-time field watching for carbon calculation updates
+  useEffect(() => {
+    console.log('[SoilManagementTab]: Field watching triggered', { 
+      hasOnDataChange: !!onDataChange, 
+      watchedFields, 
+      firstField: watchedFields[0] 
+    });
+    
+    // Always check if callback exists inside the timeout to avoid stale closures
+    const timeoutId = setTimeout(() => {
+      if (onDataChange && typeof onDataChange === 'function') {
+        const currentValues = methods.getValues();
+        console.log('[SoilManagementTab]: Current values for carbon calculation', currentValues);
+        
+        // Only trigger if we have meaningful data
+        if (currentValues.type && currentValues.area) {
+          console.log('[SoilManagementTab]: Triggering onDataChange with values', currentValues);
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('[SoilManagementTab]: Error calling onDataChange:', error);
+          }
+        } else {
+          console.log('[SoilManagementTab]: Not triggering - insufficient data', {
+            hasType: !!currentValues.type,
+            hasArea: !!currentValues.area
+          });
+        }
+      } else {
+        console.log('[SoilManagementTab]: onDataChange not available in timeout');
+      }
+    }, 500); // Debounced to prevent excessive API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedFields, onDataChange, methods]);
 
   useEffect(() => {
     if (watchedType && watchedType !== selectedSoilType) {
@@ -245,25 +299,20 @@ const SoilManagementTab = ({
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <FormControl isInvalid={!!errors.type}>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  {intl.formatMessage({ id: 'app.soilManagementType' }) || 'Soil Management Type'} *
-                </FormLabel>
-                <ChakraSelect
+              <StandardField
+                label={`${intl.formatMessage({ id: 'app.soilManagementType' }) || 'Soil Management Type'} *`}
+                required
+                error={errors.type?.message}
+              >
+                <StandardSelect
                   placeholder="Select soil management type"
-                  ml="4px"
-                  height={'40px'}
-                  borderRadius={'15px'}
-                  fontSize={'0.875rem'}
-                  mb="24px"
                   {...register('type')}
                 >
                   <option value="ST">Soil Testing</option>
                   <option value="PA">Planting/Amendment</option>
                   <option value="TI">Tillage</option>
-                </ChakraSelect>
-                <FormErrorMessage>{errors.type?.message}</FormErrorMessage>
-              </FormControl>
+                </StandardSelect>
+              </StandardField>
 
               <FormControl>
                 <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
@@ -303,62 +352,49 @@ const SoilManagementTab = ({
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <FormControl isInvalid={!!errors.area}>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Area Managed *
-                </FormLabel>
+              <StandardField
+                label="Area Managed *"
+                required
+                error={errors.area?.message}
+              >
                 <HStack spacing={2}>
-                  <Input
+                  <StandardInput
                     flex={2}
-                    ms="4px"
-                    borderRadius="15px"
                     type="number"
                     step="0.1"
                     placeholder="2.0"
-                    mb="24px"
                     {...register('area')}
                   />
-                  <ChakraSelect
+                  <StandardSelect
                     flex={1}
-                    height={'40px'}
-                    borderRadius={'15px'}
-                    mb="24px"
                     {...register('area_unit')}
                   >
                     <option value="hectares">Hectares</option>
                     <option value="acres">Acres</option>
-                  </ChakraSelect>
+                  </StandardSelect>
                 </HStack>
-                <FormErrorMessage>{errors.area?.message}</FormErrorMessage>
-              </FormControl>
+              </StandardField>
 
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Working Depth
-                </FormLabel>
+              <StandardField
+                label="Working Depth"
+              >
                 <HStack spacing={2}>
-                  <Input
+                  <StandardInput
                     flex={2}
-                    ms="4px"
-                    borderRadius="15px"
                     type="number"
                     step="1"
                     placeholder="30"
-                    mb="24px"
                     {...register('depth')}
                   />
-                  <ChakraSelect
+                  <StandardSelect
                     flex={1}
-                    height={'40px'}
-                    borderRadius={'15px'}
-                    mb="24px"
                     {...register('depth_unit')}
                   >
                     <option value="cm">Centimeters</option>
                     <option value="inches">Inches</option>
-                  </ChakraSelect>
+                  </StandardSelect>
                 </HStack>
-              </FormControl>
+              </StandardField>
             </SimpleGrid>
           </Box>
 
@@ -434,121 +470,85 @@ const SoilManagementTab = ({
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Weather Conditions
-                </FormLabel>
-                <Input
-                  ms="4px"
-                  borderRadius="15px"
+              <StandardField
+                label="Weather Conditions"
+                helpText="Weather during soil management affects carbon impact"
+              >
+                <StandardInput
                   type="text"
                   placeholder="e.g., dry, workable conditions"
-                  mb="24px"
                   {...register('weather_conditions')}
                 />
-                <Text fontSize="xs" color="gray.500" mt="-20px" mb="20px" ml="4px">
-                  Weather during soil management affects carbon impact
-                </Text>
-              </FormControl>
+              </StandardField>
 
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Temperature Range
-                </FormLabel>
-                <Input
-                  ms="4px"
-                  borderRadius="15px"
+              <StandardField
+                label="Temperature Range"
+              >
+                <StandardInput
                   type="text"
                   placeholder="e.g., 18-25°C or 65-77°F"
-                  mb="24px"
                   {...register('temperature_range')}
                 />
-              </FormControl>
+              </StandardField>
             </SimpleGrid>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Soil Moisture
-                </FormLabel>
-                <ChakraSelect
+              <StandardField
+                label="Soil Moisture"
+              >
+                <StandardSelect
                   placeholder="Select soil moisture"
-                  ml="4px"
-                  height={'40px'}
-                  borderRadius={'15px'}
-                  fontSize={'0.875rem'}
-                  mb="24px"
                   {...register('soil_moisture')}
                 >
                   <option value="dry">Dry</option>
                   <option value="moderate">Moderate</option>
                   <option value="moist">Moist</option>
                   <option value="wet">Wet</option>
-                </ChakraSelect>
-              </FormControl>
+                </StandardSelect>
+              </StandardField>
 
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Equipment Used
-                </FormLabel>
-                <Input
-                  ms="4px"
-                  borderRadius="15px"
+              <StandardField
+                label="Equipment Used"
+              >
+                <StandardInput
                   type="text"
                   placeholder="e.g., tractor with disc harrow, soil auger"
-                  mb="24px"
                   {...register('equipment_used')}
                 />
-              </FormControl>
+              </StandardField>
             </SimpleGrid>
           </Box>
 
           <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-              {intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-            </FormLabel>
-            <Textarea
-              fontSize="xs"
-              ms="4px"
-              borderRadius="15px"
-              placeholder="Optional: Additional notes about soil conditions, management goals, etc."
-              mb="24px"
-              rows={3}
-              {...register('observation')}
-            />
+            <StandardField
+              label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
+            >
+              <StandardTextarea
+                placeholder="Optional: Additional notes about soil conditions, management goals, etc."
+                rows={3}
+                {...register('observation')}
+              />
+            </StandardField>
           </Box>
 
           <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
             <HStack justify="space-between">
-              <Button
+              <StandardButton
                 variant="outline"
                 onClick={onPrev}
                 leftIcon={<FaChevronLeft />}
-                size="md"
-                px={6}
-                h="42px"
-                borderRadius="lg"
-                fontWeight="600"
-                _hover={{ transform: 'translateY(-1px)' }}
-                transition="all 0.3s ease"
+                size="lg"
               >
                 {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </Button>
-              <Button
-                colorScheme="green"
+              </StandardButton>
+              <StandardButton
+                variant="primary"
                 type="submit"
                 rightIcon={<FaChevronRight />}
-                size="md"
-                px={6}
-                h="42px"
-                borderRadius="lg"
-                fontWeight="600"
-                boxShadow="lg"
-                _hover={{ boxShadow: 'xl', transform: 'translateY(-1px)' }}
-                transition="all 0.3s ease"
+                size="lg"
               >
                 {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </Button>
+              </StandardButton>
             </HStack>
           </Box>
         </Flex>

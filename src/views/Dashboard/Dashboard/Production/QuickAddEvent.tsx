@@ -120,7 +120,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const { data: cropTypesData } = useGetCropTypesDropdownQuery();
 
   // Real USDA data for enhanced suggestions
-  const farmState = 'CA'; // TODO: Get from establishment data
+  // Get state from establishment data or default to user's company location
+  const farmState =
+    currentCompany?.establishments?.[0]?.state || currentUser?.company?.state || 'CA'; // Fallback if no establishment data available
 
   // Real USDA API queries for enhanced event suggestions
   const { data: realUSDAData } = useGetUSDAEmissionFactorsQuery(
@@ -1169,8 +1171,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         <ModalBody
           flex="1"
           overflowY="auto"
-          pb={selectedTemplate && !showDetailedForm ? '120px' : '4'}
-        >
+          pb={selectedTemplate && !showDetailedForm ? '120px' : '4'}>
           {showDetailedForm ? (
             // DETAILED FORM VIEW
             <VStack spacing={6} align="stretch">
@@ -1271,8 +1272,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                 <Button
                   variant="outline"
                   onClick={handleBackToTemplates}
-                  leftIcon={<FaArrowLeft />}
-                >
+                  leftIcon={<FaArrowLeft />}>
                   Back to Templates
                 </Button>
                 <Button
@@ -1280,8 +1280,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                   colorScheme="green"
                   onClick={handleDetailedCreate}
                   isLoading={isCreating}
-                  loadingText="Creating Detailed Event..."
-                >
+                  loadingText="Creating Detailed Event...">
                   Create Detailed Event
                 </Button>
               </HStack>
@@ -1309,8 +1308,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                       </Text>
                       <Badge
                         colorScheme={aiSuggestionsData?.ai_confidence ? 'purple' : 'blue'}
-                        size="sm"
-                      >
+                        size="sm">
                         {aiSuggestionsData?.ai_confidence ? 'OpenAI Powered' : 'AI Powered'}
                       </Badge>
                       {isLoadingAISuggestions && (
@@ -1336,8 +1334,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                             borderRadius="md"
                             borderWidth="1px"
                             borderColor="purple.200"
-                            bg="purple.50"
-                          >
+                            bg="purple.50">
                             <VStack spacing={2}>
                               <Skeleton height="20px" width="80%" />
                               <Skeleton height="16px" width="60%" />
@@ -1381,8 +1378,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                   ? 'purple.300'
                                   : 'blue.300'
                               }}
-                              transition="all 0.2s"
-                            >
+                              transition="all 0.2s">
                               <HStack>
                                 <Icon as={template.icon} boxSize={4} />
                                 {template.id.startsWith('ai-') && (
@@ -1397,8 +1393,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                   fontWeight="bold"
                                   noOfLines={2}
                                   maxW="180px"
-                                  color={isSelected ? 'purple.700' : undefined}
-                                >
+                                  color={isSelected ? 'purple.700' : undefined}>
                                   {template.name}
                                 </Text>
                                 <HStack spacing={1}>
@@ -1410,8 +1405,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                         ? 'red'
                                         : 'orange'
                                     }
-                                    size="xs"
-                                  >
+                                    size="xs">
                                     {template.carbonImpact > 0 ? '+' : ''}
                                     {template.carbonImpact} kg CO₂
                                   </Badge>
@@ -1419,8 +1413,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                     <Badge
                                       colorScheme={isSelected ? 'purple' : 'gray'}
                                       size="xs"
-                                      variant={isSelected ? 'solid' : 'outline'}
-                                    >
+                                      variant={isSelected ? 'solid' : 'outline'}>
                                       {Math.round((template as any).confidence)}%
                                     </Badge>
                                   )}
@@ -1443,8 +1436,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                         bg="purple.50"
                         borderRadius="md"
                         borderWidth="1px"
-                        borderColor="purple.200"
-                      >
+                        borderColor="purple.200">
                         <VStack spacing={2} align="start">
                           <HStack>
                             <Icon as={FaLightbulb} color="purple.500" boxSize={4} />
@@ -1499,8 +1491,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                       leftIcon={<FaMicrophone />}
                       colorScheme="blue"
                       onClick={() => setShowVoiceCapture(true)}
-                      size="lg"
-                    >
+                      size="lg">
                       Start Voice Input
                     </Button>
                   </VStack>
@@ -1561,8 +1552,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                             transform: 'translateY(-2px)',
                             boxShadow: 'md'
                           }}
-                          transition="all 0.2s"
-                        >
+                          transition="all 0.2s">
                           <VStack spacing={3} align="start">
                             <HStack justify="space-between" width="100%">
                               <HStack>
@@ -1583,8 +1573,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                     ? 'yellow'
                                     : 'green'
                                 }
-                                size="xs"
-                              >
+                                size="xs">
                                 {template.carbonImpact} kg CO₂
                               </Badge>
                             </HStack>
@@ -1662,8 +1651,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                               transform: 'translateY(-2px)',
                               boxShadow: 'md'
                             }}
-                            transition="all 0.2s"
-                          >
+                            transition="all 0.2s">
                             <VStack spacing={3} align="start">
                               <HStack justify="space-between" width="100%">
                                 <HStack>
@@ -1684,8 +1672,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                       ? 'yellow'
                                       : 'green'
                                   }
-                                  size="xs"
-                                >
+                                  size="xs">
                                   {template.carbonImpact} kg CO₂
                                 </Badge>
                               </HStack>
@@ -1740,8 +1727,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
             borderTop="1px solid"
             borderColor="gray.200"
             p={4}
-            boxShadow="0 -4px 12px rgba(0, 0, 0, 0.1)"
-          >
+            boxShadow="0 -4px 12px rgba(0, 0, 0, 0.1)">
             <VStack spacing={3}>
               <HStack justify="space-between" width="100%">
                 <VStack align="start" spacing={0}>
@@ -1766,8 +1752,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                   isLoading={isCreating}
                   loadingText="Creating Carbon Event..."
                   leftIcon={<Icon as={FaSeedling} />}
-                  size="md"
-                >
+                  size="md">
                   Quick Create Event
                 </Button>
                 <Button variant="outline" colorScheme="green" onClick={handleShowDetails} size="md">
