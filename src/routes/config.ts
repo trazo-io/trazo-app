@@ -51,7 +51,7 @@ export const routeConfig: AppConfig = {
       signup: SignUpConsumer,
       verifyEmail: VerifyEmailConsumer
     },
-    defaultRedirect: '/admin/dashboard/scans',
+    defaultRedirect: '/admin/dashboard/impact',
     protected: {
       path: '/admin/dashboard',
       roles: [CONSUMER, SUPERUSER, PRODUCER]

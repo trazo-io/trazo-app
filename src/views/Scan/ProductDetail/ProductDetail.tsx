@@ -31,6 +31,8 @@ import {
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
+import { setAuthRedirectAction } from '../../../utils/authRedirect';
 import { MdTimeline } from 'react-icons/md';
 import {
   FaLeaf,
@@ -65,7 +67,6 @@ import {
 } from './components';
 
 // Other components
-import { ModernProductionJourney } from '../../../components/ProductDetail/ModernProductionJourney';
 import { ProgressiveQRLoader } from './components/ProgressiveQRLoader';
 import { usePointsStore } from '../../../store/pointsStore';
 import USDACredibilityBadge from '../../../components/Carbon/USDACredibilityBadge';
@@ -573,6 +574,42 @@ function ProductDetail() {
   const intl = useIntl();
   const pointsStore = usePointsStore();
 
+  // Get authentication state from Redux store (same as Authenticated component)
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const currentUser = useSelector((state) => state.userState.user);
+  
+  // Helper function to check if user might be authenticated via cookies
+  const checkAuthFromCookies = () => {
+    // Check for common auth-related cookies that might indicate authentication
+    const cookieString = document.cookie;
+    console.log('🔍 All cookies:', cookieString);
+    
+    // Look for session-related cookies that might indicate authentication
+    const hasSessionCookie = cookieString.includes('sessionid') || 
+                            cookieString.includes('csrftoken') ||
+                            cookieString.includes('auth') ||
+                            cookieString.includes('user');
+    
+    console.log('🔍 Has session-related cookies:', hasSessionCookie);
+    return hasSessionCookie;
+  };
+  
+  // For public routes, check multiple sources for authentication
+  const hasAuthCookies = checkAuthFromCookies();
+  const finalIsAuthenticated = Boolean(currentUser?.id) || hasAuthCookies;
+  const finalCurrentUser = currentUser;
+  
+  // Get full Redux state for debugging
+  const fullReduxState = useSelector((state) => state);
+  
+  // Debug: Check if component is loading
+  console.log('🔍 ProductDetail component loaded with productionId:', productionId);
+  console.log('🔍 Redux Authentication state:', isAuthenticated);
+  console.log('🔍 Redux Current user:', currentUser);
+  console.log('🔍 Has auth cookies:', hasAuthCookies);
+  console.log('🔍 FINAL Authentication state:', finalIsAuthenticated);
+  console.log('🔍 FINAL Current user:', finalCurrentUser);
+
   // Theme colors
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const textColor = useColorModeValue('gray.800', 'white');
@@ -759,30 +796,6 @@ function ProductDetail() {
           bg={useColorModeValue('white', 'gray.800')}
         >
           <CardHeader mb="24px">
-            <HStack spacing={3} flexWrap="wrap">
-              <Badge colorScheme="green" fontSize="md" px={3} py={1} borderRadius="full">
-                {intl.formatMessage({ id: 'app.verified' }) || 'Verificado'}
-              </Badge>
-
-              {/* Enhanced USDA Credibility Badge */}
-              {(completeData as any)?.establishment?.id && (
-                <VStack spacing={2}>
-                  <USDACredibilityBadge
-                    establishmentId={(completeData as any).establishment.id}
-                    compact={true}
-                    showDetails={true}
-                  />
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    colorScheme="green"
-                    onClick={() => handleEducationOpen('usda-methodology')}
-                  >
-                    Learn about USDA standards
-                  </Button>
-                </VStack>
-              )}
-            </HStack>
 
             <HStack mt={4} spacing={4} align="center">
               <Heading color={textColor} fontSize={headerFontSize} fontWeight="bold">
@@ -862,10 +875,30 @@ function ProductDetail() {
 
               {/* Right Column - Modern Sidebar */}
               <ModernSidebar
-                isAuthenticated={false}
+                isAuthenticated={finalIsAuthenticated}
                 productName={completeData?.farmer?.name || completeData?.product?.name}
                 carbonScore={completeData?.carbonScore || 0}
-                onAuthPrompt={() => navigate('/auth/signin')}
+                onAuthPrompt={() => {
+                  console.log('🔍 SIDEBAR BUTTON CLICKED');
+                  console.log('🔍 Redux isAuthenticated:', isAuthenticated);
+                  console.log('🔍 Redux currentUser:', currentUser);
+                  console.log('🔍 FINAL isAuthenticated:', finalIsAuthenticated);
+                  console.log('🔍 FINAL currentUser:', finalCurrentUser);
+                  
+                  if (finalIsAuthenticated) {
+                    // User is already logged in, go directly to review page
+                    const reviewUrl = `/admin/dashboard/production/${productionId}/review/web-${Date.now()}`;
+                    console.log('🔍 User already authenticated, navigating directly to:', reviewUrl);
+                    navigate(reviewUrl);
+                  } else {
+                    // User not logged in, store action and redirect to auth
+                    console.log('🔍 User not authenticated, storing action and redirecting to auth');
+                    if (productionId) {
+                      setAuthRedirectAction(productionId);
+                    }
+                    navigate('/consumer/auth/signin');
+                  }
+                }}
                 onNavigateToAchievements={() => navigate('/achievements')}
               />
             </SimpleGrid>

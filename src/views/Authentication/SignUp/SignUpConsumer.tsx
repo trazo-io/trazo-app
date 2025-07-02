@@ -106,7 +106,7 @@ export default function SignUpConsumer() {
         pb="0px"
       >
         <Text fontSize={{ base: '24px', md: '34px' }} color="white" mb="14px" fontWeight="bold">
-          Welcome to Trazo!
+          Join the Carbon Transparency Movement
         </Text>
         <Text
           fontSize={{ base: '16px', md: '18px' }}
@@ -116,7 +116,7 @@ export default function SignUpConsumer() {
           mb="84px"
           maxW="550px"
         >
-          Create your account to start reviewing products
+          Create your account to discover carbon footprints and make informed sustainable choices
         </Text>
       </Flex>
       <Flex alignItems="center" justifyContent="center" mb="60px" mt="20px">

@@ -20,8 +20,15 @@ import {
 } from '@chakra-ui/react';
 import { FaGoogle, FaFacebook, FaApple, FaEnvelope, FaLock } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { useLoginMutation } from '../../../store/api/authApi';
+import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
+import { 
+  handleGoogleSignIn, 
+  handleFacebookSignIn, 
+  handleAppleSignIn, 
+  handleSocialAuthError,
+  checkSocialAuthConfig 
+} from '../../../utils/socialAuth';
 
 // No assets needed for minimalist design
 
@@ -38,6 +45,7 @@ const AppSignIn: React.FC = () => {
   const dispatch = useDispatch();
   const toast = useToast();
   const [login, { isLoading }] = useLoginMutation();
+  const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
@@ -69,14 +77,102 @@ const AppSignIn: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    toast({
-      title: 'Coming Soon',
-      description: `${provider} login will be available soon.`,
-      status: 'info',
-      duration: 3000,
-      isClosable: true
-    });
+  const handleSocialLoginSuccess = async (authData: any) => {
+    try {
+      setError(null);
+      const response = await socialAuth(authData).unwrap();
+
+      dispatch(loginAction(response));
+
+      toast({
+        title: 'Welcome!',
+        description: 'You have successfully signed in.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+
+      navigate('/admin/dashboard');
+    } catch (err: any) {
+      const errorMessage = err?.data?.error || 'Social authentication failed';
+      setError(errorMessage);
+      handleSocialAuthError(new Error(errorMessage), authData.provider);
+    }
+  };
+
+  const handleSocialLoginError = (error: Error, provider: string) => {
+    console.error(`${provider} auth error:`, error);
+    handleSocialAuthError(error, provider);
+  };
+
+  const handleSocialLogin = async (provider: string) => {
+    // Check if social auth is configured
+    const config = checkSocialAuthConfig();
+    
+    switch (provider) {
+      case 'Google':
+        if (!config.google) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Google sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleGoogleSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Google'),
+          4 // Producer user type
+        );
+        break;
+      
+      case 'Facebook':
+        if (!config.facebook) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Facebook sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleFacebookSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Facebook'),
+          4 // Producer user type
+        );
+        break;
+      
+      case 'Apple':
+        if (!config.apple) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Apple sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleAppleSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Apple'),
+          4 // Producer user type
+        );
+        break;
+      
+      default:
+        toast({
+          title: 'Error',
+          description: 'Unknown social login provider.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true
+        });
+    }
   };
 
   return (
@@ -359,8 +455,8 @@ const AppSignIn: React.FC = () => {
                   fontSize="md"
                   fontWeight="600"
                   borderRadius="xl"
-                  isLoading={isLoading}
-                  loadingText="Signing in..."
+                  isLoading={isLoading || isSocialLoading}
+                  loadingText={isSocialLoading ? "Authenticating..." : "Signing in..."}
                   _hover={{
                     transform: 'translateY(-1px)',
                     boxShadow: '0 10px 25px rgba(5, 150, 105, 0.2)'
@@ -405,6 +501,7 @@ const AppSignIn: React.FC = () => {
                     borderColor={useColorModeValue('gray.200', 'gray.600')}
                     borderRadius="xl"
                     onClick={() => handleSocialLogin(social.name)}
+                    isDisabled={isLoading || isSocialLoading}
                     _hover={{
                       bg: useColorModeValue('gray.100', 'gray.600'),
                       borderColor: useColorModeValue('gray.300', 'gray.500'),

@@ -175,7 +175,7 @@ export default function ConsumerDashboardView() {
                 <Icon as={FaLeaf} boxSize={10} />
               </Circle>
               <Heading size={isMobile ? 'lg' : 'xl'} color={mainText} fontWeight="bold">
-                Welcome to Trazo
+                Your Carbon Transparency Impact
               </Heading>
               <Text
                 fontSize={isMobile ? 'md' : 'lg'}
@@ -183,7 +183,7 @@ export default function ConsumerDashboardView() {
                 textAlign="center"
                 maxW="600px"
               >
-                Track your sustainability impact and earn rewards for making eco-friendly choices
+                Discover carbon footprints, support sustainable farms, and make informed choices that drive agricultural transparency
               </Text>
             </VStack>
           </Box>
@@ -201,7 +201,7 @@ export default function ConsumerDashboardView() {
                       {userStats.totalScans}
                     </Text>
                     <Text fontSize="sm" color="gray.600">
-                      Products Scanned
+                      Carbon Footprints Discovered
                     </Text>
                   </VStack>
                 </VStack>
@@ -219,7 +219,7 @@ export default function ConsumerDashboardView() {
                       {userStats.totalPoints}
                     </Text>
                     <Text fontSize="sm" color="gray.600">
-                      Green Points
+                      Transparency Points
                     </Text>
                   </VStack>
                 </VStack>
@@ -255,7 +255,7 @@ export default function ConsumerDashboardView() {
                       {userStats.level}
                     </Text>
                     <Text fontSize="sm" color="gray.600">
-                      Eco Level
+                      Transparency Level
                     </Text>
                   </VStack>
                 </VStack>
@@ -277,7 +277,7 @@ export default function ConsumerDashboardView() {
                     </Text>
                   </VStack>
                   <Badge colorScheme="green" fontSize="md" px={3} py={1}>
-                    Eco Warrior
+                    Carbon Transparency Advocate
                   </Badge>
                 </HStack>
                 <Progress
@@ -299,7 +299,7 @@ export default function ConsumerDashboardView() {
                 <CardHeader>
                   <HStack spacing={3}>
                     <Icon as={FaEye} color="blue.500" boxSize={5} />
-                    <Heading size="md">Recent Scans</Heading>
+                    <Heading size="md">Carbon Discoveries</Heading>
                   </HStack>
                 </CardHeader>
                 <CardBody>
@@ -380,8 +380,8 @@ export default function ConsumerDashboardView() {
                     flexDirection="column"
                     onClick={() => (window.location.href = '/scan')}
                   >
-                    <Text>Scan Product</Text>
-                    <Text fontSize="xs">+5 points</Text>
+                    <Text>Discover Carbon Story</Text>
+                    <Text fontSize="xs">Drive transparency</Text>
                   </Button>
 
                   <Button
@@ -392,8 +392,8 @@ export default function ConsumerDashboardView() {
                     height="80px"
                     flexDirection="column"
                   >
-                    <Text>View Impact</Text>
-                    <Text fontSize="xs">See your stats</Text>
+                    <Text>Carbon Impact</Text>
+                    <Text fontSize="xs">Your transparency journey</Text>
                   </Button>
 
                   <Button
@@ -404,8 +404,8 @@ export default function ConsumerDashboardView() {
                     height="80px"
                     flexDirection="column"
                   >
-                    <Text>Rewards</Text>
-                    <Text fontSize="xs">Redeem points</Text>
+                    <Text>Learn More</Text>
+                    <Text fontSize="xs">Carbon education</Text>
                   </Button>
                 </SimpleGrid>
               </VStack>

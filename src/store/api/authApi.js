@@ -1,4 +1,4 @@
-import { LOGIN_URL, SIGNUP_URL, USER_DATA_URL, VERIFY_EMAIL_URL } from '../../config';
+import { LOGIN_URL, SIGNUP_URL, USER_DATA_URL, VERIFY_EMAIL_URL, SOCIAL_AUTH_URL } from '../../config';
 
 import baseApi from './baseApi';
 import { setCompany } from 'store/features/companySlice';
@@ -75,6 +75,34 @@ const authApi = baseApi.injectEndpoints({
         };
       }
     }),
+    socialAuth: build.mutation({
+      query: ({ provider, access_token, id_token, user_type, user }) => ({
+        url: SOCIAL_AUTH_URL,
+        method: 'POST',
+        body: { 
+          provider, 
+          access_token, 
+          id_token, 
+          user_type,
+          user // For Apple Sign In name data
+        },
+        credentials: 'include'
+      }),
+      async onQueryStarted(args, { dispatch, queryFulfilled }) {
+        try {
+          const result = await queryFulfilled;
+          dispatch(setUser(result.data.user));
+          if (result.data.user['companies'].length > 0) {
+            const { data } = await dispatch(
+              baseApi.endpoints.getCompany.initiate(result.data.user['companies'][0].id)
+            );
+            dispatch(setCompany(data));
+          }
+        } catch (error) {
+          console.error('Social auth error:', error);
+        }
+      }
+    }),
     userData: build.query({
       query: () => {
         return {
@@ -108,5 +136,6 @@ export const {
   useLoginMutation,
   useSignUpMutation,
   useLogoutMutation,
-  useVerifyEmailMutation
+  useVerifyEmailMutation,
+  useSocialAuthMutation
 } = authApi;

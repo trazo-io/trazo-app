@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 
 import { LOGIN_PAGE_URL } from 'config/routes';
 import { useSelector } from 'react-redux';
+import { getAuthRedirectAction } from '../authRedirect';
 
 const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -14,6 +15,12 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   const [subdomain, setSubDomain] = useState('');
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  
+  // Debug wrapper for navigate calls
+  const debugNavigate = (path, options) => {
+    console.log('🔒 Authenticated.jsx: navigate() called with path:', path, 'options:', options);
+    return navigate(path, options);
+  };
 
   const currentUser = useSelector((state) => state.userState.user);
 
@@ -37,15 +44,28 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   }, []);
 
   useEffect(() => {
+    console.log('🔒 Authenticated.jsx: useEffect triggered - isAuthenticated:', isAuthenticated, 'currentUser:', currentUser, 'subdomain:', subdomain);
     if (isAuthenticated && currentUser && subdomain) {
+      // Check if there's a pending auth redirect action first
+      const pendingAction = getAuthRedirectAction();
+      if (pendingAction) {
+        console.log('🔒 Authenticated.jsx: Pending auth redirect action found, skipping subdomain redirect');
+        return;
+      }
+      
       const isConsumerUser = currentUser.user_type === CONSUMER;
       const params = new URLSearchParams(window.location.search);
-      const intendedPath = params.get('next') || '/admin/dashboard/scans';
+      
+      const intendedPath = params.get('next') || (isConsumerUser ? '/consumer/dashboard' : '/admin/dashboard/scans');
+      console.log('🔒 Authenticated.jsx: intendedPath calculated:', intendedPath);
 
       if (isConsumerUser && subdomain === 'producer') {
+        console.log('🔒 Authenticated.jsx: Redirecting consumer from producer subdomain');
         window.location.href = `${window.location.protocol}//consumer.${
           import.meta.env.VITE_APP_BASE_DOMAIN
         }${window.location.port ? ':' + window.location.port : ''}${intendedPath}`;
+      } else {
+        console.log('🔒 Authenticated.jsx: No subdomain redirect needed');
       }
     }
   }, [isAuthenticated, currentUser, subdomain]);
@@ -68,9 +88,9 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
         ) {
           if (currentCompany.establishments?.length > 0) {
             const establishment = currentCompany.establishments[0].id;
-            navigate(`/admin/dashboard/establishment/${establishment}`);
+            debugNavigate(`/admin/dashboard/establishment/${establishment}`);
           } else {
-            navigate(`/admin/dashboard/`);
+            debugNavigate(`/admin/dashboard/`);
           }
         }
       }
@@ -83,7 +103,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       subdomain === 'producer'
     ) {
       if (currentUser?.companies.length === 0) {
-        navigate(`/admin/dashboard/select-company`);
+        debugNavigate(`/admin/dashboard/select-company`);
       } else if (
         currentUser?.companies.length === 1 &&
         currentCompany?.establishments &&
@@ -93,10 +113,10 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
           currentCompany.subscription ||
           (currentCompany.subscription_plan && currentCompany.subscription_plan.id)
         ) {
-          navigate(`/admin/dashboard/establishment/add`);
+          debugNavigate(`/admin/dashboard/establishment/add`);
         } else {
           if (!currentCompany.has_subscription) {
-            navigate(`/admin/dashboard/pricing`);
+            debugNavigate(`/admin/dashboard/pricing`);
           }
         }
       }

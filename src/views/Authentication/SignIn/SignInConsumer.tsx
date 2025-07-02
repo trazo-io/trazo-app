@@ -15,6 +15,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import React, { useEffect } from 'react';
 import { object, string } from 'zod';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { executeAuthRedirectAction, buildAuthRedirectUrl } from '../../../utils/authRedirect';
 import FormInput from 'components/Forms/FormInput';
 import { login as loginAction } from 'store/features/authSlice';
 import consumerSignInImage from 'assets/img/consumer-signin.png';
@@ -51,12 +52,35 @@ export default function SignInConsumer() {
 
   useEffect(() => {
     if (data && isSuccess) {
+      console.log('🔐 SignInConsumer: Login successful, dispatching action');
+      
+      // First check if there's a pending auth redirect URL
+      const pendingRedirectUrl = buildAuthRedirectUrl();
+      if (pendingRedirectUrl) {
+        console.log('🔐 SignInConsumer: Found pending redirect URL:', pendingRedirectUrl);
+        // Dispatch login action with redirect URL
+        dispatch(loginAction({ ...data, redirectUrl: pendingRedirectUrl }));
+        
+        // Execute the redirect immediately
+        const redirectExecuted = executeAuthRedirectAction(navigate);
+        if (redirectExecuted) {
+          console.log('🔐 SignInConsumer: Auth redirect action executed successfully');
+          return;
+        }
+      } else {
+        // No pending action, dispatch login normally
+        dispatch(loginAction(data));
+      }
+      
+      // Default redirect logic for normal sign-ins
       const params = new URLSearchParams(location.search);
       const nextPath = params.get('next');
-      dispatch(loginAction(data));
-      navigate(nextPath || location.state?.next || '/admin/dashboard/scans');
+      const defaultPath = nextPath || location.state?.next || '/admin/dashboard/impact';
+      
+      console.log('🔐 SignInConsumer: No pending action, redirecting to default path:', defaultPath);
+      navigate(defaultPath);
     }
-  }, [data, dispatch, isSuccess, location]);
+  }, [data, dispatch, isSuccess, location, navigate]);
 
   useEffect(() => {
     if (isSubmitSuccessful) {
@@ -100,10 +124,10 @@ export default function SignInConsumer() {
             mt={{ md: '150px', lg: '80px' }}
           >
             <Heading color={titleColor} fontSize="32px" mb="10px">
-              Welcome Back
+              Continue Your Carbon Journey
             </Heading>
             <Text mb="36px" ms="4px" color={textColor} fontWeight="bold" fontSize="14px">
-              Enter your email and password to sign in
+              Access your carbon transparency discoveries and sustainable choices
             </Text>
             <FormProvider {...methods}>
               <form onSubmit={handleSubmit(onSubmitHandler)}>

@@ -15,21 +15,30 @@ import { SidebarContext } from 'contexts/SidebarContext';
 import theme from 'theme/theme';
 import ConsumerSidebar from 'components/Sidebar/ConsumerSidebar';
 import ConsumerSidebarResponsive from 'components/Sidebar/ConsumerSidebarResponsive';
+import { FaQrcode, FaStar, FaLeaf, FaGraduationCap, FaUsers, FaChartLine, FaBalanceScale } from 'react-icons/fa';
+import { MdDashboard, MdInsights, MdCompare, MdTimeline } from 'react-icons/md';
 
 export const consumerRoutes = [
   {
-    name: 'Scans',
-    path: 'scans',
-    icon: <StatsIcon color="inherit" />,
+    name: 'My Impact',
+    path: 'impact',
+    icon: <MdDashboard color="inherit" />,
     layout: '/admin',
-    regex: /^\/admin\/dashboard\/scans$/
+    regex: /^\/admin\/dashboard\/impact$/
   },
   {
-    name: 'Reviews',
-    path: 'reviews',
-    icon: <RocketIcon color="inherit" />,
+    name: 'Compare Products',
+    path: 'compare',
+    icon: <MdCompare color="inherit" />,
     layout: '/admin',
-    regex: /^\/admin\/dashboard\/reviews$/
+    regex: /^\/admin\/dashboard\/compare$/
+  },
+  {
+    name: 'My History',
+    path: 'journey',
+    icon: <MdTimeline color="inherit" />,
+    layout: '/admin',
+    regex: /^\/admin\/dashboard\/journey$/
   }
 ];
 

@@ -31,7 +31,7 @@ export default function ScannedProductsView() {
 
   const renderStars = (reputation: number) => {
     return (
-      <Stack direction="row" spacing="2px" color="orange.300">
+      <Stack direction="row" spacing="2px" color="green.400">
         {[1, 2, 3, 4, 5].map((index) => (
           <Icon
             key={index}
@@ -47,7 +47,7 @@ export default function ScannedProductsView() {
   return (
     <Flex flexDirection="column" pt={{ base: '120px', md: '75px' }} width="100%">
       <Text color={textColor} fontWeight="bold" fontSize="2xl" mb="20px" padding="10px">
-        Scanned Products
+        Carbon Transparency Journey
       </Text>
       <Card
         w={{ sm: '100%', md: '80%', lg: '100%' }}
@@ -117,12 +117,12 @@ export default function ScannedProductsView() {
                       </Box>
                       <Box minW="200px">
                         <Text fontSize="md" color={textColor} fontWeight="bold" mb={3}>
-                          Certification Progress
+                          Transparency Score
                         </Text>
                         <Progress
                           value={production.certificate_percentage}
                           size="lg"
-                          colorScheme={production.certificate_percentage >= 80 ? 'green' : 'orange'}
+                          colorScheme={production.certificate_percentage >= 80 ? 'green' : 'yellow'}
                           borderRadius="full"
                           mb={2}
                         />

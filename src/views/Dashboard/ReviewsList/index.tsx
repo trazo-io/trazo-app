@@ -7,17 +7,27 @@ import {
   Stack,
   Badge,
   Icon,
-  Image
+  Image,
+  VStack,
+  HStack,
+  Circle,
+  Progress,
+  Heading
 } from '@chakra-ui/react';
 import React, { useEffect } from 'react';
-import Card from 'components/Card/Card';
-import CardHeader from 'components/Card/CardHeader';
-import CardBody from 'components/Card/CardBody';
 import { useGetUserReviewsQuery } from 'store/api/historyApi';
 import { format } from 'date-fns';
 import { NavLink } from 'react-router-dom';
 import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
-import { HSeparator } from 'components/Separator/Separator';
+import { FaLeaf, FaRecycle, FaTractor } from 'react-icons/fa';
+import { MdEco, MdVerified } from 'react-icons/md';
+import {
+  StandardPage,
+  StandardCard,
+  StandardSection,
+  StandardGrid,
+  StandardAlert
+} from '../../../components/Design/StandardComponents';
 
 export default function ReviewsListView() {
   const textColor = useColorModeValue('gray.700', 'white');
@@ -31,7 +41,7 @@ export default function ReviewsListView() {
 
   const renderStars = (rating: number) => {
     return (
-      <Stack direction="row" spacing="2px" color="orange.300">
+      <Stack direction="row" spacing="2px" color="green.400">
         {[1, 2, 3, 4, 5].map((index) => (
           <Icon
             key={index}
@@ -45,21 +55,19 @@ export default function ReviewsListView() {
   };
 
   return (
-    <Flex flexDirection="column" pt={{ base: '120px', md: '75px' }}>
-      <Text color={textColor} fontWeight="bold" fontSize="2xl" mb="20px" padding="10px">
-        My Reviews
-      </Text>
-      <Card
-        w={{ sm: '100%', md: '80%', lg: '100%' }}
-        mx="auto"
-        p={{ sm: '16px', md: '32px', lg: '48px' }}
-        boxShadow="rgba(0, 0, 0, 0.05) 0px 20px 27px 0px"
-      >
-        <CardHeader p="12px 5px" mb="12px">
-          <HSeparator my="16px" />
-        </CardHeader>
-        <CardBody px="5px">
-          <Stack width="100%" spacing={6}>
+    <StandardPage
+      title="Sustainability Reviews"
+      description="Track your impact-driven product reviews and carbon transparency feedback"
+    >
+      <StandardCard variant="elevated">
+        <VStack spacing={6} align="stretch">
+          <StandardAlert
+            status="info"
+            title="Carbon-Focused Reviews"
+            description="Your reviews help build transparency in agricultural carbon footprints and sustainable farming practices."
+          />
+          
+          <VStack spacing={4} align="stretch">
             {!isLoading &&
               reviews?.map((review, index) => (
                 <NavLink key={index} to={`/production/${review.history.id}/`}>
@@ -67,14 +75,15 @@ export default function ReviewsListView() {
                     p={6}
                     shadow="sm"
                     borderWidth="1px"
-                    borderColor={borderColor}
                     borderRadius="xl"
                     cursor="pointer"
+                    border="1px solid"
+                    borderColor="gray.200"
                     transition="all 0.2s"
                     _hover={{
                       shadow: 'lg',
                       transform: 'translateY(-2px)',
-                      borderColor: 'green.300'
+                      borderColor: 'green.400'
                     }}
                   >
                     <Flex direction={{ base: 'column', md: 'row' }} gap={6}>
@@ -126,9 +135,9 @@ export default function ReviewsListView() {
                   </Box>
                 </NavLink>
               ))}
-          </Stack>
-        </CardBody>
-      </Card>
-    </Flex>
+          </VStack>
+        </VStack>
+      </StandardCard>
+    </StandardPage>
   );
 }

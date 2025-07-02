@@ -20,16 +20,17 @@ import {
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 import { MdTimeline } from 'react-icons/md';
 
 // API imports
 import { useGetCompleteSummaryQuery } from '../../../store/api/carbonApi';
+import { useUpdateUserImpactMutation } from '../../../store/api/consumerApi';
 
 // Modern components
-import { ModernProductHeader, ModernEducationalSection, ModernSidebar } from './components';
+import { ModernProductHeader, ModernEducationalSection, ModernSidebar, UltraMobileProductionJourney } from './components';
 
 // Other components
-import { ModernProductionJourney } from '../../../components/ProductDetail/ModernProductionJourney';
 import { ProgressiveQRLoader } from './components/ProgressiveQRLoader';
 import { usePointsStore } from '../../../store/pointsStore';
 
@@ -38,6 +39,20 @@ function ProductDetailModern() {
   const navigate = useNavigate();
   const intl = useIntl();
   const pointsStore = usePointsStore();
+  
+  // Debug: Check if component is loading
+  console.log('🔍 ProductDetailModern component loaded with productionId:', productionId);
+
+  // Get authentication state from Redux store (same as Authenticated component)
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const currentUser = useSelector((state) => state.userState.user);
+  
+  // Debug authentication state
+  console.log('🔍 ProductDetailModern - currentUser:', currentUser);
+  console.log('🔍 ProductDetailModern - isAuthenticated:', isAuthenticated);
+
+  // API mutations
+  const [updateUserImpact] = useUpdateUserImpactMutation();
 
   // Theme colors
   const bgColor = useColorModeValue('gray.50', 'gray.900');
@@ -71,6 +86,41 @@ function ProductDetailModern() {
       pointsStore.addPoints(3);
     } catch (error) {
       console.error('Error sharing:', error);
+    }
+  };
+
+  const handleReviewOpen = async () => {
+    if (!isAuthenticated) {
+      // Store intended action for after login
+      const action = {
+        type: 'review',
+        productionId: productionId
+      };
+      console.log('🔍 handleReviewOpen: Setting postLoginAction from "Leave Review" button:', action);
+      localStorage.setItem('postLoginAction', JSON.stringify(action));
+      navigate('/consumer/auth/signin');
+      return;
+    }
+
+    try {
+      // Create a scan record first (simulating the QR scan flow)
+      await updateUserImpact({
+        carbon_saved_kg: 0, // We'll update this based on actual carbon data
+        is_better_choice: false, // Will be determined after analysis
+        is_local: false // Will be determined based on location
+      });
+
+      // For now, we'll generate a temporary scanId based on timestamp
+      // In production, this should come from the backend scan creation
+      const temporaryScanId = `web-${Date.now()}`;
+      
+      // Navigate to review page
+      navigate(`/production/${productionId}/review/${temporaryScanId}`);
+    } catch (error) {
+      console.error('Error creating scan record:', error);
+      // Fallback: navigate anyway with a temporary ID
+      const temporaryScanId = `web-${Date.now()}`;
+      navigate(`/production/${productionId}/review/${temporaryScanId}`);
     }
   };
 
@@ -129,16 +179,19 @@ function ProductDetailModern() {
         eventsCount={completeData?.events?.length || 0}
         productionId={productionId!}
         onEducationOpen={handleEducationOpen}
-        onReviewOpen={() => {
-          // Handle review modal opening
-          console.log('Opening review modal');
-        }}
+        onReviewOpen={handleReviewOpen}
         onAuthPromptOpen={() => {
-          // Handle auth prompt
-          navigate('/auth/signin');
+          // Store intended action for after login (same as review flow)
+          const action = {
+            type: 'review',
+            productionId: productionId
+          };
+          console.log('🔍 Setting postLoginAction from header:', action);
+          localStorage.setItem('postLoginAction', JSON.stringify(action));
+          navigate('/consumer/auth/signin');
         }}
         onShare={handleShare}
-        isAuthenticated={false} // Update based on your auth state
+        isAuthenticated={isAuthenticated}
       />
 
       {/* Main Content */}
@@ -185,7 +238,7 @@ function ProductDetailModern() {
                         area: event.area?.toString(),
                         equipment: event.equipment
                       }));
-                      return <ModernProductionJourney events={timelineEvents} />;
+                      return <UltraMobileProductionJourney events={timelineEvents} />;
                     } else {
                       return (
                         <VStack spacing={3} py={8}>
@@ -209,10 +262,37 @@ function ProductDetailModern() {
 
           {/* Sidebar */}
           <ModernSidebar
-            isAuthenticated={false} // Update based on your auth state
+            isAuthenticated={isAuthenticated}
             productName={completeData?.farmer?.name || completeData?.product?.name}
             carbonScore={completeData?.carbonScore || 0}
-            onAuthPrompt={() => navigate('/auth/signin')}
+            onAuthPrompt={() => {
+              console.log('🔍 SIDEBAR BUTTON CLICKED - onAuthPrompt called!');
+              console.log('🔍 Current authentication state - isAuthenticated:', isAuthenticated);
+              console.log('🔍 Current user from Redux:', currentUser);
+              console.log('🔍 User ID:', currentUser?.id);
+              
+              // Check if user is already authenticated
+              if (isAuthenticated || currentUser?.id) {
+                console.log('🔍 User already authenticated, navigating directly to review page');
+                const reviewUrl = `/admin/dashboard/production/${productionId}/review/web-${Date.now()}`;
+                console.log('🔍 Navigating to:', reviewUrl);
+                navigate(reviewUrl);
+                return;
+              }
+
+              // Store intended action for after login using the correct key
+              const action = {
+                type: 'review',
+                productionId: productionId
+              };
+              console.log('🔍 Setting auth redirect action:', action);
+              localStorage.setItem('trazo_pending_auth_action', JSON.stringify({
+                action,
+                timestamp: Date.now()
+              }));
+              console.log('🔍 About to navigate to /consumer/auth/signin');
+              navigate('/consumer/auth/signin');
+            }}
             onNavigateToAchievements={() => navigate('/achievements')}
           />
         </SimpleGrid>

@@ -86,11 +86,10 @@ import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import {
-  ProductHeader,
-  EstablishmentInfo,
-  EnhancedProductTimeline
-} from 'components/ProductDetail';
-import { ModernProductionJourney } from 'components/ProductDetail/ModernProductionJourney';
+  ModernProductHeader,
+  CompanyEstablishmentInfo,
+  UltraMobileProductionJourney
+} from 'views/Scan/ProductDetail/components';
 
 // Import Phase 1 Carbon Cost Intelligence component
 import { CarbonCostInsights } from 'components/Carbon/CarbonCostInsights';
@@ -488,8 +487,8 @@ function ProfileProduction() {
               </Menu>
             </HStack>
 
-            {/* Use ProductHeader component */}
-            <ProductHeader
+            {/* Use ModernProductHeader component */}
+            <ModernProductHeader
               productName={historyData?.product?.name || historyData?.name || 'Production'}
               companyName={historyData?.company || 'Unknown Company'}
               reputation={safeReputation}
@@ -690,9 +689,9 @@ function ProfileProduction() {
                   </CardBody>
                 </Card>
 
-                {/* Producer Information - Reuse EstablishmentInfo component */}
+                {/* Producer Information - Reuse CompanyEstablishmentInfo component */}
                 {historyData?.parcel?.establishment && (
-                  <EstablishmentInfo establishment={historyData.parcel.establishment} />
+                  <CompanyEstablishmentInfo establishment={historyData.parcel.establishment} />
                 )}
               </VStack>
             </SimpleGrid>
@@ -711,7 +710,7 @@ function ProfileProduction() {
               </CardHeader>
               <CardBody>
                 {historyData?.events && historyData.events.length > 0 ? (
-                  <ModernProductionJourney events={mapEventsToTimeline(historyData.events)} />
+                  <UltraMobileProductionJourney events={mapEventsToTimeline(historyData.events)} />
                 ) : (
                   <VStack spacing={3} py={8}>
                     <Icon as={MdTimeline} boxSize={16} color="gray.400" />

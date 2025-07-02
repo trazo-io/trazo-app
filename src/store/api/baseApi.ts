@@ -7,7 +7,7 @@ export const baseApi = createApi({
     // Global CSRF Token endpoint
     getCsrfToken: builder.query<{ csrf_token: string; message: string }, void>({
       query: () => ({
-        url: 'api/csrf-token/',
+        url: 'csrf-token/',
         method: 'GET'
       })
     })
@@ -38,7 +38,14 @@ export const baseApi = createApi({
     'EventTemplate',
     'USDA',
     'SecurityStatus',
-    'EvidencePhotos'
+    'EvidencePhotos',
+    'ConsumerImpact',
+    'ConsumerHistory',
+    'UserFavorites',
+    'UserScans',
+    'ShoppingGoals',
+    'ConsumerRecommendations',
+    'ConsumerAnalytics'
   ]
 });
 

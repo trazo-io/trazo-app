@@ -21,8 +21,16 @@ import {
 } from '@chakra-ui/react';
 import { FaGoogle, FaFacebook, FaApple, FaEnvelope, FaLock } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { useLoginMutation } from '../../../store/api/authApi';
+import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
+import { executeAuthRedirectAction, buildAuthRedirectUrl } from '../../../utils/authRedirect';
+import { 
+  handleGoogleSignIn, 
+  handleFacebookSignIn, 
+  handleAppleSignIn, 
+  handleSocialAuthError,
+  checkSocialAuthConfig 
+} from '../../../utils/socialAuth';
 
 // No assets needed for minimalist design
 
@@ -39,6 +47,7 @@ const ConsumerSignIn: React.FC = () => {
   const dispatch = useDispatch();
   const toast = useToast();
   const [login, { isLoading }] = useLoginMutation();
+  const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
@@ -49,11 +58,36 @@ const ConsumerSignIn: React.FC = () => {
   } = useForm<SignInFormData>();
 
   const onSubmit = async (data: SignInFormData) => {
+    console.log('🔍 ConsumerSignIn onSubmit called');
     try {
       setError(null);
       const response = await login(data).unwrap();
+      console.log('🔍 Login successful, response:', response);
 
-      dispatch(loginAction(response));
+      // First check if there's a pending auth redirect URL
+      const pendingRedirectUrl = buildAuthRedirectUrl();
+      if (pendingRedirectUrl) {
+        console.log('🔐 ConsumerSignIn: Found pending redirect URL:', pendingRedirectUrl);
+        // Dispatch login action with redirect URL
+        dispatch(loginAction({ ...response, redirectUrl: pendingRedirectUrl }));
+        
+        // Execute the redirect immediately
+        const redirectExecuted = executeAuthRedirectAction(navigate);
+        if (redirectExecuted) {
+          console.log('🔐 ConsumerSignIn: Auth redirect action executed successfully');
+          toast({
+            title: 'Welcome back!',
+            description: 'You have successfully signed in.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true
+          });
+          return;
+        }
+      } else {
+        // No pending action, dispatch login normally
+        dispatch(loginAction(response));
+      }
 
       toast({
         title: 'Welcome back!',
@@ -62,22 +96,135 @@ const ConsumerSignIn: React.FC = () => {
         duration: 3000,
         isClosable: true
       });
-
-      navigate('/admin/dashboard/scans');
+      
+      // Default redirect - directly to impact to avoid route conflicts
+      navigate('/admin/dashboard/impact', { replace: true });
     } catch (err: any) {
       const errorMessage = err?.data?.detail || 'Invalid email or password';
       setError(errorMessage);
     }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    toast({
-      title: 'Coming Soon',
-      description: `${provider} login will be available soon.`,
-      status: 'info',
-      duration: 3000,
-      isClosable: true
-    });
+  const handleSocialLoginSuccess = async (authData: any) => {
+    try {
+      setError(null);
+      const response = await socialAuth(authData).unwrap();
+
+      // First check if there's a pending auth redirect URL
+      const pendingRedirectUrl = buildAuthRedirectUrl();
+      if (pendingRedirectUrl) {
+        console.log('🔐 ConsumerSignIn: Found pending redirect URL:', pendingRedirectUrl);
+        // Dispatch login action with redirect URL
+        dispatch(loginAction({ ...response, redirectUrl: pendingRedirectUrl }));
+        
+        // Execute the redirect immediately
+        const redirectExecuted = executeAuthRedirectAction(navigate);
+        if (redirectExecuted) {
+          console.log('🔐 ConsumerSignIn: Auth redirect action executed successfully');
+          toast({
+            title: 'Welcome!',
+            description: 'You have successfully signed in.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true
+          });
+          return;
+        }
+      } else {
+        // No pending action, dispatch login normally
+        dispatch(loginAction(response));
+      }
+
+      toast({
+        title: 'Welcome!',
+        description: 'You have successfully signed in.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+      
+      // Default redirect - directly to impact to avoid route conflicts
+      navigate('/admin/dashboard/impact', { replace: true });
+    } catch (err: any) {
+      const errorMessage = err?.data?.error || 'Social authentication failed';
+      setError(errorMessage);
+      handleSocialAuthError(new Error(errorMessage), authData.provider);
+    }
+  };
+
+  const handleSocialLoginError = (error: Error, provider: string) => {
+    console.error(`${provider} auth error:`, error);
+    handleSocialAuthError(error, provider);
+  };
+
+  const handleSocialLogin = async (provider: string) => {
+    // Check if social auth is configured
+    const config = checkSocialAuthConfig();
+    
+    switch (provider) {
+      case 'Google':
+        if (!config.google) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Google sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleGoogleSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Google'),
+          5 // Consumer user type
+        );
+        break;
+      
+      case 'Facebook':
+        if (!config.facebook) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Facebook sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleFacebookSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Facebook'),
+          5 // Consumer user type
+        );
+        break;
+      
+      case 'Apple':
+        if (!config.apple) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Apple sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleAppleSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Apple'),
+          5 // Consumer user type
+        );
+        break;
+      
+      default:
+        toast({
+          title: 'Error',
+          description: 'Unknown social login provider.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true
+        });
+    }
   };
 
   return (
@@ -354,8 +501,8 @@ const ConsumerSignIn: React.FC = () => {
                   fontSize="md"
                   fontWeight="semibold"
                   borderRadius="lg"
-                  isLoading={isLoading}
-                  loadingText="Signing in..."
+                  isLoading={isLoading || isSocialLoading}
+                  loadingText={isSocialLoading ? "Authenticating..." : "Signing in..."}
                   _hover={{
                     bg: 'green.700'
                   }}
@@ -414,6 +561,7 @@ const ConsumerSignIn: React.FC = () => {
                     borderColor={useColorModeValue('gray.300', 'gray.600')}
                     borderRadius="lg"
                     onClick={() => handleSocialLogin(social.name)}
+                    isDisabled={isLoading || isSocialLoading}
                     justifyContent="center"
                     leftIcon={<Icon as={social.icon} fontSize="18px" color={social.color} />}
                     _hover={{

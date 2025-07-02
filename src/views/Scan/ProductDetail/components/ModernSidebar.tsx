@@ -74,7 +74,7 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
                 size="sm"
                 colorScheme="green"
                 leftIcon={<Icon as={FaMedal} />}
-                onClick={onNavigateToAchievements}
+                onClick={onAuthPrompt}
               >
                 View Achievements
               </Button>

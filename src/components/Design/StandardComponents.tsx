@@ -27,10 +27,12 @@ import {
   SimpleGrid,
   Circle,
   Grid,
-  ResponsiveValue
+  ResponsiveValue,
+  Tooltip,
+  Portal
 } from '@chakra-ui/react';
 import { ReactNode, ReactElement } from 'react';
-import { FaLeaf, FaChevronLeft, FaChevronRight, FaCheckCircle } from 'react-icons/fa';
+import { FaLeaf, FaChevronLeft, FaChevronRight, FaCheckCircle, FaQuestionCircle } from 'react-icons/fa';
 import { MdCheck, MdError, MdInfo, MdWarning } from 'react-icons/md';
 import { IconType } from 'react-icons';
 
@@ -515,9 +517,11 @@ export const StandardInput = React.forwardRef<HTMLInputElement, any>((props, ref
     {...props}
   />
 ));
+StandardInput.displayName = 'StandardInput';
 
-export const StandardTextarea = (props: any) => (
+export const StandardTextarea = React.forwardRef<HTMLTextAreaElement, any>((props, ref) => (
   <Textarea
+    ref={ref}
     borderRadius="lg"
     borderColor="gray.300"
     _hover={{ borderColor: 'green.400' }}
@@ -526,7 +530,8 @@ export const StandardTextarea = (props: any) => (
     resize="vertical"
     {...props}
   />
-);
+));
+StandardTextarea.displayName = 'StandardTextarea';
 
 export const StandardSelect = (props: any) => (
   <Select
@@ -551,6 +556,9 @@ interface StandardButtonProps {
   onClick?: () => void;
   type?: 'button' | 'submit';
   disabled?: boolean;
+  w?: string;
+  width?: string;
+  isDisabled?: boolean;
 }
 
 export const StandardButton = ({
@@ -563,7 +571,11 @@ export const StandardButton = ({
   rightIcon,
   onClick,
   type = 'button',
-  disabled = false
+  disabled = false,
+  w,
+  width,
+  isDisabled,
+  ...rest
 }: StandardButtonProps) => {
   const variants = {
     primary: {
@@ -594,7 +606,9 @@ export const StandardButton = ({
       rightIcon={rightIcon}
       onClick={onClick}
       type={type}
-      isDisabled={disabled}
+      isDisabled={disabled || isDisabled}
+      w={w}
+      width={width}
       borderRadius="lg"
       fontWeight="semibold"
       _focus={{ boxShadow: '0 0 0 3px rgba(56, 161, 105, 0.15)' }}
@@ -603,6 +617,7 @@ export const StandardButton = ({
         transform: 'translateY(-1px)'
       }}
       transition="all 0.2s ease"
+      {...rest}
     >
       {children}
     </Button>
@@ -711,3 +726,116 @@ export const StandardSection = ({ title, description, action, children }: Standa
     {children}
   </Box>
 );
+
+// Consumer-Friendly Tooltip Component
+
+interface ConsumerTooltipProps {
+  label: string;
+  explanation: string;
+  children: ReactNode;
+  placement?: 'top' | 'bottom' | 'left' | 'right';
+}
+
+export const ConsumerTooltip = ({ 
+  label, 
+  explanation, 
+  children, 
+  placement = 'top' 
+}: ConsumerTooltipProps) => {
+  return (
+    <Tooltip
+      label={
+        <Box maxW="280px" p={2}>
+          <Text fontWeight="bold" mb={1} fontSize="sm">
+            {label}
+          </Text>
+          <Text fontSize="xs" lineHeight="1.4">
+            {explanation}
+          </Text>
+        </Box>
+      }
+      placement={placement}
+      bg="gray.800"
+      color="white"
+      borderRadius="md"
+      fontSize="xs"
+      hasArrow
+      closeOnClick={false}
+      openDelay={300}
+    >
+      {children}
+    </Tooltip>
+  );
+};
+
+// Metric Card Component for Consistent Dashboard Displays
+
+interface StandardMetricCardProps {
+  icon: IconType;
+  iconColor?: string;
+  iconBg?: string;
+  value: string | number;
+  label: string;
+  subtitle?: string;
+  size?: 'sm' | 'md' | 'lg';
+  colorScheme?: string;
+  tooltip?: {
+    label: string;
+    explanation: string;
+  };
+}
+
+export const StandardMetricCard = ({
+  icon,
+  iconColor = 'green.600',
+  iconBg = 'green.100',
+  value,
+  label,
+  subtitle,
+  size = 'md',
+  colorScheme = 'green',
+  tooltip
+}: StandardMetricCardProps) => {
+  const iconSize = size === 'sm' ? 4 : size === 'lg' ? 8 : 6;
+  const circleSize = size === 'sm' ? '40px' : size === 'lg' ? '80px' : '60px';
+  const valueSize = size === 'sm' ? 'lg' : size === 'lg' ? '3xl' : '2xl';
+  const labelSize = size === 'sm' ? 'xs' : 'sm';
+
+  const MetricContent = (
+    <VStack spacing={3}>
+      <Circle size={circleSize} bg={iconBg} color={iconColor}>
+        <Icon as={icon} boxSize={iconSize} />
+      </Circle>
+      <VStack spacing={1}>
+        <Text fontSize={valueSize} fontWeight="bold" color={iconColor}>
+          {value}
+        </Text>
+        <HStack spacing={1} align="center">
+          <Text fontSize={labelSize} color="gray.600" textAlign="center">
+            {label}
+          </Text>
+          {tooltip && (
+            <Icon as={FaQuestionCircle} boxSize={3} color="gray.400" />
+          )}
+        </HStack>
+        {subtitle && (
+          <Text fontSize="xs" color="gray.500" textAlign="center">
+            {subtitle}
+          </Text>
+        )}
+      </VStack>
+    </VStack>
+  );
+
+  if (tooltip) {
+    return (
+      <ConsumerTooltip label={tooltip.label} explanation={tooltip.explanation}>
+        <Box cursor="help">
+          {MetricContent}
+        </Box>
+      </ConsumerTooltip>
+    );
+  }
+
+  return MetricContent;
+};

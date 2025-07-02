@@ -47,6 +47,12 @@ import AdminConsumerLayout from 'layouts/AdminConsumer';
 import ConsumerDashboardView from 'views/Dashboard/ConsumerDashboard';
 import ScannedProductsView from 'views/Dashboard/ScannedProducts';
 import ReviewsListView from 'views/Dashboard/ReviewsList';
+import ImpactDashboard from 'views/Dashboard/ImpactDashboard';
+import ConsumerEducationDashboard from 'views/Dashboard/EducationDashboard';
+import CommunityDashboard from 'views/Dashboard/CommunityDashboard';
+import CarbonInsights from 'views/Dashboard/CarbonInsights';
+import CarbonComparison from 'views/Dashboard/CarbonComparison';
+import CarbonJourney from 'views/Dashboard/CarbonJourney';
 import { routeConfig } from './routes/config';
 import SubscriptionRequired from './utils/protections/SubscriptionRequired';
 import DashboardPricing from 'views/Dashboard/Dashboard/Pricing';
@@ -60,7 +66,7 @@ import ModernCarbonDashboard from 'views/Dashboard/Dashboard/Establishment/Moder
 import IoTDashboard from 'views/Dashboard/Dashboard/Establishment/IoTDashboard';
 import PublicEstablishmentProfile from 'views/Scan/PublicEstablishmentProfile/PublicEstablishmentProfile';
 import { usePointsStore } from './store/pointsStore';
-import EducationDashboard from 'views/Dashboard/Education';
+import ProducerEducationDashboard from 'views/Dashboard/Education';
 import EducationFAQ from 'views/Dashboard/Education/EducationFAQ';
 import FieldInterface from 'views/Dashboard/Mobile/FieldInterface';
 import { useGetCsrfTokenQuery } from './store/api/baseApi';
@@ -267,7 +273,7 @@ const App = () => {
                     </NoSubscriptionRedirect>
                   }
                 />
-                <Route path="education" element={<EducationDashboard />} />
+                <Route path="education" element={<ProducerEducationDashboard />} />
                 <Route path="education/faq" element={<EducationFAQ />} />
               </Route>
             </Route>
@@ -286,7 +292,13 @@ const App = () => {
             <Route element={<Authenticated allowedRoles={config.protected.roles} />}>
               <Route path={config.protected.path} element={<AdminConsumerLayout />}>
                 {/* Consumer routes */}
-                <Route index element={<Navigate to="scans" replace />} />
+                <Route index element={<Navigate to="impact" replace />} />
+                <Route path="impact" element={<ImpactDashboard />} />
+                <Route path="insights" element={<CarbonInsights />} />
+                <Route path="compare" element={<CarbonComparison />} />
+                <Route path="education" element={<ConsumerEducationDashboard />} />
+                <Route path="community" element={<CommunityDashboard />} />
+                <Route path="journey" element={<CarbonJourney />} />
                 <Route path="scans" element={<ScannedProductsView />} />
                 <Route path="reviews" element={<ReviewsListView />} />
                 <Route path="production/:productionId/review/:scanId" element={<ProductReview />} />
