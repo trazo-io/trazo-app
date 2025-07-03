@@ -22,6 +22,10 @@ export interface CarbonSummary {
   }>;
   calculated_at?: string;
   data_source?: string;
+  // Emissions breakdown data
+  emissionsByCategory?: Record<string, number>;
+  emissionsBySource?: Record<string, number>;
+  offsetsByAction?: Record<string, number>;
   // Legacy camelCase fields for backward compatibility
   totalEmissions?: number;
   totalOffsets?: number;

@@ -83,7 +83,8 @@ import {
   StandardButton,
   StandardField,
   StandardInput,
-  StandardStepper
+  StandardStepper,
+  StandardMediaUpload
 } from 'components/Design/StandardComponents';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -583,12 +584,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   };
 
   // File upload
-  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
-    maxFiles: 5,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif']
-    }
-  });
+  const [acceptedFiles, setAcceptedFiles] = useState([]);
 
   const onSubmitMedia = async () => {
     try {
@@ -1295,97 +1291,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       </CardHeader>
                       <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
                         <VStack spacing={{ base: 5, md: 6 }} align="stretch">
-                          <Box w="100%">
-                            <FormLabel fontSize="sm" fontWeight="semibold" mb={3} color={textColor}>
-                              {intl.formatMessage({ id: 'app.eventPhotos' }) || 'Event Photos'}
-                            </FormLabel>
-                            <Box
-                              border="2px dashed"
-                              borderColor={borderColor}
-                              borderRadius="lg"
-                              p={8}
-                              minH="280px"
-                              textAlign="center"
-                              cursor="pointer"
-                              transition="all 0.3s ease"
-                              _hover={{
-                                borderColor: 'green.400',
-                                bg: useColorModeValue('green.50', 'green.900'),
-                                transform: 'translateY(-2px)',
-                                boxShadow: 'lg'
-                              }}
-                              {...getRootProps()}
-                            >
-                              <Input {...getInputProps()} />
-                              {acceptedFiles.length > 0 ? (
-                                <VStack spacing={6} justify="center" h="full">
-                                  <Icon as={FaCheckCircle} color="green.500" boxSize={12} />
-                                  <Text fontWeight="bold" fontSize="lg" color={textColor}>
-                                    {acceptedFiles.length}{' '}
-                                    {intl.formatMessage({ id: 'app.filesSelected' }) ||
-                                      'files selected'}
-                                  </Text>
-                                  <Grid
-                                    templateColumns="repeat(auto-fill, minmax(140px, 1fr))"
-                                    gap={6}
-                                    w="100%"
-                                    maxW="600px"
-                                    mx="auto"
-                                  >
-                                    {acceptedFiles.map((file, index) => (
-                                      <Box key={index} textAlign="center">
-                                        <Box
-                                          borderRadius="xl"
-                                          overflow="hidden"
-                                          mb={3}
-                                          boxShadow="lg"
-                                        >
-                                          <img
-                                            src={URL.createObjectURL(file)}
-                                            alt={file.name}
-                                            style={{
-                                              width: '100%',
-                                              height: '100px',
-                                              objectFit: 'cover'
-                                            }}
-                                          />
-                                        </Box>
-                                        <Text
-                                          fontSize="sm"
-                                          color="gray.600"
-                                          noOfLines={1}
-                                          fontWeight="500"
-                                        >
-                                          {file.name}
-                                        </Text>
-                                      </Box>
-                                    ))}
-                                  </Grid>
-                                </VStack>
-                              ) : (
-                                <VStack spacing={6} justify="center" h="full">
-                                  <Box p={4} bg="gray.100" borderRadius="full">
-                                    <Icon as={FaCamera} color="gray.500" boxSize={12} />
-                                  </Box>
-                                  <VStack spacing={2}>
-                                    <Text
-                                      fontSize="lg"
-                                      color="gray.600"
-                                      fontWeight="600"
-                                      textAlign="center"
-                                    >
-                                      {intl.formatMessage({ id: 'app.dragDropPhotos' }) ||
-                                        'Drag & drop photos here, or click to select'}
-                                    </Text>
-                                    <Text fontSize="md" color="gray.500" textAlign="center">
-                                      {intl.formatMessage({ id: 'app.maxFiles' }) ||
-                                        'Maximum 5 files, up to 10MB each'}
-                                    </Text>
-                                  </VStack>
-                                </VStack>
-                              )}
-                            </Box>
-                          </Box>
+                          <StandardField
+                            label={intl.formatMessage({ id: 'app.eventPhotos' }) || 'Event Photos'}
+                            helpText="Upload photos documenting this agricultural event"
+                          >
+                            <StandardMediaUpload
+                              onFilesChange={setAcceptedFiles}
+                              acceptedFiles={acceptedFiles}
+                              maxFiles={5}
+                              placeholder={intl.formatMessage({ id: 'app.dragDropPhotos' }) || 'Drag & drop photos here, or click to select'}
+                              description={intl.formatMessage({ id: 'app.maxFiles' }) || 'Maximum 5 files, up to 10MB each'}
+                            />
+                          </StandardField>
 
                           <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
                             <HStack justify="space-between">

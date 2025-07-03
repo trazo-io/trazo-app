@@ -66,7 +66,7 @@ import { addCompanyEstablishment } from 'store/features/companySlice';
 import avatar4 from 'assets/img/avatars/avatar4.png';
 import imageMap from 'assets/img/imageMap.png';
 import { useCreateEstablishmentMutation } from 'store/api/companyApi';
-import { useDropzone } from 'react-dropzone';
+import { StandardMediaUpload } from 'components/Design/StandardComponents';
 import { useGoogleMap } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -353,17 +353,15 @@ function NewEstablishment() {
     }
   ];
 
-  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
-    onDrop: (acceptedFiles) => {
-      // Store the file names for preview purposes
-      const fileNames = acceptedFiles.map((file) => file.name);
-      setUploadedImageUrls(fileNames);
-      console.log('Dropped files:', fileNames);
-    }
-  });
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+  const handleFilesChange = (files) => {
+    setSelectedFiles(files);
+    console.log('Selected files:', files);
+  };
 
   const handleFileUpload = async () => {
-    if (acceptedFiles.length === 0) {
+    if (selectedFiles.length === 0) {
       toast({
         title: intl.formatMessage({ id: 'app.noFilesSelected' }),
         description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
@@ -378,7 +376,7 @@ function NewEstablishment() {
 
     try {
       // Upload all files and get URLs
-      const urls = await uploadMultipleFiles(acceptedFiles);
+      const urls = await uploadMultipleFiles(selectedFiles);
 
       // Store the uploaded URLs
       setUploadedImageUrls(urls);
@@ -408,7 +406,7 @@ function NewEstablishment() {
   };
 
   const handleDirectFileUpload = () => {
-    if (acceptedFiles.length === 0) {
+    if (selectedFiles.length === 0) {
       toast({
         title: intl.formatMessage({ id: 'app.noFilesSelected' }),
         description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
@@ -426,7 +424,7 @@ function NewEstablishment() {
     const formData = new FormData();
 
     // Important: use the SAME field name as in the server-side code
-    formData.append('file', acceptedFiles[0]);
+    formData.append('file', selectedFiles[0]);
 
     // Set isUploading to show loading state
     setIsUploading(true);
@@ -1013,76 +1011,24 @@ function NewEstablishment() {
             <CardBody>
               <FormProvider {...mediaFormMethods}>
                 <Flex direction="column" w="100%">
-                  <Text color={textColor} fontSize="sm" fontWeight="bold" mb="12px">
-                    {intl.formatMessage({
-                      id: 'app.establishmentImages',
-                      defaultMessage: 'Imágenes del establecimiento'
-                    })}
-                  </Text>
-                  <Flex
-                    align="center"
-                    justify="center"
-                    border="2px dashed #CBD5E0"
-                    borderRadius="15px"
-                    w="100%"
-                    maxWidth={'980px'}
-                    cursor="pointer"
-                    overflowY={'auto'}
-                    minH={'175px'}
-                    bg="gray.50"
-                    _hover={{ bg: 'gray.100' }}
-                    tabIndex={0}
-                    aria-label={intl.formatMessage({
+                  <StandardMediaUpload
+                    onFilesChange={handleFilesChange}
+                    acceptedFiles={selectedFiles}
+                    maxFiles={5}
+                    maxSize={5 * 1024 * 1024} // 5MB
+                    accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
+                    placeholder={intl.formatMessage({
                       id: 'app.dropFilesHereToUpload',
                       defaultMessage: 'Arrastra archivos aquí para subir'
                     })}
-                    {...getRootProps({ className: 'dropzone' })}
-                  >
-                    <Input {...getInputProps()} />
-                    <Button variant="no-hover">
-                      {acceptedFiles.length > 0 ? (
-                        <Flex gap="20px" p="20px" flexWrap={'wrap'}>
-                          {acceptedFiles.map((file, index) => (
-                            <Box key={index}>
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={file.name}
-                                style={{
-                                  width: '150px',
-                                  height: '100px',
-                                  borderRadius: '15px',
-                                  objectFit: 'contain'
-                                }}
-                              />
-                              <Text
-                                color="gray.400"
-                                fontWeight="normal"
-                                maxWidth="150px"
-                                textOverflow={'ellipsis'}
-                                overflow={'hidden'}
-                              >
-                                {file.name}
-                              </Text>
-                            </Box>
-                          ))}
-                        </Flex>
-                      ) : (
-                        <Text color="gray.400" fontWeight="normal">
-                          {intl.formatMessage({
-                            id: 'app.dropFilesHereToUpload',
-                            defaultMessage: 'Arrastra archivos aquí para subir'
-                          })}
-                        </Text>
-                      )}
-                    </Button>
-                  </Flex>
-                  <Text color="gray.500" fontSize="xs" mt={2}>
-                    {intl.formatMessage({
+                    description={intl.formatMessage({
                       id: 'app.mediaHelper',
-                      defaultMessage:
-                        'Puedes subir hasta 5 imágenes. Imágenes de alta calidad ayudan a generar confianza.'
+                      defaultMessage: 'Puedes subir hasta 5 imágenes. Imágenes de alta calidad ayudan a generar confianza.'
                     })}
-                  </Text>
+                    variant="default"
+                    previewMode="grid"
+                    height="175px"
+                  />
                   <Flex justify="space-between">
                     <Button
                       variant="no-hover"

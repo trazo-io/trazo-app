@@ -134,7 +134,7 @@ const CarbonDashboard = () => {
   const [cropType, setCropType] = useState('corn');
   const [selectedState, setSelectedState] = useState('CA');
 
-  // Carbon data queries with progressive loading registration
+  // Carbon data queries with progressive loading registration and error handling
   const {
     data: summaryData,
     isLoading: isSummaryLoading,
@@ -144,12 +144,37 @@ const CarbonDashboard = () => {
     productionId: viewMode === 'production' ? productionId : undefined,
     year: new Date().getFullYear()
   });
+  
+  // Error handling for API failures
+  useEffect(() => {
+    if (summaryError) {
+      console.error('Carbon summary API error:', summaryError);
+      toast({
+        title: 'Data Loading Issue',
+        description: 'Some carbon data may be incomplete. Please refresh the page.',
+        status: 'warning',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  }, [summaryError, toast]);
 
-  // Also fetch carbon entries as a fallback to check if data exists
-  const { data: carbonEntries, isLoading: isEntriesLoading } = useGetCarbonEntriesQuery({
+  // Enhanced carbon entries query with error handling
+  const { 
+    data: carbonEntries, 
+    isLoading: isEntriesLoading,
+    error: entriesError 
+  } = useGetCarbonEntriesQuery({
     establishmentId: parseInt(establishmentId),
     year: new Date().getFullYear()
   });
+  
+  // Error handling for carbon entries
+  useEffect(() => {
+    if (entriesError) {
+      console.error('Carbon entries API error:', entriesError);
+    }
+  }, [entriesError]);
 
   // USDA data queries - Only load when explicitly needed for USDA comparison view
   const [showUSDAComparison, setShowUSDAComparison] = useState(false);
@@ -207,37 +232,55 @@ const CarbonDashboard = () => {
     total_emissions: 0,
     total_offsets: 0,
     net_carbon: 0,
-    carbon_score: 85,
+    carbon_score: 50, // More realistic baseline (was 85)
     hasData: false,
     usda_verified: false,
-    transparency_score: 0
+    transparency_score: 0,
+    performance_tier: null,
+    data_quality: null
   };
 
-  // ✅ PRIORITY 1: Use enhanced carbon API data (Phase 1 implementation)
-  if (enhancedCarbonData?.success) {
+  // ✅ PRIORITY 1: Use enhanced carbon API data with validation
+  if (enhancedCarbonData?.success && enhancedCarbonData.data) {
+    const apiData = enhancedCarbonData.data;
+    
+    // Validate and sanitize API data
+    const total_emissions = Math.max(0, Number(apiData.total_emissions) || 0);
+    const total_offsets = Math.max(0, Number(apiData.total_offsets) || 0);
+    const net_carbon = Number(apiData.net_carbon) || (total_emissions - total_offsets);
+    const carbon_score = Math.max(0, Math.min(100, Number(apiData.carbon_score) || 50));
+    const transparency_score = Math.max(0, Math.min(100, Number(apiData.transparency_score) || 0));
+    
     processedData = {
-      total_emissions: enhancedCarbonData.data.total_emissions || 0,
-      total_offsets: enhancedCarbonData.data.total_offsets || 0,
-      net_carbon: enhancedCarbonData.data.net_carbon || 0,
-      carbon_score: enhancedCarbonData.data.carbon_score || 85,
-      hasData:
-        enhancedCarbonData.data.total_emissions > 0 || enhancedCarbonData.data.total_offsets > 0,
-      usda_verified: enhancedCarbonData.data.usda_verified || false,
-      transparency_score: enhancedCarbonData.data.transparency_score || 0
+      total_emissions,
+      total_offsets,
+      net_carbon,
+      carbon_score,
+      hasData: total_emissions > 0 || total_offsets > 0,
+      usda_verified: Boolean(apiData.usda_verified),
+      transparency_score,
+      performance_tier: apiData.performance_tier || null,
+      data_quality: apiData.data_quality || null,
+      offset_ratio: Number(apiData.offset_ratio) || 0
     };
   }
-  // ✅ FALLBACK 1: Use legacy summary data
+  // ✅ FALLBACK 1: Use legacy summary data with validation
   else if (summaryData) {
+    const total_emissions = Math.max(0, Number(summaryData.total_emissions) || 0);
+    const total_offsets = Math.max(0, Number(summaryData.total_offsets) || 0);
+    const net_carbon = Number(summaryData.net_carbon) || (total_emissions - total_offsets);
+    const carbon_score = Math.max(0, Math.min(100, Number(summaryData.carbon_score) || 50));
+    
     processedData = {
-      total_emissions: summaryData.total_emissions || 0,
-      total_offsets: summaryData.total_offsets || 0,
-      net_carbon:
-        summaryData.net_carbon ||
-        (summaryData.total_emissions || 0) - (summaryData.total_offsets || 0),
-      carbon_score: summaryData.carbon_score || 85,
-      hasData: summaryData.total_emissions > 0 || summaryData.total_offsets > 0,
-      usda_verified: summaryData.usda_verified || false,
-      transparency_score: summaryData.transparency_score || 0
+      total_emissions,
+      total_offsets,
+      net_carbon,
+      carbon_score,
+      hasData: total_emissions > 0 || total_offsets > 0,
+      usda_verified: Boolean(summaryData.usda_verified),
+      transparency_score: Math.max(0, Math.min(100, Number(summaryData.transparency_score) || 0)),
+      performance_tier: null,
+      data_quality: null
     };
   }
   // ✅ FALLBACK 2: Calculate from carbon entries
@@ -304,10 +347,32 @@ const CarbonDashboard = () => {
   // Update processedData with final transparency score
   processedData.transparency_score = finalTransparencyScore;
 
-  // ✅ Helper function for consistent number formatting
+  // ✅ Enhanced number formatting with locale support
   const formatNumber = (value, decimals = 1) => {
     if (value === null || value === undefined || isNaN(value)) return '0';
-    return Number(value).toFixed(decimals);
+    const num = Number(value);
+    
+    // Handle very large numbers
+    if (Math.abs(num) >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (Math.abs(num) >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    
+    return num.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  };
+  
+  // Performance tier helper
+  const getPerformanceTierDisplay = (tier) => {
+    if (!tier) return { text: 'Calculating...', color: 'gray' };
+    return {
+      text: tier.tier || 'Unknown',
+      color: tier.color || 'gray',
+      description: tier.description || ''
+    };
   };
 
   // ✅ Helper function for transparency badge

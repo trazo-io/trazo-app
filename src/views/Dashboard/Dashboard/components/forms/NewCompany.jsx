@@ -73,6 +73,7 @@ import { useDropzone } from 'react-dropzone';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 import FormLayout from 'components/Forms/FormLayout';
+import { StandardMediaUpload, StandardField } from 'components/Design/StandardComponents';
 import { InfoOutlineIcon, ArrowForwardIcon } from '@chakra-ui/icons';
 
 const formSchemaInfo = object({
@@ -122,7 +123,7 @@ function NewCompany() {
 
   const currentCompany = useSelector((state) => state.form.currentForm?.company);
 
-  const { getRootProps, getInputProps } = useDropzone();
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const infoMethods = useForm({
     resolver: zodResolver(formSchemaInfo)
@@ -499,27 +500,20 @@ function NewCompany() {
             </Text>
           </CardHeader>
           <CardBody>
-            <Flex direction="column" w="100%">
-              <Text color={textColor} fontSize="sm" fontWeight="bold" mb="12px">
-                {intl.formatMessage({ id: 'app.companyImage' })}
-              </Text>
-              <Flex
-                align="center"
-                justify="center"
-                border="1px dashed #E2E8F0"
-                borderRadius="15px"
-                w="100%"
-                minH="130px"
-                cursor="pointer"
-                {...getRootProps({ className: 'dropzone' })}
-              >
-                <Input {...getInputProps()} />
-                <Button variant="no-hover">
-                  <Text color="gray.400" fontWeight="normal">
-                    {intl.formatMessage({ id: 'app.dropTheImageHereToUpload' })}
-                  </Text>
-                </Button>
-              </Flex>
+            <StandardField
+              label={intl.formatMessage({ id: 'app.companyImage' }) || 'Company Image'}
+              helpText="Upload your company logo or representative image"
+            >
+              <StandardMediaUpload
+                onFilesChange={setUploadedFiles}
+                acceptedFiles={uploadedFiles}
+                maxFiles={1}
+                multiple={false}
+                variant="compact"
+                placeholder={intl.formatMessage({ id: 'app.dropTheImageHereToUpload' }) || 'Drop the image here to upload'}
+                description="Upload company logo (up to 10MB)"
+              />
+            </StandardField>
               <Flex justify="space-between">
                 <Button
                   variant="no-hover"
@@ -548,7 +542,6 @@ function NewCompany() {
                   </Text>
                 </Button>
               </Flex>
-            </Flex>
           </CardBody>
         </Card>
       </TabPanel>

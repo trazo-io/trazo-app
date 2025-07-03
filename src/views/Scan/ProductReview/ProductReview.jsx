@@ -21,7 +21,8 @@ import {
   StandardInput,
   StandardTextarea,
   StandardButton,
-  StandardAlert
+  StandardAlert,
+  StandardMediaUpload
 } from 'components/Design/StandardComponents';
 import { BsStar, BsStarFill } from 'react-icons/bs';
 import { FaLeaf, FaStar, FaHeart, FaCamera } from 'react-icons/fa';
@@ -30,7 +31,6 @@ import React, { useEffect, useState } from 'react';
 import { object, string } from 'zod';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useDropzone } from 'react-dropzone';
 import { useSelector } from 'react-redux';
 import { useSendReviewMutation } from 'store/api/reviewApi';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,10 +49,10 @@ function ProductReview() {
   const intl = useIntl();
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
-  const { getRootProps, getInputProps } = useDropzone();
   const navigate = useNavigate();
   const { productionId, scanId } = useParams();
   const [rating, setRating] = useState(0);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const currentUser = useSelector((state) => state.userState.user);
 
@@ -210,28 +210,15 @@ function ProductReview() {
                       label="Add Photo (Optional)"
                       helpText="Share a photo that shows the product's quality or sustainable packaging"
                     >
-                      <Flex
-                        align="center"
-                        justify="center"
-                        border="2px dashed"
-                        borderColor="gray.300"
-                        borderRadius="xl"
-                        w="100%"
-                        minH="120px"
-                        cursor="pointer"
-                        bg="gray.50"
-                        _hover={{ borderColor: 'green.400', bg: 'green.50' }}
-                        transition="all 0.2s"
-                        {...getRootProps({ className: 'dropzone' })}
-                      >
-                        <Input {...getInputProps()} />
-                        <VStack spacing={2}>
-                          <Icon as={FaCamera} color="gray.400" boxSize={6} />
-                          <Text color="gray.500" fontSize="sm" textAlign="center">
-                            Click or drop a photo here
-                          </Text>
-                        </VStack>
-                      </Flex>
+                      <StandardMediaUpload
+                        onFilesChange={setUploadedFiles}
+                        acceptedFiles={uploadedFiles}
+                        maxFiles={1}
+                        multiple={false}
+                        variant="consumer"
+                        placeholder="Click or drop a photo here"
+                        description="Upload a photo of the product (up to 10MB)"
+                      />
                     </StandardField>
                     {/* Review Text Section */}
                     <StandardField 

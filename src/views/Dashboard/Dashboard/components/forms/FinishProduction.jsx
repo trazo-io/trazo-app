@@ -37,7 +37,7 @@ import { MdDescription, MdInventory, MdNumbers } from 'react-icons/md';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useDropzone } from 'react-dropzone';
+import { StandardMediaUpload } from '../../../../../components/Design/StandardComponents';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -105,44 +105,27 @@ function FinishProduction() {
     formState: { errors }
   } = methods;
 
-  // Dropzone configuration
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
-    },
-    maxFiles: 5,
-    maxSize: 5 * 1024 * 1024, // 5MB
-    onDrop: (files) => {
-      const newImages = [...uploadedImages, ...files].slice(0, 5);
-      setUploadedImages(newImages);
+  // Handle files change for StandardMediaUpload
+  const handleFilesChange = (files) => {
+    const newImages = [...uploadedImages, ...files].slice(0, 5);
+    setUploadedImages(newImages);
 
-      // Create preview URLs
-      const newUrls = newImages.map((file) => URL.createObjectURL(file));
-      setPreviewUrls((current) => {
-        // Clean up old URLs
-        current.forEach((url) => URL.revokeObjectURL(url));
-        return newUrls;
-      });
+    // Create preview URLs
+    const newUrls = newImages.map((file) => URL.createObjectURL(file));
+    setPreviewUrls((current) => {
+      // Clean up old URLs
+      current.forEach((url) => URL.revokeObjectURL(url));
+      return newUrls;
+    });
 
-      toast({
-        title: 'Images uploaded',
-        description: `${files.length} image(s) added successfully`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-    },
-    onDropRejected: (rejectedFiles) => {
-      const reasons = rejectedFiles.map((file) => file.errors[0]?.message).join(', ');
-      toast({
-        title: 'Upload failed',
-        description: reasons,
-        status: 'error',
-        duration: 5000,
-        isClosable: true
-      });
-    }
-  });
+    toast({
+      title: 'Images uploaded',
+      description: `${files.length} image(s) added successfully`,
+      status: 'success',
+      duration: 3000,
+      isClosable: true
+    });
+  };
 
   // Remove image handler
   const removeImage = (index) => {
@@ -378,102 +361,28 @@ function FinishProduction() {
                 subtitle="Upload photos documenting the completed production"
               >
                 <VStack spacing={6} align="stretch">
-                  {/* Image Upload Dropzone */}
+                  {/* Image Upload */}
                   <StandardField
                     label={
                       intl.formatMessage({ id: 'app.productionImages' }) || 'Production Images'
                     }
                     helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
                   >
-                    {/* Current Images Preview */}
-                    {previewUrls.length > 0 && (
-                      <Box mb={4}>
-                        <Text fontSize="sm" fontWeight="medium" mb={3} color="gray.600">
-                          Uploaded Images ({previewUrls.length}/5)
-                        </Text>
-                        <SimpleGrid columns={{ base: 2, md: 3, lg: 5 }} spacing={3}>
-                          {previewUrls.map((url, index) => (
-                            <Box
-                              key={index}
-                              position="relative"
-                              borderRadius="md"
-                              overflow="hidden"
-                            >
-                              <Image
-                                src={url}
-                                alt={`Production image ${index + 1}`}
-                                objectFit="cover"
-                                h="80px"
-                                w="100%"
-                                borderRadius="md"
-                              />
-                              <IconButton
-                                aria-label="Remove image"
-                                icon={<FaTrash />}
-                                size="xs"
-                                colorScheme="red"
-                                position="absolute"
-                                top={1}
-                                right={1}
-                                onClick={() => removeImage(index)}
-                              />
-                            </Box>
-                          ))}
-                        </SimpleGrid>
-                      </Box>
-                    )}
-
-                    {/* Dropzone */}
-                    {uploadedImages.length < 5 && (
-                      <Box
-                        {...getRootProps()}
-                        border="2px dashed"
-                        borderColor={isDragActive ? 'green.400' : 'gray.300'}
-                        borderRadius="lg"
-                        p={8}
-                        textAlign="center"
-                        cursor="pointer"
-                        transition="all 0.3s ease"
-                        bg={isDragActive ? 'green.50' : 'gray.50'}
-                        _hover={{
-                          borderColor: 'green.400',
-                          bg: 'green.50',
-                          transform: 'translateY(-2px)',
-                          boxShadow: 'lg'
-                        }}
-                      >
-                        <ChakraInput {...getInputProps()} />
-
-                        <VStack spacing={4}>
-                          <Icon
-                            as={isDragActive ? FaUpload : FaCamera}
-                            boxSize={8}
-                            color={isDragActive ? 'green.500' : 'gray.400'}
-                          />
-                          <VStack spacing={1}>
-                            <Text fontWeight="medium" color="gray.700">
-                              {isDragActive
-                                ? intl.formatMessage({ id: 'app.dropFilesHere' }) ||
-                                  'Drop files here'
-                                : intl.formatMessage({ id: 'app.dragDropOrClick' }) ||
-                                  'Drag & drop images here, or click to select'}
-                            </Text>
-                            <Text fontSize="sm" color="gray.500">
-                              {uploadedImages.length === 0
-                                ? 'Up to 5 images, max 5MB each'
-                                : `${5 - uploadedImages.length} more images allowed`}
-                            </Text>
-                          </VStack>
-
-                          <Badge colorScheme="blue" variant="subtle">
-                            <HStack spacing={1}>
-                              <Icon as={FaImage} boxSize={3} />
-                              <Text fontSize="xs">JPG, PNG, GIF, WEBP</Text>
-                            </HStack>
-                          </Badge>
-                        </VStack>
-                      </Box>
-                    )}
+                    <StandardMediaUpload
+                      onFilesChange={handleFilesChange}
+                      acceptedFiles={uploadedImages}
+                      maxFiles={5}
+                      maxSize={5 * 1024 * 1024} // 5MB
+                      accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
+                      placeholder={
+                        intl.formatMessage({ id: 'app.dragDropOrClick' }) ||
+                        'Drag & drop images here, or click to select'
+                      }
+                      description={`Upload up to 5 images, max 5MB each`}
+                      variant="default"
+                      previewMode="grid"
+                      height="280px"
+                    />
                   </StandardField>
 
                   {/* Upload Limit Notice */}

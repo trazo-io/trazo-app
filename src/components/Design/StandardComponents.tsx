@@ -32,9 +32,10 @@ import {
   Portal
 } from '@chakra-ui/react';
 import { ReactNode, ReactElement } from 'react';
-import { FaLeaf, FaChevronLeft, FaChevronRight, FaCheckCircle, FaQuestionCircle } from 'react-icons/fa';
+import { FaLeaf, FaChevronLeft, FaChevronRight, FaCheckCircle, FaQuestionCircle, FaCamera } from 'react-icons/fa';
 import { MdCheck, MdError, MdInfo, MdWarning } from 'react-icons/md';
 import { IconType } from 'react-icons';
+import { useDropzone } from 'react-dropzone';
 
 // Core Layout Components
 
@@ -838,4 +839,243 @@ export const StandardMetricCard = ({
   }
 
   return MetricContent;
+};
+
+// Standardized Media Upload Component
+
+interface StandardMediaUploadProps {
+  onFilesChange: (files: File[]) => void;
+  acceptedFiles?: File[];
+  maxFiles?: number;
+  maxSize?: number;
+  accept?: {[key: string]: string[]};
+  multiple?: boolean;
+  disabled?: boolean;
+  required?: boolean;
+  error?: string;
+  helpText?: string;
+  placeholder?: string;
+  description?: string;
+  height?: string;
+  variant?: 'default' | 'compact' | 'consumer';
+  showFileNames?: boolean;
+  previewMode?: 'grid' | 'list' | 'thumbnails';
+}
+
+export const StandardMediaUpload = ({
+  onFilesChange,
+  acceptedFiles = [],
+  maxFiles = 5,
+  maxSize = 10485760, // 10MB
+  accept = { 'image/*': [] },
+  multiple = true,
+  disabled = false,
+  required = false,
+  error,
+  helpText,
+  placeholder,
+  description,
+  height = '280px',
+  variant = 'default',
+  showFileNames = true,
+  previewMode = 'grid'
+}: StandardMediaUploadProps) => {
+  const borderColor = useColorModeValue('gray.300', 'gray.600');
+  const bgColor = useColorModeValue('green.50', 'green.900');
+  const textColor = useColorModeValue('gray.700', 'white');
+  const hoverBgColor = useColorModeValue('green.25', 'green.800');
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: onFilesChange,
+    accept,
+    multiple,
+    maxFiles,
+    maxSize,
+    disabled
+  });
+
+  const isImage = (file: File) => {
+    return file.type && file.type.startsWith('image/');
+  };
+
+  const renderFilePreview = (file: File, index: number) => {
+    if (isImage(file)) {
+      return (
+        <Box key={index} textAlign="center">
+          <Box 
+            borderRadius="xl" 
+            overflow="hidden" 
+            mb={2} 
+            boxShadow="md"
+            border="1px solid"
+            borderColor="gray.200"
+          >
+            <img
+              src={URL.createObjectURL(file)}
+              alt={file.name}
+              style={{
+                width: '100%',
+                height: previewMode === 'thumbnails' ? '80px' : '120px',
+                objectFit: 'cover'
+              }}
+            />
+          </Box>
+          {showFileNames && (
+            <Text fontSize="xs" color="gray.600" noOfLines={1} fontWeight="medium">
+              {file.name}
+            </Text>
+          )}
+        </Box>
+      );
+    }
+
+    return (
+      <Box
+        key={index}
+        textAlign="center"
+        p={3}
+        border="1px solid"
+        borderColor={borderColor}
+        borderRadius="lg"
+        bg="gray.50"
+      >
+        <Icon as={FaCheckCircle} boxSize={6} color="green.500" mb={2} />
+        <Text fontSize="xs" color={textColor} noOfLines={1} fontWeight="medium">
+          {file.name}
+        </Text>
+      </Box>
+    );
+  };
+
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'compact':
+        return {
+          height: '160px',
+          iconSize: 8,
+          textSize: 'md'
+        };
+      case 'consumer':
+        return {
+          height: '140px',
+          iconSize: 6,
+          textSize: 'sm',
+          borderStyle: 'solid',
+          borderWidth: '1px'
+        };
+      default:
+        return {
+          height: height,
+          iconSize: 12,
+          textSize: 'lg'
+        };
+    }
+  };
+
+  const variantStyles = getVariantStyles();
+
+  return (
+    <VStack spacing={3} align="stretch" w="100%">
+      <Box
+        border={variantStyles.borderStyle || "2px dashed"}
+        borderWidth={variantStyles.borderWidth || "2px"}
+        borderColor={
+          error 
+            ? 'red.300' 
+            : isDragActive 
+              ? 'green.400' 
+              : borderColor
+        }
+        borderRadius="xl"
+        p={variant === 'consumer' ? 4 : 6}
+        minH={variantStyles.height}
+        textAlign="center"
+        cursor={disabled ? 'not-allowed' : 'pointer'}
+        transition="all 0.3s ease"
+        bg={isDragActive ? bgColor : error ? 'red.25' : 'transparent'}
+        _hover={{
+          borderColor: disabled ? borderColor : error ? 'red.400' : 'green.400',
+          bg: disabled ? 'transparent' : error ? 'red.50' : hoverBgColor,
+          transform: disabled ? 'none' : 'translateY(-1px)',
+          boxShadow: disabled ? 'none' : 'md'
+        }}
+        opacity={disabled ? 0.6 : 1}
+        {...getRootProps()}
+      >
+        <input {...getInputProps()} style={{ display: 'none' }} />
+
+        {acceptedFiles.length > 0 ? (
+          <VStack spacing={4} justify="center" h="full">
+            <Circle size="50px" bg="green.100" color="green.600">
+              <Icon as={FaCheckCircle} boxSize={6} />
+            </Circle>
+            <Text fontWeight="semibold" fontSize={variantStyles.textSize} color={textColor}>
+              {acceptedFiles.length} file{acceptedFiles.length !== 1 ? 's' : ''} selected
+            </Text>
+
+            {previewMode !== 'list' && (
+              <Grid
+                templateColumns={
+                  previewMode === 'thumbnails' 
+                    ? 'repeat(auto-fill, minmax(100px, 1fr))'
+                    : 'repeat(auto-fill, minmax(140px, 1fr))'
+                }
+                gap={3}
+                w="100%"
+                maxW="500px"
+                mx="auto"
+              >
+                {acceptedFiles.slice(0, 3).map((file, index) => renderFilePreview(file, index))}
+                {acceptedFiles.length > 3 && (
+                  <Box 
+                    textAlign="center" 
+                    p={3} 
+                    borderRadius="lg" 
+                    bg="gray.100"
+                    border="1px dashed"
+                    borderColor="gray.300"
+                  >
+                    <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                      +{acceptedFiles.length - 3} more
+                    </Text>
+                  </Box>
+                )}
+              </Grid>
+            )}
+          </VStack>
+        ) : (
+          <VStack spacing={4} justify="center" h="full">
+            <Circle size="60px" bg="gray.100" color="gray.500">
+              <Icon as={FaCamera} boxSize={variantStyles.iconSize} />
+            </Circle>
+            <VStack spacing={2}>
+              <Text 
+                fontSize={variantStyles.textSize} 
+                color="gray.600" 
+                fontWeight="semibold" 
+                textAlign="center"
+              >
+                {placeholder || 'Drag & drop images here, or click to select'}
+              </Text>
+              <Text fontSize="sm" color="gray.500" textAlign="center">
+                {description || `Maximum ${maxFiles} files, up to ${Math.round(maxSize / 1048576)}MB each`}
+              </Text>
+            </VStack>
+          </VStack>
+        )}
+      </Box>
+
+      {/* Error and Help Text */}
+      {helpText && !error && (
+        <Text fontSize="xs" color="gray.500">
+          {helpText}
+        </Text>
+      )}
+      {error && (
+        <Text fontSize="xs" color="red.500" fontWeight="medium">
+          {error}
+        </Text>
+      )}
+    </VStack>
+  );
 };

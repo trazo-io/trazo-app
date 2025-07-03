@@ -56,7 +56,7 @@ import FormLayout from 'components/Forms/FormLayout';
 import MapCreator from 'components/Map/MapCreator';
 import { setEstablishmentParcel } from 'store/features/companySlice';
 import { useCreateParcelMutation } from 'store/api/productApi.js';
-import { useDropzone } from 'react-dropzone';
+import { StandardMediaUpload } from 'components/Design/StandardComponents';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useIntl } from 'react-intl';
@@ -166,13 +166,12 @@ function NewParcel() {
   const [isUploading, setIsUploading] = useState(false);
   const { uploadMultipleFiles } = useFileUpload();
 
-  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
-    onDrop: (acceptedFiles) => {
-      // Store the file names for preview purposes
-      const fileNames = acceptedFiles.map((file) => file.name);
-      console.log('Dropped files:', fileNames);
-    }
-  });
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+  const handleFilesChange = (files) => {
+    setSelectedFiles(files);
+    console.log('Selected files:', files);
+  };
 
   const onMapClick = (e) => {
     setPath([...path, { lat: e.latLng.lat(), lng: e.latLng.lng() }]);
@@ -272,7 +271,7 @@ function NewParcel() {
   const [createParcel, { data, error, isSuccess, isLoading }] = useCreateParcelMutation();
 
   const handleFileUpload = async () => {
-    if (acceptedFiles.length === 0) {
+    if (selectedFiles.length === 0) {
       toast({
         title: intl.formatMessage({ id: 'app.noFilesSelected' }),
         description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
@@ -287,7 +286,7 @@ function NewParcel() {
 
     try {
       // Upload all files and get URLs
-      const urls = await uploadMultipleFiles(acceptedFiles);
+      const urls = await uploadMultipleFiles(selectedFiles);
 
       // Validate URLs and store only valid ones
       const validUrls = urls.filter(
@@ -583,56 +582,18 @@ function NewParcel() {
             </CardHeader>
             <CardBody>
               <Flex direction="column" w="100%">
-                <Text color={textColor} fontSize="sm" fontWeight="bold" mb="12px">
-                  {intl.formatMessage({ id: 'app.parcelImages' })}
-                </Text>
-                <Flex
-                  align="center"
-                  justify="center"
-                  border="1px dashed #E2E8F0"
-                  borderRadius="15px"
-                  w="100%"
-                  maxWidth={'980px'}
-                  cursor="pointer"
-                  overflowY={'auto'}
-                  minH={'175px'}
-                  {...getRootProps({ className: 'dropzone' })}
-                >
-                  <Input {...getInputProps()} />
-                  <Button variant="no-hover">
-                    {acceptedFiles.length > 0 ? (
-                      <Flex gap="20px" p="20px" flexWrap={'wrap'}>
-                        {acceptedFiles.map((file, index) => (
-                          <Box key={index}>
-                            <img
-                              src={URL.createObjectURL(file)} // Create a preview URL for the image
-                              alt={file.name}
-                              style={{
-                                width: '150px',
-                                height: '100px',
-                                borderRadius: '15px',
-                                objectFit: 'contain'
-                              }}
-                            />
-                            <Text
-                              color="gray.400"
-                              fontWeight="normal"
-                              maxWidth="150px"
-                              textOverflow={'ellipsis'}
-                              overflow={'hidden'}
-                            >
-                              {file.name}
-                            </Text>
-                          </Box>
-                        ))}
-                      </Flex>
-                    ) : (
-                      <Text color="gray.400" fontWeight="normal">
-                        {intl.formatMessage({ id: 'app.dropFilesHereToUpload' })}
-                      </Text>
-                    )}
-                  </Button>
-                </Flex>
+                <StandardMediaUpload
+                  onFilesChange={handleFilesChange}
+                  acceptedFiles={selectedFiles}
+                  maxFiles={5}
+                  maxSize={5 * 1024 * 1024} // 5MB
+                  accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
+                  placeholder={intl.formatMessage({ id: 'app.dropFilesHereToUpload' })}
+                  description="Sube hasta 5 imágenes del parcel. Formatos: JPG, PNG, GIF, WEBP."
+                  variant="default"
+                  previewMode="grid"
+                  height="175px"
+                />
                 <Flex justify="space-between">
                   <Button
                     variant="no-hover"
