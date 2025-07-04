@@ -21,6 +21,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
+import { StandardImageGallery } from 'components/ImageGallery';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 import { useGetEventQuery } from 'store/api/historyApi';
 import { useSelector } from 'react-redux';
@@ -160,15 +161,18 @@ function ProfileEstablishment() {
                 >
                   <Box
                     w={{ sm: '100%', md: '100%', lg: '380px', xl: '400px' }}
-                    h={{ sm: '200px', md: '500px', lg: '230px', xl: '300px' }}
                     mb="26px"
                     mx={{ sm: 'auto', lg: '0px' }}
                   >
-                    <Image
-                      src={eventData?.image || BgMusicCard}
-                      w="100%"
-                      h="100%"
-                      borderRadius="15px"
+                    <StandardImageGallery
+                      images={eventData?.image ? [eventData.image] : []}
+                      variant="event"
+                      enablePreview={true}
+                      showImageCount={false}
+                      fallbackImage={BgMusicCard}
+                      height={{ sm: '200px', md: '500px', lg: '230px', xl: '300px' }}
+                      showEmptyState={true}
+                      maxDisplayImages={1}
                     />
                   </Box>
                 </Flex>

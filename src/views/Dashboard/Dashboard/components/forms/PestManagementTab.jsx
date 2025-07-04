@@ -98,18 +98,18 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('[PestManagementTab]: Field watching triggered', { 
-      hasOnDataChange: !!onDataChange, 
-      watchedFields, 
-      firstField: watchedFields[0] 
+    console.log('[PestManagementTab]: Field watching triggered', {
+      hasOnDataChange: !!onDataChange,
+      watchedFields,
+      firstField: watchedFields[0]
     });
-    
+
     // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
         console.log('[PestManagementTab]: Current values for carbon calculation', currentValues);
-        
+
         // Only trigger if we have meaningful data
         if (currentValues.type) {
           console.log('[PestManagementTab]: Triggering onDataChange with values', currentValues);
@@ -159,7 +159,10 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
 
           {/* Pest Management Event Type */}
           <StandardField
-            label={intl.formatMessage({ id: 'app.pestManagementEventType' }) || 'Pest Management Event Type'}
+            label={
+              intl.formatMessage({ id: 'app.pestManagementEventType' }) ||
+              'Pest Management Event Type'
+            }
             required
             error={methods.formState.errors.type?.message}
           >
@@ -197,7 +200,9 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
 
               <HStack spacing={4} align="end">
                 <StandardField
-                  label={intl.formatMessage({ id: 'app.pestPressureLevel' }) || 'Pest Pressure Level'}
+                  label={
+                    intl.formatMessage({ id: 'app.pestPressureLevel' }) || 'Pest Pressure Level'
+                  }
                 >
                   <StandardSelect {...methods.register('pest_pressure_level')}>
                     <option value="Low">{intl.formatMessage({ id: 'app.low' }) || 'Low'}</option>
@@ -298,9 +303,7 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
           )}
 
           {/* Observations */}
-          <StandardField
-            label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-          >
+          <StandardField label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}>
             <StandardTextarea
               {...methods.register('observation')}
               placeholder={

@@ -15,7 +15,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   const [subdomain, setSubDomain] = useState('');
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  
+
   // Debug wrapper for navigate calls
   const debugNavigate = (path, options) => {
     console.log('🔒 Authenticated.jsx: navigate() called with path:', path, 'options:', options);
@@ -44,19 +44,29 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   }, []);
 
   useEffect(() => {
-    console.log('🔒 Authenticated.jsx: useEffect triggered - isAuthenticated:', isAuthenticated, 'currentUser:', currentUser, 'subdomain:', subdomain);
+    console.log(
+      '🔒 Authenticated.jsx: useEffect triggered - isAuthenticated:',
+      isAuthenticated,
+      'currentUser:',
+      currentUser,
+      'subdomain:',
+      subdomain
+    );
     if (isAuthenticated && currentUser && subdomain) {
       // Check if there's a pending auth redirect action first
       const pendingAction = getAuthRedirectAction();
       if (pendingAction) {
-        console.log('🔒 Authenticated.jsx: Pending auth redirect action found, skipping subdomain redirect');
+        console.log(
+          '🔒 Authenticated.jsx: Pending auth redirect action found, skipping subdomain redirect'
+        );
         return;
       }
-      
+
       const isConsumerUser = currentUser.user_type === CONSUMER;
       const params = new URLSearchParams(window.location.search);
-      
-      const intendedPath = params.get('next') || (isConsumerUser ? '/consumer/dashboard' : '/admin/dashboard/scans');
+
+      const intendedPath =
+        params.get('next') || (isConsumerUser ? '/consumer/dashboard' : '/admin/dashboard/scans');
       console.log('🔒 Authenticated.jsx: intendedPath calculated:', intendedPath);
 
       if (isConsumerUser && subdomain === 'producer') {

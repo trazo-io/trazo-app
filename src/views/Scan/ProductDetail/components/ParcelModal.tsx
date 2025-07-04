@@ -38,6 +38,7 @@ import {
   Alert,
   AlertIcon
 } from '@chakra-ui/react';
+import { StandardImageGallery } from '../../../../components/ImageGallery';
 import {
   FaRuler,
   FaMapMarkerAlt,
@@ -168,18 +169,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                     Certified
                   </Badge>
                 )}
-                {parcelData.unique_code && (
-                  <Badge
-                    colorScheme="purple"
-                    variant="outline"
-                    fontSize="xs"
-                    px={2}
-                    py={1}
-                    borderRadius="full"
-                  >
-                    {parcelData.unique_code}
-                  </Badge>
-                )}
+                {/* unique_code removed from public display - internal tracking code should not be public */}
               </HStack>
             </VStack>
           </HStack>
@@ -396,47 +386,10 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
               </Card>
             )}
 
-            {/* Contact Information */}
-            {(parcelData.contact_person ||
-              parcelData.contact_phone ||
-              parcelData.contact_email) && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    Parcel Contact
-                  </Heading>
-                  <VStack spacing={4} align="stretch">
-                    {parcelData.contact_person && (
-                      <HStack spacing={3}>
-                        <Icon as={FaUsers} color={accentColor} />
-                        <Text color={textColor}>
-                          <Text as="span" fontWeight="medium">
-                            Contact Person:
-                          </Text>{' '}
-                          {parcelData.contact_person}
-                        </Text>
-                      </HStack>
-                    )}
-                    {parcelData.contact_phone && (
-                      <HStack spacing={3}>
-                        <Icon as={FaPhone} color={accentColor} />
-                        <Link href={`tel:${parcelData.contact_phone}`} color={textColor}>
-                          {parcelData.contact_phone}
-                        </Link>
-                      </HStack>
-                    )}
-                    {parcelData.contact_email && (
-                      <HStack spacing={3}>
-                        <Icon as={FaEnvelope} color={accentColor} />
-                        <Link href={`mailto:${parcelData.contact_email}`} color={textColor}>
-                          {parcelData.contact_email}
-                        </Link>
-                      </HStack>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
-            )}
+            {/* Contact Information - Removed for privacy protection */}
+            {/* Personal contact information (contact_person, contact_phone, contact_email) 
+                has been removed from public display to protect farmer privacy.
+                This information should only be available to authenticated users with proper permissions. */}
 
             {/* Production History Summary */}
             {parcelData.productions_completed !== undefined &&
@@ -482,30 +435,21 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
               )}
 
             {/* Images Gallery */}
-            {parcelData.images && parcelData.images.length > 0 && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    Parcel Gallery
-                  </Heading>
-                  <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
-                    {parcelData.images.map((image, index) => (
-                      <Box key={index} borderRadius="lg" overflow="hidden">
-                        <Image
-                          src={image}
-                          alt={`${parcelData.name} - Image ${index + 1}`}
-                          w="full"
-                          h="150px"
-                          objectFit="cover"
-                          _hover={{ transform: 'scale(1.05)' }}
-                          transition="transform 0.2s"
-                        />
-                      </Box>
-                    ))}
-                  </SimpleGrid>
-                </CardBody>
-              </Card>
-            )}
+            <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+              <CardBody p={6}>
+                <StandardImageGallery
+                  images={parcelData.images || []}
+                  title="Parcel Gallery"
+                  variant="parcel"
+                  enablePreview={true}
+                  showImageCount={true}
+                  height="200px"
+                  showEmptyState={true}
+                  maxDisplayImages={4}
+                  aspectRatio="4/3"
+                />
+              </CardBody>
+            </Card>
           </VStack>
         </ModalBody>
       </ModalContent>

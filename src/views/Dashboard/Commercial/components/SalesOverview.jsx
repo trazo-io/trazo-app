@@ -1,32 +1,69 @@
 // Chakra imports
-import { Box, Flex, Text, useColorModeValue } from '@chakra-ui/react';
+import { Box, Flex, Text, useColorModeValue, VStack, HStack, Icon } from '@chakra-ui/react';
+import { FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
 
 // Custom components
-import Card from 'components/Card/Card';
-import CardHeader from 'components/Card/CardHeader.tsx';
+import { StandardCard } from 'components/Design/StandardComponents';
 import React from 'react';
 
-const SalesOverview = ({ title, percentage, chart }) => {
+const SalesOverview = ({ title, percentage, chart, period = '2024' }) => {
   const textColor = useColorModeValue('gray.700', 'white');
+  const isPositive = percentage > 0;
+
   return (
-    <Card p="28px 10px 0px 0px" mb={{ sm: '26px', lg: '0px' }}>
-      <CardHeader mb="20px" pl="22px">
-        <Flex direction="column" alignSelf="flex-start">
-          <Text fontSize="lg" color={textColor} fontWeight="bold" mb="6px">
-            {title}
-          </Text>
-          <Text fontSize="md" fontWeight="medium" color="gray.400">
-            <Text as="span" color={percentage > 0 ? 'green.400' : 'red.400'} fontWeight="bold">
-              {`${percentage}%`} more
-            </Text>{' '}
-            in 2021
-          </Text>
-        </Flex>
-      </CardHeader>
-      <Box w="100%" h={{ sm: '300px' }} ps="8px">
-        {chart}
-      </Box>
-    </Card>
+    <StandardCard title={title} variant="elevated">
+      <VStack spacing={4} align="stretch">
+        {/* Performance Indicator */}
+        <HStack
+          spacing={3}
+          p={3}
+          borderRadius="lg"
+          bg={isPositive ? 'green.50' : 'red.50'}
+          border="1px solid"
+          borderColor={isPositive ? 'green.200' : 'red.200'}
+        >
+          <Icon
+            as={isPositive ? FiTrendingUp : FiTrendingDown}
+            color={isPositive ? 'green.600' : 'red.600'}
+            boxSize={5}
+          />
+          <VStack align="start" spacing={0}>
+            <HStack spacing={2}>
+              <Text fontSize="lg" fontWeight="bold" color={isPositive ? 'green.600' : 'red.600'}>
+                {percentage > 0 ? '+' : ''}
+                {percentage}%
+              </Text>
+              <Text fontSize="sm" color="gray.600">
+                vs año anterior
+              </Text>
+            </HStack>
+            <Text fontSize="xs" color="gray.500">
+              {isPositive ? 'Crecimiento positivo' : 'Disminución'} en {period}
+            </Text>
+          </VStack>
+        </HStack>
+
+        {/* Chart Container */}
+        <Box
+          w="100%"
+          h="300px"
+          p={2}
+          borderRadius="md"
+          bg="gray.50"
+          border="1px solid"
+          borderColor="gray.200"
+        >
+          {chart || (
+            <Flex justify="center" align="center" h="100%" direction="column" color="gray.500">
+              <Text fontSize="md" fontWeight="medium">
+                Gráfico no disponible
+              </Text>
+              <Text fontSize="sm">Los datos se mostrarán cuando estén disponibles</Text>
+            </Flex>
+          )}
+        </Box>
+      </VStack>
+    </StandardCard>
   );
 };
 

@@ -71,7 +71,7 @@ import { ProgressiveQRLoader } from './components/ProgressiveQRLoader';
 import { usePointsStore } from '../../../store/pointsStore';
 import USDACredibilityBadge from '../../../components/Carbon/USDACredibilityBadge';
 import { CarbonScore } from '../../../components/CarbonScore';
-import ImageCarousel from '../../../components/ImageCarousel/ImageCarousel';
+import { StandardImageGallery } from '../../../components/ImageGallery';
 
 // Educational modal content
 const EducationModal = ({
@@ -577,31 +577,32 @@ function ProductDetail() {
   // Get authentication state from Redux store (same as Authenticated component)
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const currentUser = useSelector((state) => state.userState.user);
-  
+
   // Helper function to check if user might be authenticated via cookies
   const checkAuthFromCookies = () => {
     // Check for common auth-related cookies that might indicate authentication
     const cookieString = document.cookie;
     console.log('🔍 All cookies:', cookieString);
-    
+
     // Look for session-related cookies that might indicate authentication
-    const hasSessionCookie = cookieString.includes('sessionid') || 
-                            cookieString.includes('csrftoken') ||
-                            cookieString.includes('auth') ||
-                            cookieString.includes('user');
-    
+    const hasSessionCookie =
+      cookieString.includes('sessionid') ||
+      cookieString.includes('csrftoken') ||
+      cookieString.includes('auth') ||
+      cookieString.includes('user');
+
     console.log('🔍 Has session-related cookies:', hasSessionCookie);
     return hasSessionCookie;
   };
-  
+
   // For public routes, check multiple sources for authentication
   const hasAuthCookies = checkAuthFromCookies();
   const finalIsAuthenticated = Boolean(currentUser?.id) || hasAuthCookies;
   const finalCurrentUser = currentUser;
-  
+
   // Get full Redux state for debugging
   const fullReduxState = useSelector((state) => state);
-  
+
   // Debug: Check if component is loading
   console.log('🔍 ProductDetail component loaded with productionId:', productionId);
   console.log('🔍 Redux Authentication state:', isAuthenticated);
@@ -641,7 +642,7 @@ function ProductDetail() {
     try {
       await navigator.share({
         title: `${completeData?.farmer?.name || 'Product'}'s Sustainable Product`,
-        text: `${completeData?.carbonScore}/100 carbon score! #Trazo`,
+        text: `${Math.round((completeData?.carbonScore || 0) * 10) / 10}/100 carbon score! #Trazo`,
         url: window.location.href
       });
       pointsStore.addPoints(3);
@@ -739,7 +740,13 @@ function ProductDetail() {
                   <Icon as={FaLeaf} color="green.600" boxSize={6} />
                 </Circle>
                 <Heading size="xl" color={textColor}>
-                  {completeData?.carbonScore || 50}
+                  {(() => {
+                    const score = completeData?.carbonScore || 50;
+                    console.log('🔍 CARBON SCORE DEBUG - Raw value:', score);
+                    const rounded = Math.round(score * 10) / 10;
+                    console.log('🔍 CARBON SCORE DEBUG - Rounded value:', rounded);
+                    return rounded;
+                  })()}
                 </Heading>
                 <Text fontSize="sm" color="gray.600" textAlign="center">
                   Carbon Score
@@ -796,7 +803,6 @@ function ProductDetail() {
           bg={useColorModeValue('white', 'gray.800')}
         >
           <CardHeader mb="24px">
-
             <HStack mt={4} spacing={4} align="center">
               <Heading color={textColor} fontSize={headerFontSize} fontWeight="bold">
                 {(completeData as any)?.farmer?.name ||
@@ -856,12 +862,29 @@ function ProductDetail() {
             <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8} mb={10}>
               <Box>
                 {/* Product Images */}
-                <Box mb={6}>{hasImages && <ImageCarousel imagesList={productImages} />}</Box>
+                <Box mb={6}>
+                  <StandardImageGallery
+                    images={productImages || []}
+                    title="Product Photos"
+                    variant="product"
+                    enablePreview={true}
+                    showImageCount={true}
+                    height="300px"
+                    showEmptyState={true}
+                    maxDisplayImages={3}
+                  />
+                </Box>
 
                 {/* Carbon Score */}
                 {/* <Box borderRadius="lg" mb={6} bg="white" p={5} boxShadow="md"> */}
                 <CarbonScore
-                  score={completeData?.carbonScore || 0}
+                  score={(() => {
+                    const score = completeData?.carbonScore || 0;
+                    console.log('🔍 CARBON SCORE COMPONENT - Raw value:', score);
+                    const rounded = Math.round(score * 10) / 10;
+                    console.log('🔍 CARBON SCORE COMPONENT - Rounded value:', rounded);
+                    return rounded;
+                  })()}
                   footprint={completeData?.netFootprint || 0}
                   industryPercentile={completeData?.industryPercentile || 0}
                   relatableFootprint={
@@ -877,22 +900,33 @@ function ProductDetail() {
               <ModernSidebar
                 isAuthenticated={finalIsAuthenticated}
                 productName={completeData?.farmer?.name || completeData?.product?.name}
-                carbonScore={completeData?.carbonScore || 0}
+                carbonScore={(() => {
+                  const score = completeData?.carbonScore || 0;
+                  console.log('🔍 MODERN SIDEBAR - Raw value:', score);
+                  const rounded = Math.round(score * 10) / 10;
+                  console.log('🔍 MODERN SIDEBAR - Rounded value:', rounded);
+                  return rounded;
+                })()}
                 onAuthPrompt={() => {
                   console.log('🔍 SIDEBAR BUTTON CLICKED');
                   console.log('🔍 Redux isAuthenticated:', isAuthenticated);
                   console.log('🔍 Redux currentUser:', currentUser);
                   console.log('🔍 FINAL isAuthenticated:', finalIsAuthenticated);
                   console.log('🔍 FINAL currentUser:', finalCurrentUser);
-                  
+
                   if (finalIsAuthenticated) {
                     // User is already logged in, go directly to review page
                     const reviewUrl = `/admin/dashboard/production/${productionId}/review/web-${Date.now()}`;
-                    console.log('🔍 User already authenticated, navigating directly to:', reviewUrl);
+                    console.log(
+                      '🔍 User already authenticated, navigating directly to:',
+                      reviewUrl
+                    );
                     navigate(reviewUrl);
                   } else {
                     // User not logged in, store action and redirect to auth
-                    console.log('🔍 User not authenticated, storing action and redirecting to auth');
+                    console.log(
+                      '🔍 User not authenticated, storing action and redirecting to auth'
+                    );
                     if (productionId) {
                       setAuthRedirectAction(productionId);
                     }

@@ -28,7 +28,12 @@ import { useGetCompleteSummaryQuery } from '../../../store/api/carbonApi';
 import { useUpdateUserImpactMutation } from '../../../store/api/consumerApi';
 
 // Modern components
-import { ModernProductHeader, ModernEducationalSection, ModernSidebar, UltraMobileProductionJourney } from './components';
+import {
+  ModernProductHeader,
+  ModernEducationalSection,
+  ModernSidebar,
+  UltraMobileProductionJourney
+} from './components';
 
 // Other components
 import { ProgressiveQRLoader } from './components/ProgressiveQRLoader';
@@ -39,14 +44,14 @@ function ProductDetailModern() {
   const navigate = useNavigate();
   const intl = useIntl();
   const pointsStore = usePointsStore();
-  
+
   // Debug: Check if component is loading
   console.log('🔍 ProductDetailModern component loaded with productionId:', productionId);
 
   // Get authentication state from Redux store (same as Authenticated component)
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const currentUser = useSelector((state) => state.userState.user);
-  
+
   // Debug authentication state
   console.log('🔍 ProductDetailModern - currentUser:', currentUser);
   console.log('🔍 ProductDetailModern - isAuthenticated:', isAuthenticated);
@@ -96,7 +101,10 @@ function ProductDetailModern() {
         type: 'review',
         productionId: productionId
       };
-      console.log('🔍 handleReviewOpen: Setting postLoginAction from "Leave Review" button:', action);
+      console.log(
+        '🔍 handleReviewOpen: Setting postLoginAction from "Leave Review" button:',
+        action
+      );
       localStorage.setItem('postLoginAction', JSON.stringify(action));
       navigate('/consumer/auth/signin');
       return;
@@ -113,7 +121,7 @@ function ProductDetailModern() {
       // For now, we'll generate a temporary scanId based on timestamp
       // In production, this should come from the backend scan creation
       const temporaryScanId = `web-${Date.now()}`;
-      
+
       // Navigate to review page
       navigate(`/production/${productionId}/review/${temporaryScanId}`);
     } catch (error) {
@@ -270,7 +278,7 @@ function ProductDetailModern() {
               console.log('🔍 Current authentication state - isAuthenticated:', isAuthenticated);
               console.log('🔍 Current user from Redux:', currentUser);
               console.log('🔍 User ID:', currentUser?.id);
-              
+
               // Check if user is already authenticated
               if (isAuthenticated || currentUser?.id) {
                 console.log('🔍 User already authenticated, navigating directly to review page');
@@ -286,10 +294,13 @@ function ProductDetailModern() {
                 productionId: productionId
               };
               console.log('🔍 Setting auth redirect action:', action);
-              localStorage.setItem('trazo_pending_auth_action', JSON.stringify({
-                action,
-                timestamp: Date.now()
-              }));
+              localStorage.setItem(
+                'trazo_pending_auth_action',
+                JSON.stringify({
+                  action,
+                  timestamp: Date.now()
+                })
+              );
               console.log('🔍 About to navigate to /consumer/auth/signin');
               navigate('/consumer/auth/signin');
             }}

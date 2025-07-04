@@ -69,17 +69,15 @@ const optimizedQrApi = baseApi.injectEndpoints({
     // Priority 1: Fast carbon score - minimal payload (< 1KB)
     getCarbonQuickScore: build.query<CarbonQuickScore, string>({
       query: (productionId) => ({
-        url: `/carbon/public/qr/${productionId}/quick-score`,
+        url: `/carbon/public/productions/${productionId}/complete/`,
         method: 'GET',
         credentials: 'include'
       }),
-      // Fake endpoint until backend implementation - we'll adapt the existing endpoint response
-      // This transform simulates what the backend would do
       transformResponse: (response: any) => {
-        // If we get full QR data, extract just what we need for quick score
+        // Extract just what we need for quick score and round the carbon score to 1 decimal
         if (response?.carbonScore !== undefined) {
           return {
-            carbonScore: response.carbonScore,
+            carbonScore: Math.round((response.carbonScore || 0) * 10) / 10,
             netFootprint: response.netFootprint,
             relatableFootprint: response.relatableFootprint
           };
@@ -92,23 +90,22 @@ const optimizedQrApi = baseApi.injectEndpoints({
     // Priority 2: Basic product details - medium payload
     getProductBasics: build.query<ProductBasics, string>({
       query: (productionId) => ({
-        url: `/carbon/public/qr/${productionId}/basics`,
+        url: `/carbon/public/productions/${productionId}/complete/`,
         method: 'GET',
         credentials: 'include'
       }),
-      // Fake endpoint until backend implementation
       transformResponse: (response: any) => {
-        // If we get full history data, extract just what we need for basics
+        // Extract just what we need for basics from complete endpoint
         if (response?.product) {
           return {
             id: response.id,
             name: response.product.name,
             image: response.product.image,
             company: {
-              name: response.parcel?.establishment?.company?.name || 'Unknown',
-              logo: response.parcel?.establishment?.company?.logo
+              name: response.establishment?.company?.name || response.farmer?.company || 'Unknown',
+              logo: response.establishment?.company?.logo
             },
-            isVerified: response.blockchain_tx_hash ? true : false
+            isVerified: response.blockchainVerification?.verified || false
           };
         }
         return response;
@@ -119,7 +116,7 @@ const optimizedQrApi = baseApi.injectEndpoints({
     // Priority 3: Full details - larger payload, loaded last
     getProductFullDetails: build.query<ProductFullDetails, string>({
       query: (productionId) => ({
-        url: `/carbon/public/qr/${productionId}/full-details`,
+        url: `/carbon/public/productions/${productionId}/complete/`,
         method: 'GET',
         credentials: 'include'
       }),

@@ -148,18 +148,18 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('[WeatherTab]: Field watching triggered', { 
-      hasOnDataChange: !!onDataChange, 
-      watchedFields, 
-      firstField: watchedFields[0] 
+    console.log('[WeatherTab]: Field watching triggered', {
+      hasOnDataChange: !!onDataChange,
+      watchedFields,
+      firstField: watchedFields[0]
     });
-    
+
     // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = mainInfoMethods.getValues();
         console.log('[WeatherTab]: Current values for carbon calculation', currentValues);
-        
+
         // Only trigger if we have meaningful data
         if (currentValues.type) {
           console.log('[WeatherTab]: Triggering onDataChange with values', currentValues);
@@ -253,20 +253,14 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
           </StandardField>
           {type === 'FR' ? (
             <Flex gap={'20px'}>
-              <StandardField
-                label={intl.formatMessage({ id: 'app.lowerTemperature' })}
-                flex={1}
-              >
+              <StandardField label={intl.formatMessage({ id: 'app.lowerTemperature' })} flex={1}>
                 <StandardInput
                   type="text"
                   placeholder={intl.formatMessage({ id: 'app.temperature' })}
                   {...register('lower_temperature')}
                 />
               </StandardField>
-              <StandardField
-                label={intl.formatMessage({ id: 'app.wayOfProtection' })}
-                flex={1}
-              >
+              <StandardField label={intl.formatMessage({ id: 'app.wayOfProtection' })} flex={1}>
                 <StandardInput
                   type="text"
                   placeholder={intl.formatMessage({ id: 'app.notNet' })}
@@ -275,9 +269,7 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
               </StandardField>
             </Flex>
           ) : type === 'DR' ? (
-            <StandardField
-              label={intl.formatMessage({ id: 'app.accumulatedWaterDeficit' })}
-            >
+            <StandardField label={intl.formatMessage({ id: 'app.accumulatedWaterDeficit' })}>
               <StandardInput
                 type="text"
                 placeholder={intl.formatMessage({ id: 'app.waterDeficit' })}
@@ -309,20 +301,14 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
                 </StandardField>
               </Flex>
               <Flex gap={'20px'}>
-                <StandardField
-                  label={intl.formatMessage({ id: 'app.duration' })}
-                  flex={1}
-                >
+                <StandardField label={intl.formatMessage({ id: 'app.duration' })} flex={1}>
                   <StandardInput
                     type="text"
                     placeholder={intl.formatMessage({ id: 'app.duration' })}
                     {...register('duration')}
                   />
                 </StandardField>
-                <StandardField
-                  label={intl.formatMessage({ id: 'app.wayOfProtection' })}
-                  flex={1}
-                >
+                <StandardField label={intl.formatMessage({ id: 'app.wayOfProtection' })} flex={1}>
                   <StandardInput
                     type="text"
                     placeholder={intl.formatMessage({ id: 'app.wayOfProtection' })}
@@ -333,9 +319,7 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
             </>
           ) : type === 'HT' ? (
             <Flex gap={'20px'} direction={'column'}>
-              <StandardField
-                label={intl.formatMessage({ id: 'app.highestTemperature' })}
-              >
+              <StandardField label={intl.formatMessage({ id: 'app.highestTemperature' })}>
                 <StandardInput
                   type="text"
                   placeholder={intl.formatMessage({ id: 'app.temperature' })}
@@ -347,20 +331,14 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
                   {intl.formatMessage({ id: 'app.timePeriod' })}
                 </Text>
                 <Flex flexDir={'row'} width={'100%'} gap={'20px'}>
-                  <StandardField
-                    label={intl.formatMessage({ id: 'app.from' })}
-                    flex={1}
-                  >
+                  <StandardField label={intl.formatMessage({ id: 'app.from' })} flex={1}>
                     <StandardInput
                       type="datetime-local"
                       placeholder={intl.formatMessage({ id: 'app.selectDateAndTime' })}
                       {...register('start_date')}
                     />
                   </StandardField>
-                  <StandardField
-                    label={intl.formatMessage({ id: 'app.to' })}
-                    flex={1}
-                  >
+                  <StandardField label={intl.formatMessage({ id: 'app.to' })} flex={1}>
                     <StandardInput
                       type="datetime-local"
                       placeholder={intl.formatMessage({ id: 'app.selectDateAndTime' })}
@@ -374,9 +352,7 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
             <></>
           )}
 
-          <StandardField
-            label={intl.formatMessage({ id: 'app.observations' })}
-          >
+          <StandardField label={intl.formatMessage({ id: 'app.observations' })}>
             <StandardTextarea
               placeholder={intl.formatMessage({ id: 'app.description' })}
               {...register('observation')}

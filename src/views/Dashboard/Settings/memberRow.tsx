@@ -1,26 +1,30 @@
 // Chakra imports
 import {
   Badge,
-  Button,
   Flex,
   Icon,
-  Link,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
-  Stack,
   Td,
   Text,
   Tr,
   useColorModeValue,
-  useDisclosure
+  useDisclosure,
+  HStack
 } from '@chakra-ui/react';
 
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 import { useIntl } from 'react-intl';
 
-const ScansRow = (props) => {
+interface MemberRowProps {
+  name: string;
+  establishments: string[];
+  role: string;
+}
+
+const MemberRow = (props: MemberRowProps) => {
   const intl = useIntl();
   const { name, establishments, role } = props;
   const textColor = useColorModeValue('gray.700', 'white');
@@ -28,49 +32,113 @@ const ScansRow = (props) => {
   const { isOpen: isOpen1, onOpen: onOpen1, onClose: onClose1 } = useDisclosure();
 
   return (
-    <Tr pe="0px" paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-      <Td pe="0px" paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-        <Text color={textColor} color="gray.500" fontSize={{ sm: '14px' }}>
+    <Tr
+      _hover={{ bg: 'gray.50' }}
+      transition="all 0.2s"
+      borderBottom="1px solid"
+      borderColor="gray.100"
+    >
+      <Td py={5} px={6}>
+        <Text color={textColor} fontSize="md" fontWeight="semibold">
           {name}
         </Text>
       </Td>
-      <Td pe="0px" paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-        <Flex gap="12px">
-          {establishments?.map((establishment) => (
-            <Badge p="4px 8px" borderRadius="12px">
-              <Text color={textColor} color="gray.600" fontSize={{ sm: '12px' }}>
+      <Td py={5} px={6}>
+        <HStack spacing={2} flexWrap="wrap">
+          {establishments?.length > 0 ? (
+            establishments.map((establishment, index) => (
+              <Badge
+                key={index}
+                px={3}
+                py={1.5}
+                borderRadius="full"
+                bg="green.50"
+                color="green.700"
+                fontSize="xs"
+                fontWeight="medium"
+                border="1px solid"
+                borderColor="green.200"
+              >
                 {establishment}
-              </Text>
+              </Badge>
+            ))
+          ) : (
+            <Badge
+              px={3}
+              py={1.5}
+              borderRadius="full"
+              bg="gray.50"
+              color="gray.500"
+              fontSize="xs"
+              fontWeight="medium"
+              border="1px solid"
+              borderColor="gray.200"
+            >
+              Sin establecimientos
             </Badge>
-          ))}
-          {/* <Badge p="4px 8px" borderRadius="12px" fontSize={{ sm: '12px' }} fontWeight={'weight'}>
-            hola
-          </Badge> */}
-        </Flex>
+          )}
+        </HStack>
       </Td>
-      <Td paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-        <Text color={textColor} color="gray.500" fontSize={{ sm: '14px' }}>
+      <Td py={5} px={6}>
+        <Badge
+          px={4}
+          py={1.5}
+          borderRadius="full"
+          bg="blue.50"
+          color="blue.700"
+          fontSize="xs"
+          fontWeight="semibold"
+          border="1px solid"
+          borderColor="blue.200"
+          textTransform="capitalize"
+        >
           {role}
-        </Text>
+        </Badge>
       </Td>
-      <Td paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
+      <Td py={5} px={6}>
         <Menu isOpen={isOpen1} onClose={onClose1}>
-          <MenuButton onClick={onOpen1} alignSelf="flex-start" cursor={'pointer'}>
-            <Icon as={IoEllipsisVerticalSharp} color="gray.400" w="20px" h="20px" />
+          <MenuButton
+            onClick={onOpen1}
+            as="button"
+            p={2}
+            borderRadius="lg"
+            border="1px solid"
+            borderColor="transparent"
+            _hover={{
+              bg: 'gray.100',
+              borderColor: 'gray.200'
+            }}
+            _active={{
+              bg: 'gray.200',
+              borderColor: 'gray.300'
+            }}
+            transition="all 0.2s"
+          >
+            <Icon as={IoEllipsisVerticalSharp} color="gray.600" w="18px" h="18px" />
           </MenuButton>
-          <MenuList>
-            <MenuItem onClick={() => {}}>
-              <Flex color={textColor} cursor="pointer" align="center" p="4px">
-                {/* <Icon as={FaPencilAlt} me="4px" /> */}
-                <Text fontSize="sm" fontWeight="500">
+          <MenuList
+            borderRadius="xl"
+            boxShadow="lg"
+            border="1px solid"
+            borderColor="gray.100"
+            py={2}
+          >
+            <MenuItem
+              onClick={() => {}}
+              _hover={{ bg: 'green.50' }}
+              borderRadius="lg"
+              mx={2}
+              mb={1}
+            >
+              <Flex color={textColor} cursor="pointer" align="center">
+                <Text fontSize="sm" fontWeight="medium">
                   {intl.formatMessage({ id: 'app.edit' })}
                 </Text>
               </Flex>
             </MenuItem>
-            <MenuItem>
-              <Flex color="red.500" cursor="pointer" align="center" p="4px">
-                {/* <Icon as={FaTrashAlt} me="4px" /> */}
-                <Text fontSize="sm" fontWeight="500">
+            <MenuItem onClick={() => {}} _hover={{ bg: 'red.50' }} borderRadius="lg" mx={2}>
+              <Flex color="red.500" cursor="pointer" align="center">
+                <Text fontSize="sm" fontWeight="medium">
                   {intl.formatMessage({ id: 'app.delete' })}
                 </Text>
               </Flex>
@@ -82,4 +150,4 @@ const ScansRow = (props) => {
   );
 };
 
-export default ScansRow;
+export default MemberRow;

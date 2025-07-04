@@ -46,10 +46,7 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
         formData.append('establishment', establishmentId);
 
-        // Additional fields - now included!
-        if (parcelData.crop_type) {
-          formData.append('crop_type', parcelData.crop_type);
-        }
+        // Additional fields - only send fields that exist in backend model
         if (parcelData.soil_type) {
           formData.append('soil_type', parcelData.soil_type);
         }
@@ -71,6 +68,8 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.address) {
           formData.append('address', parcelData.address);
         }
+        
+        // Note: crop_type field removed - it's now stored in History model for per-production tracking
 
         return {
           url: PARCEL_URL(companyId, establishmentId),
@@ -108,10 +107,7 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('polygon', JSON.stringify(parcelData.polygon || []));
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
 
-        // Additional fields - now included!
-        if (parcelData.crop_type) {
-          formData.append('crop_type', parcelData.crop_type);
-        }
+        // Additional fields - only send fields that exist in backend model
         if (parcelData.soil_type) {
           formData.append('soil_type', parcelData.soil_type);
         }
@@ -133,6 +129,8 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.address) {
           formData.append('address', parcelData.address);
         }
+        
+        // Note: crop_type field removed - it's now stored in History model for per-production tracking
 
         return {
           url: PARCEL_URL(companyId, establishmentId, parcelId),

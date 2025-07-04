@@ -191,7 +191,7 @@ const MobileProductDetail: React.FC = () => {
         await navigator.share({
           title: `Carbon Footprint for ${productBasicsData?.name || 'Product'}`,
           text: `Check out the carbon footprint for this product: ${
-            carbonScoreData?.carbonScore || 'N/A'
+            carbonScoreData?.carbonScore ? Math.round(carbonScoreData.carbonScore * 10) / 10 : 'N/A'
           } score`,
           url: window.location.href
         });
@@ -290,7 +290,7 @@ const MobileProductDetail: React.FC = () => {
             <Skeleton height={{ base: '50px', md: '60px' }} width="120px" borderRadius="md" />
           ) : (
             <CarbonScore
-              score={carbonScoreData?.carbonScore || 0}
+              score={Math.round((carbonScoreData?.carbonScore || 0) * 10) / 10}
               footprint={carbonScoreData?.netFootprint || 0}
               relatableFootprint={carbonScoreData?.relatableFootprint}
               isCompact={true}
@@ -312,7 +312,7 @@ const MobileProductDetail: React.FC = () => {
             p={{ base: 3, md: 4 }}
           >
             <CarbonScore
-              score={carbonScoreData.carbonScore}
+              score={Math.round((carbonScoreData.carbonScore || 0) * 10) / 10}
               footprint={carbonScoreData.netFootprint}
               relatableFootprint={carbonScoreData.relatableFootprint}
             />

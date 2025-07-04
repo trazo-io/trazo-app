@@ -57,7 +57,7 @@ import { MdLocationOn, MdBusiness, MdEco, MdCalendarToday, MdVerified } from 're
 import { useNavigate, useParams } from 'react-router-dom';
 
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
-import ImageCarousel from 'components/ImageCarousel/ImageCarousel';
+import { StandardImageGallery } from 'components/ImageGallery';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 import establishmentImage from 'assets/img/basic-auth.png';
 import { useGetEstablishmentQuery } from 'store/api/companyApi';
@@ -436,12 +436,18 @@ function ProfileEstablishment() {
               <Box>
                 {/* Image Gallery */}
                 <Box mb={6}>
-                  <ImageCarousel
-                    imagesList={
-                      establishmentData?.images?.length > 0
-                        ? establishmentData.images
-                        : [establishmentImage]
-                    }
+                  <StandardImageGallery
+                    images={establishmentData?.images || []}
+                    title="Establishment Photos"
+                    variant="default"
+                    enablePreview={true}
+                    showImageCount={true}
+                    fallbackImage={establishmentImage}
+                    height="300px"
+                    emptyStateText="No establishment photos"
+                    emptyStateSubtext="Add photos to showcase your agricultural facility"
+                    showEmptyState={true}
+                    maxDisplayImages={3}
                   />
                 </Box>
 

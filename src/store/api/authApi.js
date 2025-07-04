@@ -1,4 +1,10 @@
-import { LOGIN_URL, SIGNUP_URL, USER_DATA_URL, VERIFY_EMAIL_URL, SOCIAL_AUTH_URL } from '../../config';
+import {
+  LOGIN_URL,
+  SIGNUP_URL,
+  USER_DATA_URL,
+  VERIFY_EMAIL_URL,
+  SOCIAL_AUTH_URL
+} from '../../config';
 
 import baseApi from './baseApi';
 import { setCompany } from 'store/features/companySlice';
@@ -79,10 +85,10 @@ const authApi = baseApi.injectEndpoints({
       query: ({ provider, access_token, id_token, user_type, user }) => ({
         url: SOCIAL_AUTH_URL,
         method: 'POST',
-        body: { 
-          provider, 
-          access_token, 
-          id_token, 
+        body: {
+          provider,
+          access_token,
+          id_token,
           user_type,
           user // For Apple Sign In name data
         },

@@ -256,9 +256,9 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               overflow="hidden"
               cursor="pointer"
               _hover={{
-                shadow: "md",
-                transform: "translateY(-1px)",
-                transition: "all 0.2s"
+                shadow: 'md',
+                transform: 'translateY(-1px)',
+                transition: 'all 0.2s'
               }}
               onClick={() => handleEventClick(event)}
             >
@@ -333,36 +333,47 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           {/* Carbon Impact Header */}
                           <HStack justify="space-between" align="center">
                             <HStack spacing={2}>
-                              <Icon 
-                                as={FaLeaf} 
-                                color={event.carbon_data.co2e > 0 ? "orange.500" : "green.500"} 
-                                boxSize={3} 
+                              <Icon
+                                as={FaLeaf}
+                                color={event.carbon_data.co2e > 0 ? 'orange.500' : 'green.500'}
+                                boxSize={3}
                               />
                               <VStack spacing={0} align="start">
                                 <Text fontSize="sm" fontWeight="bold" color={textColor}>
-                                  {event.carbon_data.co2e > 0 ? '+' : ''}{event.carbon_data.co2e.toFixed(1)} kg CO₂e
+                                  {event.carbon_data.co2e > 0 ? '+' : ''}
+                                  {event.carbon_data.co2e.toFixed(1)} kg CO₂e
                                 </Text>
                                 <Text fontSize="xs" color={mutedColor}>
-                                  {event.carbon_data.co2e > 0 ? 'Carbon footprint' : 'Carbon reduction'}
+                                  {event.carbon_data.co2e > 0
+                                    ? 'Carbon footprint'
+                                    : 'Carbon reduction'}
                                 </Text>
                               </VStack>
                             </HStack>
-                            
+
                             {/* Efficiency Score */}
                             <VStack spacing={0} align="end">
                               <HStack spacing={1}>
-                                <Text 
-                                  fontSize="sm" 
-                                  fontWeight="bold" 
-                                  color={event.carbon_data.efficiency_score >= 80 ? "green.500" : 
-                                         event.carbon_data.efficiency_score >= 60 ? "blue.500" : 
-                                         event.carbon_data.efficiency_score >= 40 ? "yellow.500" : "red.500"}
+                                <Text
+                                  fontSize="sm"
+                                  fontWeight="bold"
+                                  color={
+                                    event.carbon_data.efficiency_score >= 80
+                                      ? 'green.500'
+                                      : event.carbon_data.efficiency_score >= 60
+                                      ? 'blue.500'
+                                      : event.carbon_data.efficiency_score >= 40
+                                      ? 'yellow.500'
+                                      : 'red.500'
+                                  }
                                 >
                                   {Math.round(event.carbon_data.efficiency_score)}%
                                 </Text>
                                 <Icon as={FaShieldAlt} color="gray.400" boxSize={3} />
                               </HStack>
-                              <Text fontSize="xs" color={mutedColor}>Efficiency</Text>
+                              <Text fontSize="xs" color={mutedColor}>
+                                Efficiency
+                              </Text>
                             </VStack>
                           </HStack>
 
@@ -376,12 +387,15 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                 </HStack>
                               </Badge>
                               {event.carbon_data.verification_confidence && (
-                                <Badge 
+                                <Badge
                                   colorScheme={
-                                    event.carbon_data.verification_confidence === 'high' ? 'green' :
-                                    event.carbon_data.verification_confidence === 'medium' ? 'yellow' : 'red'
-                                  } 
-                                  size="sm" 
+                                    event.carbon_data.verification_confidence === 'high'
+                                      ? 'green'
+                                      : event.carbon_data.verification_confidence === 'medium'
+                                      ? 'yellow'
+                                      : 'red'
+                                  }
+                                  size="sm"
                                   borderRadius="full"
                                 >
                                   <Text fontSize="xs" textTransform="capitalize">

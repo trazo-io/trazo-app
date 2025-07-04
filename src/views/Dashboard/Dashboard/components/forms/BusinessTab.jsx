@@ -84,27 +84,22 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
   const businessType = watch('type');
 
   // Watch critical fields for real-time carbon calculation updates
-  const watchedFields = watch([
-    'type',
-    'revenue_amount',
-    'quantity_sold',
-    'carbon_credits_earned'
-  ]);
+  const watchedFields = watch(['type', 'revenue_amount', 'quantity_sold', 'carbon_credits_earned']);
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('[BusinessTab]: Field watching triggered', { 
-      hasOnDataChange: !!onDataChange, 
-      watchedFields, 
-      firstField: watchedFields[0] 
+    console.log('[BusinessTab]: Field watching triggered', {
+      hasOnDataChange: !!onDataChange,
+      watchedFields,
+      firstField: watchedFields[0]
     });
-    
+
     // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
         console.log('[BusinessTab]: Current values for carbon calculation', currentValues);
-        
+
         // Only trigger if we have meaningful data
         if (currentValues.type && (currentValues.revenue_amount || currentValues.quantity_sold)) {
           console.log('[BusinessTab]: Triggering onDataChange with values', currentValues);
@@ -212,9 +207,7 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 </StandardField>
               </HStack>
 
-              <StandardField
-                label={intl.formatMessage({ id: 'app.buyerName' }) || 'Buyer Name'}
-              >
+              <StandardField label={intl.formatMessage({ id: 'app.buyerName' }) || 'Buyer Name'}>
                 <StandardInput
                   {...methods.register('buyer_name')}
                   placeholder="Enter buyer company or individual name"
@@ -316,9 +309,7 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
 
           {/* Contract Details */}
           {businessType === 'CT' && (
-            <StandardField
-              label={intl.formatMessage({ id: 'app.buyerName' }) || 'Contract Party'}
-            >
+            <StandardField label={intl.formatMessage({ id: 'app.buyerName' }) || 'Contract Party'}>
               <StandardInput
                 {...methods.register('buyer_name')}
                 placeholder="Enter contract party name"
@@ -327,9 +318,7 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
           )}
 
           {/* Observations */}
-          <StandardField
-            label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-          >
+          <StandardField label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}>
             <StandardTextarea
               {...methods.register('observation')}
               placeholder={

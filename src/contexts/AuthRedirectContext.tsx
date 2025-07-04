@@ -35,11 +35,14 @@ export const AuthRedirectProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const setPendingAction = (action: PendingAction) => {
     console.log('🔐 AuthRedirect: Setting pending action:', action);
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-        action,
-        timestamp: Date.now(),
-        originPath: location.pathname
-      }));
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          action,
+          timestamp: Date.now(),
+          originPath: location.pathname
+        })
+      );
     } catch (error) {
       console.error('Failed to store pending action:', error);
     }
@@ -56,7 +59,7 @@ export const AuthRedirectProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (!stored) return null;
 
       const parsed = JSON.parse(stored);
-      
+
       // Check if action is too old (older than 10 minutes)
       const MAX_AGE = 10 * 60 * 1000; // 10 minutes
       if (Date.now() - parsed.timestamp > MAX_AGE) {
@@ -86,19 +89,21 @@ export const AuthRedirectProvider: React.FC<{ children: React.ReactNode }> = ({ 
     switch (pendingAction.type) {
       case 'review':
         if (pendingAction.data.productionId) {
-          const reviewUrl = `/admin/dashboard/production/${pendingAction.data.productionId}/review/web-${Date.now()}`;
+          const reviewUrl = `/admin/dashboard/production/${
+            pendingAction.data.productionId
+          }/review/web-${Date.now()}`;
           console.log('🔐 AuthRedirect: Navigating to review page:', reviewUrl);
           navigate(reviewUrl, { replace: true });
         }
         break;
-      
+
       case 'redirect':
         if (pendingAction.data.url) {
           console.log('🔐 AuthRedirect: Navigating to stored URL:', pendingAction.data.url);
           navigate(pendingAction.data.url, { replace: true });
         }
         break;
-      
+
       default:
         console.warn('🔐 AuthRedirect: Unknown action type:', pendingAction.type);
     }
@@ -107,7 +112,10 @@ export const AuthRedirectProvider: React.FC<{ children: React.ReactNode }> = ({ 
     clearPendingAction();
   };
 
-  const redirectToAuthWithAction = (action: PendingAction, authType: 'signin' | 'signup' = 'signin') => {
+  const redirectToAuthWithAction = (
+    action: PendingAction,
+    authType: 'signin' | 'signup' = 'signin'
+  ) => {
     setPendingAction(action);
     const authPath = authType === 'signup' ? '/consumer/auth/signup' : '/consumer/auth/signin';
     console.log('🔐 AuthRedirect: Redirecting to auth with action stored:', authPath);
@@ -115,13 +123,15 @@ export const AuthRedirectProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   return (
-    <AuthRedirectContext.Provider value={{
-      setPendingAction,
-      clearPendingAction,
-      getPendingAction,
-      executeStoredAction,
-      redirectToAuthWithAction
-    }}>
+    <AuthRedirectContext.Provider
+      value={{
+        setPendingAction,
+        clearPendingAction,
+        getPendingAction,
+        executeStoredAction,
+        redirectToAuthWithAction
+      }}
+    >
       {children}
     </AuthRedirectContext.Provider>
   );

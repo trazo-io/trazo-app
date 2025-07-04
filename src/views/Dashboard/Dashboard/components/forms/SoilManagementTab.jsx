@@ -202,18 +202,18 @@ const SoilManagementTab = ({
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('[SoilManagementTab]: Field watching triggered', { 
-      hasOnDataChange: !!onDataChange, 
-      watchedFields, 
-      firstField: watchedFields[0] 
+    console.log('[SoilManagementTab]: Field watching triggered', {
+      hasOnDataChange: !!onDataChange,
+      watchedFields,
+      firstField: watchedFields[0]
     });
-    
+
     // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
         console.log('[SoilManagementTab]: Current values for carbon calculation', currentValues);
-        
+
         // Only trigger if we have meaningful data
         if (currentValues.type && currentValues.area) {
           console.log('[SoilManagementTab]: Triggering onDataChange with values', currentValues);
@@ -300,14 +300,13 @@ const SoilManagementTab = ({
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
               <StandardField
-                label={`${intl.formatMessage({ id: 'app.soilManagementType' }) || 'Soil Management Type'} *`}
+                label={`${
+                  intl.formatMessage({ id: 'app.soilManagementType' }) || 'Soil Management Type'
+                } *`}
                 required
                 error={errors.type?.message}
               >
-                <StandardSelect
-                  placeholder="Select soil management type"
-                  {...register('type')}
-                >
+                <StandardSelect placeholder="Select soil management type" {...register('type')}>
                   <option value="ST">Soil Testing</option>
                   <option value="PA">Planting/Amendment</option>
                   <option value="TI">Tillage</option>
@@ -352,11 +351,7 @@ const SoilManagementTab = ({
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <StandardField
-                label="Area Managed *"
-                required
-                error={errors.area?.message}
-              >
+              <StandardField label="Area Managed *" required error={errors.area?.message}>
                 <HStack spacing={2}>
                   <StandardInput
                     flex={2}
@@ -365,19 +360,14 @@ const SoilManagementTab = ({
                     placeholder="2.0"
                     {...register('area')}
                   />
-                  <StandardSelect
-                    flex={1}
-                    {...register('area_unit')}
-                  >
+                  <StandardSelect flex={1} {...register('area_unit')}>
                     <option value="hectares">Hectares</option>
                     <option value="acres">Acres</option>
                   </StandardSelect>
                 </HStack>
               </StandardField>
 
-              <StandardField
-                label="Working Depth"
-              >
+              <StandardField label="Working Depth">
                 <HStack spacing={2}>
                   <StandardInput
                     flex={2}
@@ -386,10 +376,7 @@ const SoilManagementTab = ({
                     placeholder="30"
                     {...register('depth')}
                   />
-                  <StandardSelect
-                    flex={1}
-                    {...register('depth_unit')}
-                  >
+                  <StandardSelect flex={1} {...register('depth_unit')}>
                     <option value="cm">Centimeters</option>
                     <option value="inches">Inches</option>
                   </StandardSelect>
@@ -481,9 +468,7 @@ const SoilManagementTab = ({
                 />
               </StandardField>
 
-              <StandardField
-                label="Temperature Range"
-              >
+              <StandardField label="Temperature Range">
                 <StandardInput
                   type="text"
                   placeholder="e.g., 18-25°C or 65-77°F"
@@ -493,13 +478,8 @@ const SoilManagementTab = ({
             </SimpleGrid>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <StandardField
-                label="Soil Moisture"
-              >
-                <StandardSelect
-                  placeholder="Select soil moisture"
-                  {...register('soil_moisture')}
-                >
+              <StandardField label="Soil Moisture">
+                <StandardSelect placeholder="Select soil moisture" {...register('soil_moisture')}>
                   <option value="dry">Dry</option>
                   <option value="moderate">Moderate</option>
                   <option value="moist">Moist</option>
@@ -507,9 +487,7 @@ const SoilManagementTab = ({
                 </StandardSelect>
               </StandardField>
 
-              <StandardField
-                label="Equipment Used"
-              >
+              <StandardField label="Equipment Used">
                 <StandardInput
                   type="text"
                   placeholder="e.g., tractor with disc harrow, soil auger"
@@ -520,9 +498,7 @@ const SoilManagementTab = ({
           </Box>
 
           <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <StandardField
-              label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-            >
+            <StandardField label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}>
               <StandardTextarea
                 placeholder="Optional: Additional notes about soil conditions, management goals, etc."
                 rows={3}

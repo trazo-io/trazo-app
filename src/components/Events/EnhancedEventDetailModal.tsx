@@ -117,10 +117,14 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
 
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
-      case 'high': return 'green';
-      case 'medium': return 'yellow';
-      case 'low': return 'red';
-      default: return 'gray';
+      case 'high':
+        return 'green';
+      case 'medium':
+        return 'yellow';
+      case 'low':
+        return 'red';
+      default:
+        return 'gray';
     }
   };
 
@@ -175,14 +179,18 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
             {/* Event Details Section */}
             <Card bg={useColorModeValue('gray.50', 'gray.700')}>
               <CardHeader pb={2}>
-                <Heading size="sm" color={textColor}>Event Details</Heading>
+                <Heading size="sm" color={textColor}>
+                  Event Details
+                </Heading>
               </CardHeader>
               <CardBody pt={0}>
                 <VStack spacing={3} align="stretch">
                   <HStack justify="space-between">
                     <HStack spacing={2}>
                       <Icon as={FaCalendarAlt} color={mutedColor} />
-                      <Text fontSize="sm" color={textColor}>Date:</Text>
+                      <Text fontSize="sm" color={textColor}>
+                        Date:
+                      </Text>
                     </HStack>
                     <Text fontSize="sm" fontWeight="semibold" color={textColor}>
                       {formatDate(event.date)}
@@ -207,7 +215,9 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                       <SimpleGrid columns={2} spacing={3}>
                         {event.volume && (
                           <Box>
-                            <Text fontSize="xs" color={mutedColor}>Volume</Text>
+                            <Text fontSize="xs" color={mutedColor}>
+                              Volume
+                            </Text>
                             <Text fontSize="sm" fontWeight="semibold" color={textColor}>
                               {event.volume}
                             </Text>
@@ -215,7 +225,9 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                         )}
                         {event.area && (
                           <Box>
-                            <Text fontSize="xs" color={mutedColor}>Area</Text>
+                            <Text fontSize="xs" color={mutedColor}>
+                              Area
+                            </Text>
                             <Text fontSize="sm" fontWeight="semibold" color={textColor}>
                               {event.area}
                             </Text>
@@ -223,7 +235,9 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                         )}
                         {event.concentration && (
                           <Box>
-                            <Text fontSize="xs" color={mutedColor}>Concentration</Text>
+                            <Text fontSize="xs" color={mutedColor}>
+                              Concentration
+                            </Text>
                             <Text fontSize="sm" fontWeight="semibold" color={textColor}>
                               {event.concentration}
                             </Text>
@@ -231,7 +245,9 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                         )}
                         {event.equipment && (
                           <Box>
-                            <Text fontSize="xs" color={mutedColor}>Equipment</Text>
+                            <Text fontSize="xs" color={mutedColor}>
+                              Equipment
+                            </Text>
                             <Text fontSize="sm" fontWeight="semibold" color={textColor}>
                               {event.equipment}
                             </Text>
@@ -249,7 +265,9 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
               <Card bg={useColorModeValue('gray.50', 'gray.700')}>
                 <CardHeader pb={2}>
                   <HStack justify="space-between">
-                    <Heading size="sm" color={textColor}>Carbon Impact Analysis</Heading>
+                    <Heading size="sm" color={textColor}>
+                      Carbon Impact Analysis
+                    </Heading>
                     {event.carbon_data.usda_verified && (
                       <Tooltip label="Calculated using USDA verified emission factors">
                         <Badge colorScheme="blue" size="sm">
@@ -268,11 +286,12 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                     <SimpleGrid columns={2} spacing={4}>
                       <Stat>
                         <StatLabel fontSize="xs">Carbon Impact</StatLabel>
-                        <StatNumber 
-                          fontSize="xl" 
+                        <StatNumber
+                          fontSize="xl"
                           color={`${getCarbonImpactColor(event.carbon_data.co2e)}.500`}
                         >
-                          {event.carbon_data.co2e > 0 ? '+' : ''}{event.carbon_data.co2e.toFixed(1)} kg CO₂e
+                          {event.carbon_data.co2e > 0 ? '+' : ''}
+                          {event.carbon_data.co2e.toFixed(1)} kg CO₂e
                         </StatNumber>
                         <StatHelpText fontSize="xs">
                           {event.carbon_data.co2e > 0 ? 'Carbon footprint' : 'Carbon reduction'}
@@ -281,8 +300,8 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
 
                       <Stat>
                         <StatLabel fontSize="xs">Efficiency Score</StatLabel>
-                        <StatNumber 
-                          fontSize="xl" 
+                        <StatNumber
+                          fontSize="xl"
                           color={`${getEfficiencyColor(event.carbon_data.efficiency_score)}.500`}
                         >
                           {Math.round(event.carbon_data.efficiency_score)}%
@@ -294,23 +313,27 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                     {/* Efficiency Progress Bar */}
                     <Box>
                       <HStack justify="space-between" mb={1}>
-                        <Text fontSize="xs" color={mutedColor}>Application Efficiency</Text>
+                        <Text fontSize="xs" color={mutedColor}>
+                          Application Efficiency
+                        </Text>
                         <Text fontSize="xs" color={textColor}>
                           {Math.round(event.carbon_data.efficiency_score)}%
                         </Text>
                       </HStack>
-                      <Progress 
-                        value={event.carbon_data.efficiency_score} 
+                      <Progress
+                        value={event.carbon_data.efficiency_score}
                         colorScheme={getEfficiencyColor(event.carbon_data.efficiency_score)}
-                        size="sm" 
-                        borderRadius="md" 
+                        size="sm"
+                        borderRadius="md"
                       />
                     </Box>
 
                     {/* Data Confidence */}
                     <HStack justify="space-between">
-                      <Text fontSize="sm" color={textColor}>Data Confidence:</Text>
-                      <Badge 
+                      <Text fontSize="sm" color={textColor}>
+                        Data Confidence:
+                      </Text>
+                      <Badge
                         colorScheme={getConfidenceColor(event.carbon_data.verification_confidence)}
                         size="sm"
                         textTransform="capitalize"
@@ -343,7 +366,9 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
 
                     {/* Methodology */}
                     <Box bg={useColorModeValue('white', 'gray.600')} p={3} borderRadius="md">
-                      <Text fontSize="xs" color={mutedColor} mb={1}>Calculation Method:</Text>
+                      <Text fontSize="xs" color={mutedColor} mb={1}>
+                        Calculation Method:
+                      </Text>
                       <Text fontSize="sm" color={textColor}>
                         {event.carbon_data.calculation_method}
                       </Text>
@@ -375,7 +400,8 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                             {rec.description}
                             <br />
                             <Text as="span" fontWeight="semibold" color="green.500">
-                              Save ${rec.potential_savings} • Reduce {rec.carbon_reduction.toFixed(1)} kg CO₂e
+                              Save ${rec.potential_savings} • Reduce{' '}
+                              {rec.carbon_reduction.toFixed(1)} kg CO₂e
                             </Text>
                           </AlertDescription>
                         </Box>

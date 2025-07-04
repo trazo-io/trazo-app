@@ -205,9 +205,9 @@ function PlanUsage() {
     }
   ];
 
-  // Handle plan management - redirect to billing page
+  // Handle plan management - redirect to subscription page
   const handleManagePlan = () => {
-    navigate('/admin/dashboard/account/billing');
+    navigate('/admin/dashboard/subscription');
   };
 
   if (!subscription || !plan) {
@@ -634,7 +634,7 @@ function PlanUsage() {
               <Button
                 colorScheme="green"
                 size="sm"
-                onClick={() => navigate('/admin/dashboard/account/billing')}
+                onClick={() => navigate('/admin/dashboard/subscription')}
               >
                 Add Blockchain Verification
               </Button>

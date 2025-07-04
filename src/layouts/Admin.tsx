@@ -152,7 +152,7 @@ export default function Dashboard(props: any) {
       currentPath.includes('/pricing') ||
       currentPath.includes('/stripe-success') ||
       currentPath.includes('/select-company') ||
-      currentPath.includes('/account/billing')
+      currentPath.includes('/subscription')
     ) {
       return;
     }

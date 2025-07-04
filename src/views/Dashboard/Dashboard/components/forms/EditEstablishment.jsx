@@ -73,6 +73,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 import { InfoOutlineIcon, CloseIcon } from '@chakra-ui/icons';
 import { useFileUpload } from '../../../../../services/uploadService';
+import { StandardMediaUpload } from '../../../../../components/Design/StandardComponents';
 import CarbonFootprintTab from './CarbonFootprintTab';
 
 const formSchemaInfo = object({
@@ -325,34 +326,59 @@ function EditEstablishment() {
   const socialsTab = useRef();
 
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
+  const [isImageUploadOnly, setIsImageUploadOnly] = useState(false);
 
   const [existingImages, setExistingImages] = useState([]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
-  const [newImages, setNewImages] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   // On mount, set existingImages from establishment data
   useEffect(() => {
     if (establishment && establishment.images) {
+      console.log('Setting existingImages from establishment data:', establishment.images);
       setExistingImages(establishment.images);
     }
   }, [establishment]);
 
-  // Remove existing image
-  const handleRemoveExistingImage = (img) => {
-    setImagesToDelete((prev) => [...prev, img.id]);
-    setExistingImages((prev) => prev.filter((i) => i.id !== img.id));
+  // Handle selected files from StandardMediaUpload
+  const handleFilesChange = (files) => {
+    setSelectedFiles(files);
   };
-  // Remove new image
-  const handleRemoveNewImage = (file) => {
-    setNewImages((prev) => prev.filter((f) => f !== file));
+
+  // Handle removing selected files
+  const handleRemoveSelectedFile = (file) => {
+    setSelectedFiles((prev) => prev.filter((f) => f !== file));
   };
-  // On drop, add new images
-  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
-    onDrop: (acceptedFiles) => {
-      setNewImages((prev) => [...prev, ...acceptedFiles]);
+
+  // Handle removing uploaded files (existing images)
+  const handleRemoveUploadedFile = (index, url) => {
+    console.log('handleRemoveUploadedFile called with:', { index, url });
+    console.log('existingImages:', existingImages);
+    
+    // Find the image object by URL in existingImages
+    const imageToDelete = existingImages.find((img) => img.url === url);
+    console.log('imageToDelete:', imageToDelete);
+    
+    if (imageToDelete) {
+      // Only add to imagesToDelete if it's a real database ID (not temporary)
+      if (!imageToDelete.id.toString().startsWith('new-') && !imageToDelete.is_new) {
+        console.log('Adding to imagesToDelete:', imageToDelete.id);
+        setImagesToDelete((prev) => {
+          const newArray = [...prev, imageToDelete.id];
+          console.log('New imagesToDelete array:', newArray);
+          return newArray;
+        });
+      } else {
+        console.log('Skipping deletion of temporary image:', imageToDelete.id);
+      }
+      // Always remove from UI
+      setExistingImages((prev) => prev.filter((img) => img.id !== imageToDelete.id));
+    } else {
+      console.log('Image not found in existingImages');
     }
-  });
+  };
 
   // Chakra color mode
   const textColor = useColorModeValue('gray.700', 'white');
@@ -474,11 +500,23 @@ function EditEstablishment() {
 
   useEffect(() => {
     if (isSuccessEstablishment) {
+      // Update existingImages with real data from backend response
+      if (dataEstablishment && dataEstablishment.images) {
+        setExistingImages(dataEstablishment.images);
+      }
+      
       dispatch(editCompanyEstablishment(dataEstablishment));
-      dispatch(clearForm());
-      navigate(`/admin/dashboard/establishment/${dataEstablishment.id}`);
+      
+      // Only navigate away if it's not just an image upload
+      if (!isImageUploadOnly) {
+        dispatch(clearForm());
+        navigate(`/admin/dashboard/establishment/${dataEstablishment.id}`);
+      } else {
+        // Reset the flag after successful image upload
+        setIsImageUploadOnly(false);
+      }
     }
-  }, [isSuccessEstablishment]);
+  }, [isSuccessEstablishment, isImageUploadOnly]);
 
   const tabsList = [
     {
@@ -553,7 +591,7 @@ function EditEstablishment() {
 
   const handleFileUpload = async () => {
     // If there are no images at all, block and show warning
-    if (existingImages.length + newImages.length === 0) {
+    if (existingImages.length + selectedFiles.length === 0) {
       toast({
         title: intl.formatMessage({ id: 'app.noFilesSelected' }),
         description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
@@ -564,16 +602,37 @@ function EditEstablishment() {
       return;
     }
     // If no changes, just proceed to next step
-    if (newImages.length === 0 && imagesToDelete.length === 0) {
+    if (selectedFiles.length === 0 && imagesToDelete.length === 0) {
       socialsTab.current.click();
       return;
     }
+
     setIsUploading(true);
+    setUploadProgress(0);
+    setIsImageUploadOnly(true);
+
     try {
       // Upload new images and get URLs
-      const urls = newImages.length > 0 ? await uploadMultipleFiles(newImages) : [];
+      const urls = selectedFiles.length > 0 ? await uploadMultipleFiles(selectedFiles) : [];
       setUploadedImageUrls(urls);
+      setUploadProgress(100);
+
+      // Add newly uploaded images to existingImages immediately to show in UI
+      if (urls.length > 0) {
+        const newImageObjects = urls.map((url, index) => ({
+          id: `new-${Date.now()}-${index}`, // Temporary ID until backend responds
+          url: url,
+          is_new: true
+        }));
+        setExistingImages((prev) => [...prev, ...newImageObjects]);
+      }
+
       // Call API with images_to_delete and uploaded_image_urls
+      console.log('About to call editEstablishment with:', {
+        images_to_delete: imagesToDelete,
+        uploaded_image_urls: urls
+      });
+      
       editEstablishment({
         companyId: currentCompany.id,
         establishmentId,
@@ -583,6 +642,11 @@ function EditEstablishment() {
           uploaded_image_urls: urls
         }
       });
+
+      // Clear selected files after successful upload
+      setSelectedFiles([]);
+      setImagesToDelete([]);
+
       toast({
         title: intl.formatMessage({ id: 'app.uploadSuccess' }),
         description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
@@ -602,6 +666,11 @@ function EditEstablishment() {
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
+      // Reset flag in case of error
+      if (!isSuccessEstablishment) {
+        setIsImageUploadOnly(false);
+      }
     }
   };
 
@@ -648,8 +717,7 @@ function EditEstablishment() {
                             id: 'app.typeHelp',
                             defaultMessage:
                               'Tipo de establecimiento (ej: planta, bodega, campo, oficina)'
-                          })}
-                        >
+                          })}>
                           <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                         </Tooltip>
                       </FormLabel>
@@ -714,8 +782,7 @@ function EditEstablishment() {
                           label={intl.formatMessage({
                             id: 'app.zoneHelp',
                             defaultMessage: 'Zona o sector dentro de la ciudad o región'
-                          })}
-                        >
+                          })}>
                           <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                         </Tooltip>
                       </FormLabel>
@@ -749,8 +816,7 @@ function EditEstablishment() {
                           label={intl.formatMessage({
                             id: 'app.contactPersonHelp',
                             defaultMessage: 'Nombre de la persona responsable del establecimiento'
-                          })}
-                        >
+                          })}>
                           <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                         </Tooltip>
                       </FormLabel>
@@ -801,8 +867,7 @@ function EditEstablishment() {
                         id: 'app.coordinatesHelp',
                         defaultMessage:
                           'Latitud y longitud del establecimiento (puedes usar el mapa)'
-                      })}
-                    >
+                      })}>
                       <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                     </Tooltip>
                   </Text>
@@ -873,8 +938,7 @@ function EditEstablishment() {
                     mt="24px"
                     w="100px"
                     h="35px"
-                    type="submit"
-                  >
+                    type="submit">
                     <Text fontSize="xs" color="#fff" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.next' })}
                     </Text>
@@ -911,8 +975,7 @@ function EditEstablishment() {
                 onSubmit={descriptionMethods.handleSubmit(onSubmitDescription, (errors) => {
                   console.error('Validation errors:', errors);
                 })}
-                style={{ width: '100%' }}
-              >
+                style={{ width: '100%' }}>
                 <Flex direction="column" w="100%">
                   <Box
                     mb={6}
@@ -920,8 +983,7 @@ function EditEstablishment() {
                     bg="yellow.50"
                     borderRadius="md"
                     border="1px solid"
-                    borderColor="yellow.200"
-                  >
+                    borderColor="yellow.200">
                     <Text fontWeight="bold" color="yellow.800">
                       {intl.formatMessage({
                         id: 'app.publicFieldsNotice',
@@ -990,8 +1052,7 @@ function EditEstablishment() {
                             id: 'app.locationHighlightsHelp',
                             defaultMessage:
                               'Características notables, accesibilidad, geografía (opcional).'
-                          })}
-                        >
+                          })}>
                           <InfoOutlineIcon ml={2} color="gray.400" cursor="pointer" />
                         </Tooltip>
                       </Flex>
@@ -1037,8 +1098,7 @@ function EditEstablishment() {
                     borderRadius="lg"
                     boxShadow="lg"
                     bg={bgColor}
-                    border="2px solid #E2E8F0"
-                  >
+                    border="2px solid #E2E8F0">
                     <Flex align="center" mb={4}>
                       <Text fontWeight="bold" fontSize="lg" mr={2}>
                         {intl.formatMessage({
@@ -1051,8 +1111,7 @@ function EditEstablishment() {
                           id: 'app.publicProfilePreviewHelp',
                           defaultMessage:
                             'Así se verá tu establecimiento cuando alguien escanee el QR.'
-                        })}
-                      >
+                        })}>
                         <InfoOutlineIcon color="gray.400" cursor="pointer" />
                       </Tooltip>
                     </Flex>
@@ -1070,8 +1129,7 @@ function EditEstablishment() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      onClick={() => mainInfoTab.current.click()}
-                    >
+                      onClick={() => mainInfoTab.current.click()}>
                       <Text fontSize="xs" color="gray.700" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.prev' })}
                       </Text>
@@ -1083,8 +1141,7 @@ function EditEstablishment() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      type="submit"
-                    >
+                      type="submit">
                       <Text fontSize="xs" color="#fff" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.next' })}
                       </Text>
@@ -1121,113 +1178,22 @@ function EditEstablishment() {
                     defaultMessage: 'Imágenes del establecimiento'
                   })}
                 </Text>
-                {/* Drag and Drop Area */}
-                <Box
-                  {...getRootProps()}
-                  border="2px dashed #CBD5E0"
-                  borderRadius="md"
-                  p={6}
-                  mb={4}
-                  bg="gray.50"
-                  cursor="pointer"
-                  minH="120px"
-                  _hover={{ borderColor: 'blue.400', bg: 'gray.100' }}
-                  position="relative"
-                  transition="all 0.2s"
-                >
-                  <input {...getInputProps()} />
-                  {/* Thumbnails for existing and new images AT THE TOP of the dropzone */}
-                  <Flex gap="16px" mb={2} flexWrap="wrap" justify="flex-start" minH="90px">
-                    {existingImages.map((img) => (
-                      <Box key={img.id} position="relative">
-                        <img
-                          src={img.url}
-                          alt="Establishment"
-                          style={{
-                            width: '120px',
-                            height: '80px',
-                            borderRadius: '8px',
-                            objectFit: 'cover',
-                            border: '1px solid #E2E8F0'
-                          }}
-                        />
-                        <IconButton
-                          aria-label="Remove image"
-                          icon={<CloseIcon />}
-                          size="xs"
-                          position="absolute"
-                          top="4px"
-                          right="4px"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveExistingImage(img);
-                          }}
-                        />
-                      </Box>
-                    ))}
-                    {newImages.map((file, idx) => {
-                      const url = URL.createObjectURL(file);
-                      return (
-                        <Box key={file.name + idx} position="relative">
-                          <img
-                            src={url}
-                            alt={file.name}
-                            style={{
-                              width: '120px',
-                              height: '80px',
-                              borderRadius: '8px',
-                              objectFit: 'cover',
-                              border: '1px solid #E2E8F0'
-                            }}
-                          />
-                          <IconButton
-                            aria-label="Remove new image"
-                            icon={<CloseIcon />}
-                            size="xs"
-                            position="absolute"
-                            top="4px"
-                            right="4px"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveNewImage(file);
-                            }}
-                          />
-                        </Box>
-                      );
-                    })}
-                  </Flex>
-                  {/* Instructions and warning INSIDE the dropzone */}
-                  <Flex direction="column" align="center" justify="center">
-                    <Text color="gray.500" fontSize="sm" mb={2}>
-                      {intl.formatMessage({
-                        id: 'app.dragDropImages',
-                        defaultMessage:
-                          'Arrastra y suelta imágenes aquí, o haz clic para seleccionar.'
-                      })}
-                    </Text>
-                    <Text color="gray.400" fontSize="xs">
-                      {intl.formatMessage({
-                        id: 'app.maxImages',
-                        defaultMessage: 'Máximo 5 imágenes. Formato JPG o PNG, hasta 5MB cada una.'
-                      })}
-                    </Text>
-                    {existingImages.length + newImages.length >= 5 && (
-                      <Box mt={2} color="red.500" fontSize="sm" textAlign="center">
-                        {intl.formatMessage({
-                          id: 'app.maxImagesReached',
-                          defaultMessage: 'Has alcanzado el máximo de 5 imágenes.'
-                        })}
-                      </Box>
-                    )}
-                  </Flex>
-                </Box>
-                <Text color="gray.500" fontSize="xs" mt={2}>
-                  {intl.formatMessage({
+                {/* Enhanced StandardMediaUpload */}
+                <StandardMediaUpload
+                  onFilesChange={handleFilesChange}
+                  acceptedFiles={selectedFiles}
+                  uploadedFiles={existingImages.map((img) => img.url)}
+                  isUploading={isUploading}
+                  uploadProgress={uploadProgress}
+                  onRemoveFile={handleRemoveSelectedFile}
+                  onRemoveUploadedFile={handleRemoveUploadedFile}
+                  maxFiles={5}
+                  helpText={intl.formatMessage({
                     id: 'app.mediaHelper',
                     defaultMessage:
                       'Puedes subir hasta 5 imágenes. Imágenes de alta calidad ayudan a generar confianza.'
                   })}
-                </Text>
+                />
                 <Flex justify="space-between">
                   <Button
                     variant="no-hover"
@@ -1236,8 +1202,7 @@ function EditEstablishment() {
                     mt="24px"
                     w="100px"
                     h="35px"
-                    onClick={() => descriptionTab.current.click()}
-                  >
+                    onClick={() => descriptionTab.current.click()}>
                     <Text fontSize="xs" color="gray.700" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.prev' })}
                     </Text>
@@ -1255,8 +1220,7 @@ function EditEstablishment() {
                       id: 'app.uploading',
                       defaultMessage: 'Subiendo...'
                     })}
-                    isDisabled={existingImages.length + newImages.length > 5}
-                  >
+                    isDisabled={existingImages.length + selectedFiles.length > 5}>
                     <Text fontSize="xs" color="#fff" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.upload', defaultMessage: 'Subir' })}
                     </Text>
@@ -1327,8 +1291,7 @@ function EditEstablishment() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      onClick={() => mediaTab.current.click()}
-                    >
+                      onClick={() => mediaTab.current.click()}>
                       <Text fontSize="xs" color="gray.700" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.prev' })}
                       </Text>
@@ -1340,8 +1303,7 @@ function EditEstablishment() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      type="submit"
-                    >
+                      type="submit">
                       <Text fontSize="xs" color="#fff" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.send', defaultMessage: 'Enviar' })}
                       </Text>

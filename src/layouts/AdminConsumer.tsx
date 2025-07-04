@@ -15,7 +15,15 @@ import { SidebarContext } from 'contexts/SidebarContext';
 import theme from 'theme/theme';
 import ConsumerSidebar from 'components/Sidebar/ConsumerSidebar';
 import ConsumerSidebarResponsive from 'components/Sidebar/ConsumerSidebarResponsive';
-import { FaQrcode, FaStar, FaLeaf, FaGraduationCap, FaUsers, FaChartLine, FaBalanceScale } from 'react-icons/fa';
+import {
+  FaQrcode,
+  FaStar,
+  FaLeaf,
+  FaGraduationCap,
+  FaUsers,
+  FaChartLine,
+  FaBalanceScale
+} from 'react-icons/fa';
 import { MdDashboard, MdInsights, MdCompare, MdTimeline } from 'react-icons/md';
 
 export const consumerRoutes = [

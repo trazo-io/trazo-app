@@ -24,12 +24,12 @@ import { motion } from 'framer-motion';
 import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
 import { executeAuthRedirectAction, buildAuthRedirectUrl } from '../../../utils/authRedirect';
-import { 
-  handleGoogleSignIn, 
-  handleFacebookSignIn, 
-  handleAppleSignIn, 
+import {
+  handleGoogleSignIn,
+  handleFacebookSignIn,
+  handleAppleSignIn,
   handleSocialAuthError,
-  checkSocialAuthConfig 
+  checkSocialAuthConfig
 } from '../../../utils/socialAuth';
 
 // No assets needed for minimalist design
@@ -70,7 +70,7 @@ const ConsumerSignIn: React.FC = () => {
         console.log('🔐 ConsumerSignIn: Found pending redirect URL:', pendingRedirectUrl);
         // Dispatch login action with redirect URL
         dispatch(loginAction({ ...response, redirectUrl: pendingRedirectUrl }));
-        
+
         // Execute the redirect immediately
         const redirectExecuted = executeAuthRedirectAction(navigate);
         if (redirectExecuted) {
@@ -96,7 +96,7 @@ const ConsumerSignIn: React.FC = () => {
         duration: 3000,
         isClosable: true
       });
-      
+
       // Default redirect - directly to impact to avoid route conflicts
       navigate('/admin/dashboard/impact', { replace: true });
     } catch (err: any) {
@@ -116,7 +116,7 @@ const ConsumerSignIn: React.FC = () => {
         console.log('🔐 ConsumerSignIn: Found pending redirect URL:', pendingRedirectUrl);
         // Dispatch login action with redirect URL
         dispatch(loginAction({ ...response, redirectUrl: pendingRedirectUrl }));
-        
+
         // Execute the redirect immediately
         const redirectExecuted = executeAuthRedirectAction(navigate);
         if (redirectExecuted) {
@@ -142,7 +142,7 @@ const ConsumerSignIn: React.FC = () => {
         duration: 3000,
         isClosable: true
       });
-      
+
       // Default redirect - directly to impact to avoid route conflicts
       navigate('/admin/dashboard/impact', { replace: true });
     } catch (err: any) {
@@ -160,7 +160,7 @@ const ConsumerSignIn: React.FC = () => {
   const handleSocialLogin = async (provider: string) => {
     // Check if social auth is configured
     const config = checkSocialAuthConfig();
-    
+
     switch (provider) {
       case 'Google':
         if (!config.google) {
@@ -179,7 +179,7 @@ const ConsumerSignIn: React.FC = () => {
           5 // Consumer user type
         );
         break;
-      
+
       case 'Facebook':
         if (!config.facebook) {
           toast({
@@ -197,7 +197,7 @@ const ConsumerSignIn: React.FC = () => {
           5 // Consumer user type
         );
         break;
-      
+
       case 'Apple':
         if (!config.apple) {
           toast({
@@ -215,7 +215,7 @@ const ConsumerSignIn: React.FC = () => {
           5 // Consumer user type
         );
         break;
-      
+
       default:
         toast({
           title: 'Error',
@@ -502,7 +502,7 @@ const ConsumerSignIn: React.FC = () => {
                   fontWeight="semibold"
                   borderRadius="lg"
                   isLoading={isLoading || isSocialLoading}
-                  loadingText={isSocialLoading ? "Authenticating..." : "Signing in..."}
+                  loadingText={isSocialLoading ? 'Authenticating...' : 'Signing in...'}
                   _hover={{
                     bg: 'green.700'
                   }}

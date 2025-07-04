@@ -83,7 +83,12 @@ export const CarbonCostInsights: React.FC<CarbonCostInsightsProps> = ({
   }
 
   const { data } = economicsData;
-  const { carbon_credit_potential, efficiency_tips, premium_eligibility, next_actions } = data;
+  const {
+    carbon_credit_potential = {},
+    efficiency_tips = [],
+    premium_eligibility = {},
+    next_actions = []
+  } = data || {};
 
   return (
     <VStack spacing={6} align="stretch">
@@ -126,37 +131,37 @@ export const CarbonCostInsights: React.FC<CarbonCostInsightsProps> = ({
             <Stat>
               <StatLabel>Carbon Sequestered</StatLabel>
               <StatNumber color="green.600">
-                {carbon_credit_potential.tons_sequestered.toFixed(2)} tons
+                {(carbon_credit_potential.tons_sequestered || 0).toFixed(2)} tons
               </StatNumber>
               <StatHelpText>CO2 equivalent captured</StatHelpText>
             </Stat>
 
             <Stat>
               <StatLabel>Market Rate</StatLabel>
-              <StatNumber>${carbon_credit_potential.market_rate_per_ton}/ton</StatNumber>
+              <StatNumber>${carbon_credit_potential.market_rate_per_ton || 0}/ton</StatNumber>
               <StatHelpText>Current market average</StatHelpText>
             </Stat>
 
             <Stat>
               <StatLabel>Potential Revenue</StatLabel>
               <StatNumber color="green.600">
-                ${carbon_credit_potential.potential_revenue.toFixed(2)}
+                ${(carbon_credit_potential.potential_revenue || 0).toFixed(2)}
               </StatNumber>
               <StatHelpText>
                 <Badge colorScheme="blue" size="sm">
-                  {carbon_credit_potential.confidence} confidence
+                  {carbon_credit_potential.confidence || 'Low'} confidence
                 </Badge>
               </StatHelpText>
             </Stat>
           </SimpleGrid>
 
-          {carbon_credit_potential.next_steps.length > 0 && (
+          {(carbon_credit_potential.next_steps || []).length > 0 && (
             <Box mt={4} p={3} bg="green.50" borderRadius="md">
               <Text fontSize="sm" fontWeight="bold" color="green.700" mb={2}>
                 Next Steps:
               </Text>
               <List spacing={1} fontSize="sm">
-                {carbon_credit_potential.next_steps.map((step, index) => (
+                {(carbon_credit_potential.next_steps || []).map((step, index) => (
                   <ListItem key={index}>
                     <ListIcon as={FaCheckCircle} color="green.500" />
                     {step}
@@ -191,26 +196,26 @@ export const CarbonCostInsights: React.FC<CarbonCostInsightsProps> = ({
                   Eligibility Level:{' '}
                   <Badge
                     colorScheme={
-                      premium_eligibility.level === 'premium'
+                      (premium_eligibility.level || '') === 'premium'
                         ? 'green'
-                        : premium_eligibility.level === 'sustainable'
+                        : (premium_eligibility.level || '') === 'sustainable'
                         ? 'blue'
-                        : premium_eligibility.level === 'basic'
+                        : (premium_eligibility.level || '') === 'basic'
                         ? 'yellow'
                         : 'gray'
                     }
                     size="lg"
                   >
-                    {premium_eligibility.level.toUpperCase()}
+                    {(premium_eligibility.level || 'Unknown').toUpperCase()}
                   </Badge>
                 </Text>
                 <Text fontSize="sm" color="gray.600">
-                  Potential premium: {premium_eligibility.potential_premium}
+                  Potential premium: {premium_eligibility.potential_premium || '0%'}
                 </Text>
               </VStack>
               <VStack align="end" spacing={1}>
                 <Text fontSize="2xl" fontWeight="bold" color="purple.600">
-                  {premium_eligibility.score}/100
+                  {premium_eligibility.score || 0}/100
                 </Text>
                 <Text fontSize="xs" color="gray.500">
                   Sustainability Score
@@ -219,11 +224,11 @@ export const CarbonCostInsights: React.FC<CarbonCostInsightsProps> = ({
             </HStack>
 
             <Progress
-              value={premium_eligibility.score}
+              value={premium_eligibility.score || 0}
               colorScheme={
-                premium_eligibility.score >= 80
+                (premium_eligibility.score || 0) >= 80
                   ? 'green'
-                  : premium_eligibility.score >= 50
+                  : (premium_eligibility.score || 0) >= 50
                   ? 'blue'
                   : 'yellow'
               }
@@ -235,12 +240,14 @@ export const CarbonCostInsights: React.FC<CarbonCostInsightsProps> = ({
               <HStack>
                 <Icon
                   as={
-                    premium_eligibility.criteria_met.carbon_tracking
+                    (premium_eligibility.criteria_met || {}).carbon_tracking
                       ? FaCheckCircle
                       : FaExclamationTriangle
                   }
                   color={
-                    premium_eligibility.criteria_met.carbon_tracking ? 'green.500' : 'orange.500'
+                    (premium_eligibility.criteria_met || {}).carbon_tracking
+                      ? 'green.500'
+                      : 'orange.500'
                   }
                 />
                 <Text fontSize="sm">Carbon Tracking</Text>
@@ -248,12 +255,14 @@ export const CarbonCostInsights: React.FC<CarbonCostInsightsProps> = ({
               <HStack>
                 <Icon
                   as={
-                    premium_eligibility.criteria_met.regular_monitoring
+                    (premium_eligibility.criteria_met || {}).regular_monitoring
                       ? FaCheckCircle
                       : FaExclamationTriangle
                   }
                   color={
-                    premium_eligibility.criteria_met.regular_monitoring ? 'green.500' : 'orange.500'
+                    (premium_eligibility.criteria_met || {}).regular_monitoring
+                      ? 'green.500'
+                      : 'orange.500'
                   }
                 />
                 <Text fontSize="sm">Regular Monitoring</Text>
@@ -261,12 +270,12 @@ export const CarbonCostInsights: React.FC<CarbonCostInsightsProps> = ({
               <HStack>
                 <Icon
                   as={
-                    premium_eligibility.criteria_met.carbon_sequestration
+                    (premium_eligibility.criteria_met || {}).carbon_sequestration
                       ? FaCheckCircle
                       : FaExclamationTriangle
                   }
                   color={
-                    premium_eligibility.criteria_met.carbon_sequestration
+                    (premium_eligibility.criteria_met || {}).carbon_sequestration
                       ? 'green.500'
                       : 'orange.500'
                   }
@@ -275,13 +284,13 @@ export const CarbonCostInsights: React.FC<CarbonCostInsightsProps> = ({
               </HStack>
             </SimpleGrid>
 
-            {premium_eligibility.next_steps.length > 0 && (
+            {(premium_eligibility.next_steps || []).length > 0 && (
               <Box p={3} bg="purple.50" borderRadius="md">
                 <Text fontSize="sm" fontWeight="bold" color="purple.700" mb={2}>
                   Improve Your Score:
                 </Text>
                 <List spacing={1} fontSize="sm">
-                  {premium_eligibility.next_steps.map((step, index) => (
+                  {(premium_eligibility.next_steps || []).map((step, index) => (
                     <ListItem key={index}>
                       <ListIcon as={FaArrowUp} color="purple.500" />
                       {step}

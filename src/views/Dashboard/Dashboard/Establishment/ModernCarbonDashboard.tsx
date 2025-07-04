@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import MetricTransparencyModal, { MetricData } from '../../../../components/Carbon/MetricTransparencyModal';
+import MetricTransparencyModal, {
+  MetricData
+} from '../../../../components/Carbon/MetricTransparencyModal';
 import {
   Box,
   Flex,
@@ -336,7 +338,8 @@ const ModernCarbonDashboard: React.FC = () => {
   const complianceStatus = usdaComplianceScore >= 80; // Based on real USDA factors usage
 
   // Use emissions breakdown from API if available, fallback to manual calculation
-  const emissionsByCategory = establishmentSummary?.emissionsByCategory || 
+  const emissionsByCategory =
+    establishmentSummary?.emissionsByCategory ||
     carbonEntries?.reduce((acc: any, entry: any) => {
       if (entry.type === 'emission') {
         // Extract category from description since source is just an ID
@@ -358,17 +361,20 @@ const ModernCarbonDashboard: React.FC = () => {
         acc[category] = (acc[category] || 0) + entry.amount;
       }
       return acc;
-    }, {}) || {};
+    }, {}) ||
+    {};
 
   // Use offsets breakdown from API if available, fallback to manual calculation
-  const offsetsByAction = establishmentSummary?.offsetsByAction ||
+  const offsetsByAction =
+    establishmentSummary?.offsetsByAction ||
     carbonEntries?.reduce((acc: any, entry: any) => {
       if (entry.type === 'offset' && entry.source?.name) {
         const action = entry.source.name;
         acc[action] = (acc[action] || 0) + (entry.effective_amount || entry.amount || 0);
       }
       return acc;
-    }, {}) || {};
+    }, {}) ||
+    {};
 
   // Filter entries based on selected filters
   const filteredEntries =
@@ -472,7 +478,16 @@ const ModernCarbonDashboard: React.FC = () => {
   };
 
   // Handle metric info click
-  const handleMetricInfoClick = (metricType: 'carbonScore' | 'netFootprint' | 'transparencyScore' | 'verifiedEvents' | 'securityScore' | 'usdaCompliance' | 'blockchainStatus') => {
+  const handleMetricInfoClick = (
+    metricType:
+      | 'carbonScore'
+      | 'netFootprint'
+      | 'transparencyScore'
+      | 'verifiedEvents'
+      | 'securityScore'
+      | 'usdaCompliance'
+      | 'blockchainStatus'
+  ) => {
     setSelectedMetric(metricType);
     onMetricModalOpen();
   };
@@ -856,8 +871,8 @@ const ModernCarbonDashboard: React.FC = () => {
           {/* Secondary Metrics Row - Compliance & Technical Status */}
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={cardSpacing}>
             {/* Security Status Card - Enhanced with hover */}
-            <Box 
-              transition="all 0.3s ease" 
+            <Box
+              transition="all 0.3s ease"
               _hover={{ transform: 'translateY(-2px)' }}
               position="relative"
             >
@@ -1636,12 +1651,21 @@ const ModernCarbonDashboard: React.FC = () => {
         <MetricTransparencyModal
           isOpen={isMetricModalOpen}
           onClose={onMetricModalClose}
-          metricType={selectedMetric as 'carbonScore' | 'netFootprint' | 'transparencyScore' | 'verifiedEvents' | 'securityScore' | 'usdaCompliance' | 'blockchainStatus'}
+          metricType={
+            selectedMetric as
+              | 'carbonScore'
+              | 'netFootprint'
+              | 'transparencyScore'
+              | 'verifiedEvents'
+              | 'securityScore'
+              | 'usdaCompliance'
+              | 'blockchainStatus'
+          }
           metricData={{
             carbonScore: establishmentSummary?.carbon_score || 0,
             netFootprint: establishmentSummary?.net_carbon || 0,
             transparencyScore: 97, // Based on current calculation
-            verifiedEvents: 31, // Based on current calculation  
+            verifiedEvents: 31, // Based on current calculation
             securityScore: 55, // Based on current calculation
             usdaCompliance: 97, // Based on current calculation
             blockchainStatus: 'PENDING',

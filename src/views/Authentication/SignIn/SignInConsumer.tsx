@@ -53,14 +53,14 @@ export default function SignInConsumer() {
   useEffect(() => {
     if (data && isSuccess) {
       console.log('🔐 SignInConsumer: Login successful, dispatching action');
-      
+
       // First check if there's a pending auth redirect URL
       const pendingRedirectUrl = buildAuthRedirectUrl();
       if (pendingRedirectUrl) {
         console.log('🔐 SignInConsumer: Found pending redirect URL:', pendingRedirectUrl);
         // Dispatch login action with redirect URL
         dispatch(loginAction({ ...data, redirectUrl: pendingRedirectUrl }));
-        
+
         // Execute the redirect immediately
         const redirectExecuted = executeAuthRedirectAction(navigate);
         if (redirectExecuted) {
@@ -71,13 +71,16 @@ export default function SignInConsumer() {
         // No pending action, dispatch login normally
         dispatch(loginAction(data));
       }
-      
+
       // Default redirect logic for normal sign-ins
       const params = new URLSearchParams(location.search);
       const nextPath = params.get('next');
       const defaultPath = nextPath || location.state?.next || '/admin/dashboard/impact';
-      
-      console.log('🔐 SignInConsumer: No pending action, redirecting to default path:', defaultPath);
+
+      console.log(
+        '🔐 SignInConsumer: No pending action, redirecting to default path:',
+        defaultPath
+      );
       navigate(defaultPath);
     }
   }, [data, dispatch, isSuccess, location, navigate]);

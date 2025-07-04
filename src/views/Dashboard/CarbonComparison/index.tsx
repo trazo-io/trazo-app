@@ -32,7 +32,7 @@ import {
   Avatar,
   Divider
 } from '@chakra-ui/react';
-import { 
+import {
   FaSearch,
   FaBalanceScale,
   FaChartBar,
@@ -63,7 +63,10 @@ import {
   StandardInput,
   ConsumerTooltip
 } from '../../../components/Design/StandardComponents';
-import { useGetShoppingHistoryQuery, useCompareProductsMutation } from '../../../store/api/consumerApi';
+import {
+  useGetShoppingHistoryQuery,
+  useCompareProductsMutation
+} from '../../../store/api/consumerApi';
 
 export default function CarbonComparison() {
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -73,12 +76,12 @@ export default function CarbonComparison() {
   const [comparisonView, setComparisonView] = useState('table'); // 'table' | 'chart' | 'map'
 
   // Fetch user's shopping history to get products for comparison
-  const { 
-    data: shoppingHistory, 
-    isLoading: historyLoading, 
-    error: historyError 
+  const {
+    data: shoppingHistory,
+    isLoading: historyLoading,
+    error: historyError
   } = useGetShoppingHistoryQuery({});
-  
+
   const [compareProducts, { isLoading: isComparing }] = useCompareProductsMutation();
 
   // Transform shopping history into product database for comparison
@@ -89,7 +92,11 @@ export default function CarbonComparison() {
     location: scan.location || 'Location unavailable',
     carbonScoreText: scan.carbon_score || 'Not Available',
     carbonScore: (() => {
-      if (!scan.carbon_score || scan.carbon_score === 'Not Available' || scan.carbon_score === 'Data unavailable') {
+      if (
+        !scan.carbon_score ||
+        scan.carbon_score === 'Not Available' ||
+        scan.carbon_score === 'Data unavailable'
+      ) {
         return 50; // Default neutral score
       }
       const numericValue = parseInt(scan.carbon_score.replace(/[^0-9]/g, ''));
@@ -106,12 +113,12 @@ export default function CarbonComparison() {
     reviews: 100 // Mock review count
   }));
 
-  const filteredProducts = productDatabase.filter(product => {
+  const filteredProducts = productDatabase.filter((product) => {
     if (!product || !searchQuery) return true;
-    
+
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
-    
+
     return (
       product.name?.toLowerCase().includes(query) ||
       product.farm?.toLowerCase().includes(query) ||
@@ -120,14 +127,15 @@ export default function CarbonComparison() {
   });
 
   const handleProductToggle = (productId: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId].slice(0, 4) // Limit to 4 products
+    setSelectedProducts(
+      (prev) =>
+        prev.includes(productId)
+          ? prev.filter((id) => id !== productId)
+          : [...prev, productId].slice(0, 4) // Limit to 4 products
     );
   };
 
-  const selectedProductData = productDatabase.filter(p => selectedProducts.includes(p.id));
+  const selectedProductData = productDatabase.filter((p) => selectedProducts.includes(p.id));
 
   const getScoreColor = (score: number) => {
     if (score >= 85) return 'green';
@@ -148,10 +156,7 @@ export default function CarbonComparison() {
   // Handle loading state
   if (historyLoading) {
     return (
-      <StandardPage
-        title="Compare Products"
-        description="Loading your product data..."
-      >
+      <StandardPage title="Compare Products" description="Loading your product data...">
         <VStack spacing={8} align="center">
           <Text>Loading your scanned products for comparison...</Text>
         </VStack>
@@ -162,10 +167,7 @@ export default function CarbonComparison() {
   // Handle error state
   if (historyError) {
     return (
-      <StandardPage
-        title="Compare Products"
-        description="Unable to load product data"
-      >
+      <StandardPage title="Compare Products" description="Unable to load product data">
         <StandardAlert
           status="error"
           title="Error Loading Products"
@@ -213,11 +215,11 @@ export default function CarbonComparison() {
                 borderRadius="xl"
                 borderColor="gray.300"
                 _focus={{
-                  borderColor: "green.500",
-                  boxShadow: "0 0 0 1px var(--chakra-colors-green-500)"
+                  borderColor: 'green.500',
+                  boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
                 }}
                 _hover={{
-                  borderColor: "gray.400"
+                  borderColor: 'gray.400'
                 }}
                 bg="white"
                 fontSize="md"
@@ -228,7 +230,9 @@ export default function CarbonComparison() {
             {selectedProducts.length > 0 && (
               <StandardAlert
                 status="info"
-                title={`${selectedProducts.length} product${selectedProducts.length > 1 ? 's' : ''} selected for comparison`}
+                title={`${selectedProducts.length} product${
+                  selectedProducts.length > 1 ? 's' : ''
+                } selected for comparison`}
                 description="Add up to 4 products to compare their carbon footprints and sustainability metrics."
               />
             )}
@@ -237,11 +241,11 @@ export default function CarbonComparison() {
             <StandardGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
               {filteredProducts.map((product) => {
                 const isSelected = selectedProducts.includes(product.id);
-                
+
                 return (
-                  <StandardCard 
-                    key={product.id} 
-                    variant={isSelected ? "flat" : "outline"} 
+                  <StandardCard
+                    key={product.id}
+                    variant={isSelected ? 'flat' : 'outline'}
                     padding={4}
                   >
                     <VStack spacing={4}>
@@ -260,7 +264,7 @@ export default function CarbonComparison() {
                             </Text>
                           </HStack>
                         </VStack>
-                        
+
                         <VStack align="end" spacing={1}>
                           {product.carbonScoreText === 'Not Available' ? (
                             <ConsumerTooltip
@@ -280,17 +284,17 @@ export default function CarbonComparison() {
                                 label="Carbon Score"
                                 explanation="Carbon scores rate products from A+ (very low environmental impact) to F (high impact) based on greenhouse gas emissions from farming, processing, and transportation. A+ means under 0.5 kg CO₂ per kg of product."
                               >
-                                <Text 
-                                  fontSize="2xl" 
-                                  fontWeight="bold" 
+                                <Text
+                                  fontSize="2xl"
+                                  fontWeight="bold"
                                   color={getScoreColor(product.carbonScore) + '.600'}
                                   cursor="help"
                                 >
                                   {product.carbonScoreText}
                                 </Text>
                               </ConsumerTooltip>
-                              <Badge 
-                                colorScheme={getScoreColor(product.carbonScore)} 
+                              <Badge
+                                colorScheme={getScoreColor(product.carbonScore)}
                                 variant="solid"
                                 fontSize="xs"
                               >
@@ -300,25 +304,39 @@ export default function CarbonComparison() {
                           )}
                         </VStack>
                       </HStack>
-                      
+
                       <HStack justify="space-between" w="full" fontSize="sm">
                         <VStack align="start" spacing={0}>
                           <ConsumerTooltip
                             label="Carbon Footprint"
                             explanation="Carbon footprint measures all greenhouse gases produced to grow, harvest, process, package, and transport this food to you. It's measured in kg CO₂e (carbon dioxide equivalent) per kg of product. Lower numbers are better for the environment."
                           >
-                            <Text color="gray.600" cursor="help" textDecoration="underline" textDecorationStyle="dotted">
+                            <Text
+                              color="gray.600"
+                              cursor="help"
+                              textDecoration="underline"
+                              textDecorationStyle="dotted"
+                            >
                               Carbon Footprint
                             </Text>
                           </ConsumerTooltip>
-                          <Text fontWeight="medium" color={product.carbonFootprint === 'Data unavailable' ? 'gray.400' : 'gray.700'}>
-                            {product.carbonFootprint === 'Data unavailable' ? 'Pending analysis' : product.carbonFootprint}
+                          <Text
+                            fontWeight="medium"
+                            color={
+                              product.carbonFootprint === 'Data unavailable'
+                                ? 'gray.400'
+                                : 'gray.700'
+                            }
+                          >
+                            {product.carbonFootprint === 'Data unavailable'
+                              ? 'Pending analysis'
+                              : product.carbonFootprint}
                           </Text>
                         </VStack>
                       </HStack>
-                      
+
                       <StandardButton
-                        variant={isSelected ? "outline" : "primary"}
+                        variant={isSelected ? 'outline' : 'primary'}
                         size="sm"
                         leftIcon={isSelected ? <FaMinus /> : <FaPlus />}
                         onClick={() => handleProductToggle(product.id)}
@@ -344,7 +362,7 @@ export default function CarbonComparison() {
                 <Tab>Visual Analysis</Tab>
                 <Tab>Sustainability Ranking</Tab>
               </TabList>
-              
+
               <TabPanels>
                 {/* Detailed Comparison Table */}
                 <TabPanel p={0}>
@@ -363,51 +381,57 @@ export default function CarbonComparison() {
                         {selectedProductData
                           .sort((a, b) => b.carbonScore - a.carbonScore)
                           .map((product, index) => (
-                          <Tr key={product.id}>
-                            <Td>
-                              <VStack align="start" spacing={1}>
-                                <Text fontWeight="medium">{product.name}</Text>
-                                <Text fontSize="xs" color="gray.600">{product.farm}</Text>
-                                <HStack spacing={1}>
-                                  <Icon as={FaMapMarkerAlt} color="gray.500" boxSize={3} />
-                                  <Text fontSize="xs" color="gray.500">{product.location}</Text>
-                                </HStack>
-                              </VStack>
-                            </Td>
-                            <Td textAlign="center">
-                              <VStack spacing={1}>
-                                <Text fontSize="xl" fontWeight="bold" color={getScoreColor(product.carbonScore) + '.600'}>
-                                  {product.carbonScore}
-                                </Text>
-                                <Badge colorScheme={getScoreColor(product.carbonScore)} size="sm">
-                                  {getScoreGrade(product.carbonScore)}
+                            <Tr key={product.id}>
+                              <Td>
+                                <VStack align="start" spacing={1}>
+                                  <Text fontWeight="medium">{product.name}</Text>
+                                  <Text fontSize="xs" color="gray.600">
+                                    {product.farm}
+                                  </Text>
+                                  <HStack spacing={1}>
+                                    <Icon as={FaMapMarkerAlt} color="gray.500" boxSize={3} />
+                                    <Text fontSize="xs" color="gray.500">
+                                      {product.location}
+                                    </Text>
+                                  </HStack>
+                                </VStack>
+                              </Td>
+                              <Td textAlign="center">
+                                <VStack spacing={1}>
+                                  <Text
+                                    fontSize="xl"
+                                    fontWeight="bold"
+                                    color={getScoreColor(product.carbonScore) + '.600'}
+                                  >
+                                    {product.carbonScore}
+                                  </Text>
+                                  <Badge colorScheme={getScoreColor(product.carbonScore)} size="sm">
+                                    {getScoreGrade(product.carbonScore)}
+                                  </Badge>
+                                  {index === 0 && <Icon as={FaStar} color="gold" boxSize={4} />}
+                                </VStack>
+                              </Td>
+                              <Td textAlign="center">
+                                <Text fontWeight="medium">{product.carbonFootprint}</Text>
+                              </Td>
+                              <Td textAlign="center">
+                                <Badge colorScheme="blue" variant="outline" size="sm">
+                                  {product.farmingMethod}
                                 </Badge>
-                                {index === 0 && (
-                                  <Icon as={FaStar} color="gold" boxSize={4} />
-                                )}
-                              </VStack>
-                            </Td>
-                            <Td textAlign="center">
-                              <Text fontWeight="medium">{product.carbonFootprint}</Text>
-                            </Td>
-                            <Td textAlign="center">
-                              <Badge colorScheme="blue" variant="outline" size="sm">
-                                {product.farmingMethod}
-                              </Badge>
-                            </Td>
-                            <Td textAlign="center">
-                              <VStack spacing={1}>
-                                <HStack spacing={1}>
-                                  <Icon as={FaStar} color="orange.400" boxSize={3} />
-                                  <Text fontSize="sm">{product.userRating}</Text>
-                                </HStack>
-                                <Text fontSize="xs" color="gray.500">
-                                  {product.reviews} reviews
-                                </Text>
-                              </VStack>
-                            </Td>
-                          </Tr>
-                        ))}
+                              </Td>
+                              <Td textAlign="center">
+                                <VStack spacing={1}>
+                                  <HStack spacing={1}>
+                                    <Icon as={FaStar} color="orange.400" boxSize={3} />
+                                    <Text fontSize="sm">{product.userRating}</Text>
+                                  </HStack>
+                                  <Text fontSize="xs" color="gray.500">
+                                    {product.reviews} reviews
+                                  </Text>
+                                </VStack>
+                              </Td>
+                            </Tr>
+                          ))}
                       </Tbody>
                     </Table>
                   </TableContainer>
@@ -415,49 +439,61 @@ export default function CarbonComparison() {
 
                 {/* Visual Analysis */}
                 <TabPanel p={0}>
-                  <StandardSection title="Environmental Scores" description="See which products are better for the environment">
+                  <StandardSection
+                    title="Environmental Scores"
+                    description="See which products are better for the environment"
+                  >
                     <VStack spacing={6}>
                       {selectedProductData
                         .sort((a, b) => b.carbonScore - a.carbonScore)
                         .map((product, index) => (
-                        <Box key={product.id} w="full">
-                          <HStack justify="space-between" mb={2}>
-                            <VStack align="start" spacing={0}>
-                              <Text fontWeight="bold">{product.name}</Text>
-                              <Text fontSize="sm" color="gray.600">{product.farm}</Text>
-                            </VStack>
-                            <VStack align="end" spacing={0}>
-                              <Text fontSize="xl" fontWeight="bold" color={getScoreColor(product.carbonScore) + '.600'}>
-                                {product.carbonScore}/100
-                              </Text>
-                              <HStack spacing={1}>
-                                {index === 0 && <Icon as={FaStar} color="gold" boxSize={4} />}
-                                <Badge colorScheme={getScoreColor(product.carbonScore)}>
-                                  #{index + 1} Best
-                                </Badge>
-                              </HStack>
-                            </VStack>
-                          </HStack>
-                          <Progress
-                            value={product.carbonScore}
-                            size="lg"
-                            colorScheme={getScoreColor(product.carbonScore)}
-                            borderRadius="full"
-                            bg="gray.100"
-                          />
-                          <HStack justify="space-between" mt={2} fontSize="xs" color="gray.600">
-                            <Text>{product.carbonFootprint} footprint</Text>
-                            <Text>{product.farmingMethod} method</Text>
-                          </HStack>
-                        </Box>
-                      ))}
+                          <Box key={product.id} w="full">
+                            <HStack justify="space-between" mb={2}>
+                              <VStack align="start" spacing={0}>
+                                <Text fontWeight="bold">{product.name}</Text>
+                                <Text fontSize="sm" color="gray.600">
+                                  {product.farm}
+                                </Text>
+                              </VStack>
+                              <VStack align="end" spacing={0}>
+                                <Text
+                                  fontSize="xl"
+                                  fontWeight="bold"
+                                  color={getScoreColor(product.carbonScore) + '.600'}
+                                >
+                                  {product.carbonScore}/100
+                                </Text>
+                                <HStack spacing={1}>
+                                  {index === 0 && <Icon as={FaStar} color="gold" boxSize={4} />}
+                                  <Badge colorScheme={getScoreColor(product.carbonScore)}>
+                                    #{index + 1} Best
+                                  </Badge>
+                                </HStack>
+                              </VStack>
+                            </HStack>
+                            <Progress
+                              value={product.carbonScore}
+                              size="lg"
+                              colorScheme={getScoreColor(product.carbonScore)}
+                              borderRadius="full"
+                              bg="gray.100"
+                            />
+                            <HStack justify="space-between" mt={2} fontSize="xs" color="gray.600">
+                              <Text>{product.carbonFootprint} footprint</Text>
+                              <Text>{product.farmingMethod} method</Text>
+                            </HStack>
+                          </Box>
+                        ))}
                     </VStack>
                   </StandardSection>
                 </TabPanel>
 
                 {/* Sustainability Ranking */}
                 <TabPanel p={0}>
-                  <StandardSection title="Comprehensive Sustainability Analysis" description="Ranking based on multiple environmental factors">
+                  <StandardSection
+                    title="Comprehensive Sustainability Analysis"
+                    description="Ranking based on multiple environmental factors"
+                  >
                     <VStack spacing={4}>
                       {selectedProductData
                         .sort((a, b) => {
@@ -467,23 +503,36 @@ export default function CarbonComparison() {
                           return scoreB - scoreA;
                         })
                         .map((product, index) => {
-                          const totalScore = Math.round(product.carbonScore + product.trustScore * 0.3 + product.userRating * 10);
-                          
+                          const totalScore = Math.round(
+                            product.carbonScore + product.trustScore * 0.3 + product.userRating * 10
+                          );
+
                           return (
                             <StandardCard key={product.id} variant="flat" padding={6}>
                               <HStack spacing={6} align="center">
-                                <Circle size="50px" bg={index === 0 ? 'gold' : index === 1 ? 'gray.300' : 'orange.300'}>
-                                  <Text fontSize="xl" fontWeight="bold" color={index === 0 ? 'white' : 'gray.600'}>
+                                <Circle
+                                  size="50px"
+                                  bg={
+                                    index === 0 ? 'gold' : index === 1 ? 'gray.300' : 'orange.300'
+                                  }
+                                >
+                                  <Text
+                                    fontSize="xl"
+                                    fontWeight="bold"
+                                    color={index === 0 ? 'white' : 'gray.600'}
+                                  >
                                     #{index + 1}
                                   </Text>
                                 </Circle>
-                                
+
                                 <VStack align="start" spacing={1} flex={1}>
                                   <HStack spacing={3}>
                                     <Heading size="md">{product.name}</Heading>
                                     {index === 0 && <Icon as={FaStar} color="gold" boxSize={5} />}
                                   </HStack>
-                                  <Text color="gray.600">{product.farm} • {product.location}</Text>
+                                  <Text color="gray.600">
+                                    {product.farm} • {product.location}
+                                  </Text>
                                   <HStack spacing={4} fontSize="sm">
                                     <HStack spacing={1}>
                                       <Icon as={MdEco} color="green.500" boxSize={4} />
@@ -499,7 +548,7 @@ export default function CarbonComparison() {
                                     </HStack>
                                   </HStack>
                                 </VStack>
-                                
+
                                 <VStack align="end" spacing={2}>
                                   <Text fontSize="2xl" fontWeight="bold" color="green.600">
                                     {totalScore}
@@ -508,10 +557,18 @@ export default function CarbonComparison() {
                                     Overall Score
                                   </Text>
                                   <HStack spacing={2}>
-                                    <StandardButton size="sm" variant="outline" leftIcon={<FaEye />}>
+                                    <StandardButton
+                                      size="sm"
+                                      variant="outline"
+                                      leftIcon={<FaEye />}
+                                    >
                                       View Details
                                     </StandardButton>
-                                    <StandardButton size="sm" variant="ghost" leftIcon={<FaShareAlt />}>
+                                    <StandardButton
+                                      size="sm"
+                                      variant="ghost"
+                                      leftIcon={<FaShareAlt />}
+                                    >
                                       Share
                                     </StandardButton>
                                   </HStack>
@@ -537,17 +594,33 @@ export default function CarbonComparison() {
                   <StandardAlert
                     status="success"
                     title="Best Choice Identified"
-                    description={`${selectedProductData.sort((a, b) => b.carbonScore - a.carbonScore)[0].name} from ${selectedProductData.sort((a, b) => b.carbonScore - a.carbonScore)[0].farm} has the lowest carbon footprint and highest sustainability score.`}
+                    description={`${
+                      selectedProductData.sort((a, b) => b.carbonScore - a.carbonScore)[0].name
+                    } from ${
+                      selectedProductData.sort((a, b) => b.carbonScore - a.carbonScore)[0].farm
+                    } has the lowest carbon footprint and highest sustainability score.`}
                   />
-                  
+
                   <Box bg="blue.50" p={4} borderRadius="lg">
                     <VStack align="start" spacing={2}>
                       <HStack spacing={2}>
                         <Icon as={FaBalanceScale} color="blue.500" />
-                        <Text fontWeight="bold" color="blue.700">Key Differences:</Text>
+                        <Text fontWeight="bold" color="blue.700">
+                          Key Differences:
+                        </Text>
                       </HStack>
                       <Text fontSize="sm" color="blue.600">
-                        • The best option has {Math.round(((selectedProductData.sort((a, b) => b.carbonScore - a.carbonScore)[0].carbonScore - selectedProductData.sort((a, b) => a.carbonScore - b.carbonScore)[0].carbonScore) / selectedProductData.sort((a, b) => a.carbonScore - b.carbonScore)[0].carbonScore) * 100)}% better carbon performance
+                        • The best option has{' '}
+                        {Math.round(
+                          ((selectedProductData.sort((a, b) => b.carbonScore - a.carbonScore)[0]
+                            .carbonScore -
+                            selectedProductData.sort((a, b) => a.carbonScore - b.carbonScore)[0]
+                              .carbonScore) /
+                            selectedProductData.sort((a, b) => a.carbonScore - b.carbonScore)[0]
+                              .carbonScore) *
+                            100
+                        )}
+                        % better carbon performance
                       </Text>
                       <Text fontSize="sm" color="blue.600">
                         • Choosing sustainable options can save up to 2.1 kg CO₂e per purchase

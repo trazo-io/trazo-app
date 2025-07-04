@@ -510,38 +510,41 @@ function NewCompany() {
                 maxFiles={1}
                 multiple={false}
                 variant="compact"
-                placeholder={intl.formatMessage({ id: 'app.dropTheImageHereToUpload' }) || 'Drop the image here to upload'}
+                placeholder={
+                  intl.formatMessage({ id: 'app.dropTheImageHereToUpload' }) ||
+                  'Drop the image here to upload'
+                }
                 description="Upload company logo (up to 10MB)"
               />
             </StandardField>
-              <Flex justify="space-between">
-                <Button
-                  variant="no-hover"
-                  bg={bgPrevButton}
-                  alignSelf="flex-end"
-                  mt="24px"
-                  w="100px"
-                  h="35px"
-                  onClick={() => descriptionTab.current.click()}
-                >
-                  <Text fontSize="xs" color="gray.700" fontWeight="bold">
-                    {intl.formatMessage({ id: 'app.prev' })}
-                  </Text>
-                </Button>
-                <Button
-                  variant="no-hover"
-                  bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
-                  alignSelf="flex-end"
-                  mt="24px"
-                  w="100px"
-                  h="35px"
-                  onClick={() => socialsTab.current.click()}
-                >
-                  <Text fontSize="xs" color="#fff" fontWeight="bold">
-                    {intl.formatMessage({ id: 'app.next' })}
-                  </Text>
-                </Button>
-              </Flex>
+            <Flex justify="space-between">
+              <Button
+                variant="no-hover"
+                bg={bgPrevButton}
+                alignSelf="flex-end"
+                mt="24px"
+                w="100px"
+                h="35px"
+                onClick={() => descriptionTab.current.click()}
+              >
+                <Text fontSize="xs" color="gray.700" fontWeight="bold">
+                  {intl.formatMessage({ id: 'app.prev' })}
+                </Text>
+              </Button>
+              <Button
+                variant="no-hover"
+                bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
+                alignSelf="flex-end"
+                mt="24px"
+                w="100px"
+                h="35px"
+                onClick={() => socialsTab.current.click()}
+              >
+                <Text fontSize="xs" color="#fff" fontWeight="bold">
+                  {intl.formatMessage({ id: 'app.next' })}
+                </Text>
+              </Button>
+            </Flex>
           </CardBody>
         </Card>
       </TabPanel>

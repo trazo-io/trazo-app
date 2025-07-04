@@ -183,7 +183,8 @@ export default function ConsumerDashboardView() {
                 textAlign="center"
                 maxW="600px"
               >
-                Discover carbon footprints, support sustainable farms, and make informed choices that drive agricultural transparency
+                Discover carbon footprints, support sustainable farms, and make informed choices
+                that drive agricultural transparency
               </Text>
             </VStack>
           </Box>

@@ -88,7 +88,7 @@ export default function ParcelView() {
             <Button
               colorScheme="green"
               size="md"
-              onClick={() => navigate('/admin/dashboard/account/billing')}
+              onClick={() => navigate('/admin/dashboard/subscription')}
             >
               {intl.formatMessage({ id: 'app.manageTrial' })}
             </Button>

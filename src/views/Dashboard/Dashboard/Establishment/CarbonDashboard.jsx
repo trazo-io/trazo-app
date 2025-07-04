@@ -144,7 +144,7 @@ const CarbonDashboard = () => {
     productionId: viewMode === 'production' ? productionId : undefined,
     year: new Date().getFullYear()
   });
-  
+
   // Error handling for API failures
   useEffect(() => {
     if (summaryError) {
@@ -154,21 +154,21 @@ const CarbonDashboard = () => {
         description: 'Some carbon data may be incomplete. Please refresh the page.',
         status: 'warning',
         duration: 5000,
-        isClosable: true,
+        isClosable: true
       });
     }
   }, [summaryError, toast]);
 
   // Enhanced carbon entries query with error handling
-  const { 
-    data: carbonEntries, 
+  const {
+    data: carbonEntries,
     isLoading: isEntriesLoading,
-    error: entriesError 
+    error: entriesError
   } = useGetCarbonEntriesQuery({
     establishmentId: parseInt(establishmentId),
     year: new Date().getFullYear()
   });
-  
+
   // Error handling for carbon entries
   useEffect(() => {
     if (entriesError) {
@@ -243,14 +243,14 @@ const CarbonDashboard = () => {
   // ✅ PRIORITY 1: Use enhanced carbon API data with validation
   if (enhancedCarbonData?.success && enhancedCarbonData.data) {
     const apiData = enhancedCarbonData.data;
-    
+
     // Validate and sanitize API data
     const total_emissions = Math.max(0, Number(apiData.total_emissions) || 0);
     const total_offsets = Math.max(0, Number(apiData.total_offsets) || 0);
-    const net_carbon = Number(apiData.net_carbon) || (total_emissions - total_offsets);
+    const net_carbon = Number(apiData.net_carbon) || total_emissions - total_offsets;
     const carbon_score = Math.max(0, Math.min(100, Number(apiData.carbon_score) || 50));
     const transparency_score = Math.max(0, Math.min(100, Number(apiData.transparency_score) || 0));
-    
+
     processedData = {
       total_emissions,
       total_offsets,
@@ -268,9 +268,9 @@ const CarbonDashboard = () => {
   else if (summaryData) {
     const total_emissions = Math.max(0, Number(summaryData.total_emissions) || 0);
     const total_offsets = Math.max(0, Number(summaryData.total_offsets) || 0);
-    const net_carbon = Number(summaryData.net_carbon) || (total_emissions - total_offsets);
+    const net_carbon = Number(summaryData.net_carbon) || total_emissions - total_offsets;
     const carbon_score = Math.max(0, Math.min(100, Number(summaryData.carbon_score) || 50));
-    
+
     processedData = {
       total_emissions,
       total_offsets,
@@ -351,20 +351,20 @@ const CarbonDashboard = () => {
   const formatNumber = (value, decimals = 1) => {
     if (value === null || value === undefined || isNaN(value)) return '0';
     const num = Number(value);
-    
+
     // Handle very large numbers
     if (Math.abs(num) >= 1000000) {
       return (num / 1000000).toFixed(1) + 'M';
     } else if (Math.abs(num) >= 1000) {
       return (num / 1000).toFixed(1) + 'K';
     }
-    
+
     return num.toLocaleString('en-US', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals
     });
   };
-  
+
   // Performance tier helper
   const getPerformanceTierDisplay = (tier) => {
     if (!tier) return { text: 'Calculating...', color: 'gray' };

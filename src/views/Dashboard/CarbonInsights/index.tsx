@@ -16,12 +16,7 @@ import {
   StatNumber,
   StatHelpText
 } from '@chakra-ui/react';
-import { 
-  FaLeaf,
-  FaChartLine,
-  FaMapMarkerAlt,
-  FaArrowLeft
-} from 'react-icons/fa';
+import { FaLeaf, FaChartLine, FaMapMarkerAlt, FaArrowLeft } from 'react-icons/fa';
 import { MdTrendingUp } from 'react-icons/md';
 import {
   StandardPage,
@@ -57,7 +52,8 @@ export default function CarbonInsights() {
     },
     {
       title: 'Check Seasonal Availability',
-      description: 'In-season produce has lower environmental impact than out-of-season alternatives',
+      description:
+        'In-season produce has lower environmental impact than out-of-season alternatives',
       icon: FaChartLine,
       impact: '15% reduction'
     }
@@ -69,7 +65,6 @@ export default function CarbonInsights() {
       description="Simple insights about your environmental impact"
     >
       <VStack spacing={8} align="stretch">
-        
         {/* Back to Dashboard */}
         <HStack>
           <Button
@@ -100,9 +95,7 @@ export default function CarbonInsights() {
                 {insights.avgCarbonSaved}
               </StatNumber>
               <StatLabel>CO₂ Saved</StatLabel>
-              <StatHelpText color="blue.600">
-                Total impact
-              </StatHelpText>
+              <StatHelpText color="blue.600">Total impact</StatHelpText>
             </Stat>
 
             <Stat textAlign="center">
@@ -110,9 +103,7 @@ export default function CarbonInsights() {
                 {insights.improveBy}
               </StatNumber>
               <StatLabel>Potential Improvement</StatLabel>
-              <StatHelpText color="teal.600">
-                With better choices
-              </StatHelpText>
+              <StatHelpText color="teal.600">With better choices</StatHelpText>
             </Stat>
 
             <Stat textAlign="center">
@@ -120,9 +111,7 @@ export default function CarbonInsights() {
                 {insights.bestChoice}
               </StatNumber>
               <StatLabel>Your Best Choice</StatLabel>
-              <StatHelpText color="green.600">
-                Lowest carbon footprint
-              </StatHelpText>
+              <StatHelpText color="green.600">Lowest carbon footprint</StatHelpText>
             </Stat>
           </SimpleGrid>
         </StandardCard>
@@ -130,12 +119,12 @@ export default function CarbonInsights() {
         {/* Simple Tips */}
         <StandardCard title="Tips for Better Choices" variant="elevated">
           <VStack spacing={4}>
-            <StandardAlert 
-              status="info" 
-              title="Pro Tip" 
+            <StandardAlert
+              status="info"
+              title="Pro Tip"
               description="Small changes in your shopping habits can make a big difference for the environment."
             />
-            
+
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} w="full">
               {quickTips.map((tip, index) => (
                 <Box key={index} p={5} bg="gray.50" borderRadius="lg">
@@ -164,15 +153,15 @@ export default function CarbonInsights() {
                 Want to learn more?
               </Text>
               <HStack spacing={3}>
-                <Button 
-                  colorScheme="green" 
+                <Button
+                  colorScheme="green"
                   variant="outline"
                   onClick={() => navigate('/admin/dashboard/compare')}
                 >
                   Compare Products
                 </Button>
-                <Button 
-                  colorScheme="blue" 
+                <Button
+                  colorScheme="blue"
                   variant="outline"
                   onClick={() => navigate('/admin/dashboard/journey')}
                 >
@@ -182,7 +171,6 @@ export default function CarbonInsights() {
             </VStack>
           </VStack>
         </StandardCard>
-
       </VStack>
     </StandardPage>
   );

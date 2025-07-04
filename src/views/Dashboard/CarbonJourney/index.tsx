@@ -23,7 +23,7 @@ import {
   StatNumber,
   StatHelpText
 } from '@chakra-ui/react';
-import { 
+import {
   FaLeaf,
   FaChartLine,
   FaCalendar,
@@ -55,7 +55,7 @@ import { useGetUserProductionScansQuery, useGetUserReviewsQuery } from 'store/ap
 export default function CarbonJourney() {
   const isMobile = useBreakpointValue({ base: true, md: false });
   const [activeTab, setActiveTab] = useState(0);
-  
+
   // API queries for data
   const { data: productions, isLoading: scansLoading } = useGetUserProductionScansQuery();
   const { data: reviews, isLoading: reviewsLoading } = useGetUserReviewsQuery();
@@ -76,14 +76,16 @@ export default function CarbonJourney() {
     if (productions && reviews) {
       const totalScans = productions.length || 0;
       const totalReviews = reviews.length || 0;
-      const avgScore = productions.reduce((acc, prod) => acc + (prod.certificate_percentage || 0), 0) / (totalScans || 1);
-      
+      const avgScore =
+        productions.reduce((acc, prod) => acc + (prod.certificate_percentage || 0), 0) /
+        (totalScans || 1);
+
       setShopStats({
         totalScans,
         totalReviews,
         avgTransparencyScore: Math.round(avgScore),
         carbonFootprintRevealed: (totalScans * 1.8).toFixed(1),
-        sustainableFarmsFound: new Set(productions?.map(p => p.establishment_name)).size || 0,
+        sustainableFarmsFound: new Set(productions?.map((p) => p.establishment_name)).size || 0,
         daysActive: Math.max(totalScans, totalReviews),
         currentStreak: Math.min(7, totalScans) // Based on scan frequency
       });
@@ -139,8 +141,9 @@ export default function CarbonJourney() {
               value={`${shopStats.avgTransparencyScore || 0}%`}
               label="Products with Data"
               tooltip={{
-                label: "Products with Data",
-                explanation: "This shows what percentage of products you've scanned have complete environmental information available. Higher percentages mean more transparency about farming practices and carbon impact. Some products may be pending analysis."
+                label: 'Products with Data',
+                explanation:
+                  "This shows what percentage of products you've scanned have complete environmental information available. Higher percentages mean more transparency about farming practices and carbon impact. Some products may be pending analysis."
               }}
             />
 
@@ -170,31 +173,157 @@ export default function CarbonJourney() {
 
         {/* Journey Details Tabs */}
         <StandardCard variant="elevated">
-          <Tabs index={activeTab} onChange={setActiveTab} variant="soft-rounded" colorScheme="green">
+          <Tabs
+            index={activeTab}
+            onChange={setActiveTab}
+            variant="soft-rounded"
+            colorScheme="green"
+          >
             <TabList mb={6}>
               <Tab>Scan History</Tab>
               <Tab>My Reviews</Tab>
               <Tab>Impact Timeline</Tab>
             </TabList>
-            
+
             <TabPanels>
               {/* Scan History Tab */}
               <TabPanel p={0}>
-                <StandardSection 
-                  title="Product Scans" 
+                <StandardSection
+                  title="Product Scans"
                   description="Your journey through agricultural carbon footprints"
                 >
                   <VStack spacing={4}>
-                    {!scansLoading && productions?.map((production, index) => {
-                      const transparencyData = getTransparencyGrade(production.certificate_percentage || 0);
-                      
-                      return (
-                        <NavLink key={index} to={`/production/${production.id}/`} style={{ width: '100%' }}>
+                    {!scansLoading &&
+                      productions?.map((production, index) => {
+                        const transparencyData = getTransparencyGrade(
+                          production.certificate_percentage || 0
+                        );
+
+                        return (
+                          <NavLink
+                            key={index}
+                            to={`/production/${production.id}/`}
+                            style={{ width: '100%' }}
+                          >
+                            <StandardCard variant="outline" padding={6}>
+                              <HStack spacing={6} align="start">
+                                {production.images?.length > 0 && (
+                                  <Image
+                                    src={production.images[0]}
+                                    w="80px"
+                                    h="80px"
+                                    borderRadius="lg"
+                                    objectFit="cover"
+                                    shadow="sm"
+                                  />
+                                )}
+
+                                <VStack align="start" spacing={3} flex={1}>
+                                  <HStack justify="space-between" w="full">
+                                    <VStack align="start" spacing={1}>
+                                      <Text fontSize="lg" fontWeight="bold" color="gray.700">
+                                        {typeof production.product === 'object'
+                                          ? production.product?.name || 'Unknown Product'
+                                          : production.product || 'Unknown Product'}
+                                      </Text>
+                                      <HStack spacing={2}>
+                                        <Icon as={FaMapMarkerAlt} color="gray.500" boxSize={3} />
+                                        <Text fontSize="sm" color="gray.600">
+                                          {production.establishment_name ||
+                                            production.parcel?.establishment?.name ||
+                                            production.establishment?.name ||
+                                            'Unknown Farm'}
+                                        </Text>
+                                      </HStack>
+                                      <Text fontSize="xs" color="gray.500">
+                                        {production.date &&
+                                        !isNaN(new Date(production.date).getTime())
+                                          ? format(new Date(production.date), 'MMMM dd, yyyy')
+                                          : 'Date not available'}
+                                      </Text>
+                                    </VStack>
+
+                                    <VStack align="end" spacing={2}>
+                                      <Badge
+                                        colorScheme={transparencyData.color}
+                                        variant="solid"
+                                        fontSize="sm"
+                                      >
+                                        Grade {transparencyData.grade}
+                                      </Badge>
+                                      {renderSustainabilityStars(
+                                        production.certificate_percentage || 0
+                                      )}
+                                    </VStack>
+                                  </HStack>
+
+                                  <VStack spacing={2} w="full">
+                                    <HStack justify="space-between" w="full">
+                                      <ConsumerTooltip
+                                        label="Environmental Score"
+                                        explanation="Environmental Score rates how sustainable the farming practices are, from 0-100%. It includes factors like organic certification, water usage, soil health, and carbon storage practices. Higher scores mean more environmentally friendly farming."
+                                      >
+                                        <Text
+                                          fontSize="sm"
+                                          color="gray.600"
+                                          cursor="help"
+                                          textDecoration="underline"
+                                          textDecorationStyle="dotted"
+                                        >
+                                          Environmental Score
+                                        </Text>
+                                      </ConsumerTooltip>
+                                      <Text
+                                        fontSize="sm"
+                                        fontWeight="medium"
+                                        color={
+                                          !production.certificate_percentage
+                                            ? 'gray.400'
+                                            : 'gray.700'
+                                        }
+                                      >
+                                        {production.certificate_percentage
+                                          ? `${production.certificate_percentage}%`
+                                          : 'No data'}
+                                      </Text>
+                                    </HStack>
+                                    <Progress
+                                      value={production.certificate_percentage || 0}
+                                      size="sm"
+                                      colorScheme={transparencyData.color}
+                                      borderRadius="full"
+                                      w="full"
+                                    />
+                                  </VStack>
+                                </VStack>
+                              </HStack>
+                            </StandardCard>
+                          </NavLink>
+                        );
+                      })}
+                  </VStack>
+                </StandardSection>
+              </TabPanel>
+
+              {/* Reviews Tab */}
+              <TabPanel p={0}>
+                <StandardSection
+                  title="Sustainability Reviews"
+                  description="Your impact-driven feedback on carbon transparency"
+                >
+                  <VStack spacing={4}>
+                    {!reviewsLoading &&
+                      reviews?.map((review, index) => (
+                        <NavLink
+                          key={index}
+                          to={`/production/${review.history.id}/`}
+                          style={{ width: '100%' }}
+                        >
                           <StandardCard variant="outline" padding={6}>
                             <HStack spacing={6} align="start">
-                              {production.images?.length > 0 && (
+                              {review.history.images?.length > 0 && (
                                 <Image
-                                  src={production.images[0]}
+                                  src={review.history.images[0]}
                                   w="80px"
                                   h="80px"
                                   borderRadius="lg"
@@ -202,134 +331,60 @@ export default function CarbonJourney() {
                                   shadow="sm"
                                 />
                               )}
-                              
+
                               <VStack align="start" spacing={3} flex={1}>
                                 <HStack justify="space-between" w="full">
                                   <VStack align="start" spacing={1}>
                                     <Text fontSize="lg" fontWeight="bold" color="gray.700">
-                                      {typeof production.product === 'object' ? production.product?.name || 'Unknown Product' : production.product || 'Unknown Product'}
+                                      {review.headline}
                                     </Text>
-                                    <HStack spacing={2}>
-                                      <Icon as={FaMapMarkerAlt} color="gray.500" boxSize={3} />
-                                      <Text fontSize="sm" color="gray.600">
-                                        {production.establishment_name || production.parcel?.establishment?.name || production.establishment?.name || 'Unknown Farm'}
-                                      </Text>
-                                    </HStack>
+                                    <Text fontSize="sm" color="gray.600">
+                                      {typeof review.history.product === 'object'
+                                        ? review.history.product?.name || 'Unknown Product'
+                                        : review.history.product || 'Unknown Product'}
+                                    </Text>
                                     <Text fontSize="xs" color="gray.500">
-                                      {production.date && !isNaN(new Date(production.date).getTime()) ? format(new Date(production.date), 'MMMM dd, yyyy') : 'Date not available'}
+                                      {review.date && !isNaN(new Date(review.date).getTime())
+                                        ? format(new Date(review.date), 'MMMM dd, yyyy')
+                                        : 'Date not available'}
                                     </Text>
                                   </VStack>
-                                  
-                                  <VStack align="end" spacing={2}>
-                                    <Badge 
-                                      colorScheme={transparencyData.color} 
-                                      variant="solid"
-                                      fontSize="sm"
-                                    >
-                                      Grade {transparencyData.grade}
+
+                                  <VStack align="end" spacing={1}>
+                                    {renderSustainabilityStars(review.rating * 20)}
+                                    <Badge colorScheme="green" variant="subtle" fontSize="xs">
+                                      Sustainability Review
                                     </Badge>
-                                    {renderSustainabilityStars(production.certificate_percentage || 0)}
                                   </VStack>
                                 </HStack>
-                                
-                                <VStack spacing={2} w="full">
-                                  <HStack justify="space-between" w="full">
-                                    <ConsumerTooltip
-                                      label="Environmental Score"
-                                      explanation="Environmental Score rates how sustainable the farming practices are, from 0-100%. It includes factors like organic certification, water usage, soil health, and carbon storage practices. Higher scores mean more environmentally friendly farming."
-                                    >
-                                      <Text fontSize="sm" color="gray.600" cursor="help" textDecoration="underline" textDecorationStyle="dotted">
-                                        Environmental Score
-                                      </Text>
-                                    </ConsumerTooltip>
-                                    <Text fontSize="sm" fontWeight="medium" color={!production.certificate_percentage ? 'gray.400' : 'gray.700'}>
-                                      {production.certificate_percentage ? `${production.certificate_percentage}%` : 'No data'}
-                                    </Text>
-                                  </HStack>
-                                  <Progress
-                                    value={production.certificate_percentage || 0}
-                                    size="sm"
-                                    colorScheme={transparencyData.color}
-                                    borderRadius="full"
-                                    w="full"
-                                  />
-                                </VStack>
+
+                                <Text color="gray.600" fontSize="sm" noOfLines={2}>
+                                  {review.written_review}
+                                </Text>
+
+                                <HStack spacing={4} fontSize="xs" color="gray.500">
+                                  <Text>
+                                    Farm:{' '}
+                                    {typeof review.history.parcel === 'object'
+                                      ? review.history.parcel?.name || 'Unknown'
+                                      : review.history.parcel || 'Unknown'}
+                                  </Text>
+                                  <Text>•</Text>
+                                  <Text>Carbon Focus</Text>
+                                </HStack>
                               </VStack>
                             </HStack>
                           </StandardCard>
                         </NavLink>
-                      );
-                    })}
-                  </VStack>
-                </StandardSection>
-              </TabPanel>
-
-              {/* Reviews Tab */}
-              <TabPanel p={0}>
-                <StandardSection 
-                  title="Sustainability Reviews" 
-                  description="Your impact-driven feedback on carbon transparency"
-                >
-                  <VStack spacing={4}>
-                    {!reviewsLoading && reviews?.map((review, index) => (
-                      <NavLink key={index} to={`/production/${review.history.id}/`} style={{ width: '100%' }}>
-                        <StandardCard variant="outline" padding={6}>
-                          <HStack spacing={6} align="start">
-                            {review.history.images?.length > 0 && (
-                              <Image
-                                src={review.history.images[0]}
-                                w="80px"
-                                h="80px"
-                                borderRadius="lg"
-                                objectFit="cover"
-                                shadow="sm"
-                              />
-                            )}
-                            
-                            <VStack align="start" spacing={3} flex={1}>
-                              <HStack justify="space-between" w="full">
-                                <VStack align="start" spacing={1}>
-                                  <Text fontSize="lg" fontWeight="bold" color="gray.700">
-                                    {review.headline}
-                                  </Text>
-                                  <Text fontSize="sm" color="gray.600">
-                                    {typeof review.history.product === 'object' ? review.history.product?.name || 'Unknown Product' : review.history.product || 'Unknown Product'}
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.500">
-                                    {review.date && !isNaN(new Date(review.date).getTime()) ? format(new Date(review.date), 'MMMM dd, yyyy') : 'Date not available'}
-                                  </Text>
-                                </VStack>
-                                
-                                <VStack align="end" spacing={1}>
-                                  {renderSustainabilityStars(review.rating * 20)}
-                                  <Badge colorScheme="green" variant="subtle" fontSize="xs">
-                                    Sustainability Review
-                                  </Badge>
-                                </VStack>
-                              </HStack>
-                              
-                              <Text color="gray.600" fontSize="sm" noOfLines={2}>
-                                {review.written_review}
-                              </Text>
-                              
-                              <HStack spacing={4} fontSize="xs" color="gray.500">
-                                <Text>Farm: {typeof review.history.parcel === 'object' ? review.history.parcel?.name || 'Unknown' : review.history.parcel || 'Unknown'}</Text>
-                                <Text>•</Text>
-                                <Text>Carbon Focus</Text>
-                              </HStack>
-                            </VStack>
-                          </HStack>
-                        </StandardCard>
-                      </NavLink>
-                    ))}
+                      ))}
                   </VStack>
                 </StandardSection>
               </TabPanel>
 
               {/* Impact Timeline Tab */}
               <TabPanel p={0}>
-                <StandardSection 
-                  title="Carbon Discovery Timeline" 
+                <StandardSection
+                  title="Carbon Discovery Timeline"
                   description="Your journey through agricultural transparency"
                 >
                   <VStack spacing={6}>
@@ -354,7 +409,9 @@ export default function CarbonJourney() {
                           </Circle>
                           <Stat textAlign="center">
                             <StatLabel>Current Streak</StatLabel>
-                            <StatNumber color="blue.600">{shopStats.sustainableFarmsFound}</StatNumber>
+                            <StatNumber color="blue.600">
+                              {shopStats.sustainableFarmsFound}
+                            </StatNumber>
                             <StatHelpText>consecutive days</StatHelpText>
                           </Stat>
                         </VStack>
@@ -370,11 +427,17 @@ export default function CarbonJourney() {
                               label="Carbon Revealed"
                               explanation="Carbon Revealed shows the total amount of CO₂ information you've uncovered by scanning products. Each scan reveals the hidden environmental cost of food production. kg CO₂e means 'kilograms of carbon dioxide equivalent' - the standard way to measure all greenhouse gas emissions."
                             >
-                              <StatLabel cursor="help" textDecoration="underline" textDecorationStyle="dotted">
+                              <StatLabel
+                                cursor="help"
+                                textDecoration="underline"
+                                textDecorationStyle="dotted"
+                              >
                                 Carbon Revealed
                               </StatLabel>
                             </ConsumerTooltip>
-                            <StatNumber color="teal.600">{shopStats.carbonFootprintRevealed}</StatNumber>
+                            <StatNumber color="teal.600">
+                              {shopStats.carbonFootprintRevealed}
+                            </StatNumber>
                             <StatHelpText>kg CO₂e revealed</StatHelpText>
                           </Stat>
                         </VStack>

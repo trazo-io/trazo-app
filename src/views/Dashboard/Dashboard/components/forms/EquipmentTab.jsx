@@ -80,28 +80,22 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
   const { watch } = methods;
 
   // Watch critical fields for real-time carbon calculation updates
-  const watchedFields = watch([
-    'type',
-    'fuel_amount',
-    'fuel_type',
-    'hours_used',
-    'area_covered'
-  ]);
+  const watchedFields = watch(['type', 'fuel_amount', 'fuel_type', 'hours_used', 'area_covered']);
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('[EquipmentTab]: Field watching triggered', { 
-      hasOnDataChange: !!onDataChange, 
-      watchedFields, 
-      firstField: watchedFields[0] 
+    console.log('[EquipmentTab]: Field watching triggered', {
+      hasOnDataChange: !!onDataChange,
+      watchedFields,
+      firstField: watchedFields[0]
     });
-    
+
     // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
         console.log('[EquipmentTab]: Current values for carbon calculation', currentValues);
-        
+
         // Only trigger if we have meaningful data
         if (currentValues.type && (currentValues.fuel_amount || currentValues.hours_used)) {
           console.log('[EquipmentTab]: Triggering onDataChange with values', currentValues);
@@ -281,9 +275,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
 
           {/* Maintenance/Repair cost */}
           {(equipmentType === 'MN' || equipmentType === 'RE' || equipmentType === 'BD') && (
-            <StandardField
-              label={intl.formatMessage({ id: 'app.maintenanceCost' }) || 'Cost ($)'}
-            >
+            <StandardField label={intl.formatMessage({ id: 'app.maintenanceCost' }) || 'Cost ($)'}>
               <NumberInput min={0} precision={2} step={0.01}>
                 <NumberInputField {...methods.register('maintenance_cost')} placeholder="0.00" />
                 <NumberInputStepper>
@@ -296,9 +288,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
 
           {/* Hours Used */}
           <HStack spacing={4} align="end">
-            <StandardField
-              label={intl.formatMessage({ id: 'app.hoursUsed' }) || 'Hours Used'}
-            >
+            <StandardField label={intl.formatMessage({ id: 'app.hoursUsed' }) || 'Hours Used'}>
               <NumberInput min={0} precision={1} step={0.1}>
                 <NumberInputField {...methods.register('hours_used')} placeholder="0.0" />
                 <NumberInputStepper>
@@ -308,9 +298,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
               </NumberInput>
             </StandardField>
 
-            <StandardField
-              label={intl.formatMessage({ id: 'app.areaCovered' }) || 'Area Covered'}
-            >
+            <StandardField label={intl.formatMessage({ id: 'app.areaCovered' }) || 'Area Covered'}>
               <StandardInput
                 {...methods.register('area_covered')}
                 placeholder="e.g., 10 hectares"
@@ -319,9 +307,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
           </HStack>
 
           {/* Observations */}
-          <StandardField
-            label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-          >
+          <StandardField label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}>
             <StandardTextarea
               {...methods.register('observation')}
               placeholder={

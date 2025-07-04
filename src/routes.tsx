@@ -72,26 +72,15 @@ const dashRoutes: Route[] = [
     regex: /^\/admin\/dashboard\/establishment\/[0-9]+\/commercial$/
   },
   {
-    id: 'planUsage',
-    name: 'Plan Usage',
-    path: '/dashboard/plan-usage',
-    icon: <FaChartBar color="inherit" />,
-    authIcon: <FaChartBar color="inherit" />,
-    layout: '/admin',
-    collapse: true,
-    isCompanySettings: true,
-    regex: /^\/admin\/dashboard\/plan-usage$/
-  },
-  {
-    id: 'billingManagement',
-    name: 'Subscription Management',
-    path: '/dashboard/account/billing',
+    id: 'subscription',
+    name: 'Subscription & Usage',
+    path: '/dashboard/subscription',
     icon: <FaCreditCard color="inherit" />,
     authIcon: <FaCreditCard color="inherit" />,
     layout: '/admin',
     collapse: true,
     isCompanySettings: true,
-    regex: /^\/admin\/dashboard\/account\/billing$/
+    regex: /^\/admin\/dashboard\/subscription$/
   },
   {
     id: 'education',

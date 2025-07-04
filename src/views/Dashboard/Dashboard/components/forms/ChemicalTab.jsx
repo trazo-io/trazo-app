@@ -197,7 +197,13 @@ const getIntelligentDefaults = (chemicalType, cropType = 'citrus') => {
   return baseDefaults;
 };
 
-const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, cropType = 'citrus' }) => {
+const ChemicalTab = ({
+  onSubmitHandler,
+  onDataChange,
+  onPrev,
+  initialValues = {},
+  cropType = 'citrus'
+}) => {
   console.log('ChemicalTab: Component mounted/rendered with props:', {
     hasOnSubmitHandler: !!onSubmitHandler,
     hasOnDataChange: !!onDataChange,
@@ -205,7 +211,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
     hasOnPrev: !!onPrev,
     cropType
   });
-  
+
   const intl = useIntl();
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -227,7 +233,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
   };
 
   const formType = mapApiTypeToFormType(initialValues.type);
-  
+
   console.log('🔍 ChemicalTab: Form initialization debug:', {
     initialValues,
     'initialValues.type': initialValues.type,
@@ -235,7 +241,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
     'formType || empty': formType || ''
   });
 
-  // Get intelligent defaults for the current chemical type (crop type inherited from production)  
+  // Get intelligent defaults for the current chemical type (crop type inherited from production)
   const intelligentDefaults = getIntelligentDefaults(formType || 'FE', cropType);
 
   const mainInfoMethods = useForm({
@@ -277,10 +283,10 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
   // Watch critical fields for real-time carbon calculation updates
   const watchedFields = watch([
     'type',
-    'commercial_name', 
+    'commercial_name',
     'volume',
     'volume_unit',
-    'area', 
+    'area',
     'area_unit',
     'concentration',
     'way_of_application'
@@ -290,7 +296,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
   useEffect(() => {
     console.log('🔍 ChemicalTab: getValues function exists?', !!getValues);
     console.log('🔍 ChemicalTab: mainInfoMethods object:', mainInfoMethods);
-    
+
     const interval = setInterval(() => {
       try {
         const currentValues = getValues();
@@ -304,7 +310,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
         console.error('🔍 ChemicalTab: Error checking form state:', error);
       }
     }, 2000);
-    
+
     return () => clearInterval(interval);
   }, [getValues, watch, mainInfoMethods]);
 
@@ -330,33 +336,43 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('ChemicalTab: Field watching triggered', { 
-      hasOnDataChange: !!onDataChange, 
-      watchedFields, 
+    console.log('ChemicalTab: Field watching triggered', {
+      hasOnDataChange: !!onDataChange,
+      watchedFields,
       firstField: watchedFields[0],
       watchedType: watch('type')
     });
-    
+
     // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = getValues();
-        
+
         // Compare with previous values to avoid unnecessary calls
-        const relevantFields = ['type', 'commercial_name', 'volume', 'volume_unit', 'area', 'area_unit', 'concentration', 'way_of_application'];
+        const relevantFields = [
+          'type',
+          'commercial_name',
+          'volume',
+          'volume_unit',
+          'area',
+          'area_unit',
+          'concentration',
+          'way_of_application'
+        ];
         const currentRelevantValues = {};
-        relevantFields.forEach(field => {
+        relevantFields.forEach((field) => {
           currentRelevantValues[field] = currentValues[field];
         });
-        
-        const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
-        
+
+        const hasChanged =
+          JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+
         console.log('ChemicalTab: Value comparison', {
           currentValues: currentRelevantValues,
           previousValues: previousValuesRef.current,
           hasChanged
         });
-        
+
         // Only trigger if we have meaningful data AND values have actually changed
         if (hasChanged && currentValues.type && (currentValues.volume || currentValues.area)) {
           console.log('ChemicalTab: Triggering onDataChange with values', currentValues);
@@ -479,22 +495,25 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                   placeholder="Select chemical type"
                   {...register('type')}
                   onChange={(e) => {
-                    console.log('🔥 ChemicalTab: Select onChange triggered with value:', e.target.value);
-                    
+                    console.log(
+                      '🔥 ChemicalTab: Select onChange triggered with value:',
+                      e.target.value
+                    );
+
                     // First, call the original onChange from register to update the form
                     const registerProps = register('type');
                     if (registerProps.onChange) {
                       registerProps.onChange(e);
                     }
-                    
+
                     // Also manually set the value to ensure it's registered
                     setValue('type', e.target.value);
-                    
+
                     // Check what happened to the form state
                     setTimeout(() => {
                       const currentValues = getValues();
                       console.log('🔥 ChemicalTab: Form state after onChange:', currentValues);
-                      
+
                       // Manually trigger carbon calculation for testing
                       if (onDataChange && e.target.value) {
                         console.log('🔥 ChemicalTab: Manually triggering onDataChange');
@@ -562,11 +581,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
             </Text>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <StandardField
-                label="Volume Applied *"
-                required
-                error={errors.volume?.message}
-              >
+              <StandardField label="Volume Applied *" required error={errors.volume?.message}>
                 <HStack spacing={2}>
                   <StandardInput
                     flex={2}
@@ -575,10 +590,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                     placeholder="50.0"
                     {...register('volume')}
                   />
-                  <StandardSelect
-                    flex={1}
-                    {...register('volume_unit')}
-                  >
+                  <StandardSelect flex={1} {...register('volume_unit')}>
                     <option value="liters">Liters</option>
                     <option value="gallons">Gallons</option>
                     <option value="kg">Kilograms</option>
@@ -587,11 +599,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 </HStack>
               </StandardField>
 
-              <StandardField
-                label="Area Treated *"
-                required
-                error={errors.area?.message}
-              >
+              <StandardField label="Area Treated *" required error={errors.area?.message}>
                 <HStack spacing={2}>
                   <StandardInput
                     flex={2}
@@ -600,10 +608,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                     placeholder="2.0"
                     {...register('area')}
                   />
-                  <StandardSelect
-                    flex={1}
-                    {...register('area_unit')}
-                  >
+                  <StandardSelect flex={1} {...register('area_unit')}>
                     <option value="hectares">Hectares</option>
                     <option value="acres">Acres</option>
                   </StandardSelect>
@@ -668,9 +673,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 />
               </StandardField>
 
-              <StandardField
-                label="Temperature Range"
-              >
+              <StandardField label="Temperature Range">
                 <StandardInput
                   type="text"
                   placeholder="e.g., 18-25°C or 65-77°F"
@@ -680,13 +683,8 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
             </SimpleGrid>
 
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-              <StandardField
-                label="Soil Moisture"
-              >
-                <StandardSelect
-                  placeholder="Select soil moisture"
-                  {...register('soil_moisture')}
-                >
+              <StandardField label="Soil Moisture">
+                <StandardSelect placeholder="Select soil moisture" {...register('soil_moisture')}>
                   <option value="dry">Dry</option>
                   <option value="moderate">Moderate</option>
                   <option value="moist">Moist</option>
@@ -694,9 +692,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 </StandardSelect>
               </StandardField>
 
-              <StandardField
-                label="Wind Speed"
-              >
+              <StandardField label="Wind Speed">
                 <StandardInput
                   type="text"
                   placeholder="e.g., 5-10 mph, calm"
@@ -704,13 +700,8 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 />
               </StandardField>
 
-              <StandardField
-                label="Application Time"
-              >
-                <StandardSelect
-                  placeholder="Select application time"
-                  {...register('time_period')}
-                >
+              <StandardField label="Application Time">
+                <StandardSelect placeholder="Select application time" {...register('time_period')}>
                   <option value="early_morning">Early Morning (6-9 AM)</option>
                   <option value="morning">Morning (9-12 PM)</option>
                   <option value="afternoon">Afternoon (12-3 PM)</option>
@@ -723,9 +714,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
 
           {/* Section 4: Additional Notes */}
           <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <StandardField
-              label={intl.formatMessage({ id: 'app.observations' })}
-            >
+            <StandardField label={intl.formatMessage({ id: 'app.observations' })}>
               <StandardTextarea
                 placeholder="Optional: Additional notes about application conditions, target pests, equipment used, etc."
                 rows={3}

@@ -20,9 +20,9 @@ import {
   Progress,
   Box
 } from '@chakra-ui/react';
-import { 
-  FaUsers, 
-  FaComments, 
+import {
+  FaUsers,
+  FaComments,
   FaShare,
   FaLeaf,
   FaMapMarkerAlt,
@@ -58,7 +58,8 @@ export default function CommunityDashboard() {
       verified: true,
       badge: 'Carbon Detective',
       title: 'Discovered exceptional regenerative farm practices',
-      content: 'Highland Organic Farm in Oregon achieves -0.3 kg CO₂e per kg through innovative carbon sequestration. Their soil health data shows 40% carbon increase over 3 years.',
+      content:
+        'Highland Organic Farm in Oregon achieves -0.3 kg CO₂e per kg through innovative carbon sequestration. Their soil health data shows 40% carbon increase over 3 years.',
       timestamp: '2 hours ago',
       likes: 47,
       comments: 23,
@@ -78,7 +79,8 @@ export default function CommunityDashboard() {
       verified: true,
       badge: 'Sustainability Expert',
       title: 'Regional carbon footprint analysis reveals surprising patterns',
-      content: 'After analyzing 200+ farms across the Pacific Northwest, I found that elevation and rainfall patterns strongly correlate with carbon efficiency. Farms above 1000ft elevation show 25% better carbon scores on average.',
+      content:
+        'After analyzing 200+ farms across the Pacific Northwest, I found that elevation and rainfall patterns strongly correlate with carbon efficiency. Farms above 1000ft elevation show 25% better carbon scores on average.',
       timestamp: '5 hours ago',
       likes: 89,
       comments: 34,
@@ -95,7 +97,8 @@ export default function CommunityDashboard() {
       verified: true,
       badge: 'Transparency Movement',
       title: 'Community milestone: 1,000 farms now mapped!',
-      content: 'Our collective scanning efforts have mapped over 1,000 transparent farms nationwide. This represents 15% of all certified organic operations. Together, we\'re driving the transparency revolution in agriculture.',
+      content:
+        "Our collective scanning efforts have mapped over 1,000 transparent farms nationwide. This represents 15% of all certified organic operations. Together, we're driving the transparency revolution in agriculture.",
       timestamp: '8 hours ago',
       likes: 156,
       comments: 67,
@@ -112,7 +115,8 @@ export default function CommunityDashboard() {
       verified: true,
       badge: 'Local Food Champion',
       title: 'Local vs imported: My 30-day carbon comparison experiment',
-      content: 'Tracked carbon footprints of local vs imported produce for 30 days. Local sourcing reduced my food carbon footprint by 60% while supporting 12 regional transparent farms.',
+      content:
+        'Tracked carbon footprints of local vs imported produce for 30 days. Local sourcing reduced my food carbon footprint by 60% while supporting 12 regional transparent farms.',
       timestamp: '1 day ago',
       likes: 73,
       comments: 41,
@@ -258,10 +262,10 @@ export default function CommunityDashboard() {
                 </VStack>
               </VStack>
             </StandardGrid>
-            
-            <StandardAlert 
-              status="info" 
-              title="Join the Community" 
+
+            <StandardAlert
+              status="info"
+              title="Join the Community"
               description="Connect with other consumers making sustainable food choices."
             />
           </VStack>
@@ -269,17 +273,21 @@ export default function CommunityDashboard() {
 
         {/* Main Community Features */}
         <StandardCard variant="elevated">
-          <Tabs index={activeTab} onChange={setActiveTab} variant="soft-rounded" colorScheme="green">
+          <Tabs
+            index={activeTab}
+            onChange={setActiveTab}
+            variant="soft-rounded"
+            colorScheme="green"
+          >
             <TabList mb={6}>
               <Tab>Recent Posts</Tab>
               <Tab>Sustainable Tips</Tab>
             </TabList>
-            
+
             <TabPanels>
               {/* Transparency Insights */}
               <TabPanel p={0}>
                 <VStack spacing={8} align="stretch">
-                  
                   {/* Share Insight */}
                   <StandardCard title="Share Your Carbon Discovery" variant="flat">
                     <VStack spacing={4}>
@@ -316,12 +324,14 @@ export default function CommunityDashboard() {
                   </StandardCard>
 
                   {/* Transparency Insights Feed */}
-                  <StandardSection title="Latest Carbon Intelligence" description="Community discoveries driving agricultural transparency">
+                  <StandardSection
+                    title="Latest Carbon Intelligence"
+                    description="Community discoveries driving agricultural transparency"
+                  >
                     <VStack spacing={6}>
                       {transparencyInsights.map((insight) => (
                         <StandardCard key={insight.id} variant="outline" padding={6}>
                           <VStack spacing={4} align="stretch">
-                            
                             {/* Insight Header */}
                             <HStack justify="space-between">
                               <HStack spacing={3}>
@@ -343,7 +353,7 @@ export default function CommunityDashboard() {
                                   </Text>
                                 </VStack>
                               </HStack>
-                              
+
                               {insight.achievement && (
                                 <Badge colorScheme="green" variant="solid">
                                   <Icon as={FaTrophy} mr={1} boxSize={3} />
@@ -351,7 +361,7 @@ export default function CommunityDashboard() {
                                 </Badge>
                               )}
                             </HStack>
-                            
+
                             {/* Insight Content */}
                             <VStack align="start" spacing={3}>
                               <Heading size="sm" color="gray.700">
@@ -361,7 +371,7 @@ export default function CommunityDashboard() {
                                 {insight.content}
                               </Text>
                             </VStack>
-                            
+
                             {/* Insight Data & Tags */}
                             <VStack align="start" spacing={3}>
                               <Flex wrap="wrap" gap={2}>
@@ -388,7 +398,7 @@ export default function CommunityDashboard() {
                                   </Badge>
                                 )}
                               </Flex>
-                              
+
                               {/* Impact Metrics */}
                               {insight.carbonData && (
                                 <HStack spacing={4} fontSize="sm">
@@ -405,16 +415,31 @@ export default function CommunityDashboard() {
                                 </HStack>
                               )}
                             </VStack>
-                            
+
                             {/* Engagement Actions */}
                             <HStack spacing={4} pt={2} borderTop="1px" borderColor="gray.100">
-                              <Button size="sm" variant="ghost" leftIcon={<FaHeart />} colorScheme="red">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                leftIcon={<FaHeart />}
+                                colorScheme="red"
+                              >
                                 {insight.likes}
                               </Button>
-                              <Button size="sm" variant="ghost" leftIcon={<FaComments />} colorScheme="blue">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                leftIcon={<FaComments />}
+                                colorScheme="blue"
+                              >
                                 {insight.comments}
                               </Button>
-                              <Button size="sm" variant="ghost" leftIcon={<FaShare />} colorScheme="green">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                leftIcon={<FaShare />}
+                                colorScheme="green"
+                              >
                                 {insight.shares}
                               </Button>
                             </HStack>
@@ -428,7 +453,10 @@ export default function CommunityDashboard() {
 
               {/* Sustainable Tips */}
               <TabPanel p={0}>
-                <StandardSection title="Simple Ways to Shop Sustainably" description="Practical tips for reducing your food's carbon footprint">
+                <StandardSection
+                  title="Simple Ways to Shop Sustainably"
+                  description="Practical tips for reducing your food's carbon footprint"
+                >
                   <StandardGrid columns={{ base: 1, md: 2 }} spacing={6}>
                     {sustainableTips.map((tip, index) => (
                       <StandardCard key={index} variant="elevated" padding={6}>
@@ -446,7 +474,7 @@ export default function CommunityDashboard() {
                               </Text>
                             </VStack>
                           </HStack>
-                          
+
                           <Box p={3} bg="green.50" borderRadius="md">
                             <HStack spacing={2}>
                               <Icon as={FaLeaf} color="green.600" boxSize={4} />

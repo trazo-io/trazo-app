@@ -160,14 +160,14 @@ const parcelSchema = object({
   contact_phone: string().optional(),
   address: string().optional(),
   certified: boolean().default(false),
-  
+
   // Basic Land Info
   soil_type: string().optional(),
   unique_code: string().optional(),
   certification_type: string().optional(),
   contact_person: string().optional(),
   contact_email: string().email('Invalid email format').optional().or(string().length(0)),
-  
+
   // Soil Health Management
   soil_ph: number().min(0).max(14).optional(),
   soil_organic_matter: number().min(0).max(100).optional(),
@@ -178,7 +178,7 @@ const parcelSchema = object({
   erosion_risk: string().optional(),
   last_soil_test_date: string().optional(),
   soil_improvement_notes: string().optional(),
-  
+
   // Water Rights and Management
   water_source_type: string().optional(),
   water_rights_docs: string().optional(),
@@ -189,7 +189,7 @@ const parcelSchema = object({
   drainage_characteristics: string().optional(),
   water_conservation_practices: string().optional(),
   seasonal_water_availability: string().optional(),
-  
+
   // Conservation Practices
   cover_crop_management: string().optional(),
   crop_rotation_pattern: string().optional(),
@@ -199,7 +199,7 @@ const parcelSchema = object({
   nrcs_practices: string().optional(),
   carbon_sequestration_practices: string().optional(),
   biodiversity_measures: string().optional(),
-  
+
   // Advanced Land Characteristics
   slope_percentage: number().min(0).max(100).optional(),
   topography_type: string().optional(),
@@ -219,14 +219,14 @@ interface ParcelFormData {
   contact_phone?: string;
   address?: string;
   certified: boolean;
-  
+
   // Basic Land Info
   soil_type?: string;
   unique_code?: string;
   certification_type?: string;
   contact_person?: string;
   contact_email?: string;
-  
+
   // Soil Health Management
   soil_ph?: number;
   soil_organic_matter?: number;
@@ -237,7 +237,7 @@ interface ParcelFormData {
   erosion_risk?: string;
   last_soil_test_date?: string;
   soil_improvement_notes?: string;
-  
+
   // Water Rights and Management
   water_source_type?: string;
   water_rights_docs?: string;
@@ -248,7 +248,7 @@ interface ParcelFormData {
   drainage_characteristics?: string;
   water_conservation_practices?: string;
   seasonal_water_availability?: string;
-  
+
   // Conservation Practices
   cover_crop_management?: string;
   crop_rotation_pattern?: string;
@@ -258,7 +258,7 @@ interface ParcelFormData {
   nrcs_practices?: string;
   carbon_sequestration_practices?: string;
   biodiversity_measures?: string;
-  
+
   // Advanced Land Characteristics
   slope_percentage?: number;
   topography_type?: string;
@@ -269,7 +269,7 @@ interface ParcelFormData {
   wetland_designation?: boolean;
   historical_yield_data?: string;
   land_use_restrictions?: string;
-  
+
   polygon?: Array<{ lat: number; lng: number }>;
   map_metadata?: {
     center: { lat: number; lng: number };
@@ -364,14 +364,14 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
       description: '',
       contact_phone: '',
       address: '',
-      
+
       // Basic Land Info
       soil_type: '',
       unique_code: '',
       certification_type: '',
       contact_person: '',
       contact_email: '',
-      
+
       // Soil Health Management
       soil_ph: undefined,
       soil_organic_matter: undefined,
@@ -382,7 +382,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
       erosion_risk: '',
       last_soil_test_date: '',
       soil_improvement_notes: '',
-      
+
       // Water Rights and Management
       water_source_type: '',
       water_rights_docs: '',
@@ -393,7 +393,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
       drainage_characteristics: '',
       water_conservation_practices: '',
       seasonal_water_availability: '',
-      
+
       // Conservation Practices
       cover_crop_management: '',
       crop_rotation_pattern: '',
@@ -403,7 +403,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
       nrcs_practices: '',
       carbon_sequestration_practices: '',
       biodiversity_measures: '',
-      
+
       // Advanced Land Characteristics
       slope_percentage: undefined,
       topography_type: '',
@@ -414,7 +414,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
       wetland_designation: false,
       historical_yield_data: '',
       land_use_restrictions: '',
-      
+
       ...initialData
     }
   });
@@ -437,14 +437,14 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
         description: '',
         contact_phone: '',
         address: '',
-        
+
         // Basic Land Info
         soil_type: '',
         unique_code: '',
         certification_type: '',
         contact_person: '',
         contact_email: '',
-        
+
         // Soil Health Management
         soil_ph: undefined,
         soil_organic_matter: undefined,
@@ -455,7 +455,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
         erosion_risk: '',
         last_soil_test_date: '',
         soil_improvement_notes: '',
-        
+
         // Water Rights and Management
         water_source_type: '',
         water_rights_docs: '',
@@ -466,7 +466,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
         drainage_characteristics: '',
         water_conservation_practices: '',
         seasonal_water_availability: '',
-        
+
         // Conservation Practices
         cover_crop_management: '',
         crop_rotation_pattern: '',
@@ -476,7 +476,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
         nrcs_practices: '',
         carbon_sequestration_practices: '',
         biodiversity_measures: '',
-        
+
         // Advanced Land Characteristics
         slope_percentage: undefined,
         topography_type: '',
@@ -487,7 +487,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
         wetland_designation: false,
         historical_yield_data: '',
         land_use_restrictions: '',
-        
+
         ...initialData
       });
 
@@ -1270,7 +1270,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           step={0.1}
                           precision={1}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 6.5"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -1303,7 +1303,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           step={0.1}
                           precision={1}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 3.5"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -1358,7 +1358,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           min={0}
                           step={1}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 25"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -1389,7 +1389,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           min={0}
                           step={1}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 45"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -1420,7 +1420,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           min={0}
                           step={1}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 180"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -1585,7 +1585,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           step={0.1}
                           precision={2}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 25.5"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -1643,7 +1643,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           step={0.1}
                           precision={1}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 7.2"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -1674,7 +1674,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           min={0}
                           step={1}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 450"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -1706,7 +1706,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           max={100}
                           step={1}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 85"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -1878,10 +1878,10 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <VStack align="stretch" spacing={4}>
                     <StandardField label="Buffer Strips & Windbreaks">
                       <HStack>
-                        <Switch 
-                          {...methods.register('buffer_strips_windbreaks')} 
-                          colorScheme="green" 
-                          size="md" 
+                        <Switch
+                          {...methods.register('buffer_strips_windbreaks')}
+                          colorScheme="green"
+                          size="md"
                         />
                         <Text fontSize="sm" color="gray.600">
                           {watch('buffer_strips_windbreaks') ? 'Present' : 'Not present'}
@@ -1891,10 +1891,10 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
 
                     <StandardField label="Integrated Pest Management (IPM)">
                       <HStack>
-                        <Switch 
-                          {...methods.register('integrated_pest_management')} 
-                          colorScheme="green" 
-                          size="md" 
+                        <Switch
+                          {...methods.register('integrated_pest_management')}
+                          colorScheme="green"
+                          size="md"
                         />
                         <Text fontSize="sm" color="gray.600">
                           {watch('integrated_pest_management') ? 'Implemented' : 'Not implemented'}
@@ -2043,7 +2043,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           step={0.1}
                           precision={1}
                         >
-                          <NumberInputField 
+                          <NumberInputField
                             placeholder="e.g., 2.5"
                             borderRadius="lg"
                             borderColor="gray.300"
@@ -2139,10 +2139,10 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <VStack align="stretch" spacing={4}>
                     <StandardField label="Riparian Zones">
                       <HStack>
-                        <Switch 
-                          {...methods.register('riparian_zones')} 
-                          colorScheme="green" 
-                          size="md" 
+                        <Switch
+                          {...methods.register('riparian_zones')}
+                          colorScheme="green"
+                          size="md"
                         />
                         <Text fontSize="sm" color="gray.600">
                           {watch('riparian_zones') ? 'Present' : 'Not present'}
@@ -2152,13 +2152,15 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
 
                     <StandardField label="Wetland Designation">
                       <HStack>
-                        <Switch 
-                          {...methods.register('wetland_designation')} 
-                          colorScheme="green" 
-                          size="md" 
+                        <Switch
+                          {...methods.register('wetland_designation')}
+                          colorScheme="green"
+                          size="md"
                         />
                         <Text fontSize="sm" color="gray.600">
-                          {watch('wetland_designation') ? 'Designated wetland' : 'No wetland designation'}
+                          {watch('wetland_designation')
+                            ? 'Designated wetland'
+                            : 'No wetland designation'}
                         </Text>
                       </HStack>
                     </StandardField>
@@ -2455,28 +2457,44 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     <AccordionPanel pb={4}>
                       <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4} fontSize="sm">
                         {watch('soil_ph') && (
-                          <Text><strong>pH:</strong> {watch('soil_ph')}</Text>
+                          <Text>
+                            <strong>pH:</strong> {watch('soil_ph')}
+                          </Text>
                         )}
                         {watch('soil_organic_matter') && (
-                          <Text><strong>Organic Matter:</strong> {watch('soil_organic_matter')}%</Text>
+                          <Text>
+                            <strong>Organic Matter:</strong> {watch('soil_organic_matter')}%
+                          </Text>
                         )}
                         {watch('soil_nitrogen') && (
-                          <Text><strong>Nitrogen:</strong> {watch('soil_nitrogen')} ppm</Text>
+                          <Text>
+                            <strong>Nitrogen:</strong> {watch('soil_nitrogen')} ppm
+                          </Text>
                         )}
                         {watch('soil_phosphorus') && (
-                          <Text><strong>Phosphorus:</strong> {watch('soil_phosphorus')} ppm</Text>
+                          <Text>
+                            <strong>Phosphorus:</strong> {watch('soil_phosphorus')} ppm
+                          </Text>
                         )}
                         {watch('soil_potassium') && (
-                          <Text><strong>Potassium:</strong> {watch('soil_potassium')} ppm</Text>
+                          <Text>
+                            <strong>Potassium:</strong> {watch('soil_potassium')} ppm
+                          </Text>
                         )}
                         {watch('soil_compaction_level') && (
-                          <Text><strong>Compaction:</strong> {watch('soil_compaction_level')}</Text>
+                          <Text>
+                            <strong>Compaction:</strong> {watch('soil_compaction_level')}
+                          </Text>
                         )}
                         {watch('erosion_risk') && (
-                          <Text><strong>Erosion Risk:</strong> {watch('erosion_risk')}</Text>
+                          <Text>
+                            <strong>Erosion Risk:</strong> {watch('erosion_risk')}
+                          </Text>
                         )}
                         {watch('last_soil_test_date') && (
-                          <Text><strong>Last Test:</strong> {watch('last_soil_test_date')}</Text>
+                          <Text>
+                            <strong>Last Test:</strong> {watch('last_soil_test_date')}
+                          </Text>
                         )}
                       </SimpleGrid>
                     </AccordionPanel>
@@ -2495,22 +2513,35 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     <AccordionPanel pb={4}>
                       <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4} fontSize="sm">
                         {watch('water_source_type') && (
-                          <Text><strong>Source:</strong> {watch('water_source_type')}</Text>
+                          <Text>
+                            <strong>Source:</strong> {watch('water_source_type')}
+                          </Text>
                         )}
                         {watch('water_allocation_acre_feet') && (
-                          <Text><strong>Allocation:</strong> {watch('water_allocation_acre_feet')} acre-ft/yr</Text>
+                          <Text>
+                            <strong>Allocation:</strong> {watch('water_allocation_acre_feet')}{' '}
+                            acre-ft/yr
+                          </Text>
                         )}
                         {watch('water_quality_ph') && (
-                          <Text><strong>Water pH:</strong> {watch('water_quality_ph')}</Text>
+                          <Text>
+                            <strong>Water pH:</strong> {watch('water_quality_ph')}
+                          </Text>
                         )}
                         {watch('irrigation_efficiency') && (
-                          <Text><strong>Efficiency:</strong> {watch('irrigation_efficiency')}%</Text>
+                          <Text>
+                            <strong>Efficiency:</strong> {watch('irrigation_efficiency')}%
+                          </Text>
                         )}
                         {watch('drainage_characteristics') && (
-                          <Text><strong>Drainage:</strong> {watch('drainage_characteristics')}</Text>
+                          <Text>
+                            <strong>Drainage:</strong> {watch('drainage_characteristics')}
+                          </Text>
                         )}
                         {watch('seasonal_water_availability') && (
-                          <Text><strong>Availability:</strong> {watch('seasonal_water_availability')}</Text>
+                          <Text>
+                            <strong>Availability:</strong> {watch('seasonal_water_availability')}
+                          </Text>
                         )}
                       </SimpleGrid>
                     </AccordionPanel>
@@ -2529,13 +2560,26 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     <AccordionPanel pb={4}>
                       <VStack align="stretch" spacing={3} fontSize="sm">
                         {watch('organic_certification_status') && (
-                          <Text><strong>Organic Status:</strong> {watch('organic_certification_status')}</Text>
+                          <Text>
+                            <strong>Organic Status:</strong> {watch('organic_certification_status')}
+                          </Text>
                         )}
                         <HStack spacing={6}>
-                          <Text><strong>IPM:</strong> {watch('integrated_pest_management') ? 'Yes' : 'No'}</Text>
-                          <Text><strong>Buffer Strips:</strong> {watch('buffer_strips_windbreaks') ? 'Yes' : 'No'}</Text>
-                          <Text><strong>Riparian Zones:</strong> {watch('riparian_zones') ? 'Yes' : 'No'}</Text>
-                          <Text><strong>Wetlands:</strong> {watch('wetland_designation') ? 'Yes' : 'No'}</Text>
+                          <Text>
+                            <strong>IPM:</strong>{' '}
+                            {watch('integrated_pest_management') ? 'Yes' : 'No'}
+                          </Text>
+                          <Text>
+                            <strong>Buffer Strips:</strong>{' '}
+                            {watch('buffer_strips_windbreaks') ? 'Yes' : 'No'}
+                          </Text>
+                          <Text>
+                            <strong>Riparian Zones:</strong>{' '}
+                            {watch('riparian_zones') ? 'Yes' : 'No'}
+                          </Text>
+                          <Text>
+                            <strong>Wetlands:</strong> {watch('wetland_designation') ? 'Yes' : 'No'}
+                          </Text>
                         </HStack>
                       </VStack>
                     </AccordionPanel>
@@ -2554,13 +2598,19 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     <AccordionPanel pb={4}>
                       <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4} fontSize="sm">
                         {watch('slope_percentage') && (
-                          <Text><strong>Slope:</strong> {watch('slope_percentage')}%</Text>
+                          <Text>
+                            <strong>Slope:</strong> {watch('slope_percentage')}%
+                          </Text>
                         )}
                         {watch('topography_type') && (
-                          <Text><strong>Topography:</strong> {watch('topography_type')}</Text>
+                          <Text>
+                            <strong>Topography:</strong> {watch('topography_type')}
+                          </Text>
                         )}
                         {watch('frost_risk_zone') && (
-                          <Text><strong>Frost Risk:</strong> {watch('frost_risk_zone')}</Text>
+                          <Text>
+                            <strong>Frost Risk:</strong> {watch('frost_risk_zone')}
+                          </Text>
                         )}
                       </SimpleGrid>
                     </AccordionPanel>

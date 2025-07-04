@@ -25,7 +25,7 @@ function BoxBackground(props: BoxBackgroundProps) {
   const subscription = currentCompany?.subscription;
 
   // Check if we're already on the billing page to prevent infinite loop
-  const isOnBillingPage = location.pathname.includes('/admin/dashboard/account/billing');
+  const isOnBillingPage = location.pathname.includes('/admin/dashboard/subscription');
 
   return (
     <Flex direction="column" alignSelf="center" justifySelf="center" alignItems="center" w={'100%'}>
@@ -114,7 +114,7 @@ function BoxBackground(props: BoxBackgroundProps) {
               <Button
                 colorScheme="green"
                 size="md"
-                onClick={() => navigate('/admin/dashboard/account/billing')}>
+                onClick={() => navigate('/admin/dashboard/subscription')}>
                 {intl.formatMessage({ id: 'app.manageTrial' })}
               </Button>
             )}

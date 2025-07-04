@@ -111,7 +111,13 @@ const getProductionDefaults = (productionType, cropType = 'general') => {
   };
 };
 
-const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, cropType = 'general' }) => {
+const ProductionTab = ({
+  onSubmitHandler,
+  onDataChange,
+  onPrev,
+  initialValues = {},
+  cropType = 'general'
+}) => {
   const intl = useIntl();
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -162,12 +168,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
   const watchedType = watch('type');
 
   // Watch critical fields for real-time carbon calculation updates
-  const watchedFields = watch([
-    'type',
-    'duration',
-    'area_covered',
-    'equipment_used'
-  ]);
+  const watchedFields = watch(['type', 'duration', 'area_covered', 'equipment_used']);
 
   // Update defaults when production type changes
   useEffect(() => {
@@ -201,34 +202,39 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('[ProductionTab]: Field watching triggered', { 
-      hasOnDataChange: !!onDataChange, 
-      watchedFields, 
-      firstField: watchedFields[0] 
+    console.log('[ProductionTab]: Field watching triggered', {
+      hasOnDataChange: !!onDataChange,
+      watchedFields,
+      firstField: watchedFields[0]
     });
-    
+
     // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = mainInfoMethods.getValues();
-        
+
         // Compare with previous values to avoid unnecessary calls
         const relevantFields = ['type', 'duration', 'area_covered', 'equipment_used'];
         const currentRelevantValues = {};
-        relevantFields.forEach(field => {
+        relevantFields.forEach((field) => {
           currentRelevantValues[field] = currentValues[field];
         });
-        
-        const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
-        
+
+        const hasChanged =
+          JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+
         console.log('[ProductionTab]: Value comparison', {
           currentValues: currentRelevantValues,
           previousValues: previousValuesRef.current,
           hasChanged
         });
-        
+
         // Only trigger if we have meaningful data AND values have actually changed
-        if (hasChanged && currentValues.type && (currentValues.duration || currentValues.area_covered)) {
+        if (
+          hasChanged &&
+          currentValues.type &&
+          (currentValues.duration || currentValues.area_covered)
+        ) {
           console.log('[ProductionTab]: Triggering onDataChange with values', currentValues);
           previousValuesRef.current = currentRelevantValues;
           try {
@@ -349,11 +355,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
           </StandardField>
 
           <Flex gap={'20px'} mb={4}>
-            <StandardField
-              label="Duration"
-              helpText="How long did this activity take?"
-              flex={1}
-            >
+            <StandardField label="Duration" helpText="How long did this activity take?" flex={1}>
               <InputGroup>
                 <StandardInput
                   type="text"
@@ -380,10 +382,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
             </StandardField>
           </Flex>
 
-          <StandardField
-            label="Equipment Used"
-            helpText="List the main equipment or tools used"
-          >
+          <StandardField label="Equipment Used" helpText="List the main equipment or tools used">
             <StandardInput
               type="text"
               placeholder="e.g., Tractor, Harvester, Irrigation system"

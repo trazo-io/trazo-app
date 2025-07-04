@@ -52,7 +52,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
-import ImageCarousel from 'components/ImageCarousel/ImageCarousel';
+import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
@@ -404,10 +404,16 @@ function ProfileParcel() {
               <Box>
                 {/* Image Gallery */}
                 <Box mb={6}>
-                  <ImageCarousel
-                    imagesList={
-                      parcelData?.images?.length > 0 ? parcelData.images : [defaultParcelImage]
-                    }
+                  <StandardImageGallery
+                    images={parcelData?.images || []}
+                    title="Parcel Photos"
+                    variant="parcel"
+                    enablePreview={true}
+                    showImageCount={true}
+                    fallbackImage={defaultParcelImage}
+                    height="300px"
+                    showEmptyState={true}
+                    maxDisplayImages={3}
                   />
                 </Box>
 

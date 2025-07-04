@@ -15,10 +15,10 @@ import {
   Circle,
   Flex
 } from '@chakra-ui/react';
-import { 
-  FaGraduationCap, 
-  FaLeaf, 
-  FaIndustry, 
+import {
+  FaGraduationCap,
+  FaLeaf,
+  FaIndustry,
   FaChartLine,
   FaSeedling,
   FaCertificate,
@@ -61,7 +61,12 @@ export default function EducationDashboard() {
           icon: FaLeaf,
           completed: true,
           progress: 100,
-          keyTopics: ['CO₂ Equivalents', 'Carbon Scoring', 'Agricultural Emissions', 'Trazo Methodology']
+          keyTopics: [
+            'CO₂ Equivalents',
+            'Carbon Scoring',
+            'Agricultural Emissions',
+            'Trazo Methodology'
+          ]
         },
         {
           id: 'reading-scores',
@@ -71,7 +76,12 @@ export default function EducationDashboard() {
           icon: FaChartLine,
           completed: false,
           progress: 0,
-          keyTopics: ['Score Interpretation', 'Comparison Methods', 'Trust Indicators', 'Action Items']
+          keyTopics: [
+            'Score Interpretation',
+            'Comparison Methods',
+            'Trust Indicators',
+            'Action Items'
+          ]
         },
         {
           id: 'making-choices',
@@ -81,7 +91,12 @@ export default function EducationDashboard() {
           icon: FaLightbulb,
           completed: false,
           progress: 0,
-          keyTopics: ['Smart Shopping', 'Seasonal Impact', 'Local vs Global', 'Budget Considerations']
+          keyTopics: [
+            'Smart Shopping',
+            'Seasonal Impact',
+            'Local vs Global',
+            'Budget Considerations'
+          ]
         }
       ]
     },
@@ -109,7 +124,12 @@ export default function EducationDashboard() {
           icon: FaCertificate,
           completed: false,
           progress: 0,
-          keyTopics: ['USDA Standards', 'Blockchain Verification', 'Data Accuracy', 'Audit Processes']
+          keyTopics: [
+            'USDA Standards',
+            'Blockchain Verification',
+            'Data Accuracy',
+            'Audit Processes'
+          ]
         },
         {
           id: 'regional-differences',
@@ -137,7 +157,12 @@ export default function EducationDashboard() {
           icon: FaIndustry,
           completed: false,
           progress: 0,
-          keyTopics: ['Lifecycle Assessment', 'Processing Impact', 'Distribution Networks', 'Waste Management']
+          keyTopics: [
+            'Lifecycle Assessment',
+            'Processing Impact',
+            'Distribution Networks',
+            'Waste Management'
+          ]
         },
         {
           id: 'carbon-markets',
@@ -147,7 +172,12 @@ export default function EducationDashboard() {
           icon: FaChartLine,
           completed: false,
           progress: 0,
-          keyTopics: ['Carbon Credits', 'Offset Programs', 'Verification Standards', 'Market Dynamics']
+          keyTopics: [
+            'Carbon Credits',
+            'Offset Programs',
+            'Verification Standards',
+            'Market Dynamics'
+          ]
         },
         {
           id: 'future-agriculture',
@@ -157,26 +187,39 @@ export default function EducationDashboard() {
           icon: FaRocket,
           completed: false,
           progress: 0,
-          keyTopics: ['Precision Agriculture', 'AI in Farming', 'Climate Adaptation', 'Policy Trends']
+          keyTopics: [
+            'Precision Agriculture',
+            'AI in Farming',
+            'Climate Adaptation',
+            'Policy Trends'
+          ]
         }
       ]
     }
   };
 
   const currentTrack = learningTracks[selectedTrack];
-  const totalModules = Object.values(learningTracks).reduce((sum, track) => sum + track.modules.length, 0);
+  const totalModules = Object.values(learningTracks).reduce(
+    (sum, track) => sum + track.modules.length,
+    0
+  );
   const completedCount = Object.values(learningTracks)
     .flat()
-    .reduce((sum, track) => sum + track.modules.filter(m => completedModules.includes(m.id)).length, 0);
-  
+    .reduce(
+      (sum, track) => sum + track.modules.filter((m) => completedModules.includes(m.id)).length,
+      0
+    );
+
   const learningStats = {
     modulesCompleted: completedCount,
     totalModules: totalModules,
     currentTrack: selectedTrack,
     carbonLiteracy: Math.round((completedCount / totalModules) * 100),
-    estimatedTime: `${Object.values(learningTracks).reduce((sum, track) => 
-      sum + track.modules.reduce((moduleSum, module) => 
-        moduleSum + parseInt(module.duration), 0), 0)} minutes`,
+    estimatedTime: `${Object.values(learningTracks).reduce(
+      (sum, track) =>
+        sum + track.modules.reduce((moduleSum, module) => moduleSum + parseInt(module.duration), 0),
+      0
+    )} minutes`,
     weeklyGoal: 2, // modules per week
     streak: 3 // days
   };
@@ -187,9 +230,9 @@ export default function EducationDashboard() {
 
   const toggleModuleCompletion = (moduleId: string) => {
     if (completedModules.includes(moduleId)) {
-      setCompletedModules(prev => prev.filter(id => id !== moduleId));
+      setCompletedModules((prev) => prev.filter((id) => id !== moduleId));
     } else {
-      setCompletedModules(prev => [...prev, moduleId]);
+      setCompletedModules((prev) => [...prev, moduleId]);
     }
   };
 
@@ -203,7 +246,6 @@ export default function EducationDashboard() {
       description="Master agricultural carbon transparency and make informed sustainable choices"
     >
       <VStack spacing={8} align="stretch">
-
         {/* Learning Progress Overview */}
         <StandardCard title="Your Carbon Learning Journey" variant="elevated">
           <VStack spacing={6}>
@@ -220,7 +262,7 @@ export default function EducationDashboard() {
                   Carbon Literacy
                 </Text>
               </VStack>
-              
+
               <VStack spacing={2}>
                 <Circle size="50px" bg="blue.100" color="blue.600">
                   <Icon as={FaBookOpen} boxSize={6} />
@@ -232,7 +274,7 @@ export default function EducationDashboard() {
                   Modules Completed
                 </Text>
               </VStack>
-              
+
               <VStack spacing={2}>
                 <Circle size="50px" bg="purple.100" color="purple.600">
                   <Icon as={FaClock} boxSize={6} />
@@ -244,7 +286,7 @@ export default function EducationDashboard() {
                   Day Streak
                 </Text>
               </VStack>
-              
+
               <VStack spacing={2}>
                 <Circle size="50px" bg="orange.100" color="orange.600">
                   <Icon as={MdTrendingUp} boxSize={6} />
@@ -257,7 +299,7 @@ export default function EducationDashboard() {
                 </Text>
               </VStack>
             </SimpleGrid>
-            
+
             {/* Overall Progress Bar */}
             <Box w="full">
               <Flex justify="space-between" mb={2}>
@@ -276,19 +318,24 @@ export default function EducationDashboard() {
                 w="full"
               />
             </Box>
-            
+
             {learningStats.carbonLiteracy < 100 && (
-              <StandardAlert 
-                status="info" 
-                title="Continue Your Learning" 
-                description={`You're making great progress! Complete ${learningStats.totalModules - learningStats.modulesCompleted} more modules to become a carbon transparency expert.`}
+              <StandardAlert
+                status="info"
+                title="Continue Your Learning"
+                description={`You're making great progress! Complete ${
+                  learningStats.totalModules - learningStats.modulesCompleted
+                } more modules to become a carbon transparency expert.`}
               />
             )}
           </VStack>
         </StandardCard>
 
         {/* Learning Track Selection */}
-        <StandardSection title="Choose Your Learning Path" description="Select the track that matches your current knowledge level">
+        <StandardSection
+          title="Choose Your Learning Path"
+          description="Select the track that matches your current knowledge level"
+        >
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
             {Object.entries(learningTracks).map(([trackId, track]) => (
               <Box
@@ -334,28 +381,24 @@ export default function EducationDashboard() {
         </StandardSection>
 
         {/* Current Track Modules */}
-        <StandardSection 
-          title={`${currentTrack.title} Modules`} 
+        <StandardSection
+          title={`${currentTrack.title} Modules`}
           description={`Master ${currentTrack.modules.length} essential topics in carbon agriculture`}
         >
           <StandardGrid columns={{ base: 1, lg: 2 }} spacing={6}>
             {currentTrack.modules.map((module, index) => {
               const isCompleted = completedModules.includes(module.id);
               const isNext = !isCompleted && index === 0; // First incomplete module
-              
+
               return (
-                <StandardCard
-                  key={module.id}
-                  variant="elevated"
-                  padding={6}
-                >
+                <StandardCard key={module.id} variant="elevated" padding={6}>
                   <VStack spacing={4} align="stretch">
                     {/* Module Header */}
                     <HStack justify="space-between">
                       <HStack spacing={3}>
-                        <Circle 
-                          size="50px" 
-                          bg={isCompleted ? 'green.100' : `${currentTrack.color}.100`} 
+                        <Circle
+                          size="50px"
+                          bg={isCompleted ? 'green.100' : `${currentTrack.color}.100`}
                           color={isCompleted ? 'green.600' : `${currentTrack.color}.600`}
                         >
                           <Icon as={isCompleted ? FaCheck : module.icon} boxSize={6} />
@@ -376,16 +419,14 @@ export default function EducationDashboard() {
                           </HStack>
                         </VStack>
                       </HStack>
-                      {isCompleted && (
-                        <Icon as={MdVerified} color="green.500" boxSize={6} />
-                      )}
+                      {isCompleted && <Icon as={MdVerified} color="green.500" boxSize={6} />}
                     </HStack>
-                    
+
                     {/* Module Description */}
                     <Text fontSize="sm" color="gray.600">
                       {module.description}
                     </Text>
-                    
+
                     {/* Key Topics */}
                     <Box>
                       <Text fontSize="xs" fontWeight="medium" color="gray.700" mb={2}>
@@ -399,13 +440,17 @@ export default function EducationDashboard() {
                         ))}
                       </Flex>
                     </Box>
-                    
+
                     {/* Progress Bar */}
                     {module.progress > 0 && (
                       <Box>
                         <Flex justify="space-between" mb={1}>
-                          <Text fontSize="xs" color="gray.600">Progress</Text>
-                          <Text fontSize="xs" color="gray.600">{module.progress}%</Text>
+                          <Text fontSize="xs" color="gray.600">
+                            Progress
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            {module.progress}%
+                          </Text>
                         </Flex>
                         <Progress
                           value={module.progress}
@@ -415,16 +460,16 @@ export default function EducationDashboard() {
                         />
                       </Box>
                     )}
-                    
+
                     {/* Action Buttons */}
                     <HStack spacing={3}>
                       <StandardButton
-                        variant={isCompleted ? "outline" : "primary"}
+                        variant={isCompleted ? 'outline' : 'primary'}
                         size="sm"
                         leftIcon={isCompleted ? <FaCheck /> : <FaPlay />}
                         onClick={() => handleModuleClick(module.id)}
                       >
-                        {isCompleted ? "Review" : "Start Learning"}
+                        {isCompleted ? 'Review' : 'Start Learning'}
                       </StandardButton>
                       {!isCompleted && (
                         <StandardButton
@@ -444,7 +489,10 @@ export default function EducationDashboard() {
         </StandardSection>
 
         {/* Quick Carbon Insights */}
-        <StandardSection title="Carbon Intelligence Insights" description="Essential facts about agricultural carbon transparency">
+        <StandardSection
+          title="Carbon Intelligence Insights"
+          description="Essential facts about agricultural carbon transparency"
+        >
           <StandardGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
             <StandardCard variant="flat" padding={6}>
               <VStack spacing={4}>
@@ -464,7 +512,7 @@ export default function EducationDashboard() {
                 </VStack>
               </VStack>
             </StandardCard>
-            
+
             <StandardCard variant="flat" padding={6}>
               <VStack spacing={4}>
                 <Circle size="60px" bg="blue.100" color="blue.600">
@@ -483,7 +531,7 @@ export default function EducationDashboard() {
                 </VStack>
               </VStack>
             </StandardCard>
-            
+
             <StandardCard variant="flat" padding={6}>
               <VStack spacing={4}>
                 <Circle size="60px" bg="purple.100" color="purple.600">
@@ -502,7 +550,7 @@ export default function EducationDashboard() {
                 </VStack>
               </VStack>
             </StandardCard>
-            
+
             <StandardCard variant="flat" padding={6}>
               <VStack spacing={4}>
                 <Circle size="60px" bg="orange.100" color="orange.600">

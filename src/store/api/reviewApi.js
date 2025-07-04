@@ -53,6 +53,23 @@ export const historyApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       })
+    }),
+    getEstablishmentReviewsPaginated: build.query({
+      query: ({ establishment_id, company_id, page = 1, page_size = 20, ...filters }) => {
+        const params = new URLSearchParams({
+          establishment_id,
+          company_id,
+          page: page.toString(),
+          page_size: page_size.toString(),
+          ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== '' && v != null))
+        });
+        return {
+          url: `reviews/establishment_reviews_paginated/?${params}`,
+          method: 'GET',
+          credentials: 'include'
+        };
+      },
+      providesTags: (result) => (result ? ['Review'] : [])
     })
   }),
   overrideExisting: false
@@ -62,5 +79,6 @@ export const {
   useSendReviewMutation,
   useGetEstablishmentProductReputationQuery,
   useGetEstablishmentLastReviewsQuery,
-  useGetEstablishmentProductReputationPercentageQuery
+  useGetEstablishmentProductReputationPercentageQuery,
+  useGetEstablishmentReviewsPaginatedQuery
 } = historyApi;

@@ -18,12 +18,12 @@ import { FaInfoCircle, FaLeaf } from 'react-icons/fa';
 import MetricTransparencyModal from './MetricTransparencyModal';
 
 // Example component showing how to integrate the transparency modal
-const MetricCard = ({ 
-  title, 
-  value, 
-  metricKey, 
-  icon, 
-  color 
+const MetricCard = ({
+  title,
+  value,
+  metricKey,
+  icon,
+  color
 }: {
   title: string;
   value: string | number;
@@ -66,7 +66,7 @@ const MetricCard = ({
                 />
               </Tooltip>
             </HStack>
-            
+
             <VStack spacing={1}>
               <Text fontSize="2xl" fontWeight="bold" color={textColor}>
                 {value}
@@ -93,12 +93,48 @@ const MetricCard = ({
 const MetricTransparencyExample = () => {
   const metrics = [
     { title: 'Carbon Score', value: 72, metricKey: 'carbonScore', icon: FaLeaf, color: 'green' },
-    { title: 'Net Footprint', value: '+1,234.5 kg CO₂e', metricKey: 'netFootprint', icon: FaLeaf, color: 'blue' },
-    { title: 'Transparency Score', value: 85, metricKey: 'transparencyScore', icon: FaLeaf, color: 'purple' },
-    { title: 'Verified Events', value: '42 events', metricKey: 'verifiedEvents', icon: FaLeaf, color: 'orange' },
-    { title: 'Security Score', value: '65%', metricKey: 'securityScore', icon: FaLeaf, color: 'red' },
-    { title: 'USDA Compliance', value: 92, metricKey: 'usdaCompliance', icon: FaLeaf, color: 'blue' },
-    { title: 'Blockchain Status', value: 'PENDING', metricKey: 'blockchainStatus', icon: FaLeaf, color: 'gray' }
+    {
+      title: 'Net Footprint',
+      value: '+1,234.5 kg CO₂e',
+      metricKey: 'netFootprint',
+      icon: FaLeaf,
+      color: 'blue'
+    },
+    {
+      title: 'Transparency Score',
+      value: 85,
+      metricKey: 'transparencyScore',
+      icon: FaLeaf,
+      color: 'purple'
+    },
+    {
+      title: 'Verified Events',
+      value: '42 events',
+      metricKey: 'verifiedEvents',
+      icon: FaLeaf,
+      color: 'orange'
+    },
+    {
+      title: 'Security Score',
+      value: '65%',
+      metricKey: 'securityScore',
+      icon: FaLeaf,
+      color: 'red'
+    },
+    {
+      title: 'USDA Compliance',
+      value: 92,
+      metricKey: 'usdaCompliance',
+      icon: FaLeaf,
+      color: 'blue'
+    },
+    {
+      title: 'Blockchain Status',
+      value: 'PENDING',
+      metricKey: 'blockchainStatus',
+      icon: FaLeaf,
+      color: 'gray'
+    }
   ];
 
   return (
@@ -107,7 +143,7 @@ const MetricTransparencyExample = () => {
         <Text fontSize="xl" fontWeight="bold">
           Carbon Dashboard Metrics - Click info icons for details
         </Text>
-        
+
         <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>
           {metrics.map((metric) => (
             <MetricCard key={metric.metricKey} {...metric} />

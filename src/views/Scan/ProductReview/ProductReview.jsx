@@ -41,8 +41,12 @@ import { useIntl } from 'react-intl';
 // Assets
 
 const reviewSchema = object({
-  headline: string().min(1, 'Headline is required').max(100, 'Headline must be under 100 characters'),
-  review: string().min(10, 'Review must be at least 10 characters').max(1000, 'Review must be under 1000 characters')
+  headline: string()
+    .min(1, 'Headline is required')
+    .max(100, 'Headline must be under 100 characters'),
+  review: string()
+    .min(10, 'Review must be at least 10 characters')
+    .max(1000, 'Review must be under 1000 characters')
 });
 
 function ProductReview() {
@@ -95,12 +99,12 @@ function ProductReview() {
       production: historyData?.id,
       user: currentUser?.id
     };
-    
+
     // Only include scan if it's a valid numeric ID (from actual QR scan)
     if (scanId && !scanId.startsWith('web-')) {
       reviewData.scan = parseInt(scanId, 10);
     }
-    
+
     sendReview(reviewData);
   };
 
@@ -118,11 +122,11 @@ function ProductReview() {
             <Box p={6} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
               <HStack spacing={4} align="start">
                 {historyData?.images.length > 0 && (
-                  <Image 
-                    src={historyData?.images[0]} 
-                    w="80px" 
-                    h="80px" 
-                    borderRadius="lg" 
+                  <Image
+                    src={historyData?.images[0]}
+                    w="80px"
+                    h="80px"
+                    borderRadius="lg"
                     objectFit="cover"
                     border="2px solid white"
                     shadow="md"
@@ -147,8 +151,8 @@ function ProductReview() {
             <FormProvider {...methods}>
               <form onSubmit={handleSubmit(onSubmitHandler)} style={{ width: '100%' }}>
                 {isSuccess ? (
-                  <StandardAlert 
-                    status="success" 
+                  <StandardAlert
+                    status="success"
                     title="Review Submitted Successfully!"
                     description="Thank you for contributing to agricultural transparency. Your review helps other consumers make informed choices."
                   >
@@ -164,7 +168,7 @@ function ProductReview() {
                 ) : (
                   <VStack spacing={6} align="stretch">
                     {/* Rating Section */}
-                    <StandardField 
+                    <StandardField
                       label="How would you rate this sustainable product?"
                       helpText="Consider carbon footprint, farming practices, and transparency"
                     >
@@ -185,16 +189,16 @@ function ProductReview() {
                       </HStack>
                       {rating > 0 && (
                         <Text textAlign="center" fontSize="sm" color="gray.600" mt={2}>
-                          {rating === 1 && "Needs significant improvement in sustainability"}
-                          {rating === 2 && "Some sustainable practices evident"}
-                          {rating === 3 && "Good sustainable practices"}
-                          {rating === 4 && "Excellent carbon transparency"}
-                          {rating === 5 && "Outstanding environmental stewardship"}
+                          {rating === 1 && 'Needs significant improvement in sustainability'}
+                          {rating === 2 && 'Some sustainable practices evident'}
+                          {rating === 3 && 'Good sustainable practices'}
+                          {rating === 4 && 'Excellent carbon transparency'}
+                          {rating === 5 && 'Outstanding environmental stewardship'}
                         </Text>
                       )}
                     </StandardField>
                     {/* Headline Section */}
-                    <StandardField 
+                    <StandardField
                       label="Review Headline"
                       required
                       error={errors.headline?.message}
@@ -206,7 +210,7 @@ function ProductReview() {
                       />
                     </StandardField>
                     {/* Photo Upload Section */}
-                    <StandardField 
+                    <StandardField
                       label="Add Photo (Optional)"
                       helpText="Share a photo that shows the product's quality or sustainable packaging"
                     >
@@ -221,7 +225,7 @@ function ProductReview() {
                       />
                     </StandardField>
                     {/* Review Text Section */}
-                    <StandardField 
+                    <StandardField
                       label="Your Carbon Transparency Review"
                       required
                       error={errors.review?.message}
@@ -235,10 +239,7 @@ function ProductReview() {
                     </StandardField>
                     {/* Submit Button */}
                     <Flex justify="space-between" align="center" pt={4}>
-                      <StandardButton
-                        variant="outline"
-                        onClick={() => navigate('/')}
-                      >
+                      <StandardButton variant="outline" onClick={() => navigate('/')}>
                         Cancel
                       </StandardButton>
                       <StandardButton

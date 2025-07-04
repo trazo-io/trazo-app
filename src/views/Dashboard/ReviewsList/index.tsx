@@ -66,7 +66,7 @@ export default function ReviewsListView() {
             title="Carbon-Focused Reviews"
             description="Your reviews help build transparency in agricultural carbon footprints and sustainable farming practices."
           />
-          
+
           <VStack spacing={4} align="stretch">
             {!isLoading &&
               reviews?.map((review, index) => (

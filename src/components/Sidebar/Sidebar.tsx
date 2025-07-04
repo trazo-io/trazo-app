@@ -314,6 +314,13 @@ function Sidebar(props: SidebarProps) {
                         my="auto"
                         fontSize="sm"
                         display={sidebarWidth === 275 ? 'block' : 'none'}
+                        noOfLines={1}
+                        maxW="180px"
+                        title={
+                          Object.keys(intl?.messages).includes(`app.${prop.id}`)
+                            ? intl.formatMessage({ id: `app.${prop.id}` })
+                            : prop.name
+                        }
                       >
                         {Object.keys(intl?.messages).includes(`app.${prop.id}`)
                           ? intl.formatMessage({ id: `app.${prop.id}` })
@@ -334,12 +341,30 @@ function Sidebar(props: SidebarProps) {
                       />
                       {prop.establishmentId ? (
                         <NavLink to={prop.layout + prop.path}>
-                          <Text color={activeColor} my="auto" fontSize="sm">
+                          <Text
+                            color={activeColor}
+                            my="auto"
+                            fontSize="sm"
+                            maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+                            wordBreak="break-word"
+                            whiteSpace="normal"
+                            lineHeight="1.4"
+                            textAlign="left"
+                          >
                             {sidebarWidth === 275 ? prop.name : prop.name[0]}
                           </Text>
                         </NavLink>
                       ) : (
-                        <Text color={activeColor} my="auto" fontSize="sm">
+                        <Text
+                          color={activeColor}
+                          my="auto"
+                          fontSize="sm"
+                          maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+                          wordBreak="break-word"
+                          whiteSpace="normal"
+                          lineHeight="1.4"
+                          textAlign="left"
+                        >
                           {sidebarWidth === 275 ? prop.name : prop.name[0]}
                         </Text>
                       )}
@@ -389,6 +414,13 @@ function Sidebar(props: SidebarProps) {
                           my="auto"
                           fontSize="sm"
                           display={sidebarWidth === 275 ? 'block' : 'none'}
+                          noOfLines={1}
+                          maxW="180px"
+                          title={
+                            Object.keys(intl?.messages).includes(`app.${prop.id}`)
+                              ? intl.formatMessage({ id: `app.${prop.id}` })
+                              : prop.name
+                          }
                         >
                           {Object.keys(intl?.messages).includes(`app.${prop.id}`)
                             ? intl.formatMessage({ id: `app.${prop.id}` })
@@ -410,12 +442,32 @@ function Sidebar(props: SidebarProps) {
                       />
                       {prop.establishmentId ? (
                         <NavLink color="red" to={prop.layout + prop.path}>
-                          <Text color={inactiveColor} my="auto" fontSize="md" fontWeight="normal">
+                          <Text
+                            color={inactiveColor}
+                            my="auto"
+                            fontSize="md"
+                            fontWeight="normal"
+                            maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+                            wordBreak="break-word"
+                            whiteSpace="normal"
+                            lineHeight="1.4"
+                            textAlign="left"
+                          >
                             {sidebarWidth === 275 ? prop.name : prop.name[0]}
                           </Text>
                         </NavLink>
                       ) : (
-                        <Text color={inactiveColor} my="auto" fontSize="md" fontWeight="normal">
+                        <Text
+                          color={inactiveColor}
+                          my="auto"
+                          fontSize="md"
+                          fontWeight="normal"
+                          maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+                          wordBreak="break-word"
+                          whiteSpace="normal"
+                          lineHeight="1.4"
+                          textAlign="left"
+                        >
                           {sidebarWidth === 275 ? prop.name : prop.name[0]}
                         </Text>
                       )}
@@ -560,6 +612,10 @@ function Sidebar(props: SidebarProps) {
               color={activeRoute(prop.regex) ? activeColor : inactiveColor}
               fontWeight={activeRoute(prop.regex) ? 'bold' : 'normal'}
               fontSize="sm"
+              maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+              wordBreak="break-word"
+              whiteSpace="normal"
+              lineHeight="1.4"
             >
               {sidebarWidth === 275 ? prop.name : prop.name[0]}
             </Text>

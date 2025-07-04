@@ -60,7 +60,10 @@ import {
   FaChartLine,
   FaClipboardList,
   FaFlag,
-  FaMoneyBillWave
+  FaMoneyBillWave,
+  FaLightbulb,
+  FaHeart,
+  FaShieldAlt
 } from 'react-icons/fa';
 import {
   MdLocationOn,
@@ -80,7 +83,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 // Components
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
-import ImageCarousel from 'components/ImageCarousel/ImageCarousel';
+import { StandardImageGallery } from 'components/ImageGallery';
 import TimelineRow from 'components/Tables/TimelineRow';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useSelector } from 'react-redux';
@@ -96,6 +99,9 @@ import { CarbonCostInsights } from 'components/Carbon/CarbonCostInsights';
 
 // Import Week 2 Voice & Mobile Components
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
+
+// Import StandardComponents for modern design
+import { StandardCard, StandardButton } from 'components/Design/StandardComponents';
 
 // Add interface for Redux state
 interface RootState {
@@ -319,13 +325,18 @@ function ProfileProduction() {
     );
   }
 
+  const handleViewPublicPage = () => {
+    // Navigate to consumer public page
+    window.open(`http://consumer.localhost:3000/production/${productionId}`, '_blank');
+  };
+
   return (
     <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
-      {/* Clean Modern Header */}
+      {/* Modern Producer Header */}
       <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="150px" pb="120px" px={4}>
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
-            {/* Production Badge */}
+            {/* Producer Badge */}
             <Badge
               colorScheme="green"
               variant="subtle"
@@ -367,10 +378,52 @@ function ProfileProduction() {
               </Text>
             </VStack>
 
+            {/* Action Buttons */}
+            <HStack spacing={4} flexWrap="wrap" justify="center">
+              <Button
+                leftIcon={<Icon as={FaEye} />}
+                colorScheme="green"
+                size="lg"
+                borderRadius="xl"
+                px={6}
+                py={3}
+                fontSize="md"
+                fontWeight="semibold"
+                onClick={handleViewPublicPage}
+                bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
+                _hover={{
+                  bg: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: 'lg'
+                }}
+                transition="all 0.2s"
+              >
+                View Production Public Page
+              </Button>
+
+              <Button
+                leftIcon={<Icon as={FaQrcode} />}
+                variant="outline"
+                colorScheme="green"
+                size="lg"
+                borderRadius="xl"
+                px={6}
+                py={3}
+                onClick={downloadQRCode}
+                _hover={{
+                  bg: 'green.50',
+                  transform: 'translateY(-2px)'
+                }}
+                transition="all 0.2s"
+              >
+                Download QR Code
+              </Button>
+            </HStack>
+
             {/* Quick Stats */}
-            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={6} w="full" maxW="2xl">
+            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={6} w="full" maxW="2xl" mt={8}>
               <VStack>
-                <Circle size="50px" bg="green.100" color="green.600">
+                <Circle size="60px" bg="green.100" color="green.600">
                   <Icon as={FaSeedling} boxSize={6} />
                 </Circle>
                 <VStack spacing={1}>
@@ -384,7 +437,7 @@ function ProfileProduction() {
               </VStack>
 
               <VStack>
-                <Circle size="50px" bg="blue.100" color="blue.600">
+                <Circle size="60px" bg="blue.100" color="blue.600">
                   <Icon as={MdOutdoorGrill} boxSize={6} />
                 </Circle>
                 <VStack spacing={1}>
@@ -398,7 +451,7 @@ function ProfileProduction() {
               </VStack>
 
               <VStack>
-                <Circle size="50px" bg="purple.100" color="purple.600">
+                <Circle size="60px" bg="purple.100" color="purple.600">
                   <Icon as={FaClipboardList} boxSize={6} />
                 </Circle>
                 <VStack spacing={1}>
@@ -412,7 +465,7 @@ function ProfileProduction() {
               </VStack>
 
               <VStack>
-                <Circle size="50px" bg="orange.100" color="orange.600">
+                <Circle size="60px" bg="orange.100" color="orange.600">
                   <Icon as={FaFlag} boxSize={6} />
                 </Circle>
                 <VStack spacing={1}>
@@ -429,40 +482,51 @@ function ProfileProduction() {
         </Container>
       </Box>
 
-      {/* Main Content Container - Overlapping Card */}
+      {/* Main Content Container - Modern Overlapping Card */}
       <Container maxW="7xl" mx="auto" px={containerPadding}>
-        <Card
+        <StandardCard
+          variant="elevated"
           mt="-80px"
           mb="60px"
           p={cardPadding}
-          boxShadow="0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
           borderRadius="2xl"
-          bg={bgColor}
           position="relative"
           zIndex={10}
         >
-          {/* Header with Actions */}
-          <CardHeader mb="24px">
-            <HStack justify="space-between" align="flex-start" mb={6}>
-              <HStack spacing={3} flexWrap="wrap">
-                <Badge colorScheme="green" fontSize="md" px={3} py={1} borderRadius="full">
-                  {intl.formatMessage({ id: 'app.certified' })}
-                </Badge>
-                <Badge colorScheme="blue" fontSize="md" px={3} py={1} borderRadius="full">
-                  Sustainable
-                </Badge>
-              </HStack>
+          {/* Clean Minimalist Header */}
+          <Box p={8} pb={6}>
+            {/* Top Actions Row */}
+            <HStack justify="space-between" align="center" mb={8}>
+              <Badge
+                colorScheme="green"
+                variant="subtle"
+                fontSize="sm"
+                px={3}
+                py={1}
+                borderRadius="full"
+              >
+                <HStack spacing={2}>
+                  <Icon as={FaSeedling} boxSize={3} />
+                  <Text>Verification in progress</Text>
+                </HStack>
+              </Badge>
 
-              {/* Action Menu */}
-              <Menu isOpen={isOpen1} onClose={onClose1}>
+              <Menu>
                 <MenuButton
                   as={IconButton}
                   icon={<Icon as={MdMoreVert} />}
                   variant="ghost"
                   size="sm"
-                  onClick={onOpen1}
+                  colorScheme="gray"
                 />
                 <MenuList>
+                  <MenuItem
+                    icon={<Icon as={FaEye} />}
+                    onClick={handleViewPublicPage}
+                    fontWeight="medium"
+                  >
+                    View Public Page
+                  </MenuItem>
                   <MenuItem
                     icon={<Icon as={FaEdit} />}
                     onClick={() =>
@@ -471,7 +535,7 @@ function ProfileProduction() {
                       )
                     }
                   >
-                    {intl.formatMessage({ id: 'app.edit' })}
+                    Edit Production
                   </MenuItem>
                   <MenuItem icon={<Icon as={FaQrcode} />} onClick={downloadQRCode}>
                     Download QR Code
@@ -479,215 +543,192 @@ function ProfileProduction() {
                   <MenuItem icon={<Icon as={FaShare} />} onClick={handleShare}>
                     Share Production
                   </MenuItem>
-                  <Divider />
-                  <MenuItem icon={<Icon as={FaTrash} />} color="red.500" _hover={{ bg: 'red.50' }}>
-                    {intl.formatMessage({ id: 'app.delete' })}
-                  </MenuItem>
                 </MenuList>
               </Menu>
             </HStack>
 
-            {/* Use ModernProductHeader component */}
-            <ModernProductHeader
-              productName={historyData?.product?.name || historyData?.name || 'Production'}
-              companyName={historyData?.company || 'Unknown Company'}
-              reputation={safeReputation}
-              isUsdaVerified={false}
-              industryPercentile={undefined}
-            />
-          </CardHeader>
+            {/* Clean Title Section */}
+            <VStack align="start" spacing={4}>
+              <Heading
+                size="2xl"
+                color="gray.900"
+                fontWeight="600"
+                letterSpacing="-0.025em"
+                lineHeight="1.2"
+              >
+                {historyData?.product?.name || historyData?.name || 'Production'}
+              </Heading>
 
-          <CardBody p={0}>
-            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8} mb={10}>
+              <VStack align="start" spacing={2}>
+                <Text fontSize="md" color="gray.600" fontWeight="medium">
+                  {`${formatDate(historyData?.start_date)} - ${formatDate(
+                    historyData?.finish_date
+                  )}`}
+                </Text>
+                <HStack spacing={2} color="gray.500">
+                  <Icon as={FaMapMarkerAlt} boxSize={4} />
+                  <Text fontSize="sm">
+                    {historyData?.parcel?.establishment?.location || 'Farm Location'}
+                  </Text>
+                </HStack>
+              </VStack>
+            </VStack>
+          </Box>
+
+          {/* Content Sections */}
+          <Box px={8} pb={8}>
+            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8}>
               {/* Left Column */}
               <VStack spacing={6} align="stretch">
-                {/* Image Gallery */}
-                <Card bg={bgColor} borderRadius="lg" boxShadow="md" overflow="hidden">
-                  <CardBody p={0}>
-                    {historyData?.images && historyData.images.length > 0 ? (
-                      <ImageCarousel imagesList={historyData.images} />
-                    ) : (
-                      <Box
-                        bg="gray.100"
-                        height="250px"
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="center"
+                {/* Images */}
+                <StandardCard title="Production Photos" variant="clean">
+                  <StandardImageGallery
+                    images={historyData?.images || []}
+                    variant="production"
+                    enablePreview={true}
+                    showImageCount={true}
+                    height="240px"
+                    showEmptyState={true}
+                    maxDisplayImages={3}
+                  />
+                </StandardCard>
+
+                {/* Details */}
+                <StandardCard title="Details" variant="clean">
+                  <VStack spacing={4} align="stretch">
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Product
+                      </Text>
+                      <Text fontWeight="medium">{historyData?.product?.name}</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Type
+                      </Text>
+                      <Badge colorScheme="green" variant="subtle" size="sm">
+                        Sustainable Production
+                      </Badge>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Environment
+                      </Text>
+                      <Text fontWeight="medium">Outdoor</Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Duration
+                      </Text>
+                      <Text fontWeight="medium">
+                        {formatDate(historyData?.start_date)} -{' '}
+                        {formatDate(historyData?.finish_date) || 'In Progress'}
+                      </Text>
+                    </Box>
+                  </VStack>
+                </StandardCard>
+
+                {/* Location */}
+                <StandardCard title="Location" variant="clean">
+                  <VStack spacing={4} align="stretch">
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Establishment
+                      </Text>
+                      <Link
+                        color="blue.600"
+                        onClick={() =>
+                          navigate(`/admin/dashboard/establishment/${establishmentId}`)
+                        }
+                        cursor="pointer"
+                        _hover={{ textDecoration: 'underline' }}
+                        fontWeight="medium"
                       >
-                        <VStack spacing={2}>
-                          <Icon as={FaSeedling} boxSize={12} color="gray.400" />
-                          <Text color="gray.500">No images available</Text>
-                        </VStack>
-                      </Box>
-                    )}
-                  </CardBody>
-                </Card>
-
-                {/* Production Details */}
-                <Card bg={bgColor} borderRadius="lg" boxShadow="md">
-                  <CardHeader>
-                    <HStack spacing={2} justify="center">
-                      <Icon as={FaSeedling} color="green.500" boxSize={5} />
-                      <Heading as="h3" size="md" color={textColor}>
-                        Production Details
-                      </Heading>
-                    </HStack>
-                  </CardHeader>
-                  <CardBody>
-                    <VStack spacing={3} align="stretch">
-                      <HStack>
-                        <Icon as={FaLeaf} color="green.500" />
-                        <Text fontWeight="medium">Product:</Text>
-                        <Text>{historyData?.product?.name}</Text>
-                      </HStack>
-                      <HStack>
-                        <Icon as={FaCertificate} color="blue.500" />
-                        <Text fontWeight="medium">Type:</Text>
-                        <Badge colorScheme="green" variant="subtle">
-                          Sustainable Production
-                        </Badge>
-                      </HStack>
-                      <HStack>
-                        <Icon as={MdOutdoorGrill} color="purple.500" />
-                        <Text fontWeight="medium">Environment:</Text>
-                        <Text>Outdoor</Text>
-                      </HStack>
-                      <HStack>
-                        <Icon as={FaCalendarAlt} color="blue.500" />
-                        <Text fontWeight="medium">Start Date:</Text>
-                        <Text>{formatDate(historyData?.start_date)}</Text>
-                      </HStack>
-                      <HStack>
-                        <Icon as={FaFlag} color="orange.500" />
-                        <Text fontWeight="medium">Finish Date:</Text>
-                        <Text>{formatDate(historyData?.finish_date) || 'In Progress'}</Text>
-                      </HStack>
-                    </VStack>
-                  </CardBody>
-                </Card>
-
-                {/* Location Information */}
-                <Card bg={bgColor} borderRadius="lg" boxShadow="md">
-                  <CardHeader>
-                    <HStack spacing={2} justify="center">
-                      <Icon as={MdLocationOn} color="green.500" boxSize={5} />
-                      <Heading as="h3" size="md" color={textColor}>
-                        Location Information
-                      </Heading>
-                    </HStack>
-                  </CardHeader>
-                  <CardBody>
-                    <VStack spacing={3} align="stretch">
-                      <HStack>
-                        <Icon as={FaBuilding} color="blue.500" />
-                        <Text fontWeight="medium">Establishment:</Text>
-                        <Link
-                          color="blue.500"
-                          onClick={() =>
-                            navigate(`/admin/dashboard/establishment/${establishmentId}`)
-                          }
-                          cursor="pointer"
-                          _hover={{ textDecoration: 'underline' }}
-                        >
-                          {historyData?.parcel?.establishment?.name || 'Unknown'}
-                        </Link>
-                      </HStack>
-                      <HStack>
-                        <Icon as={FaTractor} color="green.500" />
-                        <Text fontWeight="medium">Parcel:</Text>
-                        <Link
-                          color="green.500"
-                          onClick={() =>
-                            navigate(
-                              `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
-                            )
-                          }
-                          cursor="pointer"
-                          _hover={{ textDecoration: 'underline' }}
-                        >
-                          {historyData?.parcel?.name || 'Unknown'}
-                        </Link>
-                      </HStack>
-                      <HStack>
-                        <Icon as={FaMapMarkerAlt} color="red.500" />
-                        <Text fontWeight="medium">Location:</Text>
-                        <Text>
-                          {historyData?.parcel?.establishment?.location || 'Not specified'}
-                        </Text>
-                      </HStack>
-                    </VStack>
-                  </CardBody>
-                </Card>
+                        {historyData?.parcel?.establishment?.name || 'Unknown'}
+                      </Link>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Parcel
+                      </Text>
+                      <Link
+                        color="green.600"
+                        onClick={() =>
+                          navigate(
+                            `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
+                          )
+                        }
+                        cursor="pointer"
+                        _hover={{ textDecoration: 'underline' }}
+                        fontWeight="medium"
+                      >
+                        {historyData?.parcel?.name || 'Unknown'}
+                      </Link>
+                    </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Address
+                      </Text>
+                      <Text fontWeight="medium">
+                        {historyData?.parcel?.establishment?.location || 'Not specified'}
+                      </Text>
+                    </Box>
+                  </VStack>
+                </StandardCard>
               </VStack>
 
               {/* Right Column */}
               <VStack spacing={6} align="stretch">
-                {/* QR Code Display Card */}
-                <Card bg={bgColor} borderRadius="lg" boxShadow="md">
-                  <CardHeader>
-                    <HStack spacing={2} justify="center">
-                      <Icon as={FaQrcode} color="green.500" boxSize={5} />
-                      <Heading as="h3" size="md" color={textColor}>
-                        QR Code
-                      </Heading>
-                    </HStack>
-                  </CardHeader>
-                  <CardBody>
-                    <VStack spacing={4}>
-                      <Center>
-                        <Box
-                          boxSize="200px"
-                          bg="white"
-                          borderRadius="md"
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="center"
-                          border="2px solid"
-                          borderColor="gray.200"
-                          overflow="hidden"
-                        >
-                          {historyData?.qr_code ? (
-                            <Image
-                              src={historyData.qr_code}
-                              alt="Production QR Code"
-                              boxSize="100%"
-                              objectFit="contain"
-                              onError={(e) => {
-                                console.log('QR image failed to load:', historyData.qr_code);
-                              }}
-                            />
-                          ) : (
-                            <VStack spacing={2}>
-                              <Icon as={FaQrcode} boxSize={12} color="gray.400" />
-                              <Text fontSize="sm" color="gray.500" textAlign="center">
-                                {historyData?.history_scan
-                                  ? 'QR Code Generating...'
-                                  : 'QR Code Not Available'}
-                              </Text>
-                            </VStack>
-                          )}
-                        </Box>
-                      </Center>
-                      <Text fontSize="sm" color="gray.600" textAlign="center">
-                        {historyData?.qr_code
-                          ? 'Scan this QR code to view production details'
-                          : historyData?.history_scan
-                          ? `Scan ID: #${historyData.history_scan} - QR code will appear when generated`
-                          : 'QR code will be generated when production is published'}
-                      </Text>
-                      <Button
-                        size="sm"
-                        colorScheme="green"
-                        leftIcon={<Icon as={FaDownload} />}
-                        onClick={downloadQRCode}
-                        variant={historyData?.qr_code ? 'solid' : 'outline'}
-                        isDisabled={!historyData?.qr_code && !historyData?.history_scan}
-                      >
-                        {historyData?.qr_code ? 'Download QR Code' : 'Generate QR Code'}
-                      </Button>
-                    </VStack>
-                  </CardBody>
-                </Card>
+                {/* QR Code */}
+                <StandardCard title="QR Code" variant="clean">
+                  <VStack spacing={4}>
+                    <Box
+                      boxSize="180px"
+                      bg="white"
+                      borderRadius="lg"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      border="1px solid"
+                      borderColor="gray.200"
+                      overflow="hidden"
+                    >
+                      {historyData?.qr_code ? (
+                        <Image
+                          src={historyData.qr_code}
+                          alt="Production QR Code"
+                          boxSize="100%"
+                          objectFit="contain"
+                        />
+                      ) : (
+                        <VStack spacing={2}>
+                          <Icon as={FaQrcode} boxSize={8} color="gray.400" />
+                          <Text fontSize="xs" color="gray.500" textAlign="center">
+                            {historyData?.history_scan ? 'Generating...' : 'Not Available'}
+                          </Text>
+                        </VStack>
+                      )}
+                    </Box>
+
+                    <Text fontSize="xs" color="gray.500" textAlign="center" maxW="200px">
+                      {historyData?.qr_code
+                        ? 'Scan to view production details'
+                        : 'QR code will be generated when published'}
+                    </Text>
+
+                    <Button
+                      size="sm"
+                      colorScheme="green"
+                      variant="outline"
+                      leftIcon={<Icon as={FaDownload} />}
+                      onClick={downloadQRCode}
+                      isDisabled={!historyData?.qr_code && !historyData?.history_scan}
+                      w="full"
+                    >
+                      {historyData?.qr_code ? 'Download' : 'Generate'}
+                    </Button>
+                  </VStack>
+                </StandardCard>
 
                 {/* Producer Information - Reuse CompanyEstablishmentInfo component */}
                 {historyData?.parcel?.establishment && (
@@ -696,73 +737,55 @@ function ProfileProduction() {
               </VStack>
             </SimpleGrid>
 
-            {/* Events Timeline - Use Modern Production Journey */}
-            <Card bg={bgColor} borderRadius="lg" boxShadow="md" mb={6}>
-              <CardHeader>
-                <HStack spacing={2} justify="space-between">
-                  <HStack spacing={2}>
-                    <Icon as={MdTimeline} color="green.500" boxSize={5} />
-                    <Heading as="h3" size="lg" color={textColor}>
-                      Production Timeline
-                    </Heading>
-                  </HStack>
-                </HStack>
-              </CardHeader>
-              <CardBody>
-                {historyData?.events && historyData.events.length > 0 ? (
-                  <UltraMobileProductionJourney events={mapEventsToTimeline(historyData.events)} />
-                ) : (
-                  <VStack spacing={3} py={8}>
-                    <Icon as={MdTimeline} boxSize={16} color="gray.400" />
-                    <Heading as="h4" size="md" color="gray.600">
-                      No events recorded yet
-                    </Heading>
-                    <Text fontSize="sm" color="gray.400" textAlign="center">
-                      Events will appear here as the production progresses
+            {/* Timeline */}
+            <StandardCard title="Timeline" variant="clean" mb={6}>
+              {historyData?.events && historyData.events.length > 0 ? (
+                <UltraMobileProductionJourney events={mapEventsToTimeline(historyData.events)} />
+              ) : (
+                <VStack spacing={3} py={8}>
+                  <Icon as={MdTimeline} boxSize={16} color="gray.400" />
+                  <Heading as="h4" size="md" color="gray.600">
+                    No events recorded yet
+                  </Heading>
+                  <Text fontSize="sm" color="gray.400" textAlign="center">
+                    Events will appear here as the production progresses
+                  </Text>
+                  {!historyData?.finish_date && (
+                    <Button
+                      leftIcon={<Icon as={FaSeedling} />}
+                      colorScheme="green"
+                      size="lg"
+                      onClick={onQuickAddOpen}
+                      mt={4}
+                    >
+                      🎤 Add Your First Event
+                    </Button>
+                  )}
+                  {historyData?.finish_date && (
+                    <Text fontSize="sm" color="gray.500" mt={4} textAlign="center">
+                      This production is finished. Events cannot be added to completed productions.
                     </Text>
-                    {!historyData?.finish_date && (
-                      <Button
-                        leftIcon={<Icon as={FaSeedling} />}
-                        colorScheme="green"
-                        size="lg"
-                        onClick={onQuickAddOpen}
-                        mt={4}
-                      >
-                        🎤 Add Your First Event
-                      </Button>
-                    )}
-                    {historyData?.finish_date && (
-                      <Text fontSize="sm" color="gray.500" mt={4} textAlign="center">
-                        This production is finished. Events cannot be added to completed
-                        productions.
-                      </Text>
-                    )}
-                  </VStack>
-                )}
-              </CardBody>
-            </Card>
+                  )}
+                </VStack>
+              )}
+            </StandardCard>
 
-            {/* Phase 1: Carbon Cost Intelligence Integration */}
+            {/* Carbon Economics - Core Trazo Feature */}
             {productionId && (
-              <Card bg={bgColor} borderRadius="lg" boxShadow="md" mb={6}>
-                <CardHeader>
-                  <HStack spacing={2} justify="center">
-                    <Icon as={FaMoneyBillWave} color="green.500" boxSize={5} />
-                    <Heading as="h3" size="lg" color={textColor}>
-                      💰 Carbon Economics
-                    </Heading>
-                  </HStack>
-                </CardHeader>
-                <CardBody>
+              <StandardCard title="Carbon Economics" variant="clean" mb={6}>
+                <Box>
+                  <Text fontSize="sm" color="gray.600" mb={4}>
+                    Understand your carbon credit potential and sustainable farming economics
+                  </Text>
                   <CarbonCostInsights
                     productionId={parseInt(productionId)}
                     productionName={historyData?.name || historyData?.product?.name}
                   />
-                </CardBody>
-              </Card>
+                </Box>
+              </StandardCard>
             )}
-          </CardBody>
-        </Card>
+          </Box>
+        </StandardCard>
       </Container>
 
       {/* Week 2 Task 2.1: Voice-to-Event System Integration */}

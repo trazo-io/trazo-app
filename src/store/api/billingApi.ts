@@ -55,9 +55,12 @@ export interface PaymentMethod {
 
 export interface Invoice {
   id: number;
+  number?: string;
   amount: number;
+  amount_paid?: number;
   status: string;
-  invoice_date: string;
+  invoice_date?: string;
+  created?: string;
   due_date: string | null;
   invoice_pdf: string | null;
 }
@@ -206,13 +209,16 @@ export const billingApi = baseApi.injectEndpoints({
         { type: 'Company' as const, id: 'LIST' }
       ]
     }),
-    addAddon: builder.mutation<any, { subscriptionId: number; addonId: number; quantity: number }>({
-      query: ({ subscriptionId, addonId, quantity }) => {
+    addAddon: builder.mutation<
+      any,
+      { subscriptionId: number; addonId: number; quantity: number; return_url?: string }
+    >({
+      query: ({ subscriptionId, addonId, quantity, return_url }) => {
         const cleanId = String(subscriptionId).replace(/\//g, '');
         return {
           url: `${SUBSCRIPTIONS_URL(cleanId)}add_addon/`,
           method: 'POST',
-          body: { addon_id: addonId, quantity },
+          body: { addon_id: addonId, quantity, return_url },
           credentials: 'include'
         };
       },

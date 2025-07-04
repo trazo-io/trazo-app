@@ -25,7 +25,7 @@ export const initializeGoogleAuth = () => {
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: resolve,
-        cancel_on_tap_outside: false,
+        cancel_on_tap_outside: false
       });
     } else {
       reject(new Error('Google SDK not loaded'));
@@ -64,21 +64,18 @@ export const handleGoogleSignIn = async (onSuccess, onError, userType = 4) => {
           onError(new Error('No credential received from Google'));
         }
       },
-      cancel_on_tap_outside: false,
+      cancel_on_tap_outside: false
     });
 
     // Show the Google Sign In prompt
     window.google.accounts.id.prompt((notification) => {
       if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
         // Fallback to popup
-        window.google.accounts.id.renderButton(
-          document.getElementById('g_id_signin'),
-          {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-          }
-        );
+        window.google.accounts.id.renderButton(document.getElementById('g_id_signin'), {
+          theme: 'outline',
+          size: 'large',
+          width: '100%'
+        });
       }
     });
   } catch (error) {
@@ -104,23 +101,26 @@ export const handleFacebookSignIn = async (onSuccess, onError, userType = 4) => 
       await loadFacebookSDK();
     }
 
-    window.FB.login((response) => {
-      if (response.authResponse) {
-        // Get user access token
-        const accessToken = response.authResponse.accessToken;
-        
-        onSuccess({
-          provider: 'facebook',
-          access_token: accessToken,
-          user_type: userType
-        });
-      } else {
-        onError(new Error('Facebook login cancelled or failed'));
+    window.FB.login(
+      (response) => {
+        if (response.authResponse) {
+          // Get user access token
+          const accessToken = response.authResponse.accessToken;
+
+          onSuccess({
+            provider: 'facebook',
+            access_token: accessToken,
+            user_type: userType
+          });
+        } else {
+          onError(new Error('Facebook login cancelled or failed'));
+        }
+      },
+      {
+        scope: 'email,public_profile',
+        return_scopes: true
       }
-    }, {
-      scope: 'email,public_profile',
-      return_scopes: true
-    });
+    );
   } catch (error) {
     console.error('Facebook Sign In error:', error);
     onError(error);
@@ -198,7 +198,7 @@ const loadFacebookSDK = () => {
       return;
     }
 
-    window.fbAsyncInit = function() {
+    window.fbAsyncInit = function () {
       window.FB.init({
         appId: FACEBOOK_APP_ID,
         cookie: true,
@@ -229,7 +229,8 @@ const loadAppleSDK = () => {
     }
 
     const script = document.createElement('script');
-    script.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
+    script.src =
+      'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
     script.async = true;
     script.defer = true;
     script.onload = resolve;
@@ -245,9 +246,9 @@ const loadAppleSDK = () => {
  */
 export const handleSocialAuthError = (error, provider) => {
   console.error(`${provider} authentication error:`, error);
-  
+
   let errorMessage = `${provider} sign in failed. Please try again.`;
-  
+
   if (error.message.includes('not configured')) {
     errorMessage = `${provider} sign in is not properly configured.`;
   } else if (error.message.includes('cancelled')) {
@@ -255,7 +256,7 @@ export const handleSocialAuthError = (error, provider) => {
   } else if (error.message.includes('popup_blocked')) {
     errorMessage = 'Please allow popups for social sign in to work.';
   }
-  
+
   toast.error(errorMessage);
 };
 
@@ -268,7 +269,7 @@ export const checkSocialAuthConfig = () => {
     facebook: !!FACEBOOK_APP_ID,
     apple: !!APPLE_CLIENT_ID
   };
-  
+
   console.log('Social Auth Configuration:', config);
   return config;
 };

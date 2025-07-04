@@ -22,12 +22,12 @@ import { FaGoogle, FaFacebook, FaApple, FaEnvelope, FaLock } from 'react-icons/f
 import { motion } from 'framer-motion';
 import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
-import { 
-  handleGoogleSignIn, 
-  handleFacebookSignIn, 
-  handleAppleSignIn, 
+import {
+  handleGoogleSignIn,
+  handleFacebookSignIn,
+  handleAppleSignIn,
   handleSocialAuthError,
-  checkSocialAuthConfig 
+  checkSocialAuthConfig
 } from '../../../utils/socialAuth';
 
 // No assets needed for minimalist design
@@ -108,7 +108,7 @@ const AppSignIn: React.FC = () => {
   const handleSocialLogin = async (provider: string) => {
     // Check if social auth is configured
     const config = checkSocialAuthConfig();
-    
+
     switch (provider) {
       case 'Google':
         if (!config.google) {
@@ -127,7 +127,7 @@ const AppSignIn: React.FC = () => {
           4 // Producer user type
         );
         break;
-      
+
       case 'Facebook':
         if (!config.facebook) {
           toast({
@@ -145,7 +145,7 @@ const AppSignIn: React.FC = () => {
           4 // Producer user type
         );
         break;
-      
+
       case 'Apple':
         if (!config.apple) {
           toast({
@@ -163,7 +163,7 @@ const AppSignIn: React.FC = () => {
           4 // Producer user type
         );
         break;
-      
+
       default:
         toast({
           title: 'Error',
@@ -456,7 +456,7 @@ const AppSignIn: React.FC = () => {
                   fontWeight="600"
                   borderRadius="xl"
                   isLoading={isLoading || isSocialLoading}
-                  loadingText={isSocialLoading ? "Authenticating..." : "Signing in..."}
+                  loadingText={isSocialLoading ? 'Authenticating...' : 'Signing in...'}
                   _hover={{
                     transform: 'translateY(-1px)',
                     boxShadow: '0 10px 25px rgba(5, 150, 105, 0.2)'

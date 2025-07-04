@@ -28,11 +28,25 @@ import {
   Circle,
   Grid,
   ResponsiveValue,
+  Progress,
   Tooltip,
-  Portal
+  Portal,
+  IconButton,
+  Image,
+  CloseButton
 } from '@chakra-ui/react';
-import { ReactNode, ReactElement } from 'react';
-import { FaLeaf, FaChevronLeft, FaChevronRight, FaCheckCircle, FaQuestionCircle, FaCamera } from 'react-icons/fa';
+import { ReactNode, ReactElement, useState, useEffect, useCallback } from 'react';
+import {
+  FaLeaf,
+  FaChevronLeft,
+  FaChevronRight,
+  FaCheckCircle,
+  FaQuestionCircle,
+  FaCamera,
+  FaTimes,
+  FaTrash,
+  FaEye
+} from 'react-icons/fa';
 import { MdCheck, MdError, MdInfo, MdWarning } from 'react-icons/md';
 import { IconType } from 'react-icons';
 import { useDropzone } from 'react-dropzone';
@@ -229,75 +243,89 @@ export const StandardStepper = ({
   onStepClick,
   allowStepClick = false
 }: StandardStepperProps) => {
+  // Adjust spacing and sizing based on number of steps
+  const manySteps = steps.length > 6;
+  const spacing = manySteps ? { base: 2, md: 3 } : { base: 3, md: 6 };
+  const circleSize = manySteps ? { base: '32px', md: '40px' } : { base: '36px', md: '44px' };
+  const iconSize = manySteps ? '16px' : '18px';
+  const titleFontSize = manySteps ? { base: '2xs', md: 'xs' } : { base: 'xs', md: 'sm' };
+  
   return (
     <StandardCard>
-      <HStack
-        spacing={{ base: 3, md: 6 }}
-        justify="center"
-        align="center"
-        w="100%"
-        maxW="800px"
-        mx="auto"
-      >
-        {steps.map((step, index) => (
-          <React.Fragment key={index}>
-            <VStack
-              spacing={3}
-              align="center"
-              flex="1"
-              cursor={allowStepClick ? 'pointer' : 'default'}
-              onClick={() => allowStepClick && onStepClick?.(index)}
-              _hover={allowStepClick ? { opacity: 0.8 } : {}}
-              transition="all 0.3s ease"
-            >
-              <Circle
-                size={{ base: '36px', md: '44px' }}
-                bg={
-                  completedSteps.includes(index) || index < currentStep
-                    ? 'green.500'
-                    : index === currentStep
-                    ? 'green.400'
-                    : 'gray.200'
-                }
-                color={index <= currentStep ? 'white' : 'gray.500'}
-                fontSize={{ base: 'sm', md: 'md' }}
-                fontWeight="bold"
-                boxShadow={index === currentStep ? 'lg' : 'md'}
-                transition="all 0.3s"
+      <Box overflowX="auto" w="100%">
+        <HStack
+          spacing={spacing}
+          justify="center"
+          align="center"
+          w={manySteps ? 'max-content' : '100%'}
+          minW="100%"
+          maxW={manySteps ? 'none' : '800px'}
+          mx="auto"
+          px={manySteps ? 4 : 0}
+        >
+          {steps.map((step, index) => (
+            <React.Fragment key={index}>
+              <VStack
+                spacing={2}
+                align="center"
+                flex={manySteps ? '0 0 auto' : '1'}
+                minW={manySteps ? '80px' : 'auto'}
+                cursor={allowStepClick ? 'pointer' : 'default'}
+                onClick={() => allowStepClick && onStepClick?.(index)}
+                _hover={allowStepClick ? { opacity: 0.8 } : {}}
+                transition="all 0.3s ease"
               >
-                {completedSteps.includes(index) || index < currentStep ? (
-                  <Icon as={step.icon || FaCheckCircle} boxSize="18px" />
-                ) : (
-                  <Text>{index + 1}</Text>
-                )}
-              </Circle>
-              <VStack spacing={1} align="center">
-                <Text
-                  fontSize={{ base: 'xs', md: 'sm' }}
+                <Circle
+                  size={circleSize}
+                  bg={
+                    completedSteps.includes(index) || index < currentStep
+                      ? 'green.500'
+                      : index === currentStep
+                      ? 'green.400'
+                      : 'gray.200'
+                  }
+                  color={index <= currentStep ? 'white' : 'gray.500'}
+                  fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="bold"
-                  color={index <= currentStep ? 'green.500' : 'gray.500'}
-                  textAlign="center"
-                  lineHeight="1.2"
+                  boxShadow={index === currentStep ? 'lg' : 'md'}
+                  transition="all 0.3s"
                 >
-                  {step.title}
-                </Text>
-                {step.description && (
+                  {completedSteps.includes(index) || index < currentStep ? (
+                    <Icon as={step.icon || FaCheckCircle} boxSize={iconSize} />
+                  ) : (
+                    <Text>{index + 1}</Text>
+                  )}
+                </Circle>
+                <VStack spacing={1} align="center">
                   <Text
-                    fontSize="xs"
-                    color="gray.500"
+                    fontSize={titleFontSize}
+                    fontWeight="bold"
+                    color={index <= currentStep ? 'green.500' : 'gray.500'}
                     textAlign="center"
-                    display={{ base: 'none', md: 'block' }}
                     lineHeight="1.2"
+                    noOfLines={2}
+                    maxW={manySteps ? '70px' : 'auto'}
                   >
-                    {step.description}
+                    {step.title}
                   </Text>
-                )}
+                  {step.description && !manySteps && (
+                    <Text
+                      fontSize="xs"
+                      color="gray.500"
+                      textAlign="center"
+                      display={{ base: 'none', md: 'block' }}
+                      lineHeight="1.2"
+                    >
+                      {step.description}
+                    </Text>
+                  )}
+                </VStack>
               </VStack>
-            </VStack>
             {index < steps.length - 1 && (
               <Box
                 height="3px"
-                flex="1"
+                flex={manySteps ? '0 0 40px' : '1'}
+                w={manySteps ? '40px' : 'auto'}
                 bg={index < currentStep ? 'green.500' : 'gray.200'}
                 borderRadius="full"
                 mx={{ base: 1, md: 2 }}
@@ -307,6 +335,7 @@ export const StandardStepper = ({
           </React.Fragment>
         ))}
       </HStack>
+      </Box>
     </StandardCard>
   );
 };
@@ -737,11 +766,11 @@ interface ConsumerTooltipProps {
   placement?: 'top' | 'bottom' | 'left' | 'right';
 }
 
-export const ConsumerTooltip = ({ 
-  label, 
-  explanation, 
-  children, 
-  placement = 'top' 
+export const ConsumerTooltip = ({
+  label,
+  explanation,
+  children,
+  placement = 'top'
 }: ConsumerTooltipProps) => {
   return (
     <Tooltip
@@ -815,9 +844,7 @@ export const StandardMetricCard = ({
           <Text fontSize={labelSize} color="gray.600" textAlign="center">
             {label}
           </Text>
-          {tooltip && (
-            <Icon as={FaQuestionCircle} boxSize={3} color="gray.400" />
-          )}
+          {tooltip && <Icon as={FaQuestionCircle} boxSize={3} color="gray.400" />}
         </HStack>
         {subtitle && (
           <Text fontSize="xs" color="gray.500" textAlign="center">
@@ -831,9 +858,7 @@ export const StandardMetricCard = ({
   if (tooltip) {
     return (
       <ConsumerTooltip label={tooltip.label} explanation={tooltip.explanation}>
-        <Box cursor="help">
-          {MetricContent}
-        </Box>
+        <Box cursor="help">{MetricContent}</Box>
       </ConsumerTooltip>
     );
   }
@@ -846,9 +871,10 @@ export const StandardMetricCard = ({
 interface StandardMediaUploadProps {
   onFilesChange: (files: File[]) => void;
   acceptedFiles?: File[];
+  uploadedFiles?: string[]; // URLs of successfully uploaded files
   maxFiles?: number;
   maxSize?: number;
-  accept?: {[key: string]: string[]};
+  accept?: { [key: string]: string[] };
   multiple?: boolean;
   disabled?: boolean;
   required?: boolean;
@@ -860,11 +886,16 @@ interface StandardMediaUploadProps {
   variant?: 'default' | 'compact' | 'consumer';
   showFileNames?: boolean;
   previewMode?: 'grid' | 'list' | 'thumbnails';
+  isUploading?: boolean;
+  uploadProgress?: number;
+  onRemoveFile?: (index: number) => void;
+  onRemoveUploadedFile?: (index: number, url: string) => void;
 }
 
 export const StandardMediaUpload = ({
   onFilesChange,
   acceptedFiles = [],
+  uploadedFiles = [],
   maxFiles = 5,
   maxSize = 10485760, // 10MB
   accept = { 'image/*': [] },
@@ -878,12 +909,48 @@ export const StandardMediaUpload = ({
   height = '280px',
   variant = 'default',
   showFileNames = true,
-  previewMode = 'grid'
+  previewMode = 'grid',
+  isUploading = false,
+  uploadProgress = 0,
+  onRemoveFile,
+  onRemoveUploadedFile
 }: StandardMediaUploadProps) => {
   const borderColor = useColorModeValue('gray.300', 'gray.600');
   const bgColor = useColorModeValue('green.50', 'green.900');
   const textColor = useColorModeValue('gray.700', 'white');
   const hoverBgColor = useColorModeValue('green.25', 'green.800');
+  const successColor = useColorModeValue('green.500', 'green.300');
+
+  // State for managing object URLs to prevent memory leaks
+  const [fileObjectUrls, setFileObjectUrls] = useState<Map<File, string>>(new Map());
+
+  // Clean up object URLs when component unmounts or files change
+  useEffect(() => {
+    return () => {
+      fileObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [fileObjectUrls]);
+
+  // Update object URLs when accepted files change
+  useEffect(() => {
+    const newUrls = new Map();
+    acceptedFiles.forEach((file) => {
+      if (fileObjectUrls.has(file)) {
+        newUrls.set(file, fileObjectUrls.get(file)!);
+      } else {
+        newUrls.set(file, URL.createObjectURL(file));
+      }
+    });
+
+    // Clean up old URLs
+    fileObjectUrls.forEach((url, file) => {
+      if (!acceptedFiles.includes(file)) {
+        URL.revokeObjectURL(url);
+      }
+    });
+
+    setFileObjectUrls(newUrls);
+  }, [acceptedFiles]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: onFilesChange,
@@ -891,34 +958,72 @@ export const StandardMediaUpload = ({
     multiple,
     maxFiles,
     maxSize,
-    disabled
+    disabled: disabled || isUploading
   });
 
   const isImage = (file: File) => {
     return file.type && file.type.startsWith('image/');
   };
 
-  const renderFilePreview = (file: File, index: number) => {
+  const handleRemoveFile = useCallback(
+    (index: number) => {
+      if (onRemoveFile) {
+        onRemoveFile(index);
+      }
+    },
+    [onRemoveFile]
+  );
+
+  const handleRemoveUploadedFile = useCallback(
+    (index: number, url: string) => {
+      if (onRemoveUploadedFile) {
+        onRemoveUploadedFile(index, url);
+      }
+    },
+    [onRemoveUploadedFile]
+  );
+
+  const renderFilePreview = (file: File, index: number, isFromAccepted = true) => {
     if (isImage(file)) {
+      const objectUrl = fileObjectUrls.get(file) || URL.createObjectURL(file);
+
       return (
-        <Box key={index} textAlign="center">
-          <Box 
-            borderRadius="xl" 
-            overflow="hidden" 
-            mb={2} 
+        <Box key={index} position="relative" textAlign="center">
+          <Box
+            borderRadius="xl"
+            overflow="hidden"
+            mb={2}
             boxShadow="md"
             border="1px solid"
             borderColor="gray.200"
+            position="relative"
           >
-            <img
-              src={URL.createObjectURL(file)}
+            <Image
+              src={objectUrl}
               alt={file.name}
-              style={{
-                width: '100%',
-                height: previewMode === 'thumbnails' ? '80px' : '120px',
-                objectFit: 'cover'
-              }}
+              w="100%"
+              h={previewMode === 'thumbnails' ? '80px' : '120px'}
+              objectFit="cover"
             />
+
+            {/* Remove button */}
+            {isFromAccepted && onRemoveFile && (
+              <IconButton
+                aria-label="Remove image"
+                icon={<FaTimes />}
+                position="absolute"
+                top={1}
+                right={1}
+                size="xs"
+                colorScheme="red"
+                variant="solid"
+                borderRadius="full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFile(index);
+                }}
+              />
+            )}
           </Box>
           {showFileNames && (
             <Text fontSize="xs" color="gray.600" noOfLines={1} fontWeight="medium">
@@ -938,10 +1043,87 @@ export const StandardMediaUpload = ({
         borderColor={borderColor}
         borderRadius="lg"
         bg="gray.50"
+        position="relative"
       >
         <Icon as={FaCheckCircle} boxSize={6} color="green.500" mb={2} />
         <Text fontSize="xs" color={textColor} noOfLines={1} fontWeight="medium">
           {file.name}
+        </Text>
+        {isFromAccepted && onRemoveFile && (
+          <IconButton
+            aria-label="Remove file"
+            icon={<FaTimes />}
+            position="absolute"
+            top={1}
+            right={1}
+            size="xs"
+            colorScheme="red"
+            variant="solid"
+            borderRadius="full"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemoveFile(index);
+            }}
+          />
+        )}
+      </Box>
+    );
+  };
+
+  const renderUploadedImage = (url: string, index: number) => {
+    return (
+      <Box key={`uploaded-${index}`} position="relative" textAlign="center">
+        <Box
+          borderRadius="xl"
+          overflow="hidden"
+          mb={2}
+          boxShadow="md"
+          border="2px solid"
+          borderColor={successColor}
+          position="relative"
+        >
+          <Image
+            src={url}
+            alt={`Uploaded image ${index + 1}`}
+            w="100%"
+            h={previewMode === 'thumbnails' ? '80px' : '120px'}
+            objectFit="cover"
+          />
+
+          {/* Success badge */}
+          <Box
+            position="absolute"
+            top={1}
+            left={1}
+            bg={successColor}
+            color="white"
+            borderRadius="full"
+            p={1}
+          >
+            <Icon as={FaCheckCircle} boxSize={3} />
+          </Box>
+
+          {/* Remove button */}
+          {onRemoveUploadedFile && (
+            <IconButton
+              aria-label="Remove uploaded image"
+              icon={<FaTrash />}
+              position="absolute"
+              top={1}
+              right={1}
+              size="xs"
+              colorScheme="red"
+              variant="solid"
+              borderRadius="full"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRemoveUploadedFile(index, url);
+              }}
+            />
+          )}
+        </Box>
+        <Text fontSize="xs" color={successColor} fontWeight="medium">
+          Uploaded
         </Text>
       </Box>
     );
@@ -973,31 +1155,71 @@ export const StandardMediaUpload = ({
   };
 
   const variantStyles = getVariantStyles();
+  const totalFiles = acceptedFiles.length + uploadedFiles.length;
+  const hasFiles = totalFiles > 0;
 
   return (
-    <VStack spacing={3} align="stretch" w="100%">
+    <VStack spacing={4} align="stretch" w="100%">
+      {/* Upload Progress */}
+      {isUploading && (
+        <Box>
+          <Flex justify="space-between" align="center" mb={2}>
+            <Text fontSize="sm" fontWeight="medium" color={textColor}>
+              Uploading images...
+            </Text>
+            <Text fontSize="sm" color="gray.500">
+              {Math.round(uploadProgress)}%
+            </Text>
+          </Flex>
+          <Progress
+            value={uploadProgress}
+            colorScheme="green"
+            borderRadius="md"
+            bg="gray.100"
+            size="sm"
+          />
+        </Box>
+      )}
+
+      {/* Uploaded Files Display */}
+      {uploadedFiles.length > 0 && (
+        <Box>
+          <Text fontSize="sm" fontWeight="medium" color={successColor} mb={3}>
+            ✓ Successfully uploaded ({uploadedFiles.length})
+          </Text>
+          <Grid
+            templateColumns={
+              previewMode === 'thumbnails'
+                ? 'repeat(auto-fill, minmax(100px, 1fr))'
+                : 'repeat(auto-fill, minmax(140px, 1fr))'
+            }
+            gap={3}
+            w="100%"
+          >
+            {uploadedFiles.map((url, index) => renderUploadedImage(url, index))}
+          </Grid>
+        </Box>
+      )}
+
+      {/* File Drop Zone */}
       <Box
-        border={variantStyles.borderStyle || "2px dashed"}
-        borderWidth={variantStyles.borderWidth || "2px"}
+        border={variantStyles.borderStyle || '2px dashed'}
+        borderWidth={variantStyles.borderWidth || '2px'}
         borderColor={
-          error 
-            ? 'red.300' 
-            : isDragActive 
-              ? 'green.400' 
-              : borderColor
+          error ? 'red.300' : isUploading ? 'blue.300' : isDragActive ? 'green.400' : borderColor
         }
         borderRadius="xl"
         p={variant === 'consumer' ? 4 : 6}
-        minH={variantStyles.height}
+        minH={hasFiles ? 'auto' : variantStyles.height}
         textAlign="center"
-        cursor={disabled ? 'not-allowed' : 'pointer'}
+        cursor={disabled || isUploading ? 'not-allowed' : 'pointer'}
         transition="all 0.3s ease"
-        bg={isDragActive ? bgColor : error ? 'red.25' : 'transparent'}
+        bg={isUploading ? 'blue.25' : isDragActive ? bgColor : error ? 'red.25' : 'transparent'}
         _hover={{
-          borderColor: disabled ? borderColor : error ? 'red.400' : 'green.400',
-          bg: disabled ? 'transparent' : error ? 'red.50' : hoverBgColor,
-          transform: disabled ? 'none' : 'translateY(-1px)',
-          boxShadow: disabled ? 'none' : 'md'
+          borderColor: disabled || isUploading ? borderColor : error ? 'red.400' : 'green.400',
+          bg: disabled || isUploading ? 'transparent' : error ? 'red.50' : hoverBgColor,
+          transform: disabled || isUploading ? 'none' : 'translateY(-1px)',
+          boxShadow: disabled || isUploading ? 'none' : 'md'
         }}
         opacity={disabled ? 0.6 : 1}
         {...getRootProps()}
@@ -1005,18 +1227,31 @@ export const StandardMediaUpload = ({
         <input {...getInputProps()} style={{ display: 'none' }} />
 
         {acceptedFiles.length > 0 ? (
-          <VStack spacing={4} justify="center" h="full">
-            <Circle size="50px" bg="green.100" color="green.600">
-              <Icon as={FaCheckCircle} boxSize={6} />
-            </Circle>
-            <Text fontWeight="semibold" fontSize={variantStyles.textSize} color={textColor}>
-              {acceptedFiles.length} file{acceptedFiles.length !== 1 ? 's' : ''} selected
-            </Text>
+          <VStack spacing={4} justify="center">
+            <HStack>
+              <Circle
+                size="40px"
+                bg={isUploading ? 'blue.100' : 'green.100'}
+                color={isUploading ? 'blue.600' : 'green.600'}
+              >
+                {isUploading ? <Spinner size="sm" /> : <Icon as={FaCheckCircle} boxSize={5} />}
+              </Circle>
+              <VStack spacing={0} align="start">
+                <Text fontWeight="semibold" fontSize="md" color={textColor}>
+                  {acceptedFiles.length} file{acceptedFiles.length !== 1 ? 's' : ''} ready
+                </Text>
+                {isUploading && (
+                  <Text fontSize="sm" color="blue.600">
+                    Processing upload...
+                  </Text>
+                )}
+              </VStack>
+            </HStack>
 
             {previewMode !== 'list' && (
               <Grid
                 templateColumns={
-                  previewMode === 'thumbnails' 
+                  previewMode === 'thumbnails'
                     ? 'repeat(auto-fill, minmax(100px, 1fr))'
                     : 'repeat(auto-fill, minmax(140px, 1fr))'
                 }
@@ -1025,12 +1260,14 @@ export const StandardMediaUpload = ({
                 maxW="500px"
                 mx="auto"
               >
-                {acceptedFiles.slice(0, 3).map((file, index) => renderFilePreview(file, index))}
+                {acceptedFiles
+                  .slice(0, 3)
+                  .map((file, index) => renderFilePreview(file, index, true))}
                 {acceptedFiles.length > 3 && (
-                  <Box 
-                    textAlign="center" 
-                    p={3} 
-                    borderRadius="lg" 
+                  <Box
+                    textAlign="center"
+                    p={3}
+                    borderRadius="lg"
                     bg="gray.100"
                     border="1px dashed"
                     borderColor="gray.300"
@@ -1049,32 +1286,34 @@ export const StandardMediaUpload = ({
               <Icon as={FaCamera} boxSize={variantStyles.iconSize} />
             </Circle>
             <VStack spacing={2}>
-              <Text 
-                fontSize={variantStyles.textSize} 
-                color="gray.600" 
-                fontWeight="semibold" 
+              <Text
+                fontSize={variantStyles.textSize}
+                color="gray.600"
+                fontWeight="semibold"
                 textAlign="center"
               >
                 {placeholder || 'Drag & drop images here, or click to select'}
               </Text>
               <Text fontSize="sm" color="gray.500" textAlign="center">
-                {description || `Maximum ${maxFiles} files, up to ${Math.round(maxSize / 1048576)}MB each`}
+                {description ||
+                  `Maximum ${maxFiles} files, up to ${Math.round(maxSize / 1048576)}MB each`}
               </Text>
             </VStack>
           </VStack>
         )}
       </Box>
 
-      {/* Error and Help Text */}
-      {helpText && !error && (
+      {/* Status and Help Text */}
+      {helpText && !error && !isUploading && (
         <Text fontSize="xs" color="gray.500">
           {helpText}
         </Text>
       )}
       {error && (
-        <Text fontSize="xs" color="red.500" fontWeight="medium">
-          {error}
-        </Text>
+        <Alert status="error" borderRadius="md">
+          <AlertIcon />
+          <Text fontSize="sm">{error}</Text>
+        </Alert>
       )}
     </VStack>
   );

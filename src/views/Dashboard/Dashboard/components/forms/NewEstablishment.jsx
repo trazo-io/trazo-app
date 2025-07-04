@@ -1023,7 +1023,8 @@ function NewEstablishment() {
                     })}
                     description={intl.formatMessage({
                       id: 'app.mediaHelper',
-                      defaultMessage: 'Puedes subir hasta 5 imágenes. Imágenes de alta calidad ayudan a generar confianza.'
+                      defaultMessage:
+                        'Puedes subir hasta 5 imágenes. Imágenes de alta calidad ayudan a generar confianza.'
                     })}
                     variant="default"
                     previewMode="grid"

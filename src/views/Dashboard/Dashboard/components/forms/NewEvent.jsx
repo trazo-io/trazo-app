@@ -319,7 +319,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const calculateCarbonWithDebounce = useCallback(
     async (formData, eventType) => {
       console.log('calculateCarbonWithDebounce called with:', { formData, eventType });
-      
+
       if (!formData || Object.keys(formData).length === 0) {
         console.log('calculateCarbonWithDebounce: No data, clearing calculation');
         setCarbonCalculation(null);
@@ -340,9 +340,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
           // Map event type to backend format (FIXED MAPPING TO MATCH eventTypeConfig)
           const eventTypeMap = {
-            0: 'weather',       // ✅ CORRECT: Weather = 0
-            1: 'production',    // ✅ FIXED: Production = 1 (was wrong)
-            2: 'chemical',      // ✅ FIXED: Chemical = 2 (was wrong)
+            0: 'weather', // ✅ CORRECT: Weather = 0
+            1: 'production', // ✅ FIXED: Production = 1 (was wrong)
+            2: 'chemical', // ✅ FIXED: Chemical = 2 (was wrong)
             3: 'general',
             4: 'equipment',
             5: 'soil_management',
@@ -521,35 +521,41 @@ function NewEvent({ isEdit = false, eventId = null }) {
   };
 
   // Handle real-time data changes from event tabs (for carbon preview updates)
-  const onDataChange = useCallback((data) => {
-    console.log('🔥 NewEvent: onDataChange SUCCESSFULLY triggered!', {
-      data,
-      activeEventType,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Use functional update to avoid stale closure
-    setEventFormData(prevData => {
-      const updatedData = { ...prevData, ...data };
-      console.log('🔥 NewEvent: updatedData for carbon calculation', updatedData);
-      
-      // Update Redux store for consistency
-      dispatch(
-        setForm({
-          event: {
-            ...currentEvent,
-            ...updatedData
-          }
-        })
-      );
+  const onDataChange = useCallback(
+    (data) => {
+      console.log('🔥 NewEvent: onDataChange SUCCESSFULLY triggered!', {
+        data,
+        activeEventType,
+        timestamp: new Date().toISOString()
+      });
 
-      // Recalculate carbon with new data (debounced)
-      console.log('🔥 NewEvent: Calling calculateCarbonWithDebounce with activeEventType:', activeEventType);
-      calculateCarbonWithDebounce(updatedData, activeEventType);
-      
-      return updatedData;
-    });
-  }, [activeEventType, calculateCarbonWithDebounce, dispatch, currentEvent]);
+      // Use functional update to avoid stale closure
+      setEventFormData((prevData) => {
+        const updatedData = { ...prevData, ...data };
+        console.log('🔥 NewEvent: updatedData for carbon calculation', updatedData);
+
+        // Update Redux store for consistency
+        dispatch(
+          setForm({
+            event: {
+              ...currentEvent,
+              ...updatedData
+            }
+          })
+        );
+
+        // Recalculate carbon with new data (debounced)
+        console.log(
+          '🔥 NewEvent: Calling calculateCarbonWithDebounce with activeEventType:',
+          activeEventType
+        );
+        calculateCarbonWithDebounce(updatedData, activeEventType);
+
+        return updatedData;
+      });
+    },
+    [activeEventType, calculateCarbonWithDebounce, dispatch, currentEvent]
+  );
 
   // Log when callback is recreated to track dependency changes
   useEffect(() => {
@@ -745,7 +751,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const currentParcel = currentCompany?.establishments
     ?.find((est) => est.id === parseInt(establishmentId || '0'))
     ?.parcels?.find((p) => p.id === parseInt(parcelId || '0'));
-  
+
   console.log('NewEvent: Current parcel debug info', {
     establishmentId,
     parcelId,
@@ -753,7 +759,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     current_history: currentParcel?.current_history,
     crop_type: currentParcel?.current_history?.crop_type
   });
-  
+
   const cropType = currentParcel?.current_history?.crop_type?.name || 'general';
   console.log('NewEvent: Resolved cropType', cropType);
   console.log('NewEvent: onDataChange function exists?', !!onDataChange);
@@ -1135,7 +1141,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         </Text>
                       </CardHeader>
                       <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
-                        {console.log('NewEvent: Rendering event details, activeEventType:', activeEventType)}
+                        {console.log(
+                          'NewEvent: Rendering event details, activeEventType:',
+                          activeEventType
+                        )}
                         {activeEventType === 0 && (
                           <WeatherTab
                             onSubmitHandler={onSubmitMainInfo}
@@ -1156,7 +1165,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         )}
                         {activeEventType === 2 && (
                           <>
-                            {console.log('NewEvent: Rendering ChemicalTab with onDataChange:', !!onDataChange)}
+                            {console.log(
+                              'NewEvent: Rendering ChemicalTab with onDataChange:',
+                              !!onDataChange
+                            )}
                             <ChemicalTab
                               onSubmitHandler={onSubmitMainInfo}
                               onDataChange={onDataChange}
@@ -1299,8 +1311,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               onFilesChange={setAcceptedFiles}
                               acceptedFiles={acceptedFiles}
                               maxFiles={5}
-                              placeholder={intl.formatMessage({ id: 'app.dragDropPhotos' }) || 'Drag & drop photos here, or click to select'}
-                              description={intl.formatMessage({ id: 'app.maxFiles' }) || 'Maximum 5 files, up to 10MB each'}
+                              placeholder={
+                                intl.formatMessage({ id: 'app.dragDropPhotos' }) ||
+                                'Drag & drop photos here, or click to select'
+                              }
+                              description={
+                                intl.formatMessage({ id: 'app.maxFiles' }) ||
+                                'Maximum 5 files, up to 10MB each'
+                              }
                             />
                           </StandardField>
 

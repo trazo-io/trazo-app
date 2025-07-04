@@ -72,6 +72,23 @@ export const historyApi = baseApi.injectEndpoints({
       }),
       providesTags: (result) => (result ? ['History'] : [])
     }),
+    getEstablishmentScansPaginated: build.query({
+      query: ({ establishment_id, company_id, page = 1, page_size = 20, ...filters }) => {
+        const params = new URLSearchParams({
+          establishment_id,
+          company_id,
+          page: page.toString(),
+          page_size: page_size.toString(),
+          ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== '' && v != null))
+        });
+        return {
+          url: `histories/establishment_scans_paginated/?${params}`,
+          method: 'GET',
+          credentials: 'include'
+        };
+      },
+      providesTags: (result) => (result ? ['History'] : [])
+    }),
     getHistory: build.query({
       query: (historyId) => ({
         url: HISTORY_URL(historyId),
@@ -240,5 +257,6 @@ export const {
   useGetScansByEstablishmentQuery,
   useGetUserProductionScansQuery,
   useGetUserReviewsQuery,
-  useGetProductionsByEstablishmentQuery
+  useGetProductionsByEstablishmentQuery,
+  useGetEstablishmentScansPaginatedQuery
 } = historyApi;

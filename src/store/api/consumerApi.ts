@@ -132,122 +132,137 @@ export const consumerApi = baseApi.injectEndpoints({
     getImpactDashboard: builder.query<ImpactDashboardResponse, void>({
       query: () => ({
         url: 'consumer/dashboard/impact_dashboard/',
-        method: 'GET',
+        method: 'GET'
       }),
-      providesTags: ['ConsumerImpact'],
+      providesTags: ['ConsumerImpact']
     }),
 
     // Shopping History with filtering
-    getShoppingHistory: builder.query<ShoppingHistoryResponse, {
-      date_from?: string;
-      date_to?: string;
-      carbon_score?: string;
-      is_favorite?: boolean;
-      page?: number;
-      page_size?: number;
-    }>({
+    getShoppingHistory: builder.query<
+      ShoppingHistoryResponse,
+      {
+        date_from?: string;
+        date_to?: string;
+        carbon_score?: string;
+        is_favorite?: boolean;
+        page?: number;
+        page_size?: number;
+      }
+    >({
       query: (params) => ({
         url: 'consumer/dashboard/shopping_history/',
         method: 'GET',
-        params: params,
+        params: params
       }),
-      providesTags: ['ConsumerHistory'],
+      providesTags: ['ConsumerHistory']
     }),
 
     // Product Comparison
-    compareProducts: builder.mutation<ProductComparisonResponse, {
-      products: number[];
-    }>({
+    compareProducts: builder.mutation<
+      ProductComparisonResponse,
+      {
+        products: number[];
+      }
+    >({
       query: (data) => ({
         url: 'consumer/dashboard/compare_products/',
         method: 'POST',
-        body: data,
-      }),
+        body: data
+      })
     }),
 
     // User Favorites
     getUserFavorites: builder.query<UserFavorite[], void>({
       query: () => ({
         url: 'consumer/favorites/',
-        method: 'GET',
+        method: 'GET'
       }),
-      providesTags: ['UserFavorites'],
+      providesTags: ['UserFavorites']
     }),
 
     addFavorite: builder.mutation<UserFavorite, { production_id: number }>({
       query: (data) => ({
         url: 'consumer/favorites/',
         method: 'POST',
-        body: data,
+        body: data
       }),
-      invalidatesTags: ['UserFavorites', 'ConsumerHistory'],
+      invalidatesTags: ['UserFavorites', 'ConsumerHistory']
     }),
 
-    toggleFavorite: builder.mutation<{
-      is_favorite: boolean;
-      message: string;
-    }, { production_id: number }>({
+    toggleFavorite: builder.mutation<
+      {
+        is_favorite: boolean;
+        message: string;
+      },
+      { production_id: number }
+    >({
       query: (data) => ({
         url: 'consumer/favorites/toggle_favorite/',
         method: 'POST',
-        body: data,
+        body: data
       }),
-      invalidatesTags: ['UserFavorites', 'ConsumerHistory'],
+      invalidatesTags: ['UserFavorites', 'ConsumerHistory']
     }),
 
     removeFavorite: builder.mutation<void, number>({
       query: (id) => ({
         url: `consumer/favorites/${id}/`,
-        method: 'DELETE',
+        method: 'DELETE'
       }),
-      invalidatesTags: ['UserFavorites', 'ConsumerHistory'],
+      invalidatesTags: ['UserFavorites', 'ConsumerHistory']
     }),
 
     // Shopping Goals
     getShoppingGoals: builder.query<ShoppingGoal[], void>({
       query: () => ({
         url: 'consumer/goals/',
-        method: 'GET',
+        method: 'GET'
       }),
-      providesTags: ['ShoppingGoals'],
+      providesTags: ['ShoppingGoals']
     }),
 
     createShoppingGoal: builder.mutation<ShoppingGoal, Partial<ShoppingGoal>>({
       query: (data) => ({
         url: 'consumer/goals/',
         method: 'POST',
-        body: data,
+        body: data
       }),
-      invalidatesTags: ['ShoppingGoals'],
+      invalidatesTags: ['ShoppingGoals']
     }),
 
-    updateShoppingGoal: builder.mutation<ShoppingGoal, {
-      id: number;
-      data: Partial<ShoppingGoal>;
-    }>({
+    updateShoppingGoal: builder.mutation<
+      ShoppingGoal,
+      {
+        id: number;
+        data: Partial<ShoppingGoal>;
+      }
+    >({
       query: ({ id, data }) => ({
         url: `consumer/goals/${id}/`,
         method: 'PATCH',
-        body: data,
+        body: data
       }),
-      invalidatesTags: ['ShoppingGoals'],
+      invalidatesTags: ['ShoppingGoals']
     }),
 
     deleteShoppingGoal: builder.mutation<void, number>({
       query: (id) => ({
         url: `consumer/goals/${id}/`,
-        method: 'DELETE',
+        method: 'DELETE'
       }),
-      invalidatesTags: ['ShoppingGoals'],
+      invalidatesTags: ['ShoppingGoals']
     }),
 
     // Enhanced existing APIs for consumer use
-    getUserProductionScansEnhanced: builder.query<EnhancedScan[], {
-      include_carbon_data?: boolean;
-      include_farmer_info?: boolean;
-      include_favorites?: boolean;
-      limit?: number;
-    }>({
+    getUserProductionScansEnhanced: builder.query<
+      EnhancedScan[],
+      {
+        include_carbon_data?: boolean;
+        include_farmer_info?: boolean;
+        include_favorites?: boolean;
+        limit?: number;
+      }
+    >({
       query: (params) => ({
         url: 'histories/my_scans/',
         method: 'GET',
@@ -255,57 +270,66 @@ export const consumerApi = baseApi.injectEndpoints({
           include_carbon_data: true,
           include_farmer_info: true,
           include_favorites: true,
-          ...params,
-        },
+          ...params
+        }
       }),
-      providesTags: ['UserScans'],
+      providesTags: ['UserScans']
     }),
 
     // Update user impact (called after scans)
-    updateUserImpact: builder.mutation<UserImpactSummary, {
-      carbon_saved_kg: number;
-      is_better_choice?: boolean;
-      is_local?: boolean;
-    }>({
+    updateUserImpact: builder.mutation<
+      UserImpactSummary,
+      {
+        carbon_saved_kg: number;
+        is_better_choice?: boolean;
+        is_local?: boolean;
+      }
+    >({
       query: (data) => ({
         url: 'consumer/dashboard/update_impact/',
         method: 'POST',
-        body: data,
+        body: data
       }),
-      invalidatesTags: ['ConsumerImpact'],
+      invalidatesTags: ['ConsumerImpact']
     }),
 
     // Get personalized recommendations
-    getPersonalizedRecommendations: builder.query<Array<{
-      type: string;
-      title: string;
-      description: string;
-      products?: ProductComparison[];
-    }>, void>({
+    getPersonalizedRecommendations: builder.query<
+      Array<{
+        type: string;
+        title: string;
+        description: string;
+        products?: ProductComparison[];
+      }>,
+      void
+    >({
       query: () => ({
         url: 'consumer/dashboard/recommendations/',
-        method: 'GET',
+        method: 'GET'
       }),
-      providesTags: ['ConsumerRecommendations'],
+      providesTags: ['ConsumerRecommendations']
     }),
 
     // Analytics for insights
-    getConsumerAnalytics: builder.query<{
-      weekly_scans: number[];
-      monthly_carbon_saved: number[];
-      top_categories: Array<{ name: string; count: number }>;
-      sustainability_trends: Array<{ date: string; score: number }>;
-    }, {
-      period?: 'week' | 'month' | 'year';
-    }>({
+    getConsumerAnalytics: builder.query<
+      {
+        weekly_scans: number[];
+        monthly_carbon_saved: number[];
+        top_categories: Array<{ name: string; count: number }>;
+        sustainability_trends: Array<{ date: string; score: number }>;
+      },
+      {
+        period?: 'week' | 'month' | 'year';
+      }
+    >({
       query: (params) => ({
         url: 'consumer/dashboard/analytics/',
         method: 'GET',
-        params: params,
+        params: params
       }),
-      providesTags: ['ConsumerAnalytics'],
-    }),
-  }),
+      providesTags: ['ConsumerAnalytics']
+    })
+  })
 });
 
 // Export hooks for components
@@ -324,5 +348,5 @@ export const {
   useGetUserProductionScansEnhancedQuery,
   useUpdateUserImpactMutation,
   useGetPersonalizedRecommendationsQuery,
-  useGetConsumerAnalyticsQuery,
+  useGetConsumerAnalyticsQuery
 } = consumerApi;

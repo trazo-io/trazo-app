@@ -58,8 +58,7 @@ import SubscriptionRequired from './utils/protections/SubscriptionRequired';
 import DashboardPricing from 'views/Dashboard/Dashboard/Pricing';
 import SubscriptionSuccess from 'views/Dashboard/Dashboard/Subscription/SubscriptionSuccess';
 import StripeSuccessRedirect from 'views/Dashboard/Dashboard/Subscription/StripeSuccessRedirect';
-import PlanUsage from 'views/Dashboard/PlanUsage';
-import Billing from 'views/Pages/Account/Billing';
+import UnifiedSubscriptionDashboard from 'views/Dashboard/UnifiedSubscription';
 import NoSubscriptionRedirect from './utils/protections/NoSubscriptionRedirect';
 import NewProduction from 'views/Dashboard/Dashboard/components/forms/NewProduction';
 import ModernCarbonDashboard from 'views/Dashboard/Dashboard/Establishment/ModernCarbonDashboard';
@@ -69,6 +68,8 @@ import { usePointsStore } from './store/pointsStore';
 import ProducerEducationDashboard from 'views/Dashboard/Education';
 import EducationFAQ from 'views/Dashboard/Education/EducationFAQ';
 import FieldInterface from 'views/Dashboard/Mobile/FieldInterface';
+import AllScansView from 'views/Dashboard/Commercial/AllScans';
+import AllReviewsView from 'views/Dashboard/Commercial/AllReviews';
 import { useGetCsrfTokenQuery } from './store/api/baseApi';
 
 const App = () => {
@@ -143,7 +144,7 @@ const App = () => {
               {/* Routes accessible without subscription */}
               <Route path="select-company" element={<SelectCompanyView />} />
               <Route path="pricing" element={<DashboardPricing />} />
-              <Route path="account/billing" element={<Billing />} />
+              <Route path="subscription" element={<UnifiedSubscriptionDashboard />} />
               <Route path="stripe-success" element={<StripeSuccessRedirect />} />
 
               {/* Routes requiring subscription */}
@@ -252,9 +253,18 @@ const App = () => {
                   exact
                   element={<CommercialView />}
                 />
+                <Route
+                  path="establishment/:establishmentId/scans"
+                  exact
+                  element={<AllScansView />}
+                />
+                <Route
+                  path="establishment/:establishmentId/reviews"
+                  exact
+                  element={<AllReviewsView />}
+                />
                 <Route path="settings" exact element={<SettingsView />} />
                 <Route path="subscription/success" element={<SubscriptionSuccess />} />
-                <Route path="plan-usage" element={<PlanUsage />} />
                 <Route
                   path="establishment/:establishmentId/carbon"
                   exact

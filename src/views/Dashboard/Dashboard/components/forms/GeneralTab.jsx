@@ -72,32 +72,33 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('[GeneralTab]: Field watching triggered', { 
-      hasOnDataChange: !!onDataChange, 
-      watchedFields, 
-      firstField: watchedFields[0] 
+    console.log('[GeneralTab]: Field watching triggered', {
+      hasOnDataChange: !!onDataChange,
+      watchedFields,
+      firstField: watchedFields[0]
     });
-    
+
     // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = mainInfoMethods.getValues();
-        
+
         // Compare with previous values to avoid unnecessary calls
         const relevantFields = ['name', 'observation'];
         const currentRelevantValues = {};
-        relevantFields.forEach(field => {
+        relevantFields.forEach((field) => {
           currentRelevantValues[field] = currentValues[field];
         });
-        
-        const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
-        
+
+        const hasChanged =
+          JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+
         console.log('[GeneralTab]: Value comparison', {
           currentValues: currentRelevantValues,
           previousValues: previousValuesRef.current,
           hasChanged
         });
-        
+
         // Only trigger if we have meaningful data AND values have actually changed
         if (hasChanged && currentValues.name && currentValues.name.trim().length > 0) {
           console.log('[GeneralTab]: Triggering onDataChange with values', currentValues);

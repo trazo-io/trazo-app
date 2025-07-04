@@ -1,94 +1,62 @@
 // Chakra imports
 import {
-  Accordion,
-  AccordionButton,
-  AccordionIcon,
-  AccordionItem,
-  AccordionPanel,
+  Box,
   Button,
-  Divider,
   Flex,
-  FormControl,
-  FormLabel,
-  IconButton,
   Input,
   InputGroup,
   InputLeftElement,
-  SimpleGrid,
   Table,
   Tbody,
   Text,
   Th,
   Thead,
   Tr,
-  useColorModeValue
+  Td,
+  useColorModeValue,
+  VStack,
+  HStack,
+  useToast,
+  Badge
 } from '@chakra-ui/react';
-import { BellIcon, SearchIcon } from '@chakra-ui/icons';
-import { FormProvider, useForm } from 'react-hook-form';
-import { NavLink, useLocation, useMatch, useParams } from 'react-router-dom';
+import { SearchIcon } from '@chakra-ui/icons';
 import React, { useEffect, useState } from 'react';
-import { object, string } from 'zod';
 
-import Card from 'components/Card/Card';
-import CardBody from 'components/Card/CardBody.tsx';
-import CardHeader from 'components/Card/CardHeader.tsx';
-import FormInput from 'components/Forms/FormInput';
+import {
+  StandardCard,
+  StandardButton,
+  StandardField,
+  StandardInput,
+  StandardSelect
+} from 'components/Design/StandardComponents';
 import MemberRow from './memberRow';
-import Select from 'react-select';
-import { es } from 'date-fns/locale';
 import { useGetCompanyMembersQuery } from 'store/api/companyApi';
 import { useGetUserRolesQuery } from 'store/api/userApi';
 import { useIntl } from 'react-intl';
-// assets
 import { useSelector } from 'react-redux';
-import { zodResolver } from '@hookform/resolvers/zod';
 
-const styles = {
-  multiValue: (base, state) => {
-    return state.data.isFixed
-      ? { ...base, backgroundColor: 'gray', borderRadius: '10px' }
-      : { ...base, borderRadius: '10px' };
-  },
-  multiValueLabel: (base, state) => {
-    return state.data.isFixed
-      ? { ...base, fontWeight: 'bold', color: 'white', paddingRight: 6 }
-      : base;
-  },
-  multiValueRemove: (base, state) => {
-    return state.data.isFixed ? { ...base, display: 'none' } : base;
-  },
-  control: (provided, state) => ({
-    ...provided,
-    border: '1px solid #E2E8F0',
-    borderRadius: '15px',
-    boxShadow: 'none',
-    outline: '2px solid transparent',
-    minHeight: '40px',
-    fontSize: '0.75rem;',
-    marginLeft: '4px'
-  })
-};
+// Types
+interface EstablishmentOption {
+  id: number;
+  name: string;
+}
 
-const formSchemaBasic = object({
-  date: string().min(1, 'Date is required')
-});
+interface RoleOption {
+  id: number;
+  name: string;
+}
 
 export default function SettingsView() {
-  const { establishmentId } = useParams();
   const intl = useIntl();
-  const [currentEstablishmentId, setCurrentEstablishmentId] = useState(null);
-  const [establishment, setEstablishment] = useState(null);
-  const [currentView, setCurrentView] = useState(null);
+  const toast = useToast();
+  const textColor = useColorModeValue('gray.700', 'white');
 
-  const cardColor = useColorModeValue('white', 'gray.700');
-
-  const [value, setValue] = useState(null);
-  const [value2, setValue2] = useState(null);
-
-  const [establishmentsOptions, setEstablishmentsOptions] = useState([]);
+  const [selectedEstablishments, setSelectedEstablishments] = useState<number[]>([]);
+  const [selectedRole, setSelectedRole] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
 
   const currentCompany = useSelector((state) => state.company.currentCompany);
-
   const establishments = useSelector((state) => state.company.currentCompany?.establishments);
 
   const { data: companyMembers } = useGetCompanyMembersQuery(
@@ -100,260 +68,396 @@ export default function SettingsView() {
     }
   );
 
-  // to check for active links and opened collapses
-  let location = useLocation();
-  let searchIcon = useColorModeValue('gray.700', 'gray.200');
-  const bgButton = useColorModeValue(
-    'linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)',
-    'gray.800'
-  );
-  let inputBg = useColorModeValue('white', 'gray.800');
-  const iconBoxInside = useColorModeValue('white', 'white');
-  let mainText = useColorModeValue('gray.700', 'gray.200');
-  let mainTeal = useColorModeValue('green.500', 'green.400');
+  const { data: userRoles } = useGetUserRolesQuery();
 
-  // verifies if routeName is the one active (in browser input)
-  const activeRoute = (routeName, isDashboard = false) => {
-    if (isDashboard) {
-      return location.pathname.startsWith(routeName) ? 'active' : '';
+  // Filter members based on search term
+  const filteredMembers =
+    companyMembers?.filter(
+      (member) =>
+        member.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.role.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
+
+  const handleInviteSubmit = () => {
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!inviteEmail || !emailRegex.test(inviteEmail)) {
+      toast({
+        title: 'Email inválido',
+        description: 'Por favor ingresa un email válido',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+      return;
     }
-    return location.pathname === routeName ? 'active' : '';
+
+    if (!selectedRole) {
+      toast({
+        title: 'Rol requerido',
+        description: 'Por favor selecciona un rol',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+      return;
+    }
+
+    if (selectedEstablishments.length === 0) {
+      toast({
+        title: 'Establecimiento requerido',
+        description: 'Por favor selecciona al menos un establecimiento',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+      return;
+    }
+
+    // TODO: Implement invite logic
+    console.log('Inviting:', {
+      email: inviteEmail,
+      role: selectedRole,
+      establishments: selectedEstablishments
+    });
+
+    toast({
+      title: 'Invitación enviada',
+      description: `Invitación enviada exitosamente a ${inviteEmail}`,
+      status: 'success',
+      duration: 4000,
+      isClosable: true
+    });
+
+    // Reset form
+    setInviteEmail('');
+    setSelectedRole(null);
+    setSelectedEstablishments([]);
+  };
+
+  const handleDiscardChanges = () => {
+    setInviteEmail('');
+    setSelectedRole(null);
+    setSelectedEstablishments([]);
   };
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const onChange = (newValue, actionMeta) => {
-    switch (actionMeta.action) {
-      case 'clear':
-        newValue = null;
-        break;
-    }
-    setValue(newValue);
-  };
+  const establishmentOptions: EstablishmentOption[] =
+    establishments?.map((est) => ({
+      id: est.id,
+      name: est.name
+    })) || [];
 
-  const onChange2 = (newValue, actionMeta) => {
-    switch (actionMeta.action) {
-      case 'clear':
-        newValue = null;
-        break;
-    }
-    setValue2(newValue);
-  };
-
-  const basicMethods = useForm({
-    resolver: zodResolver(formSchemaBasic)
-  });
-
-  const {
-    reset,
-    handleSubmit,
-    formState: { errors, isSubmitSuccessful }
-  } = basicMethods;
-
-  const onSubmitBasic = (data) => {
-    console.log(data);
-  };
-
-  const { data: userRoles } = useGetUserRolesQuery();
-
-  useEffect(() => {
-    if (establishments) {
-      const establishmentValues = establishments.map((establishment) => {
-        return {
-          value: establishment.id,
-          label: establishment.name
-        };
-      });
-      setEstablishmentsOptions(establishmentValues);
-    }
-  }, [establishments]);
+  const roleOptions: RoleOption[] =
+    userRoles?.map((role) => ({
+      id: role.id,
+      name: role.name
+    })) || [];
 
   return (
-    <Flex flexDirection="column" gap="20px" pt={{ base: '120px', md: '75px' }}>
-      <Text
-        color={mainText}
-        color="gray.400"
-        fontSize="sm"
-        bg="inherit"
-        borderRadius="inherit"
-        fontWeight="300"
-        padding="4px"
+    <Box
+      w="100vw"
+      minH="100vh"
+      ml={{ base: 0, md: '-280px' }}
+      position="relative"
+      px={{ base: 4, md: 8, lg: 24 }}
+    >
+      {/* Header Section */}
+      <Box
+        bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
+        pt={{ base: '100px', md: '120px' }}
+        pb={{ base: '60px', md: '80px' }}
+        px={{ base: 4, md: 8 }}
+        mb="-50px"
+        w="100%"
       >
-        {intl.formatMessage({ id: 'app.companySettingsDescription' })}
-      </Text>
-      <Card p="16px">
-        <Text color={mainText} bg="inherit" borderRadius="inherit" fontWeight="bold" padding="10px">
-          {intl.formatMessage({ id: 'app.inviteNewMembers' })}
-        </Text>
-        <Flex direction={'row'} grow={'1'} pr={'32px'}>
-          <FormProvider {...basicMethods}>
-            <form onSubmit={handleSubmit(onSubmitBasic)} style={{ width: '100%' }}>
-              <Flex direction={{ base: 'column', lg: 'row' }} gap="10px" width={'100%'}>
-                <Flex gap="10px" width={'100%'} direction={{ base: 'column', smdd: 'row' }}>
-                  <Flex width={{ base: '100%', smdd: '40%' }}>
-                    <FormInput
-                      fontSize="xs"
-                      borderRadius="15px"
-                      type="text"
-                      placeholder={intl.formatMessage({ id: 'app.inviteByEmail' })}
-                      name="name"
-                      // label="Name"
-                    />
-                  </Flex>
-                  <FormControl width={{ base: '100%', smdd: '40%' }}>
-                    <Select
-                      width={'100%'}
-                      value={value}
-                      styles={styles}
-                      isClearable={true}
-                      name="colors"
-                      placeholder={intl.formatMessage({ id: 'app.selectEstablishments' })}
-                      isMulti
-                      className="basic-multi-select"
-                      classNamePrefix="select"
-                      onChange={onChange}
-                      options={establishmentsOptions}
-                    />
-                  </FormControl>
-                  <FormControl width={{ base: '100%', smdd: '40%' }}>
-                    <Select
-                      width={'100%'}
-                      value={value2}
-                      styles={styles}
-                      isClearable={true}
-                      name="colors"
-                      placeholder={intl.formatMessage({ id: 'app.selectRole' })}
-                      className="basic-multi-select"
-                      classNamePrefix="select"
-                      onChange={onChange2}
-                      options={userRoles?.map((role) => {
-                        return {
-                          value: role.id,
-                          label: role.name
-                        };
-                      })}
-                    />
-                  </FormControl>
-                </Flex>
-                <Flex gap={'10px'} justifyContent={'flex-end'} pt={{ base: '12px', smdd: '0' }}>
-                  <Button
-                    variant="outline"
-                    colorScheme="green"
-                    minW="120px"
-                    h="40px"
-                    fontSize="xs"
-                    px="1.5rem"
-                    onClick={() => {}}
-                  >
-                    {intl.formatMessage({ id: 'app.discardChanges' })}
-                  </Button>
-                  <Button
-                    bg={bgButton}
-                    color="white"
-                    h="40px"
-                    fontSize="xs"
-                    variant="no-hover"
-                    onClick={() => {}}
-                  >
-                    {intl.formatMessage({ id: 'app.sendInvite' })}
-                  </Button>
-                </Flex>
-              </Flex>
-            </form>
-          </FormProvider>
-        </Flex>
-      </Card>
-      <Card p="16px">
-        <Text color={mainText} bg="inherit" borderRadius="inherit" fontWeight="bold" padding="10px">
-          {intl.formatMessage({ id: 'app.membersInThisCompany' })}
-        </Text>
-        <Flex pt={'12px'}>
-          <InputGroup
-            cursor="pointer"
-            bg={inputBg}
-            borderRadius="15px"
-            w={{
-              sm: '60%',
-              md: '200px'
-            }}
-            me={{ sm: '20px', md: '20px' }}
-            _focus={{
-              borderColor: { mainTeal }
-            }}
-            _active={{
-              borderColor: { mainTeal }
-            }}
-          >
-            <InputLeftElement
-              children={
-                <IconButton
-                  bg="inherit"
-                  borderRadius="inherit"
-                  _hover="none"
-                  _active={{
-                    bg: 'inherit',
-                    transform: 'none',
-                    borderColor: 'transparent'
-                  }}
-                  _focus={{
-                    boxShadow: 'none'
-                  }}
-                  icon={<SearchIcon color={searchIcon} w="15px" h="15px" />}
-                ></IconButton>
+        <Box maxW="none" mx="auto" pl={{ base: 0, md: '300px' }}>
+          <VStack spacing={3} textAlign="center">
+            <Text
+              fontSize={{ base: '2xl', md: '4xl' }}
+              color="green.600"
+              fontWeight="bold"
+              letterSpacing="-0.02em"
+            >
+              {intl.formatMessage({ id: 'app.companySettings' }) || 'Config. de la compañía'}
+            </Text>
+            <Text
+              fontSize={{ base: 'md', md: 'lg' }}
+              color="gray.600"
+              fontWeight="normal"
+              maxW={{ base: '90%', md: '70%' }}
+              lineHeight="1.6"
+            >
+              {intl.formatMessage({ id: 'app.companySettingsDescription' }) ||
+                'Esta pantalla es solo visible para administradores de compañía'}
+            </Text>
+          </VStack>
+        </Box>
+      </Box>
+
+      {/* Main Content */}
+      <Box
+        w="100%"
+        px={{ base: 4, md: 8 }}
+        pl={{ base: 4, md: '320px' }}
+        position="relative"
+        zIndex={10}
+      >
+        <VStack spacing={8} w="100%" pb={10}>
+          {/* Invite New Members Section */}
+          <Box w="100%">
+            <StandardCard
+              title={
+                intl.formatMessage({ id: 'app.inviteNewMembers' }) || 'Invitar nuevos miembros'
               }
-            />
-            <Input
-              fontSize="xs"
-              py="11px"
-              color={mainText}
-              placeholder={intl.formatMessage({ id: 'app.typeHere' })}
-              borderRadius="inherit"
-            />
-          </InputGroup>
-        </Flex>
-        <Card px="0px" minH="280px">
-          <CardBody overflowX={{ sm: 'scroll', md: 'hidden' }}>
-            <Table variant="simple">
-              <Thead>
-                <Tr>
-                  {[
-                    intl.formatMessage({ id: 'app.name' }),
-                    intl.formatMessage({ id: 'app.currentWorkingEstablishments' }),
-                    intl.formatMessage({ id: 'app.role' })
-                  ].map((label) => {
-                    return (
-                      <Th
-                        color="gray.400"
-                        fontSize="xs"
-                        key={label}
-                        paddingInlineStart={'25px'}
-                        paddingInlineEnd={'25px'}
-                      >
-                        {label}
-                      </Th>
-                    );
-                  })}
-                </Tr>
-              </Thead>
-              <Tbody>
-                {companyMembers?.map((member) => {
-                  return (
-                    <MemberRow
-                      name={member.user}
-                      establishments={member.establishments_in_charge.map((establishment) => {
-                        return establishment.name;
-                      })}
-                      role={member.role}
-                    />
-                  );
-                })}
-              </Tbody>
-            </Table>
-          </CardBody>
-        </Card>
-      </Card>
-    </Flex>
+              variant="elevated"
+            >
+              <Box py={2}>
+                <VStack spacing={8} align="stretch">
+                  <VStack spacing={6} w="100%">
+                    <VStack spacing={6} w="100%">
+                      <StandardField label="Correo electrónico del nuevo miembro" required>
+                        <StandardInput
+                          placeholder="ejemplo@empresa.com"
+                          value={inviteEmail}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setInviteEmail(e.target.value)
+                          }
+                          type="email"
+                          size="lg"
+                        />
+                      </StandardField>
+
+                      <HStack spacing={6} w="100%" align="flex-start">
+                        <Box flex={1}>
+                          <StandardField label="Establecimiento donde trabajará" required>
+                            <StandardSelect
+                              placeholder="Selecciona un establecimiento..."
+                              value={
+                                selectedEstablishments.length > 0 ? selectedEstablishments[0] : ''
+                              }
+                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                const value = parseInt(e.target.value);
+                                if (value) {
+                                  setSelectedEstablishments([value]);
+                                } else {
+                                  setSelectedEstablishments([]);
+                                }
+                              }}
+                            >
+                              <option value="">Selecciona un establecimiento...</option>
+                              {establishmentOptions.map((est: EstablishmentOption) => (
+                                <option key={est.id} value={est.id}>
+                                  {est.name}
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          </StandardField>
+                        </Box>
+
+                        <Box flex={1}>
+                          <StandardField label="Rol y permisos" required>
+                            <StandardSelect
+                              placeholder="Selecciona un rol..."
+                              value={selectedRole || ''}
+                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                const value = parseInt(e.target.value);
+                                setSelectedRole(value || null);
+                              }}
+                            >
+                              <option value="">Selecciona un rol...</option>
+                              {roleOptions.map((role: RoleOption) => (
+                                <option key={role.id} value={role.id}>
+                                  {role.name}
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          </StandardField>
+                        </Box>
+                      </HStack>
+                    </VStack>
+
+                    <HStack spacing={4} w="100%" justify="flex-end">
+                      <StandardButton variant="outline" onClick={handleDiscardChanges} size="lg">
+                        {intl.formatMessage({ id: 'app.discardChanges' }) || 'Descartar cambios'}
+                      </StandardButton>
+                      <StandardButton variant="primary" onClick={handleInviteSubmit} size="lg">
+                        {intl.formatMessage({ id: 'app.sendInvite' }) || 'Enviar invitación'}
+                      </StandardButton>
+                    </HStack>
+                  </VStack>
+                </VStack>
+              </Box>
+            </StandardCard>
+          </Box>
+
+          <Box w="100%">
+            <StandardCard
+              title={
+                intl.formatMessage({ id: 'app.membersInThisCompany' }) ||
+                'Miembros en esta compañía'
+              }
+              variant="elevated"
+            >
+              <Box py={2}>
+                <VStack spacing={6} align="stretch">
+                  {/* Search Bar */}
+                  <Flex justify="space-between" align="center" w="100%" flexWrap="wrap" gap={4}>
+                    <InputGroup maxW="500px" size="lg">
+                      <InputLeftElement h="full">
+                        <SearchIcon color="gray.400" />
+                      </InputLeftElement>
+                      <Input
+                        placeholder={
+                          intl.formatMessage({ id: 'app.typeHere' }) || 'Escribe aquí...'
+                        }
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        borderRadius="xl"
+                        bg="white"
+                        h="48px"
+                        fontSize="md"
+                        _placeholder={{ color: 'gray.400' }}
+                        _focus={{
+                          borderColor: 'green.400',
+                          boxShadow: '0 0 0 1px rgb(72, 187, 120)',
+                          bg: 'white'
+                        }}
+                      />
+                    </InputGroup>
+                    <Badge
+                      px={4}
+                      py={2}
+                      borderRadius="full"
+                      bg="green.100"
+                      color="green.800"
+                      fontSize="sm"
+                      fontWeight="medium"
+                    >
+                      {filteredMembers.length} miembro{filteredMembers.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </Flex>
+
+                  {/* Members Table */}
+                  <Box
+                    overflowX="auto"
+                    w="100%"
+                    borderRadius="2xl"
+                    border="1px solid"
+                    borderColor="gray.100"
+                    bg="white"
+                    boxShadow="sm"
+                  >
+                    <Table variant="simple" size="lg">
+                      <Thead bg="gray.50" borderBottom="2px solid" borderColor="gray.100">
+                        <Tr>
+                          <Th
+                            color="gray.700"
+                            fontWeight="bold"
+                            fontSize="xs"
+                            textTransform="uppercase"
+                            letterSpacing="wider"
+                            py={5}
+                            px={6}
+                          >
+                            {intl.formatMessage({ id: 'app.name' }) || 'NOMBRE'}
+                          </Th>
+                          <Th
+                            color="gray.700"
+                            fontWeight="bold"
+                            fontSize="xs"
+                            textTransform="uppercase"
+                            letterSpacing="wider"
+                            py={5}
+                            px={6}
+                          >
+                            {intl.formatMessage({ id: 'app.currentWorkingEstablishments' }) ||
+                              'ESTABLECIMIENTOS EN LOS QUE TRABAJA'}
+                          </Th>
+                          <Th
+                            color="gray.700"
+                            fontWeight="bold"
+                            fontSize="xs"
+                            textTransform="uppercase"
+                            letterSpacing="wider"
+                            py={5}
+                            px={6}
+                          >
+                            {intl.formatMessage({ id: 'app.role' }) || 'ROL'}
+                          </Th>
+                          <Th
+                            color="gray.700"
+                            fontWeight="bold"
+                            fontSize="xs"
+                            textTransform="uppercase"
+                            letterSpacing="wider"
+                            py={5}
+                            px={6}
+                          >
+                            {intl.formatMessage({ id: 'app.actions' }) || 'ACCIONES'}
+                          </Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {filteredMembers.length > 0 ? (
+                          filteredMembers.map((member: any, index: number) => (
+                            <MemberRow
+                              key={index}
+                              name={member.user}
+                              establishments={member.establishments_in_charge.map(
+                                (est: any) => est.name
+                              )}
+                              role={member.role}
+                            />
+                          ))
+                        ) : (
+                          <Tr>
+                            <Td colSpan={4} textAlign="center" py={16}>
+                              <VStack spacing={4}>
+                                <Box
+                                  w="60px"
+                                  h="60px"
+                                  borderRadius="full"
+                                  bg="gray.100"
+                                  display="flex"
+                                  alignItems="center"
+                                  justifyContent="center"
+                                  mb={2}
+                                >
+                                  <Text fontSize="2xl">👥</Text>
+                                </Box>
+                                <Text color="gray.600" fontSize="lg" fontWeight="semibold">
+                                  {searchTerm
+                                    ? 'No se encontraron miembros'
+                                    : 'No hay miembros aún'}
+                                </Text>
+                                <Text
+                                  color="gray.500"
+                                  fontSize="md"
+                                  maxW="300px"
+                                  textAlign="center"
+                                >
+                                  {searchTerm
+                                    ? 'Intenta con otros términos de búsqueda'
+                                    : 'Invita a tu primer miembro del equipo usando el formulario arriba'}
+                                </Text>
+                              </VStack>
+                            </Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
+                  </Box>
+                </VStack>
+              </Box>
+            </StandardCard>
+          </Box>
+        </VStack>
+      </Box>
+    </Box>
   );
 }
