@@ -1,9 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
-
-// Dynamic import for react-apexcharts to avoid SSR issues
-const Chart = React.lazy(() => 
-  import('react-apexcharts').then(module => ({ default: module.default }))
-);
+import React, { useState, useEffect } from 'react';
 
 interface ChartWrapperProps {
   options: any;
@@ -22,15 +17,26 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
   height = "100%",
   chartRef 
 }) => {
-  const [isClient, setIsClient] = useState(false);
+  const [Chart, setChart] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Ensure we're on the client side
-    setIsClient(typeof window !== 'undefined');
+    // Only import on client side
+    if (typeof window !== 'undefined') {
+      import('react-apexcharts')
+        .then((module) => {
+          setChart(() => module.default);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error('Failed to load chart:', error);
+          setIsLoading(false);
+        });
+    }
   }, []);
 
-  // Don't render on server side or until client is ready
-  if (!isClient) {
+  // Loading state
+  if (isLoading || !Chart) {
     return (
       <div 
         style={{ 
@@ -50,31 +56,14 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
   }
 
   return (
-    <Suspense fallback={
-      <div 
-        style={{ 
-          width, 
-          height: height === "100%" ? "300px" : height,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#f7fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '6px'
-        }}
-      >
-        <span style={{ color: '#718096' }}>Loading chart...</span>
-      </div>
-    }>
-      <Chart
-        ref={chartRef}
-        options={options}
-        series={series}
-        type={type}
-        width={width}
-        height={height}
-      />
-    </Suspense>
+    <Chart
+      ref={chartRef}
+      options={options}
+      series={series}
+      type={type}
+      width={width}
+      height={height}
+    />
   );
 };
 

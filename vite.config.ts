@@ -29,7 +29,7 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    exclude: ['date-fns', 'apexcharts', 'react-apexcharts'],
+    exclude: ['date-fns'],
     include: [
       // Pre-bundle critical dependencies for faster mobile loading
       'react',
@@ -152,14 +152,17 @@ export default defineConfig({
             return 'forms-lazy';
           }
 
-          // CHARTS - Dashboard only, lazy loaded with special handling for SSR
+          // CHARTS - Load with vendor instead of lazy loading to avoid bundling issues  
           if (
-            id.includes('node_modules/recharts') ||
             id.includes('node_modules/apexcharts') ||
-            id.includes('node_modules/react-apexcharts') ||
-            id.includes('src/components/Charts')
+            id.includes('node_modules/react-apexcharts')
           ) {
-            return 'charts-lazy';
+            return 'vendor-charts';
+          }
+          
+          // CHARTS COMPONENTS - Keep separate but not lazy
+          if (id.includes('src/components/Charts')) {
+            return 'app-charts';
           }
 
           // DEPRECATED FEATURES - To be removed
