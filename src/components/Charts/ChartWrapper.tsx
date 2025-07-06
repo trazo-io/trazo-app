@@ -1,80 +1,111 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ChartWrapperProps {
-  options: any;
-  series: any;
+  options?: any;
+  series?: any;
   type: string;
   width?: string | number;
   height?: string | number;
   chartRef?: React.Ref<any>;
+  data?: any[];
 }
 
 const ChartWrapper: React.FC<ChartWrapperProps> = ({ 
-  options, 
-  series, 
   type, 
   width = "100%", 
-  height = "100%",
-  chartRef 
+  height = 300,
+  data = [],
+  series = []
 }) => {
-  const [Chart, setChart] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    // Only import on client side and with additional safety checks
-    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-      // Add a small delay to ensure all dependencies are loaded
-      const timer = setTimeout(() => {
-        import('react-apexcharts')
-          .then((module) => {
-            if (module && module.default) {
-              setChart(() => module.default);
-              setIsLoading(false);
-            } else {
-              throw new Error('Chart module not loaded properly');
-            }
-          })
-          .catch((error) => {
-            console.error('Failed to load chart:', error);
-            setHasError(true);
-            setIsLoading(false);
-          });
-      }, 100);
-
-      return () => clearTimeout(timer);
-    } else {
-      setIsLoading(false);
+  // Convert ApexCharts-style data to Recharts format
+  const formatData = () => {
+    if (data && data.length > 0) {
+      return data;
     }
-  }, []);
+    
+    // Convert series data to Recharts format
+    if (series && series.length > 0) {
+      const firstSeries = series[0];
+      if (firstSeries && firstSeries.data) {
+        return firstSeries.data.map((value: number, index: number) => ({
+          name: `Point ${index + 1}`,
+          value: value,
+          uv: value,
+          pv: value
+        }));
+      }
+    }
+    
+    // Default sample data
+    return [
+      { name: 'Jan', value: 400, uv: 400, pv: 240 },
+      { name: 'Feb', value: 300, uv: 300, pv: 139 },
+      { name: 'Mar', value: 200, uv: 200, pv: 980 },
+      { name: 'Apr', value: 278, uv: 278, pv: 390 },
+      { name: 'May', value: 189, uv: 189, pv: 480 },
+    ];
+  };
 
-  // Error state
-  if (hasError) {
+  const chartData = formatData();
+
+  const renderChart = () => {
+    switch (type.toLowerCase()) {
+      case 'bar':
+        return (
+          <ResponsiveContainer width={width} height={height}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#059669" />
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      
+      case 'line':
+      case 'area':
+        return (
+          <ResponsiveContainer width={width} height={height}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Line type="monotone" dataKey="value" stroke="#059669" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        );
+      
+      default:
+        return (
+          <ResponsiveContainer width={width} height={height}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#059669" />
+            </BarChart>
+          </ResponsiveContainer>
+        );
+    }
+  };
+
+  try {
     return (
-      <div 
-        style={{ 
-          width, 
-          height: height === "100%" ? "300px" : height,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#fed7d7',
-          border: '1px solid #fc8181',
-          borderRadius: '6px'
-        }}
-      >
-        <span style={{ color: '#c53030' }}>Chart unavailable</span>
+      <div style={{ width, height }}>
+        {renderChart()}
       </div>
     );
-  }
-
-  // Loading state
-  if (isLoading || !Chart) {
+  } catch (error) {
+    console.error('Chart rendering error:', error);
     return (
       <div 
         style={{ 
           width, 
-          height: height === "100%" ? "300px" : height,
+          height,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -83,39 +114,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
           borderRadius: '6px'
         }}
       >
-        <span style={{ color: '#718096' }}>Loading chart...</span>
-      </div>
-    );
-  }
-
-  // Wrap chart rendering in try-catch for additional safety
-  try {
-    return (
-      <Chart
-        ref={chartRef}
-        options={options}
-        series={series}
-        type={type}
-        width={width}
-        height={height}
-      />
-    );
-  } catch (error) {
-    console.error('Chart rendering error:', error);
-    return (
-      <div 
-        style={{ 
-          width, 
-          height: height === "100%" ? "300px" : height,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#fed7d7',
-          border: '1px solid #fc8181',
-          borderRadius: '6px'
-        }}
-      >
-        <span style={{ color: '#c53030' }}>Chart error</span>
+        <span style={{ color: '#718096' }}>Chart unavailable</span>
       </div>
     );
   }

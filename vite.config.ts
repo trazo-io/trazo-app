@@ -31,7 +31,7 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    exclude: ['date-fns', 'apexcharts', 'react-apexcharts'],
+    exclude: ['date-fns'],
     include: [
       // Pre-bundle critical dependencies for faster mobile loading
       'react',
@@ -87,11 +87,8 @@ export default defineConfig({
             return 'qr-critical';
           }
 
-          // CHARTS - Keep charts completely separate and optional
-          if (
-            id.includes('node_modules/apexcharts') ||
-            id.includes('node_modules/react-apexcharts')
-          ) {
+          // CHARTS - Recharts vendor chunk
+          if (id.includes('node_modules/recharts')) {
             return 'charts-vendor';
           }
           
