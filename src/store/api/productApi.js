@@ -68,7 +68,7 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.address) {
           formData.append('address', parcelData.address);
         }
-        
+
         // Note: crop_type field removed - it's now stored in History model for per-production tracking
 
         return {
@@ -129,7 +129,7 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.address) {
           formData.append('address', parcelData.address);
         }
-        
+
         // Note: crop_type field removed - it's now stored in History model for per-production tracking
 
         return {

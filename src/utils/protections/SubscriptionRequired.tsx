@@ -36,14 +36,21 @@ const SubscriptionRequired = () => {
   // const hasActiveSubscription = useAppSelector(hasSubscription);
   const [redirectTimerActive, setRedirectTimerActive] = useState(false);
 
-  // Get company data from Redux
+  // Get company data from Redux (check both auth and company slices)
   const company = useSelector((state: RootState) => {
-    // Check if auth exists in state with correct type
+    // First check auth state for companies (normal login flow)
     const auth = state.auth as any;
     if (auth && auth.companies && auth.companies.length > 0) {
       const selectedId = auth.selectedCompany;
       return auth.companies.find((company: Company) => company.id === selectedId) || null;
     }
+    
+    // Fallback to companySlice for invitation flow
+    const companyState = state.companySlice as any;
+    if (companyState && companyState.currentCompany) {
+      return companyState.currentCompany;
+    }
+    
     return null;
   });
 

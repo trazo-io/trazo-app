@@ -54,6 +54,7 @@ import { BsStarFill, BsStarHalf, BsStar } from 'react-icons/bs';
 
 // API imports
 import { useGetCompleteSummaryQuery } from '../../../store/api/carbonApi';
+import { useCreateScanMutation } from '../../../store/api/historyApi';
 
 // Modern components (keeping the ones you like)
 import {
@@ -616,7 +617,10 @@ function ProductDetail() {
   const textColor = useColorModeValue('gray.800', 'white');
   const headerFontSize = { base: '2xl', md: '3xl', lg: '4xl' };
 
-  // API query
+  // State for scan creation
+  const [scanCreated, setScanCreated] = useState(false);
+  
+  // API queries
   const {
     data: completeData,
     error: completeError,
@@ -624,6 +628,8 @@ function ProductDetail() {
   } = useGetCompleteSummaryQuery(productionId || '', {
     skip: !productionId
   });
+  
+  const [createScan] = useCreateScanMutation();
 
   // Educational modal
   const {
@@ -637,6 +643,30 @@ function ProductDetail() {
     setEducationTopic(topic);
     onEducationOpen();
   };
+  
+  // Create scan when page loads (useEffect)
+  useEffect(() => {
+    if (productionId && !scanCreated && !isCompleteLoading) {
+      console.log('🔍 Creating scan for production:', productionId);
+      
+      // Create the scan
+      createScan({
+        production_id: productionId,
+        city: null, // Could be enhanced with geolocation
+        country: null
+      })
+        .unwrap()
+        .then((result) => {
+          console.log('✅ Scan created successfully:', result);
+          setScanCreated(true);
+        })
+        .catch((error) => {
+          console.error('❌ Failed to create scan:', error);
+          // Still mark as attempted to avoid retry loops
+          setScanCreated(true);
+        });
+    }
+  }, [productionId, scanCreated, isCompleteLoading, createScan]);
 
   const handleShare = async () => {
     try {

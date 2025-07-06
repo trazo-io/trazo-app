@@ -17,7 +17,14 @@ import {
   VStack,
   HStack,
   useToast,
-  Badge
+  Badge,
+  Checkbox,
+  Stack,
+  Wrap,
+  WrapItem,
+  Tag,
+  TagLabel,
+  TagCloseButton
 } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
 import React, { useEffect, useState } from 'react';
@@ -32,6 +39,7 @@ import {
 import MemberRow from './memberRow';
 import { useGetCompanyMembersQuery } from 'store/api/companyApi';
 import { useGetUserRolesQuery } from 'store/api/userApi';
+import { useSendInvitationMutation } from 'store/api/invitationApi';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
@@ -42,7 +50,7 @@ interface EstablishmentOption {
 }
 
 interface RoleOption {
-  id: number;
+  id: string;
   name: string;
 }
 
@@ -52,7 +60,7 @@ export default function SettingsView() {
   const textColor = useColorModeValue('gray.700', 'white');
 
   const [selectedEstablishments, setSelectedEstablishments] = useState<number[]>([]);
-  const [selectedRole, setSelectedRole] = useState<number | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
 
@@ -69,6 +77,7 @@ export default function SettingsView() {
   );
 
   const { data: userRoles } = useGetUserRolesQuery();
+  const [sendInvitation, { isLoading: isSendingInvitation }] = useSendInvitationMutation();
 
   // Filter members based on search term
   const filteredMembers =
@@ -78,7 +87,7 @@ export default function SettingsView() {
         member.role.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
-  const handleInviteSubmit = () => {
+  const handleInviteSubmit = async () => {
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -104,7 +113,8 @@ export default function SettingsView() {
       return;
     }
 
-    if (selectedEstablishments.length === 0) {
+    // Company Admins don't need establishment selection (they get all automatically)
+    if (selectedRole !== 'CA' && selectedEstablishments.length === 0) {
       toast({
         title: 'Establecimiento requerido',
         description: 'Por favor selecciona al menos un establecimiento',
@@ -115,25 +125,42 @@ export default function SettingsView() {
       return;
     }
 
-    // TODO: Implement invite logic
-    console.log('Inviting:', {
-      email: inviteEmail,
-      role: selectedRole,
-      establishments: selectedEstablishments
-    });
+    try {
+      // For Company Admin, use all establishments; for others, use selected ones
+      const establishmentsToSend = selectedRole === 'CA' && establishments 
+        ? establishments.map(est => est.id)
+        : selectedEstablishments;
+        
+      await sendInvitation({
+        email: inviteEmail,
+        role: selectedRole || 'DW',
+        establishments: establishmentsToSend,
+        invitee_name: inviteEmail.split('@')[0] // Use email prefix as default name
+      }).unwrap();
 
-    toast({
-      title: 'Invitación enviada',
-      description: `Invitación enviada exitosamente a ${inviteEmail}`,
-      status: 'success',
-      duration: 4000,
-      isClosable: true
-    });
+      toast({
+        title: 'Invitación enviada',
+        description: `Invitación enviada exitosamente a ${inviteEmail}`,
+        status: 'success',
+        duration: 4000,
+        isClosable: true
+      });
 
-    // Reset form
-    setInviteEmail('');
-    setSelectedRole(null);
-    setSelectedEstablishments([]);
+      // Reset form
+      setInviteEmail('');
+      setSelectedRole(null);
+      setSelectedEstablishments([]);
+
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      toast({
+        title: 'Error al enviar invitación',
+        description: error?.data?.error || 'Ocurrió un error al enviar la invitación',
+        status: 'error',
+        duration: 4000,
+        isClosable: true
+      });
+    }
   };
 
   const handleDiscardChanges = () => {
@@ -234,28 +261,114 @@ export default function SettingsView() {
 
                       <HStack spacing={6} w="100%" align="flex-start">
                         <Box flex={1}>
-                          <StandardField label="Establecimiento donde trabajará" required>
-                            <StandardSelect
-                              placeholder="Selecciona un establecimiento..."
-                              value={
-                                selectedEstablishments.length > 0 ? selectedEstablishments[0] : ''
-                              }
-                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                const value = parseInt(e.target.value);
-                                if (value) {
-                                  setSelectedEstablishments([value]);
-                                } else {
-                                  setSelectedEstablishments([]);
-                                }
-                              }}
-                            >
-                              <option value="">Selecciona un establecimiento...</option>
-                              {establishmentOptions.map((est: EstablishmentOption) => (
-                                <option key={est.id} value={est.id}>
-                                  {est.name}
-                                </option>
-                              ))}
-                            </StandardSelect>
+                          <StandardField label="Establecimientos donde trabajará" required>
+                            <Box>
+                              {/* Show selected establishments as tags */}
+                              {selectedEstablishments.length > 0 && (
+                                <Wrap spacing={2} mb={3}>
+                                  {selectedEstablishments.map((estId) => {
+                                    const establishment = establishmentOptions.find(e => e.id === estId);
+                                    return (
+                                      <WrapItem key={estId}>
+                                        <Tag
+                                          size="md"
+                                          borderRadius="full"
+                                          variant="solid"
+                                          colorScheme="green"
+                                        >
+                                          <TagLabel>{establishment?.name}</TagLabel>
+                                          <TagCloseButton
+                                            onClick={() => {
+                                              setSelectedEstablishments(prev => 
+                                                prev.filter(id => id !== estId)
+                                              );
+                                            }}
+                                          />
+                                        </Tag>
+                                      </WrapItem>
+                                    );
+                                  })}
+                                </Wrap>
+                              )}
+                              
+                              {/* Checkbox list for selecting establishments */}
+                              <Box
+                                border="1px solid"
+                                borderColor="gray.300"
+                                borderRadius="lg"
+                                p={4}
+                                maxH="200px"
+                                overflowY="auto"
+                                bg="white"
+                              >
+                                <Stack spacing={2}>
+                                  {establishmentOptions.map((est: EstablishmentOption) => (
+                                    <Checkbox
+                                      key={est.id}
+                                      isChecked={selectedEstablishments.includes(est.id)}
+                                      isDisabled={selectedRole === 'CA'}
+                                      onChange={(e) => {
+                                        // Don't allow changes if Company Admin is selected
+                                        if (selectedRole === 'CA') return;
+                                        
+                                        if (e.target.checked) {
+                                          setSelectedEstablishments(prev => [...prev, est.id]);
+                                        } else {
+                                          setSelectedEstablishments(prev => 
+                                            prev.filter(id => id !== est.id)
+                                          );
+                                        }
+                                      }}
+                                      colorScheme="green"
+                                    >
+                                      <Text 
+                                        fontSize="sm" 
+                                        color={selectedRole === 'CA' ? 'gray.500' : 'inherit'}
+                                      >
+                                        {est.name}
+                                        {selectedRole === 'CA' && (
+                                          <Text as="span" fontSize="xs" color="blue.600" ml={2}>
+                                            (incluido automáticamente)
+                                          </Text>
+                                        )}
+                                      </Text>
+                                    </Checkbox>
+                                  ))}
+                                  {establishmentOptions.length === 0 && (
+                                    <Text color="gray.500" fontSize="sm" textAlign="center">
+                                      No hay establecimientos disponibles
+                                    </Text>
+                                  )}
+                                </Stack>
+                              </Box>
+                            </Box>
+                            
+                            {/* Company Admin Notice */}
+                            {selectedRole === 'CA' && (
+                              <Box
+                                mt={3}
+                                p={3}
+                                bg="blue.50"
+                                border="1px solid"
+                                borderColor="blue.200"
+                                borderRadius="lg"
+                              >
+                                <HStack spacing={2}>
+                                  <Box
+                                    w="6px"
+                                    h="6px"
+                                    bg="blue.500"
+                                    borderRadius="full"
+                                    flexShrink={0}
+                                    mt={1}
+                                  />
+                                  <Text fontSize="sm" color="blue.700" lineHeight="1.5">
+                                    <Text as="span" fontWeight="600">Administrador de Compañía:</Text>
+                                    {' '}Tendrá acceso a todos los establecimientos automáticamente
+                                  </Text>
+                                </HStack>
+                              </Box>
+                            )}
                           </StandardField>
                         </Box>
 
@@ -265,8 +378,18 @@ export default function SettingsView() {
                               placeholder="Selecciona un rol..."
                               value={selectedRole || ''}
                               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                const value = parseInt(e.target.value);
+                                const value = e.target.value;
                                 setSelectedRole(value || null);
+                                
+                                // If Company Admin is selected, automatically select all establishments
+                                if (value === 'CA' && establishments) {
+                                  const allEstablishmentIds = establishments.map(est => est.id);
+                                  setSelectedEstablishments(allEstablishmentIds);
+                                }
+                                // If other role is selected, clear establishments to let user choose
+                                else if (value && value !== 'CA') {
+                                  setSelectedEstablishments([]);
+                                }
                               }}
                             >
                               <option value="">Selecciona un rol...</option>
@@ -285,7 +408,13 @@ export default function SettingsView() {
                       <StandardButton variant="outline" onClick={handleDiscardChanges} size="lg">
                         {intl.formatMessage({ id: 'app.discardChanges' }) || 'Descartar cambios'}
                       </StandardButton>
-                      <StandardButton variant="primary" onClick={handleInviteSubmit} size="lg">
+                      <StandardButton 
+                        variant="primary" 
+                        onClick={handleInviteSubmit} 
+                        size="lg"
+                        isLoading={isSendingInvitation}
+                        loadingText="Enviando..."
+                      >
                         {intl.formatMessage({ id: 'app.sendInvite' }) || 'Enviar invitación'}
                       </StandardButton>
                     </HStack>

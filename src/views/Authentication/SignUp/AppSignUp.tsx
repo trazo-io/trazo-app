@@ -80,7 +80,7 @@ const AppSignUp: React.FC = () => {
         isClosable: true
       });
 
-      navigate('/auth/verify-email', { state: { email: data.email } });
+      navigate('/auth/verifyemail', { state: { email: data.email } });
     } catch (err: any) {
       const errorMessage =
         err?.data?.detail || err?.data?.email?.[0] || 'Registration failed. Please try again.';

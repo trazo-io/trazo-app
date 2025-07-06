@@ -45,7 +45,10 @@ export const baseApi = createApi({
     'UserScans',
     'ShoppingGoals',
     'ConsumerRecommendations',
-    'ConsumerAnalytics'
+    'ConsumerAnalytics',
+    'Notification',
+    'NotificationCount',
+    'NotificationPreferences'
   ]
 });
 

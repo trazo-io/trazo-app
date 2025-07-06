@@ -6,6 +6,9 @@ import SignUpConsumer from 'views/Authentication/SignUp/ConsumerSignUp';
 import SignInApp from 'views/Authentication/SignIn/AppSignIn';
 import SignUp from 'views/Authentication/SignUp/AppSignUp';
 import VerifyEmail from 'views/Authentication/SignUp/VerifyEmail';
+import ModernVerifyEmail from 'views/Authentication/SignUp/ModernVerifyEmail';
+import ModernVerifyEmailProducer from 'views/Authentication/SignUp/ModernVerifyEmailProducer';
+import ModernVerifyEmailConsumer from 'views/Authentication/SignUp/ModernVerifyEmailConsumer';
 
 type RouteConfig = {
   auth: {
@@ -34,7 +37,7 @@ export const routeConfig: AppConfig = {
       path: '/auth',
       signin: SignInApp,
       signup: SignUp,
-      verifyEmail: VerifyEmail
+      verifyEmail: ModernVerifyEmailProducer
     },
     defaultRedirect: '/admin/dashboard',
     protected: {
@@ -49,7 +52,7 @@ export const routeConfig: AppConfig = {
       path: '/auth',
       signin: SignInConsumer,
       signup: SignUpConsumer,
-      verifyEmail: VerifyEmailConsumer
+      verifyEmail: ModernVerifyEmailConsumer
     },
     defaultRedirect: '/admin/dashboard/impact',
     protected: {

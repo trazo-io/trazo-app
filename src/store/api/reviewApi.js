@@ -61,7 +61,7 @@ export const historyApi = baseApi.injectEndpoints({
           company_id,
           page: page.toString(),
           page_size: page_size.toString(),
-          ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== '' && v != null))
+          ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== '' && v != null))
         });
         return {
           url: `reviews/establishment_reviews_paginated/?${params}`,

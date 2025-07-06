@@ -16,7 +16,7 @@
 */
 
 // Chakra Icons
-import { BellIcon, SearchIcon } from '@chakra-ui/icons';
+import { SearchIcon } from '@chakra-ui/icons';
 // Chakra Imports
 import {
   Button,
@@ -25,10 +25,6 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
   Text,
   useColorModeValue
 } from '@chakra-ui/react';
@@ -37,17 +33,14 @@ import { ProfileIcon, SettingsIcon } from 'components/Icons/Icons';
 import React, { useEffect, useState } from 'react';
 
 // Custom Components
-import { ItemContent } from 'components/Menu/ItemContent';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NotificationDropdown } from 'components/Notifications/NotificationDropdown';
+import { useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { RiLogoutBoxRLine } from 'react-icons/ri';
 import SidebarResponsive from 'components/Sidebar/SidebarResponsive';
 import ConsumerSidebarResponsive from 'components/Sidebar/ConsumerSidebarResponsive';
 import { consumerRoutes } from 'layouts/AdminConsumer';
-// Assets
-import avatar1 from 'assets/img/avatars/avatar1.png';
-import avatar2 from 'assets/img/avatars/avatar2.png';
-import avatar3 from 'assets/img/avatars/avatar3.png';
+// Hooks
 import { clearCurrentCompany } from 'store/features/companySlice';
 import { clearUser } from 'store/features/userSlice';
 import { logout as logoutAction } from 'store/features/authSlice';
@@ -101,8 +94,8 @@ export default function HeaderLinks(props: HeaderLinksProps) {
   useEffect(() => {
     const routes = [...defaultRoutes];
     if (
-      currentUser?.companies.length > 0 &&
-      currentUser?.companies[0].role === 'Company Admin' &&
+      currentUser?.companies?.length > 0 &&
+      currentUser?.companies[0]?.role === 'Company Admin' &&
       !routes.some((route) => route.id === 'companySettings') // Check if route already exists
     ) {
       const companySettingRoute = {
@@ -258,42 +251,7 @@ export default function HeaderLinks(props: HeaderLinksProps) {
         w="18px"
         h="18px"
       />
-      <Menu>
-        <MenuButton>
-          <BellIcon color={navbarIcon} w="18px" h="18px" />
-        </MenuButton>
-        {/* <MenuList p="16px 8px">
-          <Flex flexDirection="column">
-            <MenuItem borderRadius="8px" mb="10px">
-              <ItemContent
-                time="13 minutes ago"
-                info="from Alicia"
-                boldInfo="New Message"
-                aName="Alicia"
-                aSrc={avatar1}
-              />
-            </MenuItem>
-            <MenuItem borderRadius="8px" mb="10px">
-              <ItemContent
-                time="2 days ago"
-                info="by Josh Henry"
-                boldInfo="New Album"
-                aName="Josh Henry"
-                aSrc={avatar2}
-              />
-            </MenuItem>
-            <MenuItem borderRadius="8px">
-              <ItemContent
-                time="3 days ago"
-                info="Payment succesfully completed!"
-                boldInfo=""
-                aName="Kara"
-                aSrc={avatar3}
-              />
-            </MenuItem>
-          </Flex>
-        </MenuList> */}
-      </Menu>
+      <NotificationDropdown navbarIcon={navbarIcon} />
     </Flex>
   );
 }

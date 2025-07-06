@@ -79,7 +79,7 @@ export const historyApi = baseApi.injectEndpoints({
           company_id,
           page: page.toString(),
           page_size: page_size.toString(),
-          ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== '' && v != null))
+          ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== '' && v != null))
         });
         return {
           url: `histories/establishment_scans_paginated/?${params}`,
@@ -236,6 +236,19 @@ export const historyApi = baseApi.injectEndpoints({
       }),
       providesTags: (result, error, establishmentId) =>
         result ? [{ type: 'Productions', id: establishmentId }] : []
+    }),
+    createScan: build.mutation({
+      query: ({ production_id, city, country }) => ({
+        url: 'public_scans/',
+        method: 'POST',
+        credentials: 'include',
+        body: {
+          production_id,
+          city,
+          country
+        }
+      }),
+      invalidatesTags: (result) => (result ? ['History'] : [])
     })
   }),
   overrideExisting: false
@@ -258,5 +271,6 @@ export const {
   useGetUserProductionScansQuery,
   useGetUserReviewsQuery,
   useGetProductionsByEstablishmentQuery,
-  useGetEstablishmentScansPaginatedQuery
+  useGetEstablishmentScansPaginatedQuery,
+  useCreateScanMutation
 } = historyApi;

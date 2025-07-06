@@ -71,6 +71,8 @@ import FieldInterface from 'views/Dashboard/Mobile/FieldInterface';
 import AllScansView from 'views/Dashboard/Commercial/AllScans';
 import AllReviewsView from 'views/Dashboard/Commercial/AllReviews';
 import { useGetCsrfTokenQuery } from './store/api/baseApi';
+import AcceptInvitation from 'views/Authentication/Invitation/AcceptInvitation';
+import SetupPassword from 'views/Authentication/Invitation/SetupPassword';
 
 const App = () => {
   const location = useLocation();
@@ -108,7 +110,8 @@ const App = () => {
   console.log(config);
 
   return (
-    <Routes>
+    <ChakraProvider theme={theme}>
+      <Routes>
       {/* Public Pricing Page - Available without authentication */}
       <Route path="/pricing" element={<AuthLayout />}>
         <Route index element={<Pricing />} />
@@ -120,6 +123,12 @@ const App = () => {
       </Route>
       <Route path="/privacy" element={<AuthLayout />}>
         <Route index element={<PrivacyPolicy />} />
+      </Route>
+
+      {/* Invitation Routes - Available without authentication */}
+      <Route element={<AuthLayout />}>
+        <Route path="/invitation/:invitationCode" element={<AcceptInvitation />} />
+        <Route path="/invitation/:invitationCode/setup" element={<SetupPassword />} />
       </Route>
 
       <Route element={<CheckAuth />}>
@@ -321,6 +330,7 @@ const App = () => {
         <Route path="*" element={<Navigate to={config?.defaultRedirect || '/pricing'} replace />} />
       </Route>
     </Routes>
+    </ChakraProvider>
   );
 };
 

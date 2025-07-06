@@ -356,11 +356,11 @@ function EditEstablishment() {
   const handleRemoveUploadedFile = (index, url) => {
     console.log('handleRemoveUploadedFile called with:', { index, url });
     console.log('existingImages:', existingImages);
-    
+
     // Find the image object by URL in existingImages
     const imageToDelete = existingImages.find((img) => img.url === url);
     console.log('imageToDelete:', imageToDelete);
-    
+
     if (imageToDelete) {
       // Only add to imagesToDelete if it's a real database ID (not temporary)
       if (!imageToDelete.id.toString().startsWith('new-') && !imageToDelete.is_new) {
@@ -504,9 +504,9 @@ function EditEstablishment() {
       if (dataEstablishment && dataEstablishment.images) {
         setExistingImages(dataEstablishment.images);
       }
-      
+
       dispatch(editCompanyEstablishment(dataEstablishment));
-      
+
       // Only navigate away if it's not just an image upload
       if (!isImageUploadOnly) {
         dispatch(clearForm());
@@ -632,7 +632,7 @@ function EditEstablishment() {
         images_to_delete: imagesToDelete,
         uploaded_image_urls: urls
       });
-      
+
       editEstablishment({
         companyId: currentCompany.id,
         establishmentId,
@@ -717,7 +717,8 @@ function EditEstablishment() {
                             id: 'app.typeHelp',
                             defaultMessage:
                               'Tipo de establecimiento (ej: planta, bodega, campo, oficina)'
-                          })}>
+                          })}
+                        >
                           <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                         </Tooltip>
                       </FormLabel>
@@ -782,7 +783,8 @@ function EditEstablishment() {
                           label={intl.formatMessage({
                             id: 'app.zoneHelp',
                             defaultMessage: 'Zona o sector dentro de la ciudad o región'
-                          })}>
+                          })}
+                        >
                           <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                         </Tooltip>
                       </FormLabel>
@@ -816,7 +818,8 @@ function EditEstablishment() {
                           label={intl.formatMessage({
                             id: 'app.contactPersonHelp',
                             defaultMessage: 'Nombre de la persona responsable del establecimiento'
-                          })}>
+                          })}
+                        >
                           <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                         </Tooltip>
                       </FormLabel>
@@ -867,7 +870,8 @@ function EditEstablishment() {
                         id: 'app.coordinatesHelp',
                         defaultMessage:
                           'Latitud y longitud del establecimiento (puedes usar el mapa)'
-                      })}>
+                      })}
+                    >
                       <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                     </Tooltip>
                   </Text>
@@ -938,7 +942,8 @@ function EditEstablishment() {
                     mt="24px"
                     w="100px"
                     h="35px"
-                    type="submit">
+                    type="submit"
+                  >
                     <Text fontSize="xs" color="#fff" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.next' })}
                     </Text>
@@ -975,7 +980,8 @@ function EditEstablishment() {
                 onSubmit={descriptionMethods.handleSubmit(onSubmitDescription, (errors) => {
                   console.error('Validation errors:', errors);
                 })}
-                style={{ width: '100%' }}>
+                style={{ width: '100%' }}
+              >
                 <Flex direction="column" w="100%">
                   <Box
                     mb={6}
@@ -983,7 +989,8 @@ function EditEstablishment() {
                     bg="yellow.50"
                     borderRadius="md"
                     border="1px solid"
-                    borderColor="yellow.200">
+                    borderColor="yellow.200"
+                  >
                     <Text fontWeight="bold" color="yellow.800">
                       {intl.formatMessage({
                         id: 'app.publicFieldsNotice',
@@ -1052,7 +1059,8 @@ function EditEstablishment() {
                             id: 'app.locationHighlightsHelp',
                             defaultMessage:
                               'Características notables, accesibilidad, geografía (opcional).'
-                          })}>
+                          })}
+                        >
                           <InfoOutlineIcon ml={2} color="gray.400" cursor="pointer" />
                         </Tooltip>
                       </Flex>
@@ -1098,7 +1106,8 @@ function EditEstablishment() {
                     borderRadius="lg"
                     boxShadow="lg"
                     bg={bgColor}
-                    border="2px solid #E2E8F0">
+                    border="2px solid #E2E8F0"
+                  >
                     <Flex align="center" mb={4}>
                       <Text fontWeight="bold" fontSize="lg" mr={2}>
                         {intl.formatMessage({
@@ -1111,7 +1120,8 @@ function EditEstablishment() {
                           id: 'app.publicProfilePreviewHelp',
                           defaultMessage:
                             'Así se verá tu establecimiento cuando alguien escanee el QR.'
-                        })}>
+                        })}
+                      >
                         <InfoOutlineIcon color="gray.400" cursor="pointer" />
                       </Tooltip>
                     </Flex>
@@ -1129,7 +1139,8 @@ function EditEstablishment() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      onClick={() => mainInfoTab.current.click()}>
+                      onClick={() => mainInfoTab.current.click()}
+                    >
                       <Text fontSize="xs" color="gray.700" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.prev' })}
                       </Text>
@@ -1141,7 +1152,8 @@ function EditEstablishment() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      type="submit">
+                      type="submit"
+                    >
                       <Text fontSize="xs" color="#fff" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.next' })}
                       </Text>
@@ -1202,7 +1214,8 @@ function EditEstablishment() {
                     mt="24px"
                     w="100px"
                     h="35px"
-                    onClick={() => descriptionTab.current.click()}>
+                    onClick={() => descriptionTab.current.click()}
+                  >
                     <Text fontSize="xs" color="gray.700" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.prev' })}
                     </Text>
@@ -1220,7 +1233,8 @@ function EditEstablishment() {
                       id: 'app.uploading',
                       defaultMessage: 'Subiendo...'
                     })}
-                    isDisabled={existingImages.length + selectedFiles.length > 5}>
+                    isDisabled={existingImages.length + selectedFiles.length > 5}
+                  >
                     <Text fontSize="xs" color="#fff" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.upload', defaultMessage: 'Subir' })}
                     </Text>
@@ -1291,7 +1305,8 @@ function EditEstablishment() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      onClick={() => mediaTab.current.click()}>
+                      onClick={() => mediaTab.current.click()}
+                    >
                       <Text fontSize="xs" color="gray.700" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.prev' })}
                       </Text>
@@ -1303,7 +1318,8 @@ function EditEstablishment() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      type="submit">
+                      type="submit"
+                    >
                       <Text fontSize="xs" color="#fff" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.send', defaultMessage: 'Enviar' })}
                       </Text>

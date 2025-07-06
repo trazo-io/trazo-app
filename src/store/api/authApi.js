@@ -79,6 +79,45 @@ const authApi = baseApi.injectEndpoints({
             'Content-Type': 'application/json'
           }
         };
+      },
+      async onQueryStarted(args, { dispatch, queryFulfilled }) {
+        try {
+          const result = await queryFulfilled;
+          // If verification response includes user data and tokens, auto-sign in
+          if (result.data.user && result.data.access) {
+            dispatch(setUser(result.data.user));
+            // Get company data if user has companies
+            if (result.data.user['companies'] && result.data.user['companies'].length > 0) {
+              try {
+                const { data } = await dispatch(
+                  baseApi.endpoints.getCompany.initiate(result.data.user['companies'][0].id)
+                );
+                dispatch(setCompany(data));
+              } catch (error) {
+                // Continue even if company data fetch fails
+                console.warn('Could not fetch company data:', error);
+              }
+            }
+          }
+        } catch (error) {
+          // Verification failed, don't handle auto-sign in
+          console.error('Verification failed:', error);
+        }
+      }
+    }),
+    resendVerificationEmail: build.mutation({
+      query({ email }) {
+        return {
+          url: 'users/resend_verification_email/',
+          method: 'POST',
+          body: {
+            email: email
+          },
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          }
+        };
       }
     }),
     socialAuth: build.mutation({
@@ -143,5 +182,6 @@ export const {
   useSignUpMutation,
   useLogoutMutation,
   useVerifyEmailMutation,
+  useResendVerificationEmailMutation,
   useSocialAuthMutation
 } = authApi;

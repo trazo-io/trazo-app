@@ -86,7 +86,7 @@ export default function Dashboard(props: any) {
   useEffect(() => {
     const routes = [...defaultRoutes];
     if (
-      currentUser?.companies.length > 0 &&
+      currentUser?.companies?.length > 0 &&
       currentUser?.companies[0].role === 'Company Admin' &&
       !routes.some((route) => route.id === 'companySettings') // Check if route already exists
     ) {

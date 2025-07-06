@@ -249,7 +249,7 @@ export const StandardStepper = ({
   const circleSize = manySteps ? { base: '32px', md: '40px' } : { base: '36px', md: '44px' };
   const iconSize = manySteps ? '16px' : '18px';
   const titleFontSize = manySteps ? { base: '2xs', md: 'xs' } : { base: 'xs', md: 'sm' };
-  
+
   return (
     <StandardCard>
       <Box overflowX="auto" w="100%">
@@ -321,20 +321,20 @@ export const StandardStepper = ({
                   )}
                 </VStack>
               </VStack>
-            {index < steps.length - 1 && (
-              <Box
-                height="3px"
-                flex={manySteps ? '0 0 40px' : '1'}
-                w={manySteps ? '40px' : 'auto'}
-                bg={index < currentStep ? 'green.500' : 'gray.200'}
-                borderRadius="full"
-                mx={{ base: 1, md: 2 }}
-                transition="all 0.3s"
-              />
-            )}
-          </React.Fragment>
-        ))}
-      </HStack>
+              {index < steps.length - 1 && (
+                <Box
+                  height="3px"
+                  flex={manySteps ? '0 0 40px' : '1'}
+                  w={manySteps ? '40px' : 'auto'}
+                  bg={index < currentStep ? 'green.500' : 'gray.200'}
+                  borderRadius="full"
+                  mx={{ base: 1, md: 2 }}
+                  transition="all 0.3s"
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </HStack>
       </Box>
     </StandardCard>
   );

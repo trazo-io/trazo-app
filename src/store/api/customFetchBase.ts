@@ -47,7 +47,7 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any) 
   if (hasErrorData(result.error)) {
     const errorData = result.error.data;
     const currentPath = window.location.pathname;
-    const isOnAuthPage = currentPath.startsWith('/auth/');
+    const isOnAuthPage = currentPath.startsWith('/auth/') || currentPath.startsWith('/invitation/');
 
     // Check for authentication error
     if (

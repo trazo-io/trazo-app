@@ -6,6 +6,7 @@ import formReducer from './features/formSlice';
 import historySlice from './features/historySlice';
 import productReducer from './features/productSlice';
 import userReducer from './features/userSlice';
+import notificationReducer from './features/notificationSlice';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { carbonApi } from './api/carbonApi';
 
@@ -17,6 +18,7 @@ export const store = configureStore({
     product: productReducer,
     form: formReducer,
     history: historySlice,
+    notifications: notificationReducer,
     [baseApi.reducerPath]: baseApi.reducer,
     [carbonApi.reducerPath]: carbonApi.reducer
   },
