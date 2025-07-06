@@ -104,6 +104,7 @@ import {
   FaCube,
   FaLink
 } from 'react-icons/fa';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { useParams, useNavigate } from 'react-router-dom';
 
 // Import existing hooks and APIs
@@ -117,7 +118,8 @@ import {
   useGetUSDABenchmarkComparisonQuery,
   useGetEstablishmentCarbonSummaryQuery,
   useCreateOffsetMutation,
-  useGetQRCodeSummaryQuery
+  useGetQRCodeSummaryQuery,
+  useGetEstablishmentCarbonEntriesPaginatedQuery
 } from 'store/api/carbonApi';
 import ModernOffsetModal from './components/ModernOffsetModal';
 import EnhancedOffsetModal from '../../../../components/Carbon/EnhancedOffsetModal';
@@ -193,6 +195,16 @@ const ModernCarbonDashboard: React.FC = () => {
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<string>('');
 
+  // Pagination state for Carbon Entries
+  const [currentEntriesPage, setCurrentEntriesPage] = useState(1);
+  const [entriesFilters, setEntriesFilters] = useState({
+    type: '',
+    category: '',
+    search: '',
+    date_from: '',
+    date_to: ''
+  });
+
   // Modal states
   const {
     isOpen: isInsightsOpen,
@@ -235,6 +247,7 @@ const ModernCarbonDashboard: React.FC = () => {
     year: currentYear
   });
 
+  // Old non-paginated entries for summary calculations
   const {
     data: carbonEntries,
     isLoading: isEntriesLoading,
@@ -243,6 +256,29 @@ const ModernCarbonDashboard: React.FC = () => {
     establishmentId: parseInt(establishmentId || '0'),
     year: currentYear
   });
+
+  // New paginated carbon entries for the table
+  const {
+    data: paginatedEntriesData,
+    isLoading: isPaginatedEntriesLoading,
+    error: paginatedEntriesError
+  } = useGetEstablishmentCarbonEntriesPaginatedQuery(
+    {
+      establishment_id: establishmentId || '',
+      page: currentEntriesPage,
+      page_size: 10,
+      verified_only: showVerifiedOnly,
+      category: selectedCategory !== 'all' ? selectedCategory : '',
+      ...entriesFilters
+    },
+    {
+      skip: !establishmentId
+    }
+  );
+
+  const paginatedEntries = paginatedEntriesData?.results || [];
+  const totalEntriesCount = paginatedEntriesData?.count || 0;
+  const totalEntriesPages = Math.ceil(totalEntriesCount / 10);
 
   const { data: productions, isLoading: isProductionsLoading } =
     useGetProductionsByEstablishmentQuery({
@@ -336,6 +372,26 @@ const ModernCarbonDashboard: React.FC = () => {
   const blockchainVerified = false; // Will be implemented when backend adds blockchain verification
   const blockchainNetwork = 'polygon_amoy'; // Real network from backend settings
   const complianceStatus = usdaComplianceScore >= 80; // Based on real USDA factors usage
+  
+  // Helper function to format blockchain network name for user display
+  const getNetworkDisplayName = (network: string) => {
+    switch (network) {
+      case 'ethereum':
+        return 'Ethereum';
+      case 'ethereum_testnet':
+        return 'Ethereum Testnet';
+      case 'polygon_amoy':
+        return 'Polygon Testnet';
+      case 'polygon_amoy_mock':
+        return 'Polygon (Demo)';
+      case 'polygon_amoy_development_mock':
+        return 'Development Mode';
+      case 'polygon_mainnet':
+        return 'Polygon';
+      default:
+        return 'Blockchain Network';
+    }
+  };
 
   // Use emissions breakdown from API if available, fallback to manual calculation
   const emissionsByCategory =
@@ -475,6 +531,21 @@ const ModernCarbonDashboard: React.FC = () => {
       default:
         return 'gray';
     }
+  };
+
+  // Pagination helper functions
+  const handleEntriesPageChange = (newPage: number) => {
+    setCurrentEntriesPage(newPage);
+  };
+
+  const handleEntriesFilterChange = (key: string, value: string | boolean) => {
+    if (key === 'verified_only') {
+      setShowVerifiedOnly(value as boolean);
+    } else if (key === 'category') {
+      setSelectedCategory(value as string);
+    }
+    // Reset to first page when filtering
+    setCurrentEntriesPage(1);
   };
 
   // Handle metric info click
@@ -869,32 +940,12 @@ const ModernCarbonDashboard: React.FC = () => {
           </SimpleGrid>
 
           {/* Secondary Metrics Row - Compliance & Technical Status */}
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={cardSpacing}>
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={cardSpacing} alignItems="stretch">
             {/* Security Status Card - Enhanced with hover */}
-            <Box
-              transition="all 0.3s ease"
-              _hover={{ transform: 'translateY(-2px)' }}
-              position="relative"
-            >
-              <SecurityStatusCard compact={true} />
-              <Tooltip label="Click for details and improvement suggestions" hasArrow>
-                <IconButton
-                  aria-label="Security Score Info"
-                  icon={<FaInfoCircle />}
-                  size="xs"
-                  variant="ghost"
-                  color={mutedColor}
-                  position="absolute"
-                  top={4}
-                  right={4}
-                  onClick={() => {
-                    handleMetricInfoClick('securityScore');
-                  }}
-                  _hover={{ color: 'red.500', bg: 'red.50' }}
-                  zIndex={2}
-                />
-              </Tooltip>
-            </Box>
+            <SecurityStatusCard 
+              compact={true} 
+              onInfoClick={() => handleMetricInfoClick('securityScore')}
+            />
 
             {/* USDA Compliance Score */}
             <Card
@@ -907,6 +958,7 @@ const ModernCarbonDashboard: React.FC = () => {
                 borderColor: usdaComplianceScore >= 80 ? 'green.300' : 'orange.300'
               }}
               cursor="pointer"
+              height="100%"
             >
               <CardBody>
                 <VStack spacing={3}>
@@ -973,6 +1025,7 @@ const ModernCarbonDashboard: React.FC = () => {
                 borderColor: blockchainVerified ? 'green.300' : 'gray.300'
               }}
               cursor="pointer"
+              height="100%"
             >
               <CardBody>
                 <VStack spacing={3}>
@@ -1017,7 +1070,7 @@ const ModernCarbonDashboard: React.FC = () => {
                       transition="color 0.3s ease"
                     />
                     <Text fontSize="sm" color={mutedColor} textAlign="center" opacity={0.8}>
-                      {blockchainNetwork || 'Not Available'}
+                      {getNetworkDisplayName(blockchainNetwork) || 'Not Available'}
                     </Text>
                   </VStack>
                   <VStack spacing={0}>
@@ -1030,7 +1083,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   </VStack>
                   {blockchainVerified && (
                     <Text fontSize="xs" color="green.500" textAlign="center" opacity={0.9}>
-                      Records verified on {blockchainNetwork}
+                      Records verified on {getNetworkDisplayName(blockchainNetwork)}
                     </Text>
                   )}
                 </VStack>
@@ -1247,13 +1300,13 @@ const ModernCarbonDashboard: React.FC = () => {
             <HStack justify="space-between">
               <HStack spacing={2}>
                 <Icon as={FaFileAlt} color="blue.500" />
-                <Heading size="md">Carbon Entries</Heading>
+                <Heading size="md">Carbon Entries ({totalEntriesCount})</Heading>
               </HStack>
               <HStack spacing={2}>
                 <Select
                   size="sm"
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => handleEntriesFilterChange('category', e.target.value)}
                   w="auto"
                 >
                   <option value="all">All Categories</option>
@@ -1267,7 +1320,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   size="sm"
                   variant={showVerifiedOnly ? 'solid' : 'outline'}
                   colorScheme="green"
-                  onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}
+                  onClick={() => handleEntriesFilterChange('verified_only', !showVerifiedOnly)}
                 >
                   Verified Only
                 </Button>
@@ -1275,213 +1328,225 @@ const ModernCarbonDashboard: React.FC = () => {
             </HStack>
           </CardHeader>
           <CardBody pt={0}>
-            {filteredEntries.length > 0 ? (
-              <TableContainer>
-                <Table size="sm">
-                  <Thead>
+            <VStack spacing={4}>
+              {isPaginatedEntriesLoading ? (
+                <HStack justify="center" py={8}>
+                  <Spinner size="md" color="blue.500" />
+                  <Text color={mutedColor}>Loading carbon entries...</Text>
+                </HStack>
+              ) : paginatedEntriesError ? (
+                <VStack spacing={2} py={8}>
+                  <Text color="red.500">Error loading carbon entries</Text>
+                  <Text fontSize="sm" color={mutedColor}>Please try again later</Text>
+                </VStack>
+              ) : paginatedEntries.length > 0 ? (
+              <Box
+                overflowX="auto"
+                w="100%"
+                borderRadius="xl"
+                border="1px solid"
+                borderColor="gray.200"
+              >
+                <Table size="sm" variant="simple">
+                  <Thead bg="gray.50">
                     <Tr>
-                      <Th>Type</Th>
-                      <Th>Source</Th>
-                      <Th>Amount</Th>
-                      <Th>Status</Th>
-                      <Th>Date</Th>
-                      <Th>Actions</Th>
+                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="80px">
+                        Type
+                      </Th>
+                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="200px">
+                        Source
+                      </Th>
+                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="150px">
+                        Amount
+                      </Th>
+                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="200px">
+                        Status
+                      </Th>
+                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="100px">
+                        Date
+                      </Th>
+                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="80px">
+                        Actions
+                      </Th>
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {filteredEntries.slice(0, 10).map((entry: any) => (
-                      <Tr key={entry.id}>
-                        <Td>
+                    {paginatedEntries.map((entry: any) => (
+                      <Tr 
+                        key={entry.id}
+                        _hover={{ bg: 'green.50' }}
+                        transition="background-color 0.2s"
+                      >
+                        <Td py={3} px={4}>
                           <Badge
                             colorScheme={entry.type === 'emission' ? 'red' : 'green'}
-                            variant="subtle"
+                            variant="solid"
+                            fontSize="xs"
+                            px={2}
+                            py={1}
+                            borderRadius="full"
                           >
-                            {entry.type}
+                            {entry.type === 'emission' ? 'Emission' : 'Offset'}
                           </Badge>
                         </Td>
-                        <Td>
+                        <Td py={3} px={4}>
                           <VStack align="start" spacing={0}>
-                            <Text fontSize="sm" fontWeight="medium">
+                            <Text fontSize="sm" fontWeight="medium" color={textColor} noOfLines={1}>
                               {entry.source?.name || 'Unknown Source'}
                             </Text>
-                            <Text fontSize="xs" color={mutedColor}>
+                            <Text fontSize="xs" color={mutedColor} noOfLines={1}>
                               {entry.source?.category || 'Other'}
                             </Text>
                           </VStack>
                         </Td>
-                        <Td>
+                        <Td py={3} px={4}>
                           <VStack align="start" spacing={0}>
-                            <Text fontSize="sm" fontWeight="medium">
-                              {entry.amount.toFixed(2)} kg CO₂e
+                            <Text fontSize="sm" fontWeight="bold" color={textColor}>
+                              {Number(entry.amount).toLocaleString()} kg CO₂e
                             </Text>
                             {entry.type === 'offset' && entry.effective_amount && (
-                              <Text fontSize="xs" color="green.600">
-                                {entry.effective_amount.toFixed(1)} effective
+                              <Text fontSize="xs" color="green.600" fontWeight="medium">
+                                {Number(entry.effective_amount).toLocaleString()} effective
                               </Text>
                             )}
                           </VStack>
                         </Td>
-                        <Td>
+                        <Td py={3} px={4}>
                           <VStack align="start" spacing={1}>
-                            {/* Main Status Badge - Always Show */}
-                            <Tooltip
-                              label={
+                            {/* Main Status Badge */}
+                            <Badge
+                              colorScheme={
                                 entry.verification_status === 'verified'
-                                  ? 'VERIFIED: This entry has passed all verification checks and anti-gaming rules'
+                                  ? 'green'
                                   : entry.verification_status === 'rejected'
-                                  ? 'REJECTED: This entry failed verification due to high-risk violations or registry verification failure'
-                                  : 'PENDING: This entry is awaiting verification or has incomplete requirements'
+                                  ? 'red'
+                                  : 'yellow'
                               }
-                              placement="top"
-                              hasArrow
-                              bg="gray.800"
-                              color="white"
-                              fontSize="sm"
-                              px={3}
-                              py={2}
-                              borderRadius="md"
+                              variant="solid"
+                              fontSize="xs"
+                              px={2}
+                              py={1}
+                              borderRadius="full"
                             >
-                              <Badge
-                                colorScheme={
-                                  entry.verification_status === 'verified'
-                                    ? 'green'
-                                    : entry.verification_status === 'rejected'
-                                    ? 'red'
-                                    : 'yellow'
-                                }
-                                variant="subtle"
-                                cursor="help"
-                              >
-                                {entry.verification_status === 'verified'
-                                  ? 'VERIFIED'
-                                  : entry.verification_status === 'rejected'
-                                  ? 'REJECTED'
-                                  : 'PENDING'}
-                              </Badge>
-                            </Tooltip>
+                              {entry.verification_status === 'verified'
+                                ? 'VERIFIED'
+                                : entry.verification_status === 'rejected'
+                                ? 'REJECTED'
+                                : 'PENDING'}
+                            </Badge>
 
-                            {/* Verification Type Badge - Only for Offsets */}
-                            {entry.type === 'offset' && (
-                              <Tooltip
-                                label={
-                                  entry.verification_level === 'self_reported'
-                                    ? 'SELF REPORTED: User-reported data with 50% trust score. Internal verification only.'
-                                    : entry.verification_level === 'community_verified'
-                                    ? 'COMMUNITY VERIFIED: Verified by local community with 75% trust score.'
-                                    : entry.verification_level === 'certified_project'
-                                    ? entry.verification_status === 'verified'
-                                      ? 'CERTIFIED PROJECT: Successfully verified through third-party registries (VCS, Gold Standard, etc.) with 100% trust score.'
-                                      : 'CERTIFIED PROJECT: Failed third-party registry verification. Registry ID not found or invalid.'
-                                    : 'STANDARD: Basic verification level with standard trust scoring.'
-                                }
-                                placement="top"
-                                hasArrow
-                                bg="gray.800"
-                                color="white"
-                                fontSize="sm"
-                                px={3}
-                                py={2}
-                                borderRadius="md"
+                            {/* Additional badges for offsets */}
+                            {entry.type === 'offset' && entry.verification_level === 'certified_project' && (
+                              <Badge
+                                size="sm"
+                                colorScheme={entry.verification_status === 'verified' ? 'green' : 'red'}
+                                variant="outline"
+                                fontSize="xs"
                               >
-                                <Badge
-                                  size="sm"
-                                  colorScheme={
-                                    entry.verification_level === 'certified_project'
-                                      ? entry.verification_status === 'verified'
-                                        ? 'green'
-                                        : 'red'
-                                      : entry.verification_level === 'community_verified'
-                                      ? 'blue'
-                                      : 'orange'
-                                  }
-                                  variant="outline"
-                                  cursor="help"
-                                >
-                                  {entry.verification_level === 'self_reported'
-                                    ? 'Self Reported'
-                                    : entry.verification_level === 'community_verified'
-                                    ? 'Community Verified'
-                                    : entry.verification_level === 'certified_project'
-                                    ? entry.verification_status === 'verified'
-                                      ? 'Third-Party Verified'
-                                      : 'Registry Failed'
-                                    : 'Standard'}
-                                </Badge>
-                              </Tooltip>
+                                {entry.verification_status === 'verified' ? 'Registry Failed' : 'Registry Failed'}
+                              </Badge>
                             )}
 
-                            {/* Trust Score Indicator - Only for important cases */}
-                            {entry.type === 'offset' && entry.trust_score && (
-                              <Tooltip
-                                label={`Trust Score: ${Math.round(
-                                  entry.trust_score * 100
-                                )}% - This affects the effective carbon amount after buffer pool deductions.`}
-                                placement="top"
-                                hasArrow
-                                bg="gray.800"
-                                color="white"
-                                fontSize="sm"
-                                px={3}
-                                py={2}
-                                borderRadius="md"
+                            {entry.type === 'offset' && entry.verification_level === 'self_reported' && (
+                              <Badge
+                                size="sm"
+                                colorScheme="orange"
+                                variant="outline"
+                                fontSize="xs"
                               >
-                                <Badge
-                                  size="sm"
-                                  colorScheme={
-                                    entry.trust_score >= 0.9
-                                      ? 'green'
-                                      : entry.trust_score >= 0.7
-                                      ? 'blue'
-                                      : 'orange'
-                                  }
-                                  variant="subtle"
-                                  cursor="help"
-                                >
-                                  {Math.round(entry.trust_score * 100)}% Trust
-                                </Badge>
-                              </Tooltip>
+                                Self Reported
+                              </Badge>
+                            )}
+
+                            {/* Trust Score for offsets */}
+                            {entry.type === 'offset' && entry.trust_score && (
+                              <Text fontSize="xs" color="gray.600">
+                                {Math.round(entry.trust_score * 100)}% Trust
+                              </Text>
                             )}
                           </VStack>
                         </Td>
-                        <Td>
-                          <Text fontSize="sm">
+                        <Td py={3} px={4}>
+                          <Text fontSize="sm" fontWeight="medium" color={textColor}>
                             {new Date(entry.created_at || entry.timestamp).toLocaleDateString()}
                           </Text>
+                          <Text fontSize="xs" color={mutedColor}>
+                            {new Date(entry.created_at || entry.timestamp).toLocaleTimeString()}
+                          </Text>
                         </Td>
-                        <Td>
+                        <Td py={3} px={4}>
                           <HStack spacing={1}>
-                            <IconButton
-                              size="xs"
-                              variant="ghost"
-                              aria-label="View details"
-                              icon={<FaEye />}
-                            />
-                            <IconButton
-                              size="xs"
-                              variant="ghost"
-                              aria-label="Edit entry"
-                              icon={<FaEdit />}
-                            />
+                            <Tooltip label="View details" hasArrow>
+                              <IconButton
+                                size="xs"
+                                variant="ghost"
+                                aria-label="View details"
+                                icon={<FaEye />}
+                                color="gray.500"
+                                _hover={{ color: 'blue.500', bg: 'blue.50' }}
+                              />
+                            </Tooltip>
+                            <Tooltip label="Edit entry" hasArrow>
+                              <IconButton
+                                size="xs"
+                                variant="ghost"
+                                aria-label="Edit entry"
+                                icon={<FaEdit />}
+                                color="gray.500"
+                                _hover={{ color: 'green.500', bg: 'green.50' }}
+                              />
+                            </Tooltip>
                           </HStack>
                         </Td>
                       </Tr>
                     ))}
                   </Tbody>
                 </Table>
-              </TableContainer>
-            ) : (
-              <VStack spacing={4} py={8}>
-                <Icon as={FaFileAlt} color="gray.400" boxSize={8} />
-                <VStack spacing={2}>
-                  <Text color={mutedColor} textAlign="center">
-                    No carbon entries found for the selected filters
-                  </Text>
-                  <Text fontSize="sm" color={mutedColor} textAlign="center">
-                    Start tracking your carbon footprint by adding events
-                  </Text>
+              </Box>
+              ) : (
+                <VStack spacing={4} py={8}>
+                  <Icon as={FaFileAlt} color="gray.400" boxSize={8} />
+                  <VStack spacing={2}>
+                    <Text color={mutedColor} textAlign="center">
+                      No carbon entries found for the selected filters
+                    </Text>
+                    <Text fontSize="sm" color={mutedColor} textAlign="center">
+                      Start tracking your carbon footprint by adding events
+                    </Text>
+                  </VStack>
                 </VStack>
-              </VStack>
-            )}
+              )}
+
+              {/* Pagination Controls */}
+              {totalEntriesPages > 1 && (
+                <Flex justify="space-between" align="center" w="100%" pt={4}>
+                  <Text fontSize="sm" color={mutedColor}>
+                    Page {currentEntriesPage} of {totalEntriesPages} ({totalEntriesCount} total entries)
+                  </Text>
+                  <HStack spacing={2}>
+                    <IconButton
+                      icon={<FiChevronLeft />}
+                      aria-label="Previous page"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEntriesPageChange(currentEntriesPage - 1)}
+                      isDisabled={currentEntriesPage === 1}
+                    />
+                    <Text fontSize="sm" px={3}>
+                      {currentEntriesPage}
+                    </Text>
+                    <IconButton
+                      icon={<FiChevronRight />}
+                      aria-label="Next page"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEntriesPageChange(currentEntriesPage + 1)}
+                      isDisabled={currentEntriesPage === totalEntriesPages}
+                    />
+                  </HStack>
+                </Flex>
+              )}
+            </VStack>
           </CardBody>
         </Card>
 

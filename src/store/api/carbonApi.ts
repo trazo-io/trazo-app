@@ -1758,6 +1758,59 @@ export const carbonApi = baseApi.injectEndpoints({
       keepUnusedDataFor: 900
     }),
 
+    // Paginated Carbon Entries - Following Trazo pagination pattern like Scans
+    getEstablishmentCarbonEntriesPaginated: builder.query<
+      {
+        results: Array<{
+          id: number;
+          type: 'emission' | 'offset';
+          amount: number;
+          effective_amount?: number;
+          source?: {
+            name: string;
+            category: string;
+          };
+          verification_status: 'verified' | 'pending' | 'rejected';
+          verification_level?: 'self_reported' | 'community_verified' | 'certified_project';
+          trust_score?: number;
+          created_at: string;
+          timestamp?: string;
+        }>;
+        count: number;
+        next?: string;
+        previous?: string;
+      },
+      {
+        establishment_id: string;
+        page?: number;
+        page_size?: number;
+        type?: string;
+        category?: string;
+        verified_only?: boolean;
+        search?: string;
+        date_from?: string;
+        date_to?: string;
+      }
+    >({
+      query: ({ establishment_id, page = 1, page_size = 10, ...filters }) => {
+        const params = new URLSearchParams({
+          establishment_id,
+          page: page.toString(),
+          page_size: page_size.toString(),
+          ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== '' && v != null))
+        });
+        return {
+          url: `carbon/establishments/${establishment_id}/entries/paginated/?${params}`,
+          method: 'GET',
+          credentials: 'include'
+        };
+      },
+      providesTags: (result, error, { establishment_id }) => [
+        { type: 'CarbonSummary', id: establishment_id },
+        'CarbonSummary'
+      ]
+    }),
+
     // Enhanced Security Endpoints
     createSecureCarbonOffset: builder.mutation<
       {
@@ -1984,6 +2037,8 @@ export const {
   useProcessVoiceEventWithAIMutation,
   // AI Smart Suggestions hook
   useGetAIEventSuggestionsQuery,
+  // Paginated Carbon Entries hook
+  useGetEstablishmentCarbonEntriesPaginatedQuery,
   // Enhanced Security hooks
   useCreateSecureCarbonOffsetMutation,
   useValidateFileUploadSecurityMutation,

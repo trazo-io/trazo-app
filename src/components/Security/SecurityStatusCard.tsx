@@ -21,19 +21,24 @@ import {
   StatNumber,
   StatHelpText,
   useColorModeValue,
-  Spinner
+  Spinner,
+  IconButton,
+  Tooltip
 } from '@chakra-ui/react';
 import { LockIcon, WarningIcon, CheckCircleIcon, InfoIcon } from '@chakra-ui/icons';
+import { FaInfoCircle } from 'react-icons/fa';
 import { useGetUserSecurityStatusQuery } from '../../store/api/carbonApi';
 
 interface SecurityStatusCardProps {
   showDetails?: boolean;
   compact?: boolean;
+  onInfoClick?: () => void;
 }
 
 const SecurityStatusCard: React.FC<SecurityStatusCardProps> = ({
   showDetails = true,
-  compact = false
+  compact = false,
+  onInfoClick
 }) => {
   const { data: securityStatus, isLoading, error } = useGetUserSecurityStatusQuery();
 
@@ -95,33 +100,81 @@ const SecurityStatusCard: React.FC<SecurityStatusCardProps> = ({
 
   if (compact) {
     return (
-      <Card size="sm" bg={bgColor} borderColor={borderColor}>
+      <Card 
+        bg={bgColor} 
+        borderColor={borderColor}
+        transition="all 0.3s ease"
+        _hover={{
+          transform: 'translateY(-2px)',
+          boxShadow: 'xl',
+          borderColor: `${trustColor}.300`
+        }}
+        cursor="pointer"
+        height="100%"
+      >
         <CardBody>
-          <HStack justify="space-between" align="center">
-            <HStack>
-              <Icon as={SecurityIconComponent} color={`${trustColor}.500`} />
-              <VStack spacing={0} align="flex-start">
-                <Text fontSize="sm" fontWeight="medium">
-                  Security Score
-                </Text>
-                <Text fontSize="xs" color="gray.500">
-                  {getTrustScoreLabel(trustScore)}
-                </Text>
-              </VStack>
+          <VStack spacing={3} align="center">
+            {/* Icon and Badge Row */}
+            <HStack justify="space-between" w="full">
+              <Icon 
+                as={LockIcon} 
+                color="gray.500" 
+                boxSize={5}
+              />
+              <HStack spacing={2}>
+                {onInfoClick && (
+                  <Tooltip label="Click for details and improvement suggestions" hasArrow>
+                    <IconButton
+                      aria-label="Security Score Info"
+                      icon={<FaInfoCircle />}
+                      size="xs"
+                      variant="ghost"
+                      color="gray.500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onInfoClick();
+                      }}
+                      _hover={{ color: 'red.500', bg: 'red.50' }}
+                    />
+                  </Tooltip>
+                )}
+                <Badge size="sm" colorScheme={trustColor} variant="subtle" fontSize="xs" px={2} py={1} borderRadius="full">
+                  {getTrustScoreLabel(trustScore).toUpperCase()}
+                </Badge>
+              </HStack>
             </HStack>
 
-            <VStack spacing={1} align="flex-end">
-              <Text fontSize="lg" fontWeight="bold" color={`${trustColor}.500`}>
-                {Math.round(trustScore * 100)}%
+            {/* Main Score Display */}
+            <VStack spacing={1}>
+              <Icon
+                as={SecurityIconComponent}
+                boxSize={8}
+                color={`${trustColor}.500`}
+                transition="color 0.3s ease"
+              />
+              <Text fontSize="sm" color="gray.500" textAlign="center" opacity={0.8}>
+                {getTrustScoreLabel(trustScore)}
               </Text>
-              {securityStatus.security_flags?.length > 0 && (
-                <Badge size="sm" colorScheme="red" variant="subtle">
-                  {securityStatus.security_flags.length} flag
-                  {securityStatus.security_flags.length !== 1 ? 's' : ''}
-                </Badge>
-              )}
             </VStack>
-          </HStack>
+
+            {/* Title and Description */}
+            <VStack spacing={0}>
+              <Text fontWeight="semibold" color="gray.700" fontSize="sm">
+                Security Score
+              </Text>
+              <Text fontSize="xs" color="gray.500" textAlign="center" opacity={0.8}>
+                Data security and trust rating
+              </Text>
+            </VStack>
+
+            {/* Security Flags Indicator */}
+            {securityStatus.security_flags?.length > 0 && (
+              <Text fontSize="xs" color="red.500" textAlign="center" opacity={0.9}>
+                {securityStatus.security_flags.length} security flag
+                {securityStatus.security_flags.length !== 1 ? 's' : ''} detected
+              </Text>
+            )}
+          </VStack>
         </CardBody>
       </Card>
     );

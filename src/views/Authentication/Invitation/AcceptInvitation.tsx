@@ -20,6 +20,7 @@ import { FiMail, FiCheck, FiAlertCircle, FiUser } from 'react-icons/fi';
 import { HiOfficeBuilding } from 'react-icons/hi';
 import { useAcceptInvitationMutation, useGetInvitationDetailsQuery } from 'store/api/invitationApi';
 import { useSelector } from 'react-redux';
+import AuthLayout from 'components/Layout/AuthLayout';
 
 const AcceptInvitation: React.FC = () => {
   const navigate = useNavigate();
@@ -233,232 +234,134 @@ const AcceptInvitation: React.FC = () => {
 
   // Main acceptance page - Modern Trazo Design
   return (
-    <Box minH="calc(100vh - 80px)" bg="gray.50" position="relative" overflow="hidden">
-      {/* Background Design */}
-      <Box
-        position="absolute"
-        top="-50%"
-        right="-10%"
-        w="60%"
-        h="120%"
-        bg="linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
-        borderRadius="50%"
-        filter="blur(1px)"
-        opacity={0.6}
-      />
-      <Box
-        position="absolute"
-        bottom="-40%"
-        left="-10%"
-        w="50%"
-        h="100%"
-        bg="linear-gradient(45deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)"
-        borderRadius="50%"
-        filter="blur(2px)"
-      />
-
-      <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} minH="calc(100vh - 80px)">
-        {/* Left Side - Welcome Content */}
-        <Flex
-          direction="column"
-          justify="center"
-          align="center"
-          px={{ base: 6, md: 12, lg: 16 }}
-          py={12}
-          position="relative"
-          zIndex={2}
-        >
-          <Container maxW="400px" textAlign="center">
-            <VStack spacing={8}>
-              {/* Trazo Logo */}
-              <Box
-                w="80px"
-                h="80px"
-                bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
-                borderRadius="2xl"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                boxShadow="0 10px 30px rgba(5, 150, 105, 0.3)"
-                transform="rotate(-5deg)"
-                transition="all 0.3s ease"
-                _hover={{ transform: 'rotate(0deg) scale(1.05)' }}
-              >
-                <Text
-                  fontSize="2xl"
-                  fontWeight="900"
-                  color="white"
-                  letterSpacing="-1px"
-                >
-                  T
-                </Text>
-              </Box>
-
-              {/* Welcome Text */}
-              <VStack spacing={4}>
-                <Text
-                  fontSize={{ base: '2xl', md: '3xl' }}
-                  fontWeight="700"
-                  color="gray.800"
-                  lineHeight="1.2"
-                >
-                  You're Invited!
-                </Text>
-                <Text
-                  fontSize="lg"
-                  color="gray.600"
-                  lineHeight="1.6"
-                  maxW="350px"
-                >
-                  Join the carbon intelligence revolution and help build a sustainable future
-                </Text>
-              </VStack>
-            </VStack>
-          </Container>
-        </Flex>
-
-        {/* Right Side - Invitation Form */}
-        <Flex
-          direction="column"
-          justify="center"
-          align="center"
-          px={{ base: 6, md: 8, lg: 12 }}
-          py={12}
-          position="relative"
-          zIndex={2}
-        >
-          <Container maxW="400px">
+    <AuthLayout
+      title="You're Invited!"
+      subtitle="Join the carbon intelligence revolution and help build a sustainable future"
+      features={[
+        "Enterprise-grade carbon tracking",
+        "Blockchain-verified transparency", 
+        "USDA-certified emission data"
+      ]}
+    >
+      <VStack spacing={8}>
+        {/* Company Info Header */}
+        {invitationDetails && (
+          <VStack spacing={4} w="full" textAlign="center">
             <Box
-              bg="white"
-              borderRadius="2xl"
-              p={{ base: 6, md: 8 }}
-              boxShadow="0 25px 50px rgba(0, 0, 0, 0.1)"
-              border="1px solid"
-              borderColor="gray.100"
+              w="60px"
+              h="60px"
+              bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
+              borderRadius="xl"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              mx="auto"
             >
-              <VStack spacing={6}>
-                {/* Company Info */}
-                {invitationDetails && (
-                  <VStack spacing={4} w="full">
-                    <Box
-                      w="60px"
-                      h="60px"
-                      bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
-                      borderRadius="xl"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      mx="auto"
-                    >
-                      <Icon as={HiOfficeBuilding} color="white" boxSize={6} />
-                    </Box>
-
-                    <VStack spacing={2} textAlign="center">
-                      <Text fontSize="xl" fontWeight="600" color="gray.800">
-                        {invitationDetails.company_name}
-                      </Text>
-                      <Badge
-                        colorScheme="green"
-                        variant="subtle"
-                        px={4}
-                        py={2}
-                        borderRadius="full"
-                        fontSize="sm"
-                        fontWeight="600"
-                      >
-                        {invitationDetails.role_display || invitationDetails.role}
-                      </Badge>
-                    </VStack>
-
-                    <Text
-                      fontSize="sm"
-                      color="gray.600"
-                      textAlign="center"
-                      lineHeight="1.6"
-                    >
-                      You've been invited to join{' '}
-                      <Text as="span" fontWeight="600" color="gray.800">
-                        {invitationDetails.company_name}
-                      </Text>{' '}
-                      as a{' '}
-                      <Text as="span" fontWeight="600" color="green.600">
-                        {invitationDetails.role_display || invitationDetails.role}
-                      </Text>
-                      . Accept to join the team and start building sustainable solutions!
-                    </Text>
-                  </VStack>
-                )}
-
-                {/* Action Buttons */}
-                <VStack spacing={3} w="full">
-                  <Button
-                    bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
-                    color="white"
-                    size="lg"
-                    w="full"
-                    h="44px"
-                    fontSize="sm"
-                    fontWeight="600"
-                    borderRadius="xl"
-                    isLoading={isAccepting}
-                    loadingText="Accepting..."
-                    onClick={handleAcceptInvitation}
-                    _hover={{
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 10px 25px rgba(5, 150, 105, 0.4)'
-                    }}
-                    _active={{ transform: 'translateY(0)' }}
-                  >
-                    Accept Invitation
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="lg"
-                    w="full"
-                    h="44px"
-                    fontSize="sm"
-                    fontWeight="500"
-                    borderRadius="xl"
-                    onClick={handleDeclineInvitation}
-                    color="gray.500"
-                    _hover={{ bg: 'gray.50' }}
-                  >
-                    Decline
-                  </Button>
-                </VStack>
-
-                {/* Authentication Notice */}
-                {!isAuthenticated && (
-                  <Box
-                    bg="linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)"
-                    borderRadius="xl"
-                    p={4}
-                    w="full"
-                    border="1px solid"
-                    borderColor="blue.200"
-                  >
-                    <HStack spacing={3}>
-                      <Box
-                        w="6px"
-                        h="6px"
-                        bg="blue.500"
-                        borderRadius="full"
-                        flexShrink={0}
-                        mt={1}
-                      />
-                      <Text fontSize="xs" color="blue.700" lineHeight="1.5">
-                        Don't have an account? You'll be able to create one after accepting the invitation.
-                      </Text>
-                    </HStack>
-                  </Box>
-                )}
-              </VStack>
+              <Icon as={HiOfficeBuilding} color="white" boxSize={6} />
             </Box>
-          </Container>
-        </Flex>
-      </Grid>
-    </Box>
+
+            <VStack spacing={2}>
+              <Text fontSize="xl" fontWeight="600" color="gray.700">
+                {invitationDetails.company_name}
+              </Text>
+              <Badge
+                colorScheme="green"
+                variant="subtle"
+                px={4}
+                py={2}
+                borderRadius="full"
+                fontSize="sm"
+                fontWeight="600"
+              >
+                {invitationDetails.role_display || invitationDetails.role}
+              </Badge>
+            </VStack>
+
+            <Text
+              fontSize="sm"
+              color="gray.500"
+              textAlign="center"
+              lineHeight="1.6"
+            >
+              You've been invited to join{' '}
+              <Text as="span" fontWeight="600" color="gray.700">
+                {invitationDetails.company_name}
+              </Text>{' '}
+              as a{' '}
+              <Text as="span" fontWeight="600" color="green.600">
+                {invitationDetails.role_display || invitationDetails.role}
+              </Text>
+              . Accept to join the team and start building sustainable solutions!
+            </Text>
+          </VStack>
+        )}
+
+        {/* Action Buttons */}
+        <VStack spacing={4} w="full">
+          <Button
+            bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
+            color="white"
+            size="lg"
+            w="full"
+            h="44px"
+            fontSize="sm"
+            fontWeight="600"
+            borderRadius="xl"
+            isLoading={isAccepting}
+            loadingText="Accepting..."
+            onClick={handleAcceptInvitation}
+            _hover={{
+              transform: 'translateY(-1px)',
+              boxShadow: '0 10px 25px rgba(5, 150, 105, 0.4)'
+            }}
+            _active={{ transform: 'translateY(0)' }}
+          >
+            Accept Invitation
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="lg"
+            w="full"
+            h="44px"
+            fontSize="sm"
+            fontWeight="500"
+            borderRadius="xl"
+            onClick={handleDeclineInvitation}
+            color="gray.500"
+            _hover={{ bg: 'gray.50', color: 'gray.700' }}
+          >
+            Decline
+          </Button>
+        </VStack>
+
+        {/* Authentication Notice */}
+        {!isAuthenticated && (
+          <Box
+            bg="linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)"
+            borderRadius="xl"
+            p={4}
+            w="full"
+            border="1px solid"
+            borderColor="blue.200"
+          >
+            <HStack spacing={3}>
+              <Box
+                w="6px"
+                h="6px"
+                bg="blue.500"
+                borderRadius="full"
+                flexShrink={0}
+                mt={1}
+              />
+              <Text fontSize="xs" color="blue.700" lineHeight="1.5">
+                Don't have an account? You'll be able to create one after accepting the invitation.
+              </Text>
+            </HStack>
+          </Box>
+        )}
+      </VStack>
+    </AuthLayout>
   );
 };
 

@@ -120,14 +120,15 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
     return FaShieldAlt;
   };
 
-  // Get network display name
+  // Get network display name - User-friendly names instead of technical identifiers
   const getNetworkName = () => {
     if (network === 'ethereum') return 'Ethereum';
     if (network === 'ethereum_testnet') return 'Ethereum Testnet';
-    if (network === 'polygon_amoy') return 'Polygon Amoy';
+    if (network === 'polygon_amoy') return 'Polygon Testnet';
     if (network === 'polygon_amoy_mock') return 'Polygon (Demo)';
+    if (network === 'polygon_amoy_development_mock') return 'Development Mode';
     if (network === 'polygon_mainnet') return 'Polygon';
-    return 'Blockchain';
+    return 'Blockchain Network';
   };
 
   // Enhanced status display

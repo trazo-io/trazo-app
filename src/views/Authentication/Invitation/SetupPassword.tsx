@@ -28,6 +28,7 @@ import {
   StandardButton 
 } from 'components/Design/StandardComponents';
 import { useSignupWithInvitationMutation, useGetInvitationDetailsQuery } from 'store/api/invitationApi';
+import AuthLayout from 'components/Layout/AuthLayout';
 
 interface SetupPasswordFormData {
   first_name: string;
@@ -309,300 +310,202 @@ const SetupPassword: React.FC = () => {
 
   // Main password setup form - Modern Trazo Design
   return (
-    <Box minH="calc(100vh - 80px)" bg="gray.50" position="relative" overflow="hidden">
-      {/* Background Design */}
-      <Box
-        position="absolute"
-        top="-50%"
-        right="-10%"
-        w="60%"
-        h="120%"
-        bg="linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
-        borderRadius="50%"
-        filter="blur(1px)"
-        opacity={0.6}
-      />
-      <Box
-        position="absolute"
-        bottom="-40%"
-        left="-10%"
-        w="50%"
-        h="100%"
-        bg="linear-gradient(45deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)"
-        borderRadius="50%"
-        filter="blur(2px)"
-      />
+    <AuthLayout
+      title="Welcome to the Team!"
+      subtitle="Complete your account setup and start building sustainable solutions with carbon intelligence"
+      features={[
+        "Enterprise-grade carbon tracking",
+        "Blockchain-verified transparency", 
+        "USDA-certified emission data"
+      ]}
+    >
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <VStack spacing={6}>
+          {/* Header */}
+          <VStack spacing={3} textAlign="center" w="full">
+            <Text fontSize="xl" fontWeight="600" color="gray.700">
+              Complete Your Setup
+            </Text>
+            <Text fontSize="sm" color="gray.500" lineHeight="1.6">
+              Create your account to join the team
+            </Text>
+          </VStack>
 
-      <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} minH="calc(100vh - 80px)">
-        {/* Left Side - Welcome Content */}
-        <Flex
-          direction="column"
-          justify="center"
-          align="center"
-          px={{ base: 6, md: 12, lg: 16 }}
-          py={12}
-          position="relative"
-          zIndex={2}
-        >
-          <Container maxW="400px" textAlign="center">
-            <VStack spacing={8}>
-              {/* Trazo Logo */}
-              <Box
-                w="80px"
-                h="80px"
-                bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
-                borderRadius="2xl"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                boxShadow="0 10px 30px rgba(5, 150, 105, 0.3)"
-                transform="rotate(-5deg)"
-                transition="all 0.3s ease"
-                _hover={{ transform: 'rotate(0deg) scale(1.05)' }}
-              >
-                <Text
-                  fontSize="2xl"
-                  fontWeight="900"
-                  color="white"
-                  letterSpacing="-1px"
-                >
-                  T
-                </Text>
-              </Box>
-
-              {/* Welcome Text */}
-              <VStack spacing={4}>
-                <Text
-                  fontSize={{ base: '2xl', md: '3xl' }}
-                  fontWeight="700"
-                  color="gray.800"
-                  lineHeight="1.2"
-                >
-                  Welcome to the Team!
-                </Text>
-                <Text
-                  fontSize="lg"
-                  color="gray.600"
-                  lineHeight="1.6"
-                  maxW="350px"
-                >
-                  Complete your account setup and start building sustainable solutions with carbon intelligence
-                </Text>
-              </VStack>
-            </VStack>
-          </Container>
-        </Flex>
-
-        {/* Right Side - Setup Form */}
-        <Flex
-          direction="column"
-          justify="center"
-          align="center"
-          px={{ base: 6, md: 8, lg: 12 }}
-          py={12}
-          position="relative"
-          zIndex={2}
-        >
-          <Container maxW="400px">
+          {/* Company Info */}
+          {invitationDetails && (
             <Box
-              bg="white"
-              borderRadius="2xl"
-              p={{ base: 6, md: 8 }}
-              boxShadow="0 25px 50px rgba(0, 0, 0, 0.1)"
+              bg="linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
+              borderRadius="xl"
+              p={4}
+              w="full"
               border="1px solid"
-              borderColor="gray.100"
+              borderColor="green.200"
             >
-              <form onSubmit={handleSubmit(onSubmit)}>
-                <VStack spacing={6}>
-                  {/* Header */}
-                  <VStack spacing={3} textAlign="center" w="full">
-                    <Text fontSize="xl" fontWeight="600" color="gray.800">
-                      Complete Your Setup
-                    </Text>
-                    <Text fontSize="sm" color="gray.500" lineHeight="1.6">
-                      Create your account to join the team
-                    </Text>
-                  </VStack>
-
-                  {/* Company Info */}
-                  {invitationDetails && (
-                    <Box
-                      bg="linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
-                      borderRadius="xl"
-                      p={4}
-                      w="full"
-                      border="1px solid"
-                      borderColor="green.200"
-                    >
-                      <HStack spacing={3}>
-                        <Icon as={HiOfficeBuilding} color="green.600" boxSize={5} />
-                        <VStack spacing={1} align="start" flex={1}>
-                          <Text fontSize="sm" fontWeight="600" color="gray.800">
-                            {invitationDetails.company_name}
-                          </Text>
-                          <Badge colorScheme="green" variant="subtle" fontSize="xs">
-                            {invitationDetails.role}
-                          </Badge>
-                        </VStack>
-                      </HStack>
-                    </Box>
-                  )}
-
-                  {/* Form Fields */}
-                  <VStack spacing={4} w="full">
-                    {/* Name Fields */}
-                    <HStack spacing={4} w="full">
-                <StandardField label="First Name" required error={errors.first_name?.message}>
-                  <StandardInput
-                    placeholder="John"
-                    {...register('first_name', {
-                      required: 'First name is required',
-                      minLength: { value: 2, message: 'First name too short' },
-                      maxLength: { value: 50, message: 'First name too long' }
-                    })}
-                  />
-                </StandardField>
-
-                <StandardField label="Last Name" required error={errors.last_name?.message}>
-                  <StandardInput
-                    placeholder="Doe"
-                    {...register('last_name', {
-                      required: 'Last name is required',
-                      minLength: { value: 2, message: 'Last name too short' },
-                      maxLength: { value: 50, message: 'Last name too long' }
-                    })}
-                  />
-                </StandardField>
-                    </HStack>
-
-                    {/* Password Field */}
-                    <StandardField label="Password" required error={errors.password?.message}>
-                <InputGroup size="lg">
-                  <InputLeftElement pointerEvents="none">
-                    <Icon as={FiLock} color="gray.400" />
-                  </InputLeftElement>
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Create a strong password"
-                    h="44px"
-                    fontSize="sm"
-                    bg="gray.50"
-                    border="1px solid"
-                    borderColor="gray.300"
-                    borderRadius="lg"
-                    pl="3rem"
-                    pr="3rem"
-                    _focus={{
-                      borderColor: primaryColor,
-                      bg: 'white',
-                      boxShadow: `0 0 0 3px ${primaryColor}20`
-                    }}
-                    {...register('password', {
-                      required: 'Password is required',
-                      minLength: { value: 8, message: 'Password must be at least 8 characters' }
-                    })}
-                  />
-                  <InputRightElement>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setShowPassword(!showPassword)}
-                      size="sm"
-                    >
-                      <Icon as={showPassword ? FiEyeOff : FiEye} />
-                    </Button>
-                  </InputRightElement>
-                      </InputGroup>
-                      
-                      {/* Password Strength Indicator */}
-                      {password && (
-                        <Box w="full" mt={2}>
-                          <Progress
-                            value={passwordStrength}
-                            size="sm"
-                            borderRadius="full"
-                            colorScheme={passwordStrength < 50 ? 'red' : passwordStrength < 75 ? 'yellow' : 'green'}
-                          />
-                          <Text fontSize="xs" color="gray.500" mt={1}>
-                            Password strength: {passwordStrength < 50 ? 'Weak' : passwordStrength < 75 ? 'Medium' : 'Strong'}
-                          </Text>
-                        </Box>
-                      )}
-                    </StandardField>
-
-                    {/* Confirm Password Field */}
-                    <StandardField label="Confirm Password" required error={errors.password_confirm?.message}>
-                <InputGroup size="lg">
-                  <InputLeftElement pointerEvents="none">
-                    <Icon as={FiLock} color="gray.400" />
-                  </InputLeftElement>
-                  <Input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm your password"
-                    h="44px"
-                    fontSize="sm"
-                    bg="gray.50"
-                    border="1px solid"
-                    borderColor={passwordConfirm && password !== passwordConfirm ? 'red.300' : 'gray.300'}
-                    borderRadius="lg"
-                    pl="3rem"
-                    pr="3rem"
-                    _focus={{
-                      borderColor: primaryColor,
-                      bg: 'white',
-                      boxShadow: `0 0 0 3px ${primaryColor}20`
-                    }}
-                    {...register('password_confirm', {
-                      required: 'Please confirm your password'
-                    })}
-                  />
-                  <InputRightElement>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      size="sm"
-                    >
-                      <Icon as={showConfirmPassword ? FiEyeOff : FiEye} />
-                    </Button>
-                  </InputRightElement>
-                      </InputGroup>
-                      
-                      {/* Password Match Indicator */}
-                      {passwordConfirm && (
-                        <Text 
-                          fontSize="xs" 
-                          color={password === passwordConfirm ? 'green.500' : 'red.500'} 
-                          mt={1}
-                        >
-                          {password === passwordConfirm ? '✓ Passwords match' : '✗ Passwords do not match'}
-                        </Text>
-                      )}
-                    </StandardField>
-                  </VStack>
-
-                  {/* Submit Button */}
-                  <StandardButton
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    w="full"
-                    h="50px"
-                    isLoading={isSubmitting || isCreatingAccount}
-                    loadingText="Creating account..."
-                  >
-                    Complete Setup
-                  </StandardButton>
-
-                  {/* Footer */}
-                  <Text fontSize="xs" color="gray.500" textAlign="center">
-                    By creating an account, you agree to our terms of service
+              <HStack spacing={3}>
+                <Icon as={HiOfficeBuilding} color="green.600" boxSize={5} />
+                <VStack spacing={1} align="start" flex={1}>
+                  <Text fontSize="sm" fontWeight="600" color="gray.800">
+                    {invitationDetails.company_name}
                   </Text>
+                  <Badge colorScheme="green" variant="subtle" fontSize="xs">
+                    {invitationDetails.role}
+                  </Badge>
                 </VStack>
-              </form>
+              </HStack>
             </Box>
-          </Container>
-        </Flex>
-      </Grid>
-    </Box>
+          )}
+
+          {/* Form Fields */}
+          <VStack spacing={4} w="full">
+            {/* Name Fields */}
+            <Grid templateColumns="1fr 1fr" gap={3} w="full">
+              <StandardField label="First Name" required error={errors.first_name?.message}>
+                <StandardInput
+                  placeholder="John"
+                  {...register('first_name', {
+                    required: 'First name is required',
+                    minLength: { value: 2, message: 'First name too short' },
+                    maxLength: { value: 50, message: 'First name too long' }
+                  })}
+                />
+              </StandardField>
+
+              <StandardField label="Last Name" required error={errors.last_name?.message}>
+                <StandardInput
+                  placeholder="Doe"
+                  {...register('last_name', {
+                    required: 'Last name is required',
+                    minLength: { value: 2, message: 'Last name too short' },
+                    maxLength: { value: 50, message: 'Last name too long' }
+                  })}
+                />
+              </StandardField>
+            </Grid>
+
+            {/* Password Field */}
+            <StandardField label="Password" required error={errors.password?.message}>
+              <InputGroup size="lg">
+                <InputLeftElement pointerEvents="none">
+                  <Icon as={FiLock} color="gray.400" />
+                </InputLeftElement>
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create a strong password"
+                  h="44px"
+                  fontSize="sm"
+                  bg="gray.50"
+                  border="1px solid"
+                  borderColor="gray.200"
+                  borderRadius="xl"
+                  pl="3rem"
+                  pr="3rem"
+                  _focus={{
+                    borderColor: primaryColor,
+                    bg: 'white',
+                    boxShadow: `0 0 0 3px ${primaryColor}20`
+                  }}
+                  {...register('password', {
+                    required: 'Password is required',
+                    minLength: { value: 8, message: 'Password must be at least 8 characters' }
+                  })}
+                />
+                <InputRightElement>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowPassword(!showPassword)}
+                    size="sm"
+                  >
+                    <Icon as={showPassword ? FiEyeOff : FiEye} />
+                  </Button>
+                </InputRightElement>
+              </InputGroup>
+              
+              {/* Password Strength Indicator */}
+              {password && (
+                <Box w="full" mt={2}>
+                  <Progress
+                    value={passwordStrength}
+                    size="sm"
+                    borderRadius="full"
+                    colorScheme={passwordStrength < 50 ? 'red' : passwordStrength < 75 ? 'yellow' : 'green'}
+                  />
+                  <Text fontSize="xs" color="gray.500" mt={1}>
+                    Password strength: {passwordStrength < 50 ? 'Weak' : passwordStrength < 75 ? 'Medium' : 'Strong'}
+                  </Text>
+                </Box>
+              )}
+            </StandardField>
+
+            {/* Confirm Password Field */}
+            <StandardField label="Confirm Password" required error={errors.password_confirm?.message}>
+              <InputGroup size="lg">
+                <InputLeftElement pointerEvents="none">
+                  <Icon as={FiLock} color="gray.400" />
+                </InputLeftElement>
+                <Input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Confirm your password"
+                  h="44px"
+                  fontSize="sm"
+                  bg="gray.50"
+                  border="1px solid"
+                  borderColor={passwordConfirm && password !== passwordConfirm ? 'red.300' : 'gray.200'}
+                  borderRadius="xl"
+                  pl="3rem"
+                  pr="3rem"
+                  _focus={{
+                    borderColor: primaryColor,
+                    bg: 'white',
+                    boxShadow: `0 0 0 3px ${primaryColor}20`
+                  }}
+                  {...register('password_confirm', {
+                    required: 'Please confirm your password'
+                  })}
+                />
+                <InputRightElement>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    size="sm"
+                  >
+                    <Icon as={showConfirmPassword ? FiEyeOff : FiEye} />
+                  </Button>
+                </InputRightElement>
+              </InputGroup>
+              
+              {/* Password Match Indicator */}
+              {passwordConfirm && (
+                <Text 
+                  fontSize="xs" 
+                  color={password === passwordConfirm ? 'green.500' : 'red.500'} 
+                  mt={1}
+                >
+                  {password === passwordConfirm ? '✓ Passwords match' : '✗ Passwords do not match'}
+                </Text>
+              )}
+            </StandardField>
+          </VStack>
+
+          {/* Submit Button */}
+          <StandardButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            w="full"
+            h="44px"
+            isLoading={isSubmitting || isCreatingAccount}
+            loadingText="Creating account..."
+          >
+            Complete Setup
+          </StandardButton>
+
+          {/* Footer */}
+          <Text fontSize="xs" color="gray.500" textAlign="center">
+            By creating an account, you agree to our terms of service
+          </Text>
+        </VStack>
+      </form>
+    </AuthLayout>
   );
 };
 
