@@ -86,16 +86,28 @@ const App = () => {
 
   useEffect(() => {
     const host = window.location.host;
+    const baseDomain = import.meta.env.VITE_APP_BASE_DOMAIN || 'trazo.io';
+    
     console.log('Current host:', host);
-    console.log('Base domain:', import.meta.env.VITE_APP_BASE_DOMAIN);
+    console.log('Base domain:', baseDomain);
+    console.log('All env vars:', import.meta.env);
 
-    // Handle app-staging.trazo.io and similar staging domains
-    if (host.includes('app-staging') || host.includes('app.') || host.includes('app-')) {
-      setSubDomain('producer');
-    } else if (host.includes('consumer')) {
-      setSubDomain('consumer');
-    } else {
-      // Default to producer for main domain
+    try {
+      // Handle app-staging.trazo.io and similar staging domains
+      if (host.includes('app-staging') || host.includes('app.') || host.includes('app-')) {
+        console.log('Setting subdomain to producer');
+        setSubDomain('producer');
+      } else if (host.includes('consumer')) {
+        console.log('Setting subdomain to consumer');
+        setSubDomain('consumer');
+      } else {
+        // Default to producer for main domain
+        console.log('Setting subdomain to producer (default)');
+        setSubDomain('producer');
+      }
+    } catch (error) {
+      console.error('Error in subdomain detection:', error);
+      // Fallback to producer in case of any error
       setSubDomain('producer');
     }
   }, []);
