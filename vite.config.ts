@@ -67,8 +67,8 @@ export default defineConfig({
     }
   },
   build: {
-    // Enhanced mobile performance optimization
-    target: ['es2015', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
+    // Enhanced mobile performance optimization - updated for import.meta support
+    target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
     chunkSizeWarningLimit: 500, // Stricter limit for mobile
     reportCompressedSize: false, // Faster builds
     rollupOptions: {
@@ -263,8 +263,8 @@ export default defineConfig({
   esbuild: {
     // Tree shaking optimization
     treeShaking: true,
-    // Optimize for mobile devices
-    target: 'es2018',
+    // Optimize for mobile devices - updated for import.meta support
+    target: 'es2020',
     // Remove unused imports
     drop: ['console', 'debugger']
   }
