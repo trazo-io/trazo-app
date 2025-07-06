@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { splitVendorChunkPlugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { resolve } from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -8,6 +9,7 @@ export default defineConfig({
   // base: 'https://trazo.io/',
   plugins: [
     react(),
+    splitVendorChunkPlugin(),
     visualizer({
       open: false,
       gzipSize: true,
@@ -73,7 +75,7 @@ export default defineConfig({
     reportCompressedSize: false, // Faster builds
     rollupOptions: {
       output: {
-        // Enhanced manual chunking strategy for mobile performance
+        // Simplified chunking strategy that works with splitVendorChunkPlugin
         manualChunks: (id) => {
           // CRITICAL PATH - QR Scanning Experience (highest priority)
           if (
@@ -85,56 +87,20 @@ export default defineConfig({
             return 'qr-critical';
           }
 
-          // CORE REACT - Required for initial render
+          // CHARTS - Keep charts together but separate from vendor
           if (
-            id.includes('node_modules/react') ||
-            id.includes('node_modules/react-dom') ||
-            id.includes('node_modules/scheduler')
+            id.includes('node_modules/apexcharts') ||
+            id.includes('node_modules/react-apexcharts')
           ) {
-            return 'react-core';
+            return 'charts-vendor';
+          }
+          
+          // CHARTS COMPONENTS - App chart components
+          if (id.includes('src/components/Charts')) {
+            return 'charts-app';
           }
 
-          // ROUTING - Needed early for navigation
-          if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) {
-            return 'routing';
-          }
-
-          // UI ESSENTIALS - Core UI components for QR page
-          if (
-            id.includes('node_modules/@chakra-ui/react') ||
-            id.includes('node_modules/@chakra-ui/system') ||
-            id.includes('node_modules/@emotion/react') ||
-            id.includes('node_modules/@emotion/styled')
-          ) {
-            return 'ui-core';
-          }
-
-          // STATE MANAGEMENT - RTK Query for API calls
-          if (
-            id.includes('node_modules/@reduxjs/toolkit') ||
-            id.includes('node_modules/react-redux') ||
-            id.includes('src/store')
-          ) {
-            return 'state-management';
-          }
-
-          // ICONS - Split by usage frequency
-          if (id.includes('node_modules/react-icons/fa')) {
-            return 'icons-primary'; // FontAwesome icons (most used)
-          }
-          if (id.includes('node_modules/react-icons')) {
-            return 'icons-secondary'; // Other icon libraries
-          }
-
-          // ANIMATIONS - Used in carbon score
-          if (
-            id.includes('node_modules/framer-motion') ||
-            id.includes('node_modules/@emotion/css')
-          ) {
-            return 'animations';
-          }
-
-          // HEAVY FEATURES - Lazy loaded only when needed
+          // MAPS - Heavy mapping libraries
           if (
             id.includes('node_modules/@react-google-maps') ||
             id.includes('node_modules/google-maps') ||
@@ -143,62 +109,20 @@ export default defineConfig({
             return 'maps-lazy';
           }
 
-          // FORMS - Lazy loaded for admin/producer features
+          // FORMS - Form libraries
           if (
             id.includes('node_modules/react-hook-form') ||
-            id.includes('node_modules/@hookform') ||
-            id.includes('src/components/Forms')
+            id.includes('node_modules/@hookform')
           ) {
             return 'forms-lazy';
           }
 
-          // CHARTS - Load with vendor instead of lazy loading to avoid bundling issues  
-          if (
-            id.includes('node_modules/apexcharts') ||
-            id.includes('node_modules/react-apexcharts')
-          ) {
-            return 'vendor-charts';
-          }
-          
-          // CHARTS COMPONENTS - Keep separate but not lazy
-          if (id.includes('src/components/Charts')) {
-            return 'app-charts';
-          }
-
-          // DEPRECATED FEATURES - To be removed
-          if (
-            id.includes('src/views/Education') ||
-            id.includes('src/views/ROI') ||
-            id.includes('roi') ||
-            id.includes('education')
-          ) {
-            return 'deprecated-remove';
-          }
-
-          // ADMIN FEATURES - Heavy dashboard components
+          // ADMIN FEATURES - Heavy dashboard components  
           if (id.includes('src/views/Dashboard') || id.includes('src/views/Admin')) {
             return 'admin-features';
           }
 
-          // UTILITIES - Common helpers
-          if (
-            id.includes('node_modules/lodash') ||
-            id.includes('node_modules/axios') ||
-            id.includes('node_modules/uuid') ||
-            id.includes('node_modules/date-fns')
-          ) {
-            return 'utils';
-          }
-
-          // UI EXTENSIONS - Additional Chakra components
-          if (id.includes('node_modules/@chakra-ui')) {
-            return 'ui-extended';
-          }
-
-          // REMAINING VENDOR - Everything else
-          if (id.includes('node_modules')) {
-            return 'vendor-misc';
-          }
+          // Let splitVendorChunkPlugin handle the rest of node_modules
         },
         // Generate smaller initial bundles
         chunkFileNames: (chunkInfo) => {
