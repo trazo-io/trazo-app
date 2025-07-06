@@ -86,14 +86,17 @@ const App = () => {
 
   useEffect(() => {
     const host = window.location.host;
-    const arr = host
-      .split('.')
-      .slice(0, host.includes(import.meta.env.VITE_APP_BASE_DOMAIN) ? -1 : -2);
-
-    if (arr.length > 0) {
-      if (arr[0] === 'app') setSubDomain('producer');
-      else if (arr[0] === 'consumer') setSubDomain('consumer');
-      else setSubDomain('');
+    console.log('Current host:', host);
+    console.log('Base domain:', import.meta.env.VITE_APP_BASE_DOMAIN);
+    
+    // Handle app-staging.trazo.io and similar staging domains
+    if (host.includes('app-staging') || host.includes('app.') || host.includes('app-')) {
+      setSubDomain('producer');
+    } else if (host.includes('consumer')) {
+      setSubDomain('consumer');
+    } else {
+      // Default to producer for main domain
+      setSubDomain('producer');
     }
   }, []);
 
