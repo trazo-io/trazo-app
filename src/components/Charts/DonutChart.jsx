@@ -16,7 +16,7 @@
 */
 
 import React from 'react';
-import ReactApexChart from 'react-apexcharts';
+import ChartWrapper from "./ChartWrapper";
 
 class DonutChart extends React.Component {
   constructor(props) {
@@ -37,7 +37,7 @@ class DonutChart extends React.Component {
 
   render() {
     return (
-      <ReactApexChart
+      <ChartWrapper
         options={this.state.chartOptions}
         series={this.state.chartData}
         type="donut"

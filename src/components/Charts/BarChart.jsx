@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-
-import Chart from 'react-apexcharts';
+import ChartWrapper from './ChartWrapper';
 
 class BarChart extends Component {
   constructor(props) {
@@ -22,8 +21,8 @@ class BarChart extends Component {
 
   render() {
     return (
-      <Chart
-        ref={this.props.chartRef}
+      <ChartWrapper
+        chartRef={this.props.chartRef}
         options={this.state.chartOptions}
         series={this.state.chartData}
         type="bar"
