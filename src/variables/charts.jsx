@@ -1372,9 +1372,6 @@ export const radarChartOptionsCharts = {
   },
   labels: ['Travel', 'Shopping', 'Food', 'Grocery', 'Security', 'Others'],
   colors: ['#00cdcd', '#333'],
-  chart: {
-    width: '100%'
-  },
   states: {
     hover: {
       filter: {
@@ -1438,9 +1435,6 @@ export const polarChartOptionsCharts = {
   },
   labels: ['Subject 1', 'Subject2', 'Subject 3', 'Subject 4'],
   colors: ['#00cdcd', '#009a9a', '#006767', '#004d4d'],
-  chart: {
-    width: '100%'
-  },
   states: {
     hover: {
       filter: {

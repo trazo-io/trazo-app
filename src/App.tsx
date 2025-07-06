@@ -73,6 +73,43 @@ import AllReviewsView from 'views/Dashboard/Commercial/AllReviews';
 import { useGetCsrfTokenQuery } from './store/api/baseApi';
 import AcceptInvitation from 'views/Authentication/Invitation/AcceptInvitation';
 import SetupPassword from 'views/Authentication/Invitation/SetupPassword';
+import { ErrorBoundary } from 'react-error-boundary';
+
+// Error fallback component
+const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
+  <div style={{ 
+    padding: '20px', 
+    textAlign: 'center', 
+    backgroundColor: '#f7fafc',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center'
+  }}>
+    <h2 style={{ color: '#2d3748', marginBottom: '16px' }}>Something went wrong</h2>
+    <p style={{ color: '#718096', marginBottom: '24px' }}>
+      We apologize for the inconvenience. Please try refreshing the page.
+    </p>
+    <button 
+      onClick={resetErrorBoundary}
+      style={{
+        padding: '12px 24px',
+        backgroundColor: '#059669',
+        color: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: 'pointer'
+      }}
+    >
+      Try again
+    </button>
+    <details style={{ marginTop: '24px', color: '#a0aec0', fontSize: '14px' }}>
+      <summary>Error details</summary>
+      <pre style={{ marginTop: '8px', textAlign: 'left' }}>{error.message}</pre>
+    </details>
+  </div>
+);
 
 const App = () => {
   const location = useLocation();
@@ -125,7 +162,11 @@ const App = () => {
   console.log(config);
 
   return (
-    <ChakraProvider theme={theme}>
+    <ErrorBoundary 
+      FallbackComponent={ErrorFallback}
+      onReset={() => window.location.reload()}
+    >
+      <ChakraProvider theme={theme}>
       <Routes>
         {/* Public Pricing Page - Available without authentication */}
         <Route path="/pricing" element={<AuthLayout />}>
@@ -352,6 +393,7 @@ const App = () => {
         </Route>
       </Routes>
     </ChakraProvider>
+    </ErrorBoundary>
   );
 };
 
