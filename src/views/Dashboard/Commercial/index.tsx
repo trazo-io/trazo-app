@@ -257,73 +257,11 @@ export default function CommercialView() {
     console.log('currentEstablishmentId', currentEstablishmentId);
   }, [currentEstablishmentId]);
 
+  // Recharts automatically updates when dataEstablishmentProductsReputation changes
   useEffect(() => {
-    let isSubscribed = true;
-
-    const updateReputationChart = async () => {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        if (!isSubscribed || !reputationChartRef.current?.chart) return;
-
-        // Reset chart first
-        reputationChartRef.current.chart.updateOptions({
-          ...barChartOptionsCharts1,
-          chart: {
-            ...barChartOptionsCharts1.chart,
-            animations: {
-              enabled: false
-            }
-          }
-        });
-
-        if (dataEstablishmentProductsReputation?.products_reputation) {
-          reputationChartRef.current.chart.updateSeries([
-            {
-              name: 'Average',
-              data: dataEstablishmentProductsReputation.products_reputation.series
-            }
-          ]);
-
-          reputationChartRef.current.chart.updateOptions({
-            ...barChartOptionsCharts1,
-            chart: {
-              ...barChartOptionsCharts1.chart,
-              animations: {
-                enabled: true
-              },
-              toolbar: {
-                show: false
-              }
-            },
-            xaxis: {
-              ...barChartOptionsCharts1.xaxis,
-              categories: dataEstablishmentProductsReputation.products_reputation.options,
-              labels: {
-                show: true,
-                style: {
-                  colors: textColor,
-                  fontSize: '12px'
-                }
-              }
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error updating reputation chart:', error, {
-          hasChartRef: !!reputationChartRef.current,
-          hasChartInstance: !!reputationChartRef.current?.chart,
-          hasData: !!dataEstablishmentProductsReputation?.products_reputation
-        });
-      }
-    };
-
-    updateReputationChart();
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [dataEstablishmentProductsReputation, textColor, currentEstablishmentId]);
+    // Log for debugging if needed
+    console.log('Reputation data updated:', dataEstablishmentProductsReputation);
+  }, [dataEstablishmentProductsReputation]);
 
   const scansColumnsNames = [
     intl.formatMessage({ id: 'app.date' }),
