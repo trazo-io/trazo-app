@@ -7,7 +7,6 @@ interface ChartWrapperProps {
   type: string;
   width?: string | number;
   height?: string | number;
-  chartRef?: React.Ref<any>;
   data?: any[];
 }
 

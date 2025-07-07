@@ -60,8 +60,7 @@ export default function CommercialView() {
   const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white');
   const { establishmentId } = useParams();
-  const chartRef = useRef(null);
-  const reputationChartRef = useRef(null);
+  // Removed chartRef and reputationChartRef - Recharts handles updates through props
   const [filters, setFilters] = useState({
     parcel: null,
     product: null,
@@ -253,91 +252,10 @@ export default function CommercialView() {
     }
   };
 
+  // Recharts automatically updates when data changes, no imperative updates needed
   useEffect(() => {
     console.log('currentEstablishmentId', currentEstablishmentId);
-    let isSubscribed = true;
-
-    const updateChart = async () => {
-      try {
-        // Wait for next tick to ensure chart is mounted
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        if (!isSubscribed || !chartRef.current?.chart) return;
-
-        // Reset chart first
-        chartRef.current.chart.updateOptions({
-          ...lineBarChartOptions,
-          chart: {
-            ...lineBarChartOptions.chart,
-            animations: {
-              enabled: false
-            }
-          }
-        });
-
-        if (dataEstablishmentScansVsSaleInfo?.scans_vs_sales) {
-          const series = lineBarChartData.map((data) => ({
-            name: data.name,
-            type: data.type,
-            data:
-              data.name === 'Sales'
-                ? dataEstablishmentScansVsSaleInfo.scans_vs_sales.series.sales || []
-                : dataEstablishmentScansVsSaleInfo.scans_vs_sales.series.scans || []
-          }));
-
-          chartRef.current.chart.updateOptions(
-            {
-              ...lineBarChartOptions,
-              chart: {
-                ...lineBarChartOptions.chart,
-                animations: {
-                  enabled: true,
-                  dynamicAnimation: {
-                    speed: 350
-                  }
-                }
-              },
-              xaxis: {
-                ...lineBarChartOptions.xaxis,
-                categories: formatCategories(
-                  dataEstablishmentScansVsSaleInfo.scans_vs_sales.options
-                ),
-                labels: {
-                  show: true,
-                  style: {
-                    colors: textColor,
-                    fontSize: '12px'
-                  }
-                }
-              }
-            },
-            false,
-            true
-          );
-
-          chartRef.current.chart.updateSeries(series);
-        }
-      } catch (error) {
-        console.error('Error updating chart:', error, {
-          hasChartRef: !!chartRef.current,
-          hasChartInstance: !!chartRef.current?.chart,
-          hasData: !!dataEstablishmentScansVsSaleInfo?.scans_vs_sales
-        });
-      }
-    };
-
-    updateChart();
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [
-    dataEstablishmentScansVsSaleInfo,
-    textColor,
-    filters.period.id,
-    intl,
-    currentEstablishmentId
-  ]);
+  }, [currentEstablishmentId]);
 
   useEffect(() => {
     let isSubscribed = true;
@@ -628,7 +546,6 @@ export default function CommercialView() {
                   </Flex>
                 ) : (
                   <LineBarChart
-                    chartRef={chartRef}
                     chartData={lineBarChartData.map((data) => ({
                       name: data.name,
                       type: data.type,
@@ -679,7 +596,6 @@ export default function CommercialView() {
                   </Flex>
                 ) : (
                   <BarChart
-                    chartRef={reputationChartRef}
                     chartData={[
                       {
                         name: 'Average',

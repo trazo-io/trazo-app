@@ -24,23 +24,20 @@ class LineBarChart extends Component {
     super(props);
     this.state = {
       chartData: [],
-      chartOptions: {},
-      chartRef: null
+      chartOptions: {}
     };
   }
 
   componentDidMount() {
     this.setState({
       chartData: this.props.chartData,
-      chartOptions: this.props.chartOptions,
-      chartRef: this.props.chartRef
+      chartOptions: this.props.chartOptions
     });
   }
 
   render() {
     return (
       <ChartWrapper
-        chartRef={this.props.chartRef}
         options={this.state.chartOptions}
         series={this.state.chartData}
         type="line"
