@@ -264,7 +264,7 @@ export default function Dashboard(props: any) {
   htmlDocumentElement.layout = 'admin';
   // Chakra Color Mode
   return (
-    <ChakraProvider theme={theme} resetCss={false} overflow="scroll">
+    <ChakraProvider theme={theme}>
       <SidebarContext.Provider
         value={{
           sidebarWidth,

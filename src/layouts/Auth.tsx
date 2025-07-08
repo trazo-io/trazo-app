@@ -114,7 +114,7 @@ export default function Pages() {
   document.documentElement.dir = 'ltr';
   document.documentElement.layout = 'auth';
   return (
-    <ChakraProvider theme={theme} resetCss={false} w="100%">
+    <ChakraProvider theme={theme} w="100%">
       <Box ref={navRef} w="100%">
         <Portal containerRef={navRef}>
           <AuthNavbar secondary={false} logoText="trazo" />

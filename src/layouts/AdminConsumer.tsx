@@ -69,7 +69,7 @@ export default function AdminConsumerLayout(props: any) {
   };
 
   return (
-    <ChakraProvider theme={theme} resetCss={false}>
+    <ChakraProvider theme={theme}>
       <SidebarContext.Provider
         value={{
           sidebarWidth,
