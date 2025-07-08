@@ -122,7 +122,7 @@ export default function Dashboard(props: any) {
           collapse: true,
           establishmentId: e.id,
           authIcon: <HomeIcon color="inherit" />,
-          regex: /^\/dashboard\/establishment\/[0-9]+(\/parcel\/[0-9]+)?$/,
+          regex: /^\/admin\/dashboard\/establishment\/[0-9]+(\/parcel\/[0-9]+)?$/,
           layout: '/admin',
           items: e?.parcels?.map((p) => {
             return {
@@ -130,7 +130,7 @@ export default function Dashboard(props: any) {
               path: `/dashboard/establishment/${e.id}/parcel/${p.id}`,
               component: Overview,
               layout: '/admin',
-              regex: /^\/dashboard\/establishment\/[0-9]+\/parcel\/[0-9]+$/
+              regex: /^\/admin\/dashboard\/establishment\/[0-9]+\/parcel\/[0-9]+$/
             };
           })
         };
@@ -185,52 +185,79 @@ export default function Dashboard(props: any) {
 
   const getActiveRoute = (routes: TypeRoute[]): string => {
     let activeRoute = intl.formatMessage({ id: 'app.home' });
-    for (let i = 0; i < routes?.length; i++) {
-      if (routes[i].collapse) {
-        let collapseActiveRoute = getActiveRoute(
-          routes[i].isDashboard ? dynamicRoutes : routes[i].items
-        );
-        if (collapseActiveRoute !== activeRoute) {
-          return collapseActiveRoute;
-        }
-      } else if (routes[i].category) {
-        let categoryActiveRoute = getActiveRoute(
-          routes[i].isDashboard ? dynamicRoutes : routes[i].items
-        );
-        if (categoryActiveRoute !== activeRoute) {
-          return categoryActiveRoute;
-        }
-      } else {
-        if (window.location.href.indexOf(routes[i].layout + routes[i].path) !== -1) {
-          return routes[i].name;
+    try {
+      if (!routes || !Array.isArray(routes)) {
+        console.warn('getActiveRoute: routes is not an array', routes);
+        return activeRoute;
+      }
+      
+      for (let i = 0; i < routes.length; i++) {
+        const route = routes[i];
+        if (!route) continue;
+        
+        if (route.collapse) {
+          const items = route.isDashboard ? dynamicRoutes : route.items;
+          if (items && Array.isArray(items)) {
+            let collapseActiveRoute = getActiveRoute(items);
+            if (collapseActiveRoute !== activeRoute) {
+              return collapseActiveRoute;
+            }
+          }
+        } else if (route.category) {
+          const items = route.isDashboard ? dynamicRoutes : route.items;
+          if (items && Array.isArray(items)) {
+            let categoryActiveRoute = getActiveRoute(items);
+            if (categoryActiveRoute !== activeRoute) {
+              return categoryActiveRoute;
+            }
+          }
+        } else if (route.layout && route.path && route.name) {
+          if (window.location.href.indexOf(route.layout + route.path) !== -1) {
+            return route.name;
+          }
         }
       }
+    } catch (error) {
+      console.error('Error in getActiveRoute:', error, { routes });
     }
     return activeRoute;
   };
 
   const getActiveNavbar = (routes: TypeRoute[]): boolean => {
     let activeNavbar = false;
-    for (let i = 0; i < routes?.length; i++) {
-      if (routes[i].collapse) {
-        let collapseActiveNavbar = getActiveNavbar(
-          routes[i].isDashboard ? dynamicRoutes : routes[i].items
-        );
-        if (collapseActiveNavbar !== activeNavbar) {
-          return collapseActiveNavbar;
-        }
-      } else if (routes[i].category) {
-        let categoryActiveNavbar = getActiveNavbar(
-          routes[i].isDashboard ? dynamicRoutes : routes[i].items
-        );
-        if (categoryActiveNavbar !== activeNavbar) {
-          return categoryActiveNavbar;
-        }
-      } else {
-        if (window.location.href.indexOf(routes[i].layout + routes[i].path) !== -1) {
-          return routes[i].secondaryNavbar ? true : false;
+    try {
+      if (!routes || !Array.isArray(routes)) {
+        return activeNavbar;
+      }
+      
+      for (let i = 0; i < routes.length; i++) {
+        const route = routes[i];
+        if (!route) continue;
+        
+        if (route.collapse) {
+          const items = route.isDashboard ? dynamicRoutes : route.items;
+          if (items && Array.isArray(items)) {
+            let collapseActiveNavbar = getActiveNavbar(items);
+            if (collapseActiveNavbar !== activeNavbar) {
+              return collapseActiveNavbar;
+            }
+          }
+        } else if (route.category) {
+          const items = route.isDashboard ? dynamicRoutes : route.items;
+          if (items && Array.isArray(items)) {
+            let categoryActiveNavbar = getActiveNavbar(items);
+            if (categoryActiveNavbar !== activeNavbar) {
+              return categoryActiveNavbar;
+            }
+          }
+        } else if (route.layout && route.path) {
+          if (window.location.href.indexOf(route.layout + route.path) !== -1) {
+            return route.secondaryNavbar ? true : false;
+          }
         }
       }
+    } catch (error) {
+      console.error('Error in getActiveNavbar:', error, { routes });
     }
     return activeNavbar;
   };
