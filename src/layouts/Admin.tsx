@@ -23,6 +23,8 @@ import '@fontsource/roboto/700.css';
 
 // Chakra imports
 import { ChakraProvider, Portal, useDisclosure, CSSReset } from '@chakra-ui/react';
+import { CacheProvider } from '@emotion/react';
+import { emotionCache } from '../emotion-cache';
 import { Outlet, Route } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 
@@ -264,9 +266,10 @@ export default function Dashboard(props: any) {
   htmlDocumentElement.layout = 'admin';
   // Chakra Color Mode
   return (
-    <ChakraProvider theme={theme}>
-      <CSSReset />
-      <SidebarContext.Provider
+    <CacheProvider value={emotionCache}>
+      <ChakraProvider theme={theme}>
+        <CSSReset />
+        <SidebarContext.Provider
         value={{
           sidebarWidth,
           setSidebarWidth,
@@ -324,7 +327,8 @@ export default function Dashboard(props: any) {
             onTransparent={() => setSidebarVariant('transparent')}
           />
         </MainPanel>
-      </SidebarContext.Provider>
-    </ChakraProvider>
+        </SidebarContext.Provider>
+      </ChakraProvider>
+    </CacheProvider>
   );
 }

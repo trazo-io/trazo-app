@@ -22,6 +22,8 @@ import '@fontsource/roboto/700.css';
 
 // Chakra imports
 import { Box, ChakraProvider, Portal, CSSReset } from '@chakra-ui/react';
+import { CacheProvider } from '@emotion/react';
+import { emotionCache } from '../emotion-cache';
 import { Outlet, Route } from 'react-router-dom';
 
 // core components
@@ -114,9 +116,10 @@ export default function Pages() {
   document.documentElement.dir = 'ltr';
   document.documentElement.layout = 'auth';
   return (
-    <ChakraProvider theme={theme} w="100%">
-      <CSSReset />
-      <Box ref={navRef} w="100%">
+    <CacheProvider value={emotionCache}>
+      <ChakraProvider theme={theme} w="100%">
+        <CSSReset />
+        <Box ref={navRef} w="100%">
         <Portal containerRef={navRef}>
           <AuthNavbar secondary={false} logoText="trazo" />
         </Portal>
@@ -128,7 +131,8 @@ export default function Pages() {
         <Box px="24px" mx="auto" width="1044px" maxW="100%">
           <Footer />
         </Box>
-      </Box>
-    </ChakraProvider>
+        </Box>
+      </ChakraProvider>
+    </CacheProvider>
   );
 }

@@ -3,6 +3,8 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { ChakraProvider, CSSReset } from '@chakra-ui/react';
 import theme from 'theme/theme';
+import { CacheProvider } from '@emotion/react';
+import { emotionCache } from './emotion-cache';
 
 import AddEstablishment from 'views/Dashboard/Dashboard/Establishment/AddEstablishment';
 import AddParcel from 'views/Dashboard/Dashboard/Parcel/AddParcel';
@@ -166,9 +168,10 @@ const App = () => {
       FallbackComponent={ErrorFallback}
       onReset={() => window.location.reload()}
     >
-      <ChakraProvider theme={theme}>
-        <CSSReset />
-      <Routes>
+      <CacheProvider value={emotionCache}>
+        <ChakraProvider theme={theme}>
+          <CSSReset />
+        <Routes>
         {/* Public Pricing Page - Available without authentication */}
         <Route path="/pricing" element={<AuthLayout />}>
           <Route index element={<Pricing />} />
@@ -392,8 +395,9 @@ const App = () => {
             element={<Navigate to={config?.defaultRedirect || '/pricing'} replace />}
           />
         </Route>
-      </Routes>
-    </ChakraProvider>
+        </Routes>
+        </ChakraProvider>
+      </CacheProvider>
     </ErrorBoundary>
   );
 };

@@ -1,4 +1,6 @@
 import { ChakraProvider, Portal, useDisclosure, CSSReset } from '@chakra-ui/react';
+import { CacheProvider } from '@emotion/react';
+import { emotionCache } from '../emotion-cache';
 import { Outlet } from 'react-router-dom';
 import React, { useState } from 'react';
 
@@ -69,9 +71,10 @@ export default function AdminConsumerLayout(props: any) {
   };
 
   return (
-    <ChakraProvider theme={theme}>
-      <CSSReset />
-      <SidebarContext.Provider
+    <CacheProvider value={emotionCache}>
+      <ChakraProvider theme={theme}>
+        <CSSReset />
+        <SidebarContext.Provider
         value={{
           sidebarWidth,
           setSidebarWidth,
@@ -117,7 +120,8 @@ export default function AdminConsumerLayout(props: any) {
             onTransparent={() => setSidebarVariant('transparent')}
           />
         </MainPanel>
-      </SidebarContext.Provider>
-    </ChakraProvider>
+        </SidebarContext.Provider>
+      </ChakraProvider>
+    </CacheProvider>
   );
 }
