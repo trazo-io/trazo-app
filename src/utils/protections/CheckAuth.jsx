@@ -11,9 +11,9 @@ const CheckAuth = () => {
   const location = useLocation();
 
   // Skip authentication check on auth pages and public routes to prevent redirect loops
-  const isAuthPage = location.pathname.startsWith('/auth/');
-  const isPublicProductRoute = location.pathname.match(/^\/production\/[^\/]+\/?$/);
-  const isPricingPage = location.pathname === '/pricing';
+  const isAuthPage = location?.pathname?.startsWith('/auth/') || false;
+  const isPublicProductRoute = location?.pathname?.match(/^\/production\/[^\/]+\/?$/) || false;
+  const isPricingPage = location?.pathname === '/pricing' || false;
 
   // Skip authentication for public routes
   const skipAuth = isAuthPage || isPublicProductRoute || isPricingPage;
