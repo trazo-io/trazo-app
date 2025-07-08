@@ -5,7 +5,7 @@
 [build.environment]
   VITE_APP_BASE_URL = "https://app-staging.trazo.io"
   VITE_APP_BASE_DOMAIN = "trazo.io"
-  VITE_APP_BACKEND_URL = "https://staging-alb-1273700937.us-east-2.elb.amazonaws.com/"
+  VITE_APP_BACKEND_URL = "https://app-staging.trazo.io/"
   VITE_APP_CSRF_COOKIE_NAME = "csrftoken"
   VITE_APP_ENV = "production"
   PUBLIC_URL = "https://app-staging.trazo.io"
