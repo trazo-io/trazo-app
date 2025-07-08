@@ -1,6 +1,8 @@
 [build]
   publish = "dist"
   command = "env && npm run build"
+  
+# Force cache invalidation - 2025-01-08
 
 [build.environment]
   VITE_APP_BASE_URL = "https://app-staging.trazo.io"
@@ -27,12 +29,12 @@
 [[headers]]
   for = "*.js"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=3600"
 
 [[headers]]
   for = "*.css"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=3600"
 
 [[headers]]
   for = "*.woff2"
