@@ -4,6 +4,14 @@
   
 # Force cache invalidation - 2025-01-08
 
+# Disable asset optimization that can break CSS-in-JS libraries like Chakra UI
+[build.processing]
+skip_processing = false
+
+[build.processing.css]
+bundle = false
+minify = false
+
 [build.environment]
   VITE_APP_BASE_URL = "https://app-staging.trazo.io"
   VITE_APP_BASE_DOMAIN = "trazo.io"
