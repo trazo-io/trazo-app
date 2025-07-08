@@ -8,7 +8,12 @@ import { visualizer } from 'rollup-plugin-visualizer';
 export default defineConfig({
   // base: 'https://trazo.io/',
   plugins: [
-    react(),
+    react({
+      jsxImportSource: "@emotion/react",
+      babel: {
+        plugins: ["@emotion/babel-plugin"],
+      },
+    }),
     // Temporarily remove splitVendorChunkPlugin to fix initialization issue
     // splitVendorChunkPlugin(),
     visualizer({

@@ -15,6 +15,8 @@
 
 */
 
+import { mode } from '@chakra-ui/theme-tools';
+
 export const globalStyles = {
   colors: {
     gray: {
@@ -23,7 +25,19 @@ export const globalStyles = {
     teal: {
       500: 'rgb(79, 209, 197)'
     }
+  },
+  styles: {
+    global: (props) => ({
+      body: {
+        bg:
+          document.documentElement.layout === 'auth'
+            ? mode('white', 'gray.800')(props)
+            : mode('gray.50', 'gray.800')(props),
+        fontFamily: "'Roboto', sans-serif"
+      },
+      html: {
+        fontFamily: "'Roboto', sans-serif"
+      }
+    })
   }
-  // Removed global styles that were causing layout issues
-  // The body and html styling was overriding resetCSS behavior
 };
