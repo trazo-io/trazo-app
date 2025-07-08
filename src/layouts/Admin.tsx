@@ -22,7 +22,7 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 
 // Chakra imports
-import { ChakraProvider, Portal, useDisclosure } from '@chakra-ui/react';
+import { ChakraProvider, Portal, useDisclosure, CSSReset } from '@chakra-ui/react';
 import { Outlet, Route } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 
@@ -265,6 +265,7 @@ export default function Dashboard(props: any) {
   // Chakra Color Mode
   return (
     <ChakraProvider theme={theme}>
+      <CSSReset />
       <SidebarContext.Provider
         value={{
           sidebarWidth,

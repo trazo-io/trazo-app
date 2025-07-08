@@ -1,4 +1,4 @@
-import { ChakraProvider, Portal, useDisclosure } from '@chakra-ui/react';
+import { ChakraProvider, Portal, useDisclosure, CSSReset } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
 import React, { useState } from 'react';
 
@@ -70,6 +70,7 @@ export default function AdminConsumerLayout(props: any) {
 
   return (
     <ChakraProvider theme={theme}>
+      <CSSReset />
       <SidebarContext.Provider
         value={{
           sidebarWidth,

@@ -1,7 +1,7 @@
 import { CONSUMER, PRODUCER, SUPERUSER } from './config';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { ChakraProvider } from '@chakra-ui/react';
+import { ChakraProvider, CSSReset } from '@chakra-ui/react';
 import theme from 'theme/theme';
 
 import AddEstablishment from 'views/Dashboard/Dashboard/Establishment/AddEstablishment';
@@ -167,6 +167,7 @@ const App = () => {
       onReset={() => window.location.reload()}
     >
       <ChakraProvider theme={theme}>
+        <CSSReset />
       <Routes>
         {/* Public Pricing Page - Available without authentication */}
         <Route path="/pricing" element={<AuthLayout />}>
