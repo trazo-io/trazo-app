@@ -9,7 +9,8 @@ export default defineConfig({
   // base: 'https://trazo.io/',
   plugins: [
     react(),
-    splitVendorChunkPlugin(),
+    // Temporarily remove splitVendorChunkPlugin to fix initialization issue
+    // splitVendorChunkPlugin(),
     visualizer({
       open: false,
       gzipSize: true,
@@ -75,51 +76,15 @@ export default defineConfig({
     reportCompressedSize: false, // Faster builds
     rollupOptions: {
       output: {
-        // Simplified chunking strategy that works with splitVendorChunkPlugin
-        manualChunks: (id) => {
-          // CRITICAL PATH - QR Scanning Experience (highest priority)
-          if (
-            id.includes('src/views/Scan/ProductDetail') ||
-            id.includes('src/components/CarbonScore') ||
-            id.includes('src/components/BlockchainVerificationBadge') ||
-            id.includes('src/store/api/carbonApi')
-          ) {
-            return 'qr-critical';
-          }
-
-          // CHARTS - Recharts vendor chunk
-          if (id.includes('node_modules/recharts')) {
-            return 'charts-vendor';
-          }
-          
-          // CHARTS COMPONENTS - App chart components
-          if (id.includes('src/components/Charts')) {
-            return 'charts-app';
-          }
-
-          // MAPS - Heavy mapping libraries
-          if (
-            id.includes('node_modules/@react-google-maps') ||
-            id.includes('node_modules/google-maps') ||
-            id.includes('src/components/Map')
-          ) {
-            return 'maps-lazy';
-          }
-
-          // FORMS - Form libraries
-          if (
-            id.includes('node_modules/react-hook-form') ||
-            id.includes('node_modules/@hookform')
-          ) {
-            return 'forms-lazy';
-          }
-
-          // ADMIN FEATURES - Heavy dashboard components  
-          if (id.includes('src/views/Dashboard') || id.includes('src/views/Admin')) {
-            return 'admin-features';
-          }
-
-          // Let splitVendorChunkPlugin handle the rest of node_modules
+        // Simplified chunking strategy to avoid initialization conflicts
+        manualChunks: {
+          // Group vendor libraries together to avoid circular dependencies
+          'vendor': ['react', 'react-dom', '@chakra-ui/react'],
+          'recharts': ['recharts'],
+          'qr-critical': [
+            // Add specific modules that need to be in QR critical path
+            // This helps avoid dynamic imports that could cause initialization issues
+          ]
         },
         // Generate smaller initial bundles
         chunkFileNames: (chunkInfo) => {
