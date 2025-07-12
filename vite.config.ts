@@ -9,7 +9,13 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
   base: '/',
   plugins: [
-    react(),
+    react({
+      // Ensure proper emotion configuration for Chakra UI
+      jsxImportSource: '@emotion/react',
+      babel: {
+        plugins: ['@emotion/babel-plugin']
+      }
+    }),
     tsconfigPaths(),
     // Temporarily remove splitVendorChunkPlugin to fix initialization issue
     // splitVendorChunkPlugin(),
@@ -40,34 +46,22 @@ export default defineConfig({
       'react',
       'react-dom',
       '@chakra-ui/react',
+      '@emotion/react',
+      '@emotion/styled',
       '@reduxjs/toolkit/query/react'
     ]
   },
-  server: {
-    // this ensures that the browser opens upon server start
-    open: true,
-    // this sets a default port to 3000
-    port: 3000,
-    // this sets a default host to "localhost"
-    host: 'localhost',
-    // Proxy API requests to Django backend
-    proxy: {
-      '/api': {
-        target: 'http://127.0.0.1:8000/api',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
-            console.log('proxy error', err);
-          });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Request to the Target:', req.method, req.url);
-          });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
-          });
-        }
+  resolve: {
+    alias: {
+      src: resolve(__dirname, 'src')
+    }
+  },
+  css: {
+    devSourcemap: true,
+    // Ensure proper CSS-in-JS processing
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@import "src/theme/styles.js";`
       }
     }
   },
@@ -82,7 +76,7 @@ export default defineConfig({
         // Simplified chunking strategy to avoid initialization conflicts
         manualChunks: {
           // Group vendor libraries together to avoid circular dependencies
-          vendor: ['react', 'react-dom', '@chakra-ui/react'],
+          vendor: ['react', 'react-dom', '@chakra-ui/react', '@emotion/react', '@emotion/styled'],
           recharts: ['recharts']
         }
       }
@@ -110,32 +104,31 @@ export default defineConfig({
     // Image optimization settings
     assetsInlineLimit: 4096 // Inline small assets (4KB)
   },
-  resolve: {
-    alias: [
-      { find: 'views', replacement: resolve(__dirname, './src/views') },
-      { find: 'components', replacement: resolve(__dirname, './src/components') },
-      { find: 'hooks', replacement: resolve(__dirname, './src/hooks') },
-      { find: 'utils', replacement: resolve(__dirname, './src/utils') },
-      { find: 'assets', replacement: resolve(__dirname, './src/assets') },
-      { find: 'store', replacement: resolve(__dirname, './src/store') },
-      { find: 'layouts', replacement: resolve(__dirname, './src/layouts') },
-      { find: 'routes.tsx', replacement: resolve(__dirname, './src/routes.tsx') },
-      { find: 'variables', replacement: resolve(__dirname, './src/variables') },
-      { find: 'config', replacement: resolve(__dirname, './src/config') },
-      { find: 'contexts', replacement: resolve(__dirname, './src/contexts') },
-      { find: 'theme', replacement: resolve(__dirname, './src/theme') },
-      { find: 'i18n', replacement: resolve(__dirname, './src/i18n') },
-      { find: 'services', replacement: resolve(__dirname, './src/services') }
-    ]
+  server: {
+    port: 3000,
+    open: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Request to the Target:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+          });
+        }
+      }
+    }
   },
-  // Enhanced mobile-specific optimizations
-  esbuild: {
-    // Tree shaking optimization
-    treeShaking: true,
-    // Optimize for mobile devices - updated for import.meta support
-    target: 'es2020',
-    // Remove unused imports
-    drop: ['console', 'debugger']
+  // Add performance measurements
+  define: {
+    __PERFORMANCE_METRICS__: true
   }
 });
 

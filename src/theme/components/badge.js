@@ -15,6 +15,8 @@
 
 */
 
+import { mode } from '@chakra-ui/theme-tools';
+
 export const badgeStyles = {
   components: {
     Badge: {
@@ -24,9 +26,12 @@ export const badgeStyles = {
           height: '25px'
         }
       },
-      baseStyle: {
-        textTransform: 'capitalize'
-      }
+      baseStyle: (props) => ({
+        textTransform: 'capitalize',
+        // Only add minimal fallback styles for production
+        borderRadius: '6px'
+      })
+      // Removed custom variants that could override existing badge styles
     }
   }
 };

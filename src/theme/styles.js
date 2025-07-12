@@ -20,10 +20,20 @@ import { mode } from '@chakra-ui/theme-tools';
 export const globalStyles = {
   colors: {
     gray: {
-      700: '#1f2733'
+      700: '#1f2733',
+      800: '#1a202c',
+      900: '#171923'
     },
     teal: {
       500: 'rgb(79, 209, 197)'
+    },
+    green: {
+      500: '#38a169',
+      600: '#2f855a'
+    },
+    blue: {
+      500: '#3182ce',
+      600: '#2c5282'
     }
   },
   styles: {
@@ -33,11 +43,16 @@ export const globalStyles = {
           typeof document !== 'undefined' && document.documentElement.layout === 'auth'
             ? mode('white', 'gray.800')(props)
             : mode('gray.50', 'gray.800')(props),
-        fontFamily: "'Roboto', sans-serif"
+        fontFamily:
+          "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+        color: mode('gray.800', 'white')(props),
+        lineHeight: 'base'
       },
       html: {
-        fontFamily: "'Roboto', sans-serif"
+        fontFamily:
+          "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
       }
+      // Removed aggressive global selectors that could override component-specific colors
     })
   }
 };

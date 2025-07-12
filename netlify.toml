@@ -1,16 +1,16 @@
 [build]
   publish = "dist"
-  command = "env && npm run build"
+  command = "npm run build"
   
-# Force cache invalidation - 2025-01-08
+# Force cache invalidation - 2025-01-12
 
-# Disable asset optimization that can break CSS-in-JS libraries like Chakra UI
+# Enable proper CSS processing for CSS-in-JS libraries like Chakra UI
 [build.processing]
 skip_processing = false
 
 [build.processing.css]
-bundle = false
-minify = false
+bundle = true
+minify = true
 
 [build.environment]
   VITE_APP_BASE_URL = "https://app-staging.trazo.io"
@@ -19,6 +19,8 @@ minify = false
   VITE_APP_CSRF_COOKIE_NAME = "csrftoken"
   VITE_APP_ENV = "production"
   PUBLIC_URL = "https://app-staging.trazo.io"
+  # Ensure proper CSS-in-JS processing
+  NODE_ENV = "production"
 
 [[redirects]]
   from = "/*"

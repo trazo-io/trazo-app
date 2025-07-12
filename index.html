@@ -24,41 +24,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trazo - Agricultural Carbon Transparency</title>
     <style>
-      /* Fix sidebar layout issues in production */
+      /* Minimal CSS fixes for production - avoid interfering with Chakra UI */
       :root {
         --sidebar-width: 275px;
       }
 
-      /* Ensure proper MainPanel layout */
+      /* Only fix critical layout issues without overriding Chakra UI styles */
       @media screen and (min-width: 1280px) {
-        .css-1lekzkb, /* MainPanel base class */
-        [data-theme] .css-1lekzkb {
+        /* Target specific layout containers instead of generic CSS classes */
+        .chakra-ui-light [data-theme] .css-1lekzkb,
+        .chakra-ui-dark [data-theme] .css-1lekzkb {
           margin-left: var(--sidebar-width) !important;
           width: calc(100% - var(--sidebar-width)) !important;
         }
       }
 
-      /* Fix card backgrounds in production */
-      .chakra-ui-light .css-bg4444,
-      .chakra-ui-light [data-theme='light'] .css-bg4444 {
-        background-color: #ffffff !important;
+      /* Ensure fonts load properly */
+      body {
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue',
+          Arial, sans-serif;
       }
 
-      .chakra-ui-dark .css-bg4444,
-      .chakra-ui-dark [data-theme='dark'] .css-bg4444 {
-        background-color: #2d3748 !important;
+      /* Prevent layout shift during hydration */
+      #root {
+        min-height: 100vh;
       }
 
-      /* Prevent content overflow */
-      .css-1lekzkb {
-        overflow-x: hidden !important;
-        max-width: 100% !important;
+      /* Production-specific CSS-in-JS fallbacks - only for critical issues */
+      .chakra-ui-light {
+        --chakra-colors-gray-50: #f9fafb;
+        --chakra-colors-gray-100: #f3f4f6;
+        --chakra-colors-gray-200: #e5e7eb;
+        --chakra-colors-gray-700: #374151;
+        --chakra-colors-gray-800: #1f2937;
+        --chakra-colors-green-500: #10b981;
+        --chakra-colors-blue-500: #3b82f6;
       }
 
-      /* Ensure proper grid layout */
-      .css-gmuwbf {
-        max-width: 100% !important;
-        overflow: hidden !important;
+      .chakra-ui-dark {
+        --chakra-colors-gray-600: #4b5563;
+        --chakra-colors-gray-700: #374151;
+        --chakra-colors-gray-800: #1f2937;
+        --chakra-colors-white: #ffffff;
+      }
+
+      /* Ensure proper text rendering in production */
+      * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     </style>
   </head>

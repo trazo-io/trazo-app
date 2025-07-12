@@ -15,6 +15,8 @@
 
 */
 
+import { mode } from '@chakra-ui/theme-tools';
+
 export const buttonStyles = {
   components: {
     Button: {
@@ -45,13 +47,20 @@ export const buttonStyles = {
             boxShadow: 'none'
           }
         }
+        // Removed custom solid and ghost variants that could override existing styles
       },
-      baseStyle: {
+      baseStyle: (props) => ({
         borderRadius: '12px',
         _focus: {
           boxShadow: 'none'
+        },
+        // Only add color fallback if not already defined
+        _disabled: {
+          opacity: 0.4,
+          cursor: 'not-allowed',
+          boxShadow: 'none'
         }
-      }
+      })
     }
   }
 };

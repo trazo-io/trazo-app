@@ -4,6 +4,7 @@ import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import { Mutex } from 'async-mutex';
 import { fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
+// Use /api for development (proxy) or the full backend URL for production
 const baseUrl = import.meta.env.VITE_APP_BACKEND_URL || '/api';
 
 // Create a new mutex
@@ -48,20 +49,23 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any) 
     const errorData = result.error.data;
     const currentPath = window.location.pathname;
     const isOnAuthPage = currentPath.startsWith('/auth/') || currentPath.startsWith('/invitation/');
-    
+
     // Check for rate limiting error (429)
     if (result.error.status === 429) {
       const retryAfter = errorData?.retry_after || 60;
-      const message = errorData?.detail || `Too many requests. Please try again in ${retryAfter} seconds.`;
-      
+      const message =
+        errorData?.detail || `Too many requests. Please try again in ${retryAfter} seconds.`;
+
       // Show user-friendly message (you'll need to integrate with your toast system)
       console.error('Rate limit exceeded:', message);
-      
+
       // Dispatch a custom event that can be caught by your notification system
-      window.dispatchEvent(new CustomEvent('rate-limit-error', { 
-        detail: { message, retryAfter } 
-      }));
-      
+      window.dispatchEvent(
+        new CustomEvent('rate-limit-error', {
+          detail: { message, retryAfter }
+        })
+      );
+
       return result;
     }
 
