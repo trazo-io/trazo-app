@@ -14,10 +14,10 @@ export function createEmotionCache() {
   }
 
   return createCache({
-    key: 'chakra',
-    insertionPoint,
-    // Ensure styles are injected in the correct order
-    prepend: true,
+    key: 'css',
+    insertionPoint
+    // Remove prepend to use default insertion behavior
+    // prepend: true,
   });
 }
 
