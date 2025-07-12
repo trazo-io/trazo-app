@@ -30,7 +30,7 @@ export const globalStyles = {
     global: (props) => ({
       body: {
         bg:
-          document.documentElement.layout === 'auth'
+          typeof document !== 'undefined' && document.documentElement.layout === 'auth'
             ? mode('white', 'gray.800')(props)
             : mode('gray.50', 'gray.800')(props),
         fontFamily: "'Roboto', sans-serif"
