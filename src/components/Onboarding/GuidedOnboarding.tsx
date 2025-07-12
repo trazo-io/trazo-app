@@ -236,7 +236,8 @@ const GuidedOnboarding: React.FC<GuidedOnboardingProps> = ({
         mx={4}
         maxH="90vh"
         overflow="hidden"
-        boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.25)">
+        boxShadow="0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+      >
         <ModalHeader pb={4} pt={6}>
           <VStack spacing={4} align="stretch">
             {/* Header with company branding */}
@@ -283,7 +284,8 @@ const GuidedOnboarding: React.FC<GuidedOnboardingProps> = ({
                     borderRadius="xl"
                     bg={useColorModeValue('green.50', 'green.900')}
                     border="1px"
-                    borderColor={primaryColor}>
+                    borderColor={primaryColor}
+                  >
                     <Icon as={currentStepData.icon} boxSize={6} color={primaryColor} />
                   </Box>
                   <VStack align="start" spacing={1}>
@@ -337,7 +339,8 @@ const GuidedOnboarding: React.FC<GuidedOnboardingProps> = ({
                           }
                           display="flex"
                           alignItems="center"
-                          justifyContent="center">
+                          justifyContent="center"
+                        >
                           {index < currentStep ? (
                             <Icon as={FiCheckCircle} color="white" boxSize={3} />
                           ) : (
@@ -361,7 +364,8 @@ const GuidedOnboarding: React.FC<GuidedOnboardingProps> = ({
                 bg={useColorModeValue('blue.50', 'blue.900')}
                 borderRadius="xl"
                 border="1px"
-                borderColor={useColorModeValue('blue.200', 'blue.700')}>
+                borderColor={useColorModeValue('blue.200', 'blue.700')}
+              >
                 <VStack spacing={4}>
                   <Flex align="center" gap={3}>
                     <Avatar size="sm" bg={accentColor} icon={<FiEye />} />
@@ -396,7 +400,8 @@ const GuidedOnboarding: React.FC<GuidedOnboardingProps> = ({
               onClick={handlePrevious}
               isDisabled={currentStep === 0}
               size="md"
-              color={textColor}>
+              color={textColor}
+            >
               Previous
             </Button>
 
@@ -416,7 +421,8 @@ const GuidedOnboarding: React.FC<GuidedOnboardingProps> = ({
                   rightIcon={<Icon as={FiCheckCircle} />}
                   borderRadius="xl"
                   px={6}
-                  _hover={{ bg: useColorModeValue('green.600', 'green.300') }}>
+                  _hover={{ bg: useColorModeValue('green.600', 'green.300') }}
+                >
                   Complete Setup
                 </Button>
               ) : (
@@ -429,7 +435,8 @@ const GuidedOnboarding: React.FC<GuidedOnboardingProps> = ({
                     rightIcon={<Icon as={FiArrowRight} />}
                     borderRadius="xl"
                     px={6}
-                    _hover={{ bg: useColorModeValue('green.600', 'green.300') }}>
+                    _hover={{ bg: useColorModeValue('green.600', 'green.300') }}
+                  >
                     {currentStepData.actionText}
                   </Button>
                   <Button
@@ -439,7 +446,8 @@ const GuidedOnboarding: React.FC<GuidedOnboardingProps> = ({
                     onClick={handleNext}
                     size="md"
                     borderRadius="xl"
-                    px={4}>
+                    px={4}
+                  >
                     Skip Step
                   </Button>
                 </>

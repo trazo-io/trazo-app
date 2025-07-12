@@ -44,36 +44,36 @@ const SubscriptionRequired = () => {
       const selectedId = auth.selectedCompany;
       return auth.companies.find((company: Company) => company.id === selectedId) || null;
     }
-    
+
     // Fallback to companySlice for invitation flow
     const companyState = state.companySlice as any;
     if (companyState && companyState.currentCompany) {
       return companyState.currentCompany;
     }
-    
+
     return null;
   });
 
   // Helper function to check if company has active subscription or is in trial
   const hasActiveSubscriptionOrTrial = React.useMemo(() => {
     if (!company) return false;
-    
+
     // Check for active subscription
-    const hasActiveSubscription = 
+    const hasActiveSubscription =
       company.has_subscription === true ||
       (company.subscription &&
         (company.subscription.id || company.subscription.status === 'active')) ||
       (company.subscription_plan && company.subscription_plan.id);
-    
+
     if (hasActiveSubscription) return true;
-    
+
     // Check for trial period (14 days from company creation)
     const companyCreatedDate = new Date(company.created_at || company.date_joined);
-    const trialEndDate = new Date(companyCreatedDate.getTime() + (14 * 24 * 60 * 60 * 1000)); // 14 days
+    const trialEndDate = new Date(companyCreatedDate.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
     const now = new Date();
-    
+
     const isInTrialPeriod = now <= trialEndDate;
-    
+
     if (isInTrialPeriod && process.env.NODE_ENV !== 'production') {
       console.log('Company is in trial period:', {
         companyCreated: companyCreatedDate,
@@ -81,7 +81,7 @@ const SubscriptionRequired = () => {
         daysRemaining: Math.ceil((trialEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
       });
     }
-    
+
     return isInTrialPeriod;
   }, [company]);
 

@@ -297,7 +297,8 @@ export default function Dashboard(props: any) {
         setSidebarWidth,
         toggleSidebar,
         setToggleSidebar
-      }}>
+      }}
+    >
       <Sidebar
         routes={routes}
         logoText={''}
@@ -314,7 +315,8 @@ export default function Dashboard(props: any) {
         ml={{ base: 0, xl: `${sidebarWidth}px` }}
         transition="all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)"
         position="relative"
-        float="right">
+        float="right"
+      >
         <Portal padding="0">
           <AdminNavbar
             onOpen={onOpen}
@@ -328,7 +330,8 @@ export default function Dashboard(props: any) {
         {getRoute() ? (
           <PanelContent
             paddingInlineStart={{ base: '0px', lg: '15px' }}
-            paddingInlineEnd={{ base: '0px', lg: '15px' }}>
+            paddingInlineEnd={{ base: '0px', lg: '15px' }}
+          >
             <PanelContainer padding={{ base: '0px', lg: '30px 15px' }}>
               <Outlet />
             </PanelContainer>

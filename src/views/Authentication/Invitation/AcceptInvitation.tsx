@@ -13,7 +13,7 @@ import {
   Badge,
   useColorModeValue,
   Grid,
-  Container,
+  Container
 } from '@chakra-ui/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { FiMail, FiCheck, FiAlertCircle, FiUser } from 'react-icons/fi';
@@ -27,7 +27,7 @@ const AcceptInvitation: React.FC = () => {
   const { invitationCode } = useParams<{ invitationCode: string }>();
   const [searchParams] = useSearchParams();
   const toast = useToast();
-  
+
   const [step, setStep] = useState<'loading' | 'accept' | 'success' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -36,10 +36,13 @@ const AcceptInvitation: React.FC = () => {
 
   // API hooks
   const [acceptInvitation, { isLoading: isAccepting }] = useAcceptInvitationMutation();
-  const { data: invitationDetails, error: detailsError, isLoading: isLoadingDetails } = 
-    useGetInvitationDetailsQuery(invitationCode || '', {
-      skip: !invitationCode
-    });
+  const {
+    data: invitationDetails,
+    error: detailsError,
+    isLoading: isLoadingDetails
+  } = useGetInvitationDetailsQuery(invitationCode || '', {
+    skip: !invitationCode
+  });
 
   // Colors
   const primaryColor = 'green.500';
@@ -61,44 +64,44 @@ const AcceptInvitation: React.FC = () => {
 
     try {
       const result = await acceptInvitation(invitationCode).unwrap();
-      
+
       // Check if this is a signup redirect response
       if (result.requires_signup) {
         // Store invitation for after authentication
         sessionStorage.setItem('pendingInvitation', invitationCode);
-        
+
         toast({
           title: 'Account creation required',
           description: 'Please create your account to join the team',
           status: 'info',
           duration: 4000,
-          isClosable: true,
+          isClosable: true
         });
 
         // Redirect to invitation password setup page
         navigate(`/invitation/${invitationCode}/setup`);
         return;
       }
-      
+
       // If we get here, invitation was accepted successfully (authenticated user)
       setStep('success');
-      
-      const companyName = typeof result.company === 'string' ? result.company : result.company?.name;
+
+      const companyName =
+        typeof result.company === 'string' ? result.company : result.company?.name;
       const redirectUrl = result.redirect_to || '/admin/dashboard';
-      
+
       toast({
         title: 'Invitation accepted!',
         description: `Welcome to ${companyName}!`,
         status: 'success',
         duration: 4000,
-        isClosable: true,
+        isClosable: true
       });
 
       // Redirect based on subscription status
       setTimeout(() => {
         navigate(redirectUrl);
       }, 2000);
-
     } catch (error) {
       console.error('Error accepting invitation:', error);
       setStep('error');
@@ -126,12 +129,7 @@ const AcceptInvitation: React.FC = () => {
             justifyContent="center"
             animation="pulse 2s infinite"
           >
-            <Text
-              fontSize="2xl"
-              fontWeight="900"
-              color="white"
-              letterSpacing="-1px"
-            >
+            <Text fontSize="2xl" fontWeight="900" color="white" letterSpacing="-1px">
               T
             </Text>
           </Box>
@@ -190,7 +188,16 @@ const AcceptInvitation: React.FC = () => {
   if (step === 'error') {
     return (
       <Flex minH="calc(100vh - 80px)" align="center" justify="center" bg="gray.50" px={4}>
-        <Box maxW="400px" w="full" bg="white" borderRadius="2xl" boxShadow="0 25px 50px rgba(0, 0, 0, 0.1)" p={8} border="1px solid" borderColor="gray.100">
+        <Box
+          maxW="400px"
+          w="full"
+          bg="white"
+          borderRadius="2xl"
+          boxShadow="0 25px 50px rgba(0, 0, 0, 0.1)"
+          p={8}
+          border="1px solid"
+          borderColor="gray.100"
+        >
           <VStack spacing={6} textAlign="center">
             <Box
               w="80px"
@@ -238,9 +245,9 @@ const AcceptInvitation: React.FC = () => {
       title="You're Invited!"
       subtitle="Join the carbon intelligence revolution and help build a sustainable future"
       features={[
-        "Enterprise-grade carbon tracking",
-        "Blockchain-verified transparency", 
-        "USDA-certified emission data"
+        'Enterprise-grade carbon tracking',
+        'Blockchain-verified transparency',
+        'USDA-certified emission data'
       ]}
     >
       <VStack spacing={8}>
@@ -277,12 +284,7 @@ const AcceptInvitation: React.FC = () => {
               </Badge>
             </VStack>
 
-            <Text
-              fontSize="sm"
-              color="gray.500"
-              textAlign="center"
-              lineHeight="1.6"
-            >
+            <Text fontSize="sm" color="gray.500" textAlign="center" lineHeight="1.6">
               You've been invited to join{' '}
               <Text as="span" fontWeight="600" color="gray.700">
                 {invitationDetails.company_name}
@@ -346,14 +348,7 @@ const AcceptInvitation: React.FC = () => {
             borderColor="blue.200"
           >
             <HStack spacing={3}>
-              <Box
-                w="6px"
-                h="6px"
-                bg="blue.500"
-                borderRadius="full"
-                flexShrink={0}
-                mt={1}
-              />
+              <Box w="6px" h="6px" bg="blue.500" borderRadius="full" flexShrink={0} mt={1} />
               <Text fontSize="xs" color="blue.700" lineHeight="1.5">
                 Don't have an account? You'll be able to create one after accepting the invitation.
               </Text>

@@ -1,6 +1,6 @@
 [build]
   publish = "dist"
-  command = "npm run build"
+  command = "npm ci --legacy-peer-deps && npm run build"
   
 # Force cache invalidation - 2025-01-12
 
@@ -21,6 +21,8 @@ minify = true
   PUBLIC_URL = "https://app-staging.trazo.io"
   # Ensure proper CSS-in-JS processing
   NODE_ENV = "production"
+  # Ensure all dependencies are installed including devDependencies
+  NPM_FLAGS = "--legacy-peer-deps"
 
 [[redirects]]
   from = "/*"

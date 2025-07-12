@@ -17,7 +17,7 @@
 
 import React, { Component } from 'react';
 
-import ChartWrapper from "./ChartWrapper";
+import ChartWrapper from './ChartWrapper';
 
 class LineBarChart extends Component {
   constructor(props) {

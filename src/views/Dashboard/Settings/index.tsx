@@ -127,10 +127,11 @@ export default function SettingsView() {
 
     try {
       // For Company Admin, use all establishments; for others, use selected ones
-      const establishmentsToSend = selectedRole === 'CA' && establishments 
-        ? establishments.map(est => est.id)
-        : selectedEstablishments;
-        
+      const establishmentsToSend =
+        selectedRole === 'CA' && establishments
+          ? establishments.map((est) => est.id)
+          : selectedEstablishments;
+
       await sendInvitation({
         email: inviteEmail,
         role: selectedRole || 'DW',
@@ -150,7 +151,6 @@ export default function SettingsView() {
       setInviteEmail('');
       setSelectedRole(null);
       setSelectedEstablishments([]);
-
     } catch (error) {
       console.error('Error sending invitation:', error);
       toast({
@@ -267,7 +267,9 @@ export default function SettingsView() {
                               {selectedEstablishments.length > 0 && (
                                 <Wrap spacing={2} mb={3}>
                                   {selectedEstablishments.map((estId) => {
-                                    const establishment = establishmentOptions.find(e => e.id === estId);
+                                    const establishment = establishmentOptions.find(
+                                      (e) => e.id === estId
+                                    );
                                     return (
                                       <WrapItem key={estId}>
                                         <Tag
@@ -279,8 +281,8 @@ export default function SettingsView() {
                                           <TagLabel>{establishment?.name}</TagLabel>
                                           <TagCloseButton
                                             onClick={() => {
-                                              setSelectedEstablishments(prev => 
-                                                prev.filter(id => id !== estId)
+                                              setSelectedEstablishments((prev) =>
+                                                prev.filter((id) => id !== estId)
                                               );
                                             }}
                                           />
@@ -290,7 +292,7 @@ export default function SettingsView() {
                                   })}
                                 </Wrap>
                               )}
-                              
+
                               {/* Checkbox list for selecting establishments */}
                               <Box
                                 border="1px solid"
@@ -310,19 +312,19 @@ export default function SettingsView() {
                                       onChange={(e) => {
                                         // Don't allow changes if Company Admin is selected
                                         if (selectedRole === 'CA') return;
-                                        
+
                                         if (e.target.checked) {
-                                          setSelectedEstablishments(prev => [...prev, est.id]);
+                                          setSelectedEstablishments((prev) => [...prev, est.id]);
                                         } else {
-                                          setSelectedEstablishments(prev => 
-                                            prev.filter(id => id !== est.id)
+                                          setSelectedEstablishments((prev) =>
+                                            prev.filter((id) => id !== est.id)
                                           );
                                         }
                                       }}
                                       colorScheme="green"
                                     >
-                                      <Text 
-                                        fontSize="sm" 
+                                      <Text
+                                        fontSize="sm"
                                         color={selectedRole === 'CA' ? 'gray.500' : 'inherit'}
                                       >
                                         {est.name}
@@ -342,7 +344,7 @@ export default function SettingsView() {
                                 </Stack>
                               </Box>
                             </Box>
-                            
+
                             {/* Company Admin Notice */}
                             {selectedRole === 'CA' && (
                               <Box
@@ -363,8 +365,10 @@ export default function SettingsView() {
                                     mt={1}
                                   />
                                   <Text fontSize="sm" color="blue.700" lineHeight="1.5">
-                                    <Text as="span" fontWeight="600">Administrador de Compañía:</Text>
-                                    {' '}Tendrá acceso a todos los establecimientos automáticamente
+                                    <Text as="span" fontWeight="600">
+                                      Administrador de Compañía:
+                                    </Text>{' '}
+                                    Tendrá acceso a todos los establecimientos automáticamente
                                   </Text>
                                 </HStack>
                               </Box>
@@ -380,10 +384,10 @@ export default function SettingsView() {
                               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                                 const value = e.target.value;
                                 setSelectedRole(value || null);
-                                
+
                                 // If Company Admin is selected, automatically select all establishments
                                 if (value === 'CA' && establishments) {
-                                  const allEstablishmentIds = establishments.map(est => est.id);
+                                  const allEstablishmentIds = establishments.map((est) => est.id);
                                   setSelectedEstablishments(allEstablishmentIds);
                                 }
                                 // If other role is selected, clear establishments to let user choose
@@ -408,9 +412,9 @@ export default function SettingsView() {
                       <StandardButton variant="outline" onClick={handleDiscardChanges} size="lg">
                         {intl.formatMessage({ id: 'app.discardChanges' }) || 'Descartar cambios'}
                       </StandardButton>
-                      <StandardButton 
-                        variant="primary" 
-                        onClick={handleInviteSubmit} 
+                      <StandardButton
+                        variant="primary"
+                        onClick={handleInviteSubmit}
                         size="lg"
                         isLoading={isSendingInvitation}
                         loadingText="Enviando..."

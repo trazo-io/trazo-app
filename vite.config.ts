@@ -1,9 +1,34 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 import { splitVendorChunkPlugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
+
+// Check if vitest is available
+let vitestConfig = {};
+try {
+  // Try to import vitest config - this will fail in production builds where vitest is not installed
+  const { defineConfig: defineVitestConfig } = require('vitest/config');
+  vitestConfig = {
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './src/setupTests.ts',
+      css: true,
+      reporters: ['verbose'],
+      coverage: {
+        provider: 'istanbul',
+        reporter: ['text', 'json', 'html'],
+        include: ['src/**/*'],
+        exclude: []
+      }
+    }
+  };
+} catch (e) {
+  // vitest not available - this is expected in production builds
+  console.log('Vitest not available, skipping test configuration');
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -26,19 +51,7 @@ export default defineConfig({
       filename: 'dist/bundle-analysis.html'
     })
   ],
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.ts',
-    css: true,
-    reporters: ['verbose'],
-    coverage: {
-      provider: 'istanbul',
-      reporter: ['text', 'json', 'html'],
-      include: ['src/**/*'],
-      exclude: []
-    }
-  },
+  ...vitestConfig,
   optimizeDeps: {
     exclude: ['date-fns'],
     include: [

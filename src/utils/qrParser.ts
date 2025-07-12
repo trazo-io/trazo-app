@@ -25,8 +25,8 @@ interface SecureQRPayload {
 export function parseQRUrl(url: string): QRParseResult {
   try {
     const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split('/').filter(part => part.length > 0);
-    
+    const pathParts = urlObj.pathname.split('/').filter((part) => part.length > 0);
+
     // Find production ID in path
     const productionIndex = pathParts.indexOf('production');
     if (productionIndex === -1 || productionIndex + 1 >= pathParts.length) {
@@ -37,20 +37,20 @@ export function parseQRUrl(url: string): QRParseResult {
         error: 'Invalid QR code URL format'
       };
     }
-    
+
     const productionId = pathParts[productionIndex + 1];
-    
+
     // Check if this is a secure QR code (has query parameters)
     const payload = urlObj.searchParams.get('p');
     const signature = urlObj.searchParams.get('s');
-    
+
     if (payload && signature) {
       // This is a secure QR code
       try {
         const parsedPayload = parseSecurePayload(payload);
         const currentTime = Math.floor(Date.now() / 1000);
         const isExpired = parsedPayload.exp < currentTime;
-        
+
         return {
           productionId: parsedPayload.id.toString(),
           isSecure: true,
@@ -91,7 +91,7 @@ export function parseQRUrl(url: string): QRParseResult {
  */
 function parseSecurePayload(payloadB64: string): SecureQRPayload {
   // Add padding if needed
-  const padded = payloadB64 + '='.repeat((4 - payloadB64.length % 4) % 4);
+  const padded = payloadB64 + '='.repeat((4 - (payloadB64.length % 4)) % 4);
   const decoded = atob(padded);
   return JSON.parse(decoded);
 }
@@ -108,7 +108,7 @@ export async function verifySecureQR(url: string): Promise<{
     const response = await fetch('/api/security/verify-qr/', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       credentials: 'include',
       body: JSON.stringify({ url })
@@ -151,28 +151,30 @@ export function handleQRScanResult(
   onError: (message: string) => void
 ): void {
   const parseResult = parseQRUrl(scannedUrl);
-  
+
   if (!parseResult.isValid) {
     onError(parseResult.error || 'Invalid QR code');
     return;
   }
-  
+
   if (parseResult.isExpired) {
     onError('QR code has expired. Please scan a fresh code.');
     return;
   }
-  
+
   if (parseResult.isSecure) {
     // For secure QR codes, verify with backend before proceeding
-    verifySecureQR(scannedUrl).then(verification => {
-      if (verification.valid && verification.productionId) {
-        navigate(`/production/${verification.productionId}`);
-      } else {
-        onError(verification.error || 'Invalid or tampered QR code');
-      }
-    }).catch(() => {
-      onError('Unable to verify QR code. Please try again.');
-    });
+    verifySecureQR(scannedUrl)
+      .then((verification) => {
+        if (verification.valid && verification.productionId) {
+          navigate(`/production/${verification.productionId}`);
+        } else {
+          onError(verification.error || 'Invalid or tampered QR code');
+        }
+      })
+      .catch(() => {
+        onError('Unable to verify QR code. Please try again.');
+      });
   } else {
     // For legacy QR codes, navigate directly
     navigate(`/production/${parseResult.productionId}`);
@@ -198,12 +200,10 @@ export function getQRAccessMetadata(): {
   source: 'qr_scan' | 'direct_link' | 'unknown';
 } {
   const parseResult = extractProductionIdFromCurrentURL();
-  
+
   return {
     isQRAccess: parseResult.isValid && (parseResult.isSecure || isQRScanAccess()),
     isSecureQR: parseResult.isSecure,
-    source: parseResult.isSecure ? 'qr_scan' : 
-           isQRScanAccess() ? 'qr_scan' : 
-           'direct_link'
+    source: parseResult.isSecure ? 'qr_scan' : isQRScanAccess() ? 'qr_scan' : 'direct_link'
   };
 }

@@ -30,7 +30,11 @@ import {
   useDisclosure
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { extractProductionIdFromCurrentURL, verifySecureQR, getQRAccessMetadata } from 'utils/qrParser';
+import {
+  extractProductionIdFromCurrentURL,
+  verifySecureQR,
+  getQRAccessMetadata
+} from 'utils/qrParser';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { setAuthRedirectAction } from '../../../utils/authRedirect';
@@ -575,27 +579,27 @@ function ProductDetail() {
   const navigate = useNavigate();
   const intl = useIntl();
   const pointsStore = usePointsStore();
-  
+
   // QR Security: Extract and verify production ID from URL
   const [verifiedProductionId, setVerifiedProductionId] = useState<string | null>(null);
   const [qrVerificationError, setQrVerificationError] = useState<string | null>(null);
   const [isVerifyingQR, setIsVerifyingQR] = useState(false);
-  
+
   // Get QR access metadata for analytics
   const qrMetadata = getQRAccessMetadata();
-  
+
   useEffect(() => {
     const verifyQRAccess = async () => {
       // Try to extract production ID from current URL (handles secure QR format)
       const parseResult = extractProductionIdFromCurrentURL();
-      
+
       if (parseResult.isSecure) {
         // This is a secure QR code, verify it
         setIsVerifyingQR(true);
-        
+
         try {
           const verification = await verifySecureQR(window.location.href);
-          
+
           if (verification.valid && verification.productionId) {
             setVerifiedProductionId(verification.productionId);
             console.log('✅ Secure QR code verified:', verification.productionId);
@@ -619,10 +623,10 @@ function ProductDetail() {
         console.error('❌ Invalid URL format:', parseResult.error);
       }
     };
-    
+
     verifyQRAccess();
   }, [urlProductionId]);
-  
+
   // Use the verified production ID for API calls
   const productionId = verifiedProductionId;
 
@@ -670,7 +674,7 @@ function ProductDetail() {
 
   // State for scan creation
   const [scanCreated, setScanCreated] = useState(false);
-  
+
   // API queries
   const {
     data: completeData,
@@ -679,7 +683,7 @@ function ProductDetail() {
   } = useGetCompleteSummaryQuery(productionId || '', {
     skip: !productionId
   });
-  
+
   const [createScan] = useCreateScanMutation();
 
   // Educational modal
@@ -694,12 +698,12 @@ function ProductDetail() {
     setEducationTopic(topic);
     onEducationOpen();
   };
-  
+
   // Create scan when page loads (useEffect)
   useEffect(() => {
     if (productionId && !scanCreated && !isCompleteLoading) {
       console.log('🔍 Creating scan for production:', productionId);
-      
+
       // Create the scan
       createScan({
         production_id: productionId,
@@ -753,7 +757,8 @@ function ProductDetail() {
           <Box>
             <AlertTitle>QR Code Verification Failed</AlertTitle>
             <AlertDescription>
-              {qrVerificationError}. Please try scanning the QR code again or contact support if the problem persists.
+              {qrVerificationError}. Please try scanning the QR code again or contact support if the
+              problem persists.
             </AlertDescription>
           </Box>
         </Alert>

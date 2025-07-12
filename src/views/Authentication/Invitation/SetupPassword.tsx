@@ -16,18 +16,17 @@ import {
   useColorModeValue,
   Badge,
   Grid,
-  Container,
+  Container
 } from '@chakra-ui/react';
 import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import { FiLock, FiEye, FiEyeOff, FiCheck, FiUser } from 'react-icons/fi';
 import { HiOfficeBuilding } from 'react-icons/hi';
 import { useForm } from 'react-hook-form';
-import { 
-  StandardField,
-  StandardInput,
-  StandardButton 
-} from 'components/Design/StandardComponents';
-import { useSignupWithInvitationMutation, useGetInvitationDetailsQuery } from 'store/api/invitationApi';
+import { StandardField, StandardInput, StandardButton } from 'components/Design/StandardComponents';
+import {
+  useSignupWithInvitationMutation,
+  useGetInvitationDetailsQuery
+} from 'store/api/invitationApi';
 import AuthLayout from 'components/Layout/AuthLayout';
 
 interface SetupPasswordFormData {
@@ -42,7 +41,7 @@ const SetupPassword: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const toast = useToast();
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [step, setStep] = useState<'setup' | 'success'>('setup');
@@ -52,11 +51,15 @@ const SetupPassword: React.FC = () => {
   const { invitationCode } = useParams<{ invitationCode: string }>();
 
   // API hooks
-  const [signupWithInvitation, { isLoading: isCreatingAccount }] = useSignupWithInvitationMutation();
-  const { data: invitationDetails, error: detailsError, isLoading: isLoadingDetails } = 
-    useGetInvitationDetailsQuery(invitationCode || '', {
-      skip: !invitationCode
-    });
+  const [signupWithInvitation, { isLoading: isCreatingAccount }] =
+    useSignupWithInvitationMutation();
+  const {
+    data: invitationDetails,
+    error: detailsError,
+    isLoading: isLoadingDetails
+  } = useGetInvitationDetailsQuery(invitationCode || '', {
+    skip: !invitationCode
+  });
 
   // Form handling
   const {
@@ -94,7 +97,7 @@ const SetupPassword: React.FC = () => {
         description: 'Invitation not found or has expired',
         status: 'error',
         duration: 5000,
-        isClosable: true,
+        isClosable: true
       });
     }
   }, [detailsError, toast]);
@@ -107,7 +110,7 @@ const SetupPassword: React.FC = () => {
         description: 'Passwords do not match',
         status: 'error',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
       return;
     }
@@ -118,7 +121,7 @@ const SetupPassword: React.FC = () => {
         description: 'Please choose a stronger password',
         status: 'error',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
       return;
     }
@@ -129,7 +132,7 @@ const SetupPassword: React.FC = () => {
         description: 'No invitation code found',
         status: 'error',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
       return;
     }
@@ -139,17 +142,17 @@ const SetupPassword: React.FC = () => {
         first_name: data.first_name,
         last_name: data.last_name,
         password: data.password,
-        invitation_code: invitationCode,
+        invitation_code: invitationCode
       }).unwrap();
 
       setStep('success');
-      
+
       toast({
         title: 'Account created successfully!',
         description: `Welcome to ${result.company.name}!`,
         status: 'success',
         duration: 4000,
-        isClosable: true,
+        isClosable: true
       });
 
       // Start progress animation and redirect based on subscription status
@@ -163,7 +166,6 @@ const SetupPassword: React.FC = () => {
           navigate(redirectUrl);
         }
       }, 100);
-
     } catch (error) {
       console.error('Error creating account:', error);
       toast({
@@ -171,7 +173,7 @@ const SetupPassword: React.FC = () => {
         description: error?.data?.error || 'Please try again',
         status: 'error',
         duration: 4000,
-        isClosable: true,
+        isClosable: true
       });
     }
   };
@@ -200,12 +202,12 @@ const SetupPassword: React.FC = () => {
             <Text fontSize="sm" color="gray.500" textAlign="center">
               Your account has been created. Taking you to your dashboard...
             </Text>
-            
+
             {/* Progress Bar */}
             <Box w="200px">
-              <Progress 
-                value={redirectProgress} 
-                size="sm" 
+              <Progress
+                value={redirectProgress}
+                size="sm"
                 borderRadius="full"
                 bg="gray.100"
                 sx={{
@@ -240,12 +242,7 @@ const SetupPassword: React.FC = () => {
             justifyContent="center"
             animation="pulse 2s infinite"
           >
-            <Text
-              fontSize="2xl"
-              fontWeight="900"
-              color="white"
-              letterSpacing="-1px"
-            >
+            <Text fontSize="2xl" fontWeight="900" color="white" letterSpacing="-1px">
               T
             </Text>
           </Box>
@@ -266,7 +263,16 @@ const SetupPassword: React.FC = () => {
   if (detailsError || !invitationDetails) {
     return (
       <Flex minH="calc(100vh - 80px)" align="center" justify="center" bg="gray.50" px={4}>
-        <Box maxW="400px" w="full" bg="white" borderRadius="2xl" boxShadow="0 25px 50px rgba(0, 0, 0, 0.1)" p={8} border="1px solid" borderColor="gray.100">
+        <Box
+          maxW="400px"
+          w="full"
+          bg="white"
+          borderRadius="2xl"
+          boxShadow="0 25px 50px rgba(0, 0, 0, 0.1)"
+          p={8}
+          border="1px solid"
+          borderColor="gray.100"
+        >
           <VStack spacing={6} textAlign="center">
             <Box
               w="80px"
@@ -285,7 +291,8 @@ const SetupPassword: React.FC = () => {
                 Invalid Invitation
               </Text>
               <Text fontSize="sm" color="gray.600" textAlign="center" lineHeight="1.6">
-                This invitation link is invalid or has expired. Please contact your team administrator for a new invitation.
+                This invitation link is invalid or has expired. Please contact your team
+                administrator for a new invitation.
               </Text>
             </VStack>
             <Button
@@ -314,9 +321,9 @@ const SetupPassword: React.FC = () => {
       title="Welcome to the Team!"
       subtitle="Complete your account setup and start building sustainable solutions with carbon intelligence"
       features={[
-        "Enterprise-grade carbon tracking",
-        "Blockchain-verified transparency", 
-        "USDA-certified emission data"
+        'Enterprise-grade carbon tracking',
+        'Blockchain-verified transparency',
+        'USDA-certified emission data'
       ]}
     >
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -410,16 +417,12 @@ const SetupPassword: React.FC = () => {
                   })}
                 />
                 <InputRightElement>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowPassword(!showPassword)}
-                    size="sm"
-                  >
+                  <Button variant="ghost" onClick={() => setShowPassword(!showPassword)} size="sm">
                     <Icon as={showPassword ? FiEyeOff : FiEye} />
                   </Button>
                 </InputRightElement>
               </InputGroup>
-              
+
               {/* Password Strength Indicator */}
               {password && (
                 <Box w="full" mt={2}>
@@ -427,17 +430,24 @@ const SetupPassword: React.FC = () => {
                     value={passwordStrength}
                     size="sm"
                     borderRadius="full"
-                    colorScheme={passwordStrength < 50 ? 'red' : passwordStrength < 75 ? 'yellow' : 'green'}
+                    colorScheme={
+                      passwordStrength < 50 ? 'red' : passwordStrength < 75 ? 'yellow' : 'green'
+                    }
                   />
                   <Text fontSize="xs" color="gray.500" mt={1}>
-                    Password strength: {passwordStrength < 50 ? 'Weak' : passwordStrength < 75 ? 'Medium' : 'Strong'}
+                    Password strength:{' '}
+                    {passwordStrength < 50 ? 'Weak' : passwordStrength < 75 ? 'Medium' : 'Strong'}
                   </Text>
                 </Box>
               )}
             </StandardField>
 
             {/* Confirm Password Field */}
-            <StandardField label="Confirm Password" required error={errors.password_confirm?.message}>
+            <StandardField
+              label="Confirm Password"
+              required
+              error={errors.password_confirm?.message}
+            >
               <InputGroup size="lg">
                 <InputLeftElement pointerEvents="none">
                   <Icon as={FiLock} color="gray.400" />
@@ -449,7 +459,9 @@ const SetupPassword: React.FC = () => {
                   fontSize="sm"
                   bg="gray.50"
                   border="1px solid"
-                  borderColor={passwordConfirm && password !== passwordConfirm ? 'red.300' : 'gray.200'}
+                  borderColor={
+                    passwordConfirm && password !== passwordConfirm ? 'red.300' : 'gray.200'
+                  }
                   borderRadius="xl"
                   pl="3rem"
                   pr="3rem"
@@ -472,12 +484,12 @@ const SetupPassword: React.FC = () => {
                   </Button>
                 </InputRightElement>
               </InputGroup>
-              
+
               {/* Password Match Indicator */}
               {passwordConfirm && (
-                <Text 
-                  fontSize="xs" 
-                  color={password === passwordConfirm ? 'green.500' : 'red.500'} 
+                <Text
+                  fontSize="xs"
+                  color={password === passwordConfirm ? 'green.500' : 'red.500'}
                   mt={1}
                 >
                   {password === passwordConfirm ? '✓ Passwords match' : '✗ Passwords do not match'}

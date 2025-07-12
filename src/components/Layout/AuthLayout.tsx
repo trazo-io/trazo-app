@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Flex,
-  Text,
-  VStack,
-  HStack,
-  Grid,
-  Container,
-} from '@chakra-ui/react';
+import { Box, Flex, Text, VStack, HStack, Grid, Container } from '@chakra-ui/react';
 
 interface AuthLayoutProps {
   title: string;
@@ -19,15 +11,16 @@ interface AuthLayoutProps {
 const AuthLayout: React.FC<AuthLayoutProps> = ({
   title,
   subtitle,
-  features = [
-    "USDA Certified Data",
-    "Blockchain Secured", 
-    "Enterprise Ready"
-  ],
+  features = ['USDA Certified Data', 'Blockchain Secured', 'Enterprise Ready'],
   children
 }) => {
   return (
-    <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} minH="calc(100vh - 80px)" maxH="calc(100vh - 80px)" overflow="hidden">
+    <Grid
+      templateColumns={{ base: '1fr', lg: '1fr 1fr' }}
+      minH="calc(100vh - 80px)"
+      maxH="calc(100vh - 80px)"
+      overflow="hidden"
+    >
       {/* Left Side - Professional Carbon Intelligence */}
       <Flex
         direction="column"
@@ -47,12 +40,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
             >
               {title}
             </Text>
-            <Text
-              fontSize="lg"
-              color="green.50"
-              lineHeight="1.6"
-              maxW="350px"
-            >
+            <Text fontSize="lg" color="green.50" lineHeight="1.6" maxW="350px">
               {subtitle}
             </Text>
 
@@ -80,9 +68,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         px={{ base: 6, md: 8, lg: 12 }}
         py={12}
       >
-        <Container maxW="400px">
-          {children}
-        </Container>
+        <Container maxW="400px">{children}</Container>
       </Flex>
     </Grid>
   );

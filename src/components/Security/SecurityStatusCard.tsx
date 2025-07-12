@@ -100,8 +100,8 @@ const SecurityStatusCard: React.FC<SecurityStatusCardProps> = ({
 
   if (compact) {
     return (
-      <Card 
-        bg={bgColor} 
+      <Card
+        bg={bgColor}
         borderColor={borderColor}
         transition="all 0.3s ease"
         _hover={{
@@ -116,11 +116,7 @@ const SecurityStatusCard: React.FC<SecurityStatusCardProps> = ({
           <VStack spacing={3} align="center">
             {/* Icon and Badge Row */}
             <HStack justify="space-between" w="full">
-              <Icon 
-                as={LockIcon} 
-                color="gray.500" 
-                boxSize={5}
-              />
+              <Icon as={LockIcon} color="gray.500" boxSize={5} />
               <HStack spacing={2}>
                 {onInfoClick && (
                   <Tooltip label="Click for details and improvement suggestions" hasArrow>
@@ -138,7 +134,15 @@ const SecurityStatusCard: React.FC<SecurityStatusCardProps> = ({
                     />
                   </Tooltip>
                 )}
-                <Badge size="sm" colorScheme={trustColor} variant="subtle" fontSize="xs" px={2} py={1} borderRadius="full">
+                <Badge
+                  size="sm"
+                  colorScheme={trustColor}
+                  variant="subtle"
+                  fontSize="xs"
+                  px={2}
+                  py={1}
+                  borderRadius="full"
+                >
                   {getTrustScoreLabel(trustScore).toUpperCase()}
                 </Badge>
               </HStack>

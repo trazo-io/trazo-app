@@ -1,5 +1,15 @@
 import React from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 interface ChartWrapperProps {
   options?: any;
@@ -10,9 +20,9 @@ interface ChartWrapperProps {
   data?: any[];
 }
 
-const ChartWrapper: React.FC<ChartWrapperProps> = ({ 
-  type, 
-  width = "100%", 
+const ChartWrapper: React.FC<ChartWrapperProps> = ({
+  type,
+  width = '100%',
   height = 300,
   data = [],
   series = []
@@ -22,7 +32,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
     if (data && data.length > 0) {
       return data;
     }
-    
+
     // Convert series data to Recharts format
     if (series && series.length > 0) {
       const firstSeries = series[0];
@@ -35,14 +45,14 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
         }));
       }
     }
-    
+
     // Default sample data
     return [
       { name: 'Jan', value: 400, uv: 400, pv: 240 },
       { name: 'Feb', value: 300, uv: 300, pv: 139 },
       { name: 'Mar', value: 200, uv: 200, pv: 980 },
       { name: 'Apr', value: 278, uv: 278, pv: 390 },
-      { name: 'May', value: 189, uv: 189, pv: 480 },
+      { name: 'May', value: 189, uv: 189, pv: 480 }
     ];
   };
 
@@ -62,7 +72,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
             </BarChart>
           </ResponsiveContainer>
         );
-      
+
       case 'line':
       case 'area':
         return (
@@ -76,7 +86,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
             </LineChart>
           </ResponsiveContainer>
         );
-      
+
       default:
         return (
           <ResponsiveContainer width={width} height={height}>
@@ -93,17 +103,13 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
   };
 
   try {
-    return (
-      <div style={{ width, height }}>
-        {renderChart()}
-      </div>
-    );
+    return <div style={{ width, height }}>{renderChart()}</div>;
   } catch (error) {
     console.error('Chart rendering error:', error);
     return (
-      <div 
-        style={{ 
-          width, 
+      <div
+        style={{
+          width,
           height,
           display: 'flex',
           alignItems: 'center',

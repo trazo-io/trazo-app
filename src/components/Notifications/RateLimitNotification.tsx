@@ -7,14 +7,14 @@ const RateLimitNotification: React.FC = () => {
   useEffect(() => {
     const handleRateLimit = (event: CustomEvent) => {
       const { message, retryAfter } = event.detail;
-      
+
       toast({
         title: 'Rate Limit Exceeded',
         description: message,
         status: 'warning',
         duration: retryAfter * 1000, // Show for the duration of the rate limit
         isClosable: true,
-        position: 'top',
+        position: 'top'
       });
     };
 

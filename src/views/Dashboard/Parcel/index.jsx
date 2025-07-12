@@ -67,7 +67,8 @@ export default function ParcelView() {
       px={{ base: '16px', md: '24px' }}
       w="100%"
       maxW="100%"
-      overflow="hidden">
+      overflow="hidden"
+    >
       {/* Trial Banner */}
       {subscription && subscription.status === 'trialing' && (
         <Box
@@ -77,7 +78,8 @@ export default function ParcelView() {
           mb={4}
           borderLeftWidth="4px"
           borderLeftColor="green.500"
-          boxShadow="md">
+          boxShadow="md"
+        >
           <Flex align="center" justify="space-between">
             <Box>
               <Text fontSize="lg" fontWeight="bold" color="green.700">
@@ -93,7 +95,8 @@ export default function ParcelView() {
             <Button
               colorScheme="green"
               size="md"
-              onClick={() => navigate('/admin/dashboard/subscription')}>
+              onClick={() => navigate('/admin/dashboard/subscription')}
+            >
               {intl.formatMessage({ id: 'app.manageTrial' })}
             </Button>
           </Flex>
@@ -106,7 +109,8 @@ export default function ParcelView() {
         bg="inherit"
         borderRadius="inherit"
         fontWeight="bold"
-        padding="10px">
+        padding="10px"
+      >
         {establishment?.name}
       </Text>
       <Grid
@@ -115,7 +119,8 @@ export default function ParcelView() {
         my="26px"
         gap="24px"
         w="100%"
-        maxW="100%">
+        maxW="100%"
+      >
         {establishment ? (
           <CardWithImage
             title={`${establishment?.city || establishment?.zone || ''}, ${establishment?.state}`}
@@ -164,7 +169,8 @@ export default function ParcelView() {
         templateRows={{ sm: '1fr auto', md: '1fr', lg: '1fr' }}
         gap="24px"
         w="100%"
-        maxW="100%">
+        maxW="100%"
+      >
         <TrackList amount={40} />
         <HistoryCard
           title={'History'}

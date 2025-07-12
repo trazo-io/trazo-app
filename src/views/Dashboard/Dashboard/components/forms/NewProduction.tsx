@@ -92,7 +92,15 @@ import {
   FaCalculator,
   FaLightbulb
 } from 'react-icons/fa';
-import { MdLocalFlorist, MdHome, MdGrass, MdFilterVintage, MdVerified, MdTrendingDown, MdEco } from 'react-icons/md';
+import {
+  MdLocalFlorist,
+  MdHome,
+  MdGrass,
+  MdFilterVintage,
+  MdVerified,
+  MdTrendingDown,
+  MdEco
+} from 'react-icons/md';
 import {
   useGetUSDAEmissionFactorsQuery,
   useGetRegionalBenchmarkQuery,
@@ -244,7 +252,9 @@ export const NewProduction: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [productError, setProductError] = useState<string>('');
-  const [productsOptions, setProductsOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [productsOptions, setProductsOptions] = useState<Array<{ value: string; label: string }>>(
+    []
+  );
   const [navigateTo, setNavigateTo] = useState<string | null>(null);
   const [carbonPreview, setCarbonPreview] = useState<any>(null);
   const intl = useIntl();
@@ -328,7 +338,7 @@ export const NewProduction: React.FC = () => {
 
       console.log('Final data to submit:', finalData);
       createProduction(finalData);
-      
+
       toast({
         title: 'Production Created',
         description: `Production for "${selectedProduct.label}" has been created successfully with carbon goals.`,
@@ -386,23 +396,12 @@ export const NewProduction: React.FC = () => {
   }, [isSuccessProducts]);
 
   return (
-    <Flex
-      direction="column"
-      bg={bgColor}
-      w={{ base: '100%', md: '768px' }}
-      boxShadow="0 20px 27px 0 rgb(0 0 0 / 5%)"
-      borderRadius="15px"
+    <StandardPage
+      title={intl.formatMessage({ id: 'app.newProduction' })}
+      subtitle="Create a new production cycle with carbon goals"
     >
-      <Tabs variant="unstyled" mt="24px" alignSelf="center" w="100%">
-        <TabPanels maxW={{ md: '90%', lg: '100%' }} mx="auto">
-          <TabPanel>
-            <Card>
-              <CardHeader mb="32px">
-                <Text fontSize="lg" color={textColor} fontWeight="bold">
-                  {intl.formatMessage({ id: 'app.mainInfo' })}
-                </Text>
-              </CardHeader>
-
+      <FormProvider {...methods}>
+        <form onSubmit={methods.handleSubmit(onSubmitForm)}>
           {/* Step 0: Product Selection */}
           {currentStep === 0 && (
             <StandardCard
@@ -456,14 +455,24 @@ export const NewProduction: React.FC = () => {
                       </Text>
                     </HStack>
                     <Text fontSize="sm" color="green.600">
-                      {productionTypeOptions.find(option => option.value === watch('type'))?.carbonBenefits}
+                      {
+                        productionTypeOptions.find((option) => option.value === watch('type'))
+                          ?.carbonBenefits
+                      }
                     </Text>
                   </Box>
                 )}
 
                 {/* Navigation */}
                 <HStack spacing={3} justify="flex-end" pt={4}>
-                  <StandardButton variant="outline" onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`)}>
+                  <StandardButton
+                    variant="outline"
+                    onClick={() =>
+                      navigate(
+                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`
+                      )
+                    }
+                  >
                     Cancel
                   </StandardButton>
                   <StandardButton
@@ -646,7 +655,13 @@ export const NewProduction: React.FC = () => {
                 {(() => {
                   const preview = calculateCarbonPreview();
                   return preview ? (
-                    <Box p={6} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
+                    <Box
+                      p={6}
+                      bg="green.50"
+                      borderRadius="xl"
+                      border="1px solid"
+                      borderColor="green.200"
+                    >
                       <HStack spacing={3} mb={4}>
                         <Icon as={FaChartLine} color="green.600" boxSize={6} />
                         <Text fontWeight="bold" color="green.700" fontSize="lg">
@@ -701,7 +716,14 @@ export const NewProduction: React.FC = () => {
                     Back to Product
                   </StandardButton>
                   <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`)}>
+                    <StandardButton
+                      variant="outline"
+                      onClick={() =>
+                        navigate(
+                          `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`
+                        )
+                      }
+                    >
                       Cancel
                     </StandardButton>
                     <StandardButton
@@ -774,10 +796,7 @@ export const NewProduction: React.FC = () => {
                     </StandardSelect>
                   </StandardField>
 
-                  <StandardField
-                    label="Irrigation Method"
-                    helpText="Water management approach"
-                  >
+                  <StandardField label="Irrigation Method" helpText="Water management approach">
                     <StandardSelect
                       value={watch('irrigationMethod')}
                       onChange={(e) => setValue('irrigationMethod', e.target.value)}
@@ -798,10 +817,7 @@ export const NewProduction: React.FC = () => {
                     Optional Plant Details (can be updated later)
                   </Text>
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    <StandardField
-                      label="Age of Plants (days)"
-                      helpText="0 for new plantings"
-                    >
+                    <StandardField label="Age of Plants (days)" helpText="0 for new plantings">
                       <NumberInput
                         value={watch('ageOfPlants') || 0}
                         onChange={(_, num) => setValue('ageOfPlants', num || 0)}
@@ -815,10 +831,7 @@ export const NewProduction: React.FC = () => {
                       </NumberInput>
                     </StandardField>
 
-                    <StandardField
-                      label="Number of Plants"
-                      helpText="Approximate count"
-                    >
+                    <StandardField label="Number of Plants" helpText="Approximate count">
                       <NumberInput
                         value={watch('numberOfPlants') || 0}
                         onChange={(_, num) => setValue('numberOfPlants', num || 0)}
@@ -832,10 +845,7 @@ export const NewProduction: React.FC = () => {
                       </NumberInput>
                     </StandardField>
 
-                    <StandardField
-                      label="Soil pH"
-                      helpText="7.0 is neutral"
-                    >
+                    <StandardField label="Soil pH" helpText="7.0 is neutral">
                       <NumberInput
                         value={watch('soilPh') || 7.0}
                         onChange={(_, num) => setValue('soilPh', num || 7.0)}
@@ -864,7 +874,14 @@ export const NewProduction: React.FC = () => {
                     Back to Carbon Goals
                   </StandardButton>
                   <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`)}>
+                    <StandardButton
+                      variant="outline"
+                      onClick={() =>
+                        navigate(
+                          `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`
+                        )
+                      }
+                    >
                       Cancel
                     </StandardButton>
                     <StandardButton
@@ -888,7 +905,13 @@ export const NewProduction: React.FC = () => {
             >
               <VStack spacing={6} align="stretch">
                 {/* Production Summary */}
-                <Box p={6} bg="green.50" borderRadius="xl" border="2px solid" borderColor="green.200">
+                <Box
+                  p={6}
+                  bg="green.50"
+                  borderRadius="xl"
+                  border="2px solid"
+                  borderColor="green.200"
+                >
                   <HStack spacing={3} mb={4}>
                     <Icon as={FaCheckCircle} color="green.500" boxSize={6} />
                     <Text fontWeight="bold" color="green.700" fontSize="lg">
@@ -899,25 +922,37 @@ export const NewProduction: React.FC = () => {
                     <HStack>
                       <Icon as={FaSeedling} color="green.600" />
                       <Text>
-                        <Text as="span" fontWeight="semibold">Crop:</Text> {selectedProduct?.label || 'Not selected'}
+                        <Text as="span" fontWeight="semibold">
+                          Crop:
+                        </Text>{' '}
+                        {selectedProduct?.label || 'Not selected'}
                       </Text>
                     </HStack>
                     <HStack>
                       <Icon as={watch('type') === 'OR' ? FaLeaf : FaTractor} color="green.600" />
                       <Text>
-                        <Text as="span" fontWeight="semibold">Method:</Text> {watch('type') === 'OR' ? 'Organic' : 'General Agriculture'}
+                        <Text as="span" fontWeight="semibold">
+                          Method:
+                        </Text>{' '}
+                        {watch('type') === 'OR' ? 'Organic' : 'General Agriculture'}
                       </Text>
                     </HStack>
                     <HStack>
                       <Icon as={watch('isOutdoor') ? MdLocalFlorist : MdHome} color="green.600" />
                       <Text>
-                        <Text as="span" fontWeight="semibold">Environment:</Text> {watch('isOutdoor') ? 'Outdoor' : 'Indoor/Greenhouse'}
+                        <Text as="span" fontWeight="semibold">
+                          Environment:
+                        </Text>{' '}
+                        {watch('isOutdoor') ? 'Outdoor' : 'Indoor/Greenhouse'}
                       </Text>
                     </HStack>
                     <HStack>
                       <Icon as={FaCalendarAlt} color="green.600" />
                       <Text>
-                        <Text as="span" fontWeight="semibold">Start:</Text> {watch('date') ? new Date(watch('date')).toLocaleDateString() : 'Not set'}
+                        <Text as="span" fontWeight="semibold">
+                          Start:
+                        </Text>{' '}
+                        {watch('date') ? new Date(watch('date')).toLocaleDateString() : 'Not set'}
                       </Text>
                     </HStack>
                   </SimpleGrid>
@@ -935,25 +970,37 @@ export const NewProduction: React.FC = () => {
                     <HStack>
                       <Icon as={MdTrendingDown} color="blue.600" />
                       <Text>
-                        <Text as="span" fontWeight="semibold">Carbon Reduction:</Text> {watch('carbonReductionTarget') || 0}%
+                        <Text as="span" fontWeight="semibold">
+                          Carbon Reduction:
+                        </Text>{' '}
+                        {watch('carbonReductionTarget') || 0}%
                       </Text>
                     </HStack>
                     <HStack>
                       <Icon as={FaCalculator} color="blue.600" />
                       <Text>
-                        <Text as="span" fontWeight="semibold">Sustainability Score:</Text> {watch('sustainabilityScore') || 0}/100
+                        <Text as="span" fontWeight="semibold">
+                          Sustainability Score:
+                        </Text>{' '}
+                        {watch('sustainabilityScore') || 0}/100
                       </Text>
                     </HStack>
                     <HStack>
                       <Icon as={MdEco} color="blue.600" />
                       <Text>
-                        <Text as="span" fontWeight="semibold">Renewable Energy:</Text> {watch('renewableEnergyTarget') || 0}%
+                        <Text as="span" fontWeight="semibold">
+                          Renewable Energy:
+                        </Text>{' '}
+                        {watch('renewableEnergyTarget') || 0}%
                       </Text>
                     </HStack>
                     <HStack>
                       <Icon as={FaWater} color="blue.600" />
                       <Text>
-                        <Text as="span" fontWeight="semibold">Water Efficiency:</Text> {watch('waterEfficiencyGoal') || 0}% improvement
+                        <Text as="span" fontWeight="semibold">
+                          Water Efficiency:
+                        </Text>{' '}
+                        {watch('waterEfficiencyGoal') || 0}% improvement
                       </Text>
                     </HStack>
                   </SimpleGrid>
@@ -976,7 +1023,14 @@ export const NewProduction: React.FC = () => {
                     Back to Details
                   </StandardButton>
                   <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`)}>
+                    <StandardButton
+                      variant="outline"
+                      onClick={() =>
+                        navigate(
+                          `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`
+                        )
+                      }
+                    >
                       Cancel
                     </StandardButton>
                     <StandardButton

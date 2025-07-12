@@ -8,22 +8,22 @@ const invitationApi = baseApi.injectEndpoints({
       query: (invitationData) => ({
         url: 'invitations/create/',
         method: 'POST',
-        body: invitationData,
+        body: invitationData
       }),
-      invalidatesTags: ['CompanyInvitations', 'Company'],
+      invalidatesTags: ['CompanyInvitations', 'Company']
     }),
 
     // List company invitations
     getInvitations: build.query({
       query: () => 'invitations/',
-      providesTags: ['CompanyInvitations'],
+      providesTags: ['CompanyInvitations']
     }),
 
     // Accept invitation (public endpoint)
     acceptInvitation: build.mutation({
       query: (invitationCode) => ({
         url: `invitation/${invitationCode}/accept/`,
-        method: 'POST',
+        method: 'POST'
       }),
       invalidatesTags: ['CompanyInvitations', 'Company', 'User'],
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
@@ -38,42 +38,40 @@ const invitationApi = baseApi.injectEndpoints({
         } catch (error) {
           console.error('Accept invitation failed:', error);
         }
-      },
+      }
     }),
 
     // Decline invitation (public endpoint)
     declineInvitation: build.mutation({
       query: (invitationCode) => ({
         url: `invitation/${invitationCode}/decline/`,
-        method: 'POST',
+        method: 'POST'
       }),
-      invalidatesTags: ['CompanyInvitations'],
+      invalidatesTags: ['CompanyInvitations']
     }),
 
     // Resend invitation
     resendInvitation: build.mutation({
       query: (invitationId) => ({
         url: `invitations/${invitationId}/resend/`,
-        method: 'POST',
+        method: 'POST'
       }),
-      invalidatesTags: ['CompanyInvitations'],
+      invalidatesTags: ['CompanyInvitations']
     }),
 
     // Cancel invitation
     cancelInvitation: build.mutation({
       query: (invitationId) => ({
         url: `invitations/${invitationId}/cancel/`,
-        method: 'DELETE',
+        method: 'DELETE'
       }),
-      invalidatesTags: ['CompanyInvitations'],
+      invalidatesTags: ['CompanyInvitations']
     }),
 
     // Get invitation details (for acceptance page)
     getInvitationDetails: build.query({
       query: (invitationCode) => `invitation/${invitationCode}/`,
-      providesTags: (result, error, invitationCode) => [
-        { type: 'Invitation', id: invitationCode },
-      ],
+      providesTags: (result, error, invitationCode) => [{ type: 'Invitation', id: invitationCode }]
     }),
 
     // Signup with invitation (creates account and accepts invitation)
@@ -81,7 +79,7 @@ const invitationApi = baseApi.injectEndpoints({
       query: (signupData) => ({
         url: 'auth/signup-with-invitation/',
         method: 'POST',
-        body: signupData,
+        body: signupData
       }),
       invalidatesTags: ['CompanyInvitations', 'Company', 'User'],
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
@@ -92,32 +90,41 @@ const invitationApi = baseApi.injectEndpoints({
             const { setUser } = await import('store/features/userSlice');
             const { login } = await import('store/features/authSlice');
             const { setCompany } = await import('store/features/companySlice');
-            
+
             // Set company data in both slices for proper subscription detection
             if (result.data.company) {
               dispatch(setCompany(result.data.company));
-              
+
               // Create user data with company information for navbar
               const userWithCompanies = {
                 ...result.data.user,
-                companies: [{
-                  ...result.data.company,
-                  role: result.data.role === 'CA' ? 'Company Admin' : 
-                        result.data.role === 'FM' ? 'Farm Manager' : 
-                        result.data.role === 'DW' ? 'Domain Worker' : result.data.role
-                }]
+                companies: [
+                  {
+                    ...result.data.company,
+                    role:
+                      result.data.role === 'CA'
+                        ? 'Company Admin'
+                        : result.data.role === 'FM'
+                        ? 'Farm Manager'
+                        : result.data.role === 'DW'
+                        ? 'Domain Worker'
+                        : result.data.role
+                  }
+                ]
               };
-              
+
               // Set user data with company information
               dispatch(setUser(userWithCompanies));
-              
+
               // Also set auth data with company information for SubscriptionRequired
-              dispatch(login({
-                data: {
-                  ...userWithCompanies,
-                  selectedCompany: result.data.company.id
-                }
-              }));
+              dispatch(
+                login({
+                  data: {
+                    ...userWithCompanies,
+                    selectedCompany: result.data.company.id
+                  }
+                })
+              );
             } else {
               // Set user data without companies if no company data
               dispatch(setUser(result.data.user));
@@ -127,9 +134,9 @@ const invitationApi = baseApi.injectEndpoints({
           console.error('Signup with invitation failed:', error);
         }
       },
-      invalidatesTags: ['CompanyInvitations', 'Company', 'User'],
-    }),
-  }),
+      invalidatesTags: ['CompanyInvitations', 'Company', 'User']
+    })
+  })
 });
 
 export const {
@@ -140,7 +147,7 @@ export const {
   useResendInvitationMutation,
   useCancelInvitationMutation,
   useGetInvitationDetailsQuery,
-  useSignupWithInvitationMutation,
+  useSignupWithInvitationMutation
 } = invitationApi;
 
 export default invitationApi;

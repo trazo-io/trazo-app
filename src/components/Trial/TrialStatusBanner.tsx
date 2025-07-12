@@ -10,7 +10,7 @@ import {
   Text,
   useColorModeValue,
   Progress,
-  HStack,
+  HStack
 } from '@chakra-ui/react';
 import { useSelector } from 'react-redux';
 import { RootState } from 'store';
@@ -22,12 +22,12 @@ interface TrialStatusBannerProps {
   showOnlyWhenTrialExpiringSoon?: boolean;
 }
 
-const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({ 
-  showOnlyWhenTrialExpiringSoon = false 
+const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
+  showOnlyWhenTrialExpiringSoon = false
 }) => {
   const navigate = useNavigate();
   const { openOnboarding, resetOnboarding } = useOnboarding();
-  
+
   // Get company data from Redux
   const company = useSelector((state: RootState) => {
     const auth = state.auth as any;
@@ -35,12 +35,12 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
       const selectedId = auth.selectedCompany;
       return auth.companies.find((company: Company) => company.id === selectedId) || null;
     }
-    
+
     const companyState = state.companySlice as any;
     if (companyState && companyState.currentCompany) {
       return companyState.currentCompany;
     }
-    
+
     return null;
   });
 
@@ -53,7 +53,7 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
   if (!company) return null;
 
   // Check if company has active subscription
-  const hasActiveSubscription = 
+  const hasActiveSubscription =
     company.has_subscription === true ||
     (company.subscription &&
       (company.subscription.id || company.subscription.status === 'active')) ||
@@ -64,14 +64,16 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
 
   // Calculate trial status
   const companyCreatedDate = new Date(company.created_at || company.date_joined);
-  const trialEndDate = new Date(companyCreatedDate.getTime() + (14 * 24 * 60 * 60 * 1000)); // 14 days
+  const trialEndDate = new Date(companyCreatedDate.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
   const now = new Date();
-  
+
   const totalTrialDays = 14;
-  const daysElapsed = Math.floor((now.getTime() - companyCreatedDate.getTime()) / (24 * 60 * 60 * 1000));
+  const daysElapsed = Math.floor(
+    (now.getTime() - companyCreatedDate.getTime()) / (24 * 60 * 60 * 1000)
+  );
   const daysRemaining = Math.max(0, totalTrialDays - daysElapsed);
   const trialProgress = Math.min(100, (daysElapsed / totalTrialDays) * 100);
-  
+
   const isTrialExpired = daysRemaining === 0;
   const isTrialExpiringSoon = daysRemaining <= 3; // Show when 3 days or less remaining
 
@@ -86,7 +88,14 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
 
   if (isTrialExpired) {
     return (
-      <Alert status="error" bg={alertBg} border="1px" borderColor={alertBorder} borderRadius="xl" mb={4}>
+      <Alert
+        status="error"
+        bg={alertBg}
+        border="1px"
+        borderColor={alertBorder}
+        borderRadius="xl"
+        mb={4}
+      >
         <AlertIcon />
         <Box flex="1">
           <AlertTitle fontSize="sm" fontWeight="600">
@@ -104,7 +113,14 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
   }
 
   return (
-    <Alert status="warning" bg={alertBg} border="1px" borderColor={alertBorder} borderRadius="xl" mb={4}>
+    <Alert
+      status="warning"
+      bg={alertBg}
+      border="1px"
+      borderColor={alertBorder}
+      borderRadius="xl"
+      mb={4}
+    >
       <AlertIcon />
       <Box flex="1">
         <Flex justify="space-between" align="center" mb={2}>
@@ -115,31 +131,32 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
             {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining
           </Text>
         </Flex>
-        
+
         <AlertDescription fontSize="sm" mb={3}>
-          {isTrialExpiringSoon 
-            ? `Your trial expires in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}. Upgrade to keep your carbon tracking data.`
-            : `You're exploring Trazo with full access to all features.`
-          }
+          {isTrialExpiringSoon
+            ? `Your trial expires in ${daysRemaining} day${
+                daysRemaining !== 1 ? 's' : ''
+              }. Upgrade to keep your carbon tracking data.`
+            : `You're exploring Trazo with full access to all features.`}
         </AlertDescription>
-        
-        <Progress 
-          value={trialProgress} 
-          size="sm" 
-          colorScheme="orange" 
+
+        <Progress
+          value={trialProgress}
+          size="sm"
+          colorScheme="orange"
           bg={progressBg}
           borderRadius="md"
           mb={3}
         />
-        
+
         <HStack spacing={2}>
           <Button size="sm" colorScheme="green" onClick={handleUpgradeClick}>
             {isTrialExpiringSoon ? 'Upgrade Now' : 'View Pricing'}
           </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            colorScheme="blue" 
+          <Button
+            size="sm"
+            variant="outline"
+            colorScheme="blue"
             onClick={() => {
               resetOnboarding();
               openOnboarding();

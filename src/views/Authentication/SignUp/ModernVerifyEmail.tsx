@@ -223,12 +223,12 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
             <Text fontSize="sm" color="gray.500" textAlign="center">
               Welcome to Trazo! Taking you to your dashboard...
             </Text>
-            
+
             {/* Progress Bar */}
             <Box w="200px">
-              <Progress 
-                value={redirectProgress} 
-                size="sm" 
+              <Progress
+                value={redirectProgress}
+                size="sm"
                 borderRadius="full"
                 bg="gray.100"
                 sx={{

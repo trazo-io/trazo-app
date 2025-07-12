@@ -366,7 +366,9 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
           displayNotifications.length > 0 && (
             <Box textAlign="center" py="8px" mt="8px">
               <Text fontSize="xs" color={mutedTextColor}>
-                {totalNotifications === 1 ? '1 notification' : `All ${totalNotifications} notifications shown`}
+                {totalNotifications === 1
+                  ? '1 notification'
+                  : `All ${totalNotifications} notifications shown`}
               </Text>
             </Box>
           )

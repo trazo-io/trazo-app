@@ -372,7 +372,7 @@ const ModernCarbonDashboard: React.FC = () => {
   const blockchainVerified = false; // Will be implemented when backend adds blockchain verification
   const blockchainNetwork = 'polygon_amoy'; // Real network from backend settings
   const complianceStatus = usdaComplianceScore >= 80; // Based on real USDA factors usage
-  
+
   // Helper function to format blockchain network name for user display
   const getNetworkDisplayName = (network: string) => {
     switch (network) {
@@ -942,8 +942,8 @@ const ModernCarbonDashboard: React.FC = () => {
           {/* Secondary Metrics Row - Compliance & Technical Status */}
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={cardSpacing} alignItems="stretch">
             {/* Security Status Card - Enhanced with hover */}
-            <SecurityStatusCard 
-              compact={true} 
+            <SecurityStatusCard
+              compact={true}
               onInfoClick={() => handleMetricInfoClick('securityScore')}
             />
 
@@ -1337,172 +1337,221 @@ const ModernCarbonDashboard: React.FC = () => {
               ) : paginatedEntriesError ? (
                 <VStack spacing={2} py={8}>
                   <Text color="red.500">Error loading carbon entries</Text>
-                  <Text fontSize="sm" color={mutedColor}>Please try again later</Text>
+                  <Text fontSize="sm" color={mutedColor}>
+                    Please try again later
+                  </Text>
                 </VStack>
               ) : paginatedEntries.length > 0 ? (
-              <Box
-                overflowX="auto"
-                w="100%"
-                borderRadius="xl"
-                border="1px solid"
-                borderColor="gray.200"
-              >
-                <Table size="sm" variant="simple">
-                  <Thead bg="gray.50">
-                    <Tr>
-                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="80px">
-                        Type
-                      </Th>
-                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="200px">
-                        Source
-                      </Th>
-                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="150px">
-                        Amount
-                      </Th>
-                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="200px">
-                        Status
-                      </Th>
-                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="100px">
-                        Date
-                      </Th>
-                      <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4} width="80px">
-                        Actions
-                      </Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {paginatedEntries.map((entry: any) => (
-                      <Tr 
-                        key={entry.id}
-                        _hover={{ bg: 'green.50' }}
-                        transition="background-color 0.2s"
-                      >
-                        <Td py={3} px={4}>
-                          <Badge
-                            colorScheme={entry.type === 'emission' ? 'red' : 'green'}
-                            variant="solid"
-                            fontSize="xs"
-                            px={2}
-                            py={1}
-                            borderRadius="full"
-                          >
-                            {entry.type === 'emission' ? 'Emission' : 'Offset'}
-                          </Badge>
-                        </Td>
-                        <Td py={3} px={4}>
-                          <VStack align="start" spacing={0}>
-                            <Text fontSize="sm" fontWeight="medium" color={textColor} noOfLines={1}>
-                              {entry.source?.name || 'Unknown Source'}
-                            </Text>
-                            <Text fontSize="xs" color={mutedColor} noOfLines={1}>
-                              {entry.source?.category || 'Other'}
-                            </Text>
-                          </VStack>
-                        </Td>
-                        <Td py={3} px={4}>
-                          <VStack align="start" spacing={0}>
-                            <Text fontSize="sm" fontWeight="bold" color={textColor}>
-                              {Number(entry.amount).toLocaleString()} kg CO₂e
-                            </Text>
-                            {entry.type === 'offset' && entry.effective_amount && (
-                              <Text fontSize="xs" color="green.600" fontWeight="medium">
-                                {Number(entry.effective_amount).toLocaleString()} effective
-                              </Text>
-                            )}
-                          </VStack>
-                        </Td>
-                        <Td py={3} px={4}>
-                          <VStack align="start" spacing={1}>
-                            {/* Main Status Badge */}
+                <Box
+                  overflowX="auto"
+                  w="100%"
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="gray.200"
+                >
+                  <Table size="sm" variant="simple">
+                    <Thead bg="gray.50">
+                      <Tr>
+                        <Th
+                          color="gray.700"
+                          fontWeight="semibold"
+                          fontSize="sm"
+                          py={4}
+                          width="80px"
+                        >
+                          Type
+                        </Th>
+                        <Th
+                          color="gray.700"
+                          fontWeight="semibold"
+                          fontSize="sm"
+                          py={4}
+                          width="200px"
+                        >
+                          Source
+                        </Th>
+                        <Th
+                          color="gray.700"
+                          fontWeight="semibold"
+                          fontSize="sm"
+                          py={4}
+                          width="150px"
+                        >
+                          Amount
+                        </Th>
+                        <Th
+                          color="gray.700"
+                          fontWeight="semibold"
+                          fontSize="sm"
+                          py={4}
+                          width="200px"
+                        >
+                          Status
+                        </Th>
+                        <Th
+                          color="gray.700"
+                          fontWeight="semibold"
+                          fontSize="sm"
+                          py={4}
+                          width="100px"
+                        >
+                          Date
+                        </Th>
+                        <Th
+                          color="gray.700"
+                          fontWeight="semibold"
+                          fontSize="sm"
+                          py={4}
+                          width="80px"
+                        >
+                          Actions
+                        </Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      {paginatedEntries.map((entry: any) => (
+                        <Tr
+                          key={entry.id}
+                          _hover={{ bg: 'green.50' }}
+                          transition="background-color 0.2s"
+                        >
+                          <Td py={3} px={4}>
                             <Badge
-                              colorScheme={
-                                entry.verification_status === 'verified'
-                                  ? 'green'
-                                  : entry.verification_status === 'rejected'
-                                  ? 'red'
-                                  : 'yellow'
-                              }
+                              colorScheme={entry.type === 'emission' ? 'red' : 'green'}
                               variant="solid"
                               fontSize="xs"
                               px={2}
                               py={1}
                               borderRadius="full"
                             >
-                              {entry.verification_status === 'verified'
-                                ? 'VERIFIED'
-                                : entry.verification_status === 'rejected'
-                                ? 'REJECTED'
-                                : 'PENDING'}
+                              {entry.type === 'emission' ? 'Emission' : 'Offset'}
                             </Badge>
-
-                            {/* Additional badges for offsets */}
-                            {entry.type === 'offset' && entry.verification_level === 'certified_project' && (
-                              <Badge
-                                size="sm"
-                                colorScheme={entry.verification_status === 'verified' ? 'green' : 'red'}
-                                variant="outline"
-                                fontSize="xs"
+                          </Td>
+                          <Td py={3} px={4}>
+                            <VStack align="start" spacing={0}>
+                              <Text
+                                fontSize="sm"
+                                fontWeight="medium"
+                                color={textColor}
+                                noOfLines={1}
                               >
-                                {entry.verification_status === 'verified' ? 'Registry Failed' : 'Registry Failed'}
-                              </Badge>
-                            )}
-
-                            {entry.type === 'offset' && entry.verification_level === 'self_reported' && (
-                              <Badge
-                                size="sm"
-                                colorScheme="orange"
-                                variant="outline"
-                                fontSize="xs"
-                              >
-                                Self Reported
-                              </Badge>
-                            )}
-
-                            {/* Trust Score for offsets */}
-                            {entry.type === 'offset' && entry.trust_score && (
-                              <Text fontSize="xs" color="gray.600">
-                                {Math.round(entry.trust_score * 100)}% Trust
+                                {entry.source?.name || 'Unknown Source'}
                               </Text>
-                            )}
-                          </VStack>
-                        </Td>
-                        <Td py={3} px={4}>
-                          <Text fontSize="sm" fontWeight="medium" color={textColor}>
-                            {new Date(entry.created_at || entry.timestamp).toLocaleDateString()}
-                          </Text>
-                          <Text fontSize="xs" color={mutedColor}>
-                            {new Date(entry.created_at || entry.timestamp).toLocaleTimeString()}
-                          </Text>
-                        </Td>
-                        <Td py={3} px={4}>
-                          <HStack spacing={1}>
-                            <Tooltip label="View details" hasArrow>
-                              <IconButton
-                                size="xs"
-                                variant="ghost"
-                                aria-label="View details"
-                                icon={<FaEye />}
-                                color="gray.500"
-                                _hover={{ color: 'blue.500', bg: 'blue.50' }}
-                              />
-                            </Tooltip>
-                            <Tooltip label="Edit entry" hasArrow>
-                              <IconButton
-                                size="xs"
-                                variant="ghost"
-                                aria-label="Edit entry"
-                                icon={<FaEdit />}
-                                color="gray.500"
-                                _hover={{ color: 'green.500', bg: 'green.50' }}
-                              />
-                            </Tooltip>
-                          </HStack>
-                        </Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-              </Box>
+                              <Text fontSize="xs" color={mutedColor} noOfLines={1}>
+                                {entry.source?.category || 'Other'}
+                              </Text>
+                            </VStack>
+                          </Td>
+                          <Td py={3} px={4}>
+                            <VStack align="start" spacing={0}>
+                              <Text fontSize="sm" fontWeight="bold" color={textColor}>
+                                {Number(entry.amount).toLocaleString()} kg CO₂e
+                              </Text>
+                              {entry.type === 'offset' && entry.effective_amount && (
+                                <Text fontSize="xs" color="green.600" fontWeight="medium">
+                                  {Number(entry.effective_amount).toLocaleString()} effective
+                                </Text>
+                              )}
+                            </VStack>
+                          </Td>
+                          <Td py={3} px={4}>
+                            <VStack align="start" spacing={1}>
+                              {/* Main Status Badge */}
+                              <Badge
+                                colorScheme={
+                                  entry.verification_status === 'verified'
+                                    ? 'green'
+                                    : entry.verification_status === 'rejected'
+                                    ? 'red'
+                                    : 'yellow'
+                                }
+                                variant="solid"
+                                fontSize="xs"
+                                px={2}
+                                py={1}
+                                borderRadius="full"
+                              >
+                                {entry.verification_status === 'verified'
+                                  ? 'VERIFIED'
+                                  : entry.verification_status === 'rejected'
+                                  ? 'REJECTED'
+                                  : 'PENDING'}
+                              </Badge>
+
+                              {/* Additional badges for offsets */}
+                              {entry.type === 'offset' &&
+                                entry.verification_level === 'certified_project' && (
+                                  <Badge
+                                    size="sm"
+                                    colorScheme={
+                                      entry.verification_status === 'verified' ? 'green' : 'red'
+                                    }
+                                    variant="outline"
+                                    fontSize="xs"
+                                  >
+                                    {entry.verification_status === 'verified'
+                                      ? 'Registry Failed'
+                                      : 'Registry Failed'}
+                                  </Badge>
+                                )}
+
+                              {entry.type === 'offset' &&
+                                entry.verification_level === 'self_reported' && (
+                                  <Badge
+                                    size="sm"
+                                    colorScheme="orange"
+                                    variant="outline"
+                                    fontSize="xs"
+                                  >
+                                    Self Reported
+                                  </Badge>
+                                )}
+
+                              {/* Trust Score for offsets */}
+                              {entry.type === 'offset' && entry.trust_score && (
+                                <Text fontSize="xs" color="gray.600">
+                                  {Math.round(entry.trust_score * 100)}% Trust
+                                </Text>
+                              )}
+                            </VStack>
+                          </Td>
+                          <Td py={3} px={4}>
+                            <Text fontSize="sm" fontWeight="medium" color={textColor}>
+                              {new Date(entry.created_at || entry.timestamp).toLocaleDateString()}
+                            </Text>
+                            <Text fontSize="xs" color={mutedColor}>
+                              {new Date(entry.created_at || entry.timestamp).toLocaleTimeString()}
+                            </Text>
+                          </Td>
+                          <Td py={3} px={4}>
+                            <HStack spacing={1}>
+                              <Tooltip label="View details" hasArrow>
+                                <IconButton
+                                  size="xs"
+                                  variant="ghost"
+                                  aria-label="View details"
+                                  icon={<FaEye />}
+                                  color="gray.500"
+                                  _hover={{ color: 'blue.500', bg: 'blue.50' }}
+                                />
+                              </Tooltip>
+                              <Tooltip label="Edit entry" hasArrow>
+                                <IconButton
+                                  size="xs"
+                                  variant="ghost"
+                                  aria-label="Edit entry"
+                                  icon={<FaEdit />}
+                                  color="gray.500"
+                                  _hover={{ color: 'green.500', bg: 'green.50' }}
+                                />
+                              </Tooltip>
+                            </HStack>
+                          </Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                </Box>
               ) : (
                 <VStack spacing={4} py={8}>
                   <Icon as={FaFileAlt} color="gray.400" boxSize={8} />
@@ -1521,7 +1570,8 @@ const ModernCarbonDashboard: React.FC = () => {
               {totalEntriesPages > 1 && (
                 <Flex justify="space-between" align="center" w="100%" pt={4}>
                   <Text fontSize="sm" color={mutedColor}>
-                    Page {currentEntriesPage} of {totalEntriesPages} ({totalEntriesCount} total entries)
+                    Page {currentEntriesPage} of {totalEntriesPages} ({totalEntriesCount} total
+                    entries)
                   </Text>
                   <HStack spacing={2}>
                     <IconButton

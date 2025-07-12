@@ -281,7 +281,8 @@ export default function DashboardView() {
           direction={{ base: 'column', md: 'row' }}
           gap={6}
           align="flex-start"
-          px={{ base: 2, md: 2 }}>
+          px={{ base: 2, md: 2 }}
+        >
           <Box flex="2">
             <Grid
               templateColumns={{
@@ -289,14 +290,16 @@ export default function DashboardView() {
                 sm: 'repeat(auto-fill, minmax(220px, 1fr))',
                 md: 'repeat(auto-fill, minmax(240px, 1fr))'
               }}
-              gap={{ base: 3, md: 4 }}>
+              gap={{ base: 3, md: 4 }}
+            >
               {establishments ? (
                 <>
                   {establishments.map((prop) => (
                     <NavLink
                       key={prop.id}
                       to={`/admin/dashboard/establishment/${prop.id}`}
-                      style={{ textDecoration: 'none' }}>
+                      style={{ textDecoration: 'none' }}
+                    >
                       <Card
                         p={{ base: 3, md: 4 }}
                         cursor="pointer"
@@ -308,13 +311,15 @@ export default function DashboardView() {
                           transform: 'translateY(-2px)',
                           boxShadow: 'lg',
                           transition: 'all 0.2s'
-                        }}>
+                        }}
+                      >
                         <Flex align="center" gap={{ base: 2, md: 3 }} h="full">
                           <Box
                             bg={prop.id === establishment?.id ? 'white' : 'green.500'}
                             p={{ base: 1.5, md: 2 }}
                             borderRadius="md"
-                            flexShrink={0}>
+                            flexShrink={0}
+                          >
                             <HomeIcon
                               h={{ base: '20px', md: '24px' }}
                               w={{ base: '20px', md: '24px' }}
@@ -327,14 +332,16 @@ export default function DashboardView() {
                               fontSize={{ base: 'sm', md: 'md' }}
                               color={prop.id === establishment?.id ? 'white' : textColor}
                               noOfLines={1}
-                              title={prop.name}>
+                              title={prop.name}
+                            >
                               {prop.name}
                             </Text>
                             <Text
                               fontSize={{ base: 'xs', md: 'sm' }}
                               color={prop.id === establishment?.id ? 'white' : 'gray.500'}
                               noOfLines={1}
-                              title={`${prop.city || prop.zone || ''}, ${prop.state}`}>
+                              title={`${prop.city || prop.zone || ''}, ${prop.state}`}
+                            >
                               {`${prop.city || prop.zone || ''}, ${prop.state}`}
                             </Text>
                           </Box>
@@ -357,7 +364,8 @@ export default function DashboardView() {
                       transform: 'translateY(-2px)',
                       boxShadow: shadowHover
                     }}
-                    onClick={toggleAddEstablishment}>
+                    onClick={toggleAddEstablishment}
+                  >
                     <Flex direction="column" justifyContent="center" alignItems="center">
                       <Icon
                         as={FaPlus}
@@ -383,7 +391,8 @@ export default function DashboardView() {
         templateColumns={{ md: '1fr', lg: '1.8fr 1.2fr' }}
         templateRows={{ md: '1fr auto', lg: '1fr' }}
         my="26px"
-        gap="24px">
+        gap="24px"
+      >
         {establishment ? (
           <CardWithImage
             title={intl.formatMessage({ id: 'app.establishmentProfile' })}
