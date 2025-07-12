@@ -76,36 +76,14 @@ export default defineConfig({
     target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
     chunkSizeWarningLimit: 500, // Stricter limit for mobile
     reportCompressedSize: false, // Faster builds
+    cssCodeSplit: true, // Enable CSS code splitting for better caching
     rollupOptions: {
       output: {
         // Simplified chunking strategy to avoid initialization conflicts
         manualChunks: {
           // Group vendor libraries together to avoid circular dependencies
           vendor: ['react', 'react-dom', '@chakra-ui/react'],
-          recharts: ['recharts'],
-          'qr-critical': [
-            // Add specific modules that need to be in QR critical path
-            // This helps avoid dynamic imports that could cause initialization issues
-          ]
-        },
-        // Generate smaller initial bundles
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId
-            ? chunkInfo.facadeModuleId.split('/').pop()
-            : 'chunk';
-          return `assets/[name]-[hash].js`;
-        },
-        // Better asset handling for mobile
-        assetFileNames: (assetInfo) => {
-          const info = assetInfo.name?.split('.') || [];
-          const ext = info[info.length - 1];
-          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext || '')) {
-            return `assets/images/[name]-[hash][extname]`;
-          }
-          if (/woff2?|ttf|eot/i.test(ext || '')) {
-            return `assets/fonts/[name]-[hash][extname]`;
-          }
-          return `assets/[name]-[hash][extname]`;
+          recharts: ['recharts']
         }
       }
     },
@@ -128,7 +106,6 @@ export default defineConfig({
         comments: false // Remove all comments
       }
     },
-    cssCodeSplit: false,
     sourcemap: false, // No sourcemaps in production for smaller size
     // Image optimization settings
     assetsInlineLimit: 4096 // Inline small assets (4KB)
