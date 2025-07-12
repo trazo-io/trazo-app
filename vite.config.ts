@@ -9,12 +9,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
   base: '/',
   plugins: [
-    react({
-      jsxImportSource: '@emotion/react',
-      babel: {
-        plugins: ['@emotion/babel-plugin']
-      }
-    }),
+    react(),
     tsconfigPaths(),
     // Temporarily remove splitVendorChunkPlugin to fix initialization issue
     // splitVendorChunkPlugin(),
