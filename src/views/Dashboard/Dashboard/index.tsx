@@ -29,13 +29,13 @@ import {
   timelineData
 } from 'variables/general';
 
-// Step 5: Progressive Loading Imports
-import { ProgressiveLoader, DashboardSkeleton } from 'components/Loading/ProgressiveLoader';
-import {
-  usePerformanceMonitor,
-  useProgressiveLoading,
-  useMobileOptimization
-} from 'hooks/usePerformanceMonitor';
+// Step 5: Progressive Loading Imports - TEMPORARILY DISABLED
+// import { ProgressiveLoader, DashboardSkeleton } from 'components/Loading/ProgressiveLoader';
+// import {
+//   usePerformanceMonitor,
+//   useProgressiveLoading,
+//   useMobileOptimization
+// } from 'hooks/usePerformanceMonitor';
 
 import ActiveUsers from './components/ActiveUsers';
 import BarChart from 'components/Charts/BarChart';
@@ -55,6 +55,9 @@ import { useSelector } from 'react-redux';
 import CarbonSummaryCard from './components/establishment/CarbonSummaryCard';
 import CarbonDashboard from './Establishment/CarbonDashboard';
 import IoTDashboard from './Establishment/IoTDashboard';
+import TrialStatusBanner from 'components/Trial/TrialStatusBanner';
+import GuidedOnboarding from 'components/Onboarding/GuidedOnboarding';
+import { useOnboarding } from 'hooks/useOnboarding';
 
 export default function DashboardView() {
   const intl = useIntl();
@@ -62,20 +65,20 @@ export default function DashboardView() {
   const navigate = useNavigate();
   const [establishment, setEstablishment] = useState(null);
 
-  // Step 5: Progressive Loading Implementation
-  const { metrics, markStageComplete, resetTimer } = usePerformanceMonitor();
-  const { isMobile, optimizationStrategy } = useMobileOptimization();
+  // Step 5: Progressive Loading Implementation - TEMPORARILY DISABLED
+  // const { metrics, markStageComplete, resetTimer } = usePerformanceMonitor();
+  // const { isMobile, optimizationStrategy } = useMobileOptimization();
 
   // Configure progressive loading for dashboard
-  const progressiveConfig = {
-    primaryQueries: ['company', 'establishments', 'subscription'], // Critical for UI
-    secondaryQueries: ['statistics', 'carbon-data', 'iot-data'], // Enhancement data
-    enableCache: true,
-    targetTime: 3000 // 3-second target for Step 5
-  };
+  // const progressiveConfig = {
+  //   primaryQueries: ['company', 'establishments', 'subscription'], // Critical for UI
+  //   secondaryQueries: ['statistics', 'carbon-data', 'iot-data'], // Enhancement data
+  //   enableCache: true,
+  //   targetTime: 3000 // 3-second target for Step 5
+  // };
 
-  const { stage, registerQueryLoad, isLoading, primaryLoaded } =
-    useProgressiveLoading(progressiveConfig);
+  // const { stage, registerQueryLoad, isLoading, primaryLoaded } =
+  //   useProgressiveLoading(progressiveConfig);
 
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -98,22 +101,31 @@ export default function DashboardView() {
   const establishments = useSelector((state) => state.company.currentCompany?.establishments);
   const activeCompany = useSelector((state) => state.company.currentCompany);
 
+  // Onboarding hook
+  const {
+    isOnboardingOpen,
+    closeOnboarding,
+    shouldShowOnboarding,
+    openOnboarding,
+    resetOnboarding
+  } = useOnboarding();
+
   // Check subscription from the company
   const subscription = activeCompany?.subscription;
   const isLoadingCompany = useSelector((state) => state.company.isLoading);
 
-  // Step 5: Register query loads for performance tracking
-  useEffect(() => {
-    if (activeCompany && !isLoadingCompany) {
-      registerQueryLoad('company', false, activeCompany);
-    }
-    if (establishments) {
-      registerQueryLoad('establishments', false, establishments);
-    }
-    if (subscription) {
-      registerQueryLoad('subscription', false, subscription);
-    }
-  }, [activeCompany, establishments, subscription, isLoadingCompany, registerQueryLoad]);
+  // Step 5: Register query loads for performance tracking - TEMPORARILY DISABLED
+  // useEffect(() => {
+  //   if (activeCompany && !isLoadingCompany) {
+  //     registerQueryLoad('company', false, activeCompany);
+  //   }
+  //   if (establishments) {
+  //     registerQueryLoad('establishments', false, establishments);
+  //   }
+  //   if (subscription) {
+  //     registerQueryLoad('subscription', false, subscription);
+  //   }
+  // }, [activeCompany, establishments, subscription, isLoadingCompany, registerQueryLoad]);
 
   // to check for active links and opened collapses
   let location = useLocation();
@@ -154,9 +166,9 @@ export default function DashboardView() {
 
   useEffect(() => {
     // Removed: window.scrollTo(0, 0); - This was causing scroll reset issues
-    // Step 5: Reset performance timer on component mount
-    resetTimer();
-  }, [resetTimer]);
+    // Step 5: Reset performance timer on component mount - TEMPORARILY DISABLED
+    // resetTimer();
+  }, []);
 
   // Add subscription check - redirect to pricing if user has company but no subscription
   useEffect(() => {
@@ -220,50 +232,56 @@ export default function DashboardView() {
     navigate('/admin/dashboard/establishment/add');
   };
 
-  // Step 5: Show skeleton loading for primary content until loaded
-  if (stage === 'initial' || isLoadingCompany) {
-    return <ProgressiveLoader stage={stage} type="dashboard" />;
-  }
+  // Step 5: Show skeleton loading for primary content until loaded - TEMPORARILY DISABLED
+  // if (stage === 'initial' || isLoadingCompany) {
+  //   return <ProgressiveLoader stage={stage} type="dashboard" />;
+  // }
 
-  // Step 5: Progressive rendering based on loading stage and mobile optimization
-  const shouldShowSecondaryContent = stage === 'complete' || optimizationStrategy === 'standard';
+  // Step 5: Progressive rendering based on loading stage and mobile optimization - TEMPORARILY DISABLED
+  // const shouldShowSecondaryContent = stage === 'complete' || optimizationStrategy === 'standard';
+
+  // Simple loading check for now
+  if (isLoadingCompany) {
+    return (
+      <Flex justify="center" align="center" h="100vh">
+        Loading...
+      </Flex>
+    );
+  }
 
   return (
     <Flex flexDirection="column" pt={{ base: '120px', md: '75px' }}>
-      {/* Trial Banner */}
-      {subscription && subscription.status === 'trialing' && (
-        <Box
-          p={4}
-          bg="white"
-          borderRadius="lg"
-          mb={4}
-          borderLeftWidth="4px"
-          borderLeftColor="green.500"
-          boxShadow="md"
+      {/* Enhanced Trial Status Banner */}
+      <TrialStatusBanner />
+
+      {/* Test Onboarding - Remove this in production
+      <Box position="fixed" top="100px" right="20px" zIndex={9999}>
+        <Button 
+          colorScheme="blue" 
+          size="sm"
+          onClick={() => {
+            resetOnboarding();
+            openOnboarding();
+          }}
         >
-          <Flex align="center" justify="space-between">
-            <Box>
-              <Text fontSize="lg" fontWeight="bold" color="green.700">
-                {intl.formatMessage({ id: 'app.trialActive' })}
-              </Text>
-              <Text color="gray.700">
-                {intl.formatMessage(
-                  { id: 'app.trialDaysLeft' },
-                  { days: subscription.trial_end_days }
-                )}
-              </Text>
-            </Box>
-          </Flex>
-        </Box>
-      )}
+          🚀 Test Onboarding
+        </Button>
+      </Box> */}
+
+      {/* Guided Onboarding Modal */}
+      <GuidedOnboarding
+        isOpen={isOnboardingOpen}
+        onClose={closeOnboarding}
+        companyName={activeCompany?.name}
+        currentEstablishmentId={establishmentId}
+      />
 
       <Box>
         <Flex
           direction={{ base: 'column', md: 'row' }}
           gap={6}
           align="flex-start"
-          px={{ base: 2, md: 2 }}
-        >
+          px={{ base: 2, md: 2 }}>
           <Box flex="2">
             <Grid
               templateColumns={{
@@ -271,16 +289,14 @@ export default function DashboardView() {
                 sm: 'repeat(auto-fill, minmax(220px, 1fr))',
                 md: 'repeat(auto-fill, minmax(240px, 1fr))'
               }}
-              gap={{ base: 3, md: 4 }}
-            >
+              gap={{ base: 3, md: 4 }}>
               {establishments ? (
                 <>
                   {establishments.map((prop) => (
                     <NavLink
                       key={prop.id}
                       to={`/admin/dashboard/establishment/${prop.id}`}
-                      style={{ textDecoration: 'none' }}
-                    >
+                      style={{ textDecoration: 'none' }}>
                       <Card
                         p={{ base: 3, md: 4 }}
                         cursor="pointer"
@@ -292,15 +308,13 @@ export default function DashboardView() {
                           transform: 'translateY(-2px)',
                           boxShadow: 'lg',
                           transition: 'all 0.2s'
-                        }}
-                      >
+                        }}>
                         <Flex align="center" gap={{ base: 2, md: 3 }} h="full">
                           <Box
                             bg={prop.id === establishment?.id ? 'white' : 'green.500'}
                             p={{ base: 1.5, md: 2 }}
                             borderRadius="md"
-                            flexShrink={0}
-                          >
+                            flexShrink={0}>
                             <HomeIcon
                               h={{ base: '20px', md: '24px' }}
                               w={{ base: '20px', md: '24px' }}
@@ -313,16 +327,14 @@ export default function DashboardView() {
                               fontSize={{ base: 'sm', md: 'md' }}
                               color={prop.id === establishment?.id ? 'white' : textColor}
                               noOfLines={1}
-                              title={prop.name}
-                            >
+                              title={prop.name}>
                               {prop.name}
                             </Text>
                             <Text
                               fontSize={{ base: 'xs', md: 'sm' }}
                               color={prop.id === establishment?.id ? 'white' : 'gray.500'}
                               noOfLines={1}
-                              title={`${prop.city || prop.zone || ''}, ${prop.state}`}
-                            >
+                              title={`${prop.city || prop.zone || ''}, ${prop.state}`}>
                               {`${prop.city || prop.zone || ''}, ${prop.state}`}
                             </Text>
                           </Box>
@@ -345,8 +357,7 @@ export default function DashboardView() {
                       transform: 'translateY(-2px)',
                       boxShadow: shadowHover
                     }}
-                    onClick={toggleAddEstablishment}
-                  >
+                    onClick={toggleAddEstablishment}>
                     <Flex direction="column" justifyContent="center" alignItems="center">
                       <Icon
                         as={FaPlus}
@@ -372,8 +383,7 @@ export default function DashboardView() {
         templateColumns={{ md: '1fr', lg: '1.8fr 1.2fr' }}
         templateRows={{ md: '1fr auto', lg: '1fr' }}
         my="26px"
-        gap="24px"
-      >
+        gap="24px">
         {establishment ? (
           <CardWithImage
             title={intl.formatMessage({ id: 'app.establishmentProfile' })}

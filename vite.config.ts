@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config';
 import { splitVendorChunkPlugin } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
@@ -10,10 +10,10 @@ export default defineConfig({
   // base: 'https://trazo.io/',
   plugins: [
     react({
-      jsxImportSource: "@emotion/react",
+      jsxImportSource: '@emotion/react',
       babel: {
-        plugins: ["@emotion/babel-plugin"],
-      },
+        plugins: ['@emotion/babel-plugin']
+      }
     }),
     tsconfigPaths(),
     // Temporarily remove splitVendorChunkPlugin to fix initialization issue
@@ -86,8 +86,8 @@ export default defineConfig({
         // Simplified chunking strategy to avoid initialization conflicts
         manualChunks: {
           // Group vendor libraries together to avoid circular dependencies
-          'vendor': ['react', 'react-dom', '@chakra-ui/react'],
-          'recharts': ['recharts'],
+          vendor: ['react', 'react-dom', '@chakra-ui/react'],
+          recharts: ['recharts'],
           'qr-critical': [
             // Add specific modules that need to be in QR critical path
             // This helps avoid dynamic imports that could cause initialization issues
@@ -133,7 +133,7 @@ export default defineConfig({
         comments: false // Remove all comments
       }
     },
-    cssCodeSplit: true,
+    cssCodeSplit: false,
     sourcemap: false, // No sourcemaps in production for smaller size
     // Image optimization settings
     assetsInlineLimit: 4096 // Inline small assets (4KB)

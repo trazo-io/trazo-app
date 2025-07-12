@@ -30,6 +30,7 @@ import {
   useDisclosure
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { extractProductionIdFromCurrentURL, verifySecureQR, getQRAccessMetadata } from 'utils/qrParser';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { setAuthRedirectAction } from '../../../utils/authRedirect';
@@ -570,10 +571,60 @@ const EducationModal = ({
 };
 
 function ProductDetail() {
-  const { productionId } = useParams();
+  const { productionId: urlProductionId } = useParams();
   const navigate = useNavigate();
   const intl = useIntl();
   const pointsStore = usePointsStore();
+  
+  // QR Security: Extract and verify production ID from URL
+  const [verifiedProductionId, setVerifiedProductionId] = useState<string | null>(null);
+  const [qrVerificationError, setQrVerificationError] = useState<string | null>(null);
+  const [isVerifyingQR, setIsVerifyingQR] = useState(false);
+  
+  // Get QR access metadata for analytics
+  const qrMetadata = getQRAccessMetadata();
+  
+  useEffect(() => {
+    const verifyQRAccess = async () => {
+      // Try to extract production ID from current URL (handles secure QR format)
+      const parseResult = extractProductionIdFromCurrentURL();
+      
+      if (parseResult.isSecure) {
+        // This is a secure QR code, verify it
+        setIsVerifyingQR(true);
+        
+        try {
+          const verification = await verifySecureQR(window.location.href);
+          
+          if (verification.valid && verification.productionId) {
+            setVerifiedProductionId(verification.productionId);
+            console.log('✅ Secure QR code verified:', verification.productionId);
+          } else {
+            setQrVerificationError(verification.error || 'Invalid QR code');
+            console.error('❌ QR verification failed:', verification.error);
+          }
+        } catch (error) {
+          setQrVerificationError('Unable to verify QR code');
+          console.error('❌ QR verification error:', error);
+        } finally {
+          setIsVerifyingQR(false);
+        }
+      } else if (parseResult.isValid) {
+        // This is a legacy QR code or direct URL access
+        setVerifiedProductionId(parseResult.productionId || urlProductionId);
+        console.log('✅ Legacy QR or direct access:', parseResult.productionId || urlProductionId);
+      } else {
+        // Invalid URL format
+        setQrVerificationError(parseResult.error || 'Invalid URL format');
+        console.error('❌ Invalid URL format:', parseResult.error);
+      }
+    };
+    
+    verifyQRAccess();
+  }, [urlProductionId]);
+  
+  // Use the verified production ID for API calls
+  const productionId = verifiedProductionId;
 
   // Get authentication state from Redux store (same as Authenticated component)
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -688,8 +739,30 @@ function ProductDetail() {
   const productImages = (completeData as any)?.images || [];
   const hasImages = productImages.length > 0;
 
+  // QR Verification loading state
+  if (isVerifyingQR) {
+    return <ProgressiveQRLoader loadingStage="verifying" onStageComplete={() => {}} />;
+  }
+
+  // QR Verification error state
+  if (qrVerificationError) {
+    return (
+      <Container maxW="container.lg" py={8}>
+        <Alert status="error" borderRadius="md">
+          <AlertIcon />
+          <Box>
+            <AlertTitle>QR Code Verification Failed</AlertTitle>
+            <AlertDescription>
+              {qrVerificationError}. Please try scanning the QR code again or contact support if the problem persists.
+            </AlertDescription>
+          </Box>
+        </Alert>
+      </Container>
+    );
+  }
+
   // Loading state
-  if (isCompleteLoading) {
+  if (isCompleteLoading || !productionId) {
     return <ProgressiveQRLoader loadingStage="scanning" onStageComplete={() => {}} />;
   }
 
