@@ -15,36 +15,10 @@
 
 */
 
-// const Card = {
-//   baseStyle: {
-//     p: '22px',
-//     display: 'flex',
-//     flexDirection: 'column',
-//     width: '100%',
-//     position: 'relative',
-//     minWidth: '0px',
-//     wordWrap: 'break-word',
-//     backgroundClip: 'border-box'
-//   },
-//   variants: {
-//     panel: (props: {colorMode: string}) => ({
-//       bg: props.colorMode === 'dark' ? 'gray.700' : 'white',
-//       width: '100%',
-//       boxShadow: '0px 3.5px 5.5px rgba(0, 0, 0, 0.02)',
-//       borderRadius: '15px'
-//       // transition: "all .2s ease-in-out",
-//       // "&:hover": {
-//       //   transform: "scale(1.03)",
-//       // },
-//     })
-//   },
-//   defaultProps: {
-//     variant: 'panel'
-//   }
-// };
+import { mode } from '@chakra-ui/theme-tools';
 
 const Card = {
-  baseStyle: (props: { colorMode: string }) => ({
+  baseStyle: (props: any) => ({
     p: '22px',
     display: 'flex',
     flexDirection: 'column',
@@ -53,7 +27,7 @@ const Card = {
     minWidth: '0px',
     wordWrap: 'break-word',
     backgroundClip: 'border-box',
-    bg: props.colorMode === 'dark' ? 'gray.700' : 'white',
+    bg: mode('white', 'gray.700')(props),
     boxShadow: '0px 3.5px 5.5px rgba(0, 0, 0, 0.02)',
     borderRadius: '15px'
   }),

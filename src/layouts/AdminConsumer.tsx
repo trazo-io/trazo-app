@@ -53,7 +53,7 @@ export const consumerRoutes = [
 ];
 
 export default function AdminConsumerLayout(props: any) {
-  const [sidebarVariant, setSidebarVariant] = useState('transparent');
+  const [sidebarVariant, setSidebarVariant] = useState('opaque');
   const [fixed, setFixed] = useState(false);
   const [toggleSidebar, setToggleSidebar] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(275);
