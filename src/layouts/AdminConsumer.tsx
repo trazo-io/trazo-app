@@ -60,7 +60,7 @@ export default function AdminConsumerLayout(props: any) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { ...rest } = props;
 
-  const getActiveRoute = (routes) => {
+  const getActiveRoute = (routes: any[]) => {
     const currentPath = window.location.pathname;
     for (let route of routes) {
       if (route.regex.test(currentPath)) {
@@ -71,57 +71,50 @@ export default function AdminConsumerLayout(props: any) {
   };
 
   return (
-    <CacheProvider value={emotionCache}>
-      <ChakraProvider theme={theme}>
-        <CSSReset />
-        <SidebarContext.Provider
-        value={{
-          sidebarWidth,
-          setSidebarWidth,
-          toggleSidebar,
-          setToggleSidebar
-        }}
-      >
-        <>
-          <ConsumerSidebar
-            routes={consumerRoutes}
-            logoText={''}
-            sidebarVariant={sidebarVariant}
-            display="none"
-            {...rest}
-          />
-        </>
-        <MainPanel
-          w={{
-            base: '100%',
-            xl: `calc(100% - ${sidebarWidth}px)`
-          }}
-        >
-          <Portal>
-            <AdminNavbar onOpen={onOpen} brandText={getActiveRoute(consumerRoutes)} fixed={fixed} />
-          </Portal>
+    <SidebarContext.Provider
+      value={{
+        sidebarWidth,
+        setSidebarWidth,
+        toggleSidebar,
+        setToggleSidebar
+      }}>
+      <>
+        <ConsumerSidebar
+          routes={consumerRoutes}
+          logoText={''}
+          sidebarVariant={sidebarVariant}
+          display="none"
+          {...rest}
+        />
+      </>
+      <MainPanel
+        w={{
+          base: '100%',
+          xl: `calc(100% - ${sidebarWidth}px)`
+        }}>
+        {/* <Portal>
+          <AdminNavbar onOpen={onOpen} brandText={getActiveRoute(consumerRoutes)} fixed={fixed} />
+        </Portal> */}
 
-          <PanelContent>
-            <PanelContainer>
-              <Outlet />
-            </PanelContainer>
-          </PanelContent>
+        <PanelContent>
+          <PanelContainer>
+            <Outlet />
+          </PanelContainer>
+        </PanelContent>
 
-          <Footer />
-          <Portal>
-            <FixedPlugin fixed={fixed} onOpen={onOpen} />
-          </Portal>
-          <Configurator
-            isOpen={isOpen}
-            onClose={onClose}
-            isChecked={fixed}
-            onSwitch={(value) => setFixed(value)}
-            onOpaque={() => setSidebarVariant('opaque')}
-            onTransparent={() => setSidebarVariant('transparent')}
-          />
-        </MainPanel>
-        </SidebarContext.Provider>
-      </ChakraProvider>
-    </CacheProvider>
+        {/* <Footer />
+        <Portal>
+          <FixedPlugin fixed={fixed} onOpen={onOpen} />
+        </Portal>
+        <Configurator
+          isOpen={isOpen}
+          onClose={onClose}
+          isChecked={fixed}
+          onSwitch={(value) => setFixed(value)}
+          onOpaque={() => setSidebarVariant('opaque')}
+          onTransparent={() => setSidebarVariant('transparent')}
+        /> */}
+      </MainPanel>
+    </SidebarContext.Provider>
   );
 }

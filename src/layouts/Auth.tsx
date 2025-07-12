@@ -25,17 +25,19 @@ import { Box, ChakraProvider, Portal, CSSReset } from '@chakra-ui/react';
 import { CacheProvider } from '@emotion/react';
 import { emotionCache } from '../emotion-cache';
 import { Outlet, Route } from 'react-router-dom';
+import { useRef } from 'react';
 
 // core components
 import AuthNavbar from 'components/Navbars/AuthNavbar';
 import Footer from 'components/Footer/Footer';
 import React from 'react';
 import { Route as RouteType } from 'types/common';
-import theme from 'theme/theme.ts';
+import theme from 'theme/theme';
 
 export default function Pages() {
   // ref for the wrapper div
-  const wrapper = React.createRef();
+  const navRef = useRef<HTMLDivElement>(null);
+  const wrapper = useRef<HTMLDivElement>(null);
   const dynamicRoutes: RouteType[] = [];
   React.useEffect(() => {
     document.body.style.overflow = 'unset';
@@ -96,43 +98,35 @@ export default function Pages() {
     return activeNavbar;
   };
 
-  const getRoutes = (routes: RouteType[] | undefined) => {
-    return routes.map((prop, key) => {
-      if (prop.layout === '/auth') {
-        return <Route path={prop.layout + prop.path} component={prop.component} key={key} />;
+  const getRoutes = (routes: RouteType[]): React.ReactNode[] => {
+    return routes?.map((prop, key) => {
+      if (prop.component) {
+        return <Route path={prop.path} element={<prop.component />} key={key} />;
       }
-      if (prop.collapse) {
-        return getRoutes(prop.isDashboard ? dynamicRoutes : prop.items);
-      }
-      if (prop.category) {
-        return getRoutes(prop.isDashboard ? dynamicRoutes : prop.items);
-      } else {
-        return null;
-      }
+      return null;
     });
   };
 
-  const navRef = React.useRef();
   document.documentElement.dir = 'ltr';
-  document.documentElement.layout = 'auth';
+  (document.documentElement as any).layout = 'auth';
   return (
-    <CacheProvider value={emotionCache}>
-      <ChakraProvider theme={theme} w="100%">
-        <CSSReset />
-        <Box ref={navRef} w="100%">
-        <Portal containerRef={navRef}>
-          <AuthNavbar secondary={false} logoText="trazo" />
-        </Portal>
-        <Box w="100%">
-          <Box ref={wrapper} w="100%">
-            <Outlet />
-          </Box>
+    // <CacheProvider value={emotionCache}>
+    //   <ChakraProvider theme={theme} w="100%">
+    //     <CSSReset />
+    <Box ref={navRef} w="100%">
+      <Portal containerRef={navRef}>
+        <AuthNavbar secondary={false} logoText="trazo" logo="" />
+      </Portal>
+      <Box w="100%">
+        <Box ref={wrapper} w="100%">
+          <Outlet />
         </Box>
-        <Box px="24px" mx="auto" width="1044px" maxW="100%">
-          <Footer />
-        </Box>
-        </Box>
-      </ChakraProvider>
-    </CacheProvider>
+      </Box>
+      <Box px="24px" mx="auto" width="1044px" maxW="100%">
+        <Footer />
+      </Box>
+    </Box>
+    //   </ChakraProvider>
+    // </CacheProvider>
   );
 }

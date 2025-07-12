@@ -26,7 +26,7 @@ import 'assets/css/pud-dashboard-styles.css';
 import { ChakraProvider, Portal, useDisclosure, CSSReset } from '@chakra-ui/react';
 import { CacheProvider } from '@emotion/react';
 import { emotionCache } from '../emotion-cache';
-import { Outlet, Route } from 'react-router-dom';
+import { Outlet, Route, useLocation, Location } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 
 // Layout components
@@ -49,7 +49,7 @@ import { Route as TypeRoute } from '../types/common';
 import defaultRoutes from '../routes';
 import { set } from 'date-fns';
 // Custom Chakra theme
-import theme from 'theme/theme';
+import theme from 'theme';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
@@ -84,7 +84,8 @@ export default function Dashboard(props: any) {
     (state: RootState) => state.company.currentCompany
   ) as Company | null;
 
-  const [routes, setRoutes] = useState();
+  const location = useLocation() as Location<{ from: string }>;
+  const [routes, setRoutes] = useState<TypeRoute[]>([]);
 
   useEffect(() => {
     const routes = [...defaultRoutes];
@@ -190,11 +191,11 @@ export default function Dashboard(props: any) {
         console.warn('getActiveRoute: routes is not an array', routes);
         return activeRoute;
       }
-      
+
       for (let i = 0; i < routes.length; i++) {
         const route = routes[i];
         if (!route) continue;
-        
+
         if (route.collapse) {
           const items = route.isDashboard ? dynamicRoutes : route.items;
           if (items && Array.isArray(items)) {
@@ -229,11 +230,11 @@ export default function Dashboard(props: any) {
       if (!routes || !Array.isArray(routes)) {
         return activeNavbar;
       }
-      
+
       for (let i = 0; i < routes.length; i++) {
         const route = routes[i];
         if (!route) continue;
-        
+
         if (route.collapse) {
           const items = route.isDashboard ? dynamicRoutes : route.items;
           if (items && Array.isArray(items)) {
@@ -262,22 +263,15 @@ export default function Dashboard(props: any) {
     return activeNavbar;
   };
 
-  const getRoutes = (routes: TypeRoute[]): (React.ReactElement | null)[] => {
+  const getRoutes = (routes: TypeRoute[]): React.ReactNode[] => {
     return routes.map((prop, key) => {
-      if (prop.layout === '/admin') {
-        return <Route path={prop.layout + prop.path} component={prop.component} key={key} />;
+      if (prop.component) {
+        return <Route path={prop.path} element={<prop.component />} key={key} />;
       }
-      // if (prop.isCommercial) {
-      //   return getRoutes(dynamicRoutes);
-      // }
-      if (prop.collapse) {
-        return getRoutes(prop.isDashboard ? dynamicRoutes : prop.items);
+      if (prop.collapse && prop.items) {
+        return getRoutes(prop.items);
       }
-      if (prop.category) {
-        return getRoutes(prop.isDashboard ? dynamicRoutes : prop.items);
-      } else {
-        return null;
-      }
+      return null;
     });
   };
 
@@ -294,69 +288,61 @@ export default function Dashboard(props: any) {
   htmlDocumentElement.layout = 'admin';
   // Chakra Color Mode
   return (
-    <CacheProvider value={emotionCache}>
-      <ChakraProvider theme={theme}>
-        <CSSReset />
-        <SidebarContext.Provider
-        value={{
-          sidebarWidth,
-          setSidebarWidth,
-          toggleSidebar,
-          setToggleSidebar
-        }}
-      >
-        <Sidebar
-          routes={routes}
-          logoText={''}
-          display="none"
-          sidebarVariant={sidebarVariant}
-          {...rest}
-        />
-        <MainPanel
-          ref={mainPanel}
-          w={{
-            base: '100%',
-            xl: `calc(100% - ${sidebarWidth}px)`
-          }}
-        >
-          <Portal padding="0">
-            <AdminNavbar
-              onOpen={onOpen}
-              brandText={getActiveRoute(routes)}
-              secondary={getActiveNavbar(routes)}
-              fixed={fixed}
-              {...rest}
-            />
-          </Portal>
-
-          {getRoute() ? (
-            <PanelContent
-              paddingInlineStart={{ base: '0px', lg: '15px' }}
-              paddingInlineEnd={{ base: '0px', lg: '15px' }}
-            >
-              <PanelContainer padding={{ base: '0px', lg: '30px 15px' }}>
-                <Outlet />
-              </PanelContainer>
-            </PanelContent>
-          ) : null}
-          <Footer />
-          <Portal>
-            <FixedPlugin fixed={fixed} onOpen={onOpen} />
-          </Portal>
-          <Configurator
+    <SidebarContext.Provider
+      value={{
+        sidebarWidth,
+        setSidebarWidth,
+        toggleSidebar,
+        setToggleSidebar
+      }}>
+      <Sidebar
+        routes={routes}
+        logoText={''}
+        display="none"
+        sidebarVariant={sidebarVariant}
+        {...rest}
+      />
+      <MainPanel
+        ref={mainPanel}
+        w={{
+          base: '100%',
+          xl: `calc(100% - ${sidebarWidth}px)`
+        }}>
+        <Portal padding="0">
+          <AdminNavbar
+            onOpen={onOpen}
+            brandText={getActiveRoute(routes)}
             secondary={getActiveNavbar(routes)}
-            isOpen={isOpen}
-            onClose={onClose}
-            isChecked={fixed}
-            onSwitch={(value) => {
-              setFixed(value);
-            }}
-            onOpaque={() => setSidebarVariant('opaque')}
-            onTransparent={() => setSidebarVariant('transparent')}
+            fixed={fixed}
+            {...rest}
           />
-        </MainPanel>
-        </SidebarContext.Provider>
-      </ChakraProvider>
-    </CacheProvider>
+        </Portal>
+
+        {getRoute() ? (
+          <PanelContent
+            paddingInlineStart={{ base: '0px', lg: '15px' }}
+            paddingInlineEnd={{ base: '0px', lg: '15px' }}>
+            <PanelContainer padding={{ base: '0px', lg: '30px 15px' }}>
+              <Outlet />
+            </PanelContainer>
+          </PanelContent>
+        ) : null}
+        <Footer />
+        <Portal>
+          <FixedPlugin fixed={fixed} onOpen={onOpen} />
+        </Portal>
+        <Configurator
+          secondary={getActiveNavbar(routes)}
+          isOpen={isOpen}
+          onClose={onClose}
+          isChecked={fixed}
+          onSwitch={(value) => {
+            setFixed(value);
+          }}
+          onOpaque={() => setSidebarVariant('opaque')}
+          onTransparent={() => setSidebarVariant('transparent')}
+        />
+      </MainPanel>
+    </SidebarContext.Provider>
   );
 }
