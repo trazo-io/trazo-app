@@ -285,6 +285,10 @@ export default function Dashboard(props: any) {
 
   htmlDocumentElement.dir = 'ltr';
   htmlDocumentElement.layout = 'admin';
+
+  // Inject CSS variables for sidebar width
+  htmlDocumentElement.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
+
   // Chakra Color Mode
   return (
     <SidebarContext.Provider
@@ -306,7 +310,11 @@ export default function Dashboard(props: any) {
         w={{
           base: '100%',
           xl: `calc(100% - ${sidebarWidth}px)`
-        }}>
+        }}
+        ml={{ base: 0, xl: `${sidebarWidth}px` }}
+        transition="all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)"
+        position="relative"
+        float="right">
         <Portal padding="0">
           <AdminNavbar
             onOpen={onOpen}

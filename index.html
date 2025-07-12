@@ -17,42 +17,53 @@
 */
 -->
 <!DOCTYPE html>
-<html lang="en" dir="ltr" layout="admin">
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="emotion-insertion-point" content="" />
-    <!--
-          manifest.json provides metadata used when your web app is added to the
-          homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
-        -->
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="shortcut icon" href="/favicon.ico" />
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trazo - Agricultural Carbon Transparency</title>
+    <style>
+      /* Fix sidebar layout issues in production */
+      :root {
+        --sidebar-width: 275px;
+      }
 
-    <!--     Fonts and icons     -->
-    <link href="https://use.fontawesome.com/releases/v5.0.7/css/all.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico" />
-    <!--
-          Static assets are referenced relative to the public folder.
-          These will be resolved correctly during the build process.
-        -->
-    <title>trazo</title>
+      /* Ensure proper MainPanel layout */
+      @media screen and (min-width: 1280px) {
+        .css-1lekzkb, /* MainPanel base class */
+        [data-theme] .css-1lekzkb {
+          margin-left: var(--sidebar-width) !important;
+          width: calc(100% - var(--sidebar-width)) !important;
+        }
+      }
+
+      /* Fix card backgrounds in production */
+      .chakra-ui-light .css-bg4444,
+      .chakra-ui-light [data-theme='light'] .css-bg4444 {
+        background-color: #ffffff !important;
+      }
+
+      .chakra-ui-dark .css-bg4444,
+      .chakra-ui-dark [data-theme='dark'] .css-bg4444 {
+        background-color: #2d3748 !important;
+      }
+
+      /* Prevent content overflow */
+      .css-1lekzkb {
+        overflow-x: hidden !important;
+        max-width: 100% !important;
+      }
+
+      /* Ensure proper grid layout */
+      .css-gmuwbf {
+        max-width: 100% !important;
+        overflow: hidden !important;
+      }
+    </style>
   </head>
   <body>
-    <noscript> You need to enable JavaScript to run this app. </noscript>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
-    <!--
-          This HTML file is a template.
-          If you open it directly in the browser, you will see an empty page.
-
-          You can add webfonts, meta tags, or analytics to this file.
-          The build step will place the bundled scripts into the <body> tag.
-
-          To begin the development, run `npm start` or `yarn start`.
-          To create a production bundle, use `npm run build` or `yarn build`.
-        -->
   </body>
 </html>

@@ -1,43 +1,44 @@
 // Chakra imports
 import {
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  CardBody,
+  Box,
+  VStack,
   CircularProgress,
   Flex,
   Icon,
   Table,
   Tbody,
+  Td,
   Text,
   Th,
   Thead,
   Tr,
   useColorModeValue,
-  Card,
-  CardHeader,
-  Badge,
-  Button,
+  useBreakpointValue,
   Tooltip
 } from '@chakra-ui/react';
-import { FaRegCheckCircle, FaRegDotCircle } from 'react-icons/fa';
+import { FaRegCheckCircle, FaRegDotCircle, FaSeedling } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
-
-// Custom components
-import { IoCheckmarkDoneCircleSharp } from 'react-icons/io5';
-import React from 'react';
-import avatar1 from 'assets/img/avatars/avatar1.png';
-import avatar2 from 'assets/img/avatars/avatar10.png';
-import avatar3 from 'assets/img/avatars/avatar2.png';
-import { convertToObject } from 'typescript';
-import { useGetParcelHistoriesQuery } from 'store/api/historyApi';
-import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
+import { useIntl } from 'react-intl';
+import { IoCheckmarkDoneCircleSharp } from 'react-icons/io5';
 
-// Import Enhanced Table Row Component
+import { useGetParcelHistoriesQuery } from 'store/api/historyApi';
 import CarbonDashboardTableRow from './CarbonDashboardTableRow';
 
 const HistoryCard = ({ title, amount, captions }) => {
   const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
   const navigate = useNavigate();
+
+  // Move useBreakpointValue to top level to fix hooks rule violation
+  const hideTeamColumn = useBreakpointValue({ base: true, md: false });
 
   const currentCompany = useSelector((state) => state.company.currentCompany);
 
@@ -67,7 +68,12 @@ const HistoryCard = ({ title, amount, captions }) => {
       h={{ sm: 'fit-content', xl: 'fit-content' }}
       transition="all 0.3s ease"
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
-    >
+      border="1px solid"
+      borderColor={borderColor}
+      // Explicit background color for production builds
+      style={{
+        backgroundColor: cardBgColor === 'white' ? '#ffffff' : '#2D3748'
+      }}>
       <CardHeader p="20px" pb="12px">
         <Flex direction="column" gap={4}>
           <Flex justify="space-between" align="center">
@@ -82,8 +88,7 @@ const HistoryCard = ({ title, amount, captions }) => {
                 px={3}
                 py={1}
                 fontSize="xs"
-                textTransform="none"
-              >
+                textTransform="none">
                 Carbon Tracked
               </Badge>
             </Flex>
@@ -97,8 +102,7 @@ const HistoryCard = ({ title, amount, captions }) => {
                   ? 'Complete current production before starting a new one'
                   : 'Start a new production cycle'
               }
-              placement="bottom-end"
-            >
+              placement="bottom-end">
               <Button
                 size="sm"
                 colorScheme="green"
@@ -115,8 +119,7 @@ const HistoryCard = ({ title, amount, captions }) => {
                   navigate(
                     `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
                   )
-                }
-              >
+                }>
                 New Production
               </Button>
             </Tooltip>
@@ -144,72 +147,74 @@ const HistoryCard = ({ title, amount, captions }) => {
           <CircularProgress isIndeterminate color="green.500" size="40px" />
         </Flex>
       ) : (
-        <>
-          {data && data.length > 0 ? (
-            <Table variant="simple" size="md">
-              <Thead>
-                <Tr>
-                  {carbonFocusedCaptions.map((caption, idx) => (
-                    <Th
-                      key={idx}
-                      color="gray.400"
-                      fontWeight="semibold"
-                      fontSize="xs"
-                      textTransform="uppercase"
-                      letterSpacing="wider"
-                      ps={idx === 0 ? '20px' : '16px'}
-                      py="16px"
-                      borderColor="gray.100"
-                      bg="gray.50"
-                      _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
-                      display={idx === 2 ? { base: 'none', md: 'table-cell' } : 'table-cell'}
-                    >
-                      {caption}
-                    </Th>
-                  ))}
-                </Tr>
-              </Thead>
-              <Tbody>
-                {data?.map((history) => (
-                  <CarbonDashboardTableRow
-                    key={history.id}
-                    production={history}
-                    onClick={() => {
-                      navigate(
-                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${history.id}`
-                      );
-                    }}
-                  />
-                ))}
-              </Tbody>
-            </Table>
-          ) : (
-            <Flex
-              width={'100%'}
-              height={'120px'}
-              justifyContent="center"
-              alignItems="center"
-              direction="column"
-              gap={3}
-            >
-              <Text fontSize={'lg'} fontWeight={'500'} color="gray.400" textAlign={'center'}>
-                {intl.formatMessage({ id: 'app.noProductionsYet' })}
-              </Text>
-              <Button
-                size="sm"
-                colorScheme="green"
-                variant="outline"
-                onClick={() =>
-                  navigate(
-                    `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
-                  )
-                }
-              >
-                Create First Production
-              </Button>
-            </Flex>
-          )}
-        </>
+        <CardBody p="20px" pt="0px">
+          <Box
+            bg={cardBgColor}
+            borderRadius="lg"
+            // Explicit background for production
+            style={{
+              backgroundColor: cardBgColor === 'white' ? '#ffffff' : '#2D3748'
+            }}>
+            {data && data.length > 0 ? (
+              <Box overflowX="auto">
+                <Table variant="simple" size="md">
+                  <Thead>
+                    <Tr>
+                      {carbonFocusedCaptions.map((caption, index) => (
+                        <Th
+                          key={index}
+                          color="gray.500"
+                          fontSize="xs"
+                          fontWeight="bold"
+                          textTransform="uppercase"
+                          letterSpacing="wider"
+                          py={4}
+                          display={index === 2 && hideTeamColumn ? 'none' : 'table-cell'}>
+                          {caption}
+                        </Th>
+                      ))}
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {data.map((production, index) => (
+                      <CarbonDashboardTableRow
+                        key={production.id}
+                        production={production}
+                        onClick={() =>
+                          navigate(
+                            `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${production.id}`
+                          )
+                        }
+                      />
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
+            ) : (
+              <VStack spacing={4} py={8}>
+                <Icon as={FaSeedling} color="gray.400" boxSize={12} />
+                <VStack spacing={2}>
+                  <Text fontSize="lg" fontWeight="bold" color={textColor}>
+                    No productions yet
+                  </Text>
+                  <Text fontSize="sm" color="gray.500" textAlign="center">
+                    Start your first production to track carbon footprint and sustainability metrics
+                  </Text>
+                </VStack>
+                <Button
+                  leftIcon={<Icon as={FaSeedling} />}
+                  colorScheme="green"
+                  onClick={() =>
+                    navigate(
+                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
+                    )
+                  }>
+                  Start Production
+                </Button>
+              </VStack>
+            )}
+          </Box>
+        </CardBody>
       )}
     </Card>
   );
