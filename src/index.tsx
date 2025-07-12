@@ -17,23 +17,28 @@
 
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
+import { ChakraProvider, CSSReset } from '@chakra-ui/react';
 import I18n from 'i18n/I18n';
 import { Provider } from 'react-redux';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { store } from './store';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import theme from 'theme/theme';
 
 const root = createRoot(document.getElementById('root')!);
 
 root.render(
   <Provider store={store}>
     <BrowserRouter>
-      <I18n>
-        <SubscriptionProvider>
-          <App />
-        </SubscriptionProvider>
-      </I18n>
+      <ChakraProvider theme={theme}>
+        <CSSReset />
+        <I18n>
+          <SubscriptionProvider>
+            <App />
+          </SubscriptionProvider>
+        </I18n>
+      </ChakraProvider>
     </BrowserRouter>
   </Provider>
 );
