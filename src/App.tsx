@@ -10,25 +10,35 @@ import AddEstablishment from 'views/Dashboard/Dashboard/Establishment/AddEstabli
 import AddParcel from 'views/Dashboard/Dashboard/Parcel/AddParcel';
 import AdminLayout from 'layouts/Admin';
 import AuthLayout from 'layouts/Auth';
+//@ts-ignore
 import Authenticated from './utils/protections/Authenticated';
+//@ts-ignore
 import Capture from 'views/Scan/Capture/Capture';
+//@ts-ignore
 import CertificationsView from 'views/Dashboard/Certifications';
+//@ts-ignore
 import CheckAuth from './utils/protections/CheckAuth';
 import CommercialView from 'views/Dashboard/Commercial';
 import DashboardView from 'views/Dashboard/Dashboard';
 import DetailEvent from 'views/Dashboard/Dashboard/Event/DetailEvent';
 import FinishProduction from 'views/Dashboard/Dashboard/Production/FinishProduction';
+//@ts-ignore
 import NotAuthenticated from './utils/protections/NotAuthenticated';
+//@ts-ignore
 import ParcelView from 'views/Dashboard/Parcel';
+//@ts-ignore
 import Pricing from 'views/Pages/Pricing/index';
 import PrivacyPolicy from 'views/Legal/PrivacyPolicy';
 import ProductDetail from 'views/Scan/ProductDetail/ProductDetail';
+//@ts-ignore
 import ProductReview from 'views/Scan/ProductReview/ProductReview';
 import ProfileEstablishment from 'views/Dashboard/Dashboard/Establishment/ProfileEstablishment';
+//@ts-ignore
 import ProfileParcel from 'views/Dashboard/Dashboard/Parcel/ProfileParcel';
 import ProfileProduction from 'views/Dashboard/Dashboard/Production/ProfileProduction';
 import ProfileUser from 'views/Dashboard/Dashboard/User/ProfileUser';
 import React from 'react';
+//@ts-ignore
 import SelectCompanyView from 'views/Dashboard/Dashboard/Company/AddCompany';
 import SettingsView from 'views/Dashboard/Settings';
 import TermsOfService from 'views/Legal/TermsOfService';
@@ -78,22 +88,29 @@ import SetupPassword from 'views/Authentication/Invitation/SetupPassword';
 import { ErrorBoundary } from 'react-error-boundary';
 
 // Error fallback component
-const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
-  <div style={{ 
-    padding: '20px', 
-    textAlign: 'center', 
-    backgroundColor: '#f7fafc',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center'
-  }}>
+const ErrorFallback = ({
+  error,
+  resetErrorBoundary
+}: {
+  error: Error;
+  resetErrorBoundary: () => void;
+}) => (
+  <div
+    style={{
+      padding: '20px',
+      textAlign: 'center',
+      backgroundColor: '#f7fafc',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
     <h2 style={{ color: '#2d3748', marginBottom: '16px' }}>Something went wrong</h2>
     <p style={{ color: '#718096', marginBottom: '24px' }}>
       We apologize for the inconvenience. Please try refreshing the page.
     </p>
-    <button 
+    <button
       onClick={resetErrorBoundary}
       style={{
         padding: '12px 24px',
@@ -102,8 +119,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
         border: 'none',
         borderRadius: '8px',
         cursor: 'pointer'
-      }}
-    >
+      }}>
       Try again
     </button>
     <details style={{ marginTop: '24px', color: '#a0aec0', fontSize: '14px' }}>
@@ -126,7 +142,7 @@ const App = () => {
   useEffect(() => {
     const host = window.location.host;
     const baseDomain = import.meta.env.VITE_APP_BASE_DOMAIN || 'trazo.io';
-    
+
     console.log('Current host:', host);
     console.log('Base domain:', baseDomain);
     console.log('All env vars:', import.meta.env);
@@ -164,240 +180,235 @@ const App = () => {
   console.log(config);
 
   return (
-    <ErrorBoundary 
-      FallbackComponent={ErrorFallback}
-      onReset={() => window.location.reload()}
-    >
-      <CacheProvider value={emotionCache}>
-        <ChakraProvider theme={theme}>
-          <CSSReset />
+    <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
+      <ChakraProvider theme={theme}>
+        <CSSReset />
         <Routes>
-        {/* Public Pricing Page - Available without authentication */}
-        <Route path="/pricing" element={<AuthLayout />}>
-          <Route index element={<Pricing />} />
-        </Route>
-
-        {/* Legal Pages - Available without authentication */}
-        <Route path="/terms" element={<AuthLayout />}>
-          <Route index element={<TermsOfService />} />
-        </Route>
-        <Route path="/privacy" element={<AuthLayout />}>
-          <Route index element={<PrivacyPolicy />} />
-        </Route>
-
-        {/* Invitation Routes - Available without authentication */}
-        <Route element={<AuthLayout />}>
-          <Route path="/invitation/:invitationCode" element={<AcceptInvitation />} />
-          <Route path="/invitation/:invitationCode/setup" element={<SetupPassword />} />
-        </Route>
-
-        <Route element={<CheckAuth />}>
-          {/* Public Routes */}
-          <Route element={<NotAuthenticated />}>
-            <Route element={<AuthLayout />}>
-              <Route path={config?.auth.path}>
-                <Route path="signin" element={config?.auth.signin && <config.auth.signin />} />
-                <Route path="signup" element={config?.auth.signup && <config.auth.signup />} />
-                <Route
-                  path="verifyemail"
-                  element={config?.auth.verifyEmail && <config.auth.verifyEmail />}
-                />
-              </Route>
-            </Route>
+          {/* Public Pricing Page - Available without authentication */}
+          <Route path="/pricing" element={<AuthLayout />}>
+            <Route index element={<Pricing />} />
           </Route>
 
-          {/* Protected Routes */}
-          {subdomain === 'producer' && (
-            <Route element={<Authenticated allowedRoles={config.protected.roles} />}>
-              <Route path={config.protected.path} element={<AdminLayout />}>
-                {/* Routes accessible without subscription */}
-                <Route path="select-company" element={<SelectCompanyView />} />
-                <Route path="pricing" element={<DashboardPricing />} />
-                <Route path="subscription" element={<UnifiedSubscriptionDashboard />} />
-                <Route path="stripe-success" element={<StripeSuccessRedirect />} />
+          {/* Legal Pages - Available without authentication */}
+          <Route path="/terms" element={<AuthLayout />}>
+            <Route index element={<TermsOfService />} />
+          </Route>
+          <Route path="/privacy" element={<AuthLayout />}>
+            <Route index element={<PrivacyPolicy />} />
+          </Route>
 
-                {/* Routes requiring subscription */}
-                <Route element={<SubscriptionRequired />}>
+          {/* Invitation Routes - Available without authentication */}
+          <Route element={<AuthLayout />}>
+            <Route path="/invitation/:invitationCode" element={<AcceptInvitation />} />
+            <Route path="/invitation/:invitationCode/setup" element={<SetupPassword />} />
+          </Route>
+
+          <Route element={<CheckAuth />}>
+            {/* Public Routes */}
+            <Route element={<NotAuthenticated />}>
+              <Route element={<AuthLayout />}>
+                <Route path={config?.auth.path}>
+                  <Route path="signin" element={config?.auth.signin && <config.auth.signin />} />
+                  <Route path="signup" element={config?.auth.signup && <config.auth.signup />} />
                   <Route
-                    index
-                    element={
-                      <NoSubscriptionRedirect>
-                        <DashboardView />
-                      </NoSubscriptionRedirect>
-                    }
+                    path="verifyemail"
+                    element={config?.auth.verifyEmail && <config.auth.verifyEmail />}
                   />
-                  <Route path="profile" element={<ProfileUser />} />
-                  <Route path="establishment/add" element={<AddEstablishment />} />
-                  <Route
-                    path="establishment/:establishmentId"
-                    exact
-                    element={
-                      <NoSubscriptionRedirect>
-                        <DashboardView />
-                      </NoSubscriptionRedirect>
-                    }
-                  />
-                  <Route
-                    path="establishment/:establishmentId/change"
-                    exact
-                    element={<AddEstablishment isEdit={true} />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/profile"
-                    exact
-                    element={<ProfileEstablishment />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/add"
-                    exact
-                    element={<AddParcel />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId"
-                    exact
-                    element={<ParcelView />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/change"
-                    exact
-                    element={<AddParcel isEdit={true} />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/profile"
-                    exact
-                    element={<ProfileParcel />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/event/add"
-                    exact
-                    element={<UpdateEvent />}
-                  />
-                  {/* <Route
+                </Route>
+              </Route>
+            </Route>
+
+            {/* Protected Routes */}
+            {subdomain === 'producer' && (
+              <Route element={<Authenticated allowedRoles={config.protected.roles} />}>
+                <Route path={config.protected.path} element={<AdminLayout />}>
+                  {/* Routes accessible without subscription */}
+                  <Route path="select-company" element={<SelectCompanyView />} />
+                  <Route path="pricing" element={<DashboardPricing />} />
+                  <Route path="subscription" element={<UnifiedSubscriptionDashboard />} />
+                  <Route path="stripe-success" element={<StripeSuccessRedirect />} />
+
+                  {/* Routes requiring subscription */}
+                  <Route element={<SubscriptionRequired />}>
+                    <Route
+                      index
+                      element={
+                        <NoSubscriptionRedirect>
+                          <DashboardView />
+                        </NoSubscriptionRedirect>
+                      }
+                    />
+                    <Route path="profile" element={<ProfileUser />} />
+                    <Route path="establishment/add" element={<AddEstablishment />} />
+                    <Route
+                      path="establishment/:establishmentId"
+                      exact
+                      element={
+                        <NoSubscriptionRedirect>
+                          <DashboardView />
+                        </NoSubscriptionRedirect>
+                      }
+                    />
+                    <Route
+                      path="establishment/:establishmentId/change"
+                      exact
+                      element={<AddEstablishment isEdit={true} />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/profile"
+                      exact
+                      element={<ProfileEstablishment />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/add"
+                      exact
+                      element={<AddParcel />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId"
+                      exact
+                      element={<ParcelView />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId/change"
+                      exact
+                      element={<AddParcel isEdit={true} />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId/profile"
+                      exact
+                      element={<ProfileParcel />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId/event/add"
+                      exact
+                      element={<UpdateEvent />}
+                    />
+                    {/* <Route
                   path="establishment/:establishmentId/parcel/:parcelId/event/:eventId"
                   exact
                   element={<DetailEvent />}
                 /> */}
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/event/:eventId/change"
-                    exact
-                    element={<UpdateEvent isEdit={true} />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/add"
-                    exact
-                    element={<QuickStartProduction />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/:productionId"
-                    exact
-                    element={<ProfileProduction />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/mobile"
-                    exact
-                    element={<FieldInterface productionId={0} cropType="citrus" />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/change"
-                    exact
-                    element={<UpdateProduction isEdit={true} />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/finish"
-                    exact
-                    element={<FinishProduction />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/certifications/parcels"
-                    exact
-                    element={<CertificationsView />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/certifications/events"
-                    exact
-                    element={<CertificationsView />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/commercial"
-                    exact
-                    element={<CommercialView />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/scans"
-                    exact
-                    element={<AllScansView />}
-                  />
-                  <Route
-                    path="establishment/:establishmentId/reviews"
-                    exact
-                    element={<AllReviewsView />}
-                  />
-                  <Route path="settings" exact element={<SettingsView />} />
-                  <Route path="subscription/success" element={<SubscriptionSuccess />} />
-                  <Route
-                    path="establishment/:establishmentId/carbon"
-                    exact
-                    element={
-                      <NoSubscriptionRedirect>
-                        <ModernCarbonDashboard />
-                      </NoSubscriptionRedirect>
-                    }
-                  />
-                  <Route
-                    path="establishment/:establishmentId/iot"
-                    exact
-                    element={
-                      <NoSubscriptionRedirect>
-                        <IoTDashboard />
-                      </NoSubscriptionRedirect>
-                    }
-                  />
-                  <Route path="education" element={<ProducerEducationDashboard />} />
-                  <Route path="education/faq" element={<EducationFAQ />} />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId/event/:eventId/change"
+                      exact
+                      element={<UpdateEvent isEdit={true} />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId/production/add"
+                      exact
+                      element={<QuickStartProduction />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId/production/:productionId"
+                      exact
+                      element={<ProfileProduction />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/mobile"
+                      exact
+                      element={<FieldInterface productionId={0} cropType="citrus" />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/change"
+                      exact
+                      element={<UpdateProduction isEdit={true} />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/finish"
+                      exact
+                      element={<FinishProduction />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/certifications/parcels"
+                      exact
+                      element={<CertificationsView />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/certifications/events"
+                      exact
+                      element={<CertificationsView />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/commercial"
+                      exact
+                      element={<CommercialView />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/scans"
+                      exact
+                      element={<AllScansView />}
+                    />
+                    <Route
+                      path="establishment/:establishmentId/reviews"
+                      exact
+                      element={<AllReviewsView />}
+                    />
+                    <Route path="settings" exact element={<SettingsView />} />
+                    <Route path="subscription/success" element={<SubscriptionSuccess />} />
+                    <Route
+                      path="establishment/:establishmentId/carbon"
+                      exact
+                      element={
+                        <NoSubscriptionRedirect>
+                          <ModernCarbonDashboard />
+                        </NoSubscriptionRedirect>
+                      }
+                    />
+                    <Route
+                      path="establishment/:establishmentId/iot"
+                      exact
+                      element={
+                        <NoSubscriptionRedirect>
+                          <IoTDashboard />
+                        </NoSubscriptionRedirect>
+                      }
+                    />
+                    <Route path="education" element={<ProducerEducationDashboard />} />
+                    <Route path="education/faq" element={<EducationFAQ />} />
+                  </Route>
                 </Route>
               </Route>
-            </Route>
-          )}
+            )}
 
-          {subdomain === 'consumer' && (
-            <>
-              <Route element={<AuthLayout />}>
-                <Route path="/production/:productionId" element={<ProductDetail />} />
-                <Route
-                  path="/establishment/:establishmentId"
-                  element={<PublicEstablishmentProfile />}
-                />
-              </Route>
-              <Route element={<Authenticated allowedRoles={config.protected.roles} />}>
-                <Route path={config.protected.path} element={<AdminConsumerLayout />}>
-                  {/* Consumer routes */}
-                  <Route index element={<Navigate to="impact" replace />} />
-                  <Route path="impact" element={<ImpactDashboard />} />
-                  <Route path="insights" element={<CarbonInsights />} />
-                  <Route path="compare" element={<CarbonComparison />} />
-                  <Route path="education" element={<ConsumerEducationDashboard />} />
-                  <Route path="community" element={<CommunityDashboard />} />
-                  <Route path="journey" element={<CarbonJourney />} />
-                  <Route path="scans" element={<ScannedProductsView />} />
-                  <Route path="reviews" element={<ReviewsListView />} />
+            {subdomain === 'consumer' && (
+              <>
+                <Route element={<AuthLayout />}>
+                  <Route path="/production/:productionId" element={<ProductDetail />} />
                   <Route
-                    path="production/:productionId/review/:scanId"
-                    element={<ProductReview />}
+                    path="/establishment/:establishmentId"
+                    element={<PublicEstablishmentProfile />}
                   />
                 </Route>
-              </Route>
-            </>
-          )}
+                <Route element={<Authenticated allowedRoles={config.protected.roles} />}>
+                  <Route path={config.protected.path} element={<AdminConsumerLayout />}>
+                    {/* Consumer routes */}
+                    <Route index element={<Navigate to="impact" replace />} />
+                    <Route path="impact" element={<ImpactDashboard />} />
+                    <Route path="insights" element={<CarbonInsights />} />
+                    <Route path="compare" element={<CarbonComparison />} />
+                    <Route path="education" element={<ConsumerEducationDashboard />} />
+                    <Route path="community" element={<CommunityDashboard />} />
+                    <Route path="journey" element={<CarbonJourney />} />
+                    <Route path="scans" element={<ScannedProductsView />} />
+                    <Route path="reviews" element={<ReviewsListView />} />
+                    <Route
+                      path="production/:productionId/review/:scanId"
+                      element={<ProductReview />}
+                    />
+                  </Route>
+                </Route>
+              </>
+            )}
 
-          {/* Default redirect based on subdomain */}
-          <Route
-            path="*"
-            element={<Navigate to={config?.defaultRedirect || '/pricing'} replace />}
-          />
-        </Route>
+            {/* Default redirect based on subdomain */}
+            <Route
+              path="*"
+              element={<Navigate to={config?.defaultRedirect || '/pricing'} replace />}
+            />
+          </Route>
         </Routes>
-        </ChakraProvider>
-      </CacheProvider>
+      </ChakraProvider>
     </ErrorBoundary>
   );
 };
