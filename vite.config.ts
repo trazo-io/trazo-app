@@ -9,9 +9,12 @@ let visualizer: any = null;
 try {
   const visualizerModule = require('rollup-plugin-visualizer');
   visualizer = visualizerModule.visualizer;
+  console.log('rollup-plugin-visualizer loaded successfully - bundle analysis enabled');
 } catch (e) {
   // visualizer not available - this is expected in production builds
-  console.log('rollup-plugin-visualizer not available, skipping bundle analysis');
+  console.log(
+    'rollup-plugin-visualizer not available, skipping bundle analysis (expected in production)'
+  );
 }
 
 // Check if vitest is available
@@ -34,9 +37,10 @@ try {
       }
     }
   };
+  console.log('vitest configuration loaded successfully - testing enabled');
 } catch (e) {
   // vitest not available - this is expected in production builds
-  console.log('Vitest not available, skipping test configuration');
+  console.log('vitest not available, skipping test configuration (expected in production)');
 }
 
 // https://vitejs.dev/config/
