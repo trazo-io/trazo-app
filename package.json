@@ -77,7 +77,8 @@
     "vite-tsconfig-paths": "^4.2.1",
     "vitest": "^0.34.6",
     "zod": "^3.21.4",
-    "zustand": "^5.0.4"
+    "zustand": "^5.0.4",
+    "terser": "^5.43.1"
   },
   "scripts": {
     "start": "vite",
@@ -106,7 +107,6 @@
     "knip": "^2.27.1",
     "prettier": "^2.2.1",
     "rollup-plugin-visualizer": "^6.0.3",
-    "terser": "^5.43.1",
     "vite-plugin-compression2": "^2.0.1",
     "webpack-bundle-analyzer": "^4.10.2"
   },
