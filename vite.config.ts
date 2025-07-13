@@ -2,8 +2,17 @@ import { defineConfig } from 'vite';
 import { splitVendorChunkPlugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { visualizer } from 'rollup-plugin-visualizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
+
+// Conditionally import visualizer plugin only if available
+let visualizer: any = null;
+try {
+  const visualizerModule = require('rollup-plugin-visualizer');
+  visualizer = visualizerModule.visualizer;
+} catch (e) {
+  // visualizer not available - this is expected in production builds
+  console.log('rollup-plugin-visualizer not available, skipping bundle analysis');
+}
 
 // Check if vitest is available
 let vitestConfig = {};
@@ -44,12 +53,17 @@ export default defineConfig({
     tsconfigPaths(),
     // Temporarily remove splitVendorChunkPlugin to fix initialization issue
     // splitVendorChunkPlugin(),
-    visualizer({
-      open: false,
-      gzipSize: true,
-      brotliSize: true,
-      filename: 'dist/bundle-analysis.html'
-    })
+    // Only add visualizer plugin if it's available
+    ...(visualizer
+      ? [
+          visualizer({
+            open: false,
+            gzipSize: true,
+            brotliSize: true,
+            filename: 'dist/bundle-analysis.html'
+          })
+        ]
+      : [])
   ],
   ...vitestConfig,
   optimizeDeps: {
