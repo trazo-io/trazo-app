@@ -184,7 +184,7 @@ const AppSignIn: React.FC = () => {
     >
       {/* Left side - Modern Brand Section */}
       <Box
-        bg="linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%)"
+        bg="linear-gradient(135deg, #2E7D32 0%, #059669 50%, #1B5E20 100%)"
         display={{ base: 'none', lg: 'flex' }}
         alignItems="center"
         justifyContent="center"
@@ -450,7 +450,7 @@ const AppSignIn: React.FC = () => {
                   type="submit"
                   w="full"
                   h="52px"
-                  bg="linear-gradient(135deg, #059669, #047857)"
+                  bg="green.500"
                   color="white"
                   fontSize="md"
                   fontWeight="600"
@@ -458,8 +458,8 @@ const AppSignIn: React.FC = () => {
                   isLoading={isLoading || isSocialLoading}
                   loadingText={isSocialLoading ? 'Authenticating...' : 'Signing in...'}
                   _hover={{
-                    transform: 'translateY(-1px)',
-                    boxShadow: '0 10px 25px rgba(5, 150, 105, 0.2)'
+                    bg: 'green.600',
+                    transform: 'translateY(-1px)'
                   }}
                   _active={{
                     transform: 'translateY(0)'

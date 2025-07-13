@@ -630,7 +630,7 @@ function Billing() {
           <Text mb={6} maxW="lg" mx="auto">
             {intl.formatMessage({ id: 'app.noSubscriptionDescription' })}
           </Text>
-          <Button colorScheme="blue" size="lg" onClick={() => navigate('/admin/dashboard/pricing')}>
+          <Button colorScheme="green" size="lg" onClick={() => navigate('/admin/dashboard/pricing')}>
             {intl.formatMessage({ id: 'app.viewPlans' })}
           </Button>
         </Box>

@@ -449,7 +449,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                             return practices.map((practice: string, index: number) => (
                               <WrapItem key={index}>
                                 <Tag
-                                  colorScheme="blue"
+                                  colorScheme="green"
                                   variant="subtle"
                                   borderRadius="full"
                                   size="md"
@@ -563,7 +563,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                         </Text>
                         <Wrap spacing={2}>
                           {establishmentData.water_sources.map((source, index) => (
-                            <Badge key={index} colorScheme="cyan" p={2} borderRadius="md">
+                            <Badge key={index} colorScheme="green" p={2} borderRadius="md">
                               {source}
                             </Badge>
                           ))}

@@ -39,7 +39,6 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars }: Carous
         h={{ sm: '190px', md: '200px' }}
         mb="20px"
         position="relative"
-        borderRadius="15px"
       >
         {!imageLoaded && <Shimmer />}
         <Image
@@ -60,8 +59,7 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars }: Carous
           h="100%"
           position="absolute"
           top="0"
-          borderRadius="15px"
-          bg="linear-gradient(360deg, rgba(49, 56, 96, 0.16) 0%, rgba(21, 25, 40, 0.28) 100%)"
+            bg="linear-gradient(360deg, rgba(49, 56, 96, 0.16) 0%, rgba(21, 25, 40, 0.28) 100%)"
         ></Box>
       </Box>
       <Flex direction="column">
@@ -76,9 +74,11 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars }: Carous
             variant="outline"
             colorScheme="green"
             minW="110px"
-            h="36px"
-            fontSize="xs"
+            h="40px"
+            fontSize="sm"
+            fontWeight="500"
             px="1.5rem"
+            borderRadius="lg"
             onClick={() => {
               navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${id}`, {
                 replace: true

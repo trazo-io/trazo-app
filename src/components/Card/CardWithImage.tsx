@@ -6,6 +6,7 @@ import { BsArrowRight } from 'react-icons/bs';
 // Custom components
 import Card from './Card';
 import CardBody from './CardBody';
+import CardHeader from './CardHeader';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import Shimmer from 'components/Shimmer/Shimmer';
@@ -15,9 +16,35 @@ type CardWithImageProps = {
   name: string;
   image: HTMLImageElement;
   readMoreLink: string;
+  // Style props that should be forwarded to the Card component
+  borderLeft?: string;
+  borderColor?: string;
+  boxShadow?: string;
+  bgGradient?: string;
+  _hover?: any;
+  // Add other common Card props as needed
+  description?: string;
+  state?: string;
+  city?: string;
+  zone?: string;
 };
 
-const CardWithImage = ({ title, name, image, readMoreLink }: CardWithImageProps) => {
+const CardWithImage = ({ 
+  title, 
+  name, 
+  image, 
+  readMoreLink, 
+  borderLeft,
+  borderColor,
+  boxShadow,
+  bgGradient,
+  _hover,
+  description,
+  state,
+  city,
+  zone,
+  ...rest
+}: CardWithImageProps) => {
   const navigate = useNavigate();
   const intl = useIntl();
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -25,18 +52,25 @@ const CardWithImage = ({ title, name, image, readMoreLink }: CardWithImageProps)
   const textColor = useColorModeValue('gray.700', 'white');
 
   return (
-    <Card minHeight={'290.5px'} p="1.2rem">
-      <CardBody width={'100%'}>
-        <Flex flexDirection={{ sm: 'column', lg: 'row' }} w="100%">
-          <Flex flexDirection="column" h="100%" lineHeight="1.6" width={{ lg: '45%' }}>
-            <Text fontSize="sm" color="gray.400" fontWeight="bold">
+    <Card 
+      maxHeight={'290.5px'}
+      height={{ sm: '290.5px', lg: '290.5px' }} 
+      p="0"
+      overflow="hidden"
+      {...rest}
+    >
+      <Flex direction="row" h="100%" w="100%">
+        <Flex direction="column" p="16px" width={{ base: '100%', lg: '45%' }}>
+          <Box mb={4}>
+            <Text fontSize="lg" color={textColor} fontWeight="bold">
               {title}
             </Text>
-            <Text fontSize="lg" color={textColor} fontWeight="bold" pb=".5rem">
+            <Text fontSize="sm" color="gray.500" fontWeight="400">
               {name}
             </Text>
-            <Spacer />
-            <Flex align="center">
+          </Box>
+          <Spacer />
+          <Flex align="center">
               <Button
                 p="0px"
                 variant="no-hover"
@@ -67,19 +101,14 @@ const CardWithImage = ({ title, name, image, readMoreLink }: CardWithImageProps)
                   _hover={{ transform: 'translateX(20%)' }}
                 />
               </Button>
-            </Flex>
           </Flex>
-          <Spacer />
-          <Flex
-            position="relative"
-            bg={{ sm: 'none', md: 'green.300' }}
-            align="center"
-            justify="center"
-            borderRadius="15px"
-            width={{ sm: '100%', md: '320px' }}
-            height="250px"
-            minH={'250px'}
-          >
+        </Flex>
+        <Box
+          position="relative"
+          width={{ base: '0', lg: '55%' }}
+          height="100%"
+          overflow="hidden"
+        >
             {!imageLoaded && <Shimmer />}
             <Box
               position={!imageLoaded ? 'absolute' : 'relative'}
@@ -94,9 +123,8 @@ const CardWithImage = ({ title, name, image, readMoreLink }: CardWithImageProps)
                 onLoad: () => setImageLoaded(true)
               })}
             </Box>
-          </Flex>
-        </Flex>
-      </CardBody>
+        </Box>
+      </Flex>
     </Card>
   );
 };

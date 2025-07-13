@@ -46,12 +46,14 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
             h={{ base: '64px', md: '77px' }}
             bg="transparent"
             color="green.500"
-            borderRadius="15px"
+            borderRadius="lg"
             border="2px dashed"
-            borderColor="green.200"
+            borderColor="gray.200"
             _hover={{
               bg: 'green.50',
-              borderColor: 'green.500'
+              borderColor: 'green.500',
+              transform: 'translateY(-1px)',
+              boxShadow: 'md'
             }}
             onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/add`)}
           >

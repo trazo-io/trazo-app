@@ -540,9 +540,9 @@ export const StandardInput = React.forwardRef<HTMLInputElement, any>((props, ref
   <Input
     ref={ref}
     borderRadius="lg"
-    borderColor="gray.300"
+    borderColor="gray.200"
     _hover={{ borderColor: 'green.400' }}
-    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #2E7D32' }}
     size="lg"
     {...props}
   />
@@ -553,9 +553,9 @@ export const StandardTextarea = React.forwardRef<HTMLTextAreaElement, any>((prop
   <Textarea
     ref={ref}
     borderRadius="lg"
-    borderColor="gray.300"
+    borderColor="gray.200"
     _hover={{ borderColor: 'green.400' }}
-    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #2E7D32' }}
     minH="120px"
     resize="vertical"
     {...props}
@@ -566,9 +566,9 @@ StandardTextarea.displayName = 'StandardTextarea';
 export const StandardSelect = (props: any) => (
   <Select
     borderRadius="lg"
-    borderColor="gray.300"
+    borderColor="gray.200"
     _hover={{ borderColor: 'green.400' }}
-    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #2E7D32' }}
     size="lg"
     {...props}
   />
@@ -641,7 +641,7 @@ export const StandardButton = ({
       width={width}
       borderRadius="lg"
       fontWeight="semibold"
-      _focus={{ boxShadow: '0 0 0 3px rgba(56, 161, 105, 0.15)' }}
+      _focus={{ boxShadow: '0 0 0 3px rgba(46, 125, 50, 0.15)' }}
       _hover={{
         boxShadow: 'lg',
         transform: 'translateY(-1px)'

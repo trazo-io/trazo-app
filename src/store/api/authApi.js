@@ -9,6 +9,7 @@ import {
 import baseApi from './baseApi';
 import { setCompany } from 'store/features/companySlice';
 import { setUser } from 'store/features/userSlice';
+import { TokenManager } from '../../utils/secureTokenStorage';
 
 const authApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -22,16 +23,39 @@ const authApi = baseApi.injectEndpoints({
       async onQueryStarted(userId, { dispatch, queryFulfilled }) {
         try {
           const result = await queryFulfilled;
-          dispatch(setUser(result.data.user));
-          if (result.data.user['companies'].length > 0) {
-            const { data } = await dispatch(
-              baseApi.endpoints.getCompany.initiate(result.data.user['companies'][0].id)
-            );
-            dispatch(setCompany(data));
-          }
+          console.log('🔒 LOGIN: Login successful, processing result');
+          
+          // FIRST: Store the token immediately before anything else
+          TokenManager.setAccessToken(result.data.access);
           localStorage.setItem('access', result.data.access);
+          console.log('🔒 LOGIN: Token stored immediately. Length:', result.data.access.length);
+          
+          // WAIT a brief moment to ensure token is available for subsequent requests
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // SECOND: Set user data
+          dispatch(setUser(result.data.user));
+          console.log('🔒 LOGIN: User data set in Redux');
+          
+          // THIRD: Get company data if available (but don't let this fail everything)
+          if (result.data.user['companies'].length > 0) {
+            try {
+              const { data } = await dispatch(
+                baseApi.endpoints.getCompany.initiate(result.data.user['companies'][0].id)
+              );
+              dispatch(setCompany(data));
+              console.log('🔒 LOGIN: Company data loaded successfully');
+            } catch (companyError) {
+              console.warn('🔒 LOGIN: Company data fetch failed, but continuing with login:', companyError);
+              // Don't clear tokens if company fetch fails
+            }
+          }
+          
+          console.log('🔒 LOGIN: Login flow completed successfully');
         } catch (error) {
-          console.error(error);
+          console.error('🔒 LOGIN: Login flow failed:', error);
+          // Clear tokens only if the main login failed
+          TokenManager.clearTokens();
         }
       }
     }),
@@ -49,20 +73,25 @@ const authApi = baseApi.injectEndpoints({
         url: 'auth/logout/',
         method: 'POST',
         body: {},
-        credentials: 'include',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        }
+        credentials: 'include'
+        // CSRF token will be handled by customFetchBase prepareHeaders
       }),
       invalidatesTags: (result) => (result ? ['User', 'Company', 'Parcel', 'History'] : []),
       onQueryStarted: async (arg, { dispatch, queryFulfilled }) => {
         try {
+          console.log('🔒 LOGOUT: Starting logout process');
           await queryFulfilled;
+          console.log('🔒 LOGOUT: Server logout successful');
+          // SECURITY: Clear all tokens securely
+          TokenManager.clearTokens();
           // Reset the state directly here
           dispatch(baseApi.util.resetApiState());
+          console.log('🔒 LOGOUT: Local cleanup completed');
         } catch (error) {
-          // Handle logout failure
+          console.error('🔒 LOGOUT: Server logout failed, but clearing local tokens:', error);
+          // SECURITY: Even if logout fails, clear local tokens for security
+          TokenManager.clearTokens();
+          console.error('Logout error:', error);
         }
       }
     }),
@@ -87,6 +116,8 @@ const authApi = baseApi.injectEndpoints({
           // If verification response includes user data and tokens, auto-sign in
           if (result.data.user && result.data.access) {
             dispatch(setUser(result.data.user));
+            // SECURITY: Store access token securely
+            TokenManager.setAccessToken(result.data.access);
             // Get company data if user has companies
             if (result.data.user['companies'] && result.data.user['companies'].length > 0) {
               try {

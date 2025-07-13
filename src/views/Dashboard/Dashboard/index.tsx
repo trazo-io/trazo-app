@@ -83,11 +83,11 @@ export default function DashboardView() {
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
   const selectedGradient = useColorModeValue(
-    'linear-gradient(81.62deg, #4CAF50 2.25%, #45A049 79.87%)',
-    'linear-gradient(81.62deg, #388E3C 2.25%, #2E7D32 79.87%)'
+    'linear-gradient(81.62deg, #2E7D32 2.25%, #059669 79.87%)',
+    'linear-gradient(81.62deg, #2E7D32 2.25%, #1B5E20 79.87%)'
   );
   const hoverBg = useColorModeValue('green.50', 'green.900');
-  const borderColor = useColorModeValue('green.200', 'green.700');
+  const borderColor = useColorModeValue('gray.200', 'green.700');
 
   const bgGradient = useColorModeValue(
     'linear-gradient(to right, green.50, transparent)',
@@ -355,14 +355,14 @@ export default function DashboardView() {
                     h={{ base: '80px', md: '90px' }}
                     bg="transparent"
                     color="green.500"
-                    borderRadius="15px"
+                    borderRadius="xl"
                     border="2px dashed"
-                    borderColor="green.200"
+                    borderColor="gray.200"
                     _hover={{
                       bg: 'green.50',
                       borderColor: 'green.500',
                       transform: 'translateY(-2px)',
-                      boxShadow: shadowHover
+                      boxShadow: 'lg'
                     }}
                     onClick={toggleAddEstablishment}
                   >

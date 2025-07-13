@@ -692,7 +692,7 @@ function PlanUsage() {
           </SimpleGrid>
 
           <Flex justify="flex-end" mt={6}>
-            <Button colorScheme="blue" onClick={handleManagePlan}>
+            <Button colorScheme="green" onClick={handleManagePlan}>
               {intl.formatMessage({ id: 'app.manageBilling' })}
             </Button>
           </Flex>

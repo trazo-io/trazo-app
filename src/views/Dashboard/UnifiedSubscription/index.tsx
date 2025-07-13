@@ -1325,7 +1325,7 @@ function UnifiedSubscriptionDashboard() {
             <Button variant="ghost" mr={3} onClick={onClose}>
               {intl.formatMessage({ id: 'app.cancel' })}
             </Button>
-            <Button colorScheme="blue" onClick={handleAddAddon} isLoading={isAddingAddon}>
+            <Button colorScheme="green" onClick={handleAddAddon} isLoading={isAddingAddon}>
               {intl.formatMessage({ id: 'app.addAddon' })}
             </Button>
           </ModalFooter>

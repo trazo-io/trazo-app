@@ -236,7 +236,7 @@ const ConsumerSignIn: React.FC = () => {
     >
       {/* Left side - Modern Brand Section */}
       <Box
-        bg="linear-gradient(135deg, #0891b2 0%, #0e7490 50%, #155e75 100%)"
+        bg="linear-gradient(135deg, #2E7D32 0%, #059669 50%, #1B5E20 100%)"
         display={{ base: 'none', lg: 'flex' }}
         alignItems="center"
         justifyContent="center"
@@ -496,7 +496,7 @@ const ConsumerSignIn: React.FC = () => {
                   type="submit"
                   w="full"
                   h="48px"
-                  bg="green.600"
+                  bg="green.500"
                   color="white"
                   fontSize="md"
                   fontWeight="semibold"
@@ -504,10 +504,11 @@ const ConsumerSignIn: React.FC = () => {
                   isLoading={isLoading || isSocialLoading}
                   loadingText={isSocialLoading ? 'Authenticating...' : 'Signing in...'}
                   _hover={{
-                    bg: 'green.700'
+                    bg: 'green.600',
+                    transform: 'translateY(-1px)'
                   }}
                   _active={{
-                    bg: 'green.800'
+                    transform: 'translateY(0)'
                   }}
                   transition="all 0.2s"
                 >

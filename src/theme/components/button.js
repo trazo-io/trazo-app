@@ -46,37 +46,37 @@ export const buttonStyles = {
             boxShadow: 'none'
           }
         },
-        // Restore original teal-focused variants
+        // Trazo brand-focused variants using forest green palette
         brand: (props) => ({
-          bg: mode('teal.500', 'teal.300')(props),
+          bg: mode('green.500', 'green.500')(props),
           color: 'white',
           _hover: {
-            bg: mode('teal.600', 'teal.200')(props),
+            bg: mode('green.600', 'green.400')(props),
             transform: 'translateY(-1px)',
             boxShadow: 'lg'
           },
           _active: {
-            bg: mode('teal.700', 'teal.100')(props),
+            bg: mode('green.700', 'green.300')(props),
             transform: 'translateY(0px)'
           }
         }),
         outline: (props) => ({
           border: '1px solid',
-          borderColor: mode('teal.500', 'teal.300')(props),
-          color: mode('teal.500', 'teal.300')(props),
+          borderColor: mode('green.500', 'green.500')(props),
+          color: mode('green.500', 'green.500')(props),
           bg: 'transparent',
           _hover: {
-            bg: mode('teal.50', 'teal.900')(props),
-            borderColor: mode('teal.600', 'teal.200')(props),
-            color: mode('teal.600', 'teal.200')(props)
+            bg: mode('green.50', 'green.900')(props),
+            borderColor: mode('green.600', 'green.400')(props),
+            color: mode('green.600', 'green.400')(props)
           }
         }),
         ghost: (props) => ({
           bg: 'transparent',
-          color: mode('teal.500', 'teal.300')(props),
+          color: mode('green.500', 'green.500')(props),
           _hover: {
-            bg: mode('teal.50', 'teal.900')(props),
-            color: mode('teal.600', 'teal.200')(props)
+            bg: mode('green.50', 'green.900')(props),
+            color: mode('green.600', 'green.400')(props)
           }
         })
       },
@@ -84,7 +84,7 @@ export const buttonStyles = {
         borderRadius: '12px',
         fontWeight: '500',
         _focus: {
-          boxShadow: `0 0 0 3px ${mode('teal.100', 'teal.800')(props)}`
+          boxShadow: `0 0 0 3px ${mode('green.100', 'green.800')(props)}`
         },
         _disabled: {
           opacity: 0.4,

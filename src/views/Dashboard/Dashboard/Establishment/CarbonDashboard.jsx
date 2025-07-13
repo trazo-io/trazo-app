@@ -1665,7 +1665,7 @@ const CarbonDashboard = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              colorScheme="teal"
+                              colorScheme="green"
                               leftIcon={<FaDownload />}
                               onClick={handleExportTransparencyData}
                             >

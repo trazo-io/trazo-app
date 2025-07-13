@@ -211,17 +211,17 @@ function Sidebar(props: SidebarProps) {
   const createLinks = (routes: any) => {
     const { sidebarVariant } = props;
     // Chakra Color Mode
-    let activeBg = useColorModeValue('green.500', 'green.400');
+    let activeBg = useColorModeValue('green.500', 'green.500');
     let activeAccordionBg = useColorModeValue('white', 'gray.700');
     let inactiveBg = useColorModeValue('white', 'gray.700');
-    let inactiveColorIcon = useColorModeValue('green.500', 'green.400');
+    let inactiveColorIcon = useColorModeValue('green.500', 'green.500');
     let activeColorIcon = useColorModeValue('white', 'white');
     let activeColor = useColorModeValue('gray.700', 'white');
     let inactiveColor = useColorModeValue('gray.400', 'gray.400');
     let sidebarActiveShadow = '0px 7px 11px rgba(0, 0, 0, 0.04)';
     // Here are all the props that may change depending on sidebar's state.(Opaque or transparent)
     if (sidebarVariant === 'opaque') {
-      activeBg = useColorModeValue('green.500', 'green.400');
+      activeBg = useColorModeValue('green.500', 'green.500');
       inactiveBg = useColorModeValue('gray.100', 'gray.600');
       activeColor = useColorModeValue('gray.700', 'white');
       inactiveColor = useColorModeValue('gray.400', 'gray.400');
@@ -336,7 +336,7 @@ function Sidebar(props: SidebarProps) {
                       <Icon
                         as={FaCircle}
                         w="10px"
-                        color="green.400"
+                        color="green.500"
                         display={sidebarWidth === 275 ? 'block' : 'none'}
                       />
                       {prop.establishmentId ? (
@@ -437,7 +437,7 @@ function Sidebar(props: SidebarProps) {
                       <Icon
                         as={FaCircle}
                         w="6px"
-                        color="green.400"
+                        color="green.500"
                         display={sidebarWidth === 275 ? 'block' : 'none'}
                       />
                       {prop.establishmentId ? (
@@ -553,7 +553,7 @@ function Sidebar(props: SidebarProps) {
               <Box>
                 <HStack spacing="14px" py="15px" px="15px">
                   <IconBox
-                    bg="green.400"
+                    bg="green.500"
                     color="white"
                     h="30px"
                     w="30px"
@@ -582,7 +582,7 @@ function Sidebar(props: SidebarProps) {
                   <Icon
                     as={FaCircle}
                     w={activeRoute(prop.regex) ? '10px' : '6px'}
-                    color="green.400"
+                    color="green.500"
                     display={sidebarWidth === 275 ? 'block' : 'none'}
                   />
                   <Text

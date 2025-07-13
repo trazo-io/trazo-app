@@ -2,6 +2,8 @@ import { config } from 'config/environment';
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import { Mutex } from 'async-mutex';
 import { fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { validateRedirectUrl, createSafeRedirectUrl } from 'utils/urlValidator';
+import { TokenManager } from 'utils/secureTokenStorage';
 
 // Create a new mutex for handling concurrent requests
 const mutex = new Mutex();
@@ -34,8 +36,12 @@ const baseQuery = fetchBaseQuery({
 
     // Get and set CSRF token
     const csrfToken = getCookie(config.CSRF_COOKIE_NAME);
+    console.log('🔒 CSRF: Looking for CSRF token. Cookie name:', config.CSRF_COOKIE_NAME, 'Found:', !!csrfToken);
     if (csrfToken) {
       headers.set(config.CSRF_HEADER_KEY, csrfToken);
+      console.log('🔒 CSRF: Added CSRF token to headers');
+    } else {
+      console.log('🔒 CSRF: No CSRF token found - request may fail CSRF validation');
     }
 
     return headers;
@@ -74,17 +80,24 @@ function isProtectedRoute(pathname: string): boolean {
 }
 
 /**
- * Handle authentication redirects with proper URL management
+ * Handle authentication redirects with secure URL validation
+ * SECURITY: Prevents open redirect vulnerabilities
  */
 function handleAuthRedirect(currentPath: string): void {
   if (isAuthPage(currentPath)) {
     return; // Don't redirect if already on auth page
   }
 
-  const redirectUrl = isProtectedRoute(currentPath)
-    ? `/auth/signin?next=${encodeURIComponent(currentPath + window.location.search)}`
+  // Validate the current path to prevent open redirect attacks
+  const safePath = validateRedirectUrl(currentPath) || '/admin/dashboard';
+  const fullCurrentPath = safePath + window.location.search;
+  
+  // Create secure redirect URL with validated next parameter
+  const redirectUrl = isProtectedRoute(safePath)
+    ? createSafeRedirectUrl('/auth/signin', fullCurrentPath)
     : '/auth/signin';
 
+  // Use validated URL for redirect
   window.location.href = redirectUrl;
 }
 
@@ -140,9 +153,19 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
   // Wait for any pending requests to complete
   await mutex.waitForUnlock();
 
-  let token = localStorage.getItem('access');
+  // SECURITY: Use secure token storage instead of localStorage
+  let token = TokenManager.getAccessToken();
+  // TEMP DEBUG: Also try direct localStorage access as backup
+  if (!token) {
+    token = localStorage.getItem('access');
+    console.log('🔒 FETCH: Fallback to direct localStorage access. Found:', !!token);
+  }
+  console.log('🔒 FETCH: Getting token for request to', args.url, 'Token found:', !!token, 'Length:', token?.length || 0);
   if (token) {
     args.headers = { ...args.headers, Authorization: `Bearer ${token}` };
+    console.log('🔒 FETCH: Added Authorization header');
+  } else {
+    console.log('🔒 FETCH: No token found, request will be unauthenticated');
   }
 
   let result = await baseQuery(args, api, extraOptions);
@@ -161,8 +184,13 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
 
     // Handle authentication errors (401)
     if (status === 401) {
+      console.log('🔒 ERROR: 401 Unauthorized for', args.url, 'Error:', errorData);
+      
       // Check for specific authentication error messages
       if (errorData?.detail === 'Authentication credentials were not provided.') {
+        console.log('🔒 ERROR: Authentication credentials not provided - clearing tokens');
+        // SECURITY: Clear any invalid tokens
+        TokenManager.clearTokens();
         handleAuthRedirect(currentPath);
         return result;
       }
@@ -180,6 +208,9 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
               // Retry the original request
               result = await baseQuery(args, api, extraOptions);
             } else {
+              console.log('🔒 ERROR: Token refresh failed - clearing tokens');
+              // SECURITY: Clear invalid tokens before redirect
+              TokenManager.clearTokens();
               // Refresh failed, redirect to login
               handleAuthRedirect(currentPath);
             }

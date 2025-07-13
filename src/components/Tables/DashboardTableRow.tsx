@@ -94,7 +94,7 @@ function DashboardTableRow(props: DashboardTableRowProps) {
             pb=".2rem"
           >{`${progression}%`}</Text>
           <Progress
-            colorScheme={progression === 100 ? 'green' : 'cyan'}
+            colorScheme={progression === 100 ? 'green' : 'amber'}
             size="xs"
             value={progression}
             borderRadius="15px"

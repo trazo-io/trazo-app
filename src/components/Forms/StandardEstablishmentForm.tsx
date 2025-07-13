@@ -1413,7 +1413,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                         {field.value?.length ? (
                           <HStack spacing={2} flexWrap="wrap">
                             {field.value.map((source, index) => (
-                              <Tag key={index} size="md" variant="solid" colorScheme="cyan">
+                              <Tag key={index} size="md" variant="solid" colorScheme="green">
                                 <TagLabel>{source}</TagLabel>
                                 <TagCloseButton onClick={() => removeWaterSource(index)} />
                               </Tag>

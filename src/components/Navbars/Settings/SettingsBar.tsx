@@ -52,7 +52,7 @@ export function SettingsBar() {
             <Button variant="outline" me={3} onClick={onClose}>
               Cancel
             </Button>
-            <Button colorScheme="blue">Save</Button>
+            <Button colorScheme="green">Save</Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

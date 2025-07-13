@@ -50,7 +50,7 @@ const CarbonSummaryCard = ({ establishmentId }) => {
 
   if (isLoading) {
     return (
-      <Card bg={bgColor} p={6}>
+      <Card bg={bgColor} p={6} borderRadius="15px">
         <VStack spacing={4}>
           <Spinner size="lg" color="green.500" />
           <Text color="gray.500">Cargando datos de huella de carbono...</Text>
@@ -61,7 +61,7 @@ const CarbonSummaryCard = ({ establishmentId }) => {
 
   if (isError) {
     return (
-      <Card bg={bgColor} p={6}>
+      <Card bg={bgColor} p={6} borderRadius="15px">
         <VStack spacing={4}>
           <Icon as={MdEco} color="red.500" boxSize={8} />
           <Text color="red.500" textAlign="center">
@@ -81,16 +81,18 @@ const CarbonSummaryCard = ({ establishmentId }) => {
   }
 
   return (
-    <Card bg={bgColor} p={6}>
-      <CardHeader pb={2}>
-        <Flex align="center" gap={2}>
-          <FaLeaf color="#38A169" />
-          <Heading size="md" color="green.700">
+    <Card bg={bgColor} p="16px" borderRadius="15px">
+      <CardHeader p="12px 5px" mb="12px">
+        <Flex direction="column">
+          <Text fontSize="lg" color="gray.700" fontWeight="bold">
             Huella Neta
-          </Heading>
+          </Text>
+          <Text fontSize="sm" color="gray.500" fontWeight="400">
+            Resumen de Carbono del Establecimiento
+          </Text>
         </Flex>
       </CardHeader>
-      <CardBody>
+      <CardBody px="5px">
         {/* Metrics Grid */}
         <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={4}>
           <Box textAlign="center">
@@ -128,20 +130,20 @@ const CarbonSummaryCard = ({ establishmentId }) => {
 
         {/* Progress Section */}
         <Box mb={4}>
-          <Heading size="sm" mb={2} color="green.700">
+          <Heading size="sm" mb={2} color="green.500">
             Progreso de Compensación
           </Heading>
           <Progress
             value={offsetPercentage}
             colorScheme={
-              offsetPercentage >= 100 ? 'green' : offsetPercentage >= 50 ? 'blue' : 'yellow'
+              offsetPercentage >= 100 ? 'green' : 'amber'
             }
             size="lg"
             borderRadius="md"
             mb={2}
             height="20px"
           />
-          <Text textAlign="center" fontSize="sm" color="gray.600">
+          <Text textAlign="center" fontSize="sm" color="gray.500">
             {offsetPercentage.toFixed(1)}% de las emisiones compensadas
             {offsetPercentage >= 100 && ' - ¡Carbono Neutral!'}
           </Text>

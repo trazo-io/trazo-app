@@ -642,7 +642,7 @@ const IoTDashboard = () => {
             </Button>
             <Button
               leftIcon={<FaCloudSun />}
-              colorScheme="teal"
+              colorScheme="green"
               h="35px"
               fontSize="xs"
               isLoading={simulationLoading}

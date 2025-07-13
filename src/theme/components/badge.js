@@ -27,24 +27,24 @@ export const badgeStyles = {
         }
       },
       variants: {
-        // Restore original teal-focused variants
+        // Trazo brand-focused variants using forest green palette
         brand: (props) => ({
-          bg: mode('teal.500', 'teal.300')(props),
+          bg: mode('green.500', 'green.500')(props),
           color: 'white',
           fontSize: 'xs',
           fontWeight: '600'
         }),
         outline: (props) => ({
           border: '1px solid',
-          borderColor: mode('teal.500', 'teal.300')(props),
-          color: mode('teal.500', 'teal.300')(props),
+          borderColor: mode('green.500', 'green.500')(props),
+          color: mode('green.500', 'green.500')(props),
           bg: 'transparent',
           fontSize: 'xs',
           fontWeight: '600'
         }),
         subtle: (props) => ({
-          bg: mode('teal.50', 'teal.900')(props),
-          color: mode('teal.700', 'teal.200')(props),
+          bg: mode('green.50', 'green.900')(props),
+          color: mode('green.700', 'green.200')(props),
           fontSize: 'xs',
           fontWeight: '600'
         })

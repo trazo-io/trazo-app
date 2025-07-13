@@ -397,7 +397,7 @@ const ConsumerSignUp: React.FC = () => {
                   type="submit"
                   w="full"
                   h="44px"
-                  bg="linear-gradient(135deg, #0891b2, #0e7490)"
+                  bg="green.500"
                   color="white"
                   fontSize="sm"
                   fontWeight="600"
@@ -405,8 +405,8 @@ const ConsumerSignUp: React.FC = () => {
                   isLoading={isLoading}
                   loadingText="Creating account..."
                   _hover={{
-                    transform: 'translateY(-1px)',
-                    boxShadow: '0 10px 25px rgba(8, 145, 178, 0.2)'
+                    bg: 'green.600',
+                    transform: 'translateY(-1px)'
                   }}
                   _active={{
                     transform: 'translateY(0)'

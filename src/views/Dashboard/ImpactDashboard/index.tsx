@@ -192,7 +192,7 @@ export default function ImpactDashboard() {
 
           <StandardCard variant="outline">
             <VStack spacing={4}>
-              <Icon as={FaMapMarkerAlt} boxSize={10} color="teal.500" />
+              <Icon as={FaMapMarkerAlt} boxSize={10} color="green.500" />
               <VStack spacing={2}>
                 <Text fontWeight="bold" fontSize="lg" color={textColor}>
                   My History

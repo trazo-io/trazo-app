@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { LOGIN_PAGE_URL } from 'config/routes';
 import { useSelector } from 'react-redux';
 import { getAuthRedirectAction } from '../authRedirect';
+import { validateRedirectUrl, createSafeRedirectUrl } from '../urlValidator';
 
 const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -65,15 +66,27 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       const isConsumerUser = currentUser.user_type === CONSUMER;
       const params = new URLSearchParams(window.location.search);
 
-      const intendedPath =
-        params.get('next') || (isConsumerUser ? '/consumer/dashboard' : '/admin/dashboard/scans');
-      console.log('🔒 Authenticated.jsx: intendedPath calculated:', intendedPath);
+      // SECURITY: Validate next parameter to prevent open redirect attacks
+      const defaultPath = isConsumerUser ? '/consumer/dashboard' : '/admin/dashboard/scans';
+      const nextParam = params.get('next');
+      const intendedPath = validateRedirectUrl(nextParam) || defaultPath;
+      console.log('🔒 Authenticated.jsx: intendedPath calculated (validated):', intendedPath);
 
       if (isConsumerUser && subdomain === 'producer') {
         console.log('🔒 Authenticated.jsx: Redirecting consumer from producer subdomain');
-        window.location.href = `${window.location.protocol}//consumer.${
+        // SECURITY: Build safe redirect URL with domain validation
+        const baseUrl = `${window.location.protocol}//consumer.${
           import.meta.env.VITE_APP_BASE_DOMAIN
-        }${window.location.port ? ':' + window.location.port : ''}${intendedPath}`;
+        }${window.location.port ? ':' + window.location.port : ''}`;
+        const safeRedirectUrl = baseUrl + intendedPath;
+        
+        // Final validation before redirect
+        if (validateRedirectUrl(safeRedirectUrl)) {
+          window.location.href = safeRedirectUrl;
+        } else {
+          // Fallback to default consumer dashboard if validation fails
+          window.location.href = baseUrl + '/consumer/dashboard';
+        }
       } else {
         console.log('🔒 Authenticated.jsx: No subdomain redirect needed');
       }
@@ -133,7 +146,10 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
     }
   }, [currentCompany, currentUser, navigate, subdomain]);
 
-  const nextUrl = LOGIN_PAGE_URL + (pathname !== '/' ? '?next=' + pathname : '');
+  // SECURITY: Create safe next URL with validation
+  const nextUrl = pathname !== '/' 
+    ? createSafeRedirectUrl(LOGIN_PAGE_URL, pathname)
+    : LOGIN_PAGE_URL;
 
   return isLoading === false &&
     isAuthenticated &&

@@ -91,19 +91,19 @@ export default function CarbonInsights() {
             </Stat>
 
             <Stat textAlign="center">
-              <StatNumber fontSize="2xl" color="blue.600">
+              <StatNumber fontSize="2xl" color="green.600">
                 {insights.avgCarbonSaved}
               </StatNumber>
               <StatLabel>CO₂ Saved</StatLabel>
-              <StatHelpText color="blue.600">Total impact</StatHelpText>
+              <StatHelpText color="green.600">Total impact</StatHelpText>
             </Stat>
 
             <Stat textAlign="center">
-              <StatNumber fontSize="2xl" color="teal.600">
+              <StatNumber fontSize="2xl" color="green.600">
                 {insights.improveBy}
               </StatNumber>
               <StatLabel>Potential Improvement</StatLabel>
-              <StatHelpText color="teal.600">With better choices</StatHelpText>
+              <StatHelpText color="green.600">With better choices</StatHelpText>
             </Stat>
 
             <Stat textAlign="center">
@@ -161,7 +161,7 @@ export default function CarbonInsights() {
                   Compare Products
                 </Button>
                 <Button
-                  colorScheme="blue"
+                  colorScheme="green"
                   variant="outline"
                   onClick={() => navigate('/admin/dashboard/journey')}
                 >

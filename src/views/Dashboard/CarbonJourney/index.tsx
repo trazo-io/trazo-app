@@ -419,7 +419,7 @@ export default function CarbonJourney() {
 
                       <StandardCard variant="flat" padding={6}>
                         <VStack spacing={3}>
-                          <Circle size="50px" bg="teal.100" color="teal.600">
+                          <Circle size="50px" bg="green.100" color="green.600">
                             <Icon as={MdEco} boxSize={6} />
                           </Circle>
                           <Stat textAlign="center">
@@ -435,7 +435,7 @@ export default function CarbonJourney() {
                                 Carbon Revealed
                               </StatLabel>
                             </ConsumerTooltip>
-                            <StatNumber color="teal.600">
+                            <StatNumber color="green.600">
                               {shopStats.carbonFootprintRevealed}
                             </StatNumber>
                             <StatHelpText>kg CO₂e revealed</StatHelpText>

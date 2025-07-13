@@ -410,7 +410,7 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
                 </HStack>
               ))}
             </VStack>
-            <Button size="sm" variant="link" colorScheme="blue" mt={2} onClick={onOpen}>
+            <Button size="sm" variant="link" colorScheme="green" mt={2} onClick={onOpen}>
               View detailed breakdown →
             </Button>
           </Box>
