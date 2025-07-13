@@ -59,7 +59,7 @@ minify = true
     Cache-Control = "public, max-age=31536000, immutable"
 
 [context.production]
-  command = "env && npm run build"
+  command = "npm ci --legacy-peer-deps && npm run build"
 
 [context.branch-deploy]
-  command = "env && npm run build"
+  command = "npm ci --legacy-peer-deps && npm run build"
