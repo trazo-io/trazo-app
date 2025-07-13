@@ -77,8 +77,7 @@ export default function AdminConsumerLayout(props: any) {
         setSidebarWidth,
         toggleSidebar,
         setToggleSidebar
-      }}
-    >
+      }}>
       <>
         <ConsumerSidebar
           routes={consumerRoutes}
@@ -92,8 +91,7 @@ export default function AdminConsumerLayout(props: any) {
         w={{
           base: '100%',
           xl: `calc(100% - ${sidebarWidth}px)`
-        }}
-      >
+        }}>
         {/* <Portal>
           <AdminNavbar onOpen={onOpen} brandText={getActiveRoute(consumerRoutes)} fixed={fixed} />
         </Portal> */}

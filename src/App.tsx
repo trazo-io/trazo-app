@@ -107,8 +107,7 @@ const ErrorFallback = ({
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center'
-    }}
-  >
+    }}>
     <h2 style={{ color: '#2d3748', marginBottom: '16px' }}>Something went wrong</h2>
     <p style={{ color: '#718096', marginBottom: '24px' }}>
       We apologize for the inconvenience. Please try refreshing the page.
@@ -122,8 +121,7 @@ const ErrorFallback = ({
         border: 'none',
         borderRadius: '8px',
         cursor: 'pointer'
-      }}
-    >
+      }}>
       Try again
     </button>
     <details style={{ marginTop: '24px', color: '#a0aec0', fontSize: '14px' }}>

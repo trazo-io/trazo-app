@@ -20,7 +20,6 @@ import { mode } from '@chakra-ui/theme-tools';
 export const buttonStyles = {
   components: {
     Button: {
-      // 3. We can add a new visual variant
       variants: {
         'with-shadow': {
           boxShadow: '0 0 2px 2px #efdfde'
@@ -46,21 +45,57 @@ export const buttonStyles = {
           _hover: {
             boxShadow: 'none'
           }
-        }
-        // Removed custom solid and ghost variants that could override existing styles
+        },
+        // Restore original teal-focused variants
+        brand: (props) => ({
+          bg: mode('teal.500', 'teal.300')(props),
+          color: 'white',
+          _hover: {
+            bg: mode('teal.600', 'teal.200')(props),
+            transform: 'translateY(-1px)',
+            boxShadow: 'lg'
+          },
+          _active: {
+            bg: mode('teal.700', 'teal.100')(props),
+            transform: 'translateY(0px)'
+          }
+        }),
+        outline: (props) => ({
+          border: '1px solid',
+          borderColor: mode('teal.500', 'teal.300')(props),
+          color: mode('teal.500', 'teal.300')(props),
+          bg: 'transparent',
+          _hover: {
+            bg: mode('teal.50', 'teal.900')(props),
+            borderColor: mode('teal.600', 'teal.200')(props),
+            color: mode('teal.600', 'teal.200')(props)
+          }
+        }),
+        ghost: (props) => ({
+          bg: 'transparent',
+          color: mode('teal.500', 'teal.300')(props),
+          _hover: {
+            bg: mode('teal.50', 'teal.900')(props),
+            color: mode('teal.600', 'teal.200')(props)
+          }
+        })
       },
       baseStyle: (props) => ({
         borderRadius: '12px',
+        fontWeight: '500',
         _focus: {
-          boxShadow: 'none'
+          boxShadow: `0 0 0 3px ${mode('teal.100', 'teal.800')(props)}`
         },
-        // Only add color fallback if not already defined
         _disabled: {
           opacity: 0.4,
           cursor: 'not-allowed',
           boxShadow: 'none'
         }
-      })
+      }),
+      defaultProps: {
+        variant: 'brand',
+        size: 'md'
+      }
     }
   }
 };

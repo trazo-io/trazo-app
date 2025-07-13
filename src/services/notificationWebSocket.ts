@@ -6,6 +6,7 @@ import {
   markAsRead,
   Notification
 } from '../store/features/notificationSlice';
+import { config, env } from 'config/environment';
 
 export interface WebSocketMessage {
   type: 'notification' | 'notification_count' | 'notifications_list' | 'pong';
@@ -24,11 +25,8 @@ export class NotificationWebSocketService {
   private token: string | null = null;
 
   constructor() {
-    // Determine WebSocket URL based on environment
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = process.env.NODE_ENV === 'development' ? 'localhost:8000' : window.location.host;
-
-    this.url = `${protocol}//${host}/ws/notifications/`;
+    // Use centralized environment configuration
+    this.url = env.getWebSocketUrl('notifications/');
   }
 
   setAuthToken(token: string | null) {
@@ -177,8 +175,8 @@ export class NotificationWebSocketService {
 
   private showToastNotification(notification: Notification) {
     // Import toast service dynamically to avoid circular dependencies
-    import('../utils/toast/ToastManager').then(({ ToastManager }) => {
-      const toast = ToastManager.getInstance();
+    import('../utils/toast/ToastManager').then((ToastManagerModule) => {
+      const toast = ToastManagerModule.default;
 
       let icon = '🔔';
       switch (notification.type) {
@@ -196,8 +194,7 @@ export class NotificationWebSocketService {
           break;
       }
 
-      toast.showToast(
-        'info',
+      toast.info(
         `${icon} ${notification.title}`,
         notification.message,
         5000 // Show for 5 seconds

@@ -24,14 +24,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trazo - Agricultural Carbon Transparency</title>
     <style>
-      /* Minimal CSS fixes for production - avoid interfering with Chakra UI */
+      /* Essential layout fixes for sidebar positioning */
       :root {
         --sidebar-width: 275px;
       }
 
-      /* Only fix critical layout issues without overriding Chakra UI styles */
+      /* Only critical layout fixes without overriding Chakra UI styles */
       @media screen and (min-width: 1280px) {
-        /* Target specific layout containers instead of generic CSS classes */
         .chakra-ui-light [data-theme] .css-1lekzkb,
         .chakra-ui-dark [data-theme] .css-1lekzkb {
           margin-left: var(--sidebar-width) !important;
@@ -50,25 +49,7 @@
         min-height: 100vh;
       }
 
-      /* Production-specific CSS-in-JS fallbacks - only for critical issues */
-      .chakra-ui-light {
-        --chakra-colors-gray-50: #f9fafb;
-        --chakra-colors-gray-100: #f3f4f6;
-        --chakra-colors-gray-200: #e5e7eb;
-        --chakra-colors-gray-700: #374151;
-        --chakra-colors-gray-800: #1f2937;
-        --chakra-colors-green-500: #10b981;
-        --chakra-colors-blue-500: #3b82f6;
-      }
-
-      .chakra-ui-dark {
-        --chakra-colors-gray-600: #4b5563;
-        --chakra-colors-gray-700: #374151;
-        --chakra-colors-gray-800: #1f2937;
-        --chakra-colors-white: #ffffff;
-      }
-
-      /* Ensure proper text rendering in production */
+      /* Ensure proper text rendering */
       * {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;

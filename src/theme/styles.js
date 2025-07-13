@@ -25,15 +25,21 @@ export const globalStyles = {
       900: '#171923'
     },
     teal: {
-      500: 'rgb(79, 209, 197)'
+      300: '#81e6d9',
+      400: '#4fd1c5',
+      500: 'rgb(79, 209, 197)', // Primary brand color
+      600: '#319795',
+      700: '#2c7a7b'
     },
     green: {
-      500: '#38a169',
-      600: '#2f855a'
+      400: '#68d391',
+      500: '#48bb78',
+      600: '#38a169'
     },
     blue: {
-      500: '#3182ce',
-      600: '#2c5282'
+      400: '#63b3ed',
+      500: '#4299e1',
+      600: '#3182ce'
     }
   },
   styles: {
@@ -45,14 +51,25 @@ export const globalStyles = {
             : mode('gray.50', 'gray.800')(props),
         fontFamily:
           "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
-        color: mode('gray.800', 'white')(props),
+        color: mode('gray.700', 'white')(props),
         lineHeight: 'base'
       },
       html: {
         fontFamily:
           "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+      },
+      // Restore original global styles with teal focus
+      '*': {
+        boxSizing: 'border-box'
+      },
+      a: {
+        color: mode('teal.500', 'teal.300')(props),
+        textDecoration: 'none',
+        _hover: {
+          textDecoration: 'none',
+          color: mode('teal.600', 'teal.200')(props)
+        }
       }
-      // Removed aggressive global selectors that could override component-specific colors
     })
   }
 };

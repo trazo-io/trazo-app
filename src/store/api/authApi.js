@@ -29,6 +29,7 @@ const authApi = baseApi.injectEndpoints({
             );
             dispatch(setCompany(data));
           }
+          localStorage.setItem('access', result.data.access);
         } catch (error) {
           console.error(error);
         }

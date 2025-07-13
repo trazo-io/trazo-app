@@ -1,14 +1,20 @@
+// @ts-ignore - JavaScript files without type declarations
 import authReducer from './features/authSlice';
 import { baseApi } from './api/baseApi';
 import companyReducer from 'store/features/companySlice';
 import { configureStore } from '@reduxjs/toolkit';
+// @ts-ignore - JavaScript files without type declarations
 import formReducer from './features/formSlice';
+// @ts-ignore - JavaScript files without type declarations
 import historySlice from './features/historySlice';
+// @ts-ignore - JavaScript files without type declarations
 import productReducer from './features/productSlice';
+// @ts-ignore - JavaScript files without type declarations
 import userReducer from './features/userSlice';
 import notificationReducer from './features/notificationSlice';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { carbonApi } from './api/carbonApi';
+import { config } from 'config/environment';
 
 export const store = configureStore({
   reducer: {
@@ -22,12 +28,12 @@ export const store = configureStore({
     [baseApi.reducerPath]: baseApi.reducer,
     [carbonApi.reducerPath]: carbonApi.reducer
   },
-  devTools: process.env.NODE_ENV === 'development',
+  devTools: config.ENABLE_DEVTOOLS,
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({ serializableCheck: false }).concat(
-      baseApi.middleware,
-      carbonApi.middleware
-    )
+    getDefaultMiddleware({
+      serializableCheck: false,
+      immutableCheck: config.IS_DEVELOPMENT // Only run expensive checks in development
+    }).concat(baseApi.middleware, carbonApi.middleware)
 });
 
 // Set up listeners for refetching behavior

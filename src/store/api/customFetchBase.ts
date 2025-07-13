@@ -1,16 +1,15 @@
-import { CSRF_HEADER_KEY, CSRF_TOKEN } from 'config';
-
+import { config } from 'config/environment';
 import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import { Mutex } from 'async-mutex';
 import { fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
-// Use /api for development (proxy) or the full backend URL for production
-const baseUrl = import.meta.env.VITE_APP_BACKEND_URL || '/api';
-
-// Create a new mutex
+// Create a new mutex for handling concurrent requests
 const mutex = new Mutex();
 
-function getCookie(name: string) {
+/**
+ * Utility function to get cookies following browser standards
+ */
+function getCookie(name: string): string | undefined {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
 
@@ -18,113 +17,188 @@ function getCookie(name: string) {
     const part = parts.pop();
     return part ? part.split(';').shift() : undefined;
   }
+  return undefined;
 }
 
+/**
+ * Base query configuration with centralized environment management
+ */
 const baseQuery = fetchBaseQuery({
-  baseUrl,
+  baseUrl: config.API_BASE_URL,
+  timeout: config.API_TIMEOUT,
   credentials: 'include',
   prepareHeaders: (headers) => {
     // Set required headers for AJAX requests
     headers.set('X-Requested-With', 'XMLHttpRequest');
+    headers.set('Accept', 'application/json');
 
     // Get and set CSRF token
-    const csrftoken = getCookie(CSRF_TOKEN);
-    if (csrftoken) headers.set(CSRF_HEADER_KEY, csrftoken);
+    const csrfToken = getCookie(config.CSRF_COOKIE_NAME);
+    if (csrfToken) {
+      headers.set(config.CSRF_HEADER_KEY, csrfToken);
+    }
 
     return headers;
   }
 });
 
-const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any) => {
-  // wait until the mutex is available without locking it
+/**
+ * Enhanced error handling with proper typing
+ */
+interface ApiErrorData {
+  detail?: string;
+  code?: string;
+  retry_after?: number;
+  [key: string]: any;
+}
+
+/**
+ * Type guard for API errors
+ */
+function isApiError(error: any): error is FetchBaseQueryError & { data: ApiErrorData } {
+  return error && typeof error === 'object' && 'data' in error && error.data;
+}
+
+/**
+ * Check if current page is an authentication page
+ */
+function isAuthPage(pathname: string): boolean {
+  return pathname.startsWith('/auth/') || pathname.startsWith('/invitation/');
+}
+
+/**
+ * Check if current page is a protected route
+ */
+function isProtectedRoute(pathname: string): boolean {
+  return pathname.startsWith('/admin/') || pathname.startsWith('/dashboard/');
+}
+
+/**
+ * Handle authentication redirects with proper URL management
+ */
+function handleAuthRedirect(currentPath: string): void {
+  if (isAuthPage(currentPath)) {
+    return; // Don't redirect if already on auth page
+  }
+
+  const redirectUrl = isProtectedRoute(currentPath)
+    ? `/auth/signin?next=${encodeURIComponent(currentPath + window.location.search)}`
+    : '/auth/signin';
+
+  window.location.href = redirectUrl;
+}
+
+/**
+ * Handle rate limiting with user-friendly messaging
+ */
+function handleRateLimit(errorData: ApiErrorData): void {
+  const retryAfter = errorData?.retry_after || 60;
+  const message =
+    errorData?.detail || `Too many requests. Please try again in ${retryAfter} seconds.`;
+
+  // Log for debugging in development
+  if (config.IS_DEVELOPMENT) {
+    console.error('Rate limit exceeded:', message);
+  }
+
+  // Dispatch custom event for notification system
+  window.dispatchEvent(
+    new CustomEvent('rate-limit-error', {
+      detail: { message, retryAfter }
+    })
+  );
+}
+
+/**
+ * Attempt to refresh authentication token
+ */
+async function attemptTokenRefresh(api: BaseQueryApi, extraOptions: any): Promise<boolean> {
+  try {
+    const refreshResult = await baseQuery(
+      {
+        url: 'auth/refresh/',
+        method: 'POST',
+        credentials: 'include'
+      },
+      api,
+      extraOptions
+    );
+
+    return !!refreshResult.data;
+  } catch (error) {
+    if (config.IS_DEVELOPMENT) {
+      console.error('Token refresh failed:', error);
+    }
+    return false;
+  }
+}
+
+/**
+ * Custom fetch base query with enhanced error handling and retry logic
+ */
+const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any): Promise<any> => {
+  // Wait for any pending requests to complete
   await mutex.waitForUnlock();
+
+  let token = localStorage.getItem('access');
+  if (token) {
+    args.headers = { ...args.headers, Authorization: `Bearer ${token}` };
+  }
+
   let result = await baseQuery(args, api, extraOptions);
 
-  // Type guard for error checking
-  const hasErrorData = (error: any): error is FetchBaseQueryError & { data: any } => {
-    return error && typeof error === 'object' && 'data' in error && error.data;
-  };
-
-  if (hasErrorData(result.error)) {
+  // Handle API errors
+  if (isApiError(result.error)) {
     const errorData = result.error.data;
     const currentPath = window.location.pathname;
-    const isOnAuthPage = currentPath.startsWith('/auth/') || currentPath.startsWith('/invitation/');
+    const status = result.error.status;
 
-    // Check for rate limiting error (429)
-    if (result.error.status === 429) {
-      const retryAfter = errorData?.retry_after || 60;
-      const message =
-        errorData?.detail || `Too many requests. Please try again in ${retryAfter} seconds.`;
-
-      // Show user-friendly message (you'll need to integrate with your toast system)
-      console.error('Rate limit exceeded:', message);
-
-      // Dispatch a custom event that can be caught by your notification system
-      window.dispatchEvent(
-        new CustomEvent('rate-limit-error', {
-          detail: { message, retryAfter }
-        })
-      );
-
+    // Handle rate limiting (429)
+    if (status === 429) {
+      handleRateLimit(errorData);
       return result;
     }
 
-    // Check for authentication error
-    if (
-      typeof errorData === 'object' &&
-      'detail' in errorData &&
-      errorData.detail === 'Authentication credentials were not provided.'
-    ) {
-      // Only redirect if not already on an auth page
-      if (!isOnAuthPage) {
-        // Include current path as 'next' parameter for protected routes
-        const isProtectedRoute = currentPath.startsWith('/admin/');
-        const redirectUrl = isProtectedRoute
-          ? `/auth/signin?next=${encodeURIComponent(currentPath + window.location.search)}`
-          : '/auth/signin';
-        window.location.href = redirectUrl;
+    // Handle authentication errors (401)
+    if (status === 401) {
+      // Check for specific authentication error messages
+      if (errorData?.detail === 'Authentication credentials were not provided.') {
+        handleAuthRedirect(currentPath);
+        return result;
       }
-      return result;
+
+      // Handle token validation errors
+      if (errorData?.code === 'token_not_valid') {
+        // Use mutex to prevent multiple refresh attempts
+        if (!mutex.isLocked()) {
+          const release = await mutex.acquire();
+
+          try {
+            const refreshSuccess = await attemptTokenRefresh(api, extraOptions);
+
+            if (refreshSuccess) {
+              // Retry the original request
+              result = await baseQuery(args, api, extraOptions);
+            } else {
+              // Refresh failed, redirect to login
+              handleAuthRedirect(currentPath);
+            }
+          } finally {
+            release();
+          }
+        } else {
+          // Wait for refresh to complete and retry
+          await mutex.waitForUnlock();
+          result = await baseQuery(args, api, extraOptions);
+        }
+      }
     }
 
-    // Check for token validation error
-    if (
-      typeof errorData === 'object' &&
-      'code' in errorData &&
-      errorData.code === 'token_not_valid'
-    ) {
-      if (!mutex.isLocked()) {
-        const release = await mutex.acquire();
-
-        try {
-          const refreshResult = await baseQuery(
-            { credentials: 'include', url: 'auth/refresh' },
-            api,
-            extraOptions
-          );
-
-          if (refreshResult.data) {
-            // Retry the initial query
-            result = await baseQuery(args, api, extraOptions);
-          } else {
-            // Only redirect if not already on signin page
-            if (currentPath !== '/auth/signin' && !isOnAuthPage) {
-              // Include current path as 'next' parameter for protected routes
-              const isProtectedRoute = currentPath.startsWith('/admin/');
-              const redirectUrl = isProtectedRoute
-                ? `/auth/signin?next=${encodeURIComponent(currentPath + window.location.search)}`
-                : '/auth/signin';
-              window.location.href = redirectUrl;
-            }
-          }
-        } finally {
-          // release must be called once the mutex should be released again.
-          release();
-        }
-      } else {
-        // wait until the mutex is available without locking it
-        await mutex.waitForUnlock();
-        result = await baseQuery(args, api, extraOptions);
+    // Handle other HTTP errors
+    if (typeof status === 'number' && status >= 500) {
+      // Server errors - could implement retry logic here
+      if (config.IS_DEVELOPMENT) {
+        console.error('Server error:', result.error);
       }
     }
   }

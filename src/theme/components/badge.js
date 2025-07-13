@@ -26,12 +26,41 @@ export const badgeStyles = {
           height: '25px'
         }
       },
+      variants: {
+        // Restore original teal-focused variants
+        brand: (props) => ({
+          bg: mode('teal.500', 'teal.300')(props),
+          color: 'white',
+          fontSize: 'xs',
+          fontWeight: '600'
+        }),
+        outline: (props) => ({
+          border: '1px solid',
+          borderColor: mode('teal.500', 'teal.300')(props),
+          color: mode('teal.500', 'teal.300')(props),
+          bg: 'transparent',
+          fontSize: 'xs',
+          fontWeight: '600'
+        }),
+        subtle: (props) => ({
+          bg: mode('teal.50', 'teal.900')(props),
+          color: mode('teal.700', 'teal.200')(props),
+          fontSize: 'xs',
+          fontWeight: '600'
+        })
+      },
       baseStyle: (props) => ({
         textTransform: 'capitalize',
-        // Only add minimal fallback styles for production
-        borderRadius: '6px'
-      })
-      // Removed custom variants that could override existing badge styles
+        borderRadius: '6px',
+        px: 2,
+        py: 1,
+        fontSize: 'xs',
+        fontWeight: '500'
+      }),
+      defaultProps: {
+        variant: 'brand',
+        size: 'md'
+      }
     }
   }
 };
