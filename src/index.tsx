@@ -17,10 +17,10 @@
 
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
-import { ChakraProvider, CSSReset } from '@chakra-ui/react';
+import { ChakraProvider } from '@chakra-ui/react';
 import I18n from 'i18n/I18n';
 import { Provider } from 'react-redux';
-import React from 'react';
+// import React from 'react'; // Not needed with new JSX transform
 import { createRoot } from 'react-dom/client';
 import { store } from './store';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
@@ -34,7 +34,6 @@ root.render(
     <BrowserRouter>
       <I18n>
         <ChakraProvider theme={theme} resetCSS={true}>
-          <CSSReset />
           <SubscriptionProvider>
             <App />
           </SubscriptionProvider>

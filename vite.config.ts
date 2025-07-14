@@ -92,7 +92,8 @@ export default defineConfig({
     // Ensure proper CSS-in-JS processing
     preprocessorOptions: {
       scss: {
-        additionalData: `@import "src/theme/styles.js";`
+        // Remove invalid JS import - styles.js should be imported in components directly
+        // additionalData: `@import "src/theme/styles.js";`
       }
     }
   },
