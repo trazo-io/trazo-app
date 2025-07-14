@@ -15,10 +15,8 @@
 
 */
 
-import { mode } from '@chakra-ui/theme-tools';
-
 const Card = {
-  baseStyle: (props: any) => ({
+  baseStyle: {
     p: '22px',
     display: 'flex',
     flexDirection: 'column',
@@ -26,14 +24,11 @@ const Card = {
     position: 'relative',
     minWidth: '0px',
     wordWrap: 'break-word',
-    backgroundClip: 'border-box',
-    bg: mode('white', 'gray.700')(props),
+    bg: { base: 'white', _dark: 'gray.700' },
     boxShadow: '0px 3.5px 5.5px rgba(0, 0, 0, 0.02)',
-    borderRadius: '15px'
-  }),
-  defaultProps: {
-    variant: 'panel'
-  }
+    borderRadius: '15px',
+    backgroundClip: 'border-box',
+  },
 };
 
 export const CardComponent = {
