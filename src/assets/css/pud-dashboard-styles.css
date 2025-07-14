@@ -15,6 +15,29 @@
 /* Import Trazo Color System */
 @import './trazo-colors.css';
 
+/* Card background fallbacks for production builds */
+.chakra-ui-light [data-theme] .chakra-ui-light,
+.chakra-ui-light,
+[data-theme="light"] {
+  --chakra-colors-white: #ffffff;
+  --chakra-colors-gray-700: #2d3748;
+}
+
+.chakra-ui-dark [data-theme] .chakra-ui-dark,
+.chakra-ui-dark,
+[data-theme="dark"] {
+  --chakra-colors-white: #2d3748;
+  --chakra-colors-gray-700: #2d3748;
+}
+
+/* Ensure cards have proper backgrounds */
+.css-bg,
+[role="group"]:not([role="listbox"]),
+.chakra-card,
+[data-theme] .chakra-card {
+  background-color: var(--chakra-colors-white, white) !important;
+}
+
 /* General Styles */
 
 #sidebarScrollRemove::-webkit-scrollbar {
