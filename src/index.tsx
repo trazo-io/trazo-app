@@ -15,6 +15,10 @@
 
 */
 
+// Import essential CSS files for Trazo brand styling
+import 'assets/css/trazo-colors.css';
+import 'assets/css/pud-dashboard-styles.css';
+
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import { ChakraProvider } from '@chakra-ui/react';
