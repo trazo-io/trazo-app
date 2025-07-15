@@ -304,7 +304,16 @@ export default function DashboardView() {
                         h={{ base: '80px', md: '90px' }}
                         minH={{ base: '80px', md: '90px' }}
                         maxH={{ base: '80px', md: '90px' }}
-                        className={`trazo-card establishment-card ${prop.id === establishment?.id ? 'selected' : ''}`}
+                        sx={{
+                          bg: prop.id === establishment?.id ? '#2E7D32' : 'white',
+                          color: prop.id === establishment?.id ? 'white' : 'gray.700',
+                          boxShadow: prop.id === establishment?.id 
+                            ? '0px 5px 10px rgba(46, 125, 50, 0.3)' 
+                            : '0px 3.5px 5.5px rgba(0, 0, 0, 0.02)',
+                          borderRadius: '15px',
+                          overflow: 'hidden',
+                          boxSizing: 'border-box'
+                        }}
                         _hover={{
                           transform: 'translateY(-2px)',
                           boxShadow: 'lg',
@@ -429,7 +438,16 @@ export default function DashboardView() {
       </Grid>
       {/* Carbon Summary Card for selected establishment */}
       {establishment?.id && (
-        <Box flex="1" width="100%" pb="24px" overflow="hidden">
+        <Box 
+          flex="1" 
+          width="100%" 
+          pb="24px" 
+          sx={{
+            overflow: 'hidden',
+            maxWidth: '100%',
+            boxSizing: 'border-box'
+          }}
+        >
           <CarbonSummaryCard establishmentId={establishment.id} />
         </Box>
       )}

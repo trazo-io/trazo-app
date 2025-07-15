@@ -80,7 +80,19 @@ const CarbonSummaryCard = ({ establishmentId }) => {
   }
 
   return (
-    <Card bg={bgColor} p={6} borderRadius="xl" data-testid="carbon-summary">
+    <Card 
+      bg={bgColor} 
+      p={6} 
+      borderRadius="xl" 
+      sx={{
+        bg: 'white',
+        boxShadow: '0px 3.5px 5.5px rgba(0, 0, 0, 0.02)',
+        borderRadius: '15px',
+        overflow: 'hidden',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
+      }}
+    >
       <CardHeader p={0} mb={4}>
         <Flex direction="column">
           <Text fontSize="lg" color="gray.700" fontWeight="bold">

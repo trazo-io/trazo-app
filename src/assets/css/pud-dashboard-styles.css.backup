@@ -1,0 +1,426 @@
+/*!
+
+=========================================================
+* Trazo - Agricultural Carbon Transparency Platform
+=========================================================
+
+* Enhanced with Trazo Color System v2.0
+* Consistent premium color palette for global agriculture
+* Optimized for accessibility and modern design
+
+=========================================================
+
+*/
+
+/* Import Trazo Color System */
+@import './trazo-colors.css';
+
+/* Card background fallbacks for production builds */
+.chakra-ui-light [data-theme] .chakra-ui-light,
+.chakra-ui-light,
+[data-theme="light"] {
+  --chakra-colors-white: #ffffff;
+  --chakra-colors-gray-700: #2d3748;
+}
+
+.chakra-ui-dark [data-theme] .chakra-ui-dark,
+.chakra-ui-dark,
+[data-theme="dark"] {
+  --chakra-colors-white: #2d3748;
+  --chakra-colors-gray-700: #2d3748;
+}
+
+/* Ensure cards have proper backgrounds and styling */
+.css-bg,
+[role="group"]:not([role="listbox"]),
+.chakra-card,
+[data-theme] .chakra-card {
+  background-color: var(--chakra-colors-white, white);
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+}
+
+/* Target specific establishment card components */
+[data-testid="establishment-card"],
+.establishment-card,
+.css-1gqj9o0,
+.css-1x7hccm {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Production event cards styling */
+.production-event-card,
+.css-1wv0n0i {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Force proper card styling for all Trazo Card components with maximum specificity */
+html body div#root .trazo-card,
+html body div#root [data-component="Card"],
+html body div#root [data-component="card"],
+html body div#root .chakra-ui-light .trazo-card,
+html body div#root .chakra-ui-dark .trazo-card {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  position: relative !important;
+  min-width: 0px !important;
+  word-wrap: break-word !important;
+  background-clip: border-box !important;
+  box-sizing: border-box !important;
+  contain: layout style !important;
+}
+
+/* Card components styling */
+.trazo-card-header,
+[data-component="CardHeader"] {
+  background-color: white !important;
+  border-radius: 15px 15px 0 0 !important;
+  padding: 22px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.trazo-card-body,
+[data-component="CardBody"] {
+  background-color: white !important;
+  padding: 22px !important;
+  flex: 1 !important;
+}
+
+.trazo-card-footer,
+[data-component="CardFooter"] {
+  background-color: white !important;
+  border-radius: 0 0 15px 15px !important;
+  padding: 22px !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+/* Layout components styling */
+.trazo-main-panel,
+[data-component="MainPanel"] {
+  background-color: #f8f9fa !important;
+  min-height: 100vh !important;
+  transition: all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1) !important;
+  position: relative !important;
+}
+
+.trazo-panel-content,
+[data-component="PanelContent"] {
+  width: 100% !important;
+  position: relative !important;
+  min-height: 100vh !important;
+}
+
+.trazo-panel-container,
+[data-component="PanelContainer"] {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+/* Establishment card styling */
+.establishment-card.selected {
+  background-color: #2E7D32 !important;
+  color: white !important;
+  box-shadow: 0px 5px 10px rgba(46, 125, 50, 0.3) !important;
+}
+
+/* Animation components styling */
+.trazo-carbon-progress,
+.trazo-carbon-progress-full,
+.trazo-carbon-card {
+  animation-fill-mode: both !important;
+  backface-visibility: hidden !important;
+  transform: translateZ(0) !important;
+}
+
+.trazo-shimmer,
+[data-component="Shimmer"] {
+  animation-fill-mode: both !important;
+  backface-visibility: hidden !important;
+  transform: translateZ(0) !important;
+  will-change: background-position !important;
+}
+
+/* Specific production timeline cards and event cards */
+.production-timeline [class*="css-"],
+.production-events [class*="css-"],
+.production-overview [class*="css-"] {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  margin-bottom: 1rem !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Carbon summary card container fix */
+.trazo-card:has([data-testid="carbon-summary"]),
+.trazo-card[data-testid="carbon-summary"] {
+  overflow: hidden !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Fix for card containers that may overflow */
+.trazo-card .chakra-progress,
+.trazo-card .chakra-stat,
+.trazo-card .chakra-simple-grid {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Fix spacing issues in production lists and general components */
+.chakra-stack[data-orientation="vertical"] > *:not(:last-child),
+.chakra-stack[data-orientation="horizontal"] > *:not(:last-child) {
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.chakra-stack[data-orientation="vertical"] > *:not(:last-child) {
+  margin-bottom: var(--chakra-space-4) !important;
+}
+
+.chakra-stack[data-orientation="horizontal"] > *:not(:last-child) {
+  margin-right: var(--chakra-space-4) !important;
+}
+
+/* Fix grid spacing issues */
+.chakra-simple-grid > * {
+  margin: 0 !important;
+}
+
+/* Fix VStack and HStack spacing inconsistencies */
+.chakra-stack > * {
+  margin: 0 !important;
+}
+
+.chakra-stack[data-orientation="vertical"] {
+  gap: var(--chakra-space-4) !important;
+}
+
+.chakra-stack[data-orientation="horizontal"] {
+  gap: var(--chakra-space-4) !important;
+}
+
+/* Fix flex container spacing */
+.chakra-flex {
+  gap: var(--chakra-space-2) !important;
+}
+
+.chakra-flex > * {
+  margin: 0 !important;
+}
+
+/* Dashboard specific spacing fixes */
+.chakra-grid {
+  gap: var(--chakra-space-6) !important;
+}
+
+.chakra-grid > * {
+  margin: 0 !important;
+}
+
+/* Fix button spacing in cards */
+.trazo-card .chakra-button-group {
+  gap: var(--chakra-space-2) !important;
+}
+
+.trazo-card .chakra-button-group > * {
+  margin: 0 !important;
+}
+
+/* Fix text spacing in cards */
+.trazo-card .chakra-text + .chakra-text {
+  margin-top: var(--chakra-space-2) !important;
+}
+
+/* Fix establishment card spacing */
+.establishment-card .chakra-flex {
+  gap: var(--chakra-space-3) !important;
+}
+
+.establishment-card .chakra-text {
+  margin: 0 !important;
+}
+
+/* Ensure proper icon visibility */
+[class*="css-"] svg,
+[class*="css-"] .chakra-icon {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
+/* General Styles */
+
+#sidebarScrollRemove::-webkit-scrollbar {
+  display: none;
+}
+
+#sidebarScrollRemove {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+/* Full Calendar */
+a.fc-daygrid-day-number {
+  width: 100%;
+  text-align: center;
+}
+a.fc-daygrid-day-number {
+  width: 100%;
+  text-align: center;
+}
+a.fc-daygrid-day-number {
+  width: 100%;
+  text-align: center;
+}
+div.fc-daygrid-event-harness {
+  top: unset;
+}
+.fc-daygrid-event-harness .fc-daygrid-event-harness-abs {
+  top: 0px;
+  bottom: unset;
+}
+.fc .fc-scrollgrid-section-header > *,
+.fc .fc-scrollgrid-section-footer > * {
+  border-right: 0px !important;
+}
+.fc-theme-standard .fc-scrollgrid {
+  border: 0px solid transparent !important;
+}
+
+.fc-col-header-cell.fc-day.fc-day-mon {
+  border-right: 0px;
+  border-left: 0px;
+}
+
+.fc-col-header-cell.fc-day.fc-day-tue {
+  border-left: 0px;
+  border-right: 0px;
+}
+.fc-col-header-cell.fc-day.fc-day-wed {
+  border-right: 0px;
+  border-left: 0px;
+}
+
+.fc-col-header-cell.fc-day.fc-day-thu {
+  border-left: 0px;
+  border-right: 0px;
+}
+.fc-col-header-cell.fc-day.fc-day-fri {
+  border-right: 0px;
+  border-left: 0px;
+}
+
+.fc-col-header-cell.fc-day.fc-day-sat {
+  border-left: 0px;
+  border-right: 0px;
+}
+
+.fc-col-header-cell.fc-day.fc-day-sun {
+  border-left: 0px;
+  border-right: 0px;
+}
+.fc-scrollgrid.fc-scrollgrid-liquid > td {
+  border: 0px;
+}
+
+.fc .fc-scrollgrid-section > td {
+  border: 0;
+}
+
+/* React Kanban */
+body.chakra-ui-light .react-kanban-column {
+  background-color: #edf2f7; /* Gray/Gray-100 */
+  border-radius: 15px;
+}
+body.chakra-ui-dark .react-kanban-column {
+  background-color: #2d3748; /* Gray/Gray-100 */
+  border-radius: 15px;
+}
+.react-kanban-column {
+  width: 500px;
+}
+.react-kanban-card-adder-form {
+  width: 100%;
+  background-color: red;
+  border-radius: 15px;
+}
+.react-kanban-card-adder-button {
+  display: none;
+  background-color: red !important;
+  border-radius: 15px;
+}
+
+/* Text Editor */
+
+body.chakra-ui-light .ql-toolbar.ql-snow {
+  border-color: rgb(226, 232, 240); /* Gray/Gray-100 */
+}
+
+body.chakra-ui-dark .ql-toolbar.ql-snow {
+  border-color: rgba(255, 255, 255, 0.16); /* Gray/Gray-100 */
+}
+
+body.chakra-ui-light .ql-container.ql-snow {
+  border-color: rgb(226, 232, 240); /* Gray/Gray-100 */
+}
+
+body.chakra-ui-dark .ql-container.ql-snow {
+  border-color: rgba(255, 255, 255, 0.16); /* Gray/Gray-100 */
+}
+
+body.chakra-ui-light .ql-snow .ql-picker-label {
+  color: rgb(26, 32, 44) !important;
+}
+body.chakra-ui-dark .ql-snow .ql-picker-label {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+body.chakra-ui-light .ql-snow .ql-stroke {
+  stroke: rgb(26, 32, 44) !important;
+}
+body.chakra-ui-dark .ql-snow .ql-stroke {
+  stroke: rgba(255, 255, 255, 0.92) !important;
+}
+
+body.chakra-ui-light .ql-snow .ql-fill {
+  fill: rgb(26, 32, 44) !important;
+}
+body.chakra-ui-dark .ql-snow .ql-fill {
+  fill: rgba(255, 255, 255, 0.92) !important;
+}
+
+.ql-snow .ql-picker-label:hover {
+  color: var(--trazo-forest) !important;
+}
+
+.ql-snow .ql-stroke:hover {
+  stroke: var(--trazo-forest) !important;
+}
+
+.ql-snow .ql-fill:hover {
+  fill: var(--trazo-forest) !important;
+}
+
+.ql-container.ql-snow {
+  min-height: 88px !important;
+  border-bottom-left-radius: 15px !important;
+  border-bottom-right-radius: 15px !important;
+}

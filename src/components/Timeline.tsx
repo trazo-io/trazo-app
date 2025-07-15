@@ -231,7 +231,11 @@ export const Timeline: React.FC<TimelineProps> = ({ events, onEventClick }) => {
                   maxW="100%"
                   boxShadow="sm"
                   _hover={{ boxShadow: 'md' }}
-                  overflow="hidden"
+                  sx={{
+                    overflow: 'hidden',
+                    boxSizing: 'border-box',
+                    wordWrap: 'break-word'
+                  }}
                 >
                   <Flex justify="space-between" align="flex-start" mb={2} gap={2}>
                     <HStack flex="1" minW="0">

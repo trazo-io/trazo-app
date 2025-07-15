@@ -15,7 +15,7 @@
 
 */
 
-// Import essential CSS files for Trazo brand styling
+// Import minimal essential CSS
 import 'assets/css/trazo-colors.css';
 import 'assets/css/pud-dashboard-styles.css';
 
@@ -25,7 +25,6 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { CacheProvider } from '@emotion/react';
 import I18n from 'i18n/I18n';
 import { Provider } from 'react-redux';
-// import React from 'react'; // Not needed with new JSX transform
 import { createRoot } from 'react-dom/client';
 import { store } from './store';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';

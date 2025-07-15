@@ -148,6 +148,36 @@ export const globalStyles = {
           textDecoration: 'none',
           color: mode('green.600', 'green.200')(props)
         }
+      },
+      // Fix Chakra UI spacing and layout issues
+      '.chakra-stack': {
+        '& > *': {
+          margin: '0 !important'
+        }
+      },
+      '.chakra-stack[data-orientation="vertical"]': {
+        gap: 'var(--chakra-space-4)'
+      },
+      '.chakra-stack[data-orientation="horizontal"]': {
+        gap: 'var(--chakra-space-4)'
+      },
+      '.chakra-simple-grid': {
+        gap: 'var(--chakra-space-6)',
+        '& > *': {
+          margin: '0 !important'
+        }
+      },
+      '.chakra-flex': {
+        gap: 'var(--chakra-space-2)',
+        '& > *': {
+          margin: '0 !important'
+        }
+      },
+      '.chakra-grid': {
+        gap: 'var(--chakra-space-6)',
+        '& > *': {
+          margin: '0 !important'
+        }
       }
     })
   }
