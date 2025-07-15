@@ -13,6 +13,41 @@
 /* Import Trazo Color System */
 @import './trazo-colors.css';
 
+/* CRITICAL: Essential Card styling for production builds */
+.trazo-card,
+[data-component="Card"],
+[data-component="card"] {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  position: relative !important;
+  min-width: 0px !important;
+  word-wrap: break-word !important;
+  background-clip: border-box !important;
+  box-sizing: border-box !important;
+}
+
+/* Production event cards and establishment cards */
+.production-event-card,
+.establishment-card {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Establishment card selected state */
+.establishment-card.selected {
+  background-color: #2E7D32 !important;
+  color: white !important;
+  box-shadow: 0px 5px 10px rgba(46, 125, 50, 0.3) !important;
+}
+
 /* Essential layout fixes for sidebar positioning */
 @media screen and (min-width: 1280px) {
   .css-1lekzkb {

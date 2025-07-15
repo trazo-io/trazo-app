@@ -29,7 +29,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
   const { establishmentId } = useParams();
 
   return (
-    <Card p="16px">
+    <Card p="16px" className="trazo-card">
       <CardHeader p="12px 5px" mb="12px">
         <Flex justify={'space-between'} width={'100%'}>
           <Flex direction="column">

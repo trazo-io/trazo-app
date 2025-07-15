@@ -24,7 +24,7 @@ minify = true
   # Ensure all dependencies are installed including devDependencies
   NPM_FLAGS = "--legacy-peer-deps"
   # Force cache bust for CSS changes
-  VITE_CSS_CACHE_BUST = "20250115-v8-clean"
+  VITE_CSS_CACHE_BUST = "20250115-v9-fixed"
 
 [[redirects]]
   from = "/*"

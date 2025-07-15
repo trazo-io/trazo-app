@@ -38,13 +38,7 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars }: Carous
       p="16px" 
       w={{ sm: '290px', md: '300px' }} 
       minH="300px"
-      sx={{
-        bg: 'white',
-        boxShadow: '0px 3.5px 5.5px rgba(0, 0, 0, 0.02)',
-        borderRadius: '15px',
-        overflow: 'hidden',
-        boxSizing: 'border-box'
-      }}
+      className="trazo-card"
     >
       <Flex direction="column" h="100%">
         <Box

@@ -57,6 +57,7 @@ const CardWithImage = ({
       height={{ sm: '290.5px', lg: '290.5px' }} 
       p="0"
       overflow="hidden"
+      className="trazo-card"
       {...rest}
     >
       <Flex direction="row" h="100%" w="100%">
