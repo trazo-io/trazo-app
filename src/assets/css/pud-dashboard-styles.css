@@ -30,12 +30,79 @@
   --chakra-colors-gray-700: #2d3748;
 }
 
-/* Ensure cards have proper backgrounds */
+/* Ensure cards have proper backgrounds and styling */
 .css-bg,
 [role="group"]:not([role="listbox"]),
 .chakra-card,
 [data-theme] .chakra-card {
   background-color: var(--chakra-colors-white, white);
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+}
+
+/* Target specific establishment card components */
+[data-testid="establishment-card"],
+.establishment-card,
+.css-1gqj9o0,
+.css-1x7hccm {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Production event cards styling */
+.production-event-card,
+.css-1wv0n0i {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Force proper card styling for specific emotion classes identified as cards */
+.css-1gqj9o0,
+.css-1x7hccm,
+.css-1wv0n0i,
+.css-bg,
+.css-1fhw8vg,
+.css-1j5a6dt,
+.css-1cjbp7y,
+.css-1v7w5h0 {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  position: relative !important;
+  min-width: 0px !important;
+  word-wrap: break-word !important;
+  background-clip: border-box !important;
+}
+
+/* Specific production timeline cards and event cards */
+.production-timeline [class*="css-"],
+.production-events [class*="css-"],
+.production-overview [class*="css-"] {
+  background-color: white !important;
+  border-radius: 15px !important;
+  box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
+  padding: 22px !important;
+  margin-bottom: 1rem !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Ensure proper icon visibility */
+[class*="css-"] svg,
+[class*="css-"] .chakra-icon {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
 }
 
 /* General Styles */
