@@ -25,6 +25,8 @@ const Shimmer = ({ width = '100%', height = '100%', borderRadius = '15px' }: Shi
       background="linear-gradient(to right, #e0e0e0 0%, #f5f5f5 20%, #e0e0e0 40%, #e0e0e0 100%)"
       backgroundSize="1000px 100%"
       animation={`${shimmer} 1.5s ease-in-out infinite`}
+      className="trazo-shimmer"
+      data-component="Shimmer"
     />
   );
 };

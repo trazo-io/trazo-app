@@ -14,6 +14,8 @@ function MainPanel(props: MainPanelProps) {
   return (
     <Box
       __css={styles}
+      data-component="MainPanel"
+      className="trazo-main-panel"
       w={w}
       minH="100vh"
       transition="all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)"

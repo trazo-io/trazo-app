@@ -28,7 +28,12 @@ function PanelContent(props: PanelContentProps) {
   const styles = useStyleConfig('PanelContent', { variant });
 
   return (
-    <Box __css={styles} {...rest}>
+    <Box 
+      __css={styles} 
+      data-component="PanelContent"
+      className="trazo-panel-content"
+      {...rest}
+    >
       {children}
     </Box>
   );

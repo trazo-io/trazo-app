@@ -203,6 +203,7 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
           thickness="8px"
           animate={{ rotate: [0, 360] }}
           transition={{ duration: 2, ease: 'easeInOut' }}
+          className="trazo-carbon-progress"
         >
           <CircularProgressLabel fontSize="lg" fontWeight="bold">
             {score}
@@ -314,6 +315,7 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
         transition={{ duration: 0.3 }}
         cursor="pointer"
         onClick={onOpen}
+        className="trazo-carbon-card"
       >
         <VStack spacing={spacing}>
           <Flex direction="column" align="center">
@@ -340,6 +342,7 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
                   ]
                 }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className="trazo-carbon-progress-full"
               >
                 <CircularProgressLabel fontSize="3xl" fontWeight="bold">
                   {score}

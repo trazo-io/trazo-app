@@ -80,6 +80,78 @@
   background-clip: border-box !important;
 }
 
+/* Card components styling */
+.trazo-card-header,
+[data-component="CardHeader"] {
+  background-color: white !important;
+  border-radius: 15px 15px 0 0 !important;
+  padding: 22px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.trazo-card-body,
+[data-component="CardBody"] {
+  background-color: white !important;
+  padding: 22px !important;
+  flex: 1 !important;
+}
+
+.trazo-card-footer,
+[data-component="CardFooter"] {
+  background-color: white !important;
+  border-radius: 0 0 15px 15px !important;
+  padding: 22px !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+/* Layout components styling */
+.trazo-main-panel,
+[data-component="MainPanel"] {
+  background-color: #f8f9fa !important;
+  min-height: 100vh !important;
+  transition: all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1) !important;
+  position: relative !important;
+}
+
+.trazo-panel-content,
+[data-component="PanelContent"] {
+  width: 100% !important;
+  position: relative !important;
+  min-height: 100vh !important;
+}
+
+.trazo-panel-container,
+[data-component="PanelContainer"] {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+/* Establishment card styling */
+.establishment-card.selected {
+  background-color: #059669 !important;
+  color: white !important;
+  box-shadow: 0px 5px 10px rgba(5, 150, 105, 0.3) !important;
+}
+
+/* Animation components styling */
+.trazo-carbon-progress,
+.trazo-carbon-progress-full,
+.trazo-carbon-card {
+  animation-fill-mode: both !important;
+  backface-visibility: hidden !important;
+  transform: translateZ(0) !important;
+}
+
+.trazo-shimmer,
+[data-component="Shimmer"] {
+  animation-fill-mode: both !important;
+  backface-visibility: hidden !important;
+  transform: translateZ(0) !important;
+  will-change: background-position !important;
+}
+
 /* Specific production timeline cards and event cards */
 .production-timeline [class*="css-"],
 .production-events [class*="css-"],

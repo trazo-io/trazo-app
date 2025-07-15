@@ -300,10 +300,11 @@ export default function DashboardView() {
                       <Card
                         p={{ base: 3, md: 4 }}
                         cursor="pointer"
-                        bg={prop.id === establishment?.id ? 'green.500' : cardBg}
+                        bg={prop.id === establishment?.id ? 'green.600' : cardBg}
                         h={{ base: '80px', md: '90px' }}
                         minH={{ base: '80px', md: '90px' }}
                         maxH={{ base: '80px', md: '90px' }}
+                        className={`trazo-card establishment-card ${prop.id === establishment?.id ? 'selected' : ''}`}
                         _hover={{
                           transform: 'translateY(-2px)',
                           boxShadow: 'lg',
@@ -332,7 +333,7 @@ export default function DashboardView() {
                             </Text>
                             <Text
                               fontSize={{ base: 'xs', md: 'sm' }}
-                              color={prop.id === establishment?.id ? 'white' : 'gray.500'}
+                              color={prop.id === establishment?.id ? 'green.50' : 'gray.500'}
                               noOfLines={1}
                               title={`${prop.city || prop.zone || ''}, ${prop.state}`}>
                               {`${prop.city || prop.zone || ''}, ${prop.state}`}

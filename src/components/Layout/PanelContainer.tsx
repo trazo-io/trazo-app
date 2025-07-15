@@ -11,7 +11,12 @@ function PanelContainer(props: PanelContainerProps) {
   const styles = useStyleConfig('PanelContainer', { variant });
 
   return (
-    <Box __css={styles} {...rest}>
+    <Box 
+      __css={styles} 
+      data-component="PanelContainer"
+      className="trazo-panel-container"
+      {...rest}
+    >
       {children}
     </Box>
   );
