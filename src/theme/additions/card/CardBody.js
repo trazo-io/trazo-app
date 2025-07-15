@@ -20,11 +20,14 @@ const CardBody = {
     display: 'flex',
     width: '100%',
     backgroundColor: 'transparent'
-  }
+  },
+  sizes: {},
+  variants: {},
+  defaultProps: {},
 };
 
 export const CardBodyComponent = {
   components: {
-    CardBody
-  }
+    CardBody,
+  },
 };

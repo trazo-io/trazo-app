@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   Flex,
   FormControl,
   FormLabel,
@@ -33,6 +30,9 @@ import {
 import { DownloadIcon } from '@chakra-ui/icons';
 import { useGetCarbonReportsQuery, useGenerateCarbonReportMutation } from 'store/api/companyApi';
 import { useForm } from 'react-hook-form';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 const CarbonReportTab = ({ establishmentId }) => {
   const toast = useToast();
@@ -124,8 +124,7 @@ const CarbonReportTab = ({ establishmentId }) => {
             <Select
               w="200px"
               value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-            >
+              onChange={(e) => setSelectedYear(Number(e.target.value))}>
               {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
                 <option key={year} value={year}>
                   {year}
@@ -171,8 +170,7 @@ const CarbonReportTab = ({ establishmentId }) => {
                           variant="solid"
                           size="sm"
                           leftIcon={<DownloadIcon />}
-                          onClick={() => window.open(report.document, '_blank')}
-                        >
+                          onClick={() => window.open(report.document, '_blank')}>
                           Ver
                         </Button>
                       ) : (
@@ -250,8 +248,7 @@ const CarbonReportTab = ({ establishmentId }) => {
                   type="submit"
                   colorScheme="blue"
                   isLoading={generatingReport}
-                  loadingText="Generando..."
-                >
+                  loadingText="Generando...">
                   Generar Reporte
                 </Button>
               </Stack>

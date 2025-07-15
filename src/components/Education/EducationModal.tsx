@@ -26,8 +26,6 @@ import {
   Alert,
   AlertIcon,
   SimpleGrid,
-  Card,
-  CardBody,
   Flex,
   Link,
   Image,
@@ -54,6 +52,8 @@ import {
   FiSearch
 } from 'react-icons/fi';
 import { useGetEducationContentQuery, EducationContent } from '../../store/api/carbonApi';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 export type EducationTopic =
   | 'usda-methodology'
@@ -234,8 +234,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
                 borderColor={borderColor}
                 cursor="pointer"
                 _hover={{ borderColor: accentColor, transform: 'translateY(-1px)' }}
-                transition="all 0.2s"
-              >
+                transition="all 0.2s">
                 <CardBody p={3}>
                   <HStack>
                     <Icon as={IconComponent} color={accentColor} />

@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   SimpleGrid,
-  Card,
-  CardBody,
   VStack,
   Icon,
   Text,
   useColorModeValue
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 const EventTypeSelector = ({
   eventTypes,

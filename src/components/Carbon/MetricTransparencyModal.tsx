@@ -23,8 +23,6 @@ import {
   ListItem,
   ListIcon,
   Divider,
-  Card,
-  CardBody,
   Button,
   Link,
   useColorModeValue,
@@ -54,6 +52,8 @@ import {
   FaRocket,
   FaTrophy
 } from 'react-icons/fa';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 export interface MetricData {
   carbonScore: number;
@@ -627,8 +627,7 @@ const MetricTransparencyModal: React.FC<MetricTransparencyModalProps> = ({
                                   : config.color === yellowColor
                                   ? 'orange'
                                   : 'red'
-                              }
-                            >
+                              }>
                               {config.overview.status}
                             </Badge>
                           </StatHelpText>
@@ -653,8 +652,7 @@ const MetricTransparencyModal: React.FC<MetricTransparencyModalProps> = ({
                             ) : (
                               <Badge
                                 size="lg"
-                                colorScheme={config.color === greenColor ? 'green' : 'orange'}
-                              >
+                                colorScheme={config.color === greenColor ? 'green' : 'orange'}>
                                 {config.overview.currentValue}
                               </Badge>
                             )}
@@ -728,8 +726,7 @@ const MetricTransparencyModal: React.FC<MetricTransparencyModalProps> = ({
                           bg={useColorModeValue('gray.50', 'gray.700')}
                           p={3}
                           borderRadius="md"
-                          color={textColor}
-                        >
+                          color={textColor}>
                           {config.calculation.formula}
                         </Text>
                       </CardBody>
@@ -899,8 +896,7 @@ const MetricTransparencyModal: React.FC<MetricTransparencyModalProps> = ({
                           ? config.overview.currentValue
                           : 100,
                         config.benchmarks.excellent
-                      )}
-                    >
+                      )}>
                       <CardBody>
                         <VStack spacing={3}>
                           <Icon as={FaTrophy} color={greenColor} boxSize={8} />
@@ -927,8 +923,7 @@ const MetricTransparencyModal: React.FC<MetricTransparencyModalProps> = ({
                           ? config.overview.currentValue
                           : 50,
                         config.benchmarks.good
-                      )}
-                    >
+                      )}>
                       <CardBody>
                         <VStack spacing={3}>
                           <Icon as={FaCheckCircle} color={yellowColor} boxSize={8} />
@@ -988,8 +983,7 @@ const MetricTransparencyModal: React.FC<MetricTransparencyModalProps> = ({
                       <Link
                         href="https://www.epa.gov/ghgemissions/inventory-us-greenhouse-gas-emissions-and-sinks"
                         isExternal
-                        color={greenColor}
-                      >
+                        color={greenColor}>
                         <HStack>
                           <Icon as={FaExternalLinkAlt} />
                           <Text>EPA Greenhouse Gas Inventory</Text>

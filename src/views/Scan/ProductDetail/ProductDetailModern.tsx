@@ -9,15 +9,15 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
-  Card,
-  CardHeader,
-  CardBody,
   HStack,
   Circle,
   Icon,
   Heading,
   Text
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardHeader from 'components/Card/CardHeader';
+import CardBody from 'components/Card/CardBody';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';

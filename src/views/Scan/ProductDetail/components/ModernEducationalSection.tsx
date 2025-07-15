@@ -1,8 +1,5 @@
 import React from 'react';
 import {
-  Card,
-  CardHeader,
-  CardBody,
   HStack,
   VStack,
   Circle,
@@ -16,6 +13,9 @@ import {
 import { FaBookOpen, FaLeaf, FaSeedling } from 'react-icons/fa';
 import { MdVerified, MdScience } from 'react-icons/md';
 import { BsShieldCheck } from 'react-icons/bs';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 interface ModernEducationalSectionProps {
   onEducationOpen: (topic: string) => void;
@@ -57,8 +57,7 @@ export const ModernEducationalSection: React.FC<ModernEducationalSectionProps> =
             borderRadius="lg"
             border="1px solid"
             borderColor={borderColor}
-            _hover={{ bg: 'green.50', borderColor: 'green.200' }}
-          >
+            _hover={{ bg: 'green.50', borderColor: 'green.200' }}>
             <VStack align="start" spacing={2} w="full">
               <HStack>
                 <Icon as={FaLeaf} color="green.500" />
@@ -79,8 +78,7 @@ export const ModernEducationalSection: React.FC<ModernEducationalSectionProps> =
             borderRadius="lg"
             border="1px solid"
             borderColor={borderColor}
-            _hover={{ bg: 'blue.50', borderColor: 'blue.200' }}
-          >
+            _hover={{ bg: 'blue.50', borderColor: 'blue.200' }}>
             <VStack align="start" spacing={2} w="full">
               <HStack>
                 <Icon as={MdVerified} color="blue.500" />
@@ -101,8 +99,7 @@ export const ModernEducationalSection: React.FC<ModernEducationalSectionProps> =
             borderRadius="lg"
             border="1px solid"
             borderColor={borderColor}
-            _hover={{ bg: 'purple.50', borderColor: 'purple.200' }}
-          >
+            _hover={{ bg: 'purple.50', borderColor: 'purple.200' }}>
             <VStack align="start" spacing={2} w="full">
               <HStack>
                 <Icon as={BsShieldCheck} color="purple.500" />
@@ -123,8 +120,7 @@ export const ModernEducationalSection: React.FC<ModernEducationalSectionProps> =
             borderRadius="lg"
             border="1px solid"
             borderColor={borderColor}
-            _hover={{ bg: 'orange.50', borderColor: 'orange.200' }}
-          >
+            _hover={{ bg: 'orange.50', borderColor: 'orange.200' }}>
             <VStack align="start" spacing={2} w="full">
               <HStack>
                 <Icon as={FaSeedling} color="orange.500" />

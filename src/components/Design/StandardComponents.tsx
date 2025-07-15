@@ -1,9 +1,6 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardBody,
-  CardHeader,
   Container,
   VStack,
   HStack,
@@ -50,6 +47,9 @@ import {
 import { MdCheck, MdError, MdInfo, MdWarning } from 'react-icons/md';
 import { IconType } from 'react-icons';
 import { useDropzone } from 'react-dropzone';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 // Core Layout Components
 
@@ -100,15 +100,13 @@ export const StandardPage = ({
                   align="center"
                   gap={4}
                   w="full"
-                  justify={showBackButton ? 'space-between' : 'center'}
-                >
+                  justify={showBackButton ? 'space-between' : 'center'}>
                   {showBackButton && (
                     <Button
                       variant="outline"
                       leftIcon={<FaChevronLeft />}
                       onClick={onBack}
-                      size="sm"
-                    >
+                      size="sm">
                       Back
                     </Button>
                   )}
@@ -120,8 +118,7 @@ export const StandardPage = ({
                       color="green.600"
                       fontWeight="bold"
                       textAlign="center"
-                      letterSpacing="-0.02em"
-                    >
+                      letterSpacing="-0.02em">
                       {title}
                     </Heading>
                     {description && (
@@ -131,8 +128,7 @@ export const StandardPage = ({
                         fontWeight="normal"
                         maxW="70%"
                         lineHeight="1.7"
-                        textAlign="center"
-                      >
+                        textAlign="center">
                         {description}
                       </Text>
                     )}
@@ -261,8 +257,7 @@ export const StandardStepper = ({
           minW="100%"
           maxW={manySteps ? 'none' : '800px'}
           mx="auto"
-          px={manySteps ? 4 : 0}
-        >
+          px={manySteps ? 4 : 0}>
           {steps.map((step, index) => (
             <React.Fragment key={index}>
               <VStack
@@ -273,8 +268,7 @@ export const StandardStepper = ({
                 cursor={allowStepClick ? 'pointer' : 'default'}
                 onClick={() => allowStepClick && onStepClick?.(index)}
                 _hover={allowStepClick ? { opacity: 0.8 } : {}}
-                transition="all 0.3s ease"
-              >
+                transition="all 0.3s ease">
                 <Circle
                   size={circleSize}
                   bg={
@@ -288,8 +282,7 @@ export const StandardStepper = ({
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="bold"
                   boxShadow={index === currentStep ? 'lg' : 'md'}
-                  transition="all 0.3s"
-                >
+                  transition="all 0.3s">
                   {completedSteps.includes(index) || index < currentStep ? (
                     <Icon as={step.icon || FaCheckCircle} boxSize={iconSize} />
                   ) : (
@@ -304,8 +297,7 @@ export const StandardStepper = ({
                     textAlign="center"
                     lineHeight="1.2"
                     noOfLines={2}
-                    maxW={manySteps ? '70px' : 'auto'}
-                  >
+                    maxW={manySteps ? '70px' : 'auto'}>
                     {step.title}
                   </Text>
                   {step.description && !manySteps && (
@@ -314,8 +306,7 @@ export const StandardStepper = ({
                       color="gray.500"
                       textAlign="center"
                       display={{ base: 'none', md: 'block' }}
-                      lineHeight="1.2"
-                    >
+                      lineHeight="1.2">
                       {step.description}
                     </Text>
                   )}
@@ -399,15 +390,13 @@ export const StandardSelectionGrid = ({
                 }
               : {}
           }
-          onClick={() => !disabled && onSelect(option.id)}
-        >
+          onClick={() => !disabled && onSelect(option.id)}>
           <VStack spacing={3} justify="center" height="100%">
             {option.icon && (
               <Circle
                 size="50px"
                 bg={`${option.color || 'green'}.100`}
-                color={`${option.color || 'green'}.600`}
-              >
+                color={`${option.color || 'green'}.600`}>
                 <Icon as={option.icon} boxSize={iconSize} />
               </Circle>
             )}
@@ -422,8 +411,7 @@ export const StandardSelectionGrid = ({
                   color="gray.600"
                   textAlign="center"
                   noOfLines={2}
-                  display={{ base: 'none', md: 'block' }}
-                >
+                  display={{ base: 'none', md: 'block' }}>
                   {option.description}
                 </Text>
               )}
@@ -484,8 +472,7 @@ export const StandardForm = ({
               isLoading={isLoading}
               loadingText="Saving..."
               size="lg"
-              px={8}
-            >
+              px={8}>
               {submitText}
             </Button>
           </HStack>
@@ -647,8 +634,7 @@ export const StandardButton = ({
         transform: 'translateY(-1px)'
       }}
       transition="all 0.2s ease"
-      {...rest}
-    >
+      {...rest}>
       {children}
     </Button>
   );
@@ -677,8 +663,7 @@ export const StandardAlert = ({ status, title, description, children }: Standard
       variant="left-accent"
       bg={`${status}.50`}
       borderLeft="4px solid"
-      borderLeftColor={`${status}.500`}
-    >
+      borderLeftColor={`${status}.500`}>
       <AlertIcon as={icons[status]} />
       <VStack align="start" spacing={1}>
         {title && (
@@ -791,8 +776,7 @@ export const ConsumerTooltip = ({
       fontSize="xs"
       hasArrow
       closeOnClick={false}
-      openDelay={300}
-    >
+      openDelay={300}>
       {children}
     </Tooltip>
   );
@@ -996,8 +980,7 @@ export const StandardMediaUpload = ({
             boxShadow="md"
             border="1px solid"
             borderColor="gray.200"
-            position="relative"
-          >
+            position="relative">
             <Image
               src={objectUrl}
               alt={file.name}
@@ -1043,8 +1026,7 @@ export const StandardMediaUpload = ({
         borderColor={borderColor}
         borderRadius="lg"
         bg="gray.50"
-        position="relative"
-      >
+        position="relative">
         <Icon as={FaCheckCircle} boxSize={6} color="green.500" mb={2} />
         <Text fontSize="xs" color={textColor} noOfLines={1} fontWeight="medium">
           {file.name}
@@ -1080,8 +1062,7 @@ export const StandardMediaUpload = ({
           boxShadow="md"
           border="2px solid"
           borderColor={successColor}
-          position="relative"
-        >
+          position="relative">
           <Image
             src={url}
             alt={`Uploaded image ${index + 1}`}
@@ -1098,8 +1079,7 @@ export const StandardMediaUpload = ({
             bg={successColor}
             color="white"
             borderRadius="full"
-            p={1}
-          >
+            p={1}>
             <Icon as={FaCheckCircle} boxSize={3} />
           </Box>
 
@@ -1194,8 +1174,7 @@ export const StandardMediaUpload = ({
                 : 'repeat(auto-fill, minmax(140px, 1fr))'
             }
             gap={3}
-            w="100%"
-          >
+            w="100%">
             {uploadedFiles.map((url, index) => renderUploadedImage(url, index))}
           </Grid>
         </Box>
@@ -1222,8 +1201,7 @@ export const StandardMediaUpload = ({
           boxShadow: disabled || isUploading ? 'none' : 'md'
         }}
         opacity={disabled ? 0.6 : 1}
-        {...getRootProps()}
-      >
+        {...getRootProps()}>
         <input {...getInputProps()} style={{ display: 'none' }} />
 
         {acceptedFiles.length > 0 ? (
@@ -1232,8 +1210,7 @@ export const StandardMediaUpload = ({
               <Circle
                 size="40px"
                 bg={isUploading ? 'blue.100' : 'green.100'}
-                color={isUploading ? 'blue.600' : 'green.600'}
-              >
+                color={isUploading ? 'blue.600' : 'green.600'}>
                 {isUploading ? <Spinner size="sm" /> : <Icon as={FaCheckCircle} boxSize={5} />}
               </Circle>
               <VStack spacing={0} align="start">
@@ -1258,8 +1235,7 @@ export const StandardMediaUpload = ({
                 gap={3}
                 w="100%"
                 maxW="500px"
-                mx="auto"
-              >
+                mx="auto">
                 {acceptedFiles
                   .slice(0, 3)
                   .map((file, index) => renderFilePreview(file, index, true))}
@@ -1270,8 +1246,7 @@ export const StandardMediaUpload = ({
                     borderRadius="lg"
                     bg="gray.100"
                     border="1px dashed"
-                    borderColor="gray.300"
-                  >
+                    borderColor="gray.300">
                     <Text fontSize="sm" color="gray.600" fontWeight="medium">
                       +{acceptedFiles.length - 3} more
                     </Text>
@@ -1290,8 +1265,7 @@ export const StandardMediaUpload = ({
                 fontSize={variantStyles.textSize}
                 color="gray.600"
                 fontWeight="semibold"
-                textAlign="center"
-              >
+                textAlign="center">
                 {placeholder || 'Drag & drop images here, or click to select'}
               </Text>
               <Text fontSize="sm" color="gray.500" textAlign="center">

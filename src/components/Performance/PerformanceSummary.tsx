@@ -7,8 +7,6 @@ import {
   Badge,
   Progress,
   Icon,
-  Card,
-  CardBody,
   SimpleGrid,
   Heading,
   Stat,
@@ -24,6 +22,8 @@ import {
   AlertTitle,
   AlertDescription
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 import {
   FaStopwatch,
   FaMobile,

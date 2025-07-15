@@ -1,5 +1,6 @@
 import React from 'react';
-import { CardHeader, VStack, HStack, Badge, Heading, Text, Icon } from '@chakra-ui/react';
+import { VStack, HStack, Badge, Heading, Text, Icon } from '@chakra-ui/react';
+import CardHeader from 'components/Card/CardHeader';
 import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
 import { MdVerified, MdLocationOn } from 'react-icons/md';
 import { FaLeaf } from 'react-icons/fa';

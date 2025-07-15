@@ -16,8 +16,6 @@ import {
   Icon,
   Progress,
   SimpleGrid,
-  Card,
-  CardBody,
   Flex,
   useColorModeValue,
   Heading,
@@ -43,6 +41,8 @@ import {
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import confetti from 'canvas-confetti';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 // Animation keyframes
 const pulse = keyframes`
@@ -203,8 +203,7 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
           transform: achievement.isUnlocked ? 'translateY(-2px)' : 'none',
           boxShadow: achievement.isUnlocked ? 'lg' : 'none'
         }}
-        animation={isNew ? `${pulse} 2s infinite` : undefined}
-      >
+        animation={isNew ? `${pulse} 2s infinite` : undefined}>
         {isNew && (
           <Box
             position="absolute"
@@ -217,8 +216,7 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
             py={1}
             borderRadius="full"
             fontWeight="bold"
-            animation={`${sparkle} 1.5s infinite`}
-          >
+            animation={`${sparkle} 1.5s infinite`}>
             NEW!
           </Box>
         )}
@@ -288,8 +286,7 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
                 colorScheme={rarityColor}
                 variant="outline"
                 leftIcon={<Icon as={FaShare} />}
-                onClick={() => onShare(achievement)}
-              >
+                onClick={() => onShare(achievement)}>
                 Share
               </Button>
             )}
@@ -303,8 +300,7 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
     <Card
       bg={milestone.isCompleted ? 'green.50' : cardBg}
       borderWidth="1px"
-      borderColor={borderColor}
-    >
+      borderColor={borderColor}>
       <CardBody p={4}>
         <VStack spacing={3}>
           <HStack spacing={3} w="100%">
@@ -403,8 +399,7 @@ export const AchievementModal: React.FC<AchievementModalProps> = ({
                 borderBottom={activeTab === tab.key ? '2px solid' : 'none'}
                 borderColor="green.500"
                 leftIcon={<Icon as={tab.icon} />}
-                onClick={() => setActiveTab(tab.key as any)}
-              >
+                onClick={() => setActiveTab(tab.key as any)}>
                 {tab.label}
               </Button>
             ))}

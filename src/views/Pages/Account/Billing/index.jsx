@@ -28,9 +28,6 @@ import {
   NumberInputStepper,
   NumberIncrementStepper,
   NumberDecrementStepper,
-  Card,
-  CardHeader,
-  CardBody,
   Stack
 } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
@@ -52,6 +49,9 @@ import SubscriptionCard from './components/SubscriptionCard';
 import PaymentMethod from './components/PaymentMethod';
 import Invoices from './components/Invoices';
 import { MastercardIcon, VisaIcon, PayPalIcon } from 'components/Icons/Icons';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import {
   FaWallet,
   FaPlus,
@@ -600,8 +600,7 @@ function Billing() {
           colorScheme="blue"
           variant="outline"
           isLoading={isDashboardLoading}
-          onClick={() => refetchDashboard()}
-        >
+          onClick={() => refetchDashboard()}>
           {intl.formatMessage({ id: 'app.refresh' })}
         </Button>
       </Flex>
@@ -630,7 +629,10 @@ function Billing() {
           <Text mb={6} maxW="lg" mx="auto">
             {intl.formatMessage({ id: 'app.noSubscriptionDescription' })}
           </Text>
-          <Button colorScheme="green" size="lg" onClick={() => navigate('/admin/dashboard/pricing')}>
+          <Button
+            colorScheme="green"
+            size="lg"
+            onClick={() => navigate('/admin/dashboard/pricing')}>
             {intl.formatMessage({ id: 'app.viewPlans' })}
           </Button>
         </Box>
@@ -644,8 +646,7 @@ function Billing() {
               borderLeftColor="green.500"
               overflow="hidden"
               position="relative"
-              mb={6}
-            >
+              mb={6}>
               {/* Progress bar for trial */}
               <Box
                 position="absolute"
@@ -732,8 +733,7 @@ function Billing() {
                           : 'gray'
                       }
                       py={1}
-                      px={2}
-                    >
+                      px={2}>
                       {subscription?.status
                         ? subscription.status.charAt(0).toUpperCase() + subscription.status.slice(1)
                         : 'Unknown'}
@@ -795,8 +795,7 @@ function Billing() {
                         colorScheme="blue"
                         size="sm"
                         onClick={handleReactivateSubscription}
-                        width="full"
-                      >
+                        width="full">
                         {intl.formatMessage({ id: 'app.reactivateSubscription' })}
                       </Button>
                     </Box>
@@ -808,8 +807,7 @@ function Billing() {
                       <Button
                         colorScheme="blue"
                         size="sm"
-                        onClick={() => navigate('/admin/dashboard/pricing')}
-                      >
+                        onClick={() => navigate('/admin/dashboard/pricing')}>
                         {intl.formatMessage({ id: 'app.changePlan' })}
                       </Button>
                     </Flex>
@@ -887,8 +885,7 @@ function Billing() {
                       leftIcon={<FaPlus />}
                       colorScheme="blue"
                       isLoading={isCreatingCheckoutSession}
-                      onClick={handleAddPaymentMethod}
-                    >
+                      onClick={handleAddPaymentMethod}>
                       {intl.formatMessage({ id: 'app.addPaymentMethod' }) ||
                         'Añadir Método de Pago'}
                     </Button>
@@ -907,8 +904,7 @@ function Billing() {
                           bg="white"
                           justify="space-between"
                           align="center"
-                          _hover={{ boxShadow: 'sm' }}
-                        >
+                          _hover={{ boxShadow: 'sm' }}>
                           <Flex align="center">
                             <Box
                               w="40px"
@@ -918,8 +914,7 @@ function Billing() {
                               display="flex"
                               alignItems="center"
                               justifyContent="center"
-                              mr={3}
-                            >
+                              mr={3}>
                               {method.card_brand === 'visa' ? (
                                 <VisaIcon w="70%" h="70%" />
                               ) : method.card_brand === 'mastercard' ? (
@@ -956,8 +951,7 @@ function Billing() {
                                 colorScheme="blue"
                                 mr={1}
                                 isDisabled={!subscription}
-                                onClick={() => handleSetDefaultPaymentMethod(method.id)}
-                              >
+                                onClick={() => handleSetDefaultPaymentMethod(method.id)}>
                                 {intl.formatMessage({ id: 'app.setDefault' }) || 'Set Default'}
                               </Button>
                             )}
@@ -966,8 +960,7 @@ function Billing() {
                               variant="ghost"
                               colorScheme="red"
                               isDisabled={method.is_default || !subscription}
-                              onClick={() => handleSetDefaultPaymentMethod(method.id)}
-                            >
+                              onClick={() => handleSetDefaultPaymentMethod(method.id)}>
                               {intl.formatMessage({ id: 'app.remove' }) || 'Remove'}
                             </Button>
                           </Flex>
@@ -989,8 +982,7 @@ function Billing() {
                         colorScheme="blue"
                         leftIcon={<FaPlus />}
                         isLoading={isCreatingCheckoutSession}
-                        onClick={handleAddPaymentMethod}
-                      >
+                        onClick={handleAddPaymentMethod}>
                         {intl.formatMessage({ id: 'app.addPaymentMethod' }) ||
                           'Añadir Método de Pago'}
                       </Button>
@@ -1036,8 +1028,7 @@ function Billing() {
                                 borderRadius="md"
                                 boxShadow="sm"
                                 _hover={{ boxShadow: 'md' }}
-                                bg="white"
-                              >
+                                bg="white">
                                 <Flex justify="space-between" align="center" mb={2}>
                                   <Flex align="center">
                                     <Box mr={2}>
@@ -1085,8 +1076,7 @@ function Billing() {
                                 borderRadius="md"
                                 boxShadow="sm"
                                 _hover={{ boxShadow: 'md' }}
-                                bg="white"
-                              >
+                                bg="white">
                                 <Flex justify="space-between" align="center" mb={2}>
                                   <Flex align="center">
                                     <Box mr={2}>
@@ -1134,8 +1124,7 @@ function Billing() {
                         borderRadius="md"
                         borderWidth="1px"
                         borderColor="gray.200"
-                        bg="gray.50"
-                      >
+                        bg="gray.50">
                         <Text color="gray.500" textAlign="center">
                           {intl.formatMessage({ id: 'app.noAddonsYet' }) ||
                             'No tienes complementos activos'}
@@ -1162,8 +1151,7 @@ function Billing() {
                             boxShadow="sm"
                             _hover={{ boxShadow: 'md', borderColor: 'blue.300' }}
                             bg="white"
-                            transition="all 0.2s"
-                          >
+                            transition="all 0.2s">
                             <Flex justify="space-between" align="center" mb={3}>
                               <Flex align="center">
                                 <Box mr={2}>
@@ -1190,8 +1178,7 @@ function Billing() {
                                 width="85%"
                                 variant="outline"
                                 borderRadius="md"
-                                onClick={() => handleOpenAddonModal(addon)}
-                              >
+                                onClick={() => handleOpenAddonModal(addon)}>
                                 {intl.formatMessage({ id: 'app.addAddonCapacity' }) ||
                                   'app.addAddonCapacity'}
                               </Button>
@@ -1205,8 +1192,7 @@ function Billing() {
                         borderRadius="md"
                         borderWidth="1px"
                         borderColor="gray.200"
-                        bg="gray.50"
-                      >
+                        bg="gray.50">
                         <Text color="gray.500" textAlign="center">
                           {intl.formatMessage({ id: 'app.noAddonsAvailable' }) ||
                             'No hay complementos disponibles en este momento'}
@@ -1233,8 +1219,7 @@ function Billing() {
                           variant="link"
                           size="sm"
                           colorScheme="blue"
-                          onClick={() => navigate('/admin/dashboard/account/invoices')}
-                        >
+                          onClick={() => navigate('/admin/dashboard/account/invoices')}>
                           {intl.formatMessage({ id: 'app.viewAll' }) || 'Ver todo'}
                         </Button>
                       )}
@@ -1249,8 +1234,7 @@ function Billing() {
                           align="center"
                           py={2}
                           borderBottomWidth={index === invoices.slice(0, 4).length - 1 ? 0 : '1px'}
-                          borderBottomColor="gray.200"
-                        >
+                          borderBottomColor="gray.200">
                           <Text fontWeight="medium" fontSize="sm">
                             {invoice.invoice_id ||
                               `${new Date(invoice.invoice_date)
@@ -1267,8 +1251,7 @@ function Billing() {
                               variant="link"
                               colorScheme="blue"
                               onClick={() => window.open(invoice.invoice_pdf, '_blank')}
-                              isDisabled={!invoice.invoice_pdf}
-                            >
+                              isDisabled={!invoice.invoice_pdf}>
                               <Icon as={FaInfoCircle} />
                             </Button>
                           </Flex>
@@ -1292,8 +1275,7 @@ function Billing() {
                     <Badge
                       colorScheme={blockchainStatus?.blockchainSubscribed ? 'green' : 'gray'}
                       px={3}
-                      py={1}
-                    >
+                      py={1}>
                       {blockchainStatus?.blockchainSubscribed ? 'Active' : 'Inactive'}
                     </Badge>
                   </Flex>
@@ -1331,8 +1313,7 @@ function Billing() {
                       size="md"
                       isLoading={isSubscribingBlockchain}
                       onClick={handleSubscribeBlockchain}
-                      isDisabled={!hasSubscription}
-                    >
+                      isDisabled={!hasSubscription}>
                       Add Blockchain Verification
                     </Button>
                   ) : (
@@ -1341,8 +1322,7 @@ function Billing() {
                       bg="green.50"
                       borderRadius="md"
                       borderWidth="1px"
-                      borderColor="green.200"
-                    >
+                      borderColor="green.200">
                       <Text color="green.700" fontSize="sm">
                         ✅ Blockchain verification is active! Your carbon data is being
                         automatically verified and stored on the blockchain.
@@ -1411,8 +1391,7 @@ function Billing() {
                   min={1}
                   max={100}
                   onChange={(value) => setAddonQuantity(parseInt(value) || 1)}
-                  mb={4}
-                >
+                  mb={4}>
                   <NumberInputField />
                   <NumberInputStepper>
                     <NumberIncrementStepper />
@@ -1442,8 +1421,7 @@ function Billing() {
               colorScheme="blue"
               onClick={handleAddAddon}
               isLoading={isAddingAddon}
-              isDisabled={!selectedAddon}
-            >
+              isDisabled={!selectedAddon}>
               {intl.formatMessage({ id: 'app.addAddon' })}
             </Button>
           </ModalFooter>

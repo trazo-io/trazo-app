@@ -2,9 +2,6 @@
 import {
   Badge,
   Button,
-  Card,
-  CardHeader,
-  CardBody,
   Box,
   VStack,
   CircularProgress,
@@ -29,6 +26,9 @@ import { IoCheckmarkDoneCircleSharp } from 'react-icons/io5';
 
 import { useGetParcelHistoriesQuery } from 'store/api/historyApi';
 import CarbonDashboardTableRow from './CarbonDashboardTableRow';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 const HistoryCard = ({ title, amount, captions }) => {
   const intl = useIntl();
@@ -73,8 +73,7 @@ const HistoryCard = ({ title, amount, captions }) => {
       // Explicit background color for production builds
       style={{
         backgroundColor: cardBgColor === 'white' ? '#ffffff' : '#2D3748'
-      }}
-    >
+      }}>
       <CardHeader p="20px" pb="12px">
         <Flex direction="column" gap={4}>
           <Flex justify="space-between" align="center">
@@ -89,8 +88,7 @@ const HistoryCard = ({ title, amount, captions }) => {
                 px={3}
                 py={1}
                 fontSize="xs"
-                textTransform="none"
-              >
+                textTransform="none">
                 Carbon Tracked
               </Badge>
             </Flex>
@@ -104,8 +102,7 @@ const HistoryCard = ({ title, amount, captions }) => {
                   ? 'Complete current production before starting a new one'
                   : 'Start a new production cycle'
               }
-              placement="bottom-end"
-            >
+              placement="bottom-end">
               <Button
                 size="sm"
                 colorScheme="green"
@@ -122,8 +119,7 @@ const HistoryCard = ({ title, amount, captions }) => {
                   navigate(
                     `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
                   )
-                }
-              >
+                }>
                 New Production
               </Button>
             </Tooltip>
@@ -158,8 +154,7 @@ const HistoryCard = ({ title, amount, captions }) => {
             // Explicit background for production
             style={{
               backgroundColor: cardBgColor === 'white' ? '#ffffff' : '#2D3748'
-            }}
-          >
+            }}>
             {data && data.length > 0 ? (
               <Box overflowX="auto">
                 <Table variant="simple" size="md">
@@ -174,8 +169,7 @@ const HistoryCard = ({ title, amount, captions }) => {
                           textTransform="uppercase"
                           letterSpacing="wider"
                           py={4}
-                          display={index === 2 && hideTeamColumn ? 'none' : 'table-cell'}
-                        >
+                          display={index === 2 && hideTeamColumn ? 'none' : 'table-cell'}>
                           {caption}
                         </Th>
                       ))}
@@ -214,8 +208,7 @@ const HistoryCard = ({ title, amount, captions }) => {
                     navigate(
                       `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
                     )
-                  }
-                >
+                  }>
                   Start Production
                 </Button>
               </VStack>

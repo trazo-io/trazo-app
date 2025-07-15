@@ -3,9 +3,6 @@ import {
   Badge,
   Box,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   CircularProgress,
   Container,
   Flex,
@@ -102,6 +99,9 @@ import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
 
 // Import StandardComponents for modern design
 import { StandardCard, StandardButton } from 'components/Design/StandardComponents';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 // Add interface for Redux state
 interface RootState {
@@ -273,8 +273,7 @@ function ProfileProduction() {
                   p={4}
                   display="flex"
                   alignItems="center"
-                  justifyContent="center"
-                >
+                  justifyContent="center">
                   <Icon as={FaSeedling} boxSize={8} color="green.500" />
                 </Box>
                 <VStack spacing={2}>
@@ -344,8 +343,7 @@ function ProfileProduction() {
               px={4}
               py={2}
               borderRadius="full"
-              textTransform="none"
-            >
+              textTransform="none">
               <HStack spacing={2}>
                 <Icon as={FaSeedling} boxSize={4} />
                 <Text fontWeight="medium">
@@ -362,8 +360,7 @@ function ProfileProduction() {
                 color={titleColor}
                 fontWeight="bold"
                 textAlign="center"
-                letterSpacing="-0.02em"
-              >
+                letterSpacing="-0.02em">
                 {historyData?.product?.name || historyData?.name || 'Loading...'}
               </Heading>
               <Text
@@ -372,8 +369,7 @@ function ProfileProduction() {
                 fontWeight="normal"
                 maxW={{ base: '90%', sm: '70%', lg: '60%' }}
                 lineHeight="1.7"
-                textAlign="center"
-              >
+                textAlign="center">
                 {`${formatDate(historyData?.start_date)} - ${formatDate(historyData?.finish_date)}`}
               </Text>
             </VStack>
@@ -396,8 +392,7 @@ function ProfileProduction() {
                   transform: 'translateY(-2px)',
                   boxShadow: 'lg'
                 }}
-                transition="all 0.2s"
-              >
+                transition="all 0.2s">
                 View Production Public Page
               </Button>
 
@@ -414,8 +409,7 @@ function ProfileProduction() {
                   bg: 'green.50',
                   transform: 'translateY(-2px)'
                 }}
-                transition="all 0.2s"
-              >
+                transition="all 0.2s">
                 Download QR Code
               </Button>
             </HStack>
@@ -491,8 +485,7 @@ function ProfileProduction() {
           p={cardPadding}
           borderRadius="2xl"
           position="relative"
-          zIndex={10}
-        >
+          zIndex={10}>
           {/* Clean Minimalist Header */}
           <Box p={8} pb={6}>
             {/* Top Actions Row */}
@@ -503,8 +496,7 @@ function ProfileProduction() {
                 fontSize="sm"
                 px={3}
                 py={1}
-                borderRadius="full"
-              >
+                borderRadius="full">
                 <HStack spacing={2}>
                   <Icon as={FaSeedling} boxSize={3} />
                   <Text>Verification in progress</Text>
@@ -523,8 +515,7 @@ function ProfileProduction() {
                   <MenuItem
                     icon={<Icon as={FaEye} />}
                     onClick={handleViewPublicPage}
-                    fontWeight="medium"
-                  >
+                    fontWeight="medium">
                     View Public Page
                   </MenuItem>
                   <MenuItem
@@ -533,8 +524,7 @@ function ProfileProduction() {
                       navigate(
                         `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${productionId}/change`
                       )
-                    }
-                  >
+                    }>
                     Edit Production
                   </MenuItem>
                   <MenuItem icon={<Icon as={FaQrcode} />} onClick={downloadQRCode}>
@@ -554,8 +544,7 @@ function ProfileProduction() {
                 color="gray.900"
                 fontWeight="600"
                 letterSpacing="-0.025em"
-                lineHeight="1.2"
-              >
+                lineHeight="1.2">
                 {historyData?.product?.name || historyData?.name || 'Production'}
               </Heading>
 
@@ -642,8 +631,7 @@ function ProfileProduction() {
                         }
                         cursor="pointer"
                         _hover={{ textDecoration: 'underline' }}
-                        fontWeight="medium"
-                      >
+                        fontWeight="medium">
                         {historyData?.parcel?.establishment?.name || 'Unknown'}
                       </Link>
                     </Box>
@@ -660,8 +648,7 @@ function ProfileProduction() {
                         }
                         cursor="pointer"
                         _hover={{ textDecoration: 'underline' }}
-                        fontWeight="medium"
-                      >
+                        fontWeight="medium">
                         {historyData?.parcel?.name || 'Unknown'}
                       </Link>
                     </Box>
@@ -691,8 +678,7 @@ function ProfileProduction() {
                       justifyContent="center"
                       border="1px solid"
                       borderColor="gray.200"
-                      overflow="hidden"
-                    >
+                      overflow="hidden">
                       {historyData?.qr_code ? (
                         <Image
                           src={historyData.qr_code}
@@ -723,8 +709,7 @@ function ProfileProduction() {
                       leftIcon={<Icon as={FaDownload} />}
                       onClick={downloadQRCode}
                       isDisabled={!historyData?.qr_code && !historyData?.history_scan}
-                      w="full"
-                    >
+                      w="full">
                       {historyData?.qr_code ? 'Download' : 'Generate'}
                     </Button>
                   </VStack>
@@ -756,8 +741,7 @@ function ProfileProduction() {
                       colorScheme="green"
                       size="lg"
                       onClick={onQuickAddOpen}
-                      mt={4}
-                    >
+                      mt={4}>
                       🎤 Add Your First Event
                     </Button>
                   )}

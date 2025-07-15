@@ -15,20 +15,19 @@
 
 */
 
-import { Box, useStyleConfig } from '@chakra-ui/react';
+import { Box, useStyles } from '@chakra-ui/react';
 
 import { SystemProps } from '@chakra-ui/react';
-import { ThemingProps } from '@chakra-ui/system';
 
-interface CardBodyProps extends ThemingProps<'CardBody'>, SystemProps {
+interface CardBodyProps extends SystemProps {
   children?: React.ReactNode;
 }
 
 function CardBody(props: CardBodyProps) {
-  const { variant, children, ...rest } = props;
-  const styles = useStyleConfig('CardBody', { variant });
+  const { children, ...rest } = props;
+  const styles = useStyles();
   return (
-    <Box __css={styles} {...rest}>
+    <Box __css={styles.body} {...rest}>
       {children}
     </Box>
   );

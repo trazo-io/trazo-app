@@ -18,13 +18,13 @@ import {
   Spinner,
   Progress,
   Tooltip,
-  Card,
-  CardBody,
-  CardHeader,
   Heading,
   Flex,
   Divider
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import { FaLeaf, FaDollarSign, FaLightbulb, FaCheckCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 

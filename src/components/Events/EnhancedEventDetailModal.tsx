@@ -15,9 +15,6 @@ import {
   Icon,
   Divider,
   Progress,
-  Card,
-  CardBody,
-  CardHeader,
   Heading,
   Box,
   SimpleGrid,
@@ -32,6 +29,9 @@ import {
   AlertTitle,
   AlertDescription
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import {
   FaLeaf,
   FaDollarSign,

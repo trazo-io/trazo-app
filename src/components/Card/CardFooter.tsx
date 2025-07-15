@@ -15,20 +15,19 @@
 
 */
 
-import { Box, useStyleConfig } from '@chakra-ui/react';
+import { Box, useStyles } from '@chakra-ui/react';
 
 import { SystemProps } from '@chakra-ui/react';
-import { ThemingProps } from '@chakra-ui/system';
 
-interface CardFooterProps extends ThemingProps<'CardFooter'>, SystemProps {
+interface CardFooterProps extends SystemProps {
   children?: React.ReactNode;
 }
 
 function CardFooter(props: CardFooterProps) {
-  const { variant, children, ...rest } = props;
-  const styles = useStyleConfig('CardFooter', { variant });
+  const { children, ...rest } = props;
+  const styles = useStyles();
   return (
-    <Box __css={styles} {...rest}>
+    <Box __css={styles.footer} {...rest}>
       {children}
     </Box>
   );

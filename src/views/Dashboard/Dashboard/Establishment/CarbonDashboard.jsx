@@ -7,8 +7,6 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   useColorModeValue,
-  Card,
-  CardBody,
   Badge,
   Tooltip,
   Icon,
@@ -68,6 +66,8 @@ import {
   FaEye,
   FaDownload
 } from 'react-icons/fa';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 // Step 5: Progressive Loading Imports for Carbon Dashboard
 import { ProgressiveLoader, CarbonDashboardSkeleton } from 'components/Loading/ProgressiveLoader';
@@ -615,8 +615,7 @@ const CarbonDashboard = () => {
           align="center"
           gap="24px"
           paddingTop={12}
-          w="100%"
-        >
+          w="100%">
           <VStack align="start" spacing={1}>
             <Text color="gray.500" fontSize="md">
               Gestiona tu huella de carbono y optimiza costos operacionales
@@ -634,22 +633,19 @@ const CarbonDashboard = () => {
                 h="35px"
                 bg="#fff"
                 minW="155px"
-                fontSize="xs"
-              >
+                fontSize="xs">
                 {viewMode === 'establishment' ? 'ESTABLECIMIENTO' : 'PRODUCCIÓN'}
               </MenuButton>
               <MenuList>
                 <MenuItem
                   onClick={() => handleViewModeChange({ target: { value: 'establishment' } })}
-                  color="gray.500"
-                >
+                  color="gray.500">
                   Establecimiento
                 </MenuItem>
                 <MenuDivider />
                 <MenuItem
                   onClick={() => handleViewModeChange({ target: { value: 'production' } })}
-                  color="gray.500"
-                >
+                  color="gray.500">
                   Producción
                 </MenuItem>
               </MenuList>
@@ -665,8 +661,7 @@ const CarbonDashboard = () => {
                   bg="#fff"
                   minW="200px"
                   fontSize="xs"
-                  isDisabled={isProductionsLoading}
-                >
+                  isDisabled={isProductionsLoading}>
                   {(productionId &&
                     productions?.find((p) => p.id === parseInt(productionId))?.name) ||
                     'SELECCIONAR PRODUCCIÓN'}
@@ -674,8 +669,7 @@ const CarbonDashboard = () => {
                 <MenuList>
                   <MenuItem
                     onClick={() => handleProductionChange({ target: { value: '' } })}
-                    color="gray.500"
-                  >
+                    color="gray.500">
                     Seleccionar Producción
                   </MenuItem>
                   <MenuDivider />
@@ -683,8 +677,7 @@ const CarbonDashboard = () => {
                     <MenuItem
                       key={prod.id}
                       onClick={() => handleProductionChange({ target: { value: prod.id } })}
-                      color="gray.500"
-                    >
+                      color="gray.500">
                       {prod.name || `Producción ${prod.id}`}
                     </MenuItem>
                   ))}
@@ -702,8 +695,7 @@ const CarbonDashboard = () => {
           boxShadow="xl"
           borderRadius="xl"
           overflow="hidden"
-          position="relative"
-        >
+          position="relative">
           {/* Government Verification Header */}
           <Box bg="blue.50" borderBottom="1px solid" borderColor="blue.100" p={4}>
             <HStack spacing={3} justify="center" flexWrap="wrap">
@@ -714,8 +706,7 @@ const CarbonDashboard = () => {
                 py={2}
                 borderRadius="full"
                 fontSize="sm"
-                fontWeight="bold"
-              >
+                fontWeight="bold">
                 <HStack spacing={2}>
                   <Icon as={FaShieldAlt} />
                   <Text>🏛️ USDA VERIFIED</Text>
@@ -777,8 +768,7 @@ const CarbonDashboard = () => {
                           ? 'green.500'
                           : 'orange.500'
                       }
-                      mb={1}
-                    >
+                      mb={1}>
                       {benchmarkData.benchmark_comparison.performance_rating === 'excellent'
                         ? '↗'
                         : '→'}
@@ -796,8 +786,7 @@ const CarbonDashboard = () => {
                       px={2}
                       py={1}
                       borderRadius="full"
-                      mb={2}
-                    >
+                      mb={2}>
                       {benchmarkData.benchmark_comparison.performance_rating}
                     </Badge>
 
@@ -854,8 +843,7 @@ const CarbonDashboard = () => {
                     fontSize="sm"
                     px={3}
                     py={2}
-                    borderRadius="md"
-                  >
+                    borderRadius="md">
                     <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                   </Tooltip>
                 </HStack>
@@ -874,8 +862,7 @@ const CarbonDashboard = () => {
                       fontSize="4xl"
                       fontWeight="bold"
                       color={`${transparencyBadge.color}.500`}
-                      mb={1}
-                    >
+                      mb={1}>
                       {finalTransparencyScore}
                     </Text>
                     <Text fontSize="md" color="gray.600" mb={2}>
@@ -887,8 +874,7 @@ const CarbonDashboard = () => {
                       px={2}
                       py={1}
                       borderRadius="full"
-                      mb={2}
-                    >
+                      mb={2}>
                       {transparencyBadge.text}
                     </Badge>
 
@@ -929,8 +915,7 @@ const CarbonDashboard = () => {
                       fontSize="sm"
                       px={3}
                       py={2}
-                      borderRadius="md"
-                    >
+                      borderRadius="md">
                       <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                     </Tooltip>
                   </HStack>
@@ -948,8 +933,7 @@ const CarbonDashboard = () => {
                     }
                     variant="outline"
                     px={3}
-                    py={1}
-                  >
+                    py={1}>
                     {realUSDAData?.success
                       ? 'Live Data'
                       : showFallbackData
@@ -974,8 +958,7 @@ const CarbonDashboard = () => {
                       fontSize="sm"
                       px={3}
                       py={2}
-                      borderRadius="md"
-                    >
+                      borderRadius="md">
                       <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                     </Tooltip>
                   </HStack>
@@ -1014,8 +997,7 @@ const CarbonDashboard = () => {
                       fontSize="sm"
                       px={3}
                       py={2}
-                      borderRadius="md"
-                    >
+                      borderRadius="md">
                       <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                     </Tooltip>
                   </HStack>
@@ -1059,8 +1041,7 @@ const CarbonDashboard = () => {
                       fontSize="sm"
                       px={3}
                       py={2}
-                      borderRadius="md"
-                    >
+                      borderRadius="md">
                       <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                     </Tooltip>
                   </HStack>
@@ -1164,8 +1145,7 @@ const CarbonDashboard = () => {
                         fontSize="sm"
                         px={3}
                         py={2}
-                        borderRadius="md"
-                      >
+                        borderRadius="md">
                         <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                       </Tooltip>
                     </HStack>
@@ -1187,8 +1167,7 @@ const CarbonDashboard = () => {
                         fontSize="sm"
                         px={3}
                         py={2}
-                        borderRadius="md"
-                      >
+                        borderRadius="md">
                         <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                       </Tooltip>
                     </HStack>
@@ -1206,8 +1185,7 @@ const CarbonDashboard = () => {
                       <Text
                         fontSize="lg"
                         fontWeight="bold"
-                        color={`${transparencyBadge.color}.600`}
-                      >
+                        color={`${transparencyBadge.color}.600`}>
                         {finalTransparencyScore}/100
                       </Text>
                     )}
@@ -1226,16 +1204,14 @@ const CarbonDashboard = () => {
                         fontSize="sm"
                         px={3}
                         py={2}
-                        borderRadius="md"
-                      >
+                        borderRadius="md">
                         <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                       </Tooltip>
                     </HStack>
                     <Text
                       fontSize="lg"
                       fontWeight="bold"
-                      color={processedData.net_carbon <= 0 ? 'green.600' : 'orange.600'}
-                    >
+                      color={processedData.net_carbon <= 0 ? 'green.600' : 'orange.600'}>
                       {processedData.net_carbon > 0 ? '+' : ''}
                       {formatNumber(processedData.net_carbon, 1)}
                     </Text>
@@ -1261,8 +1237,7 @@ const CarbonDashboard = () => {
                   border="1px solid"
                   borderColor="green.200"
                   borderRadius="md"
-                  p={4}
-                >
+                  p={4}>
                   <HStack spacing={3} mb={2}>
                     <Icon as={FaLeaf} color="green.500" boxSize={5} />
                     <VStack align="start" spacing={0}>
@@ -1335,8 +1310,7 @@ const CarbonDashboard = () => {
                   py={4}
                   px={6}
                   fontWeight="semibold"
-                  _selected={{ bg: cardBg, borderColor: 'green.500', borderBottomColor: cardBg }}
-                >
+                  _selected={{ bg: cardBg, borderColor: 'green.500', borderBottomColor: cardBg }}>
                   <Icon as={FaLeaf} mr={2} />
                   Carbon Insights
                 </Tab>
@@ -1344,8 +1318,7 @@ const CarbonDashboard = () => {
                   py={4}
                   px={6}
                   fontWeight="semibold"
-                  _selected={{ bg: cardBg, borderColor: 'green.500', borderBottomColor: cardBg }}
-                >
+                  _selected={{ bg: cardBg, borderColor: 'green.500', borderBottomColor: cardBg }}>
                   <Icon as={FaChartLine} mr={2} />
                   Trends & Analysis
                 </Tab>
@@ -1353,8 +1326,7 @@ const CarbonDashboard = () => {
                   py={4}
                   px={6}
                   fontWeight="semibold"
-                  _selected={{ bg: cardBg, borderColor: 'green.500', borderBottomColor: cardBg }}
-                >
+                  _selected={{ bg: cardBg, borderColor: 'green.500', borderBottomColor: cardBg }}>
                   <Icon as={FaFileAlt} mr={2} />
                   Transparency Reports
                 </Tab>
@@ -1388,8 +1360,7 @@ const CarbonDashboard = () => {
                               variant="solid"
                               px={3}
                               py={1}
-                              borderRadius="full"
-                            >
+                              borderRadius="full">
                               {transparencyBadge.color === 'green'
                                 ? 'High Transparency'
                                 : 'Building Transparency'}
@@ -1428,8 +1399,7 @@ const CarbonDashboard = () => {
                                     fontSize="sm"
                                     px={3}
                                     py={2}
-                                    borderRadius="md"
-                                  >
+                                    borderRadius="md">
                                     <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                                   </Tooltip>
                                 </HStack>
@@ -1477,8 +1447,7 @@ const CarbonDashboard = () => {
                                         fontSize="sm"
                                         px={3}
                                         py={2}
-                                        borderRadius="md"
-                                      >
+                                        borderRadius="md">
                                         <InfoOutlineIcon
                                           color="gray.400"
                                           boxSize={3}
@@ -1538,8 +1507,7 @@ const CarbonDashboard = () => {
                                     fontSize="sm"
                                     px={3}
                                     py={2}
-                                    borderRadius="md"
-                                  >
+                                    borderRadius="md">
                                     <InfoOutlineIcon color="gray.400" boxSize={3} cursor="help" />
                                   </Tooltip>
                                 </HStack>
@@ -1565,8 +1533,7 @@ const CarbonDashboard = () => {
                               ? 'green.200'
                               : 'gray.200'
                           }
-                          bg={usdaLoading ? 'white' : realUSDAData?.success ? 'green.50' : 'white'}
-                        >
+                          bg={usdaLoading ? 'white' : realUSDAData?.success ? 'green.50' : 'white'}>
                           <CardBody textAlign="center" py={6}>
                             {usdaLoading ? (
                               <>
@@ -1594,8 +1561,7 @@ const CarbonDashboard = () => {
                                         fontSize="sm"
                                         px={3}
                                         py={2}
-                                        borderRadius="md"
-                                      >
+                                        borderRadius="md">
                                         <InfoOutlineIcon
                                           color="green.600"
                                           boxSize={3}
@@ -1639,8 +1605,7 @@ const CarbonDashboard = () => {
                             variant="outline"
                             colorScheme="blue"
                             leftIcon={<FaEye />}
-                            onClick={handleViewCarbonInsights}
-                          >
+                            onClick={handleViewCarbonInsights}>
                             Transparency Insights
                           </Button>
                           <Button
@@ -1648,8 +1613,7 @@ const CarbonDashboard = () => {
                             variant="outline"
                             colorScheme="green"
                             leftIcon={<FaChartLine />}
-                            onClick={handleViewTrends}
-                          >
+                            onClick={handleViewTrends}>
                             Carbon Trends
                           </Button>
                           <Button
@@ -1657,8 +1621,7 @@ const CarbonDashboard = () => {
                             variant="outline"
                             colorScheme="purple"
                             leftIcon={<FaShieldAlt />}
-                            onClick={handleViewPublicProfile}
-                          >
+                            onClick={handleViewPublicProfile}>
                             Public Profile
                           </Button>
                           {processedData.hasData && (
@@ -1667,8 +1630,7 @@ const CarbonDashboard = () => {
                               variant="outline"
                               colorScheme="green"
                               leftIcon={<FaDownload />}
-                              onClick={handleExportTransparencyData}
-                            >
+                              onClick={handleExportTransparencyData}>
                               Export Report
                             </Button>
                           )}
@@ -1725,8 +1687,7 @@ const CarbonDashboard = () => {
                               variant="outline"
                               mt={4}
                               onClick={handleAddCarbonEvent}
-                              leftIcon={<InfoOutlineIcon />}
-                            >
+                              leftIcon={<InfoOutlineIcon />}>
                               Add Carbon Event
                             </Button>
                           </CardBody>
@@ -1784,8 +1745,7 @@ const CarbonDashboard = () => {
                                 realUSDAData?.success
                                   ? handleViewTransparencyReport
                                   : handleStartVerification
-                              }
-                            >
+                              }>
                               {realUSDAData?.success
                                 ? 'View Transparency Report'
                                 : 'Start Verification'}
@@ -1815,8 +1775,7 @@ const CarbonDashboard = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={handleViewCarbonInsights}
-                              >
+                                onClick={handleViewCarbonInsights}>
                                 Learn More
                               </Button>
                             </HStack>
@@ -1970,8 +1929,7 @@ const CarbonDashboard = () => {
                                   <Text
                                     fontSize="3xl"
                                     fontWeight="bold"
-                                    color={`${transparencyBadge.color}.600`}
-                                  >
+                                    color={`${transparencyBadge.color}.600`}>
                                     {finalTransparencyScore}
                                   </Text>
                                   <Text fontSize="sm" color={`${transparencyBadge.color}.700`}>
@@ -2027,8 +1985,7 @@ const CarbonDashboard = () => {
                                     </Text>
                                     <Badge
                                       colorScheme={processedData.hasData ? 'green' : 'gray'}
-                                      size="sm"
-                                    >
+                                      size="sm">
                                       {processedData.hasData ? 'Complete' : 'Incomplete'}
                                     </Badge>
                                   </HStack>
@@ -2126,8 +2083,7 @@ const CarbonDashboard = () => {
                         borderWidth="1px"
                         borderColor={borderColor}
                         cursor="pointer"
-                        _hover={{ bg: 'gray.50' }}
-                      >
+                        _hover={{ bg: 'gray.50' }}>
                         <CardBody>
                           <VStack align="start" spacing={3}>
                             <HStack>
@@ -2144,8 +2100,7 @@ const CarbonDashboard = () => {
                               size="sm"
                               colorScheme="green"
                               variant="outline"
-                              onClick={handleViewTransparencyReport}
-                            >
+                              onClick={handleViewTransparencyReport}>
                               Generate Report
                             </Button>
                           </VStack>
@@ -2156,8 +2111,7 @@ const CarbonDashboard = () => {
                         borderWidth="1px"
                         borderColor={borderColor}
                         cursor="pointer"
-                        _hover={{ bg: 'gray.50' }}
-                      >
+                        _hover={{ bg: 'gray.50' }}>
                         <CardBody>
                           <VStack align="start" spacing={3}>
                             <HStack>
@@ -2174,8 +2128,7 @@ const CarbonDashboard = () => {
                               colorScheme="blue"
                               variant="outline"
                               isDisabled={!realUSDAData?.success}
-                              onClick={handleStartVerification}
-                            >
+                              onClick={handleStartVerification}>
                               {realUSDAData?.success
                                 ? 'Download Certificate'
                                 : 'Start Verification'}
@@ -2192,8 +2145,7 @@ const CarbonDashboard = () => {
                           color="gray.500"
                           fontStyle="italic"
                           textAlign="center"
-                          mt={4}
-                        >
+                          mt={4}>
                           {realUSDAData.api_attribution}
                         </Text>
                       </Box>

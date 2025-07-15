@@ -1,9 +1,6 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardBody,
-  CardHeader,
   Heading,
   HStack,
   VStack,
@@ -25,6 +22,9 @@ import {
   IconButton,
   Tooltip
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import { LockIcon, WarningIcon, CheckCircleIcon, InfoIcon } from '@chakra-ui/icons';
 import { FaInfoCircle } from 'react-icons/fa';
 import { useGetUserSecurityStatusQuery } from '../../store/api/carbonApi';

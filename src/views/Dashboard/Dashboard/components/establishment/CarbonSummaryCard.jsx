@@ -1,9 +1,6 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardBody,
-  CardHeader,
   Flex,
   Heading,
   Text,
@@ -23,6 +20,9 @@ import {
   SimpleGrid,
   Divider
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import { FaLeaf, FaChartLine } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
 import { useGetCarbonFootprintSummaryQuery } from 'store/api/companyApi';
@@ -71,8 +71,7 @@ const CarbonSummaryCard = ({ establishmentId }) => {
             size="sm"
             colorScheme="red"
             variant="outline"
-            onClick={() => window.location.reload()}
-          >
+            onClick={() => window.location.reload()}>
             Reintentar
           </Button>
         </VStack>
@@ -135,9 +134,7 @@ const CarbonSummaryCard = ({ establishmentId }) => {
           </Heading>
           <Progress
             value={offsetPercentage}
-            colorScheme={
-              offsetPercentage >= 100 ? 'green' : 'amber'
-            }
+            colorScheme={offsetPercentage >= 100 ? 'green' : 'amber'}
             size="lg"
             borderRadius="md"
             mb={2}
@@ -155,8 +152,7 @@ const CarbonSummaryCard = ({ establishmentId }) => {
             colorScheme="green"
             size="sm"
             onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/carbon`)}
-            leftIcon={<Icon as={FaChartLine} />}
-          >
+            leftIcon={<Icon as={FaChartLine} />}>
             Ver Detalles
           </Button>
         </Flex>

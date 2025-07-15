@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Card,
-  CardBody,
   Flex,
   Heading,
   Text,
@@ -17,6 +15,8 @@ import {
   useToast
 } from '@chakra-ui/react';
 import { useCreateCarbonEntryMutation } from 'store/api/companyApi';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 const CarbonLogEntryCard = ({ establishmentId }) => {
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -84,8 +84,7 @@ const CarbonLogEntryCard = ({ establishmentId }) => {
       borderRadius="lg"
       px={{ base: 3, md: 6 }}
       py={{ base: 2, md: 3 }}
-      mt={4}
-    >
+      mt={4}>
       <CardBody w="100%" p={0}>
         <Heading size="md" mb={4}>
           Registrar Entrada de Carbono
@@ -142,8 +141,7 @@ const CarbonLogEntryCard = ({ establishmentId }) => {
             type="submit"
             colorScheme="green"
             isLoading={isLoading}
-            loadingText="Registrando..."
-          >
+            loadingText="Registrando...">
             Registrar Entrada
           </Button>
         </form>

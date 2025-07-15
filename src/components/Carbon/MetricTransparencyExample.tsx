@@ -1,8 +1,6 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardBody,
   SimpleGrid,
   Text,
   VStack,
@@ -16,6 +14,8 @@ import {
 } from '@chakra-ui/react';
 import { FaInfoCircle, FaLeaf } from 'react-icons/fa';
 import MetricTransparencyModal from './MetricTransparencyModal';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 // Example component showing how to integrate the transparency modal
 const MetricCard = ({
@@ -45,8 +45,7 @@ const MetricCard = ({
         _hover={{
           transform: 'translateY(-2px)',
           boxShadow: 'xl'
-        }}
-      >
+        }}>
         <CardBody>
           <VStack spacing={3}>
             <HStack justify="space-between" w="full">

@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   VStack,
   HStack,
   Heading,
@@ -66,6 +63,9 @@ import { object, string, number, boolean, date } from 'zod';
 import { useGetCropTemplatesQuery, useGetCropTemplateDetailQuery } from 'store/api/carbonApi';
 import { useStartProductionMutation, useGetCropTypesDropdownQuery } from 'store/api/companyApi';
 import { StandardPage, StandardCard, StandardButton } from 'components/Design';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 // Form validation schema
 const productionSchema = object({
@@ -429,15 +429,13 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       showBackButton
       onBack={() =>
         navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
-      }
-    >
+      }>
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={8} align="stretch">
           {/* Template Selection Section */}
           <StandardCard
             title="Smart Setup Templates"
-            subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes"
-          >
+            subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes">
             <VStack spacing={6} align="stretch">
               {/* Current Template Display */}
               {selectedTemplate ? (
@@ -446,8 +444,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   bg="green.50"
                   borderRadius="lg"
                   borderWidth="2px"
-                  borderColor="green.200"
-                >
+                  borderColor="green.200">
                   <HStack spacing={3}>
                     <Icon
                       as={getCropIcon(selectedTemplate.crop_type)}
@@ -482,8 +479,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                       size="sm"
                       variant="outline"
                       colorScheme="green"
-                      onClick={onTemplateOpen}
-                    >
+                      onClick={onTemplateOpen}>
                       Change Template
                     </Button>
                   </HStack>
@@ -499,8 +495,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   transition="all 0.2s"
                   _hover={{ bg: 'blue.100', borderColor: 'blue.300' }}
                   onClick={selectedCropTypeId ? onTemplateOpen : undefined}
-                  opacity={selectedCropTypeId ? 1 : 0.6}
-                >
+                  opacity={selectedCropTypeId ? 1 : 0.6}>
                   <HStack spacing={3}>
                     <Icon as={FaRocket} color="blue.500" boxSize={6} />
                     <VStack align="start" spacing={1} flex={1}>
@@ -577,8 +572,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         onChange={(e) => {
                           field.onChange(e);
                           setSelectedCropTypeId(e.target.value);
-                        }}
-                      >
+                        }}>
                         {cropTypesData?.map((cropType) => (
                           <option key={cropType.id} value={cropType.id.toString()}>
                             {cropType.name} - {cropType.category.replace('_', ' ')}
@@ -737,8 +731,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           {customEvents.length > 0 && (
             <StandardCard
               title="Pre-configured Events"
-              subtitle="Review and customize the events from your selected template"
-            >
+              subtitle="Review and customize the events from your selected template">
               <VStack spacing={4} align="stretch">
                 {customEvents.map((event, index) => (
                   <Box
@@ -748,8 +741,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     borderRadius="md"
                     borderWidth="1px"
                     borderColor={event.enabled ? 'gray.200' : 'gray.300'}
-                    opacity={event.enabled ? 1 : 0.6}
-                  >
+                    opacity={event.enabled ? 1 : 0.6}>
                     <HStack justify="space-between" mb={2}>
                       <HStack>
                         <Switch
@@ -802,16 +794,14 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
               variant="outline"
               onClick={() =>
                 navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
-              }
-            >
+              }>
               Cancel
             </StandardButton>
             <StandardButton
               type="submit"
               isLoading={isCreating}
               loadingText="Creating Production..."
-              leftIcon={<FaRocket />}
-            >
+              leftIcon={<FaRocket />}>
               Start Production
             </StandardButton>
           </HStack>
@@ -869,8 +859,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                       }
                       bg={
                         selectedTemplate?.template_id === template.template_id ? 'blue.50' : 'white'
-                      }
-                    >
+                      }>
                       <CardHeader pb={2}>
                         <HStack justify="space-between">
                           <HStack>
@@ -940,8 +929,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   variant="outline"
                   colorScheme="blue"
                   onClick={onTemplateClose}
-                  leftIcon={<FaEdit />}
-                >
+                  leftIcon={<FaEdit />}>
                   Continue Without Template
                 </Button>
               </VStack>

@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  Card,
-  CardBody,
   Flex,
   Heading,
   Text,
@@ -14,6 +12,8 @@ import {
 } from '@chakra-ui/react';
 import { useGetCarbonFootprintSummaryQuery } from 'store/api/companyApi';
 import { MdCheckCircle, MdInfo } from 'react-icons/md';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 const CarbonInsightsCard = ({ establishmentId }) => {
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -28,8 +28,7 @@ const CarbonInsightsCard = ({ establishmentId }) => {
       borderRadius="lg"
       px={{ base: 3, md: 6 }}
       py={{ base: 2, md: 3 }}
-      mt={4}
-    >
+      mt={4}>
       <CardBody w="100%" p={0}>
         <Heading size="md" mb={4}>
           Perspectivas de Carbono
@@ -53,8 +52,7 @@ const CarbonInsightsCard = ({ establishmentId }) => {
               </Text>
               <Text
                 fontSize="sm"
-                color={data.net_carbon > (data.industry_average || 0) ? 'red.500' : 'green.500'}
-              >
+                color={data.net_carbon > (data.industry_average || 0) ? 'red.500' : 'green.500'}>
                 {data.net_carbon > (data.industry_average || 0)
                   ? 'Estás por encima del promedio de la industria. Considera reducir emisiones.'
                   : 'Estás por debajo del promedio de la industria. ¡Buen trabajo!'}

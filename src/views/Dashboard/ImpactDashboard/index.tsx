@@ -5,9 +5,6 @@ import {
   VStack,
   HStack,
   SimpleGrid,
-  Card,
-  CardBody,
-  CardHeader,
   Heading,
   Text,
   Icon,
@@ -22,6 +19,9 @@ import {
   Alert,
   AlertIcon
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import {
   FaLeaf,
   FaQrcode,

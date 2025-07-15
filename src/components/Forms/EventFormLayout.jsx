@@ -1,14 +1,14 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardBody,
-  CardHeader,
   SimpleGrid,
   GridItem,
   Text,
   useColorModeValue
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 const EventFormLayout = ({ title, subtitle, children, sidebarContent, maxWidth = '1200px' }) => {
   const bgColor = useColorModeValue('white', 'gray.800');

@@ -13,8 +13,6 @@ import {
   Divider,
   useColorModeValue,
   Flex,
-  Card,
-  CardBody,
   Stack,
   useBreakpointValue
 } from '@chakra-ui/react';
@@ -36,6 +34,8 @@ import {
 import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
 import { useIntl } from 'react-intl';
 import { format, parseISO } from 'date-fns';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 interface TimelineEvent {
   id: string;
@@ -169,8 +169,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
           direction={{ base: 'column', sm: 'row' }}
           justify="space-between"
           align={{ base: 'stretch', sm: 'center' }}
-          gap={4}
-        >
+          gap={4}>
           <VStack align={{ base: 'center', sm: 'start' }} spacing={1}>
             <Heading size="md" color={textColor} textAlign={{ base: 'center', sm: 'left' }}>
               Production Journey
@@ -186,8 +185,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
             px={3}
             py={1}
             borderRadius="full"
-            alignSelf={{ base: 'center', sm: 'flex-start' }}
-          >
+            alignSelf={{ base: 'center', sm: 'flex-start' }}>
             <HStack spacing={1}>
               <Icon as={MdVerified} boxSize={3} />
               <Text>{filteredEvents.filter((e) => e.certified).length} Verified</Text>
@@ -200,16 +198,14 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
           direction={{ base: 'column', sm: 'row' }}
           spacing={2}
           wrap="wrap"
-          justify={{ base: 'center', sm: 'flex-start' }}
-        >
+          justify={{ base: 'center', sm: 'flex-start' }}>
           <Button
             size="sm"
             variant={selectedCategory === 'all' ? 'solid' : 'outline'}
             colorScheme="green"
             onClick={() => setSelectedCategory('all')}
             borderRadius="full"
-            fontSize="xs"
-          >
+            fontSize="xs">
             All Activities
           </Button>
           {categories.slice(1, 3).map((category) => (
@@ -221,8 +217,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
               onClick={() => setSelectedCategory(category)}
               borderRadius="full"
               fontSize="xs"
-              display={{ base: 'none', sm: 'flex' }}
-            >
+              display={{ base: 'none', sm: 'flex' }}>
               {category.replace(' Activity', '').replace(' Application', '')}
             </Button>
           ))}
@@ -242,8 +237,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
               borderColor={config.color}
               shadow="sm"
               _hover={{ shadow: 'md' }}
-              transition="all 0.2s"
-            >
+              transition="all 0.2s">
               <CardBody p={{ base: 3, sm: 4 }}>
                 <Flex direction={{ base: 'column', sm: 'row' }} gap={3}>
                   {/* Icon and Category */}
@@ -257,8 +251,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                         colorScheme={config.categoryColor}
                         size="sm"
                         borderRadius="full"
-                        fontSize="xs"
-                      >
+                        fontSize="xs">
                         {config.category}
                       </Badge>
                       {event.certified && (
@@ -290,8 +283,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                       gap={{ base: 1, sm: 4 }}
                       fontSize="xs"
                       color={mutedColor}
-                      w="full"
-                    >
+                      w="full">
                       <HStack spacing={1}>
                         <Icon as={FaCalendarAlt} />
                         <Text>{formatDate(event.date)}</Text>
@@ -312,8 +304,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                     align="end"
                     spacing={1}
                     minW="fit-content"
-                    display={{ base: 'none', md: 'flex' }}
-                  >
+                    display={{ base: 'none', md: 'flex' }}>
                     <Text fontSize="sm" fontWeight="medium" color={textColor}>
                       {format(parseISO(event.date), 'MMM dd')}
                     </Text>
@@ -340,8 +331,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
             leftIcon={<Icon as={showAll ? FaChevronUp : FaChevronDown} />}
             onClick={() => setShowAll(!showAll)}
             size="sm"
-            borderRadius="full"
-          >
+            borderRadius="full">
             {showAll ? `Show Less` : `Show ${filteredEvents.length - 3} More Activities`}
           </Button>
         </Flex>

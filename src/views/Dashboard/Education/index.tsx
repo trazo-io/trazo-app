@@ -9,8 +9,6 @@ import {
   Button,
   Icon,
   SimpleGrid,
-  Card,
-  CardBody,
   useColorModeValue,
   useBreakpointValue,
   useToast,
@@ -34,6 +32,8 @@ import {
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { IconType } from 'react-icons';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 // Import subscription hook to check access
 import { useGetCompanyQuery } from 'store/api/companyApi';
@@ -447,8 +447,7 @@ const EducationDashboard: React.FC = () => {
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
-                boxShadow="md"
-              >
+                boxShadow="md">
                 <Icon as={FaGraduationCap} boxSize={8} color="white" />
               </Box>
               <Heading size="xl" mb={4} color={textColor} fontWeight="bold">
@@ -475,8 +474,7 @@ const EducationDashboard: React.FC = () => {
                 borderColor="blue.200"
                 mx="auto"
                 my={0}
-                bg={useColorModeValue('blue.50', 'blue.900')}
-              >
+                bg={useColorModeValue('blue.50', 'blue.900')}>
                 <AlertIcon boxSize="40px" mr={0} color="blue.500" />
                 <AlertTitle mt={4} mb={2} fontSize="lg" color={textColor}>
                   Knowledge Base Available with Standard & Corporate Plans
@@ -491,8 +489,7 @@ const EducationDashboard: React.FC = () => {
                   colorScheme="blue"
                   size="lg"
                   onClick={handleSubscriptionRequired}
-                  leftIcon={<Icon as={FaGraduationCap} />}
-                >
+                  leftIcon={<Icon as={FaGraduationCap} />}>
                   Upgrade to Access Knowledge Base
                 </Button>
               </Alert>
@@ -516,8 +513,7 @@ const EducationDashboard: React.FC = () => {
                         opacity: 1,
                         transform: 'translateY(-2px)',
                         boxShadow: 'md'
-                      }}
-                    >
+                      }}>
                       <CardBody p={6} textAlign="center">
                         <Box
                           bg={`${category.color}.50`}
@@ -528,8 +524,7 @@ const EducationDashboard: React.FC = () => {
                           mb={4}
                           display="flex"
                           alignItems="center"
-                          justifyContent="center"
-                        >
+                          justifyContent="center">
                           <Icon as={category.icon} boxSize={6} color={`${category.color}.500`} />
                         </Box>
                         <Heading size="md" mb={2} color={textColor} fontWeight="bold">
@@ -567,8 +562,7 @@ const EducationDashboard: React.FC = () => {
                 setSelectedContent(null);
               }}
               size="sm"
-              alignSelf="flex-start"
-            >
+              alignSelf="flex-start">
               Back
             </Button>
 
@@ -583,8 +577,7 @@ const EducationDashboard: React.FC = () => {
                 mb={6}
                 display="flex"
                 alignItems="center"
-                justifyContent="center"
-              >
+                justifyContent="center">
                 <Icon as={content.icon} boxSize={10} color={`${content.color}.500`} />
               </Box>
               <Heading size="xl" mb={4} color={textColor}>
@@ -610,8 +603,7 @@ const EducationDashboard: React.FC = () => {
                     borderRadius="xl"
                     boxShadow="sm"
                     border="1px solid"
-                    borderColor={useColorModeValue('gray.100', 'gray.600')}
-                  >
+                    borderColor={useColorModeValue('gray.100', 'gray.600')}>
                     <Text fontSize="md" color={textColor} lineHeight="1.8" whiteSpace="pre-line">
                       {section.content}
                     </Text>
@@ -634,8 +626,7 @@ const EducationDashboard: React.FC = () => {
                   <Button
                     colorScheme={content.color}
                     size="lg"
-                    onClick={() => navigate('/subscription')}
-                  >
+                    onClick={() => navigate('/subscription')}>
                     Get Started with Trazo
                   </Button>
                 </CardBody>
@@ -681,8 +672,7 @@ const EducationDashboard: React.FC = () => {
                     transform: 'translateY(-4px)',
                     boxShadow: 'xl'
                   }}
-                  onClick={() => setSelectedContent(category.id)}
-                >
+                  onClick={() => setSelectedContent(category.id)}>
                   <CardBody p={8} textAlign="center">
                     <Box
                       bg={`${category.color}.50`}
@@ -693,8 +683,7 @@ const EducationDashboard: React.FC = () => {
                       mb={6}
                       display="flex"
                       alignItems="center"
-                      justifyContent="center"
-                    >
+                      justifyContent="center">
                       <Icon as={category.icon} boxSize={8} color={`${category.color}.500`} />
                     </Box>
                     <Heading size="md" mb={4} color={textColor} lineHeight="1.3">
@@ -735,8 +724,7 @@ const EducationDashboard: React.FC = () => {
                     variant="outline"
                     colorScheme="blue"
                     size="lg"
-                    onClick={() => window.open('/documentation', '_blank')}
-                  >
+                    onClick={() => window.open('/documentation', '_blank')}>
                     View Documentation
                   </Button>
                 </HStack>

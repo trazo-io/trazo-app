@@ -9,8 +9,6 @@ import {
   Button,
   Icon,
   Badge,
-  Card,
-  CardBody,
   useColorModeValue,
   useBreakpointValue,
   Input,
@@ -28,6 +26,8 @@ import {
 } from '@chakra-ui/react';
 import { FaQuestionCircle, FaSearch, FaArrowLeft, FaTag } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 // Import education API hooks
 import {
@@ -112,8 +112,7 @@ const EducationFAQ: React.FC = () => {
               leftIcon={<Icon as={FaArrowLeft} />}
               variant="ghost"
               onClick={() => navigate('/education')}
-              mb={4}
-            >
+              mb={4}>
               Back to Education
             </Button>
 
@@ -151,8 +150,7 @@ const EducationFAQ: React.FC = () => {
                       size="sm"
                       variant={selectedCategory === null ? 'solid' : 'outline'}
                       colorScheme="blue"
-                      onClick={() => setSelectedCategory(null)}
-                    >
+                      onClick={() => setSelectedCategory(null)}>
                       All Categories
                     </Button>
                     {categories.map((category) => (
@@ -161,8 +159,7 @@ const EducationFAQ: React.FC = () => {
                         size="sm"
                         variant={selectedCategory === category.id ? 'solid' : 'outline'}
                         colorScheme="blue"
-                        onClick={() => setSelectedCategory(category.id)}
-                      >
+                        onClick={() => setSelectedCategory(category.id)}>
                         {category.name}
                       </Button>
                     ))}
@@ -226,8 +223,7 @@ const FAQCard: React.FC<FAQCardProps> = ({ faq }) => {
             align="start"
             cursor="pointer"
             onClick={() => setIsExpanded(!isExpanded)}
-            _hover={{ opacity: 0.8 }}
-          >
+            _hover={{ opacity: 0.8 }}>
             <Heading size="sm" color={textColor} flex={1} pr={4}>
               {faq.question}
             </Heading>

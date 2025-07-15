@@ -11,9 +11,6 @@ import {
   Badge,
   Progress,
   SimpleGrid,
-  Card,
-  CardBody,
-  CardHeader,
   useColorModeValue,
   useBreakpointValue,
   Input,
@@ -55,6 +52,9 @@ import {
 import { MdDashboard, MdSchool, MdHelp } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 // Import education API hooks
 import {
@@ -181,8 +181,7 @@ const EducationDashboard: React.FC = () => {
               maxW="2xl"
               mx="auto"
               borderRadius="xl"
-              py={8}
-            >
+              py={8}>
               <AlertIcon boxSize="40px" mr={0} />
               <AlertTitle mt={4} mb={2} fontSize="lg">
                 Educational Resources Available with Standard & Corporate Plans
@@ -196,8 +195,7 @@ const EducationDashboard: React.FC = () => {
                 colorScheme="blue"
                 size="lg"
                 onClick={handleSubscriptionRequired}
-                leftIcon={<Icon as={FaGraduationCap} />}
-              >
+                leftIcon={<Icon as={FaGraduationCap} />}>
                 Upgrade to Access Education
               </Button>
             </Alert>
@@ -416,8 +414,7 @@ const EducationDashboard: React.FC = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => setSelectedCategory(null)}
-                          >
+                            onClick={() => setSelectedCategory(null)}>
                             Clear Filter
                           </Button>
                         )}
@@ -489,8 +486,7 @@ const EducationDashboard: React.FC = () => {
                       <Button
                         variant="outline"
                         colorScheme="blue"
-                        onClick={() => navigate('/education/faq')}
-                      >
+                        onClick={() => navigate('/education/faq')}>
                         View All Questions
                       </Button>
                     </VStack>
@@ -548,8 +544,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
       cursor="pointer"
       onClick={onSelect}
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
-      transition="all 0.2s"
-    >
+      transition="all 0.2s">
       <CardBody p={6} textAlign="center">
         <Icon as={getCategoryIcon(category.name)} boxSize={8} color="blue.500" mb={3} />
         <Heading size="sm" mb={2} color={textColor}>
@@ -585,8 +580,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect, showProgress 
       cursor="pointer"
       onClick={onSelect}
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
-      transition="all 0.2s"
-    >
+      transition="all 0.2s">
       <CardBody p={6}>
         <VStack align="stretch" spacing={3}>
           <HStack justify="space-between" align="start">
@@ -598,8 +592,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect, showProgress 
                   ? 'blue'
                   : 'purple'
               }
-              size="sm"
-            >
+              size="sm">
               {course.level}
             </Badge>
             <HStack fontSize="sm" color={mutedTextColor}>
@@ -641,8 +634,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect, showProgress 
             onClick={(e) => {
               e.stopPropagation();
               onSelect();
-            }}
-          >
+            }}>
             {progressPercentage > 0 ? 'Continue' : 'Start Course'}
           </Button>
         </VStack>
@@ -670,8 +662,7 @@ const FAQCard: React.FC<FAQCardProps> = ({ faq }) => {
             justify="space-between"
             align="start"
             cursor="pointer"
-            onClick={() => setIsExpanded(!isExpanded)}
-          >
+            onClick={() => setIsExpanded(!isExpanded)}>
             <Heading size="sm" color={textColor} flex={1}>
               {faq.question}
             </Heading>

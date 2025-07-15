@@ -7,8 +7,6 @@ import {
   Heading,
   Badge,
   Icon,
-  Card,
-  CardBody,
   useColorModeValue,
   Stack,
   Divider,
@@ -29,6 +27,8 @@ import {
 import { BsStarFill, BsStarHalf, BsStar } from 'react-icons/bs';
 import { CompanyModal } from './CompanyModal';
 import { EstablishmentModal } from './EstablishmentModal';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 interface CompanyEstablishmentInfoProps {
   companyData?: {
@@ -170,8 +170,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                   leftIcon={<FaInfoCircle />}
                   onClick={onCompanyModalOpen}
                   borderRadius="full"
-                  fontSize="xs"
-                >
+                  fontSize="xs">
                   More Info
                 </Button>
               </HStack>
@@ -248,8 +247,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                     leftIcon={<FaInfoCircle />}
                     onClick={onEstablishmentModalOpen}
                     borderRadius="full"
-                    fontSize="xs"
-                  >
+                    fontSize="xs">
                     More Info
                   </Button>
                 </VStack>
@@ -319,8 +317,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                             borderRadius="full"
                             px={3}
                             py={1}
-                            fontSize="xs"
-                          >
+                            fontSize="xs">
                             {cert}
                           </Badge>
                         ));

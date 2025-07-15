@@ -6,12 +6,12 @@ import {
   Skeleton,
   SkeletonCircle,
   SkeletonText,
-  Card,
-  CardBody,
   SimpleGrid,
   Container,
   Flex
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 // Step 5: Progressive Loading Types
 export type LoadingStage = 'initial' | 'primary' | 'secondary' | 'complete';

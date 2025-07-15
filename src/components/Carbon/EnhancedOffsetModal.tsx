@@ -31,8 +31,6 @@ import {
   Select,
   Textarea,
   Input,
-  Card,
-  CardBody,
   Heading,
   SimpleGrid,
   Stat,
@@ -47,6 +45,8 @@ import {
   useCreateSecureCarbonOffsetMutation,
   useGetUserSecurityStatusQuery
 } from '../../store/api/carbonApi';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 interface EnhancedOffsetModalProps {
   isOpen: boolean;
@@ -193,8 +193,7 @@ const EnhancedOffsetModal: React.FC<EnhancedOffsetModalProps> = ({
                   px={3}
                   py={1}
                   borderRadius="full"
-                  fontSize="xs"
-                >
+                  fontSize="xs">
                   {getTrustScoreLabel(trustScore)}
                 </Badge>
                 <Text fontSize="xs" color="gray.500">
@@ -230,8 +229,7 @@ const EnhancedOffsetModal: React.FC<EnhancedOffsetModalProps> = ({
                   borderRadius="lg"
                   bg="orange.50"
                   borderColor="orange.200"
-                  border="1px"
-                >
+                  border="1px">
                   <AlertIcon color="orange.500" />
                   <Box>
                     <AlertTitle fontSize="sm" fontWeight="semibold" color="orange.700">
@@ -286,8 +284,7 @@ const EnhancedOffsetModal: React.FC<EnhancedOffsetModalProps> = ({
                             fontSize="lg"
                             color={
                               securityStatus.security_flags?.length > 0 ? 'red.600' : 'green.600'
-                            }
-                          >
+                            }>
                             {securityStatus.security_flags?.length || 0}
                           </StatNumber>
                           <StatHelpText fontSize="xs" color="gray.500">
@@ -334,8 +331,7 @@ const EnhancedOffsetModal: React.FC<EnhancedOffsetModalProps> = ({
                       }
                       min={0}
                       precision={2}
-                      focusBorderColor="green.500"
-                    >
+                      focusBorderColor="green.500">
                       <NumberInputField borderRadius="md" />
                       <NumberInputStepper>
                         <NumberIncrementStepper />
@@ -355,8 +351,7 @@ const EnhancedOffsetModal: React.FC<EnhancedOffsetModalProps> = ({
                       }
                       placeholder="Select offset source"
                       focusBorderColor="green.500"
-                      borderRadius="md"
-                    >
+                      borderRadius="md">
                       <option value="renewable_energy">🔋 Renewable Energy</option>
                       <option value="reforestation">🌲 Reforestation</option>
                       <option value="no_till">🚜 No-Till Farming</option>
@@ -379,8 +374,7 @@ const EnhancedOffsetModal: React.FC<EnhancedOffsetModalProps> = ({
                       }
                       placeholder="Select methodology (optional)"
                       focusBorderColor="green.500"
-                      borderRadius="md"
-                    >
+                      borderRadius="md">
                       <option value="VCS">Verified Carbon Standard (VCS)</option>
                       <option value="Gold Standard">Gold Standard</option>
                       <option value="CAR">Climate Action Reserve</option>
@@ -455,8 +449,7 @@ const EnhancedOffsetModal: React.FC<EnhancedOffsetModalProps> = ({
                   borderRadius="lg"
                   bg="blue.50"
                   borderColor="blue.200"
-                  border="1px"
-                >
+                  border="1px">
                   <AlertIcon color="blue.500" />
                   <Box>
                     <AlertTitle fontSize="sm" fontWeight="medium" color="blue.700">
@@ -493,8 +486,7 @@ const EnhancedOffsetModal: React.FC<EnhancedOffsetModalProps> = ({
                 isDisabled={!formData.amount || !formData.source_id}
                 size="md"
                 borderRadius="md"
-                px={6}
-              >
+                px={6}>
                 Create Secure Offset
               </Button>
             </HStack>

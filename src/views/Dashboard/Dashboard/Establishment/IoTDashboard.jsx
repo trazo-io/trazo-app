@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardBody,
   Text,
   Heading,
   Badge,
@@ -92,6 +90,8 @@ import {
   useMobileOptimization
 } from 'hooks/usePerformanceMonitor';
 import { PerformanceSummary } from 'components/Performance/PerformanceSummary';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 import {
   useGetIoTDeviceStatusQuery,
@@ -612,8 +612,7 @@ const IoTDashboard = () => {
           align="center"
           gap="24px"
           paddingTop={12}
-          w="100%"
-        >
+          w="100%">
           <VStack align="start" spacing={1}>
             <Text color="gray.500" fontSize="md">
               Monitorea y gestiona dispositivos IoT conectados a tu establecimiento
@@ -626,8 +625,7 @@ const IoTDashboard = () => {
               colorScheme="green"
               h="35px"
               fontSize="xs"
-              onClick={() => handleOpenModal()}
-            >
+              onClick={() => handleOpenModal()}>
               Add Device
             </Button>
             <Button
@@ -636,8 +634,7 @@ const IoTDashboard = () => {
               h="35px"
               fontSize="xs"
               isLoading={simulationLoading}
-              onClick={() => simulateData('fuel_sensor')}
-            >
+              onClick={() => simulateData('fuel_sensor')}>
               Simulate Fuel Data
             </Button>
             <Button
@@ -646,8 +643,7 @@ const IoTDashboard = () => {
               h="35px"
               fontSize="xs"
               isLoading={simulationLoading}
-              onClick={() => simulateData('weather_station')}
-            >
+              onClick={() => simulateData('weather_station')}>
               Simulate Weather Data
             </Button>
             <Button
@@ -655,8 +651,7 @@ const IoTDashboard = () => {
               variant="outline"
               h="35px"
               fontSize="xs"
-              onClick={refreshAllData}
-            >
+              onClick={refreshAllData}>
               Refresh
             </Button>
           </HStack>
@@ -800,8 +795,7 @@ const IoTDashboard = () => {
                       leftIcon={<Icon as={FaCloudSun} />}
                       onClick={() =>
                         window.open(`/dashboard/establishment/${establishmentId}/weather`, '_blank')
-                      }
-                    >
+                      }>
                       View Full Weather Dashboard
                     </Button>
                   </Flex>
@@ -1026,8 +1020,7 @@ const IoTDashboard = () => {
                                   ? 'orange'
                                   : 'gray'
                               }
-                              variant="subtle"
-                            >
+                              variant="subtle">
                               {device.signal_strength || 'Unknown'}
                             </Badge>
                           </Td>
@@ -1055,8 +1048,7 @@ const IoTDashboard = () => {
                                 <MenuItem
                                   icon={<FaTrash />}
                                   color="red.500"
-                                  onClick={() => handleDeleteDevice(device)}
-                                >
+                                  onClick={() => handleDeleteDevice(device)}>
                                   Delete Device
                                 </MenuItem>
                               </MenuList>
@@ -1113,8 +1105,7 @@ const IoTDashboard = () => {
                                   ? 'yellow'
                                   : 'orange'
                               }
-                              variant="subtle"
-                            >
+                              variant="subtle">
                               {Math.round(event.confidence * 100)}% confidence
                             </Badge>
                           </HStack>
@@ -1144,8 +1135,7 @@ const IoTDashboard = () => {
                                     : event.suggested_action.priority === 'medium'
                                     ? 'orange'
                                     : 'green'
-                                }
-                              >
+                                }>
                                 {event.suggested_action.priority} priority
                               </Badge>
                             </Box>
@@ -1162,8 +1152,7 @@ const IoTDashboard = () => {
                               size="sm"
                               colorScheme="green"
                               isLoading={approveLoading}
-                              onClick={() => handleApproveEvent(event)}
-                            >
+                              onClick={() => handleApproveEvent(event)}>
                               Approve & Create Entry
                             </Button>
                           )}
@@ -1172,8 +1161,7 @@ const IoTDashboard = () => {
                             variant="outline"
                             colorScheme="red"
                             isLoading={rejectLoading}
-                            onClick={() => handleRejectEvent(event)}
-                          >
+                            onClick={() => handleRejectEvent(event)}>
                             Reject
                           </Button>
                           {event.auto_approve_recommended && (
@@ -1307,8 +1295,7 @@ const IoTDashboard = () => {
                       value={deviceForm.device_type}
                       onChange={(e) =>
                         setDeviceForm({ ...deviceForm, device_type: e.target.value })
-                      }
-                    >
+                      }>
                       {deviceTypes.map((type) => (
                         <option key={type.value} value={type.value}>
                           {type.label}
@@ -1352,8 +1339,7 @@ const IoTDashboard = () => {
                       <NumberInput
                         placeholder="Latitude"
                         value={deviceForm.latitude}
-                        onChange={(value) => setDeviceForm({ ...deviceForm, latitude: value })}
-                      >
+                        onChange={(value) => setDeviceForm({ ...deviceForm, latitude: value })}>
                         <NumberInputField placeholder="Latitude" />
                         <NumberInputStepper>
                           <NumberIncrementStepper />
@@ -1363,8 +1349,7 @@ const IoTDashboard = () => {
                       <NumberInput
                         placeholder="Longitude"
                         value={deviceForm.longitude}
-                        onChange={(value) => setDeviceForm({ ...deviceForm, longitude: value })}
-                      >
+                        onChange={(value) => setDeviceForm({ ...deviceForm, longitude: value })}>
                         <NumberInputField placeholder="Longitude" />
                         <NumberInputStepper>
                           <NumberIncrementStepper />
@@ -1395,8 +1380,7 @@ const IoTDashboard = () => {
                 colorScheme="blue"
                 onClick={handleSubmit}
                 isLoading={registerLoading || updateLoading}
-                isDisabled={!deviceForm.device_id || !deviceForm.device_type || !deviceForm.name}
-              >
+                isDisabled={!deviceForm.device_id || !deviceForm.device_type || !deviceForm.name}>
                 {editingDevice ? 'Update Device' : 'Register Device'}
               </Button>
             </ModalFooter>

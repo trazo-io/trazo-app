@@ -16,11 +16,11 @@ import {
   Alert,
   AlertIcon,
   Badge,
-  Icon,
-  Card,
-  CardBody
+  Icon
 } from '@chakra-ui/react';
 import { FaMapMarkerAlt, FaSearchLocation, FaDrawPolygon } from 'react-icons/fa';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 interface LocationImporterProps {
   data: any;
@@ -226,8 +226,7 @@ export const LocationImporter: React.FC<LocationImporterProps> = ({ data, onChan
                   variant="outline"
                   onClick={handleGetCurrentLocation}
                   isLoading={isLoadingLocation}
-                  loadingText="Getting location..."
-                >
+                  loadingText="Getting location...">
                   Get Location
                 </Button>
               </HStack>
@@ -262,8 +261,7 @@ export const LocationImporter: React.FC<LocationImporterProps> = ({ data, onChan
                         colorScheme="green"
                         onClick={handleAddressSearch}
                         isLoading={isLoadingLocation}
-                        minW="100px"
-                      >
+                        minW="100px">
                         Search
                       </Button>
                     </HStack>

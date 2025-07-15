@@ -1,8 +1,6 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardBody,
   VStack,
   HStack,
   Text,
@@ -18,6 +16,8 @@ import {
   useColorModeValue,
   useBreakpointValue
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 import {
   FaLeaf,
   FaShare,

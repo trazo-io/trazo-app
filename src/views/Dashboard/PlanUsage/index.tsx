@@ -10,13 +10,13 @@ import {
   StatNumber,
   StatHelpText,
   Icon,
-  Card,
-  CardBody,
-  CardHeader,
   Button,
   useColorModeValue,
   useToast
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import {
   FaBuilding,
   FaMapMarkedAlt,

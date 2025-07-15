@@ -8,8 +8,6 @@ import {
   Icon,
   Badge,
   Button,
-  Card,
-  CardBody,
   useColorModeValue,
   Alert,
   AlertIcon,
@@ -25,6 +23,8 @@ import {
   FaEye,
   FaCheckCircle
 } from 'react-icons/fa';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 interface CarbonEventTemplate {
   id: string;
@@ -216,8 +216,7 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
               transform: 'translateY(-2px)',
               boxShadow: 'lg'
             }}
-            transition="all 0.2s"
-          >
+            transition="all 0.2s">
             <CardBody p={4}>
               <VStack spacing={3} align="start">
                 {/* Header with Icon and Carbon Impact */}
@@ -272,8 +271,7 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
                 <HStack justify="space-between" width="100%">
                   <Badge
                     colorScheme={template.usageFrequency === 'common' ? 'green' : 'blue'}
-                    size="xs"
-                  >
+                    size="xs">
                     {template.usageFrequency}
                   </Badge>
                   <Text fontSize="xs" color="gray.500">

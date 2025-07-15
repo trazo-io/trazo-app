@@ -8,13 +8,13 @@ import {
   SimpleGrid,
   Badge,
   Icon,
-  Card,
-  CardBody,
   Stat,
   StatLabel,
   StatNumber,
   StatHelpText
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 import { FaLeaf, FaSeedling, FaAppleAlt } from 'react-icons/fa';
 import { GiCorn } from 'react-icons/gi';
 

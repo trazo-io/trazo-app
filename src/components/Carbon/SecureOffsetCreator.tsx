@@ -24,8 +24,6 @@ import {
   useToast,
   Divider,
   Heading,
-  Card,
-  CardBody,
   Icon,
   Spinner
 } from '@chakra-ui/react';
@@ -34,6 +32,8 @@ import {
   useCreateSecureCarbonOffsetMutation,
   useGetUserSecurityStatusQuery
 } from '../../store/api/carbonApi';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 interface SecureOffsetCreatorProps {
   establishmentId?: string;
@@ -141,8 +141,7 @@ const SecureOffsetCreator: React.FC<SecureOffsetCreatorProps> = ({
               {securityStatus && (
                 <Badge
                   variant={getSecurityBadgeVariant(securityStatus.overall_trust_score)}
-                  colorScheme={getTrustScoreColor(securityStatus.overall_trust_score)}
-                >
+                  colorScheme={getTrustScoreColor(securityStatus.overall_trust_score)}>
                   Trust Score: {Math.round(securityStatus.overall_trust_score * 100)}%
                 </Badge>
               )}
@@ -181,8 +180,7 @@ const SecureOffsetCreator: React.FC<SecureOffsetCreatorProps> = ({
                       setFormData((prev) => ({ ...prev, amount: value || 0 }))
                     }
                     min={0}
-                    precision={2}
-                  >
+                    precision={2}>
                     <NumberInputField />
                     <NumberInputStepper>
                       <NumberIncrementStepper />
@@ -198,8 +196,7 @@ const SecureOffsetCreator: React.FC<SecureOffsetCreatorProps> = ({
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, source_id: e.target.value }))
                     }
-                    placeholder="Select offset source"
-                  >
+                    placeholder="Select offset source">
                     <option value="renewable_energy">Renewable Energy</option>
                     <option value="reforestation">Reforestation</option>
                     <option value="no_till">No-Till Farming</option>
@@ -217,8 +214,7 @@ const SecureOffsetCreator: React.FC<SecureOffsetCreatorProps> = ({
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, methodology_template: e.target.value }))
                   }
-                  placeholder="Select methodology (optional)"
-                >
+                  placeholder="Select methodology (optional)">
                   <option value="VCS">Verified Carbon Standard (VCS)</option>
                   <option value="Gold Standard">Gold Standard</option>
                   <option value="CAR">Climate Action Reserve</option>
@@ -313,8 +309,7 @@ const SecureOffsetCreator: React.FC<SecureOffsetCreatorProps> = ({
                   isLoading={isCreating}
                   loadingText="Creating Secure Offset..."
                   leftIcon={<LockIcon />}
-                  isDisabled={!formData.amount || !formData.source_id}
-                >
+                  isDisabled={!formData.amount || !formData.source_id}>
                   Create Secure Offset
                 </Button>
               </HStack>

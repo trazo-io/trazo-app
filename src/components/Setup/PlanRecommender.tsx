@@ -7,9 +7,6 @@ import {
   Text,
   Badge,
   Icon,
-  Card,
-  CardBody,
-  CardHeader,
   SimpleGrid,
   List,
   ListItem,
@@ -17,6 +14,9 @@ import {
   Alert,
   AlertIcon
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import { FaCheck, FaStar, FaRocket, FaBuilding } from 'react-icons/fa';
 
 interface PlanRecommenderProps {

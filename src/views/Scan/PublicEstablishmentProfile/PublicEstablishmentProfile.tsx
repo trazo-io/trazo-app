@@ -3,9 +3,6 @@ import {
   Badge,
   Box,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   Container,
   Flex,
   HStack,
@@ -32,6 +29,9 @@ import {
   Image,
   useToast
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import {
   FaFacebook,
   FaInstagram,

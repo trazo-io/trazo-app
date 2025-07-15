@@ -7,9 +7,6 @@ import {
   Flex,
   Heading,
   useColorModeValue,
-  Card,
-  CardBody,
-  CardHeader,
   Badge,
   Icon,
   Text,
@@ -121,6 +118,9 @@ import {
   useGetQRCodeSummaryQuery,
   useGetEstablishmentCarbonEntriesPaginatedQuery
 } from 'store/api/carbonApi';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import ModernOffsetModal from './components/ModernOffsetModal';
 import EnhancedOffsetModal from '../../../../components/Carbon/EnhancedOffsetModal';
 import SecurityStatusCard from '../../../../components/Security/SecurityStatusCard';
@@ -589,8 +589,7 @@ const ModernCarbonDashboard: React.FC = () => {
           align="center"
           gap="24px"
           paddingTop={12}
-          w="100%"
-        >
+          w="100%">
           {/* Header Section - Following Standard Dashboard Pattern */}
           <HStack justify="space-between" align="center" mb={4} width="100%">
             <VStack align="start" spacing={1}>
@@ -617,8 +616,7 @@ const ModernCarbonDashboard: React.FC = () => {
                     <MenuItem
                       key={prod.id}
                       onClick={() => handleProductionChange({ target: { value: prod.id } })}
-                      color="gray.500"
-                    >
+                      color="gray.500">
                       {prod.name || `Producción ${prod.id}`}
                     </MenuItem>
                   ))}
@@ -643,8 +641,7 @@ const ModernCarbonDashboard: React.FC = () => {
             leftIcon={<FaEye />}
             variant="outline"
             size="sm"
-            onClick={onCertificationsModalOpen}
-          >
+            onClick={onCertificationsModalOpen}>
             View Certifications
           </Button>
         </HStack>
@@ -665,8 +662,7 @@ const ModernCarbonDashboard: React.FC = () => {
                 boxShadow: 'xl',
                 borderColor: getStatusColor(carbonScore) + '.300'
               }}
-              cursor="pointer"
-            >
+              cursor="pointer">
               <CardBody>
                 <VStack spacing={3}>
                   <HStack justify="space-between" w="full">
@@ -692,8 +688,7 @@ const ModernCarbonDashboard: React.FC = () => {
                         fontSize="xs"
                         px={2}
                         py={1}
-                        borderRadius="full"
-                      >
+                        borderRadius="full">
                         {carbonScore}/100
                       </Badge>
                     </HStack>
@@ -703,8 +698,7 @@ const ModernCarbonDashboard: React.FC = () => {
                     size="80px"
                     color={getStatusColor(carbonScore) + '.400'}
                     thickness="8px"
-                    transition="all 0.5s ease"
-                  >
+                    transition="all 0.5s ease">
                     <CircularProgressLabel fontSize="lg" fontWeight="bold">
                       {carbonScore}
                     </CircularProgressLabel>
@@ -742,8 +736,7 @@ const ModernCarbonDashboard: React.FC = () => {
                 boxShadow: 'xl',
                 borderColor: effectiveNetCarbon > 0 ? 'red.300' : 'green.300'
               }}
-              cursor="pointer"
-            >
+              cursor="pointer">
               <CardBody>
                 <VStack spacing={3}>
                   <HStack justify="space-between" w="full">
@@ -769,8 +762,7 @@ const ModernCarbonDashboard: React.FC = () => {
                         fontSize="xs"
                         px={2}
                         py={1}
-                        borderRadius="full"
-                      >
+                        borderRadius="full">
                         {effectiveNetCarbon > 0 ? 'POSITIVE' : 'NEGATIVE'}
                       </Badge>
                     </HStack>
@@ -780,8 +772,7 @@ const ModernCarbonDashboard: React.FC = () => {
                       fontSize="2xl"
                       fontWeight="bold"
                       color={effectiveNetCarbon > 0 ? 'red.500' : 'green.500'}
-                      transition="color 0.3s ease"
-                    >
+                      transition="color 0.3s ease">
                       {effectiveNetCarbon > 0 ? '+' : ''}
                       {effectiveNetCarbon.toFixed(1)}
                     </Text>
@@ -817,8 +808,7 @@ const ModernCarbonDashboard: React.FC = () => {
                 boxShadow: 'xl',
                 borderColor: transparencyScore >= 80 ? 'green.300' : 'yellow.300'
               }}
-              cursor="pointer"
-            >
+              cursor="pointer">
               <CardBody>
                 <VStack spacing={3}>
                   <HStack justify="space-between" w="full">
@@ -844,8 +834,7 @@ const ModernCarbonDashboard: React.FC = () => {
                         fontSize="xs"
                         px={2}
                         py={1}
-                        borderRadius="full"
-                      >
+                        borderRadius="full">
                         {transparencyScore}%
                       </Badge>
                     </HStack>
@@ -855,8 +844,7 @@ const ModernCarbonDashboard: React.FC = () => {
                       fontSize="2xl"
                       fontWeight="bold"
                       color={transparencyScore >= 80 ? 'green.500' : 'yellow.600'}
-                      transition="color 0.3s ease"
-                    >
+                      transition="color 0.3s ease">
                       {transparencyScore}
                     </Text>
                     <Text fontSize="sm" color={mutedColor}>
@@ -885,8 +873,7 @@ const ModernCarbonDashboard: React.FC = () => {
                 boxShadow: 'xl',
                 borderColor: 'blue.300'
               }}
-              cursor="pointer"
-            >
+              cursor="pointer">
               <CardBody>
                 <VStack spacing={3}>
                   <HStack justify="space-between" w="full">
@@ -912,8 +899,7 @@ const ModernCarbonDashboard: React.FC = () => {
                         fontSize="xs"
                         px={2}
                         py={1}
-                        borderRadius="full"
-                      >
+                        borderRadius="full">
                         {verifiedEventsCount}/{eventsCount}
                       </Badge>
                     </HStack>
@@ -958,8 +944,7 @@ const ModernCarbonDashboard: React.FC = () => {
                 borderColor: usdaComplianceScore >= 80 ? 'green.300' : 'orange.300'
               }}
               cursor="pointer"
-              height="100%"
-            >
+              height="100%">
               <CardBody>
                 <VStack spacing={3}>
                   <HStack justify="space-between" w="full">
@@ -985,8 +970,7 @@ const ModernCarbonDashboard: React.FC = () => {
                         fontSize="xs"
                         px={2}
                         py={1}
-                        borderRadius="full"
-                      >
+                        borderRadius="full">
                         USDA {usdaComplianceScore >= 80 ? 'COMPLIANT' : 'PARTIAL'}
                       </Badge>
                     </HStack>
@@ -996,8 +980,7 @@ const ModernCarbonDashboard: React.FC = () => {
                     size="80px"
                     color={usdaComplianceScore >= 80 ? 'blue.400' : 'orange.400'}
                     thickness="8px"
-                    transition="all 0.5s ease"
-                  >
+                    transition="all 0.5s ease">
                     <CircularProgressLabel fontSize="lg" fontWeight="bold">
                       {usdaComplianceScore}%
                     </CircularProgressLabel>
@@ -1025,8 +1008,7 @@ const ModernCarbonDashboard: React.FC = () => {
                 borderColor: blockchainVerified ? 'green.300' : 'gray.300'
               }}
               cursor="pointer"
-              height="100%"
-            >
+              height="100%">
               <CardBody>
                 <VStack spacing={3}>
                   <HStack justify="space-between" w="full">
@@ -1056,8 +1038,7 @@ const ModernCarbonDashboard: React.FC = () => {
                         fontSize="xs"
                         px={2}
                         py={1}
-                        borderRadius="full"
-                      >
+                        borderRadius="full">
                         {blockchainVerified ? 'VERIFIED' : 'PENDING'}
                       </Badge>
                     </HStack>
@@ -1115,8 +1096,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   transform: 'translateY(-2px)',
                   boxShadow: 'xl',
                   borderColor: 'red.300'
-                }}
-              >
+                }}>
                 <CardHeader pb={3}>
                   <HStack justify="space-between">
                     <HStack spacing={3}>
@@ -1151,8 +1131,7 @@ const ModernCarbonDashboard: React.FC = () => {
                             fontSize="sm"
                             fontWeight="semibold"
                             textTransform="capitalize"
-                            color={textColor}
-                          >
+                            color={textColor}>
                             {category}
                           </Text>
                           <Text fontSize="sm" color={mutedColor} fontWeight="medium">
@@ -1188,8 +1167,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   transform: 'translateY(-2px)',
                   boxShadow: 'xl',
                   borderColor: 'green.300'
-                }}
-              >
+                }}>
                 <CardHeader pb={3}>
                   <HStack justify="space-between">
                     <HStack spacing={3}>
@@ -1198,8 +1176,7 @@ const ModernCarbonDashboard: React.FC = () => {
                         bg="green.50"
                         borderRadius="lg"
                         border="1px"
-                        borderColor="green.200"
-                      >
+                        borderColor="green.200">
                         <Icon as={FaTree} color="green.500" boxSize={4} />
                       </Box>
                       <VStack spacing={0} align="flex-start">
@@ -1258,8 +1235,7 @@ const ModernCarbonDashboard: React.FC = () => {
                         bg="gray.50"
                         borderRadius="full"
                         border="2px dashed"
-                        borderColor="gray.300"
-                      >
+                        borderColor="gray.300">
                         <Icon as={FaTree} color="gray.400" boxSize={8} />
                       </Box>
                       <VStack spacing={3} textAlign="center">
@@ -1281,8 +1257,7 @@ const ModernCarbonDashboard: React.FC = () => {
                           _hover={{
                             transform: 'scale(1.05)',
                             boxShadow: 'md'
-                          }}
-                        >
+                          }}>
                           Add Your First Offset
                         </Button>
                       </VStack>
@@ -1307,8 +1282,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   size="sm"
                   value={selectedCategory}
                   onChange={(e) => handleEntriesFilterChange('category', e.target.value)}
-                  w="auto"
-                >
+                  w="auto">
                   <option value="all">All Categories</option>
                   {availableCategories.map((category) => (
                     <option key={category} value={category}>
@@ -1320,8 +1294,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   size="sm"
                   variant={showVerifiedOnly ? 'solid' : 'outline'}
                   colorScheme="green"
-                  onClick={() => handleEntriesFilterChange('verified_only', !showVerifiedOnly)}
-                >
+                  onClick={() => handleEntriesFilterChange('verified_only', !showVerifiedOnly)}>
                   Verified Only
                 </Button>
               </HStack>
@@ -1347,8 +1320,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   w="100%"
                   borderRadius="xl"
                   border="1px solid"
-                  borderColor="gray.200"
-                >
+                  borderColor="gray.200">
                   <Table size="sm" variant="simple">
                     <Thead bg="gray.50">
                       <Tr>
@@ -1357,8 +1329,7 @@ const ModernCarbonDashboard: React.FC = () => {
                           fontWeight="semibold"
                           fontSize="sm"
                           py={4}
-                          width="80px"
-                        >
+                          width="80px">
                           Type
                         </Th>
                         <Th
@@ -1366,8 +1337,7 @@ const ModernCarbonDashboard: React.FC = () => {
                           fontWeight="semibold"
                           fontSize="sm"
                           py={4}
-                          width="200px"
-                        >
+                          width="200px">
                           Source
                         </Th>
                         <Th
@@ -1375,8 +1345,7 @@ const ModernCarbonDashboard: React.FC = () => {
                           fontWeight="semibold"
                           fontSize="sm"
                           py={4}
-                          width="150px"
-                        >
+                          width="150px">
                           Amount
                         </Th>
                         <Th
@@ -1384,8 +1353,7 @@ const ModernCarbonDashboard: React.FC = () => {
                           fontWeight="semibold"
                           fontSize="sm"
                           py={4}
-                          width="200px"
-                        >
+                          width="200px">
                           Status
                         </Th>
                         <Th
@@ -1393,8 +1361,7 @@ const ModernCarbonDashboard: React.FC = () => {
                           fontWeight="semibold"
                           fontSize="sm"
                           py={4}
-                          width="100px"
-                        >
+                          width="100px">
                           Date
                         </Th>
                         <Th
@@ -1402,8 +1369,7 @@ const ModernCarbonDashboard: React.FC = () => {
                           fontWeight="semibold"
                           fontSize="sm"
                           py={4}
-                          width="80px"
-                        >
+                          width="80px">
                           Actions
                         </Th>
                       </Tr>
@@ -1413,8 +1379,7 @@ const ModernCarbonDashboard: React.FC = () => {
                         <Tr
                           key={entry.id}
                           _hover={{ bg: 'green.50' }}
-                          transition="background-color 0.2s"
-                        >
+                          transition="background-color 0.2s">
                           <Td py={3} px={4}>
                             <Badge
                               colorScheme={entry.type === 'emission' ? 'red' : 'green'}
@@ -1422,8 +1387,7 @@ const ModernCarbonDashboard: React.FC = () => {
                               fontSize="xs"
                               px={2}
                               py={1}
-                              borderRadius="full"
-                            >
+                              borderRadius="full">
                               {entry.type === 'emission' ? 'Emission' : 'Offset'}
                             </Badge>
                           </Td>
@@ -1433,8 +1397,7 @@ const ModernCarbonDashboard: React.FC = () => {
                                 fontSize="sm"
                                 fontWeight="medium"
                                 color={textColor}
-                                noOfLines={1}
-                              >
+                                noOfLines={1}>
                                 {entry.source?.name || 'Unknown Source'}
                               </Text>
                               <Text fontSize="xs" color={mutedColor} noOfLines={1}>
@@ -1469,8 +1432,7 @@ const ModernCarbonDashboard: React.FC = () => {
                                 fontSize="xs"
                                 px={2}
                                 py={1}
-                                borderRadius="full"
-                              >
+                                borderRadius="full">
                                 {entry.verification_status === 'verified'
                                   ? 'VERIFIED'
                                   : entry.verification_status === 'rejected'
@@ -1487,8 +1449,7 @@ const ModernCarbonDashboard: React.FC = () => {
                                       entry.verification_status === 'verified' ? 'green' : 'red'
                                     }
                                     variant="outline"
-                                    fontSize="xs"
-                                  >
+                                    fontSize="xs">
                                     {entry.verification_status === 'verified'
                                       ? 'Registry Failed'
                                       : 'Registry Failed'}
@@ -1501,8 +1462,7 @@ const ModernCarbonDashboard: React.FC = () => {
                                     size="sm"
                                     colorScheme="orange"
                                     variant="outline"
-                                    fontSize="xs"
-                                  >
+                                    fontSize="xs">
                                     Self Reported
                                   </Badge>
                                 )}
@@ -1622,8 +1582,7 @@ const ModernCarbonDashboard: React.FC = () => {
                     colorScheme="green"
                     onClick={() =>
                       navigate(`/admin/dashboard/establishment/${establishmentId}/parcel`)
-                    }
-                  >
+                    }>
                     Add Production
                   </Button>
                   <Button leftIcon={<FaInfoCircle />} variant="outline" onClick={onInsightsOpen}>
@@ -1746,8 +1705,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   leftIcon={<FaCloudUploadAlt />}
                   colorScheme="blue"
                   variant="outline"
-                  size="sm"
-                >
+                  size="sm">
                   Upload New Certification
                 </Button>
 

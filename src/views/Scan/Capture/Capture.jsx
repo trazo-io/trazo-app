@@ -20,8 +20,6 @@ import {
   AlertTitle,
   AlertDescription,
   Badge,
-  Card,
-  CardBody,
   useBreakpointValue,
   Container
 } from '@chakra-ui/react';
@@ -54,6 +52,8 @@ import FormInput from 'components/Forms/FormInput';
 import { useNavigate } from 'react-router-dom';
 import { useSignUpMutation } from 'store/api/authApi';
 import { zodResolver } from '@hookform/resolvers/zod';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 // Assets
 
@@ -262,8 +262,7 @@ function Capture() {
         justifyContent="center"
         align="center"
         mt="6.5rem"
-        pt={'55px'}
-      >
+        pt={'55px'}>
         <Text fontSize={titleSize} color="white" fontWeight="bold">
           QR Scanner Ready!
         </Text>
@@ -273,8 +272,7 @@ function Capture() {
           fontWeight="normal"
           mt="10px"
           mb="26px"
-          w={{ base: '90%', sm: '60%', lg: '40%', xl: '25%' }}
-        >
+          w={{ base: '90%', sm: '60%', lg: '40%', xl: '25%' }}>
           Point your camera at a QR code to view product sustainability details.
         </Text>
 
@@ -315,8 +313,7 @@ function Capture() {
           p={cardPadding}
           mx={{ base: '20px', md: '100px' }}
           bg={bgColor}
-          boxShadow="0 20px 27px 0 rgb(0 0 0 / 5%)"
-        >
+          boxShadow="0 20px 27px 0 rgb(0 0 0 / 5%)">
           <VStack spacing={6}>
             <HStack justify="space-between" w="full">
               <Text fontSize="xl" color={textColor} fontWeight="bold">
@@ -331,16 +328,14 @@ function Capture() {
                     colorScheme={flashEnabled ? 'yellow' : 'gray'}
                     variant="outline"
                     onClick={() => setFlashEnabled(!flashEnabled)}
-                    leftIcon={<Icon as={flashEnabled ? MdFlashOn : MdFlashOff} />}
-                  >
+                    leftIcon={<Icon as={flashEnabled ? MdFlashOn : MdFlashOff} />}>
                     Flash
                   </Button>
                 )}
                 <Circle
                   size="30px"
                   bg={cameraReady ? 'green.100' : 'gray.100'}
-                  color={cameraReady ? 'green.600' : 'gray.600'}
-                >
+                  color={cameraReady ? 'green.600' : 'gray.600'}>
                   <Icon as={FaCameraRetro} boxSize={4} />
                 </Circle>
               </HStack>
@@ -358,8 +353,7 @@ function Capture() {
                   borderRadius="xl"
                   display="flex"
                   alignItems="center"
-                  justifyContent="center"
-                >
+                  justifyContent="center">
                   <VStack spacing={4}>
                     <Spinner size="lg" color="green.500" />
                     <Text color="gray.600">Initializing Camera...</Text>
@@ -401,8 +395,7 @@ function Capture() {
               justifyContent="center"
               alignItems="center"
               maxW="100%"
-              mt="20px"
-            >
+              mt="20px">
               <Text color={textColor} fontWeight="medium" textAlign="center">
                 Need help?
                 <Link color={titleColor} as="span" ms="5px" href="#" fontWeight="bold">

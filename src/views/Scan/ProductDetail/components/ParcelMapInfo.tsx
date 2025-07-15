@@ -7,9 +7,6 @@ import {
   Heading,
   Badge,
   Icon,
-  Card,
-  CardBody,
-  CardHeader,
   useColorModeValue,
   Button,
   Stack,
@@ -36,6 +33,9 @@ import { ParcelModal } from './ParcelModal';
 // Import the real map component from Parcel Dashboard
 // @ts-ignore - CardWithMap is a JSX component without TypeScript declarations
 import CardWithMap from '../../../Dashboard/Parcel/components/CardWithMap.jsx';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 interface ParcelMapInfoProps {
   parcelData?: {
@@ -138,8 +138,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               variant="outline"
               bg="white"
               leftIcon={<Icon as={isMapExpanded ? FaCompress : FaExpand} />}
-              onClick={() => setIsMapExpanded(!isMapExpanded)}
-            >
+              onClick={() => setIsMapExpanded(!isMapExpanded)}>
               {isMapExpanded ? 'Collapse' : 'Expand'}
             </Button>
           </Box>

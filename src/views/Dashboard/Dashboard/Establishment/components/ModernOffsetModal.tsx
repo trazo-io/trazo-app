@@ -35,8 +35,6 @@ import {
   AlertDescription,
   Progress,
   SimpleGrid,
-  Card,
-  CardBody,
   Icon,
   useColorModeValue,
   useToast,
@@ -65,6 +63,8 @@ import {
 } from 'react-icons/fi';
 import { useGetCertifiedProjectsQuery, useCreateCarbonOffsetMutation } from 'store/api/companyApi';
 import { useFileUpload } from 'services/uploadService';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 interface ModernOffsetModalProps {
   isOpen: boolean;
@@ -395,8 +395,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
           border={formData.verification_level === 'self_reported' ? '2px solid' : '1px solid'}
           borderColor={formData.verification_level === 'self_reported' ? 'orange.500' : borderColor}
           onClick={() => setFormData({ ...formData, verification_level: 'self_reported' })}
-          _hover={{ borderColor: 'orange.300' }}
-        >
+          _hover={{ borderColor: 'orange.300' }}>
           <CardBody>
             <VStack align="start" spacing={3}>
               <HStack>
@@ -443,8 +442,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
             formData.verification_level === 'certified_project' ? 'green.500' : borderColor
           }
           onClick={() => setActiveTab(1)} // Switch to Certified Projects tab
-          _hover={{ borderColor: 'green.300' }}
-        >
+          _hover={{ borderColor: 'green.300' }}>
           <CardBody>
             <VStack align="start" spacing={3}>
               <HStack>
@@ -540,8 +538,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                 <Tooltip
                   label={currentLevel.antiGaming.slice(3).join('; ')}
                   placement="top"
-                  hasArrow
-                >
+                  hasArrow>
                   <Text fontSize="xs" color="blue.500" cursor="help">
                     +{currentLevel.antiGaming.length - 3} more protections...
                   </Text>
@@ -565,8 +562,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                 <Tooltip
                   label={currentLevel.whenBlocked.slice(2).join('; ')}
                   placement="top"
-                  hasArrow
-                >
+                  hasArrow>
                   <Text fontSize="xs" color="orange.500" cursor="help">
                     +{currentLevel.whenBlocked.length - 2} more solutions...
                   </Text>
@@ -702,8 +698,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
               borderRadius="md"
               boxShadow="lg"
               p={4}
-              maxW="400px"
-            >
+              maxW="400px">
               <AlertIcon />
               <Box flex="1">
                 <AlertTitle>Offset Entry Created!</AlertTitle>
@@ -718,8 +713,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                     onClick={() => {
                       window.open(selectedProject.registry_url || '#', '_blank');
                       closeToast();
-                    }}
-                  >
+                    }}>
                     View Project
                   </Button>
                   <Button size="sm" variant="ghost" onClick={closeToast}>
@@ -809,8 +803,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
             index={activeTab}
             onChange={setActiveTab}
             variant="soft-rounded"
-            colorScheme="green"
-          >
+            colorScheme="green">
             <TabList mb={6}>
               <Tab>
                 <HStack>
@@ -853,8 +846,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                     <Select
                       placeholder="Select offset activity"
                       value={formData.source_id}
-                      onChange={(e) => setFormData({ ...formData, source_id: e.target.value })}
-                    >
+                      onChange={(e) => setFormData({ ...formData, source_id: e.target.value })}>
                       {onFarmOffsets.map((offset) => (
                         <option key={offset.id} value={offset.id}>
                           {offset.name} - {offset.description}
@@ -870,8 +862,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                         value={formData.amount}
                         onChange={(value) => setFormData({ ...formData, amount: value || '' })}
                         min={0}
-                        precision={2}
-                      >
+                        precision={2}>
                         <NumberInputField />
                         <NumberInputStepper>
                           <NumberIncrementStepper />
@@ -886,8 +877,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                         value={formData.verification_level}
                         onChange={(e) =>
                           setFormData({ ...formData, verification_level: e.target.value })
-                        }
-                      >
+                        }>
                         <option value="self_reported">Self Reported (40% effective)</option>
                       </Select>
                       <FormHelperText>
@@ -1010,8 +1000,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                             p={2}
                             bg={useColorModeValue('gray.50', 'gray.700')}
                             borderRadius="md"
-                            w="100%"
-                          >
+                            w="100%">
                             <Text fontSize="xs" fontWeight="semibold" mb={1}>
                               Credit Calculation:
                             </Text>
@@ -1077,8 +1066,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                             size="sm"
                             onClick={() => photoInputRef.current?.click()}
                             isLoading={isUploadingFiles}
-                            loadingText="Uploading..."
-                          >
+                            loadingText="Uploading...">
                             Upload Photos
                           </Button>
                           <Input
@@ -1098,8 +1086,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                           <Grid
                             templateColumns="repeat(auto-fill, minmax(100px, 1fr))"
                             gap={2}
-                            mb={2}
-                          >
+                            mb={2}>
                             {uploadedPhotos.map((photo, index) => (
                               <Box key={index} position="relative">
                                 <Image
@@ -1139,8 +1126,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                             size="sm"
                             onClick={() => documentInputRef.current?.click()}
                             isLoading={isUploadingFiles}
-                            loadingText="Uploading..."
-                          >
+                            loadingText="Uploading...">
                             Upload Documents
                           </Button>
                           <Input
@@ -1165,8 +1151,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                                 bg={bgColor}
                                 border="1px solid"
                                 borderColor={borderColor}
-                                borderRadius="md"
-                              >
+                                borderRadius="md">
                                 <Icon as={FiFile} color="blue.500" />
                                 <Text fontSize="sm" flex={1} noOfLines={1}>
                                   {doc.name}
@@ -1227,8 +1212,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                     <Select
                       placeholder="Select offset activity"
                       value={formData.source_id}
-                      onChange={(e) => setFormData({ ...formData, source_id: e.target.value })}
-                    >
+                      onChange={(e) => setFormData({ ...formData, source_id: e.target.value })}>
                       {onFarmOffsets.map((offset) => (
                         <option key={offset.id} value={offset.id}>
                           {offset.name} - {offset.description}
@@ -1244,8 +1228,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                         value={formData.amount}
                         onChange={(value) => setFormData({ ...formData, amount: value || '' })}
                         min={0}
-                        precision={2}
-                      >
+                        precision={2}>
                         <NumberInputField />
                         <NumberInputStepper>
                           <NumberIncrementStepper />
@@ -1260,8 +1243,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                         value={formData.verification_level}
                         onChange={(e) =>
                           setFormData({ ...formData, verification_level: e.target.value })
-                        }
-                      >
+                        }>
                         <option value="certified_project">ICR Verified (90% effective)</option>
                       </Select>
                       <FormHelperText>Third-party verification through ICR registry</FormHelperText>
@@ -1330,8 +1312,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                         leftIcon={<Icon as={FiCamera} />}
                         onClick={() => photoInputRef.current?.click()}
                         variant="outline"
-                        size="sm"
-                      >
+                        size="sm">
                         Upload Photos
                       </Button>
 
@@ -1384,8 +1365,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                         leftIcon={<Icon as={FiUpload} />}
                         onClick={() => documentInputRef.current?.click()}
                         variant="outline"
-                        size="sm"
-                      >
+                        size="sm">
                         Upload Documents
                       </Button>
 
@@ -1447,8 +1427,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                           p={2}
                           bg={useColorModeValue('gray.50', 'gray.700')}
                           borderRadius="md"
-                          w="100%"
-                        >
+                          w="100%">
                           <Text fontSize="xs" fontWeight="semibold" mb={1}>
                             Credit Calculation:
                           </Text>
@@ -1533,8 +1512,7 @@ const ModernOffsetModal: React.FC<ModernOffsetModalProps> = ({
                 parseFloat(formData.amount) <= 0 ||
                 !formData.source_id ||
                 (activeTab === 1 && !formData.registry_verification_id) // ICR tab requires registry ID
-              }
-            >
+              }>
               Create Offset
             </Button>
           </HStack>

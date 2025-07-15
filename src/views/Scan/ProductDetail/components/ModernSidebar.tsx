@@ -1,8 +1,5 @@
 import React from 'react';
 import {
-  Card,
-  CardHeader,
-  CardBody,
   HStack,
   VStack,
   Circle,
@@ -15,6 +12,9 @@ import {
 } from '@chakra-ui/react';
 import { FaCoins, FaGift, FaStar, FaHeart, FaAward, FaMedal, FaChartLine } from 'react-icons/fa';
 import { CarbonImpactVisualizer } from '../../../../components/Education';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 interface ModernSidebarProps {
   isAuthenticated: boolean;
@@ -74,8 +74,7 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
                 size="sm"
                 colorScheme="green"
                 leftIcon={<Icon as={FaMedal} />}
-                onClick={onAuthPrompt}
-              >
+                onClick={onAuthPrompt}>
                 View Achievements
               </Button>
             </VStack>

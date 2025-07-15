@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Card,
-  CardBody,
   Flex,
   Heading,
   Button,
@@ -14,6 +12,8 @@ import {
   FormLabel
 } from '@chakra-ui/react';
 import { useGenerateCarbonReportMutation } from 'store/api/companyApi';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 const CarbonReportsCard = ({ establishmentId }) => {
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -60,8 +60,7 @@ const CarbonReportsCard = ({ establishmentId }) => {
       borderRadius="lg"
       px={{ base: 3, md: 6 }}
       py={{ base: 2, md: 3 }}
-      mt={4}
-    >
+      mt={4}>
       <CardBody w="100%" p={0}>
         <Heading size="md" mb={4}>
           Generar Reporte de Carbono
@@ -100,8 +99,7 @@ const CarbonReportsCard = ({ establishmentId }) => {
           colorScheme="green"
           onClick={handleGenerateReport}
           isLoading={isLoading}
-          loadingText="Generando..."
-        >
+          loadingText="Generando...">
           Generar Reporte
         </Button>
         <Text fontSize="sm" color="gray.500" mt={2}>

@@ -19,11 +19,14 @@ const CardFooter = {
   baseStyle: {
     display: 'flex',
     width: '100%'
-  }
+  },
+  sizes: {},
+  variants: {},
+  defaultProps: {},
 };
 
 export const CardFooterComponent = {
   components: {
-    CardFooter
-  }
+    CardFooter,
+  },
 };

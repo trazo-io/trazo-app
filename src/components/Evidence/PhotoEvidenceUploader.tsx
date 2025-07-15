@@ -12,9 +12,6 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
-  Card,
-  CardBody,
-  CardHeader,
   Heading,
   FormControl,
   FormLabel,
@@ -27,6 +24,9 @@ import {
   Divider,
   SimpleGrid
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import { AttachmentIcon, CheckCircleIcon, WarningIcon, ViewIcon } from '@chakra-ui/icons';
 import {
   useUploadEvidencePhotoMutation,

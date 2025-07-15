@@ -11,8 +11,6 @@ import {
   Heading,
   useColorModeValue,
   Flex,
-  Card,
-  CardBody,
   Stack,
   useBreakpointValue,
   Divider
@@ -37,6 +35,8 @@ import {
 import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
 import { useIntl } from 'react-intl';
 import { format, parseISO } from 'date-fns';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
 
 interface CarbonCalculation {
   co2e: number;
@@ -189,8 +189,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
           justify="space-between"
           align="center"
           w="full"
-          gap={3}
-        >
+          gap={3}>
           <VStack spacing={1} align={{ base: 'center', sm: 'start' }}>
             <Heading size={{ base: 'md', md: 'lg' }} color={textColor}>
               Production Journey
@@ -218,8 +217,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             onClick={() => setSelectedCategory('all')}
             borderRadius="full"
             fontSize="xs"
-            minW="fit-content"
-          >
+            minW="fit-content">
             All Activities
           </Button>
           {categories.slice(1, 3).map((category) => (
@@ -231,8 +229,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               onClick={() => setSelectedCategory(category)}
               borderRadius="full"
               fontSize="xs"
-              minW="fit-content"
-            >
+              minW="fit-content">
               {category}
             </Button>
           ))}
@@ -260,8 +257,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 transform: 'translateY(-1px)',
                 transition: 'all 0.2s'
               }}
-              onClick={() => handleEventClick(event)}
-            >
+              onClick={() => handleEventClick(event)}>
               <CardBody p={4}>
                 {/* Single Column Mobile Layout */}
                 <VStack spacing={3} align="stretch">
@@ -277,8 +273,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         color={textColor}
                         noOfLines={2}
                         fontSize={{ base: 'md', md: 'lg' }}
-                        lineHeight="1.4"
-                      >
+                        lineHeight="1.4">
                         {event.description}
                       </Heading>
 
@@ -287,8 +282,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           colorScheme={config.categoryColor}
                           size="sm"
                           borderRadius="full"
-                          fontSize="xs"
-                        >
+                          fontSize="xs">
                           {config.category}
                         </Badge>
                         {event.certified && (
@@ -365,8 +359,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                       : event.carbon_data.efficiency_score >= 40
                                       ? 'yellow.500'
                                       : 'red.500'
-                                  }
-                                >
+                                  }>
                                   {Math.round(event.carbon_data.efficiency_score)}%
                                 </Text>
                                 <Icon as={FaShieldAlt} color="gray.400" boxSize={3} />
@@ -396,8 +389,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                       : 'red'
                                   }
                                   size="sm"
-                                  borderRadius="full"
-                                >
+                                  borderRadius="full">
                                   <Text fontSize="xs" textTransform="capitalize">
                                     {event.carbon_data.verification_confidence} confidence
                                   </Text>
@@ -435,8 +427,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         fontSize="xs"
                         color={mutedColor}
                         flexWrap="wrap"
-                        justify="space-between"
-                      >
+                        justify="space-between">
                         {event.volume && (
                           <HStack spacing={1}>
                             <Text fontWeight="semibold" color={textColor}>
@@ -481,8 +472,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             onClick={() => setShowAll(!showAll)}
             size="sm"
             borderRadius="full"
-            px={6}
-          >
+            px={6}>
             {showAll ? 'Show Less' : `Show ${filteredEvents.length - 3} More Activities`}
           </Button>
         </Flex>

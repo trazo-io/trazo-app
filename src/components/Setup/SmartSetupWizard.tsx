@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardBody,
-  CardHeader,
   Flex,
   Grid,
   GridItem,
@@ -37,6 +34,9 @@ import {
   StatHelpText,
   StatArrow
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import {
   FaSeedling,
   FaLeaf,

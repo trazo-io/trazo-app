@@ -9,9 +9,6 @@ import {
   Progress,
   Icon,
   SimpleGrid,
-  Card,
-  CardBody,
-  CardHeader,
   Divider,
   useColorModeValue,
   Skeleton,
@@ -21,6 +18,9 @@ import {
   Button,
   useDisclosure
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import {
   FiShield,
   FiAlertTriangle,

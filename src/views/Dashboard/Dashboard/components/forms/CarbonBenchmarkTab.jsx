@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Card,
-  CardBody,
-  CardHeader,
   Flex,
   Heading,
   Select,
@@ -25,6 +22,9 @@ import {
   SimpleGrid
 } from '@chakra-ui/react';
 import { useGetCarbonBenchmarksQuery } from 'store/api/companyApi';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 
 const CarbonBenchmarkTab = ({ establishmentId, industry }) => {
   const textColor = useColorModeValue('gray.700', 'white');
@@ -63,8 +63,7 @@ const CarbonBenchmarkTab = ({ establishmentId, industry }) => {
         <Select
           w="200px"
           value={selectedYear}
-          onChange={(e) => setSelectedYear(Number(e.target.value))}
-        >
+          onChange={(e) => setSelectedYear(Number(e.target.value))}>
           {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
             <option key={year} value={year}>
               {year}

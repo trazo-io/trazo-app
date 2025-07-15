@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Card,
-  CardBody,
-  CardHeader,
   Heading,
   HStack,
   VStack,
@@ -27,6 +24,9 @@ import {
   Spinner,
   Progress
 } from '@chakra-ui/react';
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import CardHeader from 'components/Card/CardHeader';
 import { TriangleUpIcon, TriangleDownIcon, InfoIcon } from '@chakra-ui/icons';
 import {
   useEstimateGasCostsMutation,

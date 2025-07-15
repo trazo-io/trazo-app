@@ -15,7 +15,7 @@
 
 */
 
-import { Box, useStyleConfig } from '@chakra-ui/react';
+import { Box, useMultiStyleConfig, StylesProvider } from '@chakra-ui/react';
 
 import { SystemProps } from '@chakra-ui/react';
 import { ThemingProps } from '@chakra-ui/system';
@@ -26,11 +26,13 @@ interface CardProps extends ThemingProps<'Card'>, SystemProps {
 
 function Card(props: CardProps) {
   const { variant, children, ...rest } = props;
-  const styles = useStyleConfig('Card', { variant });
+  const styles = useMultiStyleConfig('Card', { variant });
   return (
-    <Box __css={styles} {...rest}>
-      {children}
-    </Box>
+    <StylesProvider value={styles}>
+      <Box __css={styles.container} {...rest}>
+        {children}
+      </Box>
+    </StylesProvider>
   );
 }
 
