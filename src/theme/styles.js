@@ -12,7 +12,7 @@
 
 */
 
-import { mode } from '@chakra-ui/theme-tools';
+// Removed mode import to fix staging deployment issues
 
 /* 
 === TRAZO COLOR PALETTE SYSTEM ===
@@ -124,15 +124,18 @@ export const globalStyles = {
     }
   },
   styles: {
-    global: (props) => ({
+    global: {
       body: {
-        bg:
-          typeof document !== 'undefined' && document.documentElement.layout === 'auth'
-            ? mode('white', 'gray.800')(props)
-            : mode('gray.100', 'gray.800')(props), // Updated to use new neutral light
+        bg: {
+          base: 'gray.100',
+          _dark: 'gray.800'
+        },
         fontFamily:
           "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
-        color: mode('gray.700', 'white')(props), // Updated to use new text color
+        color: {
+          base: 'gray.700',
+          _dark: 'white'
+        },
         lineHeight: 'base'
       },
       html: {
@@ -144,13 +147,19 @@ export const globalStyles = {
         boxSizing: 'border-box'
       },
       a: {
-        color: mode('green.500', 'green.300')(props), // Updated to use Trazo green
+        color: {
+          base: 'green.500',
+          _dark: 'green.300'
+        },
         textDecoration: 'none',
         _hover: {
           textDecoration: 'none',
-          color: mode('green.600', 'green.200')(props) // Updated hover state
+          color: {
+            base: 'green.600',
+            _dark: 'green.200'
+          }
         }
       }
-    })
+    }
   }
 };

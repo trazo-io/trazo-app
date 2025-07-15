@@ -15,7 +15,7 @@
 
 */
 
-import { mode } from '@chakra-ui/theme-tools';
+// Removed mode import to fix staging deployment issues
 
 export const buttonStyles = {
   components: {
@@ -47,51 +47,75 @@ export const buttonStyles = {
           }
         },
         // Trazo brand-focused variants using forest green palette
-        brand: (props) => ({
-          bg: mode('green.500', 'green.500')(props),
+        brand: {
+          bg: 'green.500',
           color: 'white',
           _hover: {
-            bg: mode('green.600', 'green.400')(props),
+            bg: {
+              base: 'green.600',
+              _dark: 'green.400'
+            },
             transform: 'translateY(-1px)',
             boxShadow: 'lg'
           },
           _active: {
-            bg: mode('green.700', 'green.300')(props),
+            bg: {
+              base: 'green.700',
+              _dark: 'green.300'
+            },
             transform: 'translateY(0px)'
           }
-        }),
-        outline: (props) => ({
+        },
+        outline: {
           border: '1px solid',
-          borderColor: mode('green.500', 'green.500')(props),
-          color: mode('green.500', 'green.500')(props),
+          borderColor: 'green.500',
+          color: 'green.500',
           bg: 'transparent',
           _hover: {
-            bg: mode('green.50', 'green.900')(props),
-            borderColor: mode('green.600', 'green.400')(props),
-            color: mode('green.600', 'green.400')(props)
+            bg: {
+              base: 'green.50',
+              _dark: 'green.900'
+            },
+            borderColor: {
+              base: 'green.600',
+              _dark: 'green.400'
+            },
+            color: {
+              base: 'green.600',
+              _dark: 'green.400'
+            }
           }
-        }),
-        ghost: (props) => ({
+        },
+        ghost: {
           bg: 'transparent',
-          color: mode('green.500', 'green.500')(props),
+          color: 'green.500',
           _hover: {
-            bg: mode('green.50', 'green.900')(props),
-            color: mode('green.600', 'green.400')(props)
+            bg: {
+              base: 'green.50',
+              _dark: 'green.900'
+            },
+            color: {
+              base: 'green.600',
+              _dark: 'green.400'
+            }
           }
-        })
+        }
       },
-      baseStyle: (props) => ({
+      baseStyle: {
         borderRadius: '12px',
         fontWeight: '500',
         _focus: {
-          boxShadow: `0 0 0 3px ${mode('green.100', 'green.800')(props)}`
+          boxShadow: {
+            base: '0 0 0 3px #C6F6D5', // green.100
+            _dark: '0 0 0 3px #276749'  // green.800
+          }
         },
         _disabled: {
           opacity: 0.4,
           cursor: 'not-allowed',
           boxShadow: 'none'
         }
-      }),
+      },
       defaultProps: {
         variant: 'brand',
         size: 'md'

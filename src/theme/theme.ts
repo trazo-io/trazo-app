@@ -30,8 +30,7 @@ import { extendTheme } from '@chakra-ui/react';
 import { globalStyles } from './styles';
 import { linkStyles } from './components/link';
 
-// import { mode } from "@chakra-ui/theme-tools";
-// Cache bust: 2025-01-15 - Fixed Card component theme issues
+// Cache bust: 2025-01-15 - Fixed Card component theme issues and removed mode dependency
 export default extendTheme(
   { breakpoints }, // Breakpoints
   globalStyles,

@@ -15,7 +15,7 @@
 
 */
 
-import { mode } from '@chakra-ui/theme-tools';
+// Removed mode import to fix staging deployment issues
 
 export const badgeStyles = {
   components: {
@@ -28,35 +28,41 @@ export const badgeStyles = {
       },
       variants: {
         // Trazo brand-focused variants using forest green palette
-        brand: (props) => ({
-          bg: mode('green.500', 'green.500')(props),
+        brand: {
+          bg: 'green.500',
           color: 'white',
           fontSize: 'xs',
           fontWeight: '600'
-        }),
-        outline: (props) => ({
+        },
+        outline: {
           border: '1px solid',
-          borderColor: mode('green.500', 'green.500')(props),
-          color: mode('green.500', 'green.500')(props),
+          borderColor: 'green.500',
+          color: 'green.500',
           bg: 'transparent',
           fontSize: 'xs',
           fontWeight: '600'
-        }),
-        subtle: (props) => ({
-          bg: mode('green.50', 'green.900')(props),
-          color: mode('green.700', 'green.200')(props),
+        },
+        subtle: {
+          bg: {
+            base: 'green.50',
+            _dark: 'green.900'
+          },
+          color: {
+            base: 'green.700',
+            _dark: 'green.200'
+          },
           fontSize: 'xs',
           fontWeight: '600'
-        })
+        }
       },
-      baseStyle: (props) => ({
+      baseStyle: {
         textTransform: 'capitalize',
         borderRadius: '6px',
         px: 2,
         py: 1,
         fontSize: 'xs',
         fontWeight: '500'
-      }),
+      },
       defaultProps: {
         variant: 'brand',
         size: 'md'
