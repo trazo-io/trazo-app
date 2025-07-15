@@ -135,7 +135,7 @@ function ProfileUser() {
                     borderRadius="full"
                     {...getRootProps({ className: 'dropzone' })}
                   >
-                    <FiCamera color="#059669" size={20} />
+                    <FiCamera color="#2E7D32" size={20} />
                     <Input
                       id="imageInput"
                       type="file"

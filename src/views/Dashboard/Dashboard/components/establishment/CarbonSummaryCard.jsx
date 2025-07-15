@@ -80,8 +80,8 @@ const CarbonSummaryCard = ({ establishmentId }) => {
   }
 
   return (
-    <Card bg={bgColor} p="16px" borderRadius="15px">
-      <CardHeader p="12px 5px" mb="12px">
+    <Card bg={bgColor} p={6} borderRadius="xl" data-testid="carbon-summary">
+      <CardHeader p={0} mb={4}>
         <Flex direction="column">
           <Text fontSize="lg" color="gray.700" fontWeight="bold">
             Huella Neta
@@ -91,32 +91,42 @@ const CarbonSummaryCard = ({ establishmentId }) => {
           </Text>
         </Flex>
       </CardHeader>
-      <CardBody px="5px">
+      <CardBody px={0}>
         {/* Metrics Grid */}
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={4}>
-          <Box textAlign="center">
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4} mb={4}>
+          <Box textAlign="center" p={2}>
             <Stat>
-              <StatLabel>Emisiones Totales</StatLabel>
-              <StatNumber>{(data?.total_emissions || 0).toFixed(2)} kg CO₂e</StatNumber>
-              <StatHelpText>
+              <StatLabel fontSize="sm" color="gray.600">Emisiones Totales</StatLabel>
+              <StatNumber fontSize={{ base: "lg", md: "xl" }} color="red.500" fontWeight="bold">
+                {(data?.total_emissions || 0).toFixed(2)} kg CO₂e
+              </StatNumber>
+              <StatHelpText fontSize="xs">
                 <StatArrow type="increase" /> Emisiones del período
               </StatHelpText>
             </Stat>
           </Box>
-          <Box textAlign="center">
+          <Box textAlign="center" p={2}>
             <Stat>
-              <StatLabel>Compensaciones</StatLabel>
-              <StatNumber>{(data?.total_offsets || 0).toFixed(2)} kg CO₂e</StatNumber>
-              <StatHelpText>
+              <StatLabel fontSize="sm" color="gray.600">Compensaciones</StatLabel>
+              <StatNumber fontSize={{ base: "lg", md: "xl" }} color="green.500" fontWeight="bold">
+                {(data?.total_offsets || 0).toFixed(2)} kg CO₂e
+              </StatNumber>
+              <StatHelpText fontSize="xs">
                 <StatArrow type="decrease" /> Compensaciones del período
               </StatHelpText>
             </Stat>
           </Box>
-          <Box textAlign="center">
+          <Box textAlign="center" p={2}>
             <Stat>
-              <StatLabel>Huella Neta</StatLabel>
-              <StatNumber>{(data?.net_carbon || 0).toFixed(2)} kg CO₂e</StatNumber>
-              <StatHelpText>
+              <StatLabel fontSize="sm" color="gray.600">Huella Neta</StatLabel>
+              <StatNumber 
+                fontSize={{ base: "lg", md: "xl" }} 
+                color={(data?.net_carbon || 0) >= 0 ? "red.500" : "green.500"} 
+                fontWeight="bold"
+              >
+                {(data?.net_carbon || 0).toFixed(2)} kg CO₂e
+              </StatNumber>
+              <StatHelpText fontSize="xs">
                 <StatArrow type={(data?.net_carbon || 0) >= 0 ? 'increase' : 'decrease'} />
                 {Math.abs(data?.net_carbon || 0).toFixed(2)} kg CO₂e
               </StatHelpText>
@@ -128,31 +138,48 @@ const CarbonSummaryCard = ({ establishmentId }) => {
         <Divider my={4} />
 
         {/* Progress Section */}
-        <Box mb={4}>
-          <Heading size="sm" mb={2} color="green.500">
+        <Box mb={6}>
+          <Heading size="sm" mb={3} color="trazo.forest" fontWeight="600">
             Progreso de Compensación
           </Heading>
           <Progress
             value={offsetPercentage}
-            colorScheme={offsetPercentage >= 100 ? 'green' : 'amber'}
+            colorScheme={offsetPercentage >= 100 ? 'green' : 'orange'}
             size="lg"
             borderRadius="md"
-            mb={2}
-            height="20px"
+            mb={3}
+            height="16px"
+            bg="gray.100"
           />
-          <Text textAlign="center" fontSize="sm" color="gray.500">
+          <Text textAlign="center" fontSize="sm" color="gray.600" fontWeight="500">
             {offsetPercentage.toFixed(1)}% de las emisiones compensadas
-            {offsetPercentage >= 100 && ' - ¡Carbono Neutral!'}
+            {offsetPercentage >= 100 && (
+              <Text as="span" color="green.500" fontWeight="bold">
+                {' - ¡Carbono Neutral!'}
+              </Text>
+            )}
           </Text>
         </Box>
 
         {/* View Details Button */}
-        <Flex justify="center">
+        <Flex justify="center" pt={2}>
           <Button
-            colorScheme="green"
-            size="sm"
+            bg="trazo.forest"
+            color="white"
+            h="44px"
+            fontSize="sm"
+            borderRadius="xl"
+            px={6}
             onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/carbon`)}
-            leftIcon={<Icon as={FaChartLine} />}>
+            leftIcon={<Icon as={FaChartLine} />}
+            _hover={{
+              bg: 'green.600',
+              transform: 'translateY(-1px)',
+              boxShadow: 'md'
+            }}
+            _active={{
+              bg: 'green.700'
+            }}>
             Ver Detalles
           </Button>
         </Flex>

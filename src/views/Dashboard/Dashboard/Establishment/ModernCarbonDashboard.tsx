@@ -179,7 +179,7 @@ const ModernCarbonDashboard: React.FC = () => {
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const successColor = useColorModeValue('green.500', 'green.300');
-  const warningColor = useColorModeValue('orange.500', 'orange.300');
+  const warningColor = useColorModeValue('amber.500', 'amber.300');
   const errorColor = useColorModeValue('red.500', 'red.300');
 
   // Responsive values
@@ -740,7 +740,7 @@ const ModernCarbonDashboard: React.FC = () => {
               <CardBody>
                 <VStack spacing={3}>
                   <HStack justify="space-between" w="full">
-                    <Icon as={FaBalanceScale} color="blue.500" boxSize={5} />
+                    <Icon as={FaBalanceScale} color="green.500" boxSize={5} />
                     <HStack spacing={2}>
                       <Tooltip label="Click for details and improvement suggestions" hasArrow>
                         <IconButton
@@ -948,7 +948,7 @@ const ModernCarbonDashboard: React.FC = () => {
               <CardBody>
                 <VStack spacing={3}>
                   <HStack justify="space-between" w="full">
-                    <Icon as={FaShieldAlt} color="blue.500" boxSize={5} />
+                    <Icon as={FaShieldAlt} color="green.500" boxSize={5} />
                     <HStack spacing={2}>
                       <Tooltip label="Click for details and improvement suggestions" hasArrow>
                         <IconButton
@@ -1274,7 +1274,7 @@ const ModernCarbonDashboard: React.FC = () => {
           <CardHeader>
             <HStack justify="space-between">
               <HStack spacing={2}>
-                <Icon as={FaFileAlt} color="blue.500" />
+                <Icon as={FaFileAlt} color="green.500" />
                 <Heading size="md">Carbon Entries ({totalEntriesCount})</Heading>
               </HStack>
               <HStack spacing={2}>
@@ -1304,7 +1304,7 @@ const ModernCarbonDashboard: React.FC = () => {
             <VStack spacing={4}>
               {isPaginatedEntriesLoading ? (
                 <HStack justify="center" py={8}>
-                  <Spinner size="md" color="blue.500" />
+                  <Spinner size="md" color="green.500" />
                   <Text color={mutedColor}>Loading carbon entries...</Text>
                 </HStack>
               ) : paginatedEntriesError ? (

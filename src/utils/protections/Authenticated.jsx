@@ -117,8 +117,18 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
           }
         }
       }
+      
+      // Auto-select first establishment when visiting root dashboard without establishmentId
+      if (
+        (pathname === '/admin/dashboard' || pathname === '/admin/dashboard/') &&
+        !establishmentId &&
+        currentCompany?.establishments?.length > 0
+      ) {
+        const firstEstablishment = currentCompany.establishments[0].id;
+        debugNavigate(`/admin/dashboard/establishment/${firstEstablishment}`);
+      }
     }
-  }, [currentCompany, establishmentId, navigate, currentUser, subdomain]);
+  }, [currentCompany, establishmentId, navigate, currentUser, subdomain, pathname]);
 
   useEffect(() => {
     if (

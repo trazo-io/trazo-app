@@ -41,8 +41,10 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars }: Carous
           h={{ sm: '190px', md: '200px' }}
           mb="20px"
           position="relative"
+          borderRadius="15px"
+          overflow="hidden"
         >
-          {!imageLoaded && <Shimmer />}
+          {!imageLoaded && <Shimmer borderRadius="15px" />}
           <Image
             width="100%"
             height="100%"
@@ -62,6 +64,7 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars }: Carous
             position="absolute"
             top="0"
             bg="linear-gradient(360deg, rgba(49, 56, 96, 0.16) 0%, rgba(21, 25, 40, 0.28) 100%)"
+            borderRadius="15px"
           ></Box>
         </Box>
         <Flex direction="column" flex="1">

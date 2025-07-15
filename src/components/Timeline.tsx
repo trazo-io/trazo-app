@@ -228,12 +228,14 @@ export const Timeline: React.FC<TimelineProps> = ({ events, onEventClick }) => {
                   borderWidth="1px"
                   borderColor={borderColor}
                   width="100%"
+                  maxW="100%"
                   boxShadow="sm"
                   _hover={{ boxShadow: 'md' }}
+                  overflow="hidden"
                 >
-                  <Flex justify="space-between" align="center" mb={2}>
-                    <HStack>
-                      <Text fontWeight="bold" fontSize="md">
+                  <Flex justify="space-between" align="flex-start" mb={2} gap={2}>
+                    <HStack flex="1" minW="0">
+                      <Text fontWeight="bold" fontSize="md" noOfLines={1}>
                         {event.title}
                       </Text>
                       {event.type && (
@@ -245,14 +247,15 @@ export const Timeline: React.FC<TimelineProps> = ({ events, onEventClick }) => {
                               ? 'orange'
                               : 'blue'
                           }
+                          flexShrink={0}
                         >
                           {event.type}
                         </Badge>
                       )}
                     </HStack>
-                    <HStack>
+                    <HStack flexShrink={0}>
                       <Icon as={FaCalendarAlt} color="gray.500" />
-                      <Text fontSize="sm" color="gray.500">
+                      <Text fontSize="sm" color="gray.500" whiteSpace="nowrap">
                         {new Date(event.date).toLocaleDateString(undefined, {
                           month: 'short',
                           day: 'numeric',
@@ -266,11 +269,10 @@ export const Timeline: React.FC<TimelineProps> = ({ events, onEventClick }) => {
                     {event.description}
                   </Text>
 
-                  <Flex justify="space-between" wrap="wrap">
+                  <VStack align="stretch" spacing={2}>
                     {/* Carbon impact */}
                     {event.carbonImpact !== undefined && (
                       <MotionHStack
-                        mt={1}
                         animate={
                           hasPositiveCarbonImpact
                             ? { scale: [1, 1.05, 1], transition: { repeat: Infinity, duration: 2 } }
@@ -285,6 +287,7 @@ export const Timeline: React.FC<TimelineProps> = ({ events, onEventClick }) => {
                           fontSize="sm"
                           color={hasPositiveCarbonImpact ? 'green.500' : 'orange.500'}
                           fontWeight="medium"
+                          noOfLines={1}
                         >
                           {hasPositiveCarbonImpact ? 'Reduces' : 'Adds'}{' '}
                           {Math.abs(event.carbonImpact).toFixed(2)} kg CO₂e
@@ -294,11 +297,11 @@ export const Timeline: React.FC<TimelineProps> = ({ events, onEventClick }) => {
 
                     {/* Location */}
                     {event.location && (
-                      <Text fontSize="xs" color="gray.500" mt={1}>
+                      <Text fontSize="xs" color="gray.500" noOfLines={1} title={event.location}>
                         Location: {event.location}
                       </Text>
                     )}
-                  </Flex>
+                  </VStack>
 
                   {/* Photo thumbnails preview */}
                   {event.photos && event.photos.length > 0 && (

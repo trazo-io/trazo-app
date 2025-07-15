@@ -300,7 +300,7 @@ export default function DashboardView() {
                       <Card
                         p={{ base: 3, md: 4 }}
                         cursor="pointer"
-                        bg={prop.id === establishment?.id ? 'green.600' : cardBg}
+                        bg={prop.id === establishment?.id ? 'trazo.forest' : cardBg}
                         h={{ base: '80px', md: '90px' }}
                         minH={{ base: '80px', md: '90px' }}
                         maxH={{ base: '80px', md: '90px' }}
@@ -312,14 +312,14 @@ export default function DashboardView() {
                         }}>
                         <Flex align="center" gap={{ base: 2, md: 3 }} h="full">
                           <Box
-                            bg={prop.id === establishment?.id ? 'white' : 'green.500'}
+                            bg={prop.id === establishment?.id ? 'white' : 'trazo.forest'}
                             p={{ base: 1.5, md: 2 }}
                             borderRadius="md"
                             flexShrink={0}>
                             <HomeIcon
                               h={{ base: '20px', md: '24px' }}
                               w={{ base: '20px', md: '24px' }}
-                              color={prop.id === establishment?.id ? 'green.500' : 'white'}
+                              color={prop.id === establishment?.id ? 'trazo.forest' : 'white'}
                             />
                           </Box>
                           <Box flex="1" overflow="hidden">
@@ -333,7 +333,7 @@ export default function DashboardView() {
                             </Text>
                             <Text
                               fontSize={{ base: 'xs', md: 'sm' }}
-                              color={prop.id === establishment?.id ? 'green.50' : 'gray.500'}
+                              color={prop.id === establishment?.id ? 'green.100' : 'gray.500'}
                               noOfLines={1}
                               title={`${prop.city || prop.zone || ''}, ${prop.state}`}>
                               {`${prop.city || prop.zone || ''}, ${prop.state}`}
@@ -348,13 +348,13 @@ export default function DashboardView() {
                     w={{ base: '64px', md: '77px' }}
                     h={{ base: '80px', md: '90px' }}
                     bg="transparent"
-                    color="green.500"
+                    color="trazo.forest"
                     borderRadius="xl"
                     border="2px dashed"
                     borderColor="gray.200"
                     _hover={{
                       bg: 'green.50',
-                      borderColor: 'green.500',
+                      borderColor: 'trazo.forest',
                       transform: 'translateY(-2px)',
                       boxShadow: 'lg'
                     }}
@@ -429,7 +429,7 @@ export default function DashboardView() {
       </Grid>
       {/* Carbon Summary Card for selected establishment */}
       {establishment?.id && (
-        <Box flex="1" width="100%" pb="24px">
+        <Box flex="1" width="100%" pb="24px" overflow="hidden">
           <CarbonSummaryCard establishmentId={establishment.id} />
         </Box>
       )}

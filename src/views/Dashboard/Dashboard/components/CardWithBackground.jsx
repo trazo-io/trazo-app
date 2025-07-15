@@ -48,21 +48,27 @@ const CardWithBackground = ({ title, description, backgroundImage }) => {
             </Text>
             <Spacer />
             <Flex align="center">
-              <Button p="0px" variant="no-hover" bg="transparent" mt="12px">
-                <Text
-                  fontSize="sm"
-                  fontWeight="bold"
-                  _hover={{ me: '4px' }}
-                  transition="all .5s ease"
-                >
-                  {intl.formatMessage({ id: 'app.readMore' })}
-                </Text>
+              <Button 
+                variant="ghost" 
+                h="44px"
+                fontSize="sm"
+                borderRadius="xl"
+                color="trazo.forest"
+                fontWeight="bold"
+                px={0}
+                _hover={{
+                  transform: 'translateX(4px)',
+                  bg: 'transparent'
+                }}
+                transition="all 0.3s ease"
+              >
+                {intl.formatMessage({ id: 'app.readMore' })}
                 <Icon
                   as={BsArrowRight}
                   w="20px"
                   h="20px"
                   fontSize="xl"
-                  transition="all .5s ease"
+                  transition="all 0.3s ease"
                   mx=".3rem"
                   cursor="pointer"
                   _hover={{ transform: 'translateX(20%)' }}
