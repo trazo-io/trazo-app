@@ -15,19 +15,20 @@
 
 */
 
-import { Box, useStyles } from '@chakra-ui/react';
+import { Box, useStyleConfig } from '@chakra-ui/react';
 
 import { SystemProps } from '@chakra-ui/react';
+import { ThemingProps } from '@chakra-ui/system';
 
-interface CardHeaderProps extends SystemProps {
+interface CardHeaderProps extends ThemingProps<'CardHeader'>, SystemProps {
   children?: React.ReactNode;
 }
 
 function CardHeader(props: CardHeaderProps) {
-  const { children, ...rest } = props;
-  const styles = useStyles();
+  const { variant, children, ...rest } = props;
+  const styles = useStyleConfig('CardHeader', { variant });
   return (
-    <Box __css={styles.header} {...rest}>
+    <Box __css={styles} {...rest}>
       {children}
     </Box>
   );

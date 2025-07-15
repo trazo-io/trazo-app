@@ -15,7 +15,10 @@
 
 */
 
-import { cardTheme } from './additions/card/Card';
+import { CardComponent } from './additions/card/Card';
+import { CardBodyComponent } from './additions/card/CardBody';
+import { CardHeaderComponent } from './additions/card/CardHeader';
+import { CardFooterComponent } from './additions/card/CardFooter';
 import { MainPanelComponent } from './additions/layout/MainPanel';
 import { PanelContainerComponent } from './additions/layout/PanelContainer';
 import { PanelContentComponent } from './additions/layout/PanelContent';
@@ -35,14 +38,11 @@ export default extendTheme(
   badgeStyles, // Badge styles
   linkStyles, // Link styles
   drawerStyles, // Sidebar variant for Chakra's drawer
-  {
-    components: {
-      // Chakra UI v2 multipart Card theme
-      Card: cardTheme,
-      // Layout components
-      ...MainPanelComponent.components,
-      ...PanelContentComponent.components,
-      ...PanelContainerComponent.components,
-    },
-  }
+  CardComponent,
+  CardBodyComponent,
+  CardHeaderComponent,
+  CardFooterComponent,
+  MainPanelComponent,
+  PanelContentComponent,
+  PanelContainerComponent
 );

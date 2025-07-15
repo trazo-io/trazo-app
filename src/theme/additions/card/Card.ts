@@ -15,13 +15,8 @@
 
 */
 
-import { cardAnatomy } from '@chakra-ui/anatomy';
-import { createMultiStyleConfigHelpers } from '@chakra-ui/react';
-
-const { definePartsStyle, defineMultiStyleConfig } = createMultiStyleConfigHelpers(cardAnatomy.keys);
-
-const baseStyle = definePartsStyle({
-  container: {
+const Card = {
+  baseStyle: {
     p: '22px',
     display: 'flex',
     flexDirection: 'column',
@@ -29,27 +24,18 @@ const baseStyle = definePartsStyle({
     position: 'relative',
     minWidth: '0px',
     wordWrap: 'break-word',
-    bg: { base: 'white', _dark: 'gray.700' },
+    bg: 'white',
+    backgroundClip: 'border-box',
     boxShadow: '0px 3.5px 5.5px rgba(0, 0, 0, 0.02)',
     borderRadius: '15px',
-    backgroundClip: 'border-box',
   },
-  header: {
-    display: 'flex',
-    width: '100%',
-  },
-  body: {
-    display: 'flex',
-    width: '100%',
-    backgroundColor: 'transparent',
-  },
-  footer: {
-    display: 'flex',
-    width: '100%',
-  },
-});
-
-export const cardTheme = defineMultiStyleConfig({
-  baseStyle,
+  sizes: {},
+  variants: {},
   defaultProps: {},
-});
+};
+
+export const CardComponent = {
+  components: {
+    Card,
+  },
+};
