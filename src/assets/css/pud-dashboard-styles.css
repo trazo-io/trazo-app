@@ -63,15 +63,10 @@
   margin-bottom: 1rem !important;
 }
 
-/* Force proper card styling for specific emotion classes identified as cards */
-.css-1gqj9o0,
-.css-1x7hccm,
-.css-1wv0n0i,
-.css-bg,
-.css-1fhw8vg,
-.css-1j5a6dt,
-.css-1cjbp7y,
-.css-1v7w5h0 {
+/* Force proper card styling for all Trazo Card components */
+.trazo-card,
+[data-component="Card"],
+[data-component="card"] {
   background-color: white !important;
   border-radius: 15px !important;
   box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
