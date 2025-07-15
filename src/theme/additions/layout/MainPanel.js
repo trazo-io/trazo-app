@@ -41,13 +41,6 @@ const MainPanel = {
         marginLeft: 0,
         width: '100%'
       }
-    }),
-    rtl: () => ({
-      float: 'left',
-      '@media screen and (max-width: 1279px)': {
-        marginRight: 0,
-        width: '100%'
-      }
     })
   },
   defaultProps: {
