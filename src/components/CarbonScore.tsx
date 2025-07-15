@@ -26,7 +26,6 @@ import {
   Divider,
   Grid,
   GridItem,
-  keyframes,
   Button,
   SimpleGrid,
   useBreakpointValue,
@@ -37,6 +36,7 @@ import {
   AlertDescription,
   Circle
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 import {
   FaLeaf,
   FaCarSide,

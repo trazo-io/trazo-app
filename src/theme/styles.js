@@ -12,7 +12,8 @@
 
 */
 
-// Removed mode import to fix staging deployment issues
+// Updated for Chakra UI v2.10.9 - improved CSS-in-JS production support
+import { mode } from '@chakra-ui/theme-tools';
 
 /* 
 === TRAZO COLOR PALETTE SYSTEM ===
@@ -124,18 +125,12 @@ export const globalStyles = {
     }
   },
   styles: {
-    global: {
+    global: (props) => ({
       body: {
-        bg: {
-          base: 'gray.100',
-          _dark: 'gray.800'
-        },
+        bg: mode('gray.100', 'gray.800')(props),
         fontFamily:
           "'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
-        color: {
-          base: 'gray.700',
-          _dark: 'white'
-        },
+        color: mode('gray.700', 'white')(props),
         lineHeight: 'base'
       },
       html: {
@@ -147,19 +142,13 @@ export const globalStyles = {
         boxSizing: 'border-box'
       },
       a: {
-        color: {
-          base: 'green.500',
-          _dark: 'green.300'
-        },
+        color: mode('green.500', 'green.300')(props),
         textDecoration: 'none',
         _hover: {
           textDecoration: 'none',
-          color: {
-            base: 'green.600',
-            _dark: 'green.200'
-          }
+          color: mode('green.600', 'green.200')(props)
         }
       }
-    }
+    })
   }
 };

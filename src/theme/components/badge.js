@@ -15,7 +15,8 @@
 
 */
 
-// Removed mode import to fix staging deployment issues
+// Updated for Chakra UI v2.10.9 - restored mode function with improved CSS-in-JS support
+import { mode } from '@chakra-ui/theme-tools';
 
 export const badgeStyles = {
   components: {
