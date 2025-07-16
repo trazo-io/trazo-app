@@ -123,6 +123,28 @@
   outline: none !important;
 }
 
+/* Remove sidebar hover effects */
+.sidebar-container a:hover,
+.sidebar-container button:hover,
+.sidebar-container .chakra-button:hover,
+.sidebar-container .chakra-accordion__button:hover {
+  background-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Remove hover background from all sidebar elements */
+.sidebar-container *:hover {
+  background-color: transparent !important;
+}
+
+/* Specifically target sidebar navigation items */
+.sidebar-container .chakra-list__item:hover,
+.sidebar-container .chakra-accordion__item:hover {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
 /* Sidebar scroll behavior */
 #sidebarScrollRemove::-webkit-scrollbar {
   display: none;

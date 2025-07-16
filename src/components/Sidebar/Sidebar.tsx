@@ -260,7 +260,7 @@ function Sidebar(props: SidebarProps) {
               justify="center"
               boxShadow={activeRoute(prop.regex) && prop.icon ? sidebarActiveShadow : null}
               _hover={{
-                boxShadow: activeRoute(prop.regex) && prop.icon ? sidebarActiveShadow : null
+                boxShadow: 'none'
               }}
               _focus={{
                 boxShadow: 'none'
@@ -405,7 +405,7 @@ function Sidebar(props: SidebarProps) {
                           me="12px"
                           transition={variantChange}
                           boxShadow={sidebarActiveShadow}
-                          _hover={{ boxShadow: sidebarActiveShadow }}
+                          _hover={{ boxShadow: 'none' }}
                         >
                           {prop.icon}
                         </IconBox>
@@ -697,6 +697,7 @@ function Sidebar(props: SidebarProps) {
     >
       <Box display={{ sm: 'none', xl: 'block' }} position="fixed">
         <Box
+          className="sidebar-container"
           bg={sidebarBg}
           transition={variantChange}
           w={`${sidebarWidth}px`}

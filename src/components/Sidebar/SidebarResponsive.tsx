@@ -842,7 +842,7 @@ function SidebarResponsive(props: SidebarResponsiveProps) {
               borderRadius="16px"
             >
               <DrawerCloseButton _focus={{ boxShadow: 'none' }} _hover={{ boxShadow: 'none' }} />
-              <DrawerBody maxW="250px" px="1rem">
+              <DrawerBody className="sidebar-container" maxW="250px" px="1rem">
                 <Box maxW="100%" h="100vh">
                   <Box mb="20px">{brand}</Box>
                   <Stack direction="column" mb="40px">
