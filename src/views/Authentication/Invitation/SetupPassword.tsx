@@ -235,7 +235,7 @@ const SetupPassword: React.FC = () => {
           <Box
             w="80px"
             h="80px"
-            bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
+            bg="#2E7D32"
             borderRadius="2xl"
             display="flex"
             alignItems="center"

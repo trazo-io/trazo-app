@@ -176,44 +176,105 @@ const AppSignIn: React.FC = () => {
   };
 
   return (
-    <Grid
-      templateColumns={{ base: '1fr', lg: '1fr 1fr' }}
-      minH="calc(100vh - 80px)"
-      maxH="calc(100vh - 80px)"
-      overflow="hidden"
-    >
-      {/* Left side - Modern Brand Section */}
+    <Box minH="100vh" display="flex" flexDirection="column">
+      <Grid
+        templateColumns={{ base: '1fr', lg: '1fr 1fr' }}
+        flex="1"
+        minH="calc(100vh - 80px)"
+      >
+      {/* Left side - 2025 Premium App Design */}
       <Box
-        bg="linear-gradient(135deg, #2E7D32 0%, #059669 50%, #1B5E20 100%)"
+        bg="green.600"
         display={{ base: 'none', lg: 'flex' }}
         alignItems="center"
         justifyContent="center"
         position="relative"
         overflow="hidden"
       >
-        {/* Subtle geometric patterns */}
+        {/* Sophisticated gradient foundation */}
         <Box
           position="absolute"
-          top="-10%"
-          right="-10%"
-          w="300px"
-          h="300px"
-          borderRadius="50%"
-          bg="whiteAlpha.100"
-          filter="blur(100px)"
+          top="0"
+          left="0"
+          right="0"
+          bottom="0"
+          bg="linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)"
         />
+        
+        {/* Subtle background floating element - positioned to not interfere */}
         <Box
           position="absolute"
-          bottom="-15%"
-          left="-15%"
-          w="400px"
-          h="400px"
+          top="15%"
+          right="5%"
+          w="160px"
+          h="100px"
+          bg="rgba(255,255,255,0.04)"
+          borderRadius="12px"
+          border="1px solid rgba(255,255,255,0.06)"
+          backdropFilter="blur(80px)"
+          transform="rotate(-8deg)"
+          zIndex={0}
+        />
+        
+        {/* Bottom accent element */}
+        <Box
+          position="absolute"
+          bottom="20%"
+          left="8%"
+          w="60px"
+          h="60px"
+          bg="rgba(255,255,255,0.03)"
           borderRadius="50%"
-          bg="whiteAlpha.50"
-          filter="blur(120px)"
+          border="1px solid rgba(255,255,255,0.05)"
+          backdropFilter="blur(60px)"
+          zIndex={0}
+        />
+        
+        {/* Minimal line accents */}
+        <Box
+          position="absolute"
+          top="0"
+          left="20%"
+          w="1px"
+          h="40%"
+          bg="linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)"
+          zIndex={0}
+        />
+        
+        <Box
+          position="absolute"
+          bottom="35%"
+          left="0"
+          right="0"
+          h="1px"
+          bg="linear-gradient(to right, transparent 0%, rgba(255,255,255,0.10) 50%, transparent 100%)"
+          zIndex={0}
+        />
+        
+        {/* Tiny accent dots */}
+        <Box
+          position="absolute"
+          top="25%"
+          left="20%"
+          w="2px"
+          h="2px"
+          bg="rgba(255,255,255,0.20)"
+          borderRadius="50%"
+          zIndex={0}
+        />
+        
+        <Box
+          position="absolute"
+          bottom="45%"
+          right="15%"
+          w="3px"
+          h="3px"
+          bg="rgba(255,255,255,0.18)"
+          borderRadius="50%"
+          zIndex={0}
         />
 
-        <VStack spacing={8} position="relative" textAlign="center" color="white" px={12} maxW="lg">
+        <VStack spacing={8} position="relative" textAlign="center" color="white" px={12} maxW="lg" zIndex={10}>
           <VStack spacing={4}>
             <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
               Professional Carbon Intelligence
@@ -432,11 +493,11 @@ const AppSignIn: React.FC = () => {
                   <Link to="/auth/forgot-password">
                     <Text
                       fontSize="sm"
-                      color="green.600"
+                      color="green.500"
                       fontWeight="medium"
                       _hover={{
                         textDecoration: 'underline',
-                        color: 'green.700'
+                        color: 'green.600'
                       }}
                       transition="all 0.2s"
                     >
@@ -524,11 +585,11 @@ const AppSignIn: React.FC = () => {
               <Link to="/auth/signup">
                 <Text
                   as="span"
-                  color="green.600"
+                  color="green.500"
                   fontWeight="semibold"
                   _hover={{
                     textDecoration: 'underline',
-                    color: 'green.700'
+                    color: 'green.600'
                   }}
                   transition="all 0.2s"
                 >
@@ -540,6 +601,73 @@ const AppSignIn: React.FC = () => {
         </MotionBox>
       </Flex>
     </Grid>
+    
+    {/* Professional Footer */}
+    <Box
+      as="footer"
+      bg={useColorModeValue('gray.50', 'gray.900')}
+      borderTop="1px solid"
+      borderColor={useColorModeValue('gray.200', 'gray.700')}
+      py={6}
+      px={8}
+    >
+      <Flex
+        maxW="7xl"
+        mx="auto"
+        direction={{ base: 'column', md: 'row' }}
+        align="center"
+        justify="space-between"
+        gap={4}
+      >
+        <HStack spacing={6} flexWrap="wrap" justify="center">
+          <Link to="/about">
+            <Text 
+              fontSize="sm" 
+              color={useColorModeValue('gray.600', 'gray.400')}
+              _hover={{ color: 'green.500' }}
+              transition="color 0.2s"
+            >
+              About
+            </Text>
+          </Link>
+          <Link to="/why-us">
+            <Text 
+              fontSize="sm" 
+              color={useColorModeValue('gray.600', 'gray.400')}
+              _hover={{ color: 'green.500' }}
+              transition="color 0.2s"
+            >
+              Why Trazo?
+            </Text>
+          </Link>
+          <Link to="/blog">
+            <Text 
+              fontSize="sm" 
+              color={useColorModeValue('gray.600', 'gray.400')}
+              _hover={{ color: 'green.500' }}
+              transition="color 0.2s"
+            >
+              Blog
+            </Text>
+          </Link>
+          <Link to="/contact">
+            <Text 
+              fontSize="sm" 
+              color={useColorModeValue('gray.600', 'gray.400')}
+              _hover={{ color: 'green.500' }}
+              transition="color 0.2s"
+            >
+              Contact
+            </Text>
+          </Link>
+        </HStack>
+        
+        <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
+          © 2025 Trazo. Professional Carbon Intelligence Platform.
+        </Text>
+      </Flex>
+    </Box>
+  </Box>
   );
 };
 

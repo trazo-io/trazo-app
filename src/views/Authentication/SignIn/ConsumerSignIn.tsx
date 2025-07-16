@@ -228,44 +228,105 @@ const ConsumerSignIn: React.FC = () => {
   };
 
   return (
-    <Grid
-      templateColumns={{ base: '1fr', lg: '1fr 1fr' }}
-      minH="calc(100vh - 80px)"
-      maxH="calc(100vh - 80px)"
-      overflow="hidden"
-    >
-      {/* Left side - Modern Brand Section */}
+    <Box minH="100vh" display="flex" flexDirection="column">
+      <Grid
+        templateColumns={{ base: '1fr', lg: '1fr 1fr' }}
+        flex="1"
+        minH="calc(100vh - 80px)"
+      >
+      {/* Left side - 2025 Premium App Design */}
       <Box
-        bg="linear-gradient(135deg, #2E7D32 0%, #059669 50%, #1B5E20 100%)"
+        bg="#0D47A1"
         display={{ base: 'none', lg: 'flex' }}
         alignItems="center"
         justifyContent="center"
         position="relative"
         overflow="hidden"
       >
-        {/* Subtle geometric patterns */}
+        {/* Sophisticated gradient foundation */}
         <Box
           position="absolute"
-          top="-10%"
-          right="-10%"
-          w="300px"
-          h="300px"
-          borderRadius="50%"
-          bg="whiteAlpha.100"
-          filter="blur(100px)"
+          top="0"
+          left="0"
+          right="0"
+          bottom="0"
+          bg="linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)"
         />
+        
+        {/* Subtle background floating element - positioned to not interfere */}
         <Box
           position="absolute"
-          bottom="-15%"
-          left="-15%"
-          w="400px"
-          h="400px"
+          top="15%"
+          right="5%"
+          w="160px"
+          h="100px"
+          bg="rgba(255,255,255,0.02)"
+          borderRadius="12px"
+          border="1px solid rgba(255,255,255,0.04)"
+          backdropFilter="blur(80px)"
+          transform="rotate(-8deg)"
+          zIndex={0}
+        />
+        
+        {/* Bottom accent element */}
+        <Box
+          position="absolute"
+          bottom="20%"
+          left="8%"
+          w="60px"
+          h="60px"
+          bg="rgba(255,255,255,0.015)"
           borderRadius="50%"
-          bg="whiteAlpha.50"
-          filter="blur(120px)"
+          border="1px solid rgba(255,255,255,0.03)"
+          backdropFilter="blur(60px)"
+          zIndex={0}
+        />
+        
+        {/* Minimal line accents */}
+        <Box
+          position="absolute"
+          top="0"
+          left="20%"
+          w="1px"
+          h="40%"
+          bg="linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)"
+          zIndex={0}
+        />
+        
+        <Box
+          position="absolute"
+          bottom="35%"
+          left="0"
+          right="0"
+          h="1px"
+          bg="linear-gradient(to right, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)"
+          zIndex={0}
+        />
+        
+        {/* Tiny accent dots */}
+        <Box
+          position="absolute"
+          top="25%"
+          left="20%"
+          w="2px"
+          h="2px"
+          bg="rgba(255,255,255,0.15)"
+          borderRadius="50%"
+          zIndex={0}
+        />
+        
+        <Box
+          position="absolute"
+          bottom="45%"
+          right="15%"
+          w="3px"
+          h="3px"
+          bg="rgba(255,255,255,0.12)"
+          borderRadius="50%"
+          zIndex={0}
         />
 
-        <VStack spacing={8} position="relative" textAlign="center" color="white" px={12} maxW="lg">
+        <VStack spacing={8} position="relative" textAlign="center" color="white" px={12} maxW="lg" zIndex={10}>
           <VStack spacing={4}>
             <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
               Discover Carbon Stories
@@ -359,7 +420,7 @@ const ConsumerSignIn: React.FC = () => {
                     <InputLeftElement pointerEvents="none">
                       <Icon
                         as={FaEnvelope}
-                        color={focusedField === 'email' ? 'green.500' : 'gray.400'}
+                        color={focusedField === 'email' ? 'blue.600' : 'gray.400'}
                         transition="all 0.2s"
                       />
                     </InputLeftElement>
@@ -377,7 +438,7 @@ const ConsumerSignIn: React.FC = () => {
                         errors.email
                           ? 'red.300'
                           : focusedField === 'email'
-                          ? 'green.500'
+                          ? 'blue.600'
                           : useColorModeValue('gray.300', 'gray.600')
                       }
                       borderRadius="lg"
@@ -388,7 +449,7 @@ const ConsumerSignIn: React.FC = () => {
                       }}
                       _focus={{
                         outline: 'none',
-                        borderColor: 'green.500',
+                        borderColor: 'blue.600',
                         bg: useColorModeValue('white', 'gray.800'),
                         boxShadow: '0 0 0 3px rgba(72, 187, 120, 0.1)'
                       }}
@@ -425,7 +486,7 @@ const ConsumerSignIn: React.FC = () => {
                     <InputLeftElement pointerEvents="none">
                       <Icon
                         as={FaLock}
-                        color={focusedField === 'password' ? 'green.500' : 'gray.400'}
+                        color={focusedField === 'password' ? 'blue.600' : 'gray.400'}
                         transition="all 0.2s"
                       />
                     </InputLeftElement>
@@ -443,7 +504,7 @@ const ConsumerSignIn: React.FC = () => {
                         errors.password
                           ? 'red.300'
                           : focusedField === 'password'
-                          ? 'green.500'
+                          ? 'blue.600'
                           : useColorModeValue('gray.300', 'gray.600')
                       }
                       borderRadius="lg"
@@ -454,7 +515,7 @@ const ConsumerSignIn: React.FC = () => {
                       }}
                       _focus={{
                         outline: 'none',
-                        borderColor: 'green.500',
+                        borderColor: 'blue.600',
                         bg: useColorModeValue('white', 'gray.800'),
                         boxShadow: '0 0 0 3px rgba(72, 187, 120, 0.1)'
                       }}
@@ -478,11 +539,11 @@ const ConsumerSignIn: React.FC = () => {
                   <Link to="/consumer/auth/forgot-password">
                     <Text
                       fontSize="sm"
-                      color="green.600"
+                      color="blue.600"
                       fontWeight="medium"
                       _hover={{
                         textDecoration: 'underline',
-                        color: 'green.700'
+                        color: 'blue.700'
                       }}
                       transition="all 0.2s"
                     >
@@ -496,7 +557,7 @@ const ConsumerSignIn: React.FC = () => {
                   type="submit"
                   w="full"
                   h="48px"
-                  bg="green.500"
+                  bg="blue.600"
                   color="white"
                   fontSize="md"
                   fontWeight="semibold"
@@ -504,7 +565,7 @@ const ConsumerSignIn: React.FC = () => {
                   isLoading={isLoading || isSocialLoading}
                   loadingText={isSocialLoading ? 'Authenticating...' : 'Signing in...'}
                   _hover={{
-                    bg: 'green.600',
+                    bg: 'blue.700',
                     transform: 'translateY(-1px)'
                   }}
                   _active={{
@@ -589,14 +650,14 @@ const ConsumerSignIn: React.FC = () => {
             <Box textAlign="center">
               <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
                 Don't have an account?{' '}
-                <Link to="/consumer/auth/signup">
+                <Link to="/auth/signup">
                   <Text
                     as="span"
-                    color="green.600"
+                    color="blue.600"
                     fontWeight="semibold"
                     _hover={{
                       textDecoration: 'underline',
-                      color: 'green.700'
+                      color: 'blue.700'
                     }}
                     transition="all 0.2s"
                   >
@@ -612,10 +673,10 @@ const ConsumerSignIn: React.FC = () => {
                 <Link to="/auth/signin">
                   <Text
                     as="span"
-                    color="green.600"
+                    color="blue.600"
                     _hover={{
                       textDecoration: 'underline',
-                      color: 'green.700'
+                      color: 'blue.700'
                     }}
                     transition="all 0.2s"
                   >
@@ -628,6 +689,73 @@ const ConsumerSignIn: React.FC = () => {
         </MotionBox>
       </Flex>
     </Grid>
+    
+    {/* Professional Footer */}
+    <Box
+      as="footer"
+      bg={useColorModeValue('gray.50', 'gray.900')}
+      borderTop="1px solid"
+      borderColor={useColorModeValue('gray.200', 'gray.700')}
+      py={6}
+      px={8}
+    >
+      <Flex
+        maxW="7xl"
+        mx="auto"
+        direction={{ base: 'column', md: 'row' }}
+        align="center"
+        justify="space-between"
+        gap={4}
+      >
+        <HStack spacing={6} flexWrap="wrap" justify="center">
+          <Link to="/about">
+            <Text 
+              fontSize="sm" 
+              color={useColorModeValue('gray.600', 'gray.400')}
+              _hover={{ color: 'blue.600' }}
+              transition="color 0.2s"
+            >
+              About
+            </Text>
+          </Link>
+          <Link to="/why-us">
+            <Text 
+              fontSize="sm" 
+              color={useColorModeValue('gray.600', 'gray.400')}
+              _hover={{ color: 'blue.600' }}
+              transition="color 0.2s"
+            >
+              Why Trazo?
+            </Text>
+          </Link>
+          <Link to="/blog">
+            <Text 
+              fontSize="sm" 
+              color={useColorModeValue('gray.600', 'gray.400')}
+              _hover={{ color: 'blue.600' }}
+              transition="color 0.2s"
+            >
+              Blog
+            </Text>
+          </Link>
+          <Link to="/contact">
+            <Text 
+              fontSize="sm" 
+              color={useColorModeValue('gray.600', 'gray.400')}
+              _hover={{ color: 'blue.600' }}
+              transition="color 0.2s"
+            >
+              Contact
+            </Text>
+          </Link>
+        </HStack>
+        
+        <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
+          © 2025 Trazo. Professional Carbon Intelligence Platform.
+        </Text>
+      </Flex>
+    </Box>
+  </Box>
   );
 };
 

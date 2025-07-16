@@ -78,8 +78,7 @@ function SignUp() {
       minH="100vh"
       bg={useColorModeValue('gray.50', 'gray.900')}
       pt="120px"
-      pb={{ base: 8, md: 12 }}
-    >
+      pb={{ base: 8, md: 12 }}>
       <Container maxW="md" centerContent>
         <VStack spacing={8} w="100%">
           {/* Header */}
@@ -88,8 +87,7 @@ function SignUp() {
               fontSize={{ base: '2xl', md: '3xl' }}
               fontWeight="bold"
               color={titleColor}
-              letterSpacing="tight"
-            >
+              letterSpacing="tight">
               {intl.formatMessage({ id: 'app.welcome' })}
             </Text>
             <Text fontSize="md" color={subtitleColor} maxW="400px" lineHeight="1.6">
@@ -106,8 +104,7 @@ function SignUp() {
             boxShadow="lg"
             border="1px solid"
             borderColor={borderColor}
-            p={{ base: 6, md: 8 }}
-          >
+            p={{ base: 6, md: 8 }}>
             {isSuccess ? (
               <VStack spacing={4} textAlign="center">
                 <Icon
@@ -156,8 +153,7 @@ function SignUp() {
                           borderColor: social.color,
                           transform: 'translateY(-2px)',
                           shadow: 'md'
-                        }}
-                      >
+                        }}>
                         <Icon as={social.icon} w="24px" h="24px" color={social.color} />
                       </Flex>
                     ))}
@@ -172,8 +168,7 @@ function SignUp() {
                     color={subtitleColor}
                     fontWeight="medium"
                     fontSize="sm"
-                    flexShrink={0}
-                  >
+                    flexShrink={0}>
                     {intl.formatMessage({ id: 'app.or' })}
                   </Text>
                   <Divider />
@@ -236,8 +231,7 @@ function SignUp() {
                         _active={{
                           bg: 'green.700'
                         }}
-                        transition="all 0.2s"
-                      >
+                        transition="all 0.2s">
                         {isLoading ? (
                           <CircularProgress isIndeterminate size="24px" color="white" />
                         ) : (
@@ -256,8 +250,7 @@ function SignUp() {
                     fontWeight="semibold"
                     onClick={() => navigate('/auth/signin')}
                     _hover={{ textDecoration: 'underline' }}
-                    cursor="pointer"
-                  >
+                    cursor="pointer">
                     {intl.formatMessage({ id: 'app.signIn' })}
                   </Link>
                 </Text>

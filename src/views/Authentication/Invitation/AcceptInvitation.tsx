@@ -122,7 +122,7 @@ const AcceptInvitation: React.FC = () => {
           <Box
             w="80px"
             h="80px"
-            bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
+            bg="#2E7D32"
             borderRadius="2xl"
             display="flex"
             alignItems="center"
@@ -161,7 +161,7 @@ const AcceptInvitation: React.FC = () => {
           <Box
             w="100px"
             h="100px"
-            bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
+            bg="#2E7D32"
             borderRadius="2xl"
             display="flex"
             alignItems="center"
@@ -257,7 +257,7 @@ const AcceptInvitation: React.FC = () => {
             <Box
               w="60px"
               h="60px"
-              bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
+              bg="#2E7D32"
               borderRadius="xl"
               display="flex"
               alignItems="center"
@@ -301,7 +301,7 @@ const AcceptInvitation: React.FC = () => {
         {/* Action Buttons */}
         <VStack spacing={4} w="full">
           <Button
-            bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
+            bg="#2E7D32"
             color="white"
             size="lg"
             w="full"

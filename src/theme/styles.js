@@ -59,18 +59,18 @@ export const globalStyles = {
       deep: '#1B5E20',        // Professional enterprise
       light: '#81C784'        // Light accent
     },
-    // Updated Green Scale to Match Brand
+    // Trazo Professional Clean Green Scale - 2025
     green: {
-      50: '#E8F5E8',
-      100: '#C8E6C8', 
-      200: '#A5D6A5',
-      300: '#81C784',         // Light accent
-      400: '#66BB6A',
-      500: '#2E7D32',         // Primary forest green
-      600: '#059669',         // Emerald green  
-      700: '#388E3C',
-      800: '#2E7D32',
-      900: '#1B5E20'          // Deep forest
+      50: '#F8FDF9',          // Ultra light sage
+      100: '#E8F5E8',         // Very light sage background
+      200: '#C8E6C8',         // Light sage
+      300: '#A5D6A5',         // Soft sage accent
+      400: '#81C784',         // Modern sage green
+      500: '#4CAF50',         // Clean professional green (PRIMARY)
+      600: '#388E3C',         // Deeper professional green
+      700: '#2E7D32',         // Forest green
+      800: '#1B5E20',         // Dark forest
+      900: '#0D3D0F'          // Deepest forest
     },
     // Professional Neutral Scale
     gray: {

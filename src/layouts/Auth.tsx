@@ -29,7 +29,6 @@ import { useRef } from 'react';
 
 // core components
 import AuthNavbar from 'components/Navbars/AuthNavbar';
-import Footer from 'components/Footer/Footer';
 import React from 'react';
 import { Route as RouteType } from 'types/common';
 import theme from 'theme/theme';
@@ -121,9 +120,6 @@ export default function Pages() {
         <Box ref={wrapper} w="100%">
           <Outlet />
         </Box>
-      </Box>
-      <Box px="24px" mx="auto" width="1044px" maxW="100%">
-        <Footer />
       </Box>
     </Box>
     //   </ChakraProvider>
