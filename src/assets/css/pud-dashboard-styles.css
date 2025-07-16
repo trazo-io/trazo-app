@@ -56,6 +56,73 @@
   }
 }
 
+/* Settings page layout fixes */
+.settings-page-container {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Ensure cards don't overlap sidebar */
+.settings-page-container .trazo-card,
+.settings-page-container [data-component='Card'] {
+  z-index: 1 !important;
+  position: relative !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+}
+
+/* Settings page enhanced card styling */
+.settings-page-container .trazo-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  transform: translateY(-2px) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Sidebar z-index management */
+.sidebar-container {
+  z-index: 100 !important;
+}
+
+/* Main content area positioning */
+.main-content-area {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Settings page spacing improvements */
+.settings-page-container .main-content-area {
+  padding-top: 20px !important;
+}
+
+/* Center alignment fix for settings content */
+.settings-page-container .main-content-area {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.settings-page-container .main-content-area > div {
+  width: 100% !important;
+  max-width: 800px !important;
+}
+
+/* Enhanced form styling for settings */
+.settings-page-container input[type='email'],
+.settings-page-container select {
+  border: 2px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  font-size: 16px !important;
+  transition: all 0.2s ease !important;
+}
+
+.settings-page-container input[type='email']:focus,
+.settings-page-container select:focus {
+  border-color: #4CAF50 !important;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1) !important;
+  outline: none !important;
+}
+
 /* Sidebar scroll behavior */
 #sidebarScrollRemove::-webkit-scrollbar {
   display: none;

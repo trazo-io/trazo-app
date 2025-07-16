@@ -187,38 +187,34 @@ export default function SettingsView() {
 
   return (
     <Box
-      w="100vw"
+      w="100%"
       minH="100vh"
-      ml={{ base: 0, md: '-280px' }}
       position="relative"
       px={{ base: 4, md: 8, lg: 24 }}
-    >
+      className="settings-page-container">
       {/* Header Section */}
       <Box
         bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
         pt={{ base: '100px', md: '120px' }}
-        pb={{ base: '60px', md: '80px' }}
+        pb={{ base: '80px', md: '100px' }}
         px={{ base: 4, md: 8 }}
-        mb="-50px"
-        w="100%"
-      >
-        <Box maxW="none" mx="auto" pl={{ base: 0, md: '300px' }}>
-          <VStack spacing={3} textAlign="center">
+        mb="-60px"
+        w="100%">
+        <Box maxW="1200px" mx="auto" pl={{ base: 0 }} pr={{ base: 0, md: 8 }}>
+          <VStack spacing={4} textAlign="center">
             <Text
-              fontSize={{ base: '2xl', md: '4xl' }}
+              fontSize={{ base: '3xl', md: '5xl' }}
               color="green.600"
-              fontWeight="bold"
-              letterSpacing="-0.02em"
-            >
+              fontWeight="700"
+              letterSpacing="-0.02em">
               {intl.formatMessage({ id: 'app.companySettings' }) || 'Config. de la compañía'}
             </Text>
             <Text
-              fontSize={{ base: 'md', md: 'lg' }}
+              fontSize={{ base: 'lg', md: 'xl' }}
               color="gray.600"
-              fontWeight="normal"
-              maxW={{ base: '90%', md: '70%' }}
-              lineHeight="1.6"
-            >
+              fontWeight="400"
+              maxW={{ base: '90%', md: '60%' }}
+              lineHeight="1.7">
               {intl.formatMessage({ id: 'app.companySettingsDescription' }) ||
                 'Esta pantalla es solo visible para administradores de compañía'}
             </Text>
@@ -229,12 +225,15 @@ export default function SettingsView() {
       {/* Main Content */}
       <Box
         w="100%"
+        maxW="1200px"
+        mx="auto"
         px={{ base: 4, md: 8 }}
-        pl={{ base: 4, md: '320px' }}
+        pl={{ base: 4 }}
+        pr={{ base: 4, md: 8 }}
         position="relative"
-        zIndex={10}
-      >
-        <VStack spacing={8} w="100%" pb={10}>
+        zIndex={1}
+        className="main-content-area">
+        <VStack spacing={10} w="100%" pb={12}>
           {/* Invite New Members Section */}
           <Box w="100%">
             <StandardCard
@@ -242,9 +241,9 @@ export default function SettingsView() {
                 intl.formatMessage({ id: 'app.inviteNewMembers' }) || 'Invitar nuevos miembros'
               }
               variant="elevated"
-            >
-              <Box py={2}>
-                <VStack spacing={8} align="stretch">
+              shadow="lg">
+              <Box py={4}>
+                <VStack spacing={10} align="stretch">
                   <VStack spacing={6} w="100%">
                     <VStack spacing={6} w="100%">
                       <StandardField label="Correo electrónico del nuevo miembro" required>
@@ -276,8 +275,7 @@ export default function SettingsView() {
                                           size="md"
                                           borderRadius="full"
                                           variant="solid"
-                                          colorScheme="green"
-                                        >
+                                          colorScheme="green">
                                           <TagLabel>{establishment?.name}</TagLabel>
                                           <TagCloseButton
                                             onClick={() => {
@@ -301,8 +299,7 @@ export default function SettingsView() {
                                 p={4}
                                 maxH="200px"
                                 overflowY="auto"
-                                bg="white"
-                              >
+                                bg="white">
                                 <Stack spacing={2}>
                                   {establishmentOptions.map((est: EstablishmentOption) => (
                                     <Checkbox
@@ -321,12 +318,10 @@ export default function SettingsView() {
                                           );
                                         }
                                       }}
-                                      colorScheme="green"
-                                    >
+                                      colorScheme="green">
                                       <Text
                                         fontSize="sm"
-                                        color={selectedRole === 'CA' ? 'gray.500' : 'inherit'}
-                                      >
+                                        color={selectedRole === 'CA' ? 'gray.500' : 'inherit'}>
                                         {est.name}
                                         {selectedRole === 'CA' && (
                                           <Text as="span" fontSize="xs" color="blue.600" ml={2}>
@@ -353,8 +348,7 @@ export default function SettingsView() {
                                 bg="blue.50"
                                 border="1px solid"
                                 borderColor="blue.200"
-                                borderRadius="lg"
-                              >
+                                borderRadius="lg">
                                 <HStack spacing={2}>
                                   <Box
                                     w="6px"
@@ -394,8 +388,7 @@ export default function SettingsView() {
                                 else if (value && value !== 'CA') {
                                   setSelectedEstablishments([]);
                                 }
-                              }}
-                            >
+                              }}>
                               <option value="">Selecciona un rol...</option>
                               {roleOptions.map((role: RoleOption) => (
                                 <option key={role.id} value={role.id}>
@@ -417,8 +410,7 @@ export default function SettingsView() {
                         onClick={handleInviteSubmit}
                         size="lg"
                         isLoading={isSendingInvitation}
-                        loadingText="Enviando..."
-                      >
+                        loadingText="Enviando...">
                         {intl.formatMessage({ id: 'app.sendInvite' }) || 'Enviar invitación'}
                       </StandardButton>
                     </HStack>
@@ -435,9 +427,9 @@ export default function SettingsView() {
                 'Miembros en esta compañía'
               }
               variant="elevated"
-            >
-              <Box py={2}>
-                <VStack spacing={6} align="stretch">
+              shadow="lg">
+              <Box py={4}>
+                <VStack spacing={8} align="stretch">
                   {/* Search Bar */}
                   <Flex justify="space-between" align="center" w="100%" flexWrap="wrap" gap={4}>
                     <InputGroup maxW="500px" size="lg">
@@ -469,8 +461,7 @@ export default function SettingsView() {
                       bg="green.100"
                       color="green.800"
                       fontSize="sm"
-                      fontWeight="medium"
-                    >
+                      fontWeight="medium">
                       {filteredMembers.length} miembro{filteredMembers.length !== 1 ? 's' : ''}
                     </Badge>
                   </Flex>
@@ -483,8 +474,7 @@ export default function SettingsView() {
                     border="1px solid"
                     borderColor="gray.100"
                     bg="white"
-                    boxShadow="sm"
-                  >
+                    boxShadow="sm">
                     <Table variant="simple" size="lg">
                       <Thead bg="gray.50" borderBottom="2px solid" borderColor="gray.100">
                         <Tr>
@@ -495,8 +485,7 @@ export default function SettingsView() {
                             textTransform="uppercase"
                             letterSpacing="wider"
                             py={5}
-                            px={6}
-                          >
+                            px={6}>
                             {intl.formatMessage({ id: 'app.name' }) || 'NOMBRE'}
                           </Th>
                           <Th
@@ -506,8 +495,7 @@ export default function SettingsView() {
                             textTransform="uppercase"
                             letterSpacing="wider"
                             py={5}
-                            px={6}
-                          >
+                            px={6}>
                             {intl.formatMessage({ id: 'app.currentWorkingEstablishments' }) ||
                               'ESTABLECIMIENTOS EN LOS QUE TRABAJA'}
                           </Th>
@@ -518,8 +506,7 @@ export default function SettingsView() {
                             textTransform="uppercase"
                             letterSpacing="wider"
                             py={5}
-                            px={6}
-                          >
+                            px={6}>
                             {intl.formatMessage({ id: 'app.role' }) || 'ROL'}
                           </Th>
                           <Th
@@ -529,8 +516,7 @@ export default function SettingsView() {
                             textTransform="uppercase"
                             letterSpacing="wider"
                             py={5}
-                            px={6}
-                          >
+                            px={6}>
                             {intl.formatMessage({ id: 'app.actions' }) || 'ACCIONES'}
                           </Th>
                         </Tr>
@@ -559,8 +545,7 @@ export default function SettingsView() {
                                   display="flex"
                                   alignItems="center"
                                   justifyContent="center"
-                                  mb={2}
-                                >
+                                  mb={2}>
                                   <Text fontSize="2xl">👥</Text>
                                 </Box>
                                 <Text color="gray.600" fontSize="lg" fontWeight="semibold">
@@ -572,8 +557,7 @@ export default function SettingsView() {
                                   color="gray.500"
                                   fontSize="md"
                                   maxW="300px"
-                                  textAlign="center"
-                                >
+                                  textAlign="center">
                                   {searchTerm
                                     ? 'Intenta con otros términos de búsqueda'
                                     : 'Invita a tu primer miembro del equipo usando el formulario arriba'}
