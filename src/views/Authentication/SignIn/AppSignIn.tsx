@@ -70,7 +70,10 @@ const AppSignIn: React.FC = () => {
         isClosable: true
       });
 
-      navigate('/admin/dashboard');
+      // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
+      // This prevents race condition where company data isn't loaded yet
+      // The user will be redirected to the appropriate establishment dashboard
+      // by the authentication protection logic
     } catch (err: any) {
       const errorMessage = err?.data?.detail || 'Invalid email or password';
       setError(errorMessage);
@@ -92,7 +95,8 @@ const AppSignIn: React.FC = () => {
         isClosable: true
       });
 
-      navigate('/admin/dashboard');
+      // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
+      // This prevents race condition where company data isn't loaded yet
     } catch (err: any) {
       const errorMessage = err?.data?.error || 'Social authentication failed';
       setError(errorMessage);

@@ -77,7 +77,10 @@ function SignIn() {
   useEffect(() => {
     if (data && isSuccess) {
       dispatch(login(data));
-      navigate(location.state?.next || '/admin/dashboard');
+      // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
+      // This prevents race condition where company data isn't loaded yet
+      // The user will be redirected to the appropriate establishment dashboard
+      // by the authentication protection logic
     }
   }, [data, dispatch, isSuccess]);
 
