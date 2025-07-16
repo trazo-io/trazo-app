@@ -244,26 +244,28 @@ function TimelineRow(props: TimelineRowProps) {
           }}
           cursor="pointer"
           onClick={() => (onEventClick ? onEventClick(event) : navigate(url))}
-          transition="all 0.2s"
-        >
+          transition="all 0.2s">
           <VStack align="start" w="100%" spacing={2}>
             {/* Main Event Info */}
-            <HStack justify="space-between" align="start" mb={2} w="100%">
+            <HStack justify="space-between" align="start" mb={2} w="100%" flexDirection={'column'}>
               <VStack align="start" spacing={1} flex={1}>
-                <HStack spacing={2}>
+                <HStack spacing={2} w="100%" justifyContent="space-between" paddingEnd={4}>
                   <Text fontSize="sm" color={textColor} fontWeight="bold">
                     {title}
                   </Text>
-                  <Badge
-                    colorScheme={eventConfig.color.split('.')[0]}
-                    variant="subtle"
-                    fontSize="xs"
-                    px={2}
-                    py={1}
-                  >
-                    {eventConfig.category}
-                  </Badge>
+                  <Text fontSize="xs" color="gray.400" textAlign="right">
+                    {date}
+                  </Text>
                 </HStack>
+
+                <Badge
+                  colorScheme={eventConfig.color.split('.')[0]}
+                  variant="subtle"
+                  fontSize="xs"
+                  px={2}
+                  py={1}>
+                  {eventConfig.category}
+                </Badge>
 
                 <Text fontSize="xs" color="gray.500">
                   {event.observation || 'No additional details'}
@@ -273,10 +275,6 @@ function TimelineRow(props: TimelineRowProps) {
                   Operator: {operatorName}
                 </Text>
               </VStack>
-
-              <Text fontSize="xs" color="gray.400" textAlign="right">
-                {date}
-              </Text>
             </HStack>
 
             {/* Real Data Metrics Row */}
@@ -293,16 +291,15 @@ function TimelineRow(props: TimelineRowProps) {
                         carbonData.verification_status === 'factors_verified'
                       ? ' (USDA Factors)'
                       : ''
-                  }`}
-                >
+                  }`}>
                   <HStack spacing={1}>
                     <Badge
+                      w="fit-content"
                       colorScheme={carbonData.co2e < 0 ? 'green' : 'orange'}
                       variant="subtle"
                       fontSize="xs"
                       px={2}
-                      py={1}
-                    >
+                      py={1}>
                       {carbonData.co2e > 0 ? '+' : ''}
                       {carbonData.co2e} kg CO₂
                     </Badge>
@@ -310,12 +307,12 @@ function TimelineRow(props: TimelineRowProps) {
                       carbonData.usda_factors_based ||
                       carbonData.verification_status === 'factors_verified') && (
                       <Badge
+                        w="fit-content"
                         colorScheme={
                           carbonData.verification_status === 'usda_certified' ? 'green' : 'blue'
                         }
                         variant="solid"
-                        fontSize="xs"
-                      >
+                        fontSize="xs">
                         {carbonData.verification_status === 'usda_certified'
                           ? 'USDA'
                           : 'USDA Factors'}
@@ -350,8 +347,7 @@ function TimelineRow(props: TimelineRowProps) {
 
               {/* QR Visibility (based on consumer relevance) */}
               <Tooltip
-                label={`QR Code Visibility: ${qrVisibility} - How relevant this is to consumers`}
-              >
+                label={`QR Code Visibility: ${qrVisibility} - How relevant this is to consumers`}>
                 <HStack spacing={1}>
                   <Icon
                     as={
@@ -388,8 +384,7 @@ function TimelineRow(props: TimelineRowProps) {
                         : 'red'
                     }
                     variant="subtle"
-                    fontSize="xs"
-                  >
+                    fontSize="xs">
                     {carbonData.efficiency_score}/100
                   </Badge>
                 </Tooltip>

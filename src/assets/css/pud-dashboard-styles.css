@@ -15,8 +15,8 @@
 
 /* CRITICAL: Essential Card styling for production builds */
 .trazo-card,
-[data-component="Card"],
-[data-component="card"] {
+[data-component='Card'],
+[data-component='card'] {
   background-color: white !important;
   border-radius: 15px !important;
   box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
@@ -25,10 +25,10 @@
   flex-direction: column !important;
   width: 100% !important;
   position: relative !important;
-  min-width: 0px !important;
   word-wrap: break-word !important;
   background-clip: border-box !important;
   box-sizing: border-box !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
 /* Production event cards and establishment cards */
@@ -43,9 +43,9 @@
 
 /* Establishment card selected state */
 .establishment-card.selected {
-  background-color: #2E7D32 !important;
+  background-color: #388e3c !important;
   color: white !important;
-  box-shadow: 0px 5px 10px rgba(46, 125, 50, 0.3) !important;
+  box-shadow: 0px 5px 10px rgba(56, 142, 60, 0.3) !important;
 }
 
 /* Essential layout fixes for sidebar positioning */
@@ -98,15 +98,15 @@ div.fc-daygrid-event-harness {
 }
 
 .ql-snow .ql-picker-label:hover {
-  color: var(--trazo-forest) !important;
+  color: #4caf50 !important;
 }
 
 .ql-snow .ql-stroke:hover {
-  stroke: var(--trazo-forest) !important;
+  stroke: #4caf50 !important;
 }
 
 .ql-snow .ql-fill:hover {
-  fill: var(--trazo-forest) !important;
+  fill: #4caf50 !important;
 }
 
 /* React Kanban styling */

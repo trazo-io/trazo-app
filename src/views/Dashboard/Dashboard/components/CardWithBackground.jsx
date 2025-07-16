@@ -23,23 +23,20 @@ const CardWithBackground = ({ title, description, backgroundImage }) => {
         h={{ sm: '200px', lg: '100%' }}
         bgSize="cover"
         position="relative"
-        borderRadius="15px"
-      >
+        borderRadius="15px">
         <Box
           bg="linear-gradient(360deg, rgba(49, 56, 96, 0.16) 0%, rgba(21, 25, 40, 0.88) 100%)"
           w="100%"
           position="absolute"
           h="inherit"
           borderRadius="inherit"
-          ref={overlayRef}
-        ></Box>
+          ref={overlayRef}></Box>
         <Portal containerRef={overlayRef}>
           <Flex
             flexDirection="column"
             color="white"
             p={{ sm: '0.5rem 1.2rem 0.1rem 1.2rem', md: '1.5rem 1.2rem 0.3rem 1.2rem' }}
-            lineHeight="1.6"
-          >
+            lineHeight="1.6">
             <Text fontSize="xl" fontWeight="bold" pb=".3rem">
               {title}
             </Text>
@@ -48,20 +45,19 @@ const CardWithBackground = ({ title, description, backgroundImage }) => {
             </Text>
             <Spacer />
             <Flex align="center">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 h="44px"
                 fontSize="sm"
                 borderRadius="xl"
-                color="trazo.forest"
+                color="white"
                 fontWeight="bold"
                 px={0}
                 _hover={{
                   transform: 'translateX(4px)',
                   bg: 'transparent'
                 }}
-                transition="all 0.3s ease"
-              >
+                transition="all 0.3s ease">
                 {intl.formatMessage({ id: 'app.readMore' })}
                 <Icon
                   as={BsArrowRight}

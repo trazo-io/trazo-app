@@ -317,15 +317,16 @@ const HistoryCard = ({ amount }) => {
                   <Box
                     key={production.id}
                     px={6}
-                    py={5}
+                    py={6}
                     borderBottom="1px solid"
                     borderColor={useColorModeValue('gray.100', 'gray.600')}
                     cursor="pointer"
                     transition="all 0.2s ease"
                     _hover={{
-                      bg: useColorModeValue('gray.25', 'gray.700'),
+                      bg: useColorModeValue('green.50', 'green.900/10'),
                       borderLeftWidth: '4px',
-                      borderLeftColor: 'green.400'
+                      borderLeftColor: 'green.500',
+                      transform: 'translateX(2px)'
                     }}
                     _last={{
                       borderBottom: 'none'
@@ -335,40 +336,50 @@ const HistoryCard = ({ amount }) => {
                         `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${production.id}`
                       )
                     }>
-                    <Flex align="center" justify="space-between" w="100%">
+                    <Flex align="center" justify="space-between" w="100%" gap={6}>
                       {/* Left Section: Production Info */}
-                      <Flex align="center" gap={4} flex={1}>
-                        <Icon
-                          as={isCompleted ? FaChartLine : FaClock}
-                          color={isCompleted ? 'green.500' : 'blue.500'}
-                          boxSize={5}
-                        />
+                      <Flex align="center" gap={4} flex={1} maxW="45%">
+                        <Box
+                          p={2}
+                          bg={isCompleted ? 'green.50' : 'blue.50'}
+                          borderRadius="lg"
+                          border="1px solid"
+                          borderColor={isCompleted ? 'green.200' : 'blue.200'}>
+                          <Icon
+                            as={isCompleted ? FaChartLine : FaClock}
+                            color={isCompleted ? 'green.500' : 'blue.500'}
+                            boxSize={5}
+                          />
+                        </Box>
 
-                        <VStack align="start" spacing={1} flex={1}>
+                        <VStack align="start" spacing={2} flex={1}>
                           <Flex align="center" gap={3} w="100%">
-                            <Text fontSize="md" fontWeight="600" color={textColor}>
-                              {production.name || `Production ${production.id}`}
+                            <Text fontSize="md" fontWeight="600" color={textColor} noOfLines={1}>
+                              {production.name ||
+                                `${production.product || 'Organic'} Production ${production.id}`}
                             </Text>
 
                             {/* Modern Status Badge */}
                             <Badge
-                              bg={isCompleted ? 'green.500' : 'blue.500'}
-                              color="white"
+                              colorScheme={isCompleted ? 'green' : 'blue'}
+                              variant="subtle"
                               borderRadius="full"
-                              fontSize="2xs"
-                              fontWeight="semibold"
+                              fontSize="xs"
+                              fontWeight="600"
                               px={3}
                               py={1}
-                              textTransform="none">
+                              textTransform="uppercase"
+                              letterSpacing="wide"
+                              width="fit-content">
                               {isCompleted ? 'Complete' : 'Ongoing'}
                             </Badge>
                           </Flex>
 
-                          <Text fontSize="sm" color="gray.500" fontWeight="medium">
+                          <Text fontSize="sm" color="gray.500" fontWeight="500">
                             {formatDateRange(production.start_date, production.finish_date)}
                           </Text>
 
-                          <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                          <Text fontSize="sm" color="gray.600" fontWeight="600">
                             {production.product || 'Agricultural Product'}
                           </Text>
 
@@ -377,17 +388,15 @@ const HistoryCard = ({ amount }) => {
                             <HStack spacing={2} mt={1}>
                               {usdaVerified && (
                                 <Badge
-                                  bg="blue.50"
-                                  color="blue.700"
+                                  colorScheme="blue"
+                                  variant="subtle"
                                   fontSize="xs"
-                                  borderRadius="md"
+                                  borderRadius="lg"
                                   px={2}
                                   py={1}
                                   fontWeight="500"
                                   textTransform="none"
-                                  border="1px solid"
-                                  w="fit-content"
-                                  borderColor="blue.200">
+                                  width="fit-content">
                                   <HStack spacing={1}>
                                     <Icon as={FaAward} boxSize={2.5} />
                                     <Text>USDA Verified</Text>
@@ -396,17 +405,15 @@ const HistoryCard = ({ amount }) => {
                               )}
                               {blockchainVerified && (
                                 <Badge
-                                  bg="purple.50"
-                                  color="purple.700"
+                                  colorScheme="purple"
+                                  variant="subtle"
                                   fontSize="xs"
-                                  borderRadius="md"
+                                  borderRadius="lg"
                                   px={2}
                                   py={1}
                                   fontWeight="500"
                                   textTransform="none"
-                                  border="1px solid"
-                                  w="fit-content"
-                                  borderColor="purple.200">
+                                  width="fit-content">
                                   <HStack spacing={1}>
                                     <Icon as={FaAward} boxSize={2.5} />
                                     <Text>Blockchain</Text>
@@ -419,15 +426,20 @@ const HistoryCard = ({ amount }) => {
                       </Flex>
 
                       {/* Team Members - Middle Section */}
-                      <Flex align="center" minW="120px" justify="center">
+                      <Flex align="center" minW="140px" justify="center">
                         {(() => {
                           // Get unique team members from events first, then fallback to production.members
                           const uniqueMembers = new Map();
-                          
+
                           // Check events for team members
                           if (production.events && production.events.length > 0) {
-                            production.events.forEach(event => {
-                              if (event.user && (event.user.first_name || event.user.last_name || event.user.username)) {
+                            production.events.forEach((event) => {
+                              if (
+                                event.user &&
+                                (event.user.first_name ||
+                                  event.user.last_name ||
+                                  event.user.username)
+                              ) {
                                 const userId = event.user.id || event.user.username || 'unknown';
                                 if (!uniqueMembers.has(userId)) {
                                   uniqueMembers.set(userId, {
@@ -441,44 +453,97 @@ const HistoryCard = ({ amount }) => {
                               }
                             });
                           }
-                          
+
                           // Fallback to production.members if no event users found
-                          if (uniqueMembers.size === 0 && production.members && production.members.length > 0) {
-                            production.members.forEach(member => {
-                              if (member && (member.first_name || member.last_name || member.username)) {
-                                uniqueMembers.set(member.id || member.username || 'unknown', member);
+                          if (
+                            uniqueMembers.size === 0 &&
+                            production.members &&
+                            production.members.length > 0
+                          ) {
+                            production.members.forEach((member) => {
+                              if (
+                                member &&
+                                (member.first_name || member.last_name || member.username)
+                              ) {
+                                uniqueMembers.set(
+                                  member.id || member.username || 'unknown',
+                                  member
+                                );
                               }
                             });
                           }
-                          
+
                           const membersArray = Array.from(uniqueMembers.values());
-                          
+
                           return membersArray.length > 0 ? (
-                            <AvatarGroup size="sm" max={3} spacing="-6px">
-                              {membersArray.map((member) => {
-                                const displayName = `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.username || 'Team Member';
-                                return (
-                                  <Tooltip
-                                    key={member.id}
-                                    label={displayName}
-                                    placement="top">
-                                    <Avatar
-                                      size="sm"
-                                      name={displayName}
-                                      src={member.image || ''}
-                                      borderWidth="2px"
-                                      borderColor="white"
-                                      bg="green.100"
-                                      color="green.700"
-                                    />
-                                  </Tooltip>
-                                );
-                              })}
-                            </AvatarGroup>
+                            <VStack spacing={1} align="center">
+                              <AvatarGroup size="sm" max={3} spacing="-8px">
+                                {membersArray.map((member) => {
+                                  const displayName =
+                                    `${member.first_name || ''} ${member.last_name || ''}`.trim() ||
+                                    member.username ||
+                                    'Team Member';
+                                  return (
+                                    <Tooltip
+                                      key={member.id}
+                                      label={displayName}
+                                      placement="top"
+                                      hasArrow>
+                                      <Avatar
+                                        size="sm"
+                                        name={displayName}
+                                        src={
+                                          member.image
+                                            ? `${
+                                                import.meta.env?.VITE_API_URL ||
+                                                'http://localhost:8000'
+                                              }${member.image}`
+                                            : ''
+                                        }
+                                        borderWidth="2px"
+                                        borderColor="white"
+                                        bg="green.100"
+                                        color="green.700"
+                                        boxShadow="sm"
+                                        _hover={{
+                                          transform: 'scale(1.1)',
+                                          borderColor: 'green.300'
+                                        }}
+                                        transition="all 0.2s"
+                                      />
+                                    </Tooltip>
+                                  );
+                                })}
+                              </AvatarGroup>
+                              <Text
+                                fontSize="xs"
+                                color="gray.500"
+                                fontWeight="500"
+                                textAlign="center">
+                                {membersArray.length}{' '}
+                                {membersArray.length === 1 ? 'member' : 'members'}
+                              </Text>
+                            </VStack>
                           ) : (
-                            <VStack spacing={0} align="center">
-                              <Text fontSize="2xs" color="gray.400" fontWeight="medium">
-                                No events
+                            <VStack spacing={1} align="center">
+                              <Box
+                                w={8}
+                                h={8}
+                                bg="gray.100"
+                                borderRadius="full"
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="center"
+                                border="2px dashed"
+                                borderColor="gray.300">
+                                <Icon as={FaPlus} color="gray.400" boxSize={3} />
+                              </Box>
+                              <Text
+                                fontSize="xs"
+                                color="gray.400"
+                                fontWeight="500"
+                                textAlign="center">
+                                No team assigned
                               </Text>
                             </VStack>
                           );
@@ -486,44 +551,64 @@ const HistoryCard = ({ amount }) => {
                       </Flex>
 
                       {/* Right Section: Carbon Score */}
-                      <VStack align="center" spacing={1} minW="140px">
+                      <VStack align="center" spacing={2} minW="150px" maxW="150px">
                         <HStack spacing={2}>
-                          <Icon as={carbonImpact.icon} color={carbonImpact.color} boxSize={4} />
+                          <Box
+                            p={1}
+                            bg={`${carbonImpact.color.split('.')[0]}.50`}
+                            borderRadius="md"
+                            border="1px solid"
+                            borderColor={`${carbonImpact.color.split('.')[0]}.200`}>
+                            <Icon as={carbonImpact.icon} color={carbonImpact.color} boxSize={3} />
+                          </Box>
                           <Text
                             fontSize="xs"
                             color="gray.500"
-                            fontWeight="semibold"
-                            textTransform="uppercase">
+                            fontWeight="600"
+                            textTransform="uppercase"
+                            letterSpacing="wide">
                             Carbon Score
                           </Text>
                         </HStack>
 
-                        <Text
-                          fontSize="2xl"
-                          fontWeight="bold"
-                          color={carbonImpact.color}
-                          lineHeight="1">
-                          {carbonScore}
-                          <Text as="span" fontSize="xs" color="gray.500" fontWeight="normal">
-                            /100
+                        <VStack spacing={1} align="center">
+                          <Text
+                            fontSize="3xl"
+                            fontWeight="700"
+                            color={carbonImpact.color}
+                            lineHeight="1">
+                            {carbonScore}
+                            <Text as="span" fontSize="sm" color="gray.500" fontWeight="400">
+                              /100
+                            </Text>
                           </Text>
-                        </Text>
 
-                        <Text fontSize="xs" color={carbonImpact.color} fontWeight="medium">
-                          {carbonImpact.level}
-                        </Text>
+                          <Badge
+                            colorScheme={carbonImpact.color.split('.')[0]}
+                            variant="subtle"
+                            fontSize="xs"
+                            fontWeight="600"
+                            px={2}
+                            py={1}
+                            borderRadius="full"
+                            textTransform="uppercase"
+                            letterSpacing="wide"
+                            width="fit-content">
+                            {carbonImpact.level}
+                          </Badge>
 
-                        <Progress
-                          value={carbonScore}
-                          colorScheme={getScoreColor(carbonScore)}
-                          size="sm"
-                          borderRadius="full"
-                          bg={useColorModeValue('gray.100', 'gray.600')}
-                          w="100px"
-                          hasStripe={!isCompleted}
-                          isAnimated={!isCompleted}
-                          h="6px"
-                        />
+                          <Progress
+                            value={carbonScore}
+                            colorScheme={getScoreColor(carbonScore)}
+                            size="md"
+                            borderRadius="full"
+                            bg={useColorModeValue('gray.100', 'gray.600')}
+                            w="120px"
+                            hasStripe={!isCompleted}
+                            isAnimated={!isCompleted}
+                            h="8px"
+                          />
+                        </VStack>
                       </VStack>
                     </Flex>
                   </Box>

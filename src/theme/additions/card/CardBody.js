@@ -19,15 +19,16 @@ const CardBody = {
   baseStyle: {
     display: 'flex',
     width: '100%',
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
+    flexDirection: 'column'
   },
   sizes: {},
   variants: {},
-  defaultProps: {},
+  defaultProps: {}
 };
 
 export const CardBodyComponent = {
   components: {
-    CardBody,
-  },
+    CardBody
+  }
 };

@@ -17,10 +17,15 @@
   === PRIMARY BRAND COLORS ===
   Forest Green Family - Core brand identity
   */
-  --trazo-forest: #2E7D32;        /* Primary brand - premium forest green for trust */
-  --trazo-emerald: #059669;       /* Secondary - growth and sustainability */
-  --trazo-deep: #1B5E20;          /* Tertiary - professional enterprise-grade */
-  --trazo-light: #81C784;         /* Accent - light highlights and success states */
+  --trazo-forest: #2E7D32;        /* Legacy - use green.700 instead */
+  --trazo-emerald: #059669;       /* Legacy - use green.600 instead */
+  --trazo-deep: #1B5E20;          /* Legacy - use green.800 instead */
+  --trazo-light: #81C784;         /* Legacy - use green.400 instead */
+  
+  /* NEW: 2025 Professional Clean Green System */
+  --trazo-primary: #4CAF50;       /* PRIMARY: Clean professional green */
+  --trazo-hover: #388E3C;         /* HOVER: Deeper professional green */
+  --trazo-active: #2E7D32;        /* ACTIVE: Forest green */
 
   /* 
   === NEUTRAL COLOR SYSTEM ===
@@ -67,26 +72,26 @@
   === EXTENDED GREEN PALETTE ===
   Complete green scale for consistent brand application
   */
-  --green-50: #E8F5E8;
-  --green-100: #C8E6C8;
-  --green-200: #A5D6A5;
-  --green-300: #81C784;           /* Light accent */
-  --green-400: #66BB6A;
-  --green-500: #2E7D32;           /* Primary forest green */
-  --green-600: #059669;           /* Emerald green */
-  --green-700: #388E3C;
-  --green-800: #2E7D32;
-  --green-900: #1B5E20;           /* Deep forest */
+  --green-50: #F8FDF9;           /* Ultra light sage */
+  --green-100: #E8F5E8;          /* Very light sage background */
+  --green-200: #C8E6C8;          /* Light sage */
+  --green-300: #A5D6A5;          /* Soft sage accent */
+  --green-400: #81C784;          /* Modern sage green */
+  --green-500: #4CAF50;          /* Clean professional green (PRIMARY) */
+  --green-600: #388E3C;          /* Deeper professional green */
+  --green-700: #2E7D32;          /* Forest green */
+  --green-800: #1B5E20;          /* Dark forest */
+  --green-900: #0D3D0F;          /* Deepest forest */
 
   /* 
   === COMPONENT-SPECIFIC COLORS ===
   Pre-defined combinations for common UI patterns
   */
   
-  /* Buttons */
-  --btn-primary-bg: var(--trazo-forest);
-  --btn-primary-hover: var(--trazo-emerald);
-  --btn-primary-active: var(--trazo-deep);
+  /* Buttons - Updated 2025 */
+  --btn-primary-bg: var(--trazo-primary);
+  --btn-primary-hover: var(--trazo-hover);
+  --btn-primary-active: var(--trazo-active);
   --btn-primary-text: var(--neutral-white);
 
   --btn-secondary-bg: var(--neutral-light);
@@ -102,7 +107,7 @@
   /* Form Elements */
   --input-bg: var(--neutral-white);
   --input-border: var(--neutral-border);
-  --input-border-focus: var(--trazo-forest);
+  --input-border-focus: var(--trazo-primary);
   --input-text: var(--neutral-text);
   --input-placeholder: var(--neutral-medium);
   --input-label: var(--neutral-heading);
@@ -118,7 +123,7 @@
   --nav-bg: var(--neutral-white);
   --nav-border: var(--neutral-border);
   --nav-text: var(--neutral-text);
-  --nav-text-active: var(--trazo-forest);
+  --nav-text-active: var(--trazo-primary);
   --nav-bg-active: var(--green-50);
 
   /* Page Backgrounds */
@@ -128,7 +133,7 @@
   --header-bg: var(--neutral-white);
 
   /* Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--trazo-forest) 0%, var(--trazo-emerald) 100%);
+  --gradient-primary: linear-gradient(135deg, var(--trazo-primary) 0%, var(--trazo-hover) 100%);
   --gradient-accent: linear-gradient(135deg, var(--accent-amber) 0%, var(--accent-amber-dark) 100%);
   --gradient-success: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
 }
@@ -173,15 +178,18 @@ Helper classes for quick color application
 */
 .text-trazo-forest { color: var(--trazo-forest) !important; }
 .text-trazo-emerald { color: var(--trazo-emerald) !important; }
+.text-trazo-primary { color: var(--trazo-primary) !important; }
 .text-neutral-heading { color: var(--neutral-heading) !important; }
 .text-neutral-text { color: var(--neutral-text) !important; }
 
 .bg-trazo-forest { background-color: var(--trazo-forest) !important; }
+.bg-trazo-primary { background-color: var(--trazo-primary) !important; }
 .bg-trazo-light { background-color: var(--trazo-light) !important; }
 .bg-neutral-light { background-color: var(--neutral-light) !important; }
 .bg-neutral-white { background-color: var(--neutral-white) !important; }
 
 .border-trazo-forest { border-color: var(--trazo-forest) !important; }
+.border-trazo-primary { border-color: var(--trazo-primary) !important; }
 .border-neutral-border { border-color: var(--neutral-border) !important; }
 
 /* 

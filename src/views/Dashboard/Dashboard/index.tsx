@@ -250,7 +250,10 @@ export default function DashboardView() {
   }
 
   return (
-    <Flex flexDirection="column" pt={{ base: '120px', md: '75px' }}>
+    <Flex
+      flexDirection="column"
+      pt={{ base: '120px', md: '75px' }}
+      pl={{ base: '0px', xl: '12px' }}>
       {/* Enhanced Trial Status Banner */}
       <TrialStatusBanner />
 
@@ -277,11 +280,7 @@ export default function DashboardView() {
       />
 
       <Box>
-        <Flex
-          direction={{ base: 'column', md: 'row' }}
-          gap={6}
-          align="flex-start"
-          px={{ base: 2, md: 2 }}>
+        <Flex direction={{ base: 'column', md: 'row' }} gap={6} align="flex-start">
           <Box flex="2">
             <Grid
               templateColumns={{
@@ -304,7 +303,9 @@ export default function DashboardView() {
                         h={{ base: '80px', md: '90px' }}
                         minH={{ base: '80px', md: '90px' }}
                         maxH={{ base: '80px', md: '90px' }}
-                        className={`trazo-card establishment-card ${prop.id === establishment?.id ? 'selected' : ''}`}
+                        className={`trazo-card establishment-card ${
+                          prop.id === establishment?.id ? 'selected' : ''
+                        }`}
                         _hover={{
                           transform: 'translateY(-2px)',
                           boxShadow: 'lg',
@@ -429,12 +430,7 @@ export default function DashboardView() {
       </Grid>
       {/* Carbon Summary Card for selected establishment */}
       {establishment?.id && (
-        <Box 
-          flex="1" 
-          width="100%" 
-          pb="24px" 
-          overflow="hidden"
-        >
+        <Box flex="1" width="100%" pb="24px" overflow="hidden">
           <CarbonSummaryCard establishmentId={establishment.id} />
         </Box>
       )}

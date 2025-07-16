@@ -93,7 +93,7 @@ const CarbonSummaryCard = ({ establishmentId }) => {
       </CardHeader>
       <CardBody px={0}>
         {/* Metrics Grid */}
-        <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4} mb={4}>
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4}>
           <Box textAlign="center" p={2}>
             <Stat>
               <StatLabel fontSize="sm" color="gray.600">
@@ -143,8 +143,8 @@ const CarbonSummaryCard = ({ establishmentId }) => {
         <Divider my={4} />
 
         {/* Progress Section */}
-        <Box mb={6}>
-          <Heading size="sm" mb={3} color="trazo.forest" fontWeight="600">
+        <Box mb={2}>
+          <Heading size="sm" mb={3} color="green.700" fontWeight="600">
             Progreso de Compensación
           </Heading>
           <Progress
@@ -169,7 +169,7 @@ const CarbonSummaryCard = ({ establishmentId }) => {
         {/* View Details Button */}
         <Flex justify="center" pt={2}>
           <Button
-            bg="trazo.forest"
+            bg="green.600"
             color="white"
             h="44px"
             fontSize="sm"
@@ -178,12 +178,12 @@ const CarbonSummaryCard = ({ establishmentId }) => {
             onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/carbon`)}
             leftIcon={<Icon as={FaChartLine} />}
             _hover={{
-              bg: 'green.600',
+              bg: 'green.700',
               transform: 'translateY(-1px)',
               boxShadow: 'md'
             }}
             _active={{
-              bg: 'green.700'
+              bg: 'green.800'
             }}>
             Ver Detalles
           </Button>

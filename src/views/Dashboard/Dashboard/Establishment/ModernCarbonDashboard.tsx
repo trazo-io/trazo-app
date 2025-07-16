@@ -1097,7 +1097,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   boxShadow: 'xl',
                   borderColor: 'red.300'
                 }}>
-                <CardHeader pb={3}>
+                <CardHeader flexDirection="column" justifyContent="space-between" pb={3}>
                   <HStack justify="space-between">
                     <HStack spacing={3}>
                       <Box p={2} bg="red.50" borderRadius="lg" border="1px" borderColor="red.200">
@@ -1168,7 +1168,7 @@ const ModernCarbonDashboard: React.FC = () => {
                   boxShadow: 'xl',
                   borderColor: 'green.300'
                 }}>
-                <CardHeader pb={3}>
+                <CardHeader flexDirection="column" justifyContent="space-between" pb={3}>
                   <HStack justify="space-between">
                     <HStack spacing={3}>
                       <Box
@@ -1269,38 +1269,94 @@ const ModernCarbonDashboard: React.FC = () => {
           </VStack>
         )}
 
-        {/* Carbon Entries Table */}
-        <Card bg={cardBg} borderColor={borderColor}>
-          <CardHeader>
-            <HStack justify="space-between">
-              <HStack spacing={2}>
-                <Icon as={FaFileAlt} color="green.500" />
-                <Heading size="md">Carbon Entries ({totalEntriesCount})</Heading>
-              </HStack>
-              <HStack spacing={2}>
-                <Select
-                  size="sm"
-                  value={selectedCategory}
-                  onChange={(e) => handleEntriesFilterChange('category', e.target.value)}
-                  w="auto">
-                  <option value="all">All Categories</option>
-                  {availableCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </Select>
-                <Button
-                  size="sm"
-                  variant={showVerifiedOnly ? 'solid' : 'outline'}
-                  colorScheme="green"
-                  onClick={() => handleEntriesFilterChange('verified_only', !showVerifiedOnly)}>
-                  Verified Only
-                </Button>
-              </HStack>
-            </HStack>
+        {/* Carbon Entries Table - Modern Design */}
+        <Card bg={cardBg} borderColor={borderColor} borderRadius="xl" overflow="hidden">
+          <CardHeader p={6} py={6} width="100%">
+            <VStack spacing={4} align="stretch" width="100%">
+              <Flex justify="space-between" align="center" w="100%">
+                <HStack spacing={3}>
+                  <Box
+                    p={2}
+                    bg="green.50"
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="green.200">
+                    <Icon as={FaFileAlt} color="green.500" boxSize={5} />
+                  </Box>
+                  <VStack align="start" spacing={0}>
+                    <Heading size="lg" color={textColor} fontWeight="600">
+                      Carbon Entries
+                    </Heading>
+                    <Text fontSize="sm" color={mutedColor}>
+                      Track and manage all carbon emissions and offsets
+                    </Text>
+                  </VStack>
+                </HStack>
+                <Badge
+                  colorScheme="blue"
+                  variant="subtle"
+                  fontSize="md"
+                  px={3}
+                  py={1}
+                  borderRadius="full"
+                  width="fit-content">
+                  {totalEntriesCount} entries
+                </Badge>
+              </Flex>
+
+              <Flex justify="space-between" align="center" pt={2}>
+                <HStack spacing={3}>
+                  <Select
+                    size="sm"
+                    value={selectedCategory}
+                    onChange={(e) => handleEntriesFilterChange('category', e.target.value)}
+                    w="180px"
+                    bg={cardBg}
+                    borderRadius="lg"
+                    fontSize="sm"
+                    fontWeight="500">
+                    <option value="all">All Categories</option>
+                    {availableCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </Select>
+                  <Button
+                    size="sm"
+                    variant={showVerifiedOnly ? 'solid' : 'outline'}
+                    colorScheme="green"
+                    borderRadius="lg"
+                    fontWeight="600"
+                    _hover={{
+                      transform: 'translateY(-1px)',
+                      boxShadow: 'md'
+                    }}
+                    transition="all 0.2s"
+                    onClick={() => handleEntriesFilterChange('verified_only', !showVerifiedOnly)}>
+                    <Icon as={FaShieldAlt} mr={2} />
+                    Verified Only
+                  </Button>
+                </HStack>
+                <HStack spacing={2}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    colorScheme="gray"
+                    leftIcon={<FaDownload />}
+                    borderRadius="lg"
+                    _hover={{
+                      transform: 'translateY(-1px)',
+                      boxShadow: 'md'
+                    }}
+                    transition="all 0.2s">
+                    Export
+                  </Button>
+                </HStack>
+              </Flex>
+            </VStack>
           </CardHeader>
-          <CardBody pt={0}>
+          <CardBody pt={0} paddingTop={4}>
             <VStack spacing={4}>
               {isPaginatedEntriesLoading ? (
                 <HStack justify="center" py={8}>
@@ -1320,56 +1376,87 @@ const ModernCarbonDashboard: React.FC = () => {
                   w="100%"
                   borderRadius="xl"
                   border="1px solid"
-                  borderColor="gray.200">
-                  <Table size="sm" variant="simple">
-                    <Thead bg="gray.50">
+                  borderColor={useColorModeValue('gray.200', 'gray.600')}
+                  bg={cardBg}>
+                  <Table size="md" variant="simple">
+                    <Thead bg={useColorModeValue('gray.50', 'gray.700')}>
                       <Tr>
                         <Th
-                          color="gray.700"
-                          fontWeight="semibold"
+                          color={textColor}
+                          fontWeight="600"
                           fontSize="sm"
                           py={4}
-                          width="80px">
+                          px={6}
+                          textTransform="uppercase"
+                          letterSpacing="wide"
+                          borderBottom="1px solid"
+                          borderColor={useColorModeValue('gray.200', 'gray.600')}
+                          width="100px">
                           Type
                         </Th>
                         <Th
-                          color="gray.700"
-                          fontWeight="semibold"
+                          color={textColor}
+                          fontWeight="600"
                           fontSize="sm"
                           py={4}
-                          width="200px">
+                          px={6}
+                          textTransform="uppercase"
+                          letterSpacing="wide"
+                          borderBottom="1px solid"
+                          borderColor={useColorModeValue('gray.200', 'gray.600')}
+                          width="250px">
                           Source
                         </Th>
                         <Th
-                          color="gray.700"
-                          fontWeight="semibold"
+                          color={textColor}
+                          fontWeight="600"
                           fontSize="sm"
                           py={4}
+                          px={6}
+                          textTransform="uppercase"
+                          letterSpacing="wide"
+                          borderBottom="1px solid"
+                          borderColor={useColorModeValue('gray.200', 'gray.600')}
                           width="150px">
                           Amount
                         </Th>
                         <Th
-                          color="gray.700"
-                          fontWeight="semibold"
+                          color={textColor}
+                          fontWeight="600"
                           fontSize="sm"
                           py={4}
+                          px={6}
+                          textTransform="uppercase"
+                          letterSpacing="wide"
+                          borderBottom="1px solid"
+                          borderColor={useColorModeValue('gray.200', 'gray.600')}
                           width="200px">
                           Status
                         </Th>
                         <Th
-                          color="gray.700"
-                          fontWeight="semibold"
+                          color={textColor}
+                          fontWeight="600"
                           fontSize="sm"
                           py={4}
-                          width="100px">
+                          px={6}
+                          textTransform="uppercase"
+                          letterSpacing="wide"
+                          borderBottom="1px solid"
+                          borderColor={useColorModeValue('gray.200', 'gray.600')}
+                          width="130px">
                           Date
                         </Th>
                         <Th
-                          color="gray.700"
-                          fontWeight="semibold"
+                          color={textColor}
+                          fontWeight="600"
                           fontSize="sm"
                           py={4}
-                          width="80px">
+                          px={6}
+                          textTransform="uppercase"
+                          letterSpacing="wide"
+                          borderBottom="1px solid"
+                          borderColor={useColorModeValue('gray.200', 'gray.600')}
+                          width="100px">
                           Actions
                         </Th>
                       </Tr>
@@ -1378,47 +1465,53 @@ const ModernCarbonDashboard: React.FC = () => {
                       {paginatedEntries.map((entry: any) => (
                         <Tr
                           key={entry.id}
-                          _hover={{ bg: 'green.50' }}
-                          transition="background-color 0.2s">
-                          <Td py={3} px={4}>
+                          _hover={{
+                            bg: useColorModeValue('green.50', 'green.900/20'),
+                            transform: 'translateY(-1px)',
+                            boxShadow: 'sm'
+                          }}
+                          transition="all 0.2s"
+                          borderBottom="1px solid"
+                          borderColor={useColorModeValue('gray.100', 'gray.700')}>
+                          <Td py={5} px={6}>
                             <Badge
                               colorScheme={entry.type === 'emission' ? 'red' : 'green'}
-                              variant="solid"
+                              variant="subtle"
                               fontSize="xs"
-                              px={2}
+                              px={3}
                               py={1}
-                              borderRadius="full">
+                              borderRadius="full"
+                              fontWeight="600"
+                              textTransform="uppercase"
+                              letterSpacing="wide"
+                              width="fit-content">
                               {entry.type === 'emission' ? 'Emission' : 'Offset'}
                             </Badge>
                           </Td>
-                          <Td py={3} px={4}>
-                            <VStack align="start" spacing={0}>
-                              <Text
-                                fontSize="sm"
-                                fontWeight="medium"
-                                color={textColor}
-                                noOfLines={1}>
+                          <Td py={5} px={6}>
+                            <VStack align="start" spacing={1}>
+                              <Text fontSize="sm" fontWeight="600" color={textColor} noOfLines={1}>
                                 {entry.source?.name || 'Unknown Source'}
                               </Text>
                               <Text fontSize="xs" color={mutedColor} noOfLines={1}>
-                                {entry.source?.category || 'Other'}
+                                {entry.source?.category || 'agricultural_activity'}
                               </Text>
                             </VStack>
                           </Td>
-                          <Td py={3} px={4}>
-                            <VStack align="start" spacing={0}>
-                              <Text fontSize="sm" fontWeight="bold" color={textColor}>
+                          <Td py={5} px={6}>
+                            <VStack align="start" spacing={1}>
+                              <Text fontSize="sm" fontWeight="700" color={textColor}>
                                 {Number(entry.amount).toLocaleString()} kg CO₂e
                               </Text>
                               {entry.type === 'offset' && entry.effective_amount && (
-                                <Text fontSize="xs" color="green.600" fontWeight="medium">
+                                <Text fontSize="xs" color="green.600" fontWeight="600">
                                   {Number(entry.effective_amount).toLocaleString()} effective
                                 </Text>
                               )}
                             </VStack>
                           </Td>
-                          <Td py={3} px={4}>
-                            <VStack align="start" spacing={1}>
+                          <Td py={5} px={6}>
+                            <VStack align="start" spacing={2}>
                               {/* Main Status Badge */}
                               <Badge
                                 colorScheme={
@@ -1428,11 +1521,17 @@ const ModernCarbonDashboard: React.FC = () => {
                                     ? 'red'
                                     : 'yellow'
                                 }
-                                variant="solid"
+                                variant="subtle"
                                 fontSize="xs"
-                                px={2}
-                                py={1}
-                                borderRadius="full">
+                                px={3}
+                                py={2}
+                                borderRadius="xl"
+                                fontWeight="600"
+                                textTransform="uppercase"
+                                letterSpacing="wide"
+                                width="fit-content"
+                                minW="80px"
+                                textAlign="center">
                                 {entry.verification_status === 'verified'
                                   ? 'VERIFIED'
                                   : entry.verification_status === 'rejected'
@@ -1440,69 +1539,107 @@ const ModernCarbonDashboard: React.FC = () => {
                                   : 'PENDING'}
                               </Badge>
 
-                              {/* Additional badges for offsets */}
+                              {/* Additional badges for offsets - Consistent Modern Style */}
                               {entry.type === 'offset' &&
                                 entry.verification_level === 'certified_project' && (
                                   <Badge
-                                    size="sm"
-                                    colorScheme={
-                                      entry.verification_status === 'verified' ? 'green' : 'red'
-                                    }
-                                    variant="outline"
-                                    fontSize="xs">
-                                    {entry.verification_status === 'verified'
-                                      ? 'Registry Failed'
-                                      : 'Registry Failed'}
+                                    colorScheme="red"
+                                    variant="subtle"
+                                    fontSize="xs"
+                                    px={3}
+                                    py={1}
+                                    borderRadius="xl"
+                                    fontWeight="500"
+                                    textTransform="uppercase"
+                                    letterSpacing="wide"
+                                    width="fit-content"
+                                    minW="fit-content">
+                                    Registry Failed
                                   </Badge>
                                 )}
 
                               {entry.type === 'offset' &&
                                 entry.verification_level === 'self_reported' && (
                                   <Badge
-                                    size="sm"
                                     colorScheme="orange"
-                                    variant="outline"
-                                    fontSize="xs">
+                                    variant="subtle"
+                                    fontSize="xs"
+                                    px={3}
+                                    py={1}
+                                    borderRadius="xl"
+                                    fontWeight="500"
+                                    textTransform="uppercase"
+                                    letterSpacing="wide"
+                                    width="fit-content"
+                                    minW="fit-content">
                                     Self Reported
                                   </Badge>
                                 )}
 
-                              {/* Trust Score for offsets */}
+                              {/* Trust Score for offsets - Modern Style */}
                               {entry.type === 'offset' && entry.trust_score && (
-                                <Text fontSize="xs" color="gray.600">
-                                  {Math.round(entry.trust_score * 100)}% Trust
-                                </Text>
+                                <HStack spacing={1}>
+                                  <Box
+                                    w={2}
+                                    h={2}
+                                    bg={
+                                      entry.trust_score >= 0.8
+                                        ? 'green.500'
+                                        : entry.trust_score >= 0.5
+                                        ? 'yellow.500'
+                                        : 'red.500'
+                                    }
+                                    borderRadius="full"
+                                  />
+                                  <Text fontSize="xs" color="gray.600" fontWeight="600">
+                                    {Math.round(entry.trust_score * 100)}% Trust
+                                  </Text>
+                                </HStack>
                               )}
                             </VStack>
                           </Td>
-                          <Td py={3} px={4}>
-                            <Text fontSize="sm" fontWeight="medium" color={textColor}>
-                              {new Date(entry.created_at || entry.timestamp).toLocaleDateString()}
-                            </Text>
-                            <Text fontSize="xs" color={mutedColor}>
-                              {new Date(entry.created_at || entry.timestamp).toLocaleTimeString()}
-                            </Text>
+                          <Td py={5} px={6}>
+                            <VStack align="start" spacing={0}>
+                              <Text fontSize="sm" fontWeight="600" color={textColor}>
+                                {new Date(entry.created_at || entry.timestamp).toLocaleDateString()}
+                              </Text>
+                              <Text fontSize="xs" color={mutedColor}>
+                                {new Date(entry.created_at || entry.timestamp).toLocaleTimeString()}
+                              </Text>
+                            </VStack>
                           </Td>
-                          <Td py={3} px={4}>
-                            <HStack spacing={1}>
+                          <Td py={5} px={6}>
+                            <HStack spacing={2}>
                               <Tooltip label="View details" hasArrow>
                                 <IconButton
-                                  size="xs"
+                                  size="sm"
                                   variant="ghost"
                                   aria-label="View details"
                                   icon={<FaEye />}
                                   color="gray.500"
-                                  _hover={{ color: 'blue.500', bg: 'blue.50' }}
+                                  borderRadius="lg"
+                                  _hover={{
+                                    color: 'blue.500',
+                                    bg: 'blue.50',
+                                    transform: 'translateY(-1px)'
+                                  }}
+                                  transition="all 0.2s"
                                 />
                               </Tooltip>
                               <Tooltip label="Edit entry" hasArrow>
                                 <IconButton
-                                  size="xs"
+                                  size="sm"
                                   variant="ghost"
                                   aria-label="Edit entry"
                                   icon={<FaEdit />}
                                   color="gray.500"
-                                  _hover={{ color: 'green.500', bg: 'green.50' }}
+                                  borderRadius="lg"
+                                  _hover={{
+                                    color: 'green.500',
+                                    bg: 'green.50',
+                                    transform: 'translateY(-1px)'
+                                  }}
+                                  transition="all 0.2s"
                                 />
                               </Tooltip>
                             </HStack>
@@ -1513,45 +1650,102 @@ const ModernCarbonDashboard: React.FC = () => {
                   </Table>
                 </Box>
               ) : (
-                <VStack spacing={4} py={8}>
-                  <Icon as={FaFileAlt} color="gray.400" boxSize={8} />
-                  <VStack spacing={2}>
-                    <Text color={mutedColor} textAlign="center">
-                      No carbon entries found for the selected filters
+                <VStack spacing={6} py={12}>
+                  <Box
+                    p={4}
+                    bg={useColorModeValue('gray.50', 'gray.700')}
+                    borderRadius="full"
+                    border="2px dashed"
+                    borderColor={useColorModeValue('gray.300', 'gray.600')}>
+                    <Icon as={FaFileAlt} color="gray.400" boxSize={8} />
+                  </Box>
+                  <VStack spacing={3} textAlign="center">
+                    <Text fontSize="lg" fontWeight="600" color={textColor}>
+                      No carbon entries found
                     </Text>
-                    <Text fontSize="sm" color={mutedColor} textAlign="center">
-                      Start tracking your carbon footprint by adding events
+                    <Text fontSize="sm" color={mutedColor} maxW="400px">
+                      No entries match your current filters. Try adjusting the category or
+                      verification filters, or start tracking your carbon footprint by adding
+                      production events.
                     </Text>
                   </VStack>
+                  <Button
+                    leftIcon={<FaPlus />}
+                    colorScheme="green"
+                    size="sm"
+                    borderRadius="lg"
+                    onClick={() =>
+                      navigate(`/admin/dashboard/establishment/${establishmentId}/parcel`)
+                    }
+                    _hover={{
+                      transform: 'translateY(-1px)',
+                      boxShadow: 'md'
+                    }}
+                    transition="all 0.2s">
+                    Add Production Events
+                  </Button>
                 </VStack>
               )}
 
               {/* Pagination Controls */}
               {totalEntriesPages > 1 && (
-                <Flex justify="space-between" align="center" w="100%" pt={4}>
-                  <Text fontSize="sm" color={mutedColor}>
-                    Page {currentEntriesPage} of {totalEntriesPages} ({totalEntriesCount} total
-                    entries)
-                  </Text>
+                <Flex
+                  justify="space-between"
+                  align="center"
+                  w="100%"
+                  pt={6}
+                  px={2}
+                  borderTop="1px solid"
+                  borderColor={useColorModeValue('gray.200', 'gray.600')}>
+                  <VStack align="start" spacing={0}>
+                    <Text fontSize="sm" fontWeight="600" color={textColor}>
+                      Page {currentEntriesPage} of {totalEntriesPages}
+                    </Text>
+                    <Text fontSize="xs" color={mutedColor}>
+                      {totalEntriesCount} total entries
+                    </Text>
+                  </VStack>
                   <HStack spacing={2}>
                     <IconButton
                       icon={<FiChevronLeft />}
                       aria-label="Previous page"
                       size="sm"
                       variant="outline"
+                      colorScheme="gray"
+                      borderRadius="lg"
                       onClick={() => handleEntriesPageChange(currentEntriesPage - 1)}
                       isDisabled={currentEntriesPage === 1}
+                      _hover={{
+                        transform: 'translateY(-1px)',
+                        boxShadow: 'md'
+                      }}
+                      transition="all 0.2s"
                     />
-                    <Text fontSize="sm" px={3}>
-                      {currentEntriesPage}
-                    </Text>
+                    <Box
+                      px={3}
+                      py={1}
+                      bg={useColorModeValue('green.50', 'green.900')}
+                      borderRadius="lg"
+                      border="1px solid"
+                      borderColor={useColorModeValue('green.200', 'green.700')}>
+                      <Text fontSize="sm" fontWeight="600" color="green.600">
+                        {currentEntriesPage}
+                      </Text>
+                    </Box>
                     <IconButton
                       icon={<FiChevronRight />}
                       aria-label="Next page"
                       size="sm"
                       variant="outline"
+                      colorScheme="gray"
+                      borderRadius="lg"
                       onClick={() => handleEntriesPageChange(currentEntriesPage + 1)}
                       isDisabled={currentEntriesPage === totalEntriesPages}
+                      _hover={{
+                        transform: 'translateY(-1px)',
+                        boxShadow: 'md'
+                      }}
+                      transition="all 0.2s"
                     />
                   </HStack>
                 </Flex>
