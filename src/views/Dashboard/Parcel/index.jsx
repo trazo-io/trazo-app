@@ -100,20 +100,20 @@ export default function ParcelView() {
         </Box>
       )}
 
-      <Text
-        color={mainText}
-        href="#"
-        bg="inherit"
-        borderRadius="inherit"
-        fontWeight="bold"
-        padding="10px">
-        {establishment?.name}
-      </Text>
+      <Box mb={{ base: '16px', md: '24px' }}>
+        <Text
+          color={mainText}
+          fontSize={{ base: 'xl', md: '2xl' }}
+          fontWeight="bold"
+          px={{ base: '16px', md: '0' }}>
+          {establishment?.name}
+        </Text>
+      </Box>
       <Grid
         templateColumns={{ md: '1fr', lg: '1.8fr 1.2fr' }}
         templateRows={{ md: '1fr auto', lg: '1fr' }}
-        my="26px"
-        gap="24px"
+        my={{ base: '20px', md: '26px' }}
+        gap={{ base: '16px', md: '24px' }}
         w="100%"
         maxW="100%">
         {establishment ? (
@@ -162,7 +162,7 @@ export default function ParcelView() {
       <Grid
         templateColumns={{ sm: '1fr', md: '1fr', lg: '1fr 2fr' }}
         templateRows={{ sm: '1fr auto', md: '1fr', lg: '1fr' }}
-        gap="24px"
+        gap={{ base: '16px', md: '24px' }}
         w="100%"
         maxW="100%">
         <TrackList amount={40} />

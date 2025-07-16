@@ -80,19 +80,14 @@ const CarbonSummaryCard = ({ establishmentId }) => {
   }
 
   return (
-    <Card 
-      bg={bgColor} 
-      p={6} 
-      borderRadius="xl" 
-      className="trazo-card"
-    >
+    <Card bg={bgColor} p={6} borderRadius="xl" className="trazo-card">
       <CardHeader p={0} mb={4}>
         <Flex direction="column">
           <Text fontSize="lg" color="gray.700" fontWeight="bold">
-            Huella Neta
+            Huella Neta:
           </Text>
           <Text fontSize="sm" color="gray.500" fontWeight="400">
-            Resumen de Carbono del Establecimiento
+            Resumen de Carbono del Establecimiento:
           </Text>
         </Flex>
       </CardHeader>
@@ -101,8 +96,10 @@ const CarbonSummaryCard = ({ establishmentId }) => {
         <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing={4} mb={4}>
           <Box textAlign="center" p={2}>
             <Stat>
-              <StatLabel fontSize="sm" color="gray.600">Emisiones Totales</StatLabel>
-              <StatNumber fontSize={{ base: "lg", md: "xl" }} color="red.500" fontWeight="bold">
+              <StatLabel fontSize="sm" color="gray.600">
+                Emisiones Totales
+              </StatLabel>
+              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="red.500" fontWeight="bold">
                 {(data?.total_emissions || 0).toFixed(2)} kg CO₂e
               </StatNumber>
               <StatHelpText fontSize="xs">
@@ -112,8 +109,10 @@ const CarbonSummaryCard = ({ establishmentId }) => {
           </Box>
           <Box textAlign="center" p={2}>
             <Stat>
-              <StatLabel fontSize="sm" color="gray.600">Compensaciones</StatLabel>
-              <StatNumber fontSize={{ base: "lg", md: "xl" }} color="green.500" fontWeight="bold">
+              <StatLabel fontSize="sm" color="gray.600">
+                Compensaciones
+              </StatLabel>
+              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="green.500" fontWeight="bold">
                 {(data?.total_offsets || 0).toFixed(2)} kg CO₂e
               </StatNumber>
               <StatHelpText fontSize="xs">
@@ -123,12 +122,13 @@ const CarbonSummaryCard = ({ establishmentId }) => {
           </Box>
           <Box textAlign="center" p={2}>
             <Stat>
-              <StatLabel fontSize="sm" color="gray.600">Huella Neta</StatLabel>
-              <StatNumber 
-                fontSize={{ base: "lg", md: "xl" }} 
-                color={(data?.net_carbon || 0) >= 0 ? "red.500" : "green.500"} 
-                fontWeight="bold"
-              >
+              <StatLabel fontSize="sm" color="gray.600">
+                Huella Neta
+              </StatLabel>
+              <StatNumber
+                fontSize={{ base: 'lg', md: 'xl' }}
+                color={(data?.net_carbon || 0) >= 0 ? 'red.500' : 'green.500'}
+                fontWeight="bold">
                 {(data?.net_carbon || 0).toFixed(2)} kg CO₂e
               </StatNumber>
               <StatHelpText fontSize="xs">

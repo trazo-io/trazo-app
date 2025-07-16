@@ -102,10 +102,7 @@ const TrackList = ({ amount }) => {
     if (data) dispatch(setCurrentHistory(data));
   }, [data]);
 
-  const bgButton = useColorModeValue(
-    'linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)',
-    'gray.800'
-  );
+  const bgButton = useColorModeValue('#2E7D32', 'gray.800');
 
   const handleEventCreated = () => {
     // Refetch the current history data to show the new event
@@ -128,7 +125,7 @@ const TrackList = ({ amount }) => {
   };
 
   return (
-    <Card maxH="100%" height={'fit-content;'} minW="390px">
+    <Card maxH="100%" height={'fit-content;'} minW="390px" className="trazo-card">
       <CardHeader p="0px 0px 35px 0px">
         <Flex direction="column" w="100%">
           <Flex p="0px" align="center" justify="space-between">
@@ -241,9 +238,6 @@ const TrackList = ({ amount }) => {
         justify="flex-end"
         gap={3}
         p="20px"
-        borderTop="1px solid"
-        borderColor={useColorModeValue('gray.200', 'gray.600')}
-        bg={useColorModeValue('gray.50', 'gray.700')}
       >
         {!currentHistory?.product ? (
           <Button
