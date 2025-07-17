@@ -14,7 +14,8 @@ export {
   StandardGrid,
   StandardSection,
   StandardStepper,
-  StandardSelectionGrid
+  StandardSelectionGrid,
+  StandardMediaUpload
 } from './StandardComponents';
 
 // Media Components

@@ -11,6 +11,7 @@ import {
   useColorModeValue,
   Box
 } from '@chakra-ui/react';
+import { S3Image } from 'components/Design';
 // Custom icons
 import {
   CartIcon,
@@ -418,14 +419,15 @@ export default function DashboardView() {
               boxShadow: shadowHover
             }}
             image={
-              <Image
+              <S3Image
                 src={establishment?.image || defaultEstablishmentImage}
                 alt="establishment image"
                 width="100%"
                 height="100%"
                 objectFit={'cover'}
                 borderRadius="15px"
-                loading="lazy"
+                lazy={true}
+                fallbackSrc={defaultEstablishmentImage}
               />
             }
           />

@@ -53,6 +53,7 @@ import {
   StandardButton,
   StandardAlert,
   StandardStepper,
+  StandardMediaUpload,
   S3Image
 } from '../Design';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -60,7 +61,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, boolean, number } from 'zod';
 import { useIntl } from 'react-intl';
 import { GoogleMap, Polygon, useLoadScript } from '@react-google-maps/api';
-import { useDropzone } from 'react-dropzone';
+import { useFileUpload } from '../../services/uploadService';
 import { CloseIcon } from '@chakra-ui/icons';
 import {
   FaMapMarkedAlt,
@@ -329,9 +330,35 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
 
   // Image upload state management
   const [existingImages, setExistingImages] = useState<Array<{ id: string; url: string }>>([]);
-  const [newImages, setNewImages] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const { uploadMultipleFiles } = useFileUpload();
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  // Handle selected files from StandardMediaUpload
+  const handleFilesChange = (files: File[]) => {
+    setSelectedFiles(files);
+  };
+
+  // Handle removing selected files
+  const handleRemoveSelectedFile = (file: File) => {
+    setSelectedFiles((prev) => prev.filter((f) => f !== file));
+  };
+
+  // Handle removing uploaded files (existing images)
+  const handleRemoveUploadedFile = (index: number, url: string) => {
+    // Find the image object by URL in existingImages
+    const imageToDelete = existingImages.find((img) => img.url === url);
+    
+    if (imageToDelete) {
+      // Only add to imagesToDelete if it's a real database ID (not temporary)
+      if (!imageToDelete.id.toString().startsWith('uploaded-')) {
+        setImagesToDelete((prev) => [...prev, imageToDelete.id]);
+      }
+      // Always remove from UI
+      setExistingImages((prev) => prev.filter((img) => img.id !== imageToDelete.id));
+    }
+  };
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
 
   const intl = useIntl();
@@ -513,110 +540,31 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
     }
   }, [polygon]);
 
-  // Dropzone for images with comprehensive management
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: 'image/*',
-    maxFiles: 5,
-    maxSize: 5 * 1024 * 1024, // 5MB
-    onDrop: (acceptedFiles) => {
-      const totalImages = existingImages.length + newImages.length + acceptedFiles.length;
-      if (totalImages > 5) {
-        toast({
-          title: 'Too Many Images',
-          description: 'Maximum 5 images allowed. Please remove some images first.',
-          status: 'warning',
-          duration: 5000,
-          isClosable: true
-        });
-        return;
-      }
-      setNewImages((prev) => [...prev, ...acceptedFiles]);
-    },
-    onDropRejected: (fileRejections) => {
-      fileRejections.forEach((file) => {
-        file.errors.forEach((err) => {
-          if (err.code === 'file-too-large') {
-            toast({
-              title: 'File Too Large',
-              description: 'Each image must be smaller than 5MB.',
-              status: 'error',
-              duration: 5000,
-              isClosable: true
-            });
-          } else if (err.code === 'file-invalid-type') {
-            toast({
-              title: 'Invalid File Type',
-              description: 'Only JPG, PNG, and GIF images are allowed.',
-              status: 'error',
-              duration: 5000,
-              isClosable: true
-            });
-          }
-        });
-      });
-    }
-  });
 
-  // Image management functions
-  const handleRemoveExistingImage = (imageId: string) => {
-    setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
-    setImagesToDelete((prev) => [...prev, imageId]);
-  };
-
-  const handleRemoveNewImage = (file: File) => {
-    setNewImages((prev) => prev.filter((img) => img !== file));
-  };
 
   const handleImageUpload = async () => {
-    if (newImages.length === 0) return [];
+    if (selectedFiles.length === 0) return [];
 
     setIsUploading(true);
     setUploadProgress(0);
 
     try {
-      const uploadedUrls: string[] = [];
+      // Use the real upload service
+      const uploadedUrls = await uploadMultipleFiles(selectedFiles);
 
-      for (let i = 0; i < newImages.length; i++) {
-        const file = newImages[i];
-        const formData = new FormData();
-        formData.append('image', file);
-
-        // Simulate upload progress
-        const progressInterval = setInterval(() => {
-          setUploadProgress((prev) => {
-            const newProgress = prev + (100 / newImages.length) * Math.random() * 0.1;
-            return Math.min(newProgress, (i + 0.9) * (100 / newImages.length));
-          });
-        }, 100);
-
-        try {
-          // Here you would make the actual API call to upload the image
-          // const response = await uploadImageAPI(formData);
-          // uploadedUrls.push(response.url);
-
-          // For now, create a temporary URL for demonstration
-          const url = URL.createObjectURL(file);
-          uploadedUrls.push(url);
-
-          setUploadProgress((i + 1) * (100 / newImages.length));
-        } finally {
-          clearInterval(progressInterval);
-        }
-      }
-
-      // Move new images to existing images
-      const newExistingImages = newImages.map((file, index) => ({
+      // Move new images to existing images with real S3 URLs
+      const newExistingImages = uploadedUrls.map((url, index) => ({
         id: `uploaded-${Date.now()}-${index}`,
-        url: uploadedUrls[index]
+        url: url
       }));
 
       setExistingImages((prev) => [...prev, ...newExistingImages]);
-      setNewImages([]);
+      setSelectedFiles([]);
       setUploadProgress(100);
 
       toast({
         title: 'Images Uploaded',
-        description: `${newImages.length} image(s) uploaded successfully.`,
+        description: `${selectedFiles.length} image(s) uploaded successfully.`,
         status: 'success',
         duration: 3000,
         isClosable: true
@@ -689,10 +637,9 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
           center: mapCenter,
           zoom: mapZoom
         },
-        // Pass image data separately to match backend expectations
+        // Pass image data - only URLs now since files are uploaded separately
         uploaded_image_urls: existingImages.map((img) => img.url),
-        images_to_delete: imagesToDelete,
-        new_images: newImages
+        images_to_delete: imagesToDelete
       };
 
       // Remove the images property since we're handling it differently
@@ -2261,123 +2208,26 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
               subtitle="Upload images and set certification status"
             >
               <VStack spacing={6} align="stretch">
-                {/* Image Upload Section with comprehensive management */}
+                {/* Image Upload Section with StandardMediaUpload */}
                 <StandardField
                   label="Parcel Images"
                   helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
                 >
                   <VStack spacing={4}>
-                    {/* Comprehensive Dropzone with image preview */}
-                    <Box
-                      {...getRootProps()}
-                      border="2px dashed #CBD5E0"
-                      borderRadius="md"
-                      p={6}
-                      mb={4}
-                      bg="gray.50"
-                      cursor="pointer"
-                      minH="120px"
-                      _hover={{ borderColor: 'blue.400', bg: 'gray.100' }}
-                      position="relative"
-                      transition="all 0.2s"
-                      w="full"
-                    >
-                      <input {...getInputProps()} />
-
-                      {/* Image Previews AT THE TOP of the dropzone */}
-                      <Flex gap="16px" mb={2} flexWrap="wrap" justify="flex-start" minH="90px">
-                        {/* Existing Images */}
-                        {existingImages.map((img) => (
-                          <Box key={img.id} position="relative">
-                            <S3Image
-                              src={img.url}
-                              alt="Parcel"
-                              w="120px"
-                              h="80px"
-                              borderRadius="8px"
-                              objectFit="cover"
-                              border="1px solid #E2E8F0"
-                              fallbackSrc="/images/parcel-placeholder.jpg"
-                            />
-                            <IconButton
-                              aria-label="Remove image"
-                              icon={<CloseIcon />}
-                              size="xs"
-                              position="absolute"
-                              top="4px"
-                              right="4px"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveExistingImage(img.id);
-                              }}
-                            />
-                          </Box>
-                        ))}
-
-                        {/* New Images */}
-                        {newImages.map((file, idx) => {
-                          const url = URL.createObjectURL(file);
-                          return (
-                            <Box key={file.name + idx} position="relative">
-                              <Image
-                                src={url}
-                                alt={file.name}
-                                w="120px"
-                                h="80px"
-                                borderRadius="8px"
-                                objectFit="cover"
-                                border="1px solid #E2E8F0"
-                              />
-                              <IconButton
-                                aria-label="Remove new image"
-                                icon={<CloseIcon />}
-                                size="xs"
-                                position="absolute"
-                                top="4px"
-                                right="4px"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemoveNewImage(file);
-                                }}
-                              />
-                            </Box>
-                          );
-                        })}
-                      </Flex>
-
-                      {/* Instructions */}
-                      <Flex direction="column" align="center" justify="center">
-                        <Icon as={FaCloudUploadAlt} boxSize={12} color="gray.400" mb={2} />
-                        <Text color="gray.500" fontSize="sm" mb={2} textAlign="center">
-                          {isDragActive
-                            ? 'Drop images here...'
-                            : existingImages.length + newImages.length > 0
-                            ? 'Drop more images here or click to select'
-                            : 'Drag & drop images here, or click to select'}
-                        </Text>
-                        <Text color="gray.400" fontSize="xs" textAlign="center">
-                          Maximum 5 images. JPG, PNG, GIF format, up to 5MB each.
-                        </Text>
-                        {existingImages.length + newImages.length >= 5 && (
-                          <Text color="red.500" fontSize="sm" mt={2} textAlign="center">
-                            Maximum of 5 images reached.
-                          </Text>
-                        )}
-                      </Flex>
-                    </Box>
-
-                    {/* Upload Progress */}
-                    {isUploading && (
-                      <Box w="full">
-                        <Text fontSize="sm" mb={2}>
-                          Uploading images... {uploadProgress}%
-                        </Text>
-                        <Progress value={uploadProgress} colorScheme="green" borderRadius="full" />
-                      </Box>
-                    )}
-
+                    <StandardMediaUpload
+                      onFilesChange={handleFilesChange}
+                      acceptedFiles={selectedFiles}
+                      uploadedFiles={existingImages.map((img) => img.url)}
+                      isUploading={isUploading}
+                      uploadProgress={uploadProgress}
+                      onRemoveFile={handleRemoveSelectedFile}
+                      onRemoveUploadedFile={handleRemoveUploadedFile}
+                      maxFiles={5}
+                      helpText="Upload up to 5 high-quality images. Images help showcase your parcel."
+                    />
+                    
                     {/* Upload Button for New Images */}
-                    {newImages.length > 0 && (
+                    {selectedFiles.length > 0 && (
                       <Button
                         onClick={handleImageUpload}
                         isLoading={isUploading}
@@ -2385,8 +2235,9 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                         colorScheme="green"
                         leftIcon={<FaCloudUploadAlt />}
                         size="lg"
+                        w="full"
                       >
-                        Upload {newImages.length} Image{newImages.length > 1 ? 's' : ''}
+                        Upload {selectedFiles.length} Image{selectedFiles.length > 1 ? 's' : ''}
                       </Button>
                     )}
                   </VStack>
