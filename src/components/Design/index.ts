@@ -17,6 +17,9 @@ export {
   StandardSelectionGrid
 } from './StandardComponents';
 
+// Media Components
+export { S3Image, type S3ImageProps } from '../Media/S3Image';
+
 // Standardized Form Components
 export { StandardEventForm } from '../Forms/StandardEventForm';
 export { default as StandardChemicalForm } from '../Forms/StandardChemicalForm';

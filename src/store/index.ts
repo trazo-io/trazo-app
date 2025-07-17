@@ -14,6 +14,7 @@ import userReducer from './features/userSlice';
 import notificationReducer from './features/notificationSlice';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { carbonApi } from './api/carbonApi';
+import { mediaApi } from './api/mediaApi';
 import { config } from 'config/environment';
 
 export const store = configureStore({
@@ -26,14 +27,15 @@ export const store = configureStore({
     history: historySlice,
     notifications: notificationReducer,
     [baseApi.reducerPath]: baseApi.reducer,
-    [carbonApi.reducerPath]: carbonApi.reducer
+    [carbonApi.reducerPath]: carbonApi.reducer,
+    [mediaApi.reducerPath]: mediaApi.reducer
   },
   devTools: config.ENABLE_DEVTOOLS,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
       immutableCheck: config.IS_DEVELOPMENT // Only run expensive checks in development
-    }).concat(baseApi.middleware, carbonApi.middleware)
+    }).concat(baseApi.middleware, carbonApi.middleware, mediaApi.middleware)
 });
 
 // Set up listeners for refetching behavior
