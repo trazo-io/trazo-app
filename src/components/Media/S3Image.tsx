@@ -1,13 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { 
-  Image, 
-  Box, 
-  Skeleton, 
-  Alert, 
-  AlertIcon, 
-  Icon,
-  ImageProps 
-} from '@chakra-ui/react';
+import { Image, Box, Skeleton, Alert, AlertIcon, Icon, ImageProps } from '@chakra-ui/react';
 import { FiImage } from 'react-icons/fi';
 import { useLazyGetPresignedReadUrlQuery } from 'store/api/mediaApi';
 
@@ -46,7 +38,7 @@ export interface S3ImageProps extends Omit<ImageProps, 'src' | 'onLoad' | 'onErr
 
 /**
  * S3Image Component - Modern React image component for 2025
- * 
+ *
  * Features:
  * - Automatic S3 presigned URL handling
  * - Lazy loading with IntersectionObserver
@@ -77,13 +69,13 @@ export const S3Image: React.FC<S3ImageProps> = ({
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  
+
   // Refs
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // RTK Query hook for presigned URLs
-  const [getPresignedUrl, { data: presignedData, isLoading, error: apiError }] = 
+  const [getPresignedUrl, { data: presignedData, isLoading, error: apiError }] =
     useLazyGetPresignedReadUrlQuery();
 
   // Intersection Observer for lazy loading
@@ -97,8 +89,8 @@ export const S3Image: React.FC<S3ImageProps> = ({
           observer.disconnect();
         }
       },
-      { 
-        threshold: 0.1, 
+      {
+        threshold: 0.1,
         rootMargin: '50px' // Load images 50px before they enter viewport
       }
     );
@@ -125,11 +117,11 @@ export const S3Image: React.FC<S3ImageProps> = ({
   // Determine display URL
   const displayUrl = (() => {
     if (!src) return fallbackSrc;
-    
+
     if (needsPresignedUrl(src)) {
       return presignedData?.presigned_url || fallbackSrc;
     }
-    
+
     return src;
   })();
 
@@ -145,11 +137,11 @@ export const S3Image: React.FC<S3ImageProps> = ({
   const handleImageError = useCallback(() => {
     if (retryCount < 2 && needsPresignedUrl(src)) {
       // Retry getting presigned URL
-      setRetryCount(prev => prev + 1);
+      setRetryCount((prev) => prev + 1);
       getPresignedUrl({ s3_url: src });
       return;
     }
-    
+
     setImageError(true);
     onError?.();
   }, [retryCount, needsPresignedUrl, src, getPresignedUrl, onError]);
@@ -162,11 +154,10 @@ export const S3Image: React.FC<S3ImageProps> = ({
         boxSize={boxSize}
         borderRadius={borderRadius}
         className={className}
-        {...props}
-      >
+        {...props}>
         {placeholder || (
-          <Skeleton 
-            boxSize={boxSize} 
+          <Skeleton
+            boxSize={boxSize}
             borderRadius={borderRadius}
             startColor="gray.100"
             endColor="gray.200"
@@ -190,23 +181,17 @@ export const S3Image: React.FC<S3ImageProps> = ({
         bg="gray.50"
         border="1px solid"
         borderColor="gray.200"
-        {...props}
-      >
+        {...props}>
         {showErrorMessage ? (
-          <Alert 
-            status="warning" 
-            variant="subtle" 
-            borderRadius={borderRadius}
-            fontSize="sm"
-          >
+          <Alert status="warning" variant="subtle" borderRadius={borderRadius} fontSize="sm">
             <AlertIcon />
             Failed to load image
           </Alert>
         ) : (
-          <Icon 
-            as={FiImage} 
-            color="gray.400" 
-            boxSize={boxSize ? `calc(${boxSize} * 0.3)` : "24px"} 
+          <Icon
+            as={FiImage}
+            color="gray.400"
+            boxSize={boxSize ? `calc(${boxSize} * 0.3)` : '24px'}
           />
         )}
       </Box>
@@ -222,22 +207,21 @@ export const S3Image: React.FC<S3ImageProps> = ({
       className={className}
       position="relative"
       overflow="hidden"
-      {...props}
-    >
+      {...props}>
       {/* Loading skeleton overlay */}
       {!imageLoaded && (
-        <Skeleton 
-          position="absolute" 
-          top={0} 
-          left={0} 
-          width="100%" 
-          height="100%" 
+        <Skeleton
+          position="absolute"
+          top={0}
+          left={0}
+          width="100%"
+          height="100%"
           borderRadius={borderRadius}
           startColor="gray.100"
           endColor="gray.200"
         />
       )}
-      
+
       {/* Actual image */}
       <Image
         ref={imgRef}
@@ -251,7 +235,7 @@ export const S3Image: React.FC<S3ImageProps> = ({
         fallbackSrc={fallbackSrc}
         loading={lazy ? 'lazy' : 'eager'}
         opacity={imageLoaded ? 1 : 0}
-        transition={enableFadeIn ? "opacity 0.3s ease-in-out" : undefined}
+        transition={enableFadeIn ? 'opacity 0.3s ease-in-out' : undefined}
         // Accessibility attributes
         role="img"
         aria-label={alt}

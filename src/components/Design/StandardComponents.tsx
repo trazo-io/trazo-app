@@ -32,6 +32,7 @@ import {
   Image,
   CloseButton
 } from '@chakra-ui/react';
+import { S3Image } from '../Media/S3Image';
 import { ReactNode, ReactElement, useState, useEffect, useCallback } from 'react';
 import {
   FaLeaf,
@@ -1063,12 +1064,13 @@ export const StandardMediaUpload = ({
           border="2px solid"
           borderColor={successColor}
           position="relative">
-          <Image
+          <S3Image
             src={url}
             alt={`Uploaded image ${index + 1}`}
             w="100%"
             h={previewMode === 'thumbnails' ? '80px' : '120px'}
             objectFit="cover"
+            fallbackSrc="/images/placeholder.jpg"
           />
 
           {/* Success badge */}
