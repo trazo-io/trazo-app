@@ -12,12 +12,16 @@ type I18nProps = {
 export default function I18n(props: I18nProps) {
   const [locale, setLocale] = useState(defaultLocale);
 
+  // Ensure we have a valid locale, fallback to English
+  const currentLocale = locales[locale] ? locale : 'en-US';
+  const messages = locales[currentLocale]?.messages || locales['en-US'].messages;
+
   return (
-    <LocaleContext.Provider value={{ locale, setLocale }}>
+    <LocaleContext.Provider value={{ locale: currentLocale, setLocale }}>
       <IntlProvider
-        locale={locale}
-        defaultLocale={defaultLocale}
-        messages={locales[locale]?.messages || locales['en-US'].messages}
+        locale={currentLocale}
+        defaultLocale="en-US"
+        messages={messages}
       >
         {props.children}
       </IntlProvider>

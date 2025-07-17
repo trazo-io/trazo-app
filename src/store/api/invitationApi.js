@@ -8,7 +8,12 @@ const invitationApi = baseApi.injectEndpoints({
       query: (invitationData) => ({
         url: 'invitations/create/',
         method: 'POST',
-        body: invitationData
+        body: invitationData,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
       }),
       invalidatesTags: ['CompanyInvitations', 'Company']
     }),
@@ -81,59 +86,8 @@ const invitationApi = baseApi.injectEndpoints({
         method: 'POST',
         body: signupData
       }),
-      invalidatesTags: ['CompanyInvitations', 'Company', 'User'],
-      async onQueryStarted(args, { dispatch, queryFulfilled }) {
-        try {
-          const result = await queryFulfilled;
-          // If signup response includes user data and tokens, auto-sign in
-          if (result.data.user && result.data.access) {
-            const { setUser } = await import('store/features/userSlice');
-            const { login } = await import('store/features/authSlice');
-            const { setCompany } = await import('store/features/companySlice');
-
-            // Set company data in both slices for proper subscription detection
-            if (result.data.company) {
-              dispatch(setCompany(result.data.company));
-
-              // Create user data with company information for navbar
-              const userWithCompanies = {
-                ...result.data.user,
-                companies: [
-                  {
-                    ...result.data.company,
-                    role:
-                      result.data.role === 'CA'
-                        ? 'Company Admin'
-                        : result.data.role === 'FM'
-                        ? 'Farm Manager'
-                        : result.data.role === 'DW'
-                        ? 'Domain Worker'
-                        : result.data.role
-                  }
-                ]
-              };
-
-              // Set user data with company information
-              dispatch(setUser(userWithCompanies));
-
-              // Also set auth data with company information for SubscriptionRequired
-              dispatch(
-                login({
-                  data: {
-                    ...userWithCompanies,
-                    selectedCompany: result.data.company.id
-                  }
-                })
-              );
-            } else {
-              // Set user data without companies if no company data
-              dispatch(setUser(result.data.user));
-            }
-          }
-        } catch (error) {
-          console.error('Signup with invitation failed:', error);
-        }
-      },
+      // Login handling is done in the component instead of here
+      // to avoid conflicts and ensure proper error handling
       invalidatesTags: ['CompanyInvitations', 'Company', 'User']
     })
   })

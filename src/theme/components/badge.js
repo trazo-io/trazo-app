@@ -21,12 +21,6 @@ import { mode } from '@chakra-ui/theme-tools';
 export const badgeStyles = {
   components: {
     Badge: {
-      sizes: {
-        md: {
-          width: '65px',
-          height: '25px'
-        }
-      },
       variants: {
         // Trazo brand-focused variants using forest green palette
         brand: {

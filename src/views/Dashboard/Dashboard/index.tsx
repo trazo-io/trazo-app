@@ -228,6 +228,21 @@ export default function DashboardView() {
     }
   }, [establishmentId, establishments]);
 
+  // Redirect to first establishment when accessing root dashboard
+  useEffect(() => {
+    // Only redirect if we're on the exact dashboard root and have establishments
+    if (
+      location.pathname === '/admin/dashboard' &&
+      establishments &&
+      establishments.length > 0 &&
+      !establishmentId
+    ) {
+      const firstEstablishment = establishments[0].id;
+      console.log('DashboardView: Redirecting to first establishment:', firstEstablishment);
+      navigate(`/admin/dashboard/establishment/${firstEstablishment}`, { replace: true });
+    }
+  }, [location.pathname, establishments, establishmentId, navigate]);
+
   const toggleAddEstablishment = () => {
     navigate('/admin/dashboard/establishment/add');
   };

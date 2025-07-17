@@ -14,9 +14,11 @@ import {
   Button,
   InputGroup,
   InputLeftElement,
+  InputRightElement,
   useColorModeValue,
   Checkbox,
-  Grid
+  Grid,
+  Progress
 } from '@chakra-ui/react';
 import {
   FaGoogle,
@@ -25,7 +27,9 @@ import {
   FaEnvelope,
   FaLock,
   FaBuilding,
-  FaUser
+  FaUser,
+  FaEye,
+  FaEyeSlash
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useSignUpMutation } from '../../../store/api/authApi';
@@ -50,6 +54,8 @@ const AppSignUp: React.FC = () => {
   const [signUp, { isLoading }] = useSignUpMutation();
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register: registerField,
@@ -60,6 +66,19 @@ const AppSignUp: React.FC = () => {
 
   const password = watch('password');
   const password2 = watch('password2');
+
+  // Password strength calculation
+  const getPasswordStrength = (password: string) => {
+    if (!password) return 0;
+    let strength = 0;
+    if (password.length >= 8) strength += 25;
+    if (/[A-Z]/.test(password)) strength += 25;
+    if (/[a-z]/.test(password)) strength += 25;
+    if (/\d/.test(password)) strength += 25;
+    return strength;
+  };
+
+  const passwordStrength = getPasswordStrength(password || '');
 
   const onSubmit = async (data: SignUpFormData) => {
     try {
@@ -98,66 +117,6 @@ const AppSignUp: React.FC = () => {
     });
   };
 
-  const renderInput = (
-    name: keyof SignUpFormData,
-    type: string,
-    placeholder: string,
-    icon: any,
-    label: string,
-    validation: any
-  ) => (
-    <Box w="full">
-      <Text fontSize="sm" fontWeight="500" color={useColorModeValue('gray.700', 'gray.300')} mb={1}>
-        {label}
-      </Text>
-      <InputGroup size="lg">
-        <InputLeftElement pointerEvents="none">
-          <Icon
-            as={icon}
-            color={focusedField === name ? 'green.500' : 'gray.400'}
-            transition="all 0.2s"
-          />
-        </InputLeftElement>
-        <Box
-          as="input"
-          type={type}
-          placeholder={placeholder}
-          pl="3rem"
-          w="full"
-          h="44px"
-          fontSize="md"
-          bg={useColorModeValue('gray.50', 'gray.900')}
-          border="1px solid"
-          borderColor={
-            errors[name]
-              ? 'red.300'
-              : focusedField === name
-              ? 'green.500'
-              : useColorModeValue('gray.300', 'gray.600')
-          }
-          borderRadius="lg"
-          _hover={{
-            borderColor: errors[name] ? 'red.300' : useColorModeValue('gray.400', 'gray.500')
-          }}
-          _focus={{
-            outline: 'none',
-            borderColor: 'green.500',
-            bg: useColorModeValue('white', 'gray.800'),
-            boxShadow: '0 0 0 3px rgba(72, 187, 120, 0.1)'
-          }}
-          transition="all 0.2s"
-          {...registerField(name, validation)}
-          onFocus={() => setFocusedField(name)}
-          onBlur={() => setFocusedField(null)}
-        />
-      </InputGroup>
-      {errors[name] && (
-        <Text fontSize="sm" color="red.500" mt={1}>
-          {errors[name]?.message}
-        </Text>
-      )}
-    </Box>
-  );
 
   return (
     <Box minH="100vh" display="flex" flexDirection="column">
@@ -341,75 +300,386 @@ const AppSignUp: React.FC = () => {
                 <VStack spacing={4}>
                   {/* Name fields */}
                   <Grid templateColumns="1fr 1fr" gap={3} w="full">
-                    {renderInput('first_name', 'text', 'First name', FaUser, 'First Name', {
-                      required: 'First name is required',
-                      minLength: { value: 1, message: 'First name is required' },
-                      maxLength: { value: 100, message: 'First name too long' },
-                      pattern: {
-                        value: /^[A-Za-z\s]+$/,
-                        message: 'First name should only contain letters'
-                      }
-                    })}
+                    <Box>
+                      <Text
+                        fontSize="sm"
+                        fontWeight="500"
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                        mb={1}
+                      >
+                        First Name
+                      </Text>
+                      <Box
+                        as="input"
+                        type="text"
+                        placeholder="First name"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.first_name
+                            ? 'red.300'
+                            : focusedField === 'first_name'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        px={4}
+                        _hover={{
+                          borderColor: errors.first_name
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...registerField('first_name', {
+                          required: 'First name is required',
+                          minLength: { value: 1, message: 'First name is required' },
+                          maxLength: { value: 100, message: 'First name too long' },
+                          pattern: {
+                            value: /^[A-Za-z\s]+$/,
+                            message: 'First name should only contain letters'
+                          }
+                        })}
+                        onFocus={() => setFocusedField('first_name')}
+                        onBlur={() => setFocusedField(null)}
+                      />
+                      {errors.first_name && (
+                        <Text fontSize="sm" color="red.500" mt={1}>
+                          {errors.first_name.message}
+                        </Text>
+                      )}
+                    </Box>
 
-                    {renderInput('last_name', 'text', 'Last name', FaUser, 'Last Name', {
-                      required: 'Last name is required',
-                      minLength: { value: 1, message: 'Last name is required' },
-                      maxLength: { value: 100, message: 'Last name too long' },
-                      pattern: {
-                        value: /^[A-Za-z\s]+$/,
-                        message: 'Last name should only contain letters'
-                      }
-                    })}
+                    <Box>
+                      <Text
+                        fontSize="sm"
+                        fontWeight="500"
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                        mb={1}
+                      >
+                        Last Name
+                      </Text>
+                      <Box
+                        as="input"
+                        type="text"
+                        placeholder="Last name"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.last_name
+                            ? 'red.300'
+                            : focusedField === 'last_name'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        px={4}
+                        _hover={{
+                          borderColor: errors.last_name
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...registerField('last_name', {
+                          required: 'Last name is required',
+                          minLength: { value: 1, message: 'Last name is required' },
+                          maxLength: { value: 100, message: 'Last name too long' },
+                          pattern: {
+                            value: /^[A-Za-z\s]+$/,
+                            message: 'Last name should only contain letters'
+                          }
+                        })}
+                        onFocus={() => setFocusedField('last_name')}
+                        onBlur={() => setFocusedField(null)}
+                      />
+                      {errors.last_name && (
+                        <Text fontSize="sm" color="red.500" mt={1}>
+                          {errors.last_name.message}
+                        </Text>
+                      )}
+                    </Box>
                   </Grid>
 
                   {/* Email */}
-                  {renderInput(
-                    'email',
-                    'email',
-                    'Enter business email address',
-                    FaEnvelope,
-                    'Business Email',
-                    {
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Invalid email address'
-                      }
-                    }
-                  )}
+                  <Box w="full">
+                    <Text
+                      fontSize="sm"
+                      fontWeight="500"
+                      color={useColorModeValue('gray.700', 'gray.300')}
+                      mb={1}
+                    >
+                      Business Email
+                    </Text>
+                    <InputGroup size="lg">
+                      <InputLeftElement pointerEvents="none">
+                        <Icon
+                          as={FaEnvelope}
+                          color={focusedField === 'email' ? 'green.500' : 'gray.400'}
+                          transition="all 0.2s"
+                        />
+                      </InputLeftElement>
+                      <Box
+                        as="input"
+                        type="email"
+                        placeholder="Enter business email address"
+                        pl="3rem"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.email
+                            ? 'red.300'
+                            : focusedField === 'email'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        _hover={{
+                          borderColor: errors.email
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...registerField('email', {
+                          required: 'Email is required',
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: 'Invalid email address'
+                          }
+                        })}
+                        onFocus={() => setFocusedField('email')}
+                        onBlur={() => setFocusedField(null)}
+                      />
+                    </InputGroup>
+                    {errors.email && (
+                      <Text fontSize="sm" color="red.500" mt={1}>
+                        {errors.email.message}
+                      </Text>
+                    )}
+                  </Box>
 
                   {/* Password */}
-                  {renderInput(
-                    'password',
-                    'password',
-                    'Create secure password (8+ characters)',
-                    FaLock,
-                    'Password',
-                    {
-                      required: 'Password is required',
-                      minLength: {
-                        value: 8,
-                        message: 'Password must be more than 8 characters'
-                      },
-                      maxLength: {
-                        value: 32,
-                        message: 'Password must be less than 32 characters'
-                      }
-                    }
-                  )}
+                  <Box w="full">
+                    <Text
+                      fontSize="sm"
+                      fontWeight="500"
+                      color={useColorModeValue('gray.700', 'gray.300')}
+                      mb={1}
+                    >
+                      Password
+                    </Text>
+                    <InputGroup size="lg">
+                      <InputLeftElement pointerEvents="none">
+                        <Icon
+                          as={FaLock}
+                          color={focusedField === 'password' ? 'green.500' : 'gray.400'}
+                          transition="all 0.2s"
+                        />
+                      </InputLeftElement>
+                      <Box
+                        as="input"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create secure password (8+ characters)"
+                        pl="3rem"
+                        pr="3rem"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.password
+                            ? 'red.300'
+                            : focusedField === 'password'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        _hover={{
+                          borderColor: errors.password
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...registerField('password', {
+                          required: 'Password is required',
+                          minLength: {
+                            value: 8,
+                            message: 'Password must be more than 8 characters'
+                          },
+                          maxLength: {
+                            value: 32,
+                            message: 'Password must be less than 32 characters'
+                          }
+                        })}
+                        onFocus={() => setFocusedField('password')}
+                        onBlur={() => setFocusedField(null)}
+                      />
+                      <InputRightElement>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setShowPassword(!showPassword)}
+                          size="sm"
+                          _hover={{ bg: 'transparent' }}
+                        >
+                          <Icon
+                            as={showPassword ? FaEyeSlash : FaEye}
+                            color={useColorModeValue('gray.400', 'gray.500')}
+                            _hover={{ color: useColorModeValue('gray.600', 'gray.300') }}
+                            transition="all 0.2s"
+                          />
+                        </Button>
+                      </InputRightElement>
+                    </InputGroup>
+
+                    {/* Password Strength Indicator */}
+                    {password && (
+                      <Box w="full" mt={2}>
+                        <Progress
+                          value={passwordStrength}
+                          size="sm"
+                          borderRadius="full"
+                          colorScheme={
+                            passwordStrength < 50 ? 'red' : passwordStrength < 75 ? 'yellow' : 'green'
+                          }
+                        />
+                        <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mt={1}>
+                          Password strength:{' '}
+                          {passwordStrength < 50 ? 'Weak' : passwordStrength < 75 ? 'Medium' : 'Strong'}
+                        </Text>
+                      </Box>
+                    )}
+
+                    {errors.password && (
+                      <Text fontSize="sm" color="red.500" mt={1}>
+                        {errors.password.message}
+                      </Text>
+                    )}
+                  </Box>
 
                   {/* Confirm password */}
-                  {renderInput(
-                    'password2',
-                    'password',
-                    'Confirm your password',
-                    FaLock,
-                    'Confirm Password',
-                    {
-                      required: 'Please confirm your password',
-                      validate: (value: string) => value === password || 'Passwords do not match'
-                    }
-                  )}
+                  <Box w="full">
+                    <Text
+                      fontSize="sm"
+                      fontWeight="500"
+                      color={useColorModeValue('gray.700', 'gray.300')}
+                      mb={1}
+                    >
+                      Confirm Password
+                    </Text>
+                    <InputGroup size="lg">
+                      <InputLeftElement pointerEvents="none">
+                        <Icon
+                          as={FaLock}
+                          color={focusedField === 'password2' ? 'green.500' : 'gray.400'}
+                          transition="all 0.2s"
+                        />
+                      </InputLeftElement>
+                      <Box
+                        as="input"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirm your password"
+                        pl="3rem"
+                        pr="3rem"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.password2
+                            ? 'red.300'
+                            : password2 && password !== password2
+                            ? 'red.300'
+                            : focusedField === 'password2'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        _hover={{
+                          borderColor: errors.password2
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...registerField('password2', {
+                          required: 'Please confirm your password',
+                          validate: (value: string) => value === password || 'Passwords do not match'
+                        })}
+                        onFocus={() => setFocusedField('password2')}
+                        onBlur={() => setFocusedField(null)}
+                      />
+                      <InputRightElement>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          size="sm"
+                          _hover={{ bg: 'transparent' }}
+                        >
+                          <Icon
+                            as={showConfirmPassword ? FaEyeSlash : FaEye}
+                            color={useColorModeValue('gray.400', 'gray.500')}
+                            _hover={{ color: useColorModeValue('gray.600', 'gray.300') }}
+                            transition="all 0.2s"
+                          />
+                        </Button>
+                      </InputRightElement>
+                    </InputGroup>
+
+                    {/* Password Match Indicator */}
+                    {password2 && (
+                      <Text
+                        fontSize="xs"
+                        color={password === password2 ? 'green.500' : 'red.500'}
+                        mt={1}
+                      >
+                        {password === password2 ? '✓ Passwords match' : '✗ Passwords do not match'}
+                      </Text>
+                    )}
+
+                    {errors.password2 && (
+                      <Text fontSize="sm" color="red.500" mt={1}>
+                        {errors.password2.message}
+                      </Text>
+                    )}
+                  </Box>
 
                   {/* Terms checkbox */}
                   <Box w="full">

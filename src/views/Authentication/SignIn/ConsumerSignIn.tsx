@@ -15,11 +15,12 @@ import {
   Button,
   InputGroup,
   InputLeftElement,
+  InputRightElement,
   useColorModeValue,
   Grid,
   Badge
 } from '@chakra-ui/react';
-import { FaGoogle, FaFacebook, FaApple, FaEnvelope, FaLock } from 'react-icons/fa';
+import { FaGoogle, FaFacebook, FaApple, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
@@ -50,6 +51,7 @@ const ConsumerSignIn: React.FC = () => {
   const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -492,9 +494,10 @@ const ConsumerSignIn: React.FC = () => {
                     </InputLeftElement>
                     <Box
                       as="input"
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Enter your password"
                       pl="3rem"
+                      pr="3rem"
                       w="full"
                       h="44px"
                       fontSize="sm"
@@ -526,6 +529,21 @@ const ConsumerSignIn: React.FC = () => {
                       onFocus={() => setFocusedField('password')}
                       onBlur={() => setFocusedField(null)}
                     />
+                    <InputRightElement>
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => setShowPassword(!showPassword)} 
+                        size="sm"
+                        _hover={{ bg: 'transparent' }}
+                      >
+                        <Icon 
+                          as={showPassword ? FaEyeSlash : FaEye} 
+                          color={useColorModeValue('gray.400', 'gray.500')}
+                          _hover={{ color: useColorModeValue('gray.600', 'gray.300') }}
+                          transition="all 0.2s"
+                        />
+                      </Button>
+                    </InputRightElement>
                   </InputGroup>
                   {errors.password && (
                     <Text fontSize="sm" color="red.500" mt={1}>

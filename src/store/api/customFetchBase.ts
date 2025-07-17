@@ -37,11 +37,13 @@ const baseQuery = fetchBaseQuery({
     // Get and set CSRF token
     const csrfToken = getCookie(config.CSRF_COOKIE_NAME);
     console.log('🔒 CSRF: Looking for CSRF token. Cookie name:', config.CSRF_COOKIE_NAME, 'Found:', !!csrfToken);
+    console.log('🔒 CSRF: All cookies:', document.cookie);
     if (csrfToken) {
       headers.set(config.CSRF_HEADER_KEY, csrfToken);
-      console.log('🔒 CSRF: Added CSRF token to headers');
+      console.log('🔒 CSRF: Added CSRF token to headers:', csrfToken.substring(0, 10) + '...');
     } else {
       console.log('🔒 CSRF: No CSRF token found - request may fail CSRF validation');
+      console.log('🔒 CSRF: Available cookie names:', document.cookie.split(';').map(c => c.trim().split('=')[0]));
     }
 
     return headers;

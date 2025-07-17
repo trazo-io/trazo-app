@@ -22,9 +22,9 @@ const TermsOfService: React.FC = () => {
   const linkColor = useColorModeValue('green.600', 'green.400');
 
   return (
-    <Box bg={useColorModeValue('gray.50', 'gray.800')} minH="100vh" py={16}>
+    <Box bg={useColorModeValue('gray.50', 'gray.800')} minH="100vh" py={6}>
       <Container maxW="4xl" mx="auto">
-        <VStack spacing={8} align="stretch">
+        <VStack spacing={8} align="stretch" pt={112}>
           {/* Header */}
           <VStack spacing={4} textAlign="center">
             <Heading as="h1" size="2xl" color={headingColor} fontWeight="700" letterSpacing="tight">
@@ -370,8 +370,7 @@ const TermsOfService: React.FC = () => {
                     as={RouterLink}
                     to="/privacy-policy"
                     color={linkColor}
-                    fontWeight="medium"
-                  >
+                    fontWeight="medium">
                     Privacy Policy
                   </ChakraLink>
                   , which is incorporated into these Terms by reference.

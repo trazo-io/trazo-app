@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import {
   Box,
   Button,
@@ -16,36 +17,53 @@ import {
   useColorModeValue,
   Badge,
   Grid,
-  Container
+  Container,
+  Divider,
+  Checkbox
 } from '@chakra-ui/react';
-import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
-import { FiLock, FiEye, FiEyeOff, FiCheck, FiUser } from 'react-icons/fi';
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+  useLocation,
+  Link as RouterLink
+} from 'react-router-dom';
+import { FiLock, FiEye, FiEyeOff, FiCheck, FiUser, FiShield } from 'react-icons/fi';
 import { HiOfficeBuilding } from 'react-icons/hi';
+import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { StandardField, StandardInput, StandardButton } from 'components/Design/StandardComponents';
 import {
   useSignupWithInvitationMutation,
   useGetInvitationDetailsQuery
 } from 'store/api/invitationApi';
-import AuthLayout from 'components/Layout/AuthLayout';
+import { login as loginAction } from 'store/features/authSlice';
+import { setUser } from 'store/features/userSlice';
+import { setCompany } from 'store/features/companySlice';
 
 interface SetupPasswordFormData {
   first_name: string;
   last_name: string;
   password: string;
   password_confirm: string;
+  acceptTerms: boolean;
 }
+
+// Motion components
+const MotionBox = motion(Box);
 
 const SetupPassword: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const toast = useToast();
+  const dispatch = useDispatch();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [step, setStep] = useState<'setup' | 'success'>('setup');
   const [redirectProgress, setRedirectProgress] = useState(0);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   // Get invitation code from URL params
   const { invitationCode } = useParams<{ invitationCode: string }>();
@@ -71,10 +89,6 @@ const SetupPassword: React.FC = () => {
 
   const password = watch('password');
   const passwordConfirm = watch('password_confirm');
-
-  // Colors
-  const primaryColor = 'green.500';
-  const primaryGradient = 'linear(to-r, green.500, green.600)';
 
   // Password strength calculation
   const getPasswordStrength = (password: string) => {
@@ -138,6 +152,7 @@ const SetupPassword: React.FC = () => {
     }
 
     try {
+      console.log('🔒 INVITATION: Starting signup with invitation...');
       const result = await signupWithInvitation({
         first_name: data.first_name,
         last_name: data.last_name,
@@ -145,32 +160,28 @@ const SetupPassword: React.FC = () => {
         invitation_code: invitationCode
       }).unwrap();
 
-      setStep('success');
+      console.log('🔒 INVITATION: Signup result received:', result);
 
-      toast({
-        title: 'Account created successfully!',
-        description: `Welcome to ${result.company.name}!`,
-        status: 'success',
-        duration: 4000,
-        isClosable: true
-      });
+      handleSuccessfulSignup(result);
+    } catch (error: any) {
+      console.error('🔒 INVITATION ERROR: Error creating account:', error);
+      console.error('🔒 INVITATION ERROR: Full error object:', JSON.stringify(error, null, 2));
 
-      // Start progress animation and redirect based on subscription status
-      const redirectUrl = result.redirect_to || '/admin/dashboard';
-      let progress = 0;
-      const progressInterval = setInterval(() => {
-        progress += 5;
-        setRedirectProgress(progress);
-        if (progress >= 100) {
-          clearInterval(progressInterval);
-          navigate(redirectUrl);
+      // Check if this is actually a successful response being treated as an error
+      if (error?.status === 201 || error?.data?.access) {
+        console.warn('🔒 INVITATION: Got 201 status in error handler - treating as success');
+
+        // Handle it as a successful response
+        if (error?.data) {
+          handleSuccessfulSignup(error.data);
+          return;
         }
-      }, 100);
-    } catch (error) {
-      console.error('Error creating account:', error);
+      }
+
       toast({
         title: 'Account creation failed',
-        description: error?.data?.error || 'Please try again',
+        description:
+          error?.data?.error || error?.data?.message || error?.message || 'Please try again',
         status: 'error',
         duration: 4000,
         isClosable: true
@@ -178,52 +189,238 @@ const SetupPassword: React.FC = () => {
     }
   };
 
-  // Success state
+  // Extract the success handling logic
+  const handleSuccessfulSignup = (result: any) => {
+    // Log the user in immediately after account creation
+    if (result.access && result.refresh) {
+      console.log('🔒 INVITATION: Setting up authentication after signup success');
+      console.log('🔒 INVITATION: Result data:', result);
+
+      // Set tokens in localStorage first (using same key as login flow)
+      localStorage.setItem('access', result.access);
+      localStorage.setItem('refresh', result.refresh);
+
+      // Prepare user data with company included
+      const userData = {
+        ...result.user,
+        companies: result.company
+          ? [
+              {
+                id: result.company.id,
+                name: result.company.name,
+                role: result.role || 'Company Admin'
+              }
+            ]
+          : []
+      };
+
+      // Set user data in Redux
+      dispatch(setUser(userData));
+      console.log('🔒 INVITATION: User data set:', userData);
+
+      // Set company data if available
+      if (result.company) {
+        dispatch(setCompany(result.company));
+        console.log('🔒 INVITATION: Company data set:', result.company);
+      }
+
+      // Dispatch login action with correct payload structure (data wrapper)
+      dispatch(
+        loginAction({
+          data: {
+            access: result.access,
+            refresh: result.refresh,
+            user: userData
+          }
+        })
+      );
+      console.log('🔒 INVITATION: Login action dispatched with isAuthenticated = true');
+    }
+
+    setStep('success');
+    // Start progress animation and redirect based on subscription status
+    const redirectUrl = result.redirect_to || '/admin/dashboard';
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += 5;
+      setRedirectProgress(progress);
+      if (progress >= 100) {
+        clearInterval(progressInterval);
+        navigate(redirectUrl, { replace: true });
+      }
+    }, 100);
+  };
+
+  // Success state - Modern Trazo Design
   if (step === 'success') {
     return (
-      <Flex minH="100vh" align="center" justify="center" bg="gray.50" px={4}>
-        <VStack spacing={6} textAlign="center" maxW="400px">
+      <Box minH="100vh" display="flex" flexDirection="column">
+        <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} flex="1" minH="calc(100vh - 80px)">
+          {/* Left side - Same as setup form for consistency */}
           <Box
-            w="80px"
-            h="80px"
-            bg={primaryGradient}
-            borderRadius="full"
-            display="flex"
+            bg="green.600"
+            display={{ base: 'none', lg: 'flex' }}
             alignItems="center"
             justifyContent="center"
-            animation="pulse 2s infinite"
-          >
-            <Icon as={FiCheck} color="white" boxSize={10} />
-          </Box>
-          <VStack spacing={4}>
-            <Text fontSize="xl" fontWeight="600" color="gray.700">
-              Welcome to the team!
-            </Text>
-            <Text fontSize="sm" color="gray.500" textAlign="center">
-              Your account has been created. Taking you to your dashboard...
-            </Text>
+            position="relative"
+            overflow="hidden">
+            {/* Sophisticated gradient foundation */}
+            <Box
+              position="absolute"
+              top="0"
+              left="0"
+              right="0"
+              bottom="0"
+              bg="linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)"
+            />
 
-            {/* Progress Bar */}
-            <Box w="200px">
-              <Progress
-                value={redirectProgress}
-                size="sm"
-                borderRadius="full"
-                bg="gray.100"
-                sx={{
-                  '& > div': {
-                    background: primaryGradient,
-                    transition: 'width 0.1s ease'
-                  }
-                }}
-              />
-              <Text fontSize="xs" color="gray.400" textAlign="center" mt={1}>
-                {Math.round(redirectProgress)}%
-              </Text>
-            </Box>
-          </VStack>
-        </VStack>
-      </Flex>
+            {/* Floating elements */}
+            <Box
+              position="absolute"
+              top="15%"
+              right="5%"
+              w="160px"
+              h="100px"
+              bg="rgba(255,255,255,0.04)"
+              borderRadius="12px"
+              border="1px solid rgba(255,255,255,0.06)"
+              backdropFilter="blur(80px)"
+              transform="rotate(-8deg)"
+              zIndex={0}
+            />
+
+            <VStack
+              spacing={8}
+              position="relative"
+              textAlign="center"
+              color="white"
+              px={12}
+              maxW="lg"
+              zIndex={10}>
+              <VStack spacing={4}>
+                <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
+                  Account Created Successfully!
+                </Text>
+                <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
+                  Welcome to the team! You're now part of the carbon intelligence revolution.
+                </Text>
+              </VStack>
+
+              <VStack spacing={3} pt={4}>
+                {[
+                  'Access granted to dashboard',
+                  'Carbon tracking enabled',
+                  'Team collaboration ready'
+                ].map((feature, index) => (
+                  <HStack key={index} spacing={3}>
+                    <Box w={2} h={2} bg="white" borderRadius="50%" />
+                    <Text fontSize="sm" fontWeight="500" opacity={0.9}>
+                      {feature}
+                    </Text>
+                  </HStack>
+                ))}
+              </VStack>
+            </VStack>
+          </Box>
+
+          {/* Right side - Success content */}
+          <Flex
+            align="center"
+            justify="center"
+            bg={useColorModeValue('white', 'gray.900')}
+            px={8}
+            py={12}>
+            <MotionBox
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, type: 'spring', bounce: 0.3 }}
+              textAlign="center"
+              maxW="420px">
+              <VStack spacing={8}>
+                <Box
+                  w="100px"
+                  h="100px"
+                  bg="linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)"
+                  borderRadius="2xl"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  boxShadow="0 20px 40px rgba(72, 187, 120, 0.4)"
+                  animation="pulse 2s infinite">
+                  <Icon as={FiCheck} color="white" boxSize={12} />
+                </Box>
+
+                <VStack spacing={4}>
+                  <Text
+                    fontSize="2xl"
+                    fontWeight="700"
+                    color={useColorModeValue('gray.800', 'white')}>
+                    Welcome to the team!
+                  </Text>
+                  <Text
+                    fontSize="md"
+                    color={useColorModeValue('gray.600', 'gray.300')}
+                    textAlign="center"
+                    lineHeight="1.6">
+                    Your account has been created successfully. Taking you to your dashboard...
+                  </Text>
+                </VStack>
+
+                {/* Modern Progress Bar */}
+                <Box w="300px">
+                  <Progress
+                    value={redirectProgress}
+                    size="lg"
+                    borderRadius="full"
+                    bg={useColorModeValue('gray.100', 'gray.700')}
+                    sx={{
+                      '& > div': {
+                        background: 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)',
+                        transition: 'width 0.1s ease'
+                      }
+                    }}
+                  />
+                  <HStack justify="space-between" mt={2}>
+                    <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
+                      Setting up your workspace...
+                    </Text>
+                    <Text
+                      fontSize="xs"
+                      color={useColorModeValue('gray.500', 'gray.400')}
+                      fontWeight="600">
+                      {Math.round(redirectProgress)}%
+                    </Text>
+                  </HStack>
+                </Box>
+              </VStack>
+            </MotionBox>
+          </Flex>
+        </Grid>
+
+        {/* Professional Footer */}
+        <Box
+          as="footer"
+          bg={useColorModeValue('gray.50', 'gray.900')}
+          borderTop="1px solid"
+          borderColor={useColorModeValue('gray.200', 'gray.700')}
+          py={6}
+          px={8}>
+          <Flex
+            maxW="7xl"
+            mx="auto"
+            direction={{ base: 'column', md: 'row' }}
+            align="center"
+            justify="space-between"
+            gap={4}>
+            <Text
+              fontSize="xs"
+              color={useColorModeValue('gray.500', 'gray.400')}
+              textAlign="center">
+              © 2025 Trazo. Professional Carbon Intelligence Platform.
+            </Text>
+          </Flex>
+        </Box>
+      </Box>
     );
   }
 
@@ -240,8 +437,7 @@ const SetupPassword: React.FC = () => {
             display="flex"
             alignItems="center"
             justifyContent="center"
-            animation="pulse 2s infinite"
-          >
+            animation="pulse 2s infinite">
             <Text fontSize="2xl" fontWeight="900" color="white" letterSpacing="-1px">
               T
             </Text>
@@ -271,8 +467,7 @@ const SetupPassword: React.FC = () => {
           boxShadow="0 25px 50px rgba(0, 0, 0, 0.1)"
           p={8}
           border="1px solid"
-          borderColor="gray.100"
-        >
+          borderColor="gray.100">
           <VStack spacing={6} textAlign="center">
             <Box
               w="80px"
@@ -282,8 +477,7 @@ const SetupPassword: React.FC = () => {
               display="flex"
               alignItems="center"
               justifyContent="center"
-              boxShadow="0 10px 30px rgba(239, 68, 68, 0.3)"
-            >
+              boxShadow="0 10px 30px rgba(239, 68, 68, 0.3)">
               <Icon as={FiCheck} color="white" boxSize={10} />
             </Box>
             <VStack spacing={3}>
@@ -305,8 +499,7 @@ const SetupPassword: React.FC = () => {
               fontSize="sm"
               fontWeight="600"
               borderRadius="xl"
-              _hover={{ bg: 'gray.200' }}
-            >
+              _hover={{ bg: 'gray.200' }}>
               Go to Homepage
             </Button>
           </VStack>
@@ -315,209 +508,628 @@ const SetupPassword: React.FC = () => {
     );
   }
 
-  // Main password setup form - Modern Trazo Design
+  // Main password setup form - Modern Trazo Design (Following Producer Standards)
   return (
-    <AuthLayout
-      title="Welcome to the Team!"
-      subtitle="Complete your account setup and start building sustainable solutions with carbon intelligence"
-      features={[
-        'Enterprise-grade carbon tracking',
-        'Blockchain-verified transparency',
-        'USDA-certified emission data'
-      ]}
-    >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack spacing={6}>
-          {/* Header */}
-          <VStack spacing={3} textAlign="center" w="full">
-            <Text fontSize="xl" fontWeight="600" color="gray.700">
-              Complete Your Setup
-            </Text>
-            <Text fontSize="sm" color="gray.500" lineHeight="1.6">
-              Create your account to join the team
-            </Text>
-          </VStack>
+    <Box minH="100vh" display="flex" flexDirection="column">
+      <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} flex="1" minH="calc(100vh - 80px)">
+        {/* Left side - 2025 Premium App Design (Same as Producer Pages) */}
+        <Box
+          bg="green.600"
+          display={{ base: 'none', lg: 'flex' }}
+          alignItems="center"
+          justifyContent="center"
+          position="relative"
+          overflow="hidden">
+          {/* Sophisticated gradient foundation */}
+          <Box
+            position="absolute"
+            top="0"
+            left="0"
+            right="0"
+            bottom="0"
+            bg="linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)"
+          />
 
-          {/* Company Info */}
-          {invitationDetails && (
-            <Box
-              bg="linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)"
-              borderRadius="xl"
-              p={4}
-              w="full"
-              border="1px solid"
-              borderColor="green.200"
-            >
-              <HStack spacing={3}>
-                <Icon as={HiOfficeBuilding} color="green.600" boxSize={5} />
-                <VStack spacing={1} align="start" flex={1}>
-                  <Text fontSize="sm" fontWeight="600" color="gray.800">
-                    {invitationDetails.company_name}
+          {/* Subtle background floating element - positioned to not interfere */}
+          <Box
+            position="absolute"
+            top="15%"
+            right="5%"
+            w="160px"
+            h="100px"
+            bg="rgba(255,255,255,0.04)"
+            borderRadius="12px"
+            border="1px solid rgba(255,255,255,0.06)"
+            backdropFilter="blur(80px)"
+            transform="rotate(-8deg)"
+            zIndex={0}
+          />
+
+          {/* Bottom accent element */}
+          <Box
+            position="absolute"
+            bottom="20%"
+            left="8%"
+            w="60px"
+            h="60px"
+            bg="rgba(255,255,255,0.03)"
+            borderRadius="50%"
+            border="1px solid rgba(255,255,255,0.05)"
+            backdropFilter="blur(60px)"
+            zIndex={0}
+          />
+
+          {/* Minimal line accents */}
+          <Box
+            position="absolute"
+            top="0"
+            left="20%"
+            w="1px"
+            h="40%"
+            bg="linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)"
+            zIndex={0}
+          />
+
+          <Box
+            position="absolute"
+            bottom="35%"
+            left="0"
+            right="0"
+            h="1px"
+            bg="linear-gradient(to right, transparent 0%, rgba(255,255,255,0.10) 50%, transparent 100%)"
+            zIndex={0}
+          />
+
+          {/* Tiny accent dots */}
+          <Box
+            position="absolute"
+            top="25%"
+            left="20%"
+            w="2px"
+            h="2px"
+            bg="rgba(255,255,255,0.20)"
+            borderRadius="50%"
+            zIndex={0}
+          />
+
+          <Box
+            position="absolute"
+            bottom="45%"
+            right="15%"
+            w="3px"
+            h="3px"
+            bg="rgba(255,255,255,0.18)"
+            borderRadius="50%"
+            zIndex={0}
+          />
+
+          <VStack
+            spacing={8}
+            position="relative"
+            textAlign="center"
+            color="white"
+            px={12}
+            maxW="lg"
+            zIndex={10}>
+            <VStack spacing={4}>
+              <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
+                Welcome to the Team!
+              </Text>
+              <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
+                Complete your account setup and start building sustainable solutions with carbon
+                intelligence
+              </Text>
+            </VStack>
+
+            <VStack spacing={3} pt={4}>
+              {[
+                'Enterprise-grade carbon tracking',
+                'Blockchain-verified transparency',
+                'USDA-certified emission data'
+              ].map((feature, index) => (
+                <HStack key={index} spacing={3}>
+                  <Box w={2} h={2} bg="white" borderRadius="50%" />
+                  <Text fontSize="sm" fontWeight="500" opacity={0.9}>
+                    {feature}
                   </Text>
-                  <Badge colorScheme="green" variant="subtle" fontSize="xs">
-                    {invitationDetails.role}
-                  </Badge>
-                </VStack>
-              </HStack>
-            </Box>
-          )}
-
-          {/* Form Fields */}
-          <VStack spacing={4} w="full">
-            {/* Name Fields */}
-            <Grid templateColumns="1fr 1fr" gap={3} w="full">
-              <StandardField label="First Name" required error={errors.first_name?.message}>
-                <StandardInput
-                  placeholder="John"
-                  {...register('first_name', {
-                    required: 'First name is required',
-                    minLength: { value: 2, message: 'First name too short' },
-                    maxLength: { value: 50, message: 'First name too long' }
-                  })}
-                />
-              </StandardField>
-
-              <StandardField label="Last Name" required error={errors.last_name?.message}>
-                <StandardInput
-                  placeholder="Doe"
-                  {...register('last_name', {
-                    required: 'Last name is required',
-                    minLength: { value: 2, message: 'Last name too short' },
-                    maxLength: { value: 50, message: 'Last name too long' }
-                  })}
-                />
-              </StandardField>
-            </Grid>
-
-            {/* Password Field */}
-            <StandardField label="Password" required error={errors.password?.message}>
-              <InputGroup size="lg">
-                <InputLeftElement pointerEvents="none">
-                  <Icon as={FiLock} color="gray.400" />
-                </InputLeftElement>
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a strong password"
-                  h="44px"
-                  fontSize="sm"
-                  bg="gray.50"
-                  border="1px solid"
-                  borderColor="gray.200"
-                  borderRadius="xl"
-                  pl="3rem"
-                  pr="3rem"
-                  _focus={{
-                    borderColor: primaryColor,
-                    bg: 'white',
-                    boxShadow: `0 0 0 3px ${primaryColor}20`
-                  }}
-                  {...register('password', {
-                    required: 'Password is required',
-                    minLength: { value: 8, message: 'Password must be at least 8 characters' }
-                  })}
-                />
-                <InputRightElement>
-                  <Button variant="ghost" onClick={() => setShowPassword(!showPassword)} size="sm">
-                    <Icon as={showPassword ? FiEyeOff : FiEye} />
-                  </Button>
-                </InputRightElement>
-              </InputGroup>
-
-              {/* Password Strength Indicator */}
-              {password && (
-                <Box w="full" mt={2}>
-                  <Progress
-                    value={passwordStrength}
-                    size="sm"
-                    borderRadius="full"
-                    colorScheme={
-                      passwordStrength < 50 ? 'red' : passwordStrength < 75 ? 'yellow' : 'green'
-                    }
-                  />
-                  <Text fontSize="xs" color="gray.500" mt={1}>
-                    Password strength:{' '}
-                    {passwordStrength < 50 ? 'Weak' : passwordStrength < 75 ? 'Medium' : 'Strong'}
-                  </Text>
-                </Box>
-              )}
-            </StandardField>
-
-            {/* Confirm Password Field */}
-            <StandardField
-              label="Confirm Password"
-              required
-              error={errors.password_confirm?.message}
-            >
-              <InputGroup size="lg">
-                <InputLeftElement pointerEvents="none">
-                  <Icon as={FiLock} color="gray.400" />
-                </InputLeftElement>
-                <Input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirm your password"
-                  h="44px"
-                  fontSize="sm"
-                  bg="gray.50"
-                  border="1px solid"
-                  borderColor={
-                    passwordConfirm && password !== passwordConfirm ? 'red.300' : 'gray.200'
-                  }
-                  borderRadius="xl"
-                  pl="3rem"
-                  pr="3rem"
-                  _focus={{
-                    borderColor: primaryColor,
-                    bg: 'white',
-                    boxShadow: `0 0 0 3px ${primaryColor}20`
-                  }}
-                  {...register('password_confirm', {
-                    required: 'Please confirm your password'
-                  })}
-                />
-                <InputRightElement>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    size="sm"
-                  >
-                    <Icon as={showConfirmPassword ? FiEyeOff : FiEye} />
-                  </Button>
-                </InputRightElement>
-              </InputGroup>
-
-              {/* Password Match Indicator */}
-              {passwordConfirm && (
-                <Text
-                  fontSize="xs"
-                  color={password === passwordConfirm ? 'green.500' : 'red.500'}
-                  mt={1}
-                >
-                  {password === passwordConfirm ? '✓ Passwords match' : '✗ Passwords do not match'}
-                </Text>
-              )}
-            </StandardField>
+                </HStack>
+              ))}
+            </VStack>
           </VStack>
+        </Box>
 
-          {/* Submit Button */}
-          <StandardButton
-            type="submit"
-            variant="primary"
-            size="lg"
+        {/* Right side - Setup Form */}
+        <Flex
+          align="center"
+          justify="center"
+          bg={useColorModeValue('white', 'gray.900')}
+          px={8}
+          py={12}
+          pt={120}>
+          <MotionBox
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
             w="full"
-            h="44px"
-            isLoading={isSubmitting || isCreatingAccount}
-            loadingText="Creating account..."
-          >
-            Complete Setup
-          </StandardButton>
+            maxW="420px"
+            my={{ base: 4, lg: 8 }}>
+            {/* Header */}
+            <VStack spacing={6} mb={10}>
+              <VStack spacing={2}>
+                <Text
+                  fontSize="2xl"
+                  fontWeight="700"
+                  color={useColorModeValue('gray.900', 'white')}
+                  letterSpacing="tight"
+                  textAlign="center">
+                  Complete Your Setup
+                </Text>
+                <Text
+                  fontSize="md"
+                  color={useColorModeValue('gray.500', 'gray.400')}
+                  textAlign="center">
+                  Create your account to join the team
+                </Text>
+              </VStack>
+            </VStack>
 
-          {/* Footer */}
-          <Text fontSize="xs" color="gray.500" textAlign="center">
-            By creating an account, you agree to our terms of service
+            {/* Company Info Card */}
+            {invitationDetails && (
+              <Box
+                bg={useColorModeValue('green.50', 'green.900')}
+                borderRadius="xl"
+                p={4}
+                mb={8}
+                border="1px solid"
+                borderColor={useColorModeValue('green.200', 'green.700')}>
+                <HStack spacing={3}>
+                  <Icon
+                    as={HiOfficeBuilding}
+                    color={useColorModeValue('green.600', 'green.400')}
+                    boxSize={5}
+                  />
+                  <VStack spacing={1} align="start" flex={1}>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="600"
+                      color={useColorModeValue('gray.800', 'white')}>
+                      {invitationDetails.company_name}
+                    </Text>
+                    <Badge colorScheme="green" variant="subtle" fontSize="xs">
+                      {invitationDetails.role}
+                    </Badge>
+                  </VStack>
+                </HStack>
+              </Box>
+            )}
+
+            {/* Main Form */}
+            <Box w="full">
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <VStack spacing={5}>
+                  {/* Name Fields */}
+                  <Grid templateColumns="1fr 1fr" gap={3} w="full">
+                    <Box>
+                      <Text
+                        fontSize="sm"
+                        fontWeight="medium"
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                        mb={2}>
+                        First Name
+                      </Text>
+                      <Box
+                        as="input"
+                        type="text"
+                        placeholder="John"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.first_name
+                            ? 'red.300'
+                            : focusedField === 'first_name'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        px={4}
+                        _hover={{
+                          borderColor: errors.first_name
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...register('first_name', {
+                          required: 'First name is required',
+                          minLength: { value: 2, message: 'First name too short' },
+                          maxLength: { value: 50, message: 'First name too long' }
+                        })}
+                        onFocus={() => setFocusedField('first_name')}
+                        onBlur={() => setFocusedField(null)}
+                      />
+                      {errors.first_name && (
+                        <Text fontSize="sm" color="red.500" mt={1}>
+                          {errors.first_name.message}
+                        </Text>
+                      )}
+                    </Box>
+
+                    <Box>
+                      <Text
+                        fontSize="sm"
+                        fontWeight="medium"
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                        mb={2}>
+                        Last Name
+                      </Text>
+                      <Box
+                        as="input"
+                        type="text"
+                        placeholder="Doe"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.last_name
+                            ? 'red.300'
+                            : focusedField === 'last_name'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        px={4}
+                        _hover={{
+                          borderColor: errors.last_name
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...register('last_name', {
+                          required: 'Last name is required',
+                          minLength: { value: 2, message: 'Last name too short' },
+                          maxLength: { value: 50, message: 'Last name too long' }
+                        })}
+                        onFocus={() => setFocusedField('last_name')}
+                        onBlur={() => setFocusedField(null)}
+                      />
+                      {errors.last_name && (
+                        <Text fontSize="sm" color="red.500" mt={1}>
+                          {errors.last_name.message}
+                        </Text>
+                      )}
+                    </Box>
+                  </Grid>
+
+                  {/* Password field */}
+                  <Box w="full">
+                    <Text
+                      fontSize="sm"
+                      fontWeight="medium"
+                      color={useColorModeValue('gray.700', 'gray.300')}
+                      mb={2}>
+                      Password
+                    </Text>
+                    <InputGroup size="lg">
+                      <InputLeftElement pointerEvents="none">
+                        <Icon
+                          as={FiLock}
+                          color={focusedField === 'password' ? 'green.500' : 'gray.400'}
+                          transition="all 0.2s"
+                        />
+                      </InputLeftElement>
+                      <Box
+                        as="input"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create a strong password"
+                        pl="3rem"
+                        pr="3rem"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.password
+                            ? 'red.300'
+                            : focusedField === 'password'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        _hover={{
+                          borderColor: errors.password
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...register('password', {
+                          required: 'Password is required',
+                          minLength: { value: 8, message: 'Password must be at least 8 characters' }
+                        })}
+                        onFocus={() => setFocusedField('password')}
+                        onBlur={() => setFocusedField(null)}
+                      />
+                      <InputRightElement>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setShowPassword(!showPassword)}
+                          size="sm">
+                          <Icon as={showPassword ? FiEyeOff : FiEye} />
+                        </Button>
+                      </InputRightElement>
+                    </InputGroup>
+
+                    {/* Password Strength Indicator */}
+                    {password && (
+                      <Box w="full" mt={2}>
+                        <Progress
+                          value={passwordStrength}
+                          size="sm"
+                          borderRadius="full"
+                          colorScheme={
+                            passwordStrength < 50
+                              ? 'red'
+                              : passwordStrength < 75
+                              ? 'yellow'
+                              : 'green'
+                          }
+                        />
+                        <Text
+                          fontSize="xs"
+                          color={useColorModeValue('gray.500', 'gray.400')}
+                          mt={1}>
+                          Password strength:{' '}
+                          {passwordStrength < 50
+                            ? 'Weak'
+                            : passwordStrength < 75
+                            ? 'Medium'
+                            : 'Strong'}
+                        </Text>
+                      </Box>
+                    )}
+
+                    {errors.password && (
+                      <Text fontSize="sm" color="red.500" mt={1}>
+                        {errors.password.message}
+                      </Text>
+                    )}
+                  </Box>
+
+                  {/* Confirm Password field */}
+                  <Box w="full">
+                    <Text
+                      fontSize="sm"
+                      fontWeight="medium"
+                      color={useColorModeValue('gray.700', 'gray.300')}
+                      mb={2}>
+                      Confirm Password
+                    </Text>
+                    <InputGroup size="lg">
+                      <InputLeftElement pointerEvents="none">
+                        <Icon
+                          as={FiLock}
+                          color={focusedField === 'password_confirm' ? 'green.500' : 'gray.400'}
+                          transition="all 0.2s"
+                        />
+                      </InputLeftElement>
+                      <Box
+                        as="input"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder="Confirm your password"
+                        pl="3rem"
+                        pr="3rem"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.password_confirm
+                            ? 'red.300'
+                            : passwordConfirm && password !== passwordConfirm
+                            ? 'red.300'
+                            : focusedField === 'password_confirm'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        _hover={{
+                          borderColor: errors.password_confirm
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...register('password_confirm', {
+                          required: 'Please confirm your password'
+                        })}
+                        onFocus={() => setFocusedField('password_confirm')}
+                        onBlur={() => setFocusedField(null)}
+                      />
+                      <InputRightElement>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          size="sm">
+                          <Icon as={showConfirmPassword ? FiEyeOff : FiEye} />
+                        </Button>
+                      </InputRightElement>
+                    </InputGroup>
+
+                    {/* Password Match Indicator */}
+                    {passwordConfirm && (
+                      <Text
+                        fontSize="xs"
+                        color={password === passwordConfirm ? 'green.500' : 'red.500'}
+                        mt={1}>
+                        {password === passwordConfirm
+                          ? '✓ Passwords match'
+                          : '✗ Passwords do not match'}
+                      </Text>
+                    )}
+
+                    {errors.password_confirm && (
+                      <Text fontSize="sm" color="red.500" mt={1}>
+                        {errors.password_confirm.message}
+                      </Text>
+                    )}
+                  </Box>
+
+                  {/* Terms checkbox */}
+                  <Box w="full">
+                    <Checkbox
+                      size="md"
+                      colorScheme="green"
+                      spacing={3}
+                      {...register('acceptTerms', {
+                        required: 'You must accept the terms and conditions'
+                      })}>
+                      <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
+                        I agree to the{' '}
+                        <RouterLink to="/terms" target="_blank">
+                          <Text
+                            as="span"
+                            color="green.500"
+                            fontWeight="medium"
+                            _hover={{ textDecoration: 'underline' }}>
+                            Terms of Service
+                          </Text>
+                        </RouterLink>{' '}
+                        and{' '}
+                        <RouterLink to="/privacy" target="_blank">
+                          <Text
+                            as="span"
+                            color="green.500"
+                            fontWeight="medium"
+                            _hover={{ textDecoration: 'underline' }}>
+                            Privacy Policy
+                          </Text>
+                        </RouterLink>
+                      </Text>
+                    </Checkbox>
+                    {errors.acceptTerms && (
+                      <Text fontSize="sm" color="red.500" mt={1}>
+                        {errors.acceptTerms.message}
+                      </Text>
+                    )}
+                  </Box>
+
+                  {/* Submit button */}
+                  <Button
+                    type="submit"
+                    w="full"
+                    h="52px"
+                    bg="green.500"
+                    color="white"
+                    fontSize="md"
+                    fontWeight="600"
+                    borderRadius="xl"
+                    isLoading={isSubmitting || isCreatingAccount}
+                    loadingText="Creating account..."
+                    _hover={{
+                      bg: 'green.600',
+                      transform: 'translateY(-1px)'
+                    }}
+                    _active={{
+                      transform: 'translateY(0)'
+                    }}
+                    transition="all 0.2s">
+                    Complete Setup
+                  </Button>
+                </VStack>
+              </form>
+            </Box>
+          </MotionBox>
+        </Flex>
+      </Grid>
+
+      {/* Professional Footer (Same as Producer Pages) */}
+      <Box
+        as="footer"
+        bg={useColorModeValue('gray.50', 'gray.900')}
+        borderTop="1px solid"
+        borderColor={useColorModeValue('gray.200', 'gray.700')}
+        py={6}
+        px={8}>
+        <Flex
+          maxW="7xl"
+          mx="auto"
+          direction={{ base: 'column', md: 'row' }}
+          align="center"
+          justify="space-between"
+          gap={4}>
+          <HStack spacing={6} flexWrap="wrap" justify="center">
+            <RouterLink to="/about">
+              <Text
+                fontSize="sm"
+                color={useColorModeValue('gray.600', 'gray.400')}
+                _hover={{ color: 'green.500' }}
+                transition="color 0.2s">
+                About
+              </Text>
+            </RouterLink>
+            <RouterLink to="/why-us">
+              <Text
+                fontSize="sm"
+                color={useColorModeValue('gray.600', 'gray.400')}
+                _hover={{ color: 'green.500' }}
+                transition="color 0.2s">
+                Why Trazo?
+              </Text>
+            </RouterLink>
+            <RouterLink to="/blog">
+              <Text
+                fontSize="sm"
+                color={useColorModeValue('gray.600', 'gray.400')}
+                _hover={{ color: 'green.500' }}
+                transition="color 0.2s">
+                Blog
+              </Text>
+            </RouterLink>
+            <RouterLink to="/contact">
+              <Text
+                fontSize="sm"
+                color={useColorModeValue('gray.600', 'gray.400')}
+                _hover={{ color: 'green.500' }}
+                transition="color 0.2s">
+                Contact
+              </Text>
+            </RouterLink>
+          </HStack>
+
+          <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
+            © 2025 Trazo. Professional Carbon Intelligence Platform.
           </Text>
-        </VStack>
-      </form>
-    </AuthLayout>
+        </Flex>
+      </Box>
+    </Box>
   );
 };
 

@@ -1,7 +1,9 @@
 import enMessages from 'i18n/lang/en-US.json';
 import es419Messages from 'i18n/lang/es-419.json';
 
-export const defaultLocale = navigator.language;
+// Default to English for consistent user experience
+// Spanish can be enabled through user preference settings
+export const defaultLocale = 'en-US';
 
 export const locales = {
   // English translation message dictionary.

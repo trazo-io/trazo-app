@@ -30,9 +30,9 @@ const PrivacyPolicy: React.FC = () => {
   const tableHeaderBg = useColorModeValue('gray.50', 'gray.700');
 
   return (
-    <Box bg={useColorModeValue('gray.50', 'gray.800')} minH="100vh" py={16}>
+    <Box bg={useColorModeValue('gray.50', 'gray.800')} minH="100vh" py={6}>
       <Container maxW="4xl" mx="auto">
-        <VStack spacing={8} align="stretch">
+        <VStack spacing={8} align="stretch" pt={112}>
           {/* Header */}
           <VStack spacing={4} textAlign="center">
             <Heading as="h1" size="2xl" color={headingColor} fontWeight="700" letterSpacing="tight">
