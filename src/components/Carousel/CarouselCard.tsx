@@ -9,6 +9,7 @@ import {
   Text,
   useColorModeValue
 } from '@chakra-ui/react';
+import { S3Image } from 'components/Design';
 
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
@@ -49,18 +50,14 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars }: Carous
           borderRadius="15px"
           overflow="hidden"
         >
-          {!imageLoaded && <Shimmer borderRadius="15px" />}
-          <Image
+          <S3Image
             width="100%"
             height="100%"
             objectFit="cover"
             src={image}
+            alt={`${name} parcel`}
             borderRadius="15px"
-            position={!imageLoaded ? 'absolute' : 'relative'}
-            top="0"
-            left="0"
-            opacity={imageLoaded ? 1 : 0}
-            transition="opacity 0.3s ease-in-out"
+            fallbackSrc="/images/parcel-placeholder.jpg"
             onLoad={() => setImageLoaded(true)}
           />
           <Box

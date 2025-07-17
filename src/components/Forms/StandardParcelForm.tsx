@@ -52,7 +52,8 @@ import {
   StandardSelect,
   StandardButton,
   StandardAlert,
-  StandardStepper
+  StandardStepper,
+  S3Image
 } from '../Design';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -2288,7 +2289,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                         {/* Existing Images */}
                         {existingImages.map((img) => (
                           <Box key={img.id} position="relative">
-                            <Image
+                            <S3Image
                               src={img.url}
                               alt="Parcel"
                               w="120px"
@@ -2296,6 +2297,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                               borderRadius="8px"
                               objectFit="cover"
                               border="1px solid #E2E8F0"
+                              fallbackSrc="/images/parcel-placeholder.jpg"
                             />
                             <IconButton
                               aria-label="Remove image"
