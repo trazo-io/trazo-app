@@ -20,6 +20,7 @@ import {
   useBreakpointValue
 } from '@chakra-ui/react';
 import { FaCamera, FaChevronLeft, FaChevronRight, FaExpand, FaImage } from 'react-icons/fa';
+import { S3Image } from 'components/Design';
 
 export type ImageItem = string | { id: string; image: string; name?: string; description?: string };
 
@@ -160,7 +161,7 @@ const StandardImageGallery = ({
             clickable ? { transform: 'scale(1.02)', transition: 'transform 0.2s' } : undefined
           }
         >
-          <Image
+          <S3Image
             src={imageData.url}
             alt={imageData.name || 'Gallery image'}
             w="100%"
@@ -241,14 +242,14 @@ const StandardImageGallery = ({
               }
               transition="all 0.2s ease"
             >
-              <Image
+              <S3Image
                 src={imageData.url}
                 alt={imageData.name || `Gallery image ${index + 1}`}
                 w="100%"
                 h="100%"
                 objectFit="cover"
                 fallbackSrc={fallbackImage}
-                loading="lazy"
+                lazy={true}
               />
 
               {/* Show remaining count on last image */}
@@ -384,7 +385,7 @@ const StandardImageGallery = ({
                 alignItems="center"
                 justifyContent="center"
               >
-                <Image
+                <S3Image
                   src={processedImages[currentImageIndex]?.url}
                   alt={processedImages[currentImageIndex]?.name || 'Gallery preview'}
                   maxW="calc(100vw - 120px)"
@@ -393,6 +394,7 @@ const StandardImageGallery = ({
                   fallbackSrc={fallbackImage}
                   borderRadius="lg"
                   boxShadow="2xl"
+                  lazy={false}
                 />
 
                 {/* Desktop Navigation arrows */}
