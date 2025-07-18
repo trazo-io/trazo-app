@@ -24,9 +24,10 @@ type CarouselCardProps = {
   category: string;
   buttonText: string;
   avatars: string[];
+  presignedUrl?: string | null;
 };
 
-const CarouselCard = ({ id, image, name, category, buttonText, avatars }: CarouselCardProps) => {
+const CarouselCard = ({ id, image, name, category, buttonText, avatars, presignedUrl }: CarouselCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   // Chakra color mode
   const textColor = useColorModeValue('gray.700', 'white');
@@ -59,6 +60,7 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars }: Carous
             borderRadius="15px"
             fallbackSrc="/images/parcel-placeholder.jpg"
             onLoad={() => setImageLoaded(true)}
+            presignedUrl={presignedUrl}
           />
           <Box
             w="100%"

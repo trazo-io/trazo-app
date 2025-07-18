@@ -34,6 +34,8 @@ export interface S3ImageProps extends Omit<ImageProps, 'src' | 'onLoad' | 'onErr
   enableFadeIn?: boolean;
   /** Show error message instead of just icon */
   showErrorMessage?: boolean;
+  /** Pre-fetched presigned URL from batch loading (2025 Best Practice) */
+  presignedUrl?: string | null;
 }
 
 /**
@@ -62,6 +64,7 @@ export const S3Image: React.FC<S3ImageProps> = ({
   className,
   enableFadeIn = true,
   showErrorMessage = false,
+  presignedUrl,
   ...props
 }) => {
   // State management
@@ -105,18 +108,23 @@ export const S3Image: React.FC<S3ImageProps> = ({
     return url && S3_BUCKET_PATTERN.test(url) && !PRESIGNED_URL_PATTERN.test(url);
   }, []);
 
-  // Get presigned URL for S3 images
+  // Get presigned URL for S3 images (fallback to individual requests)
   useEffect(() => {
-    if (!isInView || !src) return;
+    if (!isInView || !src || presignedUrl !== undefined) return;
 
     if (needsPresignedUrl(src)) {
       getPresignedUrl({ s3_url: src });
     }
-  }, [isInView, src, getPresignedUrl, needsPresignedUrl]);
+  }, [isInView, src, getPresignedUrl, needsPresignedUrl, presignedUrl]);
 
-  // Determine display URL
+  // Determine display URL (prioritize batch presigned URL)
   const displayUrl = (() => {
     if (!src) return fallbackSrc;
+
+    // 2025 Best Practice: Use batch-loaded presigned URL first
+    if (presignedUrl) {
+      return presignedUrl;
+    }
 
     if (needsPresignedUrl(src)) {
       return presignedData?.presigned_url || fallbackSrc;

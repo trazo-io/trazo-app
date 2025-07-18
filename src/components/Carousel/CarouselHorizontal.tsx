@@ -1,6 +1,8 @@
 // Chakra imports
 import { Button, Flex, Grid, Icon, Text, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useBatchS3Images } from 'hooks/useBatchS3Images';
 
 import BgMusicCard from 'assets/img/BgMusicCard.png';
 // Custom components
@@ -27,6 +29,19 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
   const intl = useIntl();
   const navigate = useNavigate();
   const { establishmentId } = useParams();
+
+  // 2025 Best Practice: Batch load all parcel images at once
+  const parcelImageUrls = useMemo(() => {
+    if (!data || !Array.isArray(data)) return [];
+    return data
+      .map(parcel => parcel?.image)
+      .filter(Boolean);
+  }, [data]);
+
+  const { presignedUrls, isLoading: batchLoading } = useBatchS3Images({
+    s3Urls: parcelImageUrls,
+    enabled: parcelImageUrls.length > 0
+  });
 
   return (
     <Card p="16px" className="trazo-card">
@@ -87,6 +102,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                 category={parcel.product || intl.formatMessage({ id: 'app.noCurrentProduction' })}
                 buttonText={intl.formatMessage({ id: 'app.viewParcel' }).toUpperCase()}
                 avatars={parcel.members?.map((member) => member.image || '')}
+                presignedUrl={presignedUrls[parcel.image]}
               />
             ))}
           </Grid>

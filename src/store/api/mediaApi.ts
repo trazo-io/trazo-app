@@ -12,6 +12,19 @@ export interface PresignedUrlRequest {
   s3_url: string;
 }
 
+export interface BatchPresignedUrlsResponse {
+  presigned_urls: Record<string, string | null>;
+  expires_in: number;
+  batch_size: number;
+  processing_time_ms: number;
+  success_count: number;
+  development?: boolean;
+}
+
+export interface BatchPresignedUrlsRequest {
+  s3_urls: string[];
+}
+
 export interface UploadUrlResponse {
   presigned_url: string;
   s3_key: string;
@@ -54,6 +67,18 @@ export const mediaApi = createApi({
       keepUnusedDataFor: 1800,
       providesTags: ['PresignedUrl'],
     }),
+
+    // 2025 Best Practice: Batch presigned URLs for optimal performance
+    getBatchPresignedReadUrls: builder.query<BatchPresignedUrlsResponse, BatchPresignedUrlsRequest>({
+      query: (data) => ({
+        url: 'get-presigned-read-urls-batch/',
+        method: 'POST',
+        body: data,
+      }),
+      // Cache for 30 minutes (presigned URLs last 1 hour)
+      keepUnusedDataFor: 1800,
+      providesTags: ['PresignedUrl'],
+    }),
     
     // Get presigned URL for uploading new files
     getUploadUrl: builder.mutation<UploadUrlResponse, UploadUrlRequest>({
@@ -70,6 +95,8 @@ export const mediaApi = createApi({
 export const { 
   useGetPresignedReadUrlQuery, 
   useLazyGetPresignedReadUrlQuery,
+  useGetBatchPresignedReadUrlsQuery,
+  useLazyGetBatchPresignedReadUrlsQuery,
   useGetUploadUrlMutation 
 } = mediaApi;
 
