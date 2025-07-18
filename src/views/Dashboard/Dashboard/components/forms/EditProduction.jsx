@@ -69,7 +69,6 @@ import imageMap from 'assets/img/imageMap.png';
 import { set } from 'date-fns';
 import { useCreateEventMutation } from 'store/api/historyApi';
 import { useCreateProductionMutation } from 'store/api/historyApi';
-import { useDropzone } from 'react-dropzone';
 import { useGetEstablishmentProductsQuery } from 'store/api/productApi';
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';

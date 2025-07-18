@@ -96,11 +96,12 @@ export const useBatchS3Images = ({
     console.log('🚀 [useBatchS3Images] useEffect trigger check:', { 
       enabled, 
       urlCount: validS3Urls.length, 
-      urls: validS3Urls 
+      urls: validS3Urls,
+      timestamp: new Date().toISOString()
     });
     
     if (enabled && validS3Urls.length > 0) {
-      console.log('📡 [useBatchS3Images] Triggering batch query for URLs:', validS3Urls);
+      console.log('📡 [useBatchS3Images] Triggering FRESH batch query for URLs:', validS3Urls);
       
       // Add a debug marker to the document for easier identification
       if (typeof window !== 'undefined') {
@@ -108,11 +109,13 @@ export const useBatchS3Images = ({
           batchTriggered: true,
           urlCount: validS3Urls.length,
           urls: validS3Urls,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          urlsHash: validS3Urls.join('|') // Help identify URL changes
         };
       }
       
-      triggerBatchQuery({ s3_urls: validS3Urls });
+      // Force fresh request by using forceRefetch
+      triggerBatchQuery({ s3_urls: validS3Urls }, true);
     } else {
       console.log('⏸️ [useBatchS3Images] Batch query NOT triggered:', { enabled, urlCount: validS3Urls.length });
       

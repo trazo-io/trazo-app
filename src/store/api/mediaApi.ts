@@ -79,9 +79,13 @@ export const mediaApi = createApi({
         method: 'POST',
         body: data,
       }),
-      // Cache for 30 minutes (presigned URLs last 1 hour)
-      keepUnusedDataFor: 1800,
-      providesTags: ['PresignedUrl'],
+      // Cache for 5 minutes (short cache to allow fresh requests when establishment changes)
+      keepUnusedDataFor: 300,
+      providesTags: (result, error, arg) => [
+        { type: 'PresignedUrl', id: 'BATCH' },
+        // Create unique cache keys based on the URLs being requested
+        ...arg.s3_urls.map(url => ({ type: 'PresignedUrl' as const, id: url }))
+      ],
     }),
     
     // Get presigned URL for uploading new files

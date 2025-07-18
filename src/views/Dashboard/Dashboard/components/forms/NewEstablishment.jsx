@@ -360,13 +360,14 @@ function NewEstablishment() {
     console.log('Selected files:', files);
   };
 
+  // 2025 Best Practice: Streamlined upload with proper error handling
   const handleFileUpload = async () => {
     if (selectedFiles.length === 0) {
       toast({
         title: intl.formatMessage({ id: 'app.noFilesSelected' }),
         description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
         status: 'warning',
-        duration: 5000,
+        duration: 3000,
         isClosable: true
       });
       return;
@@ -375,8 +376,11 @@ function NewEstablishment() {
     setIsUploading(true);
 
     try {
-      // Upload all files and get URLs
+      console.log('🚀 [NewEstablishment] Starting file upload...', selectedFiles);
+      
+      // Upload all files using the standardized service
       const urls = await uploadMultipleFiles(selectedFiles);
+      console.log('✅ [NewEstablishment] Upload successful:', urls);
 
       // Store the uploaded URLs
       setUploadedImageUrls(urls);
@@ -385,17 +389,17 @@ function NewEstablishment() {
         title: intl.formatMessage({ id: 'app.uploadSuccess' }),
         description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
         status: 'success',
-        duration: 5000,
+        duration: 3000,
         isClosable: true
       });
 
-      // Proceed to next step
+      // Auto-proceed to next step
       socialsTab.current.click();
     } catch (error) {
-      console.error('Error uploading files:', error);
+      console.error('❌ [NewEstablishment] Upload failed:', error);
       toast({
         title: intl.formatMessage({ id: 'app.uploadError' }),
-        description: intl.formatMessage({ id: 'app.fileUploadFailed' }),
+        description: error.message || intl.formatMessage({ id: 'app.fileUploadFailed' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -405,72 +409,7 @@ function NewEstablishment() {
     }
   };
 
-  const handleDirectFileUpload = () => {
-    if (selectedFiles.length === 0) {
-      toast({
-        title: intl.formatMessage({ id: 'app.noFilesSelected' }),
-        description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
-        status: 'warning',
-        duration: 5000,
-        isClosable: true
-      });
-      return;
-    }
-
-    // Get the base URL from environment or use default
-    const baseUrl = import.meta.env.VITE_APP_BACKEND_URL || 'http://localhost:8000';
-
-    // Create a FormData object directly
-    const formData = new FormData();
-
-    // Important: use the SAME field name as in the server-side code
-    formData.append('file', selectedFiles[0]);
-
-    // Set isUploading to show loading state
-    setIsUploading(true);
-
-    // Use fetch directly instead of form submission
-    fetch(`${baseUrl}/api/local-upload/`, {
-      method: 'POST',
-      body: formData,
-      // Important: Do NOT set Content-Type header, let the browser set it with boundary
-      credentials: 'include'
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Upload failed with status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log('Upload successful:', data);
-        setUploadedImageUrls([data.file_url]);
-
-        toast({
-          title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-          description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: 1 }),
-          status: 'success',
-          duration: 5000,
-          isClosable: true
-        });
-
-        // Proceed to next step
-        socialsTab.current.click();
-      })
-      .catch((error) => {
-        console.error('Error uploading file:', error);
-        toast({
-          title: intl.formatMessage({ id: 'app.uploadError' }),
-          description: `${intl.formatMessage({ id: 'app.fileUploadFailed' })}: ${error.message}`,
-          status: 'error',
-          duration: 5000,
-          isClosable: true
-        });
-      })
-      .finally(() => {
-        setIsUploading(false);
-      });
-  };
+  // Removed handleDirectFileUpload - using only the standardized upload service
 
   // Add a static country list for the dropdown
   const countryOptions = [
@@ -1014,21 +953,24 @@ function NewEstablishment() {
                   <StandardMediaUpload
                     onFilesChange={handleFilesChange}
                     acceptedFiles={selectedFiles}
+                    uploadedFiles={uploadedImageUrls}
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
                     accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
                     placeholder={intl.formatMessage({
                       id: 'app.dropFilesHereToUpload',
-                      defaultMessage: 'Arrastra archivos aquí para subir'
+                      defaultMessage: 'Drag & drop images here or click to select'
                     })}
                     description={intl.formatMessage({
                       id: 'app.mediaHelper',
                       defaultMessage:
-                        'Puedes subir hasta 5 imágenes. Imágenes de alta calidad ayudan a generar confianza.'
+                        'Upload up to 5 high-quality images. Great photos build trust with your customers.'
                     })}
                     variant="default"
                     previewMode="grid"
-                    height="175px"
+                    height="200px"
+                    isUploading={isUploading}
+                    showFileNames={true}
                   />
                   <Flex justify="space-between">
                     <Button

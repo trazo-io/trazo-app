@@ -115,7 +115,6 @@ import {
 } from 'store/api/historyApi';
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
 import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
-import { useDropzone } from 'react-dropzone';
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';

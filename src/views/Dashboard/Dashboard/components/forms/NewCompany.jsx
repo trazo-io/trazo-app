@@ -69,7 +69,6 @@ import { setCompany } from 'store/features/companySlice';
 import { setEstablishmentParcel } from 'store/features/companySlice';
 import { setUserCompany } from 'store/features/userSlice';
 import { useCreateCompanyMutation } from 'store/api/companyApi';
-import { useDropzone } from 'react-dropzone';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 import FormLayout from 'components/Forms/FormLayout';

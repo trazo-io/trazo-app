@@ -42,7 +42,8 @@ import {
   TagCloseButton,
   TagLabel,
   Text,
-  useColorModeValue
+  useColorModeValue,
+  useToast
 } from '@chakra-ui/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { GoogleMap, Polygon, useLoadScript } from '@react-google-maps/api';
@@ -70,9 +71,10 @@ import avatar4 from 'assets/img/avatars/avatar4.png';
 import imageMap from 'assets/img/imageMap.png';
 import { setEstablishmentParcel } from 'store/features/companySlice';
 import { setParcel } from 'store/features/productSlice';
-import { useDropzone } from 'react-dropzone';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
+import { useFileUpload } from '../../../../../services/uploadService';
+import { StandardMediaUpload } from 'components/Design/StandardComponents';
 const formSchemaInfo = object({
   name: string().min(1, 'Name is required'),
   area: string().min(1, 'Area is required')
@@ -179,12 +181,12 @@ function NewParcel() {
   const mediaTab = useRef();
   const certificationTab = useRef();
 
-  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
-    // onDrop,
-    // accept: "image/*", // Accepted file types
-    maxFiles: 5 // Maximum number of files
-    // maxSize: 1024 * 1024 * 5, // Maximum file size (5 MB)
-  });
+  // 2025 Best Practice: Use standardized upload system
+  const { uploadMultipleFiles } = useFileUpload();
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
+  const toast = useToast();
 
   const currentParcel = useSelector((state) => state.product.currentParcel);
   const currentParcelForm = useSelector((state) => state.form.currentForm?.parcel);
@@ -284,6 +286,57 @@ function NewParcel() {
 
   const [updateParcel, { data, error, isSuccess, isLoading }] = useUpdateParcelMutation();
 
+  // 2025 Best Practice: Standardized file upload handlers
+  const handleFilesChange = (files) => {
+    setSelectedFiles(files);
+    console.log('✅ [EditParcel] Selected files:', files);
+  };
+
+  const handleFileUpload = async () => {
+    if (selectedFiles.length === 0) {
+      toast({
+        title: intl.formatMessage({ id: 'app.noFilesSelected' }),
+        description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
+        status: 'warning',
+        duration: 3000,
+        isClosable: true
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      console.log('🚀 [EditParcel] Starting file upload...', selectedFiles);
+      
+      const urls = await uploadMultipleFiles(selectedFiles);
+      console.log('✅ [EditParcel] Upload successful:', urls);
+
+      setUploadedImageUrls(urls);
+
+      toast({
+        title: intl.formatMessage({ id: 'app.uploadSuccess' }),
+        description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+
+      // Upload complete - user can manually proceed to next step
+    } catch (error) {
+      console.error('❌ [EditParcel] Upload failed:', error);
+      toast({
+        title: intl.formatMessage({ id: 'app.uploadError' }),
+        description: error.message || intl.formatMessage({ id: 'app.fileUploadFailed' }),
+        status: 'error',
+        duration: 5000,
+        isClosable: true
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const onSubmitCertificate = (data) => {
     const { product, ...currentParcelData } = currentParcel;
     if (product) {
@@ -298,7 +351,7 @@ function NewParcel() {
         ...currentParcelData,
         ...currentParcelForm,
         establishment: parseInt(establishmentId),
-        album: { images: acceptedFiles }
+        uploaded_image_urls: uploadedImageUrls // Use standardized upload URLs
       }
     });
   };
@@ -596,66 +649,43 @@ function NewParcel() {
               <Text color={textColor} fontSize="sm" fontWeight="bold" mb="12px">
                 {intl.formatMessage({ id: 'app.parcelImages' })}
               </Text>
-              <Flex
-                align="center"
-                justify="center"
-                border="1px dashed #E2E8F0"
-                borderRadius="15px"
-                w="100%"
-                maxWidth={'980px'}
-                cursor="pointer"
-                overflowY={'auto'}
-                minH={'175px'}
-                {...getRootProps({ className: 'dropzone' })}
+              {/* 2025 Best Practice: StandardMediaUpload Component */}
+              <StandardMediaUpload
+                onFilesChange={handleFilesChange}
+                acceptedFiles={selectedFiles}
+                maxFiles={5}
+                maxSize={5 * 1024 * 1024} // 5MB
+                accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
+                placeholder={intl.formatMessage({ id: 'app.dropFilesHereToUpload' })}
+                description="Upload up to 5 high-quality images (max 5MB each)"
+                variant="default"
+                previewMode="grid"
+                height="200px"
+              />
+
+              {/* Upload Button */}
+              <Button
+                bg="green.500"
+                color="white"
+                _hover={{ bg: "green.600", transform: "translateY(-1px)" }}
+                _active={{ bg: "green.700" }}
+                onClick={handleFileUpload}
+                isLoading={isUploading}
+                loadingText={intl.formatMessage({ id: 'app.uploading' })}
+                mt="16px"
+                h="44px"
+                borderRadius="xl"
+                fontSize="sm"
+                fontWeight="600"
+                isDisabled={selectedFiles.length === 0}
               >
-                <Input {...getInputProps()} />
-                <Button variant="no-hover">
-                  {acceptedFiles.length > 0 ? (
-                    // <Text fontSize="sm" color="green">
-                    //   {files.length} file(s) selected:
-                    //   {files.map((file) => (
-                    //     <span key={file.path}> {file.name},</span>
-                    //   ))}
-                    // </Text>
-                    <Flex gap="20px" p="20px" flexWrap={'wrap'}>
-                      {acceptedFiles.map((file, index) => (
-                        <Box key={index}>
-                          <img
-                            src={URL.createObjectURL(file)} // Create a preview URL for the image
-                            alt={file.name}
-                            style={{
-                              width: '150px',
-                              height: '100px',
-                              borderRadius: '15px',
-                              objectFit: 'contain'
-                            }}
-                          />
-                          <Text
-                            color="gray.400"
-                            fontWeight="normal"
-                            maxWidth="150px"
-                            textOverflow={'ellipsis'}
-                            overflow={'hidden'}
-                          >
-                            {file.name}
-                          </Text>
-                        </Box>
-                      ))}
-                      {/* </Stack> */}
-                    </Flex>
-                  ) : (
-                    <Text color="gray.400" fontWeight="normal">
-                      {intl.formatMessage({ id: 'app.dropFilesHereToUpload' })}
-                    </Text>
-                  )}
-                </Button>
-              </Flex>
-              <Flex justify="space-between">
+                {intl.formatMessage({ id: 'app.uploadImages' }) || 'Upload Images'}
+              </Button>
+              <Flex justify="space-between" mt="24px">
                 <Button
                   variant="no-hover"
                   bg={bgPrevButton}
                   alignSelf="flex-end"
-                  mt="24px"
                   w="100px"
                   h="35px"
                   onClick={() => descriptionTab.current.click()}
@@ -668,7 +698,6 @@ function NewParcel() {
                   variant="no-hover"
                   bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
                   alignSelf="flex-end"
-                  mt="24px"
                   w="100px"
                   h="35px"
                   onClick={() => certificationTab.current.click()}
