@@ -127,12 +127,31 @@ const TrackList = ({ amount }) => {
 
   return (
     <Card maxH="100%" height={'fit-content;'} minW="450px" className="trazo-card">
-      <CardHeader p="0px 0px 0px 0px">
+      <CardHeader px={6} py={5}>
         <Flex direction="column" w="100%">
-          <Flex p="0px" align="center" justify="space-between" pb={4}>
-            <Text fontSize="lg" color={textColor} fontWeight="bold">
-              {intl.formatMessage({ id: 'app.currentProduction' })}
-            </Text>
+          {/* Header with consistent height */}
+          <Flex justify="space-between" align="center" pb={4}>
+            <HStack spacing={3}>
+              <Text fontSize="lg" color={textColor} fontWeight="600">
+                {intl.formatMessage({ id: 'app.currentProduction' })}
+              </Text>
+              {currentHistory?.product && (
+                <Badge
+                  bg="green.50"
+                  color="green.700"
+                  borderRadius="md"
+                  px={2}
+                  py={1}
+                  fontSize="xs"
+                  fontWeight="500"
+                  textTransform="none"
+                  w="fit-content"
+                  border="1px solid"
+                  borderColor="green.200">
+                  {currentHistory?.product}
+                </Badge>
+              )}
+            </HStack>
             <Menu isOpen={isOpen1} onClose={onClose1}>
               <MenuButton
                 onClick={onOpen1}
@@ -149,7 +168,6 @@ const TrackList = ({ amount }) => {
                     )
                   }>
                   <Flex color={textColor} cursor="pointer" align="center" p="4px">
-                    {/* <Icon as={FaPencilAlt} me="4px" /> */}
                     <Text fontSize="sm" fontWeight="500">
                       {intl.formatMessage({ id: 'app.edit' }).toUpperCase()}
                     </Text>
@@ -157,7 +175,6 @@ const TrackList = ({ amount }) => {
                 </MenuItem>
                 <MenuItem>
                   <Flex color="red.500" cursor="pointer" align="center" p="4px">
-                    {/* <Icon as={FaTrashAlt} me="4px" /> */}
                     <Text fontSize="sm" fontWeight="500">
                       {intl.formatMessage({ id: 'app.delete' }).toUpperCase()}
                     </Text>
@@ -166,24 +183,23 @@ const TrackList = ({ amount }) => {
               </MenuList>
             </Menu>
           </Flex>
+          
           <Divider />
-          <Flex direction="column" pt={4}>
-            {currentHistory?.product && (
-              <Text fontSize="sm" color="gray.400" fontWeight="normal">
-                {intl.formatMessage({ id: 'app.theProductionOf' })}{' '}
-                <Text fontWeight="bold" as="span" color="green.300">
-                  {`${currentHistory?.product}`}{' '}
-                </Text>
-                {intl.formatMessage({ id: 'app.hasBeenStarted' })}{' '}
-                <Text fontWeight="bold" as="span" color="green.300">
-                  {`${new Date(currentHistory?.start_date).toLocaleDateString('en-US')}`}{' '}
-                </Text>
+          
+          {/* Production info moved to be more compact */}
+          {currentHistory?.product && (
+            <HStack justify="space-between" pt={4}>
+              <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                Started: {new Date(currentHistory?.start_date).toLocaleDateString('en-US')}
               </Text>
-            )}
-          </Flex>
+              <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                Active Production
+              </Text>
+            </HStack>
+          )}
         </Flex>
       </CardHeader>
-      <CardBody ps="20px" pe="0px" pt="48px" mb="31px" position="relative">
+      <CardBody ps="20px" pe="0px" mb="31px" position="relative">
         <Flex direction="column" width={'100%'}>
           {isLoading || isFetching ? (
             <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
