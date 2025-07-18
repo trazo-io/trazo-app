@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Flex,
@@ -21,6 +21,7 @@ import {
 } from '@chakra-ui/react';
 import { FaCamera, FaChevronLeft, FaChevronRight, FaExpand, FaImage } from 'react-icons/fa';
 import { S3Image } from 'components/Design';
+import { useBatchS3Images } from 'hooks/useBatchS3Images';
 
 export type ImageItem = string | { id: string; image: string; name?: string; description?: string };
 
@@ -86,6 +87,17 @@ const StandardImageGallery = ({
   const hasImages = processedImages.length > 0;
   const displayImages = processedImages.slice(0, maxDisplayImages);
   const remainingCount = Math.max(0, processedImages.length - maxDisplayImages);
+
+  // 2025 Best Practice: Extract S3 URLs for batch loading
+  const s3Urls = useMemo(() => {
+    return processedImages.map(img => img.url).filter(Boolean);
+  }, [processedImages]);
+
+  // Batch load all S3 presigned URLs in a single request
+  const { presignedUrls, isLoading: batchLoading } = useBatchS3Images({
+    s3Urls,
+    enabled: hasImages
+  });
 
   // Handle image click for preview
   const handleImageClick = useCallback(
@@ -168,6 +180,7 @@ const StandardImageGallery = ({
             h="100%"
             objectFit="cover"
             fallbackSrc={fallbackImage}
+            presignedUrl={presignedUrls[imageData.url]}
           />
 
           {/* Expand overlay on hover */}
@@ -250,6 +263,7 @@ const StandardImageGallery = ({
                 objectFit="cover"
                 fallbackSrc={fallbackImage}
                 lazy={true}
+                presignedUrl={presignedUrls[imageData.url]}
               />
 
               {/* Show remaining count on last image */}
@@ -395,6 +409,7 @@ const StandardImageGallery = ({
                   borderRadius="lg"
                   boxShadow="2xl"
                   lazy={false}
+                  presignedUrl={presignedUrls[processedImages[currentImageIndex]?.url]}
                 />
 
                 {/* Desktop Navigation arrows */}

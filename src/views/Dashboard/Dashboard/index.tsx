@@ -12,6 +12,8 @@ import {
   Box
 } from '@chakra-ui/react';
 import { S3Image } from 'components/Design';
+import { useBatchS3Images } from 'hooks/useBatchS3Images';
+import { useMemo } from 'react';
 // Custom icons
 import {
   CartIcon,
@@ -59,7 +61,7 @@ import IoTDashboard from './Establishment/IoTDashboard';
 import TrialStatusBanner from 'components/Trial/TrialStatusBanner';
 import GuidedOnboarding from 'components/Onboarding/GuidedOnboarding';
 import { useOnboarding } from 'hooks/useOnboarding';
-import BatchTestComponent from 'components/Debug/BatchTestComponent';
+// // import BatchTestComponent from 'components/Debug/BatchTestComponent'; // DEBUG: Remove for production
 
 export default function DashboardView() {
   const intl = useIntl();
@@ -229,6 +231,20 @@ export default function DashboardView() {
       setEstablishment(establishment);
     }
   }, [establishmentId, establishments]);
+
+  // 2025 Best Practice: Batch load S3 images for establishment
+  const s3Urls = useMemo(() => {
+    const urls = [];
+    if (establishment?.image) {
+      urls.push(establishment.image);
+    }
+    return urls;
+  }, [establishment]);
+
+  const { presignedUrls } = useBatchS3Images({
+    s3Urls,
+    enabled: s3Urls.length > 0
+  });
 
   // Redirect to first establishment when accessing root dashboard
   useEffect(() => {
@@ -429,6 +445,7 @@ export default function DashboardView() {
                 borderRadius="15px"
                 lazy={true}
                 fallbackSrc={defaultEstablishmentImage}
+                presignedUrl={establishment?.image ? presignedUrls[establishment.image] : null}
               />
             }
           />
@@ -458,8 +475,8 @@ export default function DashboardView() {
         data={establishment?.parcels}
       />
       
-      {/* DEBUG: Batch Testing Component */}
-      <BatchTestComponent />
+      {/* DEBUG: Batch Testing Component - REMOVED FOR PRODUCTION */}
+      {/* <BatchTestComponent /> */}
     </Flex>
   );
 }
