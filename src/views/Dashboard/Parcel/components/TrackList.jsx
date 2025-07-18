@@ -127,10 +127,10 @@ const TrackList = ({ amount }) => {
 
   return (
     <Card maxH="100%" height={'fit-content;'} minW="450px" className="trazo-card">
-      <CardHeader p="0px 0px 35px 0px">
+      <CardHeader p="0px 0px 0px 0px">
         <Flex direction="column" w="100%">
-          <Flex p="0px" align="center" justify="space-between">
-            <Text fontSize="lg" color={textColor} fontWeight="bold" pb=".5rem">
+          <Flex p="0px" align="center" justify="space-between" pb={4}>
+            <Text fontSize="lg" color={textColor} fontWeight="bold">
               {intl.formatMessage({ id: 'app.currentProduction' })}
             </Text>
             <Menu isOpen={isOpen1} onClose={onClose1}>
@@ -166,7 +166,8 @@ const TrackList = ({ amount }) => {
               </MenuList>
             </Menu>
           </Flex>
-          <Flex direction="column">
+          <Divider />
+          <Flex direction="column" pt={4}>
             {currentHistory?.product && (
               <Text fontSize="sm" color="gray.400" fontWeight="normal">
                 {intl.formatMessage({ id: 'app.theProductionOf' })}{' '}
@@ -182,7 +183,7 @@ const TrackList = ({ amount }) => {
           </Flex>
         </Flex>
       </CardHeader>
-      <CardBody ps="20px" pe="0px" mb="31px" position="relative">
+      <CardBody ps="20px" pe="0px" pt="48px" mb="31px" position="relative">
         <Flex direction="column" width={'100%'}>
           {isLoading || isFetching ? (
             <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">

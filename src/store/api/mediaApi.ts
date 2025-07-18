@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../index';
+import { TokenManager } from '../../utils/secureTokenStorage';
 
 // Types for media API
 export interface PresignedUrlResponse {
@@ -42,12 +42,16 @@ export const mediaApi = createApi({
   reducerPath: 'mediaApi',
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_APP_BACKEND_URL || '/api/',
-    prepareHeaders: (headers, { getState }) => {
-      const state = getState() as RootState;
-      const token = state.auth.token;
+    prepareHeaders: (headers) => {
+      // Get token from TokenManager (same as other working APIs)
+      const token = TokenManager.getAccessToken();
+      console.log('🔒 MEDIA API: Getting token for S3 request. Token found:', !!token, 'Length:', token?.length || 0);
       
       if (token) {
         headers.set('authorization', `Bearer ${token}`);
+        console.log('🔒 MEDIA API: Added Authorization header');
+      } else {
+        console.log('🔒 MEDIA API: No token found, request will be unauthenticated');
       }
       headers.set('content-type', 'application/json');
       

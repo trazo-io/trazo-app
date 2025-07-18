@@ -14,7 +14,8 @@ import {
   Progress,
   Avatar,
   AvatarGroup,
-  IconButton
+  IconButton,
+  Divider
 } from '@chakra-ui/react';
 import {
   FaSeedling,
@@ -122,10 +123,10 @@ const HistoryCard = ({ amount }) => {
       transition="all 0.3s ease"
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
       className="trazo-card">
-      <CardHeader px={6} py={5} borderBottom="1px solid" borderColor={borderColor}>
-        <Flex direction="column" gap={5} w="100%">
-          {/* Minimalist Header */}
-          <Flex justify="space-between" align="center">
+      <CardHeader px={6} py={5}>
+        <Flex direction="column" w="100%">
+          {/* Header with divider */}
+          <Flex justify="space-between" align="center" pb={4}>
             <HStack spacing={3}>
               <Text fontSize="lg" color={textColor} fontWeight="600">
                 {intl.formatMessage({ id: 'app.productions' })}
@@ -206,44 +207,46 @@ const HistoryCard = ({ amount }) => {
             </HStack>
           </Flex>
 
+          <Divider borderColor={borderColor} />
+
           {/* Streamlined Statistics */}
           {productionStats && (
-            <HStack spacing={6} justify="space-between">
-              <HStack spacing={1}>
+            <HStack spacing={6} justify="space-between" pt={4}>
+              <VStack spacing={1}>
                 <Text fontSize="xl" fontWeight="bold" color="green.500">
                   {productionStats.completed}
                 </Text>
-                <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
                   completed
                 </Text>
-              </HStack>
+              </VStack>
 
-              <HStack spacing={1}>
+              <VStack spacing={1}>
                 <Text fontSize="xl" fontWeight="bold" color="blue.500">
                   {productionStats.ongoing}
                 </Text>
-                <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
                   ongoing
                 </Text>
-              </HStack>
+              </VStack>
 
-              <HStack spacing={1}>
+              <VStack spacing={1}>
                 <Text fontSize="xl" fontWeight="bold" color="orange.500">
                   {productionStats.avgCarbonScore}
                 </Text>
-                <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
                   avg score
                 </Text>
-              </HStack>
+              </VStack>
 
-              <HStack spacing={1}>
+              <VStack spacing={1}>
                 <Text fontSize="xl" fontWeight="bold" color="purple.500">
                   {productionStats.verificationRate}%
                 </Text>
-                <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
                   verified
                 </Text>
-              </HStack>
+              </VStack>
             </HStack>
           )}
         </Flex>
@@ -256,7 +259,12 @@ const HistoryCard = ({ amount }) => {
       ) : (
         <CardBody p="0px">
           {data && data.length > 0 ? (
-            <VStack spacing={0} align="stretch" w="100%">
+            <VStack
+              spacing={0}
+              align="stretch"
+              w="100%"
+              py={3}
+              divider={<Divider borderColor={'transparent'} py={3} />}>
               {data.map((production) => {
                 // Calculate carbon metrics for each production
                 const extraData = production.extra_data || {};
@@ -315,304 +323,346 @@ const HistoryCard = ({ amount }) => {
                 };
 
                 return (
-                  <Box
+                  <Card
                     key={production.id}
-                    px={6}
-                    py={6}
-                    borderBottom="1px solid"
-                    borderColor={useColorModeValue('gray.100', 'gray.600')}
-                    cursor="pointer"
+                    bg={cardBgColor}
+                    borderRadius="xl"
+                    boxShadow="sm"
+                    border="1px solid"
+                    borderColor={borderColor}
+                    cursor={isCompleted ? 'pointer' : 'default'}
                     transition="all 0.2s ease"
-                    _hover={{
-                      bg: useColorModeValue('green.50', 'green.900/10'),
-                      borderLeftWidth: '4px',
-                      borderLeftColor: 'green.500',
-                      transform: 'translateX(2px)'
-                    }}
-                    _last={{
-                      borderBottom: 'none'
-                    }}
-                    onClick={() =>
-                      navigate(
-                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${production.id}`
-                      )
-                    }>
-                    <Flex align="center" justify="space-between" w="100%" gap={6}>
-                      {/* Left Section: Production Info */}
-                      <Flex align="center" gap={4} flex={1} maxW="45%">
-                        <Box
-                          p={2}
-                          bg={isCompleted ? 'green.50' : 'blue.50'}
-                          borderRadius="lg"
-                          border="1px solid"
-                          borderColor={isCompleted ? 'green.200' : 'blue.200'}>
-                          <Icon
-                            as={isCompleted ? FaChartLine : FaClock}
-                            color={isCompleted ? 'green.500' : 'blue.500'}
-                            boxSize={5}
-                          />
-                        </Box>
-
-                        <VStack align="start" spacing={2} flex={1}>
-                          <Flex align="center" gap={3} w="100%">
-                            <Text fontSize="md" fontWeight="600" color={textColor} noOfLines={1}>
-                              {production.name ||
-                                `${production.product || 'Organic'} Production ${production.id}`}
-                            </Text>
-
-                            {/* Modern Status Badge */}
-                            <Badge
-                              colorScheme={isCompleted ? 'green' : 'blue'}
-                              variant="subtle"
-                              borderRadius="full"
-                              fontSize="xs"
-                              fontWeight="600"
-                              px={3}
-                              py={1}
-                              textTransform="uppercase"
-                              letterSpacing="wide"
-                              width="fit-content">
-                              {isCompleted ? 'Complete' : 'Ongoing'}
-                            </Badge>
-                          </Flex>
-
-                          <Text fontSize="sm" color="gray.500" fontWeight="500">
-                            {formatDateRange(production.start_date, production.finish_date)}
-                          </Text>
-
-                          <Text fontSize="sm" color="gray.600" fontWeight="600">
-                            {production.product || 'Agricultural Product'}
-                          </Text>
-
-                          {/* Verification Badges */}
-                          {(usdaVerified || blockchainVerified) && (
-                            <HStack spacing={2} mt={1}>
-                              {usdaVerified && (
-                                <Badge
-                                  colorScheme="blue"
-                                  variant="subtle"
-                                  fontSize="xs"
-                                  borderRadius="lg"
-                                  px={2}
-                                  py={1}
-                                  fontWeight="500"
-                                  textTransform="none"
-                                  width="fit-content">
-                                  <HStack spacing={1}>
-                                    <Icon as={FaAward} boxSize={2.5} />
-                                    <Text>USDA Verified</Text>
-                                  </HStack>
-                                </Badge>
-                              )}
-                              {blockchainVerified && (
-                                <Badge
-                                  colorScheme="purple"
-                                  variant="subtle"
-                                  fontSize="xs"
-                                  borderRadius="lg"
-                                  px={2}
-                                  py={1}
-                                  fontWeight="500"
-                                  textTransform="none"
-                                  width="fit-content">
-                                  <HStack spacing={1}>
-                                    <Icon as={FaAward} boxSize={2.5} />
-                                    <Text>Blockchain</Text>
-                                  </HStack>
-                                </Badge>
-                              )}
-                            </HStack>
-                          )}
-                        </VStack>
-                      </Flex>
-
-                      {/* Team Members - Middle Section */}
-                      <Flex align="center" minW="140px" justify="center">
-                        {(() => {
-                          // Get unique team members from events first, then fallback to production.members
-                          const uniqueMembers = new Map();
-
-                          // Check events for team members
-                          if (production.events && production.events.length > 0) {
-                            production.events.forEach((event) => {
-                              if (
-                                event.user &&
-                                (event.user.first_name ||
-                                  event.user.last_name ||
-                                  event.user.username)
-                              ) {
-                                const userId = event.user.id || event.user.username || 'unknown';
-                                if (!uniqueMembers.has(userId)) {
-                                  uniqueMembers.set(userId, {
-                                    id: userId,
-                                    first_name: event.user.first_name || '',
-                                    last_name: event.user.last_name || '',
-                                    username: event.user.username || '',
-                                    image: event.user.image || ''
-                                  });
-                                }
-                              }
-                            });
+                    mb={6}
+                    position="relative"
+                    _hover={
+                      isCompleted
+                        ? {
+                            bg: useColorModeValue('green.50', 'green.900/10'),
+                            transform: 'translateY(-2px)',
+                            boxShadow: 'lg',
+                            borderColor: 'green.500'
                           }
+                        : {
+                            bg: useColorModeValue('blue.50', 'blue.900/10'),
+                            borderColor: 'blue.500',
+                            transform: 'translateY(-1px)',
+                            boxShadow: 'md'
+                          }
+                    }
+                    _active={
+                      isCompleted
+                        ? {
+                            transform: 'translateY(0px)',
+                            boxShadow: 'sm'
+                          }
+                        : {}
+                    }
+                    onClick={() => {
+                      // Only navigate if production is completed
+                      if (isCompleted) {
+                        navigate(
+                          `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${production.id}`
+                        );
+                      }
+                    }}
+                    className="trazo-card">
+                    <CardBody p={4}>
+                      <VStack align="stretch" spacing={3}>
+                        {/* Header Row - Production Info and Status */}
+                        <HStack justify="space-between" align="center" spacing={3}>
+                          <HStack spacing={3} flex={1}>
+                            <Box
+                              p={2}
+                              bg={isCompleted ? 'green.50' : 'blue.50'}
+                              borderRadius="lg"
+                              border="1px solid"
+                              borderColor={isCompleted ? 'green.200' : 'blue.200'}
+                              flexShrink={0}>
+                              <Icon
+                                as={isCompleted ? FaChartLine : FaClock}
+                                color={isCompleted ? 'green.500' : 'blue.500'}
+                                boxSize={4}
+                              />
+                            </Box>
+                            <VStack align="start" spacing={1} flex={1}>
+                              <Text fontSize="sm" fontWeight="600" color={textColor} noOfLines={1}>
+                                {production.name ||
+                                  `${production.product || 'Organic'} Production ${production.id}`}
+                              </Text>
+                              <HStack spacing={2}>
+                                <Badge
+                                  colorScheme={isCompleted ? 'green' : 'blue'}
+                                  variant="subtle"
+                                  borderRadius="full"
+                                  fontSize="xs"
+                                  fontWeight="600"
+                                  px={2}
+                                  py={1}
+                                  textTransform="uppercase"
+                                  letterSpacing="wide">
+                                  {isCompleted ? 'Complete' : 'Ongoing'}
+                                </Badge>
+                                <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                                  {formatDateRange(production.start_date, production.finish_date)}
+                                </Text>
+                              </HStack>
+                            </VStack>
+                          </HStack>
 
-                          // Fallback to production.members if no event users found
-                          if (
-                            uniqueMembers.size === 0 &&
-                            production.members &&
-                            production.members.length > 0
-                          ) {
-                            production.members.forEach((member) => {
+                          {/* Member Avatar */}
+                          <Box flexShrink={0}>
+                            {(() => {
+                              // Get unique team members for avatar display
+                              const uniqueMembers = new Map();
+
+                              if (production.events && production.events.length > 0) {
+                                production.events.forEach((event) => {
+                                  if (
+                                    event.user &&
+                                    (event.user.first_name ||
+                                      event.user.last_name ||
+                                      event.user.username)
+                                  ) {
+                                    const userId =
+                                      event.user.id || event.user.username || 'unknown';
+                                    if (!uniqueMembers.has(userId)) {
+                                      uniqueMembers.set(userId, {
+                                        id: userId,
+                                        name:
+                                          `${event.user.first_name || ''} ${
+                                            event.user.last_name || ''
+                                          }`.trim() ||
+                                          event.user.username ||
+                                          'User',
+                                        image: event.user.image || ''
+                                      });
+                                    }
+                                  }
+                                });
+                              }
+
                               if (
-                                member &&
-                                (member.first_name || member.last_name || member.username)
+                                uniqueMembers.size === 0 &&
+                                production.members &&
+                                production.members.length > 0
                               ) {
-                                uniqueMembers.set(
-                                  member.id || member.username || 'unknown',
-                                  member
+                                production.members.forEach((member) => {
+                                  if (
+                                    member &&
+                                    (member.first_name || member.last_name || member.username)
+                                  ) {
+                                    uniqueMembers.set(member.id || member.username || 'unknown', {
+                                      id: member.id || member.username || 'unknown',
+                                      name:
+                                        `${member.first_name || ''} ${
+                                          member.last_name || ''
+                                        }`.trim() ||
+                                        member.username ||
+                                        'User',
+                                      image: member.image || ''
+                                    });
+                                  }
+                                });
+                              }
+
+                              const membersArray = Array.from(uniqueMembers.values());
+
+                              if (membersArray.length === 0) {
+                                return (
+                                  <Avatar size="sm" name="No Team" bg="gray.300" color="gray.600" />
                                 );
                               }
-                            });
-                          }
 
-                          const membersArray = Array.from(uniqueMembers.values());
+                              if (membersArray.length === 1) {
+                                return (
+                                  <Avatar
+                                    size="sm"
+                                    name={membersArray[0].name}
+                                    src={membersArray[0].image}
+                                    bg="green.500"
+                                    color="white"
+                                  />
+                                );
+                              }
 
-                          return membersArray.length > 0 ? (
-                            <VStack spacing={1} align="center">
-                              <AvatarGroup size="sm" max={3} spacing="-8px">
-                                {membersArray.map((member) => {
-                                  const displayName =
-                                    `${member.first_name || ''} ${member.last_name || ''}`.trim() ||
-                                    member.username ||
-                                    'Team Member';
-                                  return (
-                                    <Tooltip
+                              return (
+                                <AvatarGroup size="sm" max={2}>
+                                  {membersArray.slice(0, 3).map((member) => (
+                                    <Avatar
                                       key={member.id}
-                                      label={displayName}
-                                      placement="top"
-                                      hasArrow>
-                                      <Avatar
-                                        size="sm"
-                                        name={displayName}
-                                        src={
-                                          member.image
-                                            ? `${
-                                                import.meta.env?.VITE_API_URL ||
-                                                'http://localhost:8000'
-                                              }${member.image}`
-                                            : ''
-                                        }
-                                        borderWidth="2px"
-                                        borderColor="white"
-                                        bg="green.100"
-                                        color="green.700"
-                                        boxShadow="sm"
-                                        _hover={{
-                                          transform: 'scale(1.1)',
-                                          borderColor: 'green.300'
-                                        }}
-                                        transition="all 0.2s"
-                                      />
-                                    </Tooltip>
-                                  );
-                                })}
-                              </AvatarGroup>
+                                      name={member.name}
+                                      src={member.image}
+                                      bg="green.500"
+                                      color="white"
+                                    />
+                                  ))}
+                                </AvatarGroup>
+                              );
+                            })()}
+                          </Box>
+                        </HStack>
+
+                        {/* Product & Team Info Row */}
+                        <HStack justify="space-between" align="center" spacing={3}>
+                          <HStack spacing={1}>
+                            <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                              Product:
+                            </Text>
+                            <Text fontSize="xs" color="gray.700" fontWeight="600">
+                              {production.product || 'Agricultural Product'}
+                            </Text>
+                          </HStack>
+                          <HStack spacing={1}>
+                            <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                              Team:
+                            </Text>
+                            <Text fontSize="xs" color="gray.700" fontWeight="500">
+                              {(() => {
+                                // Get unique team members count
+                                const uniqueMembers = new Map();
+
+                                if (production.events && production.events.length > 0) {
+                                  production.events.forEach((event) => {
+                                    if (
+                                      event.user &&
+                                      (event.user.first_name ||
+                                        event.user.last_name ||
+                                        event.user.username)
+                                    ) {
+                                      const userId =
+                                        event.user.id || event.user.username || 'unknown';
+                                      if (!uniqueMembers.has(userId)) {
+                                        uniqueMembers.set(userId, event.user);
+                                      }
+                                    }
+                                  });
+                                }
+
+                                if (
+                                  uniqueMembers.size === 0 &&
+                                  production.members &&
+                                  production.members.length > 0
+                                ) {
+                                  production.members.forEach((member) => {
+                                    if (
+                                      member &&
+                                      (member.first_name || member.last_name || member.username)
+                                    ) {
+                                      uniqueMembers.set(
+                                        member.id || member.username || 'unknown',
+                                        member
+                                      );
+                                    }
+                                  });
+                                }
+
+                                const membersArray = Array.from(uniqueMembers.values());
+                                return membersArray.length > 0
+                                  ? `${membersArray.length} member${
+                                      membersArray.length > 1 ? 's' : ''
+                                    }`
+                                  : 'No team';
+                              })()}
+                            </Text>
+                          </HStack>
+                        </HStack>
+
+                        {/* Verification Badges */}
+                        {(usdaVerified || blockchainVerified) && (
+                          <HStack spacing={2} wrap="wrap">
+                            {usdaVerified && (
+                              <Badge
+                                colorScheme="blue"
+                                variant="subtle"
+                                fontSize="xs"
+                                borderRadius="md"
+                                px={2}
+                                py={1}
+                                fontWeight="500">
+                                <HStack spacing={1}>
+                                  <Icon as={FaAward} boxSize={2.5} />
+                                  <Text>USDA</Text>
+                                </HStack>
+                              </Badge>
+                            )}
+                            {blockchainVerified && (
+                              <Badge
+                                colorScheme="purple"
+                                variant="subtle"
+                                fontSize="xs"
+                                borderRadius="md"
+                                px={2}
+                                py={1}
+                                fontWeight="500">
+                                <HStack spacing={1}>
+                                  <Icon as={FaAward} boxSize={2.5} />
+                                  <Text>Blockchain</Text>
+                                </HStack>
+                              </Badge>
+                            )}
+                          </HStack>
+                        )}
+
+                        {/* Carbon Score Footer */}
+                        <HStack
+                          justify="space-between"
+                          align="center"
+                          pt={2}
+                          borderTop="1px solid"
+                          borderColor={useColorModeValue('gray.200', 'gray.600')}>
+                          <HStack spacing={2}>
+                            <Box
+                              p={1.5}
+                              bg={`${carbonImpact.color.split('.')[0]}.50`}
+                              borderRadius="md"
+                              border="1px solid"
+                              borderColor={`${carbonImpact.color.split('.')[0]}.200`}>
+                              <Icon as={carbonImpact.icon} color={carbonImpact.color} boxSize={3} />
+                            </Box>
+                            <VStack align="start" spacing={0}>
                               <Text
                                 fontSize="xs"
                                 color="gray.500"
-                                fontWeight="500"
-                                textAlign="center">
-                                {membersArray.length}{' '}
-                                {membersArray.length === 1 ? 'member' : 'members'}
+                                fontWeight="600"
+                                textTransform="uppercase"
+                                letterSpacing="wide">
+                                Carbon Score
+                              </Text>
+                              <Text fontSize="xs" color="gray.600">
+                                Environmental Impact
                               </Text>
                             </VStack>
-                          ) : (
-                            <VStack spacing={1} align="center">
-                              <Box
-                                w={8}
-                                h={8}
-                                bg="gray.100"
-                                borderRadius="full"
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                border="2px dashed"
-                                borderColor="gray.300">
-                                <Icon as={FaPlus} color="gray.400" boxSize={3} />
-                              </Box>
+                          </HStack>
+                          <HStack spacing={2}>
+                            <VStack align="end" spacing={0}>
                               <Text
-                                fontSize="xs"
-                                color="gray.400"
-                                fontWeight="500"
-                                textAlign="center">
-                                No team assigned
+                                fontSize="xl"
+                                fontWeight="700"
+                                color={carbonImpact.color}
+                                lineHeight="1">
+                                {carbonScore}
+                                <Text as="span" fontSize="xs" color="gray.500" fontWeight="400">
+                                  /100
+                                </Text>
                               </Text>
+                              <Badge
+                                colorScheme={carbonImpact.color.split('.')[0]}
+                                variant="subtle"
+                                fontSize="xs"
+                                fontWeight="600"
+                                px={2}
+                                py={0.5}
+                                borderRadius="full"
+                                textTransform="uppercase"
+                                letterSpacing="wide">
+                                {carbonImpact.level}
+                              </Badge>
                             </VStack>
-                          );
-                        })()}
-                      </Flex>
-
-                      {/* Right Section: Carbon Score */}
-                      <VStack align="center" spacing={2} minW="150px" maxW="150px">
-                        <HStack spacing={2}>
-                          <Box
-                            p={1}
-                            bg={`${carbonImpact.color.split('.')[0]}.50`}
-                            borderRadius="md"
-                            border="1px solid"
-                            borderColor={`${carbonImpact.color.split('.')[0]}.200`}>
-                            <Icon as={carbonImpact.icon} color={carbonImpact.color} boxSize={3} />
-                          </Box>
-                          <Text
-                            fontSize="xs"
-                            color="gray.500"
-                            fontWeight="600"
-                            textTransform="uppercase"
-                            letterSpacing="wide">
-                            Carbon Score
-                          </Text>
+                          </HStack>
                         </HStack>
-
-                        <VStack spacing={1} align="center">
-                          <Text
-                            fontSize="3xl"
-                            fontWeight="700"
-                            color={carbonImpact.color}
-                            lineHeight="1">
-                            {carbonScore}
-                            <Text as="span" fontSize="sm" color="gray.500" fontWeight="400">
-                              /100
-                            </Text>
-                          </Text>
-
-                          <Badge
-                            colorScheme={carbonImpact.color.split('.')[0]}
-                            variant="subtle"
-                            fontSize="xs"
-                            fontWeight="600"
-                            px={2}
-                            py={1}
-                            borderRadius="full"
-                            textTransform="uppercase"
-                            letterSpacing="wide"
-                            width="fit-content">
-                            {carbonImpact.level}
-                          </Badge>
-
-                          <Progress
-                            value={carbonScore}
-                            colorScheme={getScoreColor(carbonScore)}
-                            size="md"
-                            borderRadius="full"
-                            bg={useColorModeValue('gray.100', 'gray.600')}
-                            w="120px"
-                            hasStripe={!isCompleted}
-                            isAnimated={!isCompleted}
-                            h="8px"
-                          />
-                        </VStack>
                       </VStack>
-                    </Flex>
-                  </Box>
+                    </CardBody>
+                  </Card>
                 );
               })}
             </VStack>
