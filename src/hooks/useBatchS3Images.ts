@@ -64,7 +64,12 @@ export const useBatchS3Images = ({
   
   // Filter valid URLs
   const validS3Urls = useMemo(() => {
-    if (!Array.isArray(s3Urls)) return [];
+    console.log('🔍 [useBatchS3Images] Processing URLs:', { s3Urls, enabled, skipEmpty });
+    
+    if (!Array.isArray(s3Urls)) {
+      console.log('❌ [useBatchS3Images] s3Urls is not an array:', s3Urls);
+      return [];
+    }
     
     let filtered = s3Urls;
     
@@ -73,7 +78,9 @@ export const useBatchS3Images = ({
     }
     
     // Remove duplicates
-    return Array.from(new Set(filtered));
+    const result = Array.from(new Set(filtered));
+    console.log('✅ [useBatchS3Images] Valid URLs after filtering:', result);
+    return result;
   }, [s3Urls, skipEmpty]);
 
   // Initialize the lazy query
@@ -86,8 +93,17 @@ export const useBatchS3Images = ({
 
   // Trigger the batch request when conditions are met
   useEffect(() => {
+    console.log('🚀 [useBatchS3Images] useEffect trigger check:', { 
+      enabled, 
+      urlCount: validS3Urls.length, 
+      urls: validS3Urls 
+    });
+    
     if (enabled && validS3Urls.length > 0) {
+      console.log('📡 [useBatchS3Images] Triggering batch query for URLs:', validS3Urls);
       triggerBatchQuery({ s3_urls: validS3Urls });
+    } else {
+      console.log('⏸️ [useBatchS3Images] Batch query NOT triggered:', { enabled, urlCount: validS3Urls.length });
     }
   }, [enabled, validS3Urls, triggerBatchQuery]);
 
@@ -100,9 +116,16 @@ export const useBatchS3Images = ({
 
   // Process the response data
   const presignedUrls = useMemo(() => {
-    if (!data?.presigned_urls) return {};
+    console.log('📥 [useBatchS3Images] Processing response data:', { data, isLoading, error });
+    
+    if (!data?.presigned_urls) {
+      console.log('❌ [useBatchS3Images] No presigned_urls in response:', data);
+      return {};
+    }
+    
+    console.log('✅ [useBatchS3Images] Successfully processed presigned URLs:', data.presigned_urls);
     return data.presigned_urls;
-  }, [data]);
+  }, [data, isLoading, error]);
 
   // Extract performance metrics
   const metrics = useMemo(() => {

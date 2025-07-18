@@ -110,26 +110,58 @@ export const S3Image: React.FC<S3ImageProps> = ({
 
   // Get presigned URL for S3 images (fallback to individual requests)
   useEffect(() => {
-    if (!isInView || !src || presignedUrl !== undefined) return;
+    console.log('🖼️ [S3Image] Individual fallback check:', { 
+      src, 
+      isInView, 
+      presignedUrl, 
+      presignedUrlType: typeof presignedUrl,
+      needsPresigned: src ? needsPresignedUrl(src) : false 
+    });
+
+    if (!isInView || !src || presignedUrl !== undefined) {
+      console.log('⏸️ [S3Image] Skipping individual request:', { 
+        reason: !isInView ? 'not in view' : 
+                !src ? 'no src' : 
+                presignedUrl !== undefined ? 'presignedUrl provided' : 'unknown'
+      });
+      return;
+    }
 
     if (needsPresignedUrl(src)) {
+      console.log('🔥 [S3Image] FALLBACK: Making individual presigned URL request for:', src);
       getPresignedUrl({ s3_url: src });
+    } else {
+      console.log('✅ [S3Image] URL does not need presigning:', src);
     }
   }, [isInView, src, getPresignedUrl, needsPresignedUrl, presignedUrl]);
 
   // Determine display URL (prioritize batch presigned URL)
   const displayUrl = (() => {
-    if (!src) return fallbackSrc;
+    console.log('🎯 [S3Image] Determining display URL:', { 
+      src, 
+      presignedUrl, 
+      presignedData: presignedData?.presigned_url,
+      needsPresigned: src ? needsPresignedUrl(src) : false 
+    });
+
+    if (!src) {
+      console.log('⚠️ [S3Image] No src, using fallback:', fallbackSrc);
+      return fallbackSrc;
+    }
 
     // 2025 Best Practice: Use batch-loaded presigned URL first
     if (presignedUrl) {
+      console.log('✅ [S3Image] Using BATCH presigned URL:', presignedUrl);
       return presignedUrl;
     }
 
     if (needsPresignedUrl(src)) {
-      return presignedData?.presigned_url || fallbackSrc;
+      const url = presignedData?.presigned_url || fallbackSrc;
+      console.log('🔄 [S3Image] Using INDIVIDUAL presigned URL or fallback:', url);
+      return url;
     }
 
+    console.log('📁 [S3Image] Using direct URL (no presigning needed):', src);
     return src;
   })();
 

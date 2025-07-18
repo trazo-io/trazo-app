@@ -32,16 +32,35 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
 
   // 2025 Best Practice: Batch load all parcel images at once
   const parcelImageUrls = useMemo(() => {
-    if (!data || !Array.isArray(data)) return [];
-    return data
-      .map(parcel => parcel?.image)
+    console.log('🎠 [CarouselHorizontal] Processing parcel data:', { data, dataType: typeof data, isArray: Array.isArray(data) });
+    
+    if (!data || !Array.isArray(data)) {
+      console.log('❌ [CarouselHorizontal] No valid data for parcels:', data);
+      return [];
+    }
+    
+    const imageUrls = data
+      .map(parcel => {
+        console.log('🖼️ [CarouselHorizontal] Processing parcel:', { parcel, image: parcel?.image });
+        return parcel?.image;
+      })
       .filter(Boolean);
+    
+    console.log('✅ [CarouselHorizontal] Extracted image URLs:', imageUrls);
+    return imageUrls;
   }, [data]);
+
+  console.log('🔄 [CarouselHorizontal] Calling useBatchS3Images with:', { 
+    parcelImageUrls, 
+    enabled: parcelImageUrls.length > 0 
+  });
 
   const { presignedUrls, isLoading: batchLoading } = useBatchS3Images({
     s3Urls: parcelImageUrls,
     enabled: parcelImageUrls.length > 0
   });
+
+  console.log('📊 [CarouselHorizontal] Batch results:', { presignedUrls, batchLoading });
 
   return (
     <Card p="16px" className="trazo-card">
@@ -96,6 +115,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
           >
             {data.map((parcel) => (
               <CarouselCard
+                key={parcel.id}
                 id={parcel.id}
                 image={parcel.image || BgMusicCard}
                 name={parcel.name}
