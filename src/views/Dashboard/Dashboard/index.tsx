@@ -445,7 +445,7 @@ export default function DashboardView() {
                 borderRadius="15px"
                 lazy={true}
                 fallbackSrc={defaultEstablishmentImage}
-                presignedUrl={establishment?.image ? presignedUrls[establishment.image] : null}
+                presignedUrl={establishment?.image ? presignedUrls[establishment.image] : undefined}
               />
             }
           />

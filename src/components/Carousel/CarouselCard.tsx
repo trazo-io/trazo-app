@@ -24,7 +24,7 @@ type CarouselCardProps = {
   category: string;
   buttonText: string;
   avatars: string[];
-  presignedUrl?: string | null;
+  presignedUrl?: string;
 };
 
 const CarouselCard = ({ id, image, name, category, buttonText, avatars, presignedUrl }: CarouselCardProps) => {

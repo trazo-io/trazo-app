@@ -35,7 +35,7 @@ export interface S3ImageProps extends Omit<ImageProps, 'src' | 'onLoad' | 'onErr
   /** Show error message instead of just icon */
   showErrorMessage?: boolean;
   /** Pre-fetched presigned URL from batch loading (2025 Best Practice) */
-  presignedUrl?: string | null;
+  presignedUrl?: string;
 }
 
 /**
