@@ -337,7 +337,22 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
 
   // Handle selected files from StandardMediaUpload
   const handleFilesChange = (files: File[]) => {
-    setSelectedFiles(files);
+    try {
+      if (Array.isArray(files)) {
+        setSelectedFiles(files);
+      } else {
+        console.warn('handleFilesChange received non-array:', files);
+      }
+    } catch (error) {
+      console.error('Error in handleFilesChange:', error);
+      toast({
+        title: 'File Selection Error',
+        description: 'There was an issue selecting files. Please try again.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+    }
   };
 
   // Handle removing selected files

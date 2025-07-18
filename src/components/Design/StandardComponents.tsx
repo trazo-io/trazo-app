@@ -859,7 +859,7 @@ interface StandardMediaUploadProps {
   uploadedFiles?: string[]; // URLs of successfully uploaded files
   maxFiles?: number;
   maxSize?: number;
-  accept?: { [key: string]: string[] };
+  accept?: string | string[] | { [key: string]: string[] };
   multiple?: boolean;
   disabled?: boolean;
   required?: boolean;
@@ -883,7 +883,7 @@ export const StandardMediaUpload = ({
   uploadedFiles = [],
   maxFiles = 5,
   maxSize = 10485760, // 10MB
-  accept = { 'image/*': [] },
+  accept = 'image/*',
   multiple = true,
   disabled = false,
   required = false,
@@ -938,7 +938,11 @@ export const StandardMediaUpload = ({
   }, [acceptedFiles]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: onFilesChange,
+    onDrop: (acceptedFiles: File[]) => {
+      if (onFilesChange && Array.isArray(acceptedFiles)) {
+        onFilesChange(acceptedFiles);
+      }
+    },
     accept,
     multiple,
     maxFiles,

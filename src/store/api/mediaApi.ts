@@ -46,7 +46,7 @@ export const mediaApi = createApi({
     // Get presigned URL for reading existing S3 images
     getPresignedReadUrl: builder.query<PresignedUrlResponse, PresignedUrlRequest>({
       query: (data) => ({
-        url: 'api/get-presigned-read-url/',
+        url: 'get-presigned-read-url/',
         method: 'POST',
         body: data,
       }),
@@ -58,7 +58,7 @@ export const mediaApi = createApi({
     // Get presigned URL for uploading new files
     getUploadUrl: builder.mutation<UploadUrlResponse, UploadUrlRequest>({
       query: (data) => ({
-        url: 'api/get-presigned-url/',
+        url: 'get-presigned-url/',
         method: 'POST',
         body: data,
       }),
