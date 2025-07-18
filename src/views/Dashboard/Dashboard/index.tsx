@@ -59,6 +59,7 @@ import IoTDashboard from './Establishment/IoTDashboard';
 import TrialStatusBanner from 'components/Trial/TrialStatusBanner';
 import GuidedOnboarding from 'components/Onboarding/GuidedOnboarding';
 import { useOnboarding } from 'hooks/useOnboarding';
+import BatchTestComponent from 'components/Debug/BatchTestComponent';
 
 export default function DashboardView() {
   const intl = useIntl();
@@ -456,6 +457,9 @@ export default function DashboardView() {
         description={intl.formatMessage({ id: 'app.establishmentParcels' })}
         data={establishment?.parcels}
       />
+      
+      {/* DEBUG: Batch Testing Component */}
+      <BatchTestComponent />
     </Flex>
   );
 }

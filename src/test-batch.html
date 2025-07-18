@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Batch S3 Images Test</title>
+</head>
+<body>
+    <h1>Batch S3 Images Test</h1>
+    <p>Open the console and check:</p>
+    <ol>
+        <li><strong>Console logs</strong> - Look for 🚀 🔍 📡 emojis</li>
+        <li><strong>Network tab</strong> - Look for <code>get-presigned-read-urls-batch</code> requests</li>
+        <li><strong>Window debug</strong> - Type <code>window.__TRAZO_BATCH_DEBUG</code> in console</li>
+    </ol>
+    
+    <h2>What to Look For:</h2>
+    <h3>✅ Success Signs:</h3>
+    <ul>
+        <li>📡 [useBatchS3Images] Triggering batch query for URLs</li>
+        <li>Network request to <code>/api/get-presigned-read-urls-batch/</code></li>
+        <li><code>window.__TRAZO_BATCH_DEBUG.batchTriggered === true</code></li>
+    </ul>
+    
+    <h3>❌ Problem Signs:</h3>
+    <ul>
+        <li>🔥 [S3Image] FALLBACK: Making individual presigned URL request</li>
+        <li>Network requests to <code>/api/get-presigned-read-url/</code> (singular)</li>
+        <li><code>window.__TRAZO_BATCH_DEBUG.batchTriggered === false</code></li>
+    </ul>
+    
+    <h3>Quick Debug Commands:</h3>
+    <pre>
+// Check if batch was triggered
+window.__TRAZO_BATCH_DEBUG
+
+// Clear debug info
+delete window.__TRAZO_BATCH_DEBUG
+
+// Manual check
+console.log("Debug info:", window.__TRAZO_BATCH_DEBUG)
+    </pre>
+</body>
+</html>

@@ -101,9 +101,29 @@ export const useBatchS3Images = ({
     
     if (enabled && validS3Urls.length > 0) {
       console.log('📡 [useBatchS3Images] Triggering batch query for URLs:', validS3Urls);
+      
+      // Add a debug marker to the document for easier identification
+      if (typeof window !== 'undefined') {
+        window.__TRAZO_BATCH_DEBUG = {
+          batchTriggered: true,
+          urlCount: validS3Urls.length,
+          urls: validS3Urls,
+          timestamp: new Date().toISOString()
+        };
+      }
+      
       triggerBatchQuery({ s3_urls: validS3Urls });
     } else {
       console.log('⏸️ [useBatchS3Images] Batch query NOT triggered:', { enabled, urlCount: validS3Urls.length });
+      
+      if (typeof window !== 'undefined') {
+        window.__TRAZO_BATCH_DEBUG = {
+          batchTriggered: false,
+          reason: !enabled ? 'disabled' : 'no URLs',
+          urlCount: validS3Urls.length,
+          timestamp: new Date().toISOString()
+        };
+      }
     }
   }, [enabled, validS3Urls, triggerBatchQuery]);
 
