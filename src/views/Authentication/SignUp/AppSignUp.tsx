@@ -117,7 +117,6 @@ const AppSignUp: React.FC = () => {
     });
   };
 
-
   return (
     <Box minH="100vh" display="flex" flexDirection="column">
       <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} flex="1" minH="calc(100vh - 80px)">
@@ -138,7 +137,7 @@ const AppSignUp: React.FC = () => {
             bottom="0"
             bg="linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)"
           />
-          
+
           {/* Subtle background floating element - positioned to not interfere */}
           <Box
             position="absolute"
@@ -153,7 +152,7 @@ const AppSignUp: React.FC = () => {
             transform="rotate(-8deg)"
             zIndex={0}
           />
-          
+
           {/* Bottom accent element */}
           <Box
             position="absolute"
@@ -167,7 +166,7 @@ const AppSignUp: React.FC = () => {
             backdropFilter="blur(60px)"
             zIndex={0}
           />
-          
+
           {/* Minimal line accents */}
           <Box
             position="absolute"
@@ -178,7 +177,7 @@ const AppSignUp: React.FC = () => {
             bg="linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)"
             zIndex={0}
           />
-          
+
           <Box
             position="absolute"
             bottom="35%"
@@ -188,7 +187,7 @@ const AppSignUp: React.FC = () => {
             bg="linear-gradient(to right, transparent 0%, rgba(255,255,255,0.10) 50%, transparent 100%)"
             zIndex={0}
           />
-          
+
           {/* Tiny accent dots */}
           <Box
             position="absolute"
@@ -200,7 +199,7 @@ const AppSignUp: React.FC = () => {
             borderRadius="50%"
             zIndex={0}
           />
-          
+
           <Box
             position="absolute"
             bottom="45%"
@@ -256,7 +255,7 @@ const AppSignUp: React.FC = () => {
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
           px={8}
-          pt={24}
+          pt={'112px'}
           pb={8}>
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
@@ -305,8 +304,7 @@ const AppSignUp: React.FC = () => {
                         fontSize="sm"
                         fontWeight="500"
                         color={useColorModeValue('gray.700', 'gray.300')}
-                        mb={1}
-                      >
+                        mb={1}>
                         First Name
                       </Text>
                       <Box
@@ -363,8 +361,7 @@ const AppSignUp: React.FC = () => {
                         fontSize="sm"
                         fontWeight="500"
                         color={useColorModeValue('gray.700', 'gray.300')}
-                        mb={1}
-                      >
+                        mb={1}>
                         Last Name
                       </Text>
                       <Box
@@ -423,8 +420,7 @@ const AppSignUp: React.FC = () => {
                       fontSize="sm"
                       fontWeight="500"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={1}
-                    >
+                      mb={1}>
                       Business Email
                     </Text>
                     <InputGroup size="lg">
@@ -489,8 +485,7 @@ const AppSignUp: React.FC = () => {
                       fontSize="sm"
                       fontWeight="500"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={1}
-                    >
+                      mb={1}>
                       Password
                     </Text>
                     <InputGroup size="lg">
@@ -551,8 +546,7 @@ const AppSignUp: React.FC = () => {
                           variant="ghost"
                           onClick={() => setShowPassword(!showPassword)}
                           size="sm"
-                          _hover={{ bg: 'transparent' }}
-                        >
+                          _hover={{ bg: 'transparent' }}>
                           <Icon
                             as={showPassword ? FaEyeSlash : FaEye}
                             color={useColorModeValue('gray.400', 'gray.500')}
@@ -571,12 +565,23 @@ const AppSignUp: React.FC = () => {
                           size="sm"
                           borderRadius="full"
                           colorScheme={
-                            passwordStrength < 50 ? 'red' : passwordStrength < 75 ? 'yellow' : 'green'
+                            passwordStrength < 50
+                              ? 'red'
+                              : passwordStrength < 75
+                              ? 'yellow'
+                              : 'green'
                           }
                         />
-                        <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mt={1}>
+                        <Text
+                          fontSize="xs"
+                          color={useColorModeValue('gray.500', 'gray.400')}
+                          mt={1}>
                           Password strength:{' '}
-                          {passwordStrength < 50 ? 'Weak' : passwordStrength < 75 ? 'Medium' : 'Strong'}
+                          {passwordStrength < 50
+                            ? 'Weak'
+                            : passwordStrength < 75
+                            ? 'Medium'
+                            : 'Strong'}
                         </Text>
                       </Box>
                     )}
@@ -594,8 +599,7 @@ const AppSignUp: React.FC = () => {
                       fontSize="sm"
                       fontWeight="500"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={1}
-                    >
+                      mb={1}>
                       Confirm Password
                     </Text>
                     <InputGroup size="lg">
@@ -641,7 +645,8 @@ const AppSignUp: React.FC = () => {
                         transition="all 0.2s"
                         {...registerField('password2', {
                           required: 'Please confirm your password',
-                          validate: (value: string) => value === password || 'Passwords do not match'
+                          validate: (value: string) =>
+                            value === password || 'Passwords do not match'
                         })}
                         onFocus={() => setFocusedField('password2')}
                         onBlur={() => setFocusedField(null)}
@@ -651,8 +656,7 @@ const AppSignUp: React.FC = () => {
                           variant="ghost"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           size="sm"
-                          _hover={{ bg: 'transparent' }}
-                        >
+                          _hover={{ bg: 'transparent' }}>
                           <Icon
                             as={showConfirmPassword ? FaEyeSlash : FaEye}
                             color={useColorModeValue('gray.400', 'gray.500')}
@@ -668,8 +672,7 @@ const AppSignUp: React.FC = () => {
                       <Text
                         fontSize="xs"
                         color={password === password2 ? 'green.500' : 'red.500'}
-                        mt={1}
-                      >
+                        mt={1}>
                         {password === password2 ? '✓ Passwords match' : '✗ Passwords do not match'}
                       </Text>
                     )}

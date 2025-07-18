@@ -1,7 +1,7 @@
 // Chakra imports
 import {
   Button,
-  CircularProgress,
+  Spinner,
   Flex,
   Icon,
   Menu,
@@ -94,7 +94,8 @@ const TrackList = ({ amount }) => {
       parcelId: parcelId || ''
     },
     {
-      skip: !parcelId || !currentCompany || !establishmentId || currentCompany?.id === undefined
+      skip: !parcelId || !currentCompany || !establishmentId || currentCompany?.id === undefined,
+      refetchOnMountOrArgChange: true
     }
   );
 
@@ -183,9 +184,9 @@ const TrackList = ({ amount }) => {
       </CardHeader>
       <CardBody ps="20px" pe="0px" mb="31px" position="relative">
         <Flex direction="column" width={'100%'}>
-          {isLoading ? (
+          {isLoading || isFetching ? (
             <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
-              <CircularProgress isIndeterminate value={1} color="green.300" size="25px" />
+              <Spinner size="sm" color="green.500" />
             </Flex>
           ) : (
             <>

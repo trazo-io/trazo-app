@@ -118,11 +118,15 @@ export const S3Image: React.FC<S3ImageProps> = ({
       needsPresigned: src ? needsPresignedUrl(src) : false 
     });
 
+    // Skip individual request if:
+    // 1. Not in view
+    // 2. No src
+    // 3. presignedUrl is provided (either string or null from batch loading)
     if (!isInView || !src || presignedUrl !== undefined) {
       console.log('⏸️ [S3Image] Skipping individual request:', { 
         reason: !isInView ? 'not in view' : 
                 !src ? 'no src' : 
-                presignedUrl !== undefined ? 'presignedUrl provided' : 'unknown'
+                presignedUrl !== undefined ? 'presignedUrl provided (batch loading)' : 'unknown'
       });
       return;
     }

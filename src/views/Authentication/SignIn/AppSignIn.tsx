@@ -314,7 +314,8 @@ const AppSignIn: React.FC = () => {
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
           px={8}
-          py={12}>
+          pt={'112px'}
+          pb={12}>
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}

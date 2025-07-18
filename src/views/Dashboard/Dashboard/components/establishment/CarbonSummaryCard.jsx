@@ -33,7 +33,10 @@ const CarbonSummaryCard = ({ establishmentId }) => {
   const textColor = useColorModeValue('gray.700', 'white');
   const navigate = useNavigate();
   const year = new Date().getFullYear();
-  const { data, isLoading, isError } = useGetCarbonFootprintSummaryQuery({ establishmentId, year });
+  const { data, isLoading, isFetching, isError } = useGetCarbonFootprintSummaryQuery(
+    { establishmentId, year },
+    { refetchOnMountOrArgChange: true }
+  );
 
   // Calculate offset percentage
   let offsetPercentage = 0;
@@ -48,12 +51,11 @@ const CarbonSummaryCard = ({ establishmentId }) => {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <Card bg={bgColor} p={6} borderRadius="15px">
         <VStack spacing={4}>
-          <Spinner size="lg" color="green.500" />
-          <Text color="gray.500">Cargando datos de huella de carbono...</Text>
+          <Spinner size="sm" color="green.500" />
         </VStack>
       </Card>
     );
@@ -84,10 +86,10 @@ const CarbonSummaryCard = ({ establishmentId }) => {
       <CardHeader p={0} mb={4}>
         <Flex direction="column">
           <Text fontSize="lg" color="gray.700" fontWeight="bold">
-            Huella Neta:
+            Huella Neta
           </Text>
           <Text fontSize="sm" color="gray.500" fontWeight="400">
-            Resumen de Carbono del Establecimiento:
+            Resumen de Carbono del Establecimiento
           </Text>
         </Flex>
       </CardHeader>

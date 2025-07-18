@@ -5,7 +5,7 @@ import {
   Box,
   VStack,
   HStack,
-  CircularProgress,
+  Spinner,
   Flex,
   Icon,
   Text,
@@ -53,10 +53,11 @@ const HistoryCard = ({ amount }) => {
 
   const { parcelId, establishmentId } = useParams();
 
-  const { data, isLoading } = useGetParcelHistoriesQuery(
+  const { data, isLoading, isFetching } = useGetParcelHistoriesQuery(
     { companyId: currentCompany?.id, establishmentId, parcelId },
     {
-      skip: !parcelId || !establishmentId || !currentCompany || currentCompany?.id === undefined
+      skip: !parcelId || !establishmentId || !currentCompany || currentCompany?.id === undefined,
+      refetchOnMountOrArgChange: true
     }
   );
 
@@ -248,9 +249,9 @@ const HistoryCard = ({ amount }) => {
         </Flex>
       </CardHeader>
 
-      {isLoading ? (
+      {isLoading || isFetching ? (
         <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
-          <CircularProgress isIndeterminate color="green.500" size="40px" />
+          <Spinner size="sm" color="green.500" />
         </Flex>
       ) : (
         <CardBody p="0px">
