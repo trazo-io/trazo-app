@@ -41,7 +41,7 @@ export interface UploadUrlRequest {
 export const mediaApi = createApi({
   reducerPath: 'mediaApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: '/api/',
+    baseUrl: import.meta.env.VITE_APP_BACKEND_URL || '/api/',
     prepareHeaders: (headers, { getState }) => {
       const state = getState() as RootState;
       const token = state.auth.token;

@@ -17,7 +17,9 @@ import {
   Circle,
   Tooltip,
   Avatar,
-  useBreakpointValue
+  useBreakpointValue,
+  Card,
+  CardBody
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -213,93 +215,122 @@ function TimelineRow(props: TimelineRowProps) {
   const qrVisibility = getQRVisibility(event);
 
   return (
-    <Flex alignItems="center" minH="78px" justifyContent="start" mb="5px">
-      <Flex direction="column" h="100%" mb="auto">
-        <Icon
-          as={eventConfig.icon}
-          bg={useColorModeValue('white.300', 'gray.700')}
-          color={eventConfig.color}
-          h={'30px'}
-          w={'26px'}
-          pe="6px"
-          zIndex="1"
-          position="relative"
-          right={''}
-          left={'-8px'}
+    <Box position="relative" mb={6} w="100%">
+      {/* Timeline Connector Line - Full Height */}
+      {!isLast && (
+        <Box
+          position="absolute"
+          left="19px"
+          top="40px"
+          w="3px"
+          h="calc(100% + 8px)"
+          bg={useColorModeValue('gray.200', 'gray.600')}
+          borderRadius="full"
+          zIndex={0}
         />
-        {!isLast && <Box w="2px" bg="gray.200" h={'100%'} minH={'48px'}></Box>}
-      </Flex>
+      )}
+      
+      <HStack spacing={4} align="flex-start" w="100%">
+        {/* Timeline Icon Column - Enhanced */}
+        <VStack spacing={0} align="center" minW="40px" position="relative" zIndex={1}>
+          <Circle
+            size="40px"
+            bg={useColorModeValue('white', 'gray.800')}
+            borderWidth="3px"
+            borderColor={eventConfig.color}
+            color={eventConfig.color}
+            boxShadow="0 0 0 4px white, 0 0 0 5px #E2E8F0"
+            _hover={{
+              boxShadow: `0 0 0 4px white, 0 0 0 5px ${eventConfig.color}`
+            }}
+            transition="all 0.2s ease"
+          >
+            <Icon as={eventConfig.icon} boxSize={5} />
+          </Circle>
+        </VStack>
 
-      <Flex direction="column" justifyContent="flex-start" h="100%" w="100%">
-        <Flex
-          textAlign={'start'}
-          p="10px"
-          w="100%"
-          borderRadius="10px"
-          _focus={{
-            boxShadow: 'none'
-          }}
-          _hover={{
-            bg: hoverBg
-          }}
+        {/* Event Card - Modern Clean Design */}
+        <Card
+          flex={1}
+          bg={bgColor}
+          borderRadius="xl"
+          boxShadow="sm"
+          border="1px solid"
+          borderColor={borderColor}
           cursor="pointer"
+          transition="all 0.2s ease"
+          position="relative"
+          _hover={{
+            bg: hoverBg,
+            transform: 'translateY(-1px)',
+            boxShadow: 'md',
+            borderColor: eventConfig.color
+          }}
           onClick={() => (onEventClick ? onEventClick(event) : navigate(url))}
-          transition="all 0.2s">
-          <VStack align="start" w="100%" spacing={2}>
-            {/* Main Event Info */}
-            <HStack justify="space-between" align="start" mb={2} w="100%" flexDirection={'column'}>
-              <VStack align="start" spacing={1} flex={1}>
-                <HStack spacing={2} w="100%" justifyContent="space-between" paddingEnd={4}>
-                  <Text fontSize="sm" color={textColor} fontWeight="bold">
-                    {title}
-                  </Text>
-                  <Text fontSize="xs" color="gray.400" textAlign="right">
-                    {date}
-                  </Text>
-                </HStack>
-
+          className="trazo-card"
+        >
+        <CardBody p={4}>
+          <VStack align="stretch" spacing={3}>
+            {/* Header Row - Title and Date */}
+            <HStack justify="space-between" align="flex-start">
+              <VStack align="flex-start" spacing={1} flex={1}>
+                <Text fontSize="sm" fontWeight="600" color={textColor} noOfLines={1}>
+                  {title}
+                </Text>
                 <Badge
                   colorScheme={eventConfig.color.split('.')[0]}
                   variant="subtle"
                   fontSize="xs"
+                  borderRadius="full"
                   px={2}
-                  py={1}>
+                  py={1}
+                >
                   {eventConfig.category}
                 </Badge>
-
-                <Text fontSize="xs" color="gray.500">
-                  {event.observation || 'No additional details'}
-                </Text>
-
-                <Text fontSize="xs" color="gray.400">
-                  Operator: {operatorName}
-                </Text>
               </VStack>
+              <Text fontSize="xs" color="gray.500" fontWeight="medium" minW="fit-content">
+                {date}
+              </Text>
             </HStack>
 
-            {/* Real Data Metrics Row */}
-            <HStack spacing={4} w="100%" justify="start">
-              {/* Real Carbon Impact from API */}
+            {/* Description */}
+            <Text fontSize="xs" color="gray.600" lineHeight="tall">
+              {event.observation || 'No additional details'}
+            </Text>
+
+            {/* Operator Info */}
+            <HStack spacing={2}>
+              <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                Operator:
+              </Text>
+              <Text fontSize="xs" color="gray.600">
+                {operatorName}
+              </Text>
+            </HStack>
+
+            {/* Metrics Row - Consistent Layout */}
+            <HStack spacing={3} wrap="wrap" justify="flex-start">
+              {/* Carbon Impact */}
               {carbonData && !carbonData.error ? (
                 <Tooltip
-                  label={`Carbon Impact: ${carbonData.co2e > 0 ? '+' : ''}${
-                    carbonData.co2e
-                  } kg CO₂e${
+                  label={`Carbon Impact: ${carbonData.co2e > 0 ? '+' : ''}${carbonData.co2e} kg CO₂e${
                     carbonData.verification_status === 'usda_certified'
                       ? ' (USDA Certified)'
                       : carbonData.usda_factors_based ||
                         carbonData.verification_status === 'factors_verified'
                       ? ' (USDA Factors)'
                       : ''
-                  }`}>
+                  }`}
+                >
                   <HStack spacing={1}>
                     <Badge
-                      w="fit-content"
                       colorScheme={carbonData.co2e < 0 ? 'green' : 'orange'}
                       variant="subtle"
                       fontSize="xs"
+                      borderRadius="md"
                       px={2}
-                      py={1}>
+                      py={1}
+                    >
                       {carbonData.co2e > 0 ? '+' : ''}
                       {carbonData.co2e} kg CO₂
                     </Badge>
@@ -307,12 +338,15 @@ function TimelineRow(props: TimelineRowProps) {
                       carbonData.usda_factors_based ||
                       carbonData.verification_status === 'factors_verified') && (
                       <Badge
-                        w="fit-content"
                         colorScheme={
                           carbonData.verification_status === 'usda_certified' ? 'green' : 'blue'
                         }
                         variant="solid"
-                        fontSize="xs">
+                        fontSize="xs"
+                        borderRadius="md"
+                        px={2}
+                        py={1}
+                      >
                         {carbonData.verification_status === 'usda_certified'
                           ? 'USDA'
                           : 'USDA Factors'}
@@ -321,33 +355,38 @@ function TimelineRow(props: TimelineRowProps) {
                   </HStack>
                 </Tooltip>
               ) : (
-                <Tooltip label="Carbon impact data unavailable">
-                  <Badge variant="outline" fontSize="xs" colorScheme="gray">
-                    No CO₂ data
+                <Badge 
+                  variant="outline" 
+                  fontSize="xs" 
+                  colorScheme="gray"
+                  borderRadius="md"
+                  px={2}
+                  py={1}
+                >
+                  No CO₂ data
+                </Badge>
+              )}
+
+              {/* Cost Analysis */}
+              {carbonData?.cost_analysis?.estimated_cost && (
+                <Tooltip label={`Estimated Cost: $${carbonData.cost_analysis.estimated_cost}`}>
+                  <Badge
+                    colorScheme="purple"
+                    variant="subtle"
+                    fontSize="xs"
+                    borderRadius="md"
+                    px={2}
+                    py={1}
+                  >
+                    ${carbonData.cost_analysis.estimated_cost}
                   </Badge>
                 </Tooltip>
               )}
 
-              {/* Real Cost from API */}
-              {carbonData?.cost_analysis?.estimated_cost ? (
-                <Tooltip label={`Estimated Cost: $${carbonData.cost_analysis.estimated_cost}`}>
-                  <HStack spacing={1}>
-                    <Text fontSize="xs" color="gray.600">
-                      ${carbonData.cost_analysis.estimated_cost}
-                    </Text>
-                  </HStack>
-                </Tooltip>
-              ) : eventData.hasQuantifiableData ? (
-                <Tooltip label="Cost data not available for this event type">
-                  <Text fontSize="xs" color="gray.400">
-                    Cost: N/A
-                  </Text>
-                </Tooltip>
-              ) : null}
-
-              {/* QR Visibility (based on consumer relevance) */}
+              {/* QR Visibility */}
               <Tooltip
-                label={`QR Code Visibility: ${qrVisibility} - How relevant this is to consumers`}>
+                label={`QR Code Visibility: ${qrVisibility} - Consumer relevance level`}
+              >
                 <HStack spacing={1}>
                   <Icon
                     as={
@@ -364,16 +403,16 @@ function TimelineRow(props: TimelineRowProps) {
                         ? 'yellow.500'
                         : 'gray.400'
                     }
-                    boxSize="12px"
+                    boxSize="10px"
                   />
-                  <Text fontSize="xs" color="gray.600" textTransform="capitalize">
+                  <Text fontSize="xs" color="gray.500" textTransform="capitalize">
                     {qrVisibility}
                   </Text>
                 </HStack>
               </Tooltip>
 
-              {/* Real Efficiency Score from API */}
-              {carbonData?.efficiency_score && carbonData.efficiency_score > 0 ? (
+              {/* Efficiency Score */}
+              {carbonData?.efficiency_score && carbonData.efficiency_score > 0 && (
                 <Tooltip label={`Efficiency Score: ${carbonData.efficiency_score}/100`}>
                   <Badge
                     colorScheme={
@@ -384,30 +423,37 @@ function TimelineRow(props: TimelineRowProps) {
                         : 'red'
                     }
                     variant="subtle"
-                    fontSize="xs">
+                    fontSize="xs"
+                    borderRadius="md"
+                    px={2}
+                    py={1}
+                  >
                     {carbonData.efficiency_score}/100
                   </Badge>
                 </Tooltip>
-              ) : null}
+              )}
             </HStack>
 
-            {/* Data Source Indicator - Updated */}
+            {/* Data Source Footer */}
             {carbonData && (
-              <Text fontSize="xs" color="gray.400">
-                {carbonData.verification_status === 'usda_certified'
-                  ? '✓ USDA Certified Data'
-                  : carbonData.verification_status === 'factors_verified' ||
-                    carbonData.usda_factors_based
-                  ? '📊 USDA Factors Used'
-                  : carbonData.error
-                  ? '⚠ Data Unavailable'
-                  : '📈 Calculated Estimate'}
-              </Text>
+              <HStack spacing={1} justify="flex-start">
+                <Text fontSize="xs" color="gray.400">
+                  {carbonData.verification_status === 'usda_certified'
+                    ? '✓ USDA Certified Data'
+                    : carbonData.verification_status === 'factors_verified' ||
+                      carbonData.usda_factors_based
+                    ? '📊 USDA Factors Used'
+                    : carbonData.error
+                    ? '⚠ Data Unavailable'
+                    : '📈 Calculated Estimate'}
+                </Text>
+              </HStack>
             )}
           </VStack>
-        </Flex>
-      </Flex>
-    </Flex>
+        </CardBody>
+      </Card>
+      </HStack>
+    </Box>
   );
 }
 

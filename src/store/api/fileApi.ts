@@ -8,7 +8,7 @@ export const fileApi = baseApi.injectEndpoints({
       { filename: string; fileType: string; folder?: string }
     >({
       query: (data) => ({
-        url: '/api/get-presigned-url/',
+        url: 'get-presigned-url/',
         method: 'POST',
         body: data
       })
@@ -21,7 +21,7 @@ export const fileApi = baseApi.injectEndpoints({
         console.log('Sending FormData:', formData);
 
         return {
-          url: '/api/local-upload/',
+          url: 'local-upload/',
           method: 'POST',
           body: formData,
           formData: true,
