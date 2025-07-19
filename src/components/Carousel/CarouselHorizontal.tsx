@@ -3,6 +3,7 @@ import { Button, Flex, Grid, Icon, Text, useColorModeValue, useDisclosure } from
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useBatchS3Images } from 'hooks/useBatchS3Images';
+import { useSelector } from 'react-redux';
 
 import BgMusicCard from 'assets/img/BgMusicCard.png';
 // Custom components
@@ -29,6 +30,37 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
   const intl = useIntl();
   const navigate = useNavigate();
   const { establishmentId } = useParams();
+
+  // Subscription limits check for parcel creation
+  const company = useSelector((state) => state.company?.currentCompany);
+  const canCreateParcel = useMemo(() => {
+    if (!company || !establishmentId) return false;
+    
+    const plan = company.subscription_plan || company.subscription?.plan;
+    if (!plan?.features) return false;
+    
+    // For Corporate plans with per-establishment limits
+    if (plan.features.max_parcels_per_establishment > 0) {
+      const establishment = company.establishments?.find(
+        (e) => e.id === parseInt(String(establishmentId))
+      );
+      const establishmentParcels = establishment?.parcels?.length || 0;
+      const maxParcelsPerEst = plan.features.max_parcels_per_establishment;
+      return maxParcelsPerEst === -1 || establishmentParcels < maxParcelsPerEst;
+    }
+    
+    // For Basic/Standard plans with global parcel limits
+    if (plan.features.max_parcels > 0) {
+      let totalParcels = 0;
+      company.establishments?.forEach((est) => {
+        totalParcels += est.parcels?.length || 0;
+      });
+      const maxParcels = plan.features.max_parcels;
+      return maxParcels === -1 || totalParcels < maxParcels;
+    }
+    
+    return false;
+  }, [company, establishmentId]);
 
   // 2025 Best Practice: Batch load all parcel images at once
   const parcelImageUrls = useMemo(() => {
@@ -74,30 +106,32 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
               {description}
             </Text>
           </Flex>
-          <Button
-            p="0px"
-            w={{ base: '64px', md: '77px' }}
-            h={{ base: '64px', md: '77px' }}
-            bg="transparent"
-            color="green.500"
-            borderRadius="lg"
-            border="2px dashed"
-            borderColor="gray.200"
-            _hover={{
-              bg: 'green.50',
-              borderColor: 'green.500',
-              transform: 'translateY(-1px)',
-              boxShadow: 'md'
-            }}
-            onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/add`)}
-          >
-            <Flex direction="column" justifyContent="center" align="center" h="120px">
-              <Icon as={FaPlus} w="15px" h="15px" mb="10px" />
-              <Text fontSize="md" fontWeight="bold">
-                {intl.formatMessage({ id: 'app.new' })}
-              </Text>
-            </Flex>
-          </Button>
+          {canCreateParcel && (
+            <Button
+              p="0px"
+              w={{ base: '64px', md: '77px' }}
+              h={{ base: '64px', md: '77px' }}
+              bg="transparent"
+              color="green.500"
+              borderRadius="lg"
+              border="2px dashed"
+              borderColor="gray.200"
+              _hover={{
+                bg: 'green.50',
+                borderColor: 'green.500',
+                transform: 'translateY(-1px)',
+                boxShadow: 'md'
+              }}
+              onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/add`)}
+            >
+              <Flex direction="column" justifyContent="center" align="center" h="120px">
+                <Icon as={FaPlus} w="15px" h="15px" mb="10px" />
+                <Text fontSize="md" fontWeight="bold">
+                  {intl.formatMessage({ id: 'app.new' })}
+                </Text>
+              </Flex>
+            </Button>
+          )}
         </Flex>
       </CardHeader>
       <CardBody px="5px">

@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { S3Image } from 'components/Design';
 import { useBatchS3Images } from 'hooks/useBatchS3Images';
+import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
 // Custom icons
 import {
@@ -54,7 +55,6 @@ import bgImage from 'assets/img/backgroundImage.png';
 import defaultEstablishmentImage from 'assets/img/basic-auth.png';
 // assets
 import imageFarm from 'assets/img/imageFarm.png';
-import { useSelector } from 'react-redux';
 import CarbonSummaryCard from './components/establishment/CarbonSummaryCard';
 import CarbonDashboard from './Establishment/CarbonDashboard';
 import IoTDashboard from './Establishment/IoTDashboard';
@@ -83,6 +83,21 @@ export default function DashboardView() {
 
   // const { stage, registerQueryLoad, isLoading, primaryLoaded } =
   //   useProgressiveLoading(progressiveConfig);
+
+  // Subscription limits check for establishment creation
+  const company = useSelector((state) => state.company?.currentCompany);
+  const canCreateEstablishment = useMemo(() => {
+    if (!company) return false;
+    
+    const plan = company.subscription_plan || company.subscription?.plan;
+    if (!plan?.features) return false;
+    
+    const maxEstablishments = plan.features.max_establishments || 0;
+    const currentEstablishments = company.establishments?.length || 0;
+    
+    // Check if unlimited (-1) or under limit
+    return maxEstablishments === -1 || currentEstablishments < maxEstablishments;
+  }, [company]);
 
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -377,34 +392,36 @@ export default function DashboardView() {
                       </Card>
                     </NavLink>
                   ))}
-                  <Button
-                    p="0px"
-                    w={{ base: '64px', md: '77px' }}
-                    h={{ base: '80px', md: '90px' }}
-                    bg="transparent"
-                    color="trazo.forest"
-                    borderRadius="xl"
-                    border="2px dashed"
-                    borderColor="gray.200"
-                    _hover={{
-                      bg: 'green.50',
-                      borderColor: 'trazo.forest',
-                      transform: 'translateY(-2px)',
-                      boxShadow: 'lg'
-                    }}
-                    onClick={toggleAddEstablishment}>
-                    <Flex direction="column" justifyContent="center" alignItems="center">
-                      <Icon
-                        as={FaPlus}
-                        w={{ base: '10px', md: '12px' }}
-                        h={{ base: '10px', md: '12px' }}
-                        mb={{ base: '6px', md: '8px' }}
-                      />
-                      <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="bold">
-                        {intl.formatMessage({ id: 'app.new' })}
-                      </Text>
-                    </Flex>
-                  </Button>
+                  {canCreateEstablishment && (
+                    <Button
+                      p="0px"
+                      w={{ base: '64px', md: '77px' }}
+                      h={{ base: '80px', md: '90px' }}
+                      bg="transparent"
+                      color="trazo.forest"
+                      borderRadius="xl"
+                      border="2px dashed"
+                      borderColor="gray.200"
+                      _hover={{
+                        bg: 'green.50',
+                        borderColor: 'trazo.forest',
+                        transform: 'translateY(-2px)',
+                        boxShadow: 'lg'
+                      }}
+                      onClick={toggleAddEstablishment}>
+                      <Flex direction="column" justifyContent="center" alignItems="center">
+                        <Icon
+                          as={FaPlus}
+                          w={{ base: '10px', md: '12px' }}
+                          h={{ base: '10px', md: '12px' }}
+                          mb={{ base: '6px', md: '8px' }}
+                        />
+                        <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="bold">
+                          {intl.formatMessage({ id: 'app.new' })}
+                        </Text>
+                      </Flex>
+                    </Button>
+                  )}
                 </>
               ) : (
                 <Card minH="115px" bg={cardBg} />

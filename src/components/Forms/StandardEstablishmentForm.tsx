@@ -16,19 +16,10 @@ import {
   Tag,
   TagLabel,
   TagCloseButton,
-  InputGroup,
-  InputLeftElement,
   Input,
   Select,
   Textarea,
-  Button,
-  Badge,
-  Progress,
-  Flex,
-  IconButton,
-  Image,
-  useColorModeValue,
-  Grid
+  useColorModeValue
 } from '@chakra-ui/react';
 import {
   StandardPage,
@@ -65,11 +56,8 @@ import {
   FaTrash
 } from 'react-icons/fa';
 import { MdCheck, MdLocationOn, MdDescription, MdSettings, MdImage } from 'react-icons/md';
-import { useDropzone } from 'react-dropzone';
-import { CloseIcon } from '@chakra-ui/icons';
+import { TrazoImageUpload } from '../Upload';
 
-// Services
-import { useFileUpload } from '../../services/uploadService';
 
 // Form Schema
 const establishmentSchema = object({
@@ -186,15 +174,10 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
   const [newIrrigationMethod, setNewIrrigationMethod] = useState('');
   const intl = useIntl();
   const toast = useToast();
-  const { uploadMultipleFiles } = useFileUpload();
 
-  // Image management state
-  const [existingImages, setExistingImages] = useState<Array<{ id: string; url: string }>>([]);
-  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
-  const [newImages, setNewImages] = useState<File[]>([]);
+  // Simplified image management for TrazoImageUpload
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Define steps for stepper - certifications moved to operations step
   const steps = [
@@ -255,32 +238,25 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
     console.log(`Step ${currentStep} loaded. All form values:`, allValues);
   }, [currentStep, methods]);
 
-  // Initialize existing images on edit mode
+  // Initialize existing images on edit mode for TrazoImageUpload
   useEffect(() => {
     if (isEdit && initialData?.images) {
-      const images = Array.isArray(initialData.images)
-        ? initialData.images.map((img: any, index: number) => ({
-            id: `existing-${index}`,
-            url: typeof img === 'string' ? img : img?.url || String(img)
-          }))
+      const imageUrls = Array.isArray(initialData.images)
+        ? initialData.images.map((img: any) => 
+            typeof img === 'string' ? img : img?.url || String(img)
+          ).filter(Boolean)
         : [];
-      setExistingImages(images);
+      setUploadedImageUrls(imageUrls);
     }
   }, [isEdit, initialData?.images]);
 
   const onSubmitForm = async (data: EstablishmentFormData) => {
     try {
-      // Upload any new images first
-      if (newImages.length > 0) {
-        await handleImageUpload();
-      }
-
-      // Include image management data
+      // Include uploaded image URLs
       const formDataWithImages = {
         ...data,
         uploaded_image_urls: uploadedImageUrls,
-        images_to_delete: imagesToDelete,
-        new_images: newImages.length > 0 ? newImages : undefined
+        images: uploadedImageUrls
       };
 
       await onSubmit(formDataWithImages);
@@ -476,11 +452,6 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
       return;
     }
 
-    // Handle image upload before proceeding from media step
-    if (currentStep === 3 && newImages.length > 0) {
-      await handleImageUpload();
-    }
-
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
     }
@@ -497,93 +468,6 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
     }
   };
 
-  // Image upload handlers with old form pattern
-  const handleRemoveExistingImage = (imageId: string) => {
-    const imageToRemove = existingImages.find((img) => img.id === imageId);
-    if (imageToRemove) {
-      setImagesToDelete((prev) => [...prev, imageToRemove.id]);
-      setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
-    }
-  };
-
-  const handleRemoveNewImage = (file: File) => {
-    setNewImages((prev) => prev.filter((f) => f !== file));
-  };
-
-  // Updated dropzone with proper accept format for v11.7.1
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: (acceptedFiles: File[]) => {
-      const totalImages = existingImages.length + newImages.length + acceptedFiles.length;
-      if (totalImages > 5) {
-        toast({
-          title: 'Too many images',
-          description: 'Maximum 5 images allowed',
-          status: 'warning',
-          duration: 3000
-        });
-        return;
-      }
-      setNewImages((prev) => [...prev, ...acceptedFiles]);
-    },
-    accept: 'image/*',
-    maxFiles: 5,
-    maxSize: 5 * 1024 * 1024 // 5MB
-  });
-
-  const handleImageUpload = async () => {
-    if (newImages.length === 0) {
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-
-    try {
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev: number) => Math.min(prev + 10, 90));
-      }, 200);
-
-      const urls = await uploadMultipleFiles(newImages);
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      setUploadedImageUrls((prev) => [...prev, ...urls]);
-      setNewImages([]);
-
-      toast({
-        title: 'Upload successful',
-        description: `${urls.length} image(s) uploaded successfully`,
-        status: 'success',
-        duration: 3000
-      });
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: 'Upload failed',
-        description: 'Failed to upload images. Please try again.',
-        status: 'error',
-        duration: 5000
-      });
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  };
-
-  // Enhanced form submission
-  const handleFormSubmit = async (data: EstablishmentFormData) => {
-    // Include image management data
-    const formDataWithImages = {
-      ...data,
-      uploaded_image_urls: uploadedImageUrls,
-      images_to_delete: imagesToDelete,
-      new_images: newImages
-    };
-
-    await onSubmitForm(formDataWithImages);
-  };
 
   // Step validation
   const validateStep = async (step: number): Promise<boolean> => {
@@ -629,7 +513,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
       />
 
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
+        <form onSubmit={handleSubmit(onSubmitForm)}>
           {/* Step 0: Basic Information */}
           {currentStep === 0 && (
             <StandardCard
@@ -1711,134 +1595,18 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
               subtitle="Upload images to showcase your establishment"
             >
               <VStack spacing={8} align="stretch">
-                {/* Image Upload Section */}
+                {/* 2025 Modern Image Upload */}
                 <StandardField
                   label="Images"
-                  helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
+                  helpText="Upload up to 5 high-quality images (JPG, PNG, GIF, WEBP - max 5MB each)"
                 >
-                  <VStack spacing={4}>
-                    {/* Dropzone with simplified design matching old form */}
-                    <Box
-                      {...getRootProps()}
-                      border="2px dashed #CBD5E0"
-                      borderRadius="md"
-                      p={6}
-                      mb={4}
-                      bg="gray.50"
-                      cursor="pointer"
-                      minH="120px"
-                      _hover={{ borderColor: 'blue.400', bg: 'gray.100' }}
-                      position="relative"
-                      transition="all 0.2s"
-                      w="full"
-                    >
-                      <input {...getInputProps()} />
-
-                      {/* Image Previews AT THE TOP of the dropzone like old form */}
-                      <Flex gap="16px" mb={2} flexWrap="wrap" justify="flex-start" minH="90px">
-                        {/* Existing Images */}
-                        {existingImages.map((img) => (
-                          <Box key={img.id} position="relative">
-                            <Image
-                              src={img.url}
-                              alt="Establishment"
-                              w="120px"
-                              h="80px"
-                              borderRadius="8px"
-                              objectFit="cover"
-                              border="1px solid #E2E8F0"
-                            />
-                            <IconButton
-                              aria-label="Remove image"
-                              icon={<CloseIcon />}
-                              size="xs"
-                              position="absolute"
-                              top="4px"
-                              right="4px"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveExistingImage(img.id);
-                              }}
-                            />
-                          </Box>
-                        ))}
-
-                        {/* New Images */}
-                        {newImages.map((file, idx) => {
-                          const url = URL.createObjectURL(file);
-                          return (
-                            <Box key={file.name + idx} position="relative">
-                              <Image
-                                src={url}
-                                alt={file.name}
-                                w="120px"
-                                h="80px"
-                                borderRadius="8px"
-                                objectFit="cover"
-                                border="1px solid #E2E8F0"
-                              />
-                              <IconButton
-                                aria-label="Remove new image"
-                                icon={<CloseIcon />}
-                                size="xs"
-                                position="absolute"
-                                top="4px"
-                                right="4px"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemoveNewImage(file);
-                                }}
-                              />
-                            </Box>
-                          );
-                        })}
-                      </Flex>
-
-                      {/* Instructions matching old form structure */}
-                      <Flex direction="column" align="center" justify="center">
-                        <Icon as={FaCloudUploadAlt} boxSize={12} color="gray.400" mb={2} />
-                        <Text color="gray.500" fontSize="sm" mb={2} textAlign="center">
-                          {isDragActive
-                            ? 'Drop images here...'
-                            : existingImages.length + newImages.length > 0
-                            ? 'Drop more images here or click to select'
-                            : 'Drag & drop images here, or click to select'}
-                        </Text>
-                        <Text color="gray.400" fontSize="xs" textAlign="center">
-                          Maximum 5 images. JPG, PNG, GIF format, up to 5MB each.
-                        </Text>
-                        {existingImages.length + newImages.length >= 5 && (
-                          <Text color="red.500" fontSize="sm" mt={2} textAlign="center">
-                            Maximum of 5 images reached.
-                          </Text>
-                        )}
-                      </Flex>
-                    </Box>
-
-                    {/* Upload Progress */}
-                    {isUploading && (
-                      <Box w="full">
-                        <Text fontSize="sm" mb={2}>
-                          Uploading images... {uploadProgress}%
-                        </Text>
-                        <Progress value={uploadProgress} colorScheme="green" borderRadius="full" />
-                      </Box>
-                    )}
-
-                    {/* Upload Button for New Images */}
-                    {newImages.length > 0 && (
-                      <Button
-                        onClick={handleImageUpload}
-                        isLoading={isUploading}
-                        loadingText="Uploading..."
-                        colorScheme="green"
-                        leftIcon={<FaCloudUploadAlt />}
-                        size="lg"
-                      >
-                        Upload {newImages.length} Image{newImages.length > 1 ? 's' : ''}
-                      </Button>
-                    )}
-                  </VStack>
+                  <TrazoImageUpload
+                    maxFiles={5}
+                    maxSize={5 * 1024 * 1024} // 5MB
+                    existingImages={uploadedImageUrls}
+                    onImagesChange={setUploadedImageUrls}
+                    isLoading={isUploading}
+                  />
                 </StandardField>
 
                 {/* Navigation */}

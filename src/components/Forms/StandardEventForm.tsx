@@ -34,6 +34,7 @@ import {
   StandardAlert,
   StandardGrid
 } from '../Design/StandardComponents';
+import { TrazoImageUpload } from '../Upload';
 import {
   FaCloud,
   FaSeedling,
@@ -171,6 +172,7 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
     ...initialData
   });
   const [estimatedCarbonImpact, setEstimatedCarbonImpact] = useState<number | null>(null);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
 
   const intl = useIntl();
   const toast = useToast();
@@ -195,7 +197,14 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
       return;
     }
 
-    onSubmit(formData);
+    // Include uploaded images in form submission
+    const finalData = {
+      ...formData,
+      uploaded_image_urls: uploadedImageUrls,
+      images: uploadedImageUrls
+    };
+
+    onSubmit(finalData);
   };
 
   // Calculate estimated carbon impact based on event type
@@ -450,26 +459,18 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
               />
             </StandardField>
 
-            {/* Photo Upload Placeholder */}
+            {/* 2025 Modern Image Upload */}
             <StandardField
-              label="Photos"
-              helpText="Add photos to document this event (coming soon)"
+              label="Event Photos"
+              helpText="Upload up to 5 high-quality images to document this event (JPG, PNG, GIF, WEBP - max 5MB each)"
             >
-              <Box
-                p={8}
-                borderRadius="lg"
-                border="2px dashed"
-                borderColor="gray.300"
-                textAlign="center"
-                bg="gray.50"
-              >
-                <VStack spacing={2}>
-                  <Icon as={FaCamera} boxSize={8} color="gray.400" />
-                  <Text color="gray.500" fontSize="sm">
-                    Photo upload will be available in the next update
-                  </Text>
-                </VStack>
-              </Box>
+              <TrazoImageUpload
+                maxFiles={5}
+                maxSize={5 * 1024 * 1024} // 5MB
+                existingImages={uploadedImageUrls}
+                onImagesChange={setUploadedImageUrls}
+                isLoading={false}
+              />
             </StandardField>
 
             {/* Step 2 Actions */}

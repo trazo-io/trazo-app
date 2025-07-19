@@ -73,8 +73,7 @@ import { setEstablishmentParcel } from 'store/features/companySlice';
 import { setParcel } from 'store/features/productSlice';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
-import { useFileUpload } from '../../../../../services/uploadService';
-import { StandardMediaUpload } from 'components/Design/StandardComponents';
+import { TrazoImageUpload } from 'components/Upload';
 const formSchemaInfo = object({
   name: string().min(1, 'Name is required'),
   area: string().min(1, 'Area is required')
@@ -182,9 +181,6 @@ function NewParcel() {
   const certificationTab = useRef();
 
   // 2025 Best Practice: Use standardized upload system
-  const { uploadMultipleFiles } = useFileUpload();
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
   const toast = useToast();
 
@@ -285,57 +281,6 @@ function NewParcel() {
   const certificateValue = watch('certificate');
 
   const [updateParcel, { data, error, isSuccess, isLoading }] = useUpdateParcelMutation();
-
-  // 2025 Best Practice: Standardized file upload handlers
-  const handleFilesChange = (files) => {
-    setSelectedFiles(files);
-    console.log('✅ [EditParcel] Selected files:', files);
-  };
-
-  const handleFileUpload = async () => {
-    if (selectedFiles.length === 0) {
-      toast({
-        title: intl.formatMessage({ id: 'app.noFilesSelected' }),
-        description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
-        status: 'warning',
-        duration: 3000,
-        isClosable: true
-      });
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      console.log('🚀 [EditParcel] Starting file upload...', selectedFiles);
-      
-      const urls = await uploadMultipleFiles(selectedFiles);
-      console.log('✅ [EditParcel] Upload successful:', urls);
-
-      setUploadedImageUrls(urls);
-
-      toast({
-        title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-        description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-
-      // Upload complete - user can manually proceed to next step
-    } catch (error) {
-      console.error('❌ [EditParcel] Upload failed:', error);
-      toast({
-        title: intl.formatMessage({ id: 'app.uploadError' }),
-        description: error.message || intl.formatMessage({ id: 'app.fileUploadFailed' }),
-        status: 'error',
-        duration: 5000,
-        isClosable: true
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const onSubmitCertificate = (data) => {
     const { product, ...currentParcelData } = currentParcel;
@@ -480,8 +425,7 @@ function NewParcel() {
                     mt="24px"
                     w="100px"
                     h="35px"
-                    type="submit"
-                  >
+                    type="submit">
                     <Text fontSize="xs" color="#fff" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.next' })}
                     </Text>
@@ -611,8 +555,7 @@ function NewParcel() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      onClick={() => mainInfoTab.current.click()}
-                    >
+                      onClick={() => mainInfoTab.current.click()}>
                       <Text fontSize="xs" color="gray.700" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.prev' })}
                       </Text>
@@ -624,8 +567,7 @@ function NewParcel() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      type="submit"
-                    >
+                      type="submit">
                       <Text fontSize="xs" color="#fff" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.next' })}
                       </Text>
@@ -649,38 +591,27 @@ function NewParcel() {
               <Text color={textColor} fontSize="sm" fontWeight="bold" mb="12px">
                 {intl.formatMessage({ id: 'app.parcelImages' })}
               </Text>
-              {/* 2025 Best Practice: StandardMediaUpload Component */}
-              <StandardMediaUpload
-                onFilesChange={handleFilesChange}
-                acceptedFiles={selectedFiles}
+              {/* 2025 Best Practice: TrazoImageUpload Component */}
+              <TrazoImageUpload
+                onUploadComplete={(urls) => {
+                  setUploadedImageUrls(urls);
+                  toast({
+                    title: intl.formatMessage({ id: 'app.uploadSuccess' }),
+                    description: intl.formatMessage(
+                      { id: 'app.filesUploaded' },
+                      { count: urls.length }
+                    ),
+                    status: 'success',
+                    duration: 3000,
+                    isClosable: true
+                  });
+                  // Upload complete - user can manually proceed to next step
+                }}
                 maxFiles={5}
                 maxSize={5 * 1024 * 1024} // 5MB
-                accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
-                placeholder={intl.formatMessage({ id: 'app.dropFilesHereToUpload' })}
-                description="Upload up to 5 high-quality images (max 5MB each)"
-                variant="default"
-                previewMode="grid"
-                height="200px"
+                existingImages={uploadedImageUrls}
+                onImagesChange={setUploadedImageUrls}
               />
-
-              {/* Upload Button */}
-              <Button
-                bg="green.500"
-                color="white"
-                _hover={{ bg: "green.600", transform: "translateY(-1px)" }}
-                _active={{ bg: "green.700" }}
-                onClick={handleFileUpload}
-                isLoading={isUploading}
-                loadingText={intl.formatMessage({ id: 'app.uploading' })}
-                mt="16px"
-                h="44px"
-                borderRadius="xl"
-                fontSize="sm"
-                fontWeight="600"
-                isDisabled={selectedFiles.length === 0}
-              >
-                {intl.formatMessage({ id: 'app.uploadImages' }) || 'Upload Images'}
-              </Button>
               <Flex justify="space-between" mt="24px">
                 <Button
                   variant="no-hover"
@@ -688,8 +619,7 @@ function NewParcel() {
                   alignSelf="flex-end"
                   w="100px"
                   h="35px"
-                  onClick={() => descriptionTab.current.click()}
-                >
+                  onClick={() => descriptionTab.current.click()}>
                   <Text fontSize="xs" color="gray.700" fontWeight="bold">
                     {intl.formatMessage({ id: 'app.prev' })}
                   </Text>
@@ -700,8 +630,7 @@ function NewParcel() {
                   alignSelf="flex-end"
                   w="100px"
                   h="35px"
-                  onClick={() => certificationTab.current.click()}
-                >
+                  onClick={() => certificationTab.current.click()}>
                   <Text fontSize="xs" color="#fff" fontWeight="bold">
                     {intl.formatMessage({ id: 'app.next' })}
                   </Text>
@@ -720,8 +649,7 @@ function NewParcel() {
               justify="center"
               textAlign="center"
               w="80%"
-              mx="auto"
-            >
+              mx="auto">
               <Text color={textColor} fontSize="lg" fontWeight="bold" mb="4px">
                 {intl.formatMessage({ id: 'app.doYouWantToCertificateThisParcel' })}
               </Text>
@@ -738,8 +666,7 @@ function NewParcel() {
                 <FormProvider {...methodsCertificate}>
                   <form
                     onSubmit={handleSubmitCertificate(onSubmitCertificate)}
-                    style={{ width: '100%' }}
-                  >
+                    style={{ width: '100%' }}>
                     <FormControl display="flex" alignItems="center" mb="25px">
                       <Switch
                         id="certificate"
@@ -779,8 +706,7 @@ function NewParcel() {
                         mt="24px"
                         w={{ sm: '75px', lg: '100px' }}
                         h="35px"
-                        onClick={() => mediaTab.current.click()}
-                      >
+                        onClick={() => mediaTab.current.click()}>
                         <Text fontSize="xs" color="gray.700" fontWeight="bold">
                           {intl.formatMessage({ id: 'app.prev' })}
                         </Text>
@@ -794,8 +720,7 @@ function NewParcel() {
                         mt="24px"
                         w={{ sm: '75px', lg: '100px' }}
                         h="35px"
-                        type="submit"
-                      >
+                        type="submit">
                         {isLoading ? (
                           <CircularProgress isIndeterminate value={1} color="#313860" size="25px" />
                         ) : (

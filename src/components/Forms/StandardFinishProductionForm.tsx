@@ -25,6 +25,7 @@ import {
   StandardAlert,
   StandardStepper
 } from '../Design/StandardComponents';
+import { TrazoImageUpload } from '../Upload';
 import { FaLeaf, FaCalendarAlt, FaCamera, FaUpload, FaImage, FaTrash } from 'react-icons/fa';
 import { MdDescription, MdInventory, MdNumbers } from 'react-icons/md';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -55,7 +56,7 @@ type FormStateData = {
 };
 
 interface StandardFinishProductionFormProps {
-  onSubmit: (data: FinishProductionFormData & { images: File[] }) => void;
+  onSubmit: (data: FinishProductionFormData & { uploaded_image_urls: string[]; images: string[] }) => void;
   onCancel: () => void;
   initialData?: Partial<FinishProductionFormData>;
   isLoading?: boolean;
@@ -73,8 +74,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   productName = '',
   parcelName = ''
 }) => {
-  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   // Enhanced state management for persisting form data across steps
   const [savedFormData, setSavedFormData] = useState<Partial<FormStateData>>({});
@@ -139,39 +139,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     }
   }, [currentStep, savedFormData, setValue]);
 
-  // Handle files change for StandardMediaUpload
-  const handleFilesChange = (files: File[]) => {
-    const newImages = [...uploadedImages, ...files].slice(0, 5);
-    setUploadedImages(newImages);
-
-    // Create preview URLs
-    const newUrls = newImages.map((file) => URL.createObjectURL(file));
-    setPreviewUrls((current) => {
-      // Clean up old URLs
-      current.forEach((url) => URL.revokeObjectURL(url));
-      return newUrls;
-    });
-
-    toast({
-      title: 'Images uploaded',
-      description: `${files.length} image(s) added successfully`,
-      status: 'success',
-      duration: 3000,
-      isClosable: true
-    });
-  };
-
-  // Remove image handler
-  const removeImage = (index: number) => {
-    const newImages = uploadedImages.filter((_, i) => i !== index);
-    const newUrls = previewUrls.filter((_, i) => i !== index);
-
-    // Clean up removed URL
-    URL.revokeObjectURL(previewUrls[index]);
-
-    setUploadedImages(newImages);
-    setPreviewUrls(newUrls);
-  };
 
   // Enhanced form submission handler
   const onSubmitForm = (data: FormStateData) => {
@@ -179,7 +146,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
       console.log('🚀 Form submission triggered!');
       console.log('📋 Current form data:', data);
       console.log('💾 Saved form data:', savedFormData);
-      console.log('📷 Uploaded images:', uploadedImages);
+      console.log('📷 Uploaded images:', uploadedImageUrls);
 
       // Merge current form data with saved data to ensure all fields are included
       const mergedData = {
@@ -199,7 +166,8 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
       const finalData = {
         ...finalFormData,
-        images: uploadedImages
+        uploaded_image_urls: uploadedImageUrls,
+        images: uploadedImageUrls
       };
 
       console.log('📦 Final data to submit:', finalData);
@@ -260,12 +228,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     }
   };
 
-  // Cleanup preview URLs on unmount
-  useEffect(() => {
-    return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [previewUrls]);
 
   // Enhanced step progression logic with proper data persistence
   const nextStep = () => {
@@ -531,22 +493,17 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                     }
                     helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
                   >
-                    <StandardMediaUpload
-                      onFilesChange={handleFilesChange}
-                      acceptedFiles={uploadedImages}
+                    <TrazoImageUpload
                       maxFiles={5}
                       maxSize={5 * 1024 * 1024} // 5MB
-                      accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
-                      placeholder="Drag and drop images here, or click to select"
-                      description="Upload up to 5 images, max 5MB each"
-                      variant="default"
-                      previewMode="grid"
-                      height="280px"
+                      existingImages={uploadedImageUrls}
+                      onImagesChange={setUploadedImageUrls}
+                      isLoading={false}
                     />
                   </StandardField>
 
                   {/* Upload Limit Notice */}
-                  {uploadedImages.length >= 5 && (
+                  {uploadedImageUrls.length >= 5 && (
                     <StandardAlert
                       status="info"
                       title="Upload Limit Reached"

@@ -83,9 +83,9 @@ import {
   StandardButton,
   StandardField,
   StandardInput,
-  StandardStepper,
-  StandardMediaUpload
+  StandardStepper
 } from 'components/Design/StandardComponents';
+import { TrazoImageUpload } from 'components/Upload';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
@@ -1306,18 +1306,21 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             label={intl.formatMessage({ id: 'app.eventPhotos' }) || 'Event Photos'}
                             helpText="Upload photos documenting this agricultural event"
                           >
-                            <StandardMediaUpload
-                              onFilesChange={setAcceptedFiles}
-                              acceptedFiles={acceptedFiles}
+                            <TrazoImageUpload
+                              onUploadComplete={(urls) => {
+                                setAcceptedFiles(urls.map(url => ({ url })));
+                                toast({
+                                  title: intl.formatMessage({ id: 'app.uploadSuccess' }),
+                                  description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
+                                  status: 'success',
+                                  duration: 3000,
+                                  isClosable: true
+                                });
+                              }}
                               maxFiles={5}
-                              placeholder={
-                                intl.formatMessage({ id: 'app.dragDropPhotos' }) ||
-                                'Drag & drop photos here, or click to select'
-                              }
-                              description={
-                                intl.formatMessage({ id: 'app.maxFiles' }) ||
-                                'Maximum 5 files, up to 10MB each'
-                              }
+                              maxSize={10 * 1024 * 1024} // 10MB
+                              existingImages={acceptedFiles.map(f => f.url).filter(Boolean)}
+                              onImagesChange={(urls) => setAcceptedFiles(urls.map(url => ({ url })))}
                             />
                           </StandardField>
 

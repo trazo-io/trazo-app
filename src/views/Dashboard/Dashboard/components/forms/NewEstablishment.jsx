@@ -66,14 +66,13 @@ import { addCompanyEstablishment } from 'store/features/companySlice';
 import avatar4 from 'assets/img/avatars/avatar4.png';
 import imageMap from 'assets/img/imageMap.png';
 import { useCreateEstablishmentMutation } from 'store/api/companyApi';
-import { StandardMediaUpload } from 'components/Design/StandardComponents';
+import { TrazoImageUpload } from 'components/Upload';
 import { useGoogleMap } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 import { useS3Upload } from 'hooks/useS3Upload';
 import { useFormContext } from 'react-hook-form';
-import { useFileUpload } from '../../../../../services/uploadService';
 import useSubscriptionCheck from 'hooks/useSubscriptionCheck';
 import SubscriptionLimitModal from 'components/Modals/SubscriptionLimitModal';
 import { InfoOutlineIcon } from '@chakra-ui/icons';
@@ -228,9 +227,6 @@ function NewEstablishment() {
 
   const mediaFormMethods = useForm();
 
-  const { uploadMultipleFiles } = useFileUpload();
-
-  const [isUploading, setIsUploading] = useState(false);
   const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
 
   const toast = useToast();
@@ -353,61 +349,6 @@ function NewEstablishment() {
     }
   ];
 
-  const [selectedFiles, setSelectedFiles] = useState([]);
-
-  const handleFilesChange = (files) => {
-    setSelectedFiles(files);
-    console.log('Selected files:', files);
-  };
-
-  // 2025 Best Practice: Streamlined upload with proper error handling
-  const handleFileUpload = async () => {
-    if (selectedFiles.length === 0) {
-      toast({
-        title: intl.formatMessage({ id: 'app.noFilesSelected' }),
-        description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
-        status: 'warning',
-        duration: 3000,
-        isClosable: true
-      });
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      console.log('🚀 [NewEstablishment] Starting file upload...', selectedFiles);
-      
-      // Upload all files using the standardized service
-      const urls = await uploadMultipleFiles(selectedFiles);
-      console.log('✅ [NewEstablishment] Upload successful:', urls);
-
-      // Store the uploaded URLs
-      setUploadedImageUrls(urls);
-
-      toast({
-        title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-        description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-
-      // Auto-proceed to next step
-      socialsTab.current.click();
-    } catch (error) {
-      console.error('❌ [NewEstablishment] Upload failed:', error);
-      toast({
-        title: intl.formatMessage({ id: 'app.uploadError' }),
-        description: error.message || intl.formatMessage({ id: 'app.fileUploadFailed' }),
-        status: 'error',
-        duration: 5000,
-        isClosable: true
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   // Removed handleDirectFileUpload - using only the standardized upload service
 
@@ -950,34 +891,30 @@ function NewEstablishment() {
             <CardBody>
               <FormProvider {...mediaFormMethods}>
                 <Flex direction="column" w="100%">
-                  <StandardMediaUpload
-                    onFilesChange={handleFilesChange}
-                    acceptedFiles={selectedFiles}
-                    uploadedFiles={uploadedImageUrls}
+                  <TrazoImageUpload
+                    onUploadComplete={(urls) => {
+                      setUploadedImageUrls(urls);
+                      toast({
+                        title: intl.formatMessage({ id: 'app.uploadSuccess' }),
+                        description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
+                        status: 'success',
+                        duration: 3000,
+                        isClosable: true
+                      });
+                      // Auto-advance to next tab
+                      socialsTab.current.click();
+                    }}
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
-                    accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
-                    placeholder={intl.formatMessage({
-                      id: 'app.dropFilesHereToUpload',
-                      defaultMessage: 'Drag & drop images here or click to select'
-                    })}
-                    description={intl.formatMessage({
-                      id: 'app.mediaHelper',
-                      defaultMessage:
-                        'Upload up to 5 high-quality images. Great photos build trust with your customers.'
-                    })}
-                    variant="default"
-                    previewMode="grid"
-                    height="200px"
-                    isUploading={isUploading}
-                    showFileNames={true}
+                    existingImages={uploadedImageUrls}
+                    onImagesChange={setUploadedImageUrls}
                   />
-                  <Flex justify="space-between">
+                  
+                  <Flex justify="space-between" mt={6}>
                     <Button
                       variant="no-hover"
                       bg={bgPrevButton}
                       alignSelf="flex-end"
-                      mt="24px"
                       w="100px"
                       h="35px"
                       onClick={() => descriptionTab.current.click()}
@@ -990,18 +927,12 @@ function NewEstablishment() {
                       variant="no-hover"
                       bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
                       alignSelf="flex-end"
-                      mt="24px"
                       w="100px"
                       h="35px"
-                      onClick={handleFileUpload}
-                      isLoading={isUploading}
-                      loadingText={intl.formatMessage({
-                        id: 'app.uploading',
-                        defaultMessage: 'Subiendo...'
-                      })}
+                      onClick={() => socialsTab.current.click()}
                     >
                       <Text fontSize="xs" color="#fff" fontWeight="bold">
-                        {intl.formatMessage({ id: 'app.upload', defaultMessage: 'Subir' })}
+                        {intl.formatMessage({ id: 'app.next' })}
                       </Text>
                     </Button>
                   </Flex>

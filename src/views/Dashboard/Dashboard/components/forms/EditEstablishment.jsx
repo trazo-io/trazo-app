@@ -71,8 +71,7 @@ import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 import { InfoOutlineIcon, CloseIcon } from '@chakra-ui/icons';
-import { useFileUpload } from '../../../../../services/uploadService';
-import { StandardMediaUpload } from '../../../../../components/Design/StandardComponents';
+import { TrazoImageUpload } from 'components/Upload';
 import CarbonFootprintTab from './CarbonFootprintTab';
 
 const formSchemaInfo = object({
@@ -324,14 +323,11 @@ function EditEstablishment() {
   const mediaTab = useRef();
   const socialsTab = useRef();
 
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
   const [isImageUploadOnly, setIsImageUploadOnly] = useState(false);
 
   const [existingImages, setExistingImages] = useState([]);
   const [imagesToDelete, setImagesToDelete] = useState([]);
-  const [selectedFiles, setSelectedFiles] = useState([]);
 
   // On mount, set existingImages from establishment data
   useEffect(() => {
@@ -341,43 +337,6 @@ function EditEstablishment() {
     }
   }, [establishment]);
 
-  // Handle selected files from StandardMediaUpload
-  const handleFilesChange = (files) => {
-    setSelectedFiles(files);
-  };
-
-  // Handle removing selected files
-  const handleRemoveSelectedFile = (file) => {
-    setSelectedFiles((prev) => prev.filter((f) => f !== file));
-  };
-
-  // Handle removing uploaded files (existing images)
-  const handleRemoveUploadedFile = (index, url) => {
-    console.log('handleRemoveUploadedFile called with:', { index, url });
-    console.log('existingImages:', existingImages);
-
-    // Find the image object by URL in existingImages
-    const imageToDelete = existingImages.find((img) => img.url === url);
-    console.log('imageToDelete:', imageToDelete);
-
-    if (imageToDelete) {
-      // Only add to imagesToDelete if it's a real database ID (not temporary)
-      if (!imageToDelete.id.toString().startsWith('new-') && !imageToDelete.is_new) {
-        console.log('Adding to imagesToDelete:', imageToDelete.id);
-        setImagesToDelete((prev) => {
-          const newArray = [...prev, imageToDelete.id];
-          console.log('New imagesToDelete array:', newArray);
-          return newArray;
-        });
-      } else {
-        console.log('Skipping deletion of temporary image:', imageToDelete.id);
-      }
-      // Always remove from UI
-      setExistingImages((prev) => prev.filter((img) => img.id !== imageToDelete.id));
-    } else {
-      console.log('Image not found in existingImages');
-    }
-  };
 
   // Chakra color mode
   const textColor = useColorModeValue('gray.700', 'white');
@@ -417,7 +376,6 @@ function EditEstablishment() {
   const { reset: socialsReset, handleSubmit: socialsSubmit } = socialsMethods;
 
   const toast = useToast();
-  const { uploadMultipleFiles } = useFileUpload();
 
   const onSubmitInfo = (data) => {
     // Clean up empty optional fields before saving
@@ -588,90 +546,6 @@ function EditEstablishment() {
     }
   ];
 
-  const handleFileUpload = async () => {
-    // If there are no images at all, block and show warning
-    if (existingImages.length + selectedFiles.length === 0) {
-      toast({
-        title: intl.formatMessage({ id: 'app.noFilesSelected' }),
-        description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
-        status: 'warning',
-        duration: 5000,
-        isClosable: true
-      });
-      return;
-    }
-    // If no changes, just proceed to next step
-    if (selectedFiles.length === 0 && imagesToDelete.length === 0) {
-      socialsTab.current.click();
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadProgress(0);
-    setIsImageUploadOnly(true);
-
-    try {
-      // Upload new images and get URLs
-      const urls = selectedFiles.length > 0 ? await uploadMultipleFiles(selectedFiles) : [];
-      setUploadedImageUrls(urls);
-      setUploadProgress(100);
-
-      // Add newly uploaded images to existingImages immediately to show in UI
-      if (urls.length > 0) {
-        const newImageObjects = urls.map((url, index) => ({
-          id: `new-${Date.now()}-${index}`, // Temporary ID until backend responds
-          url: url,
-          is_new: true
-        }));
-        setExistingImages((prev) => [...prev, ...newImageObjects]);
-      }
-
-      // Call API with images_to_delete and uploaded_image_urls
-      console.log('About to call editEstablishment with:', {
-        images_to_delete: imagesToDelete,
-        uploaded_image_urls: urls
-      });
-
-      editEstablishment({
-        companyId: currentCompany.id,
-        establishmentId,
-        establishmentData: {
-          ...currentEstablishment,
-          images_to_delete: imagesToDelete,
-          uploaded_image_urls: urls
-        }
-      });
-
-      // Clear selected files after successful upload
-      setSelectedFiles([]);
-      setImagesToDelete([]);
-
-      toast({
-        title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-        description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
-        status: 'success',
-        duration: 5000,
-        isClosable: true
-      });
-      socialsTab.current.click();
-    } catch (error) {
-      console.error('Error uploading files:', error);
-      toast({
-        title: intl.formatMessage({ id: 'app.uploadError' }),
-        description: intl.formatMessage({ id: 'app.fileUploadFailed' }),
-        status: 'error',
-        duration: 5000,
-        isClosable: true
-      });
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      // Reset flag in case of error
-      if (!isSuccessEstablishment) {
-        setIsImageUploadOnly(false);
-      }
-    }
-  };
 
   return (
     <FormLayout tabsList={tabsList} activeBullets={activeBullets}>
@@ -1189,28 +1063,82 @@ function EditEstablishment() {
                     defaultMessage: 'Imágenes del establecimiento'
                   })}
                 </Text>
-                {/* Enhanced StandardMediaUpload */}
-                <StandardMediaUpload
-                  onFilesChange={handleFilesChange}
-                  acceptedFiles={selectedFiles}
-                  uploadedFiles={existingImages.map((img) => img.url)}
-                  isUploading={isUploading}
-                  uploadProgress={uploadProgress}
-                  onRemoveFile={handleRemoveSelectedFile}
-                  onRemoveUploadedFile={handleRemoveUploadedFile}
+                {/* 2025 Modern TrazoImageUpload */}
+                <TrazoImageUpload
+                  onUploadComplete={(urls) => {
+                    // Handle the complete upload flow
+                    setUploadedImageUrls(urls);
+                    
+                    // Add newly uploaded images to existingImages for immediate UI feedback
+                    if (urls.length > 0) {
+                      const newImageObjects = urls.map((url, index) => ({
+                        id: `new-${Date.now()}-${index}`,
+                        url: url,
+                        is_new: true
+                      }));
+                      setExistingImages((prev) => [...prev, ...newImageObjects]);
+                    }
+
+                    // Call the API to save changes
+                    setIsImageUploadOnly(true);
+                    editEstablishment({
+                      companyId: currentCompany.id,
+                      establishmentId,
+                      establishmentData: {
+                        ...currentEstablishment,
+                        images_to_delete: imagesToDelete,
+                        uploaded_image_urls: urls
+                      }
+                    });
+
+                    // Clear states
+                    setSelectedFiles([]);
+                    setImagesToDelete([]);
+
+                    toast({
+                      title: intl.formatMessage({ id: 'app.uploadSuccess' }),
+                      description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
+                      status: 'success',
+                      duration: 3000,
+                      isClosable: true
+                    });
+
+                    // Auto-advance to next tab
+                    socialsTab.current.click();
+                  }}
                   maxFiles={5}
-                  helpText={intl.formatMessage({
-                    id: 'app.mediaHelper',
-                    defaultMessage:
-                      'Puedes subir hasta 5 imágenes. Imágenes de alta calidad ayudan a generar confianza.'
-                  })}
+                  maxSize={5 * 1024 * 1024} // 5MB
+                  existingImages={existingImages.map((img) => img.url)}
+                  onImagesChange={(urls) => {
+                    // Handle real-time image changes (additions/removals)
+                    const currentUrls = existingImages.map(img => img.url);
+                    
+                    // Find removed images
+                    const removedUrls = currentUrls.filter(url => !urls.includes(url));
+                    removedUrls.forEach(url => {
+                      const imageToDelete = existingImages.find(img => img.url === url);
+                      if (imageToDelete && !imageToDelete.id.toString().startsWith('new-') && !imageToDelete.is_new) {
+                        setImagesToDelete(prev => [...prev, imageToDelete.id]);
+                      }
+                    });
+
+                    // Update existingImages to match the new URL list
+                    const updatedImages = urls.map((url, index) => {
+                      const existing = existingImages.find(img => img.url === url);
+                      return existing || {
+                        id: `temp-${Date.now()}-${index}`,
+                        url: url,
+                        is_new: true
+                      };
+                    });
+                    setExistingImages(updatedImages);
+                  }}
                 />
-                <Flex justify="space-between">
+                <Flex justify="space-between" mt={6}>
                   <Button
                     variant="no-hover"
                     bg={bgPrevButton}
                     alignSelf="flex-end"
-                    mt="24px"
                     w="100px"
                     h="35px"
                     onClick={() => descriptionTab.current.click()}
@@ -1223,19 +1151,12 @@ function EditEstablishment() {
                     variant="no-hover"
                     bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
                     alignSelf="flex-end"
-                    mt="24px"
                     w="100px"
                     h="35px"
-                    onClick={handleFileUpload}
-                    isLoading={isUploading}
-                    loadingText={intl.formatMessage({
-                      id: 'app.uploading',
-                      defaultMessage: 'Subiendo...'
-                    })}
-                    isDisabled={existingImages.length + selectedFiles.length > 5}
+                    onClick={() => socialsTab.current.click()}
                   >
                     <Text fontSize="xs" color="#fff" fontWeight="bold">
-                      {intl.formatMessage({ id: 'app.upload', defaultMessage: 'Subir' })}
+                      {intl.formatMessage({ id: 'app.next' })}
                     </Text>
                   </Button>
                 </Flex>

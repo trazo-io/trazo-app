@@ -37,7 +37,7 @@ import { MdDescription, MdInventory, MdNumbers } from 'react-icons/md';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { StandardMediaUpload } from '../../../../../components/Design/StandardComponents';
+import { TrazoImageUpload } from 'components/Upload';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -105,27 +105,6 @@ function FinishProduction() {
     formState: { errors }
   } = methods;
 
-  // Handle files change for StandardMediaUpload
-  const handleFilesChange = (files) => {
-    const newImages = [...uploadedImages, ...files].slice(0, 5);
-    setUploadedImages(newImages);
-
-    // Create preview URLs
-    const newUrls = newImages.map((file) => URL.createObjectURL(file));
-    setPreviewUrls((current) => {
-      // Clean up old URLs
-      current.forEach((url) => URL.revokeObjectURL(url));
-      return newUrls;
-    });
-
-    toast({
-      title: 'Images uploaded',
-      description: `${files.length} image(s) added successfully`,
-      status: 'success',
-      duration: 3000,
-      isClosable: true
-    });
-  };
 
   // Remove image handler
   const removeImage = (index) => {
@@ -368,20 +347,26 @@ function FinishProduction() {
                     }
                     helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
                   >
-                    <StandardMediaUpload
-                      onFilesChange={handleFilesChange}
-                      acceptedFiles={uploadedImages}
+                    <TrazoImageUpload
+                      onUploadComplete={(urls) => {
+                        // Convert URLs to objects for compatibility
+                        const imageObjects = urls.map(url => ({ url }));
+                        setUploadedImages(imageObjects);
+                        toast({
+                          title: intl.formatMessage({ id: 'app.uploadSuccess' }),
+                          description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
+                          status: 'success',
+                          duration: 3000,
+                          isClosable: true
+                        });
+                      }}
                       maxFiles={5}
                       maxSize={5 * 1024 * 1024} // 5MB
-                      accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
-                      placeholder={
-                        intl.formatMessage({ id: 'app.dragDropOrClick' }) ||
-                        'Drag & drop images here, or click to select'
-                      }
-                      description={`Upload up to 5 images, max 5MB each`}
-                      variant="default"
-                      previewMode="grid"
-                      height="280px"
+                      existingImages={uploadedImages.map(img => img.url).filter(Boolean)}
+                      onImagesChange={(urls) => {
+                        const imageObjects = urls.map(url => ({ url }));
+                        setUploadedImages(imageObjects);
+                      }}
                     />
                   </StandardField>
 

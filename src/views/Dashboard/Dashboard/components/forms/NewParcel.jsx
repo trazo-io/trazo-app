@@ -56,11 +56,10 @@ import FormLayout from 'components/Forms/FormLayout';
 import MapCreator from 'components/Map/MapCreator';
 import { setEstablishmentParcel } from 'store/features/companySlice';
 import { useCreateParcelMutation } from 'store/api/productApi.js';
-import { StandardMediaUpload } from 'components/Design/StandardComponents';
+import { TrazoImageUpload } from 'components/Upload';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useIntl } from 'react-intl';
-import { useFileUpload } from 'services/uploadService';
 import useSubscriptionCheck from 'hooks/useSubscriptionCheck';
 import SubscriptionLimitModal from 'components/Modals/SubscriptionLimitModal';
 
@@ -163,15 +162,6 @@ function NewParcel() {
   });
 
   const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const { uploadMultipleFiles } = useFileUpload();
-
-  const [selectedFiles, setSelectedFiles] = useState([]);
-
-  const handleFilesChange = (files) => {
-    setSelectedFiles(files);
-    console.log('Selected files:', files);
-  };
 
   const onMapClick = (e) => {
     setPath([...path, { lat: e.latLng.lat(), lng: e.latLng.lng() }]);
@@ -270,59 +260,6 @@ function NewParcel() {
 
   const [createParcel, { data, error, isSuccess, isLoading }] = useCreateParcelMutation();
 
-  const handleFileUpload = async () => {
-    if (selectedFiles.length === 0) {
-      toast({
-        title: intl.formatMessage({ id: 'app.noFilesSelected' }),
-        description: intl.formatMessage({ id: 'app.pleaseSelectFilesToUpload' }),
-        status: 'warning',
-        duration: 5000,
-        isClosable: true
-      });
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      // Upload all files and get URLs
-      const urls = await uploadMultipleFiles(selectedFiles);
-
-      // Validate URLs and store only valid ones
-      const validUrls = urls.filter(
-        (url) => url && typeof url === 'string' && url.startsWith('http')
-      );
-
-      if (validUrls.length === 0) {
-        throw new Error('No valid URLs were returned from the upload service');
-      }
-
-      // Store the uploaded URLs
-      setUploadedImageUrls(validUrls);
-
-      toast({
-        title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-        description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: validUrls.length }),
-        status: 'success',
-        duration: 5000,
-        isClosable: true
-      });
-
-      // Proceed to next step
-      certificationTab.current.click();
-    } catch (error) {
-      console.error('Error uploading files:', error);
-      toast({
-        title: intl.formatMessage({ id: 'app.uploadError' }),
-        description: intl.formatMessage({ id: 'app.fileUploadFailed' }),
-        status: 'error',
-        duration: 5000,
-        isClosable: true
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const onSubmitCertificate = (data) => {
     const { product, ...currentParcelData } = currentParcel;
@@ -582,24 +519,30 @@ function NewParcel() {
             </CardHeader>
             <CardBody>
               <Flex direction="column" w="100%">
-                <StandardMediaUpload
-                  onFilesChange={handleFilesChange}
-                  acceptedFiles={selectedFiles}
+                <TrazoImageUpload
+                  onUploadComplete={(urls) => {
+                    setUploadedImageUrls(urls);
+                    toast({
+                      title: intl.formatMessage({ id: 'app.uploadSuccess' }),
+                      description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
+                      status: 'success',
+                      duration: 3000,
+                      isClosable: true
+                    });
+                    // Auto-advance to next tab
+                    certificationTab.current.click();
+                  }}
                   maxFiles={5}
                   maxSize={5 * 1024 * 1024} // 5MB
-                  accept={{ 'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'] }}
-                  placeholder={intl.formatMessage({ id: 'app.dropFilesHereToUpload' })}
-                  description="Sube hasta 5 imágenes del parcel. Formatos: JPG, PNG, GIF, WEBP."
-                  variant="default"
-                  previewMode="grid"
-                  height="175px"
+                  existingImages={uploadedImageUrls}
+                  onImagesChange={setUploadedImageUrls}
                 />
-                <Flex justify="space-between">
+                
+                <Flex justify="space-between" mt={6}>
                   <Button
                     variant="no-hover"
                     bg={bgPrevButton}
                     alignSelf="flex-end"
-                    mt="24px"
                     w="100px"
                     h="35px"
                     onClick={() => descriptionTab.current.click()}
@@ -612,14 +555,12 @@ function NewParcel() {
                     variant="no-hover"
                     bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
                     alignSelf="flex-end"
-                    mt="24px"
                     w="100px"
                     h="35px"
-                    isLoading={isUploading}
-                    onClick={handleFileUpload}
+                    onClick={() => certificationTab.current.click()}
                   >
                     <Text fontSize="xs" color="#fff" fontWeight="bold">
-                      {intl.formatMessage({ id: 'app.upload' })}
+                      {intl.formatMessage({ id: 'app.next' })}
                     </Text>
                   </Button>
                 </Flex>
