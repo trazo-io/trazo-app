@@ -24,7 +24,8 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
-  useDisclosure
+  useDisclosure,
+  Progress
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -50,7 +51,10 @@ import {
   FaClock,
   FaGlobe,
   FaTint,
-  FaBug
+  FaBug,
+  FaFlask,
+  FaWater,
+  FaMapMarkerAlt
 } from 'react-icons/fa';
 import { BsStarFill, BsStarHalf, BsStar } from 'react-icons/bs';
 import Card from 'components/Card/Card';
@@ -663,10 +667,10 @@ function ProductDetail() {
   console.log('🔍 FINAL Authentication state:', finalIsAuthenticated);
   console.log('🔍 FINAL Current user:', finalCurrentUser);
 
-  // Theme colors
+  // Theme colors - Mobile Optimized
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const textColor = useColorModeValue('gray.800', 'white');
-  const headerFontSize = { base: '2xl', md: '3xl', lg: '4xl' };
+  const headerFontSize = { base: 'lg', sm: 'xl', md: '2xl', lg: '3xl' };
 
   // State for scan creation
   const [scanCreated, setScanCreated] = useState(false);
@@ -803,9 +807,13 @@ function ProductDetail() {
 
   return (
     <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
-      {/* Welcome Header Section */}
-      <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="150px" pb="120px" px={4}>
-        <Container maxW="6xl" mx="auto">
+      {/* Welcome Header Section - Mobile Optimized */}
+      <Box
+        bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
+        pt={{ base: '120px', md: '150px' }}
+        pb={{ base: '80px', md: '120px' }}
+        px={{ base: 3, md: 4 }}>
+        <Container maxW={{ base: '100%', md: '6xl' }} mx="auto" px={{ base: 3, md: 8 }}>
           <VStack spacing={6} textAlign="center">
             {/* Welcome Badge */}
             <Badge
@@ -889,84 +897,135 @@ function ProductDetail() {
         </Container>
       </Box>
 
-      {/* Main Content Card */}
+      {/* Main Content Card - Mobile Optimized */}
       <Flex
         alignItems="center"
         justifyContent="center"
-        mb="60px"
-        mt="-80px"
+        mb={{ base: '30px', md: '60px' }}
+        mt={{ base: '-60px', md: '-80px' }}
         position="relative"
-        zIndex={10}>
+        zIndex={10}
+        px={{ base: 2, md: 0 }}>
         <Card
-          w={{ sm: '95%', md: '90%', lg: '85%' }}
-          p={{ sm: '0px', md: '32px', lg: '48px' }}
-          boxShadow="0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-          borderRadius="2xl"
-          bg={useColorModeValue('white', 'gray.800')}>
-          <CardHeader mb="24px">
-            <HStack mt={4} spacing={4} align="center">
-              <Heading color={textColor} fontSize={headerFontSize} fontWeight="bold">
-                {(completeData as any)?.farmer?.name ||
-                  (completeData as any)?.product?.name ||
+          w={{ base: '98%', sm: '96%', md: '90%', lg: '85%' }}
+          p={{ base: '16px', sm: '20px', md: '32px', lg: '48px' }}
+          boxShadow={{
+            base: '0 4px 12px rgba(0, 0, 0, 0.08)',
+            md: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}
+          borderRadius={{ base: 'xl', md: '2xl' }}
+          bg={useColorModeValue('white', 'gray.800')}
+          overflow="hidden">
+          <CardHeader mb={{ base: '16px', md: '24px' }} pb={{ base: 2, md: 4 }}>
+            <VStack spacing={3} w="full">
+              <Heading
+                color={textColor}
+                fontSize={headerFontSize}
+                fontWeight="bold"
+                noOfLines={2}
+                textAlign="start">
+                {(completeData as any)?.product?.name ||
+                  (completeData as any)?.farmer?.name ||
                   'Product'}
               </Heading>
-              <Stack direction="row" spacing="6px" color="orange.300">
-                <Icon
-                  as={safeReputation >= 1 ? BsStarFill : safeReputation > 0.5 ? BsStarHalf : BsStar}
-                  w="20px"
-                  h="20px"
-                />
-                <Icon
-                  as={safeReputation >= 2 ? BsStarFill : safeReputation > 1.5 ? BsStarHalf : BsStar}
-                  w="20px"
-                  h="20px"
-                />
-                <Icon
-                  as={safeReputation >= 3 ? BsStarFill : safeReputation > 2.5 ? BsStarHalf : BsStar}
-                  w="20px"
-                  h="20px"
-                />
-                <Icon
-                  as={safeReputation >= 4 ? BsStarFill : safeReputation > 3.5 ? BsStarHalf : BsStar}
-                  w="20px"
-                  h="20px"
-                />
-                <Icon
-                  as={
-                    safeReputation === 5 ? BsStarFill : safeReputation > 4.5 ? BsStarHalf : BsStar
-                  }
-                  w="20px"
-                  h="20px"
-                />
-              </Stack>
-            </HStack>
+              <HStack>
+                <VStack spacing={{ base: 2, md: 4 }} align="start" w="full">
+                  <HStack spacing={{ base: '4px', md: '6px' }} color="orange.300">
+                    <Icon
+                      as={
+                        safeReputation >= 1
+                          ? BsStarFill
+                          : safeReputation > 0.5
+                          ? BsStarHalf
+                          : BsStar
+                      }
+                      w={{ base: '16px', md: '20px' }}
+                      h={{ base: '16px', md: '20px' }}
+                    />
+                    <Icon
+                      as={
+                        safeReputation >= 2
+                          ? BsStarFill
+                          : safeReputation > 1.5
+                          ? BsStarHalf
+                          : BsStar
+                      }
+                      w={{ base: '16px', md: '20px' }}
+                      h={{ base: '16px', md: '20px' }}
+                    />
+                    <Icon
+                      as={
+                        safeReputation >= 3
+                          ? BsStarFill
+                          : safeReputation > 2.5
+                          ? BsStarHalf
+                          : BsStar
+                      }
+                      w={{ base: '16px', md: '20px' }}
+                      h={{ base: '16px', md: '20px' }}
+                    />
+                    <Icon
+                      as={
+                        safeReputation >= 4
+                          ? BsStarFill
+                          : safeReputation > 3.5
+                          ? BsStarHalf
+                          : BsStar
+                      }
+                      w={{ base: '16px', md: '20px' }}
+                      h={{ base: '16px', md: '20px' }}
+                    />
+                    <Icon
+                      as={
+                        safeReputation === 5
+                          ? BsStarFill
+                          : safeReputation > 4.5
+                          ? BsStarHalf
+                          : BsStar
+                      }
+                      w={{ base: '16px', md: '20px' }}
+                      h={{ base: '16px', md: '20px' }}
+                    />
+                    <Text fontSize={{ base: 'sm', md: 'md' }} color="orange.500" ml={2}>
+                      {safeReputation.toFixed(1)}
+                    </Text>
+                  </HStack>
 
-            <Text color="gray.500" fontSize="lg" mt={1}>
-              {(completeData as any)?.farmer?.location ||
-                (completeData as any)?.parcel?.location ||
-                'Farm Location'}
-            </Text>
-
-            {completeData &&
-              completeData.industryPercentile !== undefined &&
-              completeData.industryPercentile > 0 && (
-                <HStack mt={2}>
-                  <Icon as={FaLeaf} color="green.500" />
-                  <Text color="green.500" fontWeight="medium">
-                    Greener than {completeData.industryPercentile}% of similar products
+                  <Text color="gray.500" fontSize={{ base: 'sm', md: 'lg' }} noOfLines={1}>
+                    {(completeData as any)?.farmer?.location ||
+                      (completeData as any)?.parcel?.location ||
+                      'Farm Location'}
                   </Text>
-                </HStack>
-              )}
+                </VStack>
+
+                {completeData &&
+                  completeData.industryPercentile !== undefined &&
+                  completeData.industryPercentile > 0 && (
+                    <HStack mt={2} spacing={2}>
+                      <Icon as={FaLeaf} color="green.500" boxSize={{ base: 4, md: 5 }} />
+                      <Text
+                        color="green.500"
+                        fontWeight="medium"
+                        fontSize={{ base: 'sm', md: 'md' }}
+                        noOfLines={2}>
+                        Greener than {completeData.industryPercentile}% of similar products
+                      </Text>
+                    </HStack>
+                  )}
+              </HStack>
+            </VStack>
           </CardHeader>
 
-          <CardBody>
-            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8} mb={10}>
+          <CardBody px={{ base: 0, md: 6 }} py={{ base: 4, md: 6 }}>
+            <SimpleGrid
+              columns={{ base: 1, lg: 2 }}
+              spacing={{ base: 6, md: 8 }}
+              mb={{ base: 6, md: 10 }}>
               <Box>
                 {/* Product Images */}
                 <Box mb={6}>
                   <StandardImageGallery
                     images={productImages || []}
-                    title="Product Photos"
                     variant="product"
                     enablePreview={true}
                     showImageCount={true}
@@ -1009,25 +1068,12 @@ function ProductDetail() {
                   return rounded;
                 })()}
                 onAuthPrompt={() => {
-                  console.log('🔍 SIDEBAR BUTTON CLICKED');
-                  console.log('🔍 Redux isAuthenticated:', isAuthenticated);
-                  console.log('🔍 Redux currentUser:', currentUser);
-                  console.log('🔍 FINAL isAuthenticated:', finalIsAuthenticated);
-                  console.log('🔍 FINAL currentUser:', finalCurrentUser);
-
                   if (finalIsAuthenticated) {
                     // User is already logged in, go directly to review page
                     const reviewUrl = `/admin/dashboard/production/${productionId}/review/web-${Date.now()}`;
-                    console.log(
-                      '🔍 User already authenticated, navigating directly to:',
-                      reviewUrl
-                    );
                     navigate(reviewUrl);
                   } else {
                     // User not logged in, store action and redirect to auth
-                    console.log(
-                      '🔍 User not authenticated, storing action and redirecting to auth'
-                    );
                     if (productionId) {
                       setAuthRedirectAction(productionId);
                     }
@@ -1042,45 +1088,321 @@ function ProductDetail() {
             <ModernEducationalSection onEducationOpen={handleEducationOpen} />
 
             {/* Mobile-Optimized Production Journey */}
-            <Card bg={useColorModeValue('white', 'gray.800')} shadow="lg" borderRadius="xl" mt={8}>
-              <CardBody p={{ base: 4, md: 6 }}>
-                {(() => {
-                  const events = completeData?.timeline || completeData?.events || [];
+            <>
+              {(() => {
+                const events = completeData?.timeline || completeData?.events || [];
 
-                  if (Array.isArray(events) && events.length > 0) {
-                    const timelineEvents = events.map((event, index) => ({
-                      id: event.id?.toString() || `event_${index}`,
-                      type: event.type || 'general',
-                      description: event.description || event.observation || 'Event recorded',
-                      observation: event.observation || '',
-                      date: event.date || new Date().toISOString(),
-                      certified: event.certified || false,
-                      index: index,
-                      volume: event.volume?.toString(),
-                      concentration: event.concentration?.toString(),
-                      area: event.area?.toString(),
-                      equipment: event.equipment,
-                      carbon_data: event.carbon_data
-                    }));
-                    return <UltraMobileProductionJourney events={timelineEvents} />;
-                  } else {
-                    return (
-                      <VStack spacing={3} py={8}>
-                        <Icon as={MdTimeline} boxSize={16} color="gray.400" />
-                        <Heading as="h4" size="md" color="gray.600">
-                          {intl.formatMessage({ id: 'app.noTimelineData' }) ||
-                            'No events recorded yet'}
+                if (Array.isArray(events) && events.length > 0) {
+                  const timelineEvents = events.map((event, index) => ({
+                    id: event.id?.toString() || `event_${index}`,
+                    type: event.type || 'general',
+                    description: event.description || event.observation || 'Event recorded',
+                    observation: event.observation || '',
+                    date: event.date || new Date().toISOString(),
+                    certified: event.certified || false,
+                    index: index,
+                    volume: event.volume?.toString(),
+                    concentration: event.concentration?.toString(),
+                    area: event.area?.toString(),
+                    equipment: event.equipment,
+                    carbon_data: event.carbon_data
+                  }));
+                  return <UltraMobileProductionJourney events={timelineEvents} />;
+                } else {
+                  return (
+                    <VStack spacing={3} py={8}>
+                      <Icon as={MdTimeline} boxSize={16} color="gray.400" />
+                      <Heading as="h4" size="md" color="gray.600">
+                        {intl.formatMessage({ id: 'app.noTimelineData' }) ||
+                          'No events recorded yet'}
+                      </Heading>
+                      <Text fontSize="sm" color="gray.400" textAlign="center">
+                        {intl.formatMessage({ id: 'app.timelineComingSoon' }) ||
+                          'Production journey details will be available soon'}
+                      </Text>
+                    </VStack>
+                  );
+                }
+              })()}
+            </>
+
+            {/* Agricultural Practices Section - Mobile-First Design */}
+            {(completeData as any)?.parcel?.agricultural_details &&
+              Object.keys((completeData as any)?.parcel?.agricultural_details).length > 0 && (
+                <Card
+                  bg={useColorModeValue('white', 'gray.800')}
+                  shadow="sm"
+                  borderRadius="lg"
+                  mt={6}
+                  mx={{ base: 0, md: 0 }}
+                  overflow="hidden">
+                  <CardHeader pb={3}>
+                    <VStack align="start" spacing={2} w="full">
+                      <HStack spacing={3}>
+                        <Icon as={FaSeedling} color="green.500" boxSize={5} />
+                        <Heading size="sm" color={textColor}>
+                          Sustainable Farming Practices
                         </Heading>
-                        <Text fontSize="sm" color="gray.400" textAlign="center">
-                          {intl.formatMessage({ id: 'app.timelineComingSoon' }) ||
-                            'Production journey details will be available soon'}
-                        </Text>
-                      </VStack>
-                    );
-                  }
-                })()}
-              </CardBody>
-            </Card>
+                      </HStack>
+                      <Text fontSize="xs" color="gray.500" pl={8}>
+                        Real agricultural data that impacts carbon footprint
+                      </Text>
+                    </VStack>
+                  </CardHeader>
+                  <CardBody pt={0} px={{ base: 4, md: 6 }}>
+                    {(() => {
+                      const agDetails = (completeData as any)?.parcel?.agricultural_details || {};
+
+                      // Mobile-optimized metric card component
+                      const renderMobileMetric = (
+                        key: string,
+                        icon: any,
+                        title: string,
+                        value: any,
+                        description: string,
+                        color = 'green'
+                      ) => (
+                        <HStack
+                          key={key}
+                          spacing={3}
+                          p={3}
+                          bg={`${color}.50`}
+                          borderRadius="lg"
+                          border="1px"
+                          borderColor={`${color}.200`}
+                          w="full"
+                          minH="60px">
+                          <Box flex="0 0 auto">
+                            <Icon as={icon} color={`${color}.500`} boxSize={4} />
+                          </Box>
+                          <VStack spacing={0} align="start" flex={1} minW={0}>
+                            <Text fontSize="xs" fontWeight="600" color="gray.700" noOfLines={1}>
+                              {title}
+                            </Text>
+                            <Text fontSize="sm" fontWeight="bold" color="gray.800" noOfLines={1}>
+                              {value}
+                            </Text>
+                          </VStack>
+                          <Box flex="0 0 auto" maxW="80px">
+                            <Text fontSize="xs" color="gray.600" textAlign="right" noOfLines={2}>
+                              {description}
+                            </Text>
+                          </Box>
+                        </HStack>
+                      );
+
+                      // Helper function to get metric status
+                      const getMetricStatus = (
+                        value: number,
+                        optimal: [number, number],
+                        unit = ''
+                      ) => {
+                        const numValue = parseFloat(value.toString());
+                        const isOptimal = numValue >= optimal[0] && numValue <= optimal[1];
+                        return {
+                          value: `${numValue.toFixed(1)}${unit}`,
+                          color: isOptimal ? 'green' : 'orange',
+                          description: isOptimal ? 'Optimal' : 'Good'
+                        };
+                      };
+
+                      const metrics = [];
+
+                      // Soil Health Metrics
+                      if (agDetails.soil_ph) {
+                        const phStatus = getMetricStatus(agDetails.soil_ph, [6.0, 7.5]);
+                        metrics.push({
+                          section: 'Soil Health',
+                          items: [
+                            renderMobileMetric(
+                              'soil_ph',
+                              FaFlask,
+                              'Soil pH',
+                              phStatus.value,
+                              phStatus.description,
+                              phStatus.color
+                            )
+                          ]
+                        });
+                      }
+
+                      if (agDetails.soil_organic_matter) {
+                        const omStatus = getMetricStatus(
+                          agDetails.soil_organic_matter,
+                          [3.0, 10.0],
+                          '%'
+                        );
+                        const soilIndex = metrics.findIndex((m) => m.section === 'Soil Health');
+                        const metric = renderMobileMetric(
+                          'organic_matter',
+                          FaLeaf,
+                          'Organic Matter',
+                          omStatus.value,
+                          'Carbon storage',
+                          omStatus.color
+                        );
+
+                        if (soilIndex >= 0) {
+                          metrics[soilIndex].items.push(metric);
+                        } else {
+                          metrics.push({
+                            section: 'Soil Health',
+                            items: [metric]
+                          });
+                        }
+                      }
+
+                      // Water Management
+                      if (agDetails.irrigation_efficiency) {
+                        const waterStatus = getMetricStatus(
+                          agDetails.irrigation_efficiency,
+                          [80, 100],
+                          '%'
+                        );
+                        metrics.push({
+                          section: 'Water Stewardship',
+                          items: [
+                            renderMobileMetric(
+                              'irrigation_efficiency',
+                              FaTint,
+                              'Water Efficiency',
+                              waterStatus.value,
+                              waterStatus.description,
+                              waterStatus.color
+                            )
+                          ]
+                        });
+                      }
+
+                      if (agDetails.water_source_type) {
+                        const waterIndex = metrics.findIndex(
+                          (m) => m.section === 'Water Stewardship'
+                        );
+                        const metric = renderMobileMetric(
+                          'water_source',
+                          FaWater,
+                          'Water Source',
+                          agDetails.water_source_type.charAt(0).toUpperCase() +
+                            agDetails.water_source_type.slice(1),
+                          'Sustainable',
+                          'blue'
+                        );
+
+                        if (waterIndex >= 0) {
+                          metrics[waterIndex].items.push(metric);
+                        } else {
+                          metrics.push({
+                            section: 'Water Stewardship',
+                            items: [metric]
+                          });
+                        }
+                      }
+
+                      // Conservation Practices
+                      if (agDetails.drainage_characteristics) {
+                        metrics.push({
+                          section: 'Conservation',
+                          items: [
+                            renderMobileMetric(
+                              'drainage',
+                              FaShieldAlt,
+                              'Soil Drainage',
+                              agDetails.drainage_characteristics.charAt(0).toUpperCase() +
+                                agDetails.drainage_characteristics.slice(1),
+                              'Erosion control',
+                              agDetails.drainage_characteristics === 'excellent'
+                                ? 'green'
+                                : 'orange'
+                            )
+                          ]
+                        });
+                      }
+
+                      if (agDetails.erosion_risk) {
+                        const conservationIndex = metrics.findIndex(
+                          (m) => m.section === 'Conservation'
+                        );
+                        const metric = renderMobileMetric(
+                          'erosion_risk',
+                          FaShieldAlt,
+                          'Erosion Control',
+                          agDetails.erosion_risk === 'low'
+                            ? 'Protected'
+                            : agDetails.erosion_risk.charAt(0).toUpperCase() +
+                                agDetails.erosion_risk.slice(1),
+                          'Soil protection',
+                          agDetails.erosion_risk === 'low' ? 'green' : 'orange'
+                        );
+
+                        if (conservationIndex >= 0) {
+                          metrics[conservationIndex].items.push(metric);
+                        } else {
+                          metrics.push({
+                            section: 'Conservation',
+                            items: [metric]
+                          });
+                        }
+                      }
+
+                      return (
+                        <VStack spacing={4} align="stretch">
+                          {metrics.map((section, index) => (
+                            <Box key={section.section}>
+                              <HStack spacing={2} mb={3}>
+                                <Icon
+                                  as={
+                                    section.section === 'Soil Health'
+                                      ? FaFlask
+                                      : section.section === 'Water Stewardship'
+                                      ? FaTint
+                                      : FaShieldAlt
+                                  }
+                                  color={
+                                    section.section === 'Soil Health'
+                                      ? 'orange.500'
+                                      : section.section === 'Water Stewardship'
+                                      ? 'blue.500'
+                                      : 'green.500'
+                                  }
+                                  boxSize={4}
+                                />
+                                <Text fontSize="sm" fontWeight="600" color={textColor}>
+                                  {section.section}
+                                </Text>
+                              </HStack>
+                              <VStack spacing={2} align="stretch">
+                                {section.items}
+                              </VStack>
+                            </Box>
+                          ))}
+
+                          {/* Mobile-optimized impact summary */}
+                          <Box
+                            bg="green.50"
+                            p={4}
+                            borderRadius="lg"
+                            border="1px"
+                            borderColor="green.200"
+                            borderLeft="3px solid"
+                            borderLeftColor="green.500"
+                            mt={2}>
+                            <HStack spacing={2} mb={2}>
+                              <Icon as={FaLeaf} color="green.500" boxSize={4} />
+                              <Text fontSize="sm" fontWeight="600" color="green.800">
+                                Carbon Impact
+                              </Text>
+                            </HStack>
+                            <Text fontSize="xs" color="green.700" lineHeight="base">
+                              These sustainable practices store carbon in soil while producing your
+                              food, directly reducing climate impact.
+                            </Text>
+                          </Box>
+                        </VStack>
+                      );
+                    })()}
+                  </CardBody>
+                </Card>
+              )}
 
             {/* Additional Information Sections */}
             <VStack spacing={8} mt={8}>

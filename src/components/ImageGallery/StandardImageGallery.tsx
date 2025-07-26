@@ -90,13 +90,18 @@ const StandardImageGallery = ({
 
   // 2025 Best Practice: Extract S3 URLs for batch loading
   const s3Urls = useMemo(() => {
-    return processedImages.map(img => img.url).filter(Boolean);
+    return processedImages
+      .map(img => img.url)
+      .filter(url => {
+        // Only include S3 URLs, not external URLs like Unsplash
+        return url && (url.includes('s3.amazonaws.com') || url.includes('s3-'));
+      });
   }, [processedImages]);
 
   // Batch load all S3 presigned URLs in a single request
   const { presignedUrls, isLoading: batchLoading } = useBatchS3Images({
     s3Urls,
-    enabled: hasImages
+    enabled: hasImages && s3Urls.length > 0
   });
 
   // Handle image click for preview

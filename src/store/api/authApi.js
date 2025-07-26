@@ -25,10 +25,14 @@ const authApi = baseApi.injectEndpoints({
           const result = await queryFulfilled;
           console.log('🔒 LOGIN: Login successful, processing result');
           
-          // FIRST: Store the token immediately before anything else
+          // FIRST: Store the tokens immediately before anything else
           TokenManager.setAccessToken(result.data.access);
           localStorage.setItem('access', result.data.access);
-          console.log('🔒 LOGIN: Token stored immediately. Length:', result.data.access.length);
+          if (result.data.refresh) {
+            localStorage.setItem('refresh', result.data.refresh);
+            console.log('🔒 LOGIN: Refresh token stored. Length:', result.data.refresh.length);
+          }
+          console.log('🔒 LOGIN: Access token stored immediately. Length:', result.data.access.length);
           
           // WAIT a brief moment to ensure token is available for subsequent requests
           await new Promise(resolve => setTimeout(resolve, 100));

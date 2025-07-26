@@ -40,7 +40,7 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
       {/* Gamification Section - Only for Authenticated Users */}
       {isAuthenticated && (
         <Card bg={cardBg} shadow="lg" borderRadius="xl">
-          <CardHeader>
+          <CardHeader pb={8}>
             <HStack spacing={3}>
               <Circle size="40px" bg="yellow.100">
                 <Icon as={FaCoins} color="yellow.600" />
@@ -132,44 +132,6 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
           </CardBody>
         </Card>
       )}
-
-      {/* Carbon Impact Visualization */}
-      <Card bg={cardBg} shadow="lg" borderRadius="xl">
-        <CardHeader>
-          <HStack spacing={3}>
-            <Circle size="40px" bg="green.100">
-              <Icon as={FaChartLine} color="green.600" />
-            </Circle>
-            <VStack align="start" spacing={0}>
-              <Heading size="sm" color={textColor}>
-                Environmental Impact
-              </Heading>
-              <Text fontSize="xs" color={mutedColor}>
-                Your choice makes a difference
-              </Text>
-            </VStack>
-          </HStack>
-        </CardHeader>
-        <CardBody pt={0}>
-          <VStack spacing={3} align="stretch">
-            <HStack justify="space-between">
-              <Text fontSize="sm" fontWeight="medium">
-                Carbon Score
-              </Text>
-              <Badge colorScheme="green" fontSize="lg" px={3} py={1} borderRadius="full">
-                {carbonScore}/100
-              </Badge>
-            </HStack>
-            <Text fontSize="xs" color={mutedColor}>
-              {carbonScore >= 80
-                ? 'Excellent! This product has a very low carbon footprint.'
-                : carbonScore >= 60
-                ? 'Good carbon performance. Above average sustainability.'
-                : 'Carbon footprint data helps you make informed choices.'}
-            </Text>
-          </VStack>
-        </CardBody>
-      </Card>
     </VStack>
   );
 };

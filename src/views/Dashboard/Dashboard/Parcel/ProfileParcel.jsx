@@ -42,7 +42,8 @@ import {
   FaRegCommentDots,
   FaRegListAlt,
   FaCalendar,
-  FaLeaf
+  FaLeaf,
+  FaTint
 } from 'react-icons/fa';
 import { MdLocationOn, MdBusiness, MdEco, MdMoreVert } from 'react-icons/md';
 import React, { useEffect, useState } from 'react';
@@ -453,6 +454,179 @@ function ProfileParcel() {
                     )}
                   </VStack>
                 </Card>
+
+                {/* Agricultural Data Section */}
+                {parcelData?.agricultural_details && Object.keys(parcelData.agricultural_details).length > 0 && (
+                  <Card bg={bgColor} borderRadius="lg" boxShadow="md" p={6} mb={6}>
+                    <HStack spacing={2} justify="center" mb={4}>
+                      <Icon as={FaSeedling} color="green.500" boxSize={5} />
+                      <Heading as="h3" size="md" color={textColor}>
+                        Agricultural Practices
+                      </Heading>
+                    </HStack>
+                    
+                    <VStack spacing={6} align="stretch">
+                      {/* Soil Health Section */}
+                      {(parcelData.agricultural_details.soil_ph || parcelData.agricultural_details.soil_organic_matter || 
+                        parcelData.agricultural_details.soil_nitrogen || parcelData.agricultural_details.soil_phosphorus) && (
+                        <Box>
+                          <HStack spacing={2} mb={3}>
+                            <Circle size="20px" bg="orange.100">
+                              <Icon as={FaLeaf} color="orange.500" boxSize={3} />
+                            </Circle>
+                            <Text fontWeight="bold" color="orange.600" fontSize="sm">
+                              SOIL HEALTH
+                            </Text>
+                          </HStack>
+                          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
+                            {parcelData.agricultural_details.soil_ph && (
+                              <VStack spacing={1} p={3} bg="orange.50" borderRadius="md" border="1px" borderColor="orange.200">
+                                <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                  {parseFloat(parcelData.agricultural_details.soil_ph).toFixed(1)}
+                                </Text>
+                                <Text fontSize="xs" color="gray.600">pH Level</Text>
+                              </VStack>
+                            )}
+                            {parcelData.agricultural_details.soil_organic_matter && (
+                              <VStack spacing={1} p={3} bg="green.50" borderRadius="md" border="1px" borderColor="green.200">
+                                <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                  {parseFloat(parcelData.agricultural_details.soil_organic_matter).toFixed(1)}%
+                                </Text>
+                                <Text fontSize="xs" color="gray.600">Organic Matter</Text>
+                              </VStack>
+                            )}
+                            {parcelData.agricultural_details.soil_nitrogen && (
+                              <VStack spacing={1} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
+                                <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                  {parseFloat(parcelData.agricultural_details.soil_nitrogen).toFixed(0)}
+                                </Text>
+                                <Text fontSize="xs" color="gray.600">Nitrogen (ppm)</Text>
+                              </VStack>
+                            )}
+                            {parcelData.agricultural_details.soil_phosphorus && (
+                              <VStack spacing={1} p={3} bg="purple.50" borderRadius="md" border="1px" borderColor="purple.200">
+                                <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                  {parseFloat(parcelData.agricultural_details.soil_phosphorus).toFixed(0)}
+                                </Text>
+                                <Text fontSize="xs" color="gray.600">Phosphorus (ppm)</Text>
+                              </VStack>
+                            )}
+                          </SimpleGrid>
+                        </Box>
+                      )}
+
+                      {/* Water Management Section */}
+                      {(parcelData.agricultural_details.irrigation_efficiency || parcelData.agricultural_details.water_source_type || 
+                        parcelData.agricultural_details.water_quality_ph || parcelData.agricultural_details.water_allocation_acre_feet) && (
+                        <Box>
+                          <HStack spacing={2} mb={3}>
+                            <Circle size="20px" bg="blue.100">
+                              <Icon as={FaTint} color="blue.500" boxSize={3} />
+                            </Circle>
+                            <Text fontWeight="bold" color="blue.600" fontSize="sm">
+                              WATER MANAGEMENT
+                            </Text>
+                          </HStack>
+                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                            {parcelData.agricultural_details.irrigation_efficiency && (
+                              <HStack spacing={3} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
+                                <VStack spacing={0}>
+                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                    {parseFloat(parcelData.agricultural_details.irrigation_efficiency).toFixed(0)}%
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.600">Irrigation Efficiency</Text>
+                                </VStack>
+                              </HStack>
+                            )}
+                            {parcelData.agricultural_details.water_source_type && (
+                              <HStack spacing={3} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
+                                <VStack spacing={0} align="start">
+                                  <Text fontSize="sm" fontWeight="bold" color="gray.800">
+                                    {parcelData.agricultural_details.water_source_type.replace(/([A-Z])/g, ' $1').trim()}
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.600">Water Source</Text>
+                                </VStack>
+                              </HStack>
+                            )}
+                            {parcelData.agricultural_details.water_quality_ph && (
+                              <HStack spacing={3} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
+                                <VStack spacing={0}>
+                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                    {parseFloat(parcelData.agricultural_details.water_quality_ph).toFixed(1)}
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.600">Water pH</Text>
+                                </VStack>
+                              </HStack>
+                            )}
+                            {parcelData.agricultural_details.water_allocation_acre_feet && (
+                              <HStack spacing={3} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
+                                <VStack spacing={0}>
+                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                    {parseFloat(parcelData.agricultural_details.water_allocation_acre_feet).toFixed(1)}
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.600">Acre-Feet Allocated</Text>
+                                </VStack>
+                              </HStack>
+                            )}
+                          </SimpleGrid>
+                        </Box>
+                      )}
+
+                      {/* Conservation Practices Section */}
+                      {(parcelData.agricultural_details.cover_crop_management || parcelData.agricultural_details.crop_rotation_pattern || 
+                        parcelData.agricultural_details.pest_management_strategy || parcelData.agricultural_details.fertilization_program) && (
+                        <Box>
+                          <HStack spacing={2} mb={3}>
+                            <Circle size="20px" bg="green.100">
+                              <Icon as={MdEco} color="green.500" boxSize={3} />
+                            </Circle>
+                            <Text fontWeight="bold" color="green.600" fontSize="sm">
+                              CONSERVATION PRACTICES
+                            </Text>
+                          </HStack>
+                          <VStack spacing={2} align="stretch">
+                            {parcelData.agricultural_details.cover_crop_management && (
+                              <HStack spacing={3} p={3} bg="green.50" borderRadius="md" border="1px" borderColor="green.200">
+                                <Icon as={FaSeedling} color="green.500" />
+                                <VStack spacing={0} align="start">
+                                  <Text fontSize="sm" fontWeight="medium" color="gray.700">Cover Crops</Text>
+                                  <Text fontSize="xs" color="gray.600">{parcelData.agricultural_details.cover_crop_management}</Text>
+                                </VStack>
+                              </HStack>
+                            )}
+                            {parcelData.agricultural_details.crop_rotation_pattern && (
+                              <HStack spacing={3} p={3} bg="green.50" borderRadius="md" border="1px" borderColor="green.200">
+                                <Icon as={FaLeaf} color="green.500" />
+                                <VStack spacing={0} align="start">
+                                  <Text fontSize="sm" fontWeight="medium" color="gray.700">Crop Rotation</Text>
+                                  <Text fontSize="xs" color="gray.600">{parcelData.agricultural_details.crop_rotation_pattern}</Text>
+                                </VStack>
+                              </HStack>
+                            )}
+                            {parcelData.agricultural_details.pest_management_strategy && (
+                              <HStack spacing={3} p={3} bg="yellow.50" borderRadius="md" border="1px" borderColor="yellow.200">
+                                <Icon as={FaUsers} color="yellow.600" />
+                                <VStack spacing={0} align="start">
+                                  <Text fontSize="sm" fontWeight="medium" color="gray.700">Pest Management</Text>
+                                  <Text fontSize="xs" color="gray.600">{parcelData.agricultural_details.pest_management_strategy}</Text>
+                                </VStack>
+                              </HStack>
+                            )}
+                            {parcelData.agricultural_details.fertilization_program && (
+                              <HStack spacing={3} p={3} bg="purple.50" borderRadius="md" border="1px" borderColor="purple.200">
+                                <Icon as={MdEco} color="purple.500" />
+                                <VStack spacing={0} align="start">
+                                  <Text fontSize="sm" fontWeight="medium" color="gray.700">Fertilization Program</Text>
+                                  <Text fontSize="xs" color="gray.600">{parcelData.agricultural_details.fertilization_program}</Text>
+                                </VStack>
+                              </HStack>
+                            )}
+                          </VStack>
+                        </Box>
+                      )}
+                    </VStack>
+                  </Card>
+                )}
 
                 {/* Contact Information */}
                 {(parcelData?.contact_person ||

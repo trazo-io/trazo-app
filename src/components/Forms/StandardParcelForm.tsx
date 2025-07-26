@@ -59,8 +59,68 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, boolean, number } from 'zod';
 import { useIntl } from 'react-intl';
-import { GoogleMap, Polygon, useLoadScript } from '@react-google-maps/api';
+import { GoogleMap, Polygon, Marker, useLoadScript } from '@react-google-maps/api';
 import { TrazoImageUpload } from '../Upload';
+
+// ✅ SUPPORTED BACKEND FIELDS CONFIGURATION
+const SUPPORTED_PARCEL_FIELDS = {
+  // Core fields (supported by backend)
+  CORE: [
+    'name', // CharField(30)
+    'description', // TextField
+    'area', // FloatField
+    'certified', // BooleanField
+    'polygon', // JSONField
+    'map_metadata', // JSONField
+    'soil_type', // CharField(50)
+    'unique_code', // CharField(50)
+    'certification_type', // CharField(50)
+    'contact_person', // CharField(60)
+    'contact_phone', // CharField(30)
+    'contact_email', // EmailField
+    'address' // CharField(200)
+  ],
+
+  // Advanced fields (NOT YET supported - will be hidden)
+  ADVANCED: [
+    'soil_ph',
+    'soil_organic_matter',
+    'soil_nitrogen',
+    'soil_phosphorus',
+    'soil_potassium',
+    'soil_compaction_level',
+    'erosion_risk',
+    'last_soil_test_date',
+    'soil_improvement_notes',
+    'water_source_type',
+    'water_rights_docs',
+    'water_allocation_acre_feet',
+    'water_quality_ph',
+    'water_quality_tds',
+    'irrigation_efficiency',
+    'drainage_characteristics',
+    'water_conservation_practices',
+    'seasonal_water_availability',
+    'cover_crop_management',
+    'crop_rotation_pattern',
+    'buffer_strips_windbreaks',
+    'integrated_pest_management',
+    'organic_certification_status',
+    'nrcs_practices',
+    'carbon_sequestration_practices',
+    'biodiversity_measures',
+    'slope_percentage',
+    'topography_type',
+    'microclimate_conditions',
+    'frost_risk_zone',
+    'wildlife_habitat_areas',
+    'riparian_zones',
+    'wetland_designation',
+    'historical_yield_data',
+    'land_use_restrictions'
+  ]
+} as const;
+
 import {
   FaMapMarkedAlt,
   FaBuilding,
@@ -81,7 +141,8 @@ import {
   FaRecycle,
   FaShieldAlt,
   FaTree,
-  FaChartLine
+  FaChartLine,
+  FaPhone
 } from 'react-icons/fa';
 import { MdInfo, MdNature, MdLandscape, MdWaves, MdEco } from 'react-icons/md';
 import { Controller } from 'react-hook-form';
@@ -153,21 +214,32 @@ const calculatePolygonZoom = (points: Array<{ lat: number; lng: number }>) => {
 };
 
 // Enhanced Form Schema with Advanced Agricultural Features
+// ✅ PRODUCTION-READY Schema - Only Backend-Supported Fields
 const parcelSchema = object({
+  // Step 1: Basic Info (Required)
   name: string().min(1, 'Parcel name is required').max(100, 'Name too long'),
   area: number().min(0.01, 'Area must be greater than 0'),
-  description: string().min(1, 'Description is required'),
-  contact_phone: string().optional(),
-  address: string().optional(),
-  certified: boolean().default(false),
 
-  // Basic Land Info
-  soil_type: string().optional(),
-  unique_code: string().optional(),
-  certification_type: string().optional(),
+  // Step 2: Location (Required - polygon validated separately)
+
+  // Step 3: Description (Required)
+  description: string().min(1, 'Description is required'),
+
+  // Step 4: Contact & Details (Optional)
+  contact_phone: string().optional(),
   contact_person: string().optional(),
   contact_email: string().email('Invalid email format').optional().or(string().length(0)),
+  address: string().optional(),
 
+  // Step 5: Agricultural Details (Optional)
+  soil_type: string().optional(),
+  unique_code: string().optional(),
+
+  // Step 6: Certification (Optional)
+  certified: boolean().default(false),
+  certification_type: string().optional(),
+
+  // ✅ Advanced Agricultural Fields - NOW SUPPORTED via agricultural_details JSONField
   // Soil Health Management
   soil_ph: number().min(0).max(14).optional(),
   soil_organic_matter: number().min(0).max(100).optional(),
@@ -178,8 +250,8 @@ const parcelSchema = object({
   erosion_risk: string().optional(),
   last_soil_test_date: string().optional(),
   soil_improvement_notes: string().optional(),
-
-  // Water Rights and Management
+  
+  // Water Management
   water_source_type: string().optional(),
   water_rights_docs: string().optional(),
   water_allocation_acre_feet: number().min(0).optional(),
@@ -187,47 +259,112 @@ const parcelSchema = object({
   water_quality_tds: number().min(0).optional(),
   irrigation_efficiency: number().min(0).max(100).optional(),
   drainage_characteristics: string().optional(),
-  water_conservation_practices: string().optional(),
   seasonal_water_availability: string().optional(),
-
-  // Conservation Practices
+  water_conservation_practices: string().optional(),
+  
+  // Conservation Practices (if needed later)
   cover_crop_management: string().optional(),
   crop_rotation_pattern: string().optional(),
-  buffer_strips_windbreaks: boolean().default(false),
-  integrated_pest_management: boolean().default(false),
+  buffer_strips_windbreaks: string().optional(),
+  integrated_pest_management: string().optional(),
   organic_certification_status: string().optional(),
   nrcs_practices: string().optional(),
   carbon_sequestration_practices: string().optional(),
   biodiversity_measures: string().optional(),
-
-  // Advanced Land Characteristics
+  
+  // Environmental & Topographic Data (if needed later)
   slope_percentage: number().min(0).max(100).optional(),
   topography_type: string().optional(),
   microclimate_conditions: string().optional(),
   frost_risk_zone: string().optional(),
   wildlife_habitat_areas: string().optional(),
-  riparian_zones: boolean().default(false),
-  wetland_designation: boolean().default(false),
+  riparian_zones: string().optional(),
+  wetland_designation: string().optional(),
   historical_yield_data: string().optional(),
   land_use_restrictions: string().optional()
 });
 
+// ✅ STEP VALIDATION CONFIGURATION - Updated to match actual form steps
+const STEP_VALIDATION_CONFIG = [
+  {
+    stepNumber: 0,
+    name: 'Basic Info',
+    requiredFields: ['name', 'area'],
+    optionalFields: [],
+    canSkip: false
+  },
+  {
+    stepNumber: 1,
+    name: 'Location',
+    requiredFields: [], // polygon validated separately
+    optionalFields: [],
+    canSkip: false,
+    customValidation: 'polygon'
+  },
+  {
+    stepNumber: 2,
+    name: 'Description',
+    requiredFields: ['description'],
+    optionalFields: [],
+    canSkip: false
+  },
+  {
+    stepNumber: 3,
+    name: 'Soil Health Management',
+    requiredFields: [],
+    optionalFields: ['soil_ph', 'soil_organic_matter', 'soil_nitrogen', 'soil_phosphorus', 'soil_potassium', 'soil_compaction_level', 'erosion_risk', 'last_soil_test_date', 'soil_improvement_notes'],
+    canSkip: true
+  },
+  {
+    stepNumber: 4,
+    name: 'Water Management',
+    requiredFields: [],
+    optionalFields: ['water_source_type', 'water_rights_docs', 'water_allocation_acre_feet', 'water_quality_ph', 'water_quality_tds', 'irrigation_efficiency', 'drainage_characteristics', 'seasonal_water_availability', 'water_conservation_practices'],
+    canSkip: true
+  },
+  {
+    stepNumber: 5,
+    name: 'Details & Media',
+    requiredFields: [],
+    optionalFields: ['soil_type', 'unique_code', 'certified', 'certification_type'],
+    canSkip: true
+  }
+] as const;
+
+// ✅ COMPREHENSIVE Interface - All Backend-Supported Fields
 interface ParcelFormData {
+  // Core required fields
   name: string;
   area: number;
   description: string;
-  contact_phone?: string;
-  address?: string;
-  certified: boolean;
 
-  // Basic Land Info
-  soil_type?: string;
-  unique_code?: string;
-  certification_type?: string;
+  // Contact details (optional)
+  contact_phone?: string;
   contact_person?: string;
   contact_email?: string;
+  address?: string;
 
-  // Soil Health Management
+  // Agricultural details (optional)
+  soil_type?: string;
+  unique_code?: string;
+
+  // Certification (optional)
+  certified: boolean;
+  certification_type?: string;
+
+  // Media (optional)
+  images?: string[];
+
+  // System fields
+  polygon?: Array<{ lat: number; lng: number }>;
+  map_metadata?: {
+    center: { lat: number; lng: number };
+    zoom: number;
+  };
+  establishment?: number;
+
+  // ✅ NEW: Advanced Agricultural Data for Carbon Calculations
+  // Soil Analysis
   soil_ph?: number;
   soil_organic_matter?: number;
   soil_nitrogen?: number;
@@ -238,7 +375,7 @@ interface ParcelFormData {
   last_soil_test_date?: string;
   soil_improvement_notes?: string;
 
-  // Water Rights and Management
+  // Water Management
   water_source_type?: string;
   water_rights_docs?: string;
   water_allocation_acre_feet?: number;
@@ -246,37 +383,34 @@ interface ParcelFormData {
   water_quality_tds?: number;
   irrigation_efficiency?: number;
   drainage_characteristics?: string;
-  water_conservation_practices?: string;
   seasonal_water_availability?: string;
+  water_conservation_practices?: string;
 
   // Conservation Practices
   cover_crop_management?: string;
   crop_rotation_pattern?: string;
-  buffer_strips_windbreaks?: boolean;
-  integrated_pest_management?: boolean;
+  buffer_strips_windbreaks?: string;
+  integrated_pest_management?: string;
   organic_certification_status?: string;
   nrcs_practices?: string;
   carbon_sequestration_practices?: string;
   biodiversity_measures?: string;
 
-  // Advanced Land Characteristics
+  // Environmental & Topographic
   slope_percentage?: number;
   topography_type?: string;
   microclimate_conditions?: string;
   frost_risk_zone?: string;
   wildlife_habitat_areas?: string;
-  riparian_zones?: boolean;
-  wetland_designation?: boolean;
+  riparian_zones?: string;
+  wetland_designation?: string;
   historical_yield_data?: string;
   land_use_restrictions?: string;
 
-  polygon?: Array<{ lat: number; lng: number }>;
-  map_metadata?: {
-    center: { lat: number; lng: number };
-    zoom: number;
-  };
-  images?: File[];
-  establishment?: number;
+  // ✅ NEW: Carbon Calculation System Fields
+  agricultural_details?: Record<string, any>;
+  carbon_calculation_enabled?: boolean;
+  usda_compliance_eligible?: boolean;
 }
 
 interface StandardParcelFormProps {
@@ -300,10 +434,75 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
   isEdit = false,
   establishmentName = ''
 }) => {
+  // ✅ Initialize useForm first to make watch() available
+  const methods = useForm<ParcelFormData>({
+    resolver: zodResolver(parcelSchema),
+    defaultValues: {
+      // Core required fields
+      name: '',
+      area: 0,
+      description: '',
+
+      // Contact details (optional)
+      contact_phone: '',
+      contact_person: '',
+      contact_email: '',
+      address: '',
+
+      // Agricultural details (optional)
+      soil_type: '',
+      unique_code: '',
+
+      // Certification (optional)
+      certified: false,
+      certification_type: '',
+
+      // Media (optional)
+      images: [],
+      
+      // ✅ Advanced Agricultural Fields (optional)
+      // Soil Health Management
+      soil_ph: undefined,
+      soil_organic_matter: undefined,
+      soil_nitrogen: undefined,
+      soil_phosphorus: undefined,
+      soil_potassium: undefined,
+      soil_compaction_level: '',
+      erosion_risk: '',
+      last_soil_test_date: '',
+      soil_improvement_notes: '',
+      
+      // Water Management
+      water_source_type: '',
+      water_rights_docs: '',
+      water_allocation_acre_feet: undefined,
+      water_quality_ph: undefined,
+      water_quality_tds: undefined,
+      irrigation_efficiency: undefined,
+      drainage_characteristics: '',
+      seasonal_water_availability: '',
+      water_conservation_practices: '',
+
+      ...initialData
+    }
+  });
+
+  const {
+    handleSubmit,
+    watch,
+    reset,
+    setValue,
+    formState: { errors }
+  } = methods;
+
   const [currentStep, setCurrentStep] = useState(0);
   const [polygon, setPolygon] = useState<Array<{ lat: number; lng: number }>>(
     initialData?.polygon || []
   );
+
+  // ✅ Helper function to safely get polygon properties
+  const getPolygonLength = () => polygon && Array.isArray(polygon) ? polygon.length : 0;
+  const isValidPolygon = () => getPolygonLength() >= 3;
 
   // Enhanced map centering logic
   const [mapCenter, setMapCenter] = useState(() => {
@@ -326,8 +525,11 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
     return 13;
   });
 
-  // Simplified image upload state for TrazoImageUpload
+  // Image upload state integrated with form
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  
+  // Watch for images field in form
+  const currentImages = watch('images') || [];
 
   const intl = useIntl();
   const toast = useToast();
@@ -338,168 +540,150 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: options.googleMapApiKey
   });
+  
+  // ✅ Reset form when initialData changes (for edit mode)
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      console.log('🔄 Resetting form with initial data:', initialData);
+      reset(initialData);
+      
+      // Also update polygon state
+      if (initialData.polygon) {
+        setPolygon(initialData.polygon);
+      }
+      
+      // Update map center if available
+      if (initialData.map_metadata?.center) {
+        setMapCenter(initialData.map_metadata.center);
+      }
+      
+      // Update map zoom if available
+      if (initialData.map_metadata?.zoom) {
+        setMapZoom(initialData.map_metadata.zoom);
+      }
+      
+      // Update images if available
+      if (initialData.images && initialData.images.length > 0) {
+        setUploadedImageUrls(initialData.images);
+      }
+    }
+  }, [initialData, reset]);
 
-  // Define steps for enhanced stepper
+  // ✅ UPDATED Steps - Only Backend-Supported Features
   const steps = [
-    { title: 'Basic Info', description: 'Name, area & location', icon: FaBuilding },
-    { title: 'Location', description: 'Map & boundaries', icon: FaMapMarkedAlt },
-    { title: 'Description', description: 'Details & characteristics', icon: MdInfo },
-    { title: 'Soil Health', description: 'pH, nutrients & testing', icon: FaSeedling },
-    { title: 'Water Management', description: 'Sources & conservation', icon: FaTint },
-    { title: 'Conservation', description: 'Practices & sustainability', icon: FaLeaf },
-    { title: 'Land Features', description: 'Topography & environment', icon: FaMountain },
-    { title: 'Media & Certification', description: 'Images & certification', icon: FaCertificate }
+    { title: 'Basic Info', description: 'Name, area & location', icon: FaBuilding, required: true },
+    { title: 'Location', description: 'Map & boundaries', icon: FaMapMarkedAlt, required: true },
+    {
+      title: 'Description',
+      description: 'Details & characteristics',
+      icon: MdInfo,
+      required: true
+    },
+    {
+      title: 'Soil Health',
+      description: 'Soil analysis & nutrients',
+      icon: FaSeedling,
+      required: false
+    },
+    {
+      title: 'Water Management',
+      description: 'Water rights & quality',
+      icon: FaTint,
+      required: false
+    },
+    {
+      title: 'Details & Media',
+      description: 'Codes, images & certification',
+      icon: FaCertificate,
+      required: false
+    }
   ];
 
-  const methods = useForm<ParcelFormData>({
-    resolver: zodResolver(parcelSchema),
-    defaultValues: {
-      certified: false,
-      area: 0,
-      name: '',
-      description: '',
-      contact_phone: '',
-      address: '',
+  // ✅ STEP VALIDATION FUNCTIONS
+  const validateStep = (stepNumber: number, formData: any): boolean => {
+    const stepConfig = STEP_VALIDATION_CONFIG[stepNumber];
+    if (!stepConfig) return true;
 
-      // Basic Land Info
-      soil_type: '',
-      unique_code: '',
-      certification_type: '',
-      contact_person: '',
-      contact_email: '',
-
-      // Soil Health Management
-      soil_ph: undefined,
-      soil_organic_matter: undefined,
-      soil_nitrogen: undefined,
-      soil_phosphorus: undefined,
-      soil_potassium: undefined,
-      soil_compaction_level: '',
-      erosion_risk: '',
-      last_soil_test_date: '',
-      soil_improvement_notes: '',
-
-      // Water Rights and Management
-      water_source_type: '',
-      water_rights_docs: '',
-      water_allocation_acre_feet: undefined,
-      water_quality_ph: undefined,
-      water_quality_tds: undefined,
-      irrigation_efficiency: undefined,
-      drainage_characteristics: '',
-      water_conservation_practices: '',
-      seasonal_water_availability: '',
-
-      // Conservation Practices
-      cover_crop_management: '',
-      crop_rotation_pattern: '',
-      buffer_strips_windbreaks: false,
-      integrated_pest_management: false,
-      organic_certification_status: '',
-      nrcs_practices: '',
-      carbon_sequestration_practices: '',
-      biodiversity_measures: '',
-
-      // Advanced Land Characteristics
-      slope_percentage: undefined,
-      topography_type: '',
-      microclimate_conditions: '',
-      frost_risk_zone: '',
-      wildlife_habitat_areas: '',
-      riparian_zones: false,
-      wetland_designation: false,
-      historical_yield_data: '',
-      land_use_restrictions: '',
-
-      ...initialData
+    // Check required fields
+    for (const field of stepConfig.requiredFields) {
+      const value = formData[field];
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        return false;
+      }
     }
-  });
 
-  const {
-    handleSubmit,
-    watch,
-    reset,
-    setValue,
-    formState: { errors }
-  } = methods;
+    // Custom validation for polygon
+    if (stepConfig.customValidation === 'polygon' && !polygon?.length) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const canNavigateToStep = (targetStep: number): boolean => {
+    const formData = watch();
+
+    // Always allow navigation backwards
+    if (targetStep <= currentStep) return true;
+
+    // For forward navigation, validate all intermediate steps
+    for (let step = currentStep; step < targetStep; step++) {
+      const stepConfig = STEP_VALIDATION_CONFIG[step];
+      if (!stepConfig?.canSkip && !validateStep(step, formData)) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const getStepStatus = (
+    stepNumber: number
+  ): 'completed' | 'current' | 'incomplete' | 'disabled' => {
+    if (stepNumber < currentStep) {
+      return validateStep(stepNumber, watch()) ? 'completed' : 'incomplete';
+    }
+    if (stepNumber === currentStep) return 'current';
+    return canNavigateToStep(stepNumber) ? 'disabled' : 'disabled';
+  };
+
+  // Form methods were already initialized at the top of the component
 
   // Update form when initialData changes - Simplified approach
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
-      reset({
+      const formData = {
         certified: false,
         area: 0,
         name: '',
         description: '',
         contact_phone: '',
         address: '',
-
-        // Basic Land Info
         soil_type: '',
         unique_code: '',
         certification_type: '',
         contact_person: '',
         contact_email: '',
-
-        // Soil Health Management
-        soil_ph: undefined,
-        soil_organic_matter: undefined,
-        soil_nitrogen: undefined,
-        soil_phosphorus: undefined,
-        soil_potassium: undefined,
-        soil_compaction_level: '',
-        erosion_risk: '',
-        last_soil_test_date: '',
-        soil_improvement_notes: '',
-
-        // Water Rights and Management
-        water_source_type: '',
-        water_rights_docs: '',
-        water_allocation_acre_feet: undefined,
-        water_quality_ph: undefined,
-        water_quality_tds: undefined,
-        irrigation_efficiency: undefined,
-        drainage_characteristics: '',
-        water_conservation_practices: '',
-        seasonal_water_availability: '',
-
-        // Conservation Practices
-        cover_crop_management: '',
-        crop_rotation_pattern: '',
-        buffer_strips_windbreaks: false,
-        integrated_pest_management: false,
-        organic_certification_status: '',
-        nrcs_practices: '',
-        carbon_sequestration_practices: '',
-        biodiversity_measures: '',
-
-        // Advanced Land Characteristics
-        slope_percentage: undefined,
-        topography_type: '',
-        microclimate_conditions: '',
-        frost_risk_zone: '',
-        wildlife_habitat_areas: '',
-        riparian_zones: false,
-        wetland_designation: false,
-        historical_yield_data: '',
-        land_use_restrictions: '',
-
+        images: [],
         ...initialData
-      });
+      };
 
-      // Handle existing images for edit mode with TrazoImageUpload
+      reset(formData);
+
+      // Handle existing images for edit mode
       if (isEdit && initialData.images) {
-        const imageUrls = (initialData.images as any[])
-          .map((img: any) => typeof img === 'string' ? img : img.url || img.image_url)
-          .filter(Boolean);
+        const imageUrls = Array.isArray(initialData.images) 
+          ? initialData.images.map((img: any) => (typeof img === 'string' ? img : img.url || img.image_url)).filter(Boolean)
+          : [];
         setUploadedImageUrls(imageUrls);
+        setValue('images', imageUrls);
       }
     }
-  }, [initialData, reset, isEdit]);
+  }, [initialData, reset, isEdit, setValue]);
 
   // Update map center and zoom when polygon changes
   useEffect(() => {
-    if (polygon.length >= 3) {
+    if (getPolygonLength() >= 3) {
       const newCenter = calculatePolygonCenter(polygon);
       const newZoom = calculatePolygonZoom(polygon);
       setMapCenter(newCenter);
@@ -507,6 +691,19 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
     }
   }, [polygon]);
 
+  // Sync uploadedImageUrls with form images field for persistence
+  useEffect(() => {
+    const formImages = watch('images') || [];
+    if (formImages.length > 0 && formImages !== uploadedImageUrls) {
+      setUploadedImageUrls(formImages);
+    }
+  }, [currentImages, uploadedImageUrls, watch]);
+
+  // Handle image changes from TrazoImageUpload
+  const handleImagesChange = useCallback((newImageUrls: string[]) => {
+    setUploadedImageUrls(newImageUrls);
+    setValue('images', newImageUrls);
+  }, [setValue]);
 
   // Google Maps polygon editing
   const onEdit = useCallback(() => {
@@ -542,15 +739,9 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
 
   const onSubmitForm = (data: ParcelFormData) => {
     try {
-      console.log('🔍 Form submission data received:', data);
-      console.log('🔍 All form values from watch():', watch());
-      console.log('🔍 Address field specifically:', {
-        fromData: data.address,
-        fromWatch: watch('address'),
-        isDefined: data.address !== undefined,
-        isEmpty: !data.address || data.address.trim() === ''
-      });
-
+      // Use images from form state, fallback to uploadedImageUrls state
+      const imageUrls = data.images && data.images.length > 0 ? data.images : uploadedImageUrls;
+      
       const finalData = {
         ...data,
         polygon,
@@ -558,19 +749,11 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
           center: mapCenter,
           zoom: mapZoom
         },
-        // Pass uploaded image URLs
-        uploaded_image_urls: uploadedImageUrls,
-        images: uploadedImageUrls
+        images: imageUrls,
+        uploaded_image_urls: imageUrls // Keep for backward compatibility
       };
 
-      // Remove the images property since we're handling it differently
-      const { images, ...submissionData } = finalData;
-
-      console.log('🚀 Final submission data:', submissionData);
-      console.log('🔑 Submission data keys:', Object.keys(submissionData));
-      console.log('📍 Address in final data:', submissionData.address);
-
-      onSubmit(submissionData as any);
+      onSubmit(finalData as any);
       toast({
         title: isEdit ? 'Parcel Updated' : 'Parcel Created',
         description: `"${data.name}" has been ${isEdit ? 'updated' : 'created'} successfully.`,
@@ -607,7 +790,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
 
       case 1:
         // Location: polygon with at least 3 points required
-        return polygon.length >= 3;
+        return isValidPolygon();
 
       case 2:
         // Description: description required, no validation errors in basic description fields
@@ -701,8 +884,24 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
     return completed;
   };
 
+  // ✅ IMPROVED Navigation with Validation
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
+      // Use dynamic step count
+      const formData = watch();
+
+      // Validate current step before proceeding
+      if (!validateStep(currentStep, formData)) {
+        toast({
+          title: 'Required Fields Missing',
+          description: `Please complete all required fields in ${steps[currentStep].title} before continuing.`,
+          status: 'warning',
+          duration: 4000,
+          isClosable: true
+        });
+        return;
+      }
+
       setCurrentStep(currentStep + 1);
     }
   };
@@ -710,6 +909,21 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
   const previousStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // ✅ NEW: Direct step navigation with validation
+  const goToStep = (stepNumber: number) => {
+    if (canNavigateToStep(stepNumber)) {
+      setCurrentStep(stepNumber);
+    } else {
+      toast({
+        title: 'Complete Required Steps',
+        description: 'Please complete all required fields in previous steps before skipping ahead.',
+        status: 'warning',
+        duration: 4000,
+        isClosable: true
+      });
     }
   };
 
@@ -727,12 +941,12 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
         currentStep={currentStep}
         completedSteps={getCompletedSteps()}
         allowStepClick={true}
-        onStepClick={(step) => setCurrentStep(step)}
+        onStepClick={goToStep}
       />
 
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmitForm)}>
-          {/* Step 0: Basic Information */}
+          {/* ✅ STEP 0: Basic Information */}
           {currentStep === 0 && (
             <StandardCard title="Parcel Information" subtitle="Basic details about your parcel">
               <VStack spacing={6} align="stretch">
@@ -782,9 +996,9 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
 
                 {/* Progress Info */}
                 <StandardAlert
-                  status="info"
-                  title="Next Steps"
-                  description="After providing basic information, you'll map the parcel boundaries and add detailed descriptions."
+                  status="success"
+                  title="Ready for Location Mapping"
+                  description="Basic parcel information captured. Click 'Next' to define the geographic boundaries on the map."
                 />
 
                 {/* Navigation */}
@@ -831,29 +1045,48 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                       zoom={mapZoom}
                       center={mapCenter}
                       onClick={(e) => {
+                        // Improved map click handler with better UX
                         if (e.latLng) {
                           const newPoint = {
                             lat: e.latLng.lat(),
                             lng: e.latLng.lng()
                           };
-                          setPolygon([...polygon, newPoint]);
+                          
+                          // Add point to polygon
+                          const updatedPolygon = [...polygon, newPoint];
+                          setPolygon(updatedPolygon);
+                          
+                          // Update form field for persistence
+                          setValue('polygon', updatedPolygon);
+                          
+                          // Save map metadata
+                          setValue('map_metadata', {
+                            center: mapCenter,
+                            zoom: mapZoom
+                          });
                         }
                       }}
-                      onZoomChanged={() => {
-                        // Update zoom when changed
-                      }}
-                      onCenterChanged={() => {
-                        // Update center when changed
+                      options={{
+                        disableDefaultUI: false,
+                        zoomControl: true,
+                        mapTypeControl: true,
+                        scaleControl: true,
+                        streetViewControl: false,
+                        rotateControl: false,
+                        fullscreenControl: true,
+                        gestureHandling: 'cooperative',
+                        clickableIcons: false, // Prevent poi clicks from interfering
+                        mapTypeId: 'satellite' // Better for agricultural land visualization
                       }}>
-                      {polygon.length > 2 && (
+                      {getPolygonLength() > 2 && (
                         <Polygon
                           path={polygon}
                           onLoad={onLoadPolygon}
                           onUnmount={onUnmount}
                           options={{
-                            fillColor: '#00ff00',
-                            fillOpacity: 0.35,
-                            strokeColor: '#00ff00',
+                            fillColor: isValidPolygon() ? '#22C55E' : '#F59E0B', // Green when valid, orange when incomplete
+                            fillOpacity: 0.25,
+                            strokeColor: isValidPolygon() ? '#16A34A' : '#D97706',
                             strokeOpacity: 1,
                             strokeWeight: 2,
                             editable: true,
@@ -861,6 +1094,29 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           }}
                         />
                       )}
+                      
+                      {/* Add visual markers for each point */}
+                      {polygon && Array.isArray(polygon) && polygon.map((point, index) => (
+                        <Marker
+                          key={index}
+                          position={point}
+                          title={`Point ${index + 1}`}
+                          icon={{
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 8,
+                            fillColor: isValidPolygon() ? '#16A34A' : '#D97706',
+                            fillOpacity: 1,
+                            strokeColor: '#FFFFFF',
+                            strokeWeight: 2
+                          }}
+                          onClick={() => {
+                            // Allow removing individual points by clicking them
+                            const newPolygon = polygon && Array.isArray(polygon) ? polygon.filter((_, i) => i !== index) : [];
+                            setPolygon(newPolygon);
+                            setValue('polygon', newPolygon);
+                          }}
+                        />
+                      ))}
                     </GoogleMap>
                   )}
                 </Box>
@@ -873,16 +1129,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                 />
 
                 {/* Polygon Info */}
-                {polygon.length > 0 && (
+                {getPolygonLength() > 0 && (
                   <Box p={4} bg="green.50" borderRadius="lg">
                     <Text fontWeight="semibold" color="green.700" mb={2}>
-                      Polygon Points: {polygon.length}
+                      Polygon Points: {getPolygonLength()}
                     </Text>
                     <HStack>
                       <Badge colorScheme="green" variant="solid">
-                        {polygon.length >= 3 ? 'Valid Polygon' : 'Need more points'}
+                        {isValidPolygon() ? 'Valid Polygon' : 'Need more points'}
                       </Badge>
-                      {polygon.length > 0 && (
+                      {getPolygonLength() > 0 && (
                         <StandardButton
                           size="sm"
                           variant="outline"
@@ -1051,18 +1307,6 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   </StandardField>
                 </SimpleGrid>
 
-                {/* Summary */}
-                <Box p={4} bg="gray.50" borderRadius="lg">
-                  <Text fontWeight="semibold" mb={2}>
-                    Parcel Summary:
-                  </Text>
-                  <SimpleGrid columns={2} spacing={2} fontSize="sm">
-                    <Text>Name: {watch('name') || 'Not specified'}</Text>
-                    <Text>Area: {watch('area') || 0} acres</Text>
-                    <Text>Boundary Points: {polygon.length}</Text>
-                    <Text>Status: {polygon.length >= 3 ? 'Ready' : 'Incomplete'}</Text>
-                  </SimpleGrid>
-                </Box>
 
                 {/* Navigation */}
                 <HStack spacing={3} justify="space-between" pt={4}>
@@ -1631,421 +1875,10 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
             </StandardCard>
           )}
 
-          {/* Step 5: Conservation Practices */}
+          {/* Step 5: Certification & Media */}
           {currentStep === 5 && (
             <StandardCard
-              title="Conservation Practices"
-              subtitle="Sustainable farming and environmental conservation methods">
-              <VStack spacing={6} align="stretch">
-                {/* Crop Management */}
-                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mb={2}>
-                  <Icon as={FaLeaf} mr={2} color="green.500" />
-                  Crop Management Practices
-                </Text>
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="Cover Crop Management"
-                    helpText="Cover crops used and management practices"
-                    error={errors.cover_crop_management?.message}>
-                    <Textarea
-                      {...methods.register('cover_crop_management')}
-                      placeholder="Describe cover crops used (legumes, grasses, brassicas), seeding rates, termination methods..."
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                      minH="100px"
-                    />
-                  </StandardField>
-
-                  <StandardField
-                    label="Crop Rotation Pattern"
-                    helpText="Multi-year crop rotation sequence"
-                    error={errors.crop_rotation_pattern?.message}>
-                    <Textarea
-                      {...methods.register('crop_rotation_pattern')}
-                      placeholder="Describe rotation cycle (e.g., corn-soy-wheat-cover crop), timing, and benefits..."
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                      minH="100px"
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Conservation Features */}
-                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={4} mb={2}>
-                  <Icon as={FaShieldAlt} mr={2} color="green.500" />
-                  Conservation Features
-                </Text>
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <VStack align="stretch" spacing={4}>
-                    <StandardField label="Buffer Strips & Windbreaks">
-                      <HStack>
-                        <Switch
-                          {...methods.register('buffer_strips_windbreaks')}
-                          colorScheme="green"
-                          size="md"
-                        />
-                        <Text fontSize="sm" color="gray.600">
-                          {watch('buffer_strips_windbreaks') ? 'Present' : 'Not present'}
-                        </Text>
-                      </HStack>
-                    </StandardField>
-
-                    <StandardField label="Integrated Pest Management (IPM)">
-                      <HStack>
-                        <Switch
-                          {...methods.register('integrated_pest_management')}
-                          colorScheme="green"
-                          size="md"
-                        />
-                        <Text fontSize="sm" color="gray.600">
-                          {watch('integrated_pest_management') ? 'Implemented' : 'Not implemented'}
-                        </Text>
-                      </HStack>
-                    </StandardField>
-                  </VStack>
-
-                  <StandardField
-                    label="Organic Certification Status"
-                    helpText="Current organic certification status"
-                    error={errors.organic_certification_status?.message}>
-                    <Select
-                      {...methods.register('organic_certification_status')}
-                      placeholder="Select certification status"
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg">
-                      <option value="certified">USDA Organic Certified</option>
-                      <option value="transitional">In Transition (3-year period)</option>
-                      <option value="applying">Applying for Certification</option>
-                      <option value="conventional">Conventional (not organic)</option>
-                      <option value="natural">Natural methods (not certified)</option>
-                    </Select>
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Government Programs */}
-                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={4} mb={2}>
-                  <Icon as={FaRecycle} mr={2} color="green.500" />
-                  Government Programs & Carbon Practices
-                </Text>
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="NRCS Practices"
-                    helpText="NRCS conservation practices implemented"
-                    error={errors.nrcs_practices?.message}>
-                    <Textarea
-                      {...methods.register('nrcs_practices')}
-                      placeholder="List NRCS practice codes and descriptions (e.g., CPS 328 - Conservation Crop Rotation)..."
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                      minH="100px"
-                    />
-                  </StandardField>
-
-                  <StandardField
-                    label="Carbon Sequestration Practices"
-                    helpText="Practices that enhance carbon storage"
-                    error={errors.carbon_sequestration_practices?.message}>
-                    <Textarea
-                      {...methods.register('carbon_sequestration_practices')}
-                      placeholder="Describe no-till, agroforestry, biochar application, or other carbon storage practices..."
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                      minH="100px"
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
-                <StandardField
-                  label="Biodiversity Enhancement Measures"
-                  helpText="Practices that support biodiversity and wildlife habitat"
-                  error={errors.biodiversity_measures?.message}>
-                  <Textarea
-                    {...methods.register('biodiversity_measures')}
-                    placeholder="Describe pollinator habitat, native plant corridors, beneficial insect habitat, or other biodiversity initiatives..."
-                    borderRadius="lg"
-                    borderColor="gray.300"
-                    _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                    size="lg"
-                    minH="100px"
-                  />
-                </StandardField>
-
-                {/* Navigation */}
-                <HStack spacing={3} justify="space-between" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
-                    Back to Water Management
-                  </StandardButton>
-
-                  <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
-                    </StandardButton>
-                    <StandardButton
-                      onClick={nextStep}
-                      rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(5)}>
-                      Continue to Land Features
-                    </StandardButton>
-                  </HStack>
-                </HStack>
-              </VStack>
-            </StandardCard>
-          )}
-
-          {/* Step 6: Advanced Land Characteristics */}
-          {currentStep === 6 && (
-            <StandardCard
-              title="Advanced Land Characteristics"
-              subtitle="Topography, climate, and environmental features">
-              <VStack spacing={6} align="stretch">
-                {/* Topography & Physical Features */}
-                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mb={2}>
-                  <Icon as={FaMountain} mr={2} color="gray.600" />
-                  Topography & Physical Features
-                </Text>
-
-                <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-                  <StandardField
-                    label="Slope Percentage"
-                    helpText="Average slope of the parcel (0-100%)"
-                    error={errors.slope_percentage?.message}>
-                    <Controller
-                      name="slope_percentage"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <NumberInput
-                          value={field.value || ''}
-                          onChange={(_, num) => field.onChange(num)}
-                          min={0}
-                          max={100}
-                          step={0.1}
-                          precision={1}>
-                          <NumberInputField
-                            placeholder="e.g., 2.5"
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                          />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
-                      )}
-                    />
-                  </StandardField>
-
-                  <StandardField
-                    label="Topography Type"
-                    helpText="Overall land topography"
-                    error={errors.topography_type?.message}>
-                    <Select
-                      {...methods.register('topography_type')}
-                      placeholder="Select topography"
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg">
-                      <option value="flat">Flat/Level</option>
-                      <option value="gently_sloping">Gently Sloping</option>
-                      <option value="moderately_sloping">Moderately Sloping</option>
-                      <option value="steep">Steep</option>
-                      <option value="rolling">Rolling Hills</option>
-                      <option value="terraced">Terraced</option>
-                      <option value="variable">Variable</option>
-                    </Select>
-                  </StandardField>
-
-                  <StandardField
-                    label="Frost Risk Zone"
-                    helpText="Susceptibility to frost damage"
-                    error={errors.frost_risk_zone?.message}>
-                    <Select
-                      {...methods.register('frost_risk_zone')}
-                      placeholder="Select frost risk"
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg">
-                      <option value="low">Low Risk - Rare frost events</option>
-                      <option value="moderate">Moderate Risk - Occasional frost</option>
-                      <option value="high">High Risk - Frequent frost</option>
-                      <option value="frost_pocket">Frost Pocket - Very high risk</option>
-                      <option value="protected">Protected - Natural windbreaks</option>
-                    </Select>
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Climate & Environment */}
-                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={4} mb={2}>
-                  <Icon as={FaThermometerHalf} mr={2} color="orange.500" />
-                  Climate & Microenvironment
-                </Text>
-
-                <StandardField
-                  label="Microclimate Conditions"
-                  helpText="Specific microclimate characteristics of this parcel"
-                  error={errors.microclimate_conditions?.message}>
-                  <Textarea
-                    {...methods.register('microclimate_conditions')}
-                    placeholder="Describe wind patterns, temperature variations, humidity levels, sun exposure, or other microclimate factors..."
-                    borderRadius="lg"
-                    borderColor="gray.300"
-                    _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                    size="lg"
-                    minH="100px"
-                  />
-                </StandardField>
-
-                {/* Environmental Features */}
-                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={4} mb={2}>
-                  <Icon as={MdNature} mr={2} color="green.600" />
-                  Environmental Features & Designations
-                </Text>
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <VStack align="stretch" spacing={4}>
-                    <StandardField label="Riparian Zones">
-                      <HStack>
-                        <Switch
-                          {...methods.register('riparian_zones')}
-                          colorScheme="green"
-                          size="md"
-                        />
-                        <Text fontSize="sm" color="gray.600">
-                          {watch('riparian_zones') ? 'Present' : 'Not present'}
-                        </Text>
-                      </HStack>
-                    </StandardField>
-
-                    <StandardField label="Wetland Designation">
-                      <HStack>
-                        <Switch
-                          {...methods.register('wetland_designation')}
-                          colorScheme="green"
-                          size="md"
-                        />
-                        <Text fontSize="sm" color="gray.600">
-                          {watch('wetland_designation')
-                            ? 'Designated wetland'
-                            : 'No wetland designation'}
-                        </Text>
-                      </HStack>
-                    </StandardField>
-                  </VStack>
-
-                  <StandardField
-                    label="Wildlife Habitat Areas"
-                    helpText="Wildlife habitats and protected areas"
-                    error={errors.wildlife_habitat_areas?.message}>
-                    <Textarea
-                      {...methods.register('wildlife_habitat_areas')}
-                      placeholder="Describe wildlife corridors, nesting areas, protected species habitat, or conservation easements..."
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                      minH="100px"
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Historical & Regulatory */}
-                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={4} mb={2}>
-                  <Icon as={FaChartLine} mr={2} color="purple.500" />
-                  Historical Data & Regulations
-                </Text>
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="Historical Yield Data"
-                    helpText="Past production records and trends"
-                    error={errors.historical_yield_data?.message}>
-                    <Textarea
-                      {...methods.register('historical_yield_data')}
-                      placeholder="Describe yield trends, average production, best/worst years, and factors affecting yield..."
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                      minH="100px"
-                    />
-                  </StandardField>
-
-                  <StandardField
-                    label="Land Use Restrictions"
-                    helpText="Zoning, easements, or other restrictions"
-                    error={errors.land_use_restrictions?.message}>
-                    <Textarea
-                      {...methods.register('land_use_restrictions')}
-                      placeholder="Describe zoning restrictions, conservation easements, covenant restrictions, or other limitations..."
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                      minH="100px"
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Navigation */}
-                <HStack spacing={3} justify="space-between" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
-                    Back to Conservation
-                  </StandardButton>
-
-                  <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
-                    </StandardButton>
-                    <StandardButton
-                      onClick={nextStep}
-                      rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(6)}>
-                      Continue to Media & Certification
-                    </StandardButton>
-                  </HStack>
-                </HStack>
-              </VStack>
-            </StandardCard>
-          )}
-
-          {/* Step 7: Media & Certification */}
-          {currentStep === 7 && (
-            <StandardCard
-              title="Media & Certification"
+              title="Certification & Media"
               subtitle="Upload images and set certification status">
               <VStack spacing={6} align="stretch">
                 {/* 2025 Modern Image Upload */}
@@ -2055,8 +1888,8 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <TrazoImageUpload
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
-                    existingImages={uploadedImageUrls}
-                    onImagesChange={setUploadedImageUrls}
+                    existingImages={currentImages.length > 0 ? currentImages : uploadedImageUrls}
+                    onImagesChange={handleImagesChange}
                     isLoading={false}
                   />
                 </StandardField>
@@ -2105,200 +1938,13 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   </VStack>
                 </StandardField>
 
-                {/* Comprehensive Agricultural Summary */}
-                <StandardAlert
-                  status="info"
-                  title="Agricultural Data Summary"
-                  description="Review your comprehensive parcel information before submitting."
-                />
-
-                <Accordion allowToggle defaultIndex={[0]}>
-                  <AccordionItem>
-                    <AccordionButton>
-                      <Box flex="1" textAlign="left">
-                        <Text fontWeight="semibold">
-                          <Icon as={FaSeedling} mr={2} color="green.500" />
-                          Soil Health Summary
-                        </Text>
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
-                    <AccordionPanel pb={4}>
-                      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4} fontSize="sm">
-                        {watch('soil_ph') && (
-                          <Text>
-                            <strong>pH:</strong> {watch('soil_ph')}
-                          </Text>
-                        )}
-                        {watch('soil_organic_matter') && (
-                          <Text>
-                            <strong>Organic Matter:</strong> {watch('soil_organic_matter')}%
-                          </Text>
-                        )}
-                        {watch('soil_nitrogen') && (
-                          <Text>
-                            <strong>Nitrogen:</strong> {watch('soil_nitrogen')} ppm
-                          </Text>
-                        )}
-                        {watch('soil_phosphorus') && (
-                          <Text>
-                            <strong>Phosphorus:</strong> {watch('soil_phosphorus')} ppm
-                          </Text>
-                        )}
-                        {watch('soil_potassium') && (
-                          <Text>
-                            <strong>Potassium:</strong> {watch('soil_potassium')} ppm
-                          </Text>
-                        )}
-                        {watch('soil_compaction_level') && (
-                          <Text>
-                            <strong>Compaction:</strong> {watch('soil_compaction_level')}
-                          </Text>
-                        )}
-                        {watch('erosion_risk') && (
-                          <Text>
-                            <strong>Erosion Risk:</strong> {watch('erosion_risk')}
-                          </Text>
-                        )}
-                        {watch('last_soil_test_date') && (
-                          <Text>
-                            <strong>Last Test:</strong> {watch('last_soil_test_date')}
-                          </Text>
-                        )}
-                      </SimpleGrid>
-                    </AccordionPanel>
-                  </AccordionItem>
-
-                  <AccordionItem>
-                    <AccordionButton>
-                      <Box flex="1" textAlign="left">
-                        <Text fontWeight="semibold">
-                          <Icon as={FaTint} mr={2} color="blue.500" />
-                          Water Management Summary
-                        </Text>
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
-                    <AccordionPanel pb={4}>
-                      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4} fontSize="sm">
-                        {watch('water_source_type') && (
-                          <Text>
-                            <strong>Source:</strong> {watch('water_source_type')}
-                          </Text>
-                        )}
-                        {watch('water_allocation_acre_feet') && (
-                          <Text>
-                            <strong>Allocation:</strong> {watch('water_allocation_acre_feet')}{' '}
-                            acre-ft/yr
-                          </Text>
-                        )}
-                        {watch('water_quality_ph') && (
-                          <Text>
-                            <strong>Water pH:</strong> {watch('water_quality_ph')}
-                          </Text>
-                        )}
-                        {watch('irrigation_efficiency') && (
-                          <Text>
-                            <strong>Efficiency:</strong> {watch('irrigation_efficiency')}%
-                          </Text>
-                        )}
-                        {watch('drainage_characteristics') && (
-                          <Text>
-                            <strong>Drainage:</strong> {watch('drainage_characteristics')}
-                          </Text>
-                        )}
-                        {watch('seasonal_water_availability') && (
-                          <Text>
-                            <strong>Availability:</strong> {watch('seasonal_water_availability')}
-                          </Text>
-                        )}
-                      </SimpleGrid>
-                    </AccordionPanel>
-                  </AccordionItem>
-
-                  <AccordionItem>
-                    <AccordionButton>
-                      <Box flex="1" textAlign="left">
-                        <Text fontWeight="semibold">
-                          <Icon as={FaLeaf} mr={2} color="green.500" />
-                          Conservation Practices Summary
-                        </Text>
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
-                    <AccordionPanel pb={4}>
-                      <VStack align="stretch" spacing={3} fontSize="sm">
-                        {watch('organic_certification_status') && (
-                          <Text>
-                            <strong>Organic Status:</strong> {watch('organic_certification_status')}
-                          </Text>
-                        )}
-                        <HStack spacing={6}>
-                          <Text>
-                            <strong>IPM:</strong>{' '}
-                            {watch('integrated_pest_management') ? 'Yes' : 'No'}
-                          </Text>
-                          <Text>
-                            <strong>Buffer Strips:</strong>{' '}
-                            {watch('buffer_strips_windbreaks') ? 'Yes' : 'No'}
-                          </Text>
-                          <Text>
-                            <strong>Riparian Zones:</strong>{' '}
-                            {watch('riparian_zones') ? 'Yes' : 'No'}
-                          </Text>
-                          <Text>
-                            <strong>Wetlands:</strong> {watch('wetland_designation') ? 'Yes' : 'No'}
-                          </Text>
-                        </HStack>
-                      </VStack>
-                    </AccordionPanel>
-                  </AccordionItem>
-
-                  <AccordionItem>
-                    <AccordionButton>
-                      <Box flex="1" textAlign="left">
-                        <Text fontWeight="semibold">
-                          <Icon as={FaMountain} mr={2} color="gray.600" />
-                          Land Characteristics Summary
-                        </Text>
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
-                    <AccordionPanel pb={4}>
-                      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4} fontSize="sm">
-                        {watch('slope_percentage') && (
-                          <Text>
-                            <strong>Slope:</strong> {watch('slope_percentage')}%
-                          </Text>
-                        )}
-                        {watch('topography_type') && (
-                          <Text>
-                            <strong>Topography:</strong> {watch('topography_type')}
-                          </Text>
-                        )}
-                        {watch('frost_risk_zone') && (
-                          <Text>
-                            <strong>Frost Risk:</strong> {watch('frost_risk_zone')}
-                          </Text>
-                        )}
-                      </SimpleGrid>
-                    </AccordionPanel>
-                  </AccordionItem>
-                </Accordion>
-
-                <StandardAlert
-                  status="success"
-                  title="Ready to Submit"
-                  description="Your comprehensive parcel information is complete. All agricultural data will be saved for carbon calculation and farm management."
-                />
-
                 {/* Navigation */}
                 <HStack spacing={3} justify="space-between" pt={4}>
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    Back to Land Features
+                    Back to Agricultural Details
                   </StandardButton>
 
                   <HStack spacing={3}>
@@ -2317,6 +1963,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
               </VStack>
             </StandardCard>
           )}
+
         </form>
       </FormProvider>
     </StandardPage>

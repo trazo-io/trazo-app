@@ -31,13 +31,13 @@ export const ModernEducationalSection: React.FC<ModernEducationalSectionProps> =
 
   return (
     <Card bg={cardBg} shadow="lg" borderRadius="xl">
-      <CardHeader>
+      <CardHeader pb={8}>
         <HStack spacing={3}>
           <Circle size="40px" bg="blue.100">
             <Icon as={FaBookOpen} color="blue.600" />
           </Circle>
           <VStack align="start" spacing={0}>
-            <Heading size="md" color={textColor}>
+            <Heading size="sm" color={textColor}>
               Learn About Sustainability
             </Heading>
             <Text fontSize="sm" color={mutedColor}>

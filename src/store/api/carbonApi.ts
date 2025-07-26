@@ -446,6 +446,7 @@ export interface CompleteSummary {
     area?: number;
     polygon: any;
     map_metadata: any;
+    agricultural_details?: Record<string, any>; // Agricultural data from parcel form
     establishment?: {
       id: string;
       name: string;

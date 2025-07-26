@@ -46,7 +46,7 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
         formData.append('establishment', establishmentId);
 
-        // Additional fields - only send fields that exist in backend model
+        // ✅ Contact & Identification Fields - Send ALL fields
         if (parcelData.soil_type) {
           formData.append('soil_type', parcelData.soil_type);
         }
@@ -56,20 +56,32 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.certification_type) {
           formData.append('certification_type', parcelData.certification_type);
         }
-        if (parcelData.contact_person) {
-          formData.append('contact_person', parcelData.contact_person);
+        
+        // ✅ FIXED: Contact fields - Send ALL contact fields (even if empty)
+        formData.append('contact_person', parcelData.contact_person || '');
+        formData.append('contact_email', parcelData.contact_email || '');
+        formData.append('contact_phone', parcelData.contact_phone || '');
+        formData.append('address', parcelData.address || '');
+        
+        // ✅ NEW: Agricultural Details for Carbon Calculations
+        if (parcelData.agricultural_details && Object.keys(parcelData.agricultural_details).length > 0) {
+          formData.append('agricultural_details', JSON.stringify(parcelData.agricultural_details));
         }
-        if (parcelData.contact_email) {
-          formData.append('contact_email', parcelData.contact_email);
+        
+        // ✅ NEW: Carbon Calculation Flags
+        if (parcelData.carbon_calculation_enabled !== undefined) {
+          formData.append('carbon_calculation_enabled', parcelData.carbon_calculation_enabled);
         }
-        if (parcelData.contact_phone) {
-          formData.append('contact_phone', parcelData.contact_phone);
+        if (parcelData.usda_compliance_eligible !== undefined) {
+          formData.append('usda_compliance_eligible', parcelData.usda_compliance_eligible);
         }
-        if (parcelData.address) {
-          formData.append('address', parcelData.address);
-        }
-
+        
         // Note: crop_type field removed - it's now stored in History model for per-production tracking
+        
+        console.log('🚀 CREATE FormData contents being sent to backend:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`  ${key}:`, value);
+        }
 
         return {
           url: PARCEL_URL(companyId, establishmentId),
@@ -107,7 +119,7 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('polygon', JSON.stringify(parcelData.polygon || []));
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
 
-        // Additional fields - only send fields that exist in backend model
+        // ✅ Contact & Identification Fields - Send ALL fields
         if (parcelData.soil_type) {
           formData.append('soil_type', parcelData.soil_type);
         }
@@ -117,20 +129,32 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.certification_type) {
           formData.append('certification_type', parcelData.certification_type);
         }
-        if (parcelData.contact_person) {
-          formData.append('contact_person', parcelData.contact_person);
+        
+        // ✅ FIXED: Contact fields - Send ALL contact fields (even if empty)
+        formData.append('contact_person', parcelData.contact_person || '');
+        formData.append('contact_email', parcelData.contact_email || '');
+        formData.append('contact_phone', parcelData.contact_phone || '');
+        formData.append('address', parcelData.address || '');
+        
+        // ✅ NEW: Agricultural Details for Carbon Calculations
+        if (parcelData.agricultural_details && Object.keys(parcelData.agricultural_details).length > 0) {
+          formData.append('agricultural_details', JSON.stringify(parcelData.agricultural_details));
         }
-        if (parcelData.contact_email) {
-          formData.append('contact_email', parcelData.contact_email);
+        
+        // ✅ NEW: Carbon Calculation Flags
+        if (parcelData.carbon_calculation_enabled !== undefined) {
+          formData.append('carbon_calculation_enabled', parcelData.carbon_calculation_enabled);
         }
-        if (parcelData.contact_phone) {
-          formData.append('contact_phone', parcelData.contact_phone);
+        if (parcelData.usda_compliance_eligible !== undefined) {
+          formData.append('usda_compliance_eligible', parcelData.usda_compliance_eligible);
         }
-        if (parcelData.address) {
-          formData.append('address', parcelData.address);
-        }
-
+        
         // Note: crop_type field removed - it's now stored in History model for per-production tracking
+        
+        console.log('🚀 UPDATE FormData contents being sent to backend:');
+        for (let [key, value] of formData.entries()) {
+          console.log(`  ${key}:`, value);
+        }
 
         return {
           url: PARCEL_URL(companyId, establishmentId, parcelId),

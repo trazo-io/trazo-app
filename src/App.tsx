@@ -145,21 +145,19 @@ const App = () => {
     const host = window.location.host;
     const baseDomain = import.meta.env.VITE_APP_BASE_DOMAIN || 'trazo.io';
 
-    console.log('Current host:', host);
-    console.log('Base domain:', baseDomain);
-    console.log('All env vars:', import.meta.env);
+    // Subdomain detection based on host
 
     try {
       // Handle app-staging.trazo.io and similar staging domains
       if (host.includes('app-staging') || host.includes('app.') || host.includes('app-')) {
-        console.log('Setting subdomain to producer');
+        // Producer app detected
         setSubDomain('producer');
       } else if (host.includes('consumer')) {
-        console.log('Setting subdomain to consumer');
+        // Consumer app detected
         setSubDomain('consumer');
       } else {
         // Default to producer for main domain
-        console.log('Setting subdomain to producer (default)');
+        // Default to producer app
         setSubDomain('producer');
       }
     } catch (error) {
@@ -179,7 +177,7 @@ const App = () => {
     return <Navigate to="/pricing" replace />;
   }
 
-  console.log(config);
+  // App configuration loaded
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>

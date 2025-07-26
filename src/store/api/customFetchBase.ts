@@ -129,15 +129,29 @@ function handleRateLimit(errorData: ApiErrorData): void {
  */
 async function attemptTokenRefresh(api: BaseQueryApi, extraOptions: any): Promise<boolean> {
   try {
+    const refreshToken = localStorage.getItem('refresh');
+    if (!refreshToken) {
+      console.log('🔒 ERROR: No refresh token found');
+      return false;
+    }
+
     const refreshResult = await baseQuery(
       {
         url: 'auth/refresh/',
         method: 'POST',
+        body: { refresh: refreshToken },
         credentials: 'include'
       },
       api,
       extraOptions
     );
+
+    // Store new access token if refresh succeeds
+    if (refreshResult.data?.access) {
+      TokenManager.setAccessToken(refreshResult.data.access);
+      localStorage.setItem('access', refreshResult.data.access);
+      console.log('🔒 REFRESH: New access token stored');
+    }
 
     return !!refreshResult.data;
   } catch (error) {
@@ -161,6 +175,44 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
   if (!token) {
     token = localStorage.getItem('access');
     console.log('🔒 FETCH: Fallback to direct localStorage access. Found:', !!token);
+  }
+
+  // Check if we have a token and if it might be expired (simple check)
+  if (token && !args.url?.includes('auth/')) {
+    try {
+      // Decode JWT to check expiration (without verification)
+      const tokenParts = token.split('.');
+      if (tokenParts.length === 3) {
+        const payload = JSON.parse(atob(tokenParts[1]));
+        const expirationTime = payload.exp * 1000; // Convert to milliseconds
+        const currentTime = Date.now();
+        const timeUntilExpiry = expirationTime - currentTime;
+        
+        // If token expires in less than 30 seconds, refresh it preemptively
+        if (timeUntilExpiry < 30000) {
+          console.log('🔒 TOKEN: Token expires in', Math.floor(timeUntilExpiry / 1000), 'seconds - refreshing preemptively');
+          
+          if (!mutex.isLocked()) {
+            const release = await mutex.acquire();
+            try {
+              const refreshSuccess = await attemptTokenRefresh(api, extraOptions);
+              if (refreshSuccess) {
+                token = TokenManager.getAccessToken();
+                console.log('🔒 TOKEN: Preemptive refresh successful');
+              }
+            } finally {
+              release();
+            }
+          } else {
+            console.log('🔒 TOKEN: Waiting for ongoing refresh');
+            await mutex.waitForUnlock();
+            token = TokenManager.getAccessToken();
+          }
+        }
+      }
+    } catch (error) {
+      console.log('🔒 TOKEN: Error checking token expiration:', error);
+    }
   }
   console.log('🔒 FETCH: Getting token for request to', args.url, 'Token found:', !!token, 'Length:', token?.length || 0);
   if (token) {
@@ -197,8 +249,10 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
         return result;
       }
 
-      // Handle token validation errors
-      if (errorData?.code === 'token_not_valid') {
+      // Handle token validation errors - attempt refresh for any 401
+      if (errorData?.code === 'token_not_valid' || status === 401) {
+        console.log('🔒 401 ERROR: Attempting token refresh for', args.url);
+        
         // Use mutex to prevent multiple refresh attempts
         if (!mutex.isLocked()) {
           const release = await mutex.acquire();
@@ -207,7 +261,8 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
             const refreshSuccess = await attemptTokenRefresh(api, extraOptions);
 
             if (refreshSuccess) {
-              // Retry the original request
+              console.log('🔒 REFRESH: Success - retrying original request');
+              // Retry the original request with new token
               result = await baseQuery(args, api, extraOptions);
             } else {
               console.log('🔒 ERROR: Token refresh failed - clearing tokens');
@@ -220,9 +275,19 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
             release();
           }
         } else {
-          // Wait for refresh to complete and retry
+          // Another request is already refreshing the token
+          console.log('🔒 REFRESH: Waiting for ongoing refresh to complete');
           await mutex.waitForUnlock();
-          result = await baseQuery(args, api, extraOptions);
+          
+          // Check if we now have a valid token after waiting
+          const newToken = TokenManager.getAccessToken();
+          if (newToken) {
+            console.log('🔒 REFRESH: Token refreshed by another request - retrying');
+            result = await baseQuery(args, api, extraOptions);
+          } else {
+            console.log('🔒 ERROR: No valid token after waiting - redirecting to login');
+            handleAuthRedirect(currentPath);
+          }
         }
       }
     }
