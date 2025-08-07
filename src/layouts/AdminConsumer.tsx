@@ -15,8 +15,7 @@ import { StatsIcon, RocketIcon } from 'components/Icons/Icons';
 import Sidebar from 'components/Sidebar/Sidebar';
 import { SidebarContext } from 'contexts/SidebarContext';
 import theme from 'theme/theme';
-import ConsumerSidebar from 'components/Sidebar/ConsumerSidebar';
-import ConsumerSidebarResponsive from 'components/Sidebar/ConsumerSidebarResponsive';
+// Unified Sidebar is now imported above
 import {
   FaQrcode,
   FaStar,
@@ -26,7 +25,7 @@ import {
   FaChartLine,
   FaBalanceScale
 } from 'react-icons/fa';
-import { MdDashboard, MdInsights, MdCompare, MdTimeline } from 'react-icons/md';
+import { MdDashboard, MdInsights, MdCompare, MdTimeline, MdSettings } from 'react-icons/md';
 
 export const consumerRoutes = [
   {
@@ -49,6 +48,13 @@ export const consumerRoutes = [
     icon: <MdTimeline color="inherit" />,
     layout: '/admin',
     regex: /^\/admin\/dashboard\/journey$/
+  },
+  {
+    name: 'Settings',
+    path: 'settings',
+    icon: <MdSettings color="inherit" />,
+    layout: '/admin',
+    regex: /^\/admin\/dashboard\/settings$/
   }
 ];
 
@@ -79,11 +85,12 @@ export default function AdminConsumerLayout(props: any) {
         setToggleSidebar
       }}>
       <>
-        <ConsumerSidebar
+        <Sidebar
           routes={consumerRoutes}
           logoText={''}
           sidebarVariant={sidebarVariant}
           display="none"
+          toggleSidebar={toggleSidebar}
           {...rest}
         />
       </>

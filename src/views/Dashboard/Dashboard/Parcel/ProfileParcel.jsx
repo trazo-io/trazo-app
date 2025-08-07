@@ -224,7 +224,7 @@ function ProfileParcel() {
   return (
     <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
       {/* Clean Modern Header */}
-      <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="150px" pb="120px" px={4}>
+      <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="80px" pb="100px" px={4}>
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
             {/* Parcel Badge */}
@@ -332,25 +332,35 @@ function ProfileParcel() {
       <Flex
         alignItems="center"
         justifyContent="center"
-        mb="60px"
-        mt="-80px"
+        mb="80px"
+        mt="-60px"
         position="relative"
         zIndex={10}>
         <Card
-          w={{ sm: '95%', md: '90%', lg: '85%' }}
-          p={{ sm: '16px', md: '32px', lg: '48px' }}
+          w={{ base: '95%', md: '90%', lg: '85%' }}
+          p={{ base: '20px', md: '32px', lg: '40px' }}
           boxShadow="0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
           borderRadius="2xl"
           bg={bgColor}>
           {/* Header with Actions */}
           <CardHeader mb="24px">
-            <HStack spacing={3}>
+            <HStack spacing={3} mb={4}>
               <Badge colorScheme="green" fontSize="md" px={3} py={1} borderRadius="full">
                 {intl.formatMessage({ id: 'app.active' }) || 'Active'}
               </Badge>
               {parcelData?.certified && (
                 <Badge colorScheme="blue" fontSize="md" px={3} py={1} borderRadius="full">
                   Certified
+                </Badge>
+              )}
+              {parcelData?.carbon_calculation_enabled && (
+                <Badge colorScheme="purple" fontSize="md" px={3} py={1} borderRadius="full">
+                  Carbon Tracking
+                </Badge>
+              )}
+              {parcelData?.usda_compliance_eligible && (
+                <Badge colorScheme="orange" fontSize="md" px={3} py={1} borderRadius="full">
+                  USDA Eligible
                 </Badge>
               )}
             </HStack>
@@ -365,6 +375,7 @@ function ProfileParcel() {
                   variant="ghost"
                   colorScheme="gray"
                   size="lg"
+                  aria-label="Open parcel menu"
                 />
                 <MenuList>
                   <MenuItem
@@ -394,11 +405,11 @@ function ProfileParcel() {
           </CardHeader>
 
           <CardBody>
-            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8} mb={10}>
+            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 6, md: 8 }} mb={{ base: 6, md: 10 }}>
               {/* Left Column */}
               <Box>
                 {/* Image Gallery */}
-                <Box mb={6}>
+                <Box mb={{ base: 4, md: 6 }}>
                   <StandardImageGallery
                     images={parcelData?.images || []}
                     title="Parcel Photos"
@@ -413,7 +424,7 @@ function ProfileParcel() {
                 </Box>
 
                 {/* Basic Information */}
-                <Card bg={bgColor} borderRadius="lg" boxShadow="md" p={6} mb={6}>
+                <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
                   <HStack spacing={2} justify="center" mb={4}>
                     <Icon as={FaBuilding} color="green.500" boxSize={5} />
                     <Heading as="h3" size="md" color={textColor}>
@@ -457,7 +468,7 @@ function ProfileParcel() {
 
                 {/* Agricultural Data Section */}
                 {parcelData?.agricultural_details && Object.keys(parcelData.agricultural_details).length > 0 && (
-                  <Card bg={bgColor} borderRadius="lg" boxShadow="md" p={6} mb={6}>
+                  <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
                     <HStack spacing={2} justify="center" mb={4}>
                       <Icon as={FaSeedling} color="green.500" boxSize={5} />
                       <Heading as="h3" size="md" color={textColor}>
@@ -632,7 +643,7 @@ function ProfileParcel() {
                 {(parcelData?.contact_person ||
                   parcelData?.contact_email ||
                   parcelData?.contact_phone) && (
-                  <Card bg={bgColor} borderRadius="lg" boxShadow="md" p={6} mb={6}>
+                  <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
                     <HStack spacing={2} justify="center" mb={4}>
                       <Icon as={FaPhone} color="green.500" boxSize={5} />
                       <Heading as="h3" size="md" color={textColor}>
@@ -673,7 +684,7 @@ function ProfileParcel() {
               {/* Right Column */}
               <Box>
                 {/* Location Information */}
-                <Card bg={bgColor} borderRadius="lg" boxShadow="md" p={6} mb={6}>
+                <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
                   <HStack spacing={2} justify="center" mb={4}>
                     <Icon as={MdLocationOn} color="green.500" boxSize={5} />
                     <Heading as="h3" size="md" color={textColor}>
@@ -721,7 +732,7 @@ function ProfileParcel() {
 
                 {/* Certification Information */}
                 {(parcelData?.certified || parcelData?.certification_type) && (
-                  <Card bg={bgColor} borderRadius="lg" boxShadow="md" p={6} mb={6}>
+                  <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
                     <HStack spacing={2} justify="center" mb={4}>
                       <Icon as={FaCertificate} color="green.500" boxSize={5} />
                       <Heading as="h3" size="md" color={textColor}>
@@ -751,7 +762,7 @@ function ProfileParcel() {
                 )}
 
                 {/* Company Information */}
-                <Card bg={bgColor} borderRadius="lg" boxShadow="md" p={6} mb={6}>
+                <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
                   <HStack spacing={2} justify="center" mb={4}>
                     <Icon as={FaBuilding} color="green.500" boxSize={5} />
                     <Heading as="h3" size="md" color={textColor}>
@@ -776,8 +787,8 @@ function ProfileParcel() {
 
             {/* Description Section */}
             {parcelData?.description && (
-              <VStack spacing={6} align="stretch">
-                <Card bg={bgColor} borderRadius="lg" boxShadow="md" p={6}>
+              <VStack spacing={{ base: 4, md: 6 }} align="stretch">
+                <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }}>
                   <HStack spacing={2} justify="center" mb={4}>
                     <Icon as={FaRegCommentDots} color="green.500" boxSize={5} />
                     <Heading as="h3" size="md" color={textColor}>

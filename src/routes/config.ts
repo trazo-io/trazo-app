@@ -9,6 +9,10 @@ import VerifyEmail from 'views/Authentication/SignUp/VerifyEmail';
 import ModernVerifyEmail from 'views/Authentication/SignUp/ModernVerifyEmail';
 import ModernVerifyEmailProducer from 'views/Authentication/SignUp/ModernVerifyEmailProducer';
 import ModernVerifyEmailConsumer from 'views/Authentication/SignUp/ModernVerifyEmailConsumer';
+import ProducerForgotPassword from 'views/Authentication/ForgotPassword/ProducerForgotPassword';
+import ConsumerForgotPassword from 'views/Authentication/ForgotPassword/ConsumerForgotPassword';
+import ProducerResetPassword from 'views/Authentication/ResetPassword/ProducerResetPassword';
+import ConsumerResetPassword from 'views/Authentication/ResetPassword/ConsumerResetPassword';
 
 type RouteConfig = {
   auth: {
@@ -16,6 +20,8 @@ type RouteConfig = {
     signin: ComponentType;
     signup: ComponentType;
     verifyEmail: ComponentType;
+    forgotPassword: ComponentType;
+    resetPassword: ComponentType;
   };
   defaultRedirect: string;
   protected: {
@@ -37,7 +43,9 @@ export const routeConfig: AppConfig = {
       path: '/auth',
       signin: SignInApp,
       signup: SignUp,
-      verifyEmail: ModernVerifyEmailProducer
+      verifyEmail: ModernVerifyEmailProducer,
+      forgotPassword: ProducerForgotPassword,
+      resetPassword: ProducerResetPassword
     },
     defaultRedirect: '/admin/dashboard',
     protected: {
@@ -52,7 +60,9 @@ export const routeConfig: AppConfig = {
       path: '/auth',
       signin: SignInConsumer,
       signup: SignUpConsumer,
-      verifyEmail: ModernVerifyEmailConsumer
+      verifyEmail: ModernVerifyEmailConsumer,
+      forgotPassword: ConsumerForgotPassword,
+      resetPassword: ConsumerResetPassword
     },
     defaultRedirect: '/admin/dashboard/impact',
     protected: {

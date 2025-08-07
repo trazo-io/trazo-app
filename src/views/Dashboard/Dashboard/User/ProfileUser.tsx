@@ -8,12 +8,14 @@ import {
   Text,
   Grid,
   VStack,
-  HStack
+  HStack,
+  Icon
 } from '@chakra-ui/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useEffect, useRef, useState } from 'react';
 import { object, string } from 'zod';
 import { useNavigate } from 'react-router-dom';
+import { FaLock, FaChevronRight } from 'react-icons/fa';
 
 import {
   StandardPage,
@@ -225,6 +227,51 @@ function ProfileUser() {
           </form>
         </FormProvider>
       </StandardCard>
+
+      {/* Security Settings Section */}
+      <Box mt={6}>
+        <StandardCard title="Security Settings" variant="elevated">
+          <VStack spacing={4} align="stretch">
+            <Text fontSize="sm" color="gray.600">
+              Manage your account security and authentication settings
+            </Text>
+            
+            {/* Change Password Link */}
+            <Box
+              as="button"
+              onClick={() => navigate('/admin/dashboard/settings/change-password')}
+              w="100%"
+              p={4}
+              bg="gray.50"
+              borderRadius="lg"
+              border="1px solid"
+              borderColor="gray.200"
+              _hover={{
+                bg: 'gray.100',
+                borderColor: 'gray.300',
+                transform: 'translateY(-1px)',
+                boxShadow: 'sm'
+              }}
+              transition="all 0.2s"
+            >
+              <HStack justify="space-between">
+                <HStack spacing={3}>
+                  <Icon as={FaLock} color="green.500" boxSize={5} />
+                  <VStack align="start" spacing={0}>
+                    <Text fontWeight="semibold" color="gray.700">
+                      Change Password
+                    </Text>
+                    <Text fontSize="sm" color="gray.500">
+                      Update your password to keep your account secure
+                    </Text>
+                  </VStack>
+                </HStack>
+                <Icon as={FaChevronRight} color="gray.400" />
+              </HStack>
+            </Box>
+          </VStack>
+        </StandardCard>
+      </Box>
     </StandardPage>
   );
 }

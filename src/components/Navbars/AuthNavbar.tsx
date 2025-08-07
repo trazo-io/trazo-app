@@ -23,6 +23,7 @@ import {
   Grid,
   HStack,
   Icon,
+  IconButton,
   Image,
   Link,
   Menu,
@@ -30,6 +31,7 @@ import {
   MenuList,
   Stack,
   Text,
+  useBreakpointValue,
   useColorModeValue,
   useDisclosure
 } from '@chakra-ui/react';
@@ -42,7 +44,8 @@ import { NavLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { RiLogoutBoxRLine } from 'react-icons/ri';
 import { RootState } from 'store';
-import SidebarResponsive from 'components/Sidebar/SidebarResponsive';
+import Sidebar from 'components/Sidebar/Sidebar';
+import { HamburgerIcon } from '@chakra-ui/icons';
 import { clearCurrentCompany } from 'store/features/companySlice';
 import { clearUser } from 'store/features/userSlice';
 import logoTrazo from 'assets/img/trazo2.png';
@@ -65,6 +68,10 @@ export default function AuthNavbar(props: AuthNavbarProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [subdomain, setSubDomain] = useState(null);
+  
+  // Mobile drawer state
+  const { isOpen: isMobileOpen, onOpen: onMobileOpen, onClose: onMobileClose } = useDisclosure();
+  const isMobile = useBreakpointValue({ base: true, lg: false });
 
   const [open, setOpen] = React.useState(false);
   const { isOpen: isOpenPages, onOpen: onOpenPages, onClose: onClosePages } = useDisclosure();
@@ -388,13 +395,25 @@ export default function AuthNavbar(props: AuthNavbarProps) {
         {brand}
         <Box ms={{ base: 'auto', lg: '0px' }} display={{ lg: 'none' }}>
           {subdomain && isLoadingAuth === false && isAuthenticated && (
-            <SidebarResponsive
-              logoText={props.logoText}
-              secondary={props.secondary}
-              routes={routes}
-              // logo={logo}
-              {...rest}
-            />
+            <>
+              <IconButton
+                aria-label="Open navigation menu"
+                icon={<HamburgerIcon />}
+                variant="ghost"
+                color={navbarIcon}
+                onClick={onMobileOpen}
+                me="16px"
+              />
+              <Sidebar
+                logoText={props.logoText}
+                secondary={props.secondary}
+                routes={routes}
+                sidebarVariant="opaque"
+                isOpen={isMobileOpen}
+                onClose={onMobileClose}
+                {...rest}
+              />
+            </>
           )}
         </Box>
         {/* {linksAuth} */}

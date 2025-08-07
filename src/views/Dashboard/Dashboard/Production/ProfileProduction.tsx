@@ -91,8 +91,7 @@ import {
   UltraMobileProductionJourney
 } from 'views/Scan/ProductDetail/components';
 
-// Import Phase 1 Carbon Cost Intelligence component
-import { CarbonCostInsights } from 'components/Carbon/CarbonCostInsights';
+// Removed Carbon Economics - focusing on core transparency data
 
 // Import Week 2 Voice & Mobile Components
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
@@ -132,7 +131,6 @@ function ProfileProduction() {
   // Mobile-first responsive utilities
   const isMobile = useBreakpointValue({ base: true, md: false });
   const containerPadding = useBreakpointValue({ base: 4, md: 8 });
-  const cardPadding = useBreakpointValue({ base: 4, md: 6 });
   const headerFontSize = useBreakpointValue({ base: 'xl', md: '3xl' });
 
   const establishments = useSelector(
@@ -332,7 +330,7 @@ function ProfileProduction() {
   return (
     <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
       {/* Modern Producer Header */}
-      <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="150px" pb="120px" px={4}>
+      <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="80px" pb="100px" px={4}>
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
             {/* Producer Badge */}
@@ -478,16 +476,17 @@ function ProfileProduction() {
 
       {/* Main Content Container - Modern Overlapping Card */}
       <Container maxW="7xl" mx="auto" px={containerPadding}>
-        <StandardCard
-          variant="elevated"
-          mt="-80px"
-          mb="60px"
-          p={cardPadding}
-          borderRadius="2xl"
+        <Box
+          mt="-60px"
+          mb="80px"
           position="relative"
           zIndex={10}>
+          <StandardCard
+            variant="elevated"
+            p={{ base: '20px', md: '32px', lg: '40px' }}
+            borderRadius="2xl">
           {/* Clean Minimalist Header */}
-          <Box p={8} pb={6}>
+          <Box p={{ base: 4, md: 6 }} pb={{ base: 4, md: 6 }}>
             {/* Top Actions Row */}
             <HStack justify="space-between" align="center" mb={8}>
               <Badge
@@ -565,12 +564,12 @@ function ProfileProduction() {
           </Box>
 
           {/* Content Sections */}
-          <Box px={8} pb={8}>
-            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8}>
+          <Box px={{ base: 4, md: 6 }} pb={{ base: 4, md: 6 }}>
+            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 6, md: 8 }}>
               {/* Left Column */}
-              <VStack spacing={6} align="stretch">
+              <VStack spacing={{ base: 4, md: 6 }} align="stretch">
                 {/* Images */}
-                <StandardCard title="Production Photos" variant="clean">
+                <StandardCard title="Production Photos" variant="flat">
                   <StandardImageGallery
                     images={historyData?.images || []}
                     variant="production"
@@ -583,7 +582,7 @@ function ProfileProduction() {
                 </StandardCard>
 
                 {/* Details */}
-                <StandardCard title="Details" variant="clean">
+                <StandardCard title="Production Details" variant="flat">
                   <VStack spacing={4} align="stretch">
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={1}>
@@ -591,20 +590,48 @@ function ProfileProduction() {
                       </Text>
                       <Text fontWeight="medium">{historyData?.product?.name}</Text>
                     </Box>
+                    {historyData?.lot_id && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Lot ID
+                        </Text>
+                        <Text fontWeight="medium" fontFamily="mono" fontSize="sm">
+                          {historyData.lot_id}
+                        </Text>
+                      </Box>
+                    )}
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={1}>
                         Type
                       </Text>
                       <Badge colorScheme="green" variant="subtle" size="sm">
-                        Sustainable Production
+                        {historyData?.type === 'OR' ? 'Orchard' : historyData?.type === 'GA' ? 'Garden' : 'Sustainable Production'}
                       </Badge>
                     </Box>
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={1}>
                         Environment
                       </Text>
-                      <Text fontWeight="medium">Outdoor</Text>
+                      <Text fontWeight="medium">{historyData?.is_outdoor ? 'Outdoor' : 'Indoor'}</Text>
                     </Box>
+                    {historyData?.production_amount && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Production Amount
+                        </Text>
+                        <Text fontWeight="medium">{historyData.production_amount} units</Text>
+                      </Box>
+                    )}
+                    {historyData?.earning && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Revenue
+                        </Text>
+                        <Text fontWeight="medium" color="green.600">
+                          ${historyData.earning.toLocaleString()}
+                        </Text>
+                      </Box>
+                    )}
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={1}>
                         Duration
@@ -614,11 +641,118 @@ function ProfileProduction() {
                         {formatDate(historyData?.finish_date) || 'In Progress'}
                       </Text>
                     </Box>
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Status
+                      </Text>
+                      <Badge 
+                        colorScheme={historyData?.published ? 'green' : 'yellow'} 
+                        variant="subtle" 
+                        size="sm"
+                      >
+                        {historyData?.published ? 'Published' : 'Draft'}
+                      </Badge>
+                    </Box>
+                  </VStack>
+                </StandardCard>
+
+                {/* Agricultural Information */}
+                {(historyData?.age_of_plants || historyData?.number_of_plants || historyData?.soil_ph) && (
+                  <StandardCard title="Agricultural Information" variant="flat">
+                    <VStack spacing={4} align="stretch">
+                      {historyData?.age_of_plants && (
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>
+                            Plant Age
+                          </Text>
+                          <Text fontWeight="medium">{historyData.age_of_plants}</Text>
+                        </Box>
+                      )}
+                      {historyData?.number_of_plants && (
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>
+                            Number of Plants
+                          </Text>
+                          <Text fontWeight="medium">{historyData.number_of_plants}</Text>
+                        </Box>
+                      )}
+                      {historyData?.soil_ph && (
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>
+                            Soil pH
+                          </Text>
+                          <Text fontWeight="medium">{historyData.soil_ph}</Text>
+                        </Box>
+                      )}
+                      {historyData?.crop_type && (
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>
+                            Crop Type
+                          </Text>
+                          <Text fontWeight="medium">{historyData.crop_type}</Text>
+                        </Box>
+                      )}
+                    </VStack>
+                  </StandardCard>
+                )}
+
+                {/* Reputation & Operator */}
+                <StandardCard title="Performance & Management" variant="flat">
+                  <VStack spacing={4} align="stretch">
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Reputation Score
+                      </Text>
+                      <HStack spacing={2}>
+                        <HStack spacing={1}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Icon
+                              key={star}
+                              as={star <= safeReputation ? BsStarFill : BsStar}
+                              color={star <= safeReputation ? 'yellow.400' : 'gray.300'}
+                              boxSize={4}
+                            />
+                          ))}
+                        </HStack>
+                        <Text fontSize="sm" color="gray.600">
+                          ({safeReputation.toFixed(1)}/5.0)
+                        </Text>
+                      </HStack>
+                    </Box>
+                    {historyData?.operator && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Operator
+                        </Text>
+                        <HStack spacing={2}>
+                          <Avatar size="xs" name={historyData.operator.name || historyData.operator.email} />
+                          <VStack spacing={0} align="start">
+                            <Text fontWeight="medium" fontSize="sm">
+                              {historyData.operator.name || 'Unnamed Operator'}
+                            </Text>
+                            <Text fontSize="xs" color="gray.500">
+                              {historyData.operator.email}
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Box>
+                    )}
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Quality Rating
+                      </Text>
+                      <Progress 
+                        value={(safeReputation / 5) * 100} 
+                        colorScheme="green" 
+                        size="sm" 
+                        borderRadius="full"
+                      />
+                    </Box>
                   </VStack>
                 </StandardCard>
 
                 {/* Location */}
-                <StandardCard title="Location" variant="clean">
+                <StandardCard title="Location" variant="flat">
                   <VStack spacing={4} align="stretch">
                     <Box>
                       <Text fontSize="sm" color="gray.500" mb={1}>
@@ -665,9 +799,9 @@ function ProfileProduction() {
               </VStack>
 
               {/* Right Column */}
-              <VStack spacing={6} align="stretch">
+              <VStack spacing={{ base: 4, md: 6 }} align="stretch">
                 {/* QR Code */}
-                <StandardCard title="QR Code" variant="clean">
+                <StandardCard title="QR Code" variant="flat">
                   <VStack spacing={4}>
                     <Box
                       boxSize="180px"
@@ -723,7 +857,8 @@ function ProfileProduction() {
             </SimpleGrid>
 
             {/* Timeline */}
-            <StandardCard title="Timeline" variant="clean" mb={6}>
+            <Box mb={{ base: 4, md: 6 }}>
+              <StandardCard title="Production Timeline" variant="flat">
               {historyData?.events && historyData.events.length > 0 ? (
                 <UltraMobileProductionJourney events={mapEventsToTimeline(historyData.events)} />
               ) : (
@@ -752,24 +887,87 @@ function ProfileProduction() {
                   )}
                 </VStack>
               )}
-            </StandardCard>
-
-            {/* Carbon Economics - Core Trazo Feature */}
-            {productionId && (
-              <StandardCard title="Carbon Economics" variant="clean" mb={6}>
-                <Box>
-                  <Text fontSize="sm" color="gray.600" mb={4}>
-                    Understand your carbon credit potential and sustainable farming economics
-                  </Text>
-                  <CarbonCostInsights
-                    productionId={parseInt(productionId)}
-                    productionName={historyData?.name || historyData?.product?.name}
-                  />
-                </Box>
               </StandardCard>
+            </Box>
+
+            {/* Description Section */}
+            {historyData?.description && (
+              <Box mb={{ base: 4, md: 6 }}>
+                <StandardCard title="Production Description" variant="flat">
+                <Box>
+                  <Text fontSize="sm" color="gray.700" lineHeight="tall">
+                    {historyData.description}
+                  </Text>
+                </Box>
+                </StandardCard>
+              </Box>
             )}
+
+            {/* Production Summary - Core Information */}
+            <Box mb={{ base: 4, md: 6 }}>
+              <StandardCard title="Production Summary" variant="flat">
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
+                <VStack align="start" spacing={3}>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500" mb={1}>
+                      Production Status
+                    </Text>
+                    <Badge 
+                      colorScheme={historyData?.finish_date ? 'green' : 'yellow'} 
+                      variant="subtle"
+                      fontSize="sm"
+                      px={3} 
+                      py={1}
+                    >
+                      {historyData?.finish_date ? 'Completed' : 'In Progress'}
+                    </Badge>
+                  </Box>
+                  {historyData?.start_date && historyData?.finish_date && (
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Duration
+                      </Text>
+                      <Text fontWeight="medium" fontSize="sm">
+                        {Math.ceil((new Date(historyData.finish_date).getTime() - new Date(historyData.start_date).getTime()) / (1000 * 60 * 60 * 24))} days
+                      </Text>
+                    </Box>
+                  )}
+                </VStack>
+                <VStack align="start" spacing={3}>
+                  <Box>
+                    <Text fontSize="sm" color="gray.500" mb={1}>
+                      Events Recorded
+                    </Text>
+                    <Text fontWeight="medium" fontSize="sm" color="green.600">
+                      {historyData?.events?.length || 0} Events
+                    </Text>
+                  </Box>
+                  {historyData?.events && historyData.events.length > 0 && (
+                    <Box>
+                      <Text fontSize="sm" color="gray.500" mb={1}>
+                        Timeline Progress
+                      </Text>
+                      <HStack spacing={2}>
+                        <Progress 
+                          value={historyData.finish_date ? 100 : 50} 
+                          colorScheme="green" 
+                          size="sm" 
+                          borderRadius="full"
+                          flex={1}
+                        />
+                        <Text fontSize="sm" color="gray.600">
+                          {historyData.finish_date ? '100%' : '50%'}
+                        </Text>
+                      </HStack>
+                    </Box>
+                  )}
+                </VStack>
+              </SimpleGrid>
+              </StandardCard>
+            </Box>
           </Box>
-        </StandardCard>
+          </StandardCard>
+        </Box>
       </Container>
 
       {/* Week 2 Task 2.1: Voice-to-Event System Integration */}

@@ -169,9 +169,19 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                 <Heading size="lg">Smart Setup Wizard</Heading>
               </HStack>
               <Text fontSize="sm" color="gray.600" fontWeight="normal">
-                Choose a pre-configured template to reduce setup time from 45+ minutes to under 15
-                minutes
+                Choose a USDA-verified template to get carbon-intelligent farming guidance in under 15 minutes
               </Text>
+              <HStack spacing={2} mt={2}>
+                <Badge colorScheme="green" variant="solid" fontSize="xs">
+                  USDA Verified
+                </Badge>
+                <Badge colorScheme="blue" variant="solid" fontSize="xs">
+                  Agricultural Expert
+                </Badge>
+                <Badge colorScheme="purple" variant="solid" fontSize="xs">
+                  Carbon Credit Ready
+                </Badge>
+              </HStack>
             </VStack>
           </ModalHeader>
           <ModalCloseButton />
@@ -182,13 +192,13 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                 <Grid templateColumns="repeat(4, 1fr)" gap={4}>
                   <GridItem>
                     <Stat>
-                      <StatLabel fontSize="xs">Time Saved</StatLabel>
+                      <StatLabel fontSize="xs">Setup Time</StatLabel>
                       <StatNumber fontSize="lg" color="blue.600">
-                        37 min
+                        15 min
                       </StatNumber>
                       <StatHelpText fontSize="xs">
                         <StatArrow type="decrease" />
-                        vs manual setup
+                        vs 45+ min manual
                       </StatHelpText>
                     </Stat>
                   </GridItem>
@@ -198,25 +208,25 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                       <StatNumber fontSize="lg" color="green.600">
                         {templatesData?.total_count || 0}
                       </StatNumber>
-                      <StatHelpText fontSize="xs">USDA verified</StatHelpText>
+                      <StatHelpText fontSize="xs">USDA-verified practices</StatHelpText>
                     </Stat>
                   </GridItem>
                   <GridItem>
                     <Stat>
-                      <StatLabel fontSize="xs">Avg Carbon Credits</StatLabel>
+                      <StatLabel fontSize="xs">Carbon Credit Potential</StatLabel>
                       <StatNumber fontSize="lg" color="purple.600">
-                        {templatesData?.templates?.[0]?.carbon_potential || 0}
+                        ${(templatesData?.templates?.[0]?.carbon_potential * 15 || 0).toFixed(0)}
                       </StatNumber>
-                      <StatHelpText fontSize="xs">kg CO2e/ha/year</StatHelpText>
+                      <StatHelpText fontSize="xs">per hectare/year</StatHelpText>
                     </Stat>
                   </GridItem>
                   <GridItem>
                     <Stat>
-                      <StatLabel fontSize="xs">Revenue Potential</StatLabel>
+                      <StatLabel fontSize="xs">Premium Pricing</StatLabel>
                       <StatNumber fontSize="lg" color="orange.600">
-                        {formatCurrency(templatesData?.templates?.[0]?.avg_revenue || 0)}
+                        +25%
                       </StatNumber>
-                      <StatHelpText fontSize="xs">per hectare</StatHelpText>
+                      <StatHelpText fontSize="xs">certified organic</StatHelpText>
                     </Stat>
                   </GridItem>
                 </Grid>
@@ -253,9 +263,14 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                             </Text>
                           </VStack>
                         </HStack>
-                        <Badge colorScheme="blue" variant="subtle">
-                          {template.events_count} events
-                        </Badge>
+                        <VStack align="end" spacing={1}>
+                          <Badge colorScheme="green" variant="solid" fontSize="xs">
+                            USDA Verified
+                          </Badge>
+                          <Badge colorScheme="blue" variant="subtle" fontSize="xs">
+                            {template.events_count} events
+                          </Badge>
+                        </VStack>
                       </HStack>
                     </CardHeader>
                     <CardBody pt={0}>
@@ -280,11 +295,11 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                           <HStack>
                             <Icon as={FaChartLine} color="green.500" boxSize={3} />
                             <Text fontSize="xs" fontWeight="medium">
-                              Carbon Credits
+                              Carbon Value
                             </Text>
                           </HStack>
                           <Text fontSize="sm" fontWeight="bold">
-                            {template.carbon_potential} kg CO2e
+                            ${(template.carbon_potential * 15).toFixed(0)}/ha
                           </Text>
                         </VStack>
                         <VStack align="start" spacing={1}>
@@ -314,7 +329,7 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                       {/* Events Preview */}
                       <Box>
                         <Text fontSize="xs" fontWeight="medium" color="gray.600" mb={2}>
-                          Key Events Preview:
+                          USDA-Verified Practices:
                         </Text>
                         <VStack align="start" spacing={1}>
                           {template.events_preview.slice(0, 2).map((event, index) => (

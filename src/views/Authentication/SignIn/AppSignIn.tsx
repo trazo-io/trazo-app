@@ -285,16 +285,15 @@ const AppSignIn: React.FC = () => {
             zIndex={10}>
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Professional Carbon Intelligence
+                Turn Sustainability Into Profit
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                USDA-verified emission tracking, blockchain verification, and enterprise-grade
-                transparency for agricultural operations
+                USDA-verified carbon tracking with blockchain verification enables premium pricing and carbon credit revenue for agricultural operations
               </Text>
             </VStack>
 
             <VStack spacing={3} pt={4}>
-              {['USDA Certified Data', 'Blockchain Secured', 'Enterprise Ready'].map(
+              {['Carbon Credit Revenue', 'Premium Market Access', 'USDA-Verified Tracking'].map(
                 (feature, index) => (
                   <HStack key={index} spacing={3}>
                     <Box w={2} h={2} bg="white" borderRadius="50%" />
@@ -331,13 +330,13 @@ const AppSignIn: React.FC = () => {
                   fontWeight="700"
                   color={useColorModeValue('gray.900', 'white')}
                   letterSpacing="tight">
-                  Welcome back
+                  Access Carbon Intelligence
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
                   textAlign="center">
-                  Sign in to your Trazo account
+                  Track carbon footprints and unlock premium market opportunities
                 </Text>
               </VStack>
             </VStack>
@@ -542,7 +541,7 @@ const AppSignIn: React.FC = () => {
                       transform: 'translateY(0)'
                     }}
                     transition="all 0.2s">
-                    Sign in to Dashboard
+                    Access Carbon Dashboard
                   </Button>
                 </VStack>
               </form>

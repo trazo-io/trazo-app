@@ -24,6 +24,11 @@ import {
   AccordionPanel,
   Box,
   Button,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerOverlay,
   Flex,
   HStack,
   Icon,
@@ -33,7 +38,9 @@ import {
   ListItem,
   Stack,
   Text,
-  useColorModeValue
+  useColorModeValue,
+  useBreakpointValue,
+  Portal
 } from '@chakra-ui/react';
 import { NavLink, useLocation } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
@@ -65,7 +72,11 @@ type SidebarProps = {
   logoText: string;
   routes: any;
   sidebarVariant: string;
-  toggleSidebar: boolean;
+  toggleSidebar?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
+  display?: string;
+  secondary?: boolean;
 };
 
 type ParcelType = {
@@ -270,6 +281,8 @@ function Sidebar(props: SidebarProps) {
               px={prop.icon ? null : '0px'}
               py={prop.icon ? '12px' : null}
               bg={activeRoute(prop.regex) && prop.icon ? activeAccordionBg : 'transparent'}
+              aria-expanded={activeRoute(prop.regex)}
+              aria-label={`${prop.name} navigation section`}
             >
               {activeRoute(prop.regex) ? (
                 <Button
@@ -680,7 +693,7 @@ function Sidebar(props: SidebarProps) {
     <Box justifyContent={'space-between'}>
       <Flex direction={'column'}>
         <Box mb="20px">{brand}</Box>
-        <Stack direction="column" mb="40px">
+        <Stack direction="column" mb="40px" as="nav" aria-label="Main navigation">
           <Box>{links}</Box>
         </Stack>
       </Flex>
@@ -688,49 +701,92 @@ function Sidebar(props: SidebarProps) {
     </Box>
   );
 
+  // Determine if we're on mobile
+  const isMobile = useBreakpointValue({ base: true, xl: false });
+
   // SIDEBAR
-  return (
-    <Box
-      ref={mainPanel}
-      onMouseEnter={toggleSidebar ? () => setSidebarWidth(sidebarWidth === 120 ? 275 : 120) : null}
-      onMouseLeave={toggleSidebar ? () => setSidebarWidth(sidebarWidth === 275 ? 120 : 275) : null}
-    >
-      <Box display={{ sm: 'none', xl: 'block' }} position="fixed">
-        <Box
-          className="sidebar-container"
-          bg={sidebarBg}
-          transition={variantChange}
-          w={`${sidebarWidth}px`}
+  if (isMobile) {
+    // Mobile view - render as drawer
+    return (
+      <Drawer
+        placement="left"
+        isOpen={props.isOpen || false}
+        onClose={props.onClose || (() => {})}
+        size="xs"
+      >
+        <DrawerOverlay />
+        <DrawerContent
+          w="250px"
+          maxW="250px"
           ms={{
             sm: '16px'
           }}
           my={{
             sm: '16px'
           }}
-          h="calc(100vh - 32px)"
-          ps="20px"
-          pe="20px"
-          m={sidebarMargins}
-          borderRadius={sidebarRadius}
+          borderRadius="16px"
+          bg={useColorModeValue('white', 'gray.700')}
         >
-          {isWindows ? (
-            <Scrollbars
-              autoHide
-              renderTrackVertical={renderTrack}
-              renderThumbVertical={useColorModeValue(renderThumbLight, renderThumbDark)}
-              renderView={renderView}
-            >
-              {sidebarContent}
-            </Scrollbars>
-          ) : (
-            <Box id="sidebarScrollRemove" overflowY="scroll" height="100vh">
+          <DrawerCloseButton 
+            _focus={{ boxShadow: 'none' }} 
+            _hover={{ boxShadow: 'none' }}
+            aria-label="Close navigation menu"
+          />
+          <DrawerBody className="sidebar-container" maxW="250px" px="1rem">
+            <Box maxW="100%" h="100vh">
               {sidebarContent}
             </Box>
-          )}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    );
+  } else {
+    // Desktop view - original sidebar
+    return (
+      <Box
+        ref={mainPanel}
+        onMouseEnter={toggleSidebar ? () => setSidebarWidth(sidebarWidth === 120 ? 275 : 120) : null}
+        onMouseLeave={toggleSidebar ? () => setSidebarWidth(sidebarWidth === 275 ? 120 : 275) : null}
+      >
+        <Box display={{ sm: 'none', xl: 'block' }} position="fixed">
+          <Box
+            className="sidebar-container"
+            bg={sidebarBg}
+            transition={variantChange}
+            w={`${sidebarWidth}px`}
+            ms={{
+              sm: '16px'
+            }}
+            my={{
+              sm: '16px'
+            }}
+            h="calc(100vh - 32px)"
+            ps="20px"
+            pe="20px"
+            m={sidebarMargins}
+            borderRadius={sidebarRadius}
+            role="navigation"
+            aria-label="Main navigation"
+          >
+            {isWindows ? (
+              <Scrollbars
+                autoHide
+                renderTrackVertical={renderTrack}
+                renderThumbVertical={useColorModeValue(renderThumbLight, renderThumbDark)}
+                renderView={renderView}
+              >
+                {sidebarContent}
+              </Scrollbars>
+            ) : (
+              <Box id="sidebarScrollRemove" overflowY="scroll" height="100vh">
+                {sidebarContent}
+              </Box>
+            )}
+          </Box>
         </Box>
       </Box>
-    </Box>
-  );
+    );
+  }
 }
 
 export default Sidebar;

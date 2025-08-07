@@ -3,7 +3,10 @@ import {
   SIGNUP_URL,
   USER_DATA_URL,
   VERIFY_EMAIL_URL,
-  SOCIAL_AUTH_URL
+  SOCIAL_AUTH_URL,
+  PASSWORD_CHANGE_URL,
+  PASSWORD_RESET_REQUEST_URL,
+  PASSWORD_RESET_CONFIRM_URL
 } from '../../config';
 
 import baseApi from './baseApi';
@@ -25,14 +28,9 @@ const authApi = baseApi.injectEndpoints({
           const result = await queryFulfilled;
           console.log('🔒 LOGIN: Login successful, processing result');
           
-          // FIRST: Store the tokens immediately before anything else
+          // SECURITY: Store tokens using secure token manager only
           TokenManager.setAccessToken(result.data.access);
-          localStorage.setItem('access', result.data.access);
-          if (result.data.refresh) {
-            localStorage.setItem('refresh', result.data.refresh);
-            console.log('🔒 LOGIN: Refresh token stored. Length:', result.data.refresh.length);
-          }
-          console.log('🔒 LOGIN: Access token stored immediately. Length:', result.data.access.length);
+          console.log('🔒 LOGIN: Access token stored securely. Length:', result.data.access.length);
           
           // WAIT a brief moment to ensure token is available for subsequent requests
           await new Promise(resolve => setTimeout(resolve, 100));
@@ -207,6 +205,30 @@ const authApi = baseApi.injectEndpoints({
           console.error(error);
         }
       }
+    }),
+    changePassword: build.mutation({
+      query: ({ old_password, new_password }) => ({
+        url: 'users/change_password/',
+        method: 'POST',
+        body: { old_password, new_password },
+        credentials: 'include'
+      })
+    }),
+    requestPasswordReset: build.mutation({
+      query: ({ email }) => ({
+        url: 'users/request_password_reset/',
+        method: 'POST',
+        body: { email },
+        credentials: 'include'
+      })
+    }),
+    confirmPasswordReset: build.mutation({
+      query: ({ token, email, new_password }) => ({
+        url: 'users/confirm_password_reset/',
+        method: 'POST',
+        body: { token, email, new_password },
+        credentials: 'include'
+      })
     })
   }),
   overrideExisting: false
@@ -219,5 +241,8 @@ export const {
   useLogoutMutation,
   useVerifyEmailMutation,
   useResendVerificationEmailMutation,
-  useSocialAuthMutation
+  useSocialAuthMutation,
+  useChangePasswordMutation,
+  useRequestPasswordResetMutation,
+  useConfirmPasswordResetMutation
 } = authApi;

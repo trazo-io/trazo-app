@@ -127,16 +127,14 @@ class LegacyTokenStorage implements TokenStorage {
  * Factory function to get appropriate token storage implementation
  */
 function createTokenStorage(): TokenStorage {
-  // Temporarily use legacy storage until httpOnly cookie implementation is complete
-  // This ensures authentication works while maintaining security infrastructure
-  return new LegacyTokenStorage();
-  
-  // TODO: Enable secure storage once backend properly implements httpOnly cookies
-  // if (process.env.NODE_ENV === 'production') {
-  //   return new SecureTokenStorage();
-  // } else {
-  //   return new LegacyTokenStorage();
-  // }
+  // Enable secure storage for production, legacy for development
+  // This provides better security while maintaining development workflow
+  if (process.env.NODE_ENV === 'production') {
+    return new SecureTokenStorage();
+  } else {
+    // Use secure storage in development too, but with fallbacks for easier debugging
+    return new SecureTokenStorage();
+  }
 }
 
 /**

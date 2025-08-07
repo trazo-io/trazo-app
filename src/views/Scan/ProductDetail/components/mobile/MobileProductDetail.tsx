@@ -37,6 +37,7 @@ import { usePointsStore } from '../../../../../store/pointsStore';
 import { useIntl } from 'react-intl';
 import MobileEducationalSection from './MobileEducationalSection';
 import ImageCarousel from '../../../../../components/ImageCarousel/ImageCarousel';
+import { MobileTrustHeader, ProgressiveTrustLoader } from '../../../../../components/Trust';
 
 // Lazy loaded components for non-critical UI
 // Use dynamic imports with default exports
@@ -301,7 +302,26 @@ const MobileProductDetail: React.FC = () => {
 
       {/* Main Content Area - Mobile-First Component Ordering */}
       <VStack spacing={{ base: 3, md: 4 }} align="stretch" p={{ base: 3, md: 4 }} pb="90px">
-        {/* MOBILE PRIORITY 1: Carbon Score (Full Version) - Always First */}
+        {/* MOBILE PRIORITY 1: Trust Indicators - Build trust immediately */}
+        <MobileTrustHeader
+          trustData={{
+            carbonScore: carbonScoreData?.carbonScore || 0,
+            confidenceScore: productFullDetailsData?.socialProof?.confidenceScore || 0,
+            isUSDAVerified: productFullDetailsData?.isUsdaVerified || false,
+            isBlockchainVerified: productFullDetailsData?.blockchainVerification?.verified || false,
+            reviewsCount: productFullDetailsData?.socialProof?.totalUsers || 0,
+            averageRating: productFullDetailsData?.socialProof?.averageRating || 0,
+            transparencyScore: productFullDetailsData?.socialProof?.transparencyScore || 0,
+            scansCount: productFullDetailsData?.socialProof?.totalScans || 0
+          }}
+          isLoading={isCarbonScoreLoading || !productFullDetailsData}
+          onDetailClick={() => {
+            // Open trust details modal or scroll to details
+            console.log('Opening trust details');
+          }}
+        />
+
+        {/* MOBILE PRIORITY 2: Carbon Score (Full Version) */}
         {carbonScoreData && (
           <Box
             borderWidth="1px"
@@ -332,7 +352,7 @@ const MobileProductDetail: React.FC = () => {
           </Box>
         )}
 
-        {/* MOBILE PRIORITY 2: Product Header with Image - Second */}
+        {/* MOBILE PRIORITY 3: Product Header with Image */}
         {productBasicsData && (
           <Box
             borderWidth="1px"
@@ -350,7 +370,7 @@ const MobileProductDetail: React.FC = () => {
               <LazyProductHeader
                 productName={productBasicsData.name}
                 companyName={productBasicsData.company.name}
-                reputation={4.5}
+                reputation={productFullDetailsData?.socialProof?.averageRating || 0}
                 isUsdaVerified={productFullDetailsData?.isUsdaVerified}
                 industryPercentile={productFullDetailsData?.industryPercentile}
               />
@@ -358,7 +378,7 @@ const MobileProductDetail: React.FC = () => {
           </Box>
         )}
 
-        {/* MOBILE PRIORITY 3: Production Timeline - Third */}
+        {/* MOBILE PRIORITY 4: Production Timeline */}
         {productFullDetailsData?.timeline && productFullDetailsData.timeline.length > 0 && (
           <Box
             borderWidth="1px"
@@ -376,28 +396,22 @@ const MobileProductDetail: React.FC = () => {
           </Box>
         )}
 
-        {/* MOBILE PRIORITY 4: Verification Badge - Fourth */}
-        {productFullDetailsData?.blockchainVerification && (
-          <Box
-            borderWidth="1px"
-            borderRadius="lg"
-            overflow="hidden"
-            borderColor={borderColor}
-            bg={bgColor}
-          >
-            <Suspense fallback={<Skeleton height="60px" borderRadius="md" />}>
-              <LazyBlockchainVerificationBadge
-                verificationData={{
-                  verified: productFullDetailsData.blockchainVerification.verified || false,
-                  transaction_hash: productFullDetailsData.blockchainVerification.transaction_hash,
-                  record_hash: productFullDetailsData.blockchainVerification.record_hash,
-                  verification_url: productFullDetailsData.blockchainVerification.verification_url,
-                  network: productFullDetailsData.blockchainVerification.network
-                }}
-              />
-            </Suspense>
-          </Box>
-        )}
+        {/* MOBILE PRIORITY 5: Additional Trust Details - Progressive Loading */}
+        <ProgressiveTrustLoader
+          data={{
+            carbonScore: carbonScoreData?.carbonScore,
+            isUSDAVerified: productFullDetailsData?.isUsdaVerified,
+            isBlockchainVerified: productFullDetailsData?.blockchainVerification?.verified,
+            confidenceScore: productFullDetailsData?.socialProof?.confidenceScore,
+            reviewsCount: productFullDetailsData?.socialProof?.totalUsers,
+            averageRating: productFullDetailsData?.socialProof?.averageRating,
+            scansCount: productFullDetailsData?.socialProof?.totalScans
+          }}
+          isLoading={isProductFullDetailsLoading}
+          loadingPriority="carbon-first"
+          compact={true}
+          showSkeleton={true}
+        />
 
         {/* MOBILE PRIORITY 5: Establishment Info - Fifth */}
         {productFullDetailsData?.establishment && (

@@ -1,0 +1,168 @@
+import React from 'react';
+import {
+  Box,
+  Grid,
+  VStack,
+  Text,
+  Icon,
+  HStack,
+  useColorModeValue
+} from '@chakra-ui/react';
+import { FaLeaf, FaLock } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { ForgotPasswordForm } from '../../../components/Forms/ForgotPasswordForm';
+
+const MotionBox = motion(Box);
+
+const ProducerForgotPassword: React.FC = () => {
+  const bgColor = useColorModeValue('white', 'gray.800');
+
+  return (
+    <Box minH="calc(100vh - 80px)" maxH="calc(100vh - 80px)" overflow="hidden">
+      <Grid 
+        templateColumns={{ base: '1fr', lg: '1fr 1fr' }} 
+        h="calc(100vh - 80px)"
+      >
+        {/* Left Panel - Form */}
+        <VStack
+          spacing={0}
+          justify="center"
+          align="center"
+          p={{ base: 6, md: 12 }}
+          bg={bgColor}
+          position="relative"
+        >
+          <Box w="full" maxW="400px">
+            {/* Header */}
+            <VStack spacing={6} mb={8} textAlign="center">
+              <HStack spacing={3} justify="center">
+                <Icon as={FaLock} boxSize={6} color="green.500" />
+                <Icon as={FaLeaf} boxSize={6} color="green.600" />
+              </HStack>
+              
+              <VStack spacing={2}>
+                <Text fontSize="2xl" fontWeight="700" color="gray.800">
+                  Reset Password
+                </Text>
+                <Text fontSize="sm" color="gray.500" maxW="sm" lineHeight="1.6">
+                  Carbon Intelligence Platform
+                </Text>
+              </VStack>
+            </VStack>
+
+            {/* Form */}
+            <ForgotPasswordForm userType="producer" />
+
+            {/* Footer */}
+            <Box mt={8} textAlign="center">
+              <Text fontSize="xs" color="gray.500" lineHeight="1.5">
+                Secure password reset for your carbon tracking platform.
+                <br />
+                Protecting your environmental data and business insights.
+              </Text>
+            </Box>
+          </Box>
+        </VStack>
+
+        {/* Right Panel - Brand */}
+        <MotionBox
+          display={{ base: 'none', lg: 'flex' }}
+          bg="linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)"
+          position="relative"
+          overflow="hidden"
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          {/* Geometric Background Elements */}
+          <Box
+            position="absolute"
+            top="-20%"
+            right="-10%"
+            w="300px"
+            h="300px"
+            bg="whiteAlpha.100"
+            borderRadius="50%"
+            filter="blur(2px)"
+          />
+          <Box
+            position="absolute"
+            bottom="-15%"
+            left="-5%"
+            w="250px"
+            h="250px"
+            bg="whiteAlpha.100"
+            borderRadius="50%"
+            filter="blur(3px)"
+          />
+          <Box
+            position="absolute"
+            top="30%"
+            left="60%"
+            w="150px"
+            h="150px"
+            bg="whiteAlpha.50"
+            borderRadius="50%"
+            filter="blur(1px)"
+          />
+
+          {/* Content */}
+          <VStack
+            justify="center"
+            align="center"
+            h="full"
+            p={12}
+            textAlign="center"
+            position="relative"
+            zIndex={1}
+          >
+            <VStack spacing={8}>
+              {/* Icon */}
+              <Box
+                p={6}
+                bg="whiteAlpha.200"
+                borderRadius="3xl"
+                backdropFilter="blur(10px)"
+                border="1px solid"
+                borderColor="whiteAlpha.300"
+              >
+                <Icon as={FaLeaf} boxSize={12} color="white" />
+              </Box>
+
+              {/* Content */}
+              <VStack spacing={4} color="white">
+                <Text fontSize="3xl" fontWeight="700" lineHeight="1.2">
+                  Secure Account
+                  <br />
+                  Recovery
+                </Text>
+                <Text fontSize="lg" opacity={0.9} maxW="md" lineHeight="1.6">
+                  Your carbon intelligence data is protected with enterprise-grade security. 
+                  Reset your password safely and get back to tracking your environmental impact.
+                </Text>
+              </VStack>
+
+              {/* Features */}
+              <VStack spacing={3} align="start" color="white" mt={6}>
+                <HStack spacing={3}>
+                  <Box w={2} h={2} bg="green.200" borderRadius="full" />
+                  <Text fontSize="sm" opacity={0.9}>15-minute secure token expiration</Text>
+                </HStack>
+                <HStack spacing={3}>
+                  <Box w={2} h={2} bg="green.200" borderRadius="full" />
+                  <Text fontSize="sm" opacity={0.9}>One-time use password reset links</Text>
+                </HStack>
+                <HStack spacing={3}>
+                  <Box w={2} h={2} bg="green.200" borderRadius="full" />
+                  <Text fontSize="sm" opacity={0.9}>Enhanced password validation</Text>
+                </HStack>
+              </VStack>
+            </VStack>
+          </VStack>
+        </MotionBox>
+      </Grid>
+    </Box>
+  );
+};
+
+export default ProducerForgotPassword;

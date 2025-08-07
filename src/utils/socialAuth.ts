@@ -5,6 +5,35 @@
 
 import { toast } from 'react-toastify';
 
+// Type definitions for social auth
+interface SocialAuthCredentials {
+  provider: 'google' | 'facebook' | 'apple';
+  id_token?: string;
+  access_token?: string;
+  user_type: number;
+  user?: any; // Apple Sign In user data
+}
+
+interface GoogleAuthResponse {
+  credential?: string;
+}
+
+interface FacebookAuthResponse {
+  authResponse?: {
+    accessToken: string;
+  };
+}
+
+interface AppleAuthResponse {
+  authorization?: {
+    id_token: string;
+  };
+  user?: any;
+}
+
+type AuthSuccessCallback = (credentials: SocialAuthCredentials) => void;
+type AuthErrorCallback = (error: Error) => void;
+
 // OAuth Client IDs - these should be set in environment variables
 // In Vite, environment variables must be prefixed with VITE_
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -14,8 +43,8 @@ const APPLE_CLIENT_ID = import.meta.env.VITE_APPLE_CLIENT_ID;
 /**
  * Initialize Google OAuth
  */
-export const initializeGoogleAuth = () => {
-  return new Promise((resolve, reject) => {
+export const initializeGoogleAuth = (): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
     if (!GOOGLE_CLIENT_ID) {
       reject(new Error('Google Client ID not configured'));
       return;
@@ -35,11 +64,12 @@ export const initializeGoogleAuth = () => {
 
 /**
  * Handle Google Sign In
- * @param {Function} onSuccess - Callback for successful authentication
- * @param {Function} onError - Callback for authentication error
- * @param {number} userType - User type (4 for producer, 5 for consumer)
  */
-export const handleGoogleSignIn = async (onSuccess, onError, userType = 4) => {
+export const handleGoogleSignIn = async (
+  onSuccess: AuthSuccessCallback,
+  onError: AuthErrorCallback,
+  userType: number = 4
+): Promise<void> => {
   try {
     if (!GOOGLE_CLIENT_ID) {
       throw new Error('Google Client ID not configured');
@@ -86,11 +116,12 @@ export const handleGoogleSignIn = async (onSuccess, onError, userType = 4) => {
 
 /**
  * Handle Facebook Sign In
- * @param {Function} onSuccess - Callback for successful authentication
- * @param {Function} onError - Callback for authentication error
- * @param {number} userType - User type (4 for producer, 5 for consumer)
  */
-export const handleFacebookSignIn = async (onSuccess, onError, userType = 4) => {
+export const handleFacebookSignIn = async (
+  onSuccess: AuthSuccessCallback,
+  onError: AuthErrorCallback,
+  userType: number = 4
+): Promise<void> => {
   try {
     if (!FACEBOOK_APP_ID) {
       throw new Error('Facebook App ID not configured');
@@ -129,11 +160,12 @@ export const handleFacebookSignIn = async (onSuccess, onError, userType = 4) => 
 
 /**
  * Handle Apple Sign In
- * @param {Function} onSuccess - Callback for successful authentication
- * @param {Function} onError - Callback for authentication error
- * @param {number} userType - User type (4 for producer, 5 for consumer)
  */
-export const handleAppleSignIn = async (onSuccess, onError, userType = 4) => {
+export const handleAppleSignIn = async (
+  onSuccess: AuthSuccessCallback,
+  onError: AuthErrorCallback,
+  userType: number = 4
+): Promise<void> => {
   try {
     if (!APPLE_CLIENT_ID) {
       throw new Error('Apple Client ID not configured');
@@ -171,8 +203,8 @@ export const handleAppleSignIn = async (onSuccess, onError, userType = 4) => {
 /**
  * Load Google Identity Services SDK
  */
-const loadGoogleSDK = () => {
-  return new Promise((resolve, reject) => {
+const loadGoogleSDK = (): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
     if (window.google) {
       resolve();
       return;
@@ -241,10 +273,8 @@ const loadAppleSDK = () => {
 
 /**
  * Generic error handler for social authentication
- * @param {Error} error - The error object
- * @param {string} provider - The social auth provider name
  */
-export const handleSocialAuthError = (error, provider) => {
+export const handleSocialAuthError = (error: Error, provider: string): void => {
   console.error(`${provider} authentication error:`, error);
 
   let errorMessage = `${provider} sign in failed. Please try again.`;
@@ -263,7 +293,7 @@ export const handleSocialAuthError = (error, provider) => {
 /**
  * Check if OAuth environment variables are configured
  */
-export const checkSocialAuthConfig = () => {
+export const checkSocialAuthConfig = (): { google: boolean; facebook: boolean; apple: boolean } => {
   const config = {
     google: !!GOOGLE_CLIENT_ID,
     facebook: !!FACEBOOK_APP_ID,

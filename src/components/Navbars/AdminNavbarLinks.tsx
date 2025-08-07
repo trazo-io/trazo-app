@@ -26,7 +26,9 @@ import {
   InputGroup,
   InputLeftElement,
   Text,
-  useColorModeValue
+  useColorModeValue,
+  useDisclosure,
+  useBreakpointValue
 } from '@chakra-ui/react';
 // Custom Icons
 import { ProfileIcon, SettingsIcon } from 'components/Icons/Icons';
@@ -37,9 +39,9 @@ import { NotificationDropdown } from 'components/Notifications/NotificationDropd
 import { useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { RiLogoutBoxRLine } from 'react-icons/ri';
-import SidebarResponsive from 'components/Sidebar/SidebarResponsive';
-import ConsumerSidebarResponsive from 'components/Sidebar/ConsumerSidebarResponsive';
+import Sidebar from 'components/Sidebar/Sidebar';
 import { consumerRoutes } from 'layouts/AdminConsumer';
+import { HamburgerIcon } from '@chakra-ui/icons';
 // Hooks
 import { clearCurrentCompany } from 'store/features/companySlice';
 import { clearUser } from 'store/features/userSlice';
@@ -65,6 +67,10 @@ export default function HeaderLinks(props: HeaderLinksProps) {
   const [subdomain, setSubDomain] = useState<string>('');
   const [routes, setRoutes] = useState();
   const [isHome, setIsHome] = useState(false);
+  
+  // Mobile drawer state
+  const { isOpen: isMobileOpen, onOpen: onMobileOpen, onClose: onMobileClose } = useDisclosure();
+  const isMobile = useBreakpointValue({ base: true, xl: false });
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -227,21 +233,32 @@ export default function HeaderLinks(props: HeaderLinksProps) {
         onClick={() => navigate(`/admin/dashboard/profile`)}
       />
       {/* </NavLink> */}
-      {subdomain === 'consumer' ? (
-        <ConsumerSidebarResponsive
-          logoText={props.logoText}
-          secondary={props.secondary}
-          routes={consumerRoutes}
-          {...rest}
+      {/* Mobile hamburger icon */}
+      {isMobile && (
+        <IconButton
+          aria-label="Open navigation menu"
+          icon={<HamburgerIcon />}
+          variant="ghost"
+          color={navbarIcon}
+          display={{ base: 'flex', xl: 'none' }}
+          onClick={onMobileOpen}
+          me="16px"
         />
-      ) : (
-        <SidebarResponsive
+      )}
+      
+      {/* Mobile Sidebar */}
+      {isMobile && (
+        <Sidebar
           logoText={props.logoText}
           secondary={props.secondary}
-          routes={routes}
+          routes={subdomain === 'consumer' ? consumerRoutes : routes}
+          sidebarVariant="opaque"
+          isOpen={isMobileOpen}
+          onClose={onMobileClose}
           {...rest}
         />
       )}
+      
       <SettingsIcon
         cursor="pointer"
         me="16px"

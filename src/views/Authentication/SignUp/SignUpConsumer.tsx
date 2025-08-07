@@ -4,6 +4,8 @@ import {
   CircularProgress,
   Flex,
   FormControl,
+  FormLabel,
+  FormErrorMessage,
   Link,
   Text,
   useColorModeValue
@@ -12,7 +14,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import React, { useEffect } from 'react';
 import { object, string } from 'zod';
 import { useNavigate } from 'react-router-dom';
-import FormInput from 'components/Forms/FormInput';
+import { StandardInput } from 'components/Design/StandardComponents';
 import { useSignUpMutation } from 'store/api/authApi';
 import { zodResolver } from '@hookform/resolvers/zod';
 import consumerSignUpImage from 'assets/img/backgroundImage.png';
@@ -135,44 +137,94 @@ export default function SignUpConsumer() {
           </Text>
           <FormProvider {...methods}>
             <form onSubmit={handleSubmit(onSubmitHandler)}>
-              <FormControl isInvalid={errors.name}>
-                <FormInput name="first_name" label="First Name" placeholder="Your first name" />
-                <FormInput name="last_name" label="Last Name" placeholder="Your last name" />
-                <FormInput name="email" label="Email" placeholder="Your email address" />
-                <FormInput
-                  name="password"
-                  label="Password"
+              <FormControl mb={4}>
+                <FormLabel color="gray.700" fontWeight="500" mb={1}>First Name</FormLabel>
+                <StandardInput
+                  {...methods.register('first_name')}
+                  placeholder="Your first name"
+                  h="44px"
+                  fontSize="sm"
+                />
+                {errors.first_name && (
+                  <FormErrorMessage>{errors.first_name.message}</FormErrorMessage>
+                )}
+              </FormControl>
+              
+              <FormControl mb={4}>
+                <FormLabel color="gray.700" fontWeight="500" mb={1}>Last Name</FormLabel>
+                <StandardInput
+                  {...methods.register('last_name')}
+                  placeholder="Your last name"
+                  h="44px"
+                  fontSize="sm"
+                />
+                {errors.last_name && (
+                  <FormErrorMessage>{errors.last_name.message}</FormErrorMessage>
+                )}
+              </FormControl>
+              
+              <FormControl mb={4}>
+                <FormLabel color="gray.700" fontWeight="500" mb={1}>Email</FormLabel>
+                <StandardInput
+                  {...methods.register('email')}
+                  placeholder="Your email address"
+                  type="email"
+                  h="44px"
+                  fontSize="sm"
+                />
+                {errors.email && (
+                  <FormErrorMessage>{errors.email.message}</FormErrorMessage>
+                )}
+              </FormControl>
+              
+              <FormControl mb={4}>
+                <FormLabel color="gray.700" fontWeight="500" mb={1}>Password</FormLabel>
+                <StandardInput
+                  {...methods.register('password')}
                   placeholder="Your password"
                   type="password"
+                  h="44px"
+                  fontSize="sm"
                 />
-                <FormInput
-                  name="password2"
-                  label="Confirm Password"
+                {errors.password && (
+                  <FormErrorMessage>{errors.password.message}</FormErrorMessage>
+                )}
+              </FormControl>
+              
+              <FormControl mb={4}>
+                <FormLabel color="gray.700" fontWeight="500" mb={1}>Confirm Password</FormLabel>
+                <StandardInput
+                  {...methods.register('password2')}
                   placeholder="Confirm your password"
                   type="password"
+                  h="44px"
+                  fontSize="sm"
                 />
+                {errors.password2 && (
+                  <FormErrorMessage>{errors.password2.message}</FormErrorMessage>
+                )}
+              </FormControl>
                 <Button
-                  mt="12px"
                   type="submit"
-                  bg="green.300"
-                  fontSize="10px"
+                  bg="green.500"
                   color="white"
-                  fontWeight="bold"
                   w="100%"
-                  h="45"
+                  h="44px"
+                  fontSize="sm"
+                  fontWeight="600"
+                  borderRadius="xl"
+                  mt="12px"
                   mb="24px"
                   _hover={{
-                    bg: 'green.400'
+                    bg: 'green.600',
+                    transform: 'translateY(-1px)'
                   }}
                   _active={{
-                    bg: 'green.500'
+                    bg: 'green.700'
                   }}
+                  isLoading={isLoading}
                 >
-                  {isLoading ? (
-                    <CircularProgress isIndeterminate value={1} color="#313860" size="25px" />
-                  ) : (
-                    'SIGN UP'
-                  )}
+                  {isLoading ? 'Creating Account...' : 'Sign Up'}
                 </Button>
               </FormControl>
             </form>

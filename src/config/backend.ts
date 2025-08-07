@@ -7,6 +7,8 @@ export const LOGOUT_URL = `${ROOT_URL}auth/logout/`;
 export const SOCIAL_AUTH_URL = `${ROOT_URL}auth/social/`;
 export const VERIFY_EMAIL_URL = `${ROOT_URL}users/verify_email/`;
 export const PASSWORD_CHANGE_URL = `${ROOT_URL}auth/password/change/`;
+export const PASSWORD_RESET_REQUEST_URL = `${ROOT_URL}users/request_password_reset/`;
+export const PASSWORD_RESET_CONFIRM_URL = `${ROOT_URL}users/confirm_password_reset/`;
 export const USER_DATA_URL = `${ROOT_URL}users/me/`;
 
 // Company and Establishment URLs

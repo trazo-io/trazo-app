@@ -88,6 +88,8 @@ import { useGetCsrfTokenQuery } from './store/api/baseApi';
 import AcceptInvitation from 'views/Authentication/Invitation/AcceptInvitation';
 import SetupPassword from 'views/Authentication/Invitation/SetupPassword';
 import { ErrorBoundary } from 'react-error-boundary';
+import ChangePassword from 'views/Settings/ChangePassword';
+import ConsumerChangePassword from 'views/Consumer/Settings/ConsumerChangePassword';
 
 // Error fallback component
 const ErrorFallback = ({
@@ -212,6 +214,14 @@ const App = () => {
                 <Route
                   path="verifyemail"
                   element={config?.auth.verifyEmail && <config.auth.verifyEmail />}
+                />
+                <Route
+                  path="forgot-password"
+                  element={config?.auth.forgotPassword && <config.auth.forgotPassword />}
+                />
+                <Route
+                  path="reset-password"
+                  element={config?.auth.resetPassword && <config.auth.resetPassword />}
                 />
               </Route>
             </Route>
@@ -344,6 +354,7 @@ const App = () => {
                     element={<AllReviewsView />}
                   />
                   <Route path="settings" exact element={<SettingsView />} />
+                  <Route path="settings/change-password" exact element={<ChangePassword />} />
                   <Route path="subscription/success" element={<SubscriptionSuccess />} />
                   <Route
                     path="establishment/:establishmentId/carbon"
@@ -391,6 +402,7 @@ const App = () => {
                   <Route path="journey" element={<CarbonJourney />} />
                   <Route path="scans" element={<ScannedProductsView />} />
                   <Route path="reviews" element={<ReviewsListView />} />
+                  <Route path="settings" element={<ConsumerChangePassword />} />
                   <Route
                     path="production/:productionId/review/:scanId"
                     element={<ProductReview />}

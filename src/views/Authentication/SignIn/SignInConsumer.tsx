@@ -16,7 +16,7 @@ import React, { useEffect } from 'react';
 import { object, string } from 'zod';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { executeAuthRedirectAction, buildAuthRedirectUrl } from '../../../utils/authRedirect';
-import FormInput from 'components/Forms/FormInput';
+import { StandardInput } from 'components/Design/StandardComponents';
 import { login as loginAction } from 'store/features/authSlice';
 import consumerSignInImage from 'assets/img/consumer-signin.png';
 import { useDispatch } from 'react-redux';
@@ -127,21 +127,46 @@ export default function SignInConsumer() {
             mt={{ md: '150px', lg: '80px' }}
           >
             <Heading color={titleColor} fontSize="32px" mb="10px">
-              Continue Your Carbon Journey
+              Know Your Food's Climate Impact
             </Heading>
-            <Text mb="36px" ms="4px" color={textColor} fontWeight="bold" fontSize="14px">
-              Access your carbon transparency discoveries and sustainable choices
+            <Text mb="24px" ms="4px" color={textColor} fontWeight="bold" fontSize="14px">
+              Scan products to see verified carbon footprints and support climate-positive farming
             </Text>
+            <Flex mb="12px" align="center" gap={2}>
+              <Box w="4px" h="4px" bg="green.500" borderRadius="full" />
+              <Text fontSize="xs" color="gray.600">Blockchain-verified transparency</Text>
+            </Flex>
             <FormProvider {...methods}>
               <form onSubmit={handleSubmit(onSubmitHandler)}>
-                <FormControl isInvalid={isError}>
-                  <FormInput name="email" label="Email" placeholder="Your email address" />
-                  <FormInput
-                    name="password"
-                    label="Password"
+                <FormControl isInvalid={isError} mb={4}>
+                  <FormLabel color="gray.700" fontWeight="500" mb={1}>Email</FormLabel>
+                  <StandardInput
+                    {...methods.register('email')}
+                    placeholder="Your email address"
+                    type="email"
+                    h="44px"
+                    fontSize="sm"
+                  />
+                  {errors.email && (
+                    <FormErrorMessage>{errors.email.message}</FormErrorMessage>
+                  )}
+                </FormControl>
+                
+                <FormControl isInvalid={isError} mb={4}>
+                  <FormLabel color="gray.700" fontWeight="500" mb={1}>Password</FormLabel>
+                  <StandardInput
+                    {...methods.register('password')}
                     placeholder="Your password"
                     type="password"
+                    h="44px"
+                    fontSize="sm"
                   />
+                  {errors.password && (
+                    <FormErrorMessage>{errors.password.message}</FormErrorMessage>
+                  )}
+                </FormControl>
+                
+                <FormControl isInvalid={isError}>
                   {isError && <FormErrorMessage pl="4px">{error.data.detail}</FormErrorMessage>}
                   <FormControl display="flex" alignItems="center">
                     <Switch id="remember-login" colorScheme="green" me="10px" />
@@ -150,22 +175,26 @@ export default function SignInConsumer() {
                     </FormLabel>
                   </FormControl>
                   <Button
-                    fontSize="10px"
                     type="submit"
                     bg="green.500"
-                    w="100%"
-                    h="45"
-                    mb="20px"
                     color="white"
+                    w="100%"
+                    h="44px"
+                    fontSize="sm"
+                    fontWeight="600"
+                    borderRadius="xl"
+                    mb="20px"
                     mt="20px"
                     _hover={{
-                      bg: 'green.400'
+                      bg: 'green.600',
+                      transform: 'translateY(-1px)'
                     }}
                     _active={{
-                      bg: 'green.400'
+                      bg: 'green.700'
                     }}
+                    isLoading={isLoading}
                   >
-                    SIGN IN
+                    Access Carbon Transparency
                   </Button>
                 </FormControl>
               </form>

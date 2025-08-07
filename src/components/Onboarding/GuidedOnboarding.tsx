@@ -51,58 +51,60 @@ interface OnboardingStep {
 const onboardingSteps: OnboardingStep[] = [
   {
     id: 'establishment-setup',
-    title: 'Complete Your Farm Setup',
-    description: 'Finish creating your establishment with essential details',
+    title: '🎯 Milestone 1: Get Your First Carbon Score',
+    description: 'Generate your baseline carbon footprint and see immediate value',
     icon: FiMapPin,
     benefits: [
-      'Add farm location and contact information',
-      'Upload establishment imagery for transparency',
-      'Set farming certification type (Organic, Conventional)',
-      'Configure your farm story for consumers'
+      'Instant baseline carbon estimate in <5 minutes',
+      'Industry comparison showing improvement potential',
+      'Personalized carbon reduction recommendations',
+      'USDA-verified calculation methodology'
     ],
-    actionText: 'Complete Farm Setup',
+    actionText: 'Get My Carbon Score',
     actionPath: '/admin/dashboard/establishment/edit'
   },
   {
     id: 'add-parcels',
-    title: 'Add Your First Parcel',
-    description: 'Create field parcels to organize your land and crops',
+    title: '🎯 Milestone 2: Setup Smart Production',
+    description: 'Use template-driven production creation for instant carbon tracking',
     icon: FiCpu,
     benefits: [
-      'Define field boundaries with GPS coordinates',
-      'Set soil composition and pH levels',
-      'Configure irrigation and drainage systems',
-      'Organize different crop areas efficiently'
+      'Pre-configured event templates save 80% setup time',
+      'Automated carbon calculation projections',
+      'USDA-verified emission factors included',
+      'QR code generation for consumer transparency'
     ],
-    actionText: 'Add Parcel',
+    actionText: 'Create Smart Production',
     actionPath: '/admin/dashboard/parcel/create'
   },
   {
     id: 'start-production',
-    title: 'Launch Your First Production',
-    description: 'Begin carbon tracking for your current crop cycle',
+    title: '🎯 Milestone 3: Get Blockchain Verification',
+    description: 'Generate immutable carbon records and transparency certificates',
     icon: FiActivity,
     benefits: [
-      'Choose from 50+ crop templates with USDA data',
-      'Automated carbon calculations start immediately',
-      'Track inputs: seeds, fertilizers, pesticides',
-      'Monitor growth stages and harvest projections'
+      'Instant blockchain certificate generation',
+      'Consumer-facing transparency URL created',
+      'Premium pricing potential calculator activated',
+      'Verified by Polygon network security'
     ],
-    actionText: 'Start Production',
+    actionText: 'Get Verified',
     actionPath: '/admin/dashboard/production/create'
   },
   {
     id: 'carbon-insights',
-    title: 'Understand Your Carbon Impact',
-    description: 'Explore your carbon dashboard and insights',
+    title: '🎯 Milestone 4: Connect with Consumers',
+    description: 'Experience end-to-end transparency and consumer engagement',
     icon: FiBarChart2,
     benefits: [
-      'Real-time carbon footprint calculations',
+      'Live preview of consumer transparency page',
+      'Marketing materials automatically generated',
+      'First consumer engagement notifications',
       'Compare against industry benchmarks',
       'Identify optimization opportunities',
       'Generate sustainability reports'
     ],
-    actionText: 'View Carbon Dashboard',
+    actionText: 'Preview Consumer Experience',
     actionPath: '/admin/dashboard/carbon'
   },
   {

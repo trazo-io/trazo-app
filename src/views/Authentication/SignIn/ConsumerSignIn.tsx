@@ -331,16 +331,15 @@ const ConsumerSignIn: React.FC = () => {
         <VStack spacing={8} position="relative" textAlign="center" color="white" px={12} maxW="lg" zIndex={10}>
           <VStack spacing={4}>
             <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-              Discover Carbon Stories
+              Know Your Food's Climate Impact
             </Text>
             <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-              Connect with sustainable farmers, track carbon footprints, and make informed choices
-              about the food you consume
+              Scan products to see verified carbon footprints and support climate-positive farming through informed choices
             </Text>
           </VStack>
 
           <VStack spacing={3} pt={4}>
-            {['Verified Farms', 'Real Carbon Data', 'Full Transparency'].map((feature, index) => (
+            {['USDA-Verified Data', 'Blockchain Security', 'Real Farm Stories'].map((feature, index) => (
               <HStack key={index} spacing={3}>
                 <Box w={2} h={2} bg="white" borderRadius="50%" />
                 <Text fontSize="sm" fontWeight="500" opacity={0.9}>
@@ -377,14 +376,14 @@ const ConsumerSignIn: React.FC = () => {
                 color={useColorModeValue('gray.900', 'white')}
                 letterSpacing="tight"
               >
-                Welcome back
+                Continue Your Carbon Journey
               </Text>
               <Text
                 fontSize="md"
                 color={useColorModeValue('gray.500', 'gray.400')}
                 textAlign="center"
               >
-                Sign in to discover sustainable food
+                Access verified carbon transparency and sustainable choices
               </Text>
             </VStack>
           </VStack>
@@ -554,7 +553,7 @@ const ConsumerSignIn: React.FC = () => {
 
                 {/* Forgot password */}
                 <HStack justify="flex-end" w="full">
-                  <Link to="/consumer/auth/forgot-password">
+                  <Link to="/auth/forgot-password">
                     <Text
                       fontSize="sm"
                       color="blue.600"
@@ -591,7 +590,7 @@ const ConsumerSignIn: React.FC = () => {
                   }}
                   transition="all 0.2s"
                 >
-                  Sign in
+                  Access Carbon Transparency
                 </Button>
               </VStack>
             </form>

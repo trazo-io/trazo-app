@@ -2,13 +2,28 @@
  * Utility functions for subscription data handling
  */
 
+// Type definitions
+interface Subscription {
+  id?: string | number;
+  status?: string;
+  current_period_end?: string;
+  [key: string]: any;
+}
+
+interface DashboardData {
+  subscription?: Subscription[];
+  [key: string]: any;
+}
+
+interface CompanyData {
+  subscription?: Subscription;
+  [key: string]: any;
+}
+
 /**
  * Formats a date string to a localized format
- *
- * @param {string} date - Date string to format
- * @returns {string} Formatted date string
  */
-export const formatDate = (date) => {
+export const formatDate = (date: string | null | undefined): string => {
   if (!date) return '-';
   try {
     return new Date(date).toLocaleDateString();
@@ -20,12 +35,8 @@ export const formatDate = (date) => {
 
 /**
  * Formats a price value
- *
- * @param {number} price - Price to format
- * @param {number} quantity - Optional quantity multiplier
- * @returns {string} Formatted price string
  */
-export const formatPrice = (price, quantity = 1) => {
+export const formatPrice = (price: number | null | undefined, quantity: number = 1): string => {
   if (price === null || price === undefined) return '-';
   const numPrice = Number(price);
   if (isNaN(numPrice)) return '-';
@@ -34,12 +45,11 @@ export const formatPrice = (price, quantity = 1) => {
 
 /**
  * Normalizes subscription data from different sources
- *
- * @param {Object} dashboardData - Data from dashboard API
- * @param {Object} companyData - Data from company state
- * @returns {Object|null} Normalized subscription data
  */
-export const normalizeSubscription = (dashboardData, companyData) => {
+export const normalizeSubscription = (
+  dashboardData: DashboardData | null | undefined,
+  companyData: CompanyData | null | undefined
+): Subscription | null => {
   // First try subscription from dashboard
   if (dashboardData?.subscription && dashboardData.subscription.length > 0) {
     return dashboardData.subscription[0];

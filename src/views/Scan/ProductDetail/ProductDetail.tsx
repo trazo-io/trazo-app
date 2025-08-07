@@ -82,6 +82,7 @@ import { usePointsStore } from '../../../store/pointsStore';
 import USDACredibilityBadge from '../../../components/Carbon/USDACredibilityBadge';
 import { CarbonScore } from '../../../components/CarbonScore';
 import { StandardImageGallery } from '../../../components/ImageGallery';
+import { EnhancedTrustIndicators, TrustData } from '../../../components/Trust';
 
 // Educational modal content
 const EducationModal = ({
@@ -1032,6 +1033,32 @@ function ProductDetail() {
                     height="300px"
                     showEmptyState={true}
                     maxDisplayImages={3}
+                  />
+                </Box>
+
+                {/* Enhanced Trust Indicators */}
+                <Box mb={6}>
+                  <EnhancedTrustIndicators
+                    trustData={{
+                      carbonScore: completeData?.carbonScore || 0,
+                      confidenceScore: 0, // Not implemented in backend yet,
+                      isUSDAVerified: completeData?.isUsdaVerified || false,
+                      isBlockchainVerified: completeData?.blockchainVerification?.verified || false,
+                      scansCount: completeData?.socialProof?.totalScans || 0,
+                      reviewsCount: completeData?.socialProof?.reviewsCount || 0,
+                      averageRating: completeData?.socialProof?.averageRating || 0,
+                      verificationDate: completeData?.blockchainVerification?.verification_date || completeData?.verificationDate || '',
+                      farmHistory: completeData?.socialProof?.farmHistoryYears || 0,
+                      certifications: completeData?.certifications?.map(c => c.name) || [],
+                      transparencyScore: completeData?.socialProof?.transparencyScore || 0,
+                      industryPercentile: completeData?.industryPercentile || 0,
+                      sustainabilityBadges: completeData?.badges?.map(b => b.name) || [],
+                      publicViews: completeData?.socialProof?.publicViews || 0,
+                      uniqueVisitors: completeData?.socialProof?.uniqueVisitors || 0
+                    }}
+                    isLoading={isCompleteLoading}
+                    variant="hero"
+                    showDetails={true}
                   />
                 </Box>
 

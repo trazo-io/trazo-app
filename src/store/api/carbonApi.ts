@@ -373,6 +373,7 @@ export interface QRCodeSummary {
   recommendations?: string[];
   socialProof?: {
     totalScans: number;
+    reviewsCount: number;
     totalOffsets: number;
     totalUsers: number;
     averageRating: number;
@@ -503,6 +504,7 @@ export interface CompleteSummary {
   };
   socialProof: {
     totalScans: number;
+    reviewsCount: number;
     totalOffsets: number;
     totalUsers: number;
     averageRating: number;

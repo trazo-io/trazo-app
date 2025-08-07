@@ -205,10 +205,29 @@ export default function AdminNavbar(props: AdminNavbarProps) {
         }}
         alignItems={{ xl: 'center' }}
       >
-        <Box mb={{ sm: '8px', md: '0px' }} h="100%" pt={{ sm: '16px', md: '0px' }}>
-          <Breadcrumb>
+        <Box 
+          mb={{ sm: '8px', md: '0px' }} 
+          h="100%" 
+          pt={{ sm: '16px', md: '0px' }}
+          overflow="hidden"
+          maxW={{ base: '100%', md: 'auto' }}>
+          <Breadcrumb 
+            fontSize={{ base: 'sm', md: 'md' }}
+            spacing={{ base: '4px', md: '8px' }}
+            separator={
+              <Box 
+                color={secondaryText} 
+                fontSize={{ base: 'xs', md: 'sm' }}
+                px={1}>
+                /
+              </Box>
+            }>
             <BreadcrumbItem color={mainText}>
-              <BreadcrumbLink href="/admin/dashboard/" color={secondaryText}>
+              <BreadcrumbLink 
+                href="/admin/dashboard/" 
+                color={secondaryText}
+                fontSize={{ base: 'sm', md: 'md' }}
+                _hover={{ color: mainText, textDecoration: 'none' }}>
                 {intl.formatMessage({ id: 'app.home' })}
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -218,7 +237,12 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                 <BreadcrumbLink
                   href={parcelId && `/admin/dashboard/establishments/${establishmentId}`}
                   color={mainText}
-                >
+                  fontSize={{ base: 'sm', md: 'md' }}
+                  fontWeight="500"
+                  noOfLines={1}
+                  maxW={{ base: '150px', sm: '200px', md: 'auto' }}
+                  title={currentEstablishment.name}
+                  _hover={{ color: 'green.600', textDecoration: 'none' }}>
                   {currentEstablishment.name}
                 </BreadcrumbLink>
               </BreadcrumbItem>
@@ -226,7 +250,15 @@ export default function AdminNavbar(props: AdminNavbarProps) {
 
             {currentParcel && (
               <BreadcrumbItem color={mainText}>
-                <BreadcrumbLink color={mainText}>{currentParcel.name}</BreadcrumbLink>
+                <BreadcrumbLink 
+                  color={mainText}
+                  fontSize={{ base: 'sm', md: 'md' }}
+                  fontWeight="500"
+                  noOfLines={1}
+                  maxW={{ base: '120px', sm: '150px', md: 'auto' }}
+                  title={currentParcel.name}>
+                  {currentParcel.name}
+                </BreadcrumbLink>
               </BreadcrumbItem>
             )}
           </Breadcrumb>
