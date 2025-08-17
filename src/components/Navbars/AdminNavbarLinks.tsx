@@ -161,76 +161,92 @@ export default function HeaderLinks(props: HeaderLinksProps) {
   const settingsRef = React.useRef();
   return (
     <Flex
-      pe={{ sm: '0px', md: '16px' }}
-      w={{ sm: '100%', md: 'auto' }}
       alignItems="center"
-      justifyContent={{ sm: 'flex-end', md: 'flex-start' }}
-      gap={{ base: 2, md: 4 }}>
-      {subdomain === 'producer' && isHome && (
+      justifyContent="flex-end"
+      gap={{ base: 1, sm: 2, md: 3 }}
+      flexShrink={0}
+      minW={0}>
+      
+      {/* Search Component - Only on larger screens when home */}
+      {subdomain === 'producer' && isHome && !isMobile && (
         <Flex
           alignItems="center"
-          justifyContent="flex-start"
-          w={{ base: 'auto', sm: 'auto', md: 'auto', lg: 'auto', xl: 'auto' }}
-          maxW={{ base: '160px', sm: '200px', md: '240px', lg: '300px', xl: '400px' }}
-          flex={{ base: '1', sm: '1', md: '1', lg: '1', xl: 'none' }}
-          mr={{ base: 2, sm: 3, md: 3, lg: 4, xl: 4 }}>
+          w="auto"
+          maxW={{ 
+            sm: '180px', 
+            md: '220px', 
+            lg: '260px', 
+            xl: '300px' 
+          }}
+          mr={{ sm: 2, md: 3 }}
+          flexShrink={1}
+          minW={0}>
           <TrazoGlobalSearch
             placeholder={
-              isMobile
-                ? 'Search...'
-                : intl.formatMessage({ id: 'app.searchEstablishmentsAndParcels' }) ||
-                  'Search establishments, parcels...'
+              intl.formatMessage({ id: 'app.searchEstablishmentsAndParcels' }) ||
+              'Search establishments, parcels...'
             }
-            size={isMobile ? 'sm' : 'md'}
+            size="md"
           />
         </Flex>
       )}
 
-      <Flex alignItems="center" gap={{ base: 1, md: 3 }} flexShrink={0}>
+      {/* Action Buttons - Consistent spacing */}
+      <Flex 
+        alignItems="center" 
+        gap={{ base: 1, sm: 1.5, md: 2 }} 
+        flexShrink={0}>
+        
+        {/* Sign Out Button */}
         <Button
-          ms="0px"
-          px="0px"
-          me={{ sm: '2px', md: '16px' }}
           color={navbarIcon}
           variant="transparent-with-icon"
-          leftIcon={<RiLogoutBoxRLine color={navbarIcon} size="22px" me="0px" />}
-          onClick={handleLogout}>
-          <Text display={{ sm: 'none', md: 'flex' }}>
+          leftIcon={<RiLogoutBoxRLine color={navbarIcon} size="18px" />}
+          onClick={handleLogout}
+          size="sm"
+          px={{ base: 1, md: 2 }}
+          minW={0}>
+          <Text display={{ base: 'none', lg: 'flex' }} fontSize="sm" ml={1}>
             {intl.formatMessage({ id: 'app.signOut' })}
           </Text>
         </Button>
+
+        {/* Profile Button */}
         <Button
-          ms="0px"
-          px="0px"
           color={navbarIcon}
           variant="transparent-with-icon"
-          leftIcon={<ProfileIcon color={navbarIcon} w="22px" h="22px" me="0px" />}
+          leftIcon={<ProfileIcon color={navbarIcon} w="18px" h="18px" />}
           onClick={() => navigate(`/admin/dashboard/profile`)}
+          size="sm"
+          px={{ base: 1, md: 2 }}
+          minW={0}
         />
 
-        <SettingsIcon
-          cursor="pointer"
-          me={{ base: '8px', md: '16px' }}
-          ref={settingsRef}
-          onClick={props.onOpen}
+        {/* Settings Button */}
+        <Button
           color={navbarIcon}
-          w="18px"
-          h="18px"
+          variant="transparent-with-icon"
+          leftIcon={<SettingsIcon color={navbarIcon} w="18px" h="18px" />}
+          onClick={props.onOpen}
+          size="sm"
+          px={{ base: 1, md: 2 }}
+          minW={0}
         />
 
-        {/* Only show notifications for producers, not consumers */}
+        {/* Notification Dropdown */}
         {subdomain === 'producer' && <NotificationDropdown navbarIcon={navbarIcon} />}
 
-        {/* Mobile hamburger icon */}
+        {/* Mobile hamburger menu */}
         {isMobile && (
           <IconButton
             aria-label="Open navigation menu"
             icon={<HamburgerIcon />}
             variant="ghost"
             color={navbarIcon}
-            display={{ base: 'flex', xl: 'none' }}
-            onClick={onMobileOpen}
             size="sm"
+            minW={0}
+            px={1}
+            onClick={onMobileOpen}
             ml={1}
           />
         )}

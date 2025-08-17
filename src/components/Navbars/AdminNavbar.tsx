@@ -44,7 +44,7 @@ import AdminNavbarLinks from './AdminNavbarLinks';
 import PropTypes from 'prop-types';
 import { SidebarContext } from 'contexts/SidebarContext';
 import { useIntl } from 'react-intl';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FaClock } from 'react-icons/fa';
 
@@ -70,12 +70,13 @@ type AdminNavbarProps = {
 
 export default function AdminNavbar(props: AdminNavbarProps) {
   const intl = useIntl();
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const { sidebarWidth } = useContext(SidebarContext);
   const { variant, children, fixed, secondary, brandText, onOpen, ...rest } = props;
 
-  const [currentEstablishment, setCurrentEstablishment] = useState(null);
-  const [currentParcel, setCurrentParcel] = useState(null);
+  const [currentEstablishment, setCurrentEstablishment] = useState<any>(null);
+  const [currentParcel, setCurrentParcel] = useState<any>(null);
 
   const { establishmentId, parcelId } = useParams<{ establishmentId: string; parcelId: string }>();
 
@@ -105,6 +106,35 @@ export default function AdminNavbar(props: AdminNavbarProps) {
       setCurrentParcel(null);
     }
   }, [establishmentId, parcelId, establishments]);
+
+  // 🚀 2025 Best Practice: Programmatic Navigation with State Preservation
+  const handleEstablishmentClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Optimized navigation: No page refresh, preserves state, instant transition
+    if (establishmentId) {
+      navigate(`/admin/dashboard/establishment/${establishmentId}`, {
+        // Replace current entry to maintain clean history stack
+        replace: false,
+        // Preserve scroll position for better UX
+        state: { 
+          preserveScroll: true,
+          navigationSource: 'breadcrumb'
+        }
+      });
+    }
+  };
+
+  const handleHomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate('/admin/dashboard/', {
+      replace: false,
+      state: { 
+        preserveScroll: true,
+        navigationSource: 'breadcrumb'
+      }
+    });
+  };
 
   // Here are all the props that may change depending on navbar's type or state.(secondary, variant, scrolled)
   let mainText = useColorModeValue('gray.700', 'gray.200');
@@ -198,77 +228,113 @@ export default function AdminNavbar(props: AdminNavbarProps) {
       <Flex
         w="100%"
         h="100%"
-        flexDirection={{
-          sm: 'column-reverse',
-          md: 'row'
-        }}
-        alignItems={{ xl: 'center' }}>
-        <Box
-          mb={{ sm: '8px', md: '0px' }}
-          h="100%"
-          pt={{ sm: '16px', md: '0px' }}
-          overflow="hidden"
-          maxW={{ base: '100%', md: 'auto' }}>
-          <Breadcrumb
-            fontSize={{ base: 'sm', md: 'md' }}
-            spacing={{ base: '4px', md: '8px' }}
-            separator={
-              <Box color={secondaryText} fontSize={{ base: 'xs', md: 'sm' }} px={1}>
-                /
-              </Box>
-            }>
-            <BreadcrumbItem color={mainText}>
-              <BreadcrumbLink
-                href="/admin/dashboard/"
-                color={secondaryText}
-                fontSize={{ base: 'sm', md: 'md' }}
-                _hover={{ color: mainText, textDecoration: 'none' }}>
-                {intl.formatMessage({ id: 'app.home' })}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-
-            {currentEstablishment && (
-              <BreadcrumbItem color={mainText}>
-                <BreadcrumbLink
-                  href={parcelId && `/admin/dashboard/establishments/${establishmentId}`}
-                  color={mainText}
-                  fontSize={{ base: 'sm', md: 'md' }}
-                  fontWeight="500"
-                  noOfLines={1}
-                  maxW={{ base: '150px', sm: '100%', md: 'auto' }}
-                  title={currentEstablishment.name}
-                  _hover={{ color: 'green.600', textDecoration: 'none' }}>
-                  {currentEstablishment.name}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-            )}
-
-            {currentParcel && (
-              <BreadcrumbItem color={mainText}>
-                <BreadcrumbLink
-                  color={mainText}
-                  fontSize={{ base: 'sm', md: 'md' }}
-                  fontWeight="500"
-                  noOfLines={1}
-                  maxW={{ base: '120px', sm: '150px', md: 'auto' }}
-                  title={currentParcel.name}>
-                  {currentParcel.name}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-            )}
-          </Breadcrumb>
-        </Box>
-        <Box
-          ms="auto"
-          w={{ sm: '100%', md: 'unset' }}
-          justifyContent={{ sm: 'flex-end', md: 'flex-start' }}>
+        minH={{ base: '56px', sm: '60px', md: '64px' }}
+        align="center"
+        justify="space-between"
+        gap={{ base: 1, sm: 2, md: 3 }}
+        flexDirection={{ base: 'column', smd: 'row' }}
+        py={{ base: 1, smd: 0 }}>
+        
+        {/* Action Buttons Container - Mobile First */}
+        <Flex
+          align="center"
+          flexShrink={0}
+          w={{ base: '100%', smd: 'auto' }}
+          order={{ base: 1, smd: 2 }}
+          justify="flex-end">
           <AdminNavbarLinks
             onOpen={props.onOpen}
             logoText={props.logoText}
             secondary={props.secondary}
             fixed={props.fixed}
           />
-        </Box>
+        </Flex>
+
+        {/* Breadcrumb Container - Mobile Below Buttons */}
+        <Flex
+          align="center"
+          flex={{ base: 'none', smd: '1' }}
+          minW="0"
+          w={{ base: '100%', smd: 'auto' }}
+          order={{ base: 2, smd: 1 }}
+          justify={{ base: 'flex-start', smd: 'flex-start' }}>
+          <Breadcrumb
+            fontSize={{ base: 'sm', md: 'md' }}
+            spacing={{ base: '4px', sm: '6px', md: '8px' }}
+            separator={
+              <Box color={secondaryText} fontSize={{ base: 'xs', md: 'sm' }} px={{ base: 0.5, md: 1 }}>
+                /
+              </Box>
+            }>
+            
+            {/* Home - Always visible, never truncates */}
+            <BreadcrumbItem color={mainText}>
+              <BreadcrumbLink
+                onClick={handleHomeClick}
+                color={secondaryText}
+                fontSize={{ base: 'sm', md: 'md' }}
+                _hover={{ color: mainText, textDecoration: 'none', cursor: 'pointer' }}
+                flexShrink={0}
+                whiteSpace="nowrap"
+                cursor="pointer">
+                {intl.formatMessage({ id: 'app.home' })}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+
+            {/* Establishment - Smart responsive truncation */}
+            {currentEstablishment && (
+              <BreadcrumbItem color={mainText}>
+                <BreadcrumbLink
+                  onClick={parcelId ? handleEstablishmentClick : undefined}
+                  color={!parcelId ? 'green.600' : mainText} // 🎯 Active state when on establishment page
+                  fontSize={{ base: 'sm', md: 'md' }}
+                  fontWeight="500"
+                  noOfLines={1}
+                  title={currentEstablishment.name}
+                  maxW={{
+                    base: currentParcel ? 'clamp(120px, 40vw, 250px)' : 'clamp(200px, 70vw, 350px)',
+                    sm: currentParcel ? 'clamp(140px, 45vw, 280px)' : 'clamp(220px, 65vw, 400px)',
+                    smd: currentParcel ? 'clamp(160px, 40vw, 300px)' : 'clamp(250px, 60vw, 450px)',
+                    md: currentParcel ? 'clamp(180px, 35vw, 320px)' : 'clamp(280px, 55vw, 500px)',
+                    lg: 'none'
+                  }}
+                  _hover={parcelId ? { 
+                    color: 'green.600', 
+                    textDecoration: 'none', 
+                    cursor: 'pointer',
+                    transform: 'translateY(-0.5px)',
+                    transition: 'all 0.2s ease'
+                  } : {}}
+                  cursor={parcelId ? 'pointer' : 'default'}
+                  transition="all 0.2s ease">
+                  {currentEstablishment.name}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+            )}
+
+            {/* Parcel - Smart responsive truncation */}
+            {currentParcel && (
+              <BreadcrumbItem color={mainText}>
+                <BreadcrumbLink
+                  color="green.600" // 🎯 Always active (current page) when parcel is shown
+                  fontSize={{ base: 'sm', md: 'md' }}
+                  fontWeight="600" // Slightly bolder for current page emphasis
+                  noOfLines={1}
+                  title={currentParcel.name}
+                  maxW={{
+                    base: 'clamp(100px, 35vw, 200px)',
+                    sm: 'clamp(120px, 40vw, 240px)', 
+                    smd: 'clamp(140px, 35vw, 280px)',
+                    md: 'clamp(160px, 30vw, 320px)',
+                    lg: 'none'
+                  }}
+                  cursor="default"> {/* Not clickable - current page */}
+                  {currentParcel.name}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+            )}
+          </Breadcrumb>
+        </Flex>
       </Flex>
     </Flex>
   );
