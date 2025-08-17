@@ -53,8 +53,8 @@ const CardWithImage = ({
 
   return (
     <Card 
-      maxHeight={'290.5px'}
-      height={{ sm: '290.5px', md: '290.5px', lg: '290.5px', xl: '290.5px' }} 
+      maxHeight={{ base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }}
+      height={{ base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }} 
       p="0"
       overflow="hidden"
       className="trazo-card"

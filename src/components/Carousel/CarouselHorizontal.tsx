@@ -207,27 +207,29 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
           {canCreateParcel && (
             <Button
               p="0px"
-              minW={{ base: '100px', md: '100px' }}
-              h={{ base: '44px', md: '40px' }}
-              bg="green.50"
-              color="green.600"
-              borderRadius="full"
-              border="1px solid"
-              borderColor="green.200"
+              w="100px"
+              h="40px"
+              bg="transparent"
+              color="green.500"
+              borderRadius="xl"
+              border="2px dashed"
+              borderColor="gray.200"
               flexShrink={0}
-              fontWeight="600"
-              fontSize={{ base: 'sm', md: 'sm' }}
-              leftIcon={<Icon as={FaPlus} w="12px" h="12px" />}
               _hover={{
-                bg: 'green.100',
-                borderColor: 'green.300',
-                transform: 'translateY(-1px)',
-                boxShadow: 'md'
+                bg: 'green.50',
+                borderColor: 'green.500',
+                transform: 'translateY(-2px)',
+                boxShadow: 'lg'
               }}
               onClick={() =>
                 navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/add`)
               }>
-              {intl.formatMessage({ id: 'app.newParcel' }) || 'Add Parcel'}
+              <Flex direction="column" align="center" justify="center" gap={1}>
+                <Icon as={FaPlus} color="green.500" fontSize="20px" />
+                <Text fontSize="xs" fontWeight="medium" color="green.600">
+                  {intl.formatMessage({ id: 'app.new' }) || 'New'}
+                </Text>
+              </Flex>
             </Button>
           )}
         </Flex>

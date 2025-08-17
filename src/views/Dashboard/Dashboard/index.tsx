@@ -76,7 +76,7 @@ export default function DashboardView() {
   // Force horizontal scroll for ALL screen sizes - no Grid layout wrapping
   const isMobile = true; // Always use horizontal scroll layout
   const cardWidth = useBreakpointValue({ base: '280px', sm: '300px', md: '320px', lg: '340px', xl: 'auto' });
-  const cardHeight = useBreakpointValue({ base: '120px', md: '100px', lg: '100px', xl: '90px' });
+  const cardHeight = useBreakpointValue({ base: '100px', md: '90px', lg: '90px', xl: '90px' });
 
   // State for scroll progress tracking
   const [scrollProgress, setScrollProgress] = useState(0);
