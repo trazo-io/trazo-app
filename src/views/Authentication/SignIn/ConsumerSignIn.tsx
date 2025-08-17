@@ -24,7 +24,6 @@ import { FaGoogle, FaFacebook, FaApple, FaEnvelope, FaLock, FaEye, FaEyeSlash } 
 import { motion } from 'framer-motion';
 import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
-import { executeAuthRedirectAction, buildAuthRedirectUrl } from '../../../utils/authRedirect';
 import {
   handleGoogleSignIn,
   handleFacebookSignIn,
@@ -66,30 +65,11 @@ const ConsumerSignIn: React.FC = () => {
       const response = await login(data).unwrap();
       console.log('🔍 Login successful, response:', response);
 
-      // First check if there's a pending auth redirect URL
-      const pendingRedirectUrl = buildAuthRedirectUrl();
-      if (pendingRedirectUrl) {
-        console.log('🔐 ConsumerSignIn: Found pending redirect URL:', pendingRedirectUrl);
-        // Dispatch login action with redirect URL
-        dispatch(loginAction({ ...response, redirectUrl: pendingRedirectUrl }));
-
-        // Execute the redirect immediately
-        const redirectExecuted = executeAuthRedirectAction(navigate);
-        if (redirectExecuted) {
-          console.log('🔐 ConsumerSignIn: Auth redirect action executed successfully');
-          toast({
-            title: 'Welcome back!',
-            description: 'You have successfully signed in.',
-            status: 'success',
-            duration: 3000,
-            isClosable: true
-          });
-          return;
-        }
-      } else {
-        // No pending action, dispatch login normally
-        dispatch(loginAction(response));
-      }
+      // Dispatch login action
+      dispatch(loginAction(response));
+      
+      // Set a flag to prevent Authenticated component from interfering
+      sessionStorage.setItem('just_authenticated', 'true');
 
       toast({
         title: 'Welcome back!',
@@ -99,8 +79,9 @@ const ConsumerSignIn: React.FC = () => {
         isClosable: true
       });
 
-      // Default redirect - directly to impact to avoid route conflicts
-      navigate('/admin/dashboard/impact', { replace: true });
+      // RedirectGuard will handle the navigation
+      // Default redirect to dashboard
+      navigate('/admin/dashboard', { replace: true });
     } catch (err: any) {
       const errorMessage = err?.data?.detail || 'Invalid email or password';
       setError(errorMessage);
@@ -112,30 +93,11 @@ const ConsumerSignIn: React.FC = () => {
       setError(null);
       const response = await socialAuth(authData).unwrap();
 
-      // First check if there's a pending auth redirect URL
-      const pendingRedirectUrl = buildAuthRedirectUrl();
-      if (pendingRedirectUrl) {
-        console.log('🔐 ConsumerSignIn: Found pending redirect URL:', pendingRedirectUrl);
-        // Dispatch login action with redirect URL
-        dispatch(loginAction({ ...response, redirectUrl: pendingRedirectUrl }));
-
-        // Execute the redirect immediately
-        const redirectExecuted = executeAuthRedirectAction(navigate);
-        if (redirectExecuted) {
-          console.log('🔐 ConsumerSignIn: Auth redirect action executed successfully');
-          toast({
-            title: 'Welcome!',
-            description: 'You have successfully signed in.',
-            status: 'success',
-            duration: 3000,
-            isClosable: true
-          });
-          return;
-        }
-      } else {
-        // No pending action, dispatch login normally
-        dispatch(loginAction(response));
-      }
+      // Dispatch login action
+      dispatch(loginAction(response));
+      
+      // Set a flag to prevent Authenticated component from interfering
+      sessionStorage.setItem('just_authenticated', 'true');
 
       toast({
         title: 'Welcome!',
@@ -145,8 +107,9 @@ const ConsumerSignIn: React.FC = () => {
         isClosable: true
       });
 
-      // Default redirect - directly to impact to avoid route conflicts
-      navigate('/admin/dashboard/impact', { replace: true });
+      // RedirectGuard will handle the navigation
+      // Default redirect to dashboard
+      navigate('/admin/dashboard', { replace: true });
     } catch (err: any) {
       const errorMessage = err?.data?.error || 'Social authentication failed';
       setError(errorMessage);

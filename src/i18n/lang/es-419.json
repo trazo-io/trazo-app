@@ -790,5 +790,6 @@
   "app.noInvoicesYet": "Aún no hay facturas",
   "app.billingInformation": "Información de Facturación",
   "app.invoiceHistory": "Historial de Facturas",
-  "app.overview": "Resumen"
+  "app.overview": "Resumen",
+  "app.searchEstablishmentsAndParcels": "Buscar establecimientos, parcelas..."
 }

@@ -853,5 +853,6 @@
   "app.noInvoicesYet": "No invoices yet",
   "app.billingInformation": "Billing Information",
   "app.invoiceHistory": "Invoice History",
-  "app.overview": "Overview"
+  "app.overview": "Overview",
+  "app.searchEstablishmentsAndParcels": "Search establishments, parcels..."
 }

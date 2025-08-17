@@ -36,6 +36,7 @@ import React, { useEffect, useState } from 'react';
 
 // Custom Components
 import { NotificationDropdown } from 'components/Notifications/NotificationDropdown';
+import { TrazoGlobalSearch } from 'components/Search/TrazoGlobalSearch';
 import { useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { RiLogoutBoxRLine } from 'react-icons/ri';
@@ -67,10 +68,10 @@ export default function HeaderLinks(props: HeaderLinksProps) {
   const [subdomain, setSubDomain] = useState<string>('');
   const [routes, setRoutes] = useState();
   const [isHome, setIsHome] = useState(false);
-  
+
   // Mobile drawer state
   const { isOpen: isMobileOpen, onOpen: onMobileOpen, onClose: onMobileClose } = useDisclosure();
-  const isMobile = useBreakpointValue({ base: true, xl: false });
+  const isMobile = useBreakpointValue({ base: true, xl: false }); // Mobile up to 1200px
 
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -164,88 +165,77 @@ export default function HeaderLinks(props: HeaderLinksProps) {
       w={{ sm: '100%', md: 'auto' }}
       alignItems="center"
       justifyContent={{ sm: 'flex-end', md: 'flex-start' }}
-    >
+      gap={{ base: 2, md: 4 }}>
       {subdomain === 'producer' && isHome && (
-        <InputGroup
-          cursor="pointer"
-          bg={inputBg}
-          borderRadius="15px"
-          w={{
-            sm: '60%',
-            md: '200px'
-          }}
-          me={{ sm: '20px', md: '20px' }}
-          _focus={{
-            borderColor: { mainTeal }
-          }}
-          _active={{
-            borderColor: { mainTeal }
-          }}
-        >
-          <InputLeftElement
-            children={
-              <IconButton
-                bg="inherit"
-                borderRadius="inherit"
-                _hover="none"
-                _active={{
-                  bg: 'inherit',
-                  transform: 'none',
-                  borderColor: 'transparent'
-                }}
-                _focus={{
-                  boxShadow: 'none'
-                }}
-                icon={<SearchIcon color={searchIcon} w="15px" h="15px" />}
-              ></IconButton>
+        <Flex
+          alignItems="center"
+          justifyContent="flex-start"
+          w={{ base: 'auto', sm: 'auto', md: 'auto', lg: 'auto', xl: 'auto' }}
+          maxW={{ base: '160px', sm: '200px', md: '240px', lg: '300px', xl: '400px' }}
+          flex={{ base: '1', sm: '1', md: '1', lg: '1', xl: 'none' }}
+          mr={{ base: 2, sm: 3, md: 3, lg: 4, xl: 4 }}>
+          <TrazoGlobalSearch
+            placeholder={
+              isMobile
+                ? 'Search...'
+                : intl.formatMessage({ id: 'app.searchEstablishmentsAndParcels' }) ||
+                  'Search establishments, parcels...'
             }
+            size={isMobile ? 'sm' : 'md'}
           />
+        </Flex>
+      )}
 
-          <Input
-            fontSize="xs"
-            py="11px"
-            color={mainText}
-            placeholder={intl.formatMessage({ id: 'app.typeHere' })}
-            borderRadius="inherit"
-          />
-        </InputGroup>
-      )}
-      {/* <NavLink to="/auth/signin"> */}
-      <Button
-        ms="0px"
-        px="0px"
-        me={{ sm: '2px', md: '16px' }}
-        color={navbarIcon}
-        variant="transparent-with-icon"
-        leftIcon={<RiLogoutBoxRLine color={navbarIcon} size="22px" me="0px" />}
-        onClick={handleLogout}
-      >
-        <Text display={{ sm: 'none', md: 'flex' }}>
-          {intl.formatMessage({ id: 'app.signOut' })}
-        </Text>
-      </Button>
-      <Button
-        ms="0px"
-        px="0px"
-        color={navbarIcon}
-        variant="transparent-with-icon"
-        leftIcon={<ProfileIcon color={navbarIcon} w="22px" h="22px" me="0px" />}
-        onClick={() => navigate(`/admin/dashboard/profile`)}
-      />
-      {/* </NavLink> */}
-      {/* Mobile hamburger icon */}
-      {isMobile && (
-        <IconButton
-          aria-label="Open navigation menu"
-          icon={<HamburgerIcon />}
-          variant="ghost"
+      <Flex alignItems="center" gap={{ base: 1, md: 3 }} flexShrink={0}>
+        <Button
+          ms="0px"
+          px="0px"
+          me={{ sm: '2px', md: '16px' }}
           color={navbarIcon}
-          display={{ base: 'flex', xl: 'none' }}
-          onClick={onMobileOpen}
-          me="16px"
+          variant="transparent-with-icon"
+          leftIcon={<RiLogoutBoxRLine color={navbarIcon} size="22px" me="0px" />}
+          onClick={handleLogout}>
+          <Text display={{ sm: 'none', md: 'flex' }}>
+            {intl.formatMessage({ id: 'app.signOut' })}
+          </Text>
+        </Button>
+        <Button
+          ms="0px"
+          px="0px"
+          color={navbarIcon}
+          variant="transparent-with-icon"
+          leftIcon={<ProfileIcon color={navbarIcon} w="22px" h="22px" me="0px" />}
+          onClick={() => navigate(`/admin/dashboard/profile`)}
         />
-      )}
-      
+
+        <SettingsIcon
+          cursor="pointer"
+          me={{ base: '8px', md: '16px' }}
+          ref={settingsRef}
+          onClick={props.onOpen}
+          color={navbarIcon}
+          w="18px"
+          h="18px"
+        />
+
+        {/* Only show notifications for producers, not consumers */}
+        {subdomain === 'producer' && <NotificationDropdown navbarIcon={navbarIcon} />}
+
+        {/* Mobile hamburger icon */}
+        {isMobile && (
+          <IconButton
+            aria-label="Open navigation menu"
+            icon={<HamburgerIcon />}
+            variant="ghost"
+            color={navbarIcon}
+            display={{ base: 'flex', xl: 'none' }}
+            onClick={onMobileOpen}
+            size="sm"
+            ml={1}
+          />
+        )}
+      </Flex>
+
       {/* Mobile Sidebar */}
       {isMobile && (
         <Sidebar
@@ -258,17 +248,6 @@ export default function HeaderLinks(props: HeaderLinksProps) {
           {...rest}
         />
       )}
-      
-      <SettingsIcon
-        cursor="pointer"
-        me="16px"
-        ref={settingsRef}
-        onClick={props.onOpen}
-        color={navbarIcon}
-        w="18px"
-        h="18px"
-      />
-      <NotificationDropdown navbarIcon={navbarIcon} />
     </Flex>
   );
 }

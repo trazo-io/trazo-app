@@ -238,14 +238,20 @@ export const historyApi = baseApi.injectEndpoints({
         result ? [{ type: 'Productions', id: establishmentId }] : []
     }),
     createScan: build.mutation({
-      query: ({ production_id, city, country }) => ({
+      query: ({ production_id, city, country, explicit_consent, consent_timestamp, time_on_page, interactions, screen, comment }) => ({
         url: 'public_scans/',
         method: 'POST',
         credentials: 'include',
         body: {
           production_id,
           city,
-          country
+          country,
+          explicit_consent,
+          consent_timestamp,
+          time_on_page,
+          interactions,
+          screen,
+          comment
         }
       }),
       invalidatesTags: (result) => (result ? ['History'] : [])

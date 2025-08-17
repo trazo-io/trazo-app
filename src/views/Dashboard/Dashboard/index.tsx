@@ -9,7 +9,11 @@ import {
   SimpleGrid,
   Text,
   useColorModeValue,
-  Box
+  Box,
+  useBreakpointValue,
+  HStack,
+  VStack,
+  Center
 } from '@chakra-ui/react';
 import { S3Image } from 'components/Design';
 import { useBatchS3Images } from 'hooks/useBatchS3Images';
@@ -25,7 +29,7 @@ import {
 } from 'components/Icons/Icons.tsx';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   dashboardTableData,
   establishmentData,
@@ -69,6 +73,59 @@ export default function DashboardView() {
   const navigate = useNavigate();
   const [establishment, setEstablishment] = useState(null);
 
+  // Force horizontal scroll for ALL screen sizes - no Grid layout wrapping
+  const isMobile = true; // Always use horizontal scroll layout
+  const cardWidth = useBreakpointValue({ base: '280px', sm: '300px', md: '320px', lg: '340px', xl: 'auto' });
+  const cardHeight = useBreakpointValue({ base: '120px', md: '100px', lg: '100px', xl: '90px' });
+
+  // State for scroll progress tracking
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isEstablishmentsScrollable, setIsEstablishmentsScrollable] = useState(false);
+  const establishmentScrollRef = useRef<HTMLDivElement>(null);
+
+  // Check if establishments content is scrollable
+  const checkEstablishmentScrollability = () => {
+    if (!establishmentScrollRef.current || !establishments || establishments.length <= 1) {
+      setIsEstablishmentsScrollable(false);
+      return;
+    }
+
+    const { scrollWidth, clientWidth } = establishmentScrollRef.current;
+    const canScroll = scrollWidth > clientWidth;
+    
+    console.log('🏢 [Dashboard] Checking establishment scrollability:', {
+      scrollWidth,
+      clientWidth,
+      canScroll,
+      establishmentsLength: establishments.length
+    });
+
+    setIsEstablishmentsScrollable(canScroll);
+  };
+
+  // Scroll handler to track progress through establishments
+  const handleEstablishmentScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (!establishments || establishments.length <= 1) return;
+
+    const target = e.target as HTMLDivElement;
+    const scrollLeft = target.scrollLeft;
+    const scrollWidth = target.scrollWidth;
+    const clientWidth = target.clientWidth;
+    const maxScroll = scrollWidth - clientWidth;
+
+    // Update scrollable state based on whether there's overflow
+    const canScroll = maxScroll > 0;
+    if (canScroll !== isEstablishmentsScrollable) {
+      setIsEstablishmentsScrollable(canScroll);
+      console.log('🏢 [Dashboard] Establishment scrollable state updated:', canScroll);
+    }
+
+    if (maxScroll > 0) {
+      const progress = Math.min(scrollLeft / maxScroll, 1);
+      setScrollProgress(progress);
+    }
+  };
+
   // Step 5: Progressive Loading Implementation - TEMPORARILY DISABLED
   // const { metrics, markStageComplete, resetTimer } = usePerformanceMonitor();
   // const { isMobile, optimizationStrategy } = useMobileOptimization();
@@ -88,13 +145,13 @@ export default function DashboardView() {
   const company = useSelector((state) => state.company?.currentCompany);
   const canCreateEstablishment = useMemo(() => {
     if (!company) return false;
-    
+
     const plan = company.subscription_plan || company.subscription?.plan;
     if (!plan?.features) return false;
-    
+
     const maxEstablishments = plan.features.max_establishments || 0;
     const currentEstablishments = company.establishments?.length || 0;
-    
+
     // Check if unlimited (-1) or under limit
     return maxEstablishments === -1 || currentEstablishments < maxEstablishments;
   }, [company]);
@@ -102,8 +159,8 @@ export default function DashboardView() {
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
   const selectedGradient = useColorModeValue(
-    'linear-gradient(81.62deg, #2E7D32 2.25%, #059669 79.87%)',
-    'linear-gradient(81.62deg, #2E7D32 2.25%, #1B5E20 79.87%)'
+    'linear-gradient(81.62deg, green.700 2.25%, green.600 79.87%)',
+    'linear-gradient(81.62deg, green.700 2.25%, green.800 79.87%)'
   );
   const hoverBg = useColorModeValue('green.50', 'green.900');
   const borderColor = useColorModeValue('gray.200', 'green.700');
@@ -118,6 +175,7 @@ export default function DashboardView() {
   );
 
   const establishments = useSelector((state) => state.company.currentCompany?.establishments);
+
   const activeCompany = useSelector((state) => state.company.currentCompany);
 
   // Onboarding hook
@@ -276,6 +334,23 @@ export default function DashboardView() {
     }
   }, [location.pathname, establishments, establishmentId, navigate]);
 
+  // Check establishment scrollability on mount and when data changes
+  useEffect(() => {
+    // Small delay to ensure DOM is rendered
+    const timer = setTimeout(checkEstablishmentScrollability, 100);
+    return () => clearTimeout(timer);
+  }, [establishments]);
+
+  // Check establishment scrollability on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      checkEstablishmentScrollability();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [establishments]);
+
   const toggleAddEstablishment = () => {
     navigate('/admin/dashboard/establishment/add');
   };
@@ -301,141 +376,256 @@ export default function DashboardView() {
     <Flex
       flexDirection="column"
       pt={{ base: '120px', md: '75px' }}
-      pl={{ base: '0px', xl: '12px' }}>
+      px={{ base: 3, md: 6 }}
+      pb={{ base: 8, md: 8 }}
+      minH="100vh">
       {/* Enhanced Trial Status Banner */}
       <TrialStatusBanner />
 
-      {/* Test Onboarding - Remove this in production
-      <Box position="fixed" top="100px" right="20px" zIndex={9999}>
-        <Button 
-          colorScheme="blue" 
-          size="sm"
-          onClick={() => {
-            resetOnboarding();
-            openOnboarding();
-          }}
-        >
-          🚀 Test Onboarding
-        </Button>
-      </Box> */}
-
       {/* Guided Onboarding Modal */}
-      <GuidedOnboarding
+      {/* <GuidedOnboarding
         isOpen={isOnboardingOpen}
         onClose={closeOnboarding}
         companyName={activeCompany?.name}
         currentEstablishmentId={establishmentId}
-      />
+      /> */}
 
       <Box>
-        <Flex direction={{ base: 'column', md: 'row' }} gap={6} align="flex-start">
-          <Box flex="2">
-            <Grid
-              templateColumns={{
-                base: 'repeat(auto-fill, minmax(200px, 1fr))',
-                sm: 'repeat(auto-fill, minmax(220px, 1fr))',
-                md: 'repeat(auto-fill, minmax(240px, 1fr))'
-              }}
-              gap={{ base: 3, md: 4 }}>
-              {establishments ? (
-                <>
-                  {establishments.map((prop) => (
-                    <NavLink
-                      key={prop.id}
-                      to={`/admin/dashboard/establishment/${prop.id}`}
-                      style={{ textDecoration: 'none' }}>
-                      <Card
-                        p={{ base: 3, md: 4 }}
-                        cursor="pointer"
-                        bg={prop.id === establishment?.id ? 'trazo.forest' : cardBg}
-                        h={{ base: '80px', md: '90px' }}
-                        minH={{ base: '80px', md: '90px' }}
-                        maxH={{ base: '80px', md: '90px' }}
-                        className={`trazo-card establishment-card ${
-                          prop.id === establishment?.id ? 'selected' : ''
-                        }`}
-                        _hover={{
-                          transform: 'translateY(-2px)',
-                          boxShadow: 'lg',
-                          transition: 'all 0.2s'
-                        }}>
-                        <Flex align="center" gap={{ base: 2, md: 3 }} h="full">
-                          <Box
-                            bg={prop.id === establishment?.id ? 'white' : 'trazo.forest'}
-                            p={{ base: 1.5, md: 2 }}
-                            borderRadius="md"
-                            flexShrink={0}>
-                            <HomeIcon
-                              h={{ base: '20px', md: '24px' }}
-                              w={{ base: '20px', md: '24px' }}
-                              color={prop.id === establishment?.id ? 'trazo.forest' : 'white'}
-                            />
-                          </Box>
-                          <Box flex="1" overflow="hidden">
-                            <Text
-                              fontWeight="bold"
-                              fontSize={{ base: 'sm', md: 'md' }}
-                              color={prop.id === establishment?.id ? 'white' : textColor}
-                              noOfLines={1}
-                              title={prop.name}>
-                              {prop.name}
-                            </Text>
-                            <Text
-                              fontSize={{ base: 'xs', md: 'sm' }}
-                              color={prop.id === establishment?.id ? 'green.100' : 'gray.500'}
-                              noOfLines={1}
-                              title={`${prop.city || prop.zone || ''}, ${prop.state}`}>
-                              {`${prop.city || prop.zone || ''}, ${prop.state}`}
-                            </Text>
-                          </Box>
-                        </Flex>
-                      </Card>
-                    </NavLink>
-                  ))}
-                  {canCreateEstablishment && (
-                    <Button
-                      p="0px"
-                      w={{ base: '64px', md: '77px' }}
-                      h={{ base: '80px', md: '90px' }}
-                      bg="transparent"
-                      color="trazo.forest"
-                      borderRadius="xl"
-                      border="2px dashed"
-                      borderColor="gray.200"
-                      _hover={{
-                        bg: 'green.50',
-                        borderColor: 'trazo.forest',
-                        transform: 'translateY(-2px)',
-                        boxShadow: 'lg'
-                      }}
-                      onClick={toggleAddEstablishment}>
-                      <Flex direction="column" justifyContent="center" alignItems="center">
-                        <Icon
-                          as={FaPlus}
-                          w={{ base: '10px', md: '12px' }}
-                          h={{ base: '10px', md: '12px' }}
-                          mb={{ base: '6px', md: '8px' }}
-                        />
-                        <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="bold">
-                          {intl.formatMessage({ id: 'app.new' })}
-                        </Text>
-                      </Flex>
-                    </Button>
+        <Flex direction={{ base: 'column', xl: 'row' }} gap={{ base: 4, md: 4, lg: 5, xl: 6 }} align="flex-start">
+          <Box flex="2" w="100%" pt={{ base: 3, md: 4, lg: 6, xl: 0 }}>
+            <VStack spacing={3} align="stretch">
+              {/* Mobile: Simple Horizontal Scrollable Layout */}
+              {isMobile ? (
+                <VStack spacing={6} align="stretch" w="100%">
+                  <Box
+                    ref={establishmentScrollRef}
+                    overflowX="auto"
+                    overflowY="hidden"
+                    onScroll={handleEstablishmentScroll}
+                    sx={{
+                      '&::-webkit-scrollbar': {
+                        display: 'none'
+                      },
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      WebkitOverflowScrolling: 'touch'
+                    }}>
+                    <HStack spacing={3} pb={2} px={1} w="max-content">
+                      {establishments ? (
+                        <>
+                          {establishments.map((prop) => (
+                            <NavLink
+                              key={prop.id}
+                              to={`/admin/dashboard/establishment/${prop.id}`}
+                              style={{ textDecoration: 'none' }}>
+                              <Card
+                                p={4}
+                                cursor="pointer"
+                                bg={prop.id === establishment?.id ? 'green.500' : cardBg}
+                                h={cardHeight}
+                                w={cardWidth}
+                                minW={cardWidth}
+                                maxW={cardWidth}
+                                flexShrink={0}
+                                className={`trazo-card establishment-card ${
+                                  prop.id === establishment?.id ? 'selected' : ''
+                                }`}
+                                _hover={{
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: 'lg',
+                                  transition: 'all 0.2s'
+                                }}>
+                                <Flex align="center" gap={4} h="full" px={2}>
+                                  <Box
+                                    bg={prop.id === establishment?.id ? 'white' : 'green.500'}
+                                    p={{ base: 3, md: 2 }}
+                                    borderRadius="lg"
+                                    flexShrink={0}>
+                                    <HomeIcon
+                                      h={{ base: '28px', md: '24px' }}
+                                      w={{ base: '28px', md: '24px' }}
+                                      color={prop.id === establishment?.id ? 'green.500' : 'white'}
+                                    />
+                                  </Box>
+                                  <Box flex="1" overflow="hidden">
+                                    <Text
+                                      fontWeight="bold"
+                                      fontSize={{ base: 'lg', md: 'md' }}
+                                      color={prop.id === establishment?.id ? 'white' : textColor}
+                                      noOfLines={2}
+                                      lineHeight="1.3"
+                                      title={prop.name}>
+                                      {prop.name}
+                                    </Text>
+                                    <Text
+                                      fontSize={{ base: 'md', md: 'sm' }}
+                                      color={
+                                        prop.id === establishment?.id ? 'green.100' : 'gray.500'
+                                      }
+                                      noOfLines={1}
+                                      mt={1}
+                                      title={`${prop.city || prop.zone || ''}, ${prop.state}`}>
+                                      {`${prop.city || prop.zone || ''}, ${prop.state}`}
+                                    </Text>
+                                  </Box>
+                                </Flex>
+                              </Card>
+                            </NavLink>
+                          ))}
+                          {canCreateEstablishment && (
+                            <Button
+                              p="0px"
+                              w="100px"
+                              h={cardHeight}
+                              minW="100px"
+                              flexShrink={0}
+                              bg="transparent"
+                              color="green.500"
+                              borderRadius="xl"
+                              border="2px dashed"
+                              borderColor="gray.200"
+                              _hover={{
+                                bg: 'green.50',
+                                borderColor: 'green.500',
+                                transform: 'translateY(-2px)',
+                                boxShadow: 'lg'
+                              }}
+                              onClick={toggleAddEstablishment}>
+                              <Flex direction="column" align="center" justify="center" gap={1}>
+                                <Icon as={FaPlus} color="green.500" fontSize="20px" />
+                                <Text fontSize="xs" fontWeight="medium" color="green.600">
+                                  New
+                                </Text>
+                              </Flex>
+                            </Button>
+                          )}
+                        </>
+                      ) : null}
+                    </HStack>
+                  </Box>
+
+                  {/* Dynamic progress line indicator - only show when content is actually scrollable */}
+                  {isEstablishmentsScrollable && (
+                    <Box w="100%" h="3px" bg="gray.200" borderRadius="full" position="relative">
+                      <Box
+                        h="full"
+                        bg="green.500"
+                        borderRadius="full"
+                        w={`${scrollProgress * 100}%`}
+                        position="absolute"
+                        left="0"
+                        top="0"
+                        transition="width 0.2s ease"
+                      />
+                    </Box>
                   )}
-                </>
+                </VStack>
               ) : (
-                <Card minH="115px" bg={cardBg} />
+                /* Desktop: Grid Layout */
+                <Grid
+                  templateColumns={{
+                    md: 'repeat(auto-fill, minmax(240px, 1fr))'
+                  }}
+                  gap={4}>
+                  {establishments ? (
+                    <>
+                      {establishments.map((prop) => (
+                        <NavLink
+                          key={prop.id}
+                          to={`/admin/dashboard/establishment/${prop.id}`}
+                          style={{ textDecoration: 'none' }}>
+                          <Card
+                            p={4}
+                            cursor="pointer"
+                            bg={prop.id === establishment?.id ? 'green.500' : cardBg}
+                            h="90px"
+                            minH="90px"
+                            maxH="90px"
+                            className={`trazo-card establishment-card ${
+                              prop.id === establishment?.id ? 'selected' : ''
+                            }`}
+                            _hover={{
+                              transform: 'translateY(-2px)',
+                              boxShadow: 'lg',
+                              transition: 'all 0.2s'
+                            }}>
+                            <Flex align="center" gap={3} h="full">
+                              <Box
+                                bg={prop.id === establishment?.id ? 'white' : 'green.500'}
+                                p={2}
+                                borderRadius="md"
+                                flexShrink={0}>
+                                <HomeIcon
+                                  h="24px"
+                                  w="24px"
+                                  color={prop.id === establishment?.id ? 'green.500' : 'white'}
+                                />
+                              </Box>
+                              <Box flex="1" overflow="hidden">
+                                <Text
+                                  fontWeight="bold"
+                                  fontSize="md"
+                                  color={prop.id === establishment?.id ? 'white' : textColor}
+                                  noOfLines={1}
+                                  title={prop.name}>
+                                  {prop.name}
+                                </Text>
+                                <Text
+                                  fontSize="sm"
+                                  color={prop.id === establishment?.id ? 'green.100' : 'gray.500'}
+                                  noOfLines={1}
+                                  title={`${prop.city || prop.zone || ''}, ${prop.state}`}>
+                                  {`${prop.city || prop.zone || ''}, ${prop.state}`}
+                                </Text>
+                              </Box>
+                            </Flex>
+                          </Card>
+                        </NavLink>
+                      ))}
+                      {canCreateEstablishment && (
+                        <Button
+                          p="0px"
+                          w="77px"
+                          h="90px"
+                          bg="transparent"
+                          color="green.500"
+                          borderRadius="xl"
+                          border="2px dashed"
+                          borderColor="gray.200"
+                          _hover={{
+                            bg: 'green.50',
+                            borderColor: 'green.500',
+                            transform: 'translateY(-2px)',
+                            boxShadow: 'lg'
+                          }}
+                          onClick={toggleAddEstablishment}>
+                          <Flex direction="column" align="center" justify="center" gap={1}>
+                            <Icon as={FaPlus} color="green.500" fontSize="20px" />
+                            <Text fontSize="xs" fontWeight="medium" color="green.600">
+                              {intl.formatMessage({ id: 'app.new' }) || 'New'}
+                            </Text>
+                          </Flex>
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <Text color="gray.500" fontSize="sm" textAlign="center" py={8}>
+                      {intl.formatMessage({ id: 'app.noEstablishments' }) ||
+                        'No establishments found. Create your first establishment to get started.'}
+                    </Text>
+                  )}
+                </Grid>
               )}
-            </Grid>
+            </VStack>
           </Box>
         </Flex>
       </Box>
 
       <Grid
-        templateColumns={{ md: '1fr', lg: '1.8fr 1.2fr' }}
-        templateRows={{ md: '1fr auto', lg: '1fr' }}
-        my="26px"
-        gap="24px">
+        templateColumns={{ base: '1fr', md: '1fr', lg: '1.8fr 1.2fr' }}
+        templateRows={{ base: 'auto', md: '1fr auto', lg: '1fr' }}
+        my={{ base: 6, md: 6 }}
+        gap={{ base: 4, md: 6 }}>
         {establishment ? (
           <CardWithImage
             title={intl.formatMessage({ id: 'app.establishmentProfile' })}
@@ -482,7 +672,7 @@ export default function DashboardView() {
       </Grid>
       {/* Carbon Summary Card for selected establishment */}
       {establishment?.id && (
-        <Box flex="1" width="100%" pb="24px" overflow="hidden">
+        <Box flex="1" width="100%" pb={{ base: '16px', md: '24px' }} overflow="hidden">
           <CarbonSummaryCard establishmentId={establishment.id} />
         </Box>
       )}
@@ -491,9 +681,6 @@ export default function DashboardView() {
         description={intl.formatMessage({ id: 'app.establishmentParcels' })}
         data={establishment?.parcels}
       />
-      
-      {/* DEBUG: Batch Testing Component - REMOVED FOR PRODUCTION */}
-      {/* <BatchTestComponent /> */}
     </Flex>
   );
 }

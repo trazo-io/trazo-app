@@ -46,6 +46,15 @@ const baseQuery = fetchBaseQuery({
       console.log('🔒 CSRF: Available cookie names:', document.cookie.split(';').map(c => c.trim().split('=')[0]));
     }
 
+    // Add consent header for cross-origin scenarios where cookies might not work
+    const analyticsConsent = localStorage.getItem('trazo-analytics-consent');
+    if (analyticsConsent === 'true') {
+      headers.set('X-Analytics-Consent', 'true');
+      console.log('🔒 CONSENT: Added analytics consent header from localStorage');
+    } else {
+      console.log('🔒 CONSENT: No analytics consent found in localStorage');
+    }
+
     return headers;
   }
 });

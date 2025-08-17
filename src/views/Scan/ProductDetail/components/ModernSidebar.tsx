@@ -82,56 +82,6 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
         </Card>
       )}
 
-      {/* Quick Actions for Non-Authenticated Users */}
-      {!isAuthenticated && (
-        <Card bg={cardBg} shadow="lg" borderRadius="xl">
-          <CardHeader>
-            <HStack spacing={3}>
-              <Circle size="40px" bg="green.100">
-                <Icon as={FaGift} color="green.600" />
-              </Circle>
-              <VStack align="start" spacing={0}>
-                <Heading size="sm" color={textColor}>
-                  Join Trazo Community
-                </Heading>
-                <Text fontSize="xs" color={mutedColor}>
-                  Unlock rewards and detailed reviews
-                </Text>
-              </VStack>
-            </HStack>
-          </CardHeader>
-          <CardBody pt={0}>
-            <VStack spacing={3} align="stretch">
-              <Text fontSize="sm" color={mutedColor}>
-                Create an account to:
-              </Text>
-
-              <VStack spacing={2} align="stretch" fontSize="sm">
-                <HStack>
-                  <Icon as={FaStar} color="yellow.500" boxSize={3} />
-                  <Text>Leave detailed reviews</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCoins} color="green.500" boxSize={3} />
-                  <Text>Earn green points</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaAward} color="blue.500" boxSize={3} />
-                  <Text>Unlock achievements</Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaHeart} color="red.500" boxSize={3} />
-                  <Text>Save favorite products</Text>
-                </HStack>
-              </VStack>
-
-              <Button colorScheme="green" size="sm" onClick={onAuthPrompt} borderRadius="full">
-                Sign Up Free
-              </Button>
-            </VStack>
-          </CardBody>
-        </Card>
-      )}
     </VStack>
   );
 };

@@ -190,8 +190,22 @@ export const S3Image: React.FC<S3ImageProps> = ({
     onError?.();
   }, [retryCount, needsPresignedUrl, src, getPresignedUrl, onError]);
 
-  // Loading state
-  if (!isInView || (isLoading && !presignedData)) {
+  // Loading state - only show loading for URLs that actually need presigning
+  const needsPresigning = src ? needsPresignedUrl(src) : false;
+  const shouldShowLoading = !isInView || (needsPresigning && isLoading && !presignedData && !presignedUrl);
+
+  // Debug loading state
+  console.log('🔍 [S3Image] Loading state check:', {
+    src,
+    isInView,
+    isLoading,
+    presignedData: !!presignedData,
+    presignedUrl: !!presignedUrl,
+    needsPresigning,
+    shouldShowLoading
+  });
+  
+  if (shouldShowLoading) {
     return (
       <Box
         ref={containerRef}

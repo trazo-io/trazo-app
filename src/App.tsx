@@ -32,8 +32,6 @@ import ParcelView from 'views/Dashboard/Parcel';
 import Pricing from 'views/Pages/Pricing/index';
 import PrivacyPolicy from 'views/Legal/PrivacyPolicy';
 import ProductDetail from 'views/Scan/ProductDetail/ProductDetail';
-//@ts-ignore
-import ProductReview from 'views/Scan/ProductReview/ProductReview';
 import ProfileEstablishment from 'views/Dashboard/Dashboard/Establishment/ProfileEstablishment';
 //@ts-ignore
 import ProfileParcel from 'views/Dashboard/Dashboard/Parcel/ProfileParcel';
@@ -42,6 +40,7 @@ import ProfileUser from 'views/Dashboard/Dashboard/User/ProfileUser';
 import React from 'react';
 //@ts-ignore
 import SelectCompanyView from 'views/Dashboard/Dashboard/Company/AddCompany';
+import ModernProductReview from 'views/Scan/ProductReview/ModernProductReview';
 import SettingsView from 'views/Dashboard/Settings';
 import TermsOfService from 'views/Legal/TermsOfService';
 import SignIn from 'views/Authentication/SignIn/SignInIllustration';
@@ -90,6 +89,7 @@ import SetupPassword from 'views/Authentication/Invitation/SetupPassword';
 import { ErrorBoundary } from 'react-error-boundary';
 import ChangePassword from 'views/Settings/ChangePassword';
 import ConsumerChangePassword from 'views/Consumer/Settings/ConsumerChangePassword';
+import RedirectGuard from './utils/RedirectGuard';
 
 // Error fallback component
 const ErrorFallback = ({
@@ -391,7 +391,7 @@ const App = () => {
                 />
               </Route>
               <Route element={<Authenticated allowedRoles={config.protected.roles} />}>
-                <Route path={config.protected.path} element={<AdminConsumerLayout />}>
+                <Route path={config.protected.path} element={<RedirectGuard><AdminConsumerLayout /></RedirectGuard>}>
                   {/* Consumer routes */}
                   <Route index element={<Navigate to="impact" replace />} />
                   <Route path="impact" element={<ImpactDashboard />} />
@@ -405,7 +405,7 @@ const App = () => {
                   <Route path="settings" element={<ConsumerChangePassword />} />
                   <Route
                     path="production/:productionId/review/:scanId"
-                    element={<ProductReview />}
+                    element={<ModernProductReview />}
                   />
                 </Route>
               </Route>

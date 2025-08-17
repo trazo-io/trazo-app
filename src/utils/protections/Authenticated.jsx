@@ -54,23 +54,48 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       subdomain
     );
     if (isAuthenticated && currentUser && subdomain) {
-      // Check if there's a pending auth redirect action first
+      // Skip ALL redirect logic if RedirectGuard might be handling it
+      // This is a critical fix to prevent interference with auth redirects
       const pendingAction = getAuthRedirectAction();
-      if (pendingAction) {
+      const hasJustAuthenticated = sessionStorage.getItem('just_authenticated') === 'true';
+      
+      if (pendingAction || hasJustAuthenticated) {
         console.log(
-          '🔒 Authenticated.jsx: Pending auth redirect action found, skipping subdomain redirect'
+          '🔒 Authenticated.jsx: Skipping redirect logic - pending action or just authenticated'
         );
+        // Clear the flag after a delay
+        if (hasJustAuthenticated) {
+          setTimeout(() => {
+            sessionStorage.removeItem('just_authenticated');
+          }, 2000);
+        }
         return;
       }
 
-      const isConsumerUser = currentUser.user_type === CONSUMER;
+      // Also check if we're on a consumer subdomain and the user just logged in with a review redirect
+      // This prevents interference with executeAuthRedirectAction from ConsumerSignIn
+      if (subdomain === 'consumer' && window.location.pathname.includes('/admin/dashboard/production/')) {
+        console.log('🔒 Authenticated.jsx: Already on review page, skipping redirect logic');
+        return;
+      }
+
+      // For routing purposes, treat anyone on consumer subdomain as a consumer
+      // This allows producer accounts to access consumer features
+      const isConsumerUser = currentUser.user_type === CONSUMER || subdomain === 'consumer';
       const params = new URLSearchParams(window.location.search);
 
+      console.log('🔒 Authenticated.jsx: Debug user type check:', {
+        'currentUser.user_type': currentUser.user_type,
+        'CONSUMER constant': CONSUMER,
+        'subdomain': subdomain,
+        'isConsumerUser (after subdomain logic)': isConsumerUser
+      });
+
       // SECURITY: Validate next parameter to prevent open redirect attacks
-      const defaultPath = isConsumerUser ? '/consumer/dashboard' : '/admin/dashboard/scans';
+      const defaultPath = isConsumerUser ? '/admin/dashboard/impact' : '/admin/dashboard/scans';
       const nextParam = params.get('next');
       const intendedPath = validateRedirectUrl(nextParam) || defaultPath;
-      console.log('🔒 Authenticated.jsx: intendedPath calculated (validated):', intendedPath);
+      console.log('🔒 Authenticated.jsx: intendedPath calculated (validated):', intendedPath, 'defaultPath was:', defaultPath);
 
       if (isConsumerUser && subdomain === 'producer') {
         console.log('🔒 Authenticated.jsx: Redirecting consumer from producer subdomain');

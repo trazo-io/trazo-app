@@ -83,6 +83,7 @@ import USDACredibilityBadge from '../../../components/Carbon/USDACredibilityBadg
 import { CarbonScore } from '../../../components/CarbonScore';
 import { StandardImageGallery } from '../../../components/ImageGallery';
 import { EnhancedTrustIndicators, TrustData } from '../../../components/Trust';
+import QuickFeedback from '../../../components/ConsumerFeedback/QuickFeedback';
 
 // Educational modal content
 const EducationModal = ({
@@ -700,29 +701,100 @@ function ProductDetail() {
     onEducationOpen();
   };
 
-  // Create scan when page loads (useEffect)
+  // Create scan when page loads (only with consent)
   useEffect(() => {
-    if (productionId && !scanCreated && !isCompleteLoading) {
-      console.log('🔍 Creating scan for production:', productionId);
+    // Add small delay to allow consent banner to appear first
+    const timer = setTimeout(() => {
+      if (productionId && !scanCreated && !isCompleteLoading) {
+      // Import consent check function
+      const checkConsent = () => {
+        const storedConsent = localStorage.getItem('trazo-analytics-consent');
+        const cookieConsent = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('trazo-analytics-consent='))
+          ?.split('=')[1];
+        
+        return storedConsent === 'true' || cookieConsent === 'true';
+      };
 
-      // Create the scan
-      createScan({
-        production_id: productionId,
-        city: null, // Could be enhanced with geolocation
-        country: null
-      })
-        .unwrap()
-        .then((result) => {
-          console.log('✅ Scan created successfully:', result);
-          setScanCreated(true);
+      const hasConsent = checkConsent();
+      
+      if (hasConsent) {
+        console.log('🔍 Creating scan for production (with consent):', productionId);
+
+        // Create the scan
+        createScan({
+          production_id: productionId,
+          city: null, // Could be enhanced with geolocation
+          country: null
         })
-        .catch((error) => {
-          console.error('❌ Failed to create scan:', error);
-          // Still mark as attempted to avoid retry loops
-          setScanCreated(true);
-        });
-    }
+          .unwrap()
+          .then((result) => {
+            console.log('✅ Scan created successfully:', result);
+            setScanCreated(true);
+          })
+          .catch((error) => {
+            console.error('❌ Failed to create scan:', error);
+            // Still mark as attempted to avoid retry loops
+            setScanCreated(true);
+          });
+      } else {
+        console.log('ℹ️ Skipping scan creation - no analytics consent');
+        // Don't create scan but mark as processed to avoid infinite retries
+        setScanCreated(true);
+      }
+      }
+    }, 500); // 500ms delay to allow consent banner to show
+
+    return () => clearTimeout(timer);
   }, [productionId, scanCreated, isCompleteLoading, createScan]);
+
+  // Listen for consent changes and create scan when consent is given
+  useEffect(() => {
+    const handleConsentChange = () => {
+      const checkConsent = () => {
+        const storedConsent = localStorage.getItem('trazo-analytics-consent');
+        const cookieConsent = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('trazo-analytics-consent='))
+          ?.split('=')[1];
+        
+        return storedConsent === 'true' || cookieConsent === 'true';
+      };
+
+      const hasConsent = checkConsent();
+      
+      if (hasConsent && productionId && !scanCreated) {
+        console.log('🔍 Creating scan after consent granted:', productionId);
+
+        createScan({
+          production_id: productionId,
+          city: null,
+          country: null
+        })
+          .unwrap()
+          .then((result) => {
+            console.log('✅ Scan created after consent:', result);
+            setScanCreated(true);
+          })
+          .catch((error) => {
+            console.error('❌ Failed to create scan after consent:', error);
+            setScanCreated(true);
+          });
+      }
+    };
+
+    // Listen for storage changes (when consent is given)
+    window.addEventListener('storage', handleConsentChange);
+    
+    // Also listen for custom consent events
+    window.addEventListener('trazo-consent-changed', handleConsentChange);
+
+    return () => {
+      window.removeEventListener('storage', handleConsentChange);
+      window.removeEventListener('trazo-consent-changed', handleConsentChange);
+    };
+  }, [productionId, scanCreated, createScan]);
 
   const handleShare = async () => {
     try {
@@ -1538,6 +1610,14 @@ function ProductDetail() {
                     location: (completeData as any)?.farmer?.location || 'Location not specified',
                     photo: (completeData as any)?.farmer?.photo
                   }
+                }}
+              />
+
+              {/* Consumer Feedback Section */}
+              <QuickFeedback
+                productionId={productionId || ''}
+                onFeedbackSubmitted={() => {
+                  console.log('✅ Consumer feedback submitted for production:', productionId);
                 }}
               />
 

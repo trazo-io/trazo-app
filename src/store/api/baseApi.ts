@@ -48,6 +48,7 @@ export const baseApi = createApi({
     'ConsumerAnalytics',
     'Notification',
     'NotificationCount',
+    'Search',
     'NotificationPreferences',
     'Media',
     'PresignedUrl'

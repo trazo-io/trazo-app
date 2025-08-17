@@ -32,6 +32,7 @@ import AuthNavbar from 'components/Navbars/AuthNavbar';
 import React from 'react';
 import { Route as RouteType } from 'types/common';
 import theme from 'theme/theme';
+import { ConsentBanner } from '../components/Privacy/ConsentBanner';
 
 export default function Pages() {
   // ref for the wrapper div
@@ -121,6 +122,8 @@ export default function Pages() {
           <Outlet />
         </Box>
       </Box>
+      {/* Privacy consent banner for GDPR compliance */}
+      <ConsentBanner />
     </Box>
     //   </ChakraProvider>
     // </CacheProvider>

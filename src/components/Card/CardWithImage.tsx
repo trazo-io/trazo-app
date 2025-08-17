@@ -54,14 +54,64 @@ const CardWithImage = ({
   return (
     <Card 
       maxHeight={'290.5px'}
-      height={{ sm: '290.5px', lg: '290.5px' }} 
+      height={{ sm: '290.5px', md: '290.5px', lg: '290.5px', xl: '290.5px' }} 
       p="0"
       overflow="hidden"
       className="trazo-card"
       {...rest}
     >
-      <Flex direction="row" h="100%" w="100%">
-        <Flex direction="column" p="16px" width={{ base: '100%', lg: '45%' }}>
+      {/* Mobile: Clean text-only layout */}
+      <Flex display={{ base: 'flex', xl: 'none' }} direction="column" h="100%" w="100%">
+        <Flex direction="column" p="16px" flex="1">
+          {/* Header section with title and subtitle */}
+          <Box mb={4}>
+            <Text fontSize="lg" color={textColor} fontWeight="bold" mb={1}>
+              {title}
+            </Text>
+            <Text fontSize="sm" color="gray.500" fontWeight="400">
+              {name}
+            </Text>
+          </Box>
+          
+          <Spacer />
+          
+          {/* Action button */}
+          <Flex align="center">
+            <Button
+              p="0px"
+              variant="no-hover"
+              bg="transparent"
+              onClick={() => navigate(readMoreLink)}
+            >
+              <Text
+                fontSize="sm"
+                color={textColor}
+                fontWeight="bold"
+                cursor="pointer"
+                transition="all .5s ease"
+                _hover={{ me: '4px' }}
+              >
+                {intl.formatMessage({ id: 'app.readMore' })}
+              </Text>
+              <Icon
+                as={BsArrowRight}
+                w="20px"
+                h="20px"
+                fontSize="2xl"
+                transition="all .5s ease"
+                mx=".3rem"
+                cursor="pointer"
+                pt="4px"
+                _hover={{ transform: 'translateX(20%)' }}
+              />
+            </Button>
+          </Flex>
+        </Flex>
+      </Flex>
+
+      {/* Desktop: Original side-by-side layout */}
+      <Flex display={{ base: 'none', xl: 'flex' }} direction="row" h="100%" w="100%">
+        <Flex direction="column" p="16px" width="45%">
           <Box mb={4}>
             <Text fontSize="lg" color={textColor} fontWeight="bold">
               {title}
@@ -76,7 +126,6 @@ const CardWithImage = ({
                 p="0px"
                 variant="no-hover"
                 bg="transparent"
-                my={{ sm: '1.5rem', lg: '0px' }}
                 onClick={() => navigate(readMoreLink)}
               >
                 <Text
@@ -85,7 +134,6 @@ const CardWithImage = ({
                   fontWeight="bold"
                   cursor="pointer"
                   transition="all .5s ease"
-                  my={{ sm: '1.5rem', lg: '0px' }}
                   _hover={{ me: '4px' }}
                 >
                   {intl.formatMessage({ id: 'app.readMore' })}
@@ -106,7 +154,7 @@ const CardWithImage = ({
         </Flex>
         <Box
           position="relative"
-          width={{ base: '0', lg: '55%' }}
+          width="55%"
           height="100%"
           overflow="hidden"
         >

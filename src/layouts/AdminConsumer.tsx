@@ -99,9 +99,9 @@ export default function AdminConsumerLayout(props: any) {
           base: '100%',
           xl: `calc(100% - ${sidebarWidth}px)`
         }}>
-        {/* <Portal>
+        <Portal>
           <AdminNavbar onOpen={onOpen} brandText={getActiveRoute(consumerRoutes)} fixed={fixed} />
-        </Portal> */}
+        </Portal>
 
         <PanelContent>
           <PanelContainer>

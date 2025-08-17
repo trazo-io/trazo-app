@@ -194,8 +194,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
       w={{
         sm: 'calc(100vw - 30px)',
         xl: `calc(100vw - 75px - ${sidebarWidth}px)`
-      }}
-    >
+      }}>
       <Flex
         w="100%"
         h="100%"
@@ -203,28 +202,24 @@ export default function AdminNavbar(props: AdminNavbarProps) {
           sm: 'column-reverse',
           md: 'row'
         }}
-        alignItems={{ xl: 'center' }}
-      >
-        <Box 
-          mb={{ sm: '8px', md: '0px' }} 
-          h="100%" 
+        alignItems={{ xl: 'center' }}>
+        <Box
+          mb={{ sm: '8px', md: '0px' }}
+          h="100%"
           pt={{ sm: '16px', md: '0px' }}
           overflow="hidden"
           maxW={{ base: '100%', md: 'auto' }}>
-          <Breadcrumb 
+          <Breadcrumb
             fontSize={{ base: 'sm', md: 'md' }}
             spacing={{ base: '4px', md: '8px' }}
             separator={
-              <Box 
-                color={secondaryText} 
-                fontSize={{ base: 'xs', md: 'sm' }}
-                px={1}>
+              <Box color={secondaryText} fontSize={{ base: 'xs', md: 'sm' }} px={1}>
                 /
               </Box>
             }>
             <BreadcrumbItem color={mainText}>
-              <BreadcrumbLink 
-                href="/admin/dashboard/" 
+              <BreadcrumbLink
+                href="/admin/dashboard/"
                 color={secondaryText}
                 fontSize={{ base: 'sm', md: 'md' }}
                 _hover={{ color: mainText, textDecoration: 'none' }}>
@@ -240,7 +235,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="500"
                   noOfLines={1}
-                  maxW={{ base: '150px', sm: '200px', md: 'auto' }}
+                  maxW={{ base: '150px', sm: '100%', md: 'auto' }}
                   title={currentEstablishment.name}
                   _hover={{ color: 'green.600', textDecoration: 'none' }}>
                   {currentEstablishment.name}
@@ -250,7 +245,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
 
             {currentParcel && (
               <BreadcrumbItem color={mainText}>
-                <BreadcrumbLink 
+                <BreadcrumbLink
                   color={mainText}
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="500"
@@ -266,8 +261,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
         <Box
           ms="auto"
           w={{ sm: '100%', md: 'unset' }}
-          justifyContent={{ sm: 'flex-end', md: 'flex-start' }}
-        >
+          justifyContent={{ sm: 'flex-end', md: 'flex-start' }}>
           <AdminNavbarLinks
             onOpen={props.onOpen}
             logoText={props.logoText}
