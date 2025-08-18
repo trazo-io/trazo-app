@@ -167,18 +167,20 @@ export default function HeaderLinks(props: HeaderLinksProps) {
       flexShrink={0}
       minW={0}>
       
-      {/* Search Component - Only on larger screens when home */}
-      {subdomain === 'producer' && isHome && !isMobile && (
+      {/* Search Component - Show on all screen sizes when home */}
+      {subdomain === 'producer' && isHome && (
         <Flex
           alignItems="center"
           w="auto"
+          flex="1"
           maxW={{ 
+            base: 'none',
             sm: '180px', 
             md: '220px', 
             lg: '260px', 
             xl: '300px' 
           }}
-          mr={{ sm: 2, md: 3 }}
+          mr={{ base: 1, sm: 2, md: 3 }}
           flexShrink={1}
           minW={0}>
           <TrazoGlobalSearch

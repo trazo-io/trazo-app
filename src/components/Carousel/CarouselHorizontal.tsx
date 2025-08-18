@@ -264,7 +264,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                       }
                       buttonText={intl.formatMessage({ id: 'app.viewParcel' }).toUpperCase()}
                       avatars={parcel.members?.map((member: any) => member.image).filter(Boolean) || []}
-                      presignedUrl={presignedUrls[parcel.image]}
+                      presignedUrl={parcel.image ? presignedUrls[parcel.image] : undefined}
                     />
                   </Box>
                 ))}

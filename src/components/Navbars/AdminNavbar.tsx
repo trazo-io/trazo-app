@@ -250,14 +250,18 @@ export default function AdminNavbar(props: AdminNavbarProps) {
           />
         </Flex>
 
-        {/* Breadcrumb Container - Mobile Below Buttons */}
+        {/* Breadcrumb Container - Simple & Reliable */}
         <Flex
           align="center"
           flex={{ base: 'none', smd: '1' }}
           minW="0"
           w={{ base: '100%', smd: 'auto' }}
           order={{ base: 2, smd: 1 }}
-          justify={{ base: 'flex-start', smd: 'flex-start' }}>
+          justify={{ base: 'flex-start', smd: 'flex-start' }}
+          // Simple approach: Reserve fixed space for buttons
+          pr={{ base: '160px', sm: '180px', md: '200px', lg: '0px' }}
+          overflow="hidden">
+          
           <Breadcrumb
             fontSize={{ base: 'sm', md: 'md' }}
             spacing={{ base: '4px', sm: '6px', md: '8px' }}
@@ -281,23 +285,22 @@ export default function AdminNavbar(props: AdminNavbarProps) {
               </BreadcrumbLink>
             </BreadcrumbItem>
 
-            {/* Establishment - Smart responsive truncation */}
+            {/* Establishment - Smart space allocation based on context */}
             {currentEstablishment && (
               <BreadcrumbItem color={mainText}>
                 <BreadcrumbLink
                   onClick={parcelId ? handleEstablishmentClick : undefined}
-                  color={!parcelId ? 'green.600' : mainText} // 🎯 Active state when on establishment page
+                  color={!parcelId ? 'green.600' : mainText}
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="500"
-                  noOfLines={1}
                   title={currentEstablishment.name}
-                  maxW={{
-                    base: currentParcel ? 'clamp(120px, 40vw, 250px)' : 'clamp(200px, 70vw, 350px)',
-                    sm: currentParcel ? 'clamp(140px, 45vw, 280px)' : 'clamp(220px, 65vw, 400px)',
-                    smd: currentParcel ? 'clamp(160px, 40vw, 300px)' : 'clamp(250px, 60vw, 450px)',
-                    md: currentParcel ? 'clamp(180px, 35vw, 320px)' : 'clamp(280px, 55vw, 500px)',
-                    lg: 'none'
-                  }}
+                  // Smart allocation: More space when alone, conservative when sharing with parcel
+                  isTruncated
+                  maxW={
+                    currentParcel 
+                      ? { base: '120px', sm: '160px', smd: '200px', md: '220px', lg: '300px' }  // Sharing space
+                      : { base: '180px', sm: '250px', smd: '320px', md: '400px', lg: '500px' }  // Taking full space
+                  }
                   _hover={parcelId ? { 
                     color: 'green.600', 
                     textDecoration: 'none', 
@@ -312,23 +315,18 @@ export default function AdminNavbar(props: AdminNavbarProps) {
               </BreadcrumbItem>
             )}
 
-            {/* Parcel - Smart responsive truncation */}
+            {/* Parcel - Simple truncation */}
             {currentParcel && (
               <BreadcrumbItem color={mainText}>
                 <BreadcrumbLink
-                  color="green.600" // 🎯 Always active (current page) when parcel is shown
+                  color="green.600"
                   fontSize={{ base: 'sm', md: 'md' }}
-                  fontWeight="600" // Slightly bolder for current page emphasis
-                  noOfLines={1}
+                  fontWeight="600"
                   title={currentParcel.name}
-                  maxW={{
-                    base: 'clamp(100px, 35vw, 200px)',
-                    sm: 'clamp(120px, 40vw, 240px)', 
-                    smd: 'clamp(140px, 35vw, 280px)',
-                    md: 'clamp(160px, 30vw, 320px)',
-                    lg: 'none'
-                  }}
-                  cursor="default"> {/* Not clickable - current page */}
+                  // Optimized breakpoints for better space utilization
+                  isTruncated
+                  maxW={{ base: '100px', sm: '140px', smd: '180px', md: '200px', lg: '250px' }}
+                  cursor="default">
                   {currentParcel.name}
                 </BreadcrumbLink>
               </BreadcrumbItem>

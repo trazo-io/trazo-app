@@ -48,7 +48,7 @@ import {
 import ActiveUsers from './components/ActiveUsers';
 import BarChart from 'components/Charts/BarChart';
 import Card from 'components/Card/Card';
-import CardWithBackground from './components/CardWithBackground';
+import SmartUsageCard from './components/SmartUsageCard';
 import CardWithImage from 'components/Card/CardWithImage';
 import CarouselHorizontal from 'components/Carousel/CarouselHorizontal';
 import { FaPlus, FaLeaf, FaWifi } from 'react-icons/fa';
@@ -661,10 +661,16 @@ export default function DashboardView() {
         )}
 
         {establishment ? (
-          <CardWithBackground
-            backgroundImage={imageFarm}
-            title={intl.formatMessage({ id: 'app.certifications' })}
-            description={intl.formatMessage({ id: 'app.certifications_description' })}
+          <SmartUsageCard
+            // Required props for backend API call
+            companyId={activeCompany?.id}
+            establishmentId={establishment.id}
+            
+            // Smart action handlers
+            onViewAnalytics={() => navigate(`/admin/dashboard/establishment/${establishment.id}/commercial`)}
+            onUpgradeSubscription={() => navigate('/admin/dashboard/pricing')}
+            onOptimizeCarbon={() => navigate(`/admin/dashboard/establishment/${establishment.id}/productions`)}
+            onShareTransparency={() => navigate(`/admin/dashboard/establishment/${establishment.id}/commercial`)}
           />
         ) : (
           <Card minH="290px" bg={cardBg} />

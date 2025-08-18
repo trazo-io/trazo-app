@@ -48,7 +48,7 @@ interface TrazoGlobalSearchProps {
 }
 
 export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
-  placeholder = "Search establishments, parcels...",
+  placeholder = "Search",
   size = 'md'
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -198,8 +198,9 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
       {/* Search Input Trigger - Mobile Enhanced */}
       <Box 
         position="relative" 
-        width={{ base: 'full', sm: 'full', md: 'full', lg: 'full', xl: '320px' }}
-        maxW={{ base: '160px', sm: '200px', md: '240px', lg: '300px', xl: '320px' }}>
+        width={{ base: '100%', sm: '100%', md: '100%', lg: '100%', xl: '320px' }}
+        flex="1"
+        maxW={{ base: 'none', sm: 'none', md: 'none', lg: 'none', xl: '320px' }}>
         <InputGroup>
           <InputLeftElement
             pointerEvents="none"
@@ -209,7 +210,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
           />
           <StandardInput
             ref={inputRef}
-            placeholder={placeholder}
+            placeholder="Search"
             value=""
             onFocus={handleInputFocus}
             onClick={handleInputFocus}
@@ -217,32 +218,37 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
             cursor="pointer"
             bg={bgColor}
             borderColor={borderColor}
-            _hover={{ borderColor: hoverBorderColor }}
-            _focus={{ borderColor: focusBorderColor }}
+            _hover={{ 
+              borderColor: hoverBorderColor,
+              boxShadow: '0 0 0 1px ' + hoverBorderColor
+            }}
+            _focus={{ 
+              borderColor: focusBorderColor,
+              boxShadow: '0 0 0 2px rgba(72, 187, 120, 0.2)'
+            }}
             h={{ base: '40px', md: '44px' }}
             fontSize={{ base: 'sm', md: 'sm' }}
             borderRadius={{ base: 'lg', md: 'xl' }}
             pl={{ base: '40px', md: '44px' }}
-            pr={{ base: '12px', md: '60px' }}
+            pr={{ base: '12px', md: '80px' }}
             w="full"
+            transition="all 0.2s ease"
           />
-          {/* Keyboard shortcut hint - Desktop only */}
-          <Box
+          {/* Subtle keyboard shortcut hint - Desktop only */}
+          <Text
             position="absolute"
             right="12px"
             top="50%"
             transform="translateY(-50%)"
             pointerEvents="none"
             display={{ base: 'none', xl: 'block' }}
+            fontSize="xs"
+            color="gray.400"
+            fontFamily="mono"
+            letterSpacing="0.5px"
           >
-            <HStack spacing={1}>
-              <Kbd fontSize="xs" bg="gray.100" color="gray.600">
-                {navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}
-              </Kbd>
-              <Text fontSize="xs" color="gray.600">+</Text>
-              <Kbd fontSize="xs" bg="gray.100" color="gray.600">K</Kbd>
-            </HStack>
-          </Box>
+            {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
+          </Text>
         </InputGroup>
       </Box>
 
@@ -296,7 +302,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
                   />
                   <StandardInput
                     ref={modalInputRef}
-                    placeholder={placeholder}
+                    placeholder="Search establishments, parcels..."
                     value={query}
                     onChange={(e) => {
                       setQuery(e.target.value);
@@ -307,6 +313,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
                     fontWeight="medium"
                     pl="44px"
                     _focus={{ boxShadow: 'none' }}
+                    _placeholder={{ color: 'gray.400' }}
                   />
                 </InputGroup>
                 <IconButton

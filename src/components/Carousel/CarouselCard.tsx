@@ -121,6 +121,7 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
               position="relative"
               borderBottom="1px solid"
               borderColor="gray.100"
+              borderTopRadius="20px"
             >
               <Text
                 fontSize="sm"
@@ -144,7 +145,9 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
               lazy={false}
               style={{
                 transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-                transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+                transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                borderTopLeftRadius: '20px',
+                borderTopRightRadius: '20px'
               }}
             />
           )}
