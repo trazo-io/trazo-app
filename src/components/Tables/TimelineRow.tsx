@@ -215,9 +215,9 @@ function TimelineRow(props: TimelineRowProps) {
   const qrVisibility = getQRVisibility(event);
 
   return (
-    <Box position="relative" mb={6} w="100%">
-      {/* Timeline Connector Line - Full Height */}
-      {!isLast && (
+    <Box position="relative" mb={isMobile ? 4 : 6} w="100%">
+      {/* Timeline Connector Line - Hide on mobile for cleaner look */}
+      {!isLast && !isMobile && (
         <Box
           position="absolute"
           left="19px"
@@ -230,24 +230,26 @@ function TimelineRow(props: TimelineRowProps) {
         />
       )}
       
-      <HStack spacing={4} align="flex-start" w="100%">
-        {/* Timeline Icon Column - Enhanced */}
-        <VStack spacing={0} align="center" minW="40px" position="relative" zIndex={1}>
-          <Circle
-            size="40px"
-            bg={useColorModeValue('white', 'gray.800')}
-            borderWidth="3px"
-            borderColor={eventConfig.color}
-            color={eventConfig.color}
-            boxShadow="0 0 0 4px white, 0 0 0 5px #E2E8F0"
-            _hover={{
-              boxShadow: `0 0 0 4px white, 0 0 0 5px ${eventConfig.color}`
-            }}
-            transition="all 0.2s ease"
-          >
-            <Icon as={eventConfig.icon} boxSize={5} />
-          </Circle>
-        </VStack>
+      <HStack spacing={isMobile ? 0 : 4} align="flex-start" w="100%">
+        {/* Timeline Icon Column - Hidden on mobile to save space */}
+        {!isMobile && (
+          <VStack spacing={0} align="center" minW="40px" position="relative" zIndex={1}>
+            <Circle
+              size="40px"
+              bg={useColorModeValue('white', 'gray.800')}
+              borderWidth="3px"
+              borderColor={eventConfig.color}
+              color={eventConfig.color}
+              boxShadow="0 0 0 4px white, 0 0 0 5px #E2E8F0"
+              _hover={{
+                boxShadow: `0 0 0 4px white, 0 0 0 5px ${eventConfig.color}`
+              }}
+              transition="all 0.2s ease"
+            >
+              <Icon as={eventConfig.icon} boxSize={5} />
+            </Circle>
+          </VStack>
+        )}
 
         {/* Event Card - Modern Clean Design */}
         <Card
@@ -269,25 +271,38 @@ function TimelineRow(props: TimelineRowProps) {
           onClick={() => (onEventClick ? onEventClick(event) : navigate(url))}
           className="trazo-card"
         >
-        <CardBody p={4}>
-          <VStack align="stretch" spacing={3}>
+        <CardBody p={isMobile ? 3 : 4}>
+          <VStack align="stretch" spacing={isMobile ? 2 : 3}>
             {/* Header Row - Title and Date */}
             <HStack justify="space-between" align="flex-start">
-              <VStack align="flex-start" spacing={1} flex={1}>
-                <Text fontSize="sm" fontWeight="600" color={textColor} noOfLines={1}>
-                  {title}
-                </Text>
-                <Badge
-                  colorScheme={eventConfig.color.split('.')[0]}
-                  variant="subtle"
-                  fontSize="xs"
-                  borderRadius="full"
-                  px={2}
-                  py={1}
-                >
-                  {eventConfig.category}
-                </Badge>
-              </VStack>
+              <HStack spacing={2} flex={1}>
+                {/* Mobile: Compact icon indicator to replace left emoji */}
+                {isMobile && (
+                  <Circle
+                    size="24px"
+                    bg={eventConfig.color}
+                    color="white"
+                    flexShrink={0}
+                  >
+                    <Icon as={eventConfig.icon} boxSize={3} />
+                  </Circle>
+                )}
+                <VStack align="flex-start" spacing={1} flex={1}>
+                  <Text fontSize="sm" fontWeight="600" color={textColor} noOfLines={1}>
+                    {title}
+                  </Text>
+                  <Badge
+                    colorScheme={eventConfig.color.split('.')[0]}
+                    variant="subtle"
+                    fontSize="xs"
+                    borderRadius="full"
+                    px={2}
+                    py={1}
+                  >
+                    {eventConfig.category}
+                  </Badge>
+                </VStack>
+              </HStack>
               <Text fontSize="xs" color="gray.500" fontWeight="medium" minW="fit-content">
                 {date}
               </Text>
@@ -309,7 +324,7 @@ function TimelineRow(props: TimelineRowProps) {
             </HStack>
 
             {/* Metrics Row - Consistent Layout */}
-            <HStack spacing={3} wrap="wrap" justify="flex-start">
+            <HStack spacing={isMobile ? 2 : 3} wrap="wrap" justify="flex-start">
               {/* Carbon Impact */}
               {carbonData && !carbonData.error ? (
                 <Tooltip

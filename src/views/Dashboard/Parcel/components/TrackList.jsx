@@ -126,8 +126,13 @@ const TrackList = ({ amount }) => {
   };
 
   return (
-    <Card maxH="100%" height={'fit-content;'} minW="450px" className="trazo-card">
-      <CardHeader px={6} py={5}>
+    <Card
+      maxH="100%"
+      height={'fit-content;'}
+      minW={{ base: '100%', md: '450px' }}
+      w="100%"
+      className="trazo-card">
+      <CardHeader px={{ base: 4, md: 6 }} py={5}>
         <Flex direction="column" w="100%">
           {/* Header with consistent height */}
           <Flex justify="space-between" align="center" pb={4}>
@@ -183,9 +188,9 @@ const TrackList = ({ amount }) => {
               </MenuList>
             </Menu>
           </Flex>
-          
+
           <Divider />
-          
+
           {/* Production info moved to be more compact */}
           {currentHistory?.product && (
             <HStack justify="space-between" pt={4}>
@@ -199,7 +204,7 @@ const TrackList = ({ amount }) => {
           )}
         </Flex>
       </CardHeader>
-      <CardBody ps="20px" pe="0px" mb="31px" position="relative">
+      <CardBody ps={{ base: '0px', md: '20px' }} pe="0px" mb="31px" position="relative">
         <Flex direction="column" width={'100%'}>
           {isLoading || isFetching ? (
             <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
@@ -210,7 +215,7 @@ const TrackList = ({ amount }) => {
               {currentHistory?.events?.map((event, index, arr) => {
                 return (
                   <TimelineRow
-                    minW="390px"
+                    minW={{ base: '100%', md: '390px' }}
                     key={event.id}
                     logo={event.certified ? FaRegCheckCircle : FaRegDotCircle}
                     title={
@@ -250,7 +255,7 @@ const TrackList = ({ amount }) => {
         </Flex>
       </CardBody>
       {/* Modern Action Buttons - Single Add Event Dropdown */}
-      <Flex justify="flex-end" gap={3} p="20px">
+      <Flex justify="flex-end" gap={3} p={{ base: '16px', md: '20px' }}>
         {!currentHistory?.product ? (
           <Button
             bg={bgButton}
@@ -258,7 +263,8 @@ const TrackList = ({ amount }) => {
             fontSize="sm"
             fontWeight="bold"
             variant="no-hover"
-            minW="160px"
+            minW={{ base: '100%', sm: '140px', md: '160px' }}
+            w={{ base: '100%', sm: 'auto' }}
             h="44px"
             borderRadius="12px"
             _hover={{
@@ -274,7 +280,13 @@ const TrackList = ({ amount }) => {
             {intl.formatMessage({ id: 'app.startProduction' }).toUpperCase()}
           </Button>
         ) : (
-          <Flex gap={3} justify="flex-end" align="center" w="100%" flexFlow={'wrap'}>
+          <Flex
+            gap={{ base: 2, md: 3 }}
+            justify="flex-end"
+            align="center"
+            w="100%"
+            flexFlow={'wrap'}
+            direction={{ base: 'column', sm: 'row' }}>
             {/* Primary Add Event Dropdown Button */}
             <Menu isOpen={isAddEventMenuOpen} onClose={onAddEventMenuClose}>
               <MenuButton
@@ -286,7 +298,8 @@ const TrackList = ({ amount }) => {
                 fontSize="sm"
                 fontWeight="semibold"
                 variant="no-hover"
-                minW="140px"
+                minW={{ base: '100%', sm: '120px', md: '140px' }}
+                w={{ base: '100%', sm: 'auto' }}
                 h="44px"
                 borderRadius="12px"
                 _hover={{
@@ -307,7 +320,7 @@ const TrackList = ({ amount }) => {
                 borderRadius="12px"
                 boxShadow="xl"
                 py="8px"
-                minW="220px">
+                minW={{ base: '200px', md: '220px' }}>
                 {/* Carbon Focus Header - NEW */}
                 <Box
                   px="16px"
@@ -445,7 +458,8 @@ const TrackList = ({ amount }) => {
                 colorScheme="green"
                 fontSize="sm"
                 fontWeight="semibold"
-                minW="160px"
+                minW={{ base: '100%', sm: '140px', md: '160px' }}
+                w={{ base: '100%', sm: 'auto' }}
                 h="44px"
                 borderRadius="12px"
                 _hover={{

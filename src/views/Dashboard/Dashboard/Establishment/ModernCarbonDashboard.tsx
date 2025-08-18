@@ -124,6 +124,7 @@ import CardHeader from 'components/Card/CardHeader';
 import ModernOffsetModal from './components/ModernOffsetModal';
 import EnhancedOffsetModal from '../../../../components/Carbon/EnhancedOffsetModal';
 import SecurityStatusCard from '../../../../components/Security/SecurityStatusCard';
+import ProductionSelector from '../../../../components/Carbon/ProductionSelector';
 
 // Types
 interface CarbonEntry {
@@ -243,7 +244,8 @@ const ModernCarbonDashboard: React.FC = () => {
     error: summaryError,
     refetch: refetchCarbonSummary
   } = useGetCarbonFootprintSummaryQuery({
-    establishmentId: parseInt(establishmentId || '0'),
+    establishmentId: productionId ? undefined : parseInt(establishmentId || '0'),
+    productionId: productionId ? parseInt(productionId) : undefined,
     year: currentYear
   });
 
@@ -253,7 +255,8 @@ const ModernCarbonDashboard: React.FC = () => {
     isLoading: isEntriesLoading,
     refetch: refetchCarbonEntries
   } = useGetCarbonEntriesQuery({
-    establishmentId: parseInt(establishmentId || '0'),
+    establishmentId: productionId ? undefined : parseInt(establishmentId || '0'),
+    productionId: productionId ? parseInt(productionId) : undefined,
     year: currentYear
   });
 
@@ -599,29 +602,16 @@ const ModernCarbonDashboard: React.FC = () => {
             </VStack>
 
             <HStack spacing={3}>
-              <Badge colorScheme={getVerificationColor(verificationLevel)} variant="solid">
-                {verificationLevel.toUpperCase()}
-              </Badge>
-              <Menu>
-                <MenuButton as={Button} rightIcon={<FaChevronDown />} size="sm">
-                  {(productionId &&
-                    productions?.find((p: any) => p.id === parseInt(productionId))?.name) ||
-                    'SELECCIONAR PRODUCCIÓN'}
-                </MenuButton>
-                <MenuList>
-                  <MenuItem onClick={() => handleProductionChange({ target: { value: '' } })}>
-                    Establishment Overview
-                  </MenuItem>
-                  {productions?.map((prod: any) => (
-                    <MenuItem
-                      key={prod.id}
-                      onClick={() => handleProductionChange({ target: { value: prod.id } })}
-                      color="gray.500">
-                      {prod.name || `Producción ${prod.id}`}
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </Menu>
+              <ProductionSelector
+                selectedProductionId={productionId}
+                productions={productions || []}
+                onProductionChange={(newProductionId) => 
+                  handleProductionChange({ target: { value: newProductionId } })
+                }
+                isLoading={isProductionsLoading}
+                placeholder="Select Production"
+                size="sm"
+              />
             </HStack>
           </HStack>
         </Flex>
@@ -633,9 +623,6 @@ const ModernCarbonDashboard: React.FC = () => {
           </Button>
           <Button leftIcon={<FaDownload />} variant="outline" size="sm">
             Export Report
-          </Button>
-          <Button leftIcon={<FaShare />} variant="outline" size="sm">
-            Share Profile
           </Button>
           <Button
             leftIcon={<FaEye />}

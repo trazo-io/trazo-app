@@ -279,9 +279,20 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getCarbonEntries: build.query<any[], { establishmentId: number; year?: number }>({
-      query: ({ establishmentId, year }) => {
-        let url = `/carbon/entries/?establishment=${establishmentId}`;
+    getCarbonEntries: build.query<any[], { 
+      establishmentId?: number; 
+      productionId?: number; 
+      year?: number 
+    }>({
+      query: ({ establishmentId, productionId, year }) => {
+        let url;
+        if (productionId) {
+          url = `/carbon/entries/?production=${productionId}`;
+        } else if (establishmentId) {
+          url = `/carbon/entries/?establishment=${establishmentId}`;
+        } else {
+          throw new Error('Either establishmentId or productionId must be provided');
+        }
         if (year) url += `&year=${year}`;
         return {
           url,
@@ -289,8 +300,8 @@ const companyApi = baseApi.injectEndpoints({
           credentials: 'include'
         };
       },
-      providesTags: (result, error, { establishmentId }) => [
-        { type: 'CarbonSummary', id: establishmentId },
+      providesTags: (result, error, { establishmentId, productionId }) => [
+        { type: 'CarbonSummary', id: establishmentId || productionId },
         'CarbonSummary'
       ]
     }),

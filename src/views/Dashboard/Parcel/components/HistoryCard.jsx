@@ -15,7 +15,8 @@ import {
   Avatar,
   AvatarGroup,
   IconButton,
-  Divider
+  Divider,
+  useBreakpointValue
 } from '@chakra-ui/react';
 import {
   FaSeedling,
@@ -49,6 +50,9 @@ const HistoryCard = ({ amount }) => {
   const cardBgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const navigate = useNavigate();
+  
+  // Mobile responsiveness
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const currentCompany = useSelector((state) => state.company.currentCompany);
 
@@ -123,11 +127,16 @@ const HistoryCard = ({ amount }) => {
       transition="all 0.3s ease"
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
       className="trazo-card">
-      <CardHeader px={6} py={5}>
+      <CardHeader px={{ base: 4, md: 6 }} py={5}>
         <Flex direction="column" w="100%">
           {/* Header with divider */}
-          <Flex justify="space-between" align="center" pb={4}>
-            <HStack spacing={3}>
+          <Flex 
+            direction={{ base: "column", md: "row" }} 
+            justify="space-between" 
+            align={{ base: "stretch", md: "center" }} 
+            pb={4}
+            gap={{ base: 3, md: 0 }}>
+            <HStack spacing={3} justify={{ base: "center", md: "flex-start" }}>
               <Text fontSize="lg" color={textColor} fontWeight="600">
                 {intl.formatMessage({ id: 'app.productions' })}
               </Text>
@@ -147,26 +156,34 @@ const HistoryCard = ({ amount }) => {
               </Badge>
             </HStack>
 
-            <HStack spacing={3}>
-              {/* Simple Controls */}
-              {data && data.length > 1 && (
+            <Flex
+              direction={{ base: "column", sm: "row" }}
+              align="center"
+              gap={{ base: 2, sm: 3 }}
+              w={{ base: "100%", md: "auto" }}>
+              {/* Simple Controls - Hide on very small screens */}
+              {data && data.length > 1 && !isMobile && (
                 <HStack spacing={1}>
-                  <IconButton
-                    size="sm"
-                    variant="ghost"
-                    icon={<Icon as={FaFilter} />}
-                    aria-label="Filter productions"
-                    color="gray.500"
-                    _hover={{ color: 'gray.700', bg: 'gray.100' }}
-                  />
-                  <IconButton
-                    size="sm"
-                    variant="ghost"
-                    icon={<Icon as={FaSort} />}
-                    aria-label="Sort productions"
-                    color="gray.500"
-                    _hover={{ color: 'gray.700', bg: 'gray.100' }}
-                  />
+                  <Tooltip label="Filter productions" placement="top">
+                    <IconButton
+                      size="sm"
+                      variant="ghost"
+                      icon={<Icon as={FaFilter} />}
+                      aria-label="Filter productions"
+                      color="gray.500"
+                      _hover={{ color: 'gray.700', bg: 'gray.100' }}
+                    />
+                  </Tooltip>
+                  <Tooltip label="Sort productions" placement="top">
+                    <IconButton
+                      size="sm"
+                      variant="ghost"
+                      icon={<Icon as={FaSort} />}
+                      aria-label="Sort productions"
+                      color="gray.500"
+                      _hover={{ color: 'gray.700', bg: 'gray.100' }}
+                    />
+                  </Tooltip>
                 </HStack>
               )}
 
@@ -181,6 +198,8 @@ const HistoryCard = ({ amount }) => {
                 px={4}
                 py={2}
                 h="32px"
+                w={{ base: "100%", sm: "auto" }}
+                minW={{ base: "120px", sm: "auto" }}
                 _hover={{
                   bg: 'green.600',
                   transform: 'translateY(-1px)'
@@ -202,18 +221,24 @@ const HistoryCard = ({ amount }) => {
                     `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
                   )
                 }>
-                New Production
+                {isMobile ? "New" : "New Production"}
               </Button>
-            </HStack>
+            </Flex>
           </Flex>
 
           <Divider borderColor={borderColor} />
 
           {/* Streamlined Statistics */}
           {productionStats && (
-            <HStack spacing={6} justify="space-between" pt={4}>
-              <VStack spacing={1}>
-                <Text fontSize="xl" fontWeight="bold" color="green.500">
+            <Flex
+              direction={{ base: "row", sm: "row" }}
+              spacing={0}
+              justify="space-between"
+              pt={4}
+              wrap="wrap"
+              gap={{ base: 2, sm: 4 }}>
+              <VStack spacing={1} flex="1" minW="60px">
+                <Text fontSize={{ base: "lg", md: "xl" }} fontWeight="bold" color="green.500">
                   {productionStats.completed}
                 </Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
@@ -221,8 +246,8 @@ const HistoryCard = ({ amount }) => {
                 </Text>
               </VStack>
 
-              <VStack spacing={1}>
-                <Text fontSize="xl" fontWeight="bold" color="blue.500">
+              <VStack spacing={1} flex="1" minW="60px">
+                <Text fontSize={{ base: "lg", md: "xl" }} fontWeight="bold" color="blue.500">
                   {productionStats.ongoing}
                 </Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
@@ -230,24 +255,24 @@ const HistoryCard = ({ amount }) => {
                 </Text>
               </VStack>
 
-              <VStack spacing={1}>
-                <Text fontSize="xl" fontWeight="bold" color="orange.500">
+              <VStack spacing={1} flex="1" minW="60px">
+                <Text fontSize={{ base: "lg", md: "xl" }} fontWeight="bold" color="orange.500">
                   {productionStats.avgCarbonScore}
                 </Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
-                  avg score
+                  {isMobile ? "score" : "avg score"}
                 </Text>
               </VStack>
 
-              <VStack spacing={1}>
-                <Text fontSize="xl" fontWeight="bold" color="purple.500">
+              <VStack spacing={1} flex="1" minW="60px">
+                <Text fontSize={{ base: "lg", md: "xl" }} fontWeight="bold" color="purple.500">
                   {productionStats.verificationRate}%
                 </Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
                   verified
                 </Text>
               </VStack>
-            </HStack>
+            </Flex>
           )}
         </Flex>
       </CardHeader>

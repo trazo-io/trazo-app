@@ -110,14 +110,14 @@ export default function AdminNavbar(props: AdminNavbarProps) {
   // 🚀 2025 Best Practice: Programmatic Navigation with State Preservation
   const handleEstablishmentClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    
+
     // Optimized navigation: No page refresh, preserves state, instant transition
     if (establishmentId) {
       navigate(`/admin/dashboard/establishment/${establishmentId}`, {
         // Replace current entry to maintain clean history stack
         replace: false,
         // Preserve scroll position for better UX
-        state: { 
+        state: {
           preserveScroll: true,
           navigationSource: 'breadcrumb'
         }
@@ -129,7 +129,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
     e.preventDefault();
     navigate('/admin/dashboard/', {
       replace: false,
-      state: { 
+      state: {
         preserveScroll: true,
         navigationSource: 'breadcrumb'
       }
@@ -231,10 +231,9 @@ export default function AdminNavbar(props: AdminNavbarProps) {
         minH={{ base: '56px', sm: '60px', md: '64px' }}
         align="center"
         justify="space-between"
-        gap={{ base: 1, sm: 2, md: 3 }}
+        gap={{ base: 1, sm: 4, md: 5 }}
         flexDirection={{ base: 'column', smd: 'row' }}
         py={{ base: 1, smd: 0 }}>
-        
         {/* Action Buttons Container - Mobile First */}
         <Flex
           align="center"
@@ -261,16 +260,17 @@ export default function AdminNavbar(props: AdminNavbarProps) {
           // Simple approach: Reserve fixed space for buttons
           pr={{ base: '160px', sm: '180px', md: '200px', lg: '0px' }}
           overflow="hidden">
-          
           <Breadcrumb
             fontSize={{ base: 'sm', md: 'md' }}
             spacing={{ base: '4px', sm: '6px', md: '8px' }}
             separator={
-              <Box color={secondaryText} fontSize={{ base: 'xs', md: 'sm' }} px={{ base: 0.5, md: 1 }}>
+              <Box
+                color={secondaryText}
+                fontSize={{ base: 'xs', md: 'sm' }}
+                px={{ base: 0.5, md: 1 }}>
                 /
               </Box>
             }>
-            
             {/* Home - Always visible, never truncates */}
             <BreadcrumbItem color={mainText}>
               <BreadcrumbLink
@@ -297,17 +297,21 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                   // Smart allocation: More space when alone, conservative when sharing with parcel
                   isTruncated
                   maxW={
-                    currentParcel 
-                      ? { base: '120px', sm: '160px', smd: '200px', md: '220px', lg: '300px' }  // Sharing space
-                      : { base: '180px', sm: '250px', smd: '320px', md: '400px', lg: '500px' }  // Taking full space
+                    currentParcel
+                      ? { base: '120px', sm: '160px', smd: '200px', md: '220px', lg: '300px' } // Sharing space
+                      : { base: '180px', sm: '250px', smd: '320px', md: '400px', lg: '500px' } // Taking full space
                   }
-                  _hover={parcelId ? { 
-                    color: 'green.600', 
-                    textDecoration: 'none', 
-                    cursor: 'pointer',
-                    transform: 'translateY(-0.5px)',
-                    transition: 'all 0.2s ease'
-                  } : {}}
+                  _hover={
+                    parcelId
+                      ? {
+                          color: 'green.600',
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                          transform: 'translateY(-0.5px)',
+                          transition: 'all 0.2s ease'
+                        }
+                      : {}
+                  }
                   cursor={parcelId ? 'pointer' : 'default'}
                   transition="all 0.2s ease">
                   {currentEstablishment.name}
