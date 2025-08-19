@@ -42,8 +42,8 @@ export const globalSearchApi = baseApi.injectEndpoints({
           q: query,
           types: types.join(','),
           limit,
-          offset,
-        },
+          offset
+        }
       }),
       // Cache key based on search parameters
       serializeQueryArgs: ({ queryArgs }) => {
@@ -58,14 +58,14 @@ export const globalSearchApi = baseApi.injectEndpoints({
           results: response.results || [],
           count: response.count || 0,
           next: response.next || undefined,
-          previous: response.previous || undefined,
+          previous: response.previous || undefined
         };
       },
       // Error handling
       transformErrorResponse: (response: any) => {
         return {
           status: response.status,
-          data: response.data || { message: 'Search failed' },
+          data: response.data || { message: 'Search failed' }
         };
       },
       // Provide tags for cache invalidation
@@ -73,12 +73,12 @@ export const globalSearchApi = baseApi.injectEndpoints({
         { type: 'Search', id: 'GLOBAL' },
         // Tag individual results for potential invalidation
         ...(result?.results?.map((item) => ({
-          type: item.type === 'establishment' ? 'Establishment' : 'Parcel' as const,
-          id: item.id,
-        })) || []),
-      ],
-    }),
-  }),
+          type: item.type === 'establishment' ? 'Establishment' : ('Parcel' as const),
+          id: item.id
+        })) || [])
+      ]
+    })
+  })
 });
 
 export const { useGlobalSearchQuery } = globalSearchApi;
