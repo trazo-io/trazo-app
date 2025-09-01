@@ -9,6 +9,7 @@ export interface Company {
   email: string;
   website: string;
   logo: string;
+  invitation_code?: string;
   employees: Employee[];
   establishments: Establishment[];
   parcels?: Parcel[];

@@ -95,7 +95,8 @@ const TrackList = ({ amount }) => {
     },
     {
       skip: !parcelId || !currentCompany || !establishmentId || currentCompany?.id === undefined,
-      refetchOnMountOrArgChange: true
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true
     }
   );
 
@@ -127,6 +128,7 @@ const TrackList = ({ amount }) => {
 
   return (
     <Card
+      key={`track-list-${parcelId}`}
       maxH="100%"
       height={'fit-content;'}
       minW={{ base: '100%', md: '450px' }}
@@ -216,7 +218,7 @@ const TrackList = ({ amount }) => {
                 return (
                   <TimelineRow
                     minW={{ base: '100%', md: '390px' }}
-                    key={event.id}
+                    key={`${parcelId}-${event.id}-${index}`}
                     logo={event.certified ? FaRegCheckCircle : FaRegDotCircle}
                     title={
                       event.event_type != 3

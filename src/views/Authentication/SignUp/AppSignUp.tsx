@@ -29,10 +29,13 @@ import {
   FaBuilding,
   FaUser,
   FaEye,
-  FaEyeSlash
+  FaEyeSlash,
+  FaArrowLeft,
+  FaCheckCircle,
+  FaRedo
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { useSignUpMutation } from '../../../store/api/authApi';
+import { useSignUpMutation, useResendVerificationEmailMutation } from '../../../store/api/authApi';
 
 // No assets needed for minimalist design
 
@@ -46,6 +49,7 @@ interface SignUpFormData {
   password: string;
   password2: string;
   acceptTerms: boolean;
+  company_code?: string;
 }
 
 const AppSignUp: React.FC = () => {
@@ -56,16 +60,29 @@ const AppSignUp: React.FC = () => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [joinExistingCompany, setJoinExistingCompany] = useState(false);
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
+  
+  // 🚀 2025 UX Enhancement: In-panel verification state
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [isCompanyJoin, setIsCompanyJoin] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  
+  const [resendEmail, { isLoading: isResending }] = useResendVerificationEmailMutation();
 
   const {
     register: registerField,
     handleSubmit,
     watch,
+    setValue,
+    reset,
     formState: { errors }
   } = useForm<SignUpFormData>();
 
   const password = watch('password');
   const password2 = watch('password2');
+  const companyCode = watch('company_code');
 
   // Password strength calculation
   const getPasswordStrength = (password: string) => {
@@ -80,29 +97,144 @@ const AppSignUp: React.FC = () => {
 
   const passwordStrength = getPasswordStrength(password || '');
 
+  // 🚀 2025 UX Enhancement: Verification panel functions
+  const handleBackToSignup = () => {
+    setShowVerification(false);
+    setVerificationEmail('');
+    setIsCompanyJoin(false);
+    setResendCooldown(0);
+  };
+
+  const handleResendEmail = async () => {
+    if (resendCooldown > 0) return;
+    
+    try {
+      await resendEmail({ email: verificationEmail }).unwrap();
+      setResendCooldown(60); // 60 second cooldown
+      
+      toast({
+        title: 'Email sent!',
+        description: 'We\'ve sent another verification email to your inbox.',
+        status: 'success',
+        duration: 4000,
+        isClosable: true
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to resend email',
+        description: error?.data?.message || 'Please try again later.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true
+      });
+    }
+  };
+
+  // Countdown timer for resend button
+  React.useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
   const onSubmit = async (data: SignUpFormData) => {
     try {
       setError(null);
-      await signUp({
+      
+      const signUpData = {
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
         password: data.password,
         user_type: 'PRODUCER'
-      }).unwrap();
+      };
+      
+      // Add company code if joining existing company
+      if (joinExistingCompany && data.company_code) {
+        signUpData.company_code = data.company_code;
+      }
+      
+      const result = await signUp(signUpData).unwrap();
+      console.log('🔒 SIGNUP SUCCESS: User created successfully', { email: data.email, hasCompanyCode: !!data.company_code });
 
-      toast({
-        title: 'Account created successfully!',
-        description: 'Welcome to Trazo. Please check your email to verify your account.',
-        status: 'success',
-        duration: 5000,
-        isClosable: true
-      });
-
-      navigate('/auth/verifyemail', { state: { email: data.email } });
+      // 🚀 2025 Best Practice: Seamless in-panel email verification transition
+      if (joinExistingCompany && data.company_code) {
+        console.log('🔒 COMPANY SIGNUP: Processing company code signup flow');
+        
+        // Company code users still need email verification first (security-first approach)
+        toast({
+          title: 'Account created successfully!',
+          description: 'Check your email to verify your account. Once verified, you\'ll automatically join the company team.',
+          status: 'success',
+          duration: 4000,
+          isClosable: true
+        });
+        
+        console.log('🔒 TRANSITION: Moving to verification panel');
+        
+        // Transition to verification panel with company context
+        setVerificationEmail(data.email);
+        setIsCompanyJoin(true);
+        setShowVerification(true);
+        
+      } else {
+        // Regular users need email verification first
+        console.log('🔒 REGULAR SIGNUP: Processing regular signup flow');
+        
+        toast({
+          title: 'Account created successfully!',
+          description: 'Welcome to Trazo. Please check your email to verify your account.',
+          status: 'success',
+          duration: 4000,
+          isClosable: true
+        });
+        
+        console.log('🔒 TRANSITION: Moving to verification panel (regular)');
+        
+        // Transition to verification panel
+        setVerificationEmail(data.email);
+        setIsCompanyJoin(false);
+        setShowVerification(true);
+        
+        // Clear form after navigation for security
+        setTimeout(() => reset(), 100);
+      }
     } catch (err: any) {
-      const errorMessage =
-        err?.data?.detail || err?.data?.email?.[0] || 'Registration failed. Please try again.';
+      console.error('Signup error:', err);
+      
+      // Handle different types of errors with specific messaging
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (err?.data?.company_code) {
+        // Company code specific errors
+        const codeError = Array.isArray(err.data.company_code) 
+          ? err.data.company_code[0] 
+          : err.data.company_code;
+        errorMessage = codeError;
+      } else if (err?.data?.email) {
+        // Email specific errors
+        const emailError = Array.isArray(err.data.email) 
+          ? err.data.email[0] 
+          : err.data.email;
+        errorMessage = emailError;
+      } else if (err?.data?.detail) {
+        // General error detail
+        errorMessage = err.data.detail;
+      } else if (err?.data?.non_field_errors) {
+        // Non-field errors
+        const nonFieldError = Array.isArray(err.data.non_field_errors) 
+          ? err.data.non_field_errors[0] 
+          : err.data.non_field_errors;
+        errorMessage = nonFieldError;
+      } else if (err?.status === 429) {
+        // Rate limiting
+        errorMessage = 'Too many attempts. Please wait a moment before trying again.';
+      } else if (err?.status >= 500) {
+        // Server errors
+        errorMessage = 'Server error. Please try again in a few moments.';
+      }
+      
       setError(errorMessage);
     }
   };
@@ -264,23 +396,39 @@ const AppSignUp: React.FC = () => {
             w="full"
             maxW="480px"
             my={{ base: 4, lg: 8 }}>
-            {/* Header */}
-            <VStack spacing={4} mb={6}>
-              <VStack spacing={1}>
-                <Text fontSize="xl" fontWeight="600" color={useColorModeValue('gray.900', 'white')}>
-                  Create Business Account
-                </Text>
-                <Text
-                  fontSize="sm"
-                  color={useColorModeValue('gray.500', 'gray.400')}
-                  textAlign="center">
-                  Join leading agricultural enterprises
-                </Text>
-              </VStack>
-            </VStack>
+            
+            {/* 🚀 2025 UX Enhancement: Conditional rendering between signup form and verification */}
+            {!showVerification ? (
+              <>
+                {/* Header with smooth text transitions */}
+                <VStack spacing={4} mb={6}>
+                  <VStack spacing={1}>
+                    <MotionBox
+                      key={joinExistingCompany ? 'join' : 'create'} // Forces re-render for animation
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}>
+                      <Text fontSize="xl" fontWeight="600" color={useColorModeValue('gray.900', 'white')}>
+                        {joinExistingCompany ? 'Join Company Account' : 'Create Business Account'}
+                      </Text>
+                    </MotionBox>
+                    <MotionBox
+                      key={joinExistingCompany ? 'join-sub' : 'create-sub'} // Forces re-render for animation
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.1 }}>
+                      <Text
+                        fontSize="sm"
+                        color={useColorModeValue('gray.500', 'gray.400')}
+                        textAlign="center">
+                        {joinExistingCompany ? 'Join your team on Trazo' : 'Join leading agricultural enterprises'}
+                      </Text>
+                    </MotionBox>
+                  </VStack>
+                </VStack>
 
-            {/* Main Form */}
-            <Box w="full">
+                {/* Main Form */}
+                <Box w="full">
               {error && (
                 <Box
                   bg="red.50"
@@ -297,6 +445,161 @@ const AppSignUp: React.FC = () => {
 
               <form onSubmit={handleSubmit(onSubmit)}>
                 <VStack spacing={4}>
+                  {/* Company Join Toggle with smooth animation */}
+                  <MotionBox 
+                    w="full"
+                    initial={false}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.2 }}>
+                    <HStack spacing={4} justify="center" bg={useColorModeValue('gray.50', 'gray.800')} borderRadius="xl" p={1}>
+                      <Button
+                        size="sm"
+                        variant={!joinExistingCompany ? 'solid' : 'ghost'}
+                        bg={!joinExistingCompany ? 'green.500' : 'transparent'}
+                        color={!joinExistingCompany ? 'white' : useColorModeValue('gray.600', 'gray.400')}
+                        _hover={{
+                          bg: !joinExistingCompany ? 'green.600' : useColorModeValue('gray.100', 'gray.700'),
+                          transform: 'translateY(-1px)'
+                        }}
+                        _active={{
+                          transform: 'translateY(0)'
+                        }}
+                        borderRadius="lg"
+                        fontSize="sm"
+                        fontWeight="600"
+                        px={6}
+                        py={2}
+                        onClick={() => setJoinExistingCompany(false)}
+                        transition="all 0.2s"
+                        boxShadow={!joinExistingCompany ? "0 2px 8px rgba(72, 187, 120, 0.2)" : "none"}>
+                        Create New Company
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={joinExistingCompany ? 'solid' : 'ghost'}
+                        bg={joinExistingCompany ? 'green.500' : 'transparent'}
+                        color={joinExistingCompany ? 'white' : useColorModeValue('gray.600', 'gray.400')}
+                        _hover={{
+                          bg: joinExistingCompany ? 'green.600' : useColorModeValue('gray.100', 'gray.700'),
+                          transform: 'translateY(-1px)'
+                        }}
+                        _active={{
+                          transform: 'translateY(0)'
+                        }}
+                        borderRadius="lg"
+                        fontSize="sm"
+                        fontWeight="600"
+                        px={6}
+                        py={2}
+                        onClick={() => setJoinExistingCompany(true)}
+                        transition="all 0.2s"
+                        boxShadow={joinExistingCompany ? "0 2px 8px rgba(72, 187, 120, 0.2)" : "none"}>
+                        Join Existing Company
+                      </Button>
+                    </HStack>
+                  </MotionBox>
+
+                  {/* Company Code Input (animated appearance when joining existing company) */}
+                  {joinExistingCompany && (
+                    <MotionBox
+                      w="full"
+                      initial={{ opacity: 0, height: 0, y: -10 }}
+                      animate={{ opacity: 1, height: 'auto', y: 0 }}
+                      exit={{ opacity: 0, height: 0, y: -10 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}>
+                      <Box w="full">
+                      <Text
+                        fontSize="sm"
+                        fontWeight="500"
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                        mb={1}>
+                        Company Invitation Code
+                      </Text>
+                      <Box
+                        as="input"
+                        type="text"
+                        placeholder="Enter 6-character company code"
+                        w="full"
+                        h="44px"
+                        fontSize="sm"
+                        bg={useColorModeValue('gray.50', 'gray.900')}
+                        border="1px solid"
+                        borderColor={
+                          errors.company_code
+                            ? 'red.300'
+                            : focusedField === 'company_code'
+                            ? 'green.500'
+                            : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        borderRadius="xl"
+                        px={4}
+                        textTransform="uppercase"
+                        letterSpacing="wide"
+                        textAlign="center"
+                        fontWeight="600"
+                        _hover={{
+                          borderColor: errors.company_code
+                            ? 'red.300'
+                            : useColorModeValue('gray.300', 'gray.500')
+                        }}
+                        _focus={{
+                          outline: 'none',
+                          borderColor: 'green.500',
+                          bg: useColorModeValue('white', 'gray.800'),
+                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
+                        }}
+                        transition="all 0.2s"
+                        {...registerField('company_code', {
+                          required: joinExistingCompany ? 'Company code is required' : false,
+                          minLength: joinExistingCompany ? { value: 6, message: 'Company code must be at least 6 characters' } : undefined,
+                          maxLength: { value: 8, message: 'Company code must be 8 characters or less' },
+                          pattern: joinExistingCompany ? {
+                            value: /^[A-Z0-9]{6,8}$/,
+                            message: 'Company code must be 6-8 letters and numbers only'
+                          } : undefined,
+                          validate: joinExistingCompany ? (value) => {
+                            if (!value) return true;
+                            // Check if contains only alphanumeric characters
+                            if (!/^[A-Z0-9]+$/i.test(value)) {
+                              return 'Company code can only contain letters and numbers';
+                            }
+                            return true;
+                          } : undefined
+                        })}
+                        onFocus={() => setFocusedField('company_code')}
+                        onBlur={() => setFocusedField(null)}
+                        onChange={(e) => {
+                          // Transform to uppercase and filter out invalid characters
+                          const cleanValue = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                          // Update both the input value and the form state
+                          e.target.value = cleanValue;
+                          setValue('company_code', cleanValue, { shouldValidate: true });
+                        }}
+                      />
+                      {/* Company Code Validation Feedback */}
+                      {isValidatingCode && joinExistingCompany && (
+                        <Text fontSize="xs" color="blue.500" mt={1} display="flex" alignItems="center" gap={1}>
+                          <Box as="span" className="animate-spin" display="inline-block">⟳</Box>
+                          Validating company code...
+                        </Text>
+                      )}
+                      {companyCode && !errors.company_code && !isValidatingCode && joinExistingCompany && (
+                        <Text fontSize="xs" color="green.500" mt={1} display="flex" alignItems="center" gap={1}>
+                          ✓ Code format is valid
+                        </Text>
+                      )}
+                      {errors.company_code && (
+                        <Text fontSize="sm" color="red.500" mt={1}>
+                          {errors.company_code.message}
+                        </Text>
+                      )}
+                      <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mt={1}>
+                        Get this code from your company admin or team leader
+                      </Text>
+                      </Box>
+                    </MotionBox>
+                  )}
+
                   {/* Name fields */}
                   <Grid templateColumns="1fr 1fr" gap={3} w="full">
                     <Box>
@@ -723,7 +1026,7 @@ const AppSignUp: React.FC = () => {
                     )}
                   </Box>
 
-                  {/* Sign up button */}
+                  {/* Sign up button with enhanced loading states */}
                   <Button
                     type="submit"
                     w="full"
@@ -735,15 +1038,30 @@ const AppSignUp: React.FC = () => {
                     borderRadius="xl"
                     isLoading={isLoading}
                     loadingText="Creating account..."
+                    isDisabled={isValidatingCode}
                     _hover={{
-                      bg: 'green.600',
-                      transform: 'translateY(-1px)'
+                      bg: isLoading ? 'green.500' : 'green.600',
+                      transform: isLoading ? 'none' : 'translateY(-1px)'
                     }}
                     _active={{
-                      transform: 'translateY(0)'
+                      transform: isLoading ? 'none' : 'translateY(0)'
+                    }}
+                    _disabled={{
+                      bg: 'gray.300',
+                      color: 'gray.500',
+                      cursor: 'not-allowed',
+                      _hover: {
+                        bg: 'gray.300',
+                        transform: 'none'
+                      }
                     }}
                     transition="all 0.2s">
-                    Create Business Account
+                    {isValidatingCode 
+                      ? "Validating..." 
+                      : joinExistingCompany 
+                        ? "Join Company" 
+                        : "Create Business Account"
+                    }
                   </Button>
                 </VStack>
               </form>
@@ -808,6 +1126,104 @@ const AppSignUp: React.FC = () => {
                 </Link>
               </Text>
             </Box>
+              </>
+            ) : (
+              /* 🚀 2025 UX Enhancement: Email Verification Panel */
+              <MotionBox
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4 }}
+                w="full">
+                
+                {/* Back Button */}
+                <HStack w="full" justify="flex-start" mb={6}>
+                  <Button
+                    leftIcon={<Icon as={FaArrowLeft} />}
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBackToSignup}
+                    color={useColorModeValue('gray.600', 'gray.400')}
+                    _hover={{ color: useColorModeValue('gray.800', 'white') }}>
+                    Back to signup
+                  </Button>
+                </HStack>
+
+                {/* Progress Indicator */}
+                <HStack justify="center" spacing={4} mb={8}>
+                  <Box w="32px" h="32px" bg="green.500" borderRadius="50%" display="flex" alignItems="center" justifyContent="center">
+                    <Icon as={FaCheckCircle} color="white" boxSize={4} />
+                  </Box>
+                  <Box h="2px" flex={1} bg="green.500" />
+                  <Box w="32px" h="32px" bg="green.100" border="2px solid" borderColor="green.500" borderRadius="50%" display="flex" alignItems="center" justifyContent="center">
+                    <Text fontSize="xs" fontWeight="bold" color="green.600">2</Text>
+                  </Box>
+                  <Box h="2px" flex={1} bg={useColorModeValue('gray.300', 'gray.600')} />
+                  <Box w="32px" h="32px" bg={useColorModeValue('gray.100', 'gray.700')} border="2px solid" borderColor={useColorModeValue('gray.300', 'gray.600')} borderRadius="50%" display="flex" alignItems="center" justifyContent="center">
+                    <Text fontSize="xs" fontWeight="bold" color={useColorModeValue('gray.500', 'gray.400')}>3</Text>
+                  </Box>
+                </HStack>
+
+                {/* Main Icon */}
+                <Box textAlign="center" mb={6}>
+                  <Box w="80px" h="80px" bg="green.50" borderRadius="50%" mx="auto" mb={4} display="flex" alignItems="center" justifyContent="center">
+                    <Icon as={FaEnvelope} color="green.500" boxSize={10} />
+                  </Box>
+                </Box>
+
+                {/* Main Content */}
+                <VStack spacing={4} mb={8} textAlign="center">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color={useColorModeValue('gray.800', 'white')}>
+                    Check your email
+                  </Text>
+                  
+                  <Text fontSize="md" color={useColorModeValue('gray.600', 'gray.300')} lineHeight="1.6" maxW="md">
+                    {isCompanyJoin
+                      ? "We've sent a verification email to help you join the company team."
+                      : "We've sent a verification email to get you started."
+                    }
+                  </Text>
+
+                  {/* Email Display */}
+                  <Box bg={useColorModeValue('gray.50', 'gray.800')} borderRadius="lg" px={4} py={3} border="1px solid" borderColor={useColorModeValue('gray.200', 'gray.600')}>
+                    <Text fontSize="sm" fontWeight="semibold" color={useColorModeValue('gray.800', 'white')} fontFamily="mono">
+                      {verificationEmail}
+                    </Text>
+                  </Box>
+
+                  {/* Next Steps */}
+                  <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.300')} textAlign="center">
+                    Click the link in the email to verify your account and{' '}
+                    {isCompanyJoin ? 'join the company' : 'complete your registration'}.
+                  </Text>
+                </VStack>
+
+                {/* Action Buttons */}
+                <VStack spacing={4}>
+                  <Button
+                    leftIcon={<Icon as={FaRedo} />}
+                    colorScheme="green"
+                    variant="outline"
+                    size="lg"
+                    onClick={handleResendEmail}
+                    isLoading={isResending}
+                    isDisabled={resendCooldown > 0}
+                    loadingText="Sending..."
+                    w="full">
+                    {resendCooldown > 0 
+                      ? `Resend in ${resendCooldown}s` 
+                      : 'Resend email'
+                    }
+                  </Button>
+
+                  <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} textAlign="center">
+                    Didn't receive the email? Check your spam folder or{' '}
+                    <Text as="span" color="green.500">
+                      contact support
+                    </Text>
+                  </Text>
+                </VStack>
+              </MotionBox>
+            )}
           </MotionBox>
         </Flex>
       </Grid>

@@ -71,7 +71,27 @@ export default function DashboardView() {
   const intl = useIntl();
   const { establishmentId } = useParams();
   const navigate = useNavigate();
+  const currentLocation = useLocation();
   const [establishment, setEstablishment] = useState(null);
+  
+  // 🚀 2025 Best Practice: Welcome banner for new company joiners
+  const searchParams = new URLSearchParams(currentLocation.search);
+  const showWelcome = searchParams.get('welcome') === 'true';
+  const joinSource = searchParams.get('source');
+  const isCompanyJoin = searchParams.get('company_join') === 'true';
+  const [welcomeBannerVisible, setWelcomeBannerVisible] = useState(showWelcome);
+  
+  // Clean URL parameters after showing welcome banner
+  useEffect(() => {
+    if (showWelcome) {
+      const timer = setTimeout(() => {
+        // Remove welcome parameters from URL without causing re-render
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showWelcome]);
 
   // Force horizontal scroll for ALL screen sizes - no Grid layout wrapping
   const isMobile = true; // Always use horizontal scroll layout
@@ -381,6 +401,44 @@ export default function DashboardView() {
       minH="100vh">
       {/* Enhanced Trial Status Banner */}
       <TrialStatusBanner />
+      
+      {/* 🚀 2025 Best Practice: Welcome Banner for New Company Joiners */}
+      {welcomeBannerVisible && (
+        <Box
+          bg="green.50"
+          borderLeftWidth="4px"
+          borderLeftColor="green.500"
+          p={4}
+          mb={4}
+          borderRadius="md"
+          position="relative"
+        >
+          <Flex justify="space-between" align="center">
+            <Box>
+              <Text fontSize="lg" fontWeight="bold" color="green.800" mb={2}>
+                🎉 Welcome to the team!
+              </Text>
+              <Text color="green.700" fontSize="sm">
+                {isCompanyJoin
+                  ? 'Your email is verified and you\'ve successfully joined the company! You can start tracking carbon impact immediately.'
+                  : joinSource === 'company_join' 
+                    ? 'Your account is ready and you can start tracking carbon impact immediately. Check your email for additional setup information.'
+                    : 'Welcome to your dashboard! You can start exploring right away.'
+                }
+              </Text>
+            </Box>
+            <Button
+              size="sm"
+              variant="ghost"
+              color="green.600"
+              onClick={() => setWelcomeBannerVisible(false)}
+              _hover={{ bg: 'green.100' }}
+            >
+              ✕
+            </Button>
+          </Flex>
+        </Box>
+      )}
 
       {/* Guided Onboarding Modal */}
       {/* <GuidedOnboarding

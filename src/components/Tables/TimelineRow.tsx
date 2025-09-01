@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -198,6 +198,10 @@ function TimelineRow(props: TimelineRowProps) {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
   const navigate = useNavigate();
+  
+  // State to handle timeline rendering after mount
+  const [isMounted, setIsMounted] = useState(false);
+  const timelineRef = useRef<HTMLDivElement>(null);
 
   // Mobile responsiveness
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -213,27 +217,39 @@ function TimelineRow(props: TimelineRowProps) {
   const eventData = extractEventData(event);
   const operatorName = getOperatorName(event, members);
   const qrVisibility = getQRVisibility(event);
+  
+  // Force re-render after mount to fix timeline positioning
+  useEffect(() => {
+    // Small delay to ensure DOM is fully rendered
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 10);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <Box position="relative" mb={isMobile ? 4 : 6} w="100%">
+    <Box position="relative" mb={isMobile ? 3 : 4} w="100%" ref={timelineRef}>
       {/* Timeline Connector Line - Hide on mobile for cleaner look */}
-      {!isLast && !isMobile && (
+      {!isLast && !isMobile && isMounted && (
         <Box
           position="absolute"
           left="19px"
-          top="40px"
+          top="42px"  // Center of 40px circle + small offset
           w="3px"
-          h="calc(100% + 8px)"
+          h={`calc(100% - 2px)`}  // Dynamic height calculation
           bg={useColorModeValue('gray.200', 'gray.600')}
           borderRadius="full"
           zIndex={0}
+          opacity={isMounted ? 1 : 0}
+          transition="opacity 0.2s ease-in-out"
         />
       )}
       
       <HStack spacing={isMobile ? 0 : 4} align="flex-start" w="100%">
         {/* Timeline Icon Column - Hidden on mobile to save space */}
         {!isMobile && (
-          <VStack spacing={0} align="center" minW="40px" position="relative" zIndex={1}>
+          <VStack spacing={0} align="center" minW="40px" position="relative" zIndex={1} mt="2px">
             <Circle
               size="40px"
               bg={useColorModeValue('white', 'gray.800')}

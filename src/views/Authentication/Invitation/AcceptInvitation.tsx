@@ -83,14 +83,55 @@ const AcceptInvitation: React.FC = () => {
         typeof result.company === 'string' ? result.company : result.company?.name;
       const redirectUrl = result.redirect_to || '/admin/dashboard';
 
+      // Show success toast with appropriate message
+      const wasTransfer = isAuthenticated && currentUser?.companies?.length > 0;
+      toast({
+        title: wasTransfer ? 'Successfully transferred!' : 'Successfully joined!',
+        description: wasTransfer 
+          ? `You've been transferred to ${companyName}. Taking you to your new dashboard...`
+          : `Welcome to ${companyName}! Taking you to your dashboard...`,
+        status: 'success',
+        duration: 4000,
+        isClosable: true
+      });
+
       // Redirect based on subscription status
       setTimeout(() => {
         navigate(redirectUrl);
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error accepting invitation:', error);
       setStep('error');
-      setErrorMessage(error?.data?.error || 'Failed to accept invitation');
+      
+      // Enhanced error handling with specific messages
+      let message = 'Failed to accept invitation';
+      
+      if (error?.status === 404) {
+        message = 'Invitation not found or has expired';
+      } else if (error?.status === 400) {
+        message = error?.data?.error || error?.data?.detail || 'Invalid invitation';
+      } else if (error?.status === 429) {
+        message = 'Too many attempts. Please wait a moment before trying again.';
+      } else if (error?.status === 403) {
+        message = 'You do not have permission to accept this invitation';
+      } else if (error?.status >= 500) {
+        message = 'Server error. Please try again in a few moments.';
+      } else if (error?.data?.error) {
+        message = error.data.error;
+      } else if (error?.data?.detail) {
+        message = error.data.detail;
+      }
+      
+      setErrorMessage(message);
+      
+      // Show toast for immediate feedback
+      toast({
+        title: 'Invitation Error',
+        description: message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true
+      });
     }
   };
 
@@ -572,6 +613,44 @@ const AcceptInvitation: React.FC = () => {
                     Don't have an account? You'll be able to create one after accepting the
                     invitation.
                   </Text>
+                </HStack>
+              </Box>
+            )}
+
+            {/* Company Transfer Warning */}
+            {isAuthenticated && currentUser?.companies?.length > 0 && (
+              <Box
+                bg={useColorModeValue('orange.50', 'orange.900')}
+                borderRadius="xl"
+                p={4}
+                mt={6}
+                border="1px solid"
+                borderColor={useColorModeValue('orange.200', 'orange.700')}>
+                <HStack spacing={3} align="start">
+                  <Icon
+                    as={FiAlertCircle}
+                    color={useColorModeValue('orange.600', 'orange.400')}
+                    boxSize={4}
+                    mt={0.5}
+                  />
+                  <VStack spacing={2} align="start" flex={1}>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="600"
+                      color={useColorModeValue('orange.700', 'orange.300')}>
+                      Company Transfer
+                    </Text>
+                    <Text
+                      fontSize="sm"
+                      color={useColorModeValue('orange.700', 'orange.300')}
+                      lineHeight="1.5">
+                      Accepting this invitation will transfer you from your current company to{' '}
+                      <Text as="span" fontWeight="600">
+                        {invitationDetails?.company_name}
+                      </Text>
+                      . Your account data will be preserved, but you'll lose access to your current company's data.
+                    </Text>
+                  </VStack>
                 </HStack>
               </Box>
             )}

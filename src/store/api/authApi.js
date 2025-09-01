@@ -218,16 +218,16 @@ const authApi = baseApi.injectEndpoints({
       query: ({ email }) => ({
         url: 'users/request_password_reset/',
         method: 'POST',
-        body: { email },
-        credentials: 'include'
+        body: { email }
+        // Don't include credentials for password reset - it's a public endpoint
       })
     }),
     confirmPasswordReset: build.mutation({
       query: ({ token, email, new_password }) => ({
         url: 'users/confirm_password_reset/',
         method: 'POST',
-        body: { token, email, new_password },
-        credentials: 'include'
+        body: { token, email, new_password }
+        // Don't include credentials for password reset - it's a public endpoint
       })
     })
   }),

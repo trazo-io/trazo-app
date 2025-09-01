@@ -130,8 +130,7 @@ export const AuthRedirectProvider: React.FC<{ children: React.ReactNode }> = ({ 
         getPendingAction,
         executeStoredAction,
         redirectToAuthWithAction
-      }}
-    >
+      }}>
       {children}
     </AuthRedirectContext.Provider>
   );

@@ -51,6 +51,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
 import { StandardImageGallery } from 'components/ImageGallery';
+import { StandardCard } from 'components/Design/StandardComponents';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
@@ -58,19 +59,9 @@ import defaultParcelImage from 'assets/img/BgMusicCard.png';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+// Note: Main container still uses legacy Card, internal cards migrated to StandardCard
 
-// Add progressive loading imports at the top after existing imports
-import {
-  ProgressiveLoader,
-  FormSkeleton,
-  MobileListSkeleton
-} from 'components/Loading/ProgressiveLoader';
-import {
-  usePerformanceMonitor,
-  useProgressiveLoading,
-  useMobileOptimization
-} from 'hooks/usePerformanceMonitor';
-import { PerformanceSummary } from 'components/Performance/PerformanceSummary';
+// Simplified loading - matching ProfileEstablishment pattern
 
 function ProfileParcel() {
   const intl = useIntl();
@@ -83,20 +74,7 @@ function ProfileParcel() {
   const { establishmentId, parcelId } = useParams();
   const [establishment, setEstablishment] = useState(null);
 
-  // Step 5: Progressive Loading Implementation for Parcel Dashboard
-  const { metrics, markStageComplete, resetTimer } = usePerformanceMonitor();
-  const { isMobile, optimizationStrategy } = useMobileOptimization();
-
-  // Parcel-specific progressive loading configuration
-  const progressiveConfig = {
-    primaryQueries: ['parcel-data', 'parcel-map'], // Critical parcel info
-    secondaryQueries: ['parcel-history', 'parcel-analytics', 'weather-data'], // Enhanced features
-    enableCache: true,
-    targetTime: 3000 // 3-second target for parcel management
-  };
-
-  const { stage, registerQueryLoad, isLoading, primaryLoaded } =
-    useProgressiveLoading(progressiveConfig);
+  // Simplified loading - matching ProfileEstablishment pattern
 
   // Mobile-first responsive design
   const containerPadding = useBreakpointValue({ base: 4, md: 8 });
@@ -134,27 +112,7 @@ function ProfileParcel() {
     }
   }, [establishmentId, establishments]);
 
-  useEffect(() => {
-    resetTimer(); // Reset performance timer
-
-    // Register query loads for performance tracking when data is available
-    if (parcelData && !isParcelLoading) {
-      registerQueryLoad('parcel-data', false, parcelData);
-    }
-
-    // Register map data loading
-    if (parcelData?.polygon && parcelData?.map_metadata) {
-      registerQueryLoad('parcel-map', false, {
-        polygon: parcelData.polygon,
-        metadata: parcelData.map_metadata
-      });
-    }
-
-    // Register secondary data
-    if (parcelData?.history) {
-      registerQueryLoad('parcel-history', false, parcelData.history);
-    }
-  }, [parcelData, isParcelLoading, resetTimer, registerQueryLoad]);
+  // Removed progressive loading useEffect - using simple loading like ProfileEstablishment
 
   const handleShare = async () => {
     try {
@@ -176,34 +134,18 @@ function ProfileParcel() {
     }
   };
 
-  if (stage === 'initial' || isParcelLoading) {
+  // Simple loading state - matching ProfileEstablishment pattern
+  if (isParcelLoading) {
     return (
-      <Container maxW="7xl" mx="auto" pt={containerPadding}>
-        <VStack spacing={cardSpacing}>
-          {/* Performance monitoring for development */}
-          {process.env.NODE_ENV === 'development' && <PerformanceSummary compact />}
-
-          <ProgressiveLoader stage={stage} type={isMobile ? 'mobile-list' : 'form'} />
-
-          {/* Mobile optimization badges */}
-          {isMobile && (
-            <HStack spacing={2} justify="center">
-              <Badge colorScheme="green" fontSize="xs">
-                <HStack spacing={1}>
-                  <Icon as={FaMapMarkerAlt} boxSize={3} />
-                  <Text>Farm Optimized</Text>
-                </HStack>
-              </Badge>
-              <Badge colorScheme="blue" fontSize="xs">
-                <HStack spacing={1}>
-                  <Icon as={FaLeaf} boxSize={3} />
-                  <Text>Parcel Ready</Text>
-                </HStack>
-              </Badge>
-            </HStack>
-          )}
-        </VStack>
-      </Container>
+      <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
+        <Container maxW="6xl" mx="auto" py={20}>
+          <Card bg={bgColor} p={6}>
+            <Text textAlign="center" color={textColor}>
+              Loading parcel data...
+            </Text>
+          </Card>
+        </Container>
+      </Flex>
     );
   }
 
@@ -345,28 +287,89 @@ function ProfileParcel() {
           {/* Header with Actions */}
           <CardHeader mb="24px">
             <HStack spacing={3} mb={4}>
-              <Badge colorScheme="green" fontSize="md" px={3} py={1} borderRadius="full">
-                {intl.formatMessage({ id: 'app.active' }) || 'Active'}
+              {/* Active Badge - Match Establishment Profile Standard */}
+              <Badge 
+                variant="subtle"
+                colorScheme="green"
+                fontSize="sm" 
+                px={4} py={2} 
+                borderRadius="lg"
+                fontWeight="600"
+                textTransform="none"
+                bg="green.50"
+                color="green.700"
+                border="1px solid"
+                borderColor="green.200">
+                <HStack spacing={2}>
+                  <Circle size="8px" bg="green.500" />
+                  <Text>Active</Text>
+                </HStack>
               </Badge>
+              
               {parcelData?.certified && (
-                <Badge colorScheme="blue" fontSize="md" px={3} py={1} borderRadius="full">
-                  Certified
+                <Badge 
+                  variant="subtle"
+                  colorScheme="green"
+                  fontSize="sm" 
+                  px={4} py={2} 
+                  borderRadius="lg"
+                  fontWeight="600"
+                  textTransform="none"
+                  bg="green.50"
+                  color="green.700"
+                  border="1px solid"
+                  borderColor="green.200">
+                  <HStack spacing={2}>
+                    <Circle size="8px" bg="green.500" />
+                    <Text>Certified</Text>
+                  </HStack>
                 </Badge>
               )}
+              
               {parcelData?.carbon_calculation_enabled && (
-                <Badge colorScheme="purple" fontSize="md" px={3} py={1} borderRadius="full">
-                  Carbon Tracking
+                <Badge 
+                  variant="subtle"
+                  colorScheme="purple"
+                  fontSize="sm" 
+                  px={4} py={2} 
+                  borderRadius="lg"
+                  fontWeight="600"
+                  textTransform="none"
+                  bg="purple.50"
+                  color="purple.700"
+                  border="1px solid"
+                  borderColor="purple.200">
+                  <HStack spacing={2}>
+                    <Circle size="8px" bg="purple.500" />
+                    <Text>Carbon Tracking</Text>
+                  </HStack>
                 </Badge>
               )}
+              
               {parcelData?.usda_compliance_eligible && (
-                <Badge colorScheme="orange" fontSize="md" px={3} py={1} borderRadius="full">
-                  USDA Eligible
+                <Badge 
+                  variant="subtle"
+                  colorScheme="orange"
+                  fontSize="sm" 
+                  px={4} py={2} 
+                  borderRadius="lg"
+                  fontWeight="600"
+                  textTransform="none"
+                  bg="orange.50"
+                  color="orange.700"
+                  border="1px solid"
+                  borderColor="orange.200">
+                  <HStack spacing={2}>
+                    <Circle size="8px" bg="orange.500" />
+                    <Text>USDA Eligible</Text>
+                  </HStack>
                 </Badge>
               )}
             </HStack>
             <HStack mt={4} spacing={4} align="center" justify="space-between">
+              {/* Fixed: Removed translation key app.parcelInformation */}
               <Heading color={textColor} fontSize={headerFontSize} fontWeight="bold">
-                {intl.formatMessage({ id: 'app.parcelInformation' }) || 'Parcel Information'}
+                Parcel Information
               </Heading>
               <Menu>
                 <MenuButton
@@ -374,7 +377,14 @@ function ProfileParcel() {
                   icon={<Icon as={MdMoreVert} />}
                   variant="ghost"
                   colorScheme="gray"
-                  size="lg"
+                  size="md"
+                  h="40px"
+                  w="40px"
+                  color="gray.500"
+                  _hover={{ 
+                    bg: "gray.100",
+                    color: "gray.700"
+                  }}
                   aria-label="Open parcel menu"
                 />
                 <MenuList>
@@ -424,16 +434,10 @@ function ProfileParcel() {
                 </Box>
 
                 {/* Basic Information */}
-                <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
-                  <HStack spacing={2} justify="center" mb={4}>
-                    <Icon as={FaBuilding} color="green.500" boxSize={5} />
-                    <Heading as="h3" size="md" color={textColor}>
-                      Basic Information
-                    </Heading>
-                  </HStack>
+                <StandardCard title="Basic Information" variant="flat" icon={FaBuilding} mb={{ base: 4, md: 6 }}>
                   <VStack spacing={3} align="stretch">
                     <HStack>
-                      <Icon as={FaTractor} color="green.500" />
+                      <Icon as={FaTractor} color="green.600" />
                       <Text fontWeight="medium">Name:</Text>
                       <Text>{parcelData?.name}</Text>
                     </HStack>
@@ -451,30 +455,65 @@ function ProfileParcel() {
                     )}
                     {parcelData?.crop_type && (
                       <HStack>
-                        <Icon as={FaSeedling} color="green.500" />
+                        <Icon as={FaSeedling} color="green.600" />
                         <Text fontWeight="medium">Crop Type:</Text>
                         <Text>{parcelData.crop_type}</Text>
                       </HStack>
                     )}
                     {parcelData?.soil_type && (
                       <HStack>
-                        <Icon as={MdEco} color="brown.500" />
+                        <Icon as={MdEco} color="green.600" />
                         <Text fontWeight="medium">Soil Type:</Text>
                         <Text>{parcelData.soil_type}</Text>
                       </HStack>
                     )}
                   </VStack>
-                </Card>
+                </StandardCard>
+
+                {/* Technology & Features Card - CRITICAL for trust building */}
+                <StandardCard title="Technology & Features" variant="flat" icon={FaLeaf} mb={{ base: 4, md: 6 }}>
+                  <VStack spacing={4} align="stretch">
+                    {/* Carbon Calculation Status */}
+                    <HStack justify="space-between">
+                      <HStack>
+                        <Icon as={FaLeaf} color="green.600" />
+                        <Text fontWeight="medium">Carbon Calculation:</Text>
+                      </HStack>
+                      <Badge 
+                        variant="subtle" 
+                        colorScheme={parcelData?.carbon_calculation_enabled ? "green" : "gray"}
+                        px={3} py={1} borderRadius="full"
+                      >
+                        <HStack spacing={2}>
+                          <Circle size="8px" bg={parcelData?.carbon_calculation_enabled ? "green.500" : "gray.400"} />
+                          <Text>{parcelData?.carbon_calculation_enabled ? 'Enabled' : 'Disabled'}</Text>
+                        </HStack>
+                      </Badge>
+                    </HStack>
+
+                    {/* USDA Compliance Status */}
+                    <HStack justify="space-between">
+                      <HStack>
+                        <Icon as={FaCertificate} color="blue.600" />
+                        <Text fontWeight="medium">USDA Compliance:</Text>
+                      </HStack>
+                      <Badge 
+                        variant="subtle" 
+                        colorScheme={parcelData?.usda_compliance_eligible ? "blue" : "gray"}
+                        px={3} py={1} borderRadius="full"
+                      >
+                        <HStack spacing={2}>
+                          <Circle size="8px" bg={parcelData?.usda_compliance_eligible ? "blue.500" : "gray.400"} />
+                          <Text>{parcelData?.usda_compliance_eligible ? 'Eligible' : 'Not Eligible'}</Text>
+                        </HStack>
+                      </Badge>
+                    </HStack>
+                  </VStack>
+                </StandardCard>
 
                 {/* Agricultural Data Section */}
                 {parcelData?.agricultural_details && Object.keys(parcelData.agricultural_details).length > 0 && (
-                  <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
-                    <HStack spacing={2} justify="center" mb={4}>
-                      <Icon as={FaSeedling} color="green.500" boxSize={5} />
-                      <Heading as="h3" size="md" color={textColor}>
-                        Agricultural Practices
-                      </Heading>
-                    </HStack>
+                  <StandardCard title="Agricultural Practices" variant="flat" icon={FaSeedling} mb={{ base: 4, md: 6 }}>
                     
                     <VStack spacing={6} align="stretch">
                       {/* Soil Health Section */}
@@ -598,7 +637,7 @@ function ProfileParcel() {
                           <VStack spacing={2} align="stretch">
                             {parcelData.agricultural_details.cover_crop_management && (
                               <HStack spacing={3} p={3} bg="green.50" borderRadius="md" border="1px" borderColor="green.200">
-                                <Icon as={FaSeedling} color="green.500" />
+                                <Icon as={FaSeedling} color="green.600" />
                                 <VStack spacing={0} align="start">
                                   <Text fontSize="sm" fontWeight="medium" color="gray.700">Cover Crops</Text>
                                   <Text fontSize="xs" color="gray.600">{parcelData.agricultural_details.cover_crop_management}</Text>
@@ -636,20 +675,14 @@ function ProfileParcel() {
                         </Box>
                       )}
                     </VStack>
-                  </Card>
+                  </StandardCard>
                 )}
 
                 {/* Contact Information */}
                 {(parcelData?.contact_person ||
                   parcelData?.contact_email ||
                   parcelData?.contact_phone) && (
-                  <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
-                    <HStack spacing={2} justify="center" mb={4}>
-                      <Icon as={FaPhone} color="green.500" boxSize={5} />
-                      <Heading as="h3" size="md" color={textColor}>
-                        Contact Information
-                      </Heading>
-                    </HStack>
+                  <StandardCard title="Contact Information" variant="flat" icon={FaPhone} mb={{ base: 4, md: 6 }}>
                     <VStack spacing={3} align="stretch">
                       {parcelData?.contact_person && (
                         <HStack>
@@ -677,73 +710,80 @@ function ProfileParcel() {
                         </HStack>
                       )}
                     </VStack>
-                  </Card>
+                  </StandardCard>
                 )}
               </Box>
 
               {/* Right Column */}
               <Box>
-                {/* Location Information */}
-                <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
-                  <HStack spacing={2} justify="center" mb={4}>
-                    <Icon as={MdLocationOn} color="green.500" boxSize={5} />
-                    <Heading as="h3" size="md" color={textColor}>
-                      Location Details
-                    </Heading>
-                  </HStack>
+                {/* Enhanced Location Information */}
+                <StandardCard title="Location Details" variant="flat" icon={MdLocationOn} mb={{ base: 4, md: 6 }}>
                   <VStack spacing={3} align="stretch">
+                    {/* Complete Address */}
                     {parcelData?.address && (
                       <HStack>
-                        <Icon as={FaMapMarkerAlt} color="red.500" />
+                        <Icon as={FaMapMarkerAlt} color="green.600" />
                         <Text fontWeight="medium">Address:</Text>
                         <Text>{parcelData.address}</Text>
                       </HStack>
                     )}
                     {establishment?.city && (
                       <HStack>
-                        <Icon as={MdBusiness} color="blue.500" />
+                        <Icon as={MdBusiness} color="green.600" />
                         <Text fontWeight="medium">City:</Text>
                         <Text>{establishment.city}</Text>
                       </HStack>
                     )}
                     {establishment?.state && (
                       <HStack>
-                        <Icon as={MdBusiness} color="blue.500" />
+                        <Icon as={MdBusiness} color="green.600" />
                         <Text fontWeight="medium">State:</Text>
                         <Text>{establishment.state}</Text>
                       </HStack>
                     )}
                     {establishment?.country && (
                       <HStack>
-                        <Icon as={FaGlobe} color="green.500" />
+                        <Icon as={FaGlobe} color="green.600" />
                         <Text fontWeight="medium">Country:</Text>
                         <Text>{establishment.country}</Text>
                       </HStack>
                     )}
                     {establishment?.zone && (
                       <HStack>
-                        <Icon as={MdLocationOn} color="orange.500" />
+                        <Icon as={MdLocationOn} color="green.600" />
                         <Text fontWeight="medium">Zone:</Text>
                         <Text>{establishment.zone}</Text>
                       </HStack>
                     )}
+                    
+                    {/* Add Coordinates if available */}
+                    {(parcelData?.latitude && parcelData?.longitude) && (
+                      <HStack>
+                        <Icon as={FaGlobe} color="blue.600" />
+                        <Text fontWeight="medium">Coordinates:</Text>
+                        <Text>{parseFloat(parcelData.latitude).toFixed(6)}, {parseFloat(parcelData.longitude).toFixed(6)}</Text>
+                      </HStack>
+                    )}
+                    
+                    {/* Add Elevation if available */}
+                    {parcelData?.elevation && (
+                      <HStack>
+                        <Icon as={FaMapMarkerAlt} color="gray.600" />
+                        <Text fontWeight="medium">Elevation:</Text>
+                        <Text>{parcelData.elevation} ft</Text>
+                      </HStack>
+                    )}
                   </VStack>
-                </Card>
+                </StandardCard>
 
                 {/* Certification Information */}
                 {(parcelData?.certified || parcelData?.certification_type) && (
-                  <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
-                    <HStack spacing={2} justify="center" mb={4}>
-                      <Icon as={FaCertificate} color="green.500" boxSize={5} />
-                      <Heading as="h3" size="md" color={textColor}>
-                        Certification
-                      </Heading>
-                    </HStack>
+                  <StandardCard title="Certification" variant="flat" icon={FaCertificate} mb={{ base: 4, md: 6 }}>
                     <VStack spacing={3} align="stretch">
                       <HStack>
                         <Icon
                           as={FaCertificate}
-                          color={parcelData?.certified ? 'green.500' : 'gray.500'}
+                          color={parcelData?.certified ? 'green.600' : 'gray.500'}
                         />
                         <Text fontWeight="medium">Status:</Text>
                         <Badge colorScheme={parcelData?.certified ? 'green' : 'gray'}>
@@ -752,53 +792,41 @@ function ProfileParcel() {
                       </HStack>
                       {parcelData?.certification_type && (
                         <HStack>
-                          <Icon as={FaCertificate} color="blue.500" />
+                          <Icon as={FaCertificate} color="green.600" />
                           <Text fontWeight="medium">Type:</Text>
                           <Text>{parcelData.certification_type}</Text>
                         </HStack>
                       )}
                     </VStack>
-                  </Card>
+                  </StandardCard>
                 )}
 
                 {/* Company Information */}
-                <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }} mb={{ base: 4, md: 6 }}>
-                  <HStack spacing={2} justify="center" mb={4}>
-                    <Icon as={FaBuilding} color="green.500" boxSize={5} />
-                    <Heading as="h3" size="md" color={textColor}>
-                      Company & Establishment
-                    </Heading>
-                  </HStack>
+                <StandardCard title="Company & Establishment" variant="flat" icon={FaBuilding} mb={{ base: 4, md: 6 }}>
                   <VStack spacing={3} align="stretch">
                     <HStack>
-                      <Icon as={FaBuilding} color="blue.500" />
+                      <Icon as={FaBuilding} color="green.600" />
                       <Text fontWeight="medium">Company:</Text>
                       <Text>{currentCompany?.name}</Text>
                     </HStack>
                     <HStack>
-                      <Icon as={FaTractor} color="green.500" />
+                      <Icon as={FaTractor} color="green.600" />
                       <Text fontWeight="medium">Establishment:</Text>
                       <Text>{establishment?.name}</Text>
                     </HStack>
                   </VStack>
-                </Card>
+                </StandardCard>
               </Box>
             </SimpleGrid>
 
-            {/* Description Section */}
+            {/* About This Parcel Section */}
             {parcelData?.description && (
               <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-                <Card bg={bgColor} borderRadius="xl" boxShadow="sm" p={{ base: 4, md: 6 }}>
-                  <HStack spacing={2} justify="center" mb={4}>
-                    <Icon as={FaRegCommentDots} color="green.500" boxSize={5} />
-                    <Heading as="h3" size="md" color={textColor}>
-                      Description
-                    </Heading>
-                  </HStack>
+                <StandardCard title="About This Parcel" variant="flat" icon={FaRegCommentDots}>
                   <Box>
                     <HTMLRenderer htmlString={parcelData.description} />
                   </Box>
-                </Card>
+                </StandardCard>
               </VStack>
             )}
           </CardBody>

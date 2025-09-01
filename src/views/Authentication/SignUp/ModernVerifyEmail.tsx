@@ -44,6 +44,10 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
   const [canResend, setCanResend] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [redirectProgress, setRedirectProgress] = useState(0);
+  
+  // 🚀 2025 Best Practice: Company joining context from navigation state
+  const isCompanyJoin = location.state?.companyJoin || false;
+  const companyMessage = location.state?.message;
 
   // API hooks
   const [verifyEmail, { isLoading, isSuccess, error, isError }] = useVerifyEmailMutation();
@@ -78,11 +82,23 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
   useEffect(() => {
     if (isSuccess) {
       setStep('success');
+      
+      // 🚀 2025 Best Practice: Context-aware success messaging
+      const successMessage = isCompanyJoin 
+        ? {
+            title: 'Email verified! Welcome to the team!',
+            description: 'Your account is verified and you\'ve been added to the company. Taking you to your dashboard.'
+          }
+        : {
+            title: 'Email verified successfully!',
+            description: 'Welcome to Trazo! Taking you to your dashboard.'
+          };
+      
       toast({
-        title: 'Email verified successfully!',
-        description: 'Welcome to Trazo! Taking you to your dashboard.',
+        title: successMessage.title,
+        description: successMessage.description,
         status: 'success',
-        duration: 3000,
+        duration: 4000,
         isClosable: true
       });
 
@@ -95,7 +111,13 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
           clearInterval(progressInterval);
           const dashboardPath =
             userType === 'consumer' ? '/admin/dashboard/impact' : '/admin/dashboard';
-          navigate(dashboardPath);
+          
+          // 🚀 Add company join context to dashboard URL
+          const dashboardUrl = isCompanyJoin 
+            ? `${dashboardPath}?welcome=true&source=email_verification&company_join=true`
+            : dashboardPath;
+          
+          navigate(dashboardUrl);
         }
       }, 100); // Complete in 2 seconds (20 intervals * 100ms)
     } else if (isError) {
@@ -273,8 +295,15 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
             <Text fontSize="sm" color="gray.500" textAlign="center">
               {step === 'error'
                 ? 'Please check your code and try again, or request a new verification email.'
-                : `We sent a verification code to ${email}. Enter the 6-digit code below.`}
+                : isCompanyJoin
+                  ? `We sent a verification code to ${email}. Once verified, you'll automatically join the company team.`
+                  : `We sent a verification code to ${email}. Enter the 6-digit code below.`}
             </Text>
+            {isCompanyJoin && step !== 'error' && (
+              <Text fontSize="xs" color="green.600" textAlign="center" mt={2} px={4}>
+                🎉 After verification, you'll have immediate access to your team's dashboard and projects.
+              </Text>
+            )}
           </VStack>
 
           {/* Code Input */}
