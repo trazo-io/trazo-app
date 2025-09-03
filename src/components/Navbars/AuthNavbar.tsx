@@ -38,6 +38,7 @@ import {
 import { ProfileIcon, RocketIcon } from 'components/Icons/Icons';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { isProducerSubdomain } from 'utils/subdomain';
 
 import IconBox from 'components/Icons/IconBox';
 import { NavLink } from 'react-router-dom';
@@ -87,12 +88,8 @@ export default function AuthNavbar(props: AuthNavbarProps) {
   const [logout, { isLoading, isSuccess, error, isError }] = useLogoutMutation();
 
   useEffect(() => {
-    const host = window.location.host; // gets the full domain of the app
-
-    const arr = host
-      .split('.')
-      .slice(0, host.includes(import.meta.env.VITE_APP_BASE_DOMAIN) ? -1 : -2);
-    if (arr.length > 0) setSubDomain(arr[0] === 'app');
+    // Use centralized subdomain detection utility
+    setSubDomain(isProducerSubdomain());
   }, []);
 
   const handleLogout = () => {

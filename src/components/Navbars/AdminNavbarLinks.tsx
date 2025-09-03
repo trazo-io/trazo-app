@@ -33,6 +33,7 @@ import {
 // Custom Icons
 import { ProfileIcon, SettingsIcon } from 'components/Icons/Icons';
 import React, { useEffect, useState } from 'react';
+import { getSubdomainType } from 'utils/subdomain';
 
 // Custom Components
 import { NotificationDropdown } from 'components/Notifications/NotificationDropdown';
@@ -123,20 +124,8 @@ export default function HeaderLinks(props: HeaderLinksProps) {
   }, [currentUser]);
 
   useEffect(() => {
-    const host = window.location.host;
-    const arr = host
-      .split('.')
-      .slice(0, host.includes(import.meta.env.VITE_APP_BASE_DOMAIN) ? -1 : -2);
-
-    if (arr.length > 0) {
-      if (arr[0] === 'app') {
-        setSubDomain('producer');
-      } else if (arr[0] === 'consumer') {
-        setSubDomain('consumer');
-      } else {
-        setSubDomain('');
-      }
-    }
+    // Use centralized subdomain detection utility
+    setSubDomain(getSubdomainType());
   }, []);
 
   const handleLogout = () => {

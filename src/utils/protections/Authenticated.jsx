@@ -6,6 +6,7 @@ import { LOGIN_PAGE_URL } from 'config/routes';
 import { useSelector } from 'react-redux';
 import { getAuthRedirectAction } from '../authRedirect';
 import { validateRedirectUrl, createSafeRedirectUrl } from '../urlValidator';
+import { getSubdomainType } from '../subdomain';
 
 const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -28,20 +29,8 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   const { establishmentId } = useParams();
 
   useEffect(() => {
-    const host = window.location.host;
-    const arr = host
-      .split('.')
-      .slice(0, host.includes(import.meta.env.VITE_APP_BASE_DOMAIN) ? -1 : -2);
-
-    if (arr.length > 0) {
-      if (arr[0] === 'app') {
-        setSubDomain('producer');
-      } else if (arr[0] === 'consumer') {
-        setSubDomain('consumer');
-      } else {
-        setSubDomain('');
-      }
-    }
+    // Use centralized subdomain detection utility
+    setSubDomain(getSubdomainType());
   }, []);
 
   useEffect(() => {
