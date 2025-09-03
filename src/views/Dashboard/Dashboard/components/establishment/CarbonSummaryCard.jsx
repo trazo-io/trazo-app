@@ -82,13 +82,18 @@ const CarbonSummaryCard = ({ establishmentId }) => {
   }
 
   return (
-    <Card bg={bgColor} p={{ base: 4, md: 6 }} borderRadius="xl" className="trazo-card" boxShadow="md">
+    <Card
+      bg={bgColor}
+      p={{ base: 4, md: 6 }}
+      borderRadius="xl"
+      className="trazo-card"
+      boxShadow="md">
       <CardHeader p={0} mb={{ base: 4, md: 4 }}>
         <Flex direction="column">
           <HStack spacing={2} align="center">
             <Icon as={FaLeaf} color="green.500" boxSize={{ base: 5, md: 6 }} />
             <Text fontSize={{ base: 'xl', md: 'xl' }} color="gray.700" fontWeight="700">
-              Huella Neta
+              Huella Neta!
             </Text>
           </HStack>
           <Text fontSize={{ base: 'sm', md: 'sm' }} color="gray.500" fontWeight="400" ml={7}>
@@ -99,13 +104,13 @@ const CarbonSummaryCard = ({ establishmentId }) => {
       <CardBody px={0}>
         {/* Metrics Grid - Mobile Optimized */}
         <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: 4, md: 4 }}>
-          <Box 
-            textAlign="center" 
+          <Box
+            textAlign="center"
             p={{ base: 4, md: 2 }}
-            bg={{ base: "red.50", md: "transparent" }}
-            borderRadius={{ base: "lg", md: "none" }}
-            border={{ base: "1px solid", md: "none" }}
-            borderColor={{ base: "red.200", md: "transparent" }}>
+            bg={{ base: 'red.50', md: 'transparent' }}
+            borderRadius={{ base: 'lg', md: 'none' }}
+            border={{ base: '1px solid', md: 'none' }}
+            borderColor={{ base: 'red.200', md: 'transparent' }}>
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 Emisiones Totales
@@ -113,18 +118,18 @@ const CarbonSummaryCard = ({ establishmentId }) => {
               <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="red.500" fontWeight="bold">
                 {(data?.total_emissions || 0).toFixed(2)} kg CO₂e
               </StatNumber>
-              <StatHelpText fontSize={{ base: "sm", md: "xs" }} mt={1}>
+              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
                 <StatArrow type="increase" /> Emisiones del período
               </StatHelpText>
             </Stat>
           </Box>
-          <Box 
-            textAlign="center" 
+          <Box
+            textAlign="center"
             p={{ base: 4, md: 2 }}
-            bg={{ base: "green.50", md: "transparent" }}
-            borderRadius={{ base: "lg", md: "none" }}
-            border={{ base: "1px solid", md: "none" }}
-            borderColor={{ base: "green.200", md: "transparent" }}>
+            bg={{ base: 'green.50', md: 'transparent' }}
+            borderRadius={{ base: 'lg', md: 'none' }}
+            border={{ base: '1px solid', md: 'none' }}
+            borderColor={{ base: 'green.200', md: 'transparent' }}>
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 Compensaciones
@@ -132,18 +137,21 @@ const CarbonSummaryCard = ({ establishmentId }) => {
               <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="green.500" fontWeight="bold">
                 {(data?.total_offsets || 0).toFixed(2)} kg CO₂e
               </StatNumber>
-              <StatHelpText fontSize={{ base: "sm", md: "xs" }} mt={1}>
+              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
                 <StatArrow type="decrease" /> Compensaciones del período
               </StatHelpText>
             </Stat>
           </Box>
-          <Box 
-            textAlign="center" 
+          <Box
+            textAlign="center"
             p={{ base: 4, md: 2 }}
-            bg={{ base: (data?.net_carbon || 0) >= 0 ? "red.50" : "green.50", md: "transparent" }}
-            borderRadius={{ base: "lg", md: "none" }}
-            border={{ base: "1px solid", md: "none" }}
-            borderColor={{ base: (data?.net_carbon || 0) >= 0 ? "red.200" : "green.200", md: "transparent" }}>
+            bg={{ base: (data?.net_carbon || 0) >= 0 ? 'red.50' : 'green.50', md: 'transparent' }}
+            borderRadius={{ base: 'lg', md: 'none' }}
+            border={{ base: '1px solid', md: 'none' }}
+            borderColor={{
+              base: (data?.net_carbon || 0) >= 0 ? 'red.200' : 'green.200',
+              md: 'transparent'
+            }}>
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 Huella Neta
@@ -154,7 +162,7 @@ const CarbonSummaryCard = ({ establishmentId }) => {
                 fontWeight="bold">
                 {(data?.net_carbon || 0).toFixed(2)} kg CO₂e
               </StatNumber>
-              <StatHelpText fontSize={{ base: "sm", md: "xs" }} mt={1}>
+              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
                 <StatArrow type={(data?.net_carbon || 0) >= 0 ? 'increase' : 'decrease'} />
                 {Math.abs(data?.net_carbon || 0).toFixed(2)} kg CO₂e
               </StatHelpText>
@@ -167,7 +175,11 @@ const CarbonSummaryCard = ({ establishmentId }) => {
 
         {/* Progress Section */}
         <Box mb={{ base: 2, md: 2 }}>
-          <Heading size={{ base: 'xs', md: 'sm' }} mb={{ base: 2, md: 3 }} color="green.700" fontWeight="600">
+          <Heading
+            size={{ base: 'xs', md: 'sm' }}
+            mb={{ base: 2, md: 3 }}
+            color="green.700"
+            fontWeight="600">
             Progreso de Compensación
           </Heading>
           <Progress
@@ -179,7 +191,11 @@ const CarbonSummaryCard = ({ establishmentId }) => {
             height={{ base: '12px', md: '16px' }}
             bg="gray.100"
           />
-          <Text textAlign="center" fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="500">
+          <Text
+            textAlign="center"
+            fontSize={{ base: 'xs', md: 'sm' }}
+            color="gray.600"
+            fontWeight="500">
             {offsetPercentage.toFixed(1)}% de las emisiones compensadas
             {offsetPercentage >= 100 && (
               <Text as="span" color="green.500" fontWeight="bold">
