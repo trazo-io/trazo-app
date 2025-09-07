@@ -348,18 +348,6 @@ function FinishProduction() {
                     helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
                   >
                     <TrazoImageUpload
-                      onUploadComplete={(urls) => {
-                        // Convert URLs to objects for compatibility
-                        const imageObjects = urls.map(url => ({ url }));
-                        setUploadedImages(imageObjects);
-                        toast({
-                          title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-                          description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
-                          status: 'success',
-                          duration: 3000,
-                          isClosable: true
-                        });
-                      }}
                       maxFiles={5}
                       maxSize={5 * 1024 * 1024} // 5MB
                       existingImages={uploadedImages.map(img => img.url).filter(Boolean)}

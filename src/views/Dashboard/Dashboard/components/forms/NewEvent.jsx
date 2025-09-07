@@ -1307,16 +1307,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             helpText="Upload photos documenting this agricultural event"
                           >
                             <TrazoImageUpload
-                              onUploadComplete={(urls) => {
-                                setAcceptedFiles(urls.map(url => ({ url })));
-                                toast({
-                                  title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-                                  description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
-                                  status: 'success',
-                                  duration: 3000,
-                                  isClosable: true
-                                });
-                              }}
                               maxFiles={5}
                               maxSize={10 * 1024 * 1024} // 10MB
                               existingImages={acceptedFiles.map(f => f.url).filter(Boolean)}

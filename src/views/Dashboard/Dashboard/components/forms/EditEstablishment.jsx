@@ -1065,47 +1065,6 @@ function EditEstablishment() {
                 </Text>
                 {/* 2025 Modern TrazoImageUpload */}
                 <TrazoImageUpload
-                  onUploadComplete={(urls) => {
-                    // Handle the complete upload flow
-                    setUploadedImageUrls(urls);
-                    
-                    // Add newly uploaded images to existingImages for immediate UI feedback
-                    if (urls.length > 0) {
-                      const newImageObjects = urls.map((url, index) => ({
-                        id: `new-${Date.now()}-${index}`,
-                        url: url,
-                        is_new: true
-                      }));
-                      setExistingImages((prev) => [...prev, ...newImageObjects]);
-                    }
-
-                    // Call the API to save changes
-                    setIsImageUploadOnly(true);
-                    editEstablishment({
-                      companyId: currentCompany.id,
-                      establishmentId,
-                      establishmentData: {
-                        ...currentEstablishment,
-                        images_to_delete: imagesToDelete,
-                        uploaded_image_urls: urls
-                      }
-                    });
-
-                    // Clear states
-                    setSelectedFiles([]);
-                    setImagesToDelete([]);
-
-                    toast({
-                      title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-                      description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
-                      status: 'success',
-                      duration: 3000,
-                      isClosable: true
-                    });
-
-                    // Auto-advance to next tab
-                    socialsTab.current.click();
-                  }}
                   maxFiles={5}
                   maxSize={5 * 1024 * 1024} // 5MB
                   existingImages={existingImages.map((img) => img.url)}
@@ -1121,6 +1080,32 @@ function EditEstablishment() {
                         setImagesToDelete(prev => [...prev, imageToDelete.id]);
                       }
                     });
+
+                    // Check if new images were added (immediate upload complete)
+                    const newUrls = urls.filter(url => !currentUrls.includes(url));
+                    if (newUrls.length > 0) {
+                      // Handle the complete upload flow for new images
+                      setUploadedImageUrls(newUrls);
+                      
+                      // Call the API to save changes
+                      setIsImageUploadOnly(true);
+                      editEstablishment({
+                        companyId: currentCompany.id,
+                        establishmentId,
+                        establishmentData: {
+                          ...currentEstablishment,
+                          images_to_delete: imagesToDelete,
+                          uploaded_image_urls: newUrls
+                        }
+                      });
+
+                      // Clear states
+                      setSelectedFiles([]);
+                      setImagesToDelete([]);
+
+                      // Auto-advance to next tab after delay
+                      setTimeout(() => socialsTab.current.click(), 1000);
+                    }
 
                     // Update existingImages to match the new URL list
                     const updatedImages = urls.map((url, index) => {

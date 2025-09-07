@@ -44,6 +44,7 @@ const Invoices = ({ title, data = [] }) => {
               return (
                 <InvoicesRow
                   key={row.id || index}
+                  id={row.id}
                   date={row.invoice_date || row.date}
                   code={row.stripe_invoice_id || row.code}
                   price={row.amount || row.price}

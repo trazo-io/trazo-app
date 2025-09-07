@@ -207,8 +207,8 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
           {canCreateParcel && (
             <Button
               p="0px"
-              w="100px"
-              h="40px"
+              w="90px"
+              h="90px"
               bg="transparent"
               color="green.500"
               borderRadius="xl"

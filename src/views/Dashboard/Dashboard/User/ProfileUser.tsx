@@ -73,26 +73,28 @@ function ProfileUser() {
         userId: currentUser.id,
         userData: {
           ...data,
-          ...(pictureHasChange && acceptedFiles.length > 0 && { image: acceptedFiles[0] })
+          ...(pictureHasChange && droppedFiles.length > 0 && { image: droppedFiles[0] })
         }
       });
     }
   };
 
-  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
+  const { acceptedFiles: droppedFiles, getRootProps, getInputProps } = useDropzone({
     // onDrop,
-    accept: 'image/*', // Accepted file types
+    accept: {
+      'image/*': []
+    }, // Accepted file types  
     maxFiles: 1 // Maximum number of files
     // maxSize: 1024 * 1024 * 5, // Maximum file size (5 MB)
   });
 
   useEffect(() => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
+    if (droppedFiles.length > 0) {
+      const file = droppedFiles[0];
       setPicture(URL.createObjectURL(file));
       setPictureHasChange(true);
     }
-  }, [acceptedFiles]);
+  }, [droppedFiles]);
 
   useEffect(() => {
     if (currentUser) {

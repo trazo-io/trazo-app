@@ -862,5 +862,6 @@
   "app.billingInformation": "Billing Information",
   "app.invoiceHistory": "Invoice History",
   "app.overview": "Overview",
+  "app.billing": "Billing",
   "app.searchEstablishmentsAndParcels": "Search establishments, parcels..."
 }

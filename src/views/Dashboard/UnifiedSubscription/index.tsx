@@ -42,7 +42,8 @@ import {
   AlertDescription,
   Collapse,
   IconButton,
-  Spinner
+  Spinner,
+  Container
 } from '@chakra-ui/react';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -556,40 +557,50 @@ function UnifiedSubscriptionDashboard() {
   }
 
   return (
-    <Box pt={{ base: '120px', md: '60px', xl: '60px' }}>
-      {/* Header with Refresh */}
-      <Flex mb={6} justifyContent="space-between" alignItems="center">
-        <Box>
-          <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-            {intl.formatMessage({ id: 'app.subscriptionAndUsage' })}
-          </Text>
-          <Text color="gray.500">
-            {intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' })}
-          </Text>
-        </Box>
-        <Button
-          leftIcon={<FaSync />}
-          colorScheme="blue"
-          variant="outline"
-          isLoading={isLoading}
-          onClick={() => {
-            refetchDashboard();
-            handleRefreshData();
-          }}
+    <Box minH="100vh" py={{ base: 4, md: 8 }} px={{ base: 2, md: 6 }}>
+      <VStack spacing={6} align="stretch">
+        {/* Header */}
+        <Flex
+          direction={{ sm: 'column', md: 'row' }}
+          justify="space-between"
+          align="center"
+          gap="24px"
+          paddingTop={12}
+          w="100%"
         >
-          {intl.formatMessage({ id: 'app.refresh' })}
-        </Button>
-      </Flex>
+          <VStack align="start" spacing={1}>
+            <Text color="gray.500" fontSize="md">
+              {intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' })}
+            </Text>
+          </VStack>
 
-      {/* Trial Banner */}
-      {isTrial && (
-        <Card
-          mb={6}
-          borderLeftWidth="4px"
-          borderLeftColor="green.500"
-          overflow="hidden"
-          position="relative"
-        >
+          <HStack spacing={3} alignSelf={{ sm: 'flex-start', lg: 'flex-end' }}>
+            <Button
+              leftIcon={<FaSync />}
+              colorScheme="blue"
+              variant="outline"
+              h="35px"
+              fontSize="xs"
+              isLoading={isLoading}
+              onClick={() => {
+                refetchDashboard();
+                handleRefreshData();
+              }}
+            >
+              {intl.formatMessage({ id: 'app.refresh' })}
+            </Button>
+          </HStack>
+        </Flex>
+
+        {/* Trial Banner */}
+        {isTrial && (
+          <Card
+            mb={6}
+            borderLeftWidth="4px"
+            borderLeftColor="green.500"
+            overflow="hidden"
+            position="relative"
+          >
           <Box
             position="absolute"
             bottom={0}
@@ -631,13 +642,13 @@ function UnifiedSubscriptionDashboard() {
                 {intl.formatMessage({ id: 'app.upgradeNow' })}
               </Button>
             </Flex>
-          </CardBody>
-        </Card>
-      )}
+            </CardBody>
+          </Card>
+        )}
 
-      {/* Main Content with Tabs */}
-      <Card>
-        <CardBody p={0}>
+        {/* Main Content with Tabs */}
+        <Card bg={cardBg} borderColor={borderColor}>
+          <CardBody p={0}>
           <Tabs variant="enclosed" colorScheme="blue">
             <TabList px={6} pt={6} borderBottom="1px" borderColor={borderColor}>
               <Tab
@@ -1275,8 +1286,9 @@ function UnifiedSubscriptionDashboard() {
               </TabPanel>
             </TabPanels>
           </Tabs>
-        </CardBody>
-      </Card>
+          </CardBody>
+        </Card>
+      </VStack>
 
       {/* Add-on Modal */}
       <Modal isOpen={isOpen} onClose={onClose}>

@@ -605,10 +605,10 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
         </CardHeader>
         <CardBody>
           <TrazoImageUpload
-            onFilesSelected={setUploadedImages}
+            onImagesChange={setUploadedImages}
             maxFiles={3}
-            acceptedTypes={['image/jpeg', 'image/png']}
             maxSize={5 * 1024 * 1024} // 5MB
+            existingImages={uploadedImages || []}
           />
         </CardBody>
       </Card>

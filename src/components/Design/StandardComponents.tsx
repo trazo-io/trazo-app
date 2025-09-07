@@ -96,47 +96,91 @@ export const StandardPage = ({
                   </HStack>
                 </Badge> */}
 
-                <Flex
-                  direction="row"
-                  align="center"
-                  gap={4}
-                  w="full"
-                  justify={showBackButton ? 'space-between' : 'center'}>
-                  {showBackButton && (
-                    <Button
-                      variant="outline"
-                      leftIcon={<FaChevronLeft />}
-                      onClick={onBack}
-                      size="sm">
-                      Back
-                    </Button>
-                  )}
-
-                  <VStack spacing={2} flex={1}>
-                    <Heading
-                      as="h1"
-                      size="2xl"
-                      color="green.600"
-                      fontWeight="bold"
-                      textAlign="center"
-                      letterSpacing="-0.02em">
-                      {title}
-                    </Heading>
-                    {description && (
-                      <Text
-                        fontSize="lg"
-                        color="gray.600"
-                        fontWeight="normal"
-                        maxW="70%"
-                        lineHeight="1.7"
-                        textAlign="center">
-                        {description}
-                      </Text>
+                {isMobile ? (
+                  // Mobile: Back button above title for full width
+                  <VStack spacing={4} w="full" align="center">
+                    {showBackButton && (
+                      <Flex w="full" justify="flex-start">
+                        <Button
+                          variant="outline"
+                          leftIcon={<FaChevronLeft />}
+                          onClick={onBack}
+                          size="sm">
+                          Back
+                        </Button>
+                      </Flex>
                     )}
-                  </VStack>
 
-                  {rightAction && <Box>{rightAction}</Box>}
-                </Flex>
+                    <VStack spacing={2} w="full">
+                      <Heading
+                        as="h1"
+                        size="2xl"
+                        color="green.600"
+                        fontWeight="bold"
+                        textAlign="center"
+                        letterSpacing="-0.02em"
+                        w="full">
+                        {title}
+                      </Heading>
+                      {description && (
+                        <Text
+                          fontSize="lg"
+                          color="gray.600"
+                          fontWeight="normal"
+                          maxW="90%"
+                          lineHeight="1.7"
+                          textAlign="center">
+                          {description}
+                        </Text>
+                      )}
+                    </VStack>
+
+                    {rightAction && <Box>{rightAction}</Box>}
+                  </VStack>
+                ) : (
+                  // Desktop: Original horizontal layout
+                  <Flex
+                    direction="row"
+                    align="center"
+                    gap={4}
+                    w="full"
+                    justify={showBackButton ? 'space-between' : 'center'}>
+                    {showBackButton && (
+                      <Button
+                        variant="outline"
+                        leftIcon={<FaChevronLeft />}
+                        onClick={onBack}
+                        size="sm">
+                        Back
+                      </Button>
+                    )}
+
+                    <VStack spacing={2} flex={1}>
+                      <Heading
+                        as="h1"
+                        size="2xl"
+                        color="green.600"
+                        fontWeight="bold"
+                        textAlign="center"
+                        letterSpacing="-0.02em">
+                        {title}
+                      </Heading>
+                      {description && (
+                        <Text
+                          fontSize="lg"
+                          color="gray.600"
+                          fontWeight="normal"
+                          maxW="70%"
+                          lineHeight="1.7"
+                          textAlign="center">
+                          {description}
+                        </Text>
+                      )}
+                    </VStack>
+
+                    {rightAction && <Box>{rightAction}</Box>}
+                  </Flex>
+                )}
               </>
             )}
           </VStack>
@@ -248,8 +292,8 @@ export const StandardStepper = ({
   const titleFontSize = manySteps ? { base: '2xs', md: 'xs' } : { base: 'xs', md: 'sm' };
 
   return (
-    <StandardCard>
-      <Box overflowX="auto" w="100%">
+    <StandardCard padding={{ base: 2, md: 6 }}>
+      <Box overflowX="auto" w="100%" py={2}>
         <HStack
           spacing={spacing}
           justify="center"
@@ -258,7 +302,7 @@ export const StandardStepper = ({
           minW="100%"
           maxW={manySteps ? 'none' : '800px'}
           mx="auto"
-          px={manySteps ? 4 : 0}>
+          px={{ base: 6, md: manySteps ? 4 : 0 }}>
           {steps.map((step, index) => (
             <React.Fragment key={index}>
               <VStack
@@ -937,13 +981,16 @@ export const StandardMediaUpload = ({
     setFileObjectUrls(newUrls);
   }, [acceptedFiles]);
 
+  // Convert string accept prop to object format for react-dropzone v14+
+  const acceptObject = typeof accept === 'string' ? { [accept]: [] } : accept;
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: (acceptedFiles: File[]) => {
-      if (onFilesChange && Array.isArray(acceptedFiles)) {
-        onFilesChange(acceptedFiles);
+    onDrop: (droppedFiles: File[]) => {
+      if (onFilesChange && Array.isArray(droppedFiles)) {
+        onFilesChange(droppedFiles);
       }
     },
-    accept,
+    accept: acceptObject,
     multiple,
     maxFiles,
     maxSize,
@@ -1171,7 +1218,7 @@ export const StandardMediaUpload = ({
       {uploadedFiles.length > 0 && (
         <Box>
           <Text fontSize="sm" fontWeight="medium" color={successColor} mb={3}>
-            ✓ Successfully uploaded ({uploadedFiles.length})
+            Successfully uploaded ({uploadedFiles.length})
           </Text>
           <Grid
             templateColumns={

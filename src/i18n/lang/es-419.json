@@ -799,5 +799,6 @@
   "app.billingInformation": "Información de Facturación",
   "app.invoiceHistory": "Historial de Facturas",
   "app.overview": "Resumen",
+  "app.billing": "Facturación",
   "app.searchEstablishmentsAndParcels": "Buscar establecimientos, parcelas..."
 }

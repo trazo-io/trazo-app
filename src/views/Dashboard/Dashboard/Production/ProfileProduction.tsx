@@ -60,7 +60,8 @@ import {
   FaMoneyBillWave,
   FaLightbulb,
   FaHeart,
-  FaShieldAlt
+  FaShieldAlt,
+  FaChevronLeft
 } from 'react-icons/fa';
 import {
   MdLocationOn,
@@ -74,6 +75,7 @@ import {
   MdOutdoorGrill,
   MdHome
 } from 'react-icons/md';
+import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 import { FiDownload } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -81,6 +83,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 // Components
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
 import { StandardImageGallery } from 'components/ImageGallery';
+import defaultProductionImage from 'assets/img/BgMusicCard.png';
 import TimelineRow from 'components/Tables/TimelineRow';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useSelector } from 'react-redux';
@@ -328,101 +331,76 @@ function ProfileProduction() {
   };
 
   return (
-    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
-      {/* Modern Producer Header */}
-      <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="80px" pb="100px" px={4}>
+    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%" position="relative">
+      {/* Floating Back Button */}
+      <Button
+        position="fixed"
+        top={{ base: '120px', md: '140px' }}
+        left={{ base: 4, md: 6 }}
+        zIndex={1000}
+        variant="outline"
+        leftIcon={<FaChevronLeft />}
+        onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+        size="sm">
+        Back
+      </Button>
+      {/* Clean Modern Header - Standardized */}
+      <Box 
+        bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" 
+        pt={{ base: '120px', md: '140px' }}
+        pb={{ base: '80px', md: '100px' }} 
+        px={{ base: 3, sm: 4, md: 4 }}
+        position="relative">
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
-            {/* Producer Badge */}
-            <Badge
-              colorScheme="green"
-              variant="subtle"
-              fontSize="sm"
-              px={4}
-              py={2}
-              borderRadius="full"
-              textTransform="none">
-              <HStack spacing={2}>
-                <Icon as={FaSeedling} boxSize={4} />
-                <Text fontWeight="medium">
-                  {intl.formatMessage({ id: 'app.productionProfile' }) || 'Production Profile'}
-                </Text>
-              </HStack>
-            </Badge>
-
-            {/* Main Title */}
-            <VStack spacing={3}>
+            {/* Main Title - Standardized */}
+            <VStack spacing={{ base: 4, sm: 3 }}>
               <Heading
                 as="h1"
-                size="2xl"
-                color={titleColor}
+                size={{ base: 'lg', sm: 'xl', md: '2xl', lg: '2xl' }}
+                color="green.600"
                 fontWeight="bold"
                 textAlign="center"
-                letterSpacing="-0.02em">
+                letterSpacing="-0.02em"
+                px={{ base: 2, sm: 0 }}
+                lineHeight={{ base: '1.1', sm: '1.2', md: '1.2' }}
+                maxW={{ base: '90%', sm: '85%', md: '100%' }}
+                noOfLines={{ base: 2, md: 3 }}>
                 {historyData?.product?.name || historyData?.name || 'Loading...'}
               </Heading>
               <Text
-                fontSize="lg"
+                fontSize={{ base: 'lg', sm: 'xl', md: 'lg' }}
                 color="gray.600"
                 fontWeight="normal"
-                maxW={{ base: '90%', sm: '70%', lg: '60%' }}
-                lineHeight="1.7"
-                textAlign="center">
+                maxW={{ base: '95%', sm: '85%', lg: '60%' }}
+                lineHeight={{ base: '1.6', md: '1.7' }}
+                textAlign="center"
+                px={{ base: 2, sm: 0 }}>
                 {`${formatDate(historyData?.start_date)} - ${formatDate(historyData?.finish_date)}`}
               </Text>
             </VStack>
 
-            {/* Action Buttons */}
-            <HStack spacing={4} flexWrap="wrap" justify="center">
-              <Button
-                leftIcon={<Icon as={FaEye} />}
-                colorScheme="green"
-                size="lg"
-                borderRadius="xl"
-                px={6}
-                py={3}
-                fontSize="md"
-                fontWeight="semibold"
-                onClick={handleViewPublicPage}
-                bg="linear-gradient(135deg, #059669 0%, #047857 100%)"
-                _hover={{
-                  bg: 'linear-gradient(135deg, #047857 0%, #065f46 100%)',
-                  transform: 'translateY(-2px)',
-                  boxShadow: 'lg'
-                }}
-                transition="all 0.2s">
-                View Production Public Page
-              </Button>
 
-              <Button
-                leftIcon={<Icon as={FaQrcode} />}
-                variant="outline"
-                colorScheme="green"
-                size="lg"
-                borderRadius="xl"
-                px={6}
-                py={3}
-                onClick={downloadQRCode}
-                _hover={{
-                  bg: 'green.50',
-                  transform: 'translateY(-2px)'
-                }}
-                transition="all 0.2s">
-                Download QR Code
-              </Button>
-            </HStack>
-
-            {/* Quick Stats */}
-            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={6} w="full" maxW="2xl" mt={8}>
-              <VStack>
-                <Circle size="60px" bg="green.100" color="green.600">
-                  <Icon as={FaSeedling} boxSize={6} />
+            {/* Quick Stats - Standardized */}
+            <SimpleGrid 
+              columns={{ base: 2, md: 4 }} 
+              spacing={{ base: 4, sm: 6, md: 6 }} 
+              w="full" 
+              maxW="2xl"
+              px={{ base: 2, sm: 0 }}>
+              <VStack spacing={{ base: 3, sm: 2 }}>
+                <Circle 
+                  size={{ base: '60px', sm: '50px' }} 
+                  bg="green.100" 
+                  color="green.600"
+                  cursor="default">
+                  <Icon as={FaSeedling} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
-                <VStack spacing={1}>
-                  <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                <VStack spacing={{ base: 1, sm: 1 }}>
+                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
                     {historyData?.product?.name ? 'Organic' : 'General'}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Production Type
                   </Text>
                 </VStack>
@@ -442,29 +420,37 @@ function ProfileProduction() {
                 </VStack>
               </VStack>
 
-              <VStack>
-                <Circle size="60px" bg="purple.100" color="purple.600">
-                  <Icon as={FaClipboardList} boxSize={6} />
+              <VStack spacing={{ base: 3, sm: 2 }}>
+                <Circle 
+                  size={{ base: '60px', sm: '50px' }} 
+                  bg="purple.100" 
+                  color="purple.600"
+                  cursor="default">
+                  <Icon as={FaClipboardList} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
-                <VStack spacing={1}>
-                  <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                <VStack spacing={{ base: 1, sm: 1 }}>
+                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
                     {historyData?.events?.length || 0}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Events
                   </Text>
                 </VStack>
               </VStack>
 
-              <VStack>
-                <Circle size="60px" bg="orange.100" color="orange.600">
-                  <Icon as={FaFlag} boxSize={6} />
+              <VStack spacing={{ base: 3, sm: 2 }}>
+                <Circle 
+                  size={{ base: '60px', sm: '50px' }} 
+                  bg="orange.100" 
+                  color="orange.600"
+                  cursor="default">
+                  <Icon as={FaFlag} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
-                <VStack spacing={1}>
-                  <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                <VStack spacing={{ base: 1, sm: 1 }}>
+                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
                     {historyData?.finish_date ? 'Finished' : 'Active'}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Status
                   </Text>
                 </VStack>
@@ -474,112 +460,193 @@ function ProfileProduction() {
         </Container>
       </Box>
 
-      {/* Main Content Container - Modern Overlapping Card */}
-      <Container maxW="7xl" mx="auto" px={containerPadding}>
-        <Box
-          mt="-60px"
-          mb="80px"
-          position="relative"
-          zIndex={10}>
-          <StandardCard
-            variant="elevated"
-            p={{ base: '20px', md: '32px', lg: '40px' }}
-            borderRadius="2xl">
-          {/* Clean Minimalist Header */}
-          <Box p={{ base: 4, md: 6 }} pb={{ base: 4, md: 6 }}>
-            {/* Top Actions Row */}
-            <HStack justify="space-between" align="center" mb={8}>
-              <Badge
-                colorScheme="green"
-                variant="subtle"
-                fontSize="sm"
-                px={3}
-                py={1}
-                borderRadius="full">
-                <HStack spacing={2}>
-                  <Icon as={FaSeedling} boxSize={3} />
-                  <Text>Verification in progress</Text>
-                </HStack>
-              </Badge>
-
-              <Menu>
+      {/* Main Content Container - Standardized with Establishment */}
+      <Flex
+        alignItems="center"
+        justifyContent="center"
+        mb={{ base: '60px', md: '80px' }}
+        mt="-60px"
+        position="relative"
+        zIndex={10}>
+        <Card
+          w={{ base: '100%', sm: '98%', md: '95%', lg: '90%', xl: '85%' }}
+          p={{ base: 4, sm: 5, md: 6, lg: 8 }}
+          boxShadow={{
+            base: '0 8px 16px -4px rgba(0, 0, 0, 0.12)',
+            md: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}
+          borderRadius={{ base: 'xl', md: '2xl' }}
+          bg={bgColor}
+          mx={{ base: 1, sm: 'auto' }}
+          position="relative">
+          {/* Header with Actions - Standardized */}
+          <CardHeader mb={{ base: '16px', md: '24px' }} position="relative">
+            {/* Actions Menu - Top Right Corner */}
+            <Box position="absolute" top={0} right={0} zIndex={10}>
+              <Menu placement="left-start">
                 <MenuButton
                   as={IconButton}
-                  icon={<Icon as={MdMoreVert} />}
+                  icon={<Icon as={IoEllipsisVerticalSharp} />}
                   variant="ghost"
-                  size="sm"
                   colorScheme="gray"
+                  size={{ base: 'md', md: 'md' }}
+                  minH={{ base: '44px', md: '40px' }}
+                  minW={{ base: '44px', md: '40px' }}
+                  aria-label="Open production menu"
+                  _hover={{ bg: 'gray.50' }}
+                  _active={{ bg: 'gray.100' }}
                 />
-                <MenuList>
+                <MenuList fontSize={{ base: 'md', md: 'sm' }} minW={{ base: '200px', md: '180px' }}>
                   <MenuItem
-                    icon={<Icon as={FaEye} />}
+                    icon={<FaEye />}
                     onClick={handleViewPublicPage}
-                    fontWeight="medium">
-                    View Public Page
+                    minH={{ base: '44px', md: '40px' }}>
+                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
+                      View Public Page
+                    </Text>
                   </MenuItem>
                   <MenuItem
-                    icon={<Icon as={FaEdit} />}
+                    icon={<FaEdit />}
                     onClick={() =>
                       navigate(
                         `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${productionId}/change`
                       )
-                    }>
-                    Edit Production
+                    }
+                    minH={{ base: '44px', md: '40px' }}>
+                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
+                      {intl.formatMessage({ id: 'app.edit' }) || 'Edit'}
+                    </Text>
                   </MenuItem>
-                  <MenuItem icon={<Icon as={FaQrcode} />} onClick={downloadQRCode}>
-                    Download QR Code
+                  <MenuItem icon={<FaQrcode />} onClick={downloadQRCode}
+                    minH={{ base: '44px', md: '40px' }}>
+                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
+                      Download QR Code
+                    </Text>
                   </MenuItem>
-                  <MenuItem icon={<Icon as={FaShare} />} onClick={handleShare}>
-                    Share Production
+                  <MenuItem icon={<FaShare />} onClick={handleShare}
+                    minH={{ base: '44px', md: '40px' }}>
+                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
+                      Share
+                    </Text>
+                  </MenuItem>
+                  <MenuItem icon={<FaTrash />} color="red.500"
+                    minH={{ base: '44px', md: '40px' }}>
+                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
+                      {intl.formatMessage({ id: 'app.delete' }) || 'Delete'}
+                    </Text>
                   </MenuItem>
                 </MenuList>
               </Menu>
-            </HStack>
-
-            {/* Clean Title Section */}
-            <VStack align="start" spacing={4}>
-              <Heading
-                size="2xl"
-                color="gray.900"
-                fontWeight="600"
-                letterSpacing="-0.025em"
-                lineHeight="1.2">
-                {historyData?.product?.name || historyData?.name || 'Production'}
-              </Heading>
-
-              <VStack align="start" spacing={2}>
-                <Text fontSize="md" color="gray.600" fontWeight="medium">
-                  {`${formatDate(historyData?.start_date)} - ${formatDate(
-                    historyData?.finish_date
-                  )}`}
-                </Text>
-                <HStack spacing={2} color="gray.500">
-                  <Icon as={FaMapMarkerAlt} boxSize={4} />
-                  <Text fontSize="sm">
-                    {historyData?.parcel?.establishment?.location || 'Farm Location'}
-                  </Text>
-                </HStack>
-              </VStack>
+            </Box>
+            
+            <VStack spacing={{ base: 4, md: 3 }} align="stretch">
+              {/* Status Badges - Standardized */}
+              <Flex 
+                wrap="wrap" 
+                gap={{ base: 3, sm: 4 }} 
+                justify={{ base: 'center', md: 'flex-start' }}
+                align="center">
+                {/* Active Badge - Standardized */}
+                <Badge 
+                  variant="subtle"
+                  colorScheme={historyData?.finish_date ? "gray" : "green"}
+                  fontSize="sm" 
+                  px={4} 
+                  py={2} 
+                  borderRadius="lg"
+                  fontWeight="600"
+                  textTransform="none"
+                  bg={historyData?.finish_date ? "gray.50" : "green.50"}
+                  color={historyData?.finish_date ? "gray.700" : "green.700"}
+                  border="1px solid"
+                  borderColor={historyData?.finish_date ? "gray.200" : "green.200"}>
+                  <HStack spacing={2}>
+                    <Circle size="8px" bg={historyData?.finish_date ? "gray.400" : "green.500"} />
+                    <Text>{historyData?.finish_date ? 'Finished' : 'Active'}</Text>
+                  </HStack>
+                </Badge>
+                
+                {historyData?.product?.name && (
+                  <Badge 
+                    variant="subtle"
+                    colorScheme="green" 
+                    fontSize="sm" 
+                    px={4} 
+                    py={2} 
+                    borderRadius="lg"
+                    fontWeight="500"
+                    textTransform="none"
+                    bg="green.50"
+                    color="green.700"
+                    border="1px solid"
+                    borderColor="green.200">
+                    <HStack spacing={2}>
+                      <Icon as={FaSeedling} boxSize={3} color="green.500" />
+                      <Text>Organic</Text>
+                    </HStack>
+                  </Badge>
+                )}
+                
+                {historyData?.qr_code && (
+                  <Badge 
+                    variant="subtle"
+                    colorScheme="blue" 
+                    fontSize="sm" 
+                    px={4} 
+                    py={2} 
+                    borderRadius="lg"
+                    fontWeight="500"
+                    textTransform="none"
+                    bg="blue.50"
+                    color="blue.700"
+                    border="1px solid"
+                    borderColor="blue.200">
+                    <HStack spacing={2}>
+                      <Icon as={FaQrcode} boxSize={3} color="blue.500" />
+                      <Text>QR Available</Text>
+                    </HStack>
+                  </Badge>
+                )}
+              </Flex>
+              
+              {/* Header Row */}
+              <Flex 
+                align="center" 
+                justify="space-between" 
+                flexWrap={{ base: 'wrap', md: 'nowrap' }}
+                gap={{ base: 3, md: 4 }}>
+                <Heading 
+                  color={textColor} 
+                  fontSize={{ base: 'md', sm: 'lg', md: 'xl' }} 
+                  fontWeight="bold"
+                  textAlign={{ base: 'center', md: 'left' }}
+                  flex="1">
+                  Production Information
+                </Heading>
+              </Flex>
             </VStack>
-          </Box>
+          </CardHeader>
 
-          {/* Content Sections */}
-          <Box px={{ base: 4, md: 6 }} pb={{ base: 4, md: 6 }}>
-            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 6, md: 8 }}>
+          <CardBody>
+            {/* Main Content */}
+            <Box position="relative">
+              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 6, md: 8 }} mb={{ base: 6, md: 8 }}>
               {/* Left Column */}
               <VStack spacing={{ base: 4, md: 6 }} align="stretch">
                 {/* Images */}
-                <StandardCard title="Production Photos" variant="flat">
+                <Box mb={{ base: 4, md: 6 }}>
                   <StandardImageGallery
                     images={historyData?.images || []}
-                    variant="production"
+                    title="Production Photos"
+                    variant="default"
                     enablePreview={true}
                     showImageCount={true}
-                    height="240px"
+                    fallbackImage={defaultProductionImage}
+                    height={{ base: '200px', sm: '250px', md: '280px', lg: '300px' }}
                     showEmptyState={true}
                     maxDisplayImages={3}
                   />
-                </StandardCard>
+                </Box>
 
                 {/* Details */}
                 <StandardCard title="Production Details" variant="flat">
@@ -800,56 +867,69 @@ function ProfileProduction() {
 
               {/* Right Column */}
               <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-                {/* QR Code */}
-                <StandardCard title="QR Code" variant="flat">
-                  <VStack spacing={4}>
-                    <Box
-                      boxSize="180px"
-                      bg="white"
-                      borderRadius="lg"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      border="1px solid"
-                      borderColor="gray.200"
-                      overflow="hidden">
-                      {historyData?.qr_code ? (
-                        <Image
-                          src={historyData.qr_code}
-                          alt="Production QR Code"
-                          boxSize="100%"
-                          objectFit="contain"
-                        />
-                      ) : (
-                        <VStack spacing={2}>
-                          <Icon as={FaQrcode} boxSize={8} color="gray.400" />
-                          <Text fontSize="xs" color="gray.500" textAlign="center">
-                            {historyData?.history_scan ? 'Generating...' : 'Not Available'}
+                {/* Performance & Management */}
+                <StandardCard title="Performance & Management" variant="flat">
+                  <VStack spacing={4} align="stretch">
+                    {historyData?.reputation_score && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={2}>
+                          Reputation Score
+                        </Text>
+                        <HStack spacing={2}>
+                          <Text fontSize="lg" fontWeight="bold" color="green.600">
+                            {(historyData.reputation_score * 20).toFixed(1)}/5.0
                           </Text>
-                        </VStack>
-                      )}
-                    </Box>
+                          <Text fontSize="sm" color="gray.500">
+                            ({historyData.reputation_score}/5 stars)
+                          </Text>
+                        </HStack>
+                      </Box>
+                    )}
+                    
+                    {historyData?.quality_rating && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={2}>
+                          Quality Rating
+                        </Text>
+                        <Text fontSize="lg" fontWeight="bold" color="blue.600">
+                          {historyData.quality_rating}
+                        </Text>
+                      </Box>
+                    )}
 
-                    <Text fontSize="xs" color="gray.500" textAlign="center" maxW="200px">
-                      {historyData?.qr_code
-                        ? 'Scan to view production details'
-                        : 'QR code will be generated when published'}
-                    </Text>
-
-                    <Button
-                      size="sm"
-                      colorScheme="green"
-                      variant="outline"
-                      leftIcon={<Icon as={FaDownload} />}
-                      onClick={downloadQRCode}
-                      isDisabled={!historyData?.qr_code && !historyData?.history_scan}
-                      w="full">
-                      {historyData?.qr_code ? 'Download' : 'Generate'}
-                    </Button>
+                    {/* QR Code Compact Section */}
+                    {historyData?.qr_code && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={2}>
+                          Consumer Access
+                        </Text>
+                        <HStack spacing={3} p={3} bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200">
+                          <Box boxSize="40px" bg="white" borderRadius="md" display="flex" alignItems="center" justifyContent="center">
+                            <Icon as={FaQrcode} color="blue.500" />
+                          </Box>
+                          <VStack spacing={0} align="start" flex={1}>
+                            <Text fontSize="sm" fontWeight="medium" color="blue.800">
+                              QR Code Available
+                            </Text>
+                            <Text fontSize="xs" color="blue.600">
+                              Consumers can scan to view details
+                            </Text>
+                          </VStack>
+                          <IconButton
+                            icon={<Icon as={FaDownload} />}
+                            size="sm"
+                            variant="outline"
+                            colorScheme="blue"
+                            onClick={downloadQRCode}
+                            aria-label="Download QR Code"
+                          />
+                        </HStack>
+                      </Box>
+                    )}
                   </VStack>
                 </StandardCard>
 
-                {/* Producer Information - Reuse CompanyEstablishmentInfo component */}
+                {/* Producer Information */}
                 {historyData?.parcel?.establishment && (
                   <CompanyEstablishmentInfo establishment={historyData.parcel.establishment} />
                 )}
@@ -966,9 +1046,9 @@ function ProfileProduction() {
               </StandardCard>
             </Box>
           </Box>
-          </StandardCard>
-        </Box>
-      </Container>
+          </CardBody>
+        </Card>
+      </Flex>
 
       {/* Week 2 Task 2.1: Voice-to-Event System Integration */}
       <QuickAddEvent

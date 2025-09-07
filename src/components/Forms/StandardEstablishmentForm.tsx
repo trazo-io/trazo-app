@@ -252,6 +252,27 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
 
   const onSubmitForm = async (data: EstablishmentFormData) => {
     try {
+      // Validate all form steps before submission
+      const allStepsValid = await Promise.all([
+        validateStep(0), // Basic Info
+        validateStep(1), // Location  
+        validateStep(2), // Operations
+        validateStep(3)  // Media
+      ]);
+
+      const hasValidationErrors = allStepsValid.some(isValid => !isValid);
+      
+      if (hasValidationErrors) {
+        toast({
+          title: 'Validation Error',
+          description: 'Please review and complete all required fields in previous steps.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true
+        });
+        return;
+      }
+
       // Include uploaded image URLs
       const formDataWithImages = {
         ...data,
@@ -260,17 +281,18 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
       };
 
       await onSubmit(formDataWithImages);
-      toast({
-        title: isEdit ? 'Establishment Updated' : 'Establishment Created',
-        description: `"${data.name}" has been ${isEdit ? 'updated' : 'created'} successfully.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true
-      });
+      
+      // Only show success toast if onSubmit doesn't handle it
+      // (Success and navigation are now handled in AddEstablishment)
     } catch (error) {
+      // Enhanced error handling with more specific messages
+      const errorMessage = error?.response?.data?.message || 
+                          error?.message || 
+                          'Failed to save establishment. Please try again.';
+                          
       toast({
-        title: 'Error',
-        description: 'Failed to save establishment. Please try again.',
+        title: 'Error Creating Establishment',
+        description: errorMessage,
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -675,19 +697,52 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Navigation */}
-                <HStack spacing={3} justify="flex-end" pt={4}>
-                  <StandardButton variant="outline" onClick={onCancel}>
-                    Cancel
-                  </StandardButton>
-                  <StandardButton
-                    onClick={nextStep}
-                    rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}
-                  >
-                    Continue to Location
-                  </StandardButton>
-                </HStack>
+                {/* Mobile-First Navigation */}
+                <Box pt={4}>
+                  {/* Mobile Layout */}
+                  <VStack spacing={3} w="100%" display={{ base: 'flex', md: 'none' }}>
+                    <StandardButton
+                      onClick={nextStep}
+                      w="100%"
+                      size="lg"
+                      h="52px"
+                      fontSize="md"
+                      fontWeight="semibold"
+                      rightIcon={<FaChevronRight />}
+                      disabled={!isStepComplete(0)}
+                      borderRadius="xl"
+                      _hover={{ transform: 'translateY(-1px)' }}
+                    >
+                      Continue
+                    </StandardButton>
+                    <StandardButton 
+                      variant="ghost" 
+                      w="100%" 
+                      size="md"
+                      fontSize="sm"
+                      onClick={onCancel}
+                      borderRadius="xl"
+                    >
+                      Cancel
+                    </StandardButton>
+                  </VStack>
+
+                  {/* Desktop Layout */}
+                  <HStack spacing={3} justify="flex-end" display={{ base: 'none', md: 'flex' }}>
+                    <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
+                      Cancel
+                    </StandardButton>
+                    <StandardButton
+                      onClick={nextStep}
+                      rightIcon={<FaChevronRight />}
+                      disabled={!isStepComplete(0)}
+                      borderRadius="xl"
+                      _hover={{ transform: 'translateY(-1px)' }}
+                    >
+                      Continue to Location
+                    </StandardButton>
+                  </HStack>
+                </Box>
               </VStack>
             </StandardCard>
           )}
@@ -889,25 +944,74 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   </SimpleGrid>
                 </Box>
 
-                {/* Navigation */}
-                <HStack spacing={3} justify="space-between" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
-                    Back to Basic Info
-                  </StandardButton>
+                {/* Mobile-First Navigation */}
+                <Box pt={4}>
+                  {/* Mobile Layout */}
+                  <VStack spacing={3} w="100%" display={{ base: 'flex', md: 'none' }}>
+                    <StandardButton
+                      onClick={nextStep}
+                      w="100%"
+                      size="lg"
+                      h="52px"
+                      fontSize="md"
+                      fontWeight="semibold"
+                      rightIcon={<FaChevronRight />}
+                      borderRadius="xl"
+                      _hover={{ transform: 'translateY(-1px)' }}
+                    >
+                      Next: Operations
+                    </StandardButton>
+                    <HStack spacing={2} w="100%">
+                      <StandardButton
+                        variant="outline"
+                        flex={1}
+                        size="md"
+                        fontSize="sm"
+                        leftIcon={<FaChevronLeft />}
+                        onClick={previousStep}
+                        borderRadius="xl"
+                      >
+                        Back
+                      </StandardButton>
+                      <StandardButton
+                        variant="ghost"
+                        flex={1}
+                        size="md"
+                        fontSize="sm"
+                        onClick={onCancel}
+                        borderRadius="xl"
+                      >
+                        Cancel
+                      </StandardButton>
+                    </HStack>
+                  </VStack>
 
-                  <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                  {/* Desktop Layout */}
+                  <HStack spacing={3} justify="space-between" display={{ base: 'none', md: 'flex' }}>
+                    <StandardButton
+                      variant="outline"
+                      leftIcon={<FaChevronLeft />}
+                      onClick={previousStep}
+                      borderRadius="xl"
+                    >
+                      Back to Basic Info
                     </StandardButton>
-                    <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                      Next: Media
-                    </StandardButton>
+
+                    <HStack spacing={3}>
+                      <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
+                        Cancel
+                      </StandardButton>
+                      <StandardButton 
+                        onClick={nextStep} 
+                        rightIcon={<FaChevronRight />}
+                        borderRadius="xl"
+                        _hover={{ transform: 'translateY(-1px)' }}
+                      >
+                        Next: Operations
+                      </StandardButton>
+                    </HStack>
                   </HStack>
-                </HStack>
+                </Box>
               </VStack>
             </StandardCard>
           )}
@@ -1565,25 +1669,74 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   description="Your establishment information is complete. You can always update these details later."
                 />
 
-                {/* Navigation */}
-                <HStack spacing={3} justify="space-between" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
-                    Back to Location
-                  </StandardButton>
+                {/* Mobile-First Navigation */}
+                <Box pt={4}>
+                  {/* Mobile Layout */}
+                  <VStack spacing={3} w="100%" display={{ base: 'flex', md: 'none' }}>
+                    <StandardButton
+                      onClick={nextStep}
+                      w="100%"
+                      size="lg"
+                      h="52px"
+                      fontSize="md"
+                      fontWeight="semibold"
+                      rightIcon={<FaChevronRight />}
+                      borderRadius="xl"
+                      _hover={{ transform: 'translateY(-1px)' }}
+                    >
+                      Add Photos
+                    </StandardButton>
+                    <HStack spacing={2} w="100%">
+                      <StandardButton
+                        variant="outline"
+                        flex={1}
+                        size="md"
+                        fontSize="sm"
+                        leftIcon={<FaChevronLeft />}
+                        onClick={previousStep}
+                        borderRadius="xl"
+                      >
+                        Back
+                      </StandardButton>
+                      <StandardButton
+                        variant="ghost"
+                        flex={1}
+                        size="md"
+                        fontSize="sm"
+                        onClick={onCancel}
+                        borderRadius="xl"
+                      >
+                        Cancel
+                      </StandardButton>
+                    </HStack>
+                  </VStack>
 
-                  <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                  {/* Desktop Layout */}
+                  <HStack spacing={3} justify="space-between" display={{ base: 'none', md: 'flex' }}>
+                    <StandardButton
+                      variant="outline"
+                      leftIcon={<FaChevronLeft />}
+                      onClick={previousStep}
+                      borderRadius="xl"
+                    >
+                      Back to Location
                     </StandardButton>
-                    <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                      Next: Media
-                    </StandardButton>
+
+                    <HStack spacing={3}>
+                      <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
+                        Cancel
+                      </StandardButton>
+                      <StandardButton 
+                        onClick={nextStep} 
+                        rightIcon={<FaChevronRight />}
+                        borderRadius="xl"
+                        _hover={{ transform: 'translateY(-1px)' }}
+                      >
+                        Next: Media
+                      </StandardButton>
+                    </HStack>
                   </HStack>
-                </HStack>
+                </Box>
               </VStack>
             </StandardCard>
           )}
@@ -1609,30 +1762,85 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Navigation */}
-                <HStack spacing={3} justify="space-between" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
-                    Back to Operations
-                  </StandardButton>
-
-                  <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
-                    </StandardButton>
+                {/* Mobile-First Navigation - 2025 Premium UX */}
+                <Box pt={4}>
+                  {/* Mobile Layout (Stacked) */}
+                  <VStack spacing={3} w="100%" display={{ base: 'flex', md: 'none' }}>
+                    {/* Primary Action - Full Width */}
                     <StandardButton
                       type="submit"
+                      w="100%"
+                      size="lg"
+                      h="52px" // Extra height for mobile touch
+                      fontSize="md"
+                      fontWeight="semibold"
                       isLoading={isLoading}
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
                       leftIcon={<FaCheckCircle />}
+                      borderRadius="xl"
+                      _hover={{ transform: 'translateY(-1px)' }}
                     >
-                      {isEdit ? 'Update Establishment' : 'Create Establishment'}
+                      {isEdit ? 'Update Farm' : 'Create Farm'}
                     </StandardButton>
+                    
+                    {/* Secondary Actions Row */}
+                    <HStack spacing={2} w="100%">
+                      <StandardButton 
+                        variant="outline" 
+                        flex={1}
+                        size="md"
+                        fontSize="sm"
+                        leftIcon={<FaChevronLeft />}
+                        onClick={previousStep}
+                        borderRadius="xl"
+                      >
+                        Back
+                      </StandardButton>
+                      <StandardButton 
+                        variant="ghost" 
+                        flex={1}
+                        size="md"
+                        fontSize="sm"
+                        onClick={onCancel}
+                        borderRadius="xl"
+                      >
+                        Cancel
+                      </StandardButton>
+                    </HStack>
+                  </VStack>
+
+                  {/* Desktop Layout (Horizontal) */}
+                  <HStack spacing={3} justify="space-between" display={{ base: 'none', md: 'flex' }}>
+                    <StandardButton
+                      variant="outline"
+                      leftIcon={<FaChevronLeft />}
+                      onClick={previousStep}
+                      borderRadius="xl"
+                    >
+                      Back to Operations
+                    </StandardButton>
+
+                    <HStack spacing={3}>
+                      <StandardButton 
+                        variant="outline" 
+                        onClick={onCancel}
+                        borderRadius="xl"
+                      >
+                        Cancel
+                      </StandardButton>
+                      <StandardButton
+                        type="submit"
+                        isLoading={isLoading}
+                        loadingText={isEdit ? 'Updating...' : 'Creating...'}
+                        leftIcon={<FaCheckCircle />}
+                        borderRadius="xl"
+                        _hover={{ transform: 'translateY(-1px)' }}
+                      >
+                        {isEdit ? 'Update Establishment' : 'Create Establishment'}
+                      </StandardButton>
+                    </HStack>
                   </HStack>
-                </HStack>
+                </Box>
               </VStack>
             </StandardCard>
           )}

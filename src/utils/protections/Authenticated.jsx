@@ -123,8 +123,31 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
           currentCompany.establishments &&
           !currentCompany.establishments.map((e) => e.id).includes(id)
         ) {
+          // Check if we're navigating from establishment creation (prevent redirect race condition)
+          const isFromEstablishmentCreation = sessionStorage.getItem('creating_establishment') === 'true';
+          const justCreatedId = sessionStorage.getItem('just_created_establishment_id');
+          
+          console.log('🔒 Authenticated.jsx: Establishment not found in cache:', {
+            'establishmentId': id,
+            'isFromEstablishmentCreation': isFromEstablishmentCreation,
+            'justCreatedId': justCreatedId,
+            'availableEstablishments': currentCompany.establishments.map(e => e.id)
+          });
+          
+          // If we just created this establishment, wait for cache to update instead of redirecting
+          if (isFromEstablishmentCreation && justCreatedId == id) {
+            console.log('🔒 Authenticated.jsx: Waiting for newly created establishment to appear in cache, not redirecting');
+            // Clear the flag after a delay to prevent infinite waiting
+            setTimeout(() => {
+              sessionStorage.removeItem('creating_establishment');
+              sessionStorage.removeItem('just_created_establishment_id');
+            }, 3000);
+            return;
+          }
+          
           if (currentCompany.establishments?.length > 0) {
             const establishment = currentCompany.establishments[0].id;
+            console.log('🔒 Authenticated.jsx: Redirecting to first available establishment:', establishment);
             debugNavigate(`/admin/dashboard/establishment/${establishment}`);
           } else {
             debugNavigate(`/admin/dashboard/`);

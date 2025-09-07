@@ -1,14 +1,12 @@
 /**
- * TrazoImageUpload - 2025 Modern Image Upload Component
+ * TrazoImageUpload - 2025 GOLD-STANDARD FARMER-FRIENDLY VERSION
  *
- * Features:
- * - Single unified interface (no multiple buttons)
- * - Drag & drop support
- * - Paste from clipboard
- * - Camera capture on mobile
- * - AI-powered image optimization
- * - Minimalist design aligned with Trazo brand
- * - Environment-aware storage (local dev / S3 production)
+ * Key Improvements for Farmers:
+ * 1. "SELECT = UPLOAD" - No manual upload button
+ * 2. Immediate visual feedback during upload
+ * 3. Clear success/error states
+ * 4. Smart retry mechanisms for poor connections
+ * 5. Works seamlessly across all forms in the app
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
@@ -32,7 +30,11 @@ import {
   AspectRatio,
   useDisclosure,
   Circle,
-  useBreakpointValue
+  useBreakpointValue,
+  Spinner,
+  Alert,
+  AlertIcon,
+  AlertDescription
 } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -43,7 +45,9 @@ import {
   FaCheck,
   FaMobileAlt,
   FaPaste,
-  FaPlus
+  FaPlus,
+  FaExclamationTriangle,
+  FaRedo
 } from 'react-icons/fa';
 import { IoMdImages } from 'react-icons/io';
 import { useFileUpload } from '../../services/uploadService';
@@ -60,6 +64,14 @@ export interface TrazoImageUploadProps {
   onImagesChange?: (urls: string[]) => void;
 }
 
+interface UploadingFile {
+  file: File;
+  previewUrl: string;
+  progress: number;
+  status: 'uploading' | 'success' | 'error';
+  errorMessage?: string;
+}
+
 export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
   onUploadComplete,
   maxFiles = 5,
@@ -68,32 +80,18 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
   isLoading = false,
   onImagesChange
 }) => {
-  // State management
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  // State management - SIMPLIFIED for farmers
+  const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Use existingImages directly from props instead of internal state
+  // Use existingImages directly - these are successfully uploaded
   const uploadedUrls = existingImages || [];
-
-  // Sync with existingImages prop changes
-  useEffect(() => {
-    // Clear any selected files when existingImages changes
-    // This prevents confusion when the parent updates the image list
-    if (existingImages && existingImages.length > 0 && selectedFiles.length > 0) {
-      setSelectedFiles([]);
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
-      setPreviewUrls([]);
-    }
-  }, [existingImages]);
 
   // Hooks
   const toast = useToast();
-  const { uploadMultipleFiles } = useFileUpload();
+  const { uploadFile } = useFileUpload();
   const { isOpen: isPreviewOpen, onOpen: onPreviewOpen, onClose: onPreviewClose } = useDisclosure();
   const [previewIndex, setPreviewIndex] = useState(0);
 
@@ -105,6 +103,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
   const accentColor = useColorModeValue('green.500', 'green.400');
   const uploadBg = useColorModeValue('gray.50', 'gray.700');
   const uploadHoverBg = useColorModeValue('gray.100', 'gray.600');
+  const successColor = useColorModeValue('green.500', 'green.400');
+  const errorColor = useColorModeValue('red.500', 'red.400');
 
   // Responsive values
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -113,57 +113,147 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
   // Cleanup preview URLs
   useEffect(() => {
     return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+      uploadingFiles.forEach(({ previewUrl }) => URL.revokeObjectURL(previewUrl));
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [previewUrls]);
+  }, [uploadingFiles]);
 
-  // Handle file selection
+  // 🔥 GOLD-STANDARD: IMMEDIATE UPLOAD ON SELECTION
   const handleFileSelect = useCallback(
-    (files: File[]) => {
-      const totalFiles = selectedFiles.length + uploadedUrls.length + files.length;
+    async (files: File[]) => {
+      const currentTotal = uploadedUrls.length + uploadingFiles.length;
+      const newTotal = currentTotal + files.length;
 
-      if (totalFiles > maxFiles) {
+      // File type validation (since we removed accept prop)
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const invalidFiles = files.filter((file) => !allowedTypes.includes(file.type));
+      if (invalidFiles.length > 0) {
         toast({
-          title: 'Too many files',
-          description: `You can only upload up to ${maxFiles} images`,
-          status: 'warning',
-          duration: 3000
+          title: 'Invalid file type',
+          description: `Only JPG, PNG, GIF, and WEBP images are allowed`,
+          status: 'error',
+          duration: 4000,
+          isClosable: true
         });
         return;
       }
 
-      // Validate file sizes
+      // Validation
+      if (newTotal > maxFiles) {
+        toast({
+          title: 'Too many photos',
+          description: `You can only add up to ${maxFiles} photos total`,
+          status: 'warning',
+          duration: 4000,
+          isClosable: true
+        });
+        return;
+      }
+
+      // Check file sizes
       const oversizedFiles = files.filter((file) => file.size > maxSize);
       if (oversizedFiles.length > 0) {
         toast({
-          title: 'Files too large',
-          description: `Some files exceed the ${maxSize / 1024 / 1024}MB limit`,
+          title: 'Photos too large',
+          description: `Some photos are too large. Max size: ${maxSize / 1024 / 1024}MB`,
           status: 'error',
-          duration: 3000
+          duration: 4000,
+          isClosable: true
         });
         return;
       }
 
-      // Create preview URLs
-      const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
-      setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
-      setSelectedFiles((prev) => [...prev, ...files]);
+      // 🚜 FARMER-FRIENDLY: Show immediate feedback
+      const newUploadingFiles: UploadingFile[] = files.map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+        progress: 0,
+        status: 'uploading'
+      }));
+
+      setUploadingFiles((prev) => [...prev, ...newUploadingFiles]);
+
+      // 🔥 IMMEDIATELY START UPLOADING - FIXED INDEXING
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        try {
+          // Update progress by file name to avoid indexing issues
+          setUploadingFiles((prev) =>
+            prev.map((item) => (item.file.name === file.name ? { ...item, progress: 25 } : item))
+          );
+
+          // Upload the file
+          const uploadedUrl = await uploadFile(file);
+
+          // Mark as successful by file name
+          setUploadingFiles((prev) =>
+            prev.map((item) =>
+              item.file.name === file.name ? { ...item, progress: 100, status: 'success' } : item
+            )
+          );
+
+          // IMMEDIATELY remove from uploading files BEFORE adding to uploaded
+          setUploadingFiles((prev) => prev.filter((item) => item.file.name !== file.name));
+
+          // Add to uploaded URLs
+          const newUploadedUrls = [...uploadedUrls, uploadedUrl];
+
+          // Notify parent component
+          if (onImagesChange) {
+            onImagesChange(newUploadedUrls);
+          } else if (onUploadComplete) {
+            onUploadComplete([uploadedUrl]);
+          }
+        } catch (error) {
+          console.error(`Upload failed for ${file.name}:`, error);
+
+          // Mark as error by file name
+          setUploadingFiles((prev) =>
+            prev.map((item) =>
+              item.file.name === file.name
+                ? {
+                    ...item,
+                    status: 'error',
+                    errorMessage: 'Upload failed. Tap to retry.'
+                  }
+                : item
+            )
+          );
+
+          // 🚨 CLEAR ERROR FEEDBACK
+          toast({
+            title: '❌ Upload failed',
+            description: `Failed to upload ${file.name}. Check your connection and try again.`,
+            status: 'error',
+            duration: 4000,
+            isClosable: true
+          });
+        }
+      }
     },
-    [selectedFiles, uploadedUrls, maxFiles, maxSize, toast]
+    [
+      uploadedUrls,
+      uploadingFiles,
+      maxFiles,
+      maxSize,
+      toast,
+      uploadFile,
+      onImagesChange,
+      onUploadComplete
+    ]
   );
 
-  // Dropzone configuration - use legacy format for compatibility
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  // Try alternative approach - no accept prop at all, handle validation manually
+  const dropzoneConfig = {
     onDrop: handleFileSelect,
-    accept: 'image/jpeg,image/jpg,image/png,image/gif,image/webp',
-    maxFiles: maxFiles - uploadedUrls.length - selectedFiles.length,
-    maxSize,
-    disabled: isUploading || isLoading,
-    noClick: true // We'll handle clicks manually for better UX
-  });
+    multiple: true,
+    noClick: true,
+    disabled: isLoading
+  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone(dropzoneConfig);
 
   // Handle paste from clipboard
   useEffect(() => {
@@ -172,21 +262,18 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       if (!items) return;
 
       const imageFiles: File[] = [];
-
       for (const item of Array.from(items)) {
         if (item.type.startsWith('image/')) {
           const file = item.getAsFile();
-          if (file) {
-            imageFiles.push(file);
-          }
+          if (file) imageFiles.push(file);
         }
       }
 
       if (imageFiles.length > 0) {
         handleFileSelect(imageFiles);
         toast({
-          title: 'Images pasted',
-          description: `${imageFiles.length} image(s) pasted from clipboard`,
+          title: '📋 Photos pasted',
+          description: `${imageFiles.length} photo(s) pasted from clipboard`,
           status: 'success',
           duration: 2000
         });
@@ -197,7 +284,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
     return () => document.removeEventListener('paste', handlePaste);
   }, [handleFileSelect, toast]);
 
-  // Camera functions
+  // Camera functions (unchanged - already good UX)
   const openCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -215,10 +302,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       setIsCameraOpen(true);
     } catch (error) {
       toast({
-        title: 'Camera access denied',
-        description: 'Please enable camera permissions to take photos',
+        title: 'Camera unavailable',
+        description: 'Please check camera permissions and try again',
         status: 'error',
-        duration: 3000
+        duration: 4000
       });
     }
   };
@@ -236,7 +323,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       canvas.toBlob(
         (blob) => {
           if (blob) {
-            const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            const file = new File([blob], `farm-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
             handleFileSelect([file]);
             closeCamera();
           }
@@ -255,68 +342,57 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
     setIsCameraOpen(false);
   };
 
-  // Upload files
-  const handleUpload = async () => {
-    if (selectedFiles.length === 0) return;
+  // Retry failed upload
+  const retryUpload = async (index: number) => {
+    const failedFile = uploadingFiles[index];
+    if (!failedFile) return;
 
-    setIsUploading(true);
-    setUploadProgress(0);
+    // Reset to uploading state by file name
+    setUploadingFiles((prev) =>
+      prev.map((item) =>
+        item.file.name === failedFile.file.name
+          ? { ...item, status: 'uploading', progress: 0, errorMessage: undefined }
+          : item
+      )
+    );
 
+    // Attempt upload again
     try {
-      // Simulate progress for better UX
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90));
-      }, 200);
+      const uploadedUrl = await uploadFile(failedFile.file);
 
-      const urls = await uploadMultipleFiles(selectedFiles);
+      // Success by file name
+      setUploadingFiles((prev) =>
+        prev.map((item) =>
+          item.file.name === failedFile.file.name
+            ? { ...item, progress: 100, status: 'success' }
+            : item
+        )
+      );
 
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      // Calculate new complete image list with deduplication
-      const newCompleteList = [...new Set([...uploadedUrls, ...urls])];
-
-      // Clear selected files and previews
-      setSelectedFiles([]);
-      setPreviewUrls([]);
-
-      // Primary callback - use onImagesChange if available, fallback to onUploadComplete
+      const newUploadedUrls = [...uploadedUrls, uploadedUrl];
       if (onImagesChange) {
-        onImagesChange(newCompleteList);
-      } else if (onUploadComplete) {
-        onUploadComplete(urls);
+        onImagesChange(newUploadedUrls);
       }
 
       toast({
-        title: 'Images uploaded successfully',
-        description: `${urls.length} image${urls.length > 1 ? 's' : ''} uploaded to your gallery`,
+        title: '✅ Upload successful',
+        description: 'Photo uploaded successfully',
         status: 'success',
-        duration: 3000,
-        isClosable: true
+        duration: 2000
       });
-
-      // Reset progress after a delay
-      setTimeout(() => {
-        setUploadProgress(0);
-      }, 1000);
     } catch (error) {
-      console.error('Upload failed:', error);
-      toast({
-        title: 'Upload failed',
-        description: 'Please try again',
-        status: 'error',
-        duration: 3000
-      });
-    } finally {
-      setIsUploading(false);
+      setUploadingFiles((prev) =>
+        prev.map((item) =>
+          item.file.name === failedFile.file.name
+            ? {
+                ...item,
+                status: 'error',
+                errorMessage: 'Still having trouble. Check your connection.'
+              }
+            : item
+        )
+      );
     }
-  };
-
-  // Remove selected file
-  const removeSelectedFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    URL.revokeObjectURL(previewUrls[index]);
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Remove uploaded image
@@ -325,6 +401,15 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
     if (onImagesChange) {
       onImagesChange(newUrls);
     }
+  };
+
+  // Remove uploading/failed file
+  const removeUploadingFile = (index: number) => {
+    const fileToRemove = uploadingFiles[index];
+    if (fileToRemove) {
+      URL.revokeObjectURL(fileToRemove.previewUrl);
+    }
+    setUploadingFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Open file picker
@@ -341,8 +426,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
     onPreviewOpen();
   };
 
-  const totalImages = uploadedUrls.length + selectedFiles.length;
+  const totalImages = uploadedUrls.length + uploadingFiles.length;
   const canAddMore = totalImages < maxFiles;
+  const isUploading = uploadingFiles.some((file) => file.status === 'uploading');
+  const hasErrors = uploadingFiles.some((file) => file.status === 'error');
 
   return (
     <VStack spacing={4} w="100%" align="stretch">
@@ -368,7 +455,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
               }
             : {}
         }>
-        <input {...getInputProps()} />
+        <input {...getInputProps()} accept="image/jpeg,image/png,image/gif,image/webp" />
 
         {/* Content based on state */}
         {totalImages === 0 ? (
@@ -386,10 +473,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
 
               <VStack spacing={2}>
                 <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                  Add your images
+                  Add your farm photos
                 </Text>
                 <Text fontSize="sm" color={mutedColor} textAlign="center">
-                  Drag & drop, paste, or capture photos
+                  Photos upload automatically when selected
                 </Text>
               </VStack>
 
@@ -404,7 +491,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   onClick={openFilePicker}
                   _hover={{ bg: useColorModeValue('green.600', 'green.500') }}
                   borderRadius="xl">
-                  Choose Files
+                  Choose Photos
                 </Button>
 
                 {isMobile && (
@@ -444,7 +531,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}>
             <Grid templateColumns={`repeat(${gridColumns}, 1fr)`} gap={3}>
-              {/* Uploaded images */}
+              {/* Uploaded images - CLEARLY SUCCESSFUL */}
               {uploadedUrls.map((url, index) => (
                 <AspectRatio key={`uploaded-${index}`} ratio={1}>
                   <Box
@@ -455,30 +542,32 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                     cursor="pointer"
                     onClick={() => openPreview(index)}
                     transition="all 0.2s"
-                    _hover={{ transform: 'scale(1.05)', boxShadow: 'lg' }}>
+                    _hover={{ transform: 'scale(1.05)', boxShadow: 'lg' }}
+                    role="group">
                     <S3Image
                       src={url}
-                      alt={`Image ${index + 1}`}
+                      alt={`Farm photo ${index + 1}`}
                       objectFit="cover"
                       w="100%"
                       h="100%"
                     />
 
-                    {/* Success indicator */}
+                    {/* 🟢 SUCCESS INDICATOR - CLEAR FOR FARMERS */}
                     <Circle
                       position="absolute"
                       top={2}
                       left={2}
-                      size="24px"
-                      bg="green.500"
-                      color="white">
-                      <Icon as={FaCheck} boxSize={3} />
+                      size="28px"
+                      bg={successColor}
+                      color="white"
+                      boxShadow="md">
+                      <Icon as={FaCheck} boxSize={4} />
                     </Circle>
 
                     {/* Remove button */}
                     <IconButton
                       type="button"
-                      aria-label="Remove"
+                      aria-label="Remove photo"
                       icon={<FaTimes />}
                       size="xs"
                       position="absolute"
@@ -498,30 +587,93 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                 </AspectRatio>
               ))}
 
-              {/* Selected files preview */}
-              {selectedFiles.map((file, index) => (
-                <AspectRatio key={`selected-${index}`} ratio={1}>
+              {/* Uploading/Error files - CLEAR STATES */}
+              {uploadingFiles.map((item, index) => (
+                <AspectRatio key={`uploading-${index}`} ratio={1}>
                   <Box
                     position="relative"
                     borderRadius="xl"
                     overflow="hidden"
                     bg="gray.100"
                     border="2px solid"
-                    borderColor={accentColor}
-                    opacity={isUploading ? 0.7 : 1}>
+                    borderColor={
+                      item.status === 'error'
+                        ? errorColor
+                        : item.status === 'success'
+                        ? successColor
+                        : accentColor
+                    }>
                     <Image
-                      src={previewUrls[index]}
-                      alt={file.name}
+                      src={item.previewUrl}
+                      alt={item.file.name}
                       objectFit="cover"
                       w="100%"
                       h="100%"
+                      opacity={item.status === 'uploading' ? 0.7 : 1}
                     />
 
-                    {/* Remove button */}
-                    {!isUploading && (
+                    {/* Status indicators */}
+                    {item.status === 'uploading' && (
+                      <Box
+                        position="absolute"
+                        top="50%"
+                        left="50%"
+                        transform="translate(-50%, -50%)">
+                        <VStack spacing={2}>
+                          <Spinner size="lg" color={accentColor} thickness="4px" />
+                          <Text
+                            fontSize="xs"
+                            color="white"
+                            bg="blackAlpha.700"
+                            px={2}
+                            py={1}
+                            borderRadius="md">
+                            Uploading...
+                          </Text>
+                        </VStack>
+                      </Box>
+                    )}
+
+                    {item.status === 'error' && (
+                      <Box
+                        position="absolute"
+                        top="50%"
+                        left="50%"
+                        transform="translate(-50%, -50%)"
+                        textAlign="center">
+                        <VStack spacing={2}>
+                          <Circle size="40px" bg="red.500" color="white">
+                            <Icon as={FaExclamationTriangle} boxSize={5} />
+                          </Circle>
+                          <Button
+                            size="xs"
+                            colorScheme="red"
+                            leftIcon={<FaRedo />}
+                            onClick={() => retryUpload(index)}
+                            borderRadius="full">
+                            Retry
+                          </Button>
+                        </VStack>
+                      </Box>
+                    )}
+
+                    {item.status === 'success' && (
+                      <Circle
+                        position="absolute"
+                        top={2}
+                        left={2}
+                        size="28px"
+                        bg={successColor}
+                        color="white">
+                        <Icon as={FaCheck} boxSize={4} />
+                      </Circle>
+                    )}
+
+                    {/* Remove button for failed uploads */}
+                    {item.status === 'error' && (
                       <IconButton
                         type="button"
-                        aria-label="Remove"
+                        aria-label="Remove failed photo"
                         icon={<FaTimes />}
                         size="xs"
                         position="absolute"
@@ -530,10 +682,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                         colorScheme="red"
                         variant="solid"
                         borderRadius="full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeSelectedFile(index);
-                        }}
+                        onClick={() => removeUploadingFile(index)}
                       />
                     )}
                   </Box>
@@ -567,45 +716,38 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                 </AspectRatio>
               )}
             </Grid>
-
-            {/* Upload button for selected files */}
-            {selectedFiles.length > 0 && (
-              <Button
-                type="button"
-                mt={4}
-                w="100%"
-                size="lg"
-                bg={accentColor}
-                color="white"
-                leftIcon={<FaCloudUploadAlt />}
-                onClick={handleUpload}
-                isLoading={isUploading}
-                loadingText="Uploading..."
-                _hover={{ bg: useColorModeValue('green.600', 'green.500') }}
-                borderRadius="xl">
-                Upload {selectedFiles.length} image{selectedFiles.length > 1 ? 's' : ''}
-              </Button>
-            )}
           </MotionBox>
         )}
-
-        {/* Upload progress */}
-        {isUploading && uploadProgress > 0 && (
-          <Box position="absolute" bottom={0} left={0} right={0}>
-            <Progress value={uploadProgress} size="xs" colorScheme="green" borderRadius="full" />
-          </Box>
-        )}
       </Box>
+
+      {/* 🚨 ERROR ALERTS - CLEAR FOR FARMERS */}
+      {hasErrors && (
+        <Alert status="error" borderRadius="xl">
+          <AlertIcon />
+          <AlertDescription>
+            Some photos failed to upload. Check your internet connection and tap "Retry" to try
+            again.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* 🔄 UPLOAD STATUS - CLEAR FEEDBACK */}
+      {isUploading && (
+        <Alert status="info" borderRadius="xl">
+          <Spinner size="sm" mr={2} />
+          <AlertDescription>Uploading photos... This may take a moment.</AlertDescription>
+        </Alert>
+      )}
 
       {/* Status text */}
       <HStack justify="space-between" fontSize="sm">
         <Text color={mutedColor}>
-          {totalImages} of {maxFiles} images
+          {uploadedUrls.length} of {maxFiles} photos uploaded
         </Text>
-        <Text color={mutedColor}>Max {maxSize / 1024 / 1024}MB per image</Text>
+        <Text color={mutedColor}>Max {maxSize / 1024 / 1024}MB per photo</Text>
       </HStack>
 
-      {/* Camera Modal */}
+      {/* Camera Modal - Unchanged */}
       <Modal isOpen={isCameraOpen} onClose={closeCamera} size="xl">
         <ModalOverlay />
         <ModalContent borderRadius="2xl">
@@ -619,7 +761,6 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   style={{ width: '100%', height: 'auto' }}
                 />
               </Box>
-
               <HStack spacing={4}>
                 <Button
                   type="button"
@@ -630,7 +771,12 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   borderRadius="xl">
                   Capture Photo
                 </Button>
-                <Button type="button" size="lg" variant="ghost" onClick={closeCamera} borderRadius="xl">
+                <Button
+                  type="button"
+                  size="lg"
+                  variant="ghost"
+                  onClick={closeCamera}
+                  borderRadius="xl">
                   Cancel
                 </Button>
               </HStack>
@@ -639,7 +785,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         </ModalContent>
       </Modal>
 
-      {/* Preview Modal */}
+      {/* Preview Modal - Unchanged */}
       <Modal isOpen={isPreviewOpen} onClose={onPreviewClose} size="xl">
         <ModalOverlay />
         <ModalContent borderRadius="2xl">
@@ -654,7 +800,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
               />
               <IconButton
                 type="button"
-                aria-label="Close"
+                aria-label="Close preview"
                 icon={<FaTimes />}
                 position="absolute"
                 top={4}

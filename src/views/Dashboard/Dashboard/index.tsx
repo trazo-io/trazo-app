@@ -73,14 +73,14 @@ export default function DashboardView() {
   const navigate = useNavigate();
   const currentLocation = useLocation();
   const [establishment, setEstablishment] = useState(null);
-  
+
   // 🚀 2025 Best Practice: Welcome banner for new company joiners
   const searchParams = new URLSearchParams(currentLocation.search);
   const showWelcome = searchParams.get('welcome') === 'true';
   const joinSource = searchParams.get('source');
   const isCompanyJoin = searchParams.get('company_join') === 'true';
   const [welcomeBannerVisible, setWelcomeBannerVisible] = useState(showWelcome);
-  
+
   // Clean URL parameters after showing welcome banner
   useEffect(() => {
     if (showWelcome) {
@@ -95,7 +95,13 @@ export default function DashboardView() {
 
   // Force horizontal scroll for ALL screen sizes - no Grid layout wrapping
   const isMobile = true; // Always use horizontal scroll layout
-  const cardWidth = useBreakpointValue({ base: '280px', sm: '300px', md: '320px', lg: '340px', xl: 'auto' });
+  const cardWidth = useBreakpointValue({
+    base: '280px',
+    sm: '300px',
+    md: '320px',
+    lg: '340px',
+    xl: 'auto'
+  });
   const cardHeight = useBreakpointValue({ base: '100px', md: '90px', lg: '90px', xl: '90px' });
 
   // State for scroll progress tracking
@@ -112,7 +118,7 @@ export default function DashboardView() {
 
     const { scrollWidth, clientWidth } = establishmentScrollRef.current;
     const canScroll = scrollWidth > clientWidth;
-    
+
     console.log('🏢 [Dashboard] Checking establishment scrollability:', {
       scrollWidth,
       clientWidth,
@@ -321,6 +327,12 @@ export default function DashboardView() {
       establishment = establishments.filter(
         (establishment) => establishment.id.toString() === establishmentId
       )[0];
+      console.log('🏗️ Dashboard useEffect: Setting establishment data', {
+        establishmentId,
+        establishment: establishment?.name,
+        parcelCount: establishment?.parcels?.length,
+        parcels: establishment?.parcels?.map(p => p.name || p.id)
+      });
       setEstablishment(establishment);
     }
   }, [establishmentId, establishments]);
@@ -341,18 +353,19 @@ export default function DashboardView() {
 
   // Redirect to first establishment when accessing root dashboard
   useEffect(() => {
-    // Only redirect if we're on the exact dashboard root and have establishments
-    if (
-      location.pathname === '/admin/dashboard' &&
-      establishments &&
-      establishments.length > 0 &&
-      !establishmentId
-    ) {
+    // Only redirect if we're on the exact dashboard root (not any establishment page)
+    // and we have establishments but no establishmentId in the URL
+    const isExactDashboardRoot = location.pathname === '/admin/dashboard';
+    const hasEstablishments = establishments && establishments.length > 0;
+    const noEstablishmentInUrl = !establishmentId;
+
+    // RTK Query optimistic updates handle cache consistency, so we can redirect normally
+    if (isExactDashboardRoot && hasEstablishments && noEstablishmentInUrl) {
       const firstEstablishment = establishments[0].id;
       console.log('DashboardView: Redirecting to first establishment:', firstEstablishment);
       navigate(`/admin/dashboard/establishment/${firstEstablishment}`, { replace: true });
     }
-  }, [location.pathname, establishments, establishmentId, navigate]);
+  }, [location.pathname, establishmentId, navigate]); // Removed establishments dependency to reduce triggers
 
   // Check establishment scrollability on mount and when data changes
   useEffect(() => {
@@ -401,7 +414,7 @@ export default function DashboardView() {
       minH="100vh">
       {/* Enhanced Trial Status Banner */}
       <TrialStatusBanner />
-      
+
       {/* 🚀 2025 Best Practice: Welcome Banner for New Company Joiners */}
       {welcomeBannerVisible && (
         <Box
@@ -411,8 +424,7 @@ export default function DashboardView() {
           p={4}
           mb={4}
           borderRadius="md"
-          position="relative"
-        >
+          position="relative">
           <Flex justify="space-between" align="center">
             <Box>
               <Text fontSize="lg" fontWeight="bold" color="green.800" mb={2}>
@@ -420,11 +432,10 @@ export default function DashboardView() {
               </Text>
               <Text color="green.700" fontSize="sm">
                 {isCompanyJoin
-                  ? 'Your email is verified and you\'ve successfully joined the company! You can start tracking carbon impact immediately.'
-                  : joinSource === 'company_join' 
-                    ? 'Your account is ready and you can start tracking carbon impact immediately. Check your email for additional setup information.'
-                    : 'Welcome to your dashboard! You can start exploring right away.'
-                }
+                  ? "Your email is verified and you've successfully joined the company! You can start tracking carbon impact immediately."
+                  : joinSource === 'company_join'
+                  ? 'Your account is ready and you can start tracking carbon impact immediately. Check your email for additional setup information.'
+                  : 'Welcome to your dashboard! You can start exploring right away.'}
               </Text>
             </Box>
             <Button
@@ -432,8 +443,7 @@ export default function DashboardView() {
               variant="ghost"
               color="green.600"
               onClick={() => setWelcomeBannerVisible(false)}
-              _hover={{ bg: 'green.100' }}
-            >
+              _hover={{ bg: 'green.100' }}>
               ✕
             </Button>
           </Flex>
@@ -449,7 +459,10 @@ export default function DashboardView() {
       /> */}
 
       <Box>
-        <Flex direction={{ base: 'column', xl: 'row' }} gap={{ base: 4, md: 4, lg: 5, xl: 6 }} align="flex-start">
+        <Flex
+          direction={{ base: 'column', xl: 'row' }}
+          gap={{ base: 4, md: 4, lg: 5, xl: 6 }}
+          align="flex-start">
           <Box flex="2" w="100%" pt={{ base: 3, md: 4, lg: 6, xl: 0 }}>
             <VStack spacing={3} align="stretch">
               {/* Mobile: Simple Horizontal Scrollable Layout */}
@@ -459,6 +472,7 @@ export default function DashboardView() {
                     ref={establishmentScrollRef}
                     overflowX="auto"
                     overflowY="hidden"
+                    pt="2px"
                     onScroll={handleEstablishmentScroll}
                     sx={{
                       '&::-webkit-scrollbar': {
@@ -723,12 +737,17 @@ export default function DashboardView() {
             // Required props for backend API call
             companyId={activeCompany?.id}
             establishmentId={establishment.id}
-            
             // Smart action handlers
-            onViewAnalytics={() => navigate(`/admin/dashboard/establishment/${establishment.id}/commercial`)}
+            onViewAnalytics={() =>
+              navigate(`/admin/dashboard/establishment/${establishment.id}/commercial`)
+            }
             onUpgradeSubscription={() => navigate('/admin/dashboard/pricing')}
-            onOptimizeCarbon={() => navigate(`/admin/dashboard/establishment/${establishment.id}/productions`)}
-            onShareTransparency={() => navigate(`/admin/dashboard/establishment/${establishment.id}/commercial`)}
+            onOptimizeCarbon={() =>
+              navigate(`/admin/dashboard/establishment/${establishment.id}/productions`)
+            }
+            onShareTransparency={() =>
+              navigate(`/admin/dashboard/establishment/${establishment.id}/commercial`)
+            }
           />
         ) : (
           <Card minH="290px" bg={cardBg} />

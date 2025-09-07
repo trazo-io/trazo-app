@@ -336,6 +336,16 @@ export const billingApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       providesTags: [{ type: 'Company', id: 'LIST' }]
+    }),
+
+    // Invoice download endpoint
+    downloadInvoice: builder.mutation<Blob, number>({
+      query: (invoiceId) => ({
+        url: `invoices/${invoiceId}/download/`,
+        method: 'GET',
+        credentials: 'include',
+        responseHandler: (response) => response.blob()
+      })
     })
   })
 });
@@ -356,5 +366,6 @@ export const {
   useCreateCheckoutSessionMutation,
   useCreateCustomerPortalSessionMutation,
   useSubscribeBlockchainMutation,
-  useGetBlockchainSubscriptionStatusQuery
+  useGetBlockchainSubscriptionStatusQuery,
+  useDownloadInvoiceMutation
 } = billingApi;

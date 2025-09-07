@@ -23,7 +23,6 @@ import CardHeader from 'components/Card/CardHeader';
 import Editor from 'components/Editor/Editor';
 import FormInput from 'components/Forms/FormInput';
 import { FormProvider } from 'react-hook-form';
-import { useDropzone } from 'react-dropzone';
 
 function FormLayout(props) {
   const { tabsList, activeBullets, lineWidth, lineLeft, children } = props;

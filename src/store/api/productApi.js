@@ -91,7 +91,14 @@ export const productApi = baseApi.injectEndpoints({
           formData: true
         };
       },
-      invalidatesTags: (result) => (result ? ['Parcel'] : [])
+      invalidatesTags: (result, error, { establishmentId }) => 
+        result 
+          ? [
+              'Parcel',
+              { type: 'Establishment', id: establishmentId },
+              'Company' // ✅ CRITICAL: Invalidate Company to refresh establishments with new parcels
+            ] 
+          : []
     }),
     updateParcel: build.mutation({
       query: ({ companyId, establishmentId, parcelId, parcelData }) => {
@@ -164,7 +171,11 @@ export const productApi = baseApi.injectEndpoints({
           formData: true
         };
       },
-      invalidatesTags: (result, error, { parcelId }) => [{ type: 'Parcel', parcelId }]
+      invalidatesTags: (result, error, { parcelId, establishmentId }) => [
+        { type: 'Parcel', parcelId },
+        { type: 'Establishment', id: establishmentId },
+        'Company' // Also refresh company data when updating parcels
+      ]
     }),
     getProducts: build.query({
       query: () => ({

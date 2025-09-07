@@ -52,7 +52,6 @@ import Editor from 'components/Editor/Editor';
 import Header from 'views/Pages/Profile/Overview/components/Header';
 import ProfileBgImage from 'assets/img/ProfileBackground.png';
 import avatar4 from 'assets/img/avatars/avatar4.png';
-import { useDropzone } from 'react-dropzone';
 
 const reducer = (state, action) => {
   if (action.type === 'SWITCH_ACTIVE') {
@@ -110,7 +109,6 @@ function NewProduct() {
   const socialsTab = useRef();
   const pricingTab = useRef();
 
-  const { getRootProps, getInputProps } = useDropzone();
 
   const keyPress = (e) => {
     if (e.keyCode === 13) {

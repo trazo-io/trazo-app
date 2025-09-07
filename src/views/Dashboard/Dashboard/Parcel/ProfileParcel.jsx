@@ -22,7 +22,8 @@ import {
   MenuItem,
   MenuList,
   useToast,
-  IconButton
+  IconButton,
+  Button
 } from '@chakra-ui/react';
 import {
   FaMapMarkedAlt,
@@ -43,15 +44,17 @@ import {
   FaRegListAlt,
   FaCalendar,
   FaLeaf,
-  FaTint
+  FaTint,
+  FaChevronLeft
 } from 'react-icons/fa';
-import { MdLocationOn, MdBusiness, MdEco, MdMoreVert } from 'react-icons/md';
+import { MdLocationOn, MdBusiness, MdEco, MdVerified } from 'react-icons/md';
+import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
 import { StandardImageGallery } from 'components/ImageGallery';
-import { StandardCard } from 'components/Design/StandardComponents';
+import { StandardCard, StandardPage } from 'components/Design/StandardComponents';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
@@ -164,103 +167,129 @@ function ProfileParcel() {
   }
 
   return (
-    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
-      {/* Clean Modern Header */}
-      <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="80px" pb="100px" px={4}>
+    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%" position="relative">
+      {/* Floating Back Button */}
+      <Button
+        position="fixed"
+        top={{ base: '120px', md: '140px' }}
+        left={{ base: 4, md: 6 }}
+        zIndex={1000}
+        variant="outline"
+        leftIcon={<FaChevronLeft />}
+        onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
+        size="sm">
+        Back
+      </Button>
+      {/* Clean Modern Header - Standardized with Establishment */}
+      <Box 
+        bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" 
+        pt={{ base: '120px', md: '140px' }}
+        pb={{ base: '80px', md: '100px' }} 
+        px={{ base: 3, sm: 4, md: 4 }}
+        position="relative">
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
-            {/* Parcel Badge */}
-            <Badge
-              colorScheme="green"
-              variant="subtle"
-              fontSize="sm"
-              px={4}
-              py={2}
-              borderRadius="full"
-              textTransform="none">
-              <HStack spacing={2}>
-                <Icon as={FaTractor} boxSize={4} />
-                <Text fontWeight="medium">
-                  {intl.formatMessage({ id: 'app.parcelProfile' }) || 'Parcel Profile'}
-                </Text>
-              </HStack>
-            </Badge>
-
-            {/* Main Title */}
-            <VStack spacing={3}>
+            {/* Main Title - Standardized */}
+            <VStack spacing={{ base: 4, sm: 3 }}>
               <Heading
                 as="h1"
-                size="2xl"
-                color={titleColor}
+                size={{ base: 'lg', sm: 'xl', md: '2xl', lg: '2xl' }}
+                color="green.600"
                 fontWeight="bold"
                 textAlign="center"
-                letterSpacing="-0.02em">
+                letterSpacing="-0.02em"
+                px={{ base: 2, sm: 0 }}
+                lineHeight={{ base: '1.1', sm: '1.2', md: '1.2' }}
+                maxW={{ base: '90%', sm: '85%', md: '100%' }}
+                noOfLines={{ base: 2, md: 3 }}>
                 {parcelData?.name || 'Loading...'}
               </Heading>
               <Text
-                fontSize="lg"
+                fontSize={{ base: 'lg', sm: 'xl', md: 'lg' }}
                 color="gray.600"
                 fontWeight="normal"
-                maxW={{ base: '90%', sm: '70%', lg: '60%' }}
-                lineHeight="1.7"
-                textAlign="center">
+                maxW={{ base: '95%', sm: '85%', lg: '60%' }}
+                lineHeight={{ base: '1.6', md: '1.7' }}
+                textAlign="center"
+                px={{ base: 2, sm: 0 }}>
                 {establishment?.name || 'Sustainable Agriculture'}
               </Text>
             </VStack>
 
-            {/* Quick Stats */}
-            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={6} w="full" maxW="2xl">
-              <VStack>
-                <Circle size="50px" bg="green.100" color="green.600">
-                  <Icon as={FaTractor} boxSize={6} />
+            {/* Quick Stats - Standardized with Establishment */}
+            <SimpleGrid 
+              columns={{ base: 2, md: 4 }} 
+              spacing={{ base: 4, sm: 6, md: 6 }} 
+              w="full" 
+              maxW="2xl"
+              px={{ base: 2, sm: 0 }}>
+              <VStack spacing={{ base: 3, sm: 2 }}>
+                <Circle 
+                  size={{ base: '60px', sm: '50px' }} 
+                  bg="green.100" 
+                  color="green.600"
+                  cursor="default">
+                  <Icon as={FaTractor} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
-                <VStack spacing={1}>
-                  <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                <VStack spacing={{ base: 1, sm: 1 }}>
+                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
                     {parcelData?.area || '--'}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Acres
                   </Text>
                 </VStack>
               </VStack>
 
-              <VStack>
-                <Circle size="50px" bg="blue.100" color="blue.600">
-                  <Icon as={FaSeedling} boxSize={6} />
+              <VStack spacing={{ base: 3, sm: 2 }}>
+                <Circle 
+                  size={{ base: '60px', sm: '50px' }} 
+                  bg="blue.100" 
+                  color="blue.600"
+                  cursor="default">
+                  <Icon as={FaSeedling} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
-                <VStack spacing={1}>
-                  <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                <VStack spacing={{ base: 1, sm: 1 }}>
+                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
                     {parcelData?.crop_type || '--'}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Crop Type
                   </Text>
                 </VStack>
               </VStack>
 
-              <VStack>
-                <Circle size="50px" bg="purple.100" color="purple.600">
-                  <Icon as={MdEco} boxSize={6} />
+              <VStack spacing={{ base: 3, sm: 2 }}>
+                <Circle 
+                  size={{ base: '60px', sm: '50px' }} 
+                  bg="purple.100" 
+                  color="purple.600"
+                  cursor="default">
+                  <Icon as={MdEco} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
-                <VStack spacing={1}>
-                  <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                <VStack spacing={{ base: 1, sm: 1 }}>
+                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
                     {parcelData?.soil_type || '--'}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Soil Type
                   </Text>
                 </VStack>
               </VStack>
 
-              <VStack>
-                <Circle size="50px" bg="orange.100" color="orange.600">
-                  <Icon as={FaCertificate} boxSize={6} />
+              <VStack spacing={{ base: 3, sm: 2 }}>
+                <Circle 
+                  size={{ base: '60px', sm: '50px' }} 
+                  bg="orange.100" 
+                  color="orange.600"
+                  cursor="default">
+                  <Icon as={FaCertificate} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
-                <VStack spacing={1}>
-                  <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                <VStack spacing={{ base: 1, sm: 1 }}>
+                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
                     {parcelData?.certified ? 'Yes' : 'No'}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Certified
                   </Text>
                 </VStack>
@@ -270,36 +299,92 @@ function ProfileParcel() {
         </Container>
       </Box>
 
-      {/* Main Content Container - Overlapping Card */}
+      {/* Main Content Container - Standardized with Establishment */}
       <Flex
         alignItems="center"
         justifyContent="center"
-        mb="80px"
+        mb={{ base: '60px', md: '80px' }}
         mt="-60px"
         position="relative"
         zIndex={10}>
         <Card
-          w={{ base: '95%', md: '90%', lg: '85%' }}
-          p={{ base: '20px', md: '32px', lg: '40px' }}
-          boxShadow="0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-          borderRadius="2xl"
-          bg={bgColor}>
-          {/* Header with Actions */}
-          <CardHeader mb="24px">
-            <HStack spacing={3} mb={4}>
-              {/* Active Badge - Match Establishment Profile Standard */}
-              <Badge 
-                variant="subtle"
-                colorScheme="green"
-                fontSize="sm" 
-                px={4} py={2} 
-                borderRadius="lg"
-                fontWeight="600"
-                textTransform="none"
-                bg="green.50"
-                color="green.700"
-                border="1px solid"
-                borderColor="green.200">
+          w={{ base: '100%', sm: '98%', md: '95%', lg: '90%', xl: '85%' }}
+          p={{ base: 4, sm: 5, md: 6, lg: 8 }}
+          boxShadow={{
+            base: '0 8px 16px -4px rgba(0, 0, 0, 0.12)',
+            md: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}
+          borderRadius={{ base: 'xl', md: '2xl' }}
+          bg={bgColor}
+          mx={{ base: 1, sm: 'auto' }}
+          position="relative">
+          {/* Header with Actions - Standardized */}
+          <CardHeader mb={{ base: '16px', md: '24px' }} position="relative">
+            {/* Actions Menu - Top Right Corner */}
+            <Box position="absolute" top={0} right={0} zIndex={10}>
+              <Menu placement="left-start">
+                <MenuButton
+                  as={IconButton}
+                  icon={<Icon as={IoEllipsisVerticalSharp} />}
+                  variant="ghost"
+                  colorScheme="gray"
+                  size={{ base: 'md', md: 'md' }}
+                  minH={{ base: '44px', md: '40px' }}
+                  minW={{ base: '44px', md: '40px' }}
+                  aria-label="Open parcel menu"
+                  _hover={{ bg: 'gray.50' }}
+                  _active={{ bg: 'gray.100' }}
+                />
+                <MenuList fontSize={{ base: 'md', md: 'sm' }} minW={{ base: '200px', md: '180px' }}>
+                  <MenuItem
+                    onClick={() =>
+                      navigate(
+                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
+                      )
+                    }
+                    icon={<FaEdit />}
+                    minH={{ base: '44px', md: '40px' }}>
+                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
+                      {intl.formatMessage({ id: 'app.edit' }) || 'Edit'}
+                    </Text>
+                  </MenuItem>
+                  <MenuItem icon={<FaShare />} onClick={handleShare}
+                    minH={{ base: '44px', md: '40px' }}>
+                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
+                      Share
+                    </Text>
+                  </MenuItem>
+                  <MenuItem icon={<FaTrash />} color="red.500"
+                    minH={{ base: '44px', md: '40px' }}>
+                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
+                      {intl.formatMessage({ id: 'app.delete' }) || 'Delete'}
+                    </Text>
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            </Box>
+            
+            <VStack spacing={{ base: 4, md: 3 }} align="stretch">
+              {/* Status Badges - Standardized */}
+              <Flex 
+                wrap="wrap" 
+                gap={{ base: 3, sm: 4 }} 
+                justify={{ base: 'center', md: 'flex-start' }}
+                align="center">
+                {/* Active Badge - Standardized */}
+                <Badge 
+                  variant="subtle"
+                  colorScheme="green"
+                  fontSize="sm" 
+                  px={4} 
+                  py={2} 
+                  borderRadius="lg"
+                  fontWeight="600"
+                  textTransform="none"
+                  bg="green.50"
+                  color="green.700"
+                  border="1px solid"
+                  borderColor="green.200">
                 <HStack spacing={2}>
                   <Circle size="8px" bg="green.500" />
                   <Text>Active</Text>
@@ -309,18 +394,19 @@ function ProfileParcel() {
               {parcelData?.certified && (
                 <Badge 
                   variant="subtle"
-                  colorScheme="green"
+                  colorScheme="blue"
                   fontSize="sm" 
-                  px={4} py={2} 
+                  px={4} 
+                  py={2} 
                   borderRadius="lg"
                   fontWeight="600"
                   textTransform="none"
-                  bg="green.50"
-                  color="green.700"
+                  bg="blue.50"
+                  color="blue.700"
                   border="1px solid"
-                  borderColor="green.200">
+                  borderColor="blue.200">
                   <HStack spacing={2}>
-                    <Circle size="8px" bg="green.500" />
+                    <Icon as={FaCertificate} boxSize={3} color="blue.500" />
                     <Text>Certified</Text>
                   </HStack>
                 </Badge>
@@ -331,16 +417,17 @@ function ProfileParcel() {
                   variant="subtle"
                   colorScheme="purple"
                   fontSize="sm" 
-                  px={4} py={2} 
+                  px={4} 
+                  py={2} 
                   borderRadius="lg"
-                  fontWeight="600"
+                  fontWeight="500"
                   textTransform="none"
                   bg="purple.50"
                   color="purple.700"
                   border="1px solid"
                   borderColor="purple.200">
                   <HStack spacing={2}>
-                    <Circle size="8px" bg="purple.500" />
+                    <Icon as={FaLeaf} boxSize={3} color="purple.500" />
                     <Text>Carbon Tracking</Text>
                   </HStack>
                 </Badge>
@@ -351,67 +438,39 @@ function ProfileParcel() {
                   variant="subtle"
                   colorScheme="orange"
                   fontSize="sm" 
-                  px={4} py={2} 
+                  px={4} 
+                  py={2} 
                   borderRadius="lg"
-                  fontWeight="600"
+                  fontWeight="500"
                   textTransform="none"
                   bg="orange.50"
                   color="orange.700"
                   border="1px solid"
                   borderColor="orange.200">
                   <HStack spacing={2}>
-                    <Circle size="8px" bg="orange.500" />
+                    <Icon as={MdVerified} boxSize={3} color="orange.500" />
                     <Text>USDA Eligible</Text>
                   </HStack>
                 </Badge>
               )}
-            </HStack>
-            <HStack mt={4} spacing={4} align="center" justify="space-between">
-              {/* Fixed: Removed translation key app.parcelInformation */}
-              <Heading color={textColor} fontSize={headerFontSize} fontWeight="bold">
-                Parcel Information
-              </Heading>
-              <Menu>
-                <MenuButton
-                  as={IconButton}
-                  icon={<Icon as={MdMoreVert} />}
-                  variant="ghost"
-                  colorScheme="gray"
-                  size="md"
-                  h="40px"
-                  w="40px"
-                  color="gray.500"
-                  _hover={{ 
-                    bg: "gray.100",
-                    color: "gray.700"
-                  }}
-                  aria-label="Open parcel menu"
-                />
-                <MenuList>
-                  <MenuItem
-                    onClick={() =>
-                      navigate(
-                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
-                      )
-                    }
-                    icon={<FaEdit />}>
-                    <Text fontSize="sm" fontWeight="500">
-                      {intl.formatMessage({ id: 'app.edit' }) || 'Edit'}
-                    </Text>
-                  </MenuItem>
-                  <MenuItem icon={<FaShare />} onClick={handleShare}>
-                    <Text fontSize="sm" fontWeight="500">
-                      Share
-                    </Text>
-                  </MenuItem>
-                  <MenuItem icon={<FaTrash />} color="red.500">
-                    <Text fontSize="sm" fontWeight="500">
-                      {intl.formatMessage({ id: 'app.delete' }) || 'Delete'}
-                    </Text>
-                  </MenuItem>
-                </MenuList>
-              </Menu>
-            </HStack>
+              </Flex>
+              
+              {/* Header Row */}
+              <Flex 
+                align="center" 
+                justify="space-between" 
+                flexWrap={{ base: 'wrap', md: 'nowrap' }}
+                gap={{ base: 3, md: 4 }}>
+                <Heading 
+                  color={textColor} 
+                  fontSize={{ base: 'md', sm: 'lg', md: 'xl' }} 
+                  fontWeight="bold"
+                  textAlign={{ base: 'center', md: 'left' }}
+                  flex="1">
+                  Parcel Information
+                </Heading>
+              </Flex>
+            </VStack>
           </CardHeader>
 
           <CardBody>
@@ -423,11 +482,11 @@ function ProfileParcel() {
                   <StandardImageGallery
                     images={parcelData?.images || []}
                     title="Parcel Photos"
-                    variant="parcel"
+                    variant="default"
                     enablePreview={true}
                     showImageCount={true}
                     fallbackImage={defaultParcelImage}
-                    height="300px"
+                    height={{ base: '200px', sm: '250px', md: '280px', lg: '300px' }}
                     showEmptyState={true}
                     maxDisplayImages={3}
                   />

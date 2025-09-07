@@ -1,15 +1,16 @@
 import React, { useEffect } from 'react';
-import { Box, Text, useColorModeValue } from '@chakra-ui/react';
+import { Box, Text, useColorModeValue, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { StandardEstablishmentForm } from '../../../../components/Forms/StandardEstablishmentForm';
 import subscriptionToastHelper from '../../../../utils/toast/SubscriptionToastHelper';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   useCreateEstablishmentMutation,
   useEditEstablishmentMutation,
   useGetEstablishmentQuery
 } from 'store/api/companyApi';
+import { addCompanyEstablishment } from 'store/features/companySlice';
 
 interface Props {
   isEdit?: boolean;
@@ -18,6 +19,8 @@ interface Props {
 function AddEstablishment({ isEdit = false }: Props) {
   const intl = useIntl();
   const navigate = useNavigate();
+  const toast = useToast();
+  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
   const { establishmentId } = useParams();
   const isUpgrade = searchParams.get('return') === 'upgrade';
@@ -107,7 +110,10 @@ function AddEstablishment({ isEdit = false }: Props) {
           establishmentData: establishmentUpdateData
         }).unwrap();
 
-        navigate(`/admin/dashboard/establishment/${result.id}`);
+        // Small delay to allow Redux cache invalidation to complete before navigation
+        setTimeout(() => {
+          navigate(`/admin/dashboard/establishment/${result.id}`);
+        }, 100);
       } else {
         // Handle create mode
         const establishmentData = {
@@ -163,10 +169,51 @@ function AddEstablishment({ isEdit = false }: Props) {
           establishment: establishmentData
         }).unwrap();
 
-        navigate(`/admin/dashboard/establishment/${result.id}`);
+        console.log('✅ Establishment created successfully:', result);
+        console.log('🚀 New establishment ID:', result.id);
+
+        // CRITICAL FIX: Dispatch Redux action to set currentEstablishment 
+        // This ensures the newly created establishment becomes the active one in Redux state
+        dispatch(addCompanyEstablishment(result));
+        console.log('🔄 Redux: Set currentEstablishment to newly created establishment');
+
+        // Set sessionStorage flags to prevent Authenticated.jsx from redirecting during cache update
+        sessionStorage.setItem('creating_establishment', 'true');
+        sessionStorage.setItem('just_created_establishment_id', result.id.toString());
+
+        // Success toast
+        toast({
+          title: 'Establishment Created Successfully',
+          description: `"${data.name}" has been created and is ready for use.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true
+        });
+        
+        // Navigate immediately - RTK Query optimistic update + sessionStorage flags prevent race conditions
+        const targetUrl = `/admin/dashboard/establishment/${result.id}`;
+        console.log('🔄 Navigating to:', targetUrl);
+        navigate(targetUrl);
       }
     } catch (error) {
       console.error(`Failed to ${isEdit ? 'update' : 'create'} establishment:`, error);
+      console.error('Error details:', {
+        status: error?.status,
+        data: error?.data,
+        message: error?.message
+      });
+      
+      // Show specific error message to user
+      toast({
+        title: `Error ${isEdit ? 'Updating' : 'Creating'} Establishment`,
+        description: error?.data?.message || error?.message || 'Please check all required fields and try again.',
+        status: 'error',
+        duration: 6000,
+        isClosable: true
+      });
+      
+      // Re-throw error so form component can handle it properly
+      throw error;
     }
   };
 

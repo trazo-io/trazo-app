@@ -593,20 +593,6 @@ function NewParcel() {
               </Text>
               {/* 2025 Best Practice: TrazoImageUpload Component */}
               <TrazoImageUpload
-                onUploadComplete={(urls) => {
-                  setUploadedImageUrls(urls);
-                  toast({
-                    title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-                    description: intl.formatMessage(
-                      { id: 'app.filesUploaded' },
-                      { count: urls.length }
-                    ),
-                    status: 'success',
-                    duration: 3000,
-                    isClosable: true
-                  });
-                  // Upload complete - user can manually proceed to next step
-                }}
                 maxFiles={5}
                 maxSize={5 * 1024 * 1024} // 5MB
                 existingImages={uploadedImageUrls}

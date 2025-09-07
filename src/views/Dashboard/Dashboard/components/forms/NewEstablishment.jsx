@@ -892,22 +892,16 @@ function NewEstablishment() {
               <FormProvider {...mediaFormMethods}>
                 <Flex direction="column" w="100%">
                   <TrazoImageUpload
-                    onUploadComplete={(urls) => {
-                      setUploadedImageUrls(urls);
-                      toast({
-                        title: intl.formatMessage({ id: 'app.uploadSuccess' }),
-                        description: intl.formatMessage({ id: 'app.filesUploaded' }, { count: urls.length }),
-                        status: 'success',
-                        duration: 3000,
-                        isClosable: true
-                      });
-                      // Auto-advance to next tab
-                      socialsTab.current.click();
-                    }}
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
                     existingImages={uploadedImageUrls}
-                    onImagesChange={setUploadedImageUrls}
+                    onImagesChange={(urls) => {
+                      setUploadedImageUrls(urls);
+                      // Auto-advance to next tab when images are uploaded
+                      if (urls.length > 0 && urls.length > uploadedImageUrls.length) {
+                        setTimeout(() => socialsTab.current.click(), 1000);
+                      }
+                    }}
                   />
                   
                   <Flex justify="space-between" mt={6}>

@@ -186,11 +186,23 @@ function ProfileEstablishment() {
   };
 
   return (
-    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
+    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%" position="relative">
+      {/* Floating Back Button */}
+      <Button
+        position="fixed"
+        top={{ base: '120px', md: '140px' }}
+        left={{ base: 4, md: 6 }}
+        zIndex={1000}
+        variant="outline"
+        leftIcon={<FaChevronLeft />}
+        onClick={() => navigate('/admin/dashboard')}
+        size="sm">
+        Back
+      </Button>
       {/* Clean Modern Header */}
       <Box 
         bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" 
-        pt={{ base: '60px', md: '80px' }}
+        pt={{ base: '120px', md: '140px' }}
         pb={{ base: '80px', md: '100px' }} 
         px={{ base: 3, sm: 4, md: 4 }}
         position="relative">

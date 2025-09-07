@@ -1,13 +1,14 @@
 import React from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { StandardParcelForm } from '../../../../components/Forms/StandardParcelForm';
 import {
   useCreateParcelMutation,
   useUpdateParcelMutation,
   useGetParcelQuery
 } from 'store/api/productApi';
+import { setEstablishmentParcel } from 'store/features/companySlice';
 import { useToast } from '@chakra-ui/react';
 
 interface AddParcelProps {
@@ -30,6 +31,7 @@ interface RootState {
 function AddParcel({ isEdit = false }: AddParcelProps) {
   const intl = useIntl();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const toast = useToast();
   const { establishmentId, parcelId } = useParams();
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
@@ -286,11 +288,18 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         });
       } else {
         // Create new parcel
-        await createParcel({
+        const result = await createParcel({
           companyId: currentCompany?.id,
           establishmentId,
           parcelData: finalData
         }).unwrap();
+
+        // ✅ CRITICAL FIX: Update Redux state to include new parcel
+        console.log('🔄 Redux: Adding parcel to establishment state', result);
+        dispatch(setEstablishmentParcel({
+          establishmentId: establishmentId!,
+          parcel: result
+        }));
 
         toast({
           title: 'Parcel Created',

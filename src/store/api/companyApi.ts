@@ -72,7 +72,26 @@ const companyApi = baseApi.injectEndpoints({
           credentials: 'include'
         };
       },
-      invalidatesTags: ['Establishment', 'Company']
+      invalidatesTags: ['Establishment', 'Company'],
+      // RTK Query optimistic update - prevents redirect race conditions
+      async onQueryStarted({ companyId, establishment }, { dispatch, queryFulfilled }) {
+        try {
+          const { data: newEstablishment } = await queryFulfilled;
+          
+          // Immediately update the company cache with the new establishment
+          // This prevents the redirect race condition during cache invalidation
+          dispatch(
+            companyApi.util.updateQueryData('getCompany', companyId, (draft) => {
+              if (draft.establishments) {
+                // Add the new establishment to the array immediately
+                draft.establishments.push(newEstablishment);
+              }
+            })
+          );
+        } catch {
+          // RTK Query automatically reverts optimistic updates on failure
+        }
+      }
     }),
     editEstablishment: build.mutation({
       query: ({ companyId, establishmentId, establishmentData }) => ({

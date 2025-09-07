@@ -65,20 +65,37 @@ export const companySlice = createSlice({
       action: PayloadAction<{ establishmentId: string; parcel: any }>
     ) => {
       const { establishmentId, parcel } = action.payload;
+      console.log('🔄 Redux setEstablishmentParcel: Adding parcel', {
+        establishmentId,
+        parcelName: parcel?.name,
+        existingEstablishments: state.currentCompany?.establishments?.length
+      });
+      
       if (
         state.currentCompany &&
         'establishments' in state.currentCompany &&
         state.currentCompany.establishments
       ) {
-        const establishment = state.currentCompany.establishments.find(
-          (establishment: Establishment) => establishment.id === establishmentId
-        );
-        if (establishment) {
-          if (!establishment.parcels) {
-            establishment.parcels = [];
+        const oldEstablishment = state.currentCompany.establishments.find(e => e.id.toString() === establishmentId.toString());
+        console.log('🔄 Redux setEstablishmentParcel: Found establishment', {
+          name: oldEstablishment?.name,
+          currentParcelCount: oldEstablishment?.parcels?.length || 0
+        });
+        
+        // ✅ CRITICAL FIX: Create new establishments array to trigger React re-renders
+        state.currentCompany.establishments = state.currentCompany.establishments.map((establishment: Establishment) => {
+          if (establishment.id.toString() === establishmentId.toString()) {
+            const newEstablishment = {
+              ...establishment,
+              parcels: [...(establishment.parcels || []), parcel]
+            };
+            console.log('🔄 Redux setEstablishmentParcel: New establishment created', {
+              newParcelCount: newEstablishment.parcels.length
+            });
+            return newEstablishment;
           }
-          establishment.parcels.push(parcel);
-        }
+          return establishment;
+        });
       }
     },
     setEstablishmentParcelHasProduction: (state, action) => {
