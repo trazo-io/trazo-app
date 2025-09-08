@@ -135,6 +135,7 @@ function ProfileProduction() {
   const isMobile = useBreakpointValue({ base: true, md: false });
   const containerPadding = useBreakpointValue({ base: 4, md: 8 });
   const headerFontSize = useBreakpointValue({ base: 'xl', md: '3xl' });
+  const showMobileBackButton = useBreakpointValue({ base: true, md: false });
 
   const establishments = useSelector(
     (state: RootState) => state.company.currentCompany?.establishments
@@ -342,7 +343,7 @@ function ProfileProduction() {
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
             {/* Back Button - Responsive positioning like StandardPage */}
-            {useBreakpointValue({ base: true, md: false }) ? (
+            {showMobileBackButton ? (
               // Mobile: Back button above title with full width
               <VStack spacing={4} w="full" align="center">
                 <Flex w="full" justify="flex-start">
