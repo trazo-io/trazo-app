@@ -187,27 +187,42 @@ function ProfileEstablishment() {
 
   return (
     <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%" position="relative">
-      {/* Floating Back Button */}
-      <Button
-        position="fixed"
-        top={{ base: '120px', md: '140px' }}
-        left={{ base: 4, md: 6 }}
-        zIndex={1000}
-        variant="outline"
-        leftIcon={<FaChevronLeft />}
-        onClick={() => navigate('/admin/dashboard')}
-        size="sm">
-        Back
-      </Button>
       {/* Clean Modern Header */}
       <Box 
         bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" 
-        pt={{ base: '120px', md: '140px' }}
+        pt={{ base: '140px', md: '100px' }}
         pb={{ base: '80px', md: '100px' }} 
         px={{ base: 3, sm: 4, md: 4 }}
         position="relative">
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
+            {/* Back Button - Responsive positioning like StandardPage */}
+            {useBreakpointValue({ base: true, md: false }) ? (
+              // Mobile: Back button above title with full width
+              <VStack spacing={4} w="full" align="center">
+                <Flex w="full" justify="flex-start">
+                  <Button
+                    variant="outline"
+                    leftIcon={<FaChevronLeft />}
+                    onClick={() => navigate('/admin/dashboard')}
+                    size="sm">
+                    Back
+                  </Button>
+                </Flex>
+              </VStack>
+            ) : (
+              // Desktop: Back button integrated with header
+              <Flex w="full" justify="flex-start" mb={-4}>
+                <Button
+                  variant="outline"
+                  leftIcon={<FaChevronLeft />}
+                  onClick={() => navigate('/admin/dashboard')}
+                  size="sm">
+                  Back
+                </Button>
+              </Flex>
+            )}
+            
             {/* Main Title */}
             <VStack spacing={{ base: 4, sm: 3 }}>
               <Heading

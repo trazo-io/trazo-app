@@ -21,6 +21,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
+import ErrorBoundary from 'components/Utils/ErrorBoundary';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 import { useGetEventQuery } from 'store/api/historyApi';
@@ -358,7 +359,9 @@ function ProfileEstablishment() {
                 </Flex>
               </Flex>
               <Flex px="24px" pb="24px">
-                <HTMLRenderer htmlString={eventData?.description} />
+                <ErrorBoundary fallback={<Box>Event description unavailable</Box>}>
+                  <HTMLRenderer htmlString={eventData?.description} />
+                </ErrorBoundary>
               </Flex>
             </Flex>
           </CardBody>

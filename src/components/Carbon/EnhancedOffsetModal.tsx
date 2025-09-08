@@ -40,7 +40,7 @@ import {
   Divider,
   Spinner
 } from '@chakra-ui/react';
-import { CheckCircleIcon, WarningIcon, LockIcon, InfoIcon } from '@chakra-ui/icons';
+import { WarningIcon, LockIcon, InfoIcon } from '@chakra-ui/icons';
 import {
   useCreateSecureCarbonOffsetMutation,
   useGetUserSecurityStatusQuery
