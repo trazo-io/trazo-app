@@ -10,8 +10,10 @@ import { useEffect, useState } from 'react';
 
 import AddEstablishment from 'views/Dashboard/Dashboard/Establishment/AddEstablishment';
 import AddParcel from 'views/Dashboard/Dashboard/Parcel/AddParcel';
+// import AdvancedAnalyticsDemo from 'views/AdvancedAnalyticsDemo';
 import AdminLayout from 'layouts/Admin';
 import AuthLayout from 'layouts/Auth';
+import ConsumerProductLayout from 'components/Layout/ConsumerProductLayout';
 //@ts-ignore
 import Authenticated from './utils/protections/Authenticated';
 //@ts-ignore
@@ -376,6 +378,7 @@ const App = () => {
                   />
                   <Route path="education" element={<ProducerEducationDashboard />} />
                   <Route path="education/faq" element={<EducationFAQ />} />
+                  {/* <Route path="advanced-analytics-demo" element={<AdvancedAnalyticsDemo />} /> */}
                 </Route>
               </Route>
             </Route>
@@ -383,8 +386,10 @@ const App = () => {
 
           {subdomain === 'consumer' && (
             <>
-              <Route element={<AuthLayout />}>
+              <Route element={<ConsumerProductLayout />}>
                 <Route path="/production/:productionId" element={<ProductDetail />} />
+              </Route>
+              <Route element={<AuthLayout />}>
                 <Route
                   path="/establishment/:establishmentId"
                   element={<PublicEstablishmentProfile />}

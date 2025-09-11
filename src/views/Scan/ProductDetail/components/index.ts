@@ -1,4 +1,5 @@
 export { ModernProductHeader } from './ModernProductHeader';
+export { CarbonHeroSection } from '../../../../components/QR/CarbonHeroSection';
 export { ModernEducationalSection } from './ModernEducationalSection';
 export { ModernSidebar } from './ModernSidebar';
 export { MobileProductionJourney } from './MobileProductionJourney';

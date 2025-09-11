@@ -672,6 +672,33 @@ export interface CropTemplatesResponse {
   };
 }
 
+export interface CompanyCropOption {
+  id: string;
+  name: string;
+  description: string;
+  region: string;
+  carbon_benchmark: string;
+  carbon_per_hectare: number;
+  season_length: string;
+  market_demand: 'High' | 'Medium' | 'Low';
+  transparency_ready: boolean;
+  usda_verified: boolean;
+  avg_revenue: string;
+  difficulty: 'Easy' | 'Medium' | 'Advanced';
+  common_events: string[];
+}
+
+export interface CompanyCropOptionsResponse {
+  crops: CompanyCropOption[];
+  smart_benefits: string[];
+  metadata: {
+    source: string;
+    mvp_ready: boolean;
+    last_updated: string;
+    version: string;
+  };
+}
+
 export interface CropTemplateDetail {
   id: string;
   template_id?: number; // New field for actual template ID
@@ -1310,6 +1337,18 @@ export const carbonApi = baseApi.injectEndpoints({
           url: `/carbon/crop-templates/${
             searchParams.toString() ? `?${searchParams.toString()}` : ''
           }`,
+          method: 'GET',
+          credentials: 'include'
+        };
+      },
+      providesTags: ['CropTemplate']
+    }),
+
+    getCompanyCropOptions: builder.query<CompanyCropOptionsResponse, void>({
+      query: () => {
+        console.log('🌾 API QUERY FUNCTION CALLED - /carbon/company-crop-options/');
+        return {
+          url: '/carbon/company-crop-options/',
           method: 'GET',
           credentials: 'include'
         };
@@ -1982,6 +2021,54 @@ export const carbonApi = baseApi.injectEndpoints({
         body: data,
         credentials: 'include'
       })
+    }),
+
+    // Phase 6: Advanced Carbon Analytics Endpoint
+    getAdvancedAnalytics: builder.query<
+      {
+        production_id: number;
+        production_name: string;
+        crop_type: string;
+        analytics: {
+          carbon_timeline: any[];
+          carbon_flow_diagram: any;
+          carbon_hotspots: any[];
+          carbon_efficiency_score: number;
+          carbon_intensity: number;
+          carbon_roi: any;
+          market_value_impact: any;
+          carbon_credit_potential: any;
+          premium_pricing_opportunity: any;
+          industry_benchmarking: any;
+          regional_comparison: any;
+          peer_ranking: any;
+          future_projections: any;
+          optimization_roadmap: any[];
+          seasonal_patterns: any;
+          consumer_impact_story: any;
+          trust_indicators: any;
+          transparency_score: number;
+          ai_recommendations: any[];
+          pattern_recognition: any;
+          risk_assessment: any;
+          improvement_tracking: any;
+          success_metrics: any;
+        };
+        generated_at: string;
+        version: string;
+        message: string;
+      },
+      number
+    >({
+      query: (productionId) => ({
+        url: `carbon/analytics/${productionId}/`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+      providesTags: (result, error, productionId) => [
+        { type: 'CarbonAnalytics', id: productionId }
+      ]
     })
   })
 });
@@ -2018,6 +2105,7 @@ export const {
   // Phase 2 Optimization: Unified Complete Summary
   useGetCompleteSummaryQuery,
   useGetCropTemplatesQuery,
+  useGetCompanyCropOptionsQuery,
   useGetCropTemplateDetailQuery,
   // Educational Content hooks
   useGetUSDAMethodologyContentQuery,
@@ -2052,5 +2140,13 @@ export const {
   useValidatePhotoEvidenceMutation,
   // Gas Optimization hooks
   useEstimateGasCostsMutation,
-  useOptimizeTransactionGasMutation
+  useOptimizeTransactionGasMutation,
+  // Phase 6: Advanced Analytics hook
+  useGetAdvancedAnalyticsQuery
 } = carbonApi;
+
+// Debug logging
+console.log('🎯 carbonApi hooks exported:', {
+  useGetCompanyCropOptionsQuery: !!useGetCompanyCropOptionsQuery,
+  carbonApi: !!carbonApi
+});

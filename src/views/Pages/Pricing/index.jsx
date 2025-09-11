@@ -467,6 +467,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       console.log('Creating checkout session with:', {
         plan_id: planId,
         company_id: companyId,
+        interval: activeInterval,  // Include the current interval
         success_url: `${window.location.origin}/admin/pricing?status=success&plan_subscribed=true`,
         cancel_url: window.location.href
       });
@@ -474,6 +475,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       const result = await createCheckoutSession({
         plan_id: planId,
         company_id: companyId,
+        interval: activeInterval,  // Send the active interval (monthly/yearly)
         success_url: `${window.location.origin}/admin/pricing?status=success&plan_subscribed=true`,
         cancel_url: window.location.href
       }).unwrap();
@@ -538,34 +540,19 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
 
   return (
     <StandardPage
-      title={newCompanyFlow || isNewCompany ? '' : 'Selecciona Tu Plan'}
+      title={newCompanyFlow || isNewCompany ? '🎉 ¡Empresa creada exitosamente!' : 'Selecciona Tu Plan'}
       description={
         newCompanyFlow || isNewCompany
-          ? 'Elige el plan perfecto para comenzar con tus operaciones agrícolas'
+          ? `Tu empresa ${activeCompany?.name || 'nueva empresa'} está lista. Ahora selecciona el plan perfecto para comenzar a rastrear tu huella de carbono y optimizar tus operaciones agrícolas.`
           : 'Actualiza tu plan para desbloquear más funcionalidades'
       }>
-      {/* Welcome Header for New Companies */}
+      {/* Welcome Badge for New Companies */}
       {(newCompanyFlow || isNewCompany) && (
-        <StandardSection>
-          <VStack spacing={6} py={8}>
-            <Box textAlign="center">
-              <Heading as="h2" size="xl" color="green.600" mb={4}>
-                🎉 ¡Empresa creada exitosamente!
-              </Heading>
-              <Text fontSize="lg" color="gray.600" maxW="2xl" mx="auto" lineHeight="1.6">
-                Tu empresa{' '}
-                <Text as="span" fontWeight="bold" color="green.600">
-                  {activeCompany?.name || 'nueva empresa'}
-                </Text>{' '}
-                está lista. Ahora selecciona el plan perfecto para comenzar a rastrear tu huella de
-                carbono y optimizar tus operaciones agrícolas.
-              </Text>
-            </Box>
-            <Badge colorScheme="green" fontSize="md" px={4} py={2} borderRadius="full">
-              ✨ Paso 2 de 3: Selecciona tu plan
-            </Badge>
-          </VStack>
-        </StandardSection>
+        <Box textAlign="center" mb={8}>
+          <Badge colorScheme="green" fontSize="md" px={4} py={2} borderRadius="full">
+            ✨ Paso 2 de 3: Selecciona tu plan
+          </Badge>
+        </Box>
       )}
 
       {/* Upgrade Context Banner */}

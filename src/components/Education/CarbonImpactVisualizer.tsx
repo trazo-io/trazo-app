@@ -335,7 +335,7 @@ const CarbonImpactVisualizer: React.FC<CarbonImpactVisualizerProps> = ({
             Carbon Impact in Context
           </Heading>
           <Text color="gray.600" fontSize="sm">
-            Understanding your carbon footprint through everyday comparisons
+            Understanding this product's carbon footprint through everyday comparisons
           </Text>
         </Box>
 

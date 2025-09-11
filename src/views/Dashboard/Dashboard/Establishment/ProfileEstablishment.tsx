@@ -144,6 +144,55 @@ function ProfileEstablishment() {
     return [];
   };
 
+  // Helper functions for new operational fields
+  const getWaterSources = () => {
+    if (!establishmentData?.water_sources) return [];
+    if (Array.isArray(establishmentData.water_sources)) {
+      return establishmentData.water_sources;
+    }
+    try {
+      return JSON.parse(establishmentData.water_sources);
+    } catch {
+      return [];
+    }
+  };
+
+  const getSoilTypes = () => {
+    if (!establishmentData?.soil_types) return [];
+    if (Array.isArray(establishmentData.soil_types)) {
+      return establishmentData.soil_types;
+    }
+    try {
+      return JSON.parse(establishmentData.soil_types);
+    } catch {
+      return [];
+    }
+  };
+
+  const getConservationPractices = () => {
+    if (!establishmentData?.conservation_practices) return [];
+    if (Array.isArray(establishmentData.conservation_practices)) {
+      return establishmentData.conservation_practices;
+    }
+    try {
+      return JSON.parse(establishmentData.conservation_practices);
+    } catch {
+      return [];
+    }
+  };
+
+  const getIrrigationMethods = () => {
+    if (!establishmentData?.irrigation_methods) return [];
+    if (Array.isArray(establishmentData.irrigation_methods)) {
+      return establishmentData.irrigation_methods;
+    }
+    try {
+      return JSON.parse(establishmentData.irrigation_methods);
+    } catch {
+      return [];
+    }
+  };
+
   // Handle sharing establishment
   const handleShare = async () => {
     try {
@@ -942,11 +991,11 @@ function ProfileEstablishment() {
               </SimpleGrid>
 
               {/* Agricultural Operations - Full Width */}
-              {(establishmentData?.water_sources?.length > 0 ||
+              {(getWaterSources().length > 0 ||
                 establishmentData?.climate_zone ||
-                establishmentData?.soil_types?.length > 0 ||
-                establishmentData?.conservation_practices?.length > 0 ||
-                establishmentData?.irrigation_methods?.length > 0) && (
+                getSoilTypes().length > 0 ||
+                getConservationPractices().length > 0 ||
+                getIrrigationMethods().length > 0) && (
                 <StandardCard title="Agricultural Operations" variant="flat" icon={FaLeaf}>
                   <VStack spacing={4} align="stretch">
                     {/* Climate Zone - Key Information */}
@@ -969,7 +1018,7 @@ function ProfileEstablishment() {
                     {/* Operational Details - Condensed View */}
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                       {/* Water & Irrigation */}
-                      {(establishmentData?.water_sources?.length > 0 || establishmentData?.irrigation_methods?.length > 0) && (
+                      {(getWaterSources().length > 0 || getIrrigationMethods().length > 0) && (
                         <Box 
                           p={4} 
                           bg="blue.50" 
@@ -981,16 +1030,16 @@ function ProfileEstablishment() {
                             <Text fontSize="sm" fontWeight="600" color="blue.800">Water & Irrigation</Text>
                           </HStack>
                           <VStack spacing={2} align="start">
-                            {establishmentData?.water_sources?.length > 0 && (
+                            {getWaterSources().length > 0 && (
                               <Text fontSize="sm" color="blue.700">
-                                <Text as="span" fontWeight="medium">Sources:</Text> {establishmentData.water_sources.slice(0, 2).join(', ')}
-                                {establishmentData.water_sources.length > 2 && ` +${establishmentData.water_sources.length - 2} more`}
+                                <Text as="span" fontWeight="medium">Sources:</Text> {getWaterSources().slice(0, 2).join(', ')}
+                                {getWaterSources().length > 2 && ` +${getWaterSources().length - 2} more`}
                               </Text>
                             )}
-                            {establishmentData?.irrigation_methods?.length > 0 && (
+                            {getIrrigationMethods().length > 0 && (
                               <Text fontSize="sm" color="blue.700">
-                                <Text as="span" fontWeight="medium">Methods:</Text> {establishmentData.irrigation_methods.slice(0, 2).join(', ')}
-                                {establishmentData.irrigation_methods.length > 2 && ` +${establishmentData.irrigation_methods.length - 2} more`}
+                                <Text as="span" fontWeight="medium">Methods:</Text> {getIrrigationMethods().slice(0, 2).join(', ')}
+                                {getIrrigationMethods().length > 2 && ` +${getIrrigationMethods().length - 2} more`}
                               </Text>
                             )}
                           </VStack>
@@ -998,7 +1047,7 @@ function ProfileEstablishment() {
                       )}
 
                       {/* Soil & Conservation */}
-                      {(establishmentData?.soil_types?.length > 0 || establishmentData?.conservation_practices?.length > 0) && (
+                      {(getSoilTypes().length > 0 || getConservationPractices().length > 0) && (
                         <Box 
                           p={4} 
                           bg="green.50" 
@@ -1010,16 +1059,16 @@ function ProfileEstablishment() {
                             <Text fontSize="sm" fontWeight="600" color="green.800">Soil & Conservation</Text>
                           </HStack>
                           <VStack spacing={2} align="start">
-                            {establishmentData?.soil_types?.length > 0 && (
+                            {getSoilTypes().length > 0 && (
                               <Text fontSize="sm" color="green.700">
-                                <Text as="span" fontWeight="medium">Soil:</Text> {establishmentData.soil_types.slice(0, 2).join(', ')}
-                                {establishmentData.soil_types.length > 2 && ` +${establishmentData.soil_types.length - 2} more`}
+                                <Text as="span" fontWeight="medium">Soil:</Text> {getSoilTypes().slice(0, 2).join(', ')}
+                                {getSoilTypes().length > 2 && ` +${getSoilTypes().length - 2} more`}
                               </Text>
                             )}
-                            {establishmentData?.conservation_practices?.length > 0 && (
+                            {getConservationPractices().length > 0 && (
                               <Text fontSize="sm" color="green.700">
-                                <Text as="span" fontWeight="medium">Practices:</Text> {establishmentData.conservation_practices.slice(0, 2).join(', ')}
-                                {establishmentData.conservation_practices.length > 2 && ` +${establishmentData.conservation_practices.length - 2} more`}
+                                <Text as="span" fontWeight="medium">Practices:</Text> {getConservationPractices().slice(0, 2).join(', ')}
+                                {getConservationPractices().length > 2 && ` +${getConservationPractices().length - 2} more`}
                               </Text>
                             )}
                           </VStack>

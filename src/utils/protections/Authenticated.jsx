@@ -47,7 +47,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       // This is a critical fix to prevent interference with auth redirects
       const pendingAction = getAuthRedirectAction();
       const hasJustAuthenticated = sessionStorage.getItem('just_authenticated') === 'true';
-      
+
       if (pendingAction || hasJustAuthenticated) {
         console.log(
           '🔒 Authenticated.jsx: Skipping redirect logic - pending action or just authenticated'
@@ -63,7 +63,10 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
 
       // Also check if we're on a consumer subdomain and the user just logged in with a review redirect
       // This prevents interference with executeAuthRedirectAction from ConsumerSignIn
-      if (subdomain === 'consumer' && window.location.pathname.includes('/admin/dashboard/production/')) {
+      if (
+        subdomain === 'consumer' &&
+        window.location.pathname.includes('/admin/dashboard/production/')
+      ) {
         console.log('🔒 Authenticated.jsx: Already on review page, skipping redirect logic');
         return;
       }
@@ -76,7 +79,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       console.log('🔒 Authenticated.jsx: Debug user type check:', {
         'currentUser.user_type': currentUser.user_type,
         'CONSUMER constant': CONSUMER,
-        'subdomain': subdomain,
+        subdomain: subdomain,
         'isConsumerUser (after subdomain logic)': isConsumerUser
       });
 
@@ -84,7 +87,12 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       const defaultPath = isConsumerUser ? '/admin/dashboard/impact' : '/admin/dashboard/scans';
       const nextParam = params.get('next');
       const intendedPath = validateRedirectUrl(nextParam) || defaultPath;
-      console.log('🔒 Authenticated.jsx: intendedPath calculated (validated):', intendedPath, 'defaultPath was:', defaultPath);
+      console.log(
+        '🔒 Authenticated.jsx: intendedPath calculated (validated):',
+        intendedPath,
+        'defaultPath was:',
+        defaultPath
+      );
 
       if (isConsumerUser && subdomain === 'producer') {
         console.log('🔒 Authenticated.jsx: Redirecting consumer from producer subdomain');
@@ -93,7 +101,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
           import.meta.env.VITE_APP_BASE_DOMAIN
         }${window.location.port ? ':' + window.location.port : ''}`;
         const safeRedirectUrl = baseUrl + intendedPath;
-        
+
         // Final validation before redirect
         if (validateRedirectUrl(safeRedirectUrl)) {
           window.location.href = safeRedirectUrl;
@@ -124,19 +132,22 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
           !currentCompany.establishments.map((e) => e.id).includes(id)
         ) {
           // Check if we're navigating from establishment creation (prevent redirect race condition)
-          const isFromEstablishmentCreation = sessionStorage.getItem('creating_establishment') === 'true';
+          const isFromEstablishmentCreation =
+            sessionStorage.getItem('creating_establishment') === 'true';
           const justCreatedId = sessionStorage.getItem('just_created_establishment_id');
-          
+
           console.log('🔒 Authenticated.jsx: Establishment not found in cache:', {
-            'establishmentId': id,
-            'isFromEstablishmentCreation': isFromEstablishmentCreation,
-            'justCreatedId': justCreatedId,
-            'availableEstablishments': currentCompany.establishments.map(e => e.id)
+            establishmentId: id,
+            isFromEstablishmentCreation: isFromEstablishmentCreation,
+            justCreatedId: justCreatedId,
+            availableEstablishments: currentCompany.establishments.map((e) => e.id)
           });
-          
+
           // If we just created this establishment, wait for cache to update instead of redirecting
           if (isFromEstablishmentCreation && justCreatedId == id) {
-            console.log('🔒 Authenticated.jsx: Waiting for newly created establishment to appear in cache, not redirecting');
+            console.log(
+              '🔒 Authenticated.jsx: Waiting for newly created establishment to appear in cache, not redirecting'
+            );
             // Clear the flag after a delay to prevent infinite waiting
             setTimeout(() => {
               sessionStorage.removeItem('creating_establishment');
@@ -144,17 +155,20 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
             }, 3000);
             return;
           }
-          
+
           if (currentCompany.establishments?.length > 0) {
             const establishment = currentCompany.establishments[0].id;
-            console.log('🔒 Authenticated.jsx: Redirecting to first available establishment:', establishment);
+            console.log(
+              '🔒 Authenticated.jsx: Redirecting to first available establishment:',
+              establishment
+            );
             debugNavigate(`/admin/dashboard/establishment/${establishment}`);
           } else {
             debugNavigate(`/admin/dashboard/`);
           }
         }
       }
-      
+
       // Auto-select first establishment when visiting root dashboard without establishmentId
       if (
         (pathname === '/admin/dashboard' || pathname === '/admin/dashboard/') &&
@@ -194,9 +208,8 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   }, [currentCompany, currentUser, navigate, subdomain]);
 
   // SECURITY: Create safe next URL with validation
-  const nextUrl = pathname !== '/' 
-    ? createSafeRedirectUrl(LOGIN_PAGE_URL, pathname)
-    : LOGIN_PAGE_URL;
+  const nextUrl =
+    pathname !== '/' ? createSafeRedirectUrl(LOGIN_PAGE_URL, pathname) : LOGIN_PAGE_URL;
 
   return isLoading === false &&
     isAuthenticated &&

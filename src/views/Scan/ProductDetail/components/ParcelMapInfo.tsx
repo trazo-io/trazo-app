@@ -109,7 +109,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
   return (
     <Card bg={bgColor} shadow="lg" borderRadius="xl" w="full">
       <CardHeader>
-        <HStack spacing={3}>
+        <HStack spacing={3} pb="20px">
           <Icon as={FaMapMarkerAlt} color="green.500" boxSize={6} />
           <Heading size="md" color={textColor}>
             Parcel Information
@@ -129,18 +129,6 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               center={parcelData?.map_metadata?.center}
               zoom={parcelData?.map_metadata?.zoom}
             />
-
-            <Button
-              position="absolute"
-              top={2}
-              right={2}
-              size="sm"
-              variant="outline"
-              bg="white"
-              leftIcon={<Icon as={isMapExpanded ? FaCompress : FaExpand} />}
-              onClick={() => setIsMapExpanded(!isMapExpanded)}>
-              {isMapExpanded ? 'Collapse' : 'Expand'}
-            </Button>
           </Box>
 
           {/* Parcel Details */}

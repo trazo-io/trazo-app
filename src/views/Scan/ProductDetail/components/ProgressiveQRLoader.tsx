@@ -54,7 +54,7 @@ export const ProgressiveQRLoader: React.FC<ProgressiveQRLoaderProps> = ({
 
   // Eco-friendly tips that rotate during loading
   const ecoTips = [
-    '💡 Every scan helps track your carbon footprint',
+    '💡 Every scan shows this product\'s carbon transparency',
     '🌱 Supporting sustainable farming practices',
     '🌍 Join thousands reducing their environmental impact',
     '♻️ Your choices make a difference for the planet',

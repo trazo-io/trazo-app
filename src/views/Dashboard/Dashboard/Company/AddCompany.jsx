@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { useGetCompanyCropOptionsQuery } from 'store/api/carbonApi';
 import {
   Box,
   VStack,
@@ -50,7 +51,7 @@ import {
   FaStore,
   FaAppleAlt
 } from 'react-icons/fa';
-import { GiCorn, GiTreeBranch } from 'react-icons/gi';
+import { GiCorn, GiTreeBranch, GiAvocado } from 'react-icons/gi';
 import {
   StandardPage,
   StandardCard,
@@ -230,6 +231,55 @@ function AddCompany({ isEdit = false }) {
 
   console.log('🏢 AddCompany: Component rendered', { isEdit, currentUser: currentUser?.id });
 
+  // Get crop options from API
+  const { data: cropOptionsResponse, isLoading: cropOptionsLoading, error: cropOptionsError } = useGetCompanyCropOptionsQuery();
+  console.log('🌾 AddCompany: API crop options', {
+    hasData: !!cropOptionsResponse?.crops,
+    loading: cropOptionsLoading,
+    error: cropOptionsError,
+    cropsCount: cropOptionsResponse?.crops?.length
+  });
+
+  // Icon mapping for API crops
+  const getIconForCrop = (cropId) => {
+    const iconMap = {
+      'citrus': FaAppleAlt,
+      'almonds': GiTreeBranch,
+      'avocados': GiAvocado,
+      'corn': GiCorn,
+      'soybeans': FaSeedling,
+    };
+    return iconMap[cropId] || FaSeedling;
+  };
+
+  // Transform API data to match expected format
+  const apiCropTemplates = cropOptionsResponse?.crops?.map(crop => ({
+    id: crop.id,
+    title: crop.name,
+    description: crop.description,
+    icon: getIconForCrop(crop.id),
+    region: crop.region,
+    carbonBenchmark: crop.carbon_benchmark,
+    seasonality: crop.season_length,
+    industry: crop.id === 'corn' || crop.id === 'soybeans' ? 'Grain & Cereal Production' : 'Fruit Production',
+    sustainabilityTips: [
+      'USDA-verified carbon tracking',
+      'Blockchain verification ready',
+      'QR code transparency enabled'
+    ],
+    recommendedGoals: ['carbon_reduction', 'water_conservation', 'soil_health']
+  })) || CROP_TEMPLATES; // Fallback to hardcoded if API fails
+
+  // Use API data if available, otherwise use hardcoded fallback
+  const cropTemplates = apiCropTemplates;
+  
+  console.log('🌾 AddCompany: Final crop templates to render', {
+    usingApiData: !!cropOptionsResponse?.crops,
+    templateCount: cropTemplates.length,
+    cropIds: cropTemplates.map(c => c.id),
+    firstCrop: cropTemplates[0]
+  });
+
   // @ts-ignore: Mutation hook
   const [
     createCompany,
@@ -272,7 +322,7 @@ function AddCompany({ isEdit = false }) {
   } = methods;
 
   const selectedCrop = watch('primaryCrop');
-  const selectedCropTemplate = CROP_TEMPLATES.find((crop) => crop.id === selectedCrop);
+  const selectedCropTemplate = cropTemplates.find((crop) => crop.id === selectedCrop);
   const sustainabilityGoals = watch('sustainabilityGoals') || [];
   const currentDescription = watch('description');
 
@@ -519,7 +569,7 @@ function AddCompany({ isEdit = false }) {
   const handleCropSelect = (cropId) => {
     console.log('🌱 handleCropSelect: Called with cropId:', cropId);
     setValue('primaryCrop', cropId);
-    const cropTemplate = CROP_TEMPLATES.find((crop) => crop.id === cropId);
+    const cropTemplate = cropTemplates.find((crop) => crop.id === cropId);
     console.log('🌱 handleCropSelect: Found crop template:', cropTemplate);
 
     if (cropTemplate) {
@@ -660,7 +710,7 @@ function AddCompany({ isEdit = false }) {
               subtitle="Choose your main agricultural focus to get personalized insights and benchmarks">
               <VStack spacing={6} align="stretch">
                 <StandardSelectionGrid
-                  options={CROP_TEMPLATES.map((crop) => ({
+                  options={cropTemplates.map((crop) => ({
                     id: crop.id,
                     title: crop.title,
                     description: `${crop.description} • ${crop.region}`,

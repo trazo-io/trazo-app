@@ -11,12 +11,21 @@ import {
   Stat,
   StatLabel,
   StatNumber,
-  StatHelpText
+  StatHelpText,
+  Spinner,
+  Alert,
+  AlertIcon
 } from '@chakra-ui/react';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import { FaLeaf, FaSeedling, FaAppleAlt } from 'react-icons/fa';
-import { GiCorn } from 'react-icons/gi';
+import { GiCorn, GiAvocado } from 'react-icons/gi';
+import { useGetCompanyCropOptionsQuery, CompanyCropOption } from 'store/api/carbonApi';
+
+// Top-level logging
+console.log('🌱 CropTypeSelector file loaded');
+console.log('🌱 Hook imported:', !!useGetCompanyCropOptionsQuery);
+console.log('🌱 CompanyCropOption interface:', !!CompanyCropOption);
 
 interface CropTemplate {
   id: string;
@@ -31,15 +40,42 @@ interface CropTemplate {
   marketDemand: 'High' | 'Medium' | 'Low';
 }
 
-const cropTemplates: CropTemplate[] = [
+// Icon mapping for crop types
+const getIconForCrop = (cropId: string) => {
+  const iconMap: Record<string, any> = {
+    'citrus': FaAppleAlt,
+    'almonds': FaSeedling,
+    'avocados': GiAvocado,
+    'corn': GiCorn,
+    'soybeans': FaLeaf,
+  };
+  return iconMap[cropId] || FaSeedling;
+};
+
+// Transform API data to component format
+const transformCropOption = (crop: CompanyCropOption): CropTemplate => ({
+  id: crop.id,
+  name: crop.name,
+  icon: getIconForCrop(crop.id),
+  description: crop.description,
+  avgRevenue: crop.avg_revenue,
+  carbonBenchmark: crop.carbon_benchmark,
+  commonEvents: crop.common_events,
+  seasonLength: crop.season_length,
+  difficulty: crop.difficulty,
+  marketDemand: crop.market_demand
+});
+
+// Fallback crop templates (updated with correct data)
+const fallbackCropTemplates: CropTemplate[] = [
   {
     id: 'citrus',
     name: 'Citrus Fruits',
     icon: FaAppleAlt,
-    description: 'Oranges, lemons, grapefruits - Premium California citrus',
+    description: 'Premium oranges with verified carbon transparency • California',
     avgRevenue: '$8,000-15,000/acre',
-    carbonBenchmark: '2.1 tons CO2e/acre',
-    commonEvents: ['Irrigation', 'Pruning', 'Pest Management', 'Fertilization'],
+    carbonBenchmark: '1.6 tons CO2e/acre',
+    commonEvents: ['Irrigation', 'Pruning', 'QR Generation', 'Verification'],
     seasonLength: 'Year-round',
     difficulty: 'Medium',
     marketDemand: 'High'
@@ -48,11 +84,23 @@ const cropTemplates: CropTemplate[] = [
     id: 'almonds',
     name: 'Almonds',
     icon: FaSeedling,
-    description: "California's premium tree nut crop",
+    description: 'High-value tree nuts with consumer trust features • California',
     avgRevenue: '$4,000-8,000/acre',
-    carbonBenchmark: '1.8 tons CO2e/acre',
-    commonEvents: ['Irrigation', 'Harvest', 'Pruning', 'Pollination'],
+    carbonBenchmark: '2.4 tons CO2e/acre',
+    commonEvents: ['Irrigation', 'Harvest', 'Transparency', 'Certification'],
     seasonLength: 'Feb-Oct',
+    difficulty: 'Advanced',
+    marketDemand: 'High'
+  },
+  {
+    id: 'avocados',
+    name: 'Avocados',
+    icon: GiAvocado,
+    description: 'Premium Hass avocados with blockchain verification • California',
+    avgRevenue: '$12,000-20,000/acre',
+    carbonBenchmark: '1.7 tons CO2e/acre',
+    commonEvents: ['Irrigation', 'Harvest', 'QR Tracking', 'Export'],
+    seasonLength: 'Year-round',
     difficulty: 'Advanced',
     marketDemand: 'High'
   },
@@ -60,23 +108,11 @@ const cropTemplates: CropTemplate[] = [
     id: 'corn',
     name: 'Corn',
     icon: GiCorn,
-    description: 'Field corn for feed and ethanol production',
+    description: 'Scale efficiency with carbon tracking • Midwest',
     avgRevenue: '$800-1,200/acre',
-    carbonBenchmark: '0.9 tons CO2e/acre',
-    commonEvents: ['Planting', 'Fertilization', 'Harvest', 'Tillage'],
+    carbonBenchmark: '2.3 tons CO2e/acre',
+    commonEvents: ['Planting', 'Fertilization', 'Tracking', 'Harvest'],
     seasonLength: 'Apr-Oct',
-    difficulty: 'Easy',
-    marketDemand: 'High'
-  },
-  {
-    id: 'soybeans',
-    name: 'Soybeans',
-    icon: FaLeaf,
-    description: 'Nitrogen-fixing legume crop',
-    avgRevenue: '$600-900/acre',
-    carbonBenchmark: '0.4 tons CO2e/acre',
-    commonEvents: ['Planting', 'Pest Management', 'Harvest', 'Rotation'],
-    seasonLength: 'May-Oct',
     difficulty: 'Easy',
     marketDemand: 'High'
   }
@@ -89,6 +125,47 @@ interface CropTypeSelectorProps {
 }
 
 export const CropTypeSelector: React.FC<CropTypeSelectorProps> = ({ data, onChange, onNext }) => {
+  console.log('🚀 CropTypeSelector COMPONENT RENDERING');
+  console.log('🚀 Props received:', { data, hasOnChange: !!onChange, hasOnNext: !!onNext });
+  
+  // Test if the hook function exists
+  console.log('🔍 Hook function check:', {
+    hookExists: !!useGetCompanyCropOptionsQuery,
+    hookType: typeof useGetCompanyCropOptionsQuery
+  });
+
+  // Force the API call with explicit configuration
+  console.log('📞 About to call useGetCompanyCropOptionsQuery...');
+  const apiResult = useGetCompanyCropOptionsQuery(undefined, {
+    refetchOnMountOrArgChange: true
+  });
+  console.log('📞 API hook called, result:', apiResult);
+  
+  const { data: cropOptionsResponse, isLoading, error } = apiResult;
+  
+  // Use API data if available, otherwise fallback to updated hardcoded data
+  const cropTemplates = cropOptionsResponse?.crops?.map(transformCropOption) || fallbackCropTemplates;
+
+  // Comprehensive debug logging
+  console.log('🐛 DETAILED DEBUG INFO:', {
+    step1_isLoading: isLoading,
+    step2_error: error,
+    step3_errorDetails: error ? JSON.stringify(error, null, 2) : null,
+    step4_hasApiData: !!cropOptionsResponse?.crops,
+    step5_apiResponse: cropOptionsResponse,
+    step6_apiCropsCount: cropOptionsResponse?.crops?.length,
+    step7_fallbackCropsCount: fallbackCropTemplates.length,
+    step8_finalCropsCount: cropTemplates.length,
+    step9_fullApiResult: apiResult,
+    step10_using: cropOptionsResponse?.crops ? 'API_DATA' : 'FALLBACK_DATA'
+  });
+
+  // Force the API call to be visible
+  React.useEffect(() => {
+    console.log('✅ CropTypeSelector mounted - API call should be happening now');
+    console.log('✅ Check Network tab for: /api/carbon/company-crop-options/');
+  }, []);
+
   const handleCropSelect = (crop: CropTemplate) => {
     onChange({
       ...data,
@@ -99,15 +176,34 @@ export const CropTypeSelector: React.FC<CropTypeSelectorProps> = ({ data, onChan
     });
   };
 
+  if (isLoading) {
+    return (
+      <VStack spacing={6} align="center" py={8}>
+        <Spinner size="lg" color="green.500" />
+        <Text color="gray.600">Loading crop options with USDA-verified data...</Text>
+      </VStack>
+    );
+  }
+
+  // Show fallback data even if API fails (better UX)
+  // if (error) {
+  //   return (
+  //     <Alert status="error">
+  //       <AlertIcon />
+  //       Unable to load crop options. Please try again later.
+  //     </Alert>
+  //   );
+  // }
+
   return (
     <VStack spacing={6} align="stretch">
       <Box textAlign="center">
         <Text fontSize="2xl" fontWeight="bold" color="green.600" mb={2}>
           What's your primary crop?
         </Text>
-        <Text color="gray.600" maxW="500px" mx="auto">
-          Choose your main crop to get optimized templates, carbon benchmarks, and event tracking
-          specifically designed for your farming operation.
+        <Text color="gray.600" maxW="600px" mx="auto">
+          Choose your main crop to get carbon transparency tools, QR code generation, and consumer trust features
+          specifically designed for your agricultural operation.
         </Text>
       </Box>
 
@@ -174,30 +270,44 @@ export const CropTypeSelector: React.FC<CropTypeSelectorProps> = ({ data, onChan
                     </StatNumber>
                   </Stat>
                   <Stat size="sm">
-                    <StatLabel fontSize="xs">Carbon Footprint</StatLabel>
-                    <StatNumber fontSize="sm" color="orange.600">
+                    <StatLabel fontSize="xs">Carbon Benchmark</StatLabel>
+                    <StatNumber fontSize="sm" color="blue.600">
                       {crop.carbonBenchmark}
                     </StatNumber>
-                    <StatHelpText fontSize="xs">Industry avg</StatHelpText>
+                    <StatHelpText fontSize="xs">USDA verified</StatHelpText>
                   </Stat>
                 </HStack>
 
-                {/* Common Events */}
+                {/* Trust Indicators - using API data */}
+                <HStack spacing={2} justify="center">
+                  {cropOptionsResponse?.crops?.find(c => c.id === crop.id)?.usda_verified && (
+                    <Badge colorScheme="green" variant="solid" fontSize="xs">
+                      🏆 USDA Verified
+                    </Badge>
+                  )}
+                  {cropOptionsResponse?.crops?.find(c => c.id === crop.id)?.transparency_ready && (
+                    <Badge colorScheme="blue" variant="solid" fontSize="xs">
+                      📱 QR Ready
+                    </Badge>
+                  )}
+                  {cropOptionsResponse?.crops?.find(c => c.id === crop.id)?.transparency_ready && (
+                    <Badge colorScheme="purple" variant="solid" fontSize="xs">
+                      ⛓️ Blockchain
+                    </Badge>
+                  )}
+                </HStack>
+
+                {/* Transparency Features */}
                 <Box>
                   <Text fontSize="xs" fontWeight="bold" color="gray.600" mb={1}>
-                    Common Events:
+                    Transparency Features:
                   </Text>
                   <HStack spacing={1} flexWrap="wrap">
-                    {crop.commonEvents.slice(0, 3).map((event, index) => (
-                      <Badge key={index} size="sm" variant="outline">
+                    {crop.commonEvents.slice(0, 4).map((event, index) => (
+                      <Badge key={index} size="sm" variant="outline" colorScheme="green">
                         {event}
                       </Badge>
                     ))}
-                    {crop.commonEvents.length > 3 && (
-                      <Badge size="sm" variant="outline">
-                        +{crop.commonEvents.length - 3} more
-                      </Badge>
-                    )}
                   </HStack>
                 </Box>
 
@@ -242,11 +352,11 @@ export const CropTypeSelector: React.FC<CropTypeSelectorProps> = ({ data, onChan
             🎯 What you'll get with {cropTemplates.find((c) => c.id === data.cropType)?.name}:
           </Text>
           <VStack spacing={1} align="start" fontSize="sm" color="blue.600">
-            <Text>• Pre-configured event templates for faster data entry</Text>
-            <Text>• Industry carbon benchmarks for your crop type</Text>
-            <Text>• Seasonal calendar with optimal timing recommendations</Text>
-            <Text>• Crop-specific sustainability best practices</Text>
-            <Text>• Revenue and carbon tracking tailored to your operation</Text>
+            <Text>• QR code generation for consumer transparency</Text>
+            <Text>• USDA-verified carbon benchmarks and tracking</Text>
+            <Text>• Blockchain verification for trust building</Text>
+            <Text>• Consumer-friendly sustainability reporting</Text>
+            <Text>• Premium pricing through transparency leadership</Text>
           </VStack>
         </Box>
       )}

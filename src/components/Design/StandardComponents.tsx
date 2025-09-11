@@ -676,7 +676,11 @@ export const StandardButton = ({
       _focus={{ boxShadow: '0 0 0 3px rgba(46, 125, 50, 0.15)' }}
       _hover={{
         boxShadow: 'lg',
-        transform: 'translateY(-1px)'
+        transform: 'translateY(-1px)',
+        _disabled: {
+          boxShadow: 'none',
+          transform: 'none'
+        }
       }}
       transition="all 0.2s ease"
       {...rest}>

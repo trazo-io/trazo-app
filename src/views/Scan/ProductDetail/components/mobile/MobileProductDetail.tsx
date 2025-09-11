@@ -38,6 +38,7 @@ import { useIntl } from 'react-intl';
 import MobileEducationalSection from './MobileEducationalSection';
 import ImageCarousel from '../../../../../components/ImageCarousel/ImageCarousel';
 import { MobileTrustHeader, ProgressiveTrustLoader } from '../../../../../components/Trust';
+import { CarbonHeroSection } from '../../../../../components/QR/CarbonHeroSection';
 
 // Lazy loaded components for non-critical UI
 // Use dynamic imports with default exports
@@ -269,7 +270,38 @@ const MobileProductDetail: React.FC = () => {
 
   return (
     <Container maxW="container.sm" p={0}>
-      {/* Sticky Header with Carbon Score - Reduced Height for Mobile */}
+      {/* NEW: Redesigned Hero Section with Prominent Carbon Score */}
+      <CarbonHeroSection
+        carbonData={carbonScoreData ? {
+          score: Math.round((carbonScoreData.carbonScore || 0) * 10) / 10,
+          footprint: carbonScoreData.netFootprint || 0,
+          relatableFootprint: carbonScoreData.relatableFootprint,
+          industryPercentile: productFullDetailsData?.industryPercentile
+        } : undefined}
+        trustData={productFullDetailsData ? {
+          confidenceScore: productFullDetailsData.trustIndicators?.scores?.verification || productFullDetailsData.trustIndicators?.overall_score || 0,
+          isUSDAVerified: productFullDetailsData.isUsdaVerified || false,
+          isBlockchainVerified: productFullDetailsData.blockchainVerification?.verified || false,
+          reviewsCount: productFullDetailsData.socialProof?.totalUsers || 0,
+          averageRating: productFullDetailsData.socialProof?.averageRating || 0,
+          scansCount: productFullDetailsData.socialProof?.totalScans || 0,
+          transparencyScore: productFullDetailsData.socialProof?.transparencyScore || 0
+        } : undefined}
+        productData={productBasicsData}
+        isLoading={isCarbonScoreLoading}
+        onLearnMore={() => {
+          // Scroll to detailed information or open modal
+          const detailsSection = document.getElementById('detailed-info');
+          if (detailsSection) {
+            detailsSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        }}
+        onTrustDetails={() => {
+          console.log('Opening trust details');
+        }}
+      />
+
+      {/* Compact Sticky Navigation Header */}
       <Box
         position="sticky"
         top={0}
@@ -278,50 +310,32 @@ const MobileProductDetail: React.FC = () => {
         borderBottomWidth="1px"
         borderColor={borderColor}
         px={4}
-        py={{ base: 2, md: 3 }}
+        py={2}
         shadow="sm"
-        minH={{ base: '60px', md: '80px' }}
       >
-        <HStack justify="space-between" align="center" h="full">
-          <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="bold" noOfLines={1}>
+        <HStack justify="space-between" align="center">
+          <Text fontSize="sm" fontWeight="medium" noOfLines={1}>
             {productBasicsData?.name || 'Product Details'}
           </Text>
-
-          {isCarbonScoreLoading ? (
-            <Skeleton height={{ base: '50px', md: '60px' }} width="120px" borderRadius="md" />
-          ) : (
-            <CarbonScore
-              score={Math.round((carbonScoreData?.carbonScore || 0) * 10) / 10}
-              footprint={carbonScoreData?.netFootprint || 0}
-              relatableFootprint={carbonScoreData?.relatableFootprint}
-              isCompact={true}
-            />
+          {carbonScoreData && (
+            <Badge
+              colorScheme="green"
+              variant="solid"
+              fontSize="xs"
+              px={2}
+              py={1}
+              borderRadius="full"
+            >
+              Score: {Math.round((carbonScoreData.carbonScore || 0) * 10) / 10}
+            </Badge>
           )}
         </HStack>
       </Box>
 
-      {/* Main Content Area - Mobile-First Component Ordering */}
-      <VStack spacing={{ base: 3, md: 4 }} align="stretch" p={{ base: 3, md: 4 }} pb="90px">
-        {/* MOBILE PRIORITY 1: Trust Indicators - Build trust immediately */}
-        <MobileTrustHeader
-          trustData={{
-            carbonScore: carbonScoreData?.carbonScore || 0,
-            confidenceScore: productFullDetailsData?.socialProof?.confidenceScore || 0,
-            isUSDAVerified: productFullDetailsData?.isUsdaVerified || false,
-            isBlockchainVerified: productFullDetailsData?.blockchainVerification?.verified || false,
-            reviewsCount: productFullDetailsData?.socialProof?.totalUsers || 0,
-            averageRating: productFullDetailsData?.socialProof?.averageRating || 0,
-            transparencyScore: productFullDetailsData?.socialProof?.transparencyScore || 0,
-            scansCount: productFullDetailsData?.socialProof?.totalScans || 0
-          }}
-          isLoading={isCarbonScoreLoading || !productFullDetailsData}
-          onDetailClick={() => {
-            // Open trust details modal or scroll to details
-            console.log('Opening trust details');
-          }}
-        />
-
-        {/* MOBILE PRIORITY 2: Carbon Score (Full Version) */}
+      {/* Main Content Area - Detailed Information */}
+      <VStack spacing={{ base: 3, md: 4 }} align="stretch" p={{ base: 3, md: 4 }} pb="90px" id="detailed-info">
+        
+        {/* Educational Section */}
         {carbonScoreData && (
           <Box
             borderWidth="1px"
@@ -331,13 +345,6 @@ const MobileProductDetail: React.FC = () => {
             bg={bgColor}
             p={{ base: 3, md: 4 }}
           >
-            <CarbonScore
-              score={Math.round((carbonScoreData.carbonScore || 0) * 10) / 10}
-              footprint={carbonScoreData.netFootprint}
-              relatableFootprint={carbonScoreData.relatableFootprint}
-            />
-
-            {/* Mobile Educational Section */}
             <MobileEducationalSection
               carbonData={carbonScoreData}
               handleEducationOpen={(topic) => {
@@ -352,7 +359,7 @@ const MobileProductDetail: React.FC = () => {
           </Box>
         )}
 
-        {/* MOBILE PRIORITY 3: Product Header with Image */}
+        {/* MOBILE PRIORITY 2: Product Header with Image */}
         {productBasicsData && (
           <Box
             borderWidth="1px"
@@ -378,7 +385,7 @@ const MobileProductDetail: React.FC = () => {
           </Box>
         )}
 
-        {/* MOBILE PRIORITY 4: Production Timeline */}
+        {/* MOBILE PRIORITY 3: Production Timeline */}
         {productFullDetailsData?.timeline && productFullDetailsData.timeline.length > 0 && (
           <Box
             borderWidth="1px"
@@ -396,24 +403,7 @@ const MobileProductDetail: React.FC = () => {
           </Box>
         )}
 
-        {/* MOBILE PRIORITY 5: Additional Trust Details - Progressive Loading */}
-        <ProgressiveTrustLoader
-          data={{
-            carbonScore: carbonScoreData?.carbonScore,
-            isUSDAVerified: productFullDetailsData?.isUsdaVerified,
-            isBlockchainVerified: productFullDetailsData?.blockchainVerification?.verified,
-            confidenceScore: productFullDetailsData?.socialProof?.confidenceScore,
-            reviewsCount: productFullDetailsData?.socialProof?.totalUsers,
-            averageRating: productFullDetailsData?.socialProof?.averageRating,
-            scansCount: productFullDetailsData?.socialProof?.totalScans
-          }}
-          isLoading={isProductFullDetailsLoading}
-          loadingPriority="carbon-first"
-          compact={true}
-          showSkeleton={true}
-        />
-
-        {/* MOBILE PRIORITY 5: Establishment Info - Fifth */}
+        {/* MOBILE PRIORITY 4: Establishment Info */}
         {productFullDetailsData?.establishment && (
           <Box
             borderWidth="1px"

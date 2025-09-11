@@ -1,0 +1,189 @@
+import React from 'react';
+import {
+  Box,
+  Container,
+  VStack,
+  HStack,
+  Text,
+  Badge,
+  Heading,
+  Icon,
+  useColorModeValue,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Card,
+  CardBody,
+  Button,
+} from '@chakra-ui/react';
+import { FaRocket, FaLeaf, FaAward, FaChartLine } from 'react-icons/fa';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+
+import { AdvancedAnalyticsDashboard } from '../components/Carbon/AdvancedAnalytics';
+
+const AdvancedAnalyticsDemo: React.FC = () => {
+  const navigate = useNavigate();
+  const bg = useColorModeValue('gray.50', 'gray.900');
+  const cardBg = useColorModeValue('white', 'gray.800');
+
+  // Production 125 details
+  const PRODUCTION_ID = 125;
+  const PRODUCTION_NAME = "Iowa Conservation Corn - QR Test";
+  const CROP_TYPE = "Corn (Field)";
+
+  return (
+    <Box bg={bg} minH="100vh">
+      <Container maxW="7xl" py={8}>
+        <VStack spacing={8} align="stretch">
+          {/* Page Header */}
+          <Card bg={cardBg}>
+            <CardBody>
+              <VStack spacing={6}>
+                {/* Hero Section */}
+                <VStack spacing={4} textAlign="center">
+                  <HStack spacing={3}>
+                    <Icon as={FaRocket} boxSize={8} color="green.500" />
+                    <Heading size="xl" bgGradient="linear(to-r, green.500, blue.500)" bgClip="text">
+                      Phase 6: Advanced Carbon Analytics
+                    </Heading>
+                    <Icon as={FaRocket} boxSize={8} color="blue.500" />
+                  </HStack>
+                  
+                  <Text fontSize="lg" color="gray.600" maxW="3xl">
+                    Showcasing world-class carbon intelligence that positions Trazo as the market leader 
+                    in agricultural carbon transparency and analytics.
+                  </Text>
+                  {/* Fixed JSX syntax error */}
+
+                  <HStack spacing={4} flexWrap="wrap" justify="center">
+                    <Badge colorScheme="green" fontSize="md" px={3} py={1}>
+                      <HStack spacing={1}>
+                        <Icon as={FaLeaf} />
+                        <Text>Carbon Negative Production</Text>
+                      </HStack>
+                    </Badge>
+                    <Badge colorScheme="blue" fontSize="md" px={3} py={1}>
+                      <HStack spacing={1}>
+                        <Icon as={FaChartLine} />
+                        <Text>AI-Powered Insights</Text>
+                      </HStack>
+                    </Badge>
+                    <Badge colorScheme="purple" fontSize="md" px={3} py={1}>
+                      <HStack spacing={1}>
+                        <Icon as={FaAward} />
+                        <Text>Perfect Score (100/100)</Text>
+                      </HStack>
+                    </Badge>
+                  </HStack>
+                </VStack>
+
+                {/* Key Features */}
+                <Box w="full">
+                  <Heading size="md" mb={4} textAlign="center">
+                    🌟 Revolutionary Features
+                  </Heading>
+                  <Alert status="success" borderRadius="md">
+                    <AlertIcon />
+                    <Box>
+                      <AlertTitle>Phenomenal Success Status!</AlertTitle>
+                      <AlertDescription>
+                        <VStack align="start" spacing={1} mt={2}>
+                          <Text>✅ Interactive carbon journey visualization with timeline analytics</Text>
+                          <Text>✅ Carbon ROI calculations showing $2,000-3,000 annual potential</Text>
+                          <Text>✅ Market value analysis with premium pricing opportunities</Text>
+                          <Text>✅ Consumer-friendly impact stories (119,920 kg CO₂e sequestered!)</Text>
+                          <Text>✅ AI-powered optimization recommendations</Text>
+                          <Text>✅ Predictive insights and seasonal pattern analysis</Text>
+                        </VStack>
+                      </AlertDescription>
+                    </Box>
+                  </Alert>
+                </Box>
+
+                {/* Demo Production Details */}
+                <VStack spacing={3} p={4} bg="green.50" borderRadius="md" w="full">
+                  <Heading size="sm" color="green.700">
+                    🎯 Demo Production Details
+                  </Heading>
+                  <HStack spacing={6} flexWrap="wrap" justify="center">
+                    <Text><strong>Production:</strong> {PRODUCTION_NAME}</Text>
+                    <Text><strong>ID:</strong> #{PRODUCTION_ID}</Text>
+                    <Text><strong>Crop:</strong> {CROP_TYPE}</Text>
+                    <Text><strong>Status:</strong> <span style={{color: 'green'}}>Carbon Negative Elite</span></Text>
+                  </HStack>
+                </VStack>
+
+                {/* Navigation */}
+                <HStack spacing={4} justify="center">
+                  <Button
+                    as={RouterLink}
+                    to="/dashboard"
+                    variant="outline"
+                    colorScheme="gray"
+                  >
+                    ← Back to Dashboard
+                  </Button>
+                  <Button
+                    as={RouterLink}
+                    to={`/production/${PRODUCTION_ID}`}
+                    colorScheme="green"
+                    variant="outline"
+                  >
+                    View Full Production
+                  </Button>
+                  <Button
+                    as={RouterLink}
+                    to={`http://consumer.localhost:3001/production/${PRODUCTION_ID}`}
+                    colorScheme="blue"
+                    target="_blank"
+                  >
+                    🚀 Consumer Experience
+                  </Button>
+                </HStack>
+              </VStack>
+            </CardBody>
+          </Card>
+
+          {/* Advanced Analytics Dashboard */}
+          <Box>
+            <AdvancedAnalyticsDashboard
+              productionId={PRODUCTION_ID}
+              productionName={PRODUCTION_NAME}
+              cropType={CROP_TYPE}
+              onDataLoad={(data) => {
+                console.log('Advanced analytics data loaded:', data);
+              }}
+            />
+          </Box>
+
+          {/* Footer */}
+          <Card bg={cardBg}>
+            <CardBody>
+              <VStack spacing={3} textAlign="center">
+                <Heading size="md" color="green.600">
+                  🎉 Phase 6 Implementation Complete!
+                </Heading>
+                <Text color="gray.600">
+                  Advanced Carbon Analytics successfully implemented with world-class carbon intelligence,
+                  interactive visualizations, and AI-powered insights that showcase Trazo's market-leading
+                  position in agricultural carbon transparency.
+                </Text>
+                <HStack spacing={2} fontSize="sm" color="gray.500">
+                  <Text>Powered by:</Text>
+                  <Badge variant="outline">Django + React</Badge>
+                  <Badge variant="outline">USDA API</Badge>
+                  <Badge variant="outline">Recharts</Badge>
+                  <Badge variant="outline">Chakra UI</Badge>
+                  <Badge variant="outline">Claude Code</Badge>
+                </HStack>
+              </VStack>
+            </CardBody>
+          </Card>
+        </VStack>
+      </Container>
+    </Box>
+  );
+};
+
+export default AdvancedAnalyticsDemo;

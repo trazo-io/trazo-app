@@ -907,8 +907,19 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                             value={field.value || ''}
                             onChange={(_, num) => field.onChange(num)}
                             precision={6}
+                            allowMouseWheel={false}
+                            clampValueOnBlur={false}
+                            min={-90}
+                            max={90}
+                            step={0.000001}
                           >
-                            <NumberInputField borderRadius="lg" placeholder="40.7128" />
+                            <NumberInputField 
+                              borderRadius="lg" 
+                              placeholder="40.7128"
+                              borderColor="gray.300"
+                              _hover={{ borderColor: 'green.400' }}
+                              _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            />
                             <NumberInputStepper>
                               <NumberIncrementStepper />
                               <NumberDecrementStepper />
@@ -931,8 +942,19 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                             value={field.value || ''}
                             onChange={(_, num) => field.onChange(num)}
                             precision={6}
+                            allowMouseWheel={false}
+                            clampValueOnBlur={false}
+                            min={-180}
+                            max={180}
+                            step={0.000001}
                           >
-                            <NumberInputField borderRadius="lg" placeholder="-74.0060" />
+                            <NumberInputField 
+                              borderRadius="lg" 
+                              placeholder="-74.0060"
+                              borderColor="gray.300"
+                              _hover={{ borderColor: 'green.400' }}
+                              _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            />
                             <NumberInputStepper>
                               <NumberIncrementStepper />
                               <NumberDecrementStepper />
@@ -1449,7 +1471,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                         {field.value?.length ? (
                           <HStack spacing={2} flexWrap="wrap">
                             {field.value.map((soil, index) => (
-                              <Tag key={index} size="md" variant="solid" colorScheme="brown">
+                              <Tag key={index} size="md" variant="solid" colorScheme="orange">
                                 <TagLabel>{soil}</TagLabel>
                                 <TagCloseButton onClick={() => removeSoilType(index)} />
                               </Tag>

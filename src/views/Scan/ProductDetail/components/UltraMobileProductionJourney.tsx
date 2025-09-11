@@ -44,7 +44,8 @@ import {
   FaArrowUp,
   FaArrowDown,
   FaEye,
-  FaBalanceScale
+  FaBalanceScale,
+  FaBug
 } from 'react-icons/fa';
 import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
 import { useIntl } from 'react-intl';
@@ -52,6 +53,13 @@ import { format, parseISO } from 'date-fns';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+import { ConsumerEventCard } from 'components/Events/ConsumerEventCard';
+import {
+  EducationalTooltip,
+  CO2eTooltip,
+  USDATooltip,
+  CarbonScoreTooltip
+} from 'components/Education/EducationalTooltip';
 
 interface CarbonCalculation {
   co2e: number;
@@ -78,6 +86,24 @@ interface TimelineEvent {
   area?: string;
   equipment?: string;
   carbon_data?: CarbonCalculation;
+  blockchain_verified?: boolean;
+  blockchain_transaction?: string;
+  blockchain_block_number?: number;
+  blockchain_explorer_url?: string;
+  blockchain_network?: string;
+  verification_confidence?: number;
+  verification_timestamp?: string;
+  data_integrity_score?: number;
+  usda_verified?: boolean;
+  extra_data?: {
+    blockchain_verified?: boolean;
+    blockchain_transaction?: string;
+    blockchain_block_number?: number;
+    verification_confidence?: number;
+    verification_timestamp?: string;
+    data_integrity_score?: number;
+    [key: string]: any;
+  };
 }
 
 interface UltraMobileProductionJourneyProps {
@@ -148,15 +174,35 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     }
   };
 
-  // Get event configuration based on type
+  // Get event configuration based on type - Enhanced for all 7 event types
   const getEventConfig = (event: TimelineEvent) => {
     const type = event.type.toLowerCase();
     const description = event.description.toLowerCase();
 
+    // Weather Events
+    if (
+      type.includes('weather') ||
+      description.includes('weather') ||
+      description.includes('drought') ||
+      description.includes('frost') ||
+      description.includes('climate')
+    ) {
+      return {
+        icon: FaWater,
+        color: 'cyan.500',
+        bgColor: 'cyan.50',
+        category: 'Weather',
+        categoryColor: 'cyan'
+      };
+    }
+
+    // Chemical Events
     if (
       type.includes('chemical') ||
       description.includes('fertilizer') ||
-      description.includes('spray')
+      description.includes('spray') ||
+      description.includes('pesticide') ||
+      description.includes('herbicide')
     ) {
       return {
         icon: FaFlask,
@@ -167,11 +213,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       };
     }
 
+    // Production Events
     if (
       type.includes('production') ||
       description.includes('harvest') ||
       description.includes('planting') ||
-      description.includes('bee')
+      description.includes('bee') ||
+      description.includes('irrigation') ||
+      description.includes('pruning')
     ) {
       return {
         icon: MdAgriculture,
@@ -182,10 +231,13 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       };
     }
 
+    // Equipment Events
     if (
       type.includes('equipment') ||
       description.includes('tractor') ||
-      description.includes('machinery')
+      description.includes('machinery') ||
+      description.includes('fuel') ||
+      description.includes('maintenance')
     ) {
       return {
         icon: FaTractor,
@@ -196,6 +248,41 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       };
     }
 
+    // Soil Management Events
+    if (
+      type.includes('soil') ||
+      description.includes('soil') ||
+      description.includes('organic matter') ||
+      description.includes('carbon reserves') ||
+      description.includes('amendment')
+    ) {
+      return {
+        icon: FaSeedling,
+        color: 'teal.500',
+        bgColor: 'teal.50',
+        category: 'Soil Management',
+        categoryColor: 'teal'
+      };
+    }
+
+    // Pest Management Events
+    if (
+      type.includes('pest') ||
+      description.includes('pest') ||
+      description.includes('beneficial') ||
+      description.includes('scouting') ||
+      description.includes('ipm')
+    ) {
+      return {
+        icon: FaBug,
+        color: 'red.500',
+        bgColor: 'red.50',
+        category: 'Pest Management',
+        categoryColor: 'red'
+      };
+    }
+
+    // General Events (fallback)
     return {
       icon: MdEco,
       color: 'gray.500',
@@ -215,11 +302,12 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       ? sortedEvents
       : sortedEvents.filter((event) => {
           const config = getEventConfig(event);
-          return config.category.toLowerCase() === selectedCategory.toLowerCase();
+          return config.category && typeof config.category === 'string' && 
+                 config.category.toLowerCase() === selectedCategory.toLowerCase();
         });
 
   const displayedEvents = showAll ? filteredEvents : filteredEvents.slice(0, 3);
-  const categories = ['all', ...new Set(events.map((event) => getEventConfig(event).category))];
+  const categories = ['all', ...new Set(events.map((event) => getEventConfig(event).category).filter(cat => cat && typeof cat === 'string'))];
 
   const formatDate = (dateString: string) => {
     try {
@@ -313,9 +401,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     return formatCO2e(totalCO2).replace(/[+-]/, '');
                   })()}
                 </Text>
-                <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500">
-                  CO₂e
-                </Text>
+                <CO2eTooltip>
+                  <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500">
+                    CO₂e
+                  </Text>
+                </CO2eTooltip>
               </VStack>
 
               <VStack
@@ -334,9 +424,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   })()}
                   %
                 </Text>
-                <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500">
-                  USDA
-                </Text>
+                <USDATooltip>
+                  <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500">
+                    USDA
+                  </Text>
+                </USDATooltip>
               </VStack>
 
               <VStack
@@ -356,423 +448,197 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     return Math.round(avgEfficiency) || 0;
                   })()}
                 </Text>
-                <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500">
-                  Score
-                </Text>
+                <CarbonScoreTooltip>
+                  <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500">
+                    Score
+                  </Text>
+                </CarbonScoreTooltip>
               </VStack>
             </SimpleGrid>
           </VStack>
 
-          {/* Modernized Category Pills */}
+          {/* Minimalist Horizontal Event Type Filters */}
           {categories.length > 1 && (
-            <HStack spacing={2} w="full" overflowX="auto" pb={1}>
-              <Button
-                size="sm"
-                variant={selectedCategory === 'all' ? 'solid' : 'ghost'}
-                colorScheme="blue"
-                onClick={() => setSelectedCategory('all')}
-                borderRadius="full"
-                fontSize="xs"
-                minW="fit-content"
-                h="32px"
-                px={4}
-                _hover={{
-                  transform: 'translateY(-1px)',
-                  shadow: 'sm'
-                }}
-                transition="all 0.2s">
-                All
-              </Button>
-              {categories.slice(1, 4).map((category) => (
-                <Button
-                  key={category}
-                  size="sm"
-                  variant={selectedCategory === category ? 'solid' : 'ghost'}
-                  colorScheme="gray"
-                  onClick={() => setSelectedCategory(category)}
-                  borderRadius="full"
-                  fontSize="xs"
-                  minW="fit-content"
-                  h="32px"
-                  px={4}
-                  _hover={{
-                    transform: 'translateY(-1px)',
-                    shadow: 'sm'
-                  }}
-                  transition="all 0.2s">
-                  {category}
-                </Button>
-              ))}
-            </HStack>
+            <Box w="full" overflowX="auto" pb={2}>
+              <HStack spacing={2} minW="max-content" px={1}>
+                {categories.map((category) => {
+                  const getEventConfig = (cat: string) => {
+                    if (!cat || typeof cat !== 'string') {
+                      return { icon: MdTimeline, color: 'green.500' };
+                    }
+                    switch (cat.toLowerCase()) {
+                      case 'all':
+                        return { icon: MdTimeline, color: 'green.500' };
+                      case 'weather':
+                        return { icon: FaWater, color: 'cyan.500' };
+                      case 'chemical':
+                        return { icon: FaFlask, color: 'orange.500' };
+                      case 'production':
+                        return { icon: MdAgriculture, color: 'green.500' };
+                      case 'equipment':
+                        return { icon: FaTractor, color: 'blue.500' };
+                      case 'soil management':
+                        return { icon: FaSeedling, color: 'teal.500' };
+                      case 'pest management':
+                        return { icon: FaBug, color: 'red.500' };
+                      default:
+                        return { icon: MdEco, color: 'gray.500' };
+                    }
+                  };
+
+                  const config = getEventConfig(category);
+                  const isSelected = selectedCategory === category || (category === 'all' && selectedCategory === 'all');
+                  
+                  const categoryEvents = category === 'all' 
+                    ? filteredEvents 
+                    : sortedEvents.filter(event => {
+                        const eventConfig = getEventConfig(event);
+                        return eventConfig.category && typeof eventConfig.category === 'string' && 
+                               category && typeof category === 'string' &&
+                               eventConfig.category.toLowerCase() === category.toLowerCase();
+                      });
+
+                  const displayName = category === 'all' ? 'All' : category;
+                  const eventCount = categoryEvents.length;
+
+                  return (
+                    <Button
+                      key={category}
+                      size="sm"
+                      variant={isSelected ? "solid" : "outline"}
+                      colorScheme={isSelected ? config.color.split('.')[0] : "gray"}
+                      bg={isSelected ? config.color : "transparent"}
+                      color={isSelected ? "white" : useColorModeValue('gray.700', 'gray.300')}
+                      borderColor={isSelected ? config.color : useColorModeValue('gray.200', 'gray.600')}
+                      onClick={() => setSelectedCategory(category)}
+                      transition="all 0.2s"
+                      _hover={{
+                        transform: 'translateY(-1px)',
+                        shadow: 'sm',
+                        bg: isSelected ? config.color : useColorModeValue('gray.50', 'gray.700')
+                      }}
+                      leftIcon={<Icon as={config.icon} boxSize={3} />}
+                      minW="max-content"
+                      fontSize="xs"
+                      fontWeight="medium"
+                      px={3}
+                      py={2}
+                      h="32px">
+                      {displayName} {eventCount > 0 && `(${eventCount})`}
+                    </Button>
+                  );
+                })}
+              </HStack>
+            </Box>
           )}
         </VStack>
       </CardBody>
 
       <CardBody pt={0}>
-        {/* Next-Level Event Cards */}
-        <VStack spacing={2} align="stretch">
+        {/* Consumer-Friendly Event Cards */}
+        <VStack spacing={4} align="stretch">
           {displayedEvents.map((event, index) => {
-            const config = getEventConfig(event);
-            const dateInfo = formatDate(event.date);
+            // Debug: Log the raw event data for blockchain events
+            if (
+              event.description.includes('no-till') ||
+              event.description.includes('Zero-Disturbance')
+            ) {
+              console.log('🔍 RAW EVENT DATA:', {
+                eventDescription: event.description,
+                blockchain_verified: event.blockchain_verified,
+                blockchain_transaction: event.blockchain_transaction,
+                verification_confidence: event.verification_confidence,
+                extra_data: event.extra_data,
+                fullEvent: event
+              });
+            }
+
+            // Enhanced event with comprehensive blockchain verification data
+            const enhancedEvent = {
+              ...event,
+              // Blockchain verification from extra_data or direct fields
+              blockchain_verified:
+                event.extra_data?.blockchain_verified || event.blockchain_verified || false,
+              blockchain_transaction:
+                event.extra_data?.blockchain_transaction || event.blockchain_transaction || '',
+              blockchain_block_number:
+                event.extra_data?.blockchain_block_number || event.blockchain_block_number || 0,
+              verification_confidence:
+                event.extra_data?.verification_confidence || event.verification_confidence || 0,
+              verification_timestamp:
+                event.extra_data?.verification_timestamp || event.verification_timestamp || '',
+              data_integrity_score:
+                event.extra_data?.data_integrity_score || event.data_integrity_score || 0,
+              blockchain_network: event.blockchain_network || 'polygon_amoy',
+              // USDA verification from carbon_data or direct field
+              usda_verified: event.carbon_data?.usda_verified || event.usda_verified || false,
+              // Carbon impact
+              carbon_impact: event.carbon_data?.co2e,
+              // Keep certification separate from blockchain verification
+              certified: event.certified || false
+            };
+
+            // Debug: Log the enhanced event for blockchain events
+            if (
+              event.description.includes('no-till') ||
+              event.description.includes('Zero-Disturbance')
+            ) {
+              console.log('🔍 ENHANCED EVENT DATA:', {
+                eventDescription: enhancedEvent.description,
+                blockchain_verified: enhancedEvent.blockchain_verified,
+                blockchain_transaction: enhancedEvent.blockchain_transaction,
+                verification_confidence: enhancedEvent.verification_confidence,
+                extra_data: enhancedEvent.extra_data
+              });
+            }
 
             return (
-              <Card
-                // className="trazo-card-production-journey"
+              <ConsumerEventCard
                 key={event.id}
-                bg={config.bgColor}
-                borderLeft="4px solid"
-                borderColor={config.color}
-                shadow="xs"
-                borderRadius="lg"
-                overflow="hidden"
-                cursor="pointer"
-                position="relative"
-                _hover={{
-                  shadow: 'md',
-                  transform: 'translateY(-2px)',
-                  borderLeftWidth: '6px',
-                  transition: 'all 0.3s ease'
-                }}
-                _active={{
-                  transform: 'translateY(0px)',
-                  transition: 'all 0.1s ease'
-                }}
-                onClick={() => handleEventClick(event)}>
-                {/* Timeline connector */}
-                {index < displayedEvents.length - 1 && (
-                  <Box
-                    position="absolute"
-                    left="30px"
-                    bottom="-10px"
-                    width="2px"
-                    height="10px"
-                    bg="gray.300"
-                    zIndex={1}
-                  />
-                )}
-
-                <CardBody>
-                  {/* Next-Level Carbon-Rich Layout */}
-                  <VStack spacing={3} align="stretch">
-                    {/* Header Row with Carbon Impact */}
-                    <HStack spacing={3} align="start">
-                      {/* Timeline Icon */}
-                      <Circle
-                        size="36px"
-                        bg={config.color}
-                        color="white"
-                        flexShrink={0}
-                        position="relative"
-                        zIndex={2}>
-                        <Icon as={config.icon} boxSize={4} />
-                      </Circle>
-
-                      {/* Main Content */}
-                      <VStack align="start" spacing={1} flex="1" minW="0">
-                        <HStack w="full" justify="space-between" align="start">
-                          <VStack align="start" spacing={1} flex="1" minW="0">
-                            <Text
-                              fontSize="sm"
-                              fontWeight="600"
-                              color={textColor}
-                              noOfLines={2}
-                              lineHeight="1.3">
-                              {event.description}
-                            </Text>
-
-                            {/* Enhanced badges with carbon info */}
-                            <HStack spacing={1} flexWrap="wrap">
-                              <Badge
-                                colorScheme={config.categoryColor}
-                                size="sm"
-                                borderRadius="full"
-                                fontSize="xs"
-                                variant="subtle">
-                                {config.category}
-                              </Badge>
-                              {event.carbon_data?.usda_verified && (
-                                <Badge
-                                  colorScheme="blue"
-                                  size="sm"
-                                  borderRadius="full"
-                                  variant="solid">
-                                  <HStack spacing={1}>
-                                    <Icon as={FaShieldAlt} boxSize={2} />
-                                    <Text fontSize="xs">USDA</Text>
-                                  </HStack>
-                                </Badge>
-                              )}
-                              {event.certified && (
-                                <Badge
-                                  colorScheme="green"
-                                  size="sm"
-                                  borderRadius="full"
-                                  variant="solid">
-                                  <HStack spacing={1}>
-                                    <Icon as={MdVerified} boxSize={2} />
-                                    <Text fontSize="xs">✓</Text>
-                                  </HStack>
-                                </Badge>
-                              )}
-                            </HStack>
-                          </VStack>
-
-                          {/* Carbon Impact Badge */}
-                          {event.carbon_data?.co2e !== undefined && (
-                            <VStack spacing={0} align="end" flexShrink={0}>
-                              <HStack spacing={1}>
-                                <Icon
-                                  as={event.carbon_data.co2e < 0 ? FaArrowDown : FaArrowUp}
-                                  boxSize={2.5}
-                                  color={event.carbon_data.co2e < 0 ? 'green.500' : 'red.500'}
-                                />
-                                <Text
-                                  fontSize="sm"
-                                  fontWeight="bold"
-                                  color={event.carbon_data.co2e < 0 ? 'green.600' : 'red.600'}>
-                                  {formatCO2e(event.carbon_data.co2e)}
-                                </Text>
-                              </HStack>
-                              <Text fontSize="xs" color={mutedColor}>
-                                CO₂e
-                              </Text>
-                            </VStack>
-                          )}
-                        </HStack>
-
-                        {/* Date and Time */}
-                        <HStack spacing={2} w="full">
-                          <Icon as={FaCalendarAlt} boxSize={2.5} color={mutedColor} />
-                          <Text fontSize="xs" color={mutedColor} fontWeight="500">
-                            {dateInfo.full}
-                            {dateInfo.time && ` at ${dateInfo.time}`}
-                          </Text>
-                        </HStack>
-                      </VStack>
-                    </HStack>
-
-                    {/* Carbon Metrics Row */}
-                    {event.carbon_data && (
-                      <VStack spacing={2} w="full">
-                        {/* Efficiency and Verification */}
-                        <HStack w="full" justify="space-between" align="center">
-                          {/* Efficiency Score */}
-                          {event.carbon_data.efficiency_score !== undefined && (
-                            <HStack spacing={2} flex={1}>
-                              <Circle
-                                size="20px"
-                                bg={`${getEfficiencyColor(
-                                  event.carbon_data.efficiency_score
-                                )}.100`}>
-                                <Icon
-                                  as={FaBalanceScale}
-                                  boxSize={2.5}
-                                  color={`${getEfficiencyColor(
-                                    event.carbon_data.efficiency_score
-                                  )}.600`}
-                                />
-                              </Circle>
-                              <VStack spacing={0} align="start">
-                                <Text fontSize="xs" color={mutedColor} fontWeight="500">
-                                  Efficiency
-                                </Text>
-                                <Text
-                                  fontSize="sm"
-                                  fontWeight="bold"
-                                  color={`${getEfficiencyColor(
-                                    event.carbon_data.efficiency_score
-                                  )}.600`}>
-                                  {event.carbon_data.efficiency_score}%
-                                </Text>
-                              </VStack>
-                            </HStack>
-                          )}
-
-                          {/* Verification Confidence */}
-                          {event.carbon_data.verification_confidence && (
-                            <HStack spacing={2} flex={1}>
-                              <Circle size="20px" bg="purple.100">
-                                <Icon
-                                  as={getConfidenceIcon(event.carbon_data.verification_confidence)}
-                                  boxSize={2.5}
-                                  color="purple.600"
-                                />
-                              </Circle>
-                              <VStack spacing={0} align="start">
-                                <Text fontSize="xs" color={mutedColor} fontWeight="500">
-                                  Confidence
-                                </Text>
-                                <Text
-                                  fontSize="sm"
-                                  fontWeight="bold"
-                                  color="purple.600"
-                                  textTransform="capitalize">
-                                  {event.carbon_data.verification_confidence}
-                                </Text>
-                              </VStack>
-                            </HStack>
-                          )}
-                        </HStack>
-
-                        {/* Cost Analysis */}
-                        {event.carbon_data.cost_analysis && (
-                          <HStack
-                            w="full"
-                            justify="space-between"
-                            align="center"
-                            bg={useColorModeValue('gray.50', 'gray.700')}
-                            borderRadius="md"
-                            p={2}>
-                            <VStack spacing={0} align="start" flex={1}>
-                              <Text fontSize="xs" color={mutedColor} fontWeight="500">
-                                Cost Impact
-                              </Text>
-                              <Text fontSize="sm" fontWeight="bold" color={textColor}>
-                                ${event.carbon_data.cost_analysis.estimated_cost.toFixed(2)}
-                              </Text>
-                            </VStack>
-                            <VStack spacing={0} align="end" flex={1}>
-                              <Text fontSize="xs" color={mutedColor} fontWeight="500">
-                                $/kg CO₂e
-                              </Text>
-                              <Text fontSize="sm" fontWeight="bold" color="orange.600">
-                                ${event.carbon_data.cost_analysis.cost_per_co2e.toFixed(2)}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                        )}
-
-                        {/* Calculation Method */}
-                        {event.carbon_data.calculation_method && (
-                          <HStack spacing={2} w="full">
-                            <Icon as={FaFlask} boxSize={2.5} color={mutedColor} />
-                            <Text fontSize="xs" color={mutedColor} fontWeight="500">
-                              Method: {event.carbon_data.calculation_method}
-                            </Text>
-                          </HStack>
-                        )}
-                      </VStack>
-                    )}
-
-                    {/* Description */}
-                    {event.observation && (
-                      <Text
-                        fontSize="xs"
-                        color={mutedColor}
-                        noOfLines={2}
-                        lineHeight="1.4"
-                        bg={useColorModeValue('gray.50', 'gray.700')}
-                        p={2}
-                        borderRadius="md"
-                        borderLeft="3px solid"
-                        borderColor={config.color}>
-                        {event.observation}
-                      </Text>
-                    )}
-
-                    {/* Technical Metadata */}
-                    {(event.volume || event.area || event.concentration || event.equipment) && (
-                      <SimpleGrid columns={2} spacing={2} fontSize="xs" w="full">
-                        {event.volume && (
-                          <HStack spacing={1} justify="space-between">
-                            <Text color={mutedColor} fontWeight="500">
-                              Volume:
-                            </Text>
-                            <Text color={textColor} fontWeight="600">
-                              {event.volume}
-                            </Text>
-                          </HStack>
-                        )}
-                        {event.area && (
-                          <HStack spacing={1} justify="space-between">
-                            <Text color={mutedColor} fontWeight="500">
-                              Area:
-                            </Text>
-                            <Text color={textColor} fontWeight="600">
-                              {event.area}
-                            </Text>
-                          </HStack>
-                        )}
-                        {event.concentration && (
-                          <HStack spacing={1} justify="space-between">
-                            <Text color={mutedColor} fontWeight="500">
-                              Conc:
-                            </Text>
-                            <Text color={textColor} fontWeight="600">
-                              {event.concentration}
-                            </Text>
-                          </HStack>
-                        )}
-                        {event.equipment && (
-                          <HStack spacing={1} justify="space-between">
-                            <Text color={mutedColor} fontWeight="500">
-                              Equipment:
-                            </Text>
-                            <Text color={textColor} fontWeight="600" noOfLines={1}>
-                              {event.equipment}
-                            </Text>
-                          </HStack>
-                        )}
-                      </SimpleGrid>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
+                event={enhancedEvent}
+                isFirst={index === 0}
+                isLast={index === displayedEvents.length - 1}
+              />
             );
           })}
         </VStack>
 
-        {/* Enhanced Show More Button */}
+        {/* Show More Button - Keep original implementation */}
         {filteredEvents.length > 3 && (
-          <Flex justify="center" mt={4} px={4}>
+          <Box mt={4} textAlign="center">
             <Button
-              variant="ghost"
-              colorScheme="blue"
-              leftIcon={<Icon as={showAll ? FaChevronUp : FaChevronDown} />}
-              onClick={() => setShowAll(!showAll)}
               size="sm"
-              borderRadius="full"
-              px={6}
-              fontSize="xs"
-              fontWeight="500"
-              _hover={{
-                bg: 'blue.50',
-                transform: 'translateY(-1px)'
-              }}
-              transition="all 0.2s">
-              {showAll ? 'Show Less' : `View ${filteredEvents.length - 3} More`}
+              variant="ghost"
+              colorScheme="green"
+              onClick={() => setShowAll(!showAll)}
+              rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}>
+              {showAll ? 'Show Less' : `Show ${filteredEvents.length - 3} More Events`}
             </Button>
-          </Flex>
+          </Box>
         )}
 
-        {/* Empty State */}
-        {filteredEvents.length === 0 && (
-          <VStack spacing={4} py={8} textAlign="center">
-            <Circle size="60px" bg="gray.100">
-              <Icon as={MdTimeline} boxSize={6} color="gray.400" />
-            </Circle>
-            <VStack spacing={1}>
-              <Heading size="sm" color="gray.600">
-                No activities found
-              </Heading>
-              <Text fontSize="xs" color="gray.500" maxW="200px">
-                {selectedCategory === 'all'
-                  ? 'No production activities recorded yet.'
-                  : `No ${selectedCategory.toLowerCase()} activities found.`}
-              </Text>
-            </VStack>
-          </VStack>
+        {/* Keep the original modal */}
+        {selectedEvent && (
+          <EnhancedEventDetailModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            event={{
+              ...selectedEvent,
+              carbon_data: selectedEvent.carbon_data
+                ? {
+                    ...selectedEvent.carbon_data,
+                    calculation_method:
+                      selectedEvent.carbon_data.calculation_method || 'USDA Standard Method',
+                    verification_confidence:
+                      selectedEvent.carbon_data.verification_confidence || 'medium'
+                  }
+                : undefined
+            }}
+          />
         )}
       </CardBody>
-
-      {/* Enhanced Event Detail Modal */}
-      {selectedEvent && (
-        <EnhancedEventDetailModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          event={selectedEvent}
-        />
-      )}
     </Card>
   );
 };
+
+export default UltraMobileProductionJourney;

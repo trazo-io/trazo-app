@@ -583,55 +583,76 @@ const ModernCarbonDashboard: React.FC = () => {
   }
 
   return (
-    <Box minH="100vh" py={{ base: 4, md: 8 }} px={{ base: 2, md: 6 }}>
+    <Box minH="100vh" py={{ base: 4, md: 6 }} px={{ base: 2, md: 6 }}>
       <VStack spacing={6} align="stretch">
-        {/* Header */}
+        {/* Header - Optimized spacing for proper hierarchy */}
         <Flex
           direction={{ sm: 'column', md: 'row' }}
           justify="space-between"
           align="center"
           gap="24px"
-          paddingTop={12}
+          paddingTop={{ base: 4, md: 6 }}
           w="100%">
-          {/* Header Section - Following Standard Dashboard Pattern */}
-          <HStack justify="space-between" align="center" mb={4} width="100%">
-            <VStack align="start" spacing={1}>
-              <Text color="gray.500" fontSize="md">
-                Manage your carbon footprint and optimize sustainability
-              </Text>
-            </VStack>
+          {/* Title Section - Proper position after breadcrumbs */}
+          <VStack align="start" spacing={1}>
+            <Text color="gray.500" fontSize={{ base: "sm", md: "md" }}>
+              Manage your carbon footprint and optimize sustainability
+            </Text>
+          </VStack>
 
-            <HStack spacing={3}>
-              <ProductionSelector
-                selectedProductionId={productionId}
-                productions={productions || []}
-                onProductionChange={(newProductionId) => 
-                  handleProductionChange({ target: { value: newProductionId } })
-                }
-                isLoading={isProductionsLoading}
-                placeholder="Select Production"
-                size="sm"
-              />
-            </HStack>
-          </HStack>
+          {/* Production Selector - Proper sizing */}
+          <Box w={{ base: "100%", md: "fit-content" }} minW={{ md: "300px" }} maxW={{ md: "400px" }}>
+            <ProductionSelector
+              selectedProductionId={productionId}
+              productions={productions || []}
+              onProductionChange={(newProductionId) => 
+                handleProductionChange({ target: { value: newProductionId } })
+              }
+              isLoading={isProductionsLoading}
+              placeholder="Select Production"
+              size="sm"
+            />
+          </Box>
         </Flex>
 
-        {/* Quick Actions */}
-        <HStack spacing={3} mb={6}>
-          <Button leftIcon={<FaPlus />} colorScheme="green" size="sm" onClick={onOffsetModalOpen}>
+        {/* Quick Actions - Mobile-Responsive */}
+        <Flex 
+          direction={{ base: "column", sm: "row" }}
+          gap={3}
+          mb={6}
+          flexWrap="wrap"
+          justify={{ base: "stretch", sm: "flex-start" }}
+        >
+          <Button 
+            leftIcon={<FaPlus />} 
+            colorScheme="green" 
+            size="sm" 
+            onClick={onOffsetModalOpen}
+            flex={{ base: "1", sm: "none" }}
+            minW={{ base: "auto", sm: "150px" }}
+          >
             Add Carbon Offset
           </Button>
-          <Button leftIcon={<FaDownload />} variant="outline" size="sm">
+          <Button 
+            leftIcon={<FaDownload />} 
+            variant="outline" 
+            size="sm"
+            flex={{ base: "1", sm: "none" }}
+            minW={{ base: "auto", sm: "120px" }}
+          >
             Export Report
           </Button>
           <Button
             leftIcon={<FaEye />}
             variant="outline"
             size="sm"
-            onClick={onCertificationsModalOpen}>
+            onClick={onCertificationsModalOpen}
+            flex={{ base: "1", sm: "none" }}
+            minW={{ base: "auto", sm: "140px" }}
+          >
             View Certifications
           </Button>
-        </HStack>
+        </Flex>
 
         {/* Key Metrics Cards - Improved Layout */}
         <VStack spacing={cardSpacing} align="stretch">

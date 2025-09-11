@@ -25,18 +25,11 @@ interface QuickFeedbackProps {
   onFeedbackSubmitted?: () => void;
 }
 
-const FEEDBACK_REACTIONS = [
-  { emoji: '😊', label: 'Great', color: 'green', value: 'positive' },
-  { emoji: '😐', label: 'OK', color: 'yellow', value: 'neutral' },
-  { emoji: '😟', label: 'Needs Work', color: 'red', value: 'negative' },
-];
-
 export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
   productionId,
   scanId,
   onFeedbackSubmitted,
 }) => {
-  const [selectedReaction, setSelectedReaction] = useState<string | null>(null);
   const [quickMessage, setQuickMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [startTime] = useState<number>(Date.now());
@@ -115,17 +108,16 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
 
   const handleQuickFeedback = async () => {
     console.log('🎯 QuickFeedback submit clicked:', {
-      selectedReaction,
       messageLength: quickMessage.length,
       hasConsentState: hasConsent,
       hasAnalyticsConsentDirect: hasAnalyticsConsent(),
       timestamp: new Date().toISOString()
     });
 
-    if (!selectedReaction && !quickMessage.trim()) {
-      console.log('❌ No reaction or message provided');
+    if (!quickMessage.trim()) {
+      console.log('❌ No message provided');
       toast({
-        title: 'Please select a reaction or leave a message',
+        title: 'Please leave a comment',
         status: 'warning',
         duration: 3000,
         isClosable: true,
@@ -166,7 +158,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       // Enhanced feedback data with privacy and analytics
       const feedbackData = {
         production_id: productionId,
-        comment: `${selectedReaction ? `Reaction: ${selectedReaction}. ` : ''}${quickMessage}`,
+        comment: quickMessage,
         
         // Enhanced analytics data (2025 privacy standards)
         time_on_page: timeOnPage,
@@ -206,7 +198,6 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       });
 
       // Reset form
-      setSelectedReaction(null);
       setQuickMessage('');
       
       if (onFeedbackSubmitted) {
@@ -308,38 +299,6 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
             Quick feedback helps farmers improve their sustainable practices
           </Text>
 
-          {/* Quick Reactions */}
-          <VStack spacing={3} align="stretch">
-            <Text fontSize="sm" fontWeight="500" color={textColor}>
-              Rate the carbon transparency
-            </Text>
-            
-            <HStack spacing={4} justify="center">
-              {FEEDBACK_REACTIONS.map((reaction) => (
-                <Button
-                  key={reaction.value}
-                  variant={selectedReaction === reaction.value ? 'solid' : 'outline'}
-                  colorScheme={reaction.color}
-                  size="lg"
-                  borderRadius="xl"
-                  onClick={() => {
-                    setSelectedReaction(reaction.value);
-                    trackInteraction();
-                  }}
-                  _hover={{
-                    transform: 'translateY(-2px)',
-                    boxShadow: 'lg',
-                  }}
-                  transition="all 0.2s"
-                >
-                  <VStack spacing={1}>
-                    <Text fontSize="2xl">{reaction.emoji}</Text>
-                    <Text fontSize="xs">{reaction.label}</Text>
-                  </VStack>
-                </Button>
-              ))}
-            </HStack>
-          </VStack>
 
           {/* Quick Message */}
           <VStack spacing={3} align="stretch">

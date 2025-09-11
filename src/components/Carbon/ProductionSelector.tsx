@@ -41,6 +41,7 @@ interface ProductionSelectorProps {
   isLoading?: boolean;
   placeholder?: string;
   size?: 'sm' | 'md' | 'lg';
+  width?: string;
 }
 
 export const ProductionSelector: React.FC<ProductionSelectorProps> = ({
@@ -49,7 +50,8 @@ export const ProductionSelector: React.FC<ProductionSelectorProps> = ({
   onProductionChange,
   isLoading = false,
   placeholder = 'Select Production',
-  size = 'sm'
+  size = 'sm',
+  width
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -291,9 +293,9 @@ export const ProductionSelector: React.FC<ProductionSelectorProps> = ({
       <Box
         ref={ref}
         position="relative"
-        w="fit-content"
+        w={width || "fit-content"}
         minW="240px"
-        maxW={{ base: '320px', md: '380px', lg: '420px' }}>
+        maxW={width ? "none" : { base: '320px', md: '380px', lg: '420px' }}>
         <Button
           onClick={handleButtonClick}
           rightIcon={

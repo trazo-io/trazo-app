@@ -84,6 +84,12 @@ function AddEstablishment({ isEdit = false }: Props) {
             ? data.certifications.join(', ')
             : data.certifications || '',
           sustainability_practices: JSON.stringify(data.sustainabilityPractices || []),
+          // Add missing operational fields for EDIT
+          climate_zone: data.climateZone || '',
+          water_sources: JSON.stringify(data.waterSources || []),
+          soil_types: JSON.stringify(data.soilTypes || []),
+          conservation_practices: JSON.stringify(data.conservationPractices || []),
+          irrigation_methods: JSON.stringify(data.irrigationMethods || []),
           contact_person: data.contact_person || '',
           contact_phone: data.contact_phone || data.phone || '',
           contact_email: data.contact_email || data.email || '',
@@ -147,6 +153,12 @@ function AddEstablishment({ isEdit = false }: Props) {
             ? data.certifications.join(', ')
             : data.certifications || '',
           sustainability_practices: JSON.stringify(data.sustainabilityPractices || []),
+          // Add missing operational fields for CREATE
+          climate_zone: data.climateZone || '',
+          water_sources: JSON.stringify(data.waterSources || []),
+          soil_types: JSON.stringify(data.soilTypes || []),
+          conservation_practices: JSON.stringify(data.conservationPractices || []),
+          irrigation_methods: JSON.stringify(data.irrigationMethods || []),
           contact_person: data.contact_person || '',
           contact_phone: data.contact_phone || data.phone || '',
           contact_email: data.contact_email || data.email || '',
@@ -268,6 +280,20 @@ function AddEstablishment({ isEdit = false }: Props) {
         : [],
       sustainabilityPractices: Array.isArray(establishmentData.sustainability_practices)
         ? establishmentData.sustainability_practices
+        : [],
+      // Add missing operational fields for EDIT data loading
+      climateZone: establishmentData.climate_zone || '',
+      waterSources: Array.isArray(establishmentData.water_sources) 
+        ? establishmentData.water_sources 
+        : [],
+      soilTypes: Array.isArray(establishmentData.soil_types) 
+        ? establishmentData.soil_types 
+        : [],
+      conservationPractices: Array.isArray(establishmentData.conservation_practices) 
+        ? establishmentData.conservation_practices 
+        : [],
+      irrigationMethods: Array.isArray(establishmentData.irrigation_methods) 
+        ? establishmentData.irrigation_methods 
         : [],
       contact_person: establishmentData.contact_person || '',
       contact_phone: establishmentData.contact_phone || '',

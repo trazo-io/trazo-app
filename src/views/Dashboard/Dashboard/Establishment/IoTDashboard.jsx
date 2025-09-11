@@ -605,57 +605,67 @@ const IoTDashboard = () => {
   return (
     <Box minH="100vh" py={{ base: 4, md: 8 }} px={{ base: 2, md: 6 }}>
       <VStack spacing={6} align="stretch">
-        {/* Header */}
-        <Flex
-          direction={{ sm: 'column', md: 'row' }}
-          justify="space-between"
-          align="center"
-          gap="24px"
-          paddingTop={12}
-          w="100%">
+        {/* Header - Following Standard Dashboard Pattern */}
+        <VStack spacing={6} align="stretch" paddingTop={12} w="100%">
+          {/* Title Section */}
           <VStack align="start" spacing={1}>
-            <Text color="gray.500" fontSize="md">
+            <Text color="gray.500" fontSize={{ base: "sm", md: "md" }}>
               Monitorea y gestiona dispositivos IoT conectados a tu establecimiento
             </Text>
           </VStack>
+        </VStack>
 
-          <HStack spacing={3} alignSelf={{ sm: 'flex-start', lg: 'flex-end' }}>
+        {/* Action Buttons - Mobile-Responsive with proper spacing */}
+        <Flex 
+          direction={{ base: "column", sm: "row" }}
+          gap={3}
+          mb={6}
+          flexWrap="wrap"
+          justify={{ base: "stretch", sm: "flex-start" }}
+        >
             <Button
               leftIcon={<FaPlus />}
               colorScheme="green"
-              h="35px"
-              fontSize="xs"
-              onClick={() => handleOpenModal()}>
+              size="sm"
+              onClick={() => handleOpenModal()}
+              flex={{ base: "1", sm: "none" }}
+              minW={{ base: "auto", sm: "110px" }}
+            >
               Add Device
             </Button>
             <Button
               leftIcon={<FaPlay />}
               colorScheme="blue"
-              h="35px"
-              fontSize="xs"
+              size="sm"
               isLoading={simulationLoading}
-              onClick={() => simulateData('fuel_sensor')}>
+              onClick={() => simulateData('fuel_sensor')}
+              flex={{ base: "1", sm: "none" }}
+              minW={{ base: "auto", sm: "140px" }}
+            >
               Simulate Fuel Data
             </Button>
             <Button
               leftIcon={<FaCloudSun />}
               colorScheme="green"
-              h="35px"
-              fontSize="xs"
+              size="sm"
               isLoading={simulationLoading}
-              onClick={() => simulateData('weather_station')}>
-              Simulate Weather Data
+              onClick={() => simulateData('weather_station')}
+              flex={{ base: "1", sm: "none" }}
+              minW={{ base: "auto", sm: "160px" }}
+            >
+              Simulate Weather
             </Button>
             <Button
               leftIcon={<FaSync />}
               variant="outline"
-              h="35px"
-              fontSize="xs"
-              onClick={refreshAllData}>
+              size="sm"
+              onClick={refreshAllData}
+              flex={{ base: "1", sm: "none" }}
+              minW={{ base: "auto", sm: "100px" }}
+            >
               Refresh
             </Button>
-          </HStack>
-        </Flex>
+          </Flex>
 
         {/* Summary Cards */}
         <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>

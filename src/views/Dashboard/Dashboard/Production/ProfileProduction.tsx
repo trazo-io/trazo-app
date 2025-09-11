@@ -167,11 +167,11 @@ function ProfileProduction() {
 
   const downloadQRCode = async () => {
     try {
-      if (!historyData?.qr_code && !historyData?.history_scan) {
+      if (!historyData?.id) {
         toast({
-          title: 'QR Code Not Available',
-          description: 'No QR code data found for this production.',
-          status: 'warning',
+          title: 'Error',
+          description: 'Production ID not found.',
+          status: 'error',
           duration: 3000,
           isClosable: true,
           position: 'top-right'
@@ -179,29 +179,41 @@ function ProfileProduction() {
         return;
       }
 
-      // Use the QR code URL from backend or fallback to generated URL
-      const qrUrl =
-        historyData?.qr_code ||
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/media/qr_codes/${
-          historyData?.name || 'production'
-        }-${historyData?.start_date?.split('T')[0] || 'date'}.png`;
+      // Call the secure backend endpoint
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/history/${historyData.id}/download_qr_code/`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
-      // Open QR code in new window for download
-      window.open(qrUrl, '_blank');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate download URL');
+      }
+
+      const data = await response.json();
+
+      // Open the secure presigned URL
+      window.open(data.download_url, '_blank');
 
       toast({
-        title: 'QR Code Opened',
-        description: 'QR code opened in new window. Right-click to save.',
+        title: 'QR Code Ready',
+        description: `Secure download URL generated. ${data.filename} will open shortly.`,
         status: 'success',
         duration: 3000,
         isClosable: true,
         position: 'top-right'
       });
+
     } catch (error) {
       console.error('Error downloading QR code:', error);
       toast({
         title: 'Download Failed',
-        description: 'Failed to open QR code. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to generate download URL. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
