@@ -80,6 +80,8 @@ interface EstablishmentModalProps {
     email?: string;
     phone?: string;
     zip_code?: string;
+    facebook?: string;
+    instagram?: string;
     certifications?: string;
     // New operational agricultural fields
     water_sources?: string[];

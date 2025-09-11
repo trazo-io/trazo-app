@@ -22,11 +22,13 @@ import {
   FaEnvelope,
   FaGlobe,
   FaStar,
-  FaInfoCircle
+  FaInfoCircle,
+  FaTractor
 } from 'react-icons/fa';
 import { BsStarFill, BsStarHalf, BsStar } from 'react-icons/bs';
 import { CompanyModal } from './CompanyModal';
 import { EstablishmentModal } from './EstablishmentModal';
+import { ParcelMapInfo } from './ParcelMapInfo';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
@@ -104,12 +106,72 @@ interface CompanyEstablishmentInfoProps {
       name: string;
       area: number;
     }>;
+    // Operational fields
+    climate_zone?: string;
+    water_sources?: string[] | string;
+    soil_types?: string[] | string;
+    conservation_practices?: string[] | string;
+    irrigation_methods?: string[] | string;
+  };
+  parcelData?: {
+    id?: string;
+    name?: string;
+    location?: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
+    area?: number;
+    areaUnit?: string;
+    soilType?: string;
+    cropType?: string;
+    plantingDate?: string;
+    harvestDate?: string;
+    elevation?: number;
+    slope?: string;
+    irrigationType?: string;
+    polygon?: Array<{
+      lat: number;
+      lng: number;
+    }>;
+    map_metadata?: {
+      center?: {
+        lat: number;
+        lng: number;
+      };
+      zoom?: number;
+    };
+    description?: string;
+    certification_type?: string;
+    certified?: boolean;
+    unique_code?: string;
+    contact_person?: string;
+    contact_phone?: string;
+    contact_email?: string;
+    establishment?: {
+      id?: string | number;
+      name: string;
+      description?: string;
+      location: string;
+      photo?: string;
+    };
+    current_history?: {
+      id: string | number;
+      name: string;
+      start_date: string;
+      finish_date?: string;
+      crop_type?: string;
+    };
+    productions_completed?: number;
+    total_productions?: number;
+    images?: string[];
   };
 }
 
 export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> = ({
   companyData,
-  establishmentData
+  establishmentData,
+  parcelData
 }) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
@@ -221,14 +283,14 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
         <Card bg={bgColor} shadow="md" borderRadius="xl">
           <CardBody p={6}>
             <VStack spacing={4} align="stretch">
-              <Flex justify="space-between" align="flex-start">
-                <VStack align="start" spacing={1} flex="1">
-                  <Heading size="md" color={textColor}>
+              <Flex justify="space-between" align="flex-start" gap={4}>
+                <VStack align="start" spacing={1} flex="1" minW={0}>
+                  <Heading size="md" color={textColor} noOfLines={2}>
                     {establishmentData.name || 'Farm Name'}
                   </Heading>
                   <HStack spacing={2}>
                     <Icon as={FaMapMarkerAlt} color="green.500" boxSize={3} />
-                    <Text fontSize="sm" color={mutedColor}>
+                    <Text fontSize="sm" color={mutedColor} noOfLines={1}>
                       {establishmentData.location || 'Farm Location'}
                     </Text>
                   </HStack>
@@ -326,6 +388,87 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                   </VStack>
                 </>
               )}
+
+              {/* Operational Details Summary */}
+              {(establishmentData.climate_zone || 
+                (establishmentData.water_sources && establishmentData.water_sources.length > 0) || 
+                (establishmentData.soil_types && establishmentData.soil_types.length > 0) ||
+                (establishmentData.conservation_practices && establishmentData.conservation_practices.length > 0) ||
+                (establishmentData.irrigation_methods && establishmentData.irrigation_methods.length > 0)) && (
+                <>
+                  <Divider />
+                  <VStack align="start" spacing={3}>
+                    <HStack spacing={2}>
+                      <Icon as={FaTractor} color="green.500" boxSize={4} />
+                      <Text fontSize="sm" fontWeight="semibold" color={textColor}>
+                        Operations & Practices
+                      </Text>
+                    </HStack>
+                    <Stack direction={{ base: 'column', md: 'row' }} spacing={4} flexWrap="wrap">
+                      {establishmentData.climate_zone && (
+                        <VStack align="start" spacing={1}>
+                          <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                            CLIMATE
+                          </Text>
+                          <Badge colorScheme="blue" variant="subtle" px={2}>
+                            {establishmentData.climate_zone}
+                          </Badge>
+                        </VStack>
+                      )}
+                      
+                      {(() => {
+                        // Parse water sources
+                        const waterSources = Array.isArray(establishmentData.water_sources) 
+                          ? establishmentData.water_sources
+                          : typeof establishmentData.water_sources === 'string'
+                          ? (() => {
+                              try { return JSON.parse(establishmentData.water_sources); } catch { return []; }
+                            })()
+                          : [];
+                        
+                        if (waterSources.length > 0) {
+                          return (
+                            <VStack align="start" spacing={1}>
+                              <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                                WATER ({waterSources.length})
+                              </Text>
+                              <Text fontSize="xs" color={textColor} noOfLines={1}>
+                                {waterSources.slice(0, 2).join(', ')}{waterSources.length > 2 && '...'}
+                              </Text>
+                            </VStack>
+                          );
+                        }
+                        return null;
+                      })()}
+                      
+                      {(() => {
+                        // Parse soil types
+                        const soilTypes = Array.isArray(establishmentData.soil_types) 
+                          ? establishmentData.soil_types
+                          : typeof establishmentData.soil_types === 'string'
+                          ? (() => {
+                              try { return JSON.parse(establishmentData.soil_types); } catch { return []; }
+                            })()
+                          : [];
+                        
+                        if (soilTypes.length > 0) {
+                          return (
+                            <VStack align="start" spacing={1}>
+                              <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                                SOILS ({soilTypes.length})
+                              </Text>
+                              <Text fontSize="xs" color={textColor} noOfLines={1}>
+                                {soilTypes.slice(0, 2).join(', ')}{soilTypes.length > 2 && '...'}
+                              </Text>
+                            </VStack>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </Stack>
+                  </VStack>
+                </>
+              )}
             </VStack>
           </CardBody>
         </Card>
@@ -412,9 +555,68 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
             establishment_type: establishmentData.establishment_type || establishmentData.type,
             farming_method: establishmentData.farming_method,
             images: establishmentData.images,
-            parcels: establishmentData.parcels
+            parcels: establishmentData.parcels,
+            // Operational fields - handle both array and string formats
+            climate_zone: establishmentData.climate_zone,
+            water_sources: (() => {
+              if (Array.isArray(establishmentData.water_sources)) {
+                return establishmentData.water_sources;
+              }
+              if (typeof establishmentData.water_sources === 'string') {
+                try {
+                  return JSON.parse(establishmentData.water_sources);
+                } catch {
+                  return [];
+                }
+              }
+              return [];
+            })(),
+            soil_types: (() => {
+              if (Array.isArray(establishmentData.soil_types)) {
+                return establishmentData.soil_types;
+              }
+              if (typeof establishmentData.soil_types === 'string') {
+                try {
+                  return JSON.parse(establishmentData.soil_types);
+                } catch {
+                  return [];
+                }
+              }
+              return [];
+            })(),
+            conservation_practices: (() => {
+              if (Array.isArray(establishmentData.conservation_practices)) {
+                return establishmentData.conservation_practices;
+              }
+              if (typeof establishmentData.conservation_practices === 'string') {
+                try {
+                  return JSON.parse(establishmentData.conservation_practices);
+                } catch {
+                  return [];
+                }
+              }
+              return [];
+            })(),
+            irrigation_methods: (() => {
+              if (Array.isArray(establishmentData.irrigation_methods)) {
+                return establishmentData.irrigation_methods;
+              }
+              if (typeof establishmentData.irrigation_methods === 'string') {
+                try {
+                  return JSON.parse(establishmentData.irrigation_methods);
+                } catch {
+                  return [];
+                }
+              }
+              return [];
+            })()
           }}
         />
+      )}
+
+      {/* Parcel Information with Map */}
+      {parcelData && (
+        <ParcelMapInfo parcelData={parcelData} />
       )}
     </VStack>
   );

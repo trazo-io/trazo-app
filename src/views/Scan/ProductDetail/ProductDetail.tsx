@@ -76,7 +76,6 @@ import {
   ModernSidebar,
   UltraMobileProductionJourney,
   CompanyEstablishmentInfo,
-  ParcelMapInfo,
   ProductDetailsSection,
   SimilarProducts
 } from './components';
@@ -1076,39 +1075,41 @@ function ProductDetail() {
       {/* New Carbon Hero Section */}
       <Box id="carbon-section">
         <CarbonHeroSection
-        carbonData={{
-          score: completeData?.carbonScore || 0,
-          footprint: completeData?.netFootprint || completeData?.footprint || 0,
-          relatableFootprint: completeData?.relatableFootprint,
-          industryPercentile: completeData?.industryPercentile,
-          grade: completeData?.grade,
-          level: completeData?.level
-        }}
-        trustData={{
-          confidenceScore:
-            completeData?.trustIndicators?.scores?.verification ||
-            completeData?.trustIndicators?.overall_score ||
-            85,
-          isUSDAVerified: completeData?.isUsdaVerified || false,
-          isBlockchainVerified: completeData?.isBlockchainVerified || false,
-          reviewsCount: completeData?.reviewsCount || 0,
-          averageRating: safeReputation || 4.2,
-          scansCount: completeData?.scansCount || 0,
-          transparencyScore: completeData?.transparencyScore || 75
-        }}
-        productData={{
-          name:
-            (completeData as any)?.product?.name ||
-            (completeData as any)?.farmer?.name ||
-            'Product',
-          company: {
+          carbonData={{
+            score: completeData?.carbonScore || 0,
+            footprint: completeData?.netFootprint || completeData?.footprint || 0,
+            relatableFootprint: completeData?.relatableFootprint,
+            industryPercentile: completeData?.industryPercentile,
+            grade: completeData?.grade,
+            level: completeData?.level
+          }}
+          trustData={{
+            confidenceScore:
+              completeData?.trustIndicators?.scores?.verification ||
+              completeData?.trustIndicators?.overall_score ||
+              85,
+            isUSDAVerified: completeData?.isUsdaVerified || false,
+            isBlockchainVerified: completeData?.isBlockchainVerified || false,
+            reviewsCount: completeData?.reviewsCount || 0,
+            averageRating: safeReputation || 4.2,
+            scansCount: completeData?.scansCount || 0,
+            transparencyScore: completeData?.transparencyScore || 75
+          }}
+          productData={{
             name:
-              (completeData as any)?.farmer?.name || (completeData as any)?.company?.name || 'Farm'
-          }
-        }}
-        isLoading={isCompleteLoading}
-        onLearnMore={() => handleEducationOpen('carbon_impact')}
-        onTrustDetails={() => handleEducationOpen('trust_indicators')}
+              (completeData as any)?.product?.name ||
+              (completeData as any)?.farmer?.name ||
+              'Product',
+            company: {
+              name:
+                (completeData as any)?.farmer?.name ||
+                (completeData as any)?.company?.name ||
+                'Farm'
+            }
+          }}
+          isLoading={isCompleteLoading}
+          onLearnMore={() => handleEducationOpen('carbon_impact')}
+          onTrustDetails={() => handleEducationOpen('trust_indicators')}
         />
       </Box>
       {/* Main Content Section */}
@@ -1181,433 +1182,436 @@ function ProductDetail() {
               {/* Phase 6.1: Carbon Journey Visualization - Consumer Carbon Education */}
               <Box id="transparency-section">
                 <LoadingWrapper isLoading={isCompleteLoading} skeletonType="journey">
-                <CarbonJourneyVisualization
-                  data={{
-                    productionId: productionId || '',
-                    productName:
-                      completeData?.product?.name || completeData?.farmer?.name || 'Product',
-                    totalCO2e: completeData?.totalEmissions || 0,
-                    netFootprint: completeData?.netFootprint || completeData?.footprint || 0,
-                    isCarbonNegative:
-                      (completeData?.netFootprint || completeData?.footprint || 0) < 0,
-                    phases: completeData?.production_phases
-                      ? Object.entries(completeData.production_phases).map(
-                          ([key, phase]: [string, any]) => ({
-                            id: key,
-                            name: phase.name,
-                            description: phase.consumer_story,
-                            icon:
-                              key === 'farm_preparation'
-                                ? FaSeedling
-                                : key === 'growing_season'
-                                ? FaTree
-                                : key === 'harvest_operations'
-                                ? FaTractor
-                                : key === 'soil_regeneration'
-                                ? FaLeaf
-                                : FaSeedling,
-                            co2e: Math.abs(phase.carbon_impact || 0),
-                            percentage: Math.round(phase.percentage || 0),
-                            practices: [
-                              `${phase.event_count} farm events tracked and verified`,
-                              phase.consumer_story,
-                              'Data-driven transparency from actual farm practices',
-                              'No hardcoded values - all data from database'
-                            ],
-                            consumerBenefit: phase.consumer_story,
-                            color:
-                              key === 'soil_regeneration'
-                                ? 'green'
-                                : key === 'farm_preparation'
-                                ? 'blue'
-                                : key === 'growing_season'
-                                ? 'orange'
-                                : 'purple',
-                            isPositive: (phase.carbon_impact || 0) < 0
-                          })
-                        )
-                      : [],
-                    keyAchievements: [
-                      `${
+                  <CarbonJourneyVisualization
+                    data={{
+                      productionId: productionId || '',
+                      productName:
+                        completeData?.product?.name || completeData?.farmer?.name || 'Product',
+                      totalCO2e: completeData?.totalEmissions || 0,
+                      netFootprint: completeData?.netFootprint || completeData?.footprint || 0,
+                      isCarbonNegative:
+                        (completeData?.netFootprint || completeData?.footprint || 0) < 0,
+                      phases: completeData?.production_phases
+                        ? Object.entries(completeData.production_phases).map(
+                            ([key, phase]: [string, any]) => ({
+                              id: key,
+                              name: phase.name,
+                              description: phase.consumer_story,
+                              icon:
+                                key === 'farm_preparation'
+                                  ? FaSeedling
+                                  : key === 'growing_season'
+                                  ? FaTree
+                                  : key === 'harvest_operations'
+                                  ? FaTractor
+                                  : key === 'soil_regeneration'
+                                  ? FaLeaf
+                                  : FaSeedling,
+                              co2e: Math.abs(phase.carbon_impact || 0),
+                              percentage: Math.round(phase.percentage || 0),
+                              practices: [
+                                `${phase.event_count} farm events tracked and verified`,
+                                phase.consumer_story,
+                                'Data-driven transparency from actual farm practices',
+                                'No hardcoded values - all data from database'
+                              ],
+                              consumerBenefit: phase.consumer_story,
+                              color:
+                                key === 'soil_regeneration'
+                                  ? 'green'
+                                  : key === 'farm_preparation'
+                                  ? 'blue'
+                                  : key === 'growing_season'
+                                  ? 'orange'
+                                  : 'purple',
+                              isPositive: (phase.carbon_impact || 0) < 0
+                            })
+                          )
+                        : [],
+                      keyAchievements: [
+                        `${
+                          (completeData?.netFootprint || 0) < 0
+                            ? 'Carbon Negative Production'
+                            : 'Low Carbon Footprint'
+                        }`,
+                        `${
+                          completeData?.isUsdaVerified
+                            ? 'USDA Verified Practices'
+                            : 'Sustainable Practices'
+                        }`,
+                        `${
+                          completeData?.isBlockchainVerified
+                            ? 'Blockchain Verified Data'
+                            : 'Transparent Production'
+                        }`,
+                        'Soil Health Improvement',
+                        'Water Conservation Methods',
+                        'Biodiversity Enhancement'
+                      ],
+                      consumerMessage:
                         (completeData?.netFootprint || 0) < 0
-                          ? 'Carbon Negative Production'
-                          : 'Low Carbon Footprint'
-                      }`,
-                      `${
-                        completeData?.isUsdaVerified
-                          ? 'USDA Verified Practices'
-                          : 'Sustainable Practices'
-                      }`,
-                      `${
-                        completeData?.isBlockchainVerified
-                          ? 'Blockchain Verified Data'
-                          : 'Transparent Production'
-                      }`,
-                      'Soil Health Improvement',
-                      'Water Conservation Methods',
-                      'Biodiversity Enhancement'
-                    ],
-                    consumerMessage:
-                      (completeData?.netFootprint || 0) < 0
-                        ? 'This product actually removes more carbon than it produces, helping fight climate change!'
-                        : 'Your purchase supports sustainable farming practices that protect the environment.',
-                    verificationLevel: Math.round((completeData?.carbonScore || 0) + 15) // Add 15% for comprehensive data
-                  }}
-                  isLoading={false}
-                  showDetailedView={true}
-                />
-              </LoadingWrapper>
+                          ? 'This product actually removes more carbon than it produces, helping fight climate change!'
+                          : 'Your purchase supports sustainable farming practices that protect the environment.',
+                      verificationLevel: Math.round((completeData?.carbonScore || 0) + 15) // Add 15% for comprehensive data
+                    }}
+                    isLoading={false}
+                    showDetailedView={true}
+                  />
+                </LoadingWrapper>
 
-              {/* Production Journey */}
-              {/* <Card bg={useColorModeValue('white', 'gray.800')} shadow="lg" borderRadius="xl"> */}
+                {/* Production Journey */}
+                {/* <Card bg={useColorModeValue('white', 'gray.800')} shadow="lg" borderRadius="xl"> */}
 
-              <CardBody pt={0}>
-                {(() => {
-                  const events = completeData?.timeline || completeData?.events || [];
+                <CardBody pt={0}>
+                  {(() => {
+                    const events = completeData?.timeline || completeData?.events || [];
 
-                  if (Array.isArray(events) && events.length > 0) {
-                    // Calculate carbon data per event from the total production data
-                    const totalEvents = events.length;
-                    const totalCO2e = completeData?.netFootprint || 0; // Use net footprint (can be negative)
-                    const averageCO2ePerEvent = totalEvents > 0 ? totalCO2e / totalEvents : 0;
+                    if (Array.isArray(events) && events.length > 0) {
+                      // Calculate carbon data per event from the total production data
+                      const totalEvents = events.length;
+                      const totalCO2e = completeData?.netFootprint || 0; // Use net footprint (can be negative)
+                      const averageCO2ePerEvent = totalEvents > 0 ? totalCO2e / totalEvents : 0;
 
-                    const timelineEvents = events.map((event, index) => ({
-                      id: event.id?.toString() || `event_${index}`,
-                      type: event.type || 'general',
-                      description: event.description || event.observation || 'Event recorded',
-                      observation: event.observation || '',
-                      date: event.date || new Date().toISOString(),
-                      certified: event.certified || false,
-                      index: index,
-                      volume: event.volume?.toString(),
-                      concentration: event.concentration?.toString(),
-                      area: event.area?.toString(),
-                      equipment: event.equipment,
-                      // Add blockchain verification fields for Trust & Verification Enhancement
-                      blockchain_verified: event.blockchain_verified || false,
-                      blockchain_transaction: event.blockchain_transaction || '',
-                      blockchain_block_number: event.blockchain_block_number || 0,
-                      blockchain_explorer_url: event.blockchain_explorer_url || '',
-                      blockchain_network: event.blockchain_network || 'polygon_amoy',
-                      verification_confidence: event.verification_confidence || 0,
-                      verification_timestamp: event.verification_timestamp || '',
-                      data_integrity_score: event.data_integrity_score || 0,
-                      usda_verified: event.usda_verified || false,
-                      extra_data: event.extra_data || {},
-                      // Add carbon data that UltraMobileProductionJourney expects
-                      carbon_data: {
-                        co2e: averageCO2ePerEvent, // Distribute total CO₂e across events
-                        usda_verified: completeData?.isUsdaVerified || event.usda_verified || false,
-                        efficiency_score: completeData?.carbonScore || 0,
-                        total_emissions: completeData?.totalEmissions || 0,
-                        total_offsets: completeData?.totalOffsets || 0,
-                        net_footprint: completeData?.netFootprint || 0,
-                        verification_confidence: event.verification_confidence ? 'high' : 'low',
-                        cost_analysis: event.cost_analysis || {}
-                      }
-                    }));
-                    return <UltraMobileProductionJourney events={timelineEvents} />;
-                  } else {
-                    return (
-                      <VStack spacing={3} py={8}>
-                        <Icon as={MdTimeline} boxSize={16} color="gray.400" />
-                        <Heading as="h4" size="md" color="gray.600">
-                          {intl.formatMessage({ id: 'app.noTimelineData' }) ||
-                            'No events recorded yet'}
-                        </Heading>
-                        <Text fontSize="sm" color="gray.400" textAlign="center">
-                          {intl.formatMessage({ id: 'app.timelineComingSoon' }) ||
-                            'Production journey details will be available soon'}
-                        </Text>
-                      </VStack>
-                    );
-                  }
-                })()}
-              </CardBody>
-              {/* </Card> */}
+                      const timelineEvents = events.map((event, index) => ({
+                        id: event.id?.toString() || `event_${index}`,
+                        type: event.type || 'general',
+                        description: event.description || event.observation || 'Event recorded',
+                        observation: event.observation || '',
+                        date: event.date || new Date().toISOString(),
+                        certified: event.certified || false,
+                        index: index,
+                        volume: event.volume?.toString(),
+                        concentration: event.concentration?.toString(),
+                        area: event.area?.toString(),
+                        equipment: event.equipment,
+                        // Add blockchain verification fields for Trust & Verification Enhancement
+                        blockchain_verified: event.blockchain_verified || false,
+                        blockchain_transaction: event.blockchain_transaction || '',
+                        blockchain_block_number: event.blockchain_block_number || 0,
+                        blockchain_explorer_url: event.blockchain_explorer_url || '',
+                        blockchain_network: event.blockchain_network || 'polygon_amoy',
+                        verification_confidence: event.verification_confidence || 0,
+                        verification_timestamp: event.verification_timestamp || '',
+                        data_integrity_score: event.data_integrity_score || 0,
+                        usda_verified: event.usda_verified || false,
+                        extra_data: event.extra_data || {},
+                        // Add carbon data that UltraMobileProductionJourney expects
+                        carbon_data: {
+                          co2e: averageCO2ePerEvent, // Distribute total CO₂e across events
+                          usda_verified:
+                            completeData?.isUsdaVerified || event.usda_verified || false,
+                          efficiency_score: completeData?.carbonScore || 0,
+                          total_emissions: completeData?.totalEmissions || 0,
+                          total_offsets: completeData?.totalOffsets || 0,
+                          net_footprint: completeData?.netFootprint || 0,
+                          verification_confidence: event.verification_confidence ? 'high' : 'low',
+                          cost_analysis: event.cost_analysis || {}
+                        }
+                      }));
+                      return <UltraMobileProductionJourney events={timelineEvents} />;
+                    } else {
+                      return (
+                        <VStack spacing={3} py={8}>
+                          <Icon as={MdTimeline} boxSize={16} color="gray.400" />
+                          <Heading as="h4" size="md" color="gray.600">
+                            {intl.formatMessage({ id: 'app.noTimelineData' }) ||
+                              'No events recorded yet'}
+                          </Heading>
+                          <Text fontSize="sm" color="gray.400" textAlign="center">
+                            {intl.formatMessage({ id: 'app.timelineComingSoon' }) ||
+                              'Production journey details will be available soon'}
+                          </Text>
+                        </VStack>
+                      );
+                    }
+                  })()}
+                </CardBody>
+                {/* </Card> */}
 
-              {/* Phase 6.2: Transparency Analytics - Trust Building Through Data Transparency */}
-              <LoadingWrapper isLoading={isCompleteLoading} skeletonType="transparency">
-                <TransparencyAnalytics
-                  data={{
-                    // Use backend-calculated transparency score for security and consistency
-                    // If not available from API, provide a reasonable default based on verification status
-                    overallTransparencyScore:
-                      (completeData as any)?.transparency_score ||
-                      (completeData?.isUsdaVerified ? 75 : 50),
-                    // Data completeness - derived from transparency score
-                    // Higher transparency scores indicate more complete data
-                    dataCompleteness: Math.min(
-                      Math.round(
-                        ((completeData as any)?.transparency_score ||
-                          (completeData?.isUsdaVerified ? 75 : 50)) +
-                          (completeData?.timeline?.length ? 10 : 0)
+                {/* Phase 6.2: Transparency Analytics - Trust Building Through Data Transparency */}
+                <LoadingWrapper isLoading={isCompleteLoading} skeletonType="transparency">
+                  <TransparencyAnalytics
+                    data={{
+                      // Use backend-calculated transparency score for security and consistency
+                      // If not available from API, provide a reasonable default based on verification status
+                      overallTransparencyScore:
+                        (completeData as any)?.transparency_score ||
+                        (completeData?.isUsdaVerified ? 75 : 50),
+                      // Data completeness - derived from transparency score
+                      // Higher transparency scores indicate more complete data
+                      dataCompleteness: Math.min(
+                        Math.round(
+                          ((completeData as any)?.transparency_score ||
+                            (completeData?.isUsdaVerified ? 75 : 50)) +
+                            (completeData?.timeline?.length ? 10 : 0)
+                        ),
+                        100
                       ),
-                      100
-                    ),
-                    verificationDepth: {
-                      level:
-                        completeData?.isUsdaVerified && completeData?.isBlockchainVerified
-                          ? 'comprehensive'
-                          : completeData?.isUsdaVerified || completeData?.isBlockchainVerified
-                          ? 'enhanced'
-                          : 'basic',
-                      score: Math.round(
-                        (completeData?.isUsdaVerified ? 30 : 0) +
-                          (completeData?.isBlockchainVerified ? 30 : 0) +
-                          (completeData?.carbonScore || 0) * 0.4 +
-                          20
-                      ),
-                      description:
-                        completeData?.isUsdaVerified && completeData?.isBlockchainVerified
-                          ? 'Comprehensive verification with government and blockchain validation'
-                          : completeData?.isUsdaVerified || completeData?.isBlockchainVerified
-                          ? 'Enhanced verification with official validation'
-                          : 'Basic verification with standard practices',
-                      verifiedAspects: [
-                        ...(completeData?.totalEmissions ||
-                        completeData?.netFootprint ||
-                        completeData?.footprint
-                          ? ['Carbon emission calculations']
-                          : []),
-                        ...(completeData?.timeline && completeData.timeline.length > 0
-                          ? ['Production event tracking']
-                          : []),
-                        ...(completeData?.parcel?.coordinates ||
-                        completeData?.farmer?.farm?.coordinates
-                          ? ['Farm location verification']
-                          : []),
-                        ...(completeData?.production_phases &&
-                        Object.keys(completeData.production_phases).length > 0
-                          ? ['Production phase documentation']
-                          : []),
-                        ...(completeData?.product?.name
-                          ? ['Product identification and tracking']
-                          : []),
-                        ...(completeData?.farmer?.name ? ['Farmer authentication'] : []),
-                        ...(completeData?.isUsdaVerified
-                          ? ['USDA compliance verification', 'Organic practice validation']
-                          : []),
-                        ...(completeData?.isBlockchainVerified
-                          ? ['Immutable data records', 'Cryptographic verification']
-                          : []),
-                        ...(completeData?.carbonScore ? ['Carbon scoring methodology'] : []),
-                        ...(completeData?.relatableFootprint
-                          ? ['Consumer-friendly impact translation']
-                          : [])
-                      ].filter(Boolean),
-                      auditTrail: [
-                        {
-                          id: 'carbon-calculation',
-                          step: 'Carbon Footprint Calculation',
-                          method: 'USDA emission factors applied to production data',
-                          result: 'verified' as const,
-                          confidence: 95,
-                          timestamp: new Date().toISOString(),
-                          details: 'Verified using official USDA agricultural emission factors'
-                        },
-                        {
-                          id: 'production-tracking',
-                          step: 'Production Event Verification',
-                          method: 'GPS location tracking and digital signatures',
-                          result:
-                            (completeData?.timeline?.length || 0) > 3
-                              ? ('verified' as const)
-                              : ('partial' as const),
-                          confidence: (completeData?.timeline?.length || 0) > 3 ? 90 : 70,
-                          timestamp: completeData?.timeline?.length
-                            ? completeData.timeline[completeData.timeline.length - 1]?.date
-                            : new Date().toISOString(),
-                          details: `${
-                            completeData?.timeline?.length || 0
-                          } production events verified with GPS and timestamps`
-                        },
+                      verificationDepth: {
+                        level:
+                          completeData?.isUsdaVerified && completeData?.isBlockchainVerified
+                            ? 'comprehensive'
+                            : completeData?.isUsdaVerified || completeData?.isBlockchainVerified
+                            ? 'enhanced'
+                            : 'basic',
+                        score: Math.round(
+                          (completeData?.isUsdaVerified ? 30 : 0) +
+                            (completeData?.isBlockchainVerified ? 30 : 0) +
+                            (completeData?.carbonScore || 0) * 0.4 +
+                            20
+                        ),
+                        description:
+                          completeData?.isUsdaVerified && completeData?.isBlockchainVerified
+                            ? 'Comprehensive verification with government and blockchain validation'
+                            : completeData?.isUsdaVerified || completeData?.isBlockchainVerified
+                            ? 'Enhanced verification with official validation'
+                            : 'Basic verification with standard practices',
+                        verifiedAspects: [
+                          ...(completeData?.totalEmissions ||
+                          completeData?.netFootprint ||
+                          completeData?.footprint
+                            ? ['Carbon emission calculations']
+                            : []),
+                          ...(completeData?.timeline && completeData.timeline.length > 0
+                            ? ['Production event tracking']
+                            : []),
+                          ...(completeData?.parcel?.coordinates ||
+                          completeData?.farmer?.farm?.coordinates
+                            ? ['Farm location verification']
+                            : []),
+                          ...(completeData?.production_phases &&
+                          Object.keys(completeData.production_phases).length > 0
+                            ? ['Production phase documentation']
+                            : []),
+                          ...(completeData?.product?.name
+                            ? ['Product identification and tracking']
+                            : []),
+                          ...(completeData?.farmer?.name ? ['Farmer authentication'] : []),
+                          ...(completeData?.isUsdaVerified
+                            ? ['USDA compliance verification', 'Organic practice validation']
+                            : []),
+                          ...(completeData?.isBlockchainVerified
+                            ? ['Immutable data records', 'Cryptographic verification']
+                            : []),
+                          ...(completeData?.carbonScore ? ['Carbon scoring methodology'] : []),
+                          ...(completeData?.relatableFootprint
+                            ? ['Consumer-friendly impact translation']
+                            : [])
+                        ].filter(Boolean),
+                        auditTrail: [
+                          {
+                            id: 'carbon-calculation',
+                            step: 'Carbon Footprint Calculation',
+                            method: 'USDA emission factors applied to production data',
+                            result: 'verified' as const,
+                            confidence: 95,
+                            timestamp: new Date().toISOString(),
+                            details: 'Verified using official USDA agricultural emission factors'
+                          },
+                          {
+                            id: 'production-tracking',
+                            step: 'Production Event Verification',
+                            method: 'GPS location tracking and digital signatures',
+                            result:
+                              (completeData?.timeline?.length || 0) > 3
+                                ? ('verified' as const)
+                                : ('partial' as const),
+                            confidence: (completeData?.timeline?.length || 0) > 3 ? 90 : 70,
+                            timestamp: completeData?.timeline?.length
+                              ? completeData.timeline[completeData.timeline.length - 1]?.date
+                              : new Date().toISOString(),
+                            details: `${
+                              completeData?.timeline?.length || 0
+                            } production events verified with GPS and timestamps`
+                          },
+                          ...(completeData?.isUsdaVerified
+                            ? [
+                                {
+                                  id: 'usda-verification',
+                                  step: 'USDA Compliance Verification',
+                                  method: 'Official USDA organic certification process',
+                                  result: 'verified' as const,
+                                  confidence: 98,
+                                  timestamp: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago
+                                  details: 'USDA organic certification validated and current'
+                                }
+                              ]
+                            : []),
+                          ...(completeData?.isBlockchainVerified
+                            ? [
+                                {
+                                  id: 'blockchain-verification',
+                                  step: 'Blockchain Data Verification',
+                                  method: 'Polygon network cryptographic verification',
+                                  result: 'verified' as const,
+                                  confidence: 96,
+                                  timestamp: new Date().toISOString(),
+                                  details:
+                                    'Production data immutably recorded on Polygon blockchain'
+                                }
+                              ]
+                            : [])
+                        ],
+                        details: [
+                          {
+                            category: 'Government Verification',
+                            status: completeData?.isUsdaVerified ? 'verified' : 'pending',
+                            description: completeData?.isUsdaVerified
+                              ? 'USDA organic certification validates sustainable practices'
+                              : 'USDA verification process underway',
+                            impact: 'high'
+                          },
+                          {
+                            category: 'Blockchain Security',
+                            status: completeData?.isBlockchainVerified ? 'verified' : 'pending',
+                            description: completeData?.isBlockchainVerified
+                              ? 'Immutable blockchain records ensure data integrity'
+                              : 'Blockchain verification in progress',
+                            impact: 'high'
+                          },
+                          {
+                            category: 'Production Tracking',
+                            status:
+                              (completeData?.timeline?.length || 0) > 3 ? 'verified' : 'basic',
+                            description: `${
+                              completeData?.timeline?.length || 0
+                            } production events documented and verified`,
+                            impact: 'medium'
+                          },
+                          {
+                            category: 'Carbon Calculations',
+                            status: completeData?.carbonScore ? 'verified' : 'pending',
+                            description:
+                              'USDA-based emission factors used for accurate carbon calculations',
+                            impact: 'high'
+                          }
+                        ]
+                      },
+                      dataSources: [
+                        // Only show sources that actually exist and have real data
                         ...(completeData?.isUsdaVerified
                           ? [
                               {
-                                id: 'usda-verification',
-                                step: 'USDA Compliance Verification',
-                                method: 'Official USDA organic certification process',
-                                result: 'verified' as const,
-                                confidence: 98,
-                                timestamp: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago
-                                details: 'USDA organic certification validated and current'
+                                id: 'usda-fooddata',
+                                name: 'USDA Database',
+                                type: 'government' as const,
+                                credibilityScore: 100, // Government source = highest credibility
+                                description:
+                                  'Official USDA database for agricultural emission factors',
+                                lastUpdated: '2025-01-01', // Use static date since we don't have real update tracking
+                                verificationMethod: 'Government database integration',
+                                coverage: 'comprehensive',
+                                icon: FaUniversity,
+                                color: 'blue',
+                                trustFactors: [
+                                  'Government-backed data',
+                                  'Peer-reviewed emission factors',
+                                  'Federal oversight'
+                                ]
                               }
                             ]
                           : []),
+                        {
+                          id: 'farm-records',
+                          name: 'Farm Records',
+                          type: 'internal' as const,
+                          // Credibility based on actual data completeness
+                          credibilityScore: Math.min(
+                            100,
+                            Math.round(
+                              20 + // Base score
+                                (completeData?.timeline?.length || 0) * 8 + // 8 points per production event
+                                (completeData?.parcel?.coordinates ? 15 : 0) + // GPS verification
+                                (completeData?.totalEmissions > 0 ? 25 : 0) // Carbon data available
+                            )
+                          ),
+                          description: 'Direct farmer-reported production events and practices',
+                          lastUpdated: completeData?.timeline?.length
+                            ? completeData.timeline[completeData.timeline.length - 1]?.date ||
+                              '2025-01-01'
+                            : '2025-01-01',
+                          verificationMethod: 'Production event documentation',
+                          coverage:
+                            (completeData?.timeline?.length || 0) > 3 ? 'comprehensive' : 'basic',
+                          icon: FaClipboardCheck,
+                          color: 'green',
+                          trustFactors: [
+                            'Direct farmer reporting',
+                            ...(completeData?.parcel?.coordinates ? ['GPS location tracking'] : []),
+                            ...(completeData?.timeline?.length
+                              ? ['Production event documentation']
+                              : [])
+                          ]
+                        },
+                        // Only show blockchain if actually verified
                         ...(completeData?.isBlockchainVerified
                           ? [
                               {
                                 id: 'blockchain-verification',
-                                step: 'Blockchain Data Verification',
-                                method: 'Polygon network cryptographic verification',
-                                result: 'verified' as const,
-                                confidence: 96,
-                                timestamp: new Date().toISOString(),
-                                details: 'Production data immutably recorded on Polygon blockchain'
+                                name: 'Polygon Network',
+                                type: 'blockchain' as const,
+                                credibilityScore: 100, // Blockchain verification = highest credibility when active
+                                description: 'Immutable ledger for production data verification',
+                                lastUpdated: '2025-01-01',
+                                verificationMethod: 'Cryptographic proof',
+                                coverage: 'verified',
+                                icon: FaLock,
+                                color: 'purple',
+                                trustFactors: [
+                                  'Immutable records',
+                                  'Cryptographic security',
+                                  'Public verification'
+                                ]
                               }
                             ]
                           : [])
                       ],
-                      details: [
-                        {
-                          category: 'Government Verification',
-                          status: completeData?.isUsdaVerified ? 'verified' : 'pending',
-                          description: completeData?.isUsdaVerified
-                            ? 'USDA organic certification validates sustainable practices'
-                            : 'USDA verification process underway',
-                          impact: 'high'
-                        },
-                        {
-                          category: 'Blockchain Security',
-                          status: completeData?.isBlockchainVerified ? 'verified' : 'pending',
-                          description: completeData?.isBlockchainVerified
-                            ? 'Immutable blockchain records ensure data integrity'
-                            : 'Blockchain verification in progress',
-                          impact: 'high'
-                        },
-                        {
-                          category: 'Production Tracking',
-                          status: (completeData?.timeline?.length || 0) > 3 ? 'verified' : 'basic',
-                          description: `${
-                            completeData?.timeline?.length || 0
-                          } production events documented and verified`,
-                          impact: 'medium'
-                        },
-                        {
-                          category: 'Carbon Calculations',
-                          status: completeData?.carbonScore ? 'verified' : 'pending',
-                          description:
-                            'USDA-based emission factors used for accurate carbon calculations',
-                          impact: 'high'
-                        }
-                      ]
-                    },
-                    dataSources: [
-                      // Only show sources that actually exist and have real data
-                      ...(completeData?.isUsdaVerified
-                        ? [
-                            {
-                              id: 'usda-fooddata',
-                              name: 'USDA Database',
-                              type: 'government' as const,
-                              credibilityScore: 100, // Government source = highest credibility
-                              description:
-                                'Official USDA database for agricultural emission factors',
-                              lastUpdated: '2025-01-01', // Use static date since we don't have real update tracking
-                              verificationMethod: 'Government database integration',
-                              coverage: 'comprehensive',
-                              icon: FaUniversity,
-                              color: 'blue',
-                              trustFactors: [
-                                'Government-backed data',
-                                'Peer-reviewed emission factors',
-                                'Federal oversight'
-                              ]
-                            }
-                          ]
-                        : []),
-                      {
-                        id: 'farm-records',
-                        name: 'Farm Records',
-                        type: 'internal' as const,
-                        // Credibility based on actual data completeness
-                        credibilityScore: Math.min(
-                          100,
+                      trustIndicators: {
+                        blockchainVerified: completeData?.isBlockchainVerified || false,
+                        usdaCompliant: completeData?.isUsdaVerified || false,
+                        realTimeTracking: true
+                      },
+                      consumerBenefits: [
+                        'Complete transparency in food production journey',
+                        'Verified environmental impact data you can trust',
+                        'Support for farmers using sustainable practices',
+                        'Access to the complete story behind your food'
+                      ],
+                      lastUpdated: new Date().toISOString(),
+                      comparativeContext: {
+                        industryBenchmark: 67, // Industry average transparency score
+                        percentile: Math.min(
+                          99,
                           Math.round(
-                            20 + // Base score
-                              (completeData?.timeline?.length || 0) * 8 + // 8 points per production event
-                              (completeData?.parcel?.coordinates ? 15 : 0) + // GPS verification
-                              (completeData?.totalEmissions > 0 ? 25 : 0) // Carbon data available
+                            50 + // Base percentile
+                              (completeData?.isUsdaVerified ? 25 : 0) + // USDA verification bonus
+                              (completeData?.isBlockchainVerified ? 20 : 0) + // Blockchain bonus
+                              ((completeData?.timeline?.length || 0) > 3 ? 15 : 0) // Documentation bonus
                           )
                         ),
-                        description: 'Direct farmer-reported production events and practices',
-                        lastUpdated: completeData?.timeline?.length
-                          ? completeData.timeline[completeData.timeline.length - 1]?.date ||
-                            '2025-01-01'
-                          : '2025-01-01',
-                        verificationMethod: 'Production event documentation',
-                        coverage:
-                          (completeData?.timeline?.length || 0) > 3 ? 'comprehensive' : 'basic',
-                        icon: FaClipboardCheck,
-                        color: 'green',
-                        trustFactors: [
-                          'Direct farmer reporting',
-                          ...(completeData?.parcel?.coordinates ? ['GPS location tracking'] : []),
-                          ...(completeData?.timeline?.length
-                            ? ['Production event documentation']
-                            : [])
-                        ]
-                      },
-                      // Only show blockchain if actually verified
-                      ...(completeData?.isBlockchainVerified
-                        ? [
-                            {
-                              id: 'blockchain-verification',
-                              name: 'Polygon Network',
-                              type: 'blockchain' as const,
-                              credibilityScore: 100, // Blockchain verification = highest credibility when active
-                              description: 'Immutable ledger for production data verification',
-                              lastUpdated: '2025-01-01',
-                              verificationMethod: 'Cryptographic proof',
-                              coverage: 'verified',
-                              icon: FaLock,
-                              color: 'purple',
-                              trustFactors: [
-                                'Immutable records',
-                                'Cryptographic security',
-                                'Public verification'
-                              ]
-                            }
-                          ]
-                        : [])
-                    ],
-                    trustIndicators: {
-                      blockchainVerified: completeData?.isBlockchainVerified || false,
-                      usdaCompliant: completeData?.isUsdaVerified || false,
-                      realTimeTracking: true
-                    },
-                    consumerBenefits: [
-                      'Complete transparency in food production journey',
-                      'Verified environmental impact data you can trust',
-                      'Support for farmers using sustainable practices',
-                      'Access to the complete story behind your food'
-                    ],
-                    lastUpdated: new Date().toISOString(),
-                    comparativeContext: {
-                      industryBenchmark: 67, // Industry average transparency score
-                      percentile: Math.min(
-                        99,
-                        Math.round(
-                          50 + // Base percentile
-                            (completeData?.isUsdaVerified ? 25 : 0) + // USDA verification bonus
-                            (completeData?.isBlockchainVerified ? 20 : 0) + // Blockchain bonus
-                            ((completeData?.timeline?.length || 0) > 3 ? 15 : 0) // Documentation bonus
+                        betterThanPercent: Math.min(
+                          95,
+                          Math.round(
+                            40 + // Base percentage
+                              (completeData?.isUsdaVerified ? 25 : 0) + // USDA verification bonus
+                              (completeData?.isBlockchainVerified ? 20 : 0) + // Blockchain bonus
+                              ((completeData?.timeline?.length || 0) > 3 ? 15 : 0) // Documentation bonus
+                          )
                         )
-                      ),
-                      betterThanPercent: Math.min(
-                        95,
-                        Math.round(
-                          40 + // Base percentage
-                            (completeData?.isUsdaVerified ? 25 : 0) + // USDA verification bonus
-                            (completeData?.isBlockchainVerified ? 20 : 0) + // Blockchain bonus
-                            ((completeData?.timeline?.length || 0) > 3 ? 15 : 0) // Documentation bonus
-                        )
-                      )
-                    }
-                  }}
-                  productionId={productionId || ''}
-                  isLoading={isCompleteLoading}
-                  onDataSourceClick={(source) => {
-                    console.log('🔍 Consumer viewing data source:', source.name);
-                    // Could open detailed modal about data source
-                  }}
-                  onVerificationDetailsClick={() => {
-                    console.log('🔍 Consumer viewing verification details');
-                    handleEducationOpen('blockchain_verification');
-                  }}
-                />
-              </LoadingWrapper>
+                      }
+                    }}
+                    productionId={productionId || ''}
+                    isLoading={isCompleteLoading}
+                    onDataSourceClick={(source) => {
+                      console.log('🔍 Consumer viewing data source:', source.name);
+                      // Could open detailed modal about data source
+                    }}
+                    onVerificationDetailsClick={() => {
+                      console.log('🔍 Consumer viewing verification details');
+                      handleEducationOpen('blockchain_verification');
+                    }}
+                  />
+                </LoadingWrapper>
               </Box>
             </VStack>
           </Box>
@@ -1965,110 +1969,113 @@ function ProductDetail() {
           {/* Company and Establishment Information */}
           <Box id="farm-section">
             <CompanyEstablishmentInfo
-            companyData={{
-              // Use company data from the enhanced API response
-              id: (completeData as any)?.farmer?.company?.id,
-              name: (completeData as any)?.farmer?.company?.name || 'Company Information',
-              description: (completeData as any)?.farmer?.company?.description,
-              address: (completeData as any)?.farmer?.company?.address,
-              city: (completeData as any)?.farmer?.company?.city,
-              state: (completeData as any)?.farmer?.company?.state,
-              country: (completeData as any)?.farmer?.company?.country,
-              phone: (completeData as any)?.farmer?.company?.phone,
-              email: (completeData as any)?.farmer?.company?.email,
-              website: (completeData as any)?.farmer?.company?.website,
-              facebook: (completeData as any)?.farmer?.company?.facebook,
-              instagram: (completeData as any)?.farmer?.company?.instagram,
-              logo: (completeData as any)?.farmer?.company?.logo,
-              fiscal_id: (completeData as any)?.farmer?.company?.fiscal_id,
-              contact_email: (completeData as any)?.farmer?.company?.contact_email
-            }}
-            establishmentData={{
-              // Use complete farmer/establishment data from enhanced API response
-              id: (completeData as any)?.farmer?.id,
-              name: (completeData as any)?.farmer?.name,
-              description: (completeData as any)?.farmer?.description,
-              address: (completeData as any)?.farmer?.address,
-              city: (completeData as any)?.farmer?.city,
-              state: (completeData as any)?.farmer?.state,
-              country: (completeData as any)?.farmer?.country,
-              zone: (completeData as any)?.farmer?.zone,
-              latitude: (completeData as any)?.farmer?.latitude,
-              longitude: (completeData as any)?.farmer?.longitude,
-              contact_person: (completeData as any)?.farmer?.contact_person,
-              contact_phone: (completeData as any)?.farmer?.contact_phone,
-              contact_email: (completeData as any)?.farmer?.contact_email,
-              email: (completeData as any)?.farmer?.email,
-              phone: (completeData as any)?.farmer?.phone,
-              zip_code: (completeData as any)?.farmer?.zip_code,
-              facebook: (completeData as any)?.farmer?.facebook,
-              instagram: (completeData as any)?.farmer?.instagram,
-              about: (completeData as any)?.farmer?.about,
-              main_activities: (completeData as any)?.farmer?.main_activities,
-              location_highlights: (completeData as any)?.farmer?.location_highlights,
-              custom_message: (completeData as any)?.farmer?.custom_message,
-              is_active: (completeData as any)?.farmer?.is_active,
-              crops_grown: (completeData as any)?.farmer?.crops_grown,
-              sustainability_practices: (completeData as any)?.farmer?.sustainability_practices,
-              employee_count: (completeData as any)?.farmer?.employee_count,
-              total_acreage: (completeData as any)?.farmer?.total_acreage,
-              year_established: (completeData as any)?.farmer?.year_established,
-              establishment_type: (completeData as any)?.farmer?.establishment_type,
-              farming_method: (completeData as any)?.farmer?.farming_method,
-              location: (completeData as any)?.farmer?.location,
-              rating: safeReputation,
-              certifications: (completeData as any)?.farmer?.certifications || []
-            }}
-          />
-
-          {/* Parcel Information with Map */}
-          <ParcelMapInfo
-            parcelData={{
-              id: (completeData as any)?.parcel?.id?.toString(),
-              name: (completeData as any)?.parcel?.name,
-              location: (completeData as any)?.farmer?.location,
-              coordinates:
-                (completeData as any)?.farmer?.latitude && (completeData as any)?.farmer?.longitude
-                  ? {
-                      latitude: (completeData as any)?.farmer?.latitude,
-                      longitude: (completeData as any)?.farmer?.longitude
-                    }
-                  : undefined,
-              area: (completeData as any)?.parcel?.area,
-              areaUnit: 'hectares',
-              soilType: (completeData as any)?.parcel?.soilType,
-              cropType: (completeData as any)?.product?.name,
-              plantingDate: (completeData as any)?.start_date,
-              harvestDate: (completeData as any)?.finish_date,
-              elevation: (completeData as any)?.parcel?.elevation,
-              slope: (completeData as any)?.parcel?.slope,
-              irrigationType: (completeData as any)?.parcel?.irrigationType,
-              polygon: (completeData as any)?.parcel?.polygon,
-              map_metadata: (completeData as any)?.parcel?.map_metadata,
-              // Additional fields for modal
-              description: (completeData as any)?.parcel?.description,
-              certification_type: (completeData as any)?.parcel?.certification_type,
-              certified: (completeData as any)?.parcel?.certified,
-              unique_code: (completeData as any)?.parcel?.unique_code,
-              contact_person:
-                (completeData as any)?.parcel?.contact_person ||
-                (completeData as any)?.farmer?.contact_person,
-              contact_phone:
-                (completeData as any)?.parcel?.contact_phone ||
-                (completeData as any)?.farmer?.contact_phone,
-              contact_email:
-                (completeData as any)?.parcel?.contact_email ||
-                (completeData as any)?.farmer?.contact_email,
-              current_history: (completeData as any)?.parcel?.current_history,
-              establishment: {
+              companyData={{
+                // Use company data from the enhanced API response
+                id: (completeData as any)?.farmer?.company?.id,
+                name: (completeData as any)?.farmer?.company?.name || 'Company Information',
+                description: (completeData as any)?.farmer?.company?.description,
+                address: (completeData as any)?.farmer?.company?.address,
+                city: (completeData as any)?.farmer?.company?.city,
+                state: (completeData as any)?.farmer?.company?.state,
+                country: (completeData as any)?.farmer?.company?.country,
+                phone: (completeData as any)?.farmer?.company?.phone,
+                email: (completeData as any)?.farmer?.company?.email,
+                website: (completeData as any)?.farmer?.company?.website,
+                facebook: (completeData as any)?.farmer?.company?.facebook,
+                instagram: (completeData as any)?.farmer?.company?.instagram,
+                logo: (completeData as any)?.farmer?.company?.logo,
+                fiscal_id: (completeData as any)?.farmer?.company?.fiscal_id,
+                contact_email: (completeData as any)?.farmer?.company?.contact_email
+              }}
+              establishmentData={{
+                // Use complete farmer/establishment data from enhanced API response
                 id: (completeData as any)?.farmer?.id,
-                name: (completeData as any)?.farmer?.name || 'Farm',
+                name: (completeData as any)?.farmer?.name,
                 description: (completeData as any)?.farmer?.description,
-                location: (completeData as any)?.farmer?.location || 'Location not specified',
-                photo: (completeData as any)?.farmer?.photo
-              }
-            }}
-          />
+                address: (completeData as any)?.farmer?.address,
+                city: (completeData as any)?.farmer?.city,
+                state: (completeData as any)?.farmer?.state,
+                country: (completeData as any)?.farmer?.country,
+                zone: (completeData as any)?.farmer?.zone,
+                latitude: (completeData as any)?.farmer?.latitude,
+                longitude: (completeData as any)?.farmer?.longitude,
+                contact_person: (completeData as any)?.farmer?.contact_person,
+                contact_phone: (completeData as any)?.farmer?.contact_phone,
+                contact_email: (completeData as any)?.farmer?.contact_email,
+                email: (completeData as any)?.farmer?.email,
+                phone: (completeData as any)?.farmer?.phone,
+                zip_code: (completeData as any)?.farmer?.zip_code,
+                facebook: (completeData as any)?.farmer?.facebook,
+                instagram: (completeData as any)?.farmer?.instagram,
+                about: (completeData as any)?.farmer?.about,
+                main_activities: (completeData as any)?.farmer?.main_activities,
+                location_highlights: (completeData as any)?.farmer?.location_highlights,
+                custom_message: (completeData as any)?.farmer?.custom_message,
+                is_active: (completeData as any)?.farmer?.is_active,
+                crops_grown: (completeData as any)?.farmer?.crops_grown,
+                sustainability_practices: (completeData as any)?.farmer?.sustainability_practices,
+                employee_count: (completeData as any)?.farmer?.employee_count,
+                total_acreage: (completeData as any)?.farmer?.total_acreage,
+                year_established: (completeData as any)?.farmer?.year_established,
+                establishment_type: (completeData as any)?.farmer?.establishment_type,
+                farming_method: (completeData as any)?.farmer?.farming_method,
+                location: (completeData as any)?.farmer?.location,
+                rating: safeReputation,
+                certifications: (completeData as any)?.farmer?.certifications || [],
+                // Operational fields
+                climate_zone: (completeData as any)?.farmer?.climate_zone,
+                water_sources: (completeData as any)?.farmer?.water_sources,
+                soil_types: (completeData as any)?.farmer?.soil_types,
+                conservation_practices: (completeData as any)?.farmer?.conservation_practices,
+                irrigation_methods: (completeData as any)?.farmer?.irrigation_methods
+              }}
+              parcelData={{
+                id: (completeData as any)?.parcel?.id?.toString(),
+                name: (completeData as any)?.parcel?.name,
+                location: (completeData as any)?.farmer?.location,
+                coordinates:
+                  (completeData as any)?.farmer?.latitude &&
+                  (completeData as any)?.farmer?.longitude
+                    ? {
+                        latitude: (completeData as any)?.farmer?.latitude,
+                        longitude: (completeData as any)?.farmer?.longitude
+                      }
+                    : undefined,
+                area: (completeData as any)?.parcel?.area,
+                areaUnit: 'hectares',
+                soilType: (completeData as any)?.parcel?.soilType,
+                cropType: (completeData as any)?.product?.name,
+                plantingDate: (completeData as any)?.start_date,
+                harvestDate: (completeData as any)?.finish_date,
+                elevation: (completeData as any)?.parcel?.elevation,
+                slope: (completeData as any)?.parcel?.slope,
+                irrigationType: (completeData as any)?.parcel?.irrigationType,
+                polygon: (completeData as any)?.parcel?.polygon,
+                map_metadata: (completeData as any)?.parcel?.map_metadata,
+                // Additional fields for modal
+                description: (completeData as any)?.parcel?.description,
+                certification_type: (completeData as any)?.parcel?.certification_type,
+                certified: (completeData as any)?.parcel?.certified,
+                unique_code: (completeData as any)?.parcel?.unique_code,
+                contact_person:
+                  (completeData as any)?.parcel?.contact_person ||
+                  (completeData as any)?.farmer?.contact_person,
+                contact_phone:
+                  (completeData as any)?.parcel?.contact_phone ||
+                  (completeData as any)?.farmer?.contact_phone,
+                contact_email:
+                  (completeData as any)?.parcel?.contact_email ||
+                  (completeData as any)?.farmer?.contact_email,
+                current_history: (completeData as any)?.parcel?.current_history,
+                establishment: {
+                  id: (completeData as any)?.farmer?.id,
+                  name: (completeData as any)?.farmer?.name || 'Farm',
+                  description: (completeData as any)?.farmer?.description,
+                  location: (completeData as any)?.farmer?.location || 'Location not specified',
+                  photo: (completeData as any)?.farmer?.photo
+                }
+              }}
+            />
           </Box>
 
           {/* Phase 6.3: ConsumerImpactCalculator Removed - Avoided duplicate information */}
@@ -2078,34 +2085,36 @@ function ProductDetail() {
 
           {/* Consumer Feedback Section */}
           <Box id="reviews-section">
-            <QuickFeedback
-            productionId={productionId || ''}
-            onFeedbackSubmitted={() => {
-              console.log('✅ Consumer feedback submitted for production:', productionId);
-            }}
-          />
+            <VStack spacing={8}>
+              <QuickFeedback
+                productionId={productionId || ''}
+                onFeedbackSubmitted={() => {
+                  console.log('✅ Consumer feedback submitted for production:', productionId);
+                }}
+              />
 
-          {/* Similar Products */}
-          <SimilarProducts
-            currentProductId={productionId}
-            products={
-              (completeData as any)?.similar_products ||
-              (completeData as any)?.similarHistories ||
-              []
-            }
-          />
+              {/* Similar Products */}
+              <SimilarProducts
+                currentProductId={productionId}
+                products={
+                  (completeData as any)?.similar_products ||
+                  (completeData as any)?.similarHistories ||
+                  []
+                }
+              />
+            </VStack>
           </Box>
         </VStack>
       </Container>
-      
+
       {/* Navigation Bottom Bar */}
-      <NavigationBottomBar 
+      <NavigationBottomBar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         onScrollStart={() => setIsUserScrolling(true)}
         onScrollEnd={() => setIsUserScrolling(false)}
       />
-      
+
       {/* Education Modal */}
       <EducationModal isOpen={isEducationOpen} onClose={onEducationClose} topic={educationTopic} />
     </Flex>

@@ -10,7 +10,7 @@ import {
   Icon,
   Badge,
   useToast,
-  Divider,
+  Divider
 } from '@chakra-ui/react';
 import { FaComments, FaStar } from 'react-icons/fa';
 import { useCreateScanMutation } from '../../store/api/historyApi';
@@ -28,7 +28,7 @@ interface QuickFeedbackProps {
 export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
   productionId,
   scanId,
-  onFeedbackSubmitted,
+  onFeedbackSubmitted
 }) => {
   const [quickMessage, setQuickMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,7 +39,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
   const [createScan] = useCreateScanMutation();
   const navigate = useNavigate();
   const toast = useToast();
-  
+
   // Check if user is authenticated
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
   const currentUser = useSelector((state: any) => state.userState.user);
@@ -54,7 +54,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
 
   // Track interactions for engagement scoring
   const trackInteraction = () => {
-    setInteractionCount(prev => prev + 1);
+    setInteractionCount((prev) => prev + 1);
   };
 
   // Monitor consent status changes
@@ -64,7 +64,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       console.log('🔍 QuickFeedback consent check:', {
         hasAnalyticsConsent: currentConsent,
         localStorage: localStorage.getItem('trazo-analytics-consent'),
-        cookies: document.cookie.split(';').find(c => c.includes('trazo-analytics-consent')),
+        cookies: document.cookie.split(';').find((c) => c.includes('trazo-analytics-consent')),
         timestamp: new Date().toISOString()
       });
       setHasConsent(currentConsent);
@@ -92,10 +92,10 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
   useEffect(() => {
     const handleClick = () => trackInteraction();
     const handleScroll = () => trackInteraction();
-    
+
     document.addEventListener('click', handleClick);
     document.addEventListener('scroll', handleScroll);
-    
+
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('scroll', handleScroll);
@@ -120,7 +120,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
         title: 'Please leave a comment',
         status: 'warning',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
       return;
     }
@@ -131,7 +131,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       hasConsentState: hasConsent,
       directConsentCheck: directConsentCheck,
       localStorage: localStorage.getItem('trazo-analytics-consent'),
-      cookies: document.cookie.split(';').find(c => c.includes('trazo-analytics-consent')),
+      cookies: document.cookie.split(';').find((c) => c.includes('trazo-analytics-consent')),
       willProceed: hasConsent && directConsentCheck
     });
 
@@ -140,10 +140,11 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       console.log('🚫 Consent check failed - blocking API call');
       toast({
         title: 'Analytics Consent Required',
-        description: 'Please accept analytics to submit feedback and help improve carbon transparency',
+        description:
+          'Please accept analytics to submit feedback and help improve carbon transparency',
         status: 'warning',
         duration: 5000,
-        isClosable: true,
+        isClosable: true
       });
       return;
     }
@@ -154,21 +155,21 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
     try {
       // Calculate time on page and engagement metrics
       const timeOnPage = (Date.now() - startTime) / 1000; // seconds
-      
+
       // Enhanced feedback data with privacy and analytics
       const feedbackData = {
         production_id: productionId,
         comment: quickMessage,
-        
+
         // Enhanced analytics data (2025 privacy standards)
         time_on_page: timeOnPage,
         interactions: interactionCount,
         screen: `${window.screen.width}x${window.screen.height}`, // For responsive analytics
-        
+
         // EXPLICIT CONSENT FLAG - Add this as fallback for cookie domain issues
         explicit_consent: hasConsent && directConsentCheck,
-        consent_timestamp: new Date().toISOString(),
-        
+        consent_timestamp: new Date().toISOString()
+
         // Get geolocation if user allows (optional)
         // Note: This would need user permission and should be implemented carefully
         // city: '', // Can be populated by backend via IP geolocation if consented
@@ -188,18 +189,18 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       console.log('🚀 Making API call to createScan...');
       const result = await createScan(feedbackData).unwrap();
       console.log('✅ API call successful:', result);
-      
+
       toast({
         title: 'Thank you for your feedback!',
         description: 'Your comment helps improve transparency',
         status: 'success',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
 
       // Reset form
       setQuickMessage('');
-      
+
       if (onFeedbackSubmitted) {
         onFeedbackSubmitted();
       }
@@ -212,7 +213,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
         message: error?.message,
         timestamp: new Date().toISOString()
       });
-      
+
       // Handle specific error cases
       if (error?.status === 428) {
         console.error('🚨 428 Consent Required - even though frontend validated consent!');
@@ -228,7 +229,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
           description: 'Please allow analytics to submit feedback',
           status: 'warning',
           duration: 5000,
-          isClosable: true,
+          isClosable: true
         });
       } else if (error?.status === 429) {
         // Rate limited
@@ -237,7 +238,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
           description: 'Please wait a moment before submitting again',
           status: 'warning',
           duration: 3000,
-          isClosable: true,
+          isClosable: true
         });
       } else {
         toast({
@@ -245,7 +246,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
           description: 'Please try again later',
           status: 'error',
           duration: 3000,
-          isClosable: true,
+          isClosable: true
         });
       }
     } finally {
@@ -254,10 +255,6 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
   };
 
   const handleFullReview = () => {
-    console.log('🎯 QuickFeedback handleFullReview called');
-    console.log('🎯 productionId:', productionId);
-    console.log('🎯 isAuthenticated:', isAuthenticated);
-    
     if (!isAuthenticated) {
       console.log('🎯 User not authenticated, setting auth redirect action');
       // Store the production ID for review redirect after auth
@@ -271,7 +268,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
     // Generate a unique scan ID for the review
     const scanId = `web-${Date.now()}`;
     const reviewUrl = `/admin/dashboard/production/${productionId}/review/${scanId}`;
-    
+
     console.log('🎯 User is authenticated, navigating directly to review page:', reviewUrl);
     // Navigate directly to the authenticated consumer review page
     navigate(reviewUrl);
@@ -285,8 +282,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
         borderRadius="xl"
         border="1px"
         borderColor={borderColor}
-        boxShadow="sm"
-      >
+        boxShadow="sm">
         <VStack spacing={5} align="stretch">
           {/* Header */}
           <HStack spacing={3}>
@@ -298,7 +294,6 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
           <Text fontSize="sm" color="gray.500">
             Quick feedback helps farmers improve their sustainable practices
           </Text>
-
 
           {/* Quick Message */}
           <VStack spacing={3} align="stretch">
@@ -318,7 +313,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
               borderRadius="lg"
               _focus={{
                 borderColor: 'blue.500',
-                boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)',
+                boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)'
               }}
             />
             <Text fontSize="xs" color="gray.500" textAlign="right">
@@ -334,7 +329,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
               </Text>
             )}
             <Button
-              colorScheme={hasConsent ? "green" : "gray"}
+              colorScheme={hasConsent ? 'green' : 'gray'}
               size="lg"
               onClick={handleQuickFeedback}
               isLoading={isSubmitting}
@@ -342,12 +337,15 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
               w="full"
               borderRadius="xl"
               isDisabled={!hasConsent}
-              _hover={hasConsent ? {
-                transform: 'translateY(-1px)',
-                boxShadow: 'lg',
-              } : {}}
-              opacity={hasConsent ? 1 : 0.6}
-            >
+              _hover={
+                hasConsent
+                  ? {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 'lg'
+                    }
+                  : {}
+              }
+              opacity={hasConsent ? 1 : 0.6}>
               {hasConsent ? 'Submit Feedback' : 'Consent Required for Feedback'}
             </Button>
 
@@ -356,7 +354,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
             <Text fontSize="sm" color="gray.500" textAlign="center">
               Want to share more?
             </Text>
-            
+
             <Button
               variant="outline"
               colorScheme="green"
@@ -364,14 +362,12 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
               onClick={handleFullReview}
               leftIcon={<Icon as={FaStar} />}
               borderRadius="lg"
-              w="full"
-            >
+              w="full">
               {isAuthenticated ? 'Write Detailed Review' : 'Sign In for Full Review'}
             </Button>
           </VStack>
         </VStack>
       </Box>
-
     </>
   );
 };

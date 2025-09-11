@@ -267,7 +267,19 @@ function AddEstablishment({ isEdit = false }: Props) {
       type: establishmentData.type || '',
       latitude: establishmentData.latitude || undefined,
       longitude: establishmentData.longitude || undefined,
-      cropsGrown: Array.isArray(establishmentData.crops_grown) ? establishmentData.crops_grown : [],
+      cropsGrown: (() => {
+        if (Array.isArray(establishmentData.crops_grown)) {
+          return establishmentData.crops_grown;
+        }
+        if (typeof establishmentData.crops_grown === 'string') {
+          try {
+            return JSON.parse(establishmentData.crops_grown);
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      })(),
       certifications: establishmentData.certifications
         ? typeof establishmentData.certifications === 'string'
           ? establishmentData.certifications
@@ -278,23 +290,73 @@ function AddEstablishment({ isEdit = false }: Props) {
           ? establishmentData.certifications
           : []
         : [],
-      sustainabilityPractices: Array.isArray(establishmentData.sustainability_practices)
-        ? establishmentData.sustainability_practices
-        : [],
+      sustainabilityPractices: (() => {
+        if (Array.isArray(establishmentData.sustainability_practices)) {
+          return establishmentData.sustainability_practices;
+        }
+        if (typeof establishmentData.sustainability_practices === 'string') {
+          try {
+            return JSON.parse(establishmentData.sustainability_practices);
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      })(),
       // Add missing operational fields for EDIT data loading
       climateZone: establishmentData.climate_zone || '',
-      waterSources: Array.isArray(establishmentData.water_sources) 
-        ? establishmentData.water_sources 
-        : [],
-      soilTypes: Array.isArray(establishmentData.soil_types) 
-        ? establishmentData.soil_types 
-        : [],
-      conservationPractices: Array.isArray(establishmentData.conservation_practices) 
-        ? establishmentData.conservation_practices 
-        : [],
-      irrigationMethods: Array.isArray(establishmentData.irrigation_methods) 
-        ? establishmentData.irrigation_methods 
-        : [],
+      waterSources: (() => {
+        if (Array.isArray(establishmentData.water_sources)) {
+          return establishmentData.water_sources;
+        }
+        if (typeof establishmentData.water_sources === 'string') {
+          try {
+            return JSON.parse(establishmentData.water_sources);
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      })(),
+      soilTypes: (() => {
+        if (Array.isArray(establishmentData.soil_types)) {
+          return establishmentData.soil_types;
+        }
+        if (typeof establishmentData.soil_types === 'string') {
+          try {
+            return JSON.parse(establishmentData.soil_types);
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      })(),
+      conservationPractices: (() => {
+        if (Array.isArray(establishmentData.conservation_practices)) {
+          return establishmentData.conservation_practices;
+        }
+        if (typeof establishmentData.conservation_practices === 'string') {
+          try {
+            return JSON.parse(establishmentData.conservation_practices);
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      })(),
+      irrigationMethods: (() => {
+        if (Array.isArray(establishmentData.irrigation_methods)) {
+          return establishmentData.irrigation_methods;
+        }
+        if (typeof establishmentData.irrigation_methods === 'string') {
+          try {
+            return JSON.parse(establishmentData.irrigation_methods);
+          } catch {
+            return [];
+          }
+        }
+        return [];
+      })(),
       contact_person: establishmentData.contact_person || '',
       contact_phone: establishmentData.contact_phone || '',
       contact_email: establishmentData.contact_email || '',

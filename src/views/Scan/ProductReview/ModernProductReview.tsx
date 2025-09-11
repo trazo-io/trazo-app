@@ -9,19 +9,14 @@ import {
   Flex,
   Container,
   useColorModeValue,
-  Badge,
+  Badge
 } from '@chakra-ui/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string } from 'zod';
-import {
-  FaLeaf,
-  FaStar,
-  FaHeart,
-  FaCamera,
-} from 'react-icons/fa';
+import { FaLeaf, FaStar, FaHeart, FaCamera } from 'react-icons/fa';
 import { BsStarFill, BsStar } from 'react-icons/bs';
 import { MdVerified } from 'react-icons/md';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
@@ -44,37 +39,37 @@ const reviewSchema = object({
     .max(100, 'Headline must be under 100 characters'),
   written_review: string()
     .min(10, 'Review must be at least 10 characters')
-    .max(1000, 'Review must be under 1000 characters'),
+    .max(1000, 'Review must be under 1000 characters')
 });
 
 export default function ModernProductReview() {
   const navigate = useNavigate();
   const { productionId, scanId } = useParams();
-  
+
   // State
   const [rating, setRating] = useState(0);
   const [uploadedFiles, setUploadedFiles] = useState([]);
-  
+
   // User data
   const currentUser = useSelector((state: any) => state.userState.user);
-  
+
   // Form setup
   const methods = useForm({
-    resolver: zodResolver(reviewSchema),
+    resolver: zodResolver(reviewSchema)
   });
-  
+
   const {
     reset,
     handleSubmit,
     register,
-    formState: { errors, isSubmitSuccessful },
+    formState: { errors, isSubmitSuccessful }
   } = methods;
-  
+
   // Fetch product data
   const { data: historyData, isLoading } = useGetPublicHistoryQuery(productionId || '', {
-    skip: !productionId,
+    skip: !productionId
   });
-  
+
   // Review mutation
   const [sendReview, { isSuccess, isLoading: isLoadingReview }] = useSendReviewMutation();
 
@@ -91,7 +86,7 @@ export default function ModernProductReview() {
       written_review: data.written_review,
       rating: rating,
       production: historyData?.id,
-      user: currentUser?.id,
+      user: currentUser?.id
     };
 
     // Only include scan if it's a valid numeric ID (from actual QR scan)
@@ -101,14 +96,13 @@ export default function ModernProductReview() {
 
     sendReview(reviewData);
   };
-  
+
   return (
     <StandardPage
       title="Share Your Carbon Transparency Experience"
       description="Help other consumers make informed choices by sharing your experience with this sustainably-grown product"
       showBackButton={true}
-      onBack={() => navigate(-1)}
-    >
+      onBack={() => navigate(-1)}>
       <Container maxW="4xl" mx="auto">
         <StandardCard variant="elevated">
           <VStack spacing={6} align="stretch">
@@ -149,14 +143,12 @@ export default function ModernProductReview() {
                   <StandardAlert
                     status="success"
                     title="Review Submitted Successfully!"
-                    description="Thank you for contributing to agricultural transparency. Your review helps other consumers make informed choices."
-                  >
+                    description="Thank you for contributing to agricultural transparency. Your review helps other consumers make informed choices.">
                     <StandardButton
                       variant="outline"
                       size="sm"
                       onClick={() => navigate(`/production/${productionId}`)}
-                      leftIcon={<FaHeart />}
-                    >
+                      leftIcon={<FaHeart />}>
                       Back to Product
                     </StandardButton>
                   </StandardAlert>
@@ -165,8 +157,7 @@ export default function ModernProductReview() {
                     {/* Rating Section */}
                     <StandardField
                       label="How would you rate this sustainable product?"
-                      helpText="Consider carbon footprint, farming practices, and transparency"
-                    >
+                      helpText="Consider carbon footprint, farming practices, and transparency">
                       <HStack spacing={3} justify="center" py={4}>
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Icon
@@ -198,8 +189,7 @@ export default function ModernProductReview() {
                       label="Review Headline"
                       required
                       error={errors.headline?.message}
-                      helpText="Highlight what's most important about this product's sustainability"
-                    >
+                      helpText="Highlight what's most important about this product's sustainability">
                       <StandardInput
                         {...register('headline')}
                         placeholder="e.g., 'Exceptional carbon transparency' or 'Great regenerative practices'"
@@ -209,8 +199,7 @@ export default function ModernProductReview() {
                     {/* Photo Upload Section */}
                     <StandardField
                       label="Add Photo (Optional)"
-                      helpText="Share a photo that shows the product's quality or sustainable packaging"
-                    >
+                      helpText="Share a photo that shows the product's quality or sustainable packaging">
                       <StandardMediaUpload
                         onFilesChange={setUploadedFiles}
                         acceptedFiles={uploadedFiles}
@@ -227,8 +216,7 @@ export default function ModernProductReview() {
                       label="Your Carbon Transparency Review"
                       required
                       error={errors.written_review?.message}
-                      helpText="Share details about the farm's sustainability practices, carbon impact, or transparency that influenced your choice"
-                    >
+                      helpText="Share details about the farm's sustainability practices, carbon impact, or transparency that influenced your choice">
                       <StandardTextarea
                         {...register('written_review')}
                         placeholder="What did you discover about this product's environmental impact? How did the carbon transparency influence your purchase decision? Would you recommend this farm to other conscious consumers?"
@@ -246,8 +234,7 @@ export default function ModernProductReview() {
                         isLoading={isLoadingReview}
                         loadingText="Submitting Review..."
                         leftIcon={<FaLeaf />}
-                        disabled={!rating || rating === 0}
-                      >
+                        disabled={!rating || rating === 0}>
                         Share Transparency Review
                       </StandardButton>
                     </Flex>
