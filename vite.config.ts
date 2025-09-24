@@ -55,8 +55,7 @@ export default defineConfig({
       }
     }),
     tsconfigPaths(),
-    // Temporarily remove splitVendorChunkPlugin to fix initialization issue
-    // splitVendorChunkPlugin(),
+    // Note: splitVendorChunkPlugin() disabled due to manual chunks configuration below
     // Only add visualizer plugin if it's available
     ...(visualizer
       ? [
@@ -100,16 +99,27 @@ export default defineConfig({
   build: {
     // Enhanced mobile performance optimization - updated for import.meta support
     target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
-    chunkSizeWarningLimit: 500, // Stricter limit for mobile
+    chunkSizeWarningLimit: 300, // Aggressive limit for 3G networks
     reportCompressedSize: false, // Faster builds
     cssCodeSplit: true, // Enable CSS code splitting for better caching
     rollupOptions: {
       output: {
-        // Simplified chunking strategy to avoid initialization conflicts
+        // Aggressive chunking strategy for 3G networks
         manualChunks: {
-          // Group vendor libraries together to avoid circular dependencies
-          vendor: ['react', 'react-dom', '@chakra-ui/react', '@emotion/react', '@emotion/styled'],
-          recharts: ['recharts']
+          // Core React bundle - loaded first
+          react: ['react', 'react-dom'],
+          // UI framework - loaded for dashboard
+          chakra: ['@chakra-ui/react', '@emotion/react', '@emotion/styled'],
+          // Charts - loaded only when needed
+          charts: ['recharts'],
+          // Redux/API - loaded for authenticated routes
+          redux: ['@reduxjs/toolkit', 'react-redux'],
+          // Forms - loaded for form-heavy pages
+          forms: ['react-hook-form'],
+          // Icons - loaded progressively
+          icons: ['react-icons'],
+          // Utils - shared utilities
+          utils: ['date-fns', 'lodash']
         }
       }
     },

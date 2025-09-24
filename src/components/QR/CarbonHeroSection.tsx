@@ -37,7 +37,8 @@ import {
   FaBolt,
   FaAward,
   FaRecycle,
-  FaTachometerAlt
+  FaTachometerAlt,
+  FaEye
 } from 'react-icons/fa';
 import { MdVerified, MdScience, MdEco } from 'react-icons/md';
 import { BsShieldCheck } from 'react-icons/bs';
@@ -201,35 +202,77 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     };
   };
 
+  const getTransparencyMessage = (score: number) => {
+    if (score >= 95) {
+      return {
+        primary: '🌟 Open Book Farm',
+        secondary: 'This farmer shares their complete growing story - from seed to harvest, you can see it all',
+        action: 'Discover every step of how your food was grown'
+      };
+    }
+    if (score >= 85) {
+      return {
+        primary: '👨‍🌾 Farm Storyteller',
+        secondary: 'This farmer takes pride in sharing their growing practices and field stories',
+        action: 'See the farming journey behind your food'
+      };
+    }
+    if (score >= 70) {
+      return {
+        primary: '🚜 Working Farm',
+        secondary: 'This farmer shares key details about how they care for their crops and land',
+        action: 'Learn about real farming practices'
+      };
+    }
+    if (score >= 50) {
+      return {
+        primary: '🌾 Growing Story',
+        secondary: 'This farmer is building their story, sharing the essentials of how they farm',
+        action: 'Supporting farmers who share their work'
+      };
+    }
+    return {
+      primary: '🌱 Farm Beginnings',
+      secondary: 'This farmer is starting to share their growing practices with you',
+      action: 'Encouraging farming transparency, one story at a time'
+    };
+  };
+
   const getConsumerMessage = (score: number, footprint: number) => {
+    // Use transparency messaging when in transparency mode
+    if (carbonData?.level === 'transparency') {
+      return getTransparencyMessage(score);
+    }
+
+    // Informative carbon messaging (not competitive)
     const grade = getScoreGrade(score);
     const impact = getImpactLevel(footprint);
 
     if (score >= 80) {
       return {
-        primary: '🌟 Exceptional Choice!',
-        secondary: 'This product represents outstanding sustainability practices',
-        action: 'Feel great about this choice'
+        primary: '🌱 Sustainable Farming Practices',
+        secondary: 'This farm demonstrates excellent environmental stewardship with documented sustainable practices',
+        action: 'Learn about the specific farming methods used'
       };
     }
     if (score >= 60) {
       return {
-        primary: '🌿 Great Choice!',
-        secondary: 'This product shows strong environmental responsibility',
-        action: 'A responsible choice you can trust'
+        primary: '🌿 Environmentally Conscious Farming',
+        secondary: 'This farm follows good environmental practices and tracks their impact',
+        action: 'See the environmental practices used'
       };
     }
     if (score >= 40) {
       return {
-        primary: '✅ Good Choice',
-        secondary: 'This product meets solid environmental standards',
-        action: 'A balanced choice for conscious consumers'
+        primary: '🌾 Standard Environmental Practices',
+        secondary: 'This farm meets environmental standards and provides transparency about their methods',
+        action: 'Explore the farming methods documented'
       };
     }
     return {
-      primary: '🔄 Room for Improvement',
-      secondary: 'This product is working towards better sustainability',
-      action: 'Consider offsetting to make it carbon neutral'
+      primary: '🌱 Developing Sustainable Practices',
+      secondary: 'This farm is working to improve their environmental practices and transparency',
+      action: 'Support farmers improving their sustainability'
     };
   };
 
@@ -259,6 +302,43 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   };
 
   const getRelatableComparison = (footprint: number) => {
+    // In transparency mode, show transparency-related information instead of carbon comparisons
+    if (carbonData?.level === 'transparency') {
+      const score = carbonData.score || 0;
+      const eventCount = Math.round(score / 100 * 15); // Approximate events based on score
+      
+      if (score >= 95) {
+        return {
+          icon: BsShieldCheck,
+          text: `Complete farm story from planting to harvest`,
+          color: 'green.600',
+          emphasis: 'Every farming step shared with you'
+        };
+      } else if (score >= 85) {
+        return {
+          icon: FaCheckCircle,
+          text: `Rich story of how your food was grown`,
+          color: 'green.500',
+          emphasis: 'Detailed farming journey available'
+        };
+      } else if (score >= 70) {
+        return {
+          icon: FaInfoCircle,
+          text: `Key farming moments shared with care`,
+          color: 'blue.500',
+          emphasis: 'Important growing steps documented'
+        };
+      } else {
+        return {
+          icon: FaEye,
+          text: `Essential farming practices revealed`,
+          color: 'orange.500',
+          emphasis: 'Basic farm story building'
+        };
+      }
+    }
+
+    // Original carbon comparison for carbon mode
     const absFootprint = Math.abs(footprint);
 
     if (footprint <= 0) {
@@ -407,7 +487,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                       fontWeight="bold"
                       color={textColor}
                       lineHeight="1">
-                      Carbon Score
+                      {carbonData?.level === 'transparency' ? 'Transparency Score' : 'Carbon Score'}
                     </Text>
                   </VStack>
 

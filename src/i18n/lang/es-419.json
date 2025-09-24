@@ -790,7 +790,6 @@
   "event.equipment.unknown": "Evento de Equipo Desconocido",
   "event.soil.unknown": "Evento de Suelo Desconocido",
   "event.pest.unknown": "Evento de Plagas Desconocido",
-
   "app.subscriptionAndUsage": "Suscripción y Uso",
   "app.manageYourSubscriptionAndTrackUsage": "Gestiona tu suscripción y rastrea tus métricas de uso",
   "app.usageMetrics": "Métricas de Uso",
@@ -800,5 +799,30 @@
   "app.invoiceHistory": "Historial de Facturas",
   "app.overview": "Resumen",
   "app.billing": "Facturación",
-  "app.searchEstablishmentsAndParcels": "Buscar establecimientos, parcelas..."
+  "app.searchEstablishmentsAndParcels": "Buscar establecimientos, parcelas...",
+  
+  "transparency.achievement.firstStep": "Primer Paso",
+  "transparency.achievement.eventLogger": "Registrador de Eventos",
+  "transparency.achievement.transparencyAdvocate": "Defensor de la Transparencia",
+  "transparency.achievement.documentationExpert": "Experto en Documentación",
+  "transparency.achievement.transparencyMaster": "Maestro de la Transparencia",
+  "transparency.achievement.visualStoryteller": "Narrador Visual",
+  "transparency.achievement.farmPhotographer": "Fotógrafo Agrícola",
+  "transparency.achievement.visualTransparency": "Transparencia Visual",
+  "transparency.achievement.weekWarrior": "Guerrero Semanal",
+  "transparency.achievement.fortnightFighter": "Luchador Quincenal",
+  "transparency.achievement.monthlyChampion": "Campeón Mensual",
+  "transparency.achievement.trustBuilder": "Constructor de Confianza",
+  "transparency.achievement.verificationPro": "Profesional de Verificación",
+  "transparency.achievement.blockchainChampion": "Campeón Blockchain",
+  "transparency.achievement.halfwayThere": "A Medio Camino",
+  "transparency.achievement.transparencyLeader": "Líder en Transparencia",
+  "transparency.achievement.excellenceInTransparency": "Excelencia en Transparencia",
+  "transparency.achievement.transparencyPerfection": "Perfección en Transparencia",
+  
+  "transparency.level.beginner": "Principiante en Transparencia",
+  "transparency.level.builder": "Constructor de Transparencia",
+  "transparency.level.leader": "Líder en Transparencia",
+  "transparency.level.champion": "Campeón de Transparencia",
+  "transparency.level.master": "Maestro de Transparencia"
 }

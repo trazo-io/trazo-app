@@ -21,7 +21,9 @@ import {
   StatNumber,
   StatHelpText,
   Progress,
-  SimpleGrid
+  SimpleGrid,
+  Image,
+  AspectRatio
 } from '@chakra-ui/react';
 import EnhancedEventDetailModal from 'components/Events/EnhancedEventDetailModal';
 import {
@@ -48,6 +50,7 @@ import {
   FaBug
 } from 'react-icons/fa';
 import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
+import { TransparencyIndicator } from 'components/Design';
 import { useIntl } from 'react-intl';
 import { format, parseISO } from 'date-fns';
 import Card from 'components/Card/Card';
@@ -60,6 +63,18 @@ import {
   USDATooltip,
   CarbonScoreTooltip
 } from 'components/Education/EducationalTooltip';
+
+interface AlbumImage {
+  id: number;
+  image: string;
+  caption: string;
+  created_at: string;
+}
+
+interface Album {
+  id: number;
+  images: AlbumImage[];
+}
 
 interface CarbonCalculation {
   co2e: number;
@@ -104,16 +119,20 @@ interface TimelineEvent {
     data_integrity_score?: number;
     [key: string]: any;
   };
+  album?: Album;
 }
 
 interface UltraMobileProductionJourneyProps {
   events: TimelineEvent[];
+  productionId?: string;
 }
 
 export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourneyProps> = ({
-  events
+  events,
+  productionId
 }) => {
   const intl = useIntl();
+
   const [showAll, setShowAll] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
@@ -302,12 +321,22 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       ? sortedEvents
       : sortedEvents.filter((event) => {
           const config = getEventConfig(event);
-          return config.category && typeof config.category === 'string' && 
-                 config.category.toLowerCase() === selectedCategory.toLowerCase();
+          return (
+            config.category &&
+            typeof config.category === 'string' &&
+            config.category.toLowerCase() === selectedCategory.toLowerCase()
+          );
         });
 
   const displayedEvents = showAll ? filteredEvents : filteredEvents.slice(0, 3);
-  const categories = ['all', ...new Set(events.map((event) => getEventConfig(event).category).filter(cat => cat && typeof cat === 'string'))];
+  const categories = [
+    'all',
+    ...new Set(
+      events
+        .map((event) => getEventConfig(event).category)
+        .filter((cat) => cat && typeof cat === 'string')
+    )
+  ];
 
   const formatDate = (dateString: string) => {
     try {
@@ -455,6 +484,54 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 </CarbonScoreTooltip>
               </VStack>
             </SimpleGrid>
+
+            {/* Transparency Section */}
+            {productionId && (
+              <Box
+                bg={useColorModeValue('green.50', 'green.900')}
+                borderRadius="lg"
+                p={4}
+                border="1px solid"
+                borderColor={useColorModeValue('green.200', 'green.700')}
+                w="full">
+                <VStack spacing={3} align="stretch">
+                  <Flex justify="space-between" align="center">
+                    <Text fontSize="sm" fontWeight="semibold" color="green.800">
+                      Documentation Transparency
+                    </Text>
+                    <Badge colorScheme="green" fontSize="xs" borderRadius="full">
+                      {filteredEvents.length} Documented Events
+                    </Badge>
+                  </Flex>
+
+                  <TransparencyIndicator
+                    percentage={Math.min((filteredEvents.length / 15) * 100, 100)} // Assume 15 expected events
+                    message={
+                      filteredEvents.length >= 15
+                        ? 'Complete transparency'
+                        : filteredEvents.length >= 10
+                        ? 'Good transparency'
+                        : 'Basic transparency'
+                    }
+                    status={
+                      filteredEvents.length >= 15
+                        ? 'excellent'
+                        : filteredEvents.length >= 10
+                        ? 'good'
+                        : 'minimum'
+                    }
+                    variant="compact"
+                    size="sm"
+                    showDetails={false}
+                  />
+
+                  <Text fontSize="xs" color="green.700">
+                    Shows how completely this farm has documented their growing practices and
+                    activities
+                  </Text>
+                </VStack>
+              </Box>
+            )}
           </VStack>
 
           {/* Minimalist Horizontal Event Type Filters */}
@@ -487,16 +564,23 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   };
 
                   const config = getEventConfig(category);
-                  const isSelected = selectedCategory === category || (category === 'all' && selectedCategory === 'all');
-                  
-                  const categoryEvents = category === 'all' 
-                    ? filteredEvents 
-                    : sortedEvents.filter(event => {
-                        const eventConfig = getEventConfig(event);
-                        return eventConfig.category && typeof eventConfig.category === 'string' && 
-                               category && typeof category === 'string' &&
-                               eventConfig.category.toLowerCase() === category.toLowerCase();
-                      });
+                  const isSelected =
+                    selectedCategory === category ||
+                    (category === 'all' && selectedCategory === 'all');
+
+                  const categoryEvents =
+                    category === 'all'
+                      ? filteredEvents
+                      : sortedEvents.filter((event) => {
+                          const eventConfig = getEventConfig(event);
+                          return (
+                            eventConfig.category &&
+                            typeof eventConfig.category === 'string' &&
+                            category &&
+                            typeof category === 'string' &&
+                            eventConfig.category.toLowerCase() === category.toLowerCase()
+                          );
+                        });
 
                   const displayName = category === 'all' ? 'All' : category;
                   const eventCount = categoryEvents.length;
@@ -505,11 +589,13 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     <Button
                       key={category}
                       size="sm"
-                      variant={isSelected ? "solid" : "outline"}
-                      colorScheme={isSelected ? config.color.split('.')[0] : "gray"}
-                      bg={isSelected ? config.color : "transparent"}
-                      color={isSelected ? "white" : useColorModeValue('gray.700', 'gray.300')}
-                      borderColor={isSelected ? config.color : useColorModeValue('gray.200', 'gray.600')}
+                      variant={isSelected ? 'solid' : 'outline'}
+                      colorScheme={isSelected ? config.color.split('.')[0] : 'gray'}
+                      bg={isSelected ? config.color : 'transparent'}
+                      color={isSelected ? 'white' : useColorModeValue('gray.700', 'gray.300')}
+                      borderColor={
+                        isSelected ? config.color : useColorModeValue('gray.200', 'gray.600')
+                      }
                       onClick={() => setSelectedCategory(category)}
                       transition="all 0.2s"
                       _hover={{
@@ -534,9 +620,9 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         </VStack>
       </CardBody>
 
-      <CardBody pt={0}>
+      <CardBody pt={0} px={{ base: 0, md: 6 }} pb={{ base: 2, md: 6 }}>
         {/* Consumer-Friendly Event Cards */}
-        <VStack spacing={4} align="stretch">
+        <VStack spacing={{ base: 2, md: 4 }} align="stretch">
           {displayedEvents.map((event, index) => {
             // Debug: Log the raw event data for blockchain events
             if (
@@ -575,8 +661,19 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               // Carbon impact
               carbon_impact: event.carbon_data?.co2e,
               // Keep certification separate from blockchain verification
-              certified: event.certified || false
+              certified: event.certified || false,
+              // Convert album data to match ConsumerEventCard expected format
+              album: event.album ? {
+                id: event.album.id.toString(),
+                images: event.album.images.map(image => ({
+                  id: image.id.toString(),
+                  image: image.image,
+                  caption: image.caption,
+                  created_at: image.created_at
+                }))
+              } : undefined
             };
+
 
             // Debug: Log the enhanced event for blockchain events
             if (

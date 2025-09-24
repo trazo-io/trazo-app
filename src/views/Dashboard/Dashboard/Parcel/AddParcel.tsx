@@ -2,7 +2,7 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { StandardParcelForm } from '../../../../components/Forms/StandardParcelForm';
+import { StandardParcelFormTransparency } from '../../../../components/Forms/StandardParcelForm_Transparency';
 import {
   useCreateParcelMutation,
   useUpdateParcelMutation,
@@ -58,180 +58,88 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
     }
   );
 
-  // Helper function to get initial data for edit mode
+  // 🎯 Transparency-focused initial data mapping
   const getInitialData = () => {
     if (!isEdit || !parcelData) return {};
 
-    console.log('📊 Loading parcel data for edit:', parcelData);
-    console.log('📊 Agricultural details:', parcelData.agricultural_details);
-    console.log('📊 Polygon data:', parcelData.polygon);
-    
-    // Extract agricultural details from the JSON field
-    const agriculturalDetails = parcelData.agricultural_details || {};
+    console.log('📊 Loading parcel data for transparency form:', parcelData);
     
     return {
+      // Core transparency fields (map directly to new schema)
       name: parcelData.name || '',
       area: parcelData.area || 0,
-      description: parcelData.description || '',
-      contact_phone: parcelData.contact_phone || '',
-      address: parcelData.address || '',
+      crop_focus: parcelData.crop_type || '', // Map crop_type → crop_focus
+      
+      // Transparency story fields (map description → transparency_description)
+      transparency_description: parcelData.description || '',
+      sustainability_practices: parcelData.agricultural_details?.carbon_sequestration_practices || 
+                               parcelData.agricultural_details?.cover_crop_management || '',
+      consumer_story: '', // New field, will be empty for existing parcels
+      
+      // Visual documentation
+      images: parcelData.images || [],
       certified: parcelData.certified || false,
-      crop_type: parcelData.crop_type || '',
-      soil_type: parcelData.soil_type || '',
-      unique_code: parcelData.unique_code || '',
       certification_type: parcelData.certification_type || '',
-      contact_person: parcelData.contact_person || '',
-      contact_email: parcelData.contact_email || '',
+      
+      // System fields (maintain compatibility)
       polygon: parcelData.polygon || [],
       map_metadata: parcelData.map_metadata || {
         center: { lat: 40.7128, lng: -74.006 },
         zoom: 13
       },
+      establishment: parseInt(parcelData.establishment) || undefined,
       
-      // ✅ Agricultural Details - Extract from agricultural_details JSON field
-      // Soil Health Management
-      soil_ph: agriculturalDetails.soil_ph || undefined,
-      soil_organic_matter: agriculturalDetails.soil_organic_matter || undefined,
-      soil_nitrogen: agriculturalDetails.soil_nitrogen || undefined,
-      soil_phosphorus: agriculturalDetails.soil_phosphorus || undefined,
-      soil_potassium: agriculturalDetails.soil_potassium || undefined,
-      soil_compaction_level: agriculturalDetails.soil_compaction_level || '',
-      erosion_risk: agriculturalDetails.erosion_risk || '',
-      last_soil_test_date: agriculturalDetails.last_soil_test_date || '',
-      soil_improvement_notes: agriculturalDetails.soil_improvement_notes || '',
-      
-      // Water Management
-      water_source_type: agriculturalDetails.water_source_type || '',
-      water_rights_docs: agriculturalDetails.water_rights_docs || '',
-      water_allocation_acre_feet: agriculturalDetails.water_allocation_acre_feet || undefined,
-      water_quality_ph: agriculturalDetails.water_quality_ph || undefined,
-      water_quality_tds: agriculturalDetails.water_quality_tds || undefined,
-      irrigation_efficiency: agriculturalDetails.irrigation_efficiency || undefined,
-      drainage_characteristics: agriculturalDetails.drainage_characteristics || '',
-      seasonal_water_availability: agriculturalDetails.seasonal_water_availability || '',
-      water_conservation_practices: agriculturalDetails.water_conservation_practices || '',
-      
-      // Conservation Practices (if stored)
-      cover_crop_management: agriculturalDetails.cover_crop_management || '',
-      crop_rotation_pattern: agriculturalDetails.crop_rotation_pattern || '',
-      buffer_strips_windbreaks: agriculturalDetails.buffer_strips_windbreaks || '',
-      integrated_pest_management: agriculturalDetails.integrated_pest_management || '',
-      organic_certification_status: agriculturalDetails.organic_certification_status || '',
-      nrcs_practices: agriculturalDetails.nrcs_practices || '',
-      carbon_sequestration_practices: agriculturalDetails.carbon_sequestration_practices || '',
-      biodiversity_measures: agriculturalDetails.biodiversity_measures || '',
-      
-      // Environmental & Topographic Data (if stored)
-      slope_percentage: agriculturalDetails.slope_percentage || undefined,
-      topography_type: agriculturalDetails.topography_type || '',
-      microclimate_conditions: agriculturalDetails.microclimate_conditions || '',
-      frost_risk_zone: agriculturalDetails.frost_risk_zone || '',
-      wildlife_habitat_areas: agriculturalDetails.wildlife_habitat_areas || '',
-      riparian_zones: agriculturalDetails.riparian_zones || '',
-      wetland_designation: agriculturalDetails.wetland_designation || '',
-      historical_yield_data: agriculturalDetails.historical_yield_data || '',
-      land_use_restrictions: agriculturalDetails.land_use_restrictions || '',
-      
-      // Images
-      images: parcelData.images || [],
-      uploaded_image_urls: parcelData.images || []
+      // Legacy fields for backend compatibility (hidden from UI)
+      description: parcelData.description || '',
+      contact_phone: parcelData.contact_phone || '',
+      contact_person: parcelData.contact_person || '',
+      contact_email: parcelData.contact_email || '',
+      address: parcelData.address || '',
+      soil_type: parcelData.soil_type || '',
+      unique_code: parcelData.unique_code || ''
     };
   };
 
   const handleSubmit = async (data: any) => {
     try {
-      console.log('🎯 Parent handleSubmit received data:', data);
-      console.log('🎯 Data keys:', Object.keys(data));
-      console.log('🎯 Individual field values:', {
-        name: data.name,
-        description: data.description,
-        crop_type: data.crop_type,
-        soil_type: data.soil_type,
-        unique_code: data.unique_code,
-        certification_type: data.certification_type,
-        address: data.address,
-        contact_person: data.contact_person,
-        contact_email: data.contact_email,
-        contact_phone: data.contact_phone
+      console.log('🎯 Transparency form data received:', data);
+      console.log('🎯 Transparency fields:', {
+        transparency_description: data.transparency_description,
+        sustainability_practices: data.sustainability_practices,
+        consumer_story: data.consumer_story,
+        crop_focus: data.crop_focus
       });
 
-      // ✅ Collect agricultural details for carbon calculations
+      // 🌱 Store transparency narrative in agricultural_details for carbon context
       const agriculturalDetails: any = {};
       
-      console.log('🌱 Agricultural Data Debug:', {
-        soil_ph: data.soil_ph,
-        soil_organic_matter: data.soil_organic_matter,
-        soil_nitrogen: data.soil_nitrogen,
-        water_source_type: data.water_source_type,
-        soil_compaction_level: data.soil_compaction_level,
-        erosion_risk: data.erosion_risk
-      });
+      // Store transparency story for consumer display
+      if (data.sustainability_practices) {
+        agriculturalDetails.carbon_sequestration_practices = data.sustainability_practices;
+        agriculturalDetails.cover_crop_management = data.sustainability_practices;
+      }
       
-      // Soil Analysis Data
-      if (data.soil_ph) agriculturalDetails.soil_ph = data.soil_ph;
-      if (data.soil_organic_matter) agriculturalDetails.soil_organic_matter = data.soil_organic_matter;
-      if (data.soil_nitrogen) agriculturalDetails.soil_nitrogen = data.soil_nitrogen;
-      if (data.soil_phosphorus) agriculturalDetails.soil_phosphorus = data.soil_phosphorus;
-      if (data.soil_potassium) agriculturalDetails.soil_potassium = data.soil_potassium;
-      if (data.soil_compaction_level) agriculturalDetails.soil_compaction_level = data.soil_compaction_level;
-      if (data.erosion_risk) agriculturalDetails.erosion_risk = data.erosion_risk;
-      if (data.last_soil_test_date) agriculturalDetails.last_soil_test_date = data.last_soil_test_date;
-      if (data.soil_improvement_notes) agriculturalDetails.soil_improvement_notes = data.soil_improvement_notes;
+      if (data.consumer_story) {
+        agriculturalDetails.consumer_narrative = data.consumer_story;
+      }
       
-      // Water Management Data
-      if (data.water_source_type) agriculturalDetails.water_source_type = data.water_source_type;
-      if (data.water_rights_docs) agriculturalDetails.water_rights_docs = data.water_rights_docs;
-      if (data.water_allocation_acre_feet) agriculturalDetails.water_allocation_acre_feet = data.water_allocation_acre_feet;
-      if (data.water_quality_ph) agriculturalDetails.water_quality_ph = data.water_quality_ph;
-      if (data.water_quality_tds) agriculturalDetails.water_quality_tds = data.water_quality_tds;
-      if (data.irrigation_efficiency) agriculturalDetails.irrigation_efficiency = data.irrigation_efficiency;
-      if (data.drainage_characteristics) agriculturalDetails.drainage_characteristics = data.drainage_characteristics;
-      if (data.seasonal_water_availability) agriculturalDetails.seasonal_water_availability = data.seasonal_water_availability;
-      if (data.water_conservation_practices) agriculturalDetails.water_conservation_practices = data.water_conservation_practices;
+      // Basic carbon tracking capability 
+      const hasTransparencyData = !!(data.transparency_description && data.sustainability_practices);
       
-      // Conservation Practices
-      if (data.cover_crop_management) agriculturalDetails.cover_crop_management = data.cover_crop_management;
-      if (data.crop_rotation_pattern) agriculturalDetails.crop_rotation_pattern = data.crop_rotation_pattern;
-      if (data.buffer_strips_windbreaks) agriculturalDetails.buffer_strips_windbreaks = data.buffer_strips_windbreaks;
-      if (data.integrated_pest_management) agriculturalDetails.integrated_pest_management = data.integrated_pest_management;
-      if (data.organic_certification_status) agriculturalDetails.organic_certification_status = data.organic_certification_status;
-      if (data.nrcs_practices) agriculturalDetails.nrcs_practices = data.nrcs_practices;
-      if (data.carbon_sequestration_practices) agriculturalDetails.carbon_sequestration_practices = data.carbon_sequestration_practices;
-      if (data.biodiversity_measures) agriculturalDetails.biodiversity_measures = data.biodiversity_measures;
-      
-      // Environmental & Topographic Data
-      if (data.slope_percentage) agriculturalDetails.slope_percentage = data.slope_percentage;
-      if (data.topography_type) agriculturalDetails.topography_type = data.topography_type;
-      if (data.microclimate_conditions) agriculturalDetails.microclimate_conditions = data.microclimate_conditions;
-      if (data.frost_risk_zone) agriculturalDetails.frost_risk_zone = data.frost_risk_zone;
-      if (data.wildlife_habitat_areas) agriculturalDetails.wildlife_habitat_areas = data.wildlife_habitat_areas;
-      if (data.riparian_zones) agriculturalDetails.riparian_zones = data.riparian_zones;
-      if (data.wetland_designation) agriculturalDetails.wetland_designation = data.wetland_designation;
-      if (data.historical_yield_data) agriculturalDetails.historical_yield_data = data.historical_yield_data;
-      if (data.land_use_restrictions) agriculturalDetails.land_use_restrictions = data.land_use_restrictions;
-      
-      // Calculate carbon readiness and USDA compliance
-      const hasAgriculturalData = Object.keys(agriculturalDetails).length > 0;
-      const hasSoilData = !!(data.soil_ph || data.soil_organic_matter || data.soil_nitrogen);
-      const hasConservationData = !!(data.cover_crop_management || data.crop_rotation_pattern || data.carbon_sequestration_practices);
-      
-      console.log('🧪 Agricultural Details Summary:', {
+      console.log('🌱 Transparency agricultural details:', {
         agriculturalDetails,
-        hasAgriculturalData,
-        hasSoilData, 
-        hasConservationData,
-        agriculturalDetailKeys: Object.keys(agriculturalDetails)
+        hasTransparencyData
       });
       
-      // Map the form data to match backend field names
+      // 🎯 Map transparency form to backend fields
       const parcelData = {
         name: data.name,
         area: Number(data.area),
-        description: data.description,
+        description: data.transparency_description || data.description, // Use transparency description as primary
         contact_phone: data.contact_phone || '',
         address: data.address || '',
         certified: data.certified || false,
-        crop_type: data.crop_type || '',
+        crop_type: data.crop_focus || '', // Map crop_focus → crop_type for backend
         soil_type: data.soil_type || '',
         unique_code: data.unique_code || '',
         certification_type: data.certification_type || '',
@@ -244,10 +152,14 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         },
         establishment: parseInt(establishmentId!),
         
-        // ✅ Add agricultural details for carbon tracking
+        // ✅ Store transparency context for carbon calculations
         agricultural_details: agriculturalDetails,
-        carbon_calculation_enabled: hasAgriculturalData,
-        usda_compliance_eligible: hasSoilData && hasConservationData
+        carbon_calculation_enabled: hasTransparencyData,
+        transparency_ready: true, // Mark as transparency-focused parcel
+        
+        // Consumer-facing fields
+        consumer_story: data.consumer_story || '',
+        sustainability_practices: data.sustainability_practices || ''
       };
 
       console.log('🚀 Prepared parcelData:', parcelData);
@@ -334,7 +246,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   // Show loading state while fetching parcel data in edit mode
   if (isEdit && isLoadingParcel) {
     return (
-      <StandardParcelForm
+      <StandardParcelFormTransparency
         onSubmit={() => {}}
         onCancel={handleCancel}
         isLoading={true}
@@ -359,7 +271,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   }
 
   return (
-    <StandardParcelForm
+    <StandardParcelFormTransparency
       onSubmit={handleSubmit}
       onCancel={handleCancel}
       initialData={getInitialData()}

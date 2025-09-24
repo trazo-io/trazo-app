@@ -207,3 +207,47 @@ div.fc-daygrid-event-harness {
   display: none;
   border-radius: 15px;
 }
+
+/* Photo Modal Navigation Override - CRITICAL for clean photo viewing */
+/* Hide bottom navigation when photo modal is open to prevent overlap */
+body.photo-modal-open {
+  overflow: hidden !important;
+}
+
+/* Target common bottom navigation patterns and ensure they're hidden behind modal */
+body.photo-modal-open nav,
+body.photo-modal-open .bottom-navigation,
+body.photo-modal-open [data-testid="bottom-navigation"],
+body.photo-modal-open .chakra-tabs__tablist,
+body.photo-modal-open .consumer-navigation,
+body.photo-modal-open footer,
+body.photo-modal-open .chakra-stack,
+body.photo-modal-open div[class*="trazo-css-fluq49"],
+body.photo-modal-open div[class*="trazo-css-brl7ik"],
+body.photo-modal-open div[class*="trazo-css-3uuo4v"],
+body.photo-modal-open div[class*="trazo-css-15y92lb"],
+body.photo-modal-open div[class*="trazo-css-12d83pb"] {
+  z-index: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  display: none !important;
+}
+
+/* Ensure modal elements have maximum z-index for clean photo viewing */
+body.photo-modal-open .chakra-modal__overlay {
+  z-index: 99999 !important;
+}
+
+body.photo-modal-open .chakra-modal__content {
+  z-index: 100000 !important;
+}
+
+body.photo-modal-open .chakra-modal__close-btn {
+  z-index: 100001 !important;
+}
+
+/* Body scroll is handled in JavaScript to preserve scroll position */
+body.photo-modal-open {
+  /* Position and scroll are managed by JavaScript */
+}

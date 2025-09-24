@@ -31,10 +31,22 @@ export const useCarbonCalculation = (parcelId, establishmentId) => {
             establishment_id: parseInt(establishmentId || '0')
           };
 
+          console.log('🚀 CARBON PREVIEW: Sending calculation request', {
+            event_type,
+            event_data,
+            note: 'Fixed API structure to match backend expectations'
+          });
+
           const result = await calculateCarbonImpact({
             event_type,
             event_data
           }).unwrap();
+
+          console.log('✅ CARBON PREVIEW: Received calculation result', {
+            result,
+            co2e: result.co2e,
+            note: 'This should now match backend calculations'
+          });
 
           setCarbonCalculation(result);
           setShouldShowCarbonTips(true);

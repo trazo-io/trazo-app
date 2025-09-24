@@ -66,7 +66,7 @@ export default function CommunityDashboard() {
       shares: 12,
       farmMentioned: 'Highland Organic Farm',
       location: 'Oregon, USA',
-      carbonScore: 'A+',
+      transparencyLevel: 'Complete',
       carbonData: '-0.3 kg CO₂e/kg',
       impact: 'Carbon Negative',
       type: 'farm_discovery',
@@ -80,7 +80,7 @@ export default function CommunityDashboard() {
       badge: 'Sustainability Expert',
       title: 'Regional carbon footprint analysis reveals surprising patterns',
       content:
-        'After analyzing 200+ farms across the Pacific Northwest, I found that elevation and rainfall patterns strongly correlate with carbon efficiency. Farms above 1000ft elevation show 25% better carbon scores on average.',
+        'After analyzing 200+ farms across the Pacific Northwest, I found that elevation and rainfall patterns provide valuable insights for sustainable farming. Farms above 1000ft elevation show unique transparency opportunities.',
       timestamp: '5 hours ago',
       likes: 89,
       comments: 34,
@@ -181,7 +181,7 @@ export default function CommunityDashboard() {
     carbonSaved: '47.3 tons CO₂e',
     transparencyScore: 94,
     monthlyGrowth: 23,
-    globalRanking: 'Top 1%'
+    communityLevel: 'Advanced Contributor'
   };
 
   return (
@@ -386,9 +386,9 @@ export default function CommunityDashboard() {
                                     {insight.location}
                                   </Badge>
                                 )}
-                                {insight.carbonScore && (
+                                {insight.transparencyLevel && (
                                   <Badge colorScheme="purple" variant="solid">
-                                    Carbon: {insight.carbonScore}
+                                    Transparency: {insight.transparencyLevel}
                                   </Badge>
                                 )}
                                 {insight.verificationLevel && (

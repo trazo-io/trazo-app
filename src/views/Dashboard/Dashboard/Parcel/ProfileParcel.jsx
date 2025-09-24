@@ -117,6 +117,9 @@ function ProfileParcel() {
 
   // Removed progressive loading useEffect - using simple loading like ProfileEstablishment
 
+  // Move useBreakpointValue to top level to avoid hooks rule violation
+  const isMobile = useBreakpointValue({ base: true, md: false });
+
   const handleShare = async () => {
     try {
       await navigator.share({
@@ -178,7 +181,7 @@ function ProfileParcel() {
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
             {/* Back Button - Responsive positioning like StandardPage */}
-            {useBreakpointValue({ base: true, md: false }) ? (
+            {isMobile ? (
               // Mobile: Back button above title with full width
               <VStack spacing={4} w="full" align="center">
                 <Flex w="full" justify="flex-start">
@@ -266,10 +269,10 @@ function ProfileParcel() {
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
                   <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {parcelData?.crop_type || '--'}
+                    {parcelData?.primary_crop || parcelData?.crop_type || '--'}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Crop Type
+                    Primary Crop
                   </Text>
                 </VStack>
               </VStack>
@@ -468,6 +471,48 @@ function ProfileParcel() {
                   </HStack>
                 </Badge>
               )}
+              
+              {parcelData?.transparency_ready && (
+                <Badge 
+                  variant="subtle"
+                  colorScheme="cyan"
+                  fontSize="sm" 
+                  px={4} 
+                  py={2} 
+                  borderRadius="lg"
+                  fontWeight="600"
+                  textTransform="none"
+                  bg="cyan.50"
+                  color="cyan.700"
+                  border="1px solid"
+                  borderColor="cyan.200">
+                  <HStack spacing={2}>
+                    <Icon as={FaEye} boxSize={3} color="cyan.500" />
+                    <Text>Consumer Ready</Text>
+                  </HStack>
+                </Badge>
+              )}
+              
+              {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
+                <Badge 
+                  variant="subtle"
+                  colorScheme="teal"
+                  fontSize="sm" 
+                  px={4} 
+                  py={2} 
+                  borderRadius="lg"
+                  fontWeight="600"
+                  textTransform="none"
+                  bg="teal.50"
+                  color="teal.700"
+                  border="1px solid"
+                  borderColor="teal.200">
+                  <HStack spacing={2}>
+                    <Circle size="8px" bg="teal.500" />
+                    <Text>Transparency: {parcelData.transparency_score}%</Text>
+                  </HStack>
+                </Badge>
+              )}
               </Flex>
               
               {/* Header Row */}
@@ -527,11 +572,11 @@ function ProfileParcel() {
                         <Text>{parcelData.unique_code}</Text>
                       </HStack>
                     )}
-                    {parcelData?.crop_type && (
+                    {(parcelData?.crop_type || parcelData?.primary_crop) && (
                       <HStack>
                         <Icon as={FaSeedling} color="green.600" />
-                        <Text fontWeight="medium">Crop Type:</Text>
-                        <Text>{parcelData.crop_type}</Text>
+                        <Text fontWeight="medium">Primary Crop:</Text>
+                        <Text>{parcelData?.primary_crop || parcelData?.crop_type}</Text>
                       </HStack>
                     )}
                     {parcelData?.soil_type && (
@@ -543,6 +588,84 @@ function ProfileParcel() {
                     )}
                   </VStack>
                 </StandardCard>
+
+                {/* 🎯 TRANSPARENCY STORY SECTION - Consumer-Facing Narrative */}
+                {(parcelData?.transparency_description || parcelData?.sustainability_practices || parcelData?.consumer_story) && (
+                  <StandardCard title="Consumer Transparency" variant="flat" icon={FaEye} mb={{ base: 4, md: 6 }}>
+                    <VStack spacing={4} align="stretch">
+                      {/* Main Transparency Description */}
+                      {parcelData?.transparency_description && (
+                        <Box p={4} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
+                          <VStack spacing={2} align="stretch">
+                            <HStack>
+                              <Icon as={FaLeaf} color="green.600" />
+                              <Text fontWeight="bold" color="green.700" fontSize="sm">
+                                WHAT MAKES THIS PARCEL SPECIAL
+                              </Text>
+                            </HStack>
+                            <Text color="gray.700" lineHeight="tall">
+                              {parcelData.transparency_description}
+                            </Text>
+                          </VStack>
+                        </Box>
+                      )}
+                      
+                      {/* Sustainability Practices */}
+                      {parcelData?.sustainability_practices && (
+                        <Box p={4} bg="blue.50" borderRadius="lg" border="1px" borderColor="blue.200">
+                          <VStack spacing={2} align="stretch">
+                            <HStack>
+                              <Icon as={FaSeedling} color="blue.600" />
+                              <Text fontWeight="bold" color="blue.700" fontSize="sm">
+                                KEY SUSTAINABILITY PRACTICES
+                              </Text>
+                            </HStack>
+                            <Text color="gray.700" lineHeight="tall">
+                              {parcelData.sustainability_practices}
+                            </Text>
+                          </VStack>
+                        </Box>
+                      )}
+                      
+                      {/* Consumer Story */}
+                      {parcelData?.consumer_story && (
+                        <Box p={4} bg="purple.50" borderRadius="lg" border="1px" borderColor="purple.200">
+                          <VStack spacing={2} align="stretch">
+                            <HStack>
+                              <Icon as={FaUsers} color="purple.600" />
+                              <Text fontWeight="bold" color="purple.700" fontSize="sm">
+                                WHY CONSUMERS SHOULD CARE
+                              </Text>
+                            </HStack>
+                            <Text color="gray.700" lineHeight="tall">
+                              {parcelData.consumer_story}
+                            </Text>
+                          </VStack>
+                        </Box>
+                      )}
+                      
+                      {/* Transparency Quality Indicator */}
+                      {parcelData?.transparency_score && (
+                        <Box p={3} bg="gray.50" borderRadius="md" border="1px" borderColor="gray.200">
+                          <HStack justify="space-between">
+                            <HStack>
+                              <Icon as={FaEye} color="gray.600" />
+                              <Text fontWeight="medium" color="gray.700" fontSize="sm">
+                                Consumer Transparency Score
+                              </Text>
+                            </HStack>
+                            <Badge 
+                              colorScheme={parcelData.transparency_score >= 80 ? "green" : parcelData.transparency_score >= 60 ? "yellow" : "gray"}
+                              variant="solid"
+                              px={3} py={1} borderRadius="full">
+                              {parcelData.transparency_score}%
+                            </Badge>
+                          </HStack>
+                        </Box>
+                      )}
+                    </VStack>
+                  </StandardCard>
+                )}
 
                 {/* Technology & Features Card - CRITICAL for trust building */}
                 <StandardCard title="Technology & Features" variant="flat" icon={FaLeaf} mb={{ base: 4, md: 6 }}>

@@ -21,7 +21,6 @@ import { Route } from 'types/common';
 import { useIntl } from 'react-intl';
 import { FaChartBar, FaCreditCard, FaGraduationCap } from 'react-icons/fa';
 import { FaLeaf } from 'react-icons/fa';
-import { FaWifi } from 'react-icons/fa';
 
 // const intl = useIntl();
 
@@ -39,26 +38,15 @@ const dashRoutes: Route[] = [
     regex: /^\/admin\/dashboard\/establishment\/[0-9]+(\/parcel\/[0-9]+)?$/
   },
   {
-    id: 'carbonDashboard',
-    name: 'Carbon Dashboard',
-    path: '/dashboard/establishment/:establishmentId/carbon',
+    id: 'transparencyDashboard',
+    name: 'Transparency',
+    path: '/dashboard/establishment/:establishmentId/transparency',
     icon: <FaLeaf color="inherit" />,
     authIcon: <FaLeaf color="inherit" />,
     layout: '/admin',
     collapse: true,
-    isCarbonDashboard: true,
-    regex: /^\/admin\/dashboard\/establishment\/[0-9]+\/carbon$/
-  },
-  {
-    id: 'iotDashboard',
-    name: 'IoT Dashboard',
-    path: '/dashboard/establishment/:establishmentId/iot',
-    icon: <FaWifi color="inherit" />,
-    authIcon: <FaWifi color="inherit" />,
-    layout: '/admin',
-    collapse: true,
-    isIoTDashboard: true,
-    regex: /^\/admin\/dashboard\/establishment\/[0-9]+\/iot$/
+    isTransparencyDashboard: true,
+    regex: /^\/admin\/dashboard\/establishment\/[0-9]+\/transparency$/
   },
   {
     id: 'commercialInfo',

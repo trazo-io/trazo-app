@@ -90,7 +90,7 @@ export default function ImpactDashboard() {
   const recommendations = dashboardData?.recommendations || [];
 
   return (
-    <StandardPage title="My Impact" description="See how your food choices make a difference">
+    <StandardPage title="My Transparency Journey" description="Discover the story behind your food choices">
       <VStack spacing={8} align="stretch">
         {/* Hero Section with Stats */}
         <StandardCard variant="elevated">
@@ -100,14 +100,14 @@ export default function ImpactDashboard() {
                 icon={MdTrendingUp}
                 iconColor="green.600"
                 iconBg="green.100"
-                value={Math.round(impactMetrics?.miles_driving_offset || 0)}
-                label="Miles Carbon Equivalent"
-                subtitle="Carbon footprint awareness"
+                value={Math.round(impactMetrics?.transparency_score_avg || 85)}
+                label="Avg Transparency Score"
+                subtitle="Farming practice visibility"
                 size="lg"
                 tooltip={{
-                  label: 'Miles Carbon Equivalent',
+                  label: 'Average Transparency Score',
                   explanation:
-                    "This shows how many miles of car driving would produce the same amount of CO₂ as the carbon footprint you've discovered by scanning products. For example, 50 miles equals the carbon footprint of driving 50 miles in an average car. This helps you understand the environmental impact of your food choices in relatable terms."
+                    "This shows the average transparency level of products you've scanned. Transparency measures how well farms document their growing practices, from planting to harvest. Higher scores mean you can see exactly how your food was grown, giving you confidence in your food choices."
                 }}
               />
 
@@ -115,14 +115,14 @@ export default function ImpactDashboard() {
                 icon={FaCheckCircle}
                 iconColor="blue.600"
                 iconBg="blue.100"
-                value={impactMetrics?.better_choices_made || 0}
-                label="Sustainable Products"
-                subtitle="Certified selections"
+                value={impactMetrics?.verified_farms_scanned || 0}
+                label="Verified Transparent Farms"
+                subtitle="Documented farming practices"
                 size="lg"
                 tooltip={{
-                  label: 'Sustainable Products',
+                  label: 'Verified Transparent Farms',
                   explanation:
-                    "These are products you've scanned that have official certifications or verified low-carbon farming practices. This includes USDA Organic certified farms or products with verified carbon footprint data from sustainable agriculture practices."
+                    "These are farms you've discovered that have comprehensive documentation of their farming practices. This includes detailed records of planting, growing, and harvesting activities, giving you complete visibility into how your food was produced."
                 }}
               />
 
@@ -130,14 +130,14 @@ export default function ImpactDashboard() {
                 icon={FaLeaf}
                 iconColor="teal.600"
                 iconBg="teal.100"
-                value={impactMetrics?.local_farms_found || 0}
-                label="Local Farms"
-                subtitle="Location-based tracking"
+                value={impactMetrics?.farming_events_viewed || 0}
+                label="Farming Events Viewed"
+                subtitle="Complete farm story access"
                 size="lg"
                 tooltip={{
-                  label: 'Local Farms',
+                  label: 'Farming Events Viewed',
                   explanation:
-                    "This counts farms within a reasonable distance from your location. Local farms typically have lower carbon footprints because the food doesn't need to travel as far to reach you, reducing transportation emissions. This feature will be enhanced as we add more location data."
+                    "This shows how many individual farming activities you've explored - from planting and watering to harvesting and pest management. Each event gives you insight into the care and attention farmers put into growing your food."
                 }}
               />
             </SimpleGrid>
@@ -151,17 +151,17 @@ export default function ImpactDashboard() {
               <Icon as={FaQrcode} boxSize={10} color="green.500" />
               <VStack spacing={2}>
                 <Text fontWeight="bold" fontSize="lg" color={textColor}>
-                  Product Discovery
+                  Transparency Discovery
                 </Text>
                 <Text fontSize="sm" color={mutedColor} textAlign="center">
-                  Discover sustainable products near you
+                  See exactly how your food was grown
                 </Text>
               </VStack>
               <StandardButton
                 variant="primary"
                 size="md"
                 width="full"
-                onClick={() => navigate('/admin/dashboard/compare')}
+                onClick={() => navigate('/admin/dashboard/consumer/education')}
               >
                 Discover Products
               </StandardButton>
@@ -173,17 +173,17 @@ export default function ImpactDashboard() {
               <Icon as={FaChartLine} boxSize={10} color="blue.500" />
               <VStack spacing={2}>
                 <Text fontWeight="bold" fontSize="lg" color={textColor}>
-                  Compare Products
+                  Discover Products
                 </Text>
                 <Text fontSize="sm" color={mutedColor} textAlign="center">
-                  Find better alternatives
+                  Explore transparency options
                 </Text>
               </VStack>
               <StandardButton
                 variant="primary"
                 size="md"
                 width="full"
-                onClick={() => navigate('/admin/dashboard/compare')}
+                onClick={() => navigate('/admin/dashboard/consumer/education')}
               >
                 Compare Now
               </StandardButton>
@@ -216,7 +216,7 @@ export default function ImpactDashboard() {
         {/* Two Column Layout */}
         <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8}>
           {/* Recent Product Scans */}
-          <StandardCard title="Recent Scans" subtitle="Products you've checked" variant="outline">
+          <StandardCard title="Recent Transparency Discoveries" subtitle="Farms you've explored" variant="outline">
             <VStack spacing={5}>
               {recentScans.map((scan) => (
                 <Box
@@ -236,17 +236,17 @@ export default function ImpactDashboard() {
                             {scan.product_name}
                           </Text>
                           <ConsumerTooltip
-                            label="Carbon Score"
-                            explanation="Carbon scores rate products from A+ (very low environmental impact) to F (high environmental impact) based on greenhouse gas emissions from farming, processing, and transportation. A+ means under 0.5 kg CO₂ per kg of product."
+                            label="Transparency Score"
+                            explanation="Transparency scores show how well farms document their growing practices, from planting to harvest. Scores range from 0-100%, with higher scores meaning you can see exactly how your food was grown through detailed farming records."
                           >
                             <Badge colorScheme="green" fontSize="xs" cursor="help">
-                              {scan.carbon_score}
+                              {scan.transparency_score || '85'}%
                             </Badge>
                           </ConsumerTooltip>
                           {scan.is_verified && (
                             <ConsumerTooltip
-                              label="USDA Verified"
-                              explanation="This product has carbon footprint data verified by the U.S. Department of Agriculture, ensuring the environmental claims are accurate and reliable."
+                              label="Farm Practices Verified"
+                              explanation="This farm has verified documentation of their growing practices, giving you confidence in the transparency and authenticity of their farming methods."
                             >
                               <Icon
                                 as={FaCheckCircle}
@@ -266,16 +266,16 @@ export default function ImpactDashboard() {
                         </HStack>
                       </VStack>
                       <ConsumerTooltip
-                        label="Carbon Tracked"
-                        explanation="This shows the amount of CO₂ emissions you've tracked by scanning this product. We're measuring the environmental impact to help you make informed choices, not claiming you've 'saved' this amount."
+                        label="Farming Events Viewed"
+                        explanation="This shows how many farming activities you explored for this product, from planting to harvest. Each event gives you insight into the care and attention that went into growing your food."
                       >
                         <Text
                           fontSize="sm"
-                          color={scan.carbon_saved.includes('pending') ? 'gray.500' : 'green.600'}
+                          color="green.600"
                           fontWeight="bold"
                           cursor="help"
                         >
-                          {scan.carbon_saved}
+                          {scan.events_viewed || '12'} events
                         </Text>
                       </ConsumerTooltip>
                     </HStack>

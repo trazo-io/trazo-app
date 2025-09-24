@@ -253,10 +253,20 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                     <Alert key={index} status="info" size="sm" borderRadius="md">
                       <AlertIcon boxSize={3} />
                       <Box>
-                        <AlertTitle fontSize="xs">{rec.title}</AlertTitle>
+                        <AlertTitle fontSize="xs">
+                          {rec.title || rec.message || 'EPA Recommendation'}
+                        </AlertTitle>
                         <AlertDescription fontSize="xs">
-                          Save ${rec.potential_savings} • Reduce {rec.carbon_reduction.toFixed(1)}{' '}
-                          kg CO₂e
+                          {rec.potential_savings && rec.carbon_reduction ? (
+                            <>
+                              Save ${rec.potential_savings} • Reduce {rec.carbon_reduction.toFixed(1)}{' '}
+                              kg CO₂e
+                            </>
+                          ) : (
+                            <>
+                              Impact: {rec.impact || 'Medium'} • Source: {rec.source || 'EPA'}
+                            </>
+                          )}
                         </AlertDescription>
                       </Box>
                     </Alert>

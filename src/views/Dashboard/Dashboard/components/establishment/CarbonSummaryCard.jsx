@@ -23,33 +23,49 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
-import { FaLeaf, FaChartLine } from 'react-icons/fa';
-import { MdEco } from 'react-icons/md';
+import { FaLeaf, FaChartLine, FaClipboardList, FaCheckCircle, FaEye } from 'react-icons/fa';
+import { MdEco, MdVerified } from 'react-icons/md';
 import { useGetCarbonFootprintSummaryQuery } from 'store/api/companyApi';
 import { useNavigate } from 'react-router-dom';
 
-const CarbonSummaryCard = ({ establishmentId }) => {
+const TransparencySummaryCard = ({ establishmentId }) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
   const navigate = useNavigate();
   const year = new Date().getFullYear();
+  
+  // Get carbon data for environmental impact section
   const { data, isLoading, isFetching, isError } = useGetCarbonFootprintSummaryQuery(
     { establishmentId, year },
     { refetchOnMountOrArgChange: true }
   );
+  
+  // Skip transparency API call for establishment level
+  // This API is for production-level transparency, not establishment-level
+  // We'll use carbon data to estimate transparency at establishment level
+  const transparencyData = null; // Placeholder - API needs production ID, not establishment ID
 
-  // Calculate offset percentage
-  let offsetPercentage = 0;
-  if (data) {
-    const totalEmissions = data.total_emissions || 0;
-    const totalOffsets = data.total_offsets || 0;
-
-    if (totalEmissions > 0) {
-      offsetPercentage = Math.min(100, Math.max(0, (totalOffsets / totalEmissions) * 100));
-    } else if (totalOffsets > 0) {
-      offsetPercentage = 100;
+  // Calculate transparency metrics - PRIMARY FOCUS
+  const getTransparencyScore = () => {
+    if (transparencyData?.quick_view?.transparency_score?.percentage) {
+      return transparencyData.quick_view.transparency_score.percentage;
     }
-  }
+    // Fallback estimation based on documented events
+    return Math.min(100, Math.round(((data?.entries_count?.total || 0) / 15) * 100));
+  };
+  
+  const getEventCount = () => {
+    return data?.entries_count?.total || 0;
+  };
+  
+  const getTransparencyMessage = (score) => {
+    if (score >= 95) return '¡Transparencia Completa!';
+    if (score >= 85) return 'Excelente Documentación';
+    if (score >= 70) return 'Buena Transparencia';
+    if (score >= 50) return 'Transparencia Básica';
+    return 'Construyendo Transparencia';
+  };
+  
 
   if (isLoading || isFetching) {
     return (
@@ -67,7 +83,7 @@ const CarbonSummaryCard = ({ establishmentId }) => {
         <VStack spacing={4}>
           <Icon as={MdEco} color="red.500" boxSize={8} />
           <Text color="red.500" textAlign="center">
-            No se pudo cargar la huella de carbono
+            No se pudo cargar los datos de transparencia
           </Text>
           <Button
             size="sm"
@@ -91,38 +107,19 @@ const CarbonSummaryCard = ({ establishmentId }) => {
       <CardHeader p={0} mb={{ base: 4, md: 4 }}>
         <Flex direction="column">
           <HStack spacing={2} align="center">
-            <Icon as={FaLeaf} color="green.500" boxSize={{ base: 5, md: 6 }} />
+            <Icon as={FaClipboardList} color="green.500" boxSize={{ base: 5, md: 6 }} />
             <Text fontSize={{ base: 'xl', md: 'xl' }} color="gray.700" fontWeight="700">
-              Huella Neta!
+              {getTransparencyMessage(getTransparencyScore())}
             </Text>
           </HStack>
           <Text fontSize={{ base: 'sm', md: 'sm' }} color="gray.500" fontWeight="400" ml={7}>
-            Resumen de Carbono del Establecimiento
+            Documentación y Transparencia del Establecimiento
           </Text>
         </Flex>
       </CardHeader>
       <CardBody px={0}>
-        {/* Metrics Grid - Mobile Optimized */}
+        {/* PRIMARY: Transparency Metrics - Mobile Optimized */}
         <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: 4, md: 4 }}>
-          <Box
-            textAlign="center"
-            p={{ base: 4, md: 2 }}
-            bg={{ base: 'red.50', md: 'transparent' }}
-            borderRadius={{ base: 'lg', md: 'none' }}
-            border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'red.200', md: 'transparent' }}>
-            <Stat>
-              <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                Emisiones Totales
-              </StatLabel>
-              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="red.500" fontWeight="bold">
-                {(data?.total_emissions || 0).toFixed(2)} kg CO₂e
-              </StatNumber>
-              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="increase" /> Emisiones del período
-              </StatHelpText>
-            </Stat>
-          </Box>
           <Box
             textAlign="center"
             p={{ base: 4, md: 2 }}
@@ -132,39 +129,51 @@ const CarbonSummaryCard = ({ establishmentId }) => {
             borderColor={{ base: 'green.200', md: 'transparent' }}>
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                Compensaciones
+                Puntaje de Transparencia
               </StatLabel>
               <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="green.500" fontWeight="bold">
-                {(data?.total_offsets || 0).toFixed(2)} kg CO₂e
+                {getTransparencyScore()}%
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="decrease" /> Compensaciones del período
+                <StatArrow type="increase" /> Documentación completa
               </StatHelpText>
             </Stat>
           </Box>
           <Box
             textAlign="center"
             p={{ base: 4, md: 2 }}
-            bg={{ base: (data?.net_carbon || 0) >= 0 ? 'red.50' : 'green.50', md: 'transparent' }}
+            bg={{ base: 'blue.50', md: 'transparent' }}
             borderRadius={{ base: 'lg', md: 'none' }}
             border={{ base: '1px solid', md: 'none' }}
-            borderColor={{
-              base: (data?.net_carbon || 0) >= 0 ? 'red.200' : 'green.200',
-              md: 'transparent'
-            }}>
+            borderColor={{ base: 'blue.200', md: 'transparent' }}>
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                Huella Neta
+                Eventos Documentados
               </StatLabel>
-              <StatNumber
-                fontSize={{ base: 'lg', md: 'xl' }}
-                color={(data?.net_carbon || 0) >= 0 ? 'red.500' : 'green.500'}
-                fontWeight="bold">
-                {(data?.net_carbon || 0).toFixed(2)} kg CO₂e
+              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="blue.500" fontWeight="bold">
+                {getEventCount()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type={(data?.net_carbon || 0) >= 0 ? 'increase' : 'decrease'} />
-                {Math.abs(data?.net_carbon || 0).toFixed(2)} kg CO₂e
+                <StatArrow type="increase" /> Actividades registradas
+              </StatHelpText>
+            </Stat>
+          </Box>
+          <Box
+            textAlign="center"
+            p={{ base: 4, md: 2 }}
+            bg={{ base: 'purple.50', md: 'transparent' }}
+            borderRadius={{ base: 'lg', md: 'none' }}
+            border={{ base: '1px solid', md: 'none' }}
+            borderColor={{ base: 'purple.200', md: 'transparent' }}>
+            <Stat>
+              <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
+                Verificación
+              </StatLabel>
+              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="purple.500" fontWeight="bold">
+                {transparencyData?.verification_status?.transparency_verified ? 'Verificado' : 'En Progreso'}
+              </StatNumber>
+              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
+                <Icon as={MdVerified} /> Estado de verificación
               </StatHelpText>
             </Stat>
           </Box>
@@ -173,18 +182,18 @@ const CarbonSummaryCard = ({ establishmentId }) => {
         {/* Divider */}
         <Divider my={{ base: 3, md: 4 }} />
 
-        {/* Progress Section */}
+        {/* PRIMARY: Transparency Progress Section */}
         <Box mb={{ base: 2, md: 2 }}>
           <Heading
             size={{ base: 'xs', md: 'sm' }}
             mb={{ base: 2, md: 3 }}
             color="green.700"
             fontWeight="600">
-            Progreso de Compensación
+            Progreso de Transparencia
           </Heading>
           <Progress
-            value={offsetPercentage}
-            colorScheme={offsetPercentage >= 100 ? 'green' : 'orange'}
+            value={getTransparencyScore()}
+            colorScheme={getTransparencyScore() >= 80 ? 'green' : 'blue'}
             size={{ base: 'md', md: 'lg' }}
             borderRadius="md"
             mb={{ base: 2, md: 3 }}
@@ -196,17 +205,39 @@ const CarbonSummaryCard = ({ establishmentId }) => {
             fontSize={{ base: 'xs', md: 'sm' }}
             color="gray.600"
             fontWeight="500">
-            {offsetPercentage.toFixed(1)}% de las emisiones compensadas
-            {offsetPercentage >= 100 && (
+            {getTransparencyScore()}% de documentación completa
+            {getTransparencyScore() >= 95 && (
               <Text as="span" color="green.500" fontWeight="bold">
-                {' - ¡Carbono Neutral!'}
+                {' - ¡Transparencia Certificada!'}
               </Text>
             )}
           </Text>
         </Box>
+        
+        {/* SECONDARY: Environmental Impact Section */}
+        <Divider my={{ base: 3, md: 4 }} />
+        
+        <Box mb={{ base: 2, md: 2 }}>
+          <Heading
+            size={{ base: 'xs', md: 'sm' }}
+            mb={{ base: 2, md: 3 }}
+            color="gray.600"
+            fontWeight="500">
+            Impacto Ambiental
+          </Heading>
+          <VStack spacing={2}>
+            <HStack justify="space-between" w="full" fontSize="sm">
+              <Text color="gray.600">Huella Neta:</Text>
+              <Text fontWeight="medium" color={(data?.net_carbon || 0) >= 0 ? 'orange.600' : 'green.600'}>
+                {(data?.net_carbon || 0).toFixed(2)} kg CO₂e
+              </Text>
+            </HStack>
+          </VStack>
+        </Box>
 
-        {/* View Details Button */}
-        <Flex justify="center" pt={{ base: 1, md: 2 }}>
+
+        {/* Action Buttons */}
+        <Flex justify="center" gap={3} pt={{ base: 1, md: 2 }}>
           <Button
             bg="green.500"
             color="white"
@@ -214,8 +245,8 @@ const CarbonSummaryCard = ({ establishmentId }) => {
             fontSize={{ base: 'xs', md: 'sm' }}
             borderRadius="xl"
             px={{ base: 4, md: 6 }}
-            onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/carbon`)}
-            leftIcon={<Icon as={FaChartLine} />}
+            onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/productions`)}
+            leftIcon={<Icon as={FaCheckCircle} />}
             _hover={{
               bg: 'green.600',
               transform: 'translateY(-1px)',
@@ -224,7 +255,22 @@ const CarbonSummaryCard = ({ establishmentId }) => {
             _active={{
               bg: 'green.700'
             }}>
-            Ver Detalles
+            Documentar Más
+          </Button>
+          <Button
+            variant="outline"
+            colorScheme="green"
+            h={{ base: '40px', md: '44px' }}
+            fontSize={{ base: 'xs', md: 'sm' }}
+            borderRadius="xl"
+            px={{ base: 4, md: 6 }}
+            onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/transparency`)}
+            leftIcon={<Icon as={FaEye} />}
+            _hover={{
+              transform: 'translateY(-1px)',
+              boxShadow: 'md'
+            }}>
+            Ver Impacto
           </Button>
         </Flex>
       </CardBody>
@@ -232,4 +278,4 @@ const CarbonSummaryCard = ({ establishmentId }) => {
   );
 };
 
-export default CarbonSummaryCard;
+export default TransparencySummaryCard;

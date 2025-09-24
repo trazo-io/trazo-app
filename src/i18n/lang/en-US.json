@@ -142,6 +142,18 @@
   "app.highWinds": "High Winds",
   "app.highHumidity": "High Humidity",
   "app.lowHumidity": "Low Humidity",
+  "app.windSpeed": "Wind Speed (mph)",
+  "app.windSpeedPlaceholder": "e.g., 45",
+  "app.precipitationAmount": "Precipitation Amount (inches)",
+  "app.precipitationPlaceholder": "e.g., 2.5",
+  "app.damageAssessment": "Damage Assessment",
+  "app.damageAssessmentPlaceholder": "e.g., Minor, Moderate, Severe",
+  "app.humidityLevel": "Humidity Level (%)",
+  "app.humidityLevelPlaceholder": "e.g., 85",
+  "app.cropImpact": "Crop Impact Description",
+  "app.cropImpactPlaceholder": "e.g., Leaf curl, moisture stress",
+  "app.protectionMeasures": "Protection Measures Taken",
+  "app.protectionMeasuresPlaceholder": "e.g., Installed windbreaks, covered crops",
   "app.selectOption": "Select option",
   "app.type": "Type",
   "app.weight": "Weight",
@@ -853,7 +865,7 @@
   "event.equipment.unknown": "Unknown Equipment Event",
   "event.soil.unknown": "Unknown Soil Event",
   "event.pest.unknown": "Unknown Pest Event",
-
+  "app.eventDetails": "Event Details",
   "app.subscriptionAndUsage": "Subscription & Usage",
   "app.manageYourSubscriptionAndTrackUsage": "Manage your subscription and track your usage metrics",
   "app.usageMetrics": "Usage Metrics",
@@ -863,5 +875,7 @@
   "app.invoiceHistory": "Invoice History",
   "app.overview": "Overview",
   "app.billing": "Billing",
-  "app.searchEstablishmentsAndParcels": "Search establishments, parcels..."
+  "app.searchEstablishmentsAndParcels": "Search establishments, parcels...",
+  "app.continue": "Continue",
+  "app.previous": "Previous"
 }

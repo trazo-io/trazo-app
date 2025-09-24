@@ -60,6 +60,7 @@ import CardWithMap from '../CardWithMap';
 import Editor from 'components/Editor/Editor';
 import FormInput from 'components/Forms/FormInput';
 import FormLayout from 'components/Forms/FormLayout';
+import { StandardInput, StandardSelect, StandardField } from 'components/Design/StandardComponents';
 import Header from 'views/Pages/Profile/Overview/components/Header';
 import ProfileBgImage from 'assets/img/ProfileBackground.png';
 import { addCompanyEstablishment } from 'store/features/companySlice';
@@ -429,7 +430,7 @@ function NewEstablishment() {
                             <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                           </Tooltip>
                         </FormLabel>
-                        <Input
+                        <StandardInput
                           id="type"
                           name="type"
                           placeholder={intl.formatMessage({
@@ -495,7 +496,7 @@ function NewEstablishment() {
                             <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                           </Tooltip>
                         </FormLabel>
-                        <Input
+                        <StandardInput
                           id="zone"
                           name="zone"
                           placeholder={intl.formatMessage({
@@ -530,7 +531,7 @@ function NewEstablishment() {
                             <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                           </Tooltip>
                         </FormLabel>
-                        <Input
+                        <StandardInput
                           id="contact_person"
                           name="contact_person"
                           placeholder={intl.formatMessage({
@@ -629,7 +630,7 @@ function NewEstablishment() {
                     </Text>
                     <Stack direction={{ sm: 'column', md: 'row' }} spacing="30px">
                       <FormControl w="100%">
-                        <Input
+                        <StandardInput
                           id="certifications"
                           name="certifications"
                           placeholder={intl.formatMessage({

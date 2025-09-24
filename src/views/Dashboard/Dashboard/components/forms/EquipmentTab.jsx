@@ -1,4 +1,7 @@
-import React, { useEffect } from 'react';
+// CARBON-FOCUSED EQUIPMENT TAB - TRAZO MISSION ALIGNED
+// Focuses only on carbon-relevant equipment data: fuel consumption & efficiency
+
+import React, { useEffect, useRef } from 'react';
 import {
   Button,
   FormControl,
@@ -13,7 +16,11 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   Textarea,
-  useColorModeValue
+  useColorModeValue,
+  Box,
+  Badge,
+  Text,
+  Icon
 } from '@chakra-ui/react';
 import {
   StandardCard,
@@ -21,23 +28,37 @@ import {
   StandardField,
   StandardInput,
   StandardSelect,
-  StandardTextarea
+  StandardTextarea,
+  StandardAlert
 } from 'components/Design/StandardComponents';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, number } from 'zod';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { object, string } from 'zod';
+import { FaChevronLeft, FaChevronRight, FaGasPump, FaTractor, FaCalculator } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
+// CARBON-FOCUSED SCHEMA - Updated with Phase 1.2 validation constraints
 const equipmentSchema = object({
   type: string().min(1, 'Equipment event type is required'),
   name: string().min(1, 'Event name is required'),
-  equipment_name: string().optional(),
-  fuel_amount: string().optional(),
-  fuel_type: string().optional(),
-  maintenance_cost: string().optional(),
-  hours_used: string().optional(),
-  area_covered: string().optional(),
+  equipment_type: string().min(1, 'Equipment type is required for carbon calculation'),
+  fuel_consumed: string().min(1, 'Fuel amount is required for emissions calculation').refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0;
+  }, 'Fuel consumed cannot be negative'),
+  fuel_unit: string().min(1, 'Fuel unit is required'),
+  fuel_type: string().min(1, 'Fuel type affects emission factors'),
+  hours_operated: string().min(1, 'Operating hours affect efficiency calculation').refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0;
+  }, 'Hours operated cannot be negative'),
+  area_worked: string().optional().refine((val) => {
+    if (!val || val === '') return true;
+    const num = parseFloat(val);
+    return !isNaN(num) && num >= 0;
+  }, 'Area worked cannot be negative'),
+  area_unit: string().optional(),
+  operation_efficiency: string().optional(), // NEW: For carbon efficiency scoring
   observation: string().optional()
 });
 
@@ -48,14 +69,16 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
   const methods = useForm({
     resolver: zodResolver(equipmentSchema),
     defaultValues: {
-      type: initialValues.type || 'MN',
+      type: initialValues.type || 'FC', // Default to Fuel Consumption for carbon tracking
       name: initialValues.name || '',
-      equipment_name: initialValues.equipment_name || '',
-      fuel_amount: initialValues.fuel_amount?.toString() || '',
+      equipment_type: initialValues.equipment_type || 'tractor_medium',
+      fuel_consumed: initialValues.fuel_consumed?.toString() || '',
+      fuel_unit: initialValues.fuel_unit || 'L',
       fuel_type: initialValues.fuel_type || 'diesel',
-      maintenance_cost: initialValues.maintenance_cost?.toString() || '',
-      hours_used: initialValues.hours_used?.toString() || '',
-      area_covered: initialValues.area_covered || '',
+      hours_operated: initialValues.hours_operated?.toString() || '',
+      area_worked: initialValues.area_worked?.toString() || '',
+      area_unit: initialValues.area_unit || 'ha',
+      operation_efficiency: initialValues.operation_efficiency || 'normal',
       observation: initialValues.observation || ''
     }
   });
@@ -64,120 +87,66 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
   useEffect(() => {
     if (Object.keys(initialValues).length > 0) {
       methods.reset({
-        type: initialValues.type || 'MN',
+        type: initialValues.type || 'FC',
         name: initialValues.name || '',
-        equipment_name: initialValues.equipment_name || '',
-        fuel_amount: initialValues.fuel_amount?.toString() || '',
+        equipment_type: initialValues.equipment_type || 'tractor_medium',
+        fuel_consumed: initialValues.fuel_consumed?.toString() || '',
+        fuel_unit: initialValues.fuel_unit || 'L',
         fuel_type: initialValues.fuel_type || 'diesel',
-        maintenance_cost: initialValues.maintenance_cost?.toString() || '',
-        hours_used: initialValues.hours_used?.toString() || '',
-        area_covered: initialValues.area_covered || '',
+        hours_operated: initialValues.hours_operated?.toString() || '',
+        area_worked: initialValues.area_worked?.toString() || '',
+        area_unit: initialValues.area_unit || 'ha',
+        operation_efficiency: initialValues.operation_efficiency || 'normal',
         observation: initialValues.observation || ''
       });
     }
   }, [initialValues, methods]);
 
   const { watch } = methods;
+  const equipmentType = watch('type');
 
-  // Watch critical fields for real-time carbon calculation updates
-  const watchedFields = watch(['type', 'fuel_amount', 'fuel_type', 'hours_used', 'area_covered']);
+  // Real-time carbon calculation updates - focused on fuel consumption
+  const watchedFields = watch(['equipment_type', 'fuel_consumed', 'fuel_type', 'hours_operated']);
+  const previousValuesRef = useRef({});
 
-  // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('[EquipmentTab]: Field watching triggered', {
-      hasOnDataChange: !!onDataChange,
-      watchedFields,
-      firstField: watchedFields[0]
-    });
-
-    // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
-        console.log('[EquipmentTab]: Current values for carbon calculation', currentValues);
-
-        // Only trigger if we have meaningful data
-        if (currentValues.type && (currentValues.fuel_amount || currentValues.hours_used)) {
-          console.log('[EquipmentTab]: Triggering onDataChange with values', currentValues);
-          try {
-            onDataChange(currentValues);
-          } catch (error) {
-            console.error('[EquipmentTab]: Error calling onDataChange:', error);
-          }
-        } else {
-          console.log('[EquipmentTab]: Not triggering - insufficient data', {
-            hasType: !!currentValues.type,
-            hasFuelAmount: !!currentValues.fuel_amount,
-            hasHoursUsed: !!currentValues.hours_used
+        
+        // Only trigger if we have carbon-relevant data
+        if (currentValues.equipment_type && currentValues.fuel_consumed) {
+          const relevantFields = ['equipment_type', 'fuel_consumed', 'fuel_type', 'hours_operated', 'area_worked'];
+          const currentRelevantValues = {};
+          relevantFields.forEach((field) => {
+            currentRelevantValues[field] = currentValues[field];
           });
+
+          const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+
+          if (hasChanged) {
+            previousValuesRef.current = currentRelevantValues;
+            try {
+              onDataChange(currentValues);
+            } catch (error) {
+              console.error('[EquipmentTab]: Error calling onDataChange:', error);
+            }
+          }
         }
-      } else {
-        console.log('[EquipmentTab]: onDataChange not available in timeout');
       }
-    }, 500); // Debounced to prevent excessive API calls
+    }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [watchedFields, onDataChange, methods]);
-  const equipmentType = watch('type');
 
   const onSubmit = (data) => {
-    console.log('Raw form data:', data); // Debug log
-
-    // Helper function to safely parse numeric values
-    const parseNumericField = (value) => {
-      console.log('Parsing value:', value, 'Type:', typeof value); // Debug log
-
-      // Handle various input types
-      if (value === null || value === undefined) {
-        return null;
-      }
-
-      // Convert to string and trim
-      const stringValue = String(value).trim();
-
-      // If empty string, return null
-      if (stringValue === '') {
-        return null;
-      }
-
-      // Try to parse as float
-      const parsed = parseFloat(stringValue);
-
-      // If parsing failed (NaN), return null
-      if (isNaN(parsed)) {
-        console.warn('Failed to parse numeric value:', value);
-        return null;
-      }
-
-      return parsed;
-    };
-
-    // Convert string numbers to proper format and only include relevant fields
+    // Convert string numbers to numbers for backend carbon calculations
     const processedData = {
       ...data,
-      // Only include fuel-related fields for Fuel Consumption events
-      fuel_amount: equipmentType === 'FC' ? parseNumericField(data.fuel_amount) : undefined,
-      fuel_type: equipmentType === 'FC' ? data.fuel_type : undefined,
-
-      // Only include maintenance cost for relevant event types
-      maintenance_cost: ['MN', 'RE', 'BD'].includes(equipmentType)
-        ? parseNumericField(data.maintenance_cost)
-        : undefined,
-
-      // Hours used is optional for all types
-      hours_used: parseNumericField(data.hours_used)
+      fuel_consumed: parseFloat(data.fuel_consumed) || 0,
+      hours_operated: parseFloat(data.hours_operated) || 0,
+      area_worked: data.area_worked ? parseFloat(data.area_worked) : undefined
     };
-
-    console.log('Processed data before cleanup:', processedData); // Debug log
-
-    // Remove undefined fields to avoid sending them to the backend
-    Object.keys(processedData).forEach((key) => {
-      if (processedData[key] === undefined) {
-        delete processedData[key];
-      }
-    });
-
-    console.log('Final processed data:', processedData); // Debug log
     onSubmitHandler(processedData);
   };
 
@@ -185,6 +154,15 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
+          
+          {/* Carbon Focus Alert */}
+          <StandardAlert status="info" title="Carbon Tracking Focus">
+            <Text fontSize="sm">
+              🚜 This form tracks equipment fuel consumption for accurate carbon footprint calculations.
+              All fields contribute to your transparency score.
+            </Text>
+          </StandardAlert>
+
           {/* Event Name */}
           <StandardField
             label={intl.formatMessage({ id: 'app.eventName' }) || 'Event Name'}
@@ -193,17 +171,21 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
           >
             <StandardInput
               {...methods.register('name')}
-              placeholder="e.g., Tractor Maintenance, Fuel Consumption"
+              placeholder="e.g., Tractor Operation, Harvester Fuel Use"
             />
           </StandardField>
 
-          {/* Equipment Event Type */}
+          {/* Equipment Event Type - Simplified for carbon focus */}
           <StandardField
             label={intl.formatMessage({ id: 'app.equipmentEventType' }) || 'Equipment Event Type'}
             required
             error={methods.formState.errors.type?.message}
+            helpText="Focus on fuel consumption events for carbon tracking"
           >
             <StandardSelect {...methods.register('type')}>
+              <option value="FC">
+                {intl.formatMessage({ id: 'app.fuelConsumption' }) || 'Fuel Consumption'}
+              </option>
               <option value="MN">
                 {intl.formatMessage({ id: 'app.maintenance' }) || 'Maintenance'}
               </option>
@@ -211,114 +193,242 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
               <option value="CA">
                 {intl.formatMessage({ id: 'app.calibration' }) || 'Calibration'}
               </option>
-              <option value="FC">
-                {intl.formatMessage({ id: 'app.fuelConsumption' }) || 'Fuel Consumption'}
-              </option>
-              <option value="BD">
-                {intl.formatMessage({ id: 'app.breakdown' }) || 'Breakdown'}
-              </option>
-              <option value="EI">
-                {intl.formatMessage({ id: 'app.inspection' }) || 'Inspection'}
-              </option>
             </StandardSelect>
           </StandardField>
 
-          {/* Equipment Name */}
-          <StandardField
-            label={intl.formatMessage({ id: 'app.equipmentName' }) || 'Equipment Name'}
+          {/* Equipment & Fuel Section */}
+          <StandardCard
+            title={
+              <HStack>
+                <Icon as={FaTractor} color="orange.500" />
+                <Text>Equipment & Fuel Consumption</Text>
+                <Badge colorScheme="orange" size="sm">Carbon Critical</Badge>
+              </HStack>
+            }
           >
-            <StandardInput
-              {...methods.register('equipment_name')}
-              placeholder="e.g., John Deere Tractor Model X"
-            />
-          </StandardField>
+            <VStack spacing={4} align="stretch">
+              
+              {/* Equipment Type - Structured for carbon calculations */}
+              <StandardField
+                label="Equipment Type"
+                required
+                error={methods.formState.errors.equipment_type?.message}
+                helpText="Equipment type determines emission factors for calculation"
+              >
+                <Controller
+                  name="equipment_type"
+                  control={methods.control}
+                  render={({ field }) => (
+                    <StandardSelect
+                      {...field}
+                      placeholder="Select equipment type..."
+                    >
+                      <option value="tractor_small">Small Tractor (&lt;75 HP)</option>
+                      <option value="tractor_medium">Medium Tractor (75-150 HP)</option>
+                      <option value="tractor_large">Large Tractor (&gt;150 HP)</option>
+                      <option value="irrigation_pump">Irrigation Pump</option>
+                      <option value="harvester">Combine Harvester</option>
+                      <option value="sprayer">Field Sprayer</option>
+                      <option value="cultivator">Cultivator/Plow</option>
+                      <option value="transport">Transport Vehicle</option>
+                    </StandardSelect>
+                  )}
+                />
+              </StandardField>
 
-          {/* Fuel-specific fields */}
-          {equipmentType === 'FC' && (
-            <>
+              {/* Fuel Consumption with Unit */}
               <HStack spacing={4} align="end">
                 <StandardField
-                  label={intl.formatMessage({ id: 'app.fuelAmount' }) || 'Fuel Amount (L)'}
-                  flex="2"
+                  label="Fuel Consumed"
+                  required
+                  error={methods.formState.errors.fuel_consumed?.message}
+                  helpText="Critical for carbon emission calculation"
+                  flex={2}
                 >
-                  <NumberInput min={0} precision={2} step={0.1}>
-                    <NumberInputField {...methods.register('fuel_amount')} placeholder="0.0" />
-                    <NumberInputStepper>
-                      <NumberIncrementStepper />
-                      <NumberDecrementStepper />
-                    </NumberInputStepper>
-                  </NumberInput>
+                  <Controller
+                    name="fuel_consumed"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <NumberInput min={0} precision={1} step={0.1}>
+                        <NumberInputField 
+                          {...field}
+                          placeholder="0.0"
+                        />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
+                    )}
+                  />
                 </StandardField>
 
                 <StandardField
-                  label={intl.formatMessage({ id: 'app.fuelType' }) || 'Fuel Type'}
-                  flex="2"
+                  label="Unit"
+                  required
+                  error={methods.formState.errors.fuel_unit?.message}
+                  flex={1}
                 >
-                  <StandardSelect {...methods.register('fuel_type')}>
-                    <option value="diesel">
-                      {intl.formatMessage({ id: 'app.diesel' }) || 'Diesel'}
-                    </option>
-                    <option value="gasoline">
-                      {intl.formatMessage({ id: 'app.gasoline' }) || 'Gasoline'}
-                    </option>
-                    <option value="natural_gas">
-                      {intl.formatMessage({ id: 'app.naturalGas' }) || 'Natural Gas'}
-                    </option>
-                    <option value="biodiesel">
-                      {intl.formatMessage({ id: 'app.biodiesel' }) || 'Biodiesel'}
-                    </option>
-                  </StandardSelect>
+                  <Controller
+                    name="fuel_unit"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardSelect {...field}>
+                        <option value="L">Liters</option>
+                        <option value="gal">Gallons</option>
+                        <option value="kg">Kilograms</option>
+                      </StandardSelect>
+                    )}
+                  />
                 </StandardField>
               </HStack>
-            </>
-          )}
 
-          {/* Maintenance/Repair cost */}
-          {(equipmentType === 'MN' || equipmentType === 'RE' || equipmentType === 'BD') && (
-            <StandardField label={intl.formatMessage({ id: 'app.maintenanceCost' }) || 'Cost ($)'}>
-              <NumberInput min={0} precision={2} step={0.01}>
-                <NumberInputField {...methods.register('maintenance_cost')} placeholder="0.00" />
-                <NumberInputStepper>
-                  <NumberIncrementStepper />
-                  <NumberDecrementStepper />
-                </NumberInputStepper>
-              </NumberInput>
-            </StandardField>
-          )}
+              {/* Fuel Type - Critical for emission factors */}
+              <StandardField
+                label="Fuel Type"
+                required
+                error={methods.formState.errors.fuel_type?.message}
+                helpText="Different fuels have different carbon emission factors"
+              >
+                <Controller
+                  name="fuel_type"
+                  control={methods.control}
+                  render={({ field }) => (
+                    <StandardSelect {...field}>
+                      <option value="diesel">Diesel</option>
+                      <option value="gasoline">Gasoline</option>
+                      <option value="biodiesel">Biodiesel (B20)</option>
+                      <option value="electric">Electric (Grid)</option>
+                      <option value="lng">Liquified Natural Gas</option>
+                    </StandardSelect>
+                  )}
+                />
+              </StandardField>
+            </VStack>
+          </StandardCard>
 
-          {/* Hours Used */}
-          <HStack spacing={4} align="end">
-            <StandardField label={intl.formatMessage({ id: 'app.hoursUsed' }) || 'Hours Used'}>
-              <NumberInput min={0} precision={1} step={0.1}>
-                <NumberInputField {...methods.register('hours_used')} placeholder="0.0" />
-                <NumberInputStepper>
-                  <NumberIncrementStepper />
-                  <NumberDecrementStepper />
-                </NumberInputStepper>
-              </NumberInput>
-            </StandardField>
+          {/* Operation Details Section */}
+          <StandardCard
+            title={
+              <HStack>
+                <Icon as={FaCalculator} color="blue.500" />
+                <Text>Operation Details</Text>
+                <Badge colorScheme="blue" size="sm">Efficiency Calculation</Badge>
+              </HStack>
+            }
+          >
+            <VStack spacing={4} align="stretch">
 
-            <StandardField label={intl.formatMessage({ id: 'app.areaCovered' }) || 'Area Covered'}>
-              <StandardInput
-                {...methods.register('area_covered')}
-                placeholder="e.g., 10 hectares"
-              />
-            </StandardField>
-          </HStack>
+              {/* Operating Hours */}
+              <StandardField
+                label="Hours Operated"
+                required
+                error={methods.formState.errors.hours_operated?.message}
+                helpText="Used to calculate fuel efficiency and carbon per hour"
+              >
+                <Controller
+                  name="hours_operated"
+                  control={methods.control}
+                  render={({ field }) => (
+                    <NumberInput min={0} precision={1} step={0.1}>
+                      <NumberInputField 
+                        {...field}
+                        placeholder="0.0"
+                      />
+                      <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                      </NumberInputStepper>
+                    </NumberInput>
+                  )}
+                />
+              </StandardField>
+
+              {/* Area Worked (Optional) */}
+              <HStack spacing={4} align="end">
+                <StandardField
+                  label="Area Worked (Optional)"
+                  error={methods.formState.errors.area_worked?.message}
+                  helpText="For calculating emissions per hectare"
+                  flex={2}
+                >
+                  <Controller
+                    name="area_worked"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <NumberInput min={0} precision={2} step={0.1}>
+                        <NumberInputField 
+                          {...field}
+                          placeholder="Optional"
+                        />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
+                    )}
+                  />
+                </StandardField>
+
+                <StandardField
+                  label="Unit"
+                  flex={1}
+                >
+                  <Controller
+                    name="area_unit"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardSelect {...field}>
+                        <option value="ha">Hectares</option>
+                        <option value="acres">Acres</option>
+                        <option value="m2">Square Meters</option>
+                      </StandardSelect>
+                    )}
+                  />
+                </StandardField>
+              </HStack>
+
+              {/* Operation Efficiency - NEW for carbon scoring */}
+              <StandardField
+                label="Operation Efficiency"
+                error={methods.formState.errors.operation_efficiency?.message}
+                helpText="Rate the efficiency of this operation for carbon scoring"
+              >
+                <Controller
+                  name="operation_efficiency"
+                  control={methods.control}
+                  render={({ field }) => (
+                    <StandardSelect {...field}>
+                      <option value="high">High Efficiency (optimized routes, well-maintained)</option>
+                      <option value="normal">Normal Efficiency (standard operation)</option>
+                      <option value="low">Low Efficiency (inefficient patterns, maintenance needed)</option>
+                    </StandardSelect>
+                  )}
+                />
+              </StandardField>
+            </VStack>
+          </StandardCard>
 
           {/* Observations */}
-          <StandardField label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}>
-            <StandardTextarea
-              {...methods.register('observation')}
-              placeholder={
-                intl.formatMessage({ id: 'app.enterObservations' }) ||
-                'Enter any additional observations...'
-              }
-              rows={3}
+          <StandardField 
+            label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
+            error={methods.formState.errors.observation?.message}
+            helpText="Optional: Note conditions that affected fuel efficiency or carbon impact"
+          >
+            <Controller
+              name="observation"
+              control={methods.control}
+              render={({ field }) => (
+                <StandardTextarea
+                  {...field}
+                  placeholder="e.g., Heavy soil conditions increased fuel consumption, equipment running optimally..."
+                  rows={3}
+                />
+              )}
             />
           </StandardField>
 
-          {/* Action Buttons */}
+          {/* Navigation */}
           <HStack justify="space-between" pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
             <StandardButton
               variant="outline"

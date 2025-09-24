@@ -63,7 +63,7 @@ export default function ReviewsListView() {
         <VStack spacing={6} align="stretch">
           <StandardAlert
             status="info"
-            title="Carbon-Focused Reviews"
+            title="Transparency-Focused Reviews"
             description="Your reviews help build transparency in agricultural carbon footprints and sustainable farming practices."
           />
 

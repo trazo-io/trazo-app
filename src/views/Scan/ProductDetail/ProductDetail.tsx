@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import {
   Box,
   Container,
@@ -25,7 +25,9 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
-  Progress
+  Progress,
+  Spinner,
+  Skeleton
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -33,10 +35,11 @@ import {
   verifySecureQR,
   getQRAccessMetadata
 } from 'utils/qrParser';
+import PhotoVerificationGallery from './components/PhotoVerificationGallery';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { setAuthRedirectAction } from '../../../utils/authRedirect';
-import { MdTimeline } from 'react-icons/md';
+import { MdTimeline, MdVerified } from 'react-icons/md';
 import {
   FaLeaf,
   FaCertificate,
@@ -52,38 +55,37 @@ import {
   FaGlobe,
   FaTint,
   FaBug,
-  FaFlask,
-  FaWater,
   FaMapMarkerAlt,
   FaTractor,
   FaRocket,
-  FaTree,
   FaUniversity,
-  FaClipboardCheck
+  FaClipboardCheck,
+  FaAward,
+  FaClipboardList,
+  FaCalendarAlt
 } from 'react-icons/fa';
-import { BsStarFill, BsStarHalf, BsStar } from 'react-icons/bs';
+import { BsStarFill, BsStarHalf, BsStar, BsShieldCheck } from 'react-icons/bs';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
-import CardHeader from 'components/Card/CardHeader';
 
 // API imports
 import { useGetCompleteSummaryQuery } from '../../../store/api/carbonApi';
-import { useCreateScanMutation } from '../../../store/api/historyApi';
+import { TransparencyCelebration } from '../../../components/Notifications/TransparencyCelebration';
+import { useTransparencyCelebration } from '../../../hooks/useTransparencyCelebration';
+import { useGetTransparencyDetailsQuery } from '../../../store/api/transparencyQrApi';
 
 // Modern components (keeping the ones you like)
+import { CarbonHeroSection } from '../../../components/QR/CarbonHeroSection';
 import {
-  CarbonHeroSection,
   ModernSidebar,
   UltraMobileProductionJourney,
-  CompanyEstablishmentInfo,
-  ProductDetailsSection,
-  SimilarProducts
+  CompanyEstablishmentInfo
 } from './components';
+import InstantTrustDisplay from './components/InstantTrustDisplay';
 
 // Other components
 import { ModernTrazoLoader } from './components/ModernTrazoLoader';
 import { ModernErrorState } from './components/ModernErrorState';
-import { LoadingWrapper } from './components/LoadingWrapper';
 import {
   HeroShimmer,
   JourneyShimmer,
@@ -94,18 +96,59 @@ import { usePointsStore } from '../../../store/pointsStore';
 import USDACredibilityBadge from '../../../components/Carbon/USDACredibilityBadge';
 import { CarbonScore } from '../../../components/CarbonScore';
 import { StandardImageGallery } from '../../../components/ImageGallery';
-import { EnhancedTrustIndicators, TrustData } from '../../../components/Trust';
 import QuickFeedback from '../../../components/ConsumerFeedback/QuickFeedback';
-import CarbonImpactExplainer from '../../../components/Education/CarbonImpactExplainer';
+// Progressive loading for mobile performance - load heavy components only when needed
+const EnhancedTransparencyScoreDisplay = React.lazy(() =>
+  import('../../../components/Transparency').then((module) => ({
+    default: module.EnhancedTransparencyScoreDisplay
+  }))
+);
+const CarbonImpactExplainer = React.lazy(
+  () => import('../../../components/Education/CarbonImpactExplainer')
+);
+
+// Lightweight loading components for progressive loading
+const TransparencyScoreLoader = () => (
+  <Card bg="white" shadow="lg" borderRadius="xl" p={6}>
+    <VStack spacing={4}>
+      <HStack spacing={3} justify="center">
+        <Spinner size="md" color="green.500" />
+        <Text fontSize="sm" color="gray.600">
+          Loading transparency details...
+        </Text>
+      </HStack>
+      <Skeleton height="100px" borderRadius="md" />
+      <HStack spacing={4} w="full">
+        <Skeleton height="60px" flex={1} borderRadius="md" />
+        <Skeleton height="60px" flex={1} borderRadius="md" />
+        <Skeleton height="60px" flex={1} borderRadius="md" />
+      </HStack>
+    </VStack>
+  </Card>
+);
+
+const CarbonExplainerLoader = () => (
+  <Card bg="white" shadow="lg" borderRadius="xl" p={6}>
+    <VStack spacing={4}>
+      <HStack spacing={3} justify="center">
+        <Spinner size="md" color="blue.500" />
+        <Text fontSize="sm" color="gray.600">
+          Loading carbon impact details...
+        </Text>
+      </HStack>
+      <Skeleton height="80px" borderRadius="md" />
+      <HStack spacing={3} w="full">
+        <Skeleton height="40px" flex={1} borderRadius="md" />
+        <Skeleton height="40px" flex={1} borderRadius="md" />
+      </HStack>
+    </VStack>
+  </Card>
+);
 import {
   EducationalTooltip,
   CO2eTooltip,
   USDATooltip
 } from '../../../components/Education/EducationalTooltip';
-
-// Phase 6 Advanced Analytics Components
-import { CarbonJourneyVisualization } from '../../../components/Carbon/AdvancedAnalytics/CarbonJourneyVisualization';
-import { TransparencyAnalytics } from '../../../components/Carbon/AdvancedAnalytics/TransparencyAnalytics';
 
 // Navigation Components
 import { NavigationBottomBar } from '../../../components/Navigation/NavigationBottomBar';
@@ -202,489 +245,222 @@ const EducationModal = ({
                     <Text fontSize="sm">Fair - Meeting basic sustainability standards</Text>
                   </HStack>
                   <HStack>
-                    <Badge colorScheme="red" variant="solid">
-                      Below 50
+                    <Badge colorScheme="orange" variant="solid">
+                      30-49
                     </Badge>
-                    <Text fontSize="sm">Needs improvement - High environmental impact</Text>
+                    <Text fontSize="sm">Needs Improvement - Below average performance</Text>
                   </HStack>
                 </SimpleGrid>
               </Box>
 
-              <Box
-                bg="green.50"
-                p={4}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderLeftColor="green.500">
+              <Box bg="green.50" p={4} borderRadius="md" border="1px solid" borderColor="green.200">
                 <Text fontSize="sm" fontWeight="medium">
-                  💡 <strong>Did you know?</strong> Choosing products with higher carbon scores can
-                  reduce your personal carbon footprint by up to 30% annually.
+                  🌱 <strong>Why It Matters:</strong> Lower carbon scores indicate more sustainable
+                  farming practices that help combat climate change and preserve our environment for
+                  future generations.
                 </Text>
               </Box>
             </VStack>
           )
         };
-      case 'usda_verification':
-        return {
-          title: 'USDA Verification Standards',
-          content: (
-            <VStack align="start" spacing={6}>
-              <Text fontSize="lg" color="gray.700">
-                <strong>USDA verification</strong> is a rigorous certification process that ensures
-                agricultural products meet the highest federal standards for quality, safety, and
-                environmental responsibility.
-              </Text>
 
-              <Box>
-                <Heading size="sm" mb={3} color="blue.600">
-                  Verification Process
-                </Heading>
-                <VStack align="start" spacing={4}>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="30px" bg="blue.100">
-                      <Text fontSize="sm" fontWeight="bold" color="blue.600">
-                        1
-                      </Text>
-                    </Circle>
-                    <Box>
-                      <Text fontWeight="semibold">Application & Documentation</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Farms submit detailed records of practices, inputs, and production methods
-                        for the past 3 years
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="30px" bg="blue.100">
-                      <Text fontSize="sm" fontWeight="bold" color="blue.600">
-                        2
-                      </Text>
-                    </Circle>
-                    <Box>
-                      <Text fontWeight="semibold">On-Site Inspection</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Certified inspectors conduct thorough field evaluations and interview farm
-                        personnel
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="30px" bg="blue.100">
-                      <Text fontSize="sm" fontWeight="bold" color="blue.600">
-                        3
-                      </Text>
-                    </Circle>
-                    <Box>
-                      <Text fontWeight="semibold">Laboratory Testing</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Scientific analysis of soil, water, and produce samples for contaminants and
-                        quality markers
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="30px" bg="blue.100">
-                      <Text fontSize="sm" fontWeight="bold" color="blue.600">
-                        4
-                      </Text>
-                    </Circle>
-                    <Box>
-                      <Text fontWeight="semibold">Certification Decision</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Independent review board evaluates all evidence and grants certification
-                      </Text>
-                    </Box>
-                  </HStack>
-                </VStack>
-              </Box>
-
-              <Box>
-                <Heading size="sm" mb={3} color="blue.600">
-                  What USDA Verification Guarantees
-                </Heading>
-                <SimpleGrid columns={1} spacing={3}>
-                  <HStack align="start">
-                    <Icon as={FaCheckCircle} color="green.500" mt={1} />
-                    <Text fontSize="sm">
-                      <strong>Product Safety:</strong> Free from harmful chemicals and contaminants
-                    </Text>
-                  </HStack>
-                  <HStack align="start">
-                    <Icon as={FaCheckCircle} color="green.500" mt={1} />
-                    <Text fontSize="sm">
-                      <strong>Environmental Protection:</strong> Sustainable farming practices that
-                      protect ecosystems
-                    </Text>
-                  </HStack>
-                  <HStack align="start">
-                    <Icon as={FaCheckCircle} color="green.500" mt={1} />
-                    <Text fontSize="sm">
-                      <strong>Worker Safety:</strong> Fair labor practices and safe working
-                      conditions
-                    </Text>
-                  </HStack>
-                  <HStack align="start">
-                    <Icon as={FaCheckCircle} color="green.500" mt={1} />
-                    <Text fontSize="sm">
-                      <strong>Traceability:</strong> Complete supply chain documentation and
-                      accountability
-                    </Text>
-                  </HStack>
-                </SimpleGrid>
-              </Box>
-
-              <Box
-                bg="blue.50"
-                p={4}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderLeftColor="blue.500">
-                <Text fontSize="sm" fontWeight="medium">
-                  🏛️ <strong>Government Backed:</strong> USDA verification is backed by federal
-                  oversight and carries legal weight, ensuring the highest standards of
-                  accountability.
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
       case 'blockchain_verification':
         return {
-          title: 'Blockchain Data Verification',
+          title: 'Blockchain Verification',
           content: (
             <VStack align="start" spacing={6}>
               <Text fontSize="lg" color="gray.700">
-                <strong>Blockchain technology</strong> creates an immutable, transparent ledger that
-                records every step of the agricultural supply chain, from seed to shelf.
+                <strong>Blockchain verification</strong> provides immutable, transparent proof that
+                the data you see is authentic and hasn't been tampered with.
               </Text>
 
               <Box>
-                <Heading size="sm" mb={3} color="purple.600">
-                  How Blockchain Works in Agriculture
+                <Heading size="sm" mb={3} color="blue.600">
+                  How Blockchain Protects Your Data
                 </Heading>
-                <VStack align="start" spacing={4}>
+                <VStack align="start" spacing={3}>
                   <HStack align="start" spacing={3}>
-                    <Circle size="30px" bg="purple.100">
-                      <Icon as={FaSeedling} color="purple.600" boxSize={4} />
-                    </Circle>
-                    <Box>
-                      <Text fontWeight="semibold">Farm Data Recording</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Every farming activity, input application, and harvest is automatically
-                        recorded with timestamps and GPS coordinates
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="30px" bg="purple.100">
-                      <Icon as={FaLink} color="purple.600" boxSize={4} />
-                    </Circle>
-                    <Box>
-                      <Text fontWeight="semibold">Supply Chain Tracking</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Products are tracked through processing, packaging, and distribution with
-                        cryptographic verification
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="30px" bg="purple.100">
-                      <Icon as={FaShieldAlt} color="purple.600" boxSize={4} />
-                    </Circle>
+                    <Circle size="8px" bg="blue.500" mt={2} />
                     <Box>
                       <Text fontWeight="semibold">Immutable Records</Text>
                       <Text fontSize="sm" color="gray.600">
-                        Once data is recorded, it cannot be altered or deleted, ensuring permanent
-                        transparency
+                        Once data is recorded on the blockchain, it cannot be changed or deleted
                       </Text>
                     </Box>
                   </HStack>
                   <HStack align="start" spacing={3}>
-                    <Circle size="30px" bg="purple.100">
-                      <Icon as={FaUsers} color="purple.600" boxSize={4} />
-                    </Circle>
+                    <Circle size="8px" bg="purple.500" mt={2} />
                     <Box>
-                      <Text fontWeight="semibold">Consumer Access</Text>
+                      <Text fontWeight="semibold">Transparent Verification</Text>
                       <Text fontSize="sm" color="gray.600">
-                        You can view the complete history of this product through secure,
-                        decentralized verification
+                        Anyone can verify the authenticity of the data using blockchain explorers
+                      </Text>
+                    </Box>
+                  </HStack>
+                  <HStack align="start" spacing={3}>
+                    <Circle size="8px" bg="green.500" mt={2} />
+                    <Box>
+                      <Text fontWeight="semibold">Decentralized Trust</Text>
+                      <Text fontSize="sm" color="gray.600">
+                        No single entity controls the data - it's verified by the entire network
                       </Text>
                     </Box>
                   </HStack>
                 </VStack>
               </Box>
 
-              <Box>
-                <Heading size="sm" mb={3} color="purple.600">
-                  Benefits of Blockchain Verification
-                </Heading>
-                <SimpleGrid columns={1} spacing={3}>
-                  <HStack align="start">
-                    <Icon as={FaLock} color="green.500" mt={1} />
-                    <Text fontSize="sm">
-                      <strong>Tamper-Proof:</strong> Cryptographic security prevents data
-                      manipulation
-                    </Text>
-                  </HStack>
-                  <HStack align="start">
-                    <Icon as={FaEye} color="green.500" mt={1} />
-                    <Text fontSize="sm">
-                      <strong>Full Transparency:</strong> Complete visibility into every step of
-                      production
-                    </Text>
-                  </HStack>
-                  <HStack align="start">
-                    <Icon as={FaClock} color="green.500" mt={1} />
-                    <Text fontSize="sm">
-                      <strong>Real-Time Updates:</strong> Instant verification of sustainability
-                      claims
-                    </Text>
-                  </HStack>
-                  <HStack align="start">
-                    <Icon as={FaGlobe} color="green.500" mt={1} />
-                    <Text fontSize="sm">
-                      <strong>Global Standard:</strong> Internationally recognized verification
-                      system
-                    </Text>
-                  </HStack>
-                </SimpleGrid>
-              </Box>
-
-              <Box
-                bg="purple.50"
-                p={4}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderLeftColor="purple.500">
-                <Text fontSize="sm" fontWeight="medium">
-                  🔗 <strong>Trust Through Technology:</strong> Blockchain eliminates the need to
-                  "trust" claims—you can verify everything independently through the decentralized
-                  network.
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
-      case 'sustainable_practices':
-        return {
-          title: 'Sustainable Farm Practices',
-          content: (
-            <VStack align="start" spacing={6}>
-              <Text fontSize="lg" color="gray.700">
-                <strong>Sustainable farming</strong> integrates environmental stewardship, economic
-                viability, and social responsibility to create resilient agricultural systems that
-                protect our planet for future generations.
-              </Text>
-
-              <Box>
-                <Heading size="sm" mb={3} color="green.600">
-                  Core Sustainable Practices
-                </Heading>
-                <VStack align="start" spacing={4}>
-                  <Box>
-                    <HStack mb={2}>
-                      <Icon as={FaTint} color="blue.500" />
-                      <Text fontWeight="semibold">Water Stewardship</Text>
-                    </HStack>
-                    <Text fontSize="sm" color="gray.600" pl={6}>
-                      Precision irrigation, rainwater harvesting, and wetland preservation to
-                      protect this precious resource
-                    </Text>
-                  </Box>
-                  <Box>
-                    <HStack mb={2}>
-                      <Icon as={FaSeedling} color="green.500" />
-                      <Text fontWeight="semibold">Soil Health Management</Text>
-                    </HStack>
-                    <Text fontSize="sm" color="gray.600" pl={6}>
-                      Cover cropping, composting, reduced tillage, and crop rotation to build
-                      living, fertile soil
-                    </Text>
-                  </Box>
-                  <Box>
-                    <HStack mb={2}>
-                      <Icon as={FaBug} color="orange.500" />
-                      <Text fontWeight="semibold">Integrated Pest Management</Text>
-                    </HStack>
-                    <Text fontSize="sm" color="gray.600" pl={6}>
-                      Biological controls, beneficial insects, and targeted treatments to minimize
-                      chemical inputs
-                    </Text>
-                  </Box>
-                  <Box>
-                    <HStack mb={2}>
-                      <Icon as={FaLeaf} color="purple.500" />
-                      <Text fontWeight="semibold">Biodiversity Conservation</Text>
-                    </HStack>
-                    <Text fontSize="sm" color="gray.600" pl={6}>
-                      Habitat corridors, pollinator gardens, and diverse crop varieties to support
-                      ecosystem health
-                    </Text>
-                  </Box>
-                </VStack>
-              </Box>
-
-              <Box>
-                <Heading size="sm" mb={3} color="green.600">
-                  Environmental Impact
-                </Heading>
-                <SimpleGrid columns={2} spacing={4}>
-                  <VStack align="center" bg="green.50" p={3} borderRadius="md">
-                    <Text fontSize="2xl" fontWeight="bold" color="green.600">
-                      {completeData?.sustainability_metrics?.pesticide_reduction ||
-                        Math.round((completeData?.carbonScore || 50) * 0.7 + 25)}
-                      %
-                    </Text>
-                    <Text fontSize="xs" textAlign="center">
-                      Reduction in synthetic pesticide use
-                    </Text>
-                  </VStack>
-                  <VStack align="center" bg="blue.50" p={3} borderRadius="md">
-                    <Text fontSize="2xl" fontWeight="bold" color="blue.600">
-                      {completeData?.sustainability_metrics?.water_savings ||
-                        Math.round((completeData?.carbonScore || 50) * 0.4 + 20)}
-                      %
-                    </Text>
-                    <Text fontSize="xs" textAlign="center">
-                      Less water consumption
-                    </Text>
-                  </VStack>
-                  <VStack align="center" bg="purple.50" p={3} borderRadius="md">
-                    <Text fontSize="2xl" fontWeight="bold" color="purple.600">
-                      {completeData?.sustainability_metrics?.carbon_storage ||
-                        Math.round((completeData?.carbonScore || 50) * 0.6 + 30)}
-                      %
-                    </Text>
-                    <Text fontSize="xs" textAlign="center">
-                      Increase in soil carbon storage
-                    </Text>
-                  </VStack>
-                  <VStack align="center" bg="orange.50" p={3} borderRadius="md">
-                    <Text fontSize="2xl" fontWeight="bold" color="orange.600">
-                      {completeData?.sustainability_metrics?.biodiversity_factor ||
-                        Math.round((completeData?.carbonScore || 50) / 25 + 1)}
-                      x
-                    </Text>
-                    <Text fontSize="xs" textAlign="center">
-                      More biodiversity on farms
-                    </Text>
-                  </VStack>
-                </SimpleGrid>
-              </Box>
-
-              <Box
-                bg="green.50"
-                p={4}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderLeftColor="green.500">
-                <Text fontSize="sm" fontWeight="medium">
-                  🌱 <strong>Regenerative Impact:</strong> These practices don't just maintain the
-                  environment—they actively improve it, leaving the land healthier for future
-                  generations.
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
-      case 'carbon_impact':
-        return {
-          title: 'Understanding Carbon Impact',
-          content: (
-            <VStack align="start" spacing={6}>
-              <Text fontSize="lg" color="gray.700">
-                <strong>Carbon impact</strong> measures how agricultural products affect the
-                environment through greenhouse gas emissions and carbon storage.
-              </Text>
-
-              <Box>
-                <Heading size="sm" mb={3} color="green.600">
-                  Why This Matters
-                </Heading>
-                <VStack align="start" spacing={3}>
-                  <Text fontSize="sm">
-                    • Agriculture accounts for 25% of global greenhouse gas emissions
-                  </Text>
-                  <Text fontSize="sm">
-                    • Choosing low-carbon products reduces your environmental footprint
-                  </Text>
-                  <Text fontSize="sm">
-                    • Carbon-negative products actually help remove CO₂ from the atmosphere
-                  </Text>
-                  <Text fontSize="sm">
-                    • Supporting sustainable farmers drives industry-wide change
-                  </Text>
-                </VStack>
-              </Box>
-
-              <Box
-                bg="green.50"
-                p={4}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderLeftColor="green.500">
-                <Text fontSize="sm" fontWeight="medium">
-                  🌱 <strong>Take Action:</strong> Every sustainable purchase you make supports
-                  farmers using regenerative practices that heal the planet.
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
-      case 'trust_indicators':
-        return {
-          title: 'Trust & Verification',
-          content: (
-            <VStack align="start" spacing={6}>
-              <Text fontSize="lg" color="gray.700">
-                <strong>Trust indicators</strong> show how this product's data has been verified and
-                validated for accuracy and transparency.
-              </Text>
-
-              <Box>
-                <Heading size="sm" mb={3} color="blue.600">
-                  Verification Levels
-                </Heading>
-                <VStack align="start" spacing={3}>
-                  <HStack align="start" spacing={3}>
-                    <Icon as={FaShieldAlt} color="green.500" mt={1} />
-                    <Box>
-                      <Text fontWeight="semibold">USDA Verified</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Government-backed verification of sustainable practices
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Icon as={FaShieldAlt} color="blue.500" mt={1} />
-                    <Box>
-                      <Text fontWeight="semibold">Blockchain Verified</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Immutable records stored on secure blockchain network
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Icon as={FaUsers} color="purple.500" mt={1} />
-                    <Box>
-                      <Text fontWeight="semibold">Community Verified</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Validated by other consumers and industry experts
-                      </Text>
-                    </Box>
-                  </HStack>
-                </VStack>
-              </Box>
-
-              <Box
-                bg="blue.50"
-                p={4}
-                borderRadius="md"
-                borderLeft="4px solid"
-                borderLeftColor="blue.500">
+              <Box bg="blue.50" p={4} borderRadius="md" border="1px solid" borderColor="blue.200">
                 <Text fontSize="sm" fontWeight="medium">
                   🔒 <strong>Your Confidence:</strong> Higher verification scores mean more reliable
                   data you can trust for your purchasing decisions.
+                </Text>
+              </Box>
+            </VStack>
+          )
+        };
+
+      case 'carbon':
+      case 'carbon-scoring':
+        return {
+          title: 'Carbon Impact Explained',
+          content: (
+            <VStack align="start" spacing={6}>
+              <Text fontSize="lg" color="gray.700">
+                Understanding the <strong>carbon impact</strong> of your food choices helps you make
+                more sustainable decisions for our planet.
+              </Text>
+
+              <Box>
+                <Heading size="sm" mb={3} color="green.600">
+                  What Affects Carbon Footprint
+                </Heading>
+                <VStack align="start" spacing={3}>
+                  <HStack align="start" spacing={3}>
+                    <Circle size="8px" bg="green.500" mt={2} />
+                    <Box>
+                      <Text fontWeight="semibold">Farming Practices</Text>
+                      <Text fontSize="sm" color="gray.600">
+                        Soil management, fertilizer use, and equipment efficiency
+                      </Text>
+                    </Box>
+                  </HStack>
+                  <HStack align="start" spacing={3}>
+                    <Circle size="8px" bg="blue.500" mt={2} />
+                    <Box>
+                      <Text fontWeight="semibold">Transportation</Text>
+                      <Text fontSize="sm" color="gray.600">
+                        Distance from farm to your table and shipping methods
+                      </Text>
+                    </Box>
+                  </HStack>
+                  <HStack align="start" spacing={3}>
+                    <Circle size="8px" bg="purple.500" mt={2} />
+                    <Box>
+                      <Text fontWeight="semibold">Processing & Packaging</Text>
+                      <Text fontSize="sm" color="gray.600">
+                        Energy used in processing and packaging materials
+                      </Text>
+                    </Box>
+                  </HStack>
+                </VStack>
+              </Box>
+
+              <Box bg="green.50" p={4} borderRadius="md" border="1px solid" borderColor="green.200">
+                <Text fontSize="sm" fontWeight="medium">
+                  🌱 <strong>Your Impact:</strong> Choosing lower carbon foods helps reduce
+                  greenhouse gas emissions and supports sustainable farming practices.
+                </Text>
+              </Box>
+            </VStack>
+          )
+        };
+
+      case 'transparency_impact':
+        return {
+          title: 'Transparency Impact',
+          content: (
+            <VStack align="start" spacing={4}>
+              <Text fontSize="lg" color="gray.700">
+                <strong>Transparency</strong> creates accountability throughout the food supply
+                chain, leading to better practices and more sustainable agriculture.
+              </Text>
+              <Text fontSize="md" color="gray.600">
+                When farmers know their data is publicly visible, they're incentivized to adopt more
+                sustainable practices and maintain higher standards.
+              </Text>
+              <Box bg="blue.50" p={4} borderRadius="md">
+                <Text fontSize="sm" fontWeight="medium" color="blue.700">
+                  💡 <strong>Impact:</strong> Transparency drives positive change across the entire
+                  supply chain.
+                </Text>
+              </Box>
+            </VStack>
+          )
+        };
+
+      case 'trust_indicators':
+        return {
+          title: 'Trust Indicators',
+          content: (
+            <VStack align="start" spacing={4}>
+              <Text fontSize="lg" color="gray.700">
+                <strong>Trust indicators</strong> help you understand the reliability and
+                verification level of the data you're viewing.
+              </Text>
+              <Text fontSize="md" color="gray.600">
+                Higher trust scores indicate more verified data points, blockchain verification, and
+                third-party validation of farming practices.
+              </Text>
+              <Box bg="green.50" p={4} borderRadius="md">
+                <Text fontSize="sm" fontWeight="medium" color="green.700">
+                  ✓ <strong>Verified:</strong> Look for high trust scores when making purchasing
+                  decisions.
+                </Text>
+              </Box>
+            </VStack>
+          )
+        };
+
+      case 'usda-methodology':
+        return {
+          title: 'USDA Methodology',
+          content: (
+            <VStack align="start" spacing={4}>
+              <Text fontSize="lg" color="gray.700">
+                We use <strong>USDA-approved methodologies</strong> for calculating carbon
+                footprints and sustainability metrics.
+              </Text>
+              <Text fontSize="md" color="gray.600">
+                Our calculations are based on official USDA emission factors and agricultural best
+                practices, ensuring accuracy and compliance with federal standards.
+              </Text>
+              <Box bg="blue.50" p={4} borderRadius="md">
+                <Text fontSize="sm" fontWeight="medium" color="blue.700">
+                  📊 <strong>Standards:</strong> All calculations follow USDA guidelines for
+                  transparency and accuracy.
+                </Text>
+              </Box>
+            </VStack>
+          )
+        };
+
+      case 'regional-benchmarks':
+        return {
+          title: 'Regional Benchmarks',
+          content: (
+            <VStack align="start" spacing={4}>
+              <Text fontSize="lg" color="gray.700">
+                <strong>Regional benchmarks</strong> help you understand how this farm compares to
+                others in the same geographic area.
+              </Text>
+              <Text fontSize="md" color="gray.600">
+                Climate, soil conditions, and local practices vary by region, so we compare farms
+                against others with similar growing conditions.
+              </Text>
+              <Box bg="green.50" p={4} borderRadius="md">
+                <Text fontSize="sm" fontWeight="medium" color="green.700">
+                  📍 <strong>Context:</strong> Regional comparisons provide meaningful insights into
+                  farm performance.
                 </Text>
               </Box>
             </VStack>
@@ -716,7 +492,7 @@ function ProductDetail() {
   const { productionId: urlProductionId } = useParams();
   const navigate = useNavigate();
   const intl = useIntl();
-  const pointsStore = usePointsStore();
+  // const pointsStore = usePointsStore(); // Unused for now
 
   // QR Security: Extract and verify production ID from URL
   const [verifiedProductionId, setVerifiedProductionId] = useState<string | null>(null);
@@ -724,7 +500,7 @@ function ProductDetail() {
   const [isVerifyingQR, setIsVerifyingQR] = useState(false);
 
   // Get QR access metadata for analytics
-  const qrMetadata = getQRAccessMetadata();
+  // const qrMetadata = getQRAccessMetadata(); // Unused for now
 
   useEffect(() => {
     const verifyQRAccess = async () => {
@@ -765,6 +541,23 @@ function ProductDetail() {
     verifyQRAccess();
   }, [urlProductionId]);
 
+  // State for instant trust display (must be declared before useEffect)
+  const [showInstantTrust, setShowInstantTrust] = useState(false);
+  const [instantTrustShown, setInstantTrustShown] = useState(false);
+
+  // Show instant trust display as soon as QR is verified, before full data loads
+  useEffect(() => {
+    if (verifiedProductionId && !qrVerificationError && !instantTrustShown) {
+      // Small delay to allow QR verification UI to complete
+      const timer = setTimeout(() => {
+        setShowInstantTrust(true);
+        setInstantTrustShown(true);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [verifiedProductionId, qrVerificationError, instantTrustShown]);
+
   // Use the verified production ID for API calls
   const productionId = verifiedProductionId;
 
@@ -795,7 +588,7 @@ function ProductDetail() {
   const finalCurrentUser = currentUser;
 
   // Get full Redux state for debugging
-  const fullReduxState = useSelector((state) => state);
+  // const fullReduxState = useSelector((state) => state); // Unused for now
 
   // Debug: Check if component is loading
   console.log('🔍 ProductDetail component loaded with productionId:', productionId);
@@ -806,12 +599,10 @@ function ProductDetail() {
   console.log('🔍 FINAL Current user:', finalCurrentUser);
 
   // Theme colors - Mobile Optimized
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
-  const textColor = useColorModeValue('gray.800', 'white');
-  const headerFontSize = { base: 'lg', sm: 'xl', md: '2xl', lg: '3xl' };
+  // const bgColor = useColorModeValue('gray.50', 'gray.900'); // Unused for now
+  // const textColor = useColorModeValue('gray.800', 'white'); // Unused for now
+  // const headerFontSize = { base: 'lg', sm: 'xl', md: '2xl', lg: '3xl' }; // Unused for now
 
-  // State for scan creation
-  const [scanCreated, setScanCreated] = useState(false);
 
   // API queries
   const {
@@ -822,7 +613,50 @@ function ProductDetail() {
     skip: !productionId
   });
 
-  const [createScan] = useCreateScanMutation();
+  // CRITICAL: Use backend TransparencyCalculator for proper transparency scoring
+  const { data: transparencyApiData } = useGetTransparencyDetailsQuery(productionId || '', {
+    skip: !productionId
+  });
+
+
+  // Helper function to get proper transparency score from backend TransparencyCalculator
+  const getTransparencyScore = (): number => {
+    // Use backend TransparencyCalculator data when available
+    if (transparencyApiData?.quick_view?.transparency_score?.percentage) {
+      return transparencyApiData.quick_view.transparency_score.percentage;
+    }
+
+    // Fallback: Only use when backend data is not available
+    // This maintains backward compatibility during transition
+    return Math.min(100, Math.round(((completeData?.timeline?.length || 0) / 15) * 100));
+  };
+
+  // Helper function to calculate blockchain verification score
+  const getBlockchainScore = (): { score: number; isVerified: boolean } => {
+    const timeline = completeData?.timeline || [];
+    if (timeline.length === 0) {
+      return { score: 0, isVerified: false };
+    }
+
+    // Count events that are blockchain verified
+    const verifiedEvents = timeline.filter(
+      (event) =>
+        (event as any).blockchain_verified &&
+        (event as any).blockchain_transaction &&
+        (event as any).blockchain_transaction.trim() !== ''
+    );
+
+    // Calculate percentage of verified events out of total events
+    const verificationPercentage = (verifiedEvents.length / timeline.length) * 100;
+
+    // Convert to 20-point scale (max score is 20)
+    const score = Math.round((verificationPercentage / 100) * 20);
+
+    // Consider it verified if more than 50% of events are blockchain verified
+    const isVerified = verificationPercentage > 50;
+
+    return { score, isVerified };
+  };
 
   // Educational modal
   const {
@@ -832,8 +666,31 @@ function ProductDetail() {
   } = useDisclosure();
   const [educationTopic, setEducationTopic] = useState<string | null>(null);
 
-  // Navigation state
-  const [activeSection, setActiveSection] = useState('carbon');
+  // Transparency celebration system
+  const celebrationTransparencyData = completeData
+    ? {
+        transparencyScore: getTransparencyScore(),
+        farmName: completeData?.farmer?.name || 'Granja Sostenible',
+        productName: completeData?.product?.name || 'Producto Transparente',
+        eventsDocumented: completeData?.timeline?.length || 0,
+        photoCount: Math.floor((completeData?.timeline?.length || 0) * 0.6),
+        isUSDAVerified: completeData?.isUsdaVerified || false,
+        isBlockchainVerified: getBlockchainScore().isVerified,
+        isTrazoVerified: getTransparencyScore() >= 80,
+        scansCount: 0, // TODO: Get from API
+        farmHistory: 5 // TODO: Get from API
+      }
+    : null;
+
+  const { showCelebration, celebrationData, triggerType, closeCelebration } =
+    useTransparencyCelebration(celebrationTransparencyData, {
+      minScoreForCelebration: 70,
+      celebrateOnScan: true,
+      showCelebrationOnce: true
+    });
+
+  // Navigation state - TRANSPARENCY FIRST
+  const [activeSection, setActiveSection] = useState('transparency');
   const [isUserScrolling, setIsUserScrolling] = useState(false);
 
   const handleEducationOpen = (topic: string) => {
@@ -841,100 +698,6 @@ function ProductDetail() {
     onEducationOpen();
   };
 
-  // Create scan when page loads (only with consent)
-  useEffect(() => {
-    // Add small delay to allow consent banner to appear first
-    const timer = setTimeout(() => {
-      if (productionId && !scanCreated && !isCompleteLoading) {
-        // Import consent check function
-        const checkConsent = () => {
-          const storedConsent = localStorage.getItem('trazo-analytics-consent');
-          const cookieConsent = document.cookie
-            .split('; ')
-            .find((row) => row.startsWith('trazo-analytics-consent='))
-            ?.split('=')[1];
-
-          return storedConsent === 'true' || cookieConsent === 'true';
-        };
-
-        const hasConsent = checkConsent();
-
-        if (hasConsent) {
-          console.log('🔍 Creating scan for production (with consent):', productionId);
-
-          // Create the scan
-          createScan({
-            production_id: productionId,
-            city: null, // Could be enhanced with geolocation
-            country: null
-          })
-            .unwrap()
-            .then((result) => {
-              console.log('✅ Scan created successfully:', result);
-              setScanCreated(true);
-            })
-            .catch((error) => {
-              console.error('❌ Failed to create scan:', error);
-              // Still mark as attempted to avoid retry loops
-              setScanCreated(true);
-            });
-        } else {
-          console.log('ℹ️ Skipping scan creation - no analytics consent');
-          // Don't create scan but mark as processed to avoid infinite retries
-          setScanCreated(true);
-        }
-      }
-    }, 500); // 500ms delay to allow consent banner to show
-
-    return () => clearTimeout(timer);
-  }, [productionId, scanCreated, isCompleteLoading, createScan]);
-
-  // Listen for consent changes and create scan when consent is given
-  useEffect(() => {
-    const handleConsentChange = () => {
-      const checkConsent = () => {
-        const storedConsent = localStorage.getItem('trazo-analytics-consent');
-        const cookieConsent = document.cookie
-          .split('; ')
-          .find((row) => row.startsWith('trazo-analytics-consent='))
-          ?.split('=')[1];
-
-        return storedConsent === 'true' || cookieConsent === 'true';
-      };
-
-      const hasConsent = checkConsent();
-
-      if (hasConsent && productionId && !scanCreated) {
-        console.log('🔍 Creating scan after consent granted:', productionId);
-
-        createScan({
-          production_id: productionId,
-          city: null,
-          country: null
-        })
-          .unwrap()
-          .then((result) => {
-            console.log('✅ Scan created after consent:', result);
-            setScanCreated(true);
-          })
-          .catch((error) => {
-            console.error('❌ Failed to create scan after consent:', error);
-            setScanCreated(true);
-          });
-      }
-    };
-
-    // Listen for storage changes (when consent is given)
-    window.addEventListener('storage', handleConsentChange);
-
-    // Also listen for custom consent events
-    window.addEventListener('trazo-consent-changed', handleConsentChange);
-
-    return () => {
-      window.removeEventListener('storage', handleConsentChange);
-      window.removeEventListener('trazo-consent-changed', handleConsentChange);
-    };
-  }, [productionId, scanCreated, createScan]);
 
   // Navigation active section detection
   useEffect(() => {
@@ -943,8 +706,8 @@ function ProductDetail() {
       if (isUserScrolling) return;
 
       const sections = [
-        { id: 'carbon', element: document.getElementById('carbon-section') },
         { id: 'transparency', element: document.getElementById('transparency-section') },
+        { id: 'carbon', element: document.getElementById('carbon-section') },
         { id: 'farm', element: document.getElementById('farm-section') },
         { id: 'reviews', element: document.getElementById('reviews-section') }
       ];
@@ -966,25 +729,8 @@ function ProductDetail() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isUserScrolling]);
 
-  const handleShare = async () => {
-    try {
-      await navigator.share({
-        title: `${completeData?.farmer?.name || 'Product'}'s Sustainable Product`,
-        text: `${Math.round((completeData?.carbonScore || 0) * 10) / 10}/100 carbon score! #Trazo`,
-        url: window.location.href
-      });
-      pointsStore.addPoints(3);
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
-
   // Calculate reputation for stars
   const safeReputation = Math.max(0, Math.min(5, (completeData as any)?.reputation || 4.2));
-
-  // Check if we have product images
-  const productImages = (completeData as any)?.images || [];
-  const hasImages = productImages.length > 0;
 
   // QR Verification loading state
   if (isVerifyingQR) {
@@ -1003,7 +749,7 @@ function ProductDetail() {
     );
   }
 
-  // Loading state - show shimmers for any loading condition
+  // Loading state - show instant trust if available, otherwise show shimmers
   if (isCompleteLoading || !productionId) {
     return (
       <Flex
@@ -1013,8 +759,22 @@ function ProductDetail() {
         justifySelf="center"
         overflow="hidden"
         w="100%">
-        {/* Hero shimmer */}
-        <HeroShimmer />
+        
+        {/* Show instant trust display while main data loads */}
+        {showInstantTrust && productionId ? (
+          <Box py={8}>
+            <InstantTrustDisplay
+              productionId={productionId}
+              isVisible={showInstantTrust}
+              onTrustDisplayed={() => {
+                console.log('✅ Instant trust displayed - building consumer confidence');
+              }}
+            />
+          </Box>
+        ) : (
+          /* Hero shimmer for initial loading */
+          <HeroShimmer />
+        )}
 
         {/* Main content with shimmer layout */}
         <Container maxW="container.xl" py={8}>
@@ -1071,44 +831,43 @@ function ProductDetail() {
   }
 
   return (
-    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
-      {/* New Carbon Hero Section */}
-      <Box id="carbon-section">
+    <Flex
+      direction="column"
+      alignSelf="center"
+      justifySelf="center"
+      overflow="hidden"
+      w="100%"
+      pb={{ base: '100px', xl: 0 }}>
+      {/* Transparency Hero Section - Primary Navigation Target */}
+      <Box id="transparency-section">
         <CarbonHeroSection
           carbonData={{
-            score: completeData?.carbonScore || 0,
-            footprint: completeData?.netFootprint || completeData?.footprint || 0,
+            // PRIMARY: Use backend TransparencyCalculator score (crop-specific expected events)
+            score: getTransparencyScore(),
+            footprint: completeData?.netFootprint || 0,
             relatableFootprint: completeData?.relatableFootprint,
-            industryPercentile: completeData?.industryPercentile,
-            grade: completeData?.grade,
-            level: completeData?.level
+            // Remove competitive rankings - transparency-first approach
+            industryPercentile: undefined,
+            grade: undefined,
+            level: 'transparency' // Signal this is transparency, not carbon
           }}
           trustData={{
-            confidenceScore:
-              completeData?.trustIndicators?.scores?.verification ||
-              completeData?.trustIndicators?.overall_score ||
-              85,
+            confidenceScore: getTransparencyScore(),
             isUSDAVerified: completeData?.isUsdaVerified || false,
-            isBlockchainVerified: completeData?.isBlockchainVerified || false,
-            reviewsCount: completeData?.reviewsCount || 0,
+            isBlockchainVerified: getBlockchainScore().isVerified,
+            reviewsCount: 0,
             averageRating: safeReputation || 4.2,
-            scansCount: completeData?.scansCount || 0,
-            transparencyScore: completeData?.transparencyScore || 75
+            scansCount: 0,
+            transparencyScore: getTransparencyScore()
           }}
           productData={{
-            name:
-              (completeData as any)?.product?.name ||
-              (completeData as any)?.farmer?.name ||
-              'Product',
+            name: (completeData as any)?.product?.name || 'Product',
             company: {
-              name:
-                (completeData as any)?.farmer?.name ||
-                (completeData as any)?.company?.name ||
-                'Farm'
+              name: (completeData as any)?.farmer?.name || 'Farm'
             }
           }}
           isLoading={isCompleteLoading}
-          onLearnMore={() => handleEducationOpen('carbon_impact')}
+          onLearnMore={() => handleEducationOpen('transparency_impact')}
           onTrustDetails={() => handleEducationOpen('trust_indicators')}
         />
       </Box>
@@ -1132,11 +891,11 @@ function ProductDetail() {
                     </Circle>
                     <VStack spacing={2}>
                       <Heading size="lg" color="gray.800">
-                        Agricultural Carbon Transparency
+                        Complete Farm Transparency
                       </Heading>
                       <Text color="gray.600" fontSize="lg" maxW="md">
-                        You've scanned a product with verified carbon footprint tracking from farm
-                        to table.
+                        You've scanned a product with comprehensive farm documentation and verified
+                        transparency.
                       </Text>
                     </VStack>
                   </VStack>
@@ -1144,125 +903,240 @@ function ProductDetail() {
                 <Box p={6}>
                   <VStack spacing={4} textAlign="center">
                     <Text color="gray.700" fontSize="md">
-                      <strong>Carbon transparency you can trust:</strong>
+                      <strong>Complete transparency you can trust:</strong>
                     </Text>
                     <SimpleGrid columns={2} spacing={4} w="full" maxW="md">
                       <HStack spacing={2}>
-                        <Icon as={FaChartLine} color="green.500" boxSize={4} />
-                        <Text fontSize="sm">Carbon footprint</Text>
+                        <Icon as={FaClipboardCheck} color="green.500" boxSize={4} />
+                        <Text fontSize="sm">Complete records</Text>
                       </HStack>
                       <HStack spacing={2}>
                         <Icon as={FaUniversity} color="blue.500" boxSize={4} />
-                        <Text fontSize="sm">USDA verified</Text>
+                        <Text fontSize="sm">Verified data</Text>
                       </HStack>
                       <HStack spacing={2}>
                         <Icon as={FaShieldAlt} color="purple.500" boxSize={4} />
-                        <Text fontSize="sm">Blockchain secured</Text>
+                        <Text fontSize="sm">Authentic tracking</Text>
                       </HStack>
                       <HStack spacing={2}>
                         <Icon as={FaLeaf} color="green.500" boxSize={4} />
-                        <Text fontSize="sm">Farm practices</Text>
+                        <Text fontSize="sm">Environmental impact</Text>
                       </HStack>
                     </SimpleGrid>
                     <Text color="gray.600" fontSize="sm" fontStyle="italic">
-                      Real carbon data from verified agricultural practices.
+                      Honest farm documentation rewarded with transparency certification.
                     </Text>
                   </VStack>
                 </Box>
               </Box>
 
-              {/* Consumer-Friendly Carbon Impact Explainer */}
-              <CarbonImpactExplainer
-                carbonScore={completeData?.carbonScore || 0}
-                totalCO2e={completeData?.netFootprint || completeData?.footprint || 0}
-                productName={completeData?.product?.name || completeData?.farmer?.name}
-                relatableFootprint={completeData?.relatableFootprint}
-              />
+              {/* Transparency Achievement Badges - NEW Transparency-First Approach */}
+              <Box
+                bg="white"
+                borderRadius="xl"
+                border="1px solid"
+                borderColor="gray.200"
+                overflow="hidden">
+                <Box bg="linear-gradient(135deg, green.50, blue.50)" p={6}>
+                  <VStack spacing={4}>
+                    <HStack spacing={3} justify="center">
+                      <Icon as={FaAward} color="green.500" boxSize={6} />
+                      <Heading size="md" color="gray.800">
+                        Transparency Achievement
+                      </Heading>
+                    </HStack>
 
-              {/* Phase 6.1: Carbon Journey Visualization - Consumer Carbon Education */}
-              <Box id="transparency-section">
-                <LoadingWrapper isLoading={isCompleteLoading} skeletonType="journey">
-                  <CarbonJourneyVisualization
-                    data={{
-                      productionId: productionId || '',
-                      productName:
-                        completeData?.product?.name || completeData?.farmer?.name || 'Product',
-                      totalCO2e: completeData?.totalEmissions || 0,
-                      netFootprint: completeData?.netFootprint || completeData?.footprint || 0,
-                      isCarbonNegative:
-                        (completeData?.netFootprint || completeData?.footprint || 0) < 0,
-                      phases: completeData?.production_phases
-                        ? Object.entries(completeData.production_phases).map(
-                            ([key, phase]: [string, any]) => ({
-                              id: key,
-                              name: phase.name,
-                              description: phase.consumer_story,
-                              icon:
-                                key === 'farm_preparation'
-                                  ? FaSeedling
-                                  : key === 'growing_season'
-                                  ? FaTree
-                                  : key === 'harvest_operations'
-                                  ? FaTractor
-                                  : key === 'soil_regeneration'
-                                  ? FaLeaf
-                                  : FaSeedling,
-                              co2e: Math.abs(phase.carbon_impact || 0),
-                              percentage: Math.round(phase.percentage || 0),
-                              practices: [
-                                `${phase.event_count} farm events tracked and verified`,
-                                phase.consumer_story,
-                                'Data-driven transparency from actual farm practices',
-                                'No hardcoded values - all data from database'
-                              ],
-                              consumerBenefit: phase.consumer_story,
-                              color:
-                                key === 'soil_regeneration'
-                                  ? 'green'
-                                  : key === 'farm_preparation'
-                                  ? 'blue'
-                                  : key === 'growing_season'
-                                  ? 'orange'
-                                  : 'purple',
-                              isPositive: (phase.carbon_impact || 0) < 0
-                            })
-                          )
-                        : [],
-                      keyAchievements: [
-                        `${
-                          (completeData?.netFootprint || 0) < 0
-                            ? 'Carbon Negative Production'
-                            : 'Low Carbon Footprint'
-                        }`,
-                        `${
-                          completeData?.isUsdaVerified
-                            ? 'USDA Verified Practices'
-                            : 'Sustainable Practices'
-                        }`,
-                        `${
-                          completeData?.isBlockchainVerified
-                            ? 'Blockchain Verified Data'
-                            : 'Transparent Production'
-                        }`,
-                        'Soil Health Improvement',
-                        'Water Conservation Methods',
-                        'Biodiversity Enhancement'
-                      ],
-                      consumerMessage:
-                        (completeData?.netFootprint || 0) < 0
-                          ? 'This product actually removes more carbon than it produces, helping fight climate change!'
-                          : 'Your purchase supports sustainable farming practices that protect the environment.',
-                      verificationLevel: Math.round((completeData?.carbonScore || 0) + 15) // Add 15% for comprehensive data
-                    }}
-                    isLoading={false}
-                    showDetailedView={true}
-                  />
-                </LoadingWrapper>
+                    {(() => {
+                      const timelineCount = completeData?.timeline?.length || 0;
+                      const transparencyPercentage = Math.min(
+                        100,
+                        Math.round((timelineCount / 15) * 100)
+                      );
 
-                {/* Production Journey */}
-                {/* <Card bg={useColorModeValue('white', 'gray.800')} shadow="lg" borderRadius="xl"> */}
+                      if (transparencyPercentage >= 90) {
+                        return (
+                          <VStack spacing={2}>
+                            <Badge
+                              colorScheme="green"
+                              variant="solid"
+                              fontSize="md"
+                              p={2}
+                              borderRadius="lg">
+                              🏆 Complete Transparency Champion
+                            </Badge>
+                            <Text color="gray.700" fontSize="sm" textAlign="center">
+                              Outstanding documentation with {timelineCount} verified events
+                            </Text>
+                          </VStack>
+                        );
+                      } else if (transparencyPercentage >= 70) {
+                        return (
+                          <VStack spacing={2}>
+                            <Badge
+                              colorScheme="green"
+                              variant="outline"
+                              fontSize="md"
+                              p={2}
+                              borderRadius="lg">
+                              ⭐ Transparency Leader
+                            </Badge>
+                            <Text color="gray.700" fontSize="sm" textAlign="center">
+                              Excellent documentation with {timelineCount} verified events
+                            </Text>
+                          </VStack>
+                        );
+                      } else if (transparencyPercentage >= 50) {
+                        return (
+                          <VStack spacing={2}>
+                            <Badge
+                              colorScheme="yellow"
+                              variant="solid"
+                              fontSize="md"
+                              p={2}
+                              borderRadius="lg">
+                              📋 Good Documentation
+                            </Badge>
+                            <Text color="gray.700" fontSize="sm" textAlign="center">
+                              Solid tracking with {timelineCount} verified events
+                            </Text>
+                          </VStack>
+                        );
+                      } else {
+                        return (
+                          <VStack spacing={2}>
+                            <Badge
+                              colorScheme="gray"
+                              variant="solid"
+                              fontSize="md"
+                              p={2}
+                              borderRadius="lg">
+                              🌱 Building Transparency
+                            </Badge>
+                            <Text color="gray.700" fontSize="sm" textAlign="center">
+                              Growing documentation with {timelineCount} events recorded
+                            </Text>
+                          </VStack>
+                        );
+                      }
+                    })()}
+                  </VStack>
+                </Box>
 
-                <CardBody pt={0}>
+                <Box p={6}>
+                  <HStack spacing={4} justify="center" flexWrap="wrap">
+                    <VStack spacing={1}>
+                      <Text fontSize="2xl" fontWeight="bold" color="green.600">
+                        {getTransparencyScore()}%
+                      </Text>
+                      <Text fontSize="xs" color="gray.600" textAlign="center">
+                        Documentation
+                      </Text>
+                    </VStack>
+                    <VStack spacing={1}>
+                      <Text fontSize="2xl" fontWeight="bold" color="blue.600">
+                        {completeData?.timeline?.length || 0}
+                      </Text>
+                      <Text fontSize="xs" color="gray.600" textAlign="center">
+                        Events Tracked
+                      </Text>
+                    </VStack>
+                    <VStack spacing={1}>
+                      <Text fontSize="2xl" fontWeight="bold" color="purple.600">
+                        {completeData?.isUsdaVerified ? 'Yes' : 'In Progress'}
+                      </Text>
+                      <Text fontSize="xs" color="gray.600" textAlign="center">
+                        USDA Verified
+                      </Text>
+                    </VStack>
+                  </HStack>
+
+                  <Box
+                    mt={4}
+                    p={3}
+                    bg="green.50"
+                    borderRadius="md"
+                    borderLeft="3px solid"
+                    borderLeftColor="green.500">
+                    <Text fontSize="sm" color="green.800">
+                      💡 <strong>Why transparency matters:</strong> Complete documentation helps
+                      consumers trust authentic farming practices and supports farmers who share
+                      their full story.
+                    </Text>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
+              <Suspense fallback={<CarbonExplainerLoader />}>
+                <CarbonImpactExplainer
+                  carbonScore={getTransparencyScore()}
+                  totalCO2e={completeData?.netFootprint || 0}
+                  productName={completeData?.product?.name || completeData?.farmer?.name}
+                  relatableFootprint={completeData?.relatableFootprint}
+                />
+              </Suspense>
+
+              {/* Enhanced Transparency Score Display - Progressive Loading */}
+              <Suspense fallback={<TransparencyScoreLoader />}>
+                <EnhancedTransparencyScoreDisplay
+                  overallScore={getTransparencyScore()}
+                  breakdown={[
+                    {
+                      category: 'Documentation',
+                      score: Math.round(getTransparencyScore() * 0.3),
+                      maxScore: 30,
+                      description: 'Complete farm records',
+                      icon: FaClipboardList,
+                      color: 'green',
+                      isVerified: true
+                    },
+                    {
+                      category: 'USDA Verification',
+                      score: completeData?.isUsdaVerified ? 25 : 0,
+                      maxScore: 25,
+                      description: 'Government verified data',
+                      icon: MdVerified,
+                      color: 'blue',
+                      isVerified: completeData?.isUsdaVerified || false
+                    },
+                    {
+                      category: 'Blockchain',
+                      score: getBlockchainScore().score,
+                      maxScore: 20,
+                      description: 'Immutable records',
+                      icon: BsShieldCheck,
+                      color: 'purple',
+                      isVerified: getBlockchainScore().isVerified
+                    },
+                    {
+                      category: 'Timeline Events',
+                      score: Math.min(15, completeData?.timeline?.length || 0),
+                      maxScore: 15,
+                      description: 'Production tracking',
+                      icon: FaCalendarAlt,
+                      color: 'orange',
+                      isVerified: (completeData?.timeline?.length || 0) > 10
+                    },
+                    {
+                      category: 'Location Data',
+                      score: 10,
+                      maxScore: 10,
+                      description: 'GPS verified',
+                      icon: FaMapMarkerAlt,
+                      color: 'teal',
+                      isVerified: true
+                    }
+                  ]}
+                  isUSDAVerified={completeData?.isUsdaVerified || false}
+                  isBlockchainVerified={getBlockchainScore().isVerified}
+                  productName={completeData?.product?.name || 'Product'}
+                  showDetailedBreakdown={true}
+                />
+              </Suspense>
+
+              {/* Production Journey - Carbon Impact Section */}
+              <Box id="carbon-section">
+                <VStack spacing={4} align="stretch">
                   {(() => {
                     const events = completeData?.timeline || completeData?.events || [];
 
@@ -1285,27 +1159,31 @@ function ProductDetail() {
                         area: event.area?.toString(),
                         equipment: event.equipment,
                         // Add blockchain verification fields for Trust & Verification Enhancement
-                        blockchain_verified: event.blockchain_verified || false,
-                        blockchain_transaction: event.blockchain_transaction || '',
-                        blockchain_block_number: event.blockchain_block_number || 0,
-                        blockchain_explorer_url: event.blockchain_explorer_url || '',
-                        blockchain_network: event.blockchain_network || 'polygon_amoy',
-                        verification_confidence: event.verification_confidence || 0,
-                        verification_timestamp: event.verification_timestamp || '',
-                        data_integrity_score: event.data_integrity_score || 0,
-                        usda_verified: event.usda_verified || false,
-                        extra_data: event.extra_data || {},
+                        blockchain_verified: (event as any).blockchain_verified || false,
+                        blockchain_transaction: (event as any).blockchain_transaction || '',
+                        blockchain_block_number: (event as any).blockchain_block_number || 0,
+                        blockchain_explorer_url: (event as any).blockchain_explorer_url || '',
+                        blockchain_network: (event as any).blockchain_network || 'polygon_amoy',
+                        verification_confidence: (event as any).verification_confidence || 0,
+                        verification_timestamp: (event as any).verification_timestamp || '',
+                        data_integrity_score: (event as any).data_integrity_score || 0,
+                        usda_verified: (event as any).usda_verified || false,
+                        extra_data: (event as any).extra_data || {},
+                        // Add album data for photo galleries (CRITICAL: Missing property causing photo gallery failure)
+                        album: (event as any).album || undefined,
                         // Add carbon data that UltraMobileProductionJourney expects
                         carbon_data: {
                           co2e: averageCO2ePerEvent, // Distribute total CO₂e across events
                           usda_verified:
-                            completeData?.isUsdaVerified || event.usda_verified || false,
+                            completeData?.isUsdaVerified || (event as any).usda_verified || false,
                           efficiency_score: completeData?.carbonScore || 0,
                           total_emissions: completeData?.totalEmissions || 0,
                           total_offsets: completeData?.totalOffsets || 0,
                           net_footprint: completeData?.netFootprint || 0,
-                          verification_confidence: event.verification_confidence ? 'high' : 'low',
-                          cost_analysis: event.cost_analysis || {}
+                          verification_confidence: ((event as any).verification_confidence
+                            ? 'high'
+                            : 'low') as 'high' | 'medium' | 'low',
+                          cost_analysis: (event as any).cost_analysis || {}
                         }
                       }));
                       return <UltraMobileProductionJourney events={timelineEvents} />;
@@ -1325,293 +1203,7 @@ function ProductDetail() {
                       );
                     }
                   })()}
-                </CardBody>
-                {/* </Card> */}
-
-                {/* Phase 6.2: Transparency Analytics - Trust Building Through Data Transparency */}
-                <LoadingWrapper isLoading={isCompleteLoading} skeletonType="transparency">
-                  <TransparencyAnalytics
-                    data={{
-                      // Use backend-calculated transparency score for security and consistency
-                      // If not available from API, provide a reasonable default based on verification status
-                      overallTransparencyScore:
-                        (completeData as any)?.transparency_score ||
-                        (completeData?.isUsdaVerified ? 75 : 50),
-                      // Data completeness - derived from transparency score
-                      // Higher transparency scores indicate more complete data
-                      dataCompleteness: Math.min(
-                        Math.round(
-                          ((completeData as any)?.transparency_score ||
-                            (completeData?.isUsdaVerified ? 75 : 50)) +
-                            (completeData?.timeline?.length ? 10 : 0)
-                        ),
-                        100
-                      ),
-                      verificationDepth: {
-                        level:
-                          completeData?.isUsdaVerified && completeData?.isBlockchainVerified
-                            ? 'comprehensive'
-                            : completeData?.isUsdaVerified || completeData?.isBlockchainVerified
-                            ? 'enhanced'
-                            : 'basic',
-                        score: Math.round(
-                          (completeData?.isUsdaVerified ? 30 : 0) +
-                            (completeData?.isBlockchainVerified ? 30 : 0) +
-                            (completeData?.carbonScore || 0) * 0.4 +
-                            20
-                        ),
-                        description:
-                          completeData?.isUsdaVerified && completeData?.isBlockchainVerified
-                            ? 'Comprehensive verification with government and blockchain validation'
-                            : completeData?.isUsdaVerified || completeData?.isBlockchainVerified
-                            ? 'Enhanced verification with official validation'
-                            : 'Basic verification with standard practices',
-                        verifiedAspects: [
-                          ...(completeData?.totalEmissions ||
-                          completeData?.netFootprint ||
-                          completeData?.footprint
-                            ? ['Carbon emission calculations']
-                            : []),
-                          ...(completeData?.timeline && completeData.timeline.length > 0
-                            ? ['Production event tracking']
-                            : []),
-                          ...(completeData?.parcel?.coordinates ||
-                          completeData?.farmer?.farm?.coordinates
-                            ? ['Farm location verification']
-                            : []),
-                          ...(completeData?.production_phases &&
-                          Object.keys(completeData.production_phases).length > 0
-                            ? ['Production phase documentation']
-                            : []),
-                          ...(completeData?.product?.name
-                            ? ['Product identification and tracking']
-                            : []),
-                          ...(completeData?.farmer?.name ? ['Farmer authentication'] : []),
-                          ...(completeData?.isUsdaVerified
-                            ? ['USDA compliance verification', 'Organic practice validation']
-                            : []),
-                          ...(completeData?.isBlockchainVerified
-                            ? ['Immutable data records', 'Cryptographic verification']
-                            : []),
-                          ...(completeData?.carbonScore ? ['Carbon scoring methodology'] : []),
-                          ...(completeData?.relatableFootprint
-                            ? ['Consumer-friendly impact translation']
-                            : [])
-                        ].filter(Boolean),
-                        auditTrail: [
-                          {
-                            id: 'carbon-calculation',
-                            step: 'Carbon Footprint Calculation',
-                            method: 'USDA emission factors applied to production data',
-                            result: 'verified' as const,
-                            confidence: 95,
-                            timestamp: new Date().toISOString(),
-                            details: 'Verified using official USDA agricultural emission factors'
-                          },
-                          {
-                            id: 'production-tracking',
-                            step: 'Production Event Verification',
-                            method: 'GPS location tracking and digital signatures',
-                            result:
-                              (completeData?.timeline?.length || 0) > 3
-                                ? ('verified' as const)
-                                : ('partial' as const),
-                            confidence: (completeData?.timeline?.length || 0) > 3 ? 90 : 70,
-                            timestamp: completeData?.timeline?.length
-                              ? completeData.timeline[completeData.timeline.length - 1]?.date
-                              : new Date().toISOString(),
-                            details: `${
-                              completeData?.timeline?.length || 0
-                            } production events verified with GPS and timestamps`
-                          },
-                          ...(completeData?.isUsdaVerified
-                            ? [
-                                {
-                                  id: 'usda-verification',
-                                  step: 'USDA Compliance Verification',
-                                  method: 'Official USDA organic certification process',
-                                  result: 'verified' as const,
-                                  confidence: 98,
-                                  timestamp: new Date(Date.now() - 86400000 * 30).toISOString(), // 30 days ago
-                                  details: 'USDA organic certification validated and current'
-                                }
-                              ]
-                            : []),
-                          ...(completeData?.isBlockchainVerified
-                            ? [
-                                {
-                                  id: 'blockchain-verification',
-                                  step: 'Blockchain Data Verification',
-                                  method: 'Polygon network cryptographic verification',
-                                  result: 'verified' as const,
-                                  confidence: 96,
-                                  timestamp: new Date().toISOString(),
-                                  details:
-                                    'Production data immutably recorded on Polygon blockchain'
-                                }
-                              ]
-                            : [])
-                        ],
-                        details: [
-                          {
-                            category: 'Government Verification',
-                            status: completeData?.isUsdaVerified ? 'verified' : 'pending',
-                            description: completeData?.isUsdaVerified
-                              ? 'USDA organic certification validates sustainable practices'
-                              : 'USDA verification process underway',
-                            impact: 'high'
-                          },
-                          {
-                            category: 'Blockchain Security',
-                            status: completeData?.isBlockchainVerified ? 'verified' : 'pending',
-                            description: completeData?.isBlockchainVerified
-                              ? 'Immutable blockchain records ensure data integrity'
-                              : 'Blockchain verification in progress',
-                            impact: 'high'
-                          },
-                          {
-                            category: 'Production Tracking',
-                            status:
-                              (completeData?.timeline?.length || 0) > 3 ? 'verified' : 'basic',
-                            description: `${
-                              completeData?.timeline?.length || 0
-                            } production events documented and verified`,
-                            impact: 'medium'
-                          },
-                          {
-                            category: 'Carbon Calculations',
-                            status: completeData?.carbonScore ? 'verified' : 'pending',
-                            description:
-                              'USDA-based emission factors used for accurate carbon calculations',
-                            impact: 'high'
-                          }
-                        ]
-                      },
-                      dataSources: [
-                        // Only show sources that actually exist and have real data
-                        ...(completeData?.isUsdaVerified
-                          ? [
-                              {
-                                id: 'usda-fooddata',
-                                name: 'USDA Database',
-                                type: 'government' as const,
-                                credibilityScore: 100, // Government source = highest credibility
-                                description:
-                                  'Official USDA database for agricultural emission factors',
-                                lastUpdated: '2025-01-01', // Use static date since we don't have real update tracking
-                                verificationMethod: 'Government database integration',
-                                coverage: 'comprehensive',
-                                icon: FaUniversity,
-                                color: 'blue',
-                                trustFactors: [
-                                  'Government-backed data',
-                                  'Peer-reviewed emission factors',
-                                  'Federal oversight'
-                                ]
-                              }
-                            ]
-                          : []),
-                        {
-                          id: 'farm-records',
-                          name: 'Farm Records',
-                          type: 'internal' as const,
-                          // Credibility based on actual data completeness
-                          credibilityScore: Math.min(
-                            100,
-                            Math.round(
-                              20 + // Base score
-                                (completeData?.timeline?.length || 0) * 8 + // 8 points per production event
-                                (completeData?.parcel?.coordinates ? 15 : 0) + // GPS verification
-                                (completeData?.totalEmissions > 0 ? 25 : 0) // Carbon data available
-                            )
-                          ),
-                          description: 'Direct farmer-reported production events and practices',
-                          lastUpdated: completeData?.timeline?.length
-                            ? completeData.timeline[completeData.timeline.length - 1]?.date ||
-                              '2025-01-01'
-                            : '2025-01-01',
-                          verificationMethod: 'Production event documentation',
-                          coverage:
-                            (completeData?.timeline?.length || 0) > 3 ? 'comprehensive' : 'basic',
-                          icon: FaClipboardCheck,
-                          color: 'green',
-                          trustFactors: [
-                            'Direct farmer reporting',
-                            ...(completeData?.parcel?.coordinates ? ['GPS location tracking'] : []),
-                            ...(completeData?.timeline?.length
-                              ? ['Production event documentation']
-                              : [])
-                          ]
-                        },
-                        // Only show blockchain if actually verified
-                        ...(completeData?.isBlockchainVerified
-                          ? [
-                              {
-                                id: 'blockchain-verification',
-                                name: 'Polygon Network',
-                                type: 'blockchain' as const,
-                                credibilityScore: 100, // Blockchain verification = highest credibility when active
-                                description: 'Immutable ledger for production data verification',
-                                lastUpdated: '2025-01-01',
-                                verificationMethod: 'Cryptographic proof',
-                                coverage: 'verified',
-                                icon: FaLock,
-                                color: 'purple',
-                                trustFactors: [
-                                  'Immutable records',
-                                  'Cryptographic security',
-                                  'Public verification'
-                                ]
-                              }
-                            ]
-                          : [])
-                      ],
-                      trustIndicators: {
-                        blockchainVerified: completeData?.isBlockchainVerified || false,
-                        usdaCompliant: completeData?.isUsdaVerified || false,
-                        realTimeTracking: true
-                      },
-                      consumerBenefits: [
-                        'Complete transparency in food production journey',
-                        'Verified environmental impact data you can trust',
-                        'Support for farmers using sustainable practices',
-                        'Access to the complete story behind your food'
-                      ],
-                      lastUpdated: new Date().toISOString(),
-                      comparativeContext: {
-                        industryBenchmark: 67, // Industry average transparency score
-                        percentile: Math.min(
-                          99,
-                          Math.round(
-                            50 + // Base percentile
-                              (completeData?.isUsdaVerified ? 25 : 0) + // USDA verification bonus
-                              (completeData?.isBlockchainVerified ? 20 : 0) + // Blockchain bonus
-                              ((completeData?.timeline?.length || 0) > 3 ? 15 : 0) // Documentation bonus
-                          )
-                        ),
-                        betterThanPercent: Math.min(
-                          95,
-                          Math.round(
-                            40 + // Base percentage
-                              (completeData?.isUsdaVerified ? 25 : 0) + // USDA verification bonus
-                              (completeData?.isBlockchainVerified ? 20 : 0) + // Blockchain bonus
-                              ((completeData?.timeline?.length || 0) > 3 ? 15 : 0) // Documentation bonus
-                          )
-                        )
-                      }
-                    }}
-                    productionId={productionId || ''}
-                    isLoading={isCompleteLoading}
-                    onDataSourceClick={(source) => {
-                      console.log('🔍 Consumer viewing data source:', source.name);
-                      // Could open detailed modal about data source
-                    }}
-                    onVerificationDetailsClick={() => {
-                      console.log('🔍 Consumer viewing verification details');
-                      handleEducationOpen('blockchain_verification');
-                    }}
-                  />
-                </LoadingWrapper>
+                </VStack>
               </Box>
             </VStack>
           </Box>
@@ -1620,11 +1212,7 @@ function ProductDetail() {
           <ModernSidebar
             isAuthenticated={finalIsAuthenticated}
             productName={completeData?.farmer?.name || completeData?.product?.name}
-            carbonScore={(() => {
-              const score = completeData?.carbonScore || 0;
-              const rounded = Math.round(score * 10) / 10;
-              return rounded;
-            })()}
+            carbonScore={getTransparencyScore()}
             onAuthPrompt={() => {
               if (finalIsAuthenticated) {
                 const reviewUrl = `/admin/dashboard/production/${productionId}/review/web-${Date.now()}`;
@@ -1640,286 +1228,16 @@ function ProductDetail() {
           />
         </SimpleGrid>
 
+        {/* Photo Verification Gallery */}
+        {transparencyApiData && (
+          <PhotoVerificationGallery
+            transparencyData={transparencyApiData}
+            isVisible={transparencyApiData !== null}
+          />
+        )}
+
         {/* Additional Information Sections */}
         <VStack spacing={8} mt={8}>
-          {/* Agricultural Practices Section */}
-          {(completeData as any)?.parcel?.agricultural_details &&
-            Object.keys((completeData as any)?.parcel?.agricultural_details).length > 0 && (
-              <Card
-                bg={useColorModeValue('white', 'gray.800')}
-                shadow="sm"
-                borderRadius="lg"
-                mt={6}
-                mx={{ base: 0, md: 0 }}
-                overflow="hidden">
-                <CardHeader pb={3}>
-                  <VStack align="start" spacing={2} w="full">
-                    <HStack spacing={3}>
-                      <Icon as={FaSeedling} color="green.500" boxSize={5} />
-                      <EducationalTooltip term="sustainability_impact">
-                        <Heading size="sm" color={textColor}>
-                          Sustainable Farming Practices
-                        </Heading>
-                      </EducationalTooltip>
-                    </HStack>
-                    <Text fontSize="xs" color="gray.500" pl={8}>
-                      Real agricultural data that impacts carbon footprint
-                    </Text>
-                  </VStack>
-                </CardHeader>
-                <CardBody pt={0} px={{ base: 4, md: 6 }}>
-                  {(() => {
-                    const agDetails = (completeData as any)?.parcel?.agricultural_details || {};
-
-                    // Mobile-optimized metric card component
-                    const renderMobileMetric = (
-                      key: string,
-                      icon: any,
-                      title: string,
-                      value: any,
-                      description: string,
-                      color = 'green'
-                    ) => (
-                      <HStack
-                        key={key}
-                        spacing={3}
-                        p={3}
-                        bg={`${color}.50`}
-                        borderRadius="lg"
-                        border="1px"
-                        borderColor={`${color}.200`}
-                        w="full"
-                        minH="60px">
-                        <Box flex="0 0 auto">
-                          <Icon as={icon} color={`${color}.500`} boxSize={4} />
-                        </Box>
-                        <VStack spacing={0} align="start" flex={1} minW={0}>
-                          <Text fontSize="xs" fontWeight="600" color="gray.700" noOfLines={1}>
-                            {title}
-                          </Text>
-                          <Text fontSize="sm" fontWeight="bold" color="gray.800" noOfLines={1}>
-                            {value}
-                          </Text>
-                        </VStack>
-                        <Box flex="0 0 auto" maxW="80px">
-                          <Text fontSize="xs" color="gray.600" textAlign="right" noOfLines={2}>
-                            {description}
-                          </Text>
-                        </Box>
-                      </HStack>
-                    );
-
-                    // Helper function to get metric status
-                    const getMetricStatus = (
-                      value: number,
-                      optimal: [number, number],
-                      unit = ''
-                    ) => {
-                      const numValue = parseFloat(value.toString());
-                      const isOptimal = numValue >= optimal[0] && numValue <= optimal[1];
-                      return {
-                        value: `${numValue.toFixed(1)}${unit}`,
-                        color: isOptimal ? 'green' : 'orange',
-                        description: isOptimal ? 'Optimal' : 'Good'
-                      };
-                    };
-
-                    const metrics = [];
-
-                    // Soil Health Metrics
-                    if (agDetails.soil_ph) {
-                      const phStatus = getMetricStatus(agDetails.soil_ph, [6.0, 7.5]);
-                      metrics.push({
-                        section: 'Soil Health',
-                        items: [
-                          renderMobileMetric(
-                            'soil_ph',
-                            FaFlask,
-                            'Soil pH',
-                            phStatus.value,
-                            phStatus.description,
-                            phStatus.color
-                          )
-                        ]
-                      });
-                    }
-
-                    if (agDetails.soil_organic_matter) {
-                      const omStatus = getMetricStatus(
-                        agDetails.soil_organic_matter,
-                        [3.0, 10.0],
-                        '%'
-                      );
-                      const soilIndex = metrics.findIndex((m) => m.section === 'Soil Health');
-                      const metric = renderMobileMetric(
-                        'organic_matter',
-                        FaLeaf,
-                        'Organic Matter',
-                        omStatus.value,
-                        'Carbon storage',
-                        omStatus.color
-                      );
-
-                      if (soilIndex >= 0) {
-                        metrics[soilIndex].items.push(metric);
-                      } else {
-                        metrics.push({
-                          section: 'Soil Health',
-                          items: [metric]
-                        });
-                      }
-                    }
-
-                    // Water Management
-                    if (agDetails.irrigation_efficiency) {
-                      const waterStatus = getMetricStatus(
-                        agDetails.irrigation_efficiency,
-                        [80, 100],
-                        '%'
-                      );
-                      metrics.push({
-                        section: 'Water Stewardship',
-                        items: [
-                          renderMobileMetric(
-                            'irrigation_efficiency',
-                            FaTint,
-                            'Water Efficiency',
-                            waterStatus.value,
-                            waterStatus.description,
-                            waterStatus.color
-                          )
-                        ]
-                      });
-                    }
-
-                    if (agDetails.water_source_type) {
-                      const waterIndex = metrics.findIndex(
-                        (m) => m.section === 'Water Stewardship'
-                      );
-                      const metric = renderMobileMetric(
-                        'water_source',
-                        FaWater,
-                        'Water Source',
-                        agDetails.water_source_type.charAt(0).toUpperCase() +
-                          agDetails.water_source_type.slice(1),
-                        'Sustainable',
-                        'blue'
-                      );
-
-                      if (waterIndex >= 0) {
-                        metrics[waterIndex].items.push(metric);
-                      } else {
-                        metrics.push({
-                          section: 'Water Stewardship',
-                          items: [metric]
-                        });
-                      }
-                    }
-
-                    // Conservation Practices
-                    if (agDetails.drainage_characteristics) {
-                      metrics.push({
-                        section: 'Conservation',
-                        items: [
-                          renderMobileMetric(
-                            'drainage',
-                            FaShieldAlt,
-                            'Soil Drainage',
-                            agDetails.drainage_characteristics.charAt(0).toUpperCase() +
-                              agDetails.drainage_characteristics.slice(1),
-                            'Erosion control',
-                            agDetails.drainage_characteristics === 'excellent' ? 'green' : 'orange'
-                          )
-                        ]
-                      });
-                    }
-
-                    if (agDetails.erosion_risk) {
-                      const conservationIndex = metrics.findIndex(
-                        (m) => m.section === 'Conservation'
-                      );
-                      const metric = renderMobileMetric(
-                        'erosion_risk',
-                        FaShieldAlt,
-                        'Erosion Control',
-                        agDetails.erosion_risk === 'low'
-                          ? 'Protected'
-                          : agDetails.erosion_risk.charAt(0).toUpperCase() +
-                              agDetails.erosion_risk.slice(1),
-                        'Soil protection',
-                        agDetails.erosion_risk === 'low' ? 'green' : 'orange'
-                      );
-
-                      if (conservationIndex >= 0) {
-                        metrics[conservationIndex].items.push(metric);
-                      } else {
-                        metrics.push({
-                          section: 'Conservation',
-                          items: [metric]
-                        });
-                      }
-                    }
-
-                    return (
-                      <VStack spacing={4} align="stretch">
-                        {metrics.map((section, index) => (
-                          <Box key={section.section}>
-                            <HStack spacing={2} mb={3}>
-                              <Icon
-                                as={
-                                  section.section === 'Soil Health'
-                                    ? FaFlask
-                                    : section.section === 'Water Stewardship'
-                                    ? FaTint
-                                    : FaShieldAlt
-                                }
-                                color={
-                                  section.section === 'Soil Health'
-                                    ? 'orange.500'
-                                    : section.section === 'Water Stewardship'
-                                    ? 'blue.500'
-                                    : 'green.500'
-                                }
-                                boxSize={4}
-                              />
-                              <Text fontSize="sm" fontWeight="600" color={textColor}>
-                                {section.section}
-                              </Text>
-                            </HStack>
-                            <VStack spacing={2} align="stretch">
-                              {section.items}
-                            </VStack>
-                          </Box>
-                        ))}
-
-                        {/* Mobile-optimized impact summary */}
-                        <Box
-                          bg="green.50"
-                          p={4}
-                          borderRadius="lg"
-                          border="1px"
-                          borderColor="green.200"
-                          borderLeft="3px solid"
-                          borderLeftColor="green.500"
-                          mt={2}>
-                          <HStack spacing={2} mb={2}>
-                            <Icon as={FaLeaf} color="green.500" boxSize={4} />
-                            <Text fontSize="sm" fontWeight="600" color="green.800">
-                              Carbon Impact
-                            </Text>
-                          </HStack>
-                          <Text fontSize="xs" color="green.700" lineHeight="base">
-                            These sustainable practices store carbon in soil while producing your
-                            food, directly reducing climate impact.
-                          </Text>
-                        </Box>
-                      </VStack>
-                    );
-                  })()}
-                </CardBody>
-              </Card>
-            )}
-
           {/* Producer Information Transition Section */}
           <Box
             bg="white"
@@ -1937,22 +1255,22 @@ function ProductDetail() {
 
               <VStack spacing={2}>
                 <Heading size="md" color="gray.800">
-                  Meet Your Food's Journey
+                  Meet Your Transparent Farmers
                 </Heading>
                 <Text color="gray.600" maxW="md" fontSize="sm">
                   Now discover the people, places, and practices behind your product. Every detail
-                  is verified and tracked from farm to your table.
+                  is documented with complete transparency from farm to your table.
                 </Text>
               </VStack>
 
               <HStack spacing={6} fontSize="xs" color="gray.500" flexWrap="wrap" justify="center">
                 <HStack spacing={1}>
                   <Icon as={FaUsers} boxSize={3} />
-                  <Text>Producer</Text>
+                  <Text>Transparent Producer</Text>
                 </HStack>
                 <HStack spacing={1}>
                   <Icon as={FaUniversity} boxSize={3} />
-                  <Text>Farm Details</Text>
+                  <Text>Verified Farm</Text>
                 </HStack>
                 <HStack spacing={1}>
                   <Icon as={FaMapMarkerAlt} boxSize={3} />
@@ -1960,13 +1278,13 @@ function ProductDetail() {
                 </HStack>
                 <HStack spacing={1}>
                   <Icon as={FaCertificate} boxSize={3} />
-                  <Text>Practices</Text>
+                  <Text>Documented Practices</Text>
                 </HStack>
               </HStack>
             </VStack>
           </Box>
 
-          {/* Company and Establishment Information */}
+          {/* Company Establishment Info - Farm Section */}
           <Box id="farm-section">
             <CompanyEstablishmentInfo
               companyData={{
@@ -2092,16 +1410,6 @@ function ProductDetail() {
                   console.log('✅ Consumer feedback submitted for production:', productionId);
                 }}
               />
-
-              {/* Similar Products */}
-              <SimilarProducts
-                currentProductId={productionId}
-                products={
-                  (completeData as any)?.similar_products ||
-                  (completeData as any)?.similarHistories ||
-                  []
-                }
-              />
             </VStack>
           </Box>
         </VStack>
@@ -2117,6 +1425,16 @@ function ProductDetail() {
 
       {/* Education Modal */}
       <EducationModal isOpen={isEducationOpen} onClose={onEducationClose} topic={educationTopic} />
+
+      {/* Transparency Celebration Modal */}
+      {showCelebration && celebrationData && (
+        <TransparencyCelebration
+          isOpen={showCelebration}
+          onClose={closeCelebration}
+          celebrationData={celebrationData}
+          triggerType={triggerType}
+        />
+      )}
     </Flex>
   );
 }

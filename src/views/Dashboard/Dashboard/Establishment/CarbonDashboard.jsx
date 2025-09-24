@@ -246,22 +246,19 @@ const CarbonDashboard = () => {
 
     // Validate and sanitize API data
     const total_emissions = Math.max(0, Number(apiData.total_emissions) || 0);
-    const total_offsets = Math.max(0, Number(apiData.total_offsets) || 0);
-    const net_carbon = Number(apiData.net_carbon) || total_emissions - total_offsets;
+    const net_carbon = Number(apiData.net_carbon) || total_emissions;
     const carbon_score = Math.max(0, Math.min(100, Number(apiData.carbon_score) || 50));
     const transparency_score = Math.max(0, Math.min(100, Number(apiData.transparency_score) || 0));
 
     processedData = {
       total_emissions,
-      total_offsets,
       net_carbon,
       carbon_score,
-      hasData: total_emissions > 0 || total_offsets > 0,
+      hasData: total_emissions > 0,
       usda_verified: Boolean(apiData.usda_verified),
       transparency_score,
       performance_tier: apiData.performance_tier || null,
-      data_quality: apiData.data_quality || null,
-      offset_ratio: Number(apiData.offset_ratio) || 0
+      data_quality: apiData.data_quality || null
     };
   }
   // ✅ FALLBACK 1: Use legacy summary data with validation
@@ -463,16 +460,6 @@ const CarbonDashboard = () => {
     window.open(`/consumer/establishment/${establishmentId}`, '_blank');
   };
 
-  const handleViewCarbonInsights = () => {
-    console.log('🎯 View Carbon Transparency Insights');
-    // Navigate to carbon transparency insights (not cost insights)
-    navigate('/admin/insights/carbon-transparency', {
-      state: {
-        establishmentId: establishmentId,
-        focus: 'transparency-metrics'
-      }
-    });
-  };
 
   const handleViewTrends = () => {
     console.log('🎯 View Carbon Trends');
@@ -727,26 +714,26 @@ const CarbonDashboard = () => {
           </Box>
 
           <CardBody p={8}>
-            {/* PRIMARY CARBON METRICS - SIMPLIFIED */}
+            {/* PRIMARY TRANSPARENCY METRICS - TRANSPARENCY FIRST */}
             <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={8} mb={8}>
-              {/* 1. CARBON FOOTPRINT - PRIMARY METRIC */}
+              {/* 1. TRANSPARENCY SCORE - PRIMARY METRIC */}
               <Box textAlign="center">
                 <Text fontSize="sm" color="gray.500" fontWeight="medium" mb={2}>
-                  Carbon Footprint
+                  Transparency Score
                 </Text>
-                <Text fontSize="4xl" fontWeight="bold" color="gray.800" mb={1}>
-                  {summaryData?.total_emissions?.toFixed(1) || '0.0'}
+                <Text fontSize="4xl" fontWeight="bold" color={`${transparencyBadge.color}.600`} mb={1}>
+                  {finalTransparencyScore !== null ? finalTransparencyScore : '0'}/100
                 </Text>
                 <Text fontSize="md" color="gray.600" mb={3}>
-                  kg CO₂e
+                  Verified Practices
                 </Text>
 
-                {/* Government Verification Indicator */}
-                {realUSDAData?.success && (
+                {/* Blockchain Verification Indicator */}
+                {finalTransparencyScore > 0 && (
                   <HStack justify="center" spacing={1}>
                     <Icon as={CheckCircleIcon} color="green.500" boxSize={4} />
                     <Text fontSize="xs" color="green.600" fontWeight="medium">
-                      Government Verified
+                      Transparency Verified
                     </Text>
                   </HStack>
                 )}
@@ -828,14 +815,14 @@ const CarbonDashboard = () => {
                 )}
               </Box>
 
-              {/* 3. TRANSPARENCY SCORE - ENHANCED */}
+              {/* 3. CARBON FOOTPRINT - SECONDARY METRIC */}
               <Box textAlign="center">
                 <HStack justify="center" mb={2}>
                   <Text fontSize="sm" color="gray.500" fontWeight="medium">
-                    Transparency Score
+                    Carbon Footprint
                   </Text>
                   <Tooltip
-                    label="Measures how transparent your carbon data is to consumers. Based on USDA verification, data completeness, and government credibility scores. Higher scores build more consumer trust."
+                    label="Total carbon dioxide equivalent emissions from all recorded activities. This technical metric provides detailed environmental impact data for scientific analysis and B2B reporting."
                     hasArrow
                     placement="top"
                     bg="gray.800"
@@ -848,50 +835,35 @@ const CarbonDashboard = () => {
                   </Tooltip>
                 </HStack>
 
-                {finalTransparencyScore === null ? (
-                  // Loading state - show skeleton to prevent value jumping
-                  <VStack spacing={2}>
-                    <Skeleton height="60px" width="80px" />
-                    <Skeleton height="20px" width="100px" />
-                    <Skeleton height="25px" width="120px" borderRadius="full" />
-                    <Skeleton height="16px" width="140px" />
-                  </VStack>
-                ) : processedData.hasData ? (
+                {summaryData?.total_emissions ? (
                   <>
-                    <Text
-                      fontSize="4xl"
-                      fontWeight="bold"
-                      color={`${transparencyBadge.color}.500`}
-                      mb={1}>
-                      {finalTransparencyScore}
+                    <Text fontSize="2xl" fontWeight="bold" color="gray.700" mb={1}>
+                      {summaryData.total_emissions.toFixed(1)}
                     </Text>
-                    <Text fontSize="md" color="gray.600" mb={2}>
-                      / 100 Points
+                    <Text fontSize="sm" color="gray.600" mb={2}>
+                      kg CO₂e
                     </Text>
-                    <Badge
-                      colorScheme={transparencyBadge.color}
-                      fontSize="xs"
-                      px={2}
-                      py={1}
-                      borderRadius="full"
-                      mb={2}>
-                      {transparencyBadge.text}
-                    </Badge>
 
-                    <HStack justify="center" spacing={1}>
-                      <Icon as={FaChartLine} color="purple.500" boxSize={4} />
-                      <Text fontSize="xs" color="purple.600" fontWeight="medium">
-                        Transparency Report
-                      </Text>
-                    </HStack>
+                    {/* Government Verification Indicator */}
+                    {realUSDAData?.success && (
+                      <HStack justify="center" spacing={1}>
+                        <Icon as={CheckCircleIcon} color="green.500" boxSize={3} />
+                        <Text fontSize="xs" color="green.600" fontWeight="medium">
+                          USDA Verified
+                        </Text>
+                      </HStack>
+                    )}
                   </>
                 ) : (
                   <>
-                    <Text fontSize="3xl" fontWeight="bold" color="gray.400" mb={1}>
-                      📊
+                    <Text fontSize="2xl" fontWeight="bold" color="gray.400" mb={1}>
+                      0.0
                     </Text>
-                    <Text fontSize="sm" color="gray.500" mb={3}>
-                      Add carbon events to start tracking
+                    <Text fontSize="sm" color="gray.500" mb={2}>
+                      kg CO₂e
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      Add carbon events to calculate
                     </Text>
                   </>
                 )}
@@ -1033,7 +1005,7 @@ const CarbonDashboard = () => {
                       Your Performance vs Regional Farms
                     </Text>
                     <Tooltip
-                      label="Compares your carbon efficiency to other farms in your region using USDA NASS data. Shows your percentile ranking and efficiency compared to regional averages."
+                      label="Compares your farming transparency to other farms in your region using USDA NASS data. Shows your percentile ranking and documentation completeness compared to regional averages."
                       hasArrow
                       placement="top"
                       bg="gray.800"
@@ -1177,18 +1149,11 @@ const CarbonDashboard = () => {
                   </Box>
                   <Box textAlign="center">
                     <Text fontSize="xs" color="gray.500">
-                      Transparency Score
+                      Data Events
                     </Text>
-                    {finalTransparencyScore === null ? (
-                      <Skeleton height="24px" width="60px" mx="auto" />
-                    ) : (
-                      <Text
-                        fontSize="lg"
-                        fontWeight="bold"
-                        color={`${transparencyBadge.color}.600`}>
-                        {finalTransparencyScore}/100
-                      </Text>
-                    )}
+                    <Text fontSize="lg" fontWeight="bold" color="blue.600">
+                      {carbonEntries?.length || 0}
+                    </Text>
                   </Box>
                   <Box textAlign="center">
                     <HStack justify="center" spacing={1}>
@@ -1242,28 +1207,26 @@ const CarbonDashboard = () => {
                     <Icon as={FaLeaf} color="green.500" boxSize={5} />
                     <VStack align="start" spacing={0}>
                       <Text fontSize="sm" fontWeight="bold" color="green.800">
-                        Carbon Reduction Opportunity
+                        Transparency Improvement Opportunity
                       </Text>
                       <Text fontSize="xs" color="green.600">
-                        Based on USDA regional analysis
+                        Based on USDA data documentation
                       </Text>
                     </VStack>
                   </HStack>
                   <Text fontSize="xs" color="gray.700">
                     {benchmarkData?.benchmark_comparison?.improvement_potential
-                      ? `Potential to reduce emissions by ${(
+                      ? `Potential to improve transparency by ${(
                           benchmarkData.benchmark_comparison.improvement_potential * 100
-                        ).toFixed(1)}% to match regional leaders`
-                      : 'Optimize nitrogen application timing to reduce emissions by up to 15%'}
+                        ).toFixed(1)}% to match regional documentation leaders`
+                      : 'Document more farming practices to improve consumer trust by up to 15%'}
                   </Text>
                   {benchmarkData?.benchmark_comparison?.improvement_potential && (
                     <Text fontSize="xs" color="green.600" mt={1} fontWeight="medium">
-                      Could save ~
+                      Could increase consumer trust by ~
                       {(
-                        (processedData.total_emissions || 0) *
-                        benchmarkData.benchmark_comparison.improvement_potential
-                      ).toFixed(0)}{' '}
-                      kg CO₂e annually
+                        benchmarkData.benchmark_comparison.improvement_potential * 100
+                      ).toFixed(0)}% through better documentation
                     </Text>
                   )}
                 </Box>
@@ -1480,7 +1443,7 @@ const CarbonDashboard = () => {
                           </CardBody>
                         </Card>
 
-                        {/* Environmental Score */}
+                        {/* Transparency Score */}
                         <Card borderWidth="1px" borderColor="gray.200" bg="white">
                           <CardBody textAlign="center" py={6}>
                             {isSummaryLoading || isEntriesLoading ? (
@@ -1496,10 +1459,10 @@ const CarbonDashboard = () => {
                                 </Text>
                                 <HStack justify="center" spacing={1} mb={2}>
                                   <Text fontSize="sm" color="gray.600">
-                                    Environmental Score
+                                    Transparency Score
                                   </Text>
                                   <Tooltip
-                                    label="Overall environmental performance score based on carbon efficiency, sustainable practices, and data quality. Scale from 0-100, where higher scores indicate better environmental performance."
+                                    label="Overall transparency score based on farming practice documentation, data completeness, and verification status. Scale from 0-100, where higher scores indicate better consumer trust and transparency."
                                     hasArrow
                                     placement="top"
                                     bg="gray.800"
@@ -1600,14 +1563,6 @@ const CarbonDashboard = () => {
                           🌱 Carbon Transparency Actions
                         </Heading>
                         <HStack spacing={2} flexWrap="wrap">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            colorScheme="blue"
-                            leftIcon={<FaEye />}
-                            onClick={handleViewCarbonInsights}>
-                            Transparency Insights
-                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -1771,12 +1726,6 @@ const CarbonDashboard = () => {
                             <HStack spacing={3} mt={3}>
                               <Button colorScheme="green" size="sm" onClick={handleAddCarbonEvent}>
                                 Quick Add Event
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleViewCarbonInsights}>
-                                Learn More
                               </Button>
                             </HStack>
                           </VStack>
@@ -2093,8 +2042,8 @@ const CarbonDashboard = () => {
                               </Text>
                             </HStack>
                             <Text fontSize="sm" color="gray.600">
-                              Clean, professional summary of your carbon performance with key
-                              insights
+                              Clean, professional summary of your farming transparency with key
+                              consumer insights
                             </Text>
                             <Button
                               size="sm"

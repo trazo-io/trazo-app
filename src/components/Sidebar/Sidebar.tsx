@@ -100,7 +100,7 @@ function Sidebar(props: SidebarProps) {
   const [dynamicRoutes, setDynamicRoutes] = useState<Route[]>([]);
   const [certificationsRoutes, setCertificationsRoutes] = useState([]);
   const [commercialDynamicRoutes, setCommercialDynamicRoutes] = useState([]);
-  const [carbonDynamicRoutes, setCarbonDynamicRoutes] = useState([]);
+  const [transparencyDynamicRoutes, setTransparencyDynamicRoutes] = useState([]);
   const [iotDynamicRoutes, setIotDynamicRoutes] = useState([]);
 
   const establishments = useSelector(
@@ -181,15 +181,15 @@ function Sidebar(props: SidebarProps) {
         };
       });
 
-    const carbonDynamicRoutes =
+    const transparencyDynamicRoutes =
       establishments &&
       establishments.map((e: EstablishmentType) => {
         return {
           name: e.name,
-          path: `/dashboard/establishment/${e.id}/carbon`,
+          path: `/dashboard/establishment/${e.id}/transparency`,
           establishmentId: e.id,
           authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/establishment\\/${e.id}\\/carbon$`),
+          regex: new RegExp(`^\\/admin\\/dashboard\\/establishment\\/${e.id}\\/transparency$`),
           layout: '/admin',
           items: []
         };
@@ -213,7 +213,7 @@ function Sidebar(props: SidebarProps) {
       setDynamicRoutes(dynamicRoutes);
       setCertificationsRoutes(certificationsRoutes);
       setCommercialDynamicRoutes(commercialDynamicRoutes);
-      setCarbonDynamicRoutes(carbonDynamicRoutes);
+      setTransparencyDynamicRoutes(transparencyDynamicRoutes);
       setIotDynamicRoutes(iotDynamicRoutes);
     }
   }, [establishments]);
@@ -515,7 +515,7 @@ function Sidebar(props: SidebarProps) {
               {(dynamicRoutes ||
                 certificationsRoutes ||
                 commercialDynamicRoutes ||
-                carbonDynamicRoutes ||
+                transparencyDynamicRoutes ||
                 iotDynamicRoutes) && (
                 <List>
                   {
@@ -530,8 +530,8 @@ function Sidebar(props: SidebarProps) {
                               ? certificationsRoutes
                               : prop.isCommercial
                               ? commercialDynamicRoutes
-                              : prop.isCarbonDashboard
-                              ? carbonDynamicRoutes
+                              : prop.isTransparencyDashboard
+                              ? transparencyDynamicRoutes
                               : prop.isIoTDashboard
                               ? iotDynamicRoutes
                               : prop.items;
@@ -546,8 +546,8 @@ function Sidebar(props: SidebarProps) {
                           ? certificationsRoutes
                           : prop.isCommercial
                           ? commercialDynamicRoutes
-                          : prop.isCarbonDashboard
-                          ? carbonDynamicRoutes
+                          : prop.isTransparencyDashboard
+                          ? transparencyDynamicRoutes
                           : prop.isIoTDashboard
                           ? iotDynamicRoutes
                           : prop.items

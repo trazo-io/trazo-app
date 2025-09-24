@@ -21,16 +21,16 @@ interface NavigationBottomBarProps {
 
 const navigationItems: NavigationItem[] = [
   {
-    id: 'carbon',
-    label: 'Carbon',
-    icon: FaLeaf,
-    targetSection: 'carbon-section'
-  },
-  {
     id: 'transparency',
     label: 'Transparency',
     icon: FaShieldAlt,
     targetSection: 'transparency-section'
+  },
+  {
+    id: 'carbon',
+    label: 'Impact',
+    icon: FaLeaf,
+    targetSection: 'carbon-section'
   },
   {
     id: 'farm',
@@ -47,7 +47,7 @@ const navigationItems: NavigationItem[] = [
 ];
 
 export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
-  activeSection = 'carbon',
+  activeSection = 'transparency',
   onSectionChange,
   onScrollStart,
   onScrollEnd

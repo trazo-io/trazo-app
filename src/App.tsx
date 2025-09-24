@@ -1,6 +1,7 @@
+import React, { Suspense } from 'react';
+import { useEffect, useState } from 'react';
 import { CONSUMER, PRODUCER, SUPERUSER } from './config';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 // Remove ChakraProvider and CSSReset imports since they're now in index.tsx
 // import { ChakraProvider, CSSReset } from '@chakra-ui/react';
 // import theme from 'theme/theme';
@@ -23,7 +24,8 @@ import CertificationsView from 'views/Dashboard/Certifications';
 //@ts-ignore
 import CheckAuth from './utils/protections/CheckAuth';
 import CommercialView from 'views/Dashboard/Commercial';
-import DashboardView from 'views/Dashboard/Dashboard';
+// Lazy load dashboard for mobile performance
+const DashboardView = React.lazy(() => import('views/Dashboard/Dashboard'));
 import DetailEvent from 'views/Dashboard/Dashboard/Event/DetailEvent';
 import FinishProduction from 'views/Dashboard/Dashboard/Production/FinishProduction';
 //@ts-ignore
@@ -33,13 +35,13 @@ import ParcelView from 'views/Dashboard/Parcel';
 //@ts-ignore
 import Pricing from 'views/Pages/Pricing/index';
 import PrivacyPolicy from 'views/Legal/PrivacyPolicy';
-import ProductDetail from 'views/Scan/ProductDetail/ProductDetail';
+// Lazy load QR scanning components for mobile performance
+const ProductDetail = React.lazy(() => import('views/Scan/ProductDetail/ProductDetail'));
 import ProfileEstablishment from 'views/Dashboard/Dashboard/Establishment/ProfileEstablishment';
 //@ts-ignore
 import ProfileParcel from 'views/Dashboard/Dashboard/Parcel/ProfileParcel';
 import ProfileProduction from 'views/Dashboard/Dashboard/Production/ProfileProduction';
 import ProfileUser from 'views/Dashboard/Dashboard/User/ProfileUser';
-import React from 'react';
 //@ts-ignore
 import SelectCompanyView from 'views/Dashboard/Dashboard/Company/AddCompany';
 import ModernProductReview from 'views/Scan/ProductReview/ModernProductReview';
@@ -65,8 +67,6 @@ import ReviewsListView from 'views/Dashboard/ReviewsList';
 import ImpactDashboard from 'views/Dashboard/ImpactDashboard';
 import ConsumerEducationDashboard from 'views/Dashboard/EducationDashboard';
 import CommunityDashboard from 'views/Dashboard/CommunityDashboard';
-import CarbonInsights from 'views/Dashboard/CarbonInsights';
-import CarbonComparison from 'views/Dashboard/CarbonComparison';
 import CarbonJourney from 'views/Dashboard/CarbonJourney';
 import { routeConfig } from './routes/config';
 import SubscriptionRequired from './utils/protections/SubscriptionRequired';
@@ -77,7 +77,6 @@ import UnifiedSubscriptionDashboard from 'views/Dashboard/UnifiedSubscription';
 import NoSubscriptionRedirect from './utils/protections/NoSubscriptionRedirect';
 import NewProduction from 'views/Dashboard/Dashboard/components/forms/NewProduction';
 import ModernCarbonDashboard from 'views/Dashboard/Dashboard/Establishment/ModernCarbonDashboard';
-import IoTDashboard from 'views/Dashboard/Dashboard/Establishment/IoTDashboard';
 import PublicEstablishmentProfile from 'views/Scan/PublicEstablishmentProfile/PublicEstablishmentProfile';
 import { usePointsStore } from './store/pointsStore';
 import ProducerEducationDashboard from 'views/Dashboard/Education';
@@ -359,20 +358,11 @@ const App = () => {
                   <Route path="settings/change-password" exact element={<ChangePassword />} />
                   <Route path="subscription/success" element={<SubscriptionSuccess />} />
                   <Route
-                    path="establishment/:establishmentId/carbon"
+                    path="establishment/:establishmentId/transparency"
                     exact
                     element={
                       <NoSubscriptionRedirect>
                         <ModernCarbonDashboard />
-                      </NoSubscriptionRedirect>
-                    }
-                  />
-                  <Route
-                    path="establishment/:establishmentId/iot"
-                    exact
-                    element={
-                      <NoSubscriptionRedirect>
-                        <IoTDashboard />
                       </NoSubscriptionRedirect>
                     }
                   />
@@ -387,7 +377,11 @@ const App = () => {
           {subdomain === 'consumer' && (
             <>
               <Route element={<ConsumerProductLayout />}>
-                <Route path="/production/:productionId" element={<ProductDetail />} />
+                <Route path="/production/:productionId" element={
+                  <Suspense fallback={<div />}>
+                    <ProductDetail />
+                  </Suspense>
+                } />
               </Route>
               <Route element={<AuthLayout />}>
                 <Route
@@ -400,8 +394,6 @@ const App = () => {
                   {/* Consumer routes */}
                   <Route index element={<Navigate to="impact" replace />} />
                   <Route path="impact" element={<ImpactDashboard />} />
-                  <Route path="insights" element={<CarbonInsights />} />
-                  <Route path="compare" element={<CarbonComparison />} />
                   <Route path="education" element={<ConsumerEducationDashboard />} />
                   <Route path="community" element={<CommunityDashboard />} />
                   <Route path="journey" element={<CarbonJourney />} />

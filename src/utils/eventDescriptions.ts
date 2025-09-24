@@ -15,24 +15,24 @@ interface EventDescriptionData {
 
 // Enhanced event type mappings for consumer-friendly descriptions
 export const eventDescriptions: Record<string, EventDescriptionData> = {
-  // Fertilization Events - Enhanced with Precision Agriculture Details
+  // Fertilization Events - Real transparency practices
   'spring fertilization': {
-    title: 'GPS-Guided Spring Fertilizer Application',
-    shortDescription: 'Precision nitrogen application using variable rate technology to match soil needs',
-    consumerImpact: 'Ensures optimal nutrition and flavor development while preventing over-application',
-    sustainabilityBenefit: 'Reduces nutrient runoff by 40% through GPS-guided precision application',
+    title: 'Spring Nutrient Application',
+    shortDescription: 'Applied nutrients based on soil test results - documented with field photos',
+    consumerImpact: 'Your crops received exactly the nutrition needed for optimal growth and flavor, verified with photos',
+    sustainabilityBenefit: 'Soil-test guided application reduces environmental impact and protects water quality',
   },
   'fertilizer application': {
-    title: 'Smart Fertilizer Management System',
-    shortDescription: 'Soil-test guided nutrient application using advanced spreader technology',
-    consumerImpact: 'Delivers exactly the right nutrients for maximum flavor and nutritional content',
-    sustainabilityBenefit: 'Prevents over-fertilization, protecting waterways and reducing emissions by 25%',
+    title: 'Soil Nutrition Program',
+    shortDescription: 'Applied specific nutrients based on soil test recommendations - rates and methods documented',
+    consumerImpact: 'Your food was grown with scientifically-determined nutrition for maximum health benefits',
+    sustainabilityBenefit: 'Precise application prevents over-fertilization and protects water quality',
   },
   'applied fertilizer application': {
-    title: 'Variable Rate Fertilizer Application',
-    shortDescription: 'Advanced GPS-guided system applies precise amounts based on real-time soil data',
-    consumerImpact: 'Optimizes plant nutrition for consistent quality and enhanced flavor profiles',
-    sustainabilityBenefit: 'Reduces excess nitrogen by 30%, minimizing groundwater contamination',
+    title: 'Variable Rate Nutrition',
+    shortDescription: 'GPS-guided application with rates customized to soil zones - photo verified',
+    consumerImpact: 'Each area of the field received customized nutrition for consistent, premium quality produce',
+    sustainabilityBenefit: 'Precision application reduces excess nutrients and environmental impact',
   },
   'sprayer operations': {
     title: 'Precision Liquid Application System',
@@ -67,24 +67,24 @@ export const eventDescriptions: Record<string, EventDescriptionData> = {
     sustainabilityBenefit: 'Minimizes water waste and prevents soil erosion',
   },
 
-  // Planting Events - Enhanced with Conservation Agriculture Details
+  // Planting Events - Real transparency practices  
   'planting': {
-    title: 'Precision Seed Placement System',
-    shortDescription: 'Advanced planter technology ensures perfect seed spacing and depth control',
-    consumerImpact: 'Creates uniform plant stands for consistent crop quality and maximum nutrition',
-    sustainabilityBenefit: 'Optimizes seed usage and reduces replanting needs by 15%',
+    title: 'Precision Seed Placement',
+    shortDescription: 'Seeds planted with precise spacing and depth control - GPS documented for accuracy',
+    consumerImpact: 'Your crops were planted with exact spacing for optimal growth and maximum yield per plant',
+    sustainabilityBenefit: 'Precise planting ensures high germination rates, reducing seed waste and replanting needs',
   },
   'applied planting': {
-    title: 'Smart Planting Technology',
-    shortDescription: 'GPS-guided planter with variable population control adapts to field conditions',
-    consumerImpact: 'Ensures optimal plant density for maximum yield and quality per acre',
-    sustainabilityBenefit: 'Reduces seed waste while maximizing land efficiency and resource utilization',
+    title: 'Variable Rate Seeding',
+    shortDescription: 'Planting rates customized based on soil productivity zones - field conditions documented',
+    consumerImpact: 'Each area received the optimal plant population for consistent, premium quality produce',
+    sustainabilityBenefit: 'Customized planting maximizes yield while conserving seeds and resources',
   },
   'no-till planting': {
-    title: 'Conservation No-Till Seeding',
-    shortDescription: 'Advanced planter places seeds through crop residue without soil disturbance',
-    consumerImpact: 'Grown in naturally structured soil that retains more nutrients and moisture',
-    sustainabilityBenefit: 'Sequesters 1.2 tons CO₂/hectare annually while preventing 95% of soil erosion',
+    title: 'Conservation Planting',
+    shortDescription: 'Direct seeded through crop residue without soil disturbance - conservation methods documented',
+    consumerImpact: 'Your crops grow in undisturbed, naturally structured soil with enhanced water and nutrient retention',
+    sustainabilityBenefit: 'No-till method prevents soil erosion and stores carbon in the soil',
   },
   'applied no-till planting': {
     title: 'Zero-Disturbance Planting System',
@@ -105,50 +105,50 @@ export const eventDescriptions: Record<string, EventDescriptionData> = {
     sustainabilityBenefit: 'Reduces fuel consumption by 30% through efficient planting patterns',
   },
 
-  // Harvest Events - Enhanced with Modern Harvesting Technology
+  // Harvest Events - Real transparency practices
   'harvest': {
-    title: 'Precision Harvest Operations',
-    shortDescription: 'GPS-guided harvesting equipment collects crops at optimal moisture and maturity',
-    consumerImpact: 'Harvested at peak nutritional value using moisture sensors for perfect timing',
-    sustainabilityBenefit: 'Minimizes field traffic and soil compaction while reducing harvest losses by 12%',
+    title: 'Optimal Harvest Timing',
+    shortDescription: 'Harvested at peak maturity for maximum quality - timing and conditions documented',
+    consumerImpact: 'Your crops were harvested at the exact moment for maximum nutrition, flavor, and shelf life',
+    sustainabilityBenefit: 'Precise timing reduces field losses and optimizes storage quality',
   },
   'applied harvest': {
-    title: 'Smart Harvesting System',
-    shortDescription: 'Advanced combine harvester with yield mapping technology captures peak-quality crops',
-    consumerImpact: 'Real-time quality monitoring ensures only the best grains reach your table',
-    sustainabilityBenefit: 'Reduces fuel consumption by 25% through optimized harvesting patterns',
+    title: 'Yield-Mapped Harvest',
+    shortDescription: 'GPS-guided harvest with real-time yield monitoring - field performance tracked and documented',
+    consumerImpact: 'Advanced monitoring ensures only premium quality crops from the best field areas reach you',
+    sustainabilityBenefit: 'Optimized harvest patterns reduce fuel consumption and minimize soil compaction',
   },
   'combine harvest operation': {
-    title: 'High-Efficiency Combine Harvesting',
-    shortDescription: 'State-of-the-art combine with cleaning systems maximizes grain quality and recovery',
-    consumerImpact: 'Advanced separation technology delivers cleaner, higher-quality grain',
-    sustainabilityBenefit: 'Recovers 98% of available grain, reducing waste and maximizing land productivity',
+    title: 'Mechanized Grain Harvest',
+    shortDescription: 'Combine harvest with on-board cleaning systems - grain quality and recovery documented',
+    consumerImpact: 'Advanced cleaning systems deliver the highest purity grains with minimal foreign material',
+    sustainabilityBenefit: 'Efficient harvesting captures maximum available grain, minimizing field waste',
   },
   'hand harvest': {
-    title: 'Selective Hand Harvesting',
-    shortDescription: 'Carefully hand-picked by experienced harvesters for premium quality selection',
-    consumerImpact: 'Each piece individually selected for optimal ripeness and quality standards',
-    sustainabilityBenefit: 'Gentle harvesting reduces damage and extends product shelf life by 40%',
+    title: 'Selective Hand Harvest',
+    shortDescription: 'Individual selection harvest with quality evaluation for each piece - harvest process documented',
+    consumerImpact: 'Every single piece of your produce was personally inspected and selected for perfect quality',
+    sustainabilityBenefit: 'Gentle harvesting reduces damage and extends fresh storage life',
   },
 
-  // Pest Management Events - Enhanced Natural Alliance Stories
+  // Pest Management Events - Real transparency practices
   'pest scouting': {
-    title: 'Ecological Intelligence Monitoring',
-    shortDescription: 'Expert field scouts identify pest pressures and beneficial insect populations for natural balance',
-    consumerImpact: 'Prevents pest damage through early detection, minimizing any need for treatments',
-    sustainabilityBenefit: 'Precision monitoring reduces intervention needs by 70% while protecting beneficial ecosystems',
+    title: 'Field Crop Monitoring',
+    shortDescription: 'Regular field scouting to monitor crop health and pest populations - findings documented with photos',
+    consumerImpact: 'Careful monitoring ensures pest levels stay below damage thresholds, protecting your food quality naturally',
+    sustainabilityBenefit: 'Systematic scouting reduces pesticide applications through early detection and prevention',
   },
   'scouting': {
-    title: 'Precision Pest Intelligence',
-    shortDescription: 'Professional agricultural scouts monitor crop health and natural predator populations',
-    consumerImpact: 'Proactive monitoring ensures pest-free crops with minimal intervention requirements',
-    sustainabilityBenefit: 'Early detection strategies reduce chemical needs by 65% through natural ecosystem management',
+    title: 'Integrated Pest Monitoring',
+    shortDescription: 'Monitored pest and beneficial insect populations to maintain natural balance - field conditions documented',
+    consumerImpact: 'Natural predator populations controlled pests without chemical intervention, ensuring cleaner produce',
+    sustainabilityBenefit: 'Biological control maintains ecosystem balance while protecting crop quality',
   },
   'beneficial release': {
-    title: 'Natural Alliance Deployment',
-    shortDescription: 'Strategic release of beneficial insects creates natural pest control partnerships',
-    consumerImpact: 'Protected by nature\'s own pest control team, reducing chemical residue concerns',
-    sustainabilityBenefit: 'Beneficial insects eliminate 85% of pest pressure while enhancing biodiversity',
+    title: 'Beneficial Insect Release',
+    shortDescription: 'Released beneficial insects for natural pest control - release methods and timing documented',
+    consumerImpact: 'Your crops are protected by beneficial insects that eliminate pests without chemical residues',
+    sustainabilityBenefit: 'Biological control reduces pest pressure while enhancing farm biodiversity',
   },
   'trap monitoring': {
     title: 'Precision Pest Intelligence Network',
@@ -177,16 +177,16 @@ export const eventDescriptions: Record<string, EventDescriptionData> = {
 
   // Soil Management Events - Enhanced Carbon Sequestration Stories (CARBON GOLDMINE)
   'soil testing': {
-    title: 'Precision Soil Health Analysis',
-    shortDescription: 'Advanced laboratory testing reveals soil carbon storage potential and nutrient needs',
-    consumerImpact: 'Ensures crops grow in optimally balanced soil with maximum nutritional density',
-    sustainabilityBenefit: 'Identifies carbon sequestration opportunities and prevents over-application of inputs',
+    title: 'Comprehensive Soil Analysis',
+    shortDescription: 'Professional soil testing to determine nutrient needs and soil health - lab results documented',
+    consumerImpact: 'Your crops grow in scientifically optimized soil with precisely balanced nutrients for maximum nutrition',
+    sustainabilityBenefit: 'Targeted soil management prevents over-application and protects groundwater quality',
   },
   'soil test': {
-    title: 'Carbon-Smart Soil Analysis',
-    shortDescription: 'Comprehensive soil testing to optimize both crop nutrition and carbon storage capacity',
-    consumerImpact: 'Grown in scientifically optimized soil that maximizes both flavor and nutritional content',
-    sustainabilityBenefit: 'Maps soil carbon potential, enabling precision management that sequesters 1.8+ tons CO₂/hectare',
+    title: 'Precision Soil Health Assessment',
+    shortDescription: 'Detailed soil sampling and analysis to optimize growing conditions - soil health data available',
+    consumerImpact: 'Detailed soil analysis ensures your food grows in the healthiest possible soil conditions',
+    sustainabilityBenefit: 'Data-driven soil management builds soil carbon and reduces environmental impact',
   },
   'ph adjustment': {
     title: 'Natural Soil pH Optimization',
@@ -201,10 +201,10 @@ export const eventDescriptions: Record<string, EventDescriptionData> = {
     sustainabilityBenefit: 'Each 1% increase in organic matter sequesters 8.5 tons CO₂ per hectare annually',
   },
   'cover crop': {
-    title: 'Carbon-Capturing Cover Crops',
-    shortDescription: 'Strategic companion crops that capture atmospheric CO₂ and store it in soil permanently',
-    consumerImpact: 'Builds soil biology and nutrient density for more nutritious, resilient produce',
-    sustainabilityBenefit: 'Sequesters 2.3 tons CO₂/hectare while preventing erosion and building soil health',
+    title: 'Cover Crop Planting',
+    shortDescription: 'Planted cover crops to protect and enrich soil between growing seasons - species and timing documented',
+    consumerImpact: 'Cover crops build soil biology and nutrient cycling, creating richer soil for more nutritious crops',
+    sustainabilityBenefit: 'Cover crops sequester carbon while preventing soil erosion and building soil health',
   },
   'tillage': {
     title: 'Carbon-Conscious Soil Management',
@@ -373,9 +373,79 @@ export const eventDescriptions: Record<string, EventDescriptionData> = {
 };
 
 /**
- * Get consumer-friendly description for an event - Enhanced with Carbon Focus
+ * Get real transparency details from actual event data
  */
-export function getConsumerEventDescription(eventDescription: string): EventDescriptionData {
+export function getRealTransparencyDetails(event: any): string {
+  const details: string[] = [];
+  
+  // Add real data when available - handle both string and numeric values
+  if (event.volume && String(event.volume).trim() && String(event.volume).trim() !== 'null') {
+    details.push(`Applied: ${event.volume}`);
+  }
+  
+  if (event.area && String(event.area).trim() && String(event.area).trim() !== 'null') {
+    // Check if area already includes "hectares" unit
+    const areaValue = String(event.area);
+    if (areaValue.toLowerCase().includes('hectare')) {
+      details.push(`Area: ${areaValue}`);
+    } else {
+      details.push(`Area: ${areaValue} hectares`);
+    }
+  }
+  
+  if (event.concentration && String(event.concentration).trim() && String(event.concentration).trim() !== 'null') {
+    details.push(`Concentration: ${event.concentration}`);
+  }
+  
+  if (event.way_of_application && String(event.way_of_application).trim() && String(event.way_of_application).trim() !== 'null') {
+    details.push(`Method: ${event.way_of_application}`);
+  }
+  
+  if (event.time_period && String(event.time_period).trim() && String(event.time_period).trim() !== 'null') {
+    details.push(`Duration: ${event.time_period}`);
+  }
+  
+  // Check for additional data in extra_data
+  if (event.extra_data) {
+    // Equipment information
+    if (event.equipment && String(event.equipment).trim() && String(event.equipment).trim() !== 'null') {
+      details.push(`Equipment: ${event.equipment}`);
+    }
+    
+    // Specific data from extra_data based on event type
+    if (event.type === 'chemical' && event.extra_data.organic_matter_content) {
+      details.push(`Organic matter: ${event.extra_data.organic_matter_content}`);
+    }
+    
+    if (event.extra_data.area_treated) {
+      details.push(`Area treated: ${event.extra_data.area_treated} hectares`);
+    }
+    
+    if (event.extra_data.harvest_duration_days) {
+      details.push(`Harvest duration: ${event.extra_data.harvest_duration_days} days`);
+    }
+    
+    if (event.extra_data.amount && event.extra_data.unit) {
+      details.push(`Amount: ${event.extra_data.amount} ${event.extra_data.unit}`);
+    }
+  }
+  
+  // Add photo verification if available
+  if (event.album?.images?.length > 0) {
+    details.push(`${event.album.images.length} photo${event.album.images.length > 1 ? 's' : ''} documented`);
+  }
+  
+  if (details.length > 0) {
+    return ` - ${details.join(', ')}`;
+  }
+  
+  return '';
+}
+
+/**
+ * Get consumer-friendly description for an event with real data integration
+ */
+export function getConsumerEventDescription(eventDescription: string, event?: any): EventDescriptionData {
   const lowerDesc = eventDescription.toLowerCase();
   
   // Enhanced pattern matching with carbon sequestration and climate expertise focus
@@ -465,101 +535,241 @@ export function getConsumerEventDescription(eventDescription: string): EventDesc
   
   // Fertilizer application patterns
   if (lowerDesc.includes('applied fertilizer application')) {
-    return eventDescriptions['applied fertilizer application'];
+    const baseDescription = eventDescriptions['applied fertilizer application'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('sprayer operations') && lowerDesc.includes('ferti')) {
-    return eventDescriptions['sprayer operations'];
+    const baseDescription = eventDescriptions['sprayer operations'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('fertiliz')) {
-    return eventDescriptions['fertilizer application'];
+    const baseDescription = eventDescriptions['fertilizer application'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   
   // Planting patterns
   if (lowerDesc.includes('applied no-till planting')) {
-    return eventDescriptions['applied no-till planting'];
+    const baseDescription = eventDescriptions['applied no-till planting'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('no-till planting')) {
-    return eventDescriptions['no-till planting'];
+    const baseDescription = eventDescriptions['no-till planting'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('applied planting')) {
-    return eventDescriptions['applied planting'];
+    const baseDescription = eventDescriptions['applied planting'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('planting equipment operat')) {
-    return eventDescriptions['planting equipment operations'];
+    const baseDescription = eventDescriptions['planting equipment operations'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('plant')) {
-    return eventDescriptions['planting'];
+    const baseDescription = eventDescriptions['planting'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   
   // Harvest patterns
   if (lowerDesc.includes('combine harvest operation')) {
-    return eventDescriptions['combine harvest operation'];
+    const baseDescription = eventDescriptions['combine harvest operation'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('applied harvest')) {
-    return eventDescriptions['applied harvest'];
+    const baseDescription = eventDescriptions['applied harvest'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('harvest')) {
-    return eventDescriptions['harvest'];
+    const baseDescription = eventDescriptions['harvest'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   
   // Land preparation and tillage patterns
   if (lowerDesc.includes('applied land preparation')) {
-    return eventDescriptions['applied land preparation'];
+    const baseDescription = eventDescriptions['applied land preparation'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('land preparation')) {
-    return eventDescriptions['land preparation'];
+    const baseDescription = eventDescriptions['land preparation'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('applied fall tillage - primary')) {
-    return eventDescriptions['applied fall tillage - primary'];
+    const baseDescription = eventDescriptions['applied fall tillage - primary'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('fall tillage') && lowerDesc.includes('chisel')) {
-    return eventDescriptions['applied fall tillage - primary'];
+    const baseDescription = eventDescriptions['applied fall tillage - primary'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('fall tillage')) {
-    return eventDescriptions['fall tillage'];
+    const baseDescription = eventDescriptions['fall tillage'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('applied spring field preparation')) {
-    return eventDescriptions['applied spring field preparation'];
+    const baseDescription = eventDescriptions['applied spring field preparation'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('spring field preparation') && lowerDesc.includes('disk')) {
-    return eventDescriptions['applied spring field preparation'];
+    const baseDescription = eventDescriptions['applied spring field preparation'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('spring field preparation')) {
-    return eventDescriptions['spring field preparation'];
+    const baseDescription = eventDescriptions['spring field preparation'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('chisel plow')) {
-    return eventDescriptions['chisel plow'];
+    const baseDescription = eventDescriptions['chisel plow'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('disk harrow')) {
-    return eventDescriptions['disk harrow'];
+    const baseDescription = eventDescriptions['disk harrow'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   
   // Try to find exact match for remaining cases
   for (const [key, data] of Object.entries(eventDescriptions)) {
     if (lowerDesc.includes(key)) {
-      return data;
+      const realDetails = event ? getRealTransparencyDetails(event) : '';
+      return {
+        ...data,
+        shortDescription: data.shortDescription + realDetails
+      };
     }
   }
   
   // Additional category keywords
   if (lowerDesc.includes('irrigat') || lowerDesc.includes('water')) {
-    return eventDescriptions['irrigation'];
+    const baseDescription = eventDescriptions['irrigation'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('pest') || lowerDesc.includes('insect')) {
-    return eventDescriptions['pest scouting'];
+    const baseDescription = eventDescriptions['pest scouting'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('soil')) {
-    return eventDescriptions['soil testing'];
+    const baseDescription = eventDescriptions['soil testing'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('tillage')) {
-    return eventDescriptions['fall tillage'];
+    const baseDescription = eventDescriptions['fall tillage'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   if (lowerDesc.includes('preparation')) {
-    return eventDescriptions['land preparation'];
+    const baseDescription = eventDescriptions['land preparation'];
+    const realDetails = event ? getRealTransparencyDetails(event) : '';
+    return {
+      ...baseDescription,
+      shortDescription: baseDescription.shortDescription + realDetails
+    };
   }
   
-  // Default fallback
-  return eventDescriptions['general event'];
+  // Get base description and add real transparency details
+  const baseDescription = eventDescriptions['general event'];
+  const realDetails = event ? getRealTransparencyDetails(event) : '';
+  
+  return {
+    ...baseDescription,
+    shortDescription: baseDescription.shortDescription + realDetails
+  };
 }
 
 /**
@@ -631,71 +841,71 @@ export function getEventTrustIndicators(event: any): string[] {
   const indicators: string[] = [];
   
   // Always show verified practice for structured events
-  indicators.push('Verified Practice');
+  indicators.push('Farm Verified');
   
   const description = event.description?.toLowerCase() || '';
   const type = event.type?.toLowerCase() || '';
   
-  // Precision agriculture indicators
+  // Modern farming indicators
   if (description.includes('applied') || description.includes('precision') || 
       description.includes('smart') || description.includes('gps') ||
       description.includes('variable rate') || description.includes('advanced')) {
-    indicators.push('Precision Agriculture');
+    indicators.push('Modern Farming');
   }
   
-  // Conservation practice indicators
+  // Soil-friendly indicators
   if (description.includes('no-till') || description.includes('conservation') || 
       description.includes('residue') || description.includes('cover crop') ||
       description.includes('erosion')) {
-    indicators.push('Conservation Practice');
+    indicators.push('Soil Friendly');
   }
   
-  // Carbon sequestration indicators (ENHANCED CARBON GOLDMINE)
+  // Soil building indicators
   if (description.includes('carbon') || description.includes('sequester') ||
       description.includes('soil health') || description.includes('organic matter') ||
       description.includes('cover crop') || description.includes('compost') ||
       description.includes('soil carbon') || description.includes('organic amendment')) {
-    indicators.push('Carbon Storage');
+    indicators.push('Soil Builder');
   }
   
-  // Climate adaptation indicators (NEW)
+  // Weather smart indicators
   if (description.includes('weather') || description.includes('climate') ||
       description.includes('drought') || description.includes('frost') ||
       description.includes('adaptation') || description.includes('resilien')) {
-    indicators.push('Climate Expert');
+    indicators.push('Weather Smart');
   }
   
-  // Natural alliance indicators (ENHANCED)
+  // Working with nature indicators
   if (description.includes('beneficial') || description.includes('natural') ||
       description.includes('ecosystem') || description.includes('biodiversity') ||
       description.includes('integrated') || description.includes('alliance')) {
-    indicators.push('Natural Alliance');
+    indicators.push('Works with Nature');
   }
   
-  // Equipment efficiency indicators (NEW)
+  // Efficient farming indicators
   if (description.includes('fuel') || description.includes('efficiency') ||
       description.includes('emission') || description.includes('maintenance') ||
       description.includes('calibration') || description.includes('optimization')) {
-    indicators.push('Efficiency Leader');
+    indicators.push('Efficient Farming');
   }
   
   // Resource efficiency indicators
   if (description.includes('efficient') || description.includes('optimize') ||
       description.includes('reduce') || description.includes('minimize') ||
       type.includes('water') || description.includes('fuel')) {
-    indicators.push('Resource Efficient');
+    indicators.push('Saves Resources');
   }
   
   // Organic/natural indicators
   if (description.includes('organic') || description.includes('natural') ||
       description.includes('biological')) {
-    indicators.push('Natural Method');
+    indicators.push('Natural Methods');
   }
   
   // Technology indicators  
   if (description.includes('monitor') || description.includes('sensor') ||
       description.includes('data') || description.includes('real-time')) {
-    indicators.push('Data-Driven');
+    indicators.push('Smart Monitoring');
   }
   
   return indicators.slice(0, 3); // Limit to 3 most relevant indicators

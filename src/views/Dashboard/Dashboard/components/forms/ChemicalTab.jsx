@@ -40,6 +40,7 @@ import {
   StandardSelect,
   StandardTextarea
 } from 'components/Design/StandardComponents';
+import { SmartProductInput } from 'components/SmartProductInput';
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -56,7 +57,7 @@ import { FaPlus } from 'react-icons/fa';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
-// Enhanced form schema with USDA-compliant validation (crop type inherited from production)
+// Enhanced form schema with USDA-compliant validation AND NPK percentage validation
 const formSchemaMainInfo = object({
   type: string().min(1, 'Chemical type is required'),
   commercial_name: string().min(2, 'Commercial name must be at least 2 characters'),
@@ -66,12 +67,43 @@ const formSchemaMainInfo = object({
   area_unit: string().min(1, 'Area unit is required'),
   concentration: string().min(1, 'Concentration is required'),
   way_of_application: string().min(1, 'Application method is required'),
+  // NPK percentage validation fields (Phase 1.1 validation)
+  nitrogen_percentage: string().optional(),
+  phosphorus_percentage: string().optional(),
+  potassium_percentage: string().optional(),
   weather_conditions: string().optional(),
   soil_moisture: string().optional(),
   temperature_range: string().optional(),
   wind_speed: string().optional(),
   time_period: string().optional(),
   observation: string().optional()
+}).refine((data) => {
+  // NPK percentage validation - total cannot exceed 100%
+  const nitrogen = parseFloat(data.nitrogen_percentage) || 0;
+  const phosphorus = parseFloat(data.phosphorus_percentage) || 0;
+  const potassium = parseFloat(data.potassium_percentage) || 0;
+  const total = nitrogen + phosphorus + potassium;
+  
+  if (total > 100) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'NPK percentages cannot total more than 100%',
+  path: ['nitrogen_percentage']
+}).refine((data) => {
+  // Individual percentage validation - cannot be negative
+  const nitrogen = parseFloat(data.nitrogen_percentage) || 0;
+  const phosphorus = parseFloat(data.phosphorus_percentage) || 0;
+  const potassium = parseFloat(data.potassium_percentage) || 0;
+  
+  if (nitrogen < 0 || phosphorus < 0 || potassium < 0) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'NPK percentages cannot be negative',
+  path: ['nitrogen_percentage']
 });
 
 // USDA-compliant crop types for reference (crop type is inherited from production, not selected per event)
@@ -98,13 +130,13 @@ const USDA_CROP_TYPES = [
 const getIntelligentDefaults = (chemicalType, cropType = 'citrus') => {
   const cropSpecificDefaults = {
     citrus: {
-      FE: { volume: '75', area: '1.5', concentration: '8-8-8', way_of_application: 'fertigation' },
+      FE: { volume: '75', area: '1.5', concentration: '8-8-8', way_of_application: 'drip_irrigation' },
       PE: { volume: '25', area: '1.0', concentration: '1.5%', way_of_application: 'spray' },
       FU: { volume: '20', area: '1.0', concentration: '2.0%', way_of_application: 'foliar' },
-      HE: { volume: '15', area: '1.0', concentration: '2.5%', way_of_application: 'directed' }
+      HE: { volume: '15', area: '1.0', concentration: '2.5%', way_of_application: 'spray' }
     },
     corn: {
-      FE: { volume: '100', area: '4.0', concentration: '32-0-0', way_of_application: 'side_dress' },
+      FE: { volume: '100', area: '4.0', concentration: '32-0-0', way_of_application: 'sidedress' },
       PE: { volume: '30', area: '2.0', concentration: '2.0%', way_of_application: 'spray' },
       FU: { volume: '25', area: '2.0', concentration: '1.8%', way_of_application: 'foliar' },
       HE: { volume: '40', area: '2.0', concentration: '3.5%', way_of_application: 'broadcast' }
@@ -113,7 +145,7 @@ const getIntelligentDefaults = (chemicalType, cropType = 'citrus') => {
       FE: { volume: '30', area: '3.0', concentration: '0-20-20', way_of_application: 'starter' },
       PE: { volume: '20', area: '2.0', concentration: '1.2%', way_of_application: 'spray' },
       FU: { volume: '18', area: '2.0', concentration: '1.5%', way_of_application: 'foliar' },
-      HE: { volume: '35', area: '2.0', concentration: '3.0%', way_of_application: 'pre_emerge' }
+      HE: { volume: '35', area: '2.0', concentration: '3.0%', way_of_application: 'broadcast' }
     },
     tomatoes: {
       FE: {
@@ -217,6 +249,10 @@ const ChemicalTab = ({
   const textColor = useColorModeValue('gray.700', 'white');
   const iconColor = useColorModeValue('gray.300', 'gray.700');
   const [selectedChemicalType, setSelectedChemicalType] = useState('');
+  
+  // Smart Product Input state
+  const [smartProductValidation, setSmartProductValidation] = useState(null);
+  const [autoFilledNPK, setAutoFilledNPK] = useState(null);
 
   // Map API format to form format
   const mapApiTypeToFormType = (apiType) => {
@@ -262,7 +298,11 @@ const ChemicalTab = ({
       temperature_range: initialValues.temperature_range || intelligentDefaults.temperature_range,
       wind_speed: initialValues.wind_speed || '',
       time_period: initialValues.time_period || intelligentDefaults.time_period,
-      observation: initialValues.observation || ''
+      observation: initialValues.observation || '',
+      // NPK percentage fields (Phase 1.1 validation)
+      nitrogen_percentage: initialValues.nitrogen_percentage?.toString() || '',
+      phosphorus_percentage: initialValues.phosphorus_percentage?.toString() || '',
+      potassium_percentage: initialValues.potassium_percentage?.toString() || ''
     }
   });
 
@@ -417,10 +457,75 @@ const ChemicalTab = ({
         temperature_range: initialValues.temperature_range || defaults.temperature_range,
         wind_speed: initialValues.wind_speed || '',
         time_period: initialValues.time_period || defaults.time_period,
-        observation: initialValues.observation || ''
+        observation: initialValues.observation || '',
+        // NPK percentage fields (Phase 1.1 validation)
+        nitrogen_percentage: initialValues.nitrogen_percentage?.toString() || '',
+        phosphorus_percentage: initialValues.phosphorus_percentage?.toString() || '',
+        potassium_percentage: initialValues.potassium_percentage?.toString() || ''
       });
     }
   }, [initialValues, mainInfoMethods]);
+
+  // Smart Product Input handlers
+  const handleSmartProductChange = (value, additionalData) => {
+    setValue('commercial_name', value);
+    
+    if (additionalData) {
+      // Handle auto-fill data from smart validation
+      if (additionalData.auto_fill_npk) {
+        setAutoFilledNPK(additionalData.auto_fill_npk);
+        // Auto-fill concentration field with NPK ratio
+        setValue('concentration', additionalData.auto_fill_npk);
+        
+        // Also auto-fill the individual NPK percentage fields
+        const npkParts = additionalData.auto_fill_npk.split('-');
+        if (npkParts.length === 3) {
+          setValue('nitrogen_percentage', npkParts[0]);
+          setValue('phosphorus_percentage', npkParts[1]);
+          setValue('potassium_percentage', npkParts[2]);
+        }
+      }
+      
+      // Set recommended type if different from selected
+      if (additionalData.recommended_type && additionalData.recommended_type !== selectedChemicalType) {
+        console.log('Smart Product: Type recommendation', {
+          current: selectedChemicalType,
+          recommended: additionalData.recommended_type
+        });
+      }
+    }
+  };
+
+  const handleSmartProductValidation = (validationResult) => {
+    setSmartProductValidation(validationResult);
+    
+    if (validationResult) {
+      // Handle auto-fill for fertilizers - use correct_type_code for comparison
+      const typeCode = validationResult.correct_type_code || validationResult.correct_type;
+      if ((typeCode === 'FE' || validationResult.correct_type === 'Fertilizer') && validationResult.npk_ratio) {
+        setAutoFilledNPK(validationResult.npk_ratio);
+        
+        // Auto-fill NPK percentage fields if available
+        const npkParts = validationResult.npk_ratio.split('-');
+        if (npkParts.length === 3) {
+          setValue('nitrogen_percentage', npkParts[0]);
+          setValue('phosphorus_percentage', npkParts[1]);  
+          setValue('potassium_percentage', npkParts[2]);
+          // Also update the concentration field with the NPK ratio
+          setValue('concentration', validationResult.npk_ratio);
+        }
+      }
+      
+      // Show validation warnings if type mismatch
+      if (validationResult.requires_correction) {
+        console.warn('Smart Product: Type mismatch detected', {
+          product: validationResult.commercial_name,
+          detected: validationResult.correct_type,
+          selected: selectedChemicalType
+        });
+      }
+    }
+  };
 
   // Enhanced submit handler with validation (crop type inherited from production)
   const handleEnhancedSubmit = (data) => {
@@ -482,10 +587,10 @@ const ChemicalTab = ({
           <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
             <Text fontSize="md" fontWeight="bold" mb={4} color="blue.600">
               <Icon as={FaLeaf} mr={2} />
-              Chemical & Crop Information
+              Chemical Information
             </Text>
 
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+            <Box>
               <StandardField
                 label={`${intl.formatMessage({ id: 'app.type' })} *`}
                 required
@@ -529,48 +634,25 @@ const ChemicalTab = ({
                   <option value="HE">Herbicide</option>
                 </StandardSelect>
               </StandardField>
+            </Box>
 
-              <FormControl>
-                <FormLabel ms="4px" fontSize="xs" fontWeight="bold">
-                  Crop Type
-                  <Tooltip label="Crop type is inherited from production - no need to select again">
-                    <Icon as={FaInfoCircle} ml={1} color="green.400" />
-                  </Tooltip>
-                </FormLabel>
-                <Box
-                  ml="4px"
-                  height={'40px'}
-                  borderRadius={'15px'}
-                  fontSize={'0.875rem'}
-                  mb="24px"
-                  p={2}
-                  bg="green.50"
-                  border="1px solid"
-                  borderColor="green.200"
-                  display="flex"
-                  alignItems="center"
-                >
-                  <Text color="green.700" fontWeight="medium">
-                    {cropType
-                      ? USDA_CROP_TYPES.find((crop) => crop.value === cropType.toLowerCase())
-                          ?.label || `${cropType} (inherited from production)`
-                      : 'Inherited from production'}
-                  </Text>
-                </Box>
-              </FormControl>
-            </SimpleGrid>
-
-            <StandardField
+            {/* Smart Product Input - Implements Smart Bag UX */}
+            <Box mt={6}>
+              <SmartProductInput
+              value={watch('commercial_name') || ''}
+              onChange={handleSmartProductChange}
+              onValidation={handleSmartProductValidation}
+              selectedChemicalType={watchedType || selectedChemicalType || 'FE'}
               label={`${intl.formatMessage({ id: 'app.commercialName' })} *`}
+              placeholder="e.g., Miracle-Gro All Purpose, Roundup WeatherMAX"
               required
               error={errors.commercial_name?.message}
-            >
-              <StandardInput
-                type="text"
-                placeholder="e.g., Miracle-Gro All Purpose, Roundup WeatherMAX"
-                {...register('commercial_name')}
+              helpText="Enter the product name from the container label for automatic NPK detection"
+              showEducationalTips={true}
+              enableAutoFill={true}
+              enableRealtimeSearch={true}
               />
-            </StandardField>
+            </Box>
           </Box>
 
           {/* Section 2: Application Details */}
@@ -580,9 +662,9 @@ const ChemicalTab = ({
               Application Measurements
             </Text>
 
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
               <StandardField label="Volume Applied *" required error={errors.volume?.message}>
-                <HStack spacing={2}>
+                <HStack spacing={3}>
                   <StandardInput
                     flex={2}
                     type="number"
@@ -600,7 +682,7 @@ const ChemicalTab = ({
               </StandardField>
 
               <StandardField label="Area Treated *" required error={errors.area?.message}>
-                <HStack spacing={2}>
+                <HStack spacing={3}>
                   <StandardInput
                     flex={2}
                     type="number"
@@ -616,7 +698,7 @@ const ChemicalTab = ({
               </StandardField>
             </SimpleGrid>
 
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} mt={4}>
               <StandardField
                 label="Concentration/NPK *"
                 required
@@ -628,6 +710,16 @@ const ChemicalTab = ({
                   placeholder="e.g., 16-16-16, 2.5%, 1000 ppm"
                   {...register('concentration')}
                 />
+                {/* Smart Auto-Fill Indicator */}
+                {autoFilledNPK && (
+                  <Alert status="success" variant="left-accent" mt={2} borderRadius="md">
+                    <AlertIcon />
+                    <VStack align="start" spacing={0}>
+                      <Text fontSize="xs" fontWeight="bold">Smart Auto-Fill Active</Text>
+                      <Text fontSize="xs">NPK ratio {autoFilledNPK} detected and applied</Text>
+                    </VStack>
+                  </Alert>
+                )}
               </StandardField>
 
               <StandardField
@@ -646,9 +738,107 @@ const ChemicalTab = ({
                   <option value="injection">Injection</option>
                   <option value="banded">Banded</option>
                   <option value="aerial">Aerial Application</option>
+                  <option value="variable_rate">Variable Rate Application</option>
+                  <option value="sidedress">Sidedress Application</option>
+                  <option value="starter">Starter/Pop-up Placement</option>
+                  <option value="strip_till">Strip-till Application</option>
+                  <option value="anhydrous">Anhydrous Ammonia Injection</option>
                 </StandardSelect>
               </StandardField>
             </SimpleGrid>
+              
+              {/* NPK Percentage Fields (Phase 1.1 Validation) - Show only for fertilizers */}
+              {watchedType === 'FE' && (
+                <Box gridColumn={{ base: "span 1", md: "span 2" }}>
+                  <VStack spacing={4} align="stretch" p={5} bg="green.50" borderRadius="md" border="1px solid" borderColor="green.200">
+                  <HStack justify="space-between" align="center">
+                    <VStack align="start" spacing={0}>
+                      <Text fontSize="sm" fontWeight="bold" color="green.700">
+                        📊 NPK Percentage Breakdown
+                      </Text>
+                      <Text fontSize="xs" color="green.600">
+                        {autoFilledNPK ? 'Auto-filled from product recognition' : 'Optional - for precise calculations'}
+                      </Text>
+                    </VStack>
+                    {autoFilledNPK && (
+                      <Badge colorScheme="green" variant="solid" fontSize="xs">
+                        Smart Auto-Fill ✨
+                      </Badge>
+                    )}
+                  </HStack>
+                  {!autoFilledNPK && (
+                    <Text fontSize="xs" color="green.600">
+                      Enter individual NPK percentages if known. Total cannot exceed 100%.
+                    </Text>
+                  )}
+                  
+                  <SimpleGrid columns={{ base: 1, sm: 3 }} spacing={4}>
+                    <StandardField 
+                      label="Nitrogen %" 
+                      error={errors.nitrogen_percentage?.message}
+                      helpText="N percentage (0-100)"
+                    >
+                      <StandardInput
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="e.g., 16"
+                        {...register('nitrogen_percentage')}
+                      />
+                    </StandardField>
+                    
+                    <StandardField 
+                      label="Phosphorus %" 
+                      error={errors.phosphorus_percentage?.message}
+                      helpText="P percentage (0-100)"
+                    >
+                      <StandardInput
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="e.g., 16"
+                        {...register('phosphorus_percentage')}
+                      />
+                    </StandardField>
+                    
+                    <StandardField 
+                      label="Potassium %" 
+                      error={errors.potassium_percentage?.message}
+                      helpText="K percentage (0-100)"
+                    >
+                      <StandardInput
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="e.g., 16"
+                        {...register('potassium_percentage')}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                  
+                  {/* Real-time NPK total display */}
+                  <Box p={2} bg="white" borderRadius="md" borderColor="green.300" borderWidth="1px">
+                    <Text fontSize="xs" color="gray.600">
+                      Total NPK: {(
+                        (parseFloat(watch('nitrogen_percentage')) || 0) +
+                        (parseFloat(watch('phosphorus_percentage')) || 0) +
+                        (parseFloat(watch('potassium_percentage')) || 0)
+                      ).toFixed(1)}% 
+                      {((
+                        (parseFloat(watch('nitrogen_percentage')) || 0) +
+                        (parseFloat(watch('phosphorus_percentage')) || 0) +
+                        (parseFloat(watch('potassium_percentage')) || 0)
+                      ) > 100) && (
+                        <Text as="span" color="red.500" fontWeight="bold"> - Exceeds 100%!</Text>
+                      )}
+                    </Text>
+                  </Box>
+                  </VStack>
+                </Box>
+              )}
           </Box>
 
           {/* Section 3: Environmental Conditions */}

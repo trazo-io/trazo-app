@@ -32,6 +32,12 @@ const authApi = baseApi.injectEndpoints({
           TokenManager.setAccessToken(result.data.access);
           console.log('🔒 LOGIN: Access token stored securely. Length:', result.data.access.length);
           
+          // Store refresh token if provided
+          if (result.data.refresh) {
+            TokenManager.setRefreshToken(result.data.refresh);
+            console.log('🔒 LOGIN: Refresh token stored securely. Length:', result.data.refresh.length);
+          }
+          
           // WAIT a brief moment to ensure token is available for subsequent requests
           await new Promise(resolve => setTimeout(resolve, 100));
           
@@ -120,6 +126,10 @@ const authApi = baseApi.injectEndpoints({
             dispatch(setUser(result.data.user));
             // SECURITY: Store access token securely
             TokenManager.setAccessToken(result.data.access);
+            // Store refresh token if provided
+            if (result.data.refresh) {
+              TokenManager.setRefreshToken(result.data.refresh);
+            }
             // Get company data if user has companies
             if (result.data.user['companies'] && result.data.user['companies'].length > 0) {
               try {
@@ -171,6 +181,13 @@ const authApi = baseApi.injectEndpoints({
         try {
           const result = await queryFulfilled;
           dispatch(setUser(result.data.user));
+          // Store tokens if provided
+          if (result.data.access) {
+            TokenManager.setAccessToken(result.data.access);
+          }
+          if (result.data.refresh) {
+            TokenManager.setRefreshToken(result.data.refresh);
+          }
           if (result.data.user['companies'].length > 0) {
             const { data } = await dispatch(
               baseApi.endpoints.getCompany.initiate(result.data.user['companies'][0].id)

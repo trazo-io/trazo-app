@@ -52,7 +52,6 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import CarbonReportTab from './CarbonReportTab';
-import CarbonBenchmarkTab from './CarbonBenchmarkTab';
 
 const CarbonFootprintTab = ({ establishmentId, productionId }) => {
   const toast = useToast();
@@ -547,18 +546,6 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
         </CardBody>
       </Card>
 
-      {/* Comparativa Card */}
-      <Card bg={cardBg} mb={8} p={{ base: 4, md: 6 }} boxShadow="md" borderRadius="lg">
-        <CardHeader pb={2}>
-          <Flex align="center" gap={2}>
-            <FaIndustry color="#718096" />
-            <Heading size="md">Comparativa</Heading>
-          </Flex>
-        </CardHeader>
-        <CardBody>
-          <CarbonBenchmarkTab establishmentId={establishmentId} />
-        </CardBody>
-      </Card>
     </>
   );
 };

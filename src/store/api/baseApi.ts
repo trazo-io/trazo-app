@@ -25,7 +25,6 @@ export const baseApi = createApi({
     'PaymentMethod',
     'Invoice',
     'CarbonSummary',
-    'CarbonBenchmarks',
     'CarbonRecommendations',
     'IoTDevice',
     'IoTData',

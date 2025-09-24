@@ -24,9 +24,9 @@ import {
   StandardTextarea
 } from 'components/Design/StandardComponents';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, Controller } from 'react-hook-form';
 // Custom components
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { number, object, string } from 'zod';
 
 import { FaPlus } from 'react-icons/fa';
@@ -105,7 +105,7 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
     }
   });
 
-  // Update form values when initialValues change
+  // Update form values when initialValues change (without mainInfoMethods in deps to prevent loops)
   useEffect(() => {
     if (Object.keys(initialValues).length > 0) {
       const extraData = initialValues.extra_data || {};
@@ -124,7 +124,7 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
         observation: initialValues.observation || ''
       });
     }
-  }, [initialValues, mainInfoMethods]);
+  }, [initialValues]); // Removed mainInfoMethods to prevent render loops
 
   const {
     reset: mainInfoReset,
@@ -137,49 +137,49 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
 
   const type = watch('type', '');
 
-  // Watch critical fields for real-time carbon calculation updates
-  const watchedFields = watch([
-    'type',
-    'lower_temperature',
-    'highest_temperature',
-    'water_deficit',
-    'duration'
-  ]);
+  // Debug logging for form state (commented out to prevent render loops)
+  // console.log('🔍 WeatherTab Debug:', { type, formType, initialValues, errors });
 
-  // Real-time field watching for carbon calculation updates
+  // Real-time field watching for carbon calculation updates with proper dependency management
   useEffect(() => {
-    console.log('[WeatherTab]: Field watching triggered', {
-      hasOnDataChange: !!onDataChange,
-      watchedFields,
-      firstField: watchedFields[0]
+    let debounceTimeout;
+
+    // Watch specific fields without causing re-render loops
+    const subscription = watch((value, { name }) => {
+      // Only trigger on relevant field changes
+      const relevantFields = ['type', 'lower_temperature', 'highest_temperature', 'water_deficit', 'duration'];
+      
+      if (relevantFields.includes(name) || !name) { // !name means multiple fields changed
+        // Clear previous timeout
+        if (debounceTimeout) {
+          clearTimeout(debounceTimeout);
+        }
+        
+        // Debounce the callback
+        debounceTimeout = setTimeout(() => {
+          if (onDataChange && typeof onDataChange === 'function') {
+            const currentValues = mainInfoMethods.getValues();
+
+            // Only trigger if we have meaningful data
+            if (currentValues.type) {
+              try {
+                onDataChange(currentValues);
+              } catch (error) {
+                console.error('[WeatherTab]: Error calling onDataChange:', error);
+              }
+            }
+          }
+        }, 500);
+      }
     });
 
-    // Always check if callback exists inside the timeout to avoid stale closures
-    const timeoutId = setTimeout(() => {
-      if (onDataChange && typeof onDataChange === 'function') {
-        const currentValues = mainInfoMethods.getValues();
-        console.log('[WeatherTab]: Current values for carbon calculation', currentValues);
-
-        // Only trigger if we have meaningful data
-        if (currentValues.type) {
-          console.log('[WeatherTab]: Triggering onDataChange with values', currentValues);
-          try {
-            onDataChange(currentValues);
-          } catch (error) {
-            console.error('[WeatherTab]: Error calling onDataChange:', error);
-          }
-        } else {
-          console.log('[WeatherTab]: Not triggering - insufficient data', {
-            hasType: !!currentValues.type
-          });
-        }
-      } else {
-        console.log('[WeatherTab]: onDataChange not available in timeout');
+    return () => {
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
       }
-    }, 500); // Debounced to prevent excessive API calls
-
-    return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, mainInfoMethods]);
+      subscription.unsubscribe();
+    };
+  }, []); // Empty dependency array - subscription handles changes internally
 
   const onSubmit = (data) => {
     switch (type) {
@@ -217,6 +217,35 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
           observation: data.observation
         };
         break;
+      case 'TS':
+        data = {
+          type: data.type,
+          wind_speed: data.wind_speed,
+          precipitation_amount: data.precipitation_amount,
+          duration: data.duration,
+          damage_assessment: data.damage_assessment,
+          observation: data.observation
+        };
+        break;
+      case 'HW':
+        data = {
+          type: data.type,
+          wind_speed: data.wind_speed,
+          duration: data.duration,
+          protection_measures: data.protection_measures,
+          observation: data.observation
+        };
+        break;
+      case 'HH':
+      case 'LH':
+        data = {
+          type: data.type,
+          humidity_level: data.humidity_level,
+          duration: data.duration,
+          crop_impact: data.crop_impact,
+          observation: data.observation
+        };
+        break;
       default:
         data = {
           type: data.type,
@@ -237,19 +266,25 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
             required
             error={errors.type?.message}
           >
-            <StandardSelect
-              placeholder={intl.formatMessage({ id: 'app.selectOption' })}
-              {...register('type')}
-            >
-              <option value="FR">{intl.formatMessage({ id: 'app.frost' })}</option>
-              <option value="DR">{intl.formatMessage({ id: 'app.drought' })}</option>
-              <option value="HL">{intl.formatMessage({ id: 'app.hailstorms' })}</option>
-              <option value="HT">{intl.formatMessage({ id: 'app.highTemperatures' })}</option>
-              <option value="TS">{intl.formatMessage({ id: 'app.tropicalStorm' })}</option>
-              <option value="HW">{intl.formatMessage({ id: 'app.highWinds' })}</option>
-              <option value="HH">{intl.formatMessage({ id: 'app.highHumidity' })}</option>
-              <option value="LH">{intl.formatMessage({ id: 'app.lowHumidity' })}</option>
-            </StandardSelect>
+            <Controller
+              name="type"
+              control={mainInfoMethods.control}
+              render={({ field }) => (
+                <StandardSelect
+                  placeholder={intl.formatMessage({ id: 'app.selectOption' })}
+                  {...field}
+                >
+                  <option value="FR">{intl.formatMessage({ id: 'app.frost' })}</option>
+                  <option value="DR">{intl.formatMessage({ id: 'app.drought' })}</option>
+                  <option value="HL">{intl.formatMessage({ id: 'app.hailstorms' })}</option>
+                  <option value="HT">{intl.formatMessage({ id: 'app.highTemperatures' })}</option>
+                  <option value="TS">{intl.formatMessage({ id: 'app.tropicalStorm' })}</option>
+                  <option value="HW">{intl.formatMessage({ id: 'app.highWinds' })}</option>
+                  <option value="HH">{intl.formatMessage({ id: 'app.highHumidity' })}</option>
+                  <option value="LH">{intl.formatMessage({ id: 'app.lowHumidity' })}</option>
+                </StandardSelect>
+              )}
+            />
           </StandardField>
           {type === 'FR' ? (
             <Flex gap={'20px'}>
@@ -347,6 +382,140 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
                   </StandardField>
                 </Flex>
               </Box>
+            </Flex>
+          ) : type === 'TS' ? (
+            <Flex gap={'20px'} direction={'column'}>
+              <Text fontSize="sm" fontWeight="semibold" mb={2}>
+                {intl.formatMessage({ id: 'app.tropicalStorm' })} Details
+              </Text>
+              <Flex gap={'20px'}>
+                <StandardField label={intl.formatMessage({ id: 'app.windSpeed' })} flex={1}>
+                  <StandardInput
+                    type="number"
+                    placeholder={intl.formatMessage({ id: 'app.windSpeedPlaceholder' })}
+                    {...register('wind_speed')}
+                  />
+                </StandardField>
+                <StandardField label={intl.formatMessage({ id: 'app.precipitationAmount' })} flex={1}>
+                  <StandardInput
+                    type="number"
+                    step="0.1"
+                    placeholder={intl.formatMessage({ id: 'app.precipitationPlaceholder' })}
+                    {...register('precipitation_amount')}
+                  />
+                </StandardField>
+              </Flex>
+              <Flex gap={'20px'}>
+                <StandardField label={intl.formatMessage({ id: 'app.duration' })} flex={1}>
+                  <StandardInput
+                    type="number"
+                    step="0.5"
+                    placeholder={intl.formatMessage({ id: 'app.duration' })}
+                    {...register('duration')}
+                  />
+                </StandardField>
+                <StandardField label={intl.formatMessage({ id: 'app.damageAssessment' })} flex={1}>
+                  <StandardInput
+                    type="text"
+                    placeholder={intl.formatMessage({ id: 'app.damageAssessmentPlaceholder' })}
+                    {...register('damage_assessment')}
+                  />
+                </StandardField>
+              </Flex>
+            </Flex>
+          ) : type === 'HW' ? (
+            <Flex gap={'20px'} direction={'column'}>
+              <Text fontSize="sm" fontWeight="semibold" mb={2}>
+                {intl.formatMessage({ id: 'app.highWinds' })} Details
+              </Text>
+              <Flex gap={'20px'}>
+                <StandardField label={intl.formatMessage({ id: 'app.windSpeed' })} flex={1}>
+                  <StandardInput
+                    type="number"
+                    placeholder={intl.formatMessage({ id: 'app.windSpeedPlaceholder' })}
+                    {...register('wind_speed')}
+                  />
+                </StandardField>
+                <StandardField label={intl.formatMessage({ id: 'app.duration' })} flex={1}>
+                  <StandardInput
+                    type="number"
+                    step="0.5"
+                    placeholder={intl.formatMessage({ id: 'app.duration' })}
+                    {...register('duration')}
+                  />
+                </StandardField>
+              </Flex>
+              <StandardField label={intl.formatMessage({ id: 'app.protectionMeasures' })}>
+                <StandardInput
+                  type="text"
+                  placeholder={intl.formatMessage({ id: 'app.protectionMeasuresPlaceholder' })}
+                  {...register('protection_measures')}
+                />
+              </StandardField>
+            </Flex>
+          ) : type === 'HH' ? (
+            <Flex gap={'20px'} direction={'column'}>
+              <Text fontSize="sm" fontWeight="semibold" mb={2}>
+                {intl.formatMessage({ id: 'app.highHumidity' })} Details
+              </Text>
+              <Flex gap={'20px'}>
+                <StandardField label={intl.formatMessage({ id: 'app.humidityLevel' })} flex={1}>
+                  <StandardInput
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder={intl.formatMessage({ id: 'app.humidityLevelPlaceholder' })}
+                    {...register('humidity_level')}
+                  />
+                </StandardField>
+                <StandardField label={intl.formatMessage({ id: 'app.duration' })} flex={1}>
+                  <StandardInput
+                    type="number"
+                    step="0.5"
+                    placeholder={intl.formatMessage({ id: 'app.duration' })}
+                    {...register('duration')}
+                  />
+                </StandardField>
+              </Flex>
+              <StandardField label={intl.formatMessage({ id: 'app.cropImpact' })}>
+                <StandardInput
+                  type="text"
+                  placeholder={intl.formatMessage({ id: 'app.cropImpactPlaceholder' })}
+                  {...register('crop_impact')}
+                />
+              </StandardField>
+            </Flex>
+          ) : type === 'LH' ? (
+            <Flex gap={'20px'} direction={'column'}>
+              <Text fontSize="sm" fontWeight="semibold" mb={2}>
+                {intl.formatMessage({ id: 'app.lowHumidity' })} Details
+              </Text>
+              <Flex gap={'20px'}>
+                <StandardField label={intl.formatMessage({ id: 'app.humidityLevel' })} flex={1}>
+                  <StandardInput
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder={intl.formatMessage({ id: 'app.humidityLevelPlaceholder' })}
+                    {...register('humidity_level')}
+                  />
+                </StandardField>
+                <StandardField label={intl.formatMessage({ id: 'app.duration' })} flex={1}>
+                  <StandardInput
+                    type="number"
+                    step="0.5"
+                    placeholder={intl.formatMessage({ id: 'app.duration' })}
+                    {...register('duration')}
+                  />
+                </StandardField>
+              </Flex>
+              <StandardField label={intl.formatMessage({ id: 'app.cropImpact' })}>
+                <StandardInput
+                  type="text"
+                  placeholder={intl.formatMessage({ id: 'app.cropImpactPlaceholder' })}
+                  {...register('crop_impact')}
+                />
+              </StandardField>
             </Flex>
           ) : (
             <></>

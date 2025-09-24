@@ -234,19 +234,6 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getCarbonBenchmarks: build.query<any[], { industry?: string; year?: number }>({
-      query: ({ industry, year }) => {
-        let url = '/carbon/benchmarks/';
-        const params = new URLSearchParams();
-        if (industry) params.append('industry', industry);
-        if (year) params.append('year', year.toString());
-        return {
-          url: `${url}?${params.toString()}`,
-          method: 'GET',
-          credentials: 'include'
-        };
-      }
-    }),
     getCarbonReports: build.query<
       any[],
       { establishmentId: number; year?: number; reportType?: string }
@@ -418,32 +405,6 @@ const companyApi = baseApi.injectEndpoints({
       }),
       providesTags: ['CarbonSummary']
     }),
-    // Create carbon offset entry
-    createCarbonOffset: build.mutation<
-      { trust_score: number; effective_amount: number; id: number },
-      {
-        amount: number;
-        source_id?: string;
-        offset_project_type: 'on_farm' | 'local_community' | 'certified_marketplace';
-        verification_level: 'self_reported' | 'community_verified' | 'certified_project';
-        evidence_photos?: string[];
-        evidence_documents?: string[];
-        gps_coordinates?: any;
-        verification_notes?: string;
-        certified_project_id?: string | null;
-        type: 'offset';
-        year: number;
-        establishment: string;
-      }
-    >({
-      query: (offsetData) => ({
-        url: '/carbon/offsets/',
-        method: 'POST',
-        body: offsetData,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['CarbonSummary']
-    })
   }),
   overrideExisting: false
 });
@@ -466,7 +427,6 @@ export const {
   useAddCarbonCertificationMutation,
   useUpdateCarbonCertificationMutation,
   useDeleteCarbonCertificationMutation,
-  useGetCarbonBenchmarksQuery,
   useGetCarbonReportsQuery,
   useGenerateCarbonReportMutation,
   useGetProductionsByEstablishmentQuery,

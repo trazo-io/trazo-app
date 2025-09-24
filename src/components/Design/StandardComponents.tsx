@@ -595,8 +595,9 @@ export const StandardTextarea = React.forwardRef<HTMLTextAreaElement, any>((prop
 ));
 StandardTextarea.displayName = 'StandardTextarea';
 
-export const StandardSelect = (props: any) => (
+export const StandardSelect = React.forwardRef<HTMLSelectElement, any>((props, ref) => (
   <Select
+    ref={ref}
     borderRadius="lg"
     borderColor="gray.200"
     _hover={{ borderColor: 'green.400' }}
@@ -604,7 +605,8 @@ export const StandardSelect = (props: any) => (
     size="lg"
     {...props}
   />
-);
+));
+StandardSelect.displayName = 'StandardSelect';
 
 // Action Components
 interface StandardButtonProps {

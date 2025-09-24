@@ -1854,35 +1854,6 @@ export const carbonApi = baseApi.injectEndpoints({
     }),
 
     // Enhanced Security Endpoints
-    createSecureCarbonOffset: builder.mutation<
-      {
-        success: boolean;
-        carbon_entry_id: number;
-        verification_status: string;
-        security_validation: any;
-      },
-      {
-        amount: number;
-        source_id: string;
-        establishment_id?: string;
-        production_id?: string;
-        additionality_evidence?: string;
-        permanence_plan?: string;
-        baseline_data?: any;
-        methodology_template?: string;
-        registry_verification_id?: string;
-        evidence_photos?: string[];
-        evidence_documents?: string[];
-      }
-    >({
-      query: (data) => ({
-        url: 'carbon/secure/create-carbon-offset/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['CarbonSummary', 'SecurityStatus']
-    }),
 
     validateFileUploadSecurity: builder.mutation<
       { is_valid: boolean; validation_result: any; security_score: number },

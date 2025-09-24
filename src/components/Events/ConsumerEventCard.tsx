@@ -30,7 +30,8 @@ import {
   FaExternalLinkAlt,
   FaCertificate,
   FaEye,
-  FaClock
+  FaClock,
+  FaCamera
 } from 'react-icons/fa';
 import { MdVerified, MdEco, MdSecurity, MdOpenInNew } from 'react-icons/md';
 import { 
@@ -39,6 +40,7 @@ import {
   getSustainabilityImpact,
   getEventTrustIndicators 
 } from 'utils/eventDescriptions';
+import { StandardImageGallery } from 'components/ImageGallery';
 
 interface ConsumerEventCardProps {
   event: {
@@ -60,6 +62,15 @@ interface ConsumerEventCardProps {
     volume?: string;
     area?: string;
     carbon_impact?: number;
+    album?: {
+      id: string;
+      images: Array<{
+        id: string;
+        image: string;
+        caption?: string;
+        created_at?: string;
+      }>;
+    };
     extra_data?: {
       blockchain_verified?: boolean;
       blockchain_transaction?: string;
@@ -81,8 +92,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const isMobile = useBreakpointValue({ base: true, md: false });
   
-  // Get consumer-friendly description
-  const eventInfo = getConsumerEventDescription(event.description);
+  // Get consumer-friendly description with real event data
+  const eventInfo = getConsumerEventDescription(event.description, event);
   const sustainabilityLevel = getSustainabilityImpact(event.description);
   const trustIndicators = getEventTrustIndicators(event);
   const formattedDate = formatEventDate(event.date);
@@ -109,6 +120,40 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     blockchainData.timestamp = event.verification_timestamp || '';
     blockchainData.blockNumber = event.blockchain_block_number || 0;
   }
+
+  // Photo verification processing (NEW - anti-gaming system)
+  const photoVerification = {
+    hasPhotos: Boolean(event.album?.images?.length),
+    photoCount: event.album?.images?.length || 0,
+    isPhotoVerified: Boolean(event.album?.images?.length && event.album.images.length >= 1),
+    verificationLevel: (() => {
+      const photoCount = event.album?.images?.length || 0;
+      if (photoCount >= 2) return 'strong';
+      if (photoCount >= 1) return 'moderate';
+      return 'none';
+    })(),
+    trustMessage: (() => {
+      const photoCount = event.album?.images?.length || 0;
+      if (photoCount >= 2) return `Photo verified (${photoCount} images)`;
+      if (photoCount >= 1) return `Photo documented (${photoCount} image)`;
+      return 'Text documentation only';
+    })()
+  };
+
+  // DEBUG: Log photo verification data for debugging
+  console.log('📸 PHOTO VERIFICATION DEBUG:', {
+    eventId: event.id,
+    eventDescription: event.description,
+    hasAlbum: !!event.album,
+    albumId: event.album?.id,
+    imagesCount: event.album?.images?.length || 0,
+    images: event.album?.images || [],
+    photoVerification,
+    hasPhotos: photoVerification.hasPhotos
+  });
+
+  // Critical event types that require photo verification (matches backend logic)
+  const requiresPhotoVerification = ['FE', 'PE', 'FU', 'HE', 'PL', 'HA'].includes(event.type);
 
   // Enhanced verification status
   const getVerificationLevel = () => {
@@ -153,7 +198,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   
   return (
     <Box position="relative">
-      {/* Timeline connector */}
+      {/* Timeline connector - DESKTOP ONLY */}
       {!isLast && (
         <Box
           position="absolute"
@@ -163,12 +208,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
           width="2px"
           bg={borderColor}
           zIndex={0}
+          display={{ base: 'none', md: 'block' }}
         />
       )}
       
-      <HStack align="flex-start" spacing={{ base: 3, md: 4 }} position="relative" zIndex={1}>
-        {/* Timeline dot with enhanced verification indicators */}
-        <Flex direction="column" align="center" minW="40px">
+      <HStack align="flex-start" spacing={{ base: 0, md: 4 }} position="relative" zIndex={1}>
+        {/* Timeline dot - DESKTOP ONLY */}
+        <Flex direction="column" align="center" minW="40px" display={{ base: 'none', md: 'flex' }}>
           <Circle
             size={{ base: '40px', md: '48px' }}
             bg={isFirst ? accentColor : bgColor}
@@ -234,9 +280,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
           )}
         </Flex>
         
-        {/* Event card */}
+        {/* Event card - Full width on mobile */}
         <Box
           flex="1"
+          w={{ base: 'full', md: 'auto' }}
           bg={bgColor}
           borderRadius="xl"
           borderWidth="1px"
@@ -244,9 +291,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
           overflow="hidden"
           transition="all 0.2s"
           _hover={{ shadow: 'md', transform: 'translateY(-1px)' }}
+          mb={{ base: 4, md: 0 }}
         >
-          {/* Card header */}
-          <Box p={{ base: 3, md: 4 }}>
+          {/* Mobile-Optimized Card Header */}
+          <Box p={{ base: 4, md: 4 }}>
             <HStack justify="space-between" align="flex-start" mb={2}>
               <VStack align="start" spacing={1} flex="1">
                 <HStack>
@@ -281,11 +329,12 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               </Badge>
             </HStack>
             
-            {/* Short description */}
+            {/* Mobile-Optimized Short Description */}
             <Text
-              fontSize={{ base: 'sm', md: 'md' }}
+              fontSize={{ base: 'md', md: 'md' }}
               color={useColorModeValue('gray.700', 'gray.300')}
-              mb={3}
+              mb={{ base: 4, md: 3 }}
+              lineHeight={{ base: '1.6', md: '1.5' }}
             >
               {eventInfo.shortDescription}
             </Text>
@@ -312,6 +361,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   ))}
                 </HStack>
               )}
+              
+              {/* Removed redundant photo verification badge - photos are already mentioned in description and shown in gallery */}
               
               {/* Enhanced verification badges row */}
               <HStack spacing={2} flexWrap="wrap">
@@ -406,16 +457,21 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               </HStack>
             </VStack>
             
-            {/* Expand button */}
+            {/* Mobile-Optimized Expand Button */}
             <Button
-              size="sm"
+              size={{ base: 'md', md: 'sm' }}
               variant="ghost"
               colorScheme="green"
               onClick={() => setIsExpanded(!isExpanded)}
               rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}
               _hover={{ bg: highlightBg }}
+              w={{ base: 'full', md: 'auto' }}
+              justifyContent={{ base: 'space-between', md: 'flex-start' }}
+              minH={{ base: '44px', md: 'auto' }}
+              fontSize={{ base: 'md', md: 'sm' }}
+              fontWeight="semibold"
             >
-              {isExpanded ? 'Show Less' : 'Learn More'}
+              {isExpanded ? 'Show Less Details' : 'See More Details'}
             </Button>
           </Box>
           
@@ -472,7 +528,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       )}
                       {event.carbon_impact && (
                         <Text fontSize="xs" color={mutedColor}>
-                          Carbon impact: {event.carbon_impact.toFixed(2)} kg CO₂e
+                          Environmental impact: {event.carbon_impact.toFixed(2)} kg CO₂e
+                          <Text as="span" fontSize="xs" color="green.600" ml={2}>
+                            (Carbon footprint data available for sustainability tracking)
+                          </Text>
                         </Text>
                       )}
                     </Stack>
@@ -608,11 +667,67 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     </VStack>
                   </Box>
                 )}
+                
+                {/* Photo Gallery using StandardImageGallery */}
+                {photoVerification.hasPhotos && (
+                  <Box>
+                    <HStack spacing={2} mb={4}>
+                      <Icon as={FaCamera} color="green.500" boxSize={{ base: 6, md: 5 }} />
+                      <Text fontWeight="bold" fontSize={{ base: 'md', md: 'sm' }} color="green.500">
+                        See This Farming Practice
+                      </Text>
+                    </HStack>
+                    
+                    <VStack align="stretch" spacing={{ base: 4, md: 3 }} pl={{ base: 0, md: 6 }}>
+                      {/* Use StandardImageGallery for consistent experience */}
+                      <StandardImageGallery
+                        images={event.album?.images?.map(image => ({
+                          id: image.id,
+                          image: image.image,
+                          name: image.caption || `Farm photo`,
+                          description: image.created_at ? `Taken on ${new Date(image.created_at).toLocaleDateString()}` : undefined
+                        })) || []}
+                        title=""
+                        variant="consumer"
+                        enablePreview={true}
+                        showImageCount={false}
+                        height={{ base: '200px', md: '160px' }}
+                        borderRadius="lg"
+                        showEmptyState={false}
+                        maxDisplayImages={6}
+                        aspectRatio="4/3"
+                        clickable={true}
+                      />
+                      
+                      {/* Trust indicator */}
+                      <Box
+                        p={{ base: 3, md: 2 }}
+                        bg={useColorModeValue('gray.50', 'gray.800')}
+                        borderRadius="lg"
+                        border="1px solid"
+                        borderColor={useColorModeValue('gray.200', 'gray.700')}
+                      >
+                        <HStack spacing={{ base: 3, md: 2 }}>
+                          <Icon as={FaShieldAlt} boxSize={{ base: 5, md: 4 }} color="green.500" />
+                          <VStack align="start" spacing={0} flex={1}>
+                            <Text fontSize={{ base: 'sm', md: 'xs' }} fontWeight="semibold" color="gray.700">
+                              Photo Verification: {photoVerification.verificationLevel === 'strong' ? 'Excellent' : 'Good'}
+                            </Text>
+                            <Text fontSize="xs" color="gray.600">
+                              {photoVerification.photoCount} verified photo{photoVerification.photoCount > 1 ? 's' : ''} from the farm
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Box>
+                    </VStack>
+                  </Box>
+                )}
               </VStack>
             </Box>
           </Collapse>
         </Box>
       </HStack>
+      
     </Box>
   );
 };

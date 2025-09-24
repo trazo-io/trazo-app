@@ -14,7 +14,10 @@ import {
   useColorModeValue,
   Flex,
   Stack,
-  useBreakpointValue
+  useBreakpointValue,
+  Image,
+  SimpleGrid,
+  AspectRatio
 } from '@chakra-ui/react';
 import {
   FaWater,
@@ -36,6 +39,19 @@ import { useIntl } from 'react-intl';
 import { format, parseISO } from 'date-fns';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
+import { TransparencyIndicator } from 'components/Design';
+
+interface AlbumImage {
+  id: number;
+  image: string;
+  caption: string;
+  created_at: string;
+}
+
+interface Album {
+  id: number;
+  images: AlbumImage[];
+}
 
 interface TimelineEvent {
   id: string;
@@ -49,13 +65,18 @@ interface TimelineEvent {
   concentration?: string;
   area?: string;
   equipment?: string;
+  album?: Album;
 }
 
 interface MobileProductionJourneyProps {
   events: TimelineEvent[];
+  productionId?: string;
 }
 
-export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = ({ events }) => {
+export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = ({
+  events,
+  productionId
+}) => {
   const intl = useIntl();
   const [showAll, setShowAll] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -193,6 +214,52 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
           </Badge>
         </Flex>
 
+        {/* Transparency Section */}
+        {productionId && (
+          <Box
+            bg={useColorModeValue('green.50', 'green.900')}
+            borderRadius="lg"
+            p={4}
+            border="1px solid"
+            borderColor={useColorModeValue('green.200', 'green.700')}>
+            <VStack spacing={3} align="stretch">
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" fontWeight="semibold" color="green.800">
+                  Documentation Transparency
+                </Text>
+                <Badge colorScheme="green" fontSize="xs" borderRadius="full">
+                  {filteredEvents.length} Events
+                </Badge>
+              </Flex>
+
+              <TransparencyIndicator
+                percentage={Math.min((filteredEvents.length / 12) * 100, 100)} // Assume 12 expected events
+                message={
+                  filteredEvents.length >= 12
+                    ? 'Complete transparency'
+                    : filteredEvents.length >= 8
+                    ? 'Good transparency'
+                    : 'Basic transparency'
+                }
+                status={
+                  filteredEvents.length >= 12
+                    ? 'excellent'
+                    : filteredEvents.length >= 8
+                    ? 'good'
+                    : 'minimum'
+                }
+                variant="compact"
+                size="sm"
+                showDetails={false}
+              />
+
+              <Text fontSize="xs" color="green.700">
+                Shows how completely this farm has documented their production activities
+              </Text>
+            </VStack>
+          </Box>
+        )}
+
         {/* Category Filter - Mobile Optimized */}
         <Stack
           direction={{ base: 'column', sm: 'row' }}
@@ -232,91 +299,193 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
           return (
             <Card
               key={event.id}
-              bg={config.bgColor}
-              borderLeft="4px solid"
-              borderColor={config.color}
-              shadow="sm"
-              _hover={{ shadow: 'md' }}
-              transition="all 0.2s">
-              <CardBody p={{ base: 3, sm: 4 }}>
-                <Flex direction={{ base: 'column', sm: 'row' }} gap={3}>
-                  {/* Icon and Category */}
-                  <Flex align="center" gap={3} minW="fit-content">
-                    <Circle size="40px" bg={config.color} color="white">
-                      <Icon as={config.icon} boxSize={4} />
+              bg={bgColor}
+              borderRadius="xl"
+              borderWidth="1px"
+              borderColor={borderColor}
+              shadow="lg"
+              _hover={{ shadow: 'xl', transform: 'translateY(-1px)' }}
+              transition="all 0.2s"
+              overflow="hidden"
+              w="full">
+              {/* MOBILE-OPTIMIZED: Full-width card layout for maximum space utilization */}
+              <Box position="relative">
+                {/* Top-right verification indicators for immediate trust visibility */}
+                <HStack position="absolute" top={3} right={3} spacing={1} zIndex={2}>
+                  {/* Latest event indicator */}
+                  {index === 0 && (
+                    <Badge colorScheme="green" fontSize="xs" px={2} py={1} borderRadius="full">
+                      Latest
+                    </Badge>
+                  )}
+
+                  {/* Category badge */}
+                  <Badge
+                    colorScheme={config.categoryColor}
+                    fontSize="xs"
+                    px={2}
+                    py={1}
+                    borderRadius="full">
+                    {config.category.replace(' Activity', '').replace(' Application', '')}
+                  </Badge>
+
+                  {/* Verification indicator */}
+                  {event.certified && (
+                    <Circle size="20px" bg="green.500">
+                      <Icon as={MdVerified} boxSize={2.5} color="white" />
                     </Circle>
+                  )}
+                </HStack>
 
-                    <VStack align="start" spacing={0} flex="1">
-                      <Badge
-                        colorScheme={config.categoryColor}
-                        size="sm"
-                        borderRadius="full"
-                        fontSize="xs">
-                        {config.category}
-                      </Badge>
-                      {event.certified && (
-                        <Badge colorScheme="green" size="xs" borderRadius="full">
-                          <HStack spacing={1}>
-                            <Icon as={MdVerified} boxSize={2} />
-                            <Text>Verified</Text>
-                          </HStack>
-                        </Badge>
-                      )}
-                    </VStack>
-                  </Flex>
-
-                  {/* Content */}
-                  <VStack align="start" spacing={2} flex="1" minW="0">
-                    <Heading size="sm" color={textColor} noOfLines={2}>
+                {/* Main content with optimized padding for mobile */}
+                <CardBody p={{ base: 4, md: 6 }} pr={{ base: 16, md: 20 }}>
+                  <VStack align="start" spacing={3} w="full">
+                    {/* Event title - larger for better mobile readability */}
+                    <Heading
+                      size={{ base: 'md', md: 'lg' }}
+                      color={textColor}
+                      lineHeight="short"
+                      w="full">
                       {event.description}
                     </Heading>
 
+                    {/* Date and metadata - horizontal layout for efficient space use */}
+                    <HStack spacing={3} w="full" justify="space-between" flexWrap="wrap">
+                      <HStack spacing={1} color={mutedColor}>
+                        <Icon as={FaCalendarAlt} boxSize={3} />
+                        <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="medium">
+                          {formatDate(event.date)}
+                        </Text>
+                      </HStack>
+
+                      {/* Sustainability impact badge */}
+                      <Badge
+                        colorScheme={config.categoryColor}
+                        fontSize="xs"
+                        px={3}
+                        py={1}
+                        borderRadius="full">
+                        <HStack spacing={1}>
+                          <Icon as={config.icon} boxSize={3} />
+                          <Text>LOW IMPACT</Text>
+                        </HStack>
+                      </Badge>
+                    </HStack>
+
+                    {/* Observation text if available */}
                     {event.observation && (
-                      <Text fontSize="sm" color={mutedColor} noOfLines={2}>
+                      <Text
+                        fontSize={{ base: 'md', md: 'lg' }}
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                        lineHeight="relaxed"
+                        w="full">
                         {event.observation}
                       </Text>
                     )}
 
-                    {/* Metadata - Mobile Optimized */}
-                    <Flex
-                      direction={{ base: 'column', sm: 'row' }}
-                      gap={{ base: 1, sm: 4 }}
-                      fontSize="xs"
-                      color={mutedColor}
-                      w="full">
-                      <HStack spacing={1}>
-                        <Icon as={FaCalendarAlt} />
-                        <Text>{formatDate(event.date)}</Text>
-                      </HStack>
+                    {/* Photo Gallery */}
+                    {event.album && event.album.images && event.album.images.length > 0 && (
+                      <VStack spacing={3} align="stretch" w="full">
+                        <Text fontSize="sm" fontWeight="semibold" color={mutedColor}>
+                          Farming Practice Photos
+                        </Text>
+                        <SimpleGrid columns={event.album.images.length === 1 ? 1 : 2} spacing={2} w="full">
+                          {event.album.images.map((image) => (
+                            <AspectRatio key={image.id} ratio={4/3}>
+                              <Image
+                                src={image.image}
+                                alt={image.caption}
+                                borderRadius="lg"
+                                objectFit="cover"
+                                fallback={
+                                  <Box
+                                    bg={useColorModeValue('gray.100', 'gray.700')}
+                                    borderRadius="lg"
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center">
+                                    <Text fontSize="xs" color={mutedColor}>
+                                      Photo verification
+                                    </Text>
+                                  </Box>
+                                }
+                                _hover={{
+                                  transform: 'scale(1.02)',
+                                  transition: 'transform 0.2s'
+                                }}
+                              />
+                            </AspectRatio>
+                          ))}
+                        </SimpleGrid>
+                        {event.album.images.length > 0 && (
+                          <Text fontSize="xs" color={mutedColor} textAlign="center">
+                            {event.album.images.length} verification photo{event.album.images.length > 1 ? 's' : ''} available
+                          </Text>
+                        )}
+                      </VStack>
+                    )}
 
-                      {(event.volume || event.area || event.concentration) && (
-                        <Flex gap={2} wrap="wrap">
-                          {event.volume && <Text>Vol: {event.volume}</Text>}
-                          {event.area && <Text>Area: {event.area}</Text>}
-                          {event.concentration && <Text>Conc: {event.concentration}</Text>}
-                        </Flex>
-                      )}
-                    </Flex>
-                  </VStack>
+                    {/* Technical details in mobile-friendly format */}
+                    {(event.volume || event.area || event.concentration) && (
+                      <VStack spacing={2} align="stretch" w="full">
+                        <Text fontSize="sm" fontWeight="semibold" color={mutedColor}>
+                          Technical Details
+                        </Text>
+                        <Stack direction={{ base: 'column', sm: 'row' }} spacing={2}>
+                          {event.volume && (
+                            <Badge
+                              variant="subtle"
+                              colorScheme="gray"
+                              fontSize="sm"
+                              px={3}
+                              py={1}
+                              borderRadius="lg">
+                              Volume: {event.volume}
+                            </Badge>
+                          )}
+                          {event.area && (
+                            <Badge
+                              variant="subtle"
+                              colorScheme="gray"
+                              fontSize="sm"
+                              px={3}
+                              py={1}
+                              borderRadius="lg">
+                              Area: {event.area} ha
+                            </Badge>
+                          )}
+                          {event.concentration && (
+                            <Badge
+                              variant="subtle"
+                              colorScheme="gray"
+                              fontSize="sm"
+                              px={3}
+                              py={1}
+                              borderRadius="lg">
+                              Concentration: {event.concentration}
+                            </Badge>
+                          )}
+                        </Stack>
+                      </VStack>
+                    )}
 
-                  {/* Date on Right for Desktop */}
-                  <VStack
-                    align="end"
-                    spacing={1}
-                    minW="fit-content"
-                    display={{ base: 'none', md: 'flex' }}>
-                    <Text fontSize="sm" fontWeight="medium" color={textColor}>
-                      {format(parseISO(event.date), 'MMM dd')}
-                    </Text>
-                    <Text fontSize="xs" color={mutedColor}>
-                      {format(parseISO(event.date), 'yyyy')}
-                    </Text>
-                    <Text fontSize="xs" color={mutedColor}>
-                      {format(parseISO(event.date), 'h:mm a')}
-                    </Text>
+                    {/* Full-width "Learn More" button for mobile UX */}
+                    <Button
+                      w="full"
+                      size="md"
+                      variant="outline"
+                      colorScheme="green"
+                      borderRadius="xl"
+                      h="44px"
+                      _hover={{
+                        bg: useColorModeValue('green.50', 'gray.700'),
+                        borderColor: 'green.500'
+                      }}>
+                      Learn More
+                    </Button>
                   </VStack>
-                </Flex>
-              </CardBody>
+                </CardBody>
+              </Box>
             </Card>
           );
         })}

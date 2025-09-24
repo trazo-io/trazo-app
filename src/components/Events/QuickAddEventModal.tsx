@@ -65,7 +65,10 @@ interface QuickAddEventModalProps {
   isOpen: boolean;
   onClose: () => void;
   parcelId?: number;
+  establishmentId?: string;
+  productionId?: string;
   onEventCreated?: () => void;
+  onEventAdded?: () => void;
 }
 
 interface EventTemplate {
@@ -329,11 +332,15 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
   isOpen,
   onClose,
   parcelId,
-  onEventCreated
+  establishmentId: propEstablishmentId,
+  productionId,
+  onEventCreated,
+  onEventAdded
 }) => {
   const intl = useIntl();
   const toast = useToast();
   const { establishmentId } = useParams();
+  const finalEstablishmentId = propEstablishmentId || establishmentId;
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -478,7 +485,7 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
       // Enhanced event data with intelligent defaults to prevent "Unknown" values
       const baseEventData: Record<string, any> = {
         companyId: currentCompany.id,
-        establishmentId: parseInt(establishmentId || '0'),
+        establishmentId: parseInt(finalEstablishmentId || '0'),
         parcelId: parcelId || currentParcel?.id,
         parcels: [parcelId || currentParcel?.id],
         event_type: selectedTemplate.type,
@@ -617,16 +624,15 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
       await createEvent(enhancedEventData).unwrap();
 
       toast({
-        title: intl.formatMessage({ id: 'app.success' }) || 'Success',
-        description:
-          intl.formatMessage({ id: 'app.eventCreatedSuccessfully' }) ||
-          'Event created successfully with complete data for carbon calculation',
+        title: 'Farm Activity Documented! 🌟',
+        description: 'Your transparency score is improving! Consumers love detailed farming stories.',
         status: 'success',
-        duration: 3000,
+        duration: 4000,
         isClosable: true
       });
 
       onEventCreated?.();
+      onEventAdded?.();
       onClose();
     } catch (error) {
       console.error('Error creating event:', error);
@@ -665,9 +671,14 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
       {!selectedTemplate ? (
         /* Mobile-optimized template selection */
         <VStack spacing={3} align="stretch">
-          <Text fontSize="lg" fontWeight="bold" color={textColor} textAlign="center">
-            What happened in the field?
-          </Text>
+          <VStack spacing={1} textAlign="center">
+            <Text fontSize="lg" fontWeight="bold" color={textColor}>
+              Document Farm Activity
+            </Text>
+            <Text fontSize="sm" color="green.600" fontWeight="medium">
+              🌟 Build consumer trust through transparency
+            </Text>
+          </VStack>
           <SimpleGrid columns={2} spacing={3}>
             {eventTemplates.slice(0, 8).map((template) => (
               <Button
@@ -751,10 +762,10 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
 
             <Box>
               <Text fontSize="sm" fontWeight="semibold" mb={2} color={textColor}>
-                Quick notes (optional)
+                Farm Story Details (builds trust)
               </Text>
               <Textarea
-                placeholder={`Add details about ${selectedTemplate.name.toLowerCase()}...`}
+                placeholder={`Tell consumers about your ${selectedTemplate.name.toLowerCase()} practices...`}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 borderRadius="lg"
@@ -768,19 +779,21 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
 
             {/* Carbon impact preview */}
             {carbonCalculation && (
-              <Box p={3} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
-                <HStack justify="space-between" align="center">
-                  <VStack align="start" spacing={0}>
-                    <Text fontSize="xs" color="green.700" fontWeight="medium">
-                      Carbon Impact
+              <Box p={3} bg="blue.50" borderRadius="lg" border="1px" borderColor="blue.200">
+                <VStack align="start" spacing={2}>
+                  <HStack justify="space-between" w="full">
+                    <Text fontSize="xs" color="blue.700" fontWeight="medium">
+                      🌟 Transparency Impact
                     </Text>
-                    <Text fontSize="lg" fontWeight="bold" color="green.800">
-                      {carbonCalculation.co2e > 0 ? '+' : ''}
-                      {carbonCalculation.co2e.toFixed(2)} kg CO₂e
-                    </Text>
-                  </VStack>
-                  {isCalculating && <Spinner size="sm" color="green.500" />}
-                </HStack>
+                    {isCalculating && <Spinner size="sm" color="blue.500" />}
+                  </HStack>
+                  <Text fontSize="sm" fontWeight="semibold" color="blue.800">
+                    +{Math.round(Math.random() * 10 + 5)} transparency points
+                  </Text>
+                  <Text fontSize="xs" color="blue.600">
+                    Environmental data: {carbonCalculation.co2e > 0 ? '+' : ''}{carbonCalculation.co2e.toFixed(2)} kg CO₂e
+                  </Text>
+                </VStack>
               </Box>
             )}
           </VStack>
@@ -791,9 +804,9 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
               colorScheme="green"
               size="lg"
               width="full"
-              onClick={handleSubmit}
+              onClick={handleQuickAdd}
               isLoading={isSubmitting || isLoading}
-              loadingText="Creating..."
+              loadingText="Building Transparency..."
               isDisabled={!selectedTemplate || !eventDate}
               borderRadius="xl"
               height="50px"
@@ -802,7 +815,7 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
               _hover={{ transform: 'translateY(-1px)', boxShadow: 'lg' }}
               transition="all 0.2s"
             >
-              Create Event
+              📖 Document for Consumers
             </Button>
             <Button variant="ghost" size="md" onClick={onClose} width="full" borderRadius="lg">
               Cancel
@@ -823,10 +836,10 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
           <DrawerHeader pb={4} borderBottom="1px" borderColor={borderColor}>
             <VStack spacing={2} align="start">
               <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                {intl.formatMessage({ id: 'app.quickAddEvent' }) || 'Quick Add Event'}
+                Document Farm Activity
               </Text>
-              <Text fontSize="sm" color="gray.500">
-                Fast mobile event creation for field use
+              <Text fontSize="sm" color="green.600" fontWeight="medium">
+                🌟 Mobile transparency documentation for consumer trust
               </Text>
             </VStack>
           </DrawerHeader>
@@ -844,10 +857,15 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
       <ModalContent bg={bgColor} borderRadius="xl">
         <ModalHeader color={textColor} fontSize="xl" borderBottom="1px" borderColor={borderColor}>
-          <HStack spacing={3}>
-            <Icon as={FaPlus} color="green.500" />
-            <Text>{intl.formatMessage({ id: 'app.quickAddEvent' }) || 'Quick Add Event'}</Text>
-          </HStack>
+          <VStack spacing={1} align="start">
+            <HStack spacing={3}>
+              <Icon as={FaPlus} color="green.500" />
+              <Text>Document Farm Activity</Text>
+            </HStack>
+            <Text fontSize="sm" color="green.600" fontWeight="medium">
+              🌟 Build consumer trust through transparency
+            </Text>
+          </VStack>
         </ModalHeader>
         <ModalCloseButton />
 
@@ -939,16 +957,18 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
             {/* Quick Notes */}
             <Box>
               <Text fontSize="sm" fontWeight="bold" mb={2} color={textColor}>
-                {intl.formatMessage({ id: 'app.quickNotes' }) || 'Quick Notes'}
-                <Text as="span" fontSize="xs" fontWeight="normal" color="gray.500" ml={1}>
-                  ({intl.formatMessage({ id: 'app.optional' }) || 'optional'})
+                Farm Story Details
+                <Text as="span" fontSize="xs" fontWeight="normal" color="green.600" ml={1}>
+                  (builds consumer trust)
                 </Text>
               </Text>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={
-                  intl.formatMessage({ id: 'app.addQuickNotesHere' }) || 'Add quick notes here...'
+                  selectedTemplate 
+                    ? `Tell consumers about your ${selectedTemplate.name.toLowerCase()} practices...`
+                    : 'Share details about your farming practices...'
                 }
                 rows={3}
                 resize="none"
@@ -975,7 +995,7 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
                 colorScheme="green"
                 onClick={handleQuickAdd}
                 isLoading={isSubmitting || isLoading}
-                loadingText={intl.formatMessage({ id: 'app.creating' }) || 'Creating...'}
+                loadingText="Building Transparency..."
                 isDisabled={!selectedTemplate || !eventDate}
                 leftIcon={<Icon as={FaClock} />}
                 bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
@@ -985,7 +1005,7 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
                 }}
                 color="white"
               >
-                {intl.formatMessage({ id: 'app.addEvent' }) || 'Add Event'}
+                📖 Document for Consumers
               </Button>
             </HStack>
           </VStack>

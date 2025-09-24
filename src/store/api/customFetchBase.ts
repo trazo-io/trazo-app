@@ -138,7 +138,7 @@ function handleRateLimit(errorData: ApiErrorData): void {
  */
 async function attemptTokenRefresh(api: BaseQueryApi, extraOptions: any): Promise<boolean> {
   try {
-    const refreshToken = localStorage.getItem('refresh');
+    const refreshToken = TokenManager.getRefreshToken();
     if (!refreshToken) {
       console.log('🔒 ERROR: No refresh token found');
       return false;
@@ -158,8 +158,11 @@ async function attemptTokenRefresh(api: BaseQueryApi, extraOptions: any): Promis
     // Store new access token if refresh succeeds
     if (refreshResult.data?.access) {
       TokenManager.setAccessToken(refreshResult.data.access);
-      localStorage.setItem('access', refreshResult.data.access);
-      console.log('🔒 REFRESH: New access token stored');
+      // Also store refresh token if provided
+      if (refreshResult.data?.refresh) {
+        TokenManager.setRefreshToken(refreshResult.data.refresh);
+      }
+      console.log('🔒 REFRESH: New tokens stored via TokenManager');
     }
 
     return !!refreshResult.data;
@@ -180,11 +183,7 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
 
   // SECURITY: Use secure token storage instead of localStorage
   let token = TokenManager.getAccessToken();
-  // TEMP DEBUG: Also try direct localStorage access as backup
-  if (!token) {
-    token = localStorage.getItem('access');
-    console.log('🔒 FETCH: Fallback to direct localStorage access. Found:', !!token);
-  }
+  console.log('🔒 FETCH: Retrieved token from TokenManager. Found:', !!token);
 
   // Check if we have a token and if it might be expired (simple check)
   if (token && !args.url?.includes('auth/')) {

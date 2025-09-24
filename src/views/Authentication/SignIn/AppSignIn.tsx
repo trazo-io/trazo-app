@@ -29,6 +29,7 @@ import {
   FaEyeSlash
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { StandardInput } from '../../../components/Design/StandardComponents';
 import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
 import {

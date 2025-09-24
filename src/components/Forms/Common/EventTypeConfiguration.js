@@ -112,11 +112,12 @@ export const EVENT_FORM_STEPS = [
   { title: 'Media', description: 'Photos & documentation' }
 ];
 
-// Fallback carbon calculation scores
+// URGENT FIX: Updated fallback carbon calculation scores to prevent 7.0 kg CO2e vs 147.7 kg CO2e discrepancy
+// These should only be used if API calls fail, not for normal operation
 export const FALLBACK_CARBON_SCORES = {
   0: { co2e: 0.1, efficiency_score: 75 }, // Weather
   1: { co2e: 2.5, efficiency_score: 60 }, // Production
-  2: { co2e: 1.8, efficiency_score: 50 }, // Chemical
+  2: { co2e: 25.0, efficiency_score: 50 }, // Chemical - FIXED: More accurate for fertilizer applications (was 1.8)
   3: { co2e: 0.5, efficiency_score: 70 }, // General
   4: { co2e: 8.0, efficiency_score: 55 }, // Equipment
   5: { co2e: -1.5, efficiency_score: 90 }, // Soil Management

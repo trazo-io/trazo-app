@@ -91,7 +91,6 @@ import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import CardWithMap from '../CardWithMap';
 import ChemicalTab from './ChemicalTab';
-import Editor from 'components/Editor/Editor';
 import FormLayout from 'components/Forms/FormLayout';
 import GeneralTab from './GeneralTab';
 import EquipmentTab from './EquipmentTab';
@@ -128,9 +127,7 @@ const formSchemaMainInfo = object({
   type: string().min(1, 'Event type is required')
 });
 
-const formSchemaDescription = object({
-  description: string().min(1, 'Description is required')
-});
+// Removed formSchemaDescription - observations are now handled in individual event tabs
 
 const formSchemaMedia = object({});
 
@@ -165,7 +162,7 @@ const eventTypeConfig = [
     name: 'general',
     label: 'General',
     icon: FaEdit,
-    color: 'gray',
+    color: 'green',
     description: 'Other farming activities'
   },
   {
@@ -181,7 +178,7 @@ const eventTypeConfig = [
     name: 'soil_management',
     label: 'Soil Management',
     icon: FaSeedling,
-    color: 'brown',
+    color: 'green',
     description: 'Soil testing and amendments'
   },
   {
@@ -202,12 +199,11 @@ const eventTypeConfig = [
   }
 ];
 
-// Step configuration
+// Step configuration - Streamlined for mobile efficiency
 const steps = [
   { title: 'Basic Info', description: 'Event type & date' },
-  { title: 'Event Details', description: 'Specific information' },
-  { title: 'Description', description: 'Notes & observations' },
-  { title: 'Media', description: 'Photos & documentation' }
+  { title: 'Event Details', description: 'Specific information & observations' },
+  { title: 'Photos', description: 'Documentation (optional)' }
 ];
 
 function NewEvent({ isEdit = false, eventId = null }) {
@@ -257,9 +253,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     resolver: zodResolver(formSchemaMainInfo)
   });
 
-  const descriptionMethods = useForm({
-    resolver: zodResolver(formSchemaDescription)
-  });
+  // Removed descriptionMethods - observations handled in event tabs
 
   const mediaMethods = useForm({
     resolver: zodResolver(formSchemaMedia)
@@ -317,10 +311,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   const calculateCarbonWithDebounce = useCallback(
     async (formData, eventType) => {
-      console.log('calculateCarbonWithDebounce called with:', { formData, eventType });
-
       if (!formData || Object.keys(formData).length === 0) {
-        console.log('calculateCarbonWithDebounce: No data, clearing calculation');
         setCarbonCalculation(null);
         setShouldShowCarbonTips(false);
         return;
@@ -331,10 +322,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
         clearTimeout(carbonTimeoutRef.current);
       }
 
-      console.log('calculateCarbonWithDebounce: Setting timeout for calculation');
       carbonTimeoutRef.current = setTimeout(async () => {
         try {
-          console.log('calculateCarbonWithDebounce: Starting calculation');
           setIsCalculatingCarbon(true);
 
           // Map event type to backend format (FIXED MAPPING TO MATCH eventTypeConfig)
@@ -432,9 +421,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         date: eventDate
       });
 
-      descriptionMethods.reset({
-        description: existingEvent.description || ''
-      });
+      // Description now handled in individual event tabs via observation fields
 
       // Set event type from existing data
       const eventTypeFromData =
@@ -456,7 +443,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // Mark as loaded to prevent re-initialization
       hasLoadedExistingData.current = true;
     }
-  }, [isEdit, existingEvent, basicMethods, descriptionMethods, dispatch]);
+  }, [isEdit, existingEvent, basicMethods, dispatch]);
 
   // Form submission handlers
   const onSubmitBasic = (data) => {
@@ -515,51 +502,37 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // Recalculate carbon with new data
     calculateCarbonWithDebounce(updatedData, activeEventType);
 
-    // Move to next step (Description)
+    // Move directly to Photos step (skip redundant description)
     setActiveStep(2);
   };
 
   // Handle real-time data changes from event tabs (for carbon preview updates)
   const onDataChange = useCallback(
     (data) => {
-      console.log('🔥 NewEvent: onDataChange SUCCESSFULLY triggered!', {
-        data,
-        activeEventType,
-        timestamp: new Date().toISOString()
-      });
-
       // Use functional update to avoid stale closure
       setEventFormData((prevData) => {
         const updatedData = { ...prevData, ...data };
-        console.log('🔥 NewEvent: updatedData for carbon calculation', updatedData);
 
-        // Update Redux store for consistency
+        // Update Redux store for consistency - use current state snapshot
         dispatch(
           setForm({
             event: {
-              ...currentEvent,
+              ...prevData, // Use the previous data snapshot instead of currentEvent
               ...updatedData
             }
           })
         );
 
         // Recalculate carbon with new data (debounced)
-        console.log(
-          '🔥 NewEvent: Calling calculateCarbonWithDebounce with activeEventType:',
-          activeEventType
-        );
         calculateCarbonWithDebounce(updatedData, activeEventType);
 
         return updatedData;
       });
     },
-    [activeEventType, calculateCarbonWithDebounce, dispatch, currentEvent]
+    [activeEventType, calculateCarbonWithDebounce, dispatch] // Removed currentEvent dependency
   );
 
-  // Log when callback is recreated to track dependency changes
-  useEffect(() => {
-    console.log('🔄 NewEvent: onDataChange callback recreated due to dependency change');
-  }, [onDataChange]);
+  // Removed debug logging to reduce console noise
 
   // Handle event type change
   const handleEventTypeChange = (eventTypeId) => {
@@ -572,23 +545,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     }
   };
 
-  const onSubmitDescription = (data) => {
-    const updatedData = { ...eventFormData, ...data };
-    setEventFormData(updatedData);
-
-    dispatch(
-      setForm({
-        event: {
-          ...currentEvent,
-          ...updatedData
-        }
-      })
-    );
-
-    setActiveStep(3);
-  };
-
-  // File upload
+  // File upload (now step 2 instead of step 3)
   const [acceptedFiles, setAcceptedFiles] = useState([]);
 
   const onSubmitMedia = async () => {
@@ -908,7 +865,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       {(!isEdit || !isLoadingEvent) && !eventError && (
         <>
           {/* Main Content */}
-          <Box maxW="1200px" mx="auto" p={{ base: 4, md: 6, lg: 8 }}>
+          <Box maxW="1200px" mx="auto" p={{ base: 4, md: 6, lg: 8 }} pt="55px !important">
             <VStack spacing={{ base: 8, md: 10 }} align="stretch">
               {/* Header Card - Full Width */}
               <Card boxShadow="xl" bg={bgColor} borderRadius="2xl">
@@ -941,8 +898,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     align="center"
                     w="100%"
                     maxW="800px"
-                    mx="auto"
-                  >
+                    mx="auto">
                     {steps.map((step, index) => (
                       <React.Fragment key={index}>
                         <VStack spacing={3} align="center" flex="1">
@@ -959,8 +915,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             fontSize={{ base: 'sm', md: 'md' }}
                             fontWeight="bold"
                             boxShadow={index === activeStep ? 'lg' : 'md'}
-                            transition="all 0.3s"
-                          >
+                            transition="all 0.3s">
                             {index < activeStep ? (
                               <FaCheckCircle size="18px" />
                             ) : (
@@ -973,8 +928,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               fontWeight="bold"
                               color={index <= activeStep ? 'green.500' : 'gray.500'}
                               textAlign="center"
-                              lineHeight="1.2"
-                            >
+                              lineHeight="1.2">
                               {step.title}
                             </Text>
                             <Text
@@ -982,8 +936,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               color="gray.500"
                               textAlign="center"
                               display={{ base: 'none', md: 'block' }}
-                              lineHeight="1.2"
-                            >
+                              lineHeight="1.2">
                               {step.description}
                             </Text>
                           </VStack>
@@ -1033,8 +986,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     bg="yellow.50"
                                     borderRadius="md"
                                     borderWidth="1px"
-                                    borderColor="yellow.200"
-                                  >
+                                    borderColor="yellow.200">
                                     <Text fontSize="sm" color="yellow.800">
                                       <Icon as={FaInfoCircle} mr={2} />
                                       {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' }) ||
@@ -1044,8 +996,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 )}
                                 <Grid
                                   templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }}
-                                  gap={4}
-                                >
+                                  gap={4}>
                                   {eventTypeConfig.map((eventType) => (
                                     <Button
                                       key={eventType.id}
@@ -1074,8 +1025,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                       }
                                       transition="all 0.2s"
                                       whiteSpace="normal"
-                                      overflow="hidden"
-                                    >
+                                      overflow="hidden">
                                       <Icon as={eventType.icon} boxSize={6} />
                                       <VStack spacing={1} width="100%">
                                         <Text fontSize="sm" fontWeight="bold" textAlign="center">
@@ -1087,8 +1037,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                           textAlign="center"
                                           lineHeight="1.2"
                                           noOfLines={2}
-                                          display={{ base: 'none', md: 'block' }}
-                                        >
+                                          display={{ base: 'none', md: 'block' }}>
                                           {eventType.description}
                                         </Text>
                                       </VStack>
@@ -1104,8 +1053,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   'Event Date & Time'
                                 }
                                 required
-                                error={basicMethods.formState.errors.date?.message}
-                              >
+                                error={basicMethods.formState.errors.date?.message}>
                                 <StandardInput
                                   type="datetime-local"
                                   {...basicMethods.register('date')}
@@ -1119,8 +1067,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     variant="primary"
                                     type="submit"
                                     rightIcon={<FaChevronRight />}
-                                    size="lg"
-                                  >
+                                    size="lg">
                                     {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                                   </StandardButton>
                                 </HStack>
@@ -1230,72 +1177,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                       <CardHeader pb={2}>
                         <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                          {intl.formatMessage({ id: 'app.description' }) || 'Description & Notes'}
-                        </Text>
-                      </CardHeader>
-                      <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
-                        <FormProvider {...descriptionMethods}>
-                          <form
-                            onSubmit={descriptionMethods.handleSubmit(onSubmitDescription)}
-                            style={{ width: '100%' }}
-                          >
-                            <VStack spacing={{ base: 5, md: 6 }} align="stretch">
-                              <Box w="100%">
-                                <FormLabel
-                                  fontSize="sm"
-                                  fontWeight="semibold"
-                                  mb={3}
-                                  color={textColor}
-                                >
-                                  {intl.formatMessage({ id: 'app.eventDescription' }) ||
-                                    'Event Description'}
-                                </FormLabel>
-                                <Box
-                                  w="100%"
-                                  h="100%"
-                                  overflow="hidden"
-                                  bg="white"
-                                  _focusWithin={{
-                                    borderColor: 'green.400',
-                                    boxShadow: '0 0 0 1px var(--chakra-colors-green-400)'
-                                  }}
-                                  transition="all 0.3s ease"
-                                >
-                                  <Editor />
-                                </Box>
-                              </Box>
-
-                              <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                                <HStack justify="space-between">
-                                  <StandardButton
-                                    variant="outline"
-                                    onClick={goToPreviousStep}
-                                    leftIcon={<FaChevronLeft />}
-                                    size="lg"
-                                  >
-                                    {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-                                  </StandardButton>
-                                  <StandardButton
-                                    variant="primary"
-                                    type="submit"
-                                    rightIcon={<FaChevronRight />}
-                                    size="lg"
-                                  >
-                                    {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                                  </StandardButton>
-                                </HStack>
-                              </Box>
-                            </VStack>
-                          </form>
-                        </FormProvider>
-                      </CardBody>
-                    </Card>
-                  )}
-
-                  {activeStep === 3 && (
-                    <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                      <CardHeader pb={2}>
-                        <Text fontSize="lg" fontWeight="semibold" color={textColor}>
                           {intl.formatMessage({ id: 'app.mediaAndDocumentation' }) ||
                             'Media & Documentation'}
                         </Text>
@@ -1304,13 +1185,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         <VStack spacing={{ base: 5, md: 6 }} align="stretch">
                           <StandardField
                             label={intl.formatMessage({ id: 'app.eventPhotos' }) || 'Event Photos'}
-                            helpText="Upload photos documenting this agricultural event"
-                          >
+                            helpText="Upload photos documenting this agricultural event">
                             <TrazoImageUpload
                               maxFiles={5}
                               maxSize={10 * 1024 * 1024} // 10MB
-                              existingImages={acceptedFiles.map(f => f.url).filter(Boolean)}
-                              onImagesChange={(urls) => setAcceptedFiles(urls.map(url => ({ url })))}
+                              existingImages={acceptedFiles.map((f) => f.url).filter(Boolean)}
+                              onImagesChange={(urls) =>
+                                setAcceptedFiles(urls.map((url) => ({ url })))
+                              }
                             />
                           </StandardField>
 
@@ -1320,8 +1202,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 variant="outline"
                                 onClick={goToPreviousStep}
                                 leftIcon={<FaChevronLeft />}
-                                size="lg"
-                              >
+                                size="lg">
                                 {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
                               </StandardButton>
                               <StandardButton
@@ -1334,8 +1215,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     : intl.formatMessage({ id: 'app.creating' }) || 'Creating...'
                                 }
                                 rightIcon={<FaCheckCircle />}
-                                size="lg"
-                              >
+                                size="lg">
                                 {isEdit
                                   ? intl.formatMessage({ id: 'app.updateEvent' }) || 'Update Event'
                                   : intl.formatMessage({ id: 'app.createEvent' }) || 'Create Event'}
@@ -1354,8 +1234,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                   w={{ base: '100%', xl: '400px' }}
                   position={{ xl: 'sticky' }}
                   top="80px"
-                  alignSelf="flex-start"
-                >
+                  alignSelf="flex-start">
                   {activeStep === 0 && !carbonCalculation ? (
                     <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                       <CardBody>
@@ -1397,8 +1276,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   : 'red'
                               }
                               fontSize="xs"
-                              borderRadius="full"
-                            >
+                              borderRadius="full">
                               {carbonCalculation.efficiency_score}/100
                             </Badge>
                           )}

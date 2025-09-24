@@ -18,6 +18,9 @@ export {
   StandardMediaUpload
 } from './StandardComponents';
 
+// Transparency Components
+export { TransparencyIndicator } from './TransparencyIndicator';
+
 // Media Components
 export { S3Image, type S3ImageProps } from '../Media/S3Image';
 

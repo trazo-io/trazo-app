@@ -165,6 +165,23 @@ export const TokenManager = {
    */
   clearTokens(): void {
     tokenStorage.removeToken();
+    // Also clear refresh tokens from all storage locations
+    sessionStorage.removeItem('refresh');
+    localStorage.removeItem('refresh');
+  },
+
+  /**
+   * Store refresh token securely
+   */
+  setRefreshToken(token: string): void {
+    sessionStorage.setItem('refresh', token);
+  },
+
+  /**
+   * Retrieve refresh token
+   */
+  getRefreshToken(): string | null {
+    return sessionStorage.getItem('refresh') || localStorage.getItem('refresh');
   },
 
   /**

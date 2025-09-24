@@ -26,7 +26,10 @@ import {
   FaExpand,
   FaCompress,
   FaLeaf,
-  FaInfoCircle
+  FaInfoCircle,
+  FaEye,
+  FaUsers,
+  FaCertificate
 } from 'react-icons/fa';
 import { MdLocationOn, MdTerrain } from 'react-icons/md';
 import { ParcelModal } from './ParcelModal';
@@ -91,6 +94,13 @@ interface ParcelMapInfoProps {
     productions_completed?: number;
     total_productions?: number;
     images?: string[];
+    // Transparency fields from new parcel form
+    transparency_description?: string;
+    sustainability_practices?: string;
+    consumer_story?: string;
+    primary_crop?: string;
+    transparency_score?: number;
+    transparency_ready?: boolean;
   };
 }
 
@@ -216,16 +226,17 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               Cultivation Details
             </Text>
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-              {parcelData?.cropType && (
+              {/* Display primary_crop if available, otherwise fall back to cropType */}
+              {(parcelData?.primary_crop || parcelData?.cropType) && (
                 <VStack align="start" spacing={1}>
                   <HStack spacing={2}>
                     <Icon as={FaSeedling} color="green.500" boxSize={4} />
                     <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                      CROP TYPE
+                      PRIMARY CROP
                     </Text>
                   </HStack>
                   <Text fontSize="sm" color={textColor}>
-                    {parcelData.cropType}
+                    {parcelData.primary_crop || parcelData.cropType}
                   </Text>
                 </VStack>
               )}
@@ -259,6 +270,88 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               )}
             </SimpleGrid>
           </Box>
+
+          {/* 🎯 CONSUMER TRANSPARENCY SECTION - New transparency data for consumers */}
+          {(parcelData?.transparency_description || parcelData?.sustainability_practices || parcelData?.consumer_story || parcelData?.transparency_ready) && (
+            <>
+              <Divider />
+              <Box>
+                <HStack spacing={3} mb={4}>
+                  <Icon as={FaEye} color="cyan.500" boxSize={5} />
+                  <Text fontSize="sm" fontWeight="bold" color={textColor}>
+                    Consumer Transparency
+                  </Text>
+                  {parcelData?.transparency_ready && (
+                    <Badge colorScheme="cyan" variant="solid" px={2} py={1} borderRadius="full" fontSize="xs">
+                      ✓ Consumer Ready
+                    </Badge>
+                  )}
+                  {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
+                    <Badge 
+                      colorScheme={parcelData.transparency_score >= 80 ? "green" : parcelData.transparency_score >= 60 ? "yellow" : "gray"}
+                      variant="solid" px={2} py={1} borderRadius="full" fontSize="xs">
+                      {parcelData.transparency_score}% Complete
+                    </Badge>
+                  )}
+                </HStack>
+
+                <VStack spacing={4} align="stretch">
+                  {/* What makes this parcel special */}
+                  {parcelData?.transparency_description && (
+                    <Box p={4} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
+                      <VStack spacing={2} align="stretch">
+                        <HStack>
+                          <Icon as={FaLeaf} color="green.600" boxSize={4} />
+                          <Text fontWeight="bold" color="green.700" fontSize="xs">
+                            WHAT MAKES THIS PARCEL SPECIAL
+                          </Text>
+                        </HStack>
+                        <Text color="gray.700" fontSize="sm" lineHeight="tall">
+                          {parcelData.transparency_description}
+                        </Text>
+                      </VStack>
+                    </Box>
+                  )}
+
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    {/* Key sustainability practices */}
+                    {parcelData?.sustainability_practices && (
+                      <Box p={4} bg="blue.50" borderRadius="lg" border="1px" borderColor="blue.200">
+                        <VStack spacing={2} align="stretch">
+                          <HStack>
+                            <Icon as={FaSeedling} color="blue.600" boxSize={4} />
+                            <Text fontWeight="bold" color="blue.700" fontSize="xs">
+                              SUSTAINABILITY PRACTICES
+                            </Text>
+                          </HStack>
+                          <Text color="gray.700" fontSize="sm" lineHeight="tall">
+                            {parcelData.sustainability_practices}
+                          </Text>
+                        </VStack>
+                      </Box>
+                    )}
+
+                    {/* Why consumers should care */}
+                    {parcelData?.consumer_story && (
+                      <Box p={4} bg="purple.50" borderRadius="lg" border="1px" borderColor="purple.200">
+                        <VStack spacing={2} align="stretch">
+                          <HStack>
+                            <Icon as={FaUsers} color="purple.600" boxSize={4} />
+                            <Text fontWeight="bold" color="purple.700" fontSize="xs">
+                              WHY CONSUMERS SHOULD CARE
+                            </Text>
+                          </HStack>
+                          <Text color="gray.700" fontSize="sm" lineHeight="tall">
+                            {parcelData.consumer_story}
+                          </Text>
+                        </VStack>
+                      </Box>
+                    )}
+                  </SimpleGrid>
+                </VStack>
+              </Box>
+            </>
+          )}
 
           {/* Planting and Harvest Dates */}
           {(parcelData?.plantingDate || parcelData?.harvestDate) && (

@@ -165,6 +165,13 @@ interface CompanyEstablishmentInfoProps {
     productions_completed?: number;
     total_productions?: number;
     images?: string[];
+    // Transparency fields from new parcel form
+    transparency_description?: string;
+    sustainability_practices?: string;
+    consumer_story?: string;
+    primary_crop?: string;
+    transparency_score?: number;
+    transparency_ready?: boolean;
   };
 }
 

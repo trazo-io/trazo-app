@@ -1,20 +1,21 @@
 import baseApi from './baseApi';
 
-// TypeScript interface matching Django serializer
+// TypeScript interface matching Django serializer - Transparency-First
 export interface EstablishmentDashboardMetrics {
   // Consumer engagement metrics
   consumer_reach: number;           // Unique consumers reached this month
   monthly_scans: number;           // Total QR scans this month  
   scan_growth_percentage: number;  // Month-over-month scan growth
   
-  // Trust and verification metrics
+  // Transparency and trust metrics (PRIMARY)
+  transparency_score: number;      // Average transparency percentage (0-100%)
   trust_score: number;             // Average confidence score (0-100%)
-  verified_productions: number;    // Productions with carbon verification
+  verified_productions: number;    // Productions with transparency verification
   total_productions: number;       // Total productions in establishment
   
-  // Performance metrics
-  industry_percentile: number;     // Industry ranking percentile
-  carbon_score: number;           // Average carbon score (1-5 stars)
+  // Carbon impact metrics (SECONDARY) 
+  carbon_intensity: number;        // Average kg CO₂ per kg product
+  carbon_reduction_trend: number;  // Month-over-month carbon improvement
   
   // Business impact metrics
   revenue_potential: number;       // Monthly carbon credit potential revenue

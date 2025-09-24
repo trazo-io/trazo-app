@@ -260,8 +260,8 @@ export default function CarbonJourney() {
                                   <VStack spacing={2} w="full">
                                     <HStack justify="space-between" w="full">
                                       <ConsumerTooltip
-                                        label="Environmental Score"
-                                        explanation="Environmental Score rates how sustainable the farming practices are, from 0-100%. It includes factors like organic certification, water usage, soil health, and carbon storage practices. Higher scores mean more environmentally friendly farming."
+                                        label="Transparency Score"
+                                        explanation="Transparency Score rates how well documented and verified the farming practices are, from 0-100%. It includes factors like data completeness, verification status, and consumer trust indicators. Higher scores mean more transparent and trustworthy farming."
                                       >
                                         <Text
                                           fontSize="sm"
@@ -270,7 +270,7 @@ export default function CarbonJourney() {
                                           textDecoration="underline"
                                           textDecorationStyle="dotted"
                                         >
-                                          Environmental Score
+                                          Transparency Score
                                         </Text>
                                       </ConsumerTooltip>
                                       <Text

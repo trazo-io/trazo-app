@@ -30,8 +30,8 @@ import {
 import { MdVerified, MdTimeline } from 'react-icons/md';
 
 interface ProgressiveQRLoaderProps {
-  loadingStage: 'scanning' | 'carbon' | 'details' | 'complete';
-  carbonScore?: number;
+  loadingStage: 'scanning' | 'transparency' | 'details' | 'complete';
+  transparencyScore?: number;
   productName?: string;
   isVerified?: boolean;
   onStageComplete?: (stage: string) => void;
@@ -39,26 +39,26 @@ interface ProgressiveQRLoaderProps {
 
 export const ProgressiveQRLoader: React.FC<ProgressiveQRLoaderProps> = ({
   loadingStage,
-  carbonScore,
+  transparencyScore,
   productName,
   isVerified = false,
   onStageComplete
 }) => {
   const [currentTip, setCurrentTip] = useState(0);
-  const [showCarbonScore, setShowCarbonScore] = useState(false);
+  const [showTransparencyScore, setShowTransparencyScore] = useState(false);
   const hasCalledStageComplete = useRef(false);
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
   const accentColor = useColorModeValue('green.500', 'green.400');
 
-  // Eco-friendly tips that rotate during loading
+  // Transparency-focused tips that rotate during loading
   const ecoTips = [
-    '💡 Every scan shows this product\'s carbon transparency',
-    '🌱 Supporting sustainable farming practices',
-    '🌍 Join thousands reducing their environmental impact',
-    '♻️ Your choices make a difference for the planet',
-    '🌿 Discover the story behind your food'
+    '💡 Every scan reveals farm transparency and sustainable practices',
+    '🌱 Supporting honest farmers who share their complete story',
+    '🌍 Complete transparency builds trust in sustainable farming',
+    '♻️ Your support rewards farmers for transparency',
+    '🌿 Discover the complete story behind your food'
   ];
 
   // Rotate tips every 2 seconds during loading
@@ -75,24 +75,24 @@ export const ProgressiveQRLoader: React.FC<ProgressiveQRLoaderProps> = ({
   useEffect(() => {
     if (loadingStage === 'scanning') {
       hasCalledStageComplete.current = false;
-      setShowCarbonScore(false);
+      setShowTransparencyScore(false);
     }
   }, [loadingStage]);
 
-  // Show carbon score with animation when available
+  // Show transparency score with animation when available
   useEffect(() => {
-    if (loadingStage === 'carbon' && carbonScore !== undefined && !hasCalledStageComplete.current) {
-      setTimeout(() => setShowCarbonScore(true), 500);
+    if (loadingStage === 'transparency' && transparencyScore !== undefined && !hasCalledStageComplete.current) {
+      setTimeout(() => setShowTransparencyScore(true), 500);
       hasCalledStageComplete.current = true;
-      onStageComplete?.('carbon');
+      onStageComplete?.('transparency');
     }
-  }, [loadingStage, carbonScore, onStageComplete]);
+  }, [loadingStage, transparencyScore, onStageComplete]);
 
   const getProgressValue = () => {
     switch (loadingStage) {
       case 'scanning':
         return 25;
-      case 'carbon':
+      case 'transparency':
         return 60;
       case 'details':
         return 85;
@@ -107,8 +107,8 @@ export const ProgressiveQRLoader: React.FC<ProgressiveQRLoaderProps> = ({
     switch (loadingStage) {
       case 'scanning':
         return 'Scanning product...';
-      case 'carbon':
-        return 'Loading sustainability data...';
+      case 'transparency':
+        return 'Loading transparency data...';
       case 'details':
         return 'Loading complete story...';
       case 'complete':
@@ -118,10 +118,10 @@ export const ProgressiveQRLoader: React.FC<ProgressiveQRLoaderProps> = ({
     }
   };
 
-  const getCarbonScoreColor = (score: number) => {
+  const getTransparencyScoreColor = (score: number) => {
     if (score >= 80) return 'green';
     if (score >= 60) return 'yellow';
-    return 'red';
+    return 'orange';
   };
 
   return (
@@ -161,28 +161,28 @@ export const ProgressiveQRLoader: React.FC<ProgressiveQRLoaderProps> = ({
           </HStack>
         </Box>
 
-        {/* Carbon Score Preview (Phase 2 Enhancement) */}
-        {showCarbonScore && carbonScore !== undefined && (
-          <ScaleFade initialScale={0.8} in={showCarbonScore}>
+        {/* Transparency Score Preview (Phase 2 Enhancement) */}
+        {showTransparencyScore && transparencyScore !== undefined && (
+          <ScaleFade initialScale={0.8} in={showTransparencyScore}>
             <Box
               bg={bgColor}
               p={6}
               borderRadius="xl"
               boxShadow="lg"
               border="2px solid"
-              borderColor={`${getCarbonScoreColor(carbonScore)}.200`}
+              borderColor={`${getTransparencyScoreColor(transparencyScore)}.200`}
               textAlign="center"
               minW="280px"
             >
               <VStack spacing={3}>
                 <Badge
-                  colorScheme={getCarbonScoreColor(carbonScore)}
+                  colorScheme={getTransparencyScoreColor(transparencyScore)}
                   fontSize="lg"
                   px={4}
                   py={2}
                   borderRadius="full"
                 >
-                  Carbon Score: {carbonScore}/100
+                  Transparency: {Math.round(transparencyScore)}%
                 </Badge>
 
                 {productName && (
@@ -195,7 +195,7 @@ export const ProgressiveQRLoader: React.FC<ProgressiveQRLoaderProps> = ({
                   <HStack spacing={2}>
                     <Icon as={MdVerified} color="blue.500" />
                     <Text fontSize="sm" color="blue.600" fontWeight="medium">
-                      Verified Sustainable
+                      Transparency Verified
                     </Text>
                   </HStack>
                 )}

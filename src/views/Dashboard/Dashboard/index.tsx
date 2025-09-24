@@ -59,9 +59,8 @@ import bgImage from 'assets/img/backgroundImage.png';
 import defaultEstablishmentImage from 'assets/img/basic-auth.png';
 // assets
 import imageFarm from 'assets/img/imageFarm.png';
-import CarbonSummaryCard from './components/establishment/CarbonSummaryCard';
+import TransparencySummaryCard from './components/establishment/CarbonSummaryCard';
 import CarbonDashboard from './Establishment/CarbonDashboard';
-import IoTDashboard from './Establishment/IoTDashboard';
 import TrialStatusBanner from 'components/Trial/TrialStatusBanner';
 import GuidedOnboarding from 'components/Onboarding/GuidedOnboarding';
 import { useOnboarding } from 'hooks/useOnboarding';
@@ -753,12 +752,14 @@ export default function DashboardView() {
           <Card minH="290px" bg={cardBg} />
         )}
       </Grid>
-      {/* Carbon Summary Card for selected establishment */}
+      
+      {/* Single Transparency Overview Card for selected establishment */}
       {establishment?.id && (
-        <Box flex="1" width="100%" pb={{ base: '16px', md: '24px' }} overflow="hidden">
-          <CarbonSummaryCard establishmentId={establishment.id} />
+        <Box width="100%" mb={{ base: 4, md: 6 }}>
+          <TransparencySummaryCard establishmentId={establishment.id} />
         </Box>
       )}
+      
       <CarouselHorizontal
         title={intl.formatMessage({ id: 'app.parcels' })}
         description={intl.formatMessage({ id: 'app.establishmentParcels' })}
