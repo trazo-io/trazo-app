@@ -82,6 +82,7 @@ interface EventTemplate {
   type: string;
   timing?: string;
   usage_count?: number;
+  excludeFromCarbonCalculation?: boolean;
 }
 
 interface QuickAddEventProps {
@@ -361,14 +362,22 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     setEventDescription(`${template.name} - ${template.description}`);
     setApplicationRate(getDefaultApplicationRate(template));
     setDuration(template.typical_duration);
-    setEventObservations(
-      `Carbon Impact: ${template.carbonImpact} kg CO₂. Sustainability Score: ${template.sustainabilityScore}/10. QR Visibility: ${template.qrVisibility}. Efficiency Tip: ${template.efficiency_tip}`
-    );
+    
+    // Updated observations to show USDA-based calculations instead of hardcoded values
+    if (template.excludeFromCarbonCalculation) {
+      setEventObservations(
+        `General Event (no carbon calculation). Sustainability Score: ${template.sustainabilityScore}/10. QR Visibility: ${template.qrVisibility}. Efficiency Tip: ${template.efficiency_tip}`
+      );
+    } else {
+      setEventObservations(
+        `USDA-based carbon calculation will be applied. Sustainability Score: ${template.sustainabilityScore}/10. QR Visibility: ${template.qrVisibility}. Efficiency Tip: ${template.efficiency_tip}`
+      );
+    }
 
     // Show success feedback
     toast({
       title: '🎯 Template Selected',
-      description: `${template.name} ready to create with optimized settings`,
+      description: `${template.name} ready to create with ${template.excludeFromCarbonCalculation ? 'documentation tracking' : 'USDA carbon calculations'}`,
       status: 'info',
       duration: 2000,
       isClosable: true
@@ -490,9 +499,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     return colorMap[eventType] || 'blue';
   };
 
-  // Smart event templates based on crop type - CARBON-FOCUSED
+  // Smart event templates based on crop type - USDA-BASED CALCULATIONS
   const getEventTemplates = (crop: string): EventTemplate[] => {
-    // General templates (keep existing ones)
+    // General templates - now with proper USDA integration
     const baseTemplates = [
       {
         id: 'fertilization',
@@ -500,14 +509,15 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         icon: FaSeedling,
         color: 'green',
         description: 'Aplicación de fertilizante',
-        carbonImpact: 45,
+        carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 180,
         efficiency_tip: 'Soil testing can reduce fertilizer needs by 20-30%',
         typical_duration: '2-3 hours',
         carbonCategory: 'high' as const,
         sustainabilityScore: 7,
         qrVisibility: 'high' as const,
-        type: 'fertilization'
+        type: 'fertilization',
+        excludeFromCarbonCalculation: false
       },
       {
         id: 'irrigation',
@@ -515,14 +525,15 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         icon: FaTint,
         color: 'blue',
         description: 'Sistema de riego',
-        carbonImpact: 25,
+        carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 120,
         efficiency_tip: 'Smart irrigation controllers can save 25% energy',
         typical_duration: '1-2 hours setup',
         carbonCategory: 'medium' as const,
         sustainabilityScore: 8,
         qrVisibility: 'medium' as const,
-        type: 'irrigation'
+        type: 'irrigation',
+        excludeFromCarbonCalculation: false
       },
       {
         id: 'pest_control',
@@ -530,14 +541,15 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         icon: FaSprayCan,
         color: 'orange',
         description: 'Aplicación de pesticidas',
-        carbonImpact: 35,
+        carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 150,
         efficiency_tip: 'IPM practices can reduce pesticide use by 40%',
         typical_duration: '3-4 hours',
         carbonCategory: 'high' as const,
         sustainabilityScore: 6,
         qrVisibility: 'high' as const,
-        type: 'pest_control'
+        type: 'pest_control',
+        excludeFromCarbonCalculation: false
       },
       {
         id: 'pruning',
@@ -545,14 +557,32 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         icon: FaCut,
         color: 'purple',
         description: 'Poda de plantas',
-        carbonImpact: 20,
+        carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 200,
         efficiency_tip: 'Precision pruning reduces fuel consumption by 15%',
         typical_duration: '4-6 hours',
         carbonCategory: 'low' as const,
         sustainabilityScore: 9,
         qrVisibility: 'low' as const,
-        type: 'pruning'
+        type: 'pruning',
+        excludeFromCarbonCalculation: false
+      },
+      // Add General Events that exclude carbon calculations
+      {
+        id: 'general_documentation',
+        name: 'Documentación General',
+        icon: FaCamera,
+        color: 'gray',
+        description: 'Documentación de actividades sin impacto de carbono',
+        carbonImpact: 0,
+        costEstimate: 0,
+        efficiency_tip: 'Focus on transparency and documentation quality',
+        typical_duration: '15-30 minutes',
+        carbonCategory: 'low' as const,
+        sustainabilityScore: 8,
+        qrVisibility: 'medium' as const,
+        type: 'general',
+        excludeFromCarbonCalculation: true
       }
     ];
 
@@ -566,7 +596,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
           icon: getEventIcon(template.event_type),
           color: getEventColor(template.event_type, template.carbon_category),
           description: template.description,
-          carbonImpact: template.carbon_impact || 0,
+          carbonImpact: template.carbon_impact || 0, // Backend templates may have estimated values
           costEstimate: template.cost_estimate || 0,
           efficiency_tip:
             template.efficiency_tips || 'Database-sourced template for optimal results',
@@ -574,7 +604,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
           carbonCategory: template.carbon_category as 'high' | 'medium' | 'low',
           sustainabilityScore: template.sustainability_score || 7,
           qrVisibility: template.qr_visibility as 'high' | 'medium' | 'low',
-          type: template.type || template.event_type
+          type: template.type || template.event_type,
+          excludeFromCarbonCalculation: template.exclude_from_carbon_calculation || false
         });
       });
     }
@@ -582,7 +613,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     // Combine general templates with crop-specific ones
     const allTemplates = [...baseTemplates, ...dbTemplates];
 
-    // Customize based on crop type - CARBON-OPTIMIZED (keep existing logic)
+    // Customize based on crop type - USDA-OPTIMIZED
     if (crop.toLowerCase().includes('citrus')) {
       allTemplates.push({
         id: 'bloom_nutrition',
@@ -590,14 +621,15 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         icon: FaLeaf,
         color: 'pink',
         description: 'Nutrición específica para floración',
-        carbonImpact: 30,
+        carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 160,
         efficiency_tip: 'Timing-specific nutrition improves efficiency by 20%',
         typical_duration: '2-3 hours',
         carbonCategory: 'medium' as const,
         sustainabilityScore: 8,
         qrVisibility: 'medium' as const,
-        type: 'bloom_nutrition'
+        type: 'bloom_nutrition',
+        excludeFromCarbonCalculation: false
       });
     }
 
@@ -629,12 +661,14 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         parcels: [parseInt(parcelId || '0')],
         event_type: getTemplateEventType(selectedTemplate),
         date: new Date().toISOString(),
-        description: `${selectedTemplate.name} - Carbon Impact: ${selectedTemplate.carbonImpact} kg CO₂`,
+        description: selectedTemplate.excludeFromCarbonCalculation 
+          ? `${selectedTemplate.name} - Documentation only (no carbon calculation)`
+          : `${selectedTemplate.name} - USDA-based carbon calculation will be applied`,
         album: { images: [] },
         observation: `Template-created event. Sustainability Score: ${selectedTemplate.sustainabilityScore}/10. QR Visibility: ${selectedTemplate.qrVisibility}. Efficiency Tip: ${selectedTemplate.efficiency_tip}`,
         template_used: selectedTemplate.id,
         template_name: selectedTemplate.name,
-        carbon_impact_estimate: selectedTemplate.carbonImpact,
+        exclude_from_carbon_calculation: selectedTemplate.excludeFromCarbonCalculation || false,
         sustainability_score: selectedTemplate.sustainabilityScore,
         ...eventTypeFields
       };
@@ -642,8 +676,10 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       await createEvent(backendEventData).unwrap();
 
       toast({
-        title: '🌱 Carbon Event Created Successfully!',
-        description: `${selectedTemplate.name} added with ${selectedTemplate.carbonImpact} kg CO₂ impact. Visible to consumers via QR codes.`,
+        title: '🌱 Event Created Successfully!',
+        description: selectedTemplate.excludeFromCarbonCalculation 
+          ? `${selectedTemplate.name} created for documentation tracking. Visible to consumers via QR codes.`
+          : `${selectedTemplate.name} created with USDA-based carbon calculation. Visible to consumers via QR codes.`,
         status: 'success',
         duration: 5000,
         isClosable: true
@@ -1188,7 +1224,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                           {selectedTemplate.name}
                         </Text>
                         <Text fontSize="xs" color={`${selectedTemplate.color}.600`}>
-                          Carbon Impact: {selectedTemplate.carbonImpact} kg CO₂
+                          {selectedTemplate.excludeFromCarbonCalculation 
+                            ? 'Documentation only - No carbon calculation' 
+                            : 'USDA-based carbon calculation will be applied'}
                         </Text>
                       </VStack>
                     </HStack>
@@ -1578,18 +1616,15 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                   {template.name}
                                 </Text>
                               </HStack>
-                              <Badge
-                                colorScheme={
-                                  template.carbonCategory === 'high'
-                                    ? 'red'
-                                    : template.carbonCategory === 'medium'
-                                    ? 'yellow'
-                                    : 'green'
-                                }
-                                size="xs"
-                              >
-                                {template.carbonImpact} kg CO₂
-                              </Badge>
+                              {template.excludeFromCarbonCalculation ? (
+                                <Badge colorScheme="gray" size="xs">
+                                  No Carbon Calc
+                                </Badge>
+                              ) : (
+                                <Badge colorScheme="blue" size="xs">
+                                  USDA Carbon
+                                </Badge>
+                              )}
                             </HStack>
 
                             <Text fontSize="xs" color="gray.600">
@@ -1679,18 +1714,15 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                     {template.name}
                                   </Text>
                                 </HStack>
-                                <Badge
-                                  colorScheme={
-                                    template.carbonCategory === 'high'
-                                      ? 'red'
-                                      : template.carbonCategory === 'medium'
-                                      ? 'yellow'
-                                      : 'green'
-                                  }
-                                  size="xs"
-                                >
-                                  {template.carbonImpact} kg CO₂
-                                </Badge>
+                                {template.excludeFromCarbonCalculation ? (
+                                  <Badge colorScheme="gray" size="xs">
+                                    No Carbon Calc
+                                  </Badge>
+                                ) : (
+                                  <Badge colorScheme="blue" size="xs">
+                                    USDA Carbon
+                                  </Badge>
+                                )}
                               </HStack>
 
                               <Text fontSize="xs" color="gray.600">

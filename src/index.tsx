@@ -30,9 +30,24 @@ import { store } from './store';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import theme from 'theme/theme';
 import { emotionCache } from 'theme/emotion-cache';
+import { optimizeForMobile } from './utils/serviceWorker';
+import { performanceMonitor } from './utils/performance';
 
 const container = document.getElementById('root');
 const root = createRoot(container!);
+
+// Initialize mobile optimizations
+if (process.env.NODE_ENV === 'production') {
+  // Register service worker and setup mobile optimizations
+  optimizeForMobile().catch(error => {
+    console.warn('Mobile optimization failed:', error);
+  });
+}
+
+// Performance monitoring initialization
+if (process.env.NODE_ENV === 'development') {
+  console.log('📊 Performance monitoring enabled for development');
+}
 
 root.render(
   <Provider store={store}>
@@ -49,3 +64,10 @@ root.render(
     </BrowserRouter>
   </Provider>
 );
+
+// Mark initial app load for performance tracking
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    console.log('🚀 Trazo Dashboard loaded - Mobile optimized');
+  });
+}

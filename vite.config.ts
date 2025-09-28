@@ -78,7 +78,10 @@ export default defineConfig({
       '@chakra-ui/react',
       '@emotion/react',
       '@emotion/styled',
-      '@reduxjs/toolkit/query/react'
+      '@reduxjs/toolkit/query/react',
+      // Dashboard-specific optimizations
+      'react-icons/fa',
+      'react-icons/md'
     ]
   },
   resolve: {
@@ -99,9 +102,13 @@ export default defineConfig({
   build: {
     // Enhanced mobile performance optimization - updated for import.meta support
     target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
-    chunkSizeWarningLimit: 300, // Aggressive limit for 3G networks
+    chunkSizeWarningLimit: 200, // More aggressive limit for mobile (was 300KB)
     reportCompressedSize: false, // Faster builds
     cssCodeSplit: true, // Enable CSS code splitting for better caching
+    // Mobile-specific optimizations
+    modulePreload: {
+      polyfill: false // Remove module preload polyfill for smaller bundle
+    },
     rollupOptions: {
       output: {
         // Aggressive chunking strategy for 3G networks
@@ -119,7 +126,19 @@ export default defineConfig({
           // Icons - loaded progressively
           icons: ['react-icons'],
           // Utils - shared utilities
-          utils: ['date-fns', 'lodash']
+          utils: ['date-fns'],
+          // Dashboard components - lazy loaded
+          dashboard: [
+            'src/components/Dashboard/EnhancedTransparencyDashboard.tsx',
+            'src/components/Dashboard/TransparencyHeroSection.tsx',
+            'src/components/Dashboard/CarbonAnalysisExpandable.tsx',
+            'src/components/Dashboard/TrustIndicators.tsx'
+          ],
+          // Performance utilities
+          performance: [
+            'src/utils/performance.ts',
+            'src/utils/imageOptimization.ts'
+          ]
         }
       }
     },
@@ -128,10 +147,26 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        passes: 2, // Multiple passes for better optimization
-        pure_funcs: ['console.log'], // Remove console.log calls
-        unsafe_arrows: true, // Convert arrow functions for smaller size
-        unsafe_methods: true // Optimize method calls
+        passes: 3, // More passes for mobile (was 2)
+        pure_funcs: ['console.log', 'console.info', 'console.debug'], // Remove more console calls
+        unsafe_arrows: true,
+        unsafe_methods: true,
+        // Mobile-specific optimizations
+        sequences: true, // Join consecutive simple statements with comma
+        properties: true, // Rewrite property access using dot notation
+        dead_code: true, // Remove unreachable code
+        drop_unused: true, // Drop unused variables and functions
+        conditionals: true, // Optimize if-statements and conditional expressions
+        comparisons: true, // Optimize comparisons
+        evaluate: true, // Evaluate constant expressions
+        booleans: true, // Optimize boolean expressions
+        loops: true, // Optimize loops
+        unused: true, // Drop unreferenced functions and variables
+        hoist_funs: true, // Hoist function declarations
+        if_return: true, // Optimize if/return and if/continue
+        join_vars: true, // Join consecutive var statements
+        cascade: true, // Small optimization for sequences
+        warnings: false // Suppress warnings for cleaner mobile builds
       },
       mangle: {
         properties: {
@@ -143,8 +178,22 @@ export default defineConfig({
       }
     },
     sourcemap: false, // No sourcemaps in production for smaller size
-    // Image optimization settings
-    assetsInlineLimit: 4096 // Inline small assets (4KB)
+    // Mobile-optimized asset handling
+    assetsInlineLimit: 2048, // Smaller inline limit for mobile (2KB vs 4KB)
+    // Enable asset optimization
+    assetsDir: 'assets',
+    // Optimize asset file names for caching
+    assetFileNames: (assetInfo) => {
+      const info = assetInfo.name.split('.');
+      const ext = info[info.length - 1];
+      if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+        return `img/[name]-[hash][extname]`;
+      }
+      if (/woff2?|eot|ttf|otf/i.test(ext)) {
+        return `fonts/[name]-[hash][extname]`;
+      }
+      return `assets/[name]-[hash][extname]`;
+    }
   },
   server: {
     port: 3000,
@@ -152,9 +201,27 @@ export default defineConfig({
     // REMOVED: Proxy configuration - now using explicit backend URLs
     // This follows React best practices for API communication
   },
-  // Add performance measurements
+  // Enhanced mobile performance settings
   define: {
-    __PERFORMANCE_METRICS__: true
+    __PERFORMANCE_METRICS__: true,
+    __MOBILE_OPTIMIZATIONS__: true,
+    // Define build-time constants for better tree-shaking
+    __DEV__: process.env.NODE_ENV === 'development'
+  },
+  // Mobile-specific esbuild optimizations
+  esbuild: {
+    // More aggressive dead code elimination
+    treeShaking: true,
+    // Remove unused imports
+    ignoreAnnotations: false,
+    // Optimize for mobile devices
+    target: 'es2020',
+    // Remove development helpers in production
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    // Minify identifiers for smaller bundle
+    minifyIdentifiers: process.env.NODE_ENV === 'production',
+    minifyWhitespace: process.env.NODE_ENV === 'production',
+    minifySyntax: process.env.NODE_ENV === 'production'
   }
 });
 

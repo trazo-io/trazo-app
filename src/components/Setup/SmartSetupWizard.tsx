@@ -50,7 +50,11 @@ import {
   FaCalendarAlt,
   FaTools
 } from 'react-icons/fa';
-import { useGetCropTemplatesQuery, useGetCropTemplateDetailQuery } from 'store/api/carbonApi';
+import { 
+  useGetCropTemplatesQuery, 
+  useGetCropTemplateDetailQuery,
+  useCalculateEventCarbonPreviewMutation 
+} from 'store/api/carbonApi';
 
 interface SmartSetupWizardProps {
   onTemplateSelect: (template: any) => void;
@@ -67,6 +71,9 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
 }) => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const { isOpen: isDetailOpen, onOpen: onDetailOpen, onClose: onDetailClose } = useDisclosure();
+  
+  // ✅ NEW: State for USDA-based carbon calculations
+  const [carbonPreviews, setCarbonPreviews] = useState<Record<string, any>>({});
 
   const {
     data: templatesData,
@@ -80,6 +87,9 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
       skip: !selectedTemplateId
     }
   );
+  
+  // ✅ NEW: API hook for real-time USDA carbon calculations
+  const [calculateCarbonPreview] = useCalculateEventCarbonPreviewMutation();
 
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplateId(templateId);
@@ -215,7 +225,7 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                     <Stat>
                       <StatLabel fontSize="xs">Carbon Credit Potential</StatLabel>
                       <StatNumber fontSize="lg" color="purple.600">
-                        ${(templatesData?.templates?.[0]?.carbon_potential * 15 || 0).toFixed(0)}
+                        USDA Calculated
                       </StatNumber>
                       <StatHelpText fontSize="xs">per hectare/year</StatHelpText>
                     </Stat>
@@ -299,7 +309,7 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                             </Text>
                           </HStack>
                           <Text fontSize="sm" fontWeight="bold">
-                            ${(template.carbon_potential * 15).toFixed(0)}/ha
+                            USDA Calculated
                           </Text>
                         </VStack>
                         <VStack align="start" spacing={1}>
@@ -407,7 +417,7 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                       <Stat>
                         <StatLabel fontSize="xs">Annual Carbon Credits</StatLabel>
                         <StatNumber fontSize="lg" color="green.600">
-                          {templateDetail.roi_analysis.carbon_credits_annual}
+                          USDA Calculated
                         </StatNumber>
                         <StatHelpText fontSize="xs">kg CO2e</StatHelpText>
                       </Stat>
@@ -447,10 +457,16 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                               </Text>
                             </VStack>
                             <VStack align="end" spacing={0}>
-                              <Text fontSize="sm" fontWeight="bold" color="green.600">
-                                {event.carbon_impact > 0 ? '+' : ''}
-                                {event.carbon_impact} kg CO2e
-                              </Text>
+                              {/* ✅ NEW: USDA-based carbon display */}
+                              {event.excludeFromCarbonCalculation ? (
+                                <Text fontSize="sm" fontWeight="bold" color="gray.500">
+                                  No Carbon Calc
+                                </Text>
+                              ) : (
+                                <Text fontSize="sm" fontWeight="bold" color="blue.500">
+                                  USDA Calculated
+                                </Text>
+                              )}
                               <Text fontSize="xs" color="gray.500">
                                 ~{formatCurrency(event.cost_estimate)}
                               </Text>

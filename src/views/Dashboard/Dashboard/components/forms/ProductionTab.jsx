@@ -115,8 +115,21 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
 
   const productionType = watch('type');
 
-  // Real-time carbon calculation updates
-  const watchedFields = watch(['type', 'area_covered', 'yield_quantity', 'fuel_consumed']);
+  // Production events carbon calculation - LIMITED SCOPE to avoid double-counting
+  // 
+  // CRITICAL ISSUE IDENTIFIED: Production events were double-counting emissions
+  // that should be tracked in specialized event types:
+  // - Fertilization → Use Chemical Events
+  // - Soil Cultivation → Use Soil Management Events  
+  // - Weed Management → Use Pest Management Events
+  // - Equipment fuel → Use Equipment Events
+  //
+  // SOLUTION: Focus Production events only on production-specific activities:
+  // - Yield documentation (no direct emissions)
+  // - Harvest transportation (separate from field equipment)
+  // - Post-harvest processing (if applicable)
+  
+  const watchedFields = watch(['type', 'area_covered', 'yield_quantity', 'transportation_distance']);
   const previousValuesRef = useRef({});
 
   useEffect(() => {
@@ -124,9 +137,15 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
         
-        // Only trigger if we have carbon-relevant data
-        if (currentValues.type && currentValues.area_covered) {
-          const relevantFields = ['type', 'area_covered', 'yield_quantity', 'fuel_consumed', 'equipment_hours'];
+        // Only trigger for transportation-related production activities
+        // Most production activities (planting, harvesting) have minimal direct emissions
+        const transportationTypes = ['HA', 'transportation']; // Harvesting includes transport
+        
+        if (currentValues.type && 
+            currentValues.area_covered && 
+            (currentValues.transportation_distance || transportationTypes.includes(currentValues.type))) {
+          
+          const relevantFields = ['type', 'area_covered', 'transportation_distance', 'transportation_unit'];
           const currentRelevantValues = {};
           relevantFields.forEach((field) => {
             currentRelevantValues[field] = currentValues[field];
@@ -167,11 +186,15 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
       <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
           
-          {/* Carbon Focus Alert */}
-          <StandardAlert status="success" title="Production Carbon Tracking">
+          {/* Transparency Focus Alert */}
+          <StandardAlert status="success" title="Agricultural Production Transparency">
+            <HStack spacing={2} mb={2}>
+              <Icon as={FaSeedling} color="green.500" />
+              <Text fontSize="sm" fontWeight="bold">Yield & Transportation Documentation</Text>
+            </HStack>
             <Text fontSize="sm">
-              🌱 This form captures production data essential for accurate carbon footprint calculations.
-              Area, yield, and equipment data all contribute to your environmental transparency.
+              Document production activities and yields to complete your agricultural transparency story.
+              Transportation emissions from harvest to storage are calculated to avoid double-counting with field equipment.
             </Text>
           </StandardAlert>
 
@@ -202,15 +225,11 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                       {...field}
                       placeholder="Select production activity..."
                     >
-                      <option value="PL">Planting/Seeding</option>
-                      <option value="HA">Harvesting</option>
-                      <option value="IR">Irrigation</option>
-                      <option value="PR">Pruning/Trimming</option>
-                      <option value="cultivation">Soil Cultivation</option>
-                      <option value="fertilization">Fertilizer Application</option>
-                      <option value="weeding">Weed Management</option>
-                      <option value="mulching">Mulching Application</option>
-                      <option value="transplanting">Transplanting</option>
+                      <option value="PL">🌱 Planting/Seeding - Crop establishment</option>
+                      <option value="HA">🚜 Harvesting - Crop collection & transport</option>
+                      <option value="IR">💧 Irrigation - Water application</option>
+                      <option value="PR">✂️ Pruning/Trimming - Plant maintenance</option>
+                      <option value="transplanting">🌿 Transplanting - Plant relocation</option>
                     </StandardSelect>
                   )}
                 />

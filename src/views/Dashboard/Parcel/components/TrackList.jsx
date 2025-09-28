@@ -27,7 +27,6 @@ import {
   FaPlus,
   FaPlay,
   FaFlag,
-  FaMobile,
   FaSeedling,
   FaChartLine,
   FaChevronDown,
@@ -207,54 +206,75 @@ const TrackList = ({ amount }) => {
         </Flex>
       </CardHeader>
       <CardBody ps={{ base: '0px', md: '20px' }} pe="0px" mb="31px" position="relative">
-        <Flex direction="column" width={'100%'}>
-          {isLoading || isFetching ? (
-            <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
-              <Spinner size="sm" color="green.500" />
-            </Flex>
-          ) : (
-            <>
-              {currentHistory?.events?.map((event, index, arr) => {
-                return (
-                  <TimelineRow
-                    minW={{ base: '100%', md: '390px' }}
-                    key={`${parcelId}-${event.id}-${index}`}
-                    logo={event.certified ? FaRegCheckCircle : FaRegDotCircle}
-                    title={
-                      event.event_type != 3
-                        ? intl.formatMessage({ id: `${event.type}` })
-                        : event.name
-                    }
-                    date={new Date(event.date).toDateString()}
-                    color={event.certified ? 'green.300' : 'blue.400'}
-                    index={index}
-                    arrLength={arr.length}
-                    url={`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/event/${event.id}?event_type=${event.event_type}`}
-                    event={event}
-                    members={currentHistory?.members || []}
-                    isLast={index === arr.length - 1}
-                    onEventClick={() => handleEventClick(event)}
-                  />
-                );
-              })}
-              {!currentHistory?.events?.length > 0 && (
-                <Flex width={'100%'} height={'70px'}>
-                  <Text
-                    display={'flex'}
-                    fontSize={'md'}
-                    fontWeight={'300'}
-                    justifyContent={'center'}
-                    alignItems={'center'}
-                    textAlign={'center'}>
-                    {currentHistory?.product
-                      ? intl.formatMessage({ id: 'app.noEventsYet' })
-                      : intl.formatMessage({ id: 'app.noProductionYet' })}
-                  </Text>
-                </Flex>
-              )}
-            </>
-          )}
-        </Flex>
+        <Box 
+          maxH={{ base: '500px', md: '600px' }} 
+          overflowY="auto"
+          pr={{ base: '8px', md: '12px' }}
+          sx={{
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              bg: 'gray.100',
+              borderRadius: 'full',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              bg: 'green.500',
+              borderRadius: 'full',
+              _hover: {
+                bg: 'green.600',
+              },
+            },
+          }}>
+          <Flex direction="column" width={'100%'}>
+            {isLoading || isFetching ? (
+              <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
+                <Spinner size="sm" color="green.500" />
+              </Flex>
+            ) : (
+              <>
+                {currentHistory?.events?.map((event, index, arr) => {
+                  return (
+                    <TimelineRow
+                      minW={{ base: '100%', md: '390px' }}
+                      key={`${parcelId}-${event.id}-${index}`}
+                      logo={event.certified ? FaRegCheckCircle : FaRegDotCircle}
+                      title={
+                        event.event_type != 3
+                          ? intl.formatMessage({ id: `${event.type}` })
+                          : event.name
+                      }
+                      date={new Date(event.date).toDateString()}
+                      color={event.certified ? 'green.300' : 'blue.400'}
+                      index={index}
+                      arrLength={arr.length}
+                      url={`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/event/${event.id}?event_type=${event.event_type}`}
+                      event={event}
+                      members={currentHistory?.members || []}
+                      isLast={index === arr.length - 1}
+                      onEventClick={() => handleEventClick(event)}
+                    />
+                  );
+                })}
+                {!currentHistory?.events?.length > 0 && (
+                  <Flex width={'100%'} height={'70px'}>
+                    <Text
+                      display={'flex'}
+                      fontSize={'md'}
+                      fontWeight={'300'}
+                      justifyContent={'center'}
+                      alignItems={'center'}
+                      textAlign={'center'}>
+                      {currentHistory?.product
+                        ? intl.formatMessage({ id: 'app.noEventsYet' })
+                        : intl.formatMessage({ id: 'app.noProductionYet' })}
+                    </Text>
+                  </Flex>
+                )}
+              </>
+            )}
+          </Flex>
+        </Box>
       </CardBody>
       {/* Modern Action Buttons - Single Add Event Dropdown */}
       <Flex justify="flex-end" gap={3} p={{ base: '16px', md: '20px' }}>
@@ -367,38 +387,6 @@ const TrackList = ({ amount }) => {
                     </HStack>
                     <Text fontSize="xs" color="gray.500">
                       "Applied fertilizer, 200 lbs/acre"
-                    </Text>
-                  </VStack>
-                </MenuItem>
-
-                <MenuItem
-                  icon={<Icon as={FaMobile} color="blue.500" />}
-                  fontSize="sm"
-                  fontWeight="medium"
-                  width={'96%'}
-                  py="12px"
-                  px="16px"
-                  borderRadius="8px"
-                  mx="4px"
-                  _hover={{
-                    bg: useColorModeValue('blue.50', 'blue.900'),
-                    color: useColorModeValue('blue.700', 'blue.200')
-                  }}
-                  onClick={() => {
-                    onAddEventMenuClose();
-                    navigate(
-                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${currentHistory?.id}/mobile`
-                    );
-                  }}>
-                  <VStack align="start" spacing={0} flex={1}>
-                    <HStack justify="space-between" width="100%">
-                      <Text fontWeight="semibold">Mobile Interface</Text>
-                      <Badge colorScheme="blue" size="xs">
-                        FIELD
-                      </Badge>
-                    </HStack>
-                    <Text fontSize="xs" color="gray.500">
-                      Touch-friendly field interface
                     </Text>
                   </VStack>
                 </MenuItem>

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import type { RootState } from 'store/index';
 import {
   Box,
   Button,
@@ -60,12 +62,27 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, number, boolean, date } from 'zod';
-import { useGetCropTemplatesQuery, useGetCropTemplateDetailQuery } from 'store/api/carbonApi';
+import { 
+  useGetCropTemplatesQuery, 
+  useGetCropTemplateDetailQuery,
+  useCalculateEventCarbonImpactMutation 
+} from 'store/api/carbonApi';
 import { useStartProductionMutation, useGetCropTypesDropdownQuery } from 'store/api/companyApi';
+import { useGetParcelQuery } from 'store/api/productApi';
+import { setParcel } from 'store/features/productSlice';
 import { StandardPage, StandardCard, StandardButton } from 'components/Design';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+import { getEventTypeMapping, getEventDataForType } from 'utils/eventTypeMapping';
+
+// Utility function for formatting carbon values with appropriate precision
+const formatCarbonValue = (value: number): string => {
+  if (value < 0.01) return value.toFixed(4); // Very small values: 0.0018 -> "0.0018"
+  if (value < 0.1) return value.toFixed(3);  // Small values: 0.018 -> "0.018"  
+  if (value < 10) return value.toFixed(2);   // Medium values: 2.45 -> "2.45"
+  return value.toFixed(1);                   // Large values: 15.3 -> "15.3"
+};
 
 // Form validation schema
 const productionSchema = object({
@@ -108,6 +125,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
   const navigate = useNavigate();
   const toast = useToast();
+  const dispatch = useDispatch();
   const {
     isOpen: isTemplateOpen,
     onOpen: onTemplateOpen,
@@ -119,6 +137,43 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   const [customEvents, setCustomEvents] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedCropTypeId, setSelectedCropTypeId] = useState<string | null>(null);
+  
+  // Get parcel data from Redux store
+  const currentParcel = useSelector((state: RootState) => state.product?.currentParcel);
+  const currentCompany = useSelector((state: RootState) => state.company?.currentCompany);
+  
+  // Fetch parcel data directly if not in Redux
+  const { data: parcelData } = useGetParcelQuery(
+    { parcelId, establishmentId, companyId: currentCompany?.id },
+    {
+      skip: !parcelId || !establishmentId || !currentCompany || !!currentParcel
+    }
+  );
+  
+  // Update Redux with fetched parcel data
+  useEffect(() => {
+    if (parcelData && !currentParcel) {
+      dispatch(setParcel(parcelData));
+    }
+  }, [parcelData, currentParcel, dispatch]);
+  
+  // Update area input when parcel data becomes available
+  useEffect(() => {
+    if (currentParcel?.area) {
+      setAreaInput(currentParcel.area);
+    }
+  }, [currentParcel?.area]);
+  
+  // Debug logging (remove in production)
+  useEffect(() => {
+    console.log('QuickStartProduction - Current parcel:', currentParcel);
+    console.log('QuickStartProduction - Fetched parcel data:', parcelData);
+  }, [currentParcel, parcelData]);
+  
+  // ✅ NEW: State for USDA-based carbon calculations
+  // IMPORTANT: Area from Redux parcel data, fallback to user input or 10 hectares
+  const [areaInput, setAreaInput] = useState<number>(10);
+  const [carbonPreviews, setCarbonPreviews] = useState<Record<string, any>>({});
 
   // API hooks - Dynamic template fetching based on crop type
   const { data: templatesData, isLoading: isLoadingTemplates } = useGetCropTemplatesQuery(
@@ -134,6 +189,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     error: cropTypesError,
     isLoading: isLoadingCropTypes
   } = useGetCropTypesDropdownQuery();
+  
+  // ✅ NEW: API hook for real-time USDA carbon calculations
+  const [calculateCarbonPreview] = useCalculateEventCarbonImpactMutation();
 
   // Debug logging for crop types
   React.useEffect(() => {
@@ -228,6 +286,13 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     }
   }, [watchedCropTypeId, selectedCropTypeId]);
 
+  // Update area input when parcel data changes
+  useEffect(() => {
+    if (currentParcel?.area) {
+      setAreaInput(currentParcel.area);
+    }
+  }, [currentParcel?.area]);
+
   // Auto-fill form when template is selected
   useEffect(() => {
     if (templateDetail) {
@@ -253,6 +318,17 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       }
     }
   }, [templateDetail, setValue]);
+
+  // ✅ NEW: Calculate carbon previews when events change
+  useEffect(() => {
+    if (customEvents.length > 0) {
+      customEvents.forEach(event => {
+        if (!event.excludeFromCarbonCalculation) {
+          calculateCarbonPreviewForEvent(event);
+        }
+      });
+    }
+  }, [customEvents, areaInput]);
 
   const calculateEventDate = (timing: string) => {
     const startDate = new Date(watch('start_date') || new Date());
@@ -409,6 +485,228 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     return iconMap[cropType?.toLowerCase()] || FaSeedling;
   };
 
+  // ✅ NEW: Real-time carbon calculation function using USDA emission factors
+  const calculateCarbonPreviewForEvent = async (event: any) => {
+    if (event.excludeFromCarbonCalculation) {
+      return null; // No carbon calculation for General Events
+    }
+
+    try {
+      // Map event names to proper backend event types (covers all 29 backend types)
+      const getEventType = (eventName: string) => {
+        const name = eventName?.toLowerCase() || '';
+        
+        // Chemical events (fertilizers, pesticides, herbicides, fungicides)
+        if (name.includes('fertiliz') || name.includes('nutrient') || name.includes('nitrogen') || name.includes('phosphor') || name.includes('potassium')) return 'chemical';
+        if (name.includes('spray') || name.includes('pesticide') || name.includes('insecticide') || name.includes('pest control')) return 'chemical';
+        if (name.includes('herbicide') || name.includes('weed') || name.includes('glyphosate')) return 'chemical';
+        if (name.includes('fungicide') || name.includes('fungus') || name.includes('disease control')) return 'chemical';
+        
+        // Equipment events (machinery, fuel consumption, maintenance)
+        if (name.includes('equipment') || name.includes('machinery') || name.includes('tractor') || name.includes('harvester')) return 'equipment';
+        if (name.includes('fuel') || name.includes('diesel') || name.includes('gasoline')) return 'equipment';
+        if (name.includes('maintenance') || name.includes('repair') || name.includes('service') || name.includes('calibration')) return 'equipment';
+        if (name.includes('preparation') || name.includes('tillage') || name.includes('cultivation') || name.includes('plowing')) return 'equipment';
+        if (name.includes('field preparation') || name.includes('planting/seeding') || name.includes('seeding equipment')) return 'equipment';
+        
+        // Weather events (frost, drought, storms, temperature monitoring)
+        if (name.includes('weather') || name.includes('climate') || name.includes('temperature') || name.includes('monitoring weather')) return 'weather';
+        if (name.includes('frost') || name.includes('freeze') || name.includes('cold protection')) return 'weather';
+        if (name.includes('drought') || name.includes('water stress') || name.includes('irrigation need')) return 'weather';
+        if (name.includes('storm') || name.includes('wind') || name.includes('hail') || name.includes('rain')) return 'weather';
+        
+        // Soil events (testing, amendments, management)
+        if (name.includes('soil') && (name.includes('test') || name.includes('analysis') || name.includes('ph'))) return 'soil';
+        if (name.includes('soil amendment') || name.includes('lime') || name.includes('compost') || name.includes('organic matter')) return 'soil';
+        if (name.includes('soil preparation') || name.includes('soil management') || name.includes('tillage')) return 'soil';
+        if (name.includes('ph management') || name.includes('ph adjustment') || name.includes('ph control')) return 'soil';
+        
+        // Pest management events (scouting, monitoring, biological control)
+        if (name.includes('scout') || name.includes('monitoring') || name.includes('inspection') || name.includes('pest monitoring')) return 'pest';
+        if (name.includes('biological control') || name.includes('beneficial') || name.includes('predator')) return 'pest';
+        if (name.includes('trap') || name.includes('pheromone') || name.includes('ipm')) return 'pest';
+        
+        // Business events (certification, audit, training)
+        if (name.includes('certif') || name.includes('organic') || name.includes('audit') || name.includes('compliance')) return 'business';
+        if (name.includes('training') || name.includes('education') || name.includes('workshop')) return 'business';
+        if (name.includes('record') || name.includes('documentation') || name.includes('reporting')) return 'business';
+        
+        // Production events (biological/manual operations) - must be after more specific checks
+        if (name.includes('irrigation') || name.includes('watering') || name.includes('water application')) return 'production';
+        if (name.includes('harvest') || name.includes('picking') || name.includes('collection')) return 'production';
+        if (name.includes('planting') && !name.includes('equipment') && !name.includes('seeding')) return 'production';
+        if (name.includes('pruning') || name.includes('trimming') || name.includes('cutting back')) return 'production';
+        if (name.includes('bloom') || name.includes('flower') || name.includes('pollination')) return 'production';
+        if (name.includes('thinning') || name.includes('selective removal') || name.includes('crop management')) return 'production';
+        
+        return 'production'; // Default to production for agricultural events
+      };
+
+      const eventType = getEventType(event.name);
+      
+      // Map event type to proper sub-type (covers all 29 backend sub-types)
+      const getEventSubType = (eventType: string, eventName: string) => {
+        const name = eventName?.toLowerCase() || '';
+        
+        if (eventType === 'chemical') {
+          if (name.includes('fertiliz') || name.includes('nutrient') || name.includes('nitrogen') || name.includes('phosphor')) return 'FE'; // Fertilizer
+          if (name.includes('pesticide') || name.includes('insecticide') || name.includes('pest control')) return 'PE'; // Pesticide
+          if (name.includes('herbicide') || name.includes('weed') || name.includes('glyphosate')) return 'HE'; // Herbicide
+          if (name.includes('fungicide') || name.includes('fungus') || name.includes('disease')) return 'FU'; // Fungicide
+          return 'FE'; // Default to fertilizer for chemical events
+        }
+        
+        if (eventType === 'production') {
+          if (name.includes('irrigation') || name.includes('watering')) return 'IR'; // Irrigation
+          if (name.includes('harvest') || name.includes('picking')) return 'HA'; // Harvest
+          if (name.includes('plant') && !name.includes('equipment')) return 'PL'; // Planting
+          if (name.includes('pruning') || name.includes('trimming')) return 'PR'; // Pruning
+          if (name.includes('thinning') || name.includes('selective removal')) return 'TH'; // Thinning
+          if (name.includes('bloom') || name.includes('flower') || name.includes('pollination')) return 'BL'; // Bloom Support
+          return 'GE'; // Default to general for production events
+        }
+        
+        if (eventType === 'equipment') {
+          if (name.includes('fuel') || name.includes('diesel') || name.includes('gasoline')) return 'FC'; // Fuel Consumption
+          if (name.includes('maintenance') || name.includes('service')) return 'MN'; // Maintenance
+          if (name.includes('repair') || name.includes('fix')) return 'RE'; // Repair
+          if (name.includes('calibration') || name.includes('adjustment')) return 'CA'; // Calibration
+          if (name.includes('breakdown') || name.includes('failure')) return 'BR'; // Breakdown
+          if (name.includes('inspection') || name.includes('check')) return 'IN'; // Inspection
+          return 'FC'; // Default to fuel consumption for equipment events
+        }
+        
+        if (eventType === 'weather') {
+          if (name.includes('frost') || name.includes('freeze')) return 'FR'; // Frost Protection
+          if (name.includes('drought') || name.includes('water stress')) return 'DR'; // Drought Management
+          if (name.includes('storm') || name.includes('wind') || name.includes('hail')) return 'ST'; // Storm Impact
+          if (name.includes('temperature') || name.includes('monitoring')) return 'TM'; // Temperature Monitoring
+          if (name.includes('humidity') || name.includes('moisture')) return 'HU'; // Humidity Tracking
+          if (name.includes('precipitation') || name.includes('rain')) return 'PR'; // Precipitation Tracking
+          if (name.includes('heat') || name.includes('cooling')) return 'HE'; // Heat Management
+          if (name.includes('microclimate') || name.includes('local weather')) return 'MC'; // Microclimate Monitoring
+          return 'TM'; // Default to temperature monitoring
+        }
+        
+        if (eventType === 'soil') {
+          if (name.includes('test') || name.includes('analysis')) return 'ST'; // Soil Testing
+          if (name.includes('amendment') || name.includes('lime') || name.includes('compost')) return 'SA'; // Soil Amendment
+          if (name.includes('ph') || name.includes('acidity') || name.includes('alkalinity')) return 'PH'; // pH Management
+          if (name.includes('compaction') || name.includes('aeration')) return 'CO'; // Compaction Management
+          if (name.includes('erosion') || name.includes('conservation')) return 'ER'; // Erosion Control
+          if (name.includes('organic matter') || name.includes('carbon')) return 'OM'; // Organic Matter
+          return 'ST'; // Default to soil testing
+        }
+        
+        if (eventType === 'pest') {
+          if (name.includes('scout') || name.includes('monitoring')) return 'SC'; // Scouting
+          if (name.includes('biological') || name.includes('beneficial')) return 'BC'; // Biological Control
+          if (name.includes('trap') || name.includes('pheromone')) return 'TR'; // Trap Monitoring
+          if (name.includes('threshold') || name.includes('economic')) return 'TH'; // Threshold Assessment
+          if (name.includes('resistance') || name.includes('management')) return 'RM'; // Resistance Management
+          if (name.includes('integrated') || name.includes('ipm')) return 'IP'; // Integrated Pest Management
+          return 'SC'; // Default to scouting
+        }
+        
+        if (eventType === 'business') {
+          if (name.includes('certif') || name.includes('organic')) return 'CE'; // Certification
+          if (name.includes('audit') || name.includes('compliance')) return 'AU'; // Audit
+          if (name.includes('training') || name.includes('education')) return 'TR'; // Training
+          return 'CE'; // Default to certification
+        }
+        
+        return 'GE'; // General fallback
+      };
+
+      const eventSubType = getEventSubType(eventType, event.name);
+      
+      const response = await calculateCarbonPreview({
+        event_type: eventType,
+        event_data: {
+          type: eventSubType,
+          cropType: selectedCropTypeId || propCropType || 'general',
+          applicationRate: event.application_rate || 200,
+          area_covered: areaInput,
+          area_unit: 'ha',
+          unit: event.unit || 'kg/ha',
+          name: event.name,
+          description: event.description,
+          // Add chemical-specific data for fertilization
+          ...(eventType === 'chemical' && {
+            concentration: '10-10-10', // NPK ratio
+            volume: '100', // liters
+            volume_unit: 'liters',
+            way_of_application: 'broadcast',
+            commercial_name: event.name || 'General Fertilizer'
+          }),
+          // Add equipment-specific data for fuel consumption
+          ...(eventType === 'equipment' && {
+            fuel_amount: 10, // Default fuel consumption in liters
+            fuel_type: 'diesel',
+            equipment_type: 'tractor',
+            hours_operated: 2,
+            efficiency: 'normal'
+          }),
+          // Add weather-specific data
+          ...(eventType === 'weather' && {
+            temperature: 20, // Default temperature in Celsius
+            humidity: 60, // Default humidity percentage
+            wind_speed: 5, // Default wind speed in m/s
+            precipitation: 0, // Default precipitation in mm
+            monitoring_duration: 24 // Default monitoring duration in hours
+          }),
+          // Add soil-specific data
+          ...(eventType === 'soil' && {
+            soil_ph: 7.0, // Default neutral pH
+            organic_matter: 3.5, // Default organic matter percentage
+            nitrogen_level: 20, // Default nitrogen level in ppm
+            phosphorus_level: 15, // Default phosphorus level in ppm
+            potassium_level: 150, // Default potassium level in ppm
+            sample_depth: 20 // Default sampling depth in cm
+          }),
+          // Add pest-specific data
+          ...(eventType === 'pest' && {
+            pest_type: 'general', // Default pest type
+            severity_level: 'low', // Default severity
+            affected_area: 10, // Default affected area percentage
+            treatment_method: 'monitoring', // Default treatment method
+            beneficial_insects: true, // Default beneficial presence
+            economic_threshold: 'below' // Default threshold status
+          }),
+          // Add business-specific data
+          ...(eventType === 'business' && {
+            certification_type: 'organic', // Default certification
+            compliance_status: 'compliant', // Default compliance
+            training_hours: 4, // Default training duration
+            documentation_level: 'complete', // Default documentation
+            audit_score: 85, // Default audit score
+            cost_impact: 100 // Default cost in USD
+          })
+        }
+      }).unwrap();
+
+      const preview = {
+        estimated_carbon: response.co2e || 0,  // Backend returns co2e
+        calculation_source: response.calculation_method || 'USDA Agricultural Research Service',
+        area_hectares: areaInput,
+        application_rate: event.application_rate || 200,
+        emission_factor: response.emission_factor || 0,
+        confidence_level: response.efficiency_score || 0.8,
+        usda_verified: response.usda_verified || false
+      };
+
+      setCarbonPreviews(prev => ({
+        ...prev,
+        [event.id]: preview
+      }));
+
+      return preview;
+    } catch (error) {
+      console.error(`Error calculating carbon preview for ${event.id}:`, error);
+      return null;
+    }
+  };
+
   if (isLoadingTemplates) {
     return (
       <StandardPage title="Quick Start Production" showBackButton>
@@ -463,7 +761,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                       <Text fontSize="sm" color="green.600">
                         ⏱️ Setup time reduced by 37 minutes • 📅{' '}
                         {selectedTemplate.events_count || customEvents.length} events configured •
-                        💰 {selectedTemplate.carbon_potential || 500} kg CO2e/year potential
+                        💰 USDA-based carbon calculation will be applied
                       </Text>
                       <HStack spacing={2} mt={1}>
                         <Badge colorScheme="blue" variant="subtle" fontSize="xs">
@@ -690,6 +988,50 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
               <GridItem>
                 <FormControl>
+                  <FormLabel>
+                    Parcel Area (hectares)
+                    {currentParcel?.area && (
+                      <Badge ml={2} colorScheme="green" variant="subtle">
+                        Auto-loaded
+                      </Badge>
+                    )}
+                  </FormLabel>
+                  {currentParcel?.area ? (
+                    // Read-only display when parcel data is available
+                    <Input 
+                      value={`${areaInput} hectares`}
+                      isReadOnly
+                      bg="gray.50"
+                      size="lg"
+                      cursor="not-allowed"
+                    />
+                  ) : (
+                    // Editable input only when no parcel data available
+                    <NumberInput 
+                      value={areaInput} 
+                      onChange={(valueString) => setAreaInput(Number(valueString) || 10)}
+                      min={0.1} 
+                      max={10000}
+                      step={0.1}
+                      size="lg"
+                    >
+                      <NumberInputField placeholder="Enter parcel area in hectares" />
+                      <NumberInputStepper>
+                        <NumberIncrementStepper />
+                        <NumberDecrementStepper />
+                      </NumberInputStepper>
+                    </NumberInput>
+                  )}
+                  <Text fontSize="sm" color="gray.500" mt={1}>
+                    {currentParcel?.area 
+                      ? `Area from parcel data (read-only). To change, edit the parcel settings.` 
+                      : "Used for carbon footprint calculations. Default: 10 hectares"}
+                  </Text>
+                </FormControl>
+              </GridItem>
+
+              <GridItem>
+                <FormControl>
                   <FormLabel>Irrigation Method</FormLabel>
                   <Controller
                     name="irrigation_method"
@@ -757,10 +1099,21 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         </VStack>
                       </HStack>
                       <VStack align="end" spacing={0}>
-                        <Text fontSize="sm" fontWeight="bold" color="green.600">
-                          {event.carbon_impact > 0 ? '+' : ''}
-                          {event.carbon_impact} kg CO2e
-                        </Text>
+                        {/* ✅ NEW: USDA-based carbon display */}
+                        {event.excludeFromCarbonCalculation ? (
+                          <Text fontSize="sm" fontWeight="bold" color="gray.500">
+                            No Carbon Calc
+                          </Text>
+                        ) : carbonPreviews[event.id] ? (
+                          <Text fontSize="sm" fontWeight="bold" color="green.600">
+                            {formatCarbonValue(carbonPreviews[event.id].estimated_carbon)} kg CO2e
+                            <Text fontSize="xs" color="gray.500">USDA calculated</Text>
+                          </Text>
+                        ) : (
+                          <Text fontSize="sm" fontWeight="bold" color="blue.500">
+                            Calculating...
+                          </Text>
+                        )}
                         <Input
                           type="date"
                           size="sm"
@@ -901,7 +1254,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                               </Text>
                             </HStack>
                             <Text fontSize="sm" fontWeight="bold">
-                              {template.carbon_potential} kg CO2e
+                              USDA Calculated
                             </Text>
                           </VStack>
                         </Grid>

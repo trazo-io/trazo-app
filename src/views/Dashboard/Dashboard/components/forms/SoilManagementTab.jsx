@@ -24,7 +24,9 @@ import {
   SimpleGrid,
   Badge,
   Tooltip,
-  FormErrorMessage
+  FormErrorMessage,
+  Collapse,
+  useDisclosure
 } from '@chakra-ui/react';
 import {
   StandardCard,
@@ -40,9 +42,11 @@ import {
   FaSeedling,
   FaRulerHorizontal,
   FaThermometerHalf,
-  FaInfoCircle
+  FaInfoCircle,
+  FaChevronDown,
+  FaChevronUp
 } from 'react-icons/fa';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, number } from 'zod';
 import { FaPlus } from 'react-icons/fa';
@@ -50,7 +54,11 @@ import { useIntl } from 'react-intl';
 
 const formSchemaSoilManagement = object({
   type: string().min(1, 'Soil management type is required'),
-  area: string().min(1, 'Area is required'),
+  area: string()
+    .min(1, 'Area is required')
+    .refine((val) => val !== '' && parseFloat(val) > 0, {
+      message: 'Area must be greater than 0'
+    }),
   area_unit: string().min(1, 'Area unit is required'),
   soil_ph: string().optional(),
   organic_matter_percentage: string().optional(),
@@ -141,6 +149,9 @@ const SoilManagementTab = ({
   const textColor = useColorModeValue('gray.700', 'white');
   const iconColor = useColorModeValue('gray.300', 'gray.700');
   const [selectedSoilType, setSelectedSoilType] = useState('');
+  
+  // Progressive disclosure for advanced options
+  const { isOpen: isAdvancedOpen, onToggle: onAdvancedToggle } = useDisclosure();
 
   const mapApiTypeToFormType = (apiType) => {
     if (!apiType) return '';
@@ -162,19 +173,18 @@ const SoilManagementTab = ({
     resolver: zodResolver(formSchemaSoilManagement),
     defaultValues: {
       type: formType || '',
-      area: initialValues.area || intelligentDefaults.area,
-      area_unit: initialValues.area_unit || intelligentDefaults.area_unit,
-      soil_ph: initialValues.soil_ph || intelligentDefaults.soil_ph,
-      organic_matter_percentage:
-        initialValues.organic_matter_percentage || intelligentDefaults.organic_matter_percentage,
-      soil_texture: initialValues.soil_texture || intelligentDefaults.soil_texture,
-      soil_moisture: initialValues.soil_moisture || intelligentDefaults.soil_moisture,
-      depth: initialValues.depth || intelligentDefaults.depth,
-      depth_unit: initialValues.depth_unit || intelligentDefaults.depth_unit,
-      equipment_used: initialValues.equipment_used || intelligentDefaults.equipment_used,
-      weather_conditions:
-        initialValues.weather_conditions || intelligentDefaults.weather_conditions,
-      temperature_range: initialValues.temperature_range || intelligentDefaults.temperature_range,
+      // Only use existing values, not intelligent defaults for carbon calculation fields
+      area: initialValues.area || '',
+      area_unit: initialValues.area_unit || 'hectares',
+      soil_ph: initialValues.soil_ph || '',
+      organic_matter_percentage: initialValues.organic_matter_percentage || '',
+      soil_texture: initialValues.soil_texture || '',
+      soil_moisture: initialValues.soil_moisture || '',
+      depth: initialValues.depth || '',
+      depth_unit: initialValues.depth_unit || 'cm',
+      equipment_used: initialValues.equipment_used || '',
+      weather_conditions: initialValues.weather_conditions || '',
+      temperature_range: initialValues.temperature_range || '',
       observation: initialValues.observation || ''
     }
   });
@@ -202,34 +212,38 @@ const SoilManagementTab = ({
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('[SoilManagementTab]: Field watching triggered', {
-      hasOnDataChange: !!onDataChange,
-      watchedFields,
-      firstField: watchedFields[0]
-    });
 
     // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
-        console.log('[SoilManagementTab]: Current values for carbon calculation', currentValues);
 
-        // Only trigger if we have meaningful data
-        if (currentValues.type && currentValues.area) {
-          console.log('[SoilManagementTab]: Triggering onDataChange with values', currentValues);
+        // Only trigger if we have meaningful user-provided data
+        const hasValidType = currentValues.type && currentValues.type !== '';
+        const hasValidArea = currentValues.area && 
+          parseFloat(currentValues.area) > 0 && 
+          currentValues.area !== '';
+        const hasValidAreaUnit = currentValues.area_unit && currentValues.area_unit !== '';
+
+        if (hasValidType && hasValidArea && hasValidAreaUnit) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[SoilManagementTab]: ✅ Triggering carbon calculation');
+          }
           try {
             onDataChange(currentValues);
           } catch (error) {
             console.error('[SoilManagementTab]: Error calling onDataChange:', error);
           }
         } else {
-          console.log('[SoilManagementTab]: Not triggering - insufficient data', {
-            hasType: !!currentValues.type,
-            hasArea: !!currentValues.area
+          console.log('[SoilManagementTab]: Not triggering - insufficient meaningful data', {
+            hasValidType,
+            hasValidArea,
+            hasValidAreaUnit,
+            areaValue: currentValues.area,
+            typeValue: currentValues.type
           });
         }
       } else {
-        console.log('[SoilManagementTab]: onDataChange not available in timeout');
       }
     }, 500); // Debounced to prevent excessive API calls
 
@@ -237,19 +251,24 @@ const SoilManagementTab = ({
   }, [watchedFields, onDataChange, methods]);
 
   useEffect(() => {
-    if (watchedType && watchedType !== selectedSoilType) {
+    if (watchedType && watchedType !== selectedSoilType && watchedType !== '') {
       setSelectedSoilType(watchedType);
 
       const newDefaults = getSoilManagementDefaults(watchedType);
 
+      // Only apply defaults for non-critical carbon calculation fields
+      // Area must be user-provided to ensure meaningful carbon calculations
       Object.keys(newDefaults).forEach((field) => {
+        // Skip area field - user must provide this for valid carbon calculation
+        if (field === 'area') return;
+        
         const currentValue = watch(field);
-        if (!currentValue || currentValue === intelligentDefaults[field]) {
+        if (!currentValue || currentValue === '' || currentValue === intelligentDefaults[field]) {
           setValue(field, newDefaults[field]);
         }
       });
     }
-  }, [watchedType, selectedSoilType, setValue, watch]);
+  }, [watchedType, selectedSoilType, setValue, watch, intelligentDefaults]);
 
   const handleEnhancedSubmit = (data) => {
     const requiredFields = ['type', 'area', 'area_unit'];
@@ -284,19 +303,25 @@ const SoilManagementTab = ({
           <Alert status="info" mb={4} borderRadius="md">
             <AlertIcon />
             <Box>
-              <AlertTitle fontSize="sm">USDA Compliance & Soil Carbon Calculation</AlertTitle>
+              <AlertTitle fontSize="sm">Soil Management & Transparency Documentation</AlertTitle>
               <AlertDescription fontSize="xs">
-                All fields marked with * are required for accurate soil carbon calculations and USDA
-                compliance verification. Smart defaults are provided based on your selections.
+                All fields marked with * are required for accurate carbon footprint calculations and
+                transparency documentation. Soil management practices help build consumer trust through
+                documented sustainable farming methods.
               </AlertDescription>
             </Box>
           </Alert>
 
           <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <Text fontSize="md" fontWeight="bold" mb={4} color="green.600">
-              <Icon as={FaSeedling} mr={2} />
-              Soil Management & Crop Information
-            </Text>
+            <HStack justify="space-between" align="center" mb={4}>
+              <Text fontSize="md" fontWeight="bold" color="green.600">
+                <Icon as={FaSeedling} mr={2} />
+                Soil Management & Crop Information
+              </Text>
+              <Badge colorScheme="green" fontSize="xs">
+                Transparency Tracking
+              </Badge>
+            </HStack>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
               <StandardField
@@ -345,10 +370,15 @@ const SoilManagementTab = ({
           </Box>
 
           <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <Text fontSize="md" fontWeight="bold" mb={4} color="blue.600">
-              <Icon as={FaRulerHorizontal} mr={2} />
-              Area and Physical Measurements
-            </Text>
+            <HStack justify="space-between" align="center" mb={4}>
+              <Text fontSize="md" fontWeight="bold" color="blue.600">
+                <Icon as={FaRulerHorizontal} mr={2} />
+                Area and Physical Measurements
+              </Text>
+              <Badge colorScheme="blue" fontSize="xs">
+                Carbon Calculation Required
+              </Badge>
+            </HStack>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
               <StandardField label="Area Managed *" required error={errors.area?.message}>
@@ -387,56 +417,50 @@ const SoilManagementTab = ({
 
           {(watch('type') === 'ST' || watch('type') === 'PA') && (
             <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-              <Text fontSize="md" fontWeight="bold" mb={4} color="orange.600">
-                <Icon as={FaThermometerHalf} mr={2} />
-                Soil Properties
-                <Badge ml={2} colorScheme="green" fontSize="xs">
+              <HStack justify="space-between" align="center" mb={4}>
+                <Text fontSize="md" fontWeight="bold" color="orange.600">
+                  <Icon as={FaThermometerHalf} mr={2} />
+                  Soil Properties
+                </Text>
+                <Badge colorScheme="orange" fontSize="xs">
                   Improves Carbon Accuracy
                 </Badge>
-              </Text>
+              </HStack>
 
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="semibold">
-                    {intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
-                  </FormLabel>
-                  <NumberInput min={0} max={14} precision={1} step={0.1}>
-                    <NumberInputField {...register('soil_ph')} placeholder="6.5" />
-                    <NumberInputStepper>
-                      <NumberIncrementStepper />
-                      <NumberDecrementStepper />
-                    </NumberInputStepper>
-                  </NumberInput>
-                </FormControl>
+                <StandardField 
+                  label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
+                  helpText="pH affects nutrient availability"
+                >
+                  <StandardInput
+                    type="number"
+                    min="0"
+                    max="14"
+                    step="0.1"
+                    placeholder="6.5"
+                    {...register('soil_ph')}
+                  />
+                </StandardField>
 
-                <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="semibold">
-                    {intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
-                      'Organic Matter (%)'}
-                  </FormLabel>
-                  <NumberInput min={0} max={100} precision={1} step={0.1}>
-                    <NumberInputField
-                      {...register('organic_matter_percentage')}
-                      placeholder="3.5"
-                    />
-                    <NumberInputStepper>
-                      <NumberIncrementStepper />
-                      <NumberDecrementStepper />
-                    </NumberInputStepper>
-                  </NumberInput>
-                </FormControl>
+                <StandardField 
+                  label={intl.formatMessage({ id: 'app.organicMatterPercentage' }) || 'Organic Matter (%)'}
+                  helpText="Higher organic matter improves soil carbon"
+                >
+                  <StandardInput
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    placeholder="3.5"
+                    {...register('organic_matter_percentage')}
+                  />
+                </StandardField>
 
-                <FormControl>
-                  <FormLabel fontSize="sm" fontWeight="semibold">
-                    Soil Texture
-                  </FormLabel>
-                  <ChakraSelect
-                    placeholder="Select soil texture"
-                    height={'40px'}
-                    borderRadius={'15px'}
-                    fontSize={'0.875rem'}
-                    {...register('soil_texture')}
-                  >
+                <StandardField 
+                  label="Soil Texture"
+                  helpText="Soil type affects carbon retention"
+                >
+                  <StandardSelect placeholder="Select soil texture" {...register('soil_texture')}>
                     <option value="clay">Clay</option>
                     <option value="clay_loam">Clay Loam</option>
                     <option value="loam">Loam</option>
@@ -444,17 +468,34 @@ const SoilManagementTab = ({
                     <option value="sand">Sand</option>
                     <option value="silt">Silt</option>
                     <option value="silt_loam">Silt Loam</option>
-                  </ChakraSelect>
-                </FormControl>
+                  </StandardSelect>
+                </StandardField>
               </SimpleGrid>
             </Box>
           )}
 
           <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <Text fontSize="md" fontWeight="bold" mb={4} color="purple.600">
-              <Icon as={FaThermometerHalf} mr={2} />
-              Environmental Conditions & Equipment
-            </Text>
+            <HStack justify="space-between" align="center" mb={4}>
+              <HStack>
+                <Text fontSize="md" fontWeight="bold" color="purple.600">
+                  <Icon as={FaThermometerHalf} mr={2} />
+                  Environmental Conditions & Equipment
+                </Text>
+                <StandardButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={onAdvancedToggle}
+                  rightIcon={<Icon as={isAdvancedOpen ? FaChevronUp : FaChevronDown} />}
+                >
+                  {isAdvancedOpen ? 'Hide Details' : 'Show Details'}
+                </StandardButton>
+              </HStack>
+              <Badge colorScheme="purple" fontSize="xs">
+                Context for Transparency
+              </Badge>
+            </HStack>
+
+            <Collapse in={isAdvancedOpen} animateOpacity>
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
               <StandardField
@@ -495,13 +536,26 @@ const SoilManagementTab = ({
                 />
               </StandardField>
             </SimpleGrid>
+            </Collapse>
           </Box>
 
           <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <StandardField label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}>
+            <HStack justify="space-between" align="center" mb={4}>
+              <Text fontSize="md" fontWeight="bold" color="green.600">
+                <Icon as={FaSeedling} mr={2} />
+                Additional Notes & Transparency Details
+              </Text>
+              <Badge colorScheme="green" fontSize="xs">
+                Consumer Transparency
+              </Badge>
+            </HStack>
+            <StandardField 
+              label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
+              helpText="Share additional details about your soil management practices that help build consumer trust"
+            >
               <StandardTextarea
-                placeholder="Optional: Additional notes about soil conditions, management goals, etc."
-                rows={3}
+                placeholder="Optional: Describe your soil management approach, goals for soil health, organic practices used, etc. These details help consumers understand your farming methods."
+                rows={4}
                 {...register('observation')}
               />
             </StandardField>

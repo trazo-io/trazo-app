@@ -90,12 +90,12 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import CardWithMap from '../CardWithMap';
-import ChemicalTab from './ChemicalTab';
+import ChemicalTab from './ChemicalTab-ENHANCED';
 import FormLayout from 'components/Forms/FormLayout';
 import GeneralTab from './GeneralTab';
 import EquipmentTab from './EquipmentTab';
 import SoilManagementTab from './SoilManagementTab';
-import BusinessTab from './BusinessTab';
+import BusinessTab from './BusinessTab-SIMPLIFIED';
 import PestManagementTab from './PestManagementTab';
 import Header from 'views/Pages/Profile/Overview/components/Header';
 import ProductionTab from './ProductionTab';
@@ -317,26 +317,27 @@ function NewEvent({ isEdit = false, eventId = null }) {
         return;
       }
 
-      // Clear previous timeout
+      // 2025 PERFORMANCE: Clear previous timeout to prevent memory leaks
       if (carbonTimeoutRef.current) {
         clearTimeout(carbonTimeoutRef.current);
+        carbonTimeoutRef.current = null;
       }
 
       carbonTimeoutRef.current = setTimeout(async () => {
+        // Map event type to backend format (FIXED MAPPING TO MATCH eventTypeConfig)
+        const eventTypeMap = {
+          0: 'weather', // ✅ CORRECT: Weather = 0
+          1: 'production', // ✅ FIXED: Production = 1 (was wrong)
+          2: 'chemical', // ✅ FIXED: Chemical = 2 (was wrong)
+          3: 'general',
+          4: 'equipment',
+          5: 'soil_management',
+          6: 'business',
+          7: 'pest_management'
+        };
+
         try {
           setIsCalculatingCarbon(true);
-
-          // Map event type to backend format (FIXED MAPPING TO MATCH eventTypeConfig)
-          const eventTypeMap = {
-            0: 'weather', // ✅ CORRECT: Weather = 0
-            1: 'production', // ✅ FIXED: Production = 1 (was wrong)
-            2: 'chemical', // ✅ FIXED: Chemical = 2 (was wrong)
-            3: 'general',
-            4: 'equipment',
-            5: 'soil_management',
-            6: 'business',
-            7: 'pest_management'
-          };
 
           const event_type = eventTypeMap[eventType] || 'general';
 
@@ -385,8 +386,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
           setShouldShowCarbonTips(true);
         } finally {
           setIsCalculatingCarbon(false);
+          carbonTimeoutRef.current = null; // 2025 PERFORMANCE: Clean reference after completion
         }
-      }, 500);
+      }, 300); // 2025 UX: Reduced delay for better responsiveness
     },
     [calculateCarbonImpact, parcelId, establishmentId]
   );
@@ -400,20 +402,81 @@ function NewEvent({ isEdit = false, eventId = null }) {
     };
   }, []);
 
+  // Helper function to map backend event types to frontend codes
+  const mapBackendTypeToFrontendCode = (backendType) => {
+    if (!backendType) return '';
+    
+    // Map verbose backend types to frontend codes
+    const typeMap = {
+      'event.chemical.fertilizer': 'FE',
+      'event.chemical.pesticide': 'PE',
+      'event.chemical.fungicide': 'FU',
+      'event.chemical.herbicide': 'HE'
+    };
+    
+    // If it's already a code (FE, PE, FU, HE), return it as is
+    if (['FE', 'PE', 'FU', 'HE'].includes(backendType)) {
+      return backendType;
+    }
+    
+    // Otherwise, try to map it
+    return typeMap[backendType] || '';
+  };
+
   // Load existing event data and pre-fill forms when editing
   const hasLoadedExistingData = useRef(false);
 
   useEffect(() => {
     if (isEdit && existingEvent && !hasLoadedExistingData.current) {
+      console.log('[NewEvent] Loading existing event data:', existingEvent);
+      console.log('[NewEvent] RAW existingEvent.type:', existingEvent.type, typeof existingEvent.type);
+      console.log('[NewEvent] RAW existingEvent.volume_applied:', existingEvent.volume_applied, typeof existingEvent.volume_applied);
+      console.log('[NewEvent] RAW existingEvent.area_treated:', existingEvent.area_treated, typeof existingEvent.area_treated);
+      console.log('[NewEvent] RAW existingEvent.application_method:', existingEvent.application_method, typeof existingEvent.application_method);
+      
       const eventDate = existingEvent.date
         ? new Date(existingEvent.date).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16);
 
-      // Update form data state
+      // Map backend type to frontend code
+      const mappedType = mapBackendTypeToFrontendCode(existingEvent.type);
+      console.log('[NewEvent] Mapped type from', existingEvent.type, 'to', mappedType);
+
+      // Update form data state with comprehensive data mapping
+      // IMPORTANT: Use spread operator to preserve ALL fields from existingEvent,
+      // including weather-specific fields (water_deficit, highest_temperature, etc.)
       const initialData = {
-        ...existingEvent,
-        date: eventDate
+        ...existingEvent, // Include all fields from backend (weather, production, etc.)
+        date: eventDate,
+        // Override type field with frontend code mapping for Chemical events
+        type: mappedType || existingEvent.type, // Preserve original type if no mapping found
+        // Chemical event specific overrides
+        commercial_name: existingEvent.commercial_name || existingEvent.name || '',
+        active_ingredient: existingEvent.active_ingredient || '',
+        concentration: existingEvent.concentration || '',
+        // Safely handle numeric fields that might be undefined
+        volume_applied: existingEvent.volume_applied !== undefined && existingEvent.volume_applied !== null 
+          ? existingEvent.volume_applied 
+          : '',
+        volume_unit: existingEvent.volume_unit || 'L',
+        area_treated: existingEvent.area_treated !== undefined && existingEvent.area_treated !== null
+          ? existingEvent.area_treated
+          : '',
+        area_unit: existingEvent.area_unit || 'ha',
+        application_method: existingEvent.application_method || '',
+        weather_conditions: existingEvent.weather_conditions || '',
+        application_timing: existingEvent.application_timing || '',
+        target_pest_disease: existingEvent.target_pest_disease || '',
+        observation: existingEvent.observation || ''
       };
+      
+      console.log('[NewEvent] Processed initialData:', initialData);
+      console.log('[NewEvent] initialData.type:', initialData.type, typeof initialData.type);
+      console.log('[NewEvent] initialData.volume_applied:', initialData.volume_applied, typeof initialData.volume_applied);
+      console.log('[NewEvent] initialData.area_treated:', initialData.area_treated, typeof initialData.area_treated);
+      console.log('[NewEvent] Setting eventFormData with initialData');
+      
+      // Set form data directly - no two-phase update needed
       setEventFormData(initialData);
 
       // Reset forms with existing data
@@ -421,11 +484,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
         date: eventDate
       });
 
-      // Description now handled in individual event tabs via observation fields
-
       // Set event type from existing data
       const eventTypeFromData =
         existingEvent.event_type !== undefined ? existingEvent.event_type : 0;
+      console.log('[NewEvent] Setting activeEventType:', eventTypeFromData);
       setActiveEventType(eventTypeFromData);
 
       // Store in Redux
@@ -442,6 +504,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
       // Mark as loaded to prevent re-initialization
       hasLoadedExistingData.current = true;
+      console.log('[NewEvent] Existing event data loaded successfully');
     }
   }, [isEdit, existingEvent, basicMethods, dispatch]);
 
@@ -614,22 +677,100 @@ function NewEvent({ isEdit = false, eventId = null }) {
           enhancedData.observation = `${eventTypeName} activity completed successfully. Standard procedures followed for ${cropType} production.`;
         }
 
+        // Map observation to description field required by backend CommonEvent model
+        enhancedData.description = enhancedData.observation;
+
         return enhancedData;
       };
 
       const enhancedEventFormData = validateAndEnhanceEventData(eventFormData);
 
-      const finalEventData = {
-        ...enhancedEventFormData,
-        event_type: backendEventType, // Use corrected event_type mapping
-        companyId: currentCompany.id,
-        establishmentId: parseInt(establishmentId || '0'),
-        parcelId: parseInt(parcelId || '0'),
-        parcels: [parseInt(parcelId || '0')],
-        album: { images: acceptedFiles }
+      // Clean the data to remove any undefined or problematic fields
+      const cleanEventData = (data) => {
+        const cleaned = {};
+        
+        // Special handling for weather events (activeEventType === 0)
+        if (activeEventType === 0) {
+          // For weather events, send fields FLAT (not in extra_data)
+          // The backend serializer's to_internal_value will handle moving them to extra_data
+          const weatherSpecificFields = [
+            'lower_temperature', 'way_of_protection', 'water_deficit', 'weight', 
+            'diameter', 'duration', 'highest_temperature', 'start_date', 'end_date',
+            'wind_speed', 'precipitation_amount', 'damage_assessment', 'protection_measures',
+            'humidity_level', 'crop_impact'
+          ];
+          
+          // Send all fields flat to the backend
+          Object.keys(data).forEach(key => {
+            const value = data[key];
+            // Exclude problematic fields but INCLUDE weather-specific fields and type
+            if (value !== undefined && value !== null && value !== '' && 
+                !['carbon_data', 'carbon_calculation', 'image', 'index', 'companyId', 'establishmentId', 'parcelId', 'volume_unit', 'area_unit', 'extra_data'].includes(key)) {
+              cleaned[key] = value;
+            }
+          });
+          
+          return cleaned;
+        }
+        
+        // List of fields that should NOT be sent to the backend for non-weather events
+        const excludedFields = [
+          'carbon_data', 
+          'carbon_calculation', 
+          'image',
+          'type', // Remove frontend type field since we use event_type for backend (except for weather events)
+          'index', // Remove index field - not expected by backend
+          'companyId', // Remove camelCase fields - use snake_case for backend
+          'establishmentId',
+          'parcelId',
+          'volume_unit', // Remove unit fields if they're causing issues
+          'area_unit'
+        ];
+        
+        Object.keys(data).forEach(key => {
+          const value = data[key];
+          // Only include defined values and exclude problematic fields
+          if (value !== undefined && value !== null && value !== '' && !excludedFields.includes(key)) {
+            // CRITICAL FIX: Ensure extra_data is always a valid JSON object, not an array
+            if (key === 'extra_data') {
+              // If extra_data is an array, convert it to an empty object
+              // If it's already an object, keep it as is
+              // If it's anything else, convert to empty object
+              if (Array.isArray(value)) {
+                console.warn('⚠️ [FIXED] Converting extra_data from array to object:', value);
+                cleaned[key] = {}; // Convert array to empty object
+              } else if (typeof value === 'object' && value !== null) {
+                cleaned[key] = value; // Keep valid object
+              } else {
+                cleaned[key] = {}; // Convert other types to empty object
+              }
+            } else {
+              cleaned[key] = value;
+            }
+          }
+        });
+        return cleaned;
       };
 
+      const finalEventData = cleanEventData({
+        ...enhancedEventFormData,
+        event_type: backendEventType, // Use corrected event_type mapping
+        parcels: parcelId ? [parcelId] : [], // Add parcels array required by backend
+        // Add album images from S3 URLs (modern approach)
+        album_images: acceptedFiles.map(f => f.url).filter(Boolean)
+      });
+
       console.log('Final event data being sent:', finalEventData);
+      console.log('Final event data keys:', Object.keys(finalEventData));
+      console.log('Final event data values:', Object.values(finalEventData));
+      
+      // DEBUGGING: Check extra_data specifically for weather events
+      if (activeEventType === 0 && finalEventData.extra_data) {
+        console.log('🔍 DEBUGGING extra_data for weather event:');
+        console.log('extra_data type:', typeof finalEventData.extra_data);
+        console.log('extra_data value:', finalEventData.extra_data);
+        console.log('extra_data JSON.stringify:', JSON.stringify(finalEventData.extra_data));
+      }
 
       if (isEdit) {
         // Update existing event
@@ -653,7 +794,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
         });
       } else {
         // Create new event
-        await createEvent(finalEventData).unwrap();
+        await createEvent({
+          companyId: currentCompany.id,
+          establishmentId: parseInt(establishmentId || '0'),
+          ...finalEventData
+        }).unwrap();
 
         toast({
           title: intl.formatMessage({ id: 'app.success' }) || 'Success',
@@ -708,17 +853,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
     ?.find((est) => est.id === parseInt(establishmentId || '0'))
     ?.parcels?.find((p) => p.id === parseInt(parcelId || '0'));
 
-  console.log('NewEvent: Current parcel debug info', {
-    establishmentId,
-    parcelId,
-    currentParcel,
-    current_history: currentParcel?.current_history,
-    crop_type: currentParcel?.current_history?.crop_type
-  });
-
   const cropType = currentParcel?.current_history?.crop_type?.name || 'general';
-  console.log('NewEvent: Resolved cropType', cropType);
-  console.log('NewEvent: onDataChange function exists?', !!onDataChange);
+
+  // 2025 PERFORMANCE: Removed excessive debug logging to prevent render loops and improve performance
+  // Debug info available via React DevTools or selective logging when needed
 
   const tabConfig = [
     {
@@ -829,19 +967,23 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   return (
     <Box w="100%" bg={useColorModeValue('gray.50', 'gray.900')} minH="100vh" pt={6}>
-      {/* Loading state when editing */}
+      {/* 2025 UX: Enhanced loading state with progress indication */}
       {isEdit && isLoadingEvent && (
         <Box maxW="1200px" mx="auto" p={{ base: 4, md: 6, lg: 8 }}>
-          <Card boxShadow="xl" bg={bgColor} borderRadius="2xl">
+          <StandardCard>
             <CardBody py={8} px={6}>
               <VStack spacing={4} align="center">
                 <Spinner size="xl" color="green.500" />
                 <Text fontSize="lg" fontWeight="semibold" color={textColor}>
                   {intl.formatMessage({ id: 'app.loadingEvent' }) || 'Loading event data...'}
                 </Text>
+                <Progress value={60} colorScheme="green" w="200px" borderRadius="full" />
+                <Text fontSize="sm" color="gray.500">
+                  Retrieving agricultural data and calculations
+                </Text>
               </VStack>
             </CardBody>
-          </Card>
+          </StandardCard>
         </Box>
       )}
 
@@ -1025,7 +1167,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                       }
                                       transition="all 0.2s"
                                       whiteSpace="normal"
-                                      overflow="hidden">
+                                      overflow="hidden"
+                                      // 2025 ACCESSIBILITY: Enhanced ARIA support
+                                      aria-label={`Select ${eventType.label} event type. ${eventType.description}`}
+                                      aria-pressed={activeEventType === eventType.id}
+                                      role="button"
+                                      tabIndex={isEdit ? -1 : 0}>
                                       <Icon as={eventType.icon} boxSize={6} />
                                       <VStack spacing={1} width="100%">
                                         <Text fontSize="sm" fontWeight="bold" textAlign="center">
@@ -1096,7 +1243,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             onSubmitHandler={onSubmitMainInfo}
                             onDataChange={onDataChange}
                             onPrev={goToPreviousStep}
-                            initialValues={isEdit && existingEvent ? existingEvent : {}}
+                            initialValues={eventFormData}
                             cropType={cropType}
                           />
                         )}
@@ -1105,31 +1252,25 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             onSubmitHandler={onSubmitMainInfo}
                             onDataChange={onDataChange}
                             onPrev={goToPreviousStep}
-                            initialValues={isEdit && existingEvent ? existingEvent : {}}
+                            initialValues={eventFormData}
                             cropType={cropType}
                           />
                         )}
                         {activeEventType === 2 && (
-                          <>
-                            {console.log(
-                              'NewEvent: Rendering ChemicalTab with onDataChange:',
-                              !!onDataChange
-                            )}
-                            <ChemicalTab
-                              onSubmitHandler={onSubmitMainInfo}
-                              onDataChange={onDataChange}
-                              onPrev={goToPreviousStep}
-                              initialValues={isEdit && existingEvent ? existingEvent : {}}
-                              cropType={cropType}
-                            />
-                          </>
+                          <ChemicalTab
+                            onSubmitHandler={onSubmitMainInfo}
+                            onDataChange={onDataChange}
+                            onPrev={goToPreviousStep}
+                            initialValues={eventFormData}
+                            cropType={cropType}
+                          />
                         )}
                         {activeEventType === 3 && (
                           <GeneralTab
                             onSubmitHandler={onSubmitMainInfo}
                             onDataChange={onDataChange}
                             onPrev={goToPreviousStep}
-                            initialValues={isEdit && existingEvent ? existingEvent : {}}
+                            initialValues={eventFormData}
                             cropType={cropType}
                           />
                         )}
@@ -1138,7 +1279,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             onSubmitHandler={onSubmitMainInfo}
                             onDataChange={onDataChange}
                             onPrev={goToPreviousStep}
-                            initialValues={isEdit && existingEvent ? existingEvent : {}}
+                            initialValues={eventFormData}
                             cropType={cropType}
                           />
                         )}
@@ -1147,7 +1288,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             onSubmitHandler={onSubmitMainInfo}
                             onDataChange={onDataChange}
                             onPrev={goToPreviousStep}
-                            initialValues={isEdit && existingEvent ? existingEvent : {}}
+                            initialValues={eventFormData}
                             cropType={cropType}
                           />
                         )}
@@ -1156,7 +1297,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             onSubmitHandler={onSubmitMainInfo}
                             onDataChange={onDataChange}
                             onPrev={goToPreviousStep}
-                            initialValues={isEdit && existingEvent ? existingEvent : {}}
+                            initialValues={eventFormData}
                             cropType={cropType}
                           />
                         )}
@@ -1165,7 +1306,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             onSubmitHandler={onSubmitMainInfo}
                             onDataChange={onDataChange}
                             onPrev={goToPreviousStep}
-                            initialValues={isEdit && existingEvent ? existingEvent : {}}
+                            initialValues={eventFormData}
                             cropType={cropType}
                           />
                         )}
@@ -1276,7 +1417,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   : 'red'
                               }
                               fontSize="xs"
-                              borderRadius="full">
+                              borderRadius="full"
+                              // 2025 ACCESSIBILITY: Screen reader support for efficiency scores
+                              aria-label={`Efficiency score: ${carbonCalculation.efficiency_score} out of 100. ${
+                                carbonCalculation.efficiency_score >= 70 ? 'Good' : 
+                                carbonCalculation.efficiency_score >= 50 ? 'Moderate' : 'Needs improvement'
+                              } efficiency rating.`}>
                               {carbonCalculation.efficiency_score}/100
                             </Badge>
                           )}

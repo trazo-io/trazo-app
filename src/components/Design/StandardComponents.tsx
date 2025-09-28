@@ -714,6 +714,7 @@ export const StandardAlert = ({ status, title, description, children }: Standard
       variant="left-accent"
       bg={`${status}.50`}
       borderLeft="4px solid"
+      marginBottom={6}
       borderLeftColor={`${status}.500`}>
       <AlertIcon as={icons[status]} />
       <VStack align="start" spacing={1}>

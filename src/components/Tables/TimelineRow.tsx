@@ -40,7 +40,8 @@ import {
   FaRegDotCircle,
   FaTint,
   FaEyeSlash,
-  FaMinus
+  FaMinus,
+  FaCamera
 } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
 
@@ -338,6 +339,22 @@ function TimelineRow(props: TimelineRowProps) {
                 {operatorName}
               </Text>
             </HStack>
+
+            {/* Photo Status Indicator - CRITICAL for transparency improvement */}
+            {!event.image && (
+              <HStack 
+                spacing={2} 
+                p={2} 
+                bg="orange.50" 
+                borderRadius="md" 
+                border="1px solid"
+                borderColor="orange.200">
+                <Icon as={FaCamera} color="orange.500" boxSize={3} />
+                <Text fontSize="xs" color="orange.700" fontWeight="600">
+                  📷 Photo Needed for Transparency
+                </Text>
+              </HStack>
+            )}
 
             {/* Metrics Row - Consistent Layout */}
             <HStack spacing={isMobile ? 2 : 3} wrap="wrap" justify="flex-start">

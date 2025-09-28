@@ -50,7 +50,10 @@ export const baseApi = createApi({
     'Search',
     'NotificationPreferences',
     'Media',
-    'PresignedUrl'
+    'PresignedUrl',
+    'DashboardComprehensive',
+    'CarbonScopeBreakdown',
+    'CarbonAnalytics'
   ]
 });
 

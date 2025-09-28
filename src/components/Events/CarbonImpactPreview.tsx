@@ -29,10 +29,16 @@ import { FaLeaf, FaDollarSign, FaLightbulb, FaCheckCircle } from 'react-icons/fa
 import { useIntl } from 'react-intl';
 
 interface CarbonCalculation {
-  co2e: number;
-  efficiency_score: number;
-  usda_verified: boolean;
+  co2e?: number;
+  efficiency_score?: number;
+  usda_verified?: boolean;
   calculation_method: string;
+  // Error handling properties
+  error?: boolean;
+  calculation_unavailable?: boolean;
+  message?: string;
+  transparency_note?: string;
+  retry_available?: boolean;
   breakdown?: {
     nitrogen_emissions?: number;
     phosphorus_emissions?: number;
@@ -114,6 +120,40 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
         formattedCO2e: formatCO2e(calculation.co2e)
       };
     }, [calculation, getImpactLevel, getCarbonScoreColor, formatCO2e]);
+
+    // Handle error state from API failures
+    if (calculation?.error || calculation?.calculation_unavailable) {
+      return (
+        <Card size="sm" bg="orange.50" borderRadius="md" borderWidth="1px" borderColor="orange.200">
+          <CardBody>
+            <VStack spacing={3} align="stretch">
+              <HStack spacing={3}>
+                <Icon as={FaLeaf} color="orange.500" boxSize={5} />
+                <VStack spacing={1} align="start" flex={1}>
+                  <Text fontSize="sm" fontWeight="semibold" color="orange.700">
+                    {calculation.message || 'Carbon calculation temporarily unavailable'}
+                  </Text>
+                  <Text fontSize="xs" color="orange.600">
+                    {calculation.transparency_note || 'Event will still be documented for transparency tracking'}
+                  </Text>
+                </VStack>
+              </HStack>
+              
+              <Alert status="info" size="sm" borderRadius="md">
+                <AlertIcon boxSize={3} />
+                <Box>
+                  <AlertTitle fontSize="xs">Transparency Focus</AlertTitle>
+                  <AlertDescription fontSize="xs">
+                    This event will build your transparency score and appear in consumer QR stories. 
+                    Carbon calculations will be updated when available.
+                  </AlertDescription>
+                </Box>
+              </Alert>
+            </VStack>
+          </CardBody>
+        </Card>
+      );
+    }
 
     if (!calculation && !isCalculating) {
       return (

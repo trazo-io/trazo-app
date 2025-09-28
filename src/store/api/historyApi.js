@@ -107,62 +107,28 @@ export const historyApi = baseApi.injectEndpoints({
     }),
     createEvent: build.mutation({
       query: ({ companyId, establishmentId, ...eventData }) => {
-        const formData = new FormData();
+        // Filter out album since images are handled via pre-signed URLs
+        const { album, ...cleanEventData } = eventData;
 
-        eventData.album.images.forEach((file) => {
-          formData.append('album[images]', file);
-        });
-
-        eventData.parcels.forEach((parcel) => {
-          formData.append('parcels', parcel);
-        });
-
-        for (const [key, value] of Object.entries(eventData)) {
-          if (key !== 'album' && key !== 'parcels') {
-            formData.append(key, value);
-          }
-        }
         return {
           url: EVENT_CREATE_URL(companyId, establishmentId),
           method: 'POST',
           credentials: 'include',
-          body: formData,
-          formData: true
+          body: cleanEventData
         };
       },
       invalidatesTags: (result) => (result ? ['Event', 'History'] : [])
     }),
     updateEvent: build.mutation({
       query: ({ companyId, establishmentId, eventId, eventType, ...eventData }) => {
-        const formData = new FormData();
-
-        // Handle album images if present
-        if (eventData.album?.images) {
-          eventData.album.images.forEach((file) => {
-            formData.append('album[images]', file);
-          });
-        }
-
-        // Handle parcels if present
-        if (eventData.parcels) {
-          eventData.parcels.forEach((parcel) => {
-            formData.append('parcels', parcel);
-          });
-        }
-
-        // Add other fields
-        for (const [key, value] of Object.entries(eventData)) {
-          if (key !== 'album' && key !== 'parcels' && value !== null && value !== undefined) {
-            formData.append(key, value);
-          }
-        }
+        // Filter out album since images are handled via pre-signed URLs
+        const { album, ...cleanEventData } = eventData;
 
         return {
           url: EVENT_URL(companyId, establishmentId, eventId, eventType),
           method: 'PUT',
           credentials: 'include',
-          body: formData,
-          formData: true
+          body: cleanEventData
         };
       },
       invalidatesTags: (result, error, { eventId }) =>

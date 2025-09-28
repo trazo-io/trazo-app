@@ -267,30 +267,63 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
 
       setIsCalculatingCarbon(true);
       try {
+        // Determine sub-type based on event type
+        let eventSubType = 'OT'; // Other - default
+        if (formData.event_type === 'fertilizer_application') {
+          eventSubType = 'FE'; // Fertilizer
+        } else if (formData.event_type === 'pest_control') {
+          eventSubType = 'PE'; // Pesticide
+        } else if (formData.event_type === 'irrigation') {
+          eventSubType = 'IR'; // Irrigation
+        } else if (formData.event_type === 'equipment_operation' || formData.event_type === 'harvest') {
+          eventSubType = 'EQ'; // Equipment
+        } else if (formData.event_type === 'soil_management') {
+          eventSubType = 'SM'; // Soil Management
+        }
+
         // Enhanced event data structure matching backend expectations
         const event_data = {
+          type: eventSubType,
           description: formData.description,
           duration: formData.duration,
           area: formData.area,
           amount: formData.amount,
           parcel_id: parseInt(parcelId || '0'),
           establishment_id: parseInt(establishmentId || '0'),
+          area_covered: parseFloat(formData.area) || 1,
+          area_unit: 'ha',
           
           // Extract chemical data for more accurate calculations
-          ...(formData.event_type === 'fertilizer_application' || formData.event_type === 'chemical' ? {
-            type: 'FE', // Fertilizer type
-            commercial_name: 'Fertilizer Application',
-            concentration: '16-16-16', // Default NPK for preview (matches your test case)
-            volume: formData.amount || '50', // Use amount as volume (matches your 50L test case)
+          ...(formData.event_type === 'fertilizer_application' ? {
+            commercial_name: 'NPK Fertilizer',
+            concentration: '10-10-10', // Standard NPK ratio
+            volume: formData.amount || '100',
             volume_unit: 'liters',
-            area: formData.area || '2.0', // Matches your 2.0Ha test case
-            area_unit: 'hectares', 
-            way_of_application: 'broadcast' // Matches your test case
+            way_of_application: 'broadcast',
+            applicationRate: 200, // kg/ha standard rate
+            unit: 'kg/ha'
+          } : {}),
+          
+          ...(formData.event_type === 'pest_control' ? {
+            commercial_name: 'Pesticide Application',
+            concentration: '5%',
+            volume: formData.amount || '10',
+            volume_unit: 'liters',
+            way_of_application: 'spray',
+            applicationRate: 2, // L/ha standard rate
+            unit: 'L/ha'
           } : {})
         };
 
         // Map frontend event types to backend types
-        const backendEventType = formData.event_type === 'fertilizer_application' ? 'chemical' : formData.event_type;
+        let backendEventType = 'production'; // default
+        if (formData.event_type === 'fertilizer_application' || formData.event_type === 'pest_control') {
+          backendEventType = 'chemical';
+        } else if (formData.event_type === 'equipment_operation' || formData.event_type === 'harvest') {
+          backendEventType = 'equipment';
+        } else if (formData.event_type === 'irrigation' || formData.event_type === 'soil_management') {
+          backendEventType = 'production';
+        }
         
         const result = await calculateCarbonImpact({
           event_type: backendEventType,

@@ -1076,13 +1076,13 @@ export const carbonApi = baseApi.injectEndpoints({
       invalidatesTags: ['CarbonSummary']
     }),
 
-    // Real-time event carbon calculation
+    // Real-time event carbon calculation - High-performance endpoint
     calculateEventCarbonImpact: builder.mutation<
       CarbonCalculationResult,
       EventCarbonCalculationRequest
     >({
       query: (data) => ({
-        url: 'carbon/calculate-event-impact/',
+        url: 'carbon/calculate-event-carbon/',
         method: 'POST',
         body: data,
         credentials: 'include'
@@ -2040,6 +2040,105 @@ export const carbonApi = baseApi.injectEndpoints({
       providesTags: (result, error, productionId) => [
         { type: 'CarbonAnalytics', id: productionId }
       ]
+    }),
+
+    // Phase 3: Enhanced Dashboard Endpoints
+    getDashboardComprehensive: builder.query<
+      {
+        establishment_id: string;
+        transparency_metrics: {
+          overall_score: number;
+          event_count: number;
+          verification_percentage: number;
+          trust_indicators: {
+            blockchain_verified: boolean;
+            photo_evidence_count: number;
+            third_party_verified: boolean;
+          };
+        };
+        carbon_summary: {
+          total_emissions: number;
+          total_offsets: number;
+          net_carbon: number;
+          carbon_intensity: number;
+        };
+        recent_activity: Array<{
+          id: number;
+          type: string;
+          description: string;
+          date: string;
+          carbon_impact: number;
+        }>;
+        performance_trends: {
+          transparency_trend: 'up' | 'down' | 'stable';
+          carbon_trend: 'up' | 'down' | 'stable';
+          engagement_trend: 'up' | 'down' | 'stable';
+        };
+        generated_at: string;
+      },
+      { companyId: string; establishmentId: string }
+    >({
+      query: ({ companyId, establishmentId }) => ({
+        url: `companies/${companyId}/establishments/${establishmentId}/dashboard_comprehensive/`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+      providesTags: (result, error, { establishmentId }) => [
+        { type: 'DashboardComprehensive', id: establishmentId },
+        'CarbonSummary'
+      ]
+    }),
+
+    getCarbonScopeBreakdown: builder.query<
+      {
+        establishment_id: string;
+        scope_breakdown: {
+          scope_1: {
+            total: number;
+            categories: Record<string, number>;
+            percentage: number;
+          };
+          scope_2: {
+            total: number;
+            categories: Record<string, number>;
+            percentage: number;
+          };
+          scope_3: {
+            total: number;
+            categories: Record<string, number>;
+            percentage: number;
+          };
+        };
+        carbon_intensity_metrics: {
+          per_hectare: number;
+          per_kg_product: number;
+          industry_comparison: {
+            percentile: number;
+            benchmark: number;
+          };
+        };
+        improvement_opportunities: Array<{
+          scope: 'scope_1' | 'scope_2' | 'scope_3';
+          category: string;
+          potential_reduction: number;
+          implementation_cost: 'low' | 'medium' | 'high';
+          roi_estimate: string;
+        }>;
+        generated_at: string;
+      },
+      { companyId: string; establishmentId: string }
+    >({
+      query: ({ companyId, establishmentId }) => ({
+        url: `companies/${companyId}/establishments/${establishmentId}/carbon_scope_breakdown/`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      keepUnusedDataFor: 300, // Cache for 5 minutes
+      providesTags: (result, error, { establishmentId }) => [
+        { type: 'CarbonScopeBreakdown', id: establishmentId },
+        'CarbonSummary'
+      ]
     })
   })
 });
@@ -2113,7 +2212,10 @@ export const {
   useEstimateGasCostsMutation,
   useOptimizeTransactionGasMutation,
   // Phase 6: Advanced Analytics hook
-  useGetAdvancedAnalyticsQuery
+  useGetAdvancedAnalyticsQuery,
+  // Phase 3: Enhanced Dashboard hooks
+  useGetDashboardComprehensiveQuery,
+  useGetCarbonScopeBreakdownQuery
 } = carbonApi;
 
 // Debug logging

@@ -244,7 +244,9 @@ const App = () => {
                     index
                     element={
                       <NoSubscriptionRedirect>
-                        <DashboardView />
+                        <Suspense fallback={<div>Loading dashboard...</div>}>
+                          <DashboardView />
+                        </Suspense>
                       </NoSubscriptionRedirect>
                     }
                   />
@@ -255,7 +257,9 @@ const App = () => {
                     exact
                     element={
                       <NoSubscriptionRedirect>
-                        <DashboardView />
+                        <Suspense fallback={<div>Loading dashboard...</div>}>
+                          <DashboardView />
+                        </Suspense>
                       </NoSubscriptionRedirect>
                     }
                   />

@@ -236,15 +236,18 @@ const ChemicalTab = ({
   initialValues = {},
   cropType = 'citrus'
 }) => {
-  console.log('ChemicalTab: Component mounted/rendered with props:', {
-    hasOnSubmitHandler: !!onSubmitHandler,
-    hasOnDataChange: !!onDataChange,
-    onDataChangeType: typeof onDataChange,
-    hasOnPrev: !!onPrev,
-    cropType
-  });
 
   const intl = useIntl();
+
+  useEffect(() => {
+    console.log('ChemicalTab: Component mounted with props:', {
+      hasOnSubmitHandler: !!onSubmitHandler,
+      hasOnDataChange: !!onDataChange,
+      onDataChangeType: typeof onDataChange,
+      hasOnPrev: !!onPrev,
+      cropType
+    });
+  }, []);
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
   const textColor = useColorModeValue('gray.700', 'white');
   const iconColor = useColorModeValue('gray.300', 'gray.700');
@@ -332,27 +335,6 @@ const ChemicalTab = ({
     'way_of_application'
   ]);
 
-  // Debug form state periodically (now that getValues is available)
-  useEffect(() => {
-    console.log('🔍 ChemicalTab: getValues function exists?', !!getValues);
-    console.log('🔍 ChemicalTab: mainInfoMethods object:', mainInfoMethods);
-
-    const interval = setInterval(() => {
-      try {
-        const currentValues = getValues();
-        const directWatch = watch('type');
-        console.log('🔍 ChemicalTab: Periodic form state check:', {
-          getValues: currentValues,
-          watchType: directWatch,
-          methodsType: mainInfoMethods?.getValues?.()?.type
-        });
-      } catch (error) {
-        console.error('🔍 ChemicalTab: Error checking form state:', error);
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [getValues, watch, mainInfoMethods]);
 
   // Update defaults when chemical type changes
   useEffect(() => {
@@ -373,22 +355,14 @@ const ChemicalTab = ({
 
   // Track previous values to prevent unnecessary API calls
   const previousValuesRef = useRef({});
+  const isInitialMountRef = useRef(true);
 
   // Real-time field watching for carbon calculation updates
   useEffect(() => {
-    console.log('ChemicalTab: Field watching triggered', {
-      hasOnDataChange: !!onDataChange,
-      watchedFields,
-      firstField: watchedFields[0],
-      watchedType: watch('type')
-    });
-
-    // Always check if callback exists inside the timeout to avoid stale closures
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = getValues();
 
-        // Compare with previous values to avoid unnecessary calls
         const relevantFields = [
           'type',
           'commercial_name',
@@ -404,38 +378,40 @@ const ChemicalTab = ({
           currentRelevantValues[field] = currentValues[field];
         });
 
-        const hasChanged =
-          JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+        const previousValuesStr = JSON.stringify(previousValuesRef.current);
+        const currentValuesStr = JSON.stringify(currentRelevantValues);
+        const hasChanged = previousValuesStr !== currentValuesStr;
 
-        console.log('ChemicalTab: Value comparison', {
-          currentValues: currentRelevantValues,
-          previousValues: previousValuesRef.current,
-          hasChanged
-        });
+        const hasMeaningfulData = 
+          currentValues.type && 
+          currentValues.volume && 
+          parseFloat(currentValues.volume) > 0 &&
+          currentValues.area && 
+          parseFloat(currentValues.area) > 0;
 
-        // Only trigger if we have meaningful data AND values have actually changed
-        if (hasChanged && currentValues.type && (currentValues.volume || currentValues.area)) {
-          console.log('ChemicalTab: Triggering onDataChange with values', currentValues);
+        const shouldTrigger = hasMeaningfulData && (hasChanged || isInitialMountRef.current);
+
+        if (shouldTrigger) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[ChemicalTab]: ✅ Triggering carbon calculation', {
+              type: currentValues.type,
+              volume: currentValues.volume,
+              area: currentValues.area
+            });
+          }
           previousValuesRef.current = currentRelevantValues;
+          isInitialMountRef.current = false;
           try {
             onDataChange(currentValues);
           } catch (error) {
-            console.error('ChemicalTab: Error calling onDataChange:', error);
+            console.error('[ChemicalTab]: ❌ Error calling onDataChange:', error);
           }
-        } else {
-          console.log('ChemicalTab: Not triggering', {
-            hasChanged,
-            hasType: !!currentValues.type,
-            hasVolumeOrArea: !!(currentValues.volume || currentValues.area)
-          });
         }
-      } else {
-        console.log('ChemicalTab: onDataChange not available in timeout');
       }
-    }, 500); // Debounced to prevent excessive API calls
+    }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, getValues, watch]);
+  }, [watchedFields, onDataChange, getValues]);
 
   // Update form values when initialValues change
   useEffect(() => {

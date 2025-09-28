@@ -1,5 +1,6 @@
-// SIMPLIFIED BUSINESS TAB - CARBON TRANSPARENCY FOCUSED
-// Only tracks business activities relevant to carbon transparency and consumer value
+// BUSINESS TAB - TRANSPARENCY & TRUST BUILDING FOCUSED
+// Tracks business activities that enhance agricultural transparency and consumer trust
+// Phase 1 Enhanced: Trust indicators, progressive disclosure, consumer value messaging
 
 import {
   Flex,
@@ -8,7 +9,9 @@ import {
   VStack,
   Badge,
   Text,
-  Icon
+  Icon,
+  Collapse,
+  useDisclosure
 } from '@chakra-ui/react';
 import {
   StandardCard,
@@ -19,14 +22,14 @@ import {
   StandardTextarea,
   StandardAlert
 } from 'components/Design/StandardComponents';
-import { FaChevronLeft, FaChevronRight, FaCertificate, FaLeaf, FaAward } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaCertificate, FaLeaf, FaAward, FaCheckCircle, FaShieldAlt, FaChartLine } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import React, { useEffect, useRef } from 'react';
 import { object, string } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
-// CARBON-FOCUSED BUSINESS SCHEMA - Only carbon-relevant business activities
+// TRANSPARENCY-FOCUSED BUSINESS SCHEMA - Activities that build consumer trust
 const formSchemaMainInfo = object({
   business_type: string().min(1, 'Business activity type is required'),
   certification_type: string().optional(),
@@ -34,11 +37,14 @@ const formSchemaMainInfo = object({
   carbon_credits_unit: string().optional(),
   verification_status: string().optional(),
   sustainability_practice: string().optional(),
+  trust_impact: string().optional(), // NEW: Impact on consumer trust
+  transparency_benefit: string().optional(), // NEW: Transparency benefit
   observation: string().optional()
 });
 
 const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
   const intl = useIntl();
+  const { isOpen: isAdvancedOpen, onToggle: onAdvancedToggle } = useDisclosure();
 
   const methods = useForm({
     resolver: zodResolver(formSchemaMainInfo),
@@ -47,8 +53,10 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
       certification_type: initialValues.certification_type || '',
       carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
       carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
-      verification_status: initialValues.verification_status || 'pending',
+      verification_status: initialValues.verification_status || '',
       sustainability_practice: initialValues.sustainability_practice || '',
+      trust_impact: initialValues.trust_impact || '',
+      transparency_benefit: initialValues.transparency_benefit || '',
       observation: initialValues.observation || ''
     }
   });
@@ -61,8 +69,10 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
         certification_type: initialValues.certification_type || '',
         carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
         carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
-        verification_status: initialValues.verification_status || 'pending',
+        verification_status: initialValues.verification_status || '',
         sustainability_practice: initialValues.sustainability_practice || '',
+        trust_impact: initialValues.trust_impact || '',
+        transparency_benefit: initialValues.transparency_benefit || '',
         observation: initialValues.observation || ''
       });
     }
@@ -75,42 +85,19 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
   } = methods;
 
   const businessType = watch('business_type');
+  const verificationStatus = watch('verification_status');
 
-  // Real-time carbon calculation updates - only for carbon-relevant events
-  const watchedFields = watch(['business_type', 'carbon_credits_earned', 'certification_type']);
-  const previousValuesRef = useRef({});
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (onDataChange && typeof onDataChange === 'function') {
-        const currentValues = methods.getValues();
-        
-        // Only trigger for carbon-relevant business activities
-        if (currentValues.business_type && 
-            ['certification', 'carbon_credits', 'sustainability_audit'].includes(currentValues.business_type)) {
-          
-          const relevantFields = ['business_type', 'certification_type', 'carbon_credits_earned', 'verification_status'];
-          const currentRelevantValues = {};
-          relevantFields.forEach((field) => {
-            currentRelevantValues[field] = currentValues[field];
-          });
-
-          const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
-
-          if (hasChanged) {
-            previousValuesRef.current = currentRelevantValues;
-            try {
-              onDataChange(currentValues);
-            } catch (error) {
-              console.error('[BusinessTab]: Error calling onDataChange:', error);
-            }
-          }
-        }
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, methods]);
+  // Business events do NOT trigger carbon calculations
+  // These are administrative/documentation events, not direct agricultural activities
+  // Carbon calculations are only appropriate for: Equipment, Soil, Pest, Chemical, Production events
+  
+  // NOTE: Business events provide transparency value through:
+  // - Certification badges on consumer QR pages
+  // - Trust indicators for transparency scores  
+  // - Verification status for consumer confidence
+  // - Documentation of sustainability practices
+  //
+  // They do NOT generate meaningful carbon emissions and should not call carbon APIs
 
   const onSubmit = (data) => {
     // Process numeric data
@@ -126,21 +113,33 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
       <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
           
-          {/* Carbon Focus Alert */}
-          <StandardAlert status="info" title="Carbon Transparency Focus">
+          {/* Transparency Focus Alert */}
+          <StandardAlert status="info" title="Agricultural Transparency Documentation">
+            <HStack spacing={2} mb={2}>
+              <Icon as={FaShieldAlt} color="blue.500" />
+              <Text fontSize="sm" fontWeight="bold">Building Consumer Trust Through Verification</Text>
+            </HStack>
             <Text fontSize="sm">
-              This form tracks only business activities that provide carbon transparency value to consumers.
-              Revenue and sales data are tracked separately for business purposes.
+              Document certifications, verifications, and sustainability practices that enhance consumer confidence
+              in your agricultural transparency. These trust indicators appear on your product's transparency page.
             </Text>
           </StandardAlert>
 
-          {/* Business Activity Type */}
+          {/* Section 1: Business Activity Selection */}
           <StandardCard
             title={
               <HStack>
                 <Icon as={FaCertificate} color="teal.500" />
-                <Text>Carbon-Relevant Business Activity</Text>
-                <Badge colorScheme="teal" size="sm">Consumer Value</Badge>
+                <Text>Trust-Building Business Activity</Text>
+                <Badge colorScheme="teal" size="sm">Consumer Trust</Badge>
+                {verificationStatus === 'verified' && (
+                  <Badge colorScheme="green" size="sm" ml={2}>
+                    <HStack spacing={1}>
+                      <Icon as={FaCheckCircle} />
+                      <Text>Verified</Text>
+                    </HStack>
+                  </Badge>
+                )}
               </HStack>
             }
           >
@@ -150,7 +149,7 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 label="Business Activity Type"
                 required
                 error={errors.business_type?.message}
-                helpText="Select activities that provide carbon transparency or certification value"
+                helpText="Select activities that build consumer trust and enhance transparency"
               >
                 <Controller
                   name="business_type"
@@ -160,12 +159,12 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                       {...field}
                       placeholder="Select business activity type..."
                     >
-                      <option value="certification">Certification Event (Organic, Carbon, etc.)</option>
-                      <option value="carbon_credits">Carbon Credits Transaction</option>
-                      <option value="sustainability_audit">Sustainability Audit/Assessment</option>
-                      <option value="verification">Third-Party Verification</option>
-                      <option value="compliance">Regulatory Compliance Activity</option>
-                      <option value="transparency">Consumer Transparency Initiative</option>
+                      <option value="certification">Certification Achievement (Organic, Fair Trade, etc.)</option>
+                      <option value="verification">Third-Party Verification Completed</option>
+                      <option value="sustainability_audit">Sustainability Assessment Passed</option>
+                      <option value="transparency">Transparency Initiative Launched</option>
+                      <option value="carbon_credits">Carbon Credits Earned</option>
+                      <option value="compliance">Regulatory Compliance Achieved</option>
                     </StandardSelect>
                   )}
                 />

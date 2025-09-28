@@ -52,21 +52,20 @@ export const useCarbonCalculation = (parcelId, establishmentId) => {
           setShouldShowCarbonTips(true);
         } catch (error) {
           console.error('Carbon calculation failed:', error);
-
-          // Set fallback calculation based on event type
-          const fallback = FALLBACK_CARBON_SCORES[eventType] || FALLBACK_CARBON_SCORES[3];
-
+          
+          // CRITICAL FIX: Don't show misleading fallback values
+          // Instead, show transparent error state
           setCarbonCalculation({
-            co2e: fallback.co2e,
-            efficiency_score: fallback.efficiency_score,
-            usda_verified: false,
-            calculation_method: 'estimate',
+            error: true,
+            calculation_unavailable: true,
+            calculation_method: 'api_unavailable',
             event_type: EVENT_TYPE_MAP[eventType] || 'general',
             timestamp: new Date().toISOString(),
-            estimated_cost: fallback.co2e * 50, // Rough cost estimate
-            warning: 'Using estimated values - calculations temporarily unavailable'
+            message: 'Carbon calculation temporarily unavailable',
+            transparency_note: 'Event will still be documented for transparency tracking',
+            retry_available: true
           });
-          setShouldShowCarbonTips(true);
+          setShouldShowCarbonTips(false); // Don't show tips when calculation failed
         } finally {
           setIsCalculatingCarbon(false);
         }

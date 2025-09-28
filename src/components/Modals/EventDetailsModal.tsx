@@ -915,18 +915,39 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             bg={useColorModeValue('white', 'gray.800')}
             borderBottomRadius="xl"
           >
-            <HStack spacing={3} w="full" justify="space-between">
+            <Flex w="full" justify="space-between" align="center">
               <Button
                 variant="ghost"
                 onClick={onClose}
                 size="lg"
                 color="gray.600"
                 _hover={{ bg: 'gray.100' }}
+                borderRadius="lg"
               >
                 Close
               </Button>
 
               <HStack spacing={3}>
+                <Button
+                  leftIcon={<FaTrash />}
+                  colorScheme="red"
+                  variant="outline"
+                  onClick={onDeleteOpen}
+                  size="lg"
+                  borderRadius="lg"
+                  fontWeight="semibold"
+                  isLoading={isDeleting}
+                  loadingText="Deleting..."
+                  _hover={{
+                    bg: 'red.50',
+                    color: 'red.600',
+                    borderColor: 'red.600'
+                  }}
+                  transition="all 0.2s"
+                >
+                  Delete
+                </Button>
+
                 <Button
                   leftIcon={<FaEdit />}
                   colorScheme="blue"
@@ -943,27 +964,8 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 >
                   Edit Event
                 </Button>
-
-                <Button
-                  leftIcon={<FaTrash />}
-                  colorScheme="red"
-                  variant="ghost"
-                  onClick={onDeleteOpen}
-                  size="lg"
-                  borderRadius="lg"
-                  fontWeight="semibold"
-                  isLoading={isDeleting}
-                  loadingText="Deleting..."
-                  _hover={{
-                    bg: 'red.50',
-                    color: 'red.600'
-                  }}
-                  transition="all 0.2s"
-                >
-                  Delete
-                </Button>
               </HStack>
-            </HStack>
+            </Flex>
           </ModalFooter>
         </ModalContent>
       </Modal>
