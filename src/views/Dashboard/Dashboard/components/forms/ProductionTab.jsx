@@ -129,37 +129,59 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
   // - Harvest transportation (separate from field equipment)
   // - Post-harvest processing (if applicable)
   
-  const watchedFields = watch(['type', 'area_covered', 'yield_quantity', 'transportation_distance']);
+  const watchedFields = watch(['type', 'area_covered', 'yield_quantity', 'transportation_distance', 'fuel_consumed', 'equipment_hours']);
   const previousValuesRef = useRef({});
+  const isInitialMountRef = useRef(true);
 
+  // Real-time field watching for carbon calculation updates (following ChemicalTab.jsx pattern)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
-        
-        // Only trigger for transportation-related production activities
-        // Most production activities (planting, harvesting) have minimal direct emissions
-        const transportationTypes = ['HA', 'transportation']; // Harvesting includes transport
-        
-        if (currentValues.type && 
-            currentValues.area_covered && 
-            (currentValues.transportation_distance || transportationTypes.includes(currentValues.type))) {
-          
-          const relevantFields = ['type', 'area_covered', 'transportation_distance', 'transportation_unit'];
-          const currentRelevantValues = {};
-          relevantFields.forEach((field) => {
-            currentRelevantValues[field] = currentValues[field];
-          });
 
-          const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+        const relevantFields = [
+          'type',
+          'area_covered',
+          'area_unit',
+          'yield_quantity',
+          'yield_unit',
+          'fuel_consumed',
+          'fuel_unit',
+          'equipment_hours',
+          'transportation_distance',
+          'transportation_unit'
+        ];
+        const currentRelevantValues = {};
+        relevantFields.forEach((field) => {
+          currentRelevantValues[field] = currentValues[field];
+        });
 
-          if (hasChanged) {
-            previousValuesRef.current = currentRelevantValues;
-            try {
-              onDataChange(currentValues);
-            } catch (error) {
-              console.error('[ProductionTab]: Error calling onDataChange:', error);
-            }
+        const previousValuesStr = JSON.stringify(previousValuesRef.current);
+        const currentValuesStr = JSON.stringify(currentRelevantValues);
+        const hasChanged = previousValuesStr !== currentValuesStr;
+
+        const hasMeaningfulData = 
+          currentValues.type && 
+          currentValues.area_covered && 
+          parseFloat(currentValues.area_covered) > 0;
+
+        const shouldTrigger = hasMeaningfulData && (hasChanged || isInitialMountRef.current);
+
+        if (shouldTrigger) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[ProductionTab]: ✅ Triggering carbon calculation', {
+              type: currentValues.type,
+              area_covered: currentValues.area_covered,
+              fuel_consumed: currentValues.fuel_consumed,
+              transportation_distance: currentValues.transportation_distance
+            });
+          }
+          previousValuesRef.current = currentRelevantValues;
+          isInitialMountRef.current = false;
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('[ProductionTab]: ❌ Error calling onDataChange:', error);
           }
         }
       }

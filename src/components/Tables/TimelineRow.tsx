@@ -164,6 +164,77 @@ const extractEventData = (event: Event) => {
   };
 };
 
+// Generate transparency-focused description for events
+const getEventDescription = (event: Event) => {
+  const eventData = event as any;
+  
+  // For production events (Type 1), show key transparency metrics
+  if (event.event_type === 1) {
+    const details = [];
+    
+    // Area covered - most important for transparency
+    if (eventData.area_covered && eventData.area_covered > 0) {
+      const areaUnit = eventData.area_unit === 'ha' ? 'hectares' : eventData.area_unit || 'hectares';
+      details.push(`${eventData.area_covered} ${areaUnit}`);
+    }
+    
+    // Quantity for planting/harvesting
+    if (eventData.yield_quantity && eventData.yield_quantity > 0) {
+      const unit = eventData.yield_unit || 'units';
+      const quantity = parseFloat(eventData.yield_quantity);
+      
+      // Format large numbers nicely
+      const formattedQuantity = quantity >= 1000 
+        ? `${(quantity / 1000).toFixed(0)}K` 
+        : quantity.toLocaleString();
+      
+      details.push(`${formattedQuantity} ${unit}`);
+    }
+    
+    // Fuel consumption - key for carbon transparency
+    if (eventData.fuel_consumed && eventData.fuel_consumed > 0) {
+      const fuelUnit = eventData.fuel_unit || 'L';
+      details.push(`${eventData.fuel_consumed} ${fuelUnit} fuel`);
+    }
+    
+    // Equipment hours
+    if (eventData.equipment_hours && eventData.equipment_hours > 0) {
+      details.push(`${eventData.equipment_hours}h equipment`);
+    }
+    
+    // If we have transparency data, show it
+    if (details.length > 0) {
+      return details.join(' • ');
+    }
+  }
+  
+  // For chemical events (Type 2), show chemical details
+  if (event.event_type === 2) {
+    const details = [];
+    
+    if (eventData.commercial_name) {
+      details.push(eventData.commercial_name);
+    }
+    
+    if (eventData.area_covered && eventData.area_covered > 0) {
+      const areaUnit = eventData.area_unit === 'ha' ? 'hectares' : eventData.area_unit || 'hectares';
+      details.push(`${eventData.area_covered} ${areaUnit}`);
+    }
+    
+    if (eventData.volume_applied && eventData.volume_applied > 0) {
+      const volumeUnit = eventData.volume_unit || 'L';
+      details.push(`${eventData.volume_applied} ${volumeUnit}`);
+    }
+    
+    if (details.length > 0) {
+      return details.join(' • ');
+    }
+  }
+  
+  // Fallback to observation or default message
+  return event.observation || 'No additional details';
+};
+
 // Get operator name from members array
 const getOperatorName = (event: Event, members: Member[]) => {
   const operator = members.find((member) => member.id === event.created_by);
@@ -327,7 +398,7 @@ function TimelineRow(props: TimelineRowProps) {
 
             {/* Description */}
             <Text fontSize="xs" color="gray.600" lineHeight="tall">
-              {event.observation || 'No additional details'}
+              {getEventDescription(event)}
             </Text>
 
             {/* Operator Info */}

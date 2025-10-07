@@ -61,9 +61,15 @@ import { useIntl } from 'react-intl';
 const formSchemaMainInfo = object({
   type: string().min(1, 'Chemical type is required'),
   commercial_name: string().min(2, 'Commercial name must be at least 2 characters'),
-  volume: string().min(1, 'Volume is required'),
+  volume: string().min(1, 'Volume is required').refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num > 0;
+  }, 'Volume must be a positive number'),
   volume_unit: string().min(1, 'Volume unit is required'),
-  area: string().min(1, 'Area is required'),
+  area: string().min(1, 'Area is required').refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num > 0;
+  }, 'Area must be a positive number'),
   area_unit: string().min(1, 'Area unit is required'),
   concentration: string().min(1, 'Concentration is required'),
   way_of_application: string().min(1, 'Application method is required'),
@@ -419,25 +425,29 @@ const ChemicalTab = ({
       const mappedType = mapApiTypeToFormType(initialValues.type);
       const defaults = getIntelligentDefaults(mappedType || 'FE', cropType);
 
+      // Get current form values to preserve user input
+      const currentValues = mainInfoMethods.getValues();
+
       mainInfoMethods.reset({
         type: mappedType || '',
         commercial_name: initialValues.commercial_name || '',
-        volume: initialValues.volume || defaults.volume,
-        volume_unit: initialValues.volume_unit || defaults.volume_unit,
-        area: initialValues.area || defaults.area,
-        area_unit: initialValues.area_unit || defaults.area_unit,
-        concentration: initialValues.concentration || defaults.concentration,
-        way_of_application: initialValues.way_of_application || defaults.way_of_application,
-        weather_conditions: initialValues.weather_conditions || defaults.weather_conditions,
-        soil_moisture: initialValues.soil_moisture || defaults.soil_moisture,
-        temperature_range: initialValues.temperature_range || defaults.temperature_range,
-        wind_speed: initialValues.wind_speed || '',
-        time_period: initialValues.time_period || defaults.time_period,
-        observation: initialValues.observation || '',
+        // FIXED: Preserve user input if fields have been filled
+        volume: currentValues.volume || initialValues.volume || defaults.volume,
+        volume_unit: currentValues.volume_unit || initialValues.volume_unit || defaults.volume_unit,
+        area: currentValues.area || initialValues.area || defaults.area,
+        area_unit: currentValues.area_unit || initialValues.area_unit || defaults.area_unit,
+        concentration: currentValues.concentration || initialValues.concentration || defaults.concentration,
+        way_of_application: currentValues.way_of_application || initialValues.way_of_application || defaults.way_of_application,
+        weather_conditions: currentValues.weather_conditions || initialValues.weather_conditions || defaults.weather_conditions,
+        soil_moisture: currentValues.soil_moisture || initialValues.soil_moisture || defaults.soil_moisture,
+        temperature_range: currentValues.temperature_range || initialValues.temperature_range || defaults.temperature_range,
+        wind_speed: currentValues.wind_speed || initialValues.wind_speed || '',
+        time_period: currentValues.time_period || initialValues.time_period || defaults.time_period,
+        observation: currentValues.observation || initialValues.observation || '',
         // NPK percentage fields (Phase 1.1 validation)
-        nitrogen_percentage: initialValues.nitrogen_percentage?.toString() || '',
-        phosphorus_percentage: initialValues.phosphorus_percentage?.toString() || '',
-        potassium_percentage: initialValues.potassium_percentage?.toString() || ''
+        nitrogen_percentage: currentValues.nitrogen_percentage || initialValues.nitrogen_percentage?.toString() || '',
+        phosphorus_percentage: currentValues.phosphorus_percentage || initialValues.phosphorus_percentage?.toString() || '',
+        potassium_percentage: currentValues.potassium_percentage || initialValues.potassium_percentage?.toString() || ''
       });
     }
   }, [initialValues, mainInfoMethods]);

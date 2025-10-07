@@ -94,8 +94,8 @@ const TrackList = ({ amount }) => {
     },
     {
       skip: !parcelId || !currentCompany || !establishmentId || currentCompany?.id === undefined,
-      refetchOnMountOrArgChange: true,
-      refetchOnFocus: true
+      refetchOnMountOrArgChange: false,
+      refetchOnFocus: false
     }
   );
 
@@ -103,7 +103,7 @@ const TrackList = ({ amount }) => {
     if (data) dispatch(setCurrentHistory(data));
   }, [data]);
 
-  const bgButton = useColorModeValue('#2E7D32', 'gray.800');
+  const bgButton = useColorModeValue('green.500', 'gray.800');
 
   const handleEventCreated = () => {
     // Refetch the current history data to show the new event
@@ -128,8 +128,8 @@ const TrackList = ({ amount }) => {
   return (
     <Card
       key={`track-list-${parcelId}`}
-      maxH="100%"
-      height={'fit-content;'}
+      h={{ base: '650px', md: '700px' }}
+      maxH={{ base: '650px', md: '700px' }}
       minW={{ base: '100%', md: '450px' }}
       w="100%"
       className="trazo-card">
@@ -206,27 +206,27 @@ const TrackList = ({ amount }) => {
         </Flex>
       </CardHeader>
       <CardBody ps={{ base: '0px', md: '20px' }} pe="0px" mb="31px" position="relative">
-        <Box 
-          maxH={{ base: '500px', md: '600px' }} 
+        <Box
+          maxH={{ base: '400px', md: '450px' }}
           overflowY="auto"
           pr={{ base: '8px', md: '12px' }}
           sx={{
             '&::-webkit-scrollbar': {
-              width: '8px',
+              width: '8px'
             },
             '&::-webkit-scrollbar-track': {
               bg: 'gray.100',
-              borderRadius: 'full',
+              borderRadius: 'full'
             },
             '&::-webkit-scrollbar-thumb': {
               bg: 'green.500',
               borderRadius: 'full',
               _hover: {
-                bg: 'green.600',
-              },
-            },
+                bg: 'green.600'
+              }
+            }
           }}>
-          <Flex direction="column" width={'100%'}>
+          <Flex direction="column" width={'100%'} pb={4}>
             {isLoading || isFetching ? (
               <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
                 <Spinner size="sm" color="green.500" />
@@ -241,7 +241,21 @@ const TrackList = ({ amount }) => {
                       logo={event.certified ? FaRegCheckCircle : FaRegDotCircle}
                       title={
                         event.event_type != 3
-                          ? intl.formatMessage({ id: `${event.type}` })
+                          ? (() => {
+                              // Check for commercial name override for chemical events
+                              if (event.commercial_name) {
+                                const isChemicalEvent =
+                                  event.event_type === 1 ||
+                                  event.type?.includes('chemical') ||
+                                  (event.type && ['FE', 'PE', 'FU', 'HE'].includes(event.type));
+
+                                if (isChemicalEvent) {
+                                  return event.commercial_name;
+                                }
+                              }
+                              // Fallback to generic translation
+                              return intl.formatMessage({ id: `${event.type}` });
+                            })()
                           : event.name
                       }
                       date={new Date(event.date).toDateString()}
@@ -256,20 +270,36 @@ const TrackList = ({ amount }) => {
                     />
                   );
                 })}
-                {!currentHistory?.events?.length > 0 && (
-                  <Flex width={'100%'} height={'70px'}>
-                    <Text
-                      display={'flex'}
-                      fontSize={'md'}
-                      fontWeight={'300'}
-                      justifyContent={'center'}
-                      alignItems={'center'}
-                      textAlign={'center'}>
-                      {currentHistory?.product
-                        ? intl.formatMessage({ id: 'app.noEventsYet' })
-                        : intl.formatMessage({ id: 'app.noProductionYet' })}
-                    </Text>
-                  </Flex>
+                {!currentHistory?.events?.length > 0 && !currentHistory?.product && (
+                  <VStack spacing={8} py={16} align="center" px={6}>
+                    <VStack spacing={4} textAlign="center">
+                      <Icon as={FaSeedling} color="green.400" boxSize={12} />
+                      <VStack spacing={2}>
+                        <Text fontSize="lg" fontWeight="bold" color={textColor}>
+                          No current production yet
+                        </Text>
+                        <Text fontSize="sm" color="gray.500" maxW="350px" lineHeight="1.5">
+                          Start a new production cycle to track agricultural events and build carbon
+                          transparency
+                        </Text>
+                      </VStack>
+                    </VStack>
+                  </VStack>
+                )}
+                {!currentHistory?.events?.length > 0 && currentHistory?.product && (
+                  <VStack spacing={8} py={8} align="center" px={6}>
+                    <VStack spacing={4} textAlign="center">
+                      <Icon as={FaClock} color="blue.400" boxSize={10} />
+                      <VStack spacing={2}>
+                        <Text fontSize="md" fontWeight="bold" color={textColor}>
+                          No events recorded yet
+                        </Text>
+                        <Text fontSize="sm" color="gray.500" maxW="300px" lineHeight="1.5">
+                          Add your first agricultural event to start tracking
+                        </Text>
+                      </VStack>
+                    </VStack>
+                  </VStack>
                 )}
               </>
             )}
@@ -283,7 +313,7 @@ const TrackList = ({ amount }) => {
             bg={bgButton}
             color="white"
             fontSize="sm"
-            fontWeight="bold"
+            fontWeight="semibold"
             variant="no-hover"
             minW={{ base: '100%', sm: '140px', md: '160px' }}
             w={{ base: '100%', sm: 'auto' }}
@@ -299,7 +329,7 @@ const TrackList = ({ amount }) => {
                 `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
               )
             }>
-            {intl.formatMessage({ id: 'app.startProduction' }).toUpperCase()}
+            {intl.formatMessage({ id: 'app.startProduction' })}
           </Button>
         ) : (
           <Flex

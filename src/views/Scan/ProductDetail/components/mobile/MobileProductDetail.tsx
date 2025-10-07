@@ -31,6 +31,7 @@ import {
   useGetProductBasicsQuery,
   useGetProductFullDetailsQuery
 } from 'store/api/optimizedQrApi';
+import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import { CarbonScore } from '../../../../../components/CarbonScore';
 import { useAddEstablishmentCarbonFootprintMutation } from 'store/api/companyApi';
 import { usePointsStore } from '../../../../../store/pointsStore';
@@ -52,9 +53,9 @@ const LazyEstablishmentInfo = lazy(() =>
     default: module.EstablishmentInfo
   }))
 );
-const LazyEnhancedProductTimeline = lazy(() =>
-  import('../../../../../components/ProductDetail/EnhancedProductTimeline').then((module) => ({
-    default: module.EnhancedProductTimeline
+const LazyUltraMobileProductionJourney = lazy(() =>
+  import('../UltraMobileProductionJourney').then((module) => ({
+    default: module.UltraMobileProductionJourney
   }))
 );
 const LazyBlockchainVerificationBadge = lazy(() =>
@@ -171,6 +172,15 @@ const MobileProductDetail: React.FC = () => {
     skip: productionId === undefined || !productBasicsData
   });
 
+  // ✅ 2025 UNIFIED ARCHITECTURE: Use same transparency API as producer dashboard
+  const {
+    data: transparencyApiData,
+    error: transparencyApiError,
+    isLoading: isTransparencyApiLoading
+  } = useGetTransparencyDetailsQuery(productionId || '', {
+    skip: productionId === undefined
+  });
+
   // Track full page load time
   useEffect(() => {
     if (productFullDetailsData && !fullPageLoadTime) {
@@ -185,6 +195,65 @@ const MobileProductDetail: React.FC = () => {
   }, [productFullDetailsData, fullPageLoadTime, carbonScoreLoadTime, pageLoadStart]);
 
   const [addEstablishmentCarbonFootprint] = useAddEstablishmentCarbonFootprintMutation();
+
+  // ✅ 2025 UNIFIED ARCHITECTURE: Same unified timeline data logic as producer dashboard
+  const getUnifiedTimelineEvents = () => {
+    // 🔧 PHOTO FIX: Check if each API has album data
+    const transparencyHasPhotos = transparencyApiData?.timeline?.some((event: any) => event.album && event.album.images?.length > 0);
+    const legacyHasPhotos = productFullDetailsData?.timeline?.some((event: any) => event.album && event.album.images?.length > 0);
+    
+    console.log('🔧 PHOTO DATA COMPARISON:', {
+      transparencyApiLength: transparencyApiData?.timeline?.length || 0,
+      transparencyHasPhotos,
+      legacyApiLength: productFullDetailsData?.timeline?.length || 0,
+      legacyHasPhotos
+    });
+
+    // PRIORITY 1: Use API with photo data if one has photos and the other doesn't
+    if (legacyHasPhotos && !transparencyHasPhotos && productFullDetailsData?.timeline?.length > 0) {
+      console.log('✅ Using legacy API timeline data (has photos, transparency API lacks photos)');
+      return productFullDetailsData.timeline.map((event: any) => ({
+        id: event.id || `event-${Date.now()}`,
+        type: event.title || 'Agricultural Activity',
+        description: event.description || 'No description available',
+        date: event.date,
+        certified: false,
+        volume: '', concentration: '', area: '', equipment: '',
+        carbon_data: undefined, blockchain_verified: false,
+        // 🔧 CRITICAL: Preserve album data for photos
+        album: event.album
+      }));
+    }
+    
+    // PRIORITY 2: Use transparency API data (rich timeline with agricultural details)
+    if (transparencyApiData?.timeline && transparencyApiData.timeline.length > 0) {
+      console.log('✅ Using transparency API timeline data (unified architecture)');
+      return transparencyApiData.timeline;
+    }
+    
+    // FALLBACK: Use legacy productFullDetailsData.timeline if transparency API unavailable
+    if (productFullDetailsData?.timeline && productFullDetailsData.timeline.length > 0) {
+      console.log('⚠️ Using legacy productFullDetailsData.timeline as fallback');
+      return productFullDetailsData.timeline.map((event: any) => ({
+        id: event.id || `event-${Date.now()}`,
+        type: event.title || 'Agricultural Activity',
+        description: event.description || 'No description available',
+        date: event.date,
+        certified: false,
+        // Map simple structure to rich TimelineEvent format
+        volume: '',
+        concentration: '',
+        area: '',
+        equipment: '',
+        carbon_data: undefined,
+        blockchain_verified: false,
+        // 🔧 CRITICAL: Preserve album data for photos
+        album: event.album
+      }));
+    }
+    
+    return [];
+  };
 
   // Handlers
   const handleShare = async () => {
@@ -251,7 +320,7 @@ const MobileProductDetail: React.FC = () => {
   };
 
   // Show error state if data loading fails
-  const hasError = carbonScoreError || productBasicsError || productFullDetailsError;
+  const hasError = carbonScoreError || productBasicsError || productFullDetailsError || transparencyApiError;
   const isInitialLoading = isCarbonScoreLoading && !carbonScoreData;
 
   if (hasError && !isInitialLoading) {
@@ -385,23 +454,26 @@ const MobileProductDetail: React.FC = () => {
           </Box>
         )}
 
-        {/* MOBILE PRIORITY 3: Production Timeline */}
-        {productFullDetailsData?.timeline && productFullDetailsData.timeline.length > 0 && (
-          <Box
-            borderWidth="1px"
-            borderRadius="lg"
-            overflow="hidden"
-            borderColor={borderColor}
-            bg={bgColor}
-          >
-            <Suspense fallback={<TimelineSkeleton />}>
-              <LazyEnhancedProductTimeline
-                events={productFullDetailsData.timeline}
-                isCompact={true}
-              />
-            </Suspense>
-          </Box>
-        )}
+        {/* ✅ 2025 UNIFIED ARCHITECTURE: Use same timeline data source as producer dashboard */}
+        {(() => {
+          const unifiedEvents = getUnifiedTimelineEvents();
+          return unifiedEvents.length > 0 && (
+            <Box
+              borderWidth="1px"
+              borderRadius="lg"
+              overflow="hidden"
+              borderColor={borderColor}
+              bg={bgColor}
+            >
+              <Suspense fallback={<TimelineSkeleton />}>
+                <LazyUltraMobileProductionJourney
+                  events={unifiedEvents}
+                  isCompact={true}
+                />
+              </Suspense>
+            </Box>
+          );
+        })()}
 
         {/* MOBILE PRIORITY 4: Establishment Info */}
         {productFullDetailsData?.establishment && (

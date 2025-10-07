@@ -553,7 +553,7 @@ function ProductDetail() {
         setShowInstantTrust(true);
         setInstantTrustShown(true);
       }, 300);
-      
+
       return () => clearTimeout(timer);
     }
   }, [verifiedProductionId, qrVerificationError, instantTrustShown]);
@@ -603,7 +603,6 @@ function ProductDetail() {
   // const textColor = useColorModeValue('gray.800', 'white'); // Unused for now
   // const headerFontSize = { base: 'lg', sm: 'xl', md: '2xl', lg: '3xl' }; // Unused for now
 
-
   // API queries
   const {
     data: completeData,
@@ -613,22 +612,69 @@ function ProductDetail() {
     skip: !productionId
   });
 
+  // DEBUG: Log complete data when it arrives from API
+  React.useEffect(() => {
+    if (completeData && productionId === '183') {
+      console.log('🔧 COMPLETE DATA FROM API - PRODUCTION 183:', {
+        hasTimeline: !!completeData.timeline,
+        timelineLength: completeData.timeline?.length,
+        timelineData: completeData.timeline,
+        productionEvents: completeData.timeline?.filter(e => e.type?.includes('production')),
+        fullCompleteData: completeData
+      });
+      
+      // Check if production events have transparency fields
+      const productionEvents = completeData.timeline?.filter(e => e.type?.includes('production')) || [];
+      if (productionEvents.length > 0) {
+        const firstEvent = productionEvents[0];
+        console.log('🔧 FIRST PRODUCTION EVENT FROM COMPLETE API:', {
+          eventId: firstEvent.id,
+          eventType: firstEvent.type,
+          area_covered: firstEvent.area_covered,
+          yield_quantity: firstEvent.yield_quantity,
+          fuel_consumed: firstEvent.fuel_consumed,
+          equipment_hours: firstEvent.equipment_hours,
+          hasAreaCovered: firstEvent.hasOwnProperty('area_covered'),
+          hasYieldQuantity: firstEvent.hasOwnProperty('yield_quantity'),
+          hasFuelConsumed: firstEvent.hasOwnProperty('fuel_consumed'),
+          hasEquipmentHours: firstEvent.hasOwnProperty('equipment_hours'),
+          allKeys: Object.keys(firstEvent),
+          fullEvent: firstEvent
+        });
+      }
+    }
+  }, [completeData, productionId]);
+
   // CRITICAL: Use backend TransparencyCalculator for proper transparency scoring
   const { data: transparencyApiData } = useGetTransparencyDetailsQuery(productionId || '', {
     skip: !productionId
   });
 
-
   // Helper function to get proper transparency score from backend TransparencyCalculator
   const getTransparencyScore = (): number => {
-    // Use backend TransparencyCalculator data when available
-    if (transparencyApiData?.quick_view?.transparency_score?.percentage) {
+    // ✅ 2025 BEST PRACTICE: Single source of truth - ONLY use transparency API
+    // The transparency API provides the authoritative score with detailed breakdown
+    
+    if (transparencyApiData?.quick_view?.transparency_score?.percentage !== undefined) {
+      console.log(
+        '✅ Using transparency API score (SINGLE SOURCE OF TRUTH):',
+        transparencyApiData.quick_view.transparency_score.percentage
+      );
       return transparencyApiData.quick_view.transparency_score.percentage;
     }
 
-    // Fallback: Only use when backend data is not available
-    // This maintains backward compatibility during transition
-    return Math.min(100, Math.round(((completeData?.timeline?.length || 0) / 15) * 100));
+    // ❌ REMOVED: No fallback to complete API - prevents inconsistent scores
+    // The complete API uses different calculation logic (57 vs 12.5)
+    // We only use the dedicated transparency API to ensure consistency
+    
+    console.warn('⚠️ Transparency API not ready - showing loading state');
+    return 0; // Triggers loading state in UI instead of inconsistent score
+  };
+
+  // Helper function for consistent consumer-facing display (whole numbers)
+  const getDisplayTransparencyScore = (): number => {
+    const rawScore = getTransparencyScore(); // Get precise backend score (e.g., 12.5)
+    return Math.round(rawScore); // Round for consumer display (e.g., 13)
   };
 
   // Helper function to calculate blockchain verification score
@@ -698,7 +744,6 @@ function ProductDetail() {
     onEducationOpen();
   };
 
-
   // Navigation active section detection
   useEffect(() => {
     const handleScroll = () => {
@@ -759,7 +804,6 @@ function ProductDetail() {
         justifySelf="center"
         overflow="hidden"
         w="100%">
-        
         {/* Show instant trust display while main data loads */}
         {showInstantTrust && productionId ? (
           <Box py={8}>
@@ -843,7 +887,7 @@ function ProductDetail() {
         <CarbonHeroSection
           carbonData={{
             // PRIMARY: Use backend TransparencyCalculator score (crop-specific expected events)
-            score: getTransparencyScore(),
+            score: getDisplayTransparencyScore(),
             footprint: completeData?.netFootprint || 0,
             relatableFootprint: completeData?.relatableFootprint,
             // Remove competitive rankings - transparency-first approach
@@ -852,13 +896,13 @@ function ProductDetail() {
             level: 'transparency' // Signal this is transparency, not carbon
           }}
           trustData={{
-            confidenceScore: getTransparencyScore(),
+            confidenceScore: getDisplayTransparencyScore(),
             isUSDAVerified: completeData?.isUsdaVerified || false,
             isBlockchainVerified: getBlockchainScore().isVerified,
             reviewsCount: 0,
             averageRating: safeReputation || 4.2,
             scansCount: 0,
-            transparencyScore: getTransparencyScore()
+            transparencyScore: getDisplayTransparencyScore()
           }}
           productData={{
             name: (completeData as any)?.product?.name || 'Product',
@@ -1026,7 +1070,7 @@ function ProductDetail() {
                   <HStack spacing={4} justify="center" flexWrap="wrap">
                     <VStack spacing={1}>
                       <Text fontSize="2xl" fontWeight="bold" color="green.600">
-                        {getTransparencyScore()}%
+                        {getDisplayTransparencyScore()}%
                       </Text>
                       <Text fontSize="xs" color="gray.600" textAlign="center">
                         Documentation
@@ -1069,76 +1113,142 @@ function ProductDetail() {
               {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
               <Suspense fallback={<CarbonExplainerLoader />}>
                 <CarbonImpactExplainer
-                  carbonScore={getTransparencyScore()}
+                  carbonScore={getDisplayTransparencyScore()}
                   totalCO2e={completeData?.netFootprint || 0}
                   productName={completeData?.product?.name || completeData?.farmer?.name}
                   relatableFootprint={completeData?.relatableFootprint}
                 />
               </Suspense>
 
-              {/* Enhanced Transparency Score Display - Progressive Loading */}
-              <Suspense fallback={<TransparencyScoreLoader />}>
-                <EnhancedTransparencyScoreDisplay
-                  overallScore={getTransparencyScore()}
-                  breakdown={[
-                    {
-                      category: 'Documentation',
-                      score: Math.round(getTransparencyScore() * 0.3),
-                      maxScore: 30,
-                      description: 'Complete farm records',
-                      icon: FaClipboardList,
-                      color: 'green',
-                      isVerified: true
-                    },
-                    {
-                      category: 'USDA Verification',
-                      score: completeData?.isUsdaVerified ? 25 : 0,
-                      maxScore: 25,
-                      description: 'Government verified data',
-                      icon: MdVerified,
-                      color: 'blue',
-                      isVerified: completeData?.isUsdaVerified || false
-                    },
-                    {
-                      category: 'Blockchain',
-                      score: getBlockchainScore().score,
-                      maxScore: 20,
-                      description: 'Immutable records',
-                      icon: BsShieldCheck,
-                      color: 'purple',
-                      isVerified: getBlockchainScore().isVerified
-                    },
-                    {
-                      category: 'Timeline Events',
-                      score: Math.min(15, completeData?.timeline?.length || 0),
-                      maxScore: 15,
-                      description: 'Production tracking',
-                      icon: FaCalendarAlt,
-                      color: 'orange',
-                      isVerified: (completeData?.timeline?.length || 0) > 10
-                    },
-                    {
-                      category: 'Location Data',
-                      score: 10,
-                      maxScore: 10,
-                      description: 'GPS verified',
-                      icon: FaMapMarkerAlt,
-                      color: 'teal',
-                      isVerified: true
-                    }
-                  ]}
-                  isUSDAVerified={completeData?.isUsdaVerified || false}
-                  isBlockchainVerified={getBlockchainScore().isVerified}
-                  productName={completeData?.product?.name || 'Product'}
-                  showDetailedBreakdown={true}
-                />
-              </Suspense>
+              {/* Farm Story Highlights - Consumer-Friendly */}
+              <Box
+                bg="white"
+                borderRadius="xl"
+                border="1px solid"
+                borderColor="gray.200"
+                p={6}
+                shadow="sm"
+                mb={6}
+              >
+                <VStack align="start" spacing={4}>
+                  <Flex align="center" justify="space-between" w="full">
+                    <Heading size="md" color="gray.800">
+                      🌱 How This Food Was Grown
+                    </Heading>
+                    <Badge 
+                      colorScheme="green" 
+                      px={3} 
+                      py={1} 
+                      borderRadius="full"
+                      fontSize="sm"
+                      fontWeight="semibold"
+                    >
+                      {getDisplayTransparencyScore()}% Transparent
+                    </Badge>
+                  </Flex>
+
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} w="full">
+                    {/* Farming Practices */}
+                    <HStack align="start" spacing={3}>
+                      <Icon as={FaSeedling} color="green.500" size="20px" mt={1} />
+                      <Box>
+                        <Text fontWeight="semibold" color="gray.800">
+                          {completeData?.timeline?.length || 0} Farming Events Documented
+                        </Text>
+                        <Text fontSize="sm" color="gray.600">
+                          From planting to harvest, every step tracked
+                        </Text>
+                      </Box>
+                    </HStack>
+
+                    {/* Verification Status */}
+                    <HStack align="start" spacing={3}>
+                      <Icon 
+                        as={completeData?.isUsdaVerified ? MdVerified : FaCertificate} 
+                        color={completeData?.isUsdaVerified ? "blue.500" : "gray.400"} 
+                        size="20px" 
+                        mt={1} 
+                      />
+                      <Box>
+                        <Text fontWeight="semibold" color="gray.800">
+                          {completeData?.isUsdaVerified ? "Government Verified" : "Farm Verified"}
+                        </Text>
+                        <Text fontSize="sm" color="gray.600">
+                          {completeData?.isUsdaVerified 
+                            ? "Meets USDA transparency standards" 
+                            : "Farmer-documented practices"}
+                        </Text>
+                      </Box>
+                    </HStack>
+
+                    {/* Photos & Evidence */}
+                    <HStack align="start" spacing={3}>
+                      <Icon as={FaCheckCircle} color="green.500" size="20px" mt={1} />
+                      <Box>
+                        <Text fontWeight="semibold" color="gray.800">
+                          {(() => {
+                            // Count actual photos from events with albums (use complete timeline first)
+                            const events = completeData?.timeline || transparencyApiData?.timeline_events || [];
+                            const eventsWithPhotos = events.filter((event: any) => event.album || event.hasAlbum);
+                            return eventsWithPhotos.length;
+                          })()} Photos Included
+                        </Text>
+                        <Text fontSize="sm" color="gray.600">
+                          Visual proof of sustainable practices
+                        </Text>
+                      </Box>
+                    </HStack>
+
+                    {/* Blockchain Security */}
+                    <HStack align="start" spacing={3}>
+                      <Icon 
+                        as={FaShieldAlt} 
+                        color={getBlockchainScore().isVerified ? "purple.500" : "gray.400"} 
+                        size="20px" 
+                        mt={1} 
+                      />
+                      <Box>
+                        <Text fontWeight="semibold" color="gray.800">
+                          {getBlockchainScore().isVerified ? "Blockchain Protected" : "Standard Security"}
+                        </Text>
+                        <Text fontSize="sm" color="gray.600">
+                          {getBlockchainScore().isVerified 
+                            ? "Data permanently secured on blockchain" 
+                            : "Standard data protection"}
+                        </Text>
+                      </Box>
+                    </HStack>
+                  </SimpleGrid>
+
+                  {/* Farm Information */}
+                  <Box
+                    bg="green.50"
+                    p={4}
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="green.200"
+                    w="full"
+                  >
+                    <Text fontSize="sm" color="green.800" fontWeight="medium">
+                      🏡 <strong>Farm:</strong> {completeData?.farmer?.name || 'Sustainable Farm'} • 
+                      📅 <strong>Harvest:</strong> {completeData?.created_at ? new Date(completeData.created_at).toLocaleDateString() : 'Recently harvested'}
+                    </Text>
+                  </Box>
+                </VStack>
+              </Box>
+
 
               {/* Production Journey - Carbon Impact Section */}
               <Box id="carbon-section">
                 <VStack spacing={4} align="stretch">
                   {(() => {
-                    const events = completeData?.timeline || completeData?.events || [];
+                    // PRIORITY 1: Use complete API timeline (includes transparency fields)
+                    // FALLBACK: Use transparency API timeline_events for album data if complete API incomplete
+                    const events =
+                      completeData?.timeline ||
+                      transparencyApiData?.timeline_events ||
+                      completeData?.events ||
+                      [];
 
                     if (Array.isArray(events) && events.length > 0) {
                       // Calculate carbon data per event from the total production data
@@ -1146,6 +1256,10 @@ function ProductDetail() {
                       const totalCO2e = completeData?.netFootprint || 0; // Use net footprint (can be negative)
                       const averageCO2ePerEvent = totalEvents > 0 ? totalCO2e / totalEvents : 0;
 
+                      // 🔧 DEBUG: Log the source data before mapping
+                      console.log('🔧 TIMELINE EVENTS MAPPING - Source Events:', events);
+                      console.log('🔧 FIRST SOURCE EVENT FIELDS:', events[0]);
+                      
                       const timelineEvents = events.map((event, index) => ({
                         id: event.id?.toString() || `event_${index}`,
                         type: event.type || 'general',
@@ -1158,6 +1272,30 @@ function ProductDetail() {
                         concentration: event.concentration?.toString(),
                         area: event.area?.toString(),
                         equipment: event.equipment,
+                        // Use backend-provided title (commercial_name) instead of equipment fallback
+                        commercial_name: (event as any).commercial_name,
+                        // CRITICAL: Add missing transparency fields for comprehensive consumer display
+                        npk_ratio: (event as any).npk_ratio || (event as any).concentration,
+                        active_ingredient: (event as any).active_ingredient,
+                        application_method: (event as any).application_method,
+                        weather_conditions: (event as any).weather_conditions,
+                        application_timing: (event as any).application_timing,
+                        target_pest_disease_need: (event as any).target_pest_disease_need,
+                        // 🔧 TRANSPARENCY FIELDS: Pass through transparency data from Complete API
+                        area_covered: (event as any).area_covered,
+                        yield_quantity: (event as any).yield_quantity,
+                        fuel_consumed: (event as any).fuel_consumed,
+                        equipment_hours: (event as any).equipment_hours,
+                        area_unit: (event as any).area_unit,
+                        yield_unit: (event as any).yield_unit,
+                        fuel_unit: (event as any).fuel_unit,
+                        area_covered_numeric: (event as any).area_covered_numeric,
+                        yield_quantity_numeric: (event as any).yield_quantity_numeric,
+                        fuel_consumed_numeric: (event as any).fuel_consumed_numeric,
+                        equipment_hours_numeric: (event as any).equipment_hours_numeric,
+                        operation_type: (event as any).operation_type,
+                        production_type: (event as any).production_type,
+                        production_name: (event as any).production_name,
                         // Add blockchain verification fields for Trust & Verification Enhancement
                         blockchain_verified: (event as any).blockchain_verified || false,
                         blockchain_transaction: (event as any).blockchain_transaction || '',
@@ -1169,8 +1307,9 @@ function ProductDetail() {
                         data_integrity_score: (event as any).data_integrity_score || 0,
                         usda_verified: (event as any).usda_verified || false,
                         extra_data: (event as any).extra_data || {},
-                        // Add album data for photo galleries (CRITICAL: Missing property causing photo gallery failure)
+                        // 📸 ALBUM FIX: Add album data for photo galleries (backend returns 'albums' array)
                         album: (event as any).album || undefined,
+                        albums: (event as any).albums || undefined, // TimelineService returns 'albums' array
                         // Add carbon data that UltraMobileProductionJourney expects
                         carbon_data: {
                           co2e: averageCO2ePerEvent, // Distribute total CO₂e across events
@@ -1186,7 +1325,10 @@ function ProductDetail() {
                           cost_analysis: (event as any).cost_analysis || {}
                         }
                       }));
-                      return <UltraMobileProductionJourney events={timelineEvents} />;
+                      return <UltraMobileProductionJourney 
+                        events={timelineEvents} 
+                        transparencyScore={getDisplayTransparencyScore()} 
+                      />;
                     } else {
                       return (
                         <VStack spacing={3} py={8}>
@@ -1212,7 +1354,7 @@ function ProductDetail() {
           <ModernSidebar
             isAuthenticated={finalIsAuthenticated}
             productName={completeData?.farmer?.name || completeData?.product?.name}
-            carbonScore={getTransparencyScore()}
+            carbonScore={getDisplayTransparencyScore()}
             onAuthPrompt={() => {
               if (finalIsAuthenticated) {
                 const reviewUrl = `/admin/dashboard/production/${productionId}/review/web-${Date.now()}`;
@@ -1227,14 +1369,6 @@ function ProductDetail() {
             onNavigateToAchievements={() => navigate('/achievements')}
           />
         </SimpleGrid>
-
-        {/* Photo Verification Gallery */}
-        {transparencyApiData && (
-          <PhotoVerificationGallery
-            transparencyData={transparencyApiData}
-            isVisible={transparencyApiData !== null}
-          />
-        )}
 
         {/* Additional Information Sections */}
         <VStack spacing={8} mt={8}>

@@ -284,6 +284,11 @@ export const StandardStepper = ({
   onStepClick,
   allowStepClick = false
 }: StandardStepperProps) => {
+  // Null safety for steps array
+  if (!steps || !Array.isArray(steps)) {
+    return null;
+  }
+  
   // Adjust spacing and sizing based on number of steps
   const manySteps = steps.length > 6;
   const spacing = manySteps ? { base: 2, md: 3 } : { base: 3, md: 6 };

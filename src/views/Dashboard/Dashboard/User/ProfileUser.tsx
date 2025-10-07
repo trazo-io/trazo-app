@@ -81,9 +81,7 @@ function ProfileUser() {
 
   const { acceptedFiles: droppedFiles, getRootProps, getInputProps } = useDropzone({
     // onDrop,
-    accept: {
-      'image/*': []
-    }, // Accepted file types  
+    accept: 'image/*', // Accepted file types for v11 syntax
     maxFiles: 1 // Maximum number of files
     // maxSize: 1024 * 1024 * 5, // Maximum file size (5 MB)
   });

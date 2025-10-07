@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chemical Form Mobile Testing - Trazo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #f7fafc;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 375px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #718096;
+            font-size: 16px;
+        }
+        .form-group {
+            margin-bottom: 24px;
+        }
+        label {
+            display: block;
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .required {
+            color: #e53e3e;
+        }
+        select, input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px; /* Prevent zoom on iOS */
+            background-color: white;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+        .validation-feedback {
+            margin-top: 8px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .validation-success {
+            background-color: #f0fff4;
+            border: 1px solid #9ae6b4;
+            color: #276749;
+        }
+        .validation-error {
+            background-color: #fed7d7;
+            border: 1px solid #fc8181;
+            color: #742a2a;
+        }
+        .validation-info {
+            background-color: #ebf8ff;
+            border: 1px solid #90cdf4;
+            color: #2a69ac;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 480px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 44px; /* Touch target */
+        }
+        .btn-primary {
+            background-color: #4299e1;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #3182ce;
+        }
+        .btn-primary:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+        .step-indicator {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #718096;
+            font-size: 14px;
+        }
+        .concentration-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        .badge-success {
+            background-color: #9ae6b4;
+            color: #276749;
+        }
+        .badge-error {
+            background-color: #fc8181;
+            color: #742a2a;
+        }
+        .performance-metrics {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 12px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="performance-metrics" id="metrics">
+        <div>Load: <span id="loadTime">-</span>ms</div>
+        <div>Validation: <span id="validationTime">-</span>ms</div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Chemical Application</h1>
+            <p class="subtitle">Mobile Testing - Demo Field</p>
+        </div>
+
+        <div class="step-indicator">Step 1 of 3: Chemical Information</div>
+
+        <form id="chemicalForm">
+            <div class="form-group">
+                <label for="type">Chemical Type <span class="required">*</span></label>
+                <select id="type" name="type" required>
+                    <option value="">Select chemical type...</option>
+                    <option value="fertilizer">Fertilizer</option>
+                    <option value="pesticide">Pesticide</option>
+                    <option value="herbicide">Herbicide</option>
+                    <option value="fungicide">Fungicide</option>
+                    <option value="insecticide">Insecticide</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="commercialName">Commercial Name <span class="required">*</span></label>
+                <input type="text" id="commercialName" name="commercialName" 
+                       placeholder="e.g., Roundup WeatherMAX" required>
+            </div>
+
+            <div class="form-group">
+                <label for="concentration">
+                    Concentration <span class="required">*</span>
+                    <span class="concentration-badge badge-error" id="concentrationBadge">Required</span>
+                </label>
+                <input type="text" id="concentration" name="concentration" 
+                       placeholder="Select chemical type first..." disabled>
+                <div class="validation-feedback" id="validationFeedback" style="display: none;"></div>
+            </div>
+
+            <div class="grid">
+                <div class="form-group">
+                    <label for="volume">Volume (gallons) <span class="required">*</span></label>
+                    <input type="number" id="volume" name="volume" min="0" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="area">Area (acres) <span class="required">*</span></label>
+                    <input type="number" id="area" name="area" min="0" step="0.1" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button type="button" class="btn btn-primary" style="width: 100%;" disabled id="continueBtn">
+                    Continue to Application Details
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Performance monitoring
+        const startTime = Date.now();
+        
+        // Concentration validation logic (mimics React component)
+        const validateConcentration = (concentration, chemicalType) => {
+            const startValidation = Date.now();
+            
+            if (!concentration || !concentration.trim()) {
+                return {
+                    isValid: false,
+                    format: 'unknown',
+                    errors: ['Concentration is required'],
+                    suggestions: getFormatSuggestions(chemicalType)
+                };
+            }
+
+            const trimmed = concentration.trim();
+            const isFertilizer = chemicalType === 'fertilizer';
+            const isPesticide = ['pesticide', 'herbicide', 'fungicide', 'insecticide'].includes(chemicalType);
+
+            let result;
+            if (isFertilizer) {
+                result = validateNPKFormat(trimmed);
+            } else if (isPesticide) {
+                result = validatePercentageFormat(trimmed);
+            } else {
+                result = {
+                    isValid: false,
+                    format: 'unknown',
+                    errors: ['Unknown chemical type'],
+                    suggestions: []
+                };
+            }
+
+            // Update performance metrics
+            document.getElementById('validationTime').textContent = Date.now() - startValidation;
+            return result;
+        };
+
+        const validateNPKFormat = (input) => {
+            const errors = [];
+            const suggestions = [];
+
+            if (input.includes('%')) {
+                errors.push('Fertilizers require NPK format, not percentage');
+                suggestions.push('Use NPK format like "10-10-10" or "16-16-16"');
+                return { isValid: false, format: 'percentage', errors, suggestions };
+            }
+
+            const npkPattern = /^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/;
+            const match = input.match(npkPattern);
+
+            if (!match) {
+                errors.push('Invalid NPK format');
+                suggestions.push('Use format: N-P-K (e.g., "10-10-10", "16-16-16")');
+                return { isValid: false, format: 'unknown', errors, suggestions };
+            }
+
+            const nitrogen = parseFloat(match[1]);
+            const phosphorus = parseFloat(match[2]);
+            const potassium = parseFloat(match[3]);
+
+            if (nitrogen < 0 || nitrogen > 50) errors.push('Nitrogen should be 0-50%');
+            if (phosphorus < 0 || phosphorus > 50) errors.push('Phosphorus should be 0-50%');
+            if (potassium < 0 || potassium > 50) errors.push('Potassium should be 0-50%');
+
+            const total = nitrogen + phosphorus + potassium;
+            if (total > 100) errors.push(`Total NPK (${total.toFixed(1)}%) cannot exceed 100%`);
+            if (nitrogen === 0 && phosphorus === 0 && potassium === 0) errors.push('All NPK values cannot be zero');
+
+            return {
+                isValid: errors.length === 0,
+                format: 'npk',
+                errors,
+                suggestions,
+                parsed: { nitrogen, phosphorus, potassium }
+            };
+        };
+
+        const validatePercentageFormat = (input) => {
+            const errors = [];
+            const suggestions = [];
+
+            if (input.includes('-') && /^\d+-\d+-\d+$/.test(input)) {
+                errors.push('Pesticides require percentage format, not NPK');
+                suggestions.push('Use percentage format like "2.5%" or "70%"');
+                return { isValid: false, format: 'npk', errors, suggestions };
+            }
+
+            const percentagePattern = /^(\d+(?:\.\d+)?)%?$/;
+            const match = input.match(percentagePattern);
+
+            if (!match) {
+                errors.push('Invalid percentage format');
+                suggestions.push('Use format: number% (e.g., "2.5%", "70%")');
+                return { isValid: false, format: 'unknown', errors, suggestions };
+            }
+
+            const percentage = parseFloat(match[1]);
+
+            if (percentage < 0) errors.push('Percentage cannot be negative');
+            if (percentage > 100) errors.push('Percentage cannot exceed 100%');
+            if (percentage === 0) errors.push('Percentage cannot be zero');
+
+            return {
+                isValid: errors.length === 0,
+                format: 'percentage',
+                errors,
+                suggestions,
+                parsed: { percentage }
+            };
+        };
+
+        const getFormatSuggestions = (chemicalType) => {
+            switch (chemicalType) {
+                case 'fertilizer':
+                    return ['Use NPK format: "10-10-10"', 'Examples: "16-16-16", "20-5-5"'];
+                case 'pesticide':
+                case 'herbicide':
+                case 'fungicide':
+                case 'insecticide':
+                    return ['Use percentage format: "2.5%"', 'Examples: "70%", "0.5%", "10%"'];
+                default:
+                    return ['Select chemical type first'];
+            }
+        };
+
+        const getPlaceholder = (chemicalType) => {
+            switch (chemicalType) {
+                case 'fertilizer': return '10-10-10';
+                case 'pesticide': return '2.5%';
+                case 'herbicide': return '40%';
+                case 'fungicide': return '80%';
+                case 'insecticide': return '25%';
+                default: return 'Select chemical type first...';
+            }
+        };
+
+        // DOM Elements
+        const typeSelect = document.getElementById('type');
+        const concentrationInput = document.getElementById('concentration');
+        const concentrationBadge = document.getElementById('concentrationBadge');
+        const validationFeedback = document.getElementById('validationFeedback');
+        const continueBtn = document.getElementById('continueBtn');
+        const form = document.getElementById('chemicalForm');
+
+        // Event Listeners
+        typeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            if (selectedType) {
+                concentrationInput.disabled = false;
+                concentrationInput.placeholder = getPlaceholder(selectedType);
+                concentrationBadge.textContent = selectedType === 'fertilizer' ? 'NPK' : '%';
+                concentrationBadge.className = 'concentration-badge badge-error';
+                validateForm();
+            } else {
+                concentrationInput.disabled = true;
+                concentrationInput.value = '';
+                concentrationInput.placeholder = 'Select chemical type first...';
+                concentrationBadge.textContent = 'Required';
+                concentrationBadge.className = 'concentration-badge badge-error';
+                validationFeedback.style.display = 'none';
+            }
+        });
+
+        concentrationInput.addEventListener('input', function() {
+            const chemicalType = typeSelect.value;
+            const concentration = this.value;
+            
+            if (chemicalType && concentration) {
+                const validation = validateConcentration(concentration, chemicalType);
+                updateValidationFeedback(validation);
+            } else {
+                validationFeedback.style.display = 'none';
+                concentrationBadge.className = 'concentration-badge badge-error';
+            }
+            validateForm();
+        });
+
+        const updateValidationFeedback = (validation) => {
+            const feedback = validationFeedback;
+            feedback.style.display = 'block';
+            
+            if (validation.isValid) {
+                feedback.className = 'validation-feedback validation-success';
+                feedback.innerHTML = `✅ Valid ${validation.format === 'npk' ? 'NPK' : 'percentage'} format`;
+                concentrationBadge.className = 'concentration-badge badge-success';
+                
+                if (validation.parsed) {
+                    if (validation.format === 'npk') {
+                        feedback.innerHTML += `<br><strong>N:</strong> ${validation.parsed.nitrogen}% <strong>P:</strong> ${validation.parsed.phosphorus}% <strong>K:</strong> ${validation.parsed.potassium}%`;
+                    } else {
+                        feedback.innerHTML += `<br><strong>Concentration:</strong> ${validation.parsed.percentage}%`;
+                    }
+                }
+            } else {
+                feedback.className = 'validation-feedback validation-error';
+                feedback.innerHTML = '❌ ' + validation.errors.join('<br>❌ ');
+                concentrationBadge.className = 'concentration-badge badge-error';
+                
+                if (validation.suggestions.length > 0) {
+                    feedback.innerHTML += '<br><br>💡 ' + validation.suggestions.join('<br>💡 ');
+                }
+            }
+        };
+
+        const validateForm = () => {
+            const type = typeSelect.value;
+            const commercialName = document.getElementById('commercialName').value;
+            const concentration = concentrationInput.value;
+            const volume = document.getElementById('volume').value;
+            const area = document.getElementById('area').value;
+            
+            let isValid = type && commercialName && volume && area;
+            
+            if (type && concentration) {
+                const validation = validateConcentration(concentration, type);
+                isValid = isValid && validation.isValid;
+            } else {
+                isValid = false;
+            }
+            
+            continueBtn.disabled = !isValid;
+        };
+
+        // Add validation to all required fields
+        form.addEventListener('input', validateForm);
+        
+        // Load time measurement
+        window.addEventListener('load', () => {
+            document.getElementById('loadTime').textContent = Date.now() - startTime;
+        });
+
+        // Test scenarios for automated testing
+        window.testScenarios = {
+            // NPK validation tests
+            testValidNPK: () => {
+                typeSelect.value = 'fertilizer';
+                typeSelect.dispatchEvent(new Event('change'));
+                concentrationInput.value = '16-10-12';
+                concentrationInput.dispatchEvent(new Event('input'));
+            },
+            testInvalidNPKWithPercentage: () => {
+                typeSelect.value = 'fertilizer';
+                typeSelect.dispatchEvent(new Event('change'));
+                concentrationInput.value = '70%';
+                concentrationInput.dispatchEvent(new Event('input'));
+            },
+            // Percentage validation tests
+            testValidPercentage: () => {
+                typeSelect.value = 'pesticide';
+                typeSelect.dispatchEvent(new Event('change'));
+                concentrationInput.value = '70%';
+                concentrationInput.dispatchEvent(new Event('input'));
+            },
+            testInvalidPercentageWithNPK: () => {
+                typeSelect.value = 'pesticide';
+                typeSelect.dispatchEvent(new Event('change'));
+                concentrationInput.value = '16-10-12';
+                concentrationInput.dispatchEvent(new Event('input'));
+            },
+            // Performance test
+            performanceTest: () => {
+                const start = Date.now();
+                for (let i = 0; i < 100; i++) {
+                    validateConcentration('16-10-12', 'fertilizer');
+                }
+                console.log('100 validations took:', Date.now() - start, 'ms');
+            }
+        };
+
+        console.log('Chemical Form Demo loaded. Available test scenarios:', Object.keys(window.testScenarios));
+    </script>
+</body>
+</html>

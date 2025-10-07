@@ -405,7 +405,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Helper function to map backend event types to frontend codes
   const mapBackendTypeToFrontendCode = (backendType) => {
     if (!backendType) return '';
-    
+
     // Map verbose backend types to frontend codes
     const typeMap = {
       'event.chemical.fertilizer': 'FE',
@@ -413,12 +413,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
       'event.chemical.fungicide': 'FU',
       'event.chemical.herbicide': 'HE'
     };
-    
+
     // If it's already a code (FE, PE, FU, HE), return it as is
     if (['FE', 'PE', 'FU', 'HE'].includes(backendType)) {
       return backendType;
     }
-    
+
     // Otherwise, try to map it
     return typeMap[backendType] || '';
   };
@@ -429,11 +429,27 @@ function NewEvent({ isEdit = false, eventId = null }) {
   useEffect(() => {
     if (isEdit && existingEvent && !hasLoadedExistingData.current) {
       console.log('[NewEvent] Loading existing event data:', existingEvent);
-      console.log('[NewEvent] RAW existingEvent.type:', existingEvent.type, typeof existingEvent.type);
-      console.log('[NewEvent] RAW existingEvent.volume_applied:', existingEvent.volume_applied, typeof existingEvent.volume_applied);
-      console.log('[NewEvent] RAW existingEvent.area_treated:', existingEvent.area_treated, typeof existingEvent.area_treated);
-      console.log('[NewEvent] RAW existingEvent.application_method:', existingEvent.application_method, typeof existingEvent.application_method);
-      
+      console.log(
+        '[NewEvent] RAW existingEvent.type:',
+        existingEvent.type,
+        typeof existingEvent.type
+      );
+      console.log(
+        '[NewEvent] RAW existingEvent.volume_applied:',
+        existingEvent.volume_applied,
+        typeof existingEvent.volume_applied
+      );
+      console.log(
+        '[NewEvent] RAW existingEvent.area_treated:',
+        existingEvent.area_treated,
+        typeof existingEvent.area_treated
+      );
+      console.log(
+        '[NewEvent] RAW existingEvent.application_method:',
+        existingEvent.application_method,
+        typeof existingEvent.application_method
+      );
+
       const eventDate = existingEvent.date
         ? new Date(existingEvent.date).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16);
@@ -455,27 +471,37 @@ function NewEvent({ isEdit = false, eventId = null }) {
         active_ingredient: existingEvent.active_ingredient || '',
         concentration: existingEvent.concentration || '',
         // Safely handle numeric fields that might be undefined
-        volume_applied: existingEvent.volume_applied !== undefined && existingEvent.volume_applied !== null 
-          ? existingEvent.volume_applied 
-          : '',
+        volume_applied:
+          existingEvent.volume_applied !== undefined && existingEvent.volume_applied !== null
+            ? existingEvent.volume_applied
+            : '',
         volume_unit: existingEvent.volume_unit || 'L',
-        area_treated: existingEvent.area_treated !== undefined && existingEvent.area_treated !== null
-          ? existingEvent.area_treated
-          : '',
+        area_treated:
+          existingEvent.area_treated !== undefined && existingEvent.area_treated !== null
+            ? existingEvent.area_treated
+            : '',
         area_unit: existingEvent.area_unit || 'ha',
         application_method: existingEvent.application_method || '',
         weather_conditions: existingEvent.weather_conditions || '',
         application_timing: existingEvent.application_timing || '',
         target_pest_disease: existingEvent.target_pest_disease || '',
-        observation: existingEvent.observation || ''
+        description: existingEvent.description || ''
       };
-      
+
       console.log('[NewEvent] Processed initialData:', initialData);
       console.log('[NewEvent] initialData.type:', initialData.type, typeof initialData.type);
-      console.log('[NewEvent] initialData.volume_applied:', initialData.volume_applied, typeof initialData.volume_applied);
-      console.log('[NewEvent] initialData.area_treated:', initialData.area_treated, typeof initialData.area_treated);
+      console.log(
+        '[NewEvent] initialData.volume_applied:',
+        initialData.volume_applied,
+        typeof initialData.volume_applied
+      );
+      console.log(
+        '[NewEvent] initialData.area_treated:',
+        initialData.area_treated,
+        typeof initialData.area_treated
+      );
       console.log('[NewEvent] Setting eventFormData with initialData');
-      
+
       // Set form data directly - no two-phase update needed
       setEventFormData(initialData);
 
@@ -638,15 +664,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
         const cropType = currentParcel?.current_history?.crop_type?.name || 'general';
 
         // Validate required fields are present - don't add mocked values, instead ensure forms have proper inputs
+        // FIXED: Corrected event type mapping to match backend constants
+        // Backend constants: WEATHER_EVENT_TYPE = 0, PRODUCTION_EVENT_TYPE = 1, CHEMICAL_EVENT_TYPE = 2
         const requiredFieldsByType = {
-          1: ['type', 'commercial_name', 'volume', 'area', 'concentration', 'way_of_application'], // Chemical
-          2: ['type'], // Production - other fields are optional but encouraged
+          0: ['type'], // Weather
+          1: ['type'], // Production - other fields are optional but encouraged  
+          2: ['type', 'commercial_name', 'volume', 'area', 'concentration', 'way_of_application'], // Chemical
+          3: ['name'], // General
           4: ['type', 'equipment_name'], // Equipment - fuel data should come from form inputs
           5: ['type'], // Soil Management - specific fields should come from form inputs
-          7: ['type'], // Pest Management - specific fields should come from form inputs
-          0: ['type'], // Weather
-          3: ['name'], // General
-          6: ['type'] // Business
+          6: ['type'], // Pest Management - specific fields should come from form inputs
+          7: ['type'] // Business
         };
 
         const requiredFields = requiredFieldsByType[backendEventType] || [];
@@ -666,19 +694,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
           throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
         }
 
-        // Ensure observation is never empty or "Unknown" - this is the only field we'll provide a fallback for
-        if (
-          !enhancedData.observation ||
-          enhancedData.observation.toLowerCase() === 'unknown' ||
-          enhancedData.observation.trim() === ''
-        ) {
-          const eventTypeName =
-            eventTypeConfig.find((t) => t.id === activeEventType)?.label || 'Farm';
-          enhancedData.observation = `${eventTypeName} activity completed successfully. Standard procedures followed for ${cropType} production.`;
-        }
-
-        // Map observation to description field required by backend CommonEvent model
-        enhancedData.description = enhancedData.observation;
+        // No auto-generation of descriptions - users must provide their own
+        // Only use the description field that users manually fill
+        // Remove any mapping from observation to description as we're consolidating to description only
 
         return enhancedData;
       };
@@ -688,35 +706,97 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // Clean the data to remove any undefined or problematic fields
       const cleanEventData = (data) => {
         const cleaned = {};
-        
+
         // Special handling for weather events (activeEventType === 0)
         if (activeEventType === 0) {
           // For weather events, send fields FLAT (not in extra_data)
           // The backend serializer's to_internal_value will handle moving them to extra_data
           const weatherSpecificFields = [
-            'lower_temperature', 'way_of_protection', 'water_deficit', 'weight', 
-            'diameter', 'duration', 'highest_temperature', 'start_date', 'end_date',
-            'wind_speed', 'precipitation_amount', 'damage_assessment', 'protection_measures',
-            'humidity_level', 'crop_impact'
+            'lower_temperature',
+            'way_of_protection',
+            'water_deficit',
+            'weight',
+            'diameter',
+            'duration',
+            'highest_temperature',
+            'start_date',
+            'end_date',
+            'wind_speed',
+            'precipitation_amount',
+            'damage_assessment',
+            'protection_measures',
+            'humidity_level',
+            'crop_impact'
           ];
-          
+
           // Send all fields flat to the backend
-          Object.keys(data).forEach(key => {
+          Object.keys(data).forEach((key) => {
             const value = data[key];
             // Exclude problematic fields but INCLUDE weather-specific fields and type
-            if (value !== undefined && value !== null && value !== '' && 
-                !['carbon_data', 'carbon_calculation', 'image', 'index', 'companyId', 'establishmentId', 'parcelId', 'volume_unit', 'area_unit', 'extra_data'].includes(key)) {
+            if (
+              value !== undefined &&
+              value !== null &&
+              value !== '' &&
+              ![
+                'carbon_data',
+                'carbon_calculation',
+                'image',
+                'index',
+                'companyId',
+                'establishmentId',
+                'parcelId',
+                'volume_unit',
+                'area_unit',
+                'extra_data'
+              ].includes(key)
+            ) {
               cleaned[key] = value;
             }
           });
-          
+
           return cleaned;
         }
-        
-        // List of fields that should NOT be sent to the backend for non-weather events
+
+        // Special handling for production events (activeEventType === 1)
+        if (activeEventType === 1) {
+          // For production events, include the type field (PL, HA, IR, PR)
+          // The backend ProductionEvent model requires this field
+          Object.keys(data).forEach((key) => {
+            const value = data[key];
+            if (
+              value !== undefined &&
+              value !== null &&
+              value !== ''
+            ) {
+              // CRITICAL FIX: Map operating_hours to equipment_hours for backend compatibility
+              let finalKey = key;
+              if (key === 'operating_hours') {
+                finalKey = 'equipment_hours';
+                console.log('🔧 [FIXED] Mapping operating_hours to equipment_hours:', value);
+              }
+
+              // CRITICAL: Include the 'type' field for production events (required by backend)
+              if (key === 'type') {
+                console.log('✅ [FIXED] Including production type field:', value);
+              }
+
+              // CRITICAL FIX: Map observation to description (required by CommonEvent model)
+              if (key === 'observation') {
+                finalKey = 'description';
+                console.log('🔧 [FIXED] Mapping observation to description:', value);
+              }
+
+              cleaned[finalKey] = value;
+            }
+          });
+
+          return cleaned;
+        }
+
+        // List of fields that should NOT be sent to the backend for other event types
         const excludedFields = [
-          'carbon_data', 
-          'carbon_calculation', 
+          'carbon_data',
+          'carbon_calculation',
           'image',
           'type', // Remove frontend type field since we use event_type for backend (except for weather events)
           'index', // Remove index field - not expected by backend
@@ -726,26 +806,38 @@ function NewEvent({ isEdit = false, eventId = null }) {
           'volume_unit', // Remove unit fields if they're causing issues
           'area_unit'
         ];
-        
-        Object.keys(data).forEach(key => {
+
+        Object.keys(data).forEach((key) => {
           const value = data[key];
           // Only include defined values and exclude problematic fields
-          if (value !== undefined && value !== null && value !== '' && !excludedFields.includes(key)) {
+          if (
+            value !== undefined &&
+            value !== null &&
+            value !== '' &&
+            !excludedFields.includes(key)
+          ) {
+            // CRITICAL FIX: Map operating_hours to equipment_hours for backend compatibility
+            let finalKey = key;
+            if (key === 'operating_hours') {
+              finalKey = 'equipment_hours';
+              console.log('🔧 [FIXED] Mapping operating_hours to equipment_hours:', value);
+            }
+
             // CRITICAL FIX: Ensure extra_data is always a valid JSON object, not an array
-            if (key === 'extra_data') {
+            if (finalKey === 'extra_data') {
               // If extra_data is an array, convert it to an empty object
               // If it's already an object, keep it as is
               // If it's anything else, convert to empty object
               if (Array.isArray(value)) {
                 console.warn('⚠️ [FIXED] Converting extra_data from array to object:', value);
-                cleaned[key] = {}; // Convert array to empty object
+                cleaned[finalKey] = {}; // Convert array to empty object
               } else if (typeof value === 'object' && value !== null) {
-                cleaned[key] = value; // Keep valid object
+                cleaned[finalKey] = value; // Keep valid object
               } else {
-                cleaned[key] = {}; // Convert other types to empty object
+                cleaned[finalKey] = {}; // Convert other types to empty object
               }
             } else {
-              cleaned[key] = value;
+              cleaned[finalKey] = value;
             }
           }
         });
@@ -757,13 +849,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
         event_type: backendEventType, // Use corrected event_type mapping
         parcels: parcelId ? [parcelId] : [], // Add parcels array required by backend
         // Add album images from S3 URLs (modern approach)
-        album_images: acceptedFiles.map(f => f.url).filter(Boolean)
+        album_images: acceptedFiles.map((f) => f.url).filter(Boolean)
       });
 
       console.log('Final event data being sent:', finalEventData);
       console.log('Final event data keys:', Object.keys(finalEventData));
       console.log('Final event data values:', Object.values(finalEventData));
-      
+
       // DEBUGGING: Check extra_data specifically for weather events
       if (activeEventType === 0 && finalEventData.extra_data) {
         console.log('🔍 DEBUGGING extra_data for weather event:');
@@ -1137,7 +1229,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   </Box>
                                 )}
                                 <Grid
-                                  templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }}
+                                  templateColumns={{
+                                    base: 'repeat(2, 1fr)',
+                                    sm: 'repeat(3, 1fr)',
+                                    md: 'repeat(4, 1fr)'
+                                  }}
                                   gap={4}>
                                   {eventTypeConfig.map((eventType) => (
                                     <Button
@@ -1419,9 +1515,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               fontSize="xs"
                               borderRadius="full"
                               // 2025 ACCESSIBILITY: Screen reader support for efficiency scores
-                              aria-label={`Efficiency score: ${carbonCalculation.efficiency_score} out of 100. ${
-                                carbonCalculation.efficiency_score >= 70 ? 'Good' : 
-                                carbonCalculation.efficiency_score >= 50 ? 'Moderate' : 'Needs improvement'
+                              aria-label={`Efficiency score: ${
+                                carbonCalculation.efficiency_score
+                              } out of 100. ${
+                                carbonCalculation.efficiency_score >= 70
+                                  ? 'Good'
+                                  : carbonCalculation.efficiency_score >= 50
+                                  ? 'Moderate'
+                                  : 'Needs improvement'
                               } efficiency rating.`}>
                               {carbonCalculation.efficiency_score}/100
                             </Badge>

@@ -76,6 +76,9 @@ export interface PublicHistory {
     concentration: string;
     area: string;
     way_of_application: string;
+    weather_conditions: string;
+    application_timing: string;
+    target_pest_disease: string;
     time_period: string;
     observation: string;
     album: any;

@@ -737,7 +737,7 @@ const DynamicEventFields: React.FC<{
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setFormData((prev) => ({ ...prev, areaTreated: e.target.value }))
               }
-              placeholder="e.g., 25 acres, 10.2 hectares"
+              placeholder="e.g., 10.2 hectares (25.2 acres)"
               required
             />
           </StandardField>
@@ -815,7 +815,7 @@ const DynamicEventFields: React.FC<{
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setFormData((prev) => ({ ...prev, areaTreated: e.target.value }))
               }
-              placeholder="e.g., 50 acres, 20 hectares"
+              placeholder="e.g., 20 hectares (49.4 acres)"
               required
             />
           </StandardField>
@@ -907,7 +907,7 @@ const DynamicEventFields: React.FC<{
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setFormData((prev) => ({ ...prev, areaTreated: e.target.value }))
               }
-              placeholder="e.g., 5 acres, 2 hectares"
+              placeholder="e.g., 2 hectares (4.9 acres)"
               required
             />
           </StandardField>

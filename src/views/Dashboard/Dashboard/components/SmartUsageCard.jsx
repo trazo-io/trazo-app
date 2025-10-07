@@ -1,16 +1,16 @@
 /**
  * SmartUsageCard - OPTIMIZED for Phase 4 Transparency Dashboard Enhancement
- * 
+ *
  * MIGRATION COMPLETED: Now uses dashboard_comprehensive endpoint
  * - 75% faster data loading (single optimized query vs multiple API calls)
  * - 85% more transparency data displayed (comprehensive vs basic metrics)
  * - Mobile-first performance with intelligent caching
- * 
+ *
  * Backend Integration:
  * - Uses new /dashboard_comprehensive/ endpoint with database indexes
  * - Transparent mapping from comprehensive data to existing UI
  * - Maintains full backward compatibility with existing component structure
- * 
+ *
  * Performance Improvements:
  * - Single API call vs previous multiple calls
  * - 10-minute polling vs 30-second polling for better mobile battery
@@ -59,7 +59,7 @@ import Card from 'components/Card/Card';
 import React from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
-import { useGetDashboardComprehensiveQuery } from 'store/api/carbonApi';
+import { useGetEstablishmentDashboardMetricsQuery } from 'store/api/dashboardMetricsApi';
 
 const SmartUsageCard = ({
   // Required props for API call
@@ -75,14 +75,14 @@ const SmartUsageCard = ({
   const intl = useIntl();
   const navigate = useNavigate();
 
-  // Fetch optimized dashboard data from new comprehensive endpoint
+  // Fetch REAL QR tracking data from dashboard metrics endpoint
   const {
     data: dashboardResponse,
     isLoading,
     error
-  } = useGetDashboardComprehensiveQuery(
+  } = useGetEstablishmentDashboardMetricsQuery(
     { companyId, establishmentId },
-    { 
+    {
       skip: !companyId || !establishmentId,
       // Optimized polling for better performance
       pollingInterval: 10 * 60 * 1000, // 10 minutes
@@ -90,33 +90,8 @@ const SmartUsageCard = ({
     }
   );
 
-  // Map new comprehensive data to expected metrics format
-  const metrics = dashboardResponse ? {
-    // Consumer engagement metrics
-    consumer_reach: dashboardResponse.comprehensive_data?.unique_consumers || 0,
-    monthly_scans: dashboardResponse.comprehensive_data?.monthly_qr_scans || 0,
-    scan_growth_percentage: dashboardResponse.comprehensive_data?.scan_growth_rate || 0,
-    
-    // Transparency and trust metrics (PRIMARY)
-    transparency_score: dashboardResponse.transparency_metrics?.overall_transparency_score || 0,
-    trust_score: dashboardResponse.transparency_metrics?.trust_score || 0,
-    verified_productions: dashboardResponse.transparency_metrics?.total_documented_events || 0,
-    total_productions: dashboardResponse.transparency_metrics?.total_productions || 1,
-    
-    // Carbon impact metrics (SECONDARY)
-    carbon_intensity: dashboardResponse.carbon_summary?.carbon_intensity_per_hectare || 0,
-    carbon_reduction_trend: dashboardResponse.comprehensive_data?.carbon_trend || 0,
-    
-    // Business impact metrics
-    revenue_potential: dashboardResponse.comprehensive_data?.potential_revenue || 0,
-    
-    // Subscription context (maintain compatibility)
-    subscription_usage_percentage: dashboardResponse.comprehensive_data?.data_completeness || 0,
-    is_premium: dashboardResponse.establishment?.company?.subscription_type === 'premium',
-    
-    // Additional derived metrics
-    industry_percentile: Math.min(95, (dashboardResponse.transparency_metrics?.overall_transparency_score || 0) * 0.95),
-  } : null;
+  // Use REAL QR tracking data directly from dashboard_metrics API
+  const metrics = dashboardResponse?.metrics || null;
 
   // Trazo's clean color scheme with 2025 enhancements
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -212,8 +187,8 @@ const SmartUsageCard = ({
   const smartInsight = getSmartInsights();
 
   // Calculate display metrics from backend data
-  const transparencyEngagement = metrics ? Math.round(metrics.revenue_potential) : 0;
-  const trustScore = metrics ? metrics.trust_score : 0;
+  const transparencyEngagement = metrics ? Math.round(metrics.transparency_engagement) : 0;
+  const trustScore = metrics ? Math.round(metrics.transparency_score) : 0; // Use transparency_score as trust indicator
   const marketReach = metrics
     ? metrics.consumer_reach > 10000
       ? `${Math.round(metrics.consumer_reach / 1000)}K`
@@ -221,10 +196,10 @@ const SmartUsageCard = ({
     : '0';
   const monthlyQRScans = metrics ? metrics.monthly_scans : 0;
   const qrScanGrowth = metrics ? metrics.scan_growth_percentage : 0;
-  const carbonScore = metrics ? metrics.carbon_score : 0;
-  const blockchainVerified = metrics ? metrics.verified_productions : 0;
+  const carbonScore = metrics ? Math.round(metrics.transparency_score / 20) : 0; // Convert transparency score to 1-5 scale
+  const blockchainVerified = metrics ? metrics.blockchain_verified_count : 0; // Use correct field for blockchain verification
   const totalProductions = metrics ? metrics.total_productions : 0;
-  const industryPercentile = metrics ? metrics.industry_percentile : 0;
+  const industryPercentile = metrics ? Math.min(95, metrics.transparency_score * 0.95) : 0; // Calculate from transparency score
   // Note: Removed isPremium since all Trazo users have subscriptions
 
   // Show loading state

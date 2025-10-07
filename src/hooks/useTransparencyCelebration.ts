@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TransparencyCelebrationData } from '../components/Notifications/TransparencyCelebration';
-import { 
-  FaClipboardList, 
-  FaCamera, 
-  FaShieldAlt, 
-  FaLeaf, 
+import {
+  FaClipboardList,
+  FaCamera,
+  FaShieldAlt,
+  FaLeaf,
   FaAward,
   FaCertificate,
   FaLock,
@@ -173,8 +173,14 @@ export const useTransparencyCelebration = (
     ];
 
     // Select messages based on transparency score
-    const impactIndex = Math.min(Math.floor(data.transparencyScore / 25), impactMessages.length - 1);
-    const consumerIndex = Math.min(Math.floor(data.transparencyScore / 25), consumerMessages.length - 1);
+    const impactIndex = Math.min(
+      Math.floor(data.transparencyScore / 25),
+      impactMessages.length - 1
+    );
+    const consumerIndex = Math.min(
+      Math.floor(data.transparencyScore / 25),
+      consumerMessages.length - 1
+    );
 
     return {
       impact: impactMessages[impactIndex],
@@ -183,44 +189,45 @@ export const useTransparencyCelebration = (
   }, []);
 
   // Trigger celebration based on transparency score and conditions
-  const triggerCelebration = useCallback((
-    type: 'scan' | 'achievement' | 'milestone' = 'scan'
-  ) => {
-    if (!transparencyData) return;
-    
-    // Check if we should show celebration
-    const shouldShow = transparencyData.transparencyScore >= minScoreForCelebration;
-    const canShow = !showCelebrationOnce || !hasShownCelebration;
-    
-    if (!shouldShow || !canShow) return;
+  const triggerCelebration = useCallback(
+    (type: 'scan' | 'achievement' | 'milestone' = 'scan') => {
+      if (!transparencyData) return;
 
-    const achievements = generateAchievements(transparencyData);
-    const milestones = generateMilestones(transparencyData.transparencyScore);
-    const messages = generateMessages(transparencyData);
+      // Check if we should show celebration
+      const shouldShow = transparencyData.transparencyScore >= minScoreForCelebration;
+      const canShow = !showCelebrationOnce || !hasShownCelebration;
 
-    const celebrationData: TransparencyCelebrationData = {
-      transparencyScore: transparencyData.transparencyScore,
-      farmName: transparencyData.farmName,
-      productName: transparencyData.productName,
-      achievements,
-      milestones,
-      impactMessage: messages.impact,
-      consumerMessage: messages.consumer
-    };
+      if (!shouldShow || !canShow) return;
 
-    setCelebrationData(celebrationData);
-    setTriggerType(type);
-    setShowCelebration(true);
-    setHasShownCelebration(true);
-  }, [
-    transparencyData,
-    minScoreForCelebration,
-    showCelebrationOnce,
-    hasShownCelebration,
-    generateAchievements,
-    generateMilestones,
-    generateMessages
-  ]);
+      const achievements = generateAchievements(transparencyData);
+      const milestones = generateMilestones(transparencyData.transparencyScore);
+      const messages = generateMessages(transparencyData);
+
+      const celebrationData: TransparencyCelebrationData = {
+        transparencyScore: transparencyData.transparencyScore,
+        farmName: transparencyData.farmName,
+        productName: transparencyData.productName,
+        achievements,
+        milestones,
+        impactMessage: messages.impact,
+        consumerMessage: messages.consumer
+      };
+
+      setCelebrationData(celebrationData);
+      setTriggerType(type);
+      setShowCelebration(true);
+      setHasShownCelebration(true);
+    },
+    [
+      transparencyData,
+      minScoreForCelebration,
+      showCelebrationOnce,
+      hasShownCelebration,
+      generateAchievements,
+      generateMilestones,
+      generateMessages
+    ]
+  );
 
   // Auto-trigger celebration on scan if enabled
   useEffect(() => {
@@ -229,7 +236,7 @@ export const useTransparencyCelebration = (
       const timer = setTimeout(() => {
         triggerCelebration('scan');
       }, 2000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [transparencyData, celebrateOnScan, triggerCelebration]);
@@ -238,8 +245,8 @@ export const useTransparencyCelebration = (
   useEffect(() => {
     if (transparencyData && celebrateOnMilestone) {
       const milestones = generateMilestones(transparencyData.transparencyScore);
-      const hasNewMilestone = milestones.some(m => m.unlocked);
-      
+      const hasNewMilestone = milestones.some((m) => m.unlocked);
+
       if (hasNewMilestone && transparencyData.transparencyScore >= 90) {
         triggerCelebration('milestone');
       }
@@ -266,7 +273,9 @@ export const useTransparencyCelebration = (
     triggerCelebration,
     closeCelebration,
     resetCelebrationState,
-    canCelebrate: transparencyData ? transparencyData.transparencyScore >= minScoreForCelebration : false
+    canCelebrate: transparencyData
+      ? transparencyData.transparencyScore >= minScoreForCelebration
+      : false
   };
 };
 

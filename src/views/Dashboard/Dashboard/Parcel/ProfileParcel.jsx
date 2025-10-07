@@ -58,6 +58,7 @@ import { StandardCard, StandardPage } from 'components/Design/StandardComponents
 import { useGetParcelQuery } from 'store/api/productApi';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
+import { formatAreaWithBothUnits } from '../../../../utils/areaUnits';
 import defaultParcelImage from 'assets/img/BgMusicCard.png';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -251,11 +252,16 @@ function ProfileParcel() {
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
                   <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {parcelData?.area || '--'}
+                    {parcelData?.area ? parcelData.area.toFixed(2) : '--'}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Acres
+                    Hectares
                   </Text>
+                  {parcelData?.area && (
+                    <Text fontSize="xs" color="gray.500">
+                      ({(parcelData.area * 2.47105).toFixed(1)} acres)
+                    </Text>
+                  )}
                 </VStack>
               </VStack>
 
@@ -563,7 +569,7 @@ function ProfileParcel() {
                     <HStack>
                       <Icon as={FaMapMarkedAlt} color="blue.500" />
                       <Text fontWeight="medium">Area:</Text>
-                      <Text>{parcelData?.area} acres</Text>
+                      <Text>{parcelData?.area ? formatAreaWithBothUnits(parcelData.area, 'METRIC') : '--'}</Text>
                     </HStack>
                     {parcelData?.unique_code && (
                       <HStack>

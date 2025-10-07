@@ -423,6 +423,43 @@ export interface CompleteSummary {
     concentration?: number;
     area?: number;
     equipment?: string;
+    // Transparency fields for production events (formatted strings with units)
+    area_covered?: string;
+    yield_quantity?: string;
+    fuel_consumed?: string;
+    equipment_hours?: string;
+    // Raw numeric values for calculations
+    area_covered_numeric?: number;
+    yield_quantity_numeric?: number;
+    fuel_consumed_numeric?: number;
+    equipment_hours_numeric?: number;
+    // Production-specific fields
+    operation_type?: string;
+    production_type?: string;
+    production_name?: string;
+    // Chemical-specific fields
+    commercial_name?: string;
+    chemical_name?: string;
+    npk_n_percentage?: number;
+    npk_p_percentage?: number;
+    npk_k_percentage?: number;
+    npk_ratio?: string;
+    // Additional transparency fields
+    weather_conditions?: string;
+    application_timing?: string;
+    target_pest_disease?: string;
+    application_method?: string;
+    active_ingredient?: string;
+    area_unit?: string;
+    yield_unit?: string;
+    fuel_unit?: string;
+    volume_unit?: string;
+    // Image albums
+    albums?: Array<{
+      id: number;
+      title: string;
+      image_url: string;
+    }>;
   }>;
   production_events: Array<any>; // Alias for compatibility
   events: Array<any>; // Alias for compatibility

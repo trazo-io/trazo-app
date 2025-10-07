@@ -125,11 +125,13 @@ interface TimelineEvent {
 interface UltraMobileProductionJourneyProps {
   events: TimelineEvent[];
   productionId?: string;
+  transparencyScore?: number;
 }
 
 export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourneyProps> = ({
   events,
-  productionId
+  productionId,
+  transparencyScore
 }) => {
   const intl = useIntl();
 
@@ -198,13 +200,20 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     const type = event.type.toLowerCase();
     const description = event.description.toLowerCase();
 
-    // Weather Events
+    // Weather Events - Check event_type, type string, type codes, then description
     if (
+      (event as any)?.event_type === 0 ||  // Direct event_type check
+      type === 'weather' ||  // String type check
+      ['fr', 'dr', 'hl', 'ht', 'ts', 'hw', 'hh', 'lh'].includes(type) ||  // Weather type codes
       type.includes('weather') ||
       description.includes('weather') ||
       description.includes('drought') ||
       description.includes('frost') ||
-      description.includes('climate')
+      description.includes('climate') ||
+      description.includes('hail') ||
+      description.includes('wind') ||
+      description.includes('humidity') ||
+      description.includes('temperature')
     ) {
       return {
         icon: FaWater,
@@ -215,13 +224,17 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       };
     }
 
-    // Chemical Events
+    // Chemical Events (event_type: 2) - Check event_type first, then type string, then type codes, then description
     if (
+      (event as any)?.event_type === 2 ||  // Direct event_type check
+      type === 'chemical' ||  // String type check
+      ['fe', 'pe', 'fu', 'he'].includes(type) ||  // Chemical type codes
       type.includes('chemical') ||
       description.includes('fertilizer') ||
       description.includes('spray') ||
       description.includes('pesticide') ||
-      description.includes('herbicide')
+      description.includes('herbicide') ||
+      description.includes('fungicide')
     ) {
       return {
         icon: FaFlask,
@@ -232,8 +245,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       };
     }
 
-    // Production Events
+    // Production Events (event_type: 1) - Check event_type first, then type string, then type codes, then description
     if (
+      (event as any)?.event_type === 1 ||  // Direct event_type check
+      type === 'production' ||  // String type check
+      ['pl', 'ha', 'ir', 'pr'].includes(type) ||  // Production type codes
       type.includes('production') ||
       description.includes('harvest') ||
       description.includes('planting') ||
@@ -250,13 +266,18 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       };
     }
 
-    // Equipment Events
+    // Equipment Events (event_type: 3) - Check event_type first, then type string, then type codes, then description
     if (
+      (event as any)?.event_type === 3 ||  // Direct event_type check
+      type === 'equipment' ||  // String type check
+      ['mn', 're', 'ca', 'fc', 'bd', 'ei'].includes(type) ||  // Equipment type codes
       type.includes('equipment') ||
       description.includes('tractor') ||
       description.includes('machinery') ||
       description.includes('fuel') ||
-      description.includes('maintenance')
+      description.includes('maintenance') ||
+      description.includes('repair') ||
+      description.includes('calibration')
     ) {
       return {
         icon: FaTractor,
@@ -267,13 +288,19 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       };
     }
 
-    // Soil Management Events
+    // Soil Management Events (event_type: 4) - Check event_type first, then type string, then type codes, then description
     if (
+      (event as any)?.event_type === 4 ||  // Direct event_type check
+      type === 'soil_management' ||  // String type check
+      type === 'soil' ||  // Alternative string type check
+      ['st', 'pa', 'om', 'cc', 'ti', 'co'].includes(type) ||  // Soil type codes
       type.includes('soil') ||
       description.includes('soil') ||
       description.includes('organic matter') ||
       description.includes('carbon reserves') ||
-      description.includes('amendment')
+      description.includes('amendment') ||
+      description.includes('composting') ||
+      description.includes('cover crop')
     ) {
       return {
         icon: FaSeedling,
@@ -284,13 +311,18 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       };
     }
 
-    // Pest Management Events
+    // Pest Management Events (event_type: 5) - Check event_type first, then type string, then type codes, then description
     if (
+      (event as any)?.event_type === 5 ||  // Direct event_type check
+      type === 'pest_management' ||  // String type check
+      type === 'pest' ||  // Alternative string type check
+      ['sc', 'br', 'tm', 'pi', 'ta', 'ip'].includes(type) ||  // Pest type codes
       type.includes('pest') ||
       description.includes('pest') ||
       description.includes('beneficial') ||
       description.includes('scouting') ||
-      description.includes('ipm')
+      description.includes('ipm') ||
+      description.includes('monitoring')
     ) {
       return {
         icon: FaBug,
@@ -298,6 +330,26 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         bgColor: 'red.50',
         category: 'Pest Management',
         categoryColor: 'red'
+      };
+    }
+
+    // Business Events (event_type: 6) - Check event_type first, then type string, then type codes, then description
+    if (
+      (event as any)?.event_type === 6 ||  // Direct event_type check
+      type === 'business' ||  // String type check
+      ['ce', 'cm', 'in'].includes(type) ||  // Business type codes
+      type.includes('business') ||
+      description.includes('certification') ||
+      description.includes('compliance') ||
+      description.includes('audit') ||
+      description.includes('inspection')
+    ) {
+      return {
+        icon: FaCertificate,
+        color: 'purple.500',
+        bgColor: 'purple.50',
+        category: 'Business',
+        categoryColor: 'purple'
       };
     }
 
@@ -468,14 +520,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 border="1px solid"
                 borderColor={useColorModeValue('orange.200', 'orange.700')}>
                 <Text fontSize="lg" fontWeight="bold" color="orange.600">
-                  {(() => {
-                    const avgEfficiency =
-                      filteredEvents.reduce(
-                        (sum, e) => sum + (e.carbon_data?.efficiency_score || 0),
-                        0
-                      ) / filteredEvents.length;
-                    return Math.round(avgEfficiency) || 0;
-                  })()}
+                  {transparencyScore || 0}
                 </Text>
                 <CarbonScoreTooltip>
                   <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500">
@@ -639,9 +684,61 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               });
             }
 
+            // 🔧 FIX: Normalize event ID for photo lookups
+            // Consumer API returns "chemical_152", producer API returns "152"
+            // Strip type prefix to ensure consistent photo lookup
+            const normalizedEventId = event.id.toString().includes('_') 
+              ? event.id.toString().split('_')[1] 
+              : event.id.toString();
+            
+            console.log('🔧 EVENT ID NORMALIZATION:', {
+              originalId: event.id,
+              normalizedId: normalizedEventId,
+              hasAlbum: !!event.album
+            });
+
+            // DEBUG: Deep transparency fields analysis
+            if (event.type?.includes('production')) {
+              console.log('🔧 TRANSPARENCY FIELDS DEBUG - Raw API Event:', {
+                eventId: event.id,
+                eventType: event.type,
+                area_covered: event.area_covered,
+                yield_quantity: event.yield_quantity,
+                fuel_consumed: event.fuel_consumed,
+                equipment_hours: event.equipment_hours,
+                hasAreaCovered: event.hasOwnProperty('area_covered'),
+                hasYieldQuantity: event.hasOwnProperty('yield_quantity'),
+                hasFuelConsumed: event.hasOwnProperty('fuel_consumed'),
+                hasEquipmentHours: event.hasOwnProperty('equipment_hours'),
+                fieldTypes: {
+                  area_covered: typeof event.area_covered,
+                  yield_quantity: typeof event.yield_quantity,
+                  fuel_consumed: typeof event.fuel_consumed,
+                  equipment_hours: typeof event.equipment_hours
+                },
+                allFields: Object.keys(event),
+                fullEvent: event
+              });
+              
+              // Also check if fields are being passed as different property names
+              console.log('🔧 ALTERNATIVE FIELD NAMES CHECK:', {
+                areaCovered: (event as any).areaCovered,
+                yieldQuantity: (event as any).yieldQuantity,
+                fuelConsumed: (event as any).fuelConsumed,
+                equipmentHours: (event as any).equipmentHours,
+                production_data: (event as any).production_data,
+                transparency_data: (event as any).transparency_data,
+                fields: (event as any).fields,
+                metadata: (event as any).metadata,
+                extra_data: event.extra_data
+              });
+            }
+
             // Enhanced event with comprehensive blockchain verification data
             const enhancedEvent = {
               ...event,
+              // Use normalized ID for consistent photo lookups
+              id: normalizedEventId,
               // Blockchain verification from extra_data or direct fields
               blockchain_verified:
                 event.extra_data?.blockchain_verified || event.blockchain_verified || false,
@@ -662,16 +759,41 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               carbon_impact: event.carbon_data?.co2e,
               // Keep certification separate from blockchain verification
               certified: event.certified || false,
-              // Convert album data to match ConsumerEventCard expected format
-              album: event.album ? {
-                id: event.album.id.toString(),
-                images: event.album.images.map(image => ({
-                  id: image.id.toString(),
-                  image: image.image,
-                  caption: image.caption,
-                  created_at: image.created_at
-                }))
-              } : undefined
+              // 🔧 TRANSPARENCY FIELDS: Preserve transparency fields from API
+              area_covered: event.area_covered,
+              yield_quantity: event.yield_quantity,
+              fuel_consumed: event.fuel_consumed,
+              equipment_hours: event.equipment_hours,
+              area_unit: event.area_unit,
+              yield_unit: event.yield_unit,
+              fuel_unit: event.fuel_unit,
+              area_covered_numeric: event.area_covered_numeric,
+              yield_quantity_numeric: event.yield_quantity_numeric,
+              fuel_consumed_numeric: event.fuel_consumed_numeric,
+              equipment_hours_numeric: event.equipment_hours_numeric,
+              operation_type: event.operation_type,
+              production_type: event.production_type,
+              production_name: event.production_name,
+              // 📸 ALBUM FIX: Convert albums array to album object format
+              // Backend TimelineService returns 'albums' array, frontend expects 'album' object
+              album: (() => {
+                console.log('📸 ALBUM MAPPING DEBUG:', {
+                  eventId: event.id,
+                  hasAlbumsField: 'albums' in event,
+                  albumsValue: event.albums,
+                  albumsLength: event.albums ? event.albums.length : 0
+                });
+                
+                return event.albums && event.albums.length > 0 ? {
+                  id: 'album_' + normalizedEventId, // Create consistent album ID
+                  images: event.albums.map(albumImage => ({
+                    id: albumImage.id.toString(),
+                    image: albumImage.image_url, // Use image_url from TimelineService
+                    caption: albumImage.title || `Image ${albumImage.id}`,
+                    created_at: new Date().toISOString() // Fallback date
+                  }))
+                } : undefined;
+              })()
             };
 
 

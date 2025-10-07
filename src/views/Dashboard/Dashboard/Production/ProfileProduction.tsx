@@ -86,6 +86,7 @@ import { StandardImageGallery } from 'components/ImageGallery';
 import defaultProductionImage from 'assets/img/BgMusicCard.png';
 import TimelineRow from 'components/Tables/TimelineRow';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
+import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import {
@@ -149,6 +150,36 @@ function ProfileProduction() {
     skip: !productionId
   });
 
+  // ✅ 2025 BEST PRACTICE: Use unified transparency API for consistency with consumer and dashboard
+  const {
+    data: transparencyApiData,
+    error: transparencyError,
+    isLoading: transparencyLoading
+  } = useGetTransparencyDetailsQuery(
+    productionId || '175', // Use productionId from URL params, or fallback to test production 175
+    {
+      skip: false, // Always try to get transparency data
+      refetchOnMountOrArgChange: true
+    }
+  );
+
+  // ✅ 2025 UNIFIED ARCHITECTURE: Get timeline events from same API as consumer page
+  const getUnifiedTimelineEvents = () => {
+    // PRIORITY 1: Use unified transparency API timeline (same as consumer page)
+    if (transparencyApiData?.timeline && transparencyApiData.timeline.length > 0) {
+      console.log('🔄 Using unified transparency API timeline data (producer dashboard)');
+      return transparencyApiData.timeline;
+    }
+
+    // FALLBACK: Map legacy historyData events if transparency API unavailable
+    if (historyData?.events && historyData.events.length > 0) {
+      console.log('⚠️ Using legacy historyData events as fallback');
+      return mapEventsToTimeline(historyData.events);
+    }
+
+    return [];
+  };
+
   useEffect(() => {
     let establishment: any;
     if (establishments) {
@@ -181,10 +212,12 @@ function ProfileProduction() {
 
       // Call the secure backend endpoint
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/history/${historyData.id}/download_qr_code/`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/history/${
+          historyData.id
+        }/download_qr_code/`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
             'Content-Type': 'application/json'
           }
         }
@@ -208,12 +241,14 @@ function ProfileProduction() {
         isClosable: true,
         position: 'top-right'
       });
-
     } catch (error) {
       console.error('Error downloading QR code:', error);
       toast({
         title: 'Download Failed',
-        description: error instanceof Error ? error.message : 'Failed to generate download URL. Please try again.',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to generate download URL. Please try again.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -245,6 +280,22 @@ function ProfileProduction() {
   // Helper function for safe reputation access
   const safeReputation = historyData?.reputation || 0;
 
+  // ✅ 2025 BEST PRACTICE: Get transparency score using unified API (same as consumer page and dashboard)
+  const getTransparencyScore = (): number => {
+    // PRIORITY 1: Use unified transparency API data (preferred for consistency)
+    if (transparencyApiData?.quick_view?.transparency_score?.percentage) {
+      return transparencyApiData.quick_view.transparency_score.percentage;
+    }
+
+    // PRIORITY 2: Use backend transparency_score from history API
+    if (historyData?.transparency_score !== undefined && historyData?.transparency_score !== null) {
+      return historyData.transparency_score;
+    }
+
+    // NO CALCULATION FALLBACK - Return 0 to trigger loading state
+    return 0;
+  };
+
   // Format dates safely
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'Not available';
@@ -269,7 +320,24 @@ function ProfileProduction() {
         volume: event.volume,
         concentration: event.concentration,
         area: event.area,
-        equipment: event.equipment || event.commercial_name
+        equipment: event.equipment || event.commercial_name,
+        // CRITICAL: Pass extra_data for comprehensive field display
+        extra_data: event.extra_data || {},
+        // Pass blockchain verification data
+        blockchain_verified: event.blockchain_verified || false,
+        blockchain_transaction: event.blockchain_transaction || '',
+        blockchain_block_number: event.blockchain_block_number || 0,
+        blockchain_explorer_url: event.blockchain_explorer_url || '',
+        blockchain_network: event.blockchain_network || 'polygon_amoy',
+        verification_confidence: event.verification_confidence || 0,
+        verification_timestamp: event.verification_timestamp || '',
+        data_integrity_score: event.data_integrity_score || 0,
+        usda_verified: event.usda_verified || false,
+        // Pass album data for photo verification
+        album: event.album || null,
+        // Pass carbon data
+        carbon_data: event.carbon_data || null,
+        carbon_impact: event.carbon_data?.co2e || event.carbon_impact || null
       };
     });
   };
@@ -344,12 +412,18 @@ function ProfileProduction() {
   };
 
   return (
-    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%" position="relative">
+    <Flex
+      direction="column"
+      alignSelf="center"
+      justifySelf="center"
+      overflow="hidden"
+      w="100%"
+      position="relative">
       {/* Clean Modern Header - Standardized */}
-      <Box 
-        bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" 
+      <Box
+        bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
         pt={{ base: '140px', md: '100px' }}
-        pb={{ base: '80px', md: '100px' }} 
+        pb={{ base: '80px', md: '100px' }}
         px={{ base: 3, sm: 4, md: 4 }}
         position="relative">
         <Container maxW="6xl" mx="auto">
@@ -362,7 +436,11 @@ function ProfileProduction() {
                   <Button
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+                    onClick={() =>
+                      navigate(
+                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
+                      )
+                    }
                     size="sm">
                     Back
                   </Button>
@@ -374,13 +452,15 @@ function ProfileProduction() {
                 <Button
                   variant="outline"
                   leftIcon={<FaChevronLeft />}
-                  onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+                  onClick={() =>
+                    navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+                  }
                   size="sm">
                   Back
                 </Button>
               </Flex>
             )}
-            
+
             {/* Main Title - Standardized */}
             <VStack spacing={{ base: 4, sm: 3 }}>
               <Heading
@@ -408,18 +488,17 @@ function ProfileProduction() {
               </Text>
             </VStack>
 
-
             {/* Quick Stats - Standardized */}
-            <SimpleGrid 
-              columns={{ base: 2, md: 4 }} 
-              spacing={{ base: 4, sm: 6, md: 6 }} 
-              w="full" 
+            <SimpleGrid
+              columns={{ base: 2, md: 4 }}
+              spacing={{ base: 4, sm: 6, md: 6 }}
+              w="full"
               maxW="2xl"
               px={{ base: 2, sm: 0 }}>
               <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle 
-                  size={{ base: '60px', sm: '50px' }} 
-                  bg="green.100" 
+                <Circle
+                  size={{ base: '60px', sm: '50px' }}
+                  bg="green.100"
                   color="green.600"
                   cursor="default">
                   <Icon as={FaSeedling} boxSize={{ base: 7, sm: 6 }} />
@@ -434,31 +513,39 @@ function ProfileProduction() {
                 </VStack>
               </VStack>
 
-              <VStack>
-                <Circle size="60px" bg="blue.100" color="blue.600">
-                  <Icon as={MdOutdoorGrill} boxSize={6} />
+              <VStack spacing={{ base: 3, sm: 2 }}>
+                <Circle
+                  size={{ base: '60px', sm: '50px' }}
+                  bg="green.100"
+                  color="green.600"
+                  cursor="default">
+                  <Icon as={FaLeaf} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
-                <VStack spacing={1}>
-                  <Text fontSize="xl" fontWeight="bold" color="gray.800">
-                    Outdoor
+                <VStack spacing={{ base: 1, sm: 1 }}>
+                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
+                    {getTransparencyScore() > 0
+                      ? `${Math.round(getTransparencyScore())}%`
+                      : transparencyLoading
+                      ? '...'
+                      : '0%'}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
-                    Environment
+                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
+                    Transparency
                   </Text>
                 </VStack>
               </VStack>
 
               <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle 
-                  size={{ base: '60px', sm: '50px' }} 
-                  bg="purple.100" 
+                <Circle
+                  size={{ base: '60px', sm: '50px' }}
+                  bg="purple.100"
                   color="purple.600"
                   cursor="default">
                   <Icon as={FaClipboardList} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
                   <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {historyData?.events?.length || 0}
+                    {getUnifiedTimelineEvents().length || 0}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Events
@@ -467,9 +554,9 @@ function ProfileProduction() {
               </VStack>
 
               <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle 
-                  size={{ base: '60px', sm: '50px' }} 
-                  bg="orange.100" 
+                <Circle
+                  size={{ base: '60px', sm: '50px' }}
+                  bg="orange.100"
                   color="orange.600"
                   cursor="default">
                   <Icon as={FaFlag} boxSize={{ base: 7, sm: 6 }} />
@@ -545,20 +632,23 @@ function ProfileProduction() {
                       {intl.formatMessage({ id: 'app.edit' }) || 'Edit'}
                     </Text>
                   </MenuItem>
-                  <MenuItem icon={<FaQrcode />} onClick={downloadQRCode}
+                  <MenuItem
+                    icon={<FaQrcode />}
+                    onClick={downloadQRCode}
                     minH={{ base: '44px', md: '40px' }}>
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       Download QR Code
                     </Text>
                   </MenuItem>
-                  <MenuItem icon={<FaShare />} onClick={handleShare}
+                  <MenuItem
+                    icon={<FaShare />}
+                    onClick={handleShare}
                     minH={{ base: '44px', md: '40px' }}>
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       Share
                     </Text>
                   </MenuItem>
-                  <MenuItem icon={<FaTrash />} color="red.500"
-                    minH={{ base: '44px', md: '40px' }}>
+                  <MenuItem icon={<FaTrash />} color="red.500" minH={{ base: '44px', md: '40px' }}>
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       {intl.formatMessage({ id: 'app.delete' }) || 'Delete'}
                     </Text>
@@ -566,41 +656,41 @@ function ProfileProduction() {
                 </MenuList>
               </Menu>
             </Box>
-            
+
             <VStack spacing={{ base: 4, md: 3 }} align="stretch">
               {/* Status Badges - Standardized */}
-              <Flex 
-                wrap="wrap" 
-                gap={{ base: 3, sm: 4 }} 
+              <Flex
+                wrap="wrap"
+                gap={{ base: 3, sm: 4 }}
                 justify={{ base: 'center', md: 'flex-start' }}
                 align="center">
                 {/* Active Badge - Standardized */}
-                <Badge 
+                <Badge
                   variant="subtle"
-                  colorScheme={historyData?.finish_date ? "gray" : "green"}
-                  fontSize="sm" 
-                  px={4} 
-                  py={2} 
+                  colorScheme={historyData?.finish_date ? 'gray' : 'green'}
+                  fontSize="sm"
+                  px={4}
+                  py={2}
                   borderRadius="lg"
                   fontWeight="600"
                   textTransform="none"
-                  bg={historyData?.finish_date ? "gray.50" : "green.50"}
-                  color={historyData?.finish_date ? "gray.700" : "green.700"}
+                  bg={historyData?.finish_date ? 'gray.50' : 'green.50'}
+                  color={historyData?.finish_date ? 'gray.700' : 'green.700'}
                   border="1px solid"
-                  borderColor={historyData?.finish_date ? "gray.200" : "green.200"}>
+                  borderColor={historyData?.finish_date ? 'gray.200' : 'green.200'}>
                   <HStack spacing={2}>
-                    <Circle size="8px" bg={historyData?.finish_date ? "gray.400" : "green.500"} />
+                    <Circle size="8px" bg={historyData?.finish_date ? 'gray.400' : 'green.500'} />
                     <Text>{historyData?.finish_date ? 'Finished' : 'Active'}</Text>
                   </HStack>
                 </Badge>
-                
+
                 {historyData?.product?.name && (
-                  <Badge 
+                  <Badge
                     variant="subtle"
-                    colorScheme="green" 
-                    fontSize="sm" 
-                    px={4} 
-                    py={2} 
+                    colorScheme="green"
+                    fontSize="sm"
+                    px={4}
+                    py={2}
                     borderRadius="lg"
                     fontWeight="500"
                     textTransform="none"
@@ -614,14 +704,14 @@ function ProfileProduction() {
                     </HStack>
                   </Badge>
                 )}
-                
+
                 {historyData?.qr_code && (
-                  <Badge 
+                  <Badge
                     variant="subtle"
-                    colorScheme="blue" 
-                    fontSize="sm" 
-                    px={4} 
-                    py={2} 
+                    colorScheme="blue"
+                    fontSize="sm"
+                    px={4}
+                    py={2}
                     borderRadius="lg"
                     fontWeight="500"
                     textTransform="none"
@@ -636,16 +726,16 @@ function ProfileProduction() {
                   </Badge>
                 )}
               </Flex>
-              
+
               {/* Header Row */}
-              <Flex 
-                align="center" 
-                justify="space-between" 
+              <Flex
+                align="center"
+                justify="space-between"
                 flexWrap={{ base: 'wrap', md: 'nowrap' }}
                 gap={{ base: 3, md: 4 }}>
-                <Heading 
-                  color={textColor} 
-                  fontSize={{ base: 'md', sm: 'lg', md: 'xl' }} 
+                <Heading
+                  color={textColor}
+                  fontSize={{ base: 'md', sm: 'lg', md: 'xl' }}
                   fontWeight="bold"
                   textAlign={{ base: 'center', md: 'left' }}
                   flex="1">
@@ -658,422 +748,612 @@ function ProfileProduction() {
           <CardBody>
             {/* Main Content */}
             <Box position="relative">
-              <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 6, md: 8 }} mb={{ base: 6, md: 8 }}>
-              {/* Left Column */}
-              <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-                {/* Images */}
-                <Box mb={{ base: 4, md: 6 }}>
-                  <StandardImageGallery
-                    images={historyData?.images || []}
-                    title="Production Photos"
-                    variant="default"
-                    enablePreview={true}
-                    showImageCount={true}
-                    fallbackImage={defaultProductionImage}
-                    height={{ base: '200px', sm: '250px', md: '280px', lg: '300px' }}
-                    showEmptyState={true}
-                    maxDisplayImages={3}
-                  />
-                </Box>
+              <SimpleGrid
+                columns={{ base: 1, lg: 2 }}
+                spacing={{ base: 6, md: 8 }}
+                mb={{ base: 6, md: 8 }}>
+                {/* Left Column */}
+                <VStack spacing={{ base: 4, md: 6 }} align="stretch">
+                  {/* Images */}
+                  <Box mb={{ base: 4, md: 6 }}>
+                    <StandardImageGallery
+                      images={historyData?.images || []}
+                      title="Production Photos"
+                      variant="default"
+                      enablePreview={true}
+                      showImageCount={true}
+                      fallbackImage={defaultProductionImage}
+                      height={{ base: '200px', sm: '250px', md: '280px', lg: '300px' }}
+                      showEmptyState={true}
+                      maxDisplayImages={3}
+                    />
+                  </Box>
 
-                {/* Details */}
-                <StandardCard title="Production Details" variant="flat">
-                  <VStack spacing={4} align="stretch">
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Product
-                      </Text>
-                      <Text fontWeight="medium">{historyData?.product?.name}</Text>
-                    </Box>
-                    {historyData?.lot_id && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Lot ID
-                        </Text>
-                        <Text fontWeight="medium" fontFamily="mono" fontSize="sm">
-                          {historyData.lot_id}
-                        </Text>
-                      </Box>
-                    )}
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Type
-                      </Text>
-                      <Badge colorScheme="green" variant="subtle" size="sm">
-                        {historyData?.type === 'OR' ? 'Orchard' : historyData?.type === 'GA' ? 'Garden' : 'Sustainable Production'}
-                      </Badge>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Environment
-                      </Text>
-                      <Text fontWeight="medium">{historyData?.is_outdoor ? 'Outdoor' : 'Indoor'}</Text>
-                    </Box>
-                    {historyData?.production_amount && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Production Amount
-                        </Text>
-                        <Text fontWeight="medium">{historyData.production_amount} units</Text>
-                      </Box>
-                    )}
-                    {historyData?.earning && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Revenue
-                        </Text>
-                        <Text fontWeight="medium" color="green.600">
-                          ${historyData.earning.toLocaleString()}
-                        </Text>
-                      </Box>
-                    )}
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Duration
-                      </Text>
-                      <Text fontWeight="medium">
-                        {formatDate(historyData?.start_date)} -{' '}
-                        {formatDate(historyData?.finish_date) || 'In Progress'}
-                      </Text>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Status
-                      </Text>
-                      <Badge 
-                        colorScheme={historyData?.published ? 'green' : 'yellow'} 
-                        variant="subtle" 
-                        size="sm"
-                      >
-                        {historyData?.published ? 'Published' : 'Draft'}
-                      </Badge>
-                    </Box>
-                  </VStack>
-                </StandardCard>
-
-                {/* Agricultural Information */}
-                {(historyData?.age_of_plants || historyData?.number_of_plants || historyData?.soil_ph) && (
-                  <StandardCard title="Agricultural Information" variant="flat">
+                  {/* Details */}
+                  <StandardCard title="Production Details" variant="flat">
                     <VStack spacing={4} align="stretch">
-                      {historyData?.age_of_plants && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Product
+                        </Text>
+                        <Text fontWeight="medium">{historyData?.product?.name}</Text>
+                      </Box>
+                      {historyData?.lot_id && (
                         <Box>
                           <Text fontSize="sm" color="gray.500" mb={1}>
-                            Plant Age
+                            Lot ID
                           </Text>
-                          <Text fontWeight="medium">{historyData.age_of_plants}</Text>
+                          <Text fontWeight="medium" fontFamily="mono" fontSize="sm">
+                            {historyData.lot_id}
+                          </Text>
                         </Box>
                       )}
-                      {historyData?.number_of_plants && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Type
+                        </Text>
+                        <Badge colorScheme="green" variant="subtle" size="sm">
+                          {historyData?.type === 'OR'
+                            ? 'Orchard'
+                            : historyData?.type === 'GA'
+                            ? 'Garden'
+                            : 'Sustainable Production'}
+                        </Badge>
+                      </Box>
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Environment
+                        </Text>
+                        <Text fontWeight="medium">
+                          {historyData?.is_outdoor ? 'Outdoor' : 'Indoor'}
+                        </Text>
+                      </Box>
+                      {historyData?.production_amount && (
                         <Box>
                           <Text fontSize="sm" color="gray.500" mb={1}>
-                            Number of Plants
+                            Production Amount
                           </Text>
-                          <Text fontWeight="medium">{historyData.number_of_plants}</Text>
+                          <Text fontWeight="medium">{historyData.production_amount} units</Text>
                         </Box>
                       )}
-                      {historyData?.soil_ph && (
+                      {historyData?.earning && (
                         <Box>
                           <Text fontSize="sm" color="gray.500" mb={1}>
-                            Soil pH
+                            Revenue
                           </Text>
-                          <Text fontWeight="medium">{historyData.soil_ph}</Text>
+                          <Text fontWeight="medium" color="green.600">
+                            ${historyData.earning.toLocaleString()}
+                          </Text>
                         </Box>
                       )}
-                      {historyData?.crop_type && (
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Duration
+                        </Text>
+                        <Text fontWeight="medium">
+                          {formatDate(historyData?.start_date)} -{' '}
+                          {formatDate(historyData?.finish_date) || 'In Progress'}
+                        </Text>
+                      </Box>
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Status
+                        </Text>
+                        <Badge
+                          colorScheme={historyData?.published ? 'green' : 'yellow'}
+                          variant="subtle"
+                          size="sm">
+                          {historyData?.published ? 'Published' : 'Draft'}
+                        </Badge>
+                      </Box>
+                    </VStack>
+                  </StandardCard>
+
+                  {/* Agricultural Information */}
+                  {(historyData?.age_of_plants ||
+                    historyData?.number_of_plants ||
+                    historyData?.soil_ph) && (
+                    <StandardCard title="Agricultural Information" variant="flat">
+                      <VStack spacing={4} align="stretch">
+                        {historyData?.age_of_plants && (
+                          <Box>
+                            <Text fontSize="sm" color="gray.500" mb={1}>
+                              Plant Age
+                            </Text>
+                            <Text fontWeight="medium">{historyData.age_of_plants}</Text>
+                          </Box>
+                        )}
+                        {historyData?.number_of_plants && (
+                          <Box>
+                            <Text fontSize="sm" color="gray.500" mb={1}>
+                              Number of Plants
+                            </Text>
+                            <Text fontWeight="medium">{historyData.number_of_plants}</Text>
+                          </Box>
+                        )}
+                        {historyData?.soil_ph && (
+                          <Box>
+                            <Text fontSize="sm" color="gray.500" mb={1}>
+                              Soil pH
+                            </Text>
+                            <Text fontWeight="medium">{historyData.soil_ph}</Text>
+                          </Box>
+                        )}
+                        {historyData?.crop_type && (
+                          <Box>
+                            <Text fontSize="sm" color="gray.500" mb={1}>
+                              Crop Type
+                            </Text>
+                            <Text fontWeight="medium">{historyData.crop_type}</Text>
+                          </Box>
+                        )}
+                      </VStack>
+                    </StandardCard>
+                  )}
+
+                  {/* Reputation & Operator */}
+                  <StandardCard title="Performance & Management" variant="flat">
+                    <VStack spacing={4} align="stretch">
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Reputation Score
+                        </Text>
+                        <HStack spacing={2}>
+                          <HStack spacing={1}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Icon
+                                key={star}
+                                as={star <= safeReputation ? BsStarFill : BsStar}
+                                color={star <= safeReputation ? 'yellow.400' : 'gray.300'}
+                                boxSize={4}
+                              />
+                            ))}
+                          </HStack>
+                          <Text fontSize="sm" color="gray.600">
+                            ({safeReputation.toFixed(1)}/5.0)
+                          </Text>
+                        </HStack>
+                      </Box>
+                      {historyData?.operator && (
                         <Box>
                           <Text fontSize="sm" color="gray.500" mb={1}>
-                            Crop Type
+                            Operator
                           </Text>
-                          <Text fontWeight="medium">{historyData.crop_type}</Text>
+                          <HStack spacing={2}>
+                            <Avatar
+                              size="xs"
+                              name={historyData.operator.name || historyData.operator.email}
+                            />
+                            <VStack spacing={0} align="start">
+                              <Text fontWeight="medium" fontSize="sm">
+                                {historyData.operator.name || 'Unnamed Operator'}
+                              </Text>
+                              <Text fontSize="xs" color="gray.500">
+                                {historyData.operator.email}
+                              </Text>
+                            </VStack>
+                          </HStack>
+                        </Box>
+                      )}
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Quality Rating
+                        </Text>
+                        <Progress
+                          value={(safeReputation / 5) * 100}
+                          colorScheme="green"
+                          size="sm"
+                          borderRadius="full"
+                        />
+                      </Box>
+                    </VStack>
+                  </StandardCard>
+
+                  {/* Location */}
+                  <StandardCard title="Location" variant="flat">
+                    <VStack spacing={4} align="stretch">
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Establishment
+                        </Text>
+                        <Link
+                          color="blue.600"
+                          onClick={() =>
+                            navigate(`/admin/dashboard/establishment/${establishmentId}`)
+                          }
+                          cursor="pointer"
+                          _hover={{ textDecoration: 'underline' }}
+                          fontWeight="medium">
+                          {historyData?.parcel?.establishment?.name || 'Unknown'}
+                        </Link>
+                      </Box>
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Parcel
+                        </Text>
+                        <Link
+                          color="green.600"
+                          onClick={() =>
+                            navigate(
+                              `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
+                            )
+                          }
+                          cursor="pointer"
+                          _hover={{ textDecoration: 'underline' }}
+                          fontWeight="medium">
+                          {historyData?.parcel?.name || 'Unknown'}
+                        </Link>
+                      </Box>
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Address
+                        </Text>
+                        <Text fontWeight="medium">
+                          {historyData?.parcel?.establishment?.location || 'Not specified'}
+                        </Text>
+                      </Box>
+                    </VStack>
+                  </StandardCard>
+                </VStack>
+
+                {/* Right Column */}
+                <VStack spacing={{ base: 4, md: 6 }} align="stretch">
+                  {/* Transparency Score - TRAZO ALIGNED */}
+                  <StandardCard title="🌱 Farm Transparency" variant="flat">
+                    <VStack spacing={4} align="stretch">
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={2}>
+                          Consumer Trust Score
+                        </Text>
+                        <HStack spacing={3} align="center">
+                          <Box
+                            boxSize="60px"
+                            borderRadius="full"
+                            bg="green.100"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center">
+                            <Icon as={FaLeaf} color="green.600" boxSize={6} />
+                          </Box>
+                          <VStack spacing={0} align="start">
+                            <Text fontSize="3xl" fontWeight="bold" color="green.600">
+                              {getTransparencyScore() > 0
+                                ? `${Math.round(getTransparencyScore())}%`
+                                : transparencyLoading
+                                ? 'Loading...'
+                                : '0%'}
+                            </Text>
+                            <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                              {getTransparencyScore() >= 90
+                                ? '🌟 Exceptional Documentation'
+                                : getTransparencyScore() >= 70
+                                ? '✅ Strong Record Keeping'
+                                : getTransparencyScore() >= 50
+                                ? '📋 Building Transparency'
+                                : getTransparencyScore() > 0
+                                ? '🌱 Getting Started'
+                                : 'Ready to Begin'}
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </Box>
+
+                      {/* Trazo-style Progress Indicator */}
+                      <Box>
+                        <HStack justify="space-between" mb={2}>
+                          <Text fontSize="sm" color="gray.500">
+                            Progress to Next Level
+                          </Text>
+                          <Text fontSize="sm" color="green.600" fontWeight="medium">
+                            {getTransparencyScore() >= 90
+                              ? 'Complete!'
+                              : getTransparencyScore() >= 70
+                              ? `${90 - Math.round(getTransparencyScore())}% to Exceptional`
+                              : getTransparencyScore() >= 50
+                              ? `${70 - Math.round(getTransparencyScore())}% to Strong`
+                              : `${50 - Math.round(getTransparencyScore())}% to Building`}
+                          </Text>
+                        </HStack>
+                        <Progress
+                          value={getTransparencyScore()}
+                          colorScheme="green"
+                          size="md"
+                          borderRadius="full"
+                          bg="gray.100"
+                        />
+                      </Box>
+
+                      {/* Producer Benefits & Encouragement */}
+                      <Box
+                        p={3}
+                        bg="green.50"
+                        borderRadius="lg"
+                        border="1px solid"
+                        borderColor="green.200">
+                        <HStack spacing={2} mb={2}>
+                          <Icon as={FaLightbulb} color="green.600" boxSize={4} />
+                          <Text fontSize="sm" fontWeight="semibold" color="green.800">
+                            Why This Matters
+                          </Text>
+                        </HStack>
+                        <Text fontSize="sm" color="green.700" lineHeight="tall">
+                          Higher transparency builds consumer trust, can justify premium pricing,
+                          and differentiates your farm in the marketplace.
+                        </Text>
+                      </Box>
+
+                      <Box>
+                        <HStack justify="space-between" mb={1}>
+                          <Text fontSize="sm" color="gray.500">
+                            Events Documented
+                          </Text>
+                          <Badge
+                            colorScheme={
+                              getUnifiedTimelineEvents().length > 5
+                                ? 'green'
+                                : getUnifiedTimelineEvents().length > 0
+                                ? 'yellow'
+                                : 'gray'
+                            }
+                            variant="subtle">
+                            {getUnifiedTimelineEvents().length || 0} practices
+                          </Badge>
+                        </HStack>
+                        <Text fontSize="sm" color="gray.700" fontWeight="medium">
+                          {getUnifiedTimelineEvents().length > 5
+                            ? 'Comprehensive documentation'
+                            : getUnifiedTimelineEvents().length > 0
+                            ? 'Good start - keep documenting!'
+                            : 'Ready to start documenting practices'}
+                        </Text>
+                      </Box>
+
+                      {/* Next Steps for Improvement */}
+                      {getTransparencyScore() < 90 && (
+                        <Box
+                          p={3}
+                          bg="blue.50"
+                          borderRadius="lg"
+                          border="1px solid"
+                          borderColor="blue.200">
+                          <HStack spacing={2} mb={2}>
+                            <Icon as={FaChartLine} color="blue.600" boxSize={4} />
+                            <Text fontSize="sm" fontWeight="semibold" color="blue.800">
+                              Increase Your Score
+                            </Text>
+                          </HStack>
+                          <Text fontSize="sm" color="blue.700" lineHeight="tall">
+                            {getTransparencyScore() < 30
+                              ? 'Document more farming activities like planting, irrigation, and harvesting to build trust.'
+                              : getTransparencyScore() < 70
+                              ? 'Add photos to your events and document specialized practices for higher transparency.'
+                              : 'Add detailed descriptions and verify more events to reach exceptional transparency.'}
+                          </Text>
+                        </Box>
+                      )}
+
+                      {transparencyError && (
+                        <Box
+                          p={3}
+                          bg="yellow.50"
+                          borderRadius="md"
+                          border="1px solid"
+                          borderColor="yellow.200">
+                          <Text fontSize="sm" color="yellow.800">
+                            Transparency data temporarily unavailable. Using basic calculation.
+                          </Text>
                         </Box>
                       )}
                     </VStack>
                   </StandardCard>
-                )}
 
-                {/* Reputation & Operator */}
-                <StandardCard title="Performance & Management" variant="flat">
-                  <VStack spacing={4} align="stretch">
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Reputation Score
-                      </Text>
-                      <HStack spacing={2}>
-                        <HStack spacing={1}>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Icon
-                              key={star}
-                              as={star <= safeReputation ? BsStarFill : BsStar}
-                              color={star <= safeReputation ? 'yellow.400' : 'gray.300'}
-                              boxSize={4}
+                  {/* Performance & Management */}
+                  <StandardCard title="Performance & Management" variant="flat">
+                    <VStack spacing={4} align="stretch">
+                      {historyData?.reputation_score && (
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={2}>
+                            Reputation Score
+                          </Text>
+                          <HStack spacing={2}>
+                            <Text fontSize="lg" fontWeight="bold" color="green.600">
+                              {(historyData.reputation_score * 20).toFixed(1)}/5.0
+                            </Text>
+                            <Text fontSize="sm" color="gray.500">
+                              ({historyData.reputation_score}/5 stars)
+                            </Text>
+                          </HStack>
+                        </Box>
+                      )}
+
+                      {historyData?.quality_rating && (
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={2}>
+                            Quality Rating
+                          </Text>
+                          <Text fontSize="lg" fontWeight="bold" color="blue.600">
+                            {historyData.quality_rating}
+                          </Text>
+                        </Box>
+                      )}
+
+                      {/* QR Code Compact Section */}
+                      {historyData?.qr_code && (
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={2}>
+                            Consumer Access
+                          </Text>
+                          <HStack
+                            spacing={3}
+                            p={3}
+                            bg="blue.50"
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor="blue.200">
+                            <Box
+                              boxSize="40px"
+                              bg="white"
+                              borderRadius="md"
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="center">
+                              <Icon as={FaQrcode} color="blue.500" />
+                            </Box>
+                            <VStack spacing={0} align="start" flex={1}>
+                              <Text fontSize="sm" fontWeight="medium" color="blue.800">
+                                QR Code Available
+                              </Text>
+                              <Text fontSize="xs" color="blue.600">
+                                Consumers can scan to view details
+                              </Text>
+                            </VStack>
+                            <IconButton
+                              icon={<Icon as={FaDownload} />}
+                              size="sm"
+                              variant="outline"
+                              colorScheme="blue"
+                              onClick={downloadQRCode}
+                              aria-label="Download QR Code"
                             />
-                          ))}
-                        </HStack>
-                        <Text fontSize="sm" color="gray.600">
-                          ({safeReputation.toFixed(1)}/5.0)
-                        </Text>
-                      </HStack>
-                    </Box>
-                    {historyData?.operator && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Operator
-                        </Text>
-                        <HStack spacing={2}>
-                          <Avatar size="xs" name={historyData.operator.name || historyData.operator.email} />
-                          <VStack spacing={0} align="start">
-                            <Text fontWeight="medium" fontSize="sm">
-                              {historyData.operator.name || 'Unnamed Operator'}
-                            </Text>
-                            <Text fontSize="xs" color="gray.500">
-                              {historyData.operator.email}
-                            </Text>
-                          </VStack>
-                        </HStack>
-                      </Box>
-                    )}
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Quality Rating
-                      </Text>
-                      <Progress 
-                        value={(safeReputation / 5) * 100} 
-                        colorScheme="green" 
-                        size="sm" 
-                        borderRadius="full"
-                      />
-                    </Box>
-                  </VStack>
-                </StandardCard>
+                          </HStack>
+                        </Box>
+                      )}
+                    </VStack>
+                  </StandardCard>
 
-                {/* Location */}
-                <StandardCard title="Location" variant="flat">
-                  <VStack spacing={4} align="stretch">
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Establishment
-                      </Text>
-                      <Link
-                        color="blue.600"
-                        onClick={() =>
-                          navigate(`/admin/dashboard/establishment/${establishmentId}`)
-                        }
-                        cursor="pointer"
-                        _hover={{ textDecoration: 'underline' }}
-                        fontWeight="medium">
-                        {historyData?.parcel?.establishment?.name || 'Unknown'}
-                      </Link>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Parcel
-                      </Text>
-                      <Link
-                        color="green.600"
-                        onClick={() =>
-                          navigate(
-                            `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
-                          )
-                        }
-                        cursor="pointer"
-                        _hover={{ textDecoration: 'underline' }}
-                        fontWeight="medium">
-                        {historyData?.parcel?.name || 'Unknown'}
-                      </Link>
-                    </Box>
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Address
-                      </Text>
-                      <Text fontWeight="medium">
-                        {historyData?.parcel?.establishment?.location || 'Not specified'}
-                      </Text>
-                    </Box>
-                  </VStack>
-                </StandardCard>
-              </VStack>
-
-              {/* Right Column */}
-              <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-                {/* Performance & Management */}
-                <StandardCard title="Performance & Management" variant="flat">
-                  <VStack spacing={4} align="stretch">
-                    {historyData?.reputation_score && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={2}>
-                          Reputation Score
-                        </Text>
-                        <HStack spacing={2}>
-                          <Text fontSize="lg" fontWeight="bold" color="green.600">
-                            {(historyData.reputation_score * 20).toFixed(1)}/5.0
-                          </Text>
-                          <Text fontSize="sm" color="gray.500">
-                            ({historyData.reputation_score}/5 stars)
-                          </Text>
-                        </HStack>
-                      </Box>
-                    )}
-                    
-                    {historyData?.quality_rating && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={2}>
-                          Quality Rating
-                        </Text>
-                        <Text fontSize="lg" fontWeight="bold" color="blue.600">
-                          {historyData.quality_rating}
-                        </Text>
-                      </Box>
-                    )}
-
-                    {/* QR Code Compact Section */}
-                    {historyData?.qr_code && (
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={2}>
-                          Consumer Access
-                        </Text>
-                        <HStack spacing={3} p={3} bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200">
-                          <Box boxSize="40px" bg="white" borderRadius="md" display="flex" alignItems="center" justifyContent="center">
-                            <Icon as={FaQrcode} color="blue.500" />
-                          </Box>
-                          <VStack spacing={0} align="start" flex={1}>
-                            <Text fontSize="sm" fontWeight="medium" color="blue.800">
-                              QR Code Available
-                            </Text>
-                            <Text fontSize="xs" color="blue.600">
-                              Consumers can scan to view details
-                            </Text>
-                          </VStack>
-                          <IconButton
-                            icon={<Icon as={FaDownload} />}
-                            size="sm"
-                            variant="outline"
-                            colorScheme="blue"
-                            onClick={downloadQRCode}
-                            aria-label="Download QR Code"
-                          />
-                        </HStack>
-                      </Box>
-                    )}
-                  </VStack>
-                </StandardCard>
-
-                {/* Producer Information */}
-                {historyData?.parcel?.establishment && (
-                  <CompanyEstablishmentInfo establishment={historyData.parcel.establishment} />
-                )}
-              </VStack>
-            </SimpleGrid>
-
-            {/* Timeline */}
-            <Box mb={{ base: 4, md: 6 }}>
-              <StandardCard title="Production Timeline" variant="flat">
-              {historyData?.events && historyData.events.length > 0 ? (
-                <UltraMobileProductionJourney events={mapEventsToTimeline(historyData.events)} />
-              ) : (
-                <VStack spacing={3} py={8}>
-                  <Icon as={MdTimeline} boxSize={16} color="gray.400" />
-                  <Heading as="h4" size="md" color="gray.600">
-                    No events recorded yet
-                  </Heading>
-                  <Text fontSize="sm" color="gray.400" textAlign="center">
-                    Events will appear here as the production progresses
-                  </Text>
-                  {!historyData?.finish_date && (
-                    <Button
-                      leftIcon={<Icon as={FaSeedling} />}
-                      colorScheme="green"
-                      size="lg"
-                      onClick={onQuickAddOpen}
-                      mt={4}>
-                      🎤 Add Your First Event
-                    </Button>
-                  )}
-                  {historyData?.finish_date && (
-                    <Text fontSize="sm" color="gray.500" mt={4} textAlign="center">
-                      This production is finished. Events cannot be added to completed productions.
-                    </Text>
-                  )}
-                </VStack>
-              )}
-              </StandardCard>
-            </Box>
-
-            {/* Description Section */}
-            {historyData?.description && (
-              <Box mb={{ base: 4, md: 6 }}>
-                <StandardCard title="Production Description" variant="flat">
-                <Box>
-                  <Text fontSize="sm" color="gray.700" lineHeight="tall">
-                    {historyData.description}
-                  </Text>
-                </Box>
-                </StandardCard>
-              </Box>
-            )}
-
-            {/* Production Summary - Core Information */}
-            <Box mb={{ base: 4, md: 6 }}>
-              <StandardCard title="Production Summary" variant="flat">
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-                <VStack align="start" spacing={3}>
-                  <Box>
-                    <Text fontSize="sm" color="gray.500" mb={1}>
-                      Production Status
-                    </Text>
-                    <Badge 
-                      colorScheme={historyData?.finish_date ? 'green' : 'yellow'} 
-                      variant="subtle"
-                      fontSize="sm"
-                      px={3} 
-                      py={1}
-                    >
-                      {historyData?.finish_date ? 'Completed' : 'In Progress'}
-                    </Badge>
-                  </Box>
-                  {historyData?.start_date && historyData?.finish_date && (
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Duration
-                      </Text>
-                      <Text fontWeight="medium" fontSize="sm">
-                        {Math.ceil((new Date(historyData.finish_date).getTime() - new Date(historyData.start_date).getTime()) / (1000 * 60 * 60 * 24))} days
-                      </Text>
-                    </Box>
-                  )}
-                </VStack>
-                <VStack align="start" spacing={3}>
-                  <Box>
-                    <Text fontSize="sm" color="gray.500" mb={1}>
-                      Events Recorded
-                    </Text>
-                    <Text fontWeight="medium" fontSize="sm" color="green.600">
-                      {historyData?.events?.length || 0} Events
-                    </Text>
-                  </Box>
-                  {historyData?.events && historyData.events.length > 0 && (
-                    <Box>
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Timeline Progress
-                      </Text>
-                      <HStack spacing={2}>
-                        <Progress 
-                          value={historyData.finish_date ? 100 : 50} 
-                          colorScheme="green" 
-                          size="sm" 
-                          borderRadius="full"
-                          flex={1}
-                        />
-                        <Text fontSize="sm" color="gray.600">
-                          {historyData.finish_date ? '100%' : '50%'}
-                        </Text>
-                      </HStack>
-                    </Box>
+                  {/* Producer Information */}
+                  {historyData?.parcel?.establishment && (
+                    <CompanyEstablishmentInfo establishment={historyData.parcel.establishment} />
                   )}
                 </VStack>
               </SimpleGrid>
-              </StandardCard>
+
+              {/* Timeline - ✅ 2025 UNIFIED ARCHITECTURE: Use same data source as consumer page */}
+              <Box mb={{ base: 4, md: 6 }}>
+                {(() => {
+                  const unifiedEvents = getUnifiedTimelineEvents();
+                  
+                  if (unifiedEvents.length > 0) {
+                    console.log('🔄 Rendering producer timeline with unified events:', unifiedEvents.length, 'events');
+                    return (
+                      <UltraMobileProductionJourney 
+                        events={unifiedEvents} 
+                        productionId={productionId}
+                      />
+                    );
+                  }
+                  
+                  // No events available
+                  return (
+                    <VStack spacing={3} py={8}>
+                      <Icon as={MdTimeline} boxSize={16} color="gray.400" />
+                      <Heading as="h4" size="md" color="gray.600">
+                        No events recorded yet
+                      </Heading>
+                      <Text fontSize="sm" color="gray.400" textAlign="center">
+                        Events will appear here as the production progresses
+                      </Text>
+                      {!historyData?.finish_date && (
+                        <Button
+                          leftIcon={<Icon as={FaSeedling} />}
+                          colorScheme="green"
+                          size="lg"
+                          onClick={onQuickAddOpen}
+                          mt={4}>
+                          🎤 Add Your First Event
+                        </Button>
+                      )}
+                      {historyData?.finish_date && (
+                        <Text fontSize="sm" color="gray.500" mt={4} textAlign="center">
+                          This production is finished. Events cannot be added to completed
+                          productions.
+                        </Text>
+                      )}
+                    </VStack>
+                  );
+                })()}
+              </Box>
+
+              {/* Description Section */}
+              {historyData?.description && (
+                <Box mb={{ base: 4, md: 6 }}>
+                  <StandardCard title="Production Description" variant="flat">
+                    <Box>
+                      <Text fontSize="sm" color="gray.700" lineHeight="tall">
+                        {historyData.description}
+                      </Text>
+                    </Box>
+                  </StandardCard>
+                </Box>
+              )}
+
+              {/* Production Summary - Core Information */}
+              <Box mb={{ base: 4, md: 6 }}>
+                <StandardCard title="Production Summary" variant="flat">
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
+                    <VStack align="start" spacing={3}>
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Production Status
+                        </Text>
+                        <Badge
+                          colorScheme={historyData?.finish_date ? 'green' : 'yellow'}
+                          variant="subtle"
+                          fontSize="sm"
+                          px={3}
+                          py={1}>
+                          {historyData?.finish_date ? 'Completed' : 'In Progress'}
+                        </Badge>
+                      </Box>
+                      {historyData?.start_date && historyData?.finish_date && (
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>
+                            Duration
+                          </Text>
+                          <Text fontWeight="medium" fontSize="sm">
+                            {Math.ceil(
+                              (new Date(historyData.finish_date).getTime() -
+                                new Date(historyData.start_date).getTime()) /
+                                (1000 * 60 * 60 * 24)
+                            )}{' '}
+                            days
+                          </Text>
+                        </Box>
+                      )}
+                    </VStack>
+                    <VStack align="start" spacing={3}>
+                      <Box>
+                        <Text fontSize="sm" color="gray.500" mb={1}>
+                          Events Recorded
+                        </Text>
+                        <Text fontWeight="medium" fontSize="sm" color="green.600">
+                          {getUnifiedTimelineEvents().length || 0} Events
+                        </Text>
+                      </Box>
+                      {getUnifiedTimelineEvents().length > 0 && (
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>
+                            Timeline Progress
+                          </Text>
+                          <HStack spacing={2}>
+                            <Progress
+                              value={historyData.finish_date ? 100 : 50}
+                              colorScheme="green"
+                              size="sm"
+                              borderRadius="full"
+                              flex={1}
+                            />
+                            <Text fontSize="sm" color="gray.600">
+                              {historyData.finish_date ? '100%' : '50%'}
+                            </Text>
+                          </HStack>
+                        </Box>
+                      )}
+                    </VStack>
+                  </SimpleGrid>
+                </StandardCard>
+              </Box>
             </Box>
-          </Box>
           </CardBody>
         </Card>
       </Flex>

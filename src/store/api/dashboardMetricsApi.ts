@@ -89,12 +89,13 @@ export interface DashboardMetricsResponse {
   calculated_at: string;
 }
 
+// Actual nested response structure (matches API response)
 export interface ComprehensiveDashboardResponse {
   establishment: EstablishmentInfo;
   transparency_metrics: TransparencyMetrics;
   comprehensive_data: ComprehensiveData;
-  carbon_summary: CarbonSummary;
-  optimization_metadata: {
+  carbon_summary?: CarbonSummary;
+  optimization_metadata?: {
     query_count: number;
     load_time_ms: number;
     data_completeness_percentage: number;

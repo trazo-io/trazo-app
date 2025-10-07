@@ -405,6 +405,13 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     );
   };
 
+  const handleToggleAll = () => {
+    const allSelected = customEvents.every(event => event.enabled);
+    setCustomEvents((events) =>
+      events.map((event) => ({ ...event, enabled: !allSelected }))
+    );
+  };
+
   const handleEventDateChange = (eventId: string, newDate: string) => {
     setCustomEvents((events) =>
       events.map((event) => (event.id === eventId ? { ...event, scheduled_date: newDate } : event))
@@ -1074,8 +1081,25 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             <StandardCard
               title="Pre-configured Events"
               subtitle="Review and customize the events from your selected template">
+              {/* Master Switch Controls */}
+              <HStack justify="space-between" mb={4} p={3} bg="gray.50" borderRadius="md">
+                <Text fontSize="sm" color="gray.600">
+                  {customEvents.filter(event => event.enabled).length} of {customEvents.length} events selected
+                </Text>
+                <HStack spacing={3}>
+                  <Switch
+                    isChecked={customEvents.every(event => event.enabled)}
+                    onChange={handleToggleAll}
+                    colorScheme="green"
+                    size="md"
+                  />
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {customEvents.every(event => event.enabled) ? 'Unselect All' : 'Select All'}
+                  </Text>
+                </HStack>
+              </HStack>
               <VStack spacing={4} align="stretch">
-                {customEvents.map((event, index) => (
+                {customEvents.map((event) => (
                   <Box
                     key={event.id}
                     p={4}
@@ -1194,25 +1218,25 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                 {filteredTemplates.map((template) => {
                   const CropIcon = getCropIcon(template.crop_type);
                   return (
-                    <Card
-                      key={template.template_id}
+                    <Box
                       cursor="pointer"
                       transition="all 0.2s"
                       _hover={{
                         transform: 'translateY(-2px)',
-                        shadow: 'lg',
-                        borderColor: 'blue.300'
+                        shadow: 'lg'
                       }}
-                      onClick={() => handleTemplateSelect(template)}
-                      borderWidth="1px"
-                      borderColor={
-                        selectedTemplate?.template_id === template.template_id
-                          ? 'blue.300'
-                          : 'gray.200'
-                      }
-                      bg={
-                        selectedTemplate?.template_id === template.template_id ? 'blue.50' : 'white'
-                      }>
+                      onClick={() => handleTemplateSelect(template)}>
+                      <Card
+                        key={template.template_id}
+                        borderWidth="1px"
+                        borderColor={
+                          selectedTemplate?.template_id === template.template_id
+                            ? 'blue.300'
+                            : 'gray.200'
+                        }
+                        bg={
+                          selectedTemplate?.template_id === template.template_id ? 'blue.50' : 'white'
+                        }>
                       <CardHeader pb={2}>
                         <HStack justify="space-between">
                           <HStack>
@@ -1260,6 +1284,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         </Grid>
                       </CardBody>
                     </Card>
+                    </Box>
                   );
                 })}
               </Grid>

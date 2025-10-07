@@ -322,8 +322,8 @@ export const LocationImporter: React.FC<LocationImporterProps> = ({ data, onChan
                   {data.farmLocation.lng.toFixed(6)}
                 </Text>
                 <Text>
-                  <strong>Farm Size:</strong> {data.farmLocation.acres} acres (
-                  {(data.farmLocation.acres * 0.404686).toFixed(1)} hectares)
+                  <strong>Farm Size:</strong> {(data.farmLocation.acres * 0.40468564224).toFixed(2)} hectares (
+                  {data.farmLocation.acres} acres)
                 </Text>
               </VStack>
 

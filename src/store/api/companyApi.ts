@@ -279,8 +279,8 @@ const companyApi = baseApi.injectEndpoints({
       invalidatesTags: ['CarbonSummary']
     }),
     getProductionsByEstablishment: build.query({
-      query: ({ establishmentId }) => ({
-        url: `/carbon/productions-flat/?establishment=${establishmentId}`,
+      query: ({ establishmentId, _t }) => ({
+        url: `/carbon/productions-flat/?establishment=${establishmentId}${_t ? `&_t=${_t}` : ''}`,
         method: 'GET',
         credentials: 'include'
       })

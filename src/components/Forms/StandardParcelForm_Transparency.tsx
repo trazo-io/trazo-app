@@ -499,10 +499,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   </StandardField>
 
                   <StandardField
-                    label="Area (acres)"
+                    label="Area (hectares)"
                     required
                     error={errors.area?.message}
-                    helpText="Provides scale context for consumers">
+                    helpText="Area in hectares - provides scale context for consumers and carbon calculations">
                     <Controller
                       name="area"
                       control={methods.control}

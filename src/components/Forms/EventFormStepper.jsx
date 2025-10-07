@@ -3,6 +3,11 @@ import { HStack, VStack, Circle, Text, Box, useColorModeValue } from '@chakra-ui
 import { FaCheckCircle } from 'react-icons/fa';
 
 const EventFormStepper = ({ steps, activeStep, completedSteps = [] }) => {
+  // Null safety for steps array
+  if (!steps || !Array.isArray(steps)) {
+    return null;
+  }
+  
   const activeColor = useColorModeValue('green.500', 'green.400');
   const inactiveColor = useColorModeValue('gray.300', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'white');

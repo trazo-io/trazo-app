@@ -101,11 +101,29 @@ export interface TransparencyDetailedView {
   };
 }
 
+// Timeline event structure for photo display
+export interface TimelineEvent {
+  id: string;
+  event_type: string;
+  date: string;
+  description: string;
+  hasAlbum: boolean;
+  album?: {
+    id: number;
+    images: Array<{
+      id: number;
+      image: string;
+      thumbnail?: string;
+    }>;
+  };
+}
+
 // Complete response structure
 export interface TransparencyResponse {
   quick_view: TransparencyQuickView;
   standard_view: TransparencyStandardView;
   detailed_view: TransparencyDetailedView;
+  timeline_events?: TimelineEvent[];  // Added timeline events for photo display
   api_version: string;
   response_timestamp: string;
   trazo_transparency_certified: boolean;
@@ -153,7 +171,7 @@ const transparencyQrApi = baseApi.injectEndpoints({
     // Ultra-fast mobile summary (< 1 second target)
     getTransparencySummary: build.query<TransparencySummary, string>({
       query: (productionId) => ({
-        url: `/history/transparency/${productionId}/summary/`,
+        url: `/transparency/${productionId}/summary/`,
         method: 'GET'
       }),
       providesTags: (result, error, id) => [{ type: 'TransparencySummary', id }]
@@ -162,7 +180,7 @@ const transparencyQrApi = baseApi.injectEndpoints({
     // Complete transparency data with progressive loading structure
     getTransparencyDetails: build.query<TransparencyResponse, string>({
       query: (productionId) => ({
-        url: `/history/transparency/${productionId}/`,
+        url: `/transparency/${productionId}/`,
         method: 'GET'
       }),
       providesTags: (result, error, id) => [{ type: 'TransparencyDetails', id }]
@@ -171,7 +189,7 @@ const transparencyQrApi = baseApi.injectEndpoints({
     // Consumer education about transparency scoring
     getTransparencyExplanation: build.query<TransparencyExplanation, void>({
       query: () => ({
-        url: `/history/transparency/explanation/`,
+        url: `/transparency/explanation/`,
         method: 'GET'
       }),
       providesTags: [{ type: 'TransparencyExplanation', id: 'explanation' }]

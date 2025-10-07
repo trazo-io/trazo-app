@@ -41,13 +41,54 @@ import {
   FaChevronLeft
 } from 'react-icons/fa';
 import { MdCheck } from 'react-icons/md';
+import { 
+  validateConcentration, 
+  ConcentrationFeedback, 
+  getFormatExamples 
+} from './ConcentrationValidation';
 
-// Form Schema
+// Map form values to validation codes
+const mapChemicalTypeToCode = (formType: string): string => {
+  const mapping: Record<string, string> = {
+    'fertilizer': 'FE',
+    'pesticide': 'PE', 
+    'herbicide': 'HE',
+    'fungicide': 'FU',
+    'insecticide': 'PE', // Insecticides use pesticide validation
+    'growth_regulator': 'PE' // Growth regulators use pesticide validation
+  };
+  return mapping[formType] || formType;
+};
+
+// Form Schema with Dynamic Concentration Validation
 const chemicalSchema = object({
   type: string().min(1, 'Chemical type is required'),
   commercialName: string().min(1, 'Commercial name is required'),
   activeIngredient: string().optional(),
-  concentration: number().min(0, 'Concentration must be positive').optional(),
+  concentration: string().min(1, 'Concentration is required for carbon calculations')
+    .refine((value, context) => {
+      // Safety checks for validation
+      if (!value || typeof value !== 'string') return false;
+      
+      // Get chemical type from context with fallback
+      const parent = context?.parent;
+      const chemicalType = parent?.type;
+      
+      // Skip validation if no chemical type selected yet
+      if (!chemicalType || typeof chemicalType !== 'string') return true;
+      
+      try {
+        // Map form value to validation code
+        const typeCode = mapChemicalTypeToCode(chemicalType);
+        const validation = validateConcentration(value, typeCode);
+        return validation.isValid;
+      } catch (error) {
+        console.error('Concentration validation error:', error);
+        return false;
+      }
+    }, {
+      message: 'Invalid concentration format for selected chemical type'
+    }),
   volume: number().min(0, 'Volume must be positive'),
   applicationRate: string().min(1, 'Application rate is required'),
   area: number().min(0, 'Area must be positive'),
@@ -65,7 +106,7 @@ interface ChemicalFormData {
   type: string;
   commercialName: string;
   activeIngredient?: string;
-  concentration?: number;
+  concentration: string; // Changed to string for dynamic validation
   volume: number;
   applicationRate: string;
   area: number;
@@ -111,7 +152,7 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
     defaultValues: {
       volume: 0,
       area: 0,
-      concentration: 0,
+      concentration: '',
       preHarvestInterval: 0,
       reentryInterval: 0,
       ...initialData
@@ -125,10 +166,16 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
     formState: { errors }
   } = methods;
 
-  // Watch form values for calculations
+  // Watch form values for calculations and validation
   const watchedType = watch('type');
   const watchedVolume = watch('volume');
   const watchedArea = watch('area');
+  const watchedConcentration = watch('concentration');
+  
+  // Real-time concentration validation
+  const concentrationValidation = watchedType && watchedConcentration 
+    ? validateConcentration(watchedConcentration, mapChemicalTypeToCode(watchedType))
+    : null;
 
   // Calculate carbon impact
   useEffect(() => {
@@ -160,7 +207,7 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
       onSubmit(data);
       toast({
         title: 'Chemical Application Recorded',
-        description: `Applied ${data.commercialName} to ${data.area} acres successfully recorded.`,
+        description: `Applied ${data.commercialName} to ${data.area} hectares successfully recorded.`,
         status: 'success',
         duration: 5000,
         isClosable: true
@@ -181,9 +228,24 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
     const formData = watch();
     switch (step) {
       case 0:
-        return formData.type && formData.commercialName && formData.volume && formData.area;
+        // Include concentration validation for step 0
+        const hasBasicFields = formData.type && formData.commercialName && formData.volume && formData.area && formData.concentration;
+        if (!hasBasicFields) return false;
+        
+        // Validate concentration format if all basic fields are present
+        try {
+          if (formData.type && formData.concentration) {
+            const typeCode = mapChemicalTypeToCode(formData.type);
+            const validation = validateConcentration(formData.concentration, typeCode);
+            return validation && validation.isValid === true;
+          }
+          return false;
+        } catch (error) {
+          console.error('Step validation error:', error);
+          return false;
+        }
       case 1:
-        return formData.applicationRate && formData.wayOfApplication;
+        return Boolean(formData.applicationRate && formData.wayOfApplication);
       case 2:
         return true; // Safety info is optional but recommended
       default:
@@ -203,7 +265,7 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
   };
 
   const nextStep = () => {
-    if (currentStep < steps.length - 1) {
+    if (currentStep < 2) { // We have 3 steps (0, 1, 2)
       setCurrentStep(currentStep + 1);
     }
   };
@@ -324,25 +386,59 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                   </StandardField>
                 </SimpleGrid>
 
-                {/* Concentration & Target */}
+                {/* Enhanced Concentration Field with Dynamic Validation */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
-                    label="Concentration %"
+                    label={
+                      <HStack spacing={2}>
+                        <Text>
+                          {mapChemicalTypeToCode(watchedType || '') === 'FE' ? 'NPK Ratio' :
+                           mapChemicalTypeToCode(watchedType || '') === 'PE' ? 'Pesticide Concentration' :
+                           mapChemicalTypeToCode(watchedType || '') === 'HE' ? 'Herbicide Concentration' :
+                           mapChemicalTypeToCode(watchedType || '') === 'FU' ? 'Fungicide Concentration' :
+                           'Concentration'}
+                        </Text>
+                        <Badge 
+                          size="sm" 
+                          colorScheme={concentrationValidation?.isValid ? 'green' : 'red'}
+                          variant={concentrationValidation ? 'solid' : 'outline'}
+                        >
+                          {mapChemicalTypeToCode(watchedType || '') === 'FE' ? 'NPK' :
+                           ['PE', 'HE', 'FU'].includes(mapChemicalTypeToCode(watchedType || '')) ? '%' :
+                           'Required'}
+                        </Badge>
+                      </HStack>
+                    }
+                    required
                     error={errors.concentration?.message}
-                    helpText="Active ingredient concentration"
+                    helpText={
+                      watchedType ? 
+                        `Enter ${mapChemicalTypeToCode(watchedType) === 'FE' ? 'NPK format (e.g., "10-10-10")' : 'percentage (e.g., "2.5%")'} for accurate carbon calculations` :
+                        'Select chemical type first'
+                    }
                   >
-                    <NumberInput
-                      value={watch('concentration') || 0}
-                      onChange={(_, num) => methods.setValue('concentration', num || 0)}
-                      max={100}
-                      min={0}
-                    >
-                      <NumberInputField borderRadius="lg" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
+                    <StandardInput
+                      {...methods.register('concentration')}
+                      placeholder={
+                        watchedType ? getFormatExamples(mapChemicalTypeToCode(watchedType))[0] || 'Enter concentration...' :
+                        'Select chemical type first...'
+                      }
+                      isDisabled={!watchedType}
+                      borderColor={
+                        concentrationValidation?.isValid ? 'green.300' :
+                        concentrationValidation && !concentrationValidation.isValid ? 'red.300' :
+                        undefined
+                      }
+                    />
+                    
+                    {/* Real-time Validation Feedback */}
+                    {watchedType && (
+                      <ConcentrationFeedback
+                        validation={concentrationValidation || { isValid: false, format: 'unknown', errors: [], suggestions: [] }}
+                        chemicalType={mapChemicalTypeToCode(watchedType)}
+                        concentration={watchedConcentration || ''}
+                      />
+                    )}
                   </StandardField>
 
                   <StandardField
@@ -412,11 +508,16 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                   >
                     <StandardSelect {...methods.register('wayOfApplication')}>
                       <option value="">Select method...</option>
-                      <option value="spray">Spray Application</option>
+                      <option value="spray">Boom Sprayer (Field Crops)</option>
+                      <option value="airblast">Airblast Sprayer (Orchards/Vineyards)</option>
+                      <option value="broadcast">Broadcast Application</option>
                       <option value="granular">Granular Broadcast</option>
                       <option value="injection">Soil Injection</option>
+                      <option value="drip_irrigation">Drip/Micro Irrigation System</option>
+                      <option value="foliar_spray">Foliar Spray (Mist Blower)</option>
                       <option value="drench">Soil Drench</option>
-                      <option value="aerial">Aerial Application</option>
+                      <option value="aerial">Aerial Application (Aircraft)</option>
+                      <option value="hand">Manual/Backpack Sprayer</option>
                       <option value="fumigation">Fumigation</option>
                     </StandardSelect>
                   </StandardField>
@@ -557,7 +658,7 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                   <SimpleGrid columns={2} spacing={2} fontSize="sm">
                     <Text>Chemical: {watch('commercialName') || 'Not specified'}</Text>
                     <Text>Volume: {watch('volume') || 0} gallons</Text>
-                    <Text>Area: {watch('area') || 0} acres</Text>
+                    <Text>Area: {watch('area') || 0} hectares</Text>
                     <Text>Method: {watch('wayOfApplication') || 'Not specified'}</Text>
                   </SimpleGrid>
                 </Box>

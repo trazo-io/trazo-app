@@ -16,7 +16,8 @@ import {
   Stack,
   useBreakpointValue,
   Link,
-  Progress
+  Progress,
+  SimpleGrid
 } from '@chakra-ui/react';
 import {
   FaLeaf,
@@ -31,7 +32,16 @@ import {
   FaCertificate,
   FaEye,
   FaClock,
-  FaCamera
+  FaCamera,
+  FaThermometerHalf,
+  FaTint,
+  FaWind,
+  FaFlask,
+  FaTractor,
+  FaSeedling as FaSeed,
+  FaBug,
+  FaRulerCombined,
+  FaCalendarDay
 } from 'react-icons/fa';
 import { MdVerified, MdEco, MdSecurity, MdOpenInNew } from 'react-icons/md';
 import { 
@@ -40,6 +50,7 @@ import {
   getSustainabilityImpact,
   getEventTrustIndicators 
 } from 'utils/eventDescriptions';
+import { getEventFieldDisplay, type EventFieldDisplay, type FieldDisplayItem } from 'utils/fieldDisplayUtils';
 import { StandardImageGallery } from 'components/ImageGallery';
 
 interface ConsumerEventCardProps {
@@ -98,6 +109,26 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const trustIndicators = getEventTrustIndicators(event);
   const formattedDate = formatEventDate(event.date);
   
+  // Get comprehensive field display data based on field display matrix
+  const fieldDisplay = getEventFieldDisplay(event);
+  
+  // DEBUG: Log field display data for production events
+  if (event.type?.startsWith('production.')) {
+    console.log('🔧 PRODUCTION EVENT FIELD DISPLAY DEBUG:', {
+      eventId: event.id,
+      eventType: event.type,
+      description: event.description,
+      area_covered: event.area_covered,
+      yield_quantity: event.yield_quantity,
+      fuel_consumed: event.fuel_consumed,
+      equipment_hours: event.equipment_hours,
+      fieldDisplay,
+      immediateFields: fieldDisplay.immediate,
+      secondaryFields: fieldDisplay.secondary,
+      fullEvent: event
+    });
+  }
+  
   // Enhanced blockchain verification processing
   const blockchainData = {
     verified: event.blockchain_verified || event.extra_data?.blockchain_verified || false,
@@ -152,6 +183,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     hasPhotos: photoVerification.hasPhotos
   });
 
+
   // Critical event types that require photo verification (matches backend logic)
   const requiresPhotoVerification = ['FE', 'PE', 'FU', 'HE', 'PL', 'HA'].includes(event.type);
 
@@ -168,6 +200,20 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   };
   
   const verificationLevel = getVerificationLevel();
+
+  // Helper function to get icon for field categories
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'weather': return FaThermometerHalf;
+      case 'application': return FaFlask;
+      case 'measurement': return FaRulerCombined;
+      case 'verification': return FaCertificate;
+      case 'environmental': return FaLeaf;
+      case 'operational': return FaTractor;
+      case 'documentation': return FaInfoCircle;
+      default: return FaInfoCircle;
+    }
+  };
 
   // Debug blockchain data for verified events
   if (blockchainData.verified && blockchainData.transaction) {
@@ -392,14 +438,17 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   </Tooltip>
                 )}
                 
-                {/* USDA verification badge */}
-                {event.usda_verified && (
+                {/* USDA verification badge - REMOVED to avoid duplication with EnhancedTrustIndicators */}
+                {/* USDA verification is already shown in the product header via EnhancedTrustIndicators */}
+                
+                {/* Photo verification badge */}
+                {photoVerification.hasPhotos && (
                   <Tooltip
-                    label="Carbon calculations verified against USDA emission factors and agricultural standards"
+                    label="Visual evidence provided with verified photos from the farm"
                     placement="top"
                   >
                     <Badge
-                      colorScheme="green"
+                      colorScheme="blue"
                       variant="solid"
                       fontSize="xs"
                       px={3}
@@ -407,8 +456,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       borderRadius="full"
                     >
                       <HStack spacing={1}>
-                        <Icon as={FaCertificate} boxSize={3} />
-                        <Text>USDA VERIFIED</Text>
+                        <Icon as={FaCamera} boxSize={3} />
+                        <Text>PHOTO VERIFIED</Text>
                       </HStack>
                     </Badge>
                   </Tooltip>
@@ -506,35 +555,171 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   </Text>
                 </Box>
                 
-                {/* Technical details if available */}
-                {(event.volume || event.area) && (
+                {/* Comprehensive Field Display - IMMEDIATE Priority Fields */}
+                {fieldDisplay.immediate.length > 0 && (
                   <Box>
-                    <HStack mb={1}>
-                      <Icon as={FaInfoCircle} color="gray.500" boxSize={4} />
-                      <Text fontWeight="semibold" fontSize="sm">
+                    <HStack mb={3}>
+                      <Icon as={FaRulerCombined} color="green.500" boxSize={4} />
+                      <Text fontWeight="bold" fontSize="sm" color="green.500">
+                        Key Details
+                      </Text>
+                    </HStack>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} pl={6}>
+                      {fieldDisplay.immediate.map((field, idx) => (
+                        <Box
+                          key={idx}
+                          p={3}
+                          bg={useColorModeValue('green.50', 'green.900')}
+                          borderRadius="lg"
+                          border="1px solid"
+                          borderColor={useColorModeValue('green.200', 'green.700')}
+                        >
+                          <HStack spacing={2} mb={1}>
+                            <Icon 
+                              as={getCategoryIcon(field.category)} 
+                              color="green.600" 
+                              boxSize={3} 
+                            />
+                            <Text fontSize="xs" fontWeight="bold" color="green.700">
+                              {field.label}
+                            </Text>
+                          </HStack>
+                          <Text fontSize="sm" color="green.800" fontWeight="medium">
+                            {field.value}
+                          </Text>
+                        </Box>
+                      ))}
+                    </SimpleGrid>
+                  </Box>
+                )}
+                
+                {/* Comprehensive Field Display - SECONDARY Priority Fields */}
+                {fieldDisplay.secondary.length > 0 && (
+                  <Box>
+                    <HStack mb={3}>
+                      <Icon as={FaInfoCircle} color="blue.500" boxSize={4} />
+                      <Text fontWeight="semibold" fontSize="sm" color="blue.500">
+                        Additional Information
+                      </Text>
+                    </HStack>
+                    <VStack align="stretch" spacing={2} pl={6}>
+                      {fieldDisplay.secondary.map((field, idx) => (
+                        <HStack key={idx} justify="space-between" flexWrap="wrap">
+                          <HStack spacing={2} minW="120px">
+                            <Icon 
+                              as={getCategoryIcon(field.category)} 
+                              color="blue.600" 
+                              boxSize={3} 
+                            />
+                            <Text fontSize="sm" fontWeight="medium" color="blue.700">
+                              {field.label}:
+                            </Text>
+                          </HStack>
+                          <Text fontSize="sm" color={mutedColor} flex="1" textAlign="right">
+                            {field.value}
+                          </Text>
+                        </HStack>
+                      ))}
+                    </VStack>
+                  </Box>
+                )}
+
+                {/* Technical details if available (legacy fallback) */}
+                {(event.volume || event.area || event.concentration || event.npk_ratio || 
+                  event.active_ingredient || event.application_method || event.target_pest_disease_need) && 
+                  fieldDisplay.immediate.length === 0 && (
+                  <Box>
+                    <HStack mb={4} spacing={2}>
+                      <Icon as={FaFlask} color="green.500" boxSize={4} />
+                      <Text fontWeight="600" fontSize="sm" color="gray.700">
+                        Application Details
+                      </Text>
+                    </HStack>
+                    
+                    {/* Modern grid layout for fields */}
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mb={4}>
+                      {(() => {
+                        const chemicalFields = getEventFieldDisplay(event);
+                        return [...chemicalFields.immediate, ...chemicalFields.secondary, ...chemicalFields.details].map((field, index) => (
+                          <Box 
+                            key={index} 
+                            p={3} 
+                            bg="gray.50" 
+                            borderRadius="lg" 
+                            border="1px solid" 
+                            borderColor="gray.100"
+                            _hover={{ borderColor: "green.200", bg: "green.50" }}
+                            transition="all 0.2s"
+                          >
+                            <Text fontSize="xs" fontWeight="500" color="gray.500" mb={1}>
+                              {field.label}
+                            </Text>
+                            <Text fontSize="sm" fontWeight="600" color="gray.700">
+                              {field.value}
+                            </Text>
+                          </Box>
+                        ));
+                      })()}
+                    </SimpleGrid>
+
+                    {/* Carbon impact with modern styling */}
+                    {event.carbon_impact && (
+                      <Box 
+                        p={4} 
+                        bg="green.50" 
+                        borderRadius="xl" 
+                        border="1px solid" 
+                        borderColor="green.200"
+                      >
+                        <HStack spacing={3}>
+                          <Circle size="40px" bg="green.100">
+                            <Icon as={FaGlobeAmericas} color="green.600" boxSize={5} />
+                          </Circle>
+                          <Box>
+                            <Text fontSize="sm" fontWeight="600" color="gray.700">
+                              Environmental Impact
+                            </Text>
+                            <Text fontSize="lg" fontWeight="bold" color="green.600">
+                              {event.carbon_impact.toFixed(2)} kg CO₂e
+                            </Text>
+                            <Text fontSize="xs" color="green.600">
+                              Carbon footprint data available for sustainability tracking
+                            </Text>
+                          </Box>
+                        </HStack>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+                
+                {/* Comprehensive Field Display - DETAILS Priority Fields */}
+                {fieldDisplay.details.length > 0 && (
+                  <Box>
+                    <HStack mb={3}>
+                      <Icon as={FaEye} color="gray.500" boxSize={4} />
+                      <Text fontWeight="semibold" fontSize="sm" color="gray.600">
                         Technical Details
                       </Text>
                     </HStack>
-                    <Stack spacing={1} pl={6}>
-                      {event.volume && (
-                        <Text fontSize="xs" color={mutedColor}>
-                          Amount applied: {event.volume}
-                        </Text>
-                      )}
-                      {event.area && (
-                        <Text fontSize="xs" color={mutedColor}>
-                          Coverage area: {event.area} hectares
-                        </Text>
-                      )}
-                      {event.carbon_impact && (
-                        <Text fontSize="xs" color={mutedColor}>
-                          Environmental impact: {event.carbon_impact.toFixed(2)} kg CO₂e
-                          <Text as="span" fontSize="xs" color="green.600" ml={2}>
-                            (Carbon footprint data available for sustainability tracking)
+                    <VStack align="stretch" spacing={1} pl={6}>
+                      {fieldDisplay.details.map((field, idx) => (
+                        <HStack key={idx} justify="space-between" flexWrap="wrap">
+                          <HStack spacing={2} minW="120px">
+                            <Icon 
+                              as={getCategoryIcon(field.category)} 
+                              color="gray.500" 
+                              boxSize={3} 
+                            />
+                            <Text fontSize="xs" color="gray.600">
+                              {field.label}:
+                            </Text>
+                          </HStack>
+                          <Text fontSize="xs" color={mutedColor} flex="1" textAlign="right">
+                            {field.value}
                           </Text>
-                        </Text>
-                      )}
-                    </Stack>
+                        </HStack>
+                      ))}
+                    </VStack>
                   </Box>
                 )}
                 

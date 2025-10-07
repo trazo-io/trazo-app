@@ -43,6 +43,7 @@ import {
   Radio,
   Stack
 } from '@chakra-ui/react';
+import { formatAreaWithBothUnits, normalizeAreaToHectares, type AreaMeasurement } from '../../utils/areaUnits';
 import {
   StandardPage,
   StandardCard,
@@ -969,10 +970,10 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   </StandardField>
 
                   <StandardField
-                    label="Area (acres)"
+                    label="Area (hectares)"
                     required
                     error={errors.area?.message}
-                    helpText="Total area in acres">
+                    helpText="Total area in hectares - carbon calculations require metric units">
                     <Controller
                       name="area"
                       control={methods.control}
@@ -980,10 +981,13 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                         <NumberInput
                           value={field.value || 0}
                           onChange={(_, num) => field.onChange(num || 0)}
-                          min={0.01}
+                          min={0.001}
                           step={0.1}
-                          precision={2}>
-                          <NumberInputField borderRadius="lg" />
+                          precision={3}>
+                          <NumberInputField 
+                            borderRadius="lg" 
+                            placeholder="e.g., 10.5 hectares (25.9 acres)"
+                          />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
                             <NumberDecrementStepper />

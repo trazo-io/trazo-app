@@ -37,13 +37,49 @@ import React, { useEffect, useRef, useState } from 'react';
 import { object, string } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
+import { 
+  validateConcentration, 
+  ConcentrationFeedback, 
+  getFormatExamples 
+} from 'components/Forms/ConcentrationValidation';
 
-// ENHANCED SCHEMA - Following Equipment/Soil/Pest enhanced patterns
+// ENHANCED SCHEMA - Following Equipment/Soil/Pest enhanced patterns with dynamic validation
 const formSchemaMainInfo = object({
   type: string().min(1, 'Chemical type is required'),
   commercial_name: string().min(2, 'Commercial name must be at least 2 characters'),
   active_ingredient: string().optional(),
-  concentration: string().min(1, 'Concentration/application rate is required'),
+  concentration: string().min(1, 'Concentration/application rate is required')
+    .refine((value, context) => {
+      console.log('[ChemicalTab] 🔍 Zod concentration validation called with:', { value, context });
+      
+      try {
+        // Safely access context and parent properties
+        const chemicalType = context?.parent?.type;
+        console.log('[ChemicalTab] 📝 Chemical type from context:', chemicalType);
+        
+        if (!chemicalType) {
+          console.log('[ChemicalTab] ⚠️ No chemical type, skipping validation');
+          return true; // Let type validation handle this
+        }
+        
+        const validation = validateConcentration(value, chemicalType);
+        console.log('[ChemicalTab] ✅ Validation result:', validation);
+        
+        // Check if validation object exists and has the expected structure
+        if (!validation) {
+          console.warn('[ChemicalTab] ⚠️ Validation returned null/undefined');
+          return false;
+        }
+        
+        return validation.isValid === true;
+      } catch (error) {
+        console.error('[ChemicalTab] ❌ Concentration validation error:', error);
+        console.error('[ChemicalTab] 📊 Error stack:', error.stack);
+        return false; // Fail validation if there's an error
+      }
+    }, {
+      message: 'Invalid concentration format for selected chemical type'
+    }),
   volume_applied: string().min(1, 'Volume applied is required').refine((val) => {
     const num = parseFloat(val);
     return !isNaN(num) && num > 0;
@@ -58,7 +94,7 @@ const formSchemaMainInfo = object({
   weather_conditions: string().optional(),
   application_timing: string().optional(),
   target_pest_disease: string().optional(),
-  observation: string().optional()
+  description: string().optional()
 });
 
 const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
@@ -80,7 +116,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
       weather_conditions: initialValues.weather_conditions || '',
       application_timing: initialValues.application_timing || '',
       target_pest_disease: initialValues.target_pest_disease || '',
-      observation: initialValues.observation || ''
+      description: initialValues.description || ''
     }
   });
 
@@ -143,7 +179,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
         weather_conditions: initialValues.weather_conditions || '',
         application_timing: initialValues.application_timing || '',
         target_pest_disease: initialValues.target_pest_disease || '',
-        observation: initialValues.observation || ''
+        description: initialValues.description || ''
       };
       
       console.log('[ChemicalTab] Calling methods.reset() with:', resetData);
@@ -167,6 +203,12 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
   const chemicalType = watch('type');
   const areaValue = watch('area_treated');
   const volumeValue = watch('volume_applied');
+  const concentrationValue = watch('concentration');
+  
+  // Real-time concentration validation
+  const concentrationValidation = chemicalType && concentrationValue 
+    ? validateConcentration(concentrationValue, chemicalType)
+    : null;
 
   // Real-time carbon calculation updates - only when sufficient data present
   const watchedFields = watch(['type', 'volume_applied', 'area_treated', 'concentration']);
@@ -207,6 +249,10 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
   }, [watchedFields, onDataChange, methods]);
 
   const onSubmit = (data) => {
+    console.log('[ChemicalTab] 🚀 onSubmit called with data:', data);
+    console.log('[ChemicalTab] 🔍 Form validation errors:', errors);
+    console.log('[ChemicalTab] 📝 Form values from getValues():', methods.getValues());
+    
     // Process numeric data and map frontend field names to backend field names
     const {
       // Remove frontend-only field names to avoid confusion
@@ -233,7 +279,14 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
     };
     
     console.log('[ChemicalTab] Submitting with backend field names:', processedData);
-    onSubmitHandler(processedData);
+    console.log('[ChemicalTab] 🎯 About to call onSubmitHandler...');
+    
+    try {
+      const result = onSubmitHandler(processedData);
+      console.log('[ChemicalTab] ✅ onSubmitHandler returned:', result);
+    } catch (error) {
+      console.error('[ChemicalTab] ❌ onSubmitHandler error:', error);
+    }
   };
 
   // Calculate application rate for validation
@@ -354,7 +407,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
           >
             <VStack spacing={4} align="stretch">
               
-              <HStack spacing={4} align="end">
+              <HStack spacing={4} align="top">
                 <StandardField
                   label="Volume Applied"
                   required
@@ -380,6 +433,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 <StandardField
                   label="Unit"
                   flex={1}
+                  mt="0px"
                 >
                   <Controller
                     name="volume_unit"
@@ -396,7 +450,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 </StandardField>
               </HStack>
 
-              <HStack spacing={4} align="end">
+              <HStack spacing={4} align="top">
                 <StandardField
                   label="Area Treated"
                   required
@@ -422,6 +476,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 <StandardField
                   label="Unit"
                   flex={1}
+                  mt="0px"
                 >
                   <Controller
                     name="area_unit"
@@ -438,19 +493,65 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
               </HStack>
 
               <StandardField
-                label="Concentration / Application Rate"
+                label={
+                  <HStack spacing={2}>
+                    <Text>
+                      {chemicalType === 'FE' ? 'NPK Ratio' :
+                       chemicalType === 'PE' ? 'Pesticide Concentration' :
+                       chemicalType === 'HE' ? 'Herbicide Concentration' :
+                       chemicalType === 'FU' ? 'Fungicide Concentration' :
+                       'Concentration / Application Rate'}
+                    </Text>
+                    <Badge 
+                      size="sm" 
+                      colorScheme={concentrationValidation?.isValid ? 'green' : 'red'}
+                      variant={concentrationValidation ? 'solid' : 'outline'}
+                    >
+                      {chemicalType === 'FE' ? 'NPK' :
+                       ['PE', 'HE', 'FU'].includes(chemicalType) ? '%' :
+                       'Required'}
+                    </Badge>
+                  </HStack>
+                }
                 required
                 error={errors.concentration?.message}
-                helpText="Product concentration or application rate for carbon calculations"
+                helpText={
+                  chemicalType ? 
+                    `Enter ${chemicalType === 'FE' ? 'NPK format (e.g., "10-10-10")' : 'percentage (e.g., "2.5%")'} for accurate carbon calculations` :
+                    'Select chemical type first for format guidance'
+                }
               >
                 <Controller
                   name="concentration"
                   control={methods.control}
                   render={({ field }) => (
-                    <StandardInput
-                      {...field}
-                      placeholder="e.g., 10-10-10, 2.5%, 1 kg/ha"
-                    />
+                    <VStack spacing={2} align="stretch">
+                      <StandardInput
+                        {...field}
+                        placeholder={
+                          chemicalType === 'FE' ? getFormatExamples('FE')[0] :
+                          chemicalType === 'PE' ? getFormatExamples('PE')[0] :
+                          chemicalType === 'HE' ? getFormatExamples('HE')[0] :
+                          chemicalType === 'FU' ? getFormatExamples('FU')[0] :
+                          'Select chemical type first...'
+                        }
+                        isDisabled={!chemicalType}
+                        borderColor={
+                          concentrationValidation?.isValid ? 'green.300' :
+                          concentrationValidation && !concentrationValidation.isValid ? 'red.300' :
+                          undefined
+                        }
+                      />
+                      
+                      {/* Real-time Validation Feedback */}
+                      {chemicalType && (
+                        <ConcentrationFeedback
+                          validation={concentrationValidation || { isValid: false, format: 'unknown', errors: [], suggestions: [] }}
+                          chemicalType={chemicalType}
+                          concentration={concentrationValue || ''}
+                        />
+                      )}
+                    </VStack>
                   )}
                 />
               </StandardField>
@@ -555,11 +656,11 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
           {/* Section 4: Documentation & Notes */}
           <StandardField 
             label="Documentation & Consumer Context"
-            error={errors.observation?.message}
+            error={errors.description?.message}
             helpText="Additional details about this chemical application for transparency"
           >
             <Controller
-              name="observation"
+              name="description"
               control={methods.control}
               render={({ field }) => (
                 <StandardTextarea
@@ -587,6 +688,11 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 type="submit"
                 rightIcon={<FaChevronRight />}
                 size="lg"
+                onClick={() => {
+                  console.log('[ChemicalTab] 🖱️ Continue button clicked!');
+                  console.log('[ChemicalTab] 📊 Current form state:', methods.formState);
+                  console.log('[ChemicalTab] ❗ Form errors before submit:', errors);
+                }}
               >
                 {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
               </StandardButton>

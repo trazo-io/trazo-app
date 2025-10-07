@@ -1077,9 +1077,9 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   </StandardField>
 
                   <StandardField
-                    label="Total Acreage"
+                    label="Total Area (Hectares)"
                     error={errors.totalAcreage?.message}
-                    helpText="Total land area in acres"
+                    helpText="Total land area in hectares - used for agricultural reporting and carbon calculations"
                   >
                     <Controller
                       name="totalAcreage"
