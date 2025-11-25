@@ -42,7 +42,7 @@ const formSchemaMainInfo = object({
   observation: string().optional()
 });
 
-const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
+const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
   const intl = useIntl();
   const { isOpen: isAdvancedOpen, onToggle: onAdvancedToggle } = useDisclosure();
 
@@ -86,6 +86,16 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
 
   const businessType = watch('business_type');
   const verificationStatus = watch('verification_status');
+  
+  // Watch all form fields for real-time updates
+  const allValues = watch();
+  
+  // Call onDataChange whenever form values change (for real-time preview updates)
+  useEffect(() => {
+    if (onDataChange && Object.keys(allValues).length > 0) {
+      onDataChange(allValues);
+    }
+  }, [allValues]); // FIXED: Removed onDataChange to prevent infinite loop
 
   // Business events do NOT trigger carbon calculations
   // These are administrative/documentation events, not direct agricultural activities
@@ -319,27 +329,29 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
             />
           </StandardField>
 
-          {/* Navigation */}
-          <Box pt={4} mt={4} borderTop="1px" borderColor="gray.200">
-            <HStack justify="space-between">
-              <StandardButton
-                variant="outline"
-                onClick={onPrev}
-                leftIcon={<FaChevronLeft />}
-                size="lg"
-              >
-                {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </StandardButton>
-              <StandardButton
-                variant="primary"
-                type="submit"
-                rightIcon={<FaChevronRight />}
-                size="lg"
-              >
-                {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </StandardButton>
-            </HStack>
-          </Box>
+          {/* Navigation - Hidden when hideActions is true */}
+          {!hideActions && (
+            <Box pt={4} mt={4} borderTop="1px" borderColor="gray.200">
+              <HStack justify="space-between">
+                <StandardButton
+                  variant="outline"
+                  onClick={onPrev}
+                  leftIcon={<FaChevronLeft />}
+                  size="lg"
+                >
+                  {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                </StandardButton>
+                <StandardButton
+                  variant="primary"
+                  type="submit"
+                  rightIcon={<FaChevronRight />}
+                  size="lg"
+                >
+                  {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                </StandardButton>
+              </HStack>
+            </Box>
+          )}
         </VStack>
       </form>
     </FormProvider>

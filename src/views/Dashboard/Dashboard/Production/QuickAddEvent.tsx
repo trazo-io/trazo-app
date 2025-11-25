@@ -749,8 +749,17 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     // Handle the actual data structure from VoiceEventCapture
     if (eventType === 'production') {
       // For production events, use the production_type field
+      const productionType = eventData.production_type || 'IR';
+      const productionTypeNames = {
+        'IR': 'Irrigation Event',
+        'HA': 'Harvest Event',
+        'PL': 'Planting Event', 
+        'PR': 'Pruning Event'
+      };
       return {
-        type: eventData.production_type || 'IR', // Use production_type from VoiceEventCapture
+        type: productionType, // Use production_type from VoiceEventCapture
+        production_name: productionTypeNames[productionType] || `${eventData.description || 'Production Event'}`,
+        name: productionTypeNames[productionType] || `${eventData.description || 'Production Event'}`,
         observation:
           eventData.observation ||
           `Production activity: ${eventData.description || 'Not specified'}`
@@ -904,14 +913,25 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         };
       } else if (eventType === 2) {
         // Production
+        const productionType = aiCategory?.includes('irrigation')
+          ? 'IR'
+          : aiCategory?.includes('harvest')
+          ? 'HA'
+          : aiCategory?.includes('pruning')
+          ? 'PR'
+          : 'IR'; // Default to irrigation
+        
+        const productionTypeNames = {
+          'IR': 'Irrigation Operation',
+          'HA': 'Harvest Operation',
+          'PL': 'Planting Operation', 
+          'PR': 'Pruning Operation'
+        };
+        
         return {
-          type: aiCategory?.includes('irrigation')
-            ? 'IR'
-            : aiCategory?.includes('harvest')
-            ? 'HA'
-            : aiCategory?.includes('pruning')
-            ? 'PR'
-            : 'IR', // Default to irrigation
+          type: productionType,
+          production_name: productionTypeNames[productionType] || template.name.replace('🤖 ', ''),
+          name: productionTypeNames[productionType] || template.name.replace('🤖 ', ''),
           observation: `AI-suggested ${template.name}: ${template.description}`
         };
       } else if (eventType === 4) {
@@ -949,17 +969,37 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     } else if (template.id.includes('irrigation')) {
       return {
         type: 'IR',
+        production_name: 'Irrigation Operation',
+        name: 'Irrigation Operation',
         observation: 'Standard irrigation cycle'
       };
     } else if (template.id.includes('harvest')) {
       return {
         type: 'HA',
+        production_name: 'Harvest Operation',
+        name: 'Harvest Operation',
         observation: 'Harvest operation'
       };
     } else if (template.id.includes('pruning')) {
       return {
         type: 'PR',
+        production_name: 'Pruning Operation',
+        name: 'Pruning Operation',
         observation: 'Pruning operation'
+      };
+    } else if (template.id.includes('planting') || template.id.includes('seeding')) {
+      return {
+        type: 'PL',
+        production_name: 'Planting Operation',
+        name: 'Planting Operation',
+        observation: 'Planting/seeding operation'
+      };
+    } else if (template.id.includes('soil')) {
+      return {
+        type: 'SO',
+        production_name: 'Soil Operation',
+        name: 'Soil Operation',
+        observation: 'Soil management operation'
       };
     }
     return {};
@@ -980,10 +1020,10 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         2: ['type'], // Production - other fields are optional but encouraged
         4: ['type', 'equipment_name', 'fuel_amount', 'hours_used'], // Equipment
         5: ['type'], // Soil Management - specific fields should come from form inputs
-        7: ['type'], // Pest Management - specific fields should come from form inputs
+        6: ['type'], // Pest Management - specific fields should come from form inputs
+        7: ['type'], // Business Activity - specific fields should come from form inputs
         0: ['type'], // Weather
-        3: ['name'], // General
-        6: ['type'] // Business
+        3: ['name'] // General
       };
 
       const requiredFields = requiredFieldsByType[eventType] || [];

@@ -94,10 +94,10 @@ const formSchemaMainInfo = object({
   weather_conditions: string().optional(),
   application_timing: string().optional(),
   target_pest_disease: string().optional(),
-  description: string().optional()
+  observation: string().optional()
 });
 
-const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
+const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
   const intl = useIntl();
   const [hasInitialized, setHasInitialized] = useState(false);
 
@@ -116,7 +116,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
       weather_conditions: initialValues.weather_conditions || '',
       application_timing: initialValues.application_timing || '',
       target_pest_disease: initialValues.target_pest_disease || '',
-      description: initialValues.description || ''
+      observation: initialValues.observation || ''
     }
   });
 
@@ -165,21 +165,25 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
         commercial_name: initialValues.commercial_name || initialValues.name || '',
         active_ingredient: initialValues.active_ingredient || '',
         concentration: initialValues.concentration || '',
-        // FIXED: Use correct backend field names for form population
-        volume_applied: initialValues.volume !== undefined && initialValues.volume !== null 
-          ? initialValues.volume.toString() 
-          : '',
+        // FIXED: Use correct backend field names for form population - check both possible field names
+        volume_applied: (initialValues.volume_applied !== undefined && initialValues.volume_applied !== null) 
+          ? initialValues.volume_applied.toString()
+          : (initialValues.volume !== undefined && initialValues.volume !== null) 
+            ? initialValues.volume.toString() 
+            : '',
         volume_unit: initialValues.volume_unit || 'L',
-        area_treated: initialValues.area !== undefined && initialValues.area !== null
-          ? initialValues.area.toString()
-          : '',
+        area_treated: (initialValues.area_treated !== undefined && initialValues.area_treated !== null)
+          ? initialValues.area_treated.toString()
+          : (initialValues.area !== undefined && initialValues.area !== null)
+            ? initialValues.area.toString()
+            : '',
         area_unit: initialValues.area_unit || 'ha',
         application_method: initialValues.way_of_application || '',
         // Environmental context fields for transparency
         weather_conditions: initialValues.weather_conditions || '',
         application_timing: initialValues.application_timing || '',
         target_pest_disease: initialValues.target_pest_disease || '',
-        description: initialValues.description || ''
+        observation: initialValues.observation || ''
       };
       
       console.log('[ChemicalTab] Calling methods.reset() with:', resetData);
@@ -211,7 +215,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
     : null;
 
   // Real-time carbon calculation updates - only when sufficient data present
-  const watchedFields = watch(['type', 'volume_applied', 'area_treated', 'concentration']);
+  const watchedFields = watch(['type', 'volume_applied', 'volume_unit', 'area_treated', 'area_unit', 'concentration']);
   const previousValuesRef = useRef({});
 
   useEffect(() => {
@@ -219,13 +223,15 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
         
-        // Only trigger carbon calculation when we have complete data
-        if (currentValues.type && 
-            currentValues.volume_applied && 
-            currentValues.area_treated && 
-            currentValues.concentration) {
+        // FIXED: Always save form data for persistence, regardless of completeness
+        // This ensures Volume Applied and Area Treated values persist when navigating between steps
+        if (currentValues.volume_applied || 
+            currentValues.area_treated || 
+            currentValues.type || 
+            currentValues.concentration ||
+            currentValues.commercial_name) {
           
-          const relevantFields = ['type', 'volume_applied', 'area_treated', 'concentration', 'application_method'];
+          const relevantFields = ['type', 'commercial_name', 'active_ingredient', 'volume_applied', 'volume_unit', 'area_treated', 'area_unit', 'concentration', 'application_method', 'weather_conditions', 'application_timing', 'target_pest_disease', 'observation'];
           const currentRelevantValues = {};
           relevantFields.forEach((field) => {
             currentRelevantValues[field] = currentValues[field];
@@ -237,6 +243,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
             previousValuesRef.current = currentRelevantValues;
             try {
               onDataChange(currentValues);
+              console.log('[ChemicalTab]: 💾 Saved form data for persistence:', currentValues);
             } catch (error) {
               console.error('[ChemicalTab]: Error calling onDataChange:', error);
             }
@@ -246,7 +253,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, methods]);
+  }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
   const onSubmit = (data) => {
     console.log('[ChemicalTab] 🚀 onSubmit called with data:', data);
@@ -268,14 +275,20 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
     
     const processedData = {
       ...filteredData,
-      // Map frontend field names to backend field names
-      volume: volume_applied ? parseFloat(volume_applied) : undefined,
-      area: area_treated ? parseFloat(area_treated) : undefined,
+      // Map frontend field names to backend field names - ensure required fields are always strings
+      volume: volume_applied ? `${volume_applied} ${data.volume_unit}` : '',
+      area: area_treated ? `${area_treated} ${data.area_unit}` : '',
       way_of_application: application_method || '',
-      // Include environmental context fields for transparency
-      weather_conditions: weather_conditions || '',
-      application_timing: application_timing || '',
-      target_pest_disease: target_pest_disease || '',
+      // Store enhanced fields in extra_data for backend compatibility
+      extra_data: {
+        // Unit fields for carbon calculation accuracy
+        volume_unit: data.volume_unit || '',
+        area_unit: data.area_unit || '',
+        // Environmental context fields for transparency
+        weather_conditions: weather_conditions || '',
+        application_timing: application_timing || '',
+        target_pest_disease: target_pest_disease || '',
+      }
     };
     
     console.log('[ChemicalTab] Submitting with backend field names:', processedData);
@@ -391,20 +404,23 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
           </StandardCard>
 
           {/* Section 2: Application Details & Carbon Calculation Data */}
-          <StandardCard
-            title={
-              <HStack>
-                <Icon as={FaCalculator} color="green.500" />
-                <Text>Application Rate & Coverage</Text>
-                <Badge colorScheme="green" size="sm">Carbon Calculation</Badge>
+          <Box mb={6} p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
+            <HStack justify="space-between" align="center" mb={4}>
+              <Text fontSize="md" fontWeight="bold" color="green.600">
+                <Icon as={FaCalculator} mr={2} />
+                Application Rate & Coverage
+              </Text>
+              <HStack spacing={2}>
+                <Badge colorScheme="green" fontSize="xs">
+                  Carbon Calculation
+                </Badge>
                 {applicationRate && (
-                  <Badge colorScheme="blue" size="sm" ml={2}>
+                  <Badge colorScheme="blue" fontSize="xs">
                     {applicationRate} L/ha
                   </Badge>
                 )}
               </HStack>
-            }
-          >
+            </HStack>
             <VStack spacing={4} align="stretch">
               
               <HStack spacing={4} align="top">
@@ -425,6 +441,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                         step="0.1"
                         min="0"
                         placeholder="0.0"
+                        bg="white"
                       />
                     )}
                   />
@@ -439,7 +456,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                     name="volume_unit"
                     control={methods.control}
                     render={({ field }) => (
-                      <StandardSelect {...field}>
+                      <StandardSelect {...field} bg="white">
                         <option value="L">Liters (L)</option>
                         <option value="gal">Gallons</option>
                         <option value="kg">Kilograms</option>
@@ -468,6 +485,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                         step="0.01"
                         min="0"
                         placeholder="0.00"
+                        bg="white"
                       />
                     )}
                   />
@@ -482,7 +500,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                     name="area_unit"
                     control={methods.control}
                     render={({ field }) => (
-                      <StandardSelect {...field}>
+                      <StandardSelect {...field} bg="white">
                         <option value="ha">Hectares (ha)</option>
                         <option value="acres">Acres</option>
                         <option value="m2">Square meters</option>
@@ -536,6 +554,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                           'Select chemical type first...'
                         }
                         isDisabled={!chemicalType}
+                        bg="white"
                         borderColor={
                           concentrationValidation?.isValid ? 'green.300' :
                           concentrationValidation && !concentrationValidation.isValid ? 'red.300' :
@@ -556,6 +575,7 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                 />
               </StandardField>
 
+
               <StandardField
                 label="Application Method"
                 required
@@ -566,20 +586,79 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                   name="application_method"
                   control={methods.control}
                   render={({ field }) => (
-                    <StandardSelect {...field}>
+                    <StandardSelect {...field} bg="white">
                       <option value="">Select application method...</option>
-                      <option value="spray">🌊 Spray Application</option>
-                      <option value="broadcast">📡 Broadcast Spreading</option>
-                      <option value="drip">💧 Drip Irrigation</option>
-                      <option value="foliar">🌿 Foliar Application</option>
-                      <option value="soil_injection">💉 Soil Injection</option>
-                      <option value="granular">🌾 Granular Application</option>
+                      
+                      {/* Fertilizer-specific methods */}
+                      {chemicalType === 'FE' && (
+                        <>
+                          <option value="broadcast_surface">📡 Broadcast Surface - Uniform spreading</option>
+                          <option value="broadcast_incorporated">📡 Broadcast Incorporated - Mixed into soil</option>
+                          <option value="band_placement">📏 Band Placement - Precise placement</option>
+                          <option value="side_dress">🌱 Side Dress - Growing season application</option>
+                          <option value="fertigation">💧 Fertigation - Through irrigation</option>
+                          <option value="foliar_feed">🌿 Foliar Feed - Leaf application</option>
+                          <option value="soil_injection_liquid">💉 Soil Injection - Liquid fertilizer</option>
+                          <option value="granular_spreader">🌾 Granular Spreader - Mechanical application</option>
+                        </>
+                      )}
+                      
+                      {/* Pesticide-specific methods */}
+                      {chemicalType === 'PE' && (
+                        <>
+                          <option value="spray_broadcast">🌊 Spray Broadcast - Full coverage</option>
+                          <option value="spray_targeted">🎯 Spray Targeted - Spot treatment</option>
+                          <option value="spray_banded">📏 Spray Banded - Row treatment</option>
+                          <option value="soil_incorporation">🔄 Soil Incorporation - Mixed into soil</option>
+                          <option value="seed_treatment">🌱 Seed Treatment - Pre-planting</option>
+                          <option value="systemic_drench">💧 Systemic Drench - Root uptake</option>
+                          <option value="granular_surface">🌾 Granular Surface - Soil surface</option>
+                        </>
+                      )}
+                      
+                      {/* Herbicide-specific methods */}
+                      {chemicalType === 'HE' && (
+                        <>
+                          <option value="pre_emergent_spray">🌱 Pre-Emergent Spray - Before weeds emerge</option>
+                          <option value="post_emergent_spray">🌿 Post-Emergent Spray - After weeds emerge</option>
+                          <option value="spot_treatment">🎯 Spot Treatment - Targeted application</option>
+                          <option value="broadcast_spray">🌊 Broadcast Spray - Full field coverage</option>
+                          <option value="band_spray">📏 Band Spray - Row treatment</option>
+                          <option value="soil_incorporation">🔄 Soil Incorporation - Mixed into soil</option>
+                          <option value="granular_preemergent">🌾 Granular Pre-Emergent - Soil surface</option>
+                        </>
+                      )}
+                      
+                      {/* Fungicide-specific methods */}
+                      {chemicalType === 'FU' && (
+                        <>
+                          <option value="foliar_spray">🌿 Foliar Spray - Leaf surface treatment</option>
+                          <option value="soil_drench">💧 Soil Drench - Root zone treatment</option>
+                          <option value="seed_treatment">🌱 Seed Treatment - Preventive coating</option>
+                          <option value="trunk_injection">💉 Trunk Injection - Tree treatment</option>
+                          <option value="dusting">💨 Dusting - Powder application</option>
+                          <option value="systemic_spray">🔄 Systemic Spray - Internal protection</option>
+                          <option value="granular_soil">🌾 Granular Soil - Soil application</option>
+                        </>
+                      )}
+                      
+                      {/* Generic methods for any type or when no type selected */}
+                      {!chemicalType && (
+                        <>
+                          <option value="spray">🌊 Spray Application</option>
+                          <option value="broadcast">📡 Broadcast Spreading</option>
+                          <option value="drip">💧 Drip/Irrigation</option>
+                          <option value="foliar">🌿 Foliar Application</option>
+                          <option value="soil_injection">💉 Soil Injection</option>
+                          <option value="granular">🌾 Granular Application</option>
+                        </>
+                      )}
                     </StandardSelect>
                   )}
                 />
               </StandardField>
             </VStack>
-          </StandardCard>
+          </Box>
 
           {/* Section 3: Environmental Context & Transparency */}
           <StandardCard
@@ -653,51 +732,63 @@ const ChemicalTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
             </VStack>
           </StandardCard>
 
-          {/* Section 4: Documentation & Notes */}
-          <StandardField 
-            label="Documentation & Consumer Context"
-            error={errors.description?.message}
-            helpText="Additional details about this chemical application for transparency"
+          {/* Section 4: Farmer's Field Notes */}
+          <StandardCard
+            title={
+              <HStack>
+                <Icon as={FaSeedling} color="green.500" />
+                <Text>Farmer's Field Notes & Consumer Transparency</Text>
+                <Badge colorScheme="green" size="sm">Consumer Transparency</Badge>
+              </HStack>
+            }
           >
+            <StandardField 
+              label="Operation Notes & Observations"
+              error={errors.observation?.message}
+              helpText="Share details about this chemical application that help consumers understand your farming practices"
+            >
             <Controller
-              name="description"
+              name="observation"
               control={methods.control}
               render={({ field }) => (
                 <StandardTextarea
                   {...field}
-                  placeholder="e.g., Organic-certified fertilizer applied following IPM guidelines, reduced application rate by 20% using precision agriculture..."
-                  rows={3}
+                  placeholder="Optional: Describe the purpose of this chemical application, environmental conditions, safety measures taken, or any observations that consumers might find valuable."
+                  rows={4}
                 />
               )}
             />
-          </StandardField>
+            </StandardField>
+          </StandardCard>
 
           {/* Navigation */}
-          <Box pt={4} mt={4} borderTop="1px" borderColor="gray.200">
-            <HStack justify="space-between">
-              <StandardButton
-                variant="outline"
-                onClick={onPrev}
-                leftIcon={<FaChevronLeft />}
-                size="lg"
-              >
-                {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </StandardButton>
-              <StandardButton
-                variant="primary"
-                type="submit"
-                rightIcon={<FaChevronRight />}
-                size="lg"
-                onClick={() => {
-                  console.log('[ChemicalTab] 🖱️ Continue button clicked!');
-                  console.log('[ChemicalTab] 📊 Current form state:', methods.formState);
-                  console.log('[ChemicalTab] ❗ Form errors before submit:', errors);
-                }}
-              >
-                {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </StandardButton>
-            </HStack>
-          </Box>
+          {!hideActions && (
+            <Box pt={4} mt={4} borderTop="1px" borderColor="gray.200">
+              <HStack justify="space-between">
+                <StandardButton
+                  variant="outline"
+                  onClick={onPrev}
+                  leftIcon={<FaChevronLeft />}
+                  size="lg"
+                >
+                  {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                </StandardButton>
+                <StandardButton
+                  variant="primary"
+                  type="submit"
+                  rightIcon={<FaChevronRight />}
+                  size="lg"
+                  onClick={() => {
+                    console.log('[ChemicalTab] 🖱️ Continue button clicked!');
+                    console.log('[ChemicalTab] 📊 Current form state:', methods.formState);
+                    console.log('[ChemicalTab] ❗ Form errors before submit:', errors);
+                  }}
+                >
+                  {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                </StandardButton>
+              </HStack>
+            </Box>
+          )}
         </VStack>
       </form>
     </FormProvider>

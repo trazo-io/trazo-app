@@ -36,23 +36,15 @@ const baseQuery = fetchBaseQuery({
 
     // Get and set CSRF token
     const csrfToken = getCookie(config.CSRF_COOKIE_NAME);
-    console.log('🔒 CSRF: Looking for CSRF token. Cookie name:', config.CSRF_COOKIE_NAME, 'Found:', !!csrfToken);
-    console.log('🔒 CSRF: All cookies:', document.cookie);
+
     if (csrfToken) {
       headers.set(config.CSRF_HEADER_KEY, csrfToken);
-      console.log('🔒 CSRF: Added CSRF token to headers:', csrfToken.substring(0, 10) + '...');
-    } else {
-      console.log('🔒 CSRF: No CSRF token found - request may fail CSRF validation');
-      console.log('🔒 CSRF: Available cookie names:', document.cookie.split(';').map(c => c.trim().split('=')[0]));
     }
 
     // Add consent header for cross-origin scenarios where cookies might not work
     const analyticsConsent = localStorage.getItem('trazo-analytics-consent');
     if (analyticsConsent === 'true') {
       headers.set('X-Analytics-Consent', 'true');
-      console.log('🔒 CONSENT: Added analytics consent header from localStorage');
-    } else {
-      console.log('🔒 CONSENT: No analytics consent found in localStorage');
     }
 
     return headers;
@@ -102,7 +94,7 @@ function handleAuthRedirect(currentPath: string): void {
   // Validate the current path to prevent open redirect attacks
   const safePath = validateRedirectUrl(currentPath) || '/admin/dashboard';
   const fullCurrentPath = safePath + window.location.search;
-  
+
   // Create secure redirect URL with validated next parameter
   const redirectUrl = isProtectedRoute(safePath)
     ? createSafeRedirectUrl('/auth/signin', fullCurrentPath)
@@ -140,7 +132,6 @@ async function attemptTokenRefresh(api: BaseQueryApi, extraOptions: any): Promis
   try {
     const refreshToken = TokenManager.getRefreshToken();
     if (!refreshToken) {
-      console.log('🔒 ERROR: No refresh token found');
       return false;
     }
 
@@ -162,7 +153,6 @@ async function attemptTokenRefresh(api: BaseQueryApi, extraOptions: any): Promis
       if (refreshResult.data?.refresh) {
         TokenManager.setRefreshToken(refreshResult.data.refresh);
       }
-      console.log('🔒 REFRESH: New tokens stored via TokenManager');
     }
 
     return !!refreshResult.data;
@@ -183,7 +173,6 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
 
   // SECURITY: Use secure token storage instead of localStorage
   let token = TokenManager.getAccessToken();
-  console.log('🔒 FETCH: Retrieved token from TokenManager. Found:', !!token);
 
   // Check if we have a token and if it might be expired (simple check)
   if (token && !args.url?.includes('auth/')) {
@@ -195,24 +184,20 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
         const expirationTime = payload.exp * 1000; // Convert to milliseconds
         const currentTime = Date.now();
         const timeUntilExpiry = expirationTime - currentTime;
-        
+
         // If token expires in less than 30 seconds, refresh it preemptively
         if (timeUntilExpiry < 30000) {
-          console.log('🔒 TOKEN: Token expires in', Math.floor(timeUntilExpiry / 1000), 'seconds - refreshing preemptively');
-          
           if (!mutex.isLocked()) {
             const release = await mutex.acquire();
             try {
               const refreshSuccess = await attemptTokenRefresh(api, extraOptions);
               if (refreshSuccess) {
                 token = TokenManager.getAccessToken();
-                console.log('🔒 TOKEN: Preemptive refresh successful');
               }
             } finally {
               release();
             }
           } else {
-            console.log('🔒 TOKEN: Waiting for ongoing refresh');
             await mutex.waitForUnlock();
             token = TokenManager.getAccessToken();
           }
@@ -222,12 +207,9 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
       console.log('🔒 TOKEN: Error checking token expiration:', error);
     }
   }
-  console.log('🔒 FETCH: Getting token for request to', args.url, 'Token found:', !!token, 'Length:', token?.length || 0);
+
   if (token) {
     args.headers = { ...args.headers, Authorization: `Bearer ${token}` };
-    console.log('🔒 FETCH: Added Authorization header');
-  } else {
-    console.log('🔒 FETCH: No token found, request will be unauthenticated');
   }
 
   let result = await baseQuery(args, api, extraOptions);
@@ -246,11 +228,8 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
 
     // Handle authentication errors (401)
     if (status === 401) {
-      console.log('🔒 ERROR: 401 Unauthorized for', args.url, 'Error:', errorData);
-      
       // Check for specific authentication error messages
       if (errorData?.detail === 'Authentication credentials were not provided.') {
-        console.log('🔒 ERROR: Authentication credentials not provided - clearing tokens');
         // SECURITY: Clear any invalid tokens
         TokenManager.clearTokens();
         handleAuthRedirect(currentPath);
@@ -259,8 +238,6 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
 
       // Handle token validation errors - attempt refresh for any 401
       if (errorData?.code === 'token_not_valid' || status === 401) {
-        console.log('🔒 401 ERROR: Attempting token refresh for', args.url);
-        
         // Use mutex to prevent multiple refresh attempts
         if (!mutex.isLocked()) {
           const release = await mutex.acquire();
@@ -269,11 +246,9 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
             const refreshSuccess = await attemptTokenRefresh(api, extraOptions);
 
             if (refreshSuccess) {
-              console.log('🔒 REFRESH: Success - retrying original request');
               // Retry the original request with new token
               result = await baseQuery(args, api, extraOptions);
             } else {
-              console.log('🔒 ERROR: Token refresh failed - clearing tokens');
               // SECURITY: Clear invalid tokens before redirect
               TokenManager.clearTokens();
               // Refresh failed, redirect to login
@@ -284,16 +259,13 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
           }
         } else {
           // Another request is already refreshing the token
-          console.log('🔒 REFRESH: Waiting for ongoing refresh to complete');
           await mutex.waitForUnlock();
-          
+
           // Check if we now have a valid token after waiting
           const newToken = TokenManager.getAccessToken();
           if (newToken) {
-            console.log('🔒 REFRESH: Token refreshed by another request - retrying');
             result = await baseQuery(args, api, extraOptions);
           } else {
-            console.log('🔒 ERROR: No valid token after waiting - redirecting to login');
             handleAuthRedirect(currentPath);
           }
         }

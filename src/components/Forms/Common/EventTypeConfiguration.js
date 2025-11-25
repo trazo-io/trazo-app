@@ -62,7 +62,7 @@ export const EVENT_TYPE_CONFIG = [
   },
   {
     id: 6,
-    value: 6, // BUSINESS_EVENT_TYPE = 6
+    value: 7, // ✅ FIXED: BUSINESS_EVENT_TYPE = 7
     name: 'business',
     label: 'Business',
     icon: FaBusinessTime,
@@ -71,7 +71,7 @@ export const EVENT_TYPE_CONFIG = [
   },
   {
     id: 7,
-    value: 7, // PEST_MANAGEMENT_EVENT_TYPE = 7
+    value: 6, // ✅ FIXED: PEST_MANAGEMENT_EVENT_TYPE = 6
     name: 'pest_management',
     label: 'Pest Management',
     icon: FaBug,
@@ -89,13 +89,13 @@ export const EVENT_TYPE_VALUE_TO_CONFIG = EVENT_TYPE_CONFIG.reduce((acc, config)
 // Event type mapping for backend (corrected to match backend constants)
 export const EVENT_TYPE_MAP = {
   0: 'weather', // WEATHER_EVENT_TYPE = 0
-  1: 'chemical', // ✅ FIXED: CHEMICAL_EVENT_TYPE = 1
-  2: 'production', // ✅ FIXED: PRODUCTION_EVENT_TYPE = 2
+  1: 'production', // ✅ FIXED: PRODUCTION_EVENT_TYPE = 1
+  2: 'chemical', // ✅ FIXED: CHEMICAL_EVENT_TYPE = 2
   3: 'general', // GENERAL_EVENT_TYPE = 3
   4: 'equipment', // EQUIPMENT_EVENT_TYPE = 4
   5: 'soil_management', // SOIL_MANAGEMENT_EVENT_TYPE = 5
-  6: 'business', // BUSINESS_EVENT_TYPE = 6
-  7: 'pest_management' // PEST_MANAGEMENT_EVENT_TYPE = 7
+  6: 'pest_management', // ✅ FIXED: PEST_MANAGEMENT_EVENT_TYPE = 6
+  7: 'business' // ✅ FIXED: BUSINESS_EVENT_TYPE = 7
 };
 
 // Reverse mapping (name -> backend value)

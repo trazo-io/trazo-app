@@ -37,6 +37,7 @@ import { useIntl } from 'react-intl';
 // ENHANCED SCHEMA - Carbon calculation focused with Phase 1.3 validation
 const formSchemaMainInfo = object({
   type: string().min(1, 'Production type is required'),
+  name: string().min(1, 'Event name is required for transparency documentation'),
   area_covered: string().min(1, 'Area is required for carbon calculation').refine((val) => {
     const num = parseFloat(val);
     return !isNaN(num) && num > 0;
@@ -65,7 +66,7 @@ const formSchemaMainInfo = object({
   observation: string().optional()
 });
 
-const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
+const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
   const intl = useIntl();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
@@ -73,6 +74,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
     resolver: zodResolver(formSchemaMainInfo),
     defaultValues: {
       type: initialValues.type || 'PL',
+      name: initialValues.name || '',
       area_covered: initialValues.area_covered?.toString() || '',
       area_unit: initialValues.area_unit || 'ha',
       yield_quantity: initialValues.yield_quantity?.toString() || '',
@@ -89,9 +91,11 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
 
   // Update form values when initialValues change
   useEffect(() => {
-    if (Object.keys(initialValues).length > 0) {
-      methods.reset({
+    // Better condition check: ensure we have actual form data, not just an empty object
+    if (initialValues && (Object.keys(initialValues).length > 2 || initialValues.name || initialValues.area_covered)) {
+      const resetData = {
         type: initialValues.type || 'PL',
+        name: initialValues.name || '',
         area_covered: initialValues.area_covered?.toString() || '',
         area_unit: initialValues.area_unit || 'ha',
         yield_quantity: initialValues.yield_quantity?.toString() || '',
@@ -103,9 +107,12 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
         transportation_unit: initialValues.transportation_unit || 'km',
         production_efficiency: initialValues.production_efficiency || 'normal',
         observation: initialValues.observation || ''
-      });
+      };
+      
+      console.log('🔧 ProductionTab: Resetting form with data:', resetData);
+      methods.reset(resetData);
     }
-  }, [initialValues, methods]);
+  }, [initialValues, methods.reset]); // Use methods.reset instead of entire methods object
 
   const {
     handleSubmit,
@@ -129,7 +136,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
   // - Harvest transportation (separate from field equipment)
   // - Post-harvest processing (if applicable)
   
-  const watchedFields = watch(['type', 'area_covered', 'yield_quantity', 'transportation_distance', 'fuel_consumed', 'equipment_hours']);
+  const watchedFields = watch(['type', 'name', 'area_covered', 'yield_quantity', 'transportation_distance', 'fuel_consumed', 'equipment_hours', 'observation']);
   const previousValuesRef = useRef({});
   const isInitialMountRef = useRef(true);
 
@@ -141,6 +148,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
 
         const relevantFields = [
           'type',
+          'name',
           'area_covered',
           'area_unit',
           'yield_quantity',
@@ -149,7 +157,8 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
           'fuel_unit',
           'equipment_hours',
           'transportation_distance',
-          'transportation_unit'
+          'transportation_unit',
+          'observation'
         ];
         const currentRelevantValues = {};
         relevantFields.forEach((field) => {
@@ -188,7 +197,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, methods]);
+  }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
   const onSubmit = (data) => {
     // Convert string numbers to numbers for backend carbon calculations
@@ -251,58 +260,84 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                       <option value="HA">🚜 Harvesting - Crop collection & transport</option>
                       <option value="IR">💧 Irrigation - Water application</option>
                       <option value="PR">✂️ Pruning/Trimming - Plant maintenance</option>
-                      <option value="transplanting">🌿 Transplanting - Plant relocation</option>
+                      <option value="TR">🌿 Transplanting - Plant relocation</option>
                     </StandardSelect>
                   )}
                 />
               </StandardField>
 
-              {/* Area Covered - Critical for all carbon calculations */}
-              <HStack spacing={4} align="end">
-                <StandardField
-                  label="Area Covered"
-                  required
-                  error={errors.area_covered?.message}
-                  helpText="Essential for calculating carbon emissions per hectare"
-                  flex={2}
-                >
-                  <Controller
-                    name="area_covered"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <NumberInput min={0} precision={2} step={0.01}>
-                        <NumberInputField 
-                          {...field}
-                          placeholder="0.00"
-                        />
-                        <NumberInputStepper>
-                          <NumberIncrementStepper />
-                          <NumberDecrementStepper />
-                        </NumberInputStepper>
-                      </NumberInput>
-                    )}
-                  />
-                </StandardField>
+              {/* Event Name - Required for transparency documentation */}
+              <StandardField
+                label="Event Name"
+                required
+                error={errors.name?.message}
+                helpText="Descriptive name for this production activity"
+              >
+                <Controller
+                  name="name"
+                  control={methods.control}
+                  render={({ field }) => (
+                    <StandardInput
+                      {...field}
+                      placeholder="e.g., Spring avocado planting, Winter harvest - Field A"
+                    />
+                  )}
+                />
+              </StandardField>
 
-                <StandardField
-                  label="Unit"
-                  required
-                  error={errors.area_unit?.message}
-                  flex={1}
-                >
-                  <Controller
-                    name="area_unit"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardSelect {...field}>
-                        <option value="ha">Hectares</option>
-                        <option value="acres">Acres</option>
-                        <option value="m2">Square Meters</option>
-                        <option value="km2">Square Kilometers</option>
-                      </StandardSelect>
-                    )}
-                  />
-                </StandardField>
+              {/* Area Covered - Critical for all carbon calculations */}
+              <HStack spacing={4} align="stretch">
+                <Box flex={2}>
+                  <StandardField
+                    label="Area Covered"
+                    required
+                    error={errors.area_covered?.message}
+                    helpText="Essential for calculating carbon emissions per hectare"
+                  >
+                    <Controller
+                      name="area_covered"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <NumberInput 
+                          min={0} 
+                          precision={2} 
+                          step={0.01}
+                          value={field.value || ''}
+                          onChange={(valueString) => field.onChange(valueString)}
+                        >
+                          <NumberInputField 
+                            placeholder="0.00"
+                          />
+                          <NumberInputStepper>
+                            <NumberIncrementStepper />
+                            <NumberDecrementStepper />
+                          </NumberInputStepper>
+                        </NumberInput>
+                      )}
+                    />
+                  </StandardField>
+                </Box>
+
+                <Box flex={1}>
+                  <StandardField
+                    label="Unit"
+                    required
+                    error={errors.area_unit?.message}
+                  >
+                    <Controller
+                      name="area_unit"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardSelect {...field}>
+                          <option value="ha">Hectares</option>
+                          <option value="acres">Acres</option>
+                          <option value="m2">Square Meters</option>
+                          <option value="km2">Square Kilometers</option>
+                        </StandardSelect>
+                      )}
+                    />
+                  </StandardField>
+                </Box>
               </HStack>
             </VStack>
           </StandardCard>
@@ -320,21 +355,102 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
             >
               <VStack spacing={4} align="stretch">
                 
-                <HStack spacing={4} align="end">
+                <HStack spacing={4} align="stretch">
+                  <Box flex={2}>
+                    <StandardField
+                      label={productionType === 'HA' ? "Quantity Harvested" : "Quantity Planted"}
+                      error={errors.yield_quantity?.message}
+                      helpText="Used to calculate carbon efficiency per unit of production"
+                    >
+                      <Controller
+                        name="yield_quantity"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <NumberInput 
+                            min={0} 
+                            precision={1} 
+                            step={0.1}
+                            value={field.value || ''}
+                            onChange={(valueString) => field.onChange(valueString)}
+                          >
+                            <NumberInputField 
+                              placeholder="0.0"
+                            />
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                        )}
+                      />
+                    </StandardField>
+                  </Box>
+
+                  <Box flex={1}>
+                    <StandardField
+                      label="Unit"
+                    >
+                      <Controller
+                        name="yield_unit"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field}>
+                            <option value="kg">Kilograms</option>
+                            <option value="tons">Tonnes</option>
+                            <option value="lbs">Pounds</option>
+                            <option value="boxes">Boxes</option>
+                            <option value="plants">Plants</option>
+                            <option value="seeds">Seeds</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+                  </Box>
+                </HStack>
+              </VStack>
+            </StandardCard>
+          )}
+
+          {/* Equipment & Fuel Usage */}
+          <Box mb={6} p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
+            <HStack justify="space-between" align="center" mb={4}>
+              <Text fontSize="md" fontWeight="bold" color="green.600">
+                <Icon as={FaSeedling} mr={2} />
+                Fuel Consumption & Equipment Data
+              </Text>
+              <Badge colorScheme="green" fontSize="xs">
+                Enhanced Carbon Accuracy
+              </Badge>
+            </HStack>
+
+            <Text fontSize="sm" color="gray.600" mb={4}>
+              Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. 
+              These details help consumers understand the real operational impact of your production operations.
+            </Text>
+
+            <VStack spacing={4} align="stretch">
+              
+              {/* Fuel Consumption */}
+              <HStack spacing={4} align="stretch">
+                <Box flex={2}>
                   <StandardField
-                    label={productionType === 'HA' ? "Quantity Harvested" : "Quantity Planted"}
-                    error={errors.yield_quantity?.message}
-                    helpText="Used to calculate carbon efficiency per unit of production"
-                    flex={2}
+                    label="Fuel Consumed"
+                    error={errors.fuel_consumed?.message}
+                    helpText="Fuel consumption for carbon emission calculation"
                   >
                     <Controller
-                      name="yield_quantity"
+                      name="fuel_consumed"
                       control={methods.control}
                       render={({ field }) => (
-                        <NumberInput min={0} precision={1} step={0.1}>
+                        <NumberInput 
+                          min={0} 
+                          precision={1} 
+                          step={0.1}
+                          value={field.value || ''}
+                          onChange={(valueString) => field.onChange(valueString)}
+                        >
                           <NumberInputField 
-                            {...field}
-                            placeholder="0.0"
+                            placeholder="Optional"
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -344,85 +460,25 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                       )}
                     />
                   </StandardField>
+                </Box>
 
+                <Box flex={1}>
                   <StandardField
                     label="Unit"
-                    flex={1}
                   >
                     <Controller
-                      name="yield_unit"
+                      name="fuel_unit"
                       control={methods.control}
                       render={({ field }) => (
                         <StandardSelect {...field}>
+                          <option value="L">Liters</option>
+                          <option value="gal">Gallons</option>
                           <option value="kg">Kilograms</option>
-                          <option value="tons">Tonnes</option>
-                          <option value="lbs">Pounds</option>
-                          <option value="boxes">Boxes</option>
-                          <option value="plants">Plants</option>
-                          <option value="seeds">Seeds</option>
                         </StandardSelect>
                       )}
                     />
                   </StandardField>
-                </HStack>
-              </VStack>
-            </StandardCard>
-          )}
-
-          {/* Equipment & Fuel Usage */}
-          <StandardCard
-            title={
-              <HStack>
-                <Icon as={FaTractor} color="orange.500" />
-                <Text>Equipment & Fuel</Text>
-                <Badge colorScheme="orange" size="sm">Emissions Source</Badge>
-              </HStack>
-            }
-          >
-            <VStack spacing={4} align="stretch">
-              
-              {/* Fuel Consumption */}
-              <HStack spacing={4} align="end">
-                <StandardField
-                  label="Fuel Consumed"
-                  error={errors.fuel_consumed?.message}
-                  helpText="Fuel consumption for carbon emission calculation"
-                  flex={2}
-                >
-                  <Controller
-                    name="fuel_consumed"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <NumberInput min={0} precision={1} step={0.1}>
-                        <NumberInputField 
-                          {...field}
-                          placeholder="Optional"
-                        />
-                        <NumberInputStepper>
-                          <NumberIncrementStepper />
-                          <NumberDecrementStepper />
-                        </NumberInputStepper>
-                      </NumberInput>
-                    )}
-                  />
-                </StandardField>
-
-                <StandardField
-                  label="Unit"
-                  flex={1}
-                >
-                  <Controller
-                    name="fuel_unit"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardSelect {...field}>
-                        <option value="L">Liters</option>
-                        <option value="gal">Gallons</option>
-                        <option value="kg">Kilograms</option>
-                      </StandardSelect>
-                    )}
-                  />
-                </StandardField>
+                </Box>
               </HStack>
 
               {/* Equipment Hours */}
@@ -435,9 +491,14 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                   name="equipment_hours"
                   control={methods.control}
                   render={({ field }) => (
-                    <NumberInput min={0} precision={1} step={0.1}>
+                    <NumberInput 
+                      min={0} 
+                      precision={1} 
+                      step={0.1}
+                      value={field.value || ''}
+                      onChange={(valueString) => field.onChange(valueString)}
+                    >
                       <NumberInputField 
-                        {...field}
                         placeholder="Optional"
                       />
                       <NumberInputStepper>
@@ -449,7 +510,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                 />
               </StandardField>
             </VStack>
-          </StandardCard>
+          </Box>
 
           {/* Transportation - For logistics emissions */}
           {productionType === 'HA' && (
@@ -464,47 +525,54 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
             >
               <VStack spacing={4} align="stretch">
                 
-                <HStack spacing={4} align="end">
-                  <StandardField
-                    label="Transportation Distance"
-                    error={errors.transportation_distance?.message}
-                    helpText="Distance for transporting harvest affects carbon footprint"
-                    flex={2}
-                  >
-                    <Controller
-                      name="transportation_distance"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <NumberInput min={0} precision={1} step={0.1}>
-                          <NumberInputField 
-                            {...field}
-                            placeholder="Optional"
-                          />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
-                      )}
-                    />
-                  </StandardField>
+                <HStack spacing={4} align="stretch">
+                  <Box flex={2}>
+                    <StandardField
+                      label="Transportation Distance"
+                      error={errors.transportation_distance?.message}
+                      helpText="Distance for transporting harvest affects carbon footprint"
+                    >
+                      <Controller
+                        name="transportation_distance"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <NumberInput 
+                            min={0} 
+                            precision={1} 
+                            step={0.1}
+                            value={field.value || ''}
+                            onChange={(valueString) => field.onChange(valueString)}
+                          >
+                            <NumberInputField 
+                              placeholder="Optional"
+                            />
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                        )}
+                      />
+                    </StandardField>
+                  </Box>
 
-                  <StandardField
-                    label="Unit"
-                    flex={1}
-                  >
-                    <Controller
-                      name="transportation_unit"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardSelect {...field}>
-                          <option value="km">Kilometers</option>
-                          <option value="miles">Miles</option>
-                          <option value="m">Meters</option>
-                        </StandardSelect>
-                      )}
-                    />
-                  </StandardField>
+                  <Box flex={1}>
+                    <StandardField
+                      label="Unit"
+                    >
+                      <Controller
+                        name="transportation_unit"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field}>
+                            <option value="km">Kilometers</option>
+                            <option value="miles">Miles</option>
+                            <option value="m">Meters</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+                  </Box>
                 </HStack>
 
                 {/* Production Efficiency Rating */}
@@ -549,26 +617,28 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
           </StandardField>
 
           {/* Navigation */}
-          <Box pt={4} mt={4} borderTop="1px" borderColor={borderColor}>
-            <HStack justify="space-between">
-              <StandardButton
-                variant="outline"
-                onClick={onPrev}
-                leftIcon={<FaChevronLeft />}
-                size="lg"
-              >
-                {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </StandardButton>
-              <StandardButton
-                variant="primary"
-                type="submit"
-                rightIcon={<FaChevronRight />}
-                size="lg"
-              >
-                {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </StandardButton>
-            </HStack>
-          </Box>
+          {!hideActions && (
+            <Box pt={4} mt={4} borderTop="1px" borderColor={borderColor}>
+              <HStack justify="space-between">
+                <StandardButton
+                  variant="outline"
+                  onClick={onPrev}
+                  leftIcon={<FaChevronLeft />}
+                  size="lg"
+                >
+                  {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                </StandardButton>
+                <StandardButton
+                  variant="primary"
+                  type="submit"
+                  rightIcon={<FaChevronRight />}
+                  size="lg"
+                >
+                  {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                </StandardButton>
+              </HStack>
+            </Box>
+          )}
         </VStack>
       </form>
     </FormProvider>

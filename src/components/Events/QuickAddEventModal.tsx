@@ -263,11 +263,11 @@ const eventTemplates: EventTemplate[] = [
     defaultData: { type: 'CC' }
   },
 
-  // Business Events (type 6)
+  // Business Events (type 7)
   {
     id: 'harvest_sale',
     name: 'Harvest Sale',
-    type: 6,
+    type: 7,
     eventType: 'HS',
     icon: FaShoppingCart,
     color: 'green',
@@ -277,7 +277,7 @@ const eventTemplates: EventTemplate[] = [
   {
     id: 'certification',
     name: 'Certification',
-    type: 6,
+    type: 7,
     eventType: 'CE',
     icon: FaCertificate,
     color: 'blue',
@@ -287,7 +287,7 @@ const eventTemplates: EventTemplate[] = [
   {
     id: 'inspection',
     name: 'Inspection',
-    type: 6,
+    type: 7,
     eventType: 'IN',
     icon: FaEye,
     color: 'purple',
@@ -295,11 +295,11 @@ const eventTemplates: EventTemplate[] = [
     defaultData: { type: 'IN' }
   },
 
-  // Pest Management Events (type 7)
+  // Pest Management Events (type 6)
   {
     id: 'pest_scouting',
     name: 'Pest Scouting',
-    type: 7,
+    type: 6,
     eventType: 'SC',
     icon: FaBug,
     color: 'orange',
@@ -309,7 +309,7 @@ const eventTemplates: EventTemplate[] = [
   {
     id: 'beneficial_release',
     name: 'Beneficial Release',
-    type: 7,
+    type: 6,
     eventType: 'BR',
     icon: FaShieldAlt,
     color: 'green',
@@ -319,7 +319,7 @@ const eventTemplates: EventTemplate[] = [
   {
     id: 'ipm_implementation',
     name: 'IPM Implementation',
-    type: 7,
+    type: 6,
     eventType: 'IP',
     icon: FaChartLine,
     color: 'blue',
@@ -437,8 +437,8 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
             3: { co2e: 0.5, efficiency_score: 70 }, // General - low impact
             4: { co2e: 8.0, efficiency_score: 55 }, // Equipment - higher impact (fuel)
             5: { co2e: -1.5, efficiency_score: 90 }, // Soil Management - often negative (sequestration)
-            6: { co2e: 0.3, efficiency_score: 65 }, // Business - minimal direct impact
-            7: { co2e: -0.2, efficiency_score: 80 } // Pest Management - often reduces chemical use
+            6: { co2e: -0.2, efficiency_score: 80 }, // Pest Management - often reduces chemical use
+            7: { co2e: 0.3, efficiency_score: 65 } // Business Activity - minimal direct impact
           };
 
           const fallback = fallbackScores[selectedTemplate.type] || fallbackScores[3];
@@ -548,8 +548,8 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
         enhancedEventData = { ...enhancedEventData, ...soilDefaults };
       }
 
-      // Pest Management event defaults (type 7)
-      else if (selectedTemplate.type === 7) {
+      // Pest Management event defaults (type 6)
+      else if (selectedTemplate.type === 6) {
         const pestDefaults = {
           type: selectedTemplate.eventType || 'SC', // Default to scouting
           pest_species: selectedTemplate.defaultData?.pest_species || 'General pest monitoring',
@@ -584,8 +584,8 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
         enhancedEventData = { ...enhancedEventData, ...generalDefaults };
       }
 
-      // Business event defaults (type 6)
-      else if (selectedTemplate.type === 6) {
+      // Business event defaults (type 7)
+      else if (selectedTemplate.type === 7) {
         const businessDefaults = {
           type: selectedTemplate.eventType || 'HS', // Default to harvest sale
           observation:

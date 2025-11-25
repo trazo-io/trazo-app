@@ -23,6 +23,7 @@ export interface ConcentrationValidationResult {
     phosphorus?: number; 
     potassium?: number;
     percentage?: number;
+    unit?: string;
   };
 }
 
@@ -110,8 +111,8 @@ const validateNPKFormat = (input: string): ConcentrationValidationResult => {
   const potassium = parseFloat(match[3]);
 
   // Validate individual NPK values
-  if (nitrogen < 0 || nitrogen > 50) {
-    errors.push('Nitrogen percentage should be 0-50%');
+  if (nitrogen < 0 || nitrogen > 85) {
+    errors.push('Nitrogen percentage should be 0-85%');
   }
   if (phosphorus < 0 || phosphorus > 50) {
     errors.push('Phosphorus percentage should be 0-50%');
@@ -157,35 +158,52 @@ const validatePercentageFormat = (input: string): ConcentrationValidationResult 
     return { isValid: false, format: 'npk', errors, suggestions };
   }
 
-  // Percentage pattern: number followed by % (allows decimals and negative)
-  const percentagePattern = /^(-?\d+(?:\.\d+)?)%?$/;
+  // Percentage pattern: number followed by % or EC (allows decimals and negative)
+  const percentagePattern = /^(-?\d+(?:\.\d+)?)(\s*%|\s*EC)?$/i;
   const match = input.match(percentagePattern);
 
   if (!match) {
-    errors.push('Invalid percentage format');
-    suggestions.push('Use format: number% (e.g., "2.5%", "70%", "0.5%")');
+    errors.push('Invalid concentration format');
+    suggestions.push('Use format: number% (e.g., "2.5%", "70%") or EC format (e.g., "2.08 EC")');
     return { isValid: false, format: 'unknown', errors, suggestions };
   }
 
   const percentage = parseFloat(match[1]);
+  const unit = match[2] ? match[2].trim().toUpperCase() : '%';
 
-  // Validate percentage range
+  // Validate concentration range based on unit
   if (percentage < 0) {
-    errors.push('Percentage cannot be negative');
+    errors.push('Concentration cannot be negative');
   }
-  if (percentage > 100) {
-    errors.push('Percentage cannot exceed 100%');
-  }
-
-  // Warnings for unusual values
-  if (percentage === 0) {
-    errors.push('Percentage cannot be zero');
-  }
-  if (percentage > 90) {
-    suggestions.push('Very high concentration - verify this is correct');
-  }
-  if (percentage < 0.1) {
-    suggestions.push('Very low concentration - verify this is correct');
+  
+  if (unit === 'EC') {
+    // EC format validation (Emulsifiable Concentrate - pounds per gallon)
+    if (percentage > 50) {
+      errors.push('EC concentration should not exceed 50 lbs/gal');
+    }
+    if (percentage === 0) {
+      errors.push('EC concentration cannot be zero');
+    }
+    if (percentage > 25) {
+      suggestions.push('Very high EC concentration - verify this is correct');
+    }
+    if (percentage < 0.01) {
+      suggestions.push('Very low EC concentration - verify this is correct');
+    }
+  } else {
+    // Percentage format validation
+    if (percentage > 100) {
+      errors.push('Percentage cannot exceed 100%');
+    }
+    if (percentage === 0) {
+      errors.push('Percentage cannot be zero');
+    }
+    if (percentage > 90) {
+      suggestions.push('Very high concentration - verify this is correct');
+    }
+    if (percentage < 0.1) {
+      suggestions.push('Very low concentration - verify this is correct');
+    }
   }
 
   return {
@@ -193,7 +211,7 @@ const validatePercentageFormat = (input: string): ConcentrationValidationResult 
     format: 'percentage',
     errors,
     suggestions,
-    parsed: { percentage }
+    parsed: { percentage, unit }
   };
 };
 
@@ -211,8 +229,8 @@ const getFormatSuggestions = (chemicalType: string): string[] => {
     case 'HE': 
     case 'FU':
       return [
-        'Use percentage format: "2.5%"',
-        'Examples: "70%", "0.5%", "10%"'
+        'Use percentage format: "2.5%" or EC format: "2.08 EC"',
+        'Examples: "70%", "0.5%", "10%", "2.08 EC", "1.5 EC"'
       ];
     default:
       return ['Select chemical type first'];
@@ -283,7 +301,7 @@ export const ConcentrationFeedback: React.FC<ConcentrationFeedbackProps> = ({
           )}
           {validation.format === 'percentage' && validation.parsed.percentage !== undefined && (
             <Text fontSize="sm">
-              <strong>Concentration:</strong> {validation.parsed.percentage}%
+              <strong>Concentration:</strong> {validation.parsed.percentage}{validation.parsed.unit || '%'}
             </Text>
           )}
         </Box>
@@ -329,11 +347,11 @@ const getFormatGuidance = (chemicalType: string): string => {
     case 'FE':
       return '🌱 Fertilizer: Use NPK format (e.g., "10-10-10", "16-16-16")';
     case 'PE':
-      return '🐛 Pesticide: Use percentage format (e.g., "2.5%", "70%")';
+      return '🐛 Pesticide: Use percentage (e.g., "2.5%", "70%") or EC format (e.g., "2.08 EC")';
     case 'HE':
-      return '🌿 Herbicide: Use percentage format (e.g., "40%", "5%")';
+      return '🌿 Herbicide: Use percentage (e.g., "40%", "5%") or EC format (e.g., "3.2 EC")';
     case 'FU':
-      return '🍄 Fungicide: Use percentage format (e.g., "80%", "1.5%")';
+      return '🍄 Fungicide: Use percentage (e.g., "80%", "1.5%") or EC format (e.g., "4.0 EC")';
     default:
       return 'Select chemical type to see format requirements';
   }
@@ -352,11 +370,11 @@ export const getFormatExamples = (chemicalType: string): string[] => {
     case 'FE':
       return ['10-10-10', '16-16-16', '20-5-5', '15-30-15'];
     case 'PE':
-      return ['2.5%', '70%', '25%', '50%'];
+      return ['2.5%', '70%', '25%', '50%', '2.08 EC', '1.5 EC'];
     case 'HE':
-      return ['40%', '5%', '15%', '2%'];
+      return ['40%', '5%', '15%', '2%', '3.2 EC', '0.8 EC'];
     case 'FU':
-      return ['80%', '1.5%', '10%', '25%'];
+      return ['80%', '1.5%', '10%', '25%', '4.0 EC', '2.5 EC'];
     default:
       return [];
   }

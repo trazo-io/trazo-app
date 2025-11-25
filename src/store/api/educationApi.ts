@@ -189,6 +189,39 @@ export const educationApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       invalidatesTags: ['Education']
+    }),
+
+    // Dashboard endpoint (mock implementation for now since backend doesn't have this endpoint yet)
+    getEducationDashboard: builder.query<EducationDashboard, void>({
+      queryFn: async () => {
+        // Return mock data since the backend endpoint doesn't exist yet
+        // This would be replaced with actual API call when backend is implemented
+        return {
+          data: {
+            total_courses: 0,
+            completed_courses: 0,
+            in_progress_courses: 0,
+            total_certificates: 0,
+            total_time_spent_minutes: 0,
+            current_streak_days: 0,
+            recent_courses: [],
+            recommended_courses: [],
+            certificates: []
+          }
+        };
+      },
+      providesTags: ['Education']
+    }),
+
+    // User bookmarks endpoint (mock implementation for now since backend doesn't have this endpoint yet)
+    getUserBookmarks: builder.query<EducationBookmark[], void>({
+      queryFn: async () => {
+        // Return mock data since the backend endpoint doesn't exist yet
+        return {
+          data: []
+        };
+      },
+      providesTags: ['Education']
     })
 
     // Note: Search and Analytics endpoints don't exist in backend yet
@@ -204,5 +237,7 @@ export const {
   useGetCourseLessonsQuery,
   useGetEducationLessonQuery,
   useGetFarmerQuestionsQuery,
-  useGetFarmerQuestionQuery
+  useGetFarmerQuestionQuery,
+  useGetEducationDashboardQuery,
+  useGetUserBookmarksQuery
 } = educationApi;

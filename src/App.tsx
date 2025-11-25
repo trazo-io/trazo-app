@@ -80,6 +80,7 @@ import ModernCarbonDashboard from 'views/Dashboard/Dashboard/Establishment/Moder
 import PublicEstablishmentProfile from 'views/Scan/PublicEstablishmentProfile/PublicEstablishmentProfile';
 import { usePointsStore } from './store/pointsStore';
 import ProducerEducationDashboard from 'views/Dashboard/Education';
+import EducationTopicDetail from 'views/Dashboard/Education/EducationTopicDetail';
 import EducationFAQ from 'views/Dashboard/Education/EducationFAQ';
 import FieldInterface from 'views/Dashboard/Mobile/FieldInterface';
 import AllScansView from 'views/Dashboard/Commercial/AllScans';
@@ -371,6 +372,7 @@ const App = () => {
                     }
                   />
                   <Route path="education" element={<ProducerEducationDashboard />} />
+                  <Route path="education/topic/:topicId" element={<EducationTopicDetail />} />
                   <Route path="education/faq" element={<EducationFAQ />} />
                   {/* <Route path="advanced-analytics-demo" element={<AdvancedAnalyticsDemo />} /> */}
                 </Route>

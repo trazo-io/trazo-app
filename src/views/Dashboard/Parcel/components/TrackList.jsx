@@ -37,7 +37,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
-import TimelineRow from 'components/Tables/TimelineRow';
+import EnhancedTimelineRow from 'components/Tables/EnhancedTimelineRow';
 import { setCurrentHistory } from 'store/features/historySlice';
 import { useGetCurrentHistoryQuery } from 'store/api/historyApi';
 import { useIntl } from 'react-intl';
@@ -205,7 +205,7 @@ const TrackList = ({ amount }) => {
           )}
         </Flex>
       </CardHeader>
-      <CardBody ps={{ base: '0px', md: '20px' }} pe="0px" mb="31px" position="relative">
+      <CardBody ps={{ base: '0px', md: '20px' }} pe="0px" mb="12px" position="relative">
         <Box
           maxH={{ base: '400px', md: '450px' }}
           overflowY="auto"
@@ -235,7 +235,7 @@ const TrackList = ({ amount }) => {
               <>
                 {currentHistory?.events?.map((event, index, arr) => {
                   return (
-                    <TimelineRow
+                    <EnhancedTimelineRow
                       minW={{ base: '100%', md: '390px' }}
                       key={`${parcelId}-${event.id}-${index}`}
                       logo={event.certified ? FaRegCheckCircle : FaRegDotCircle}
@@ -473,6 +473,7 @@ const TrackList = ({ amount }) => {
             {/* Finish Production Button - Only show if there are events */}
             {currentHistory?.events && currentHistory?.events.length > 0 && (
               <Button
+                p={{ base: '0px', md: '16px' }}
                 leftIcon={<Icon as={FaFlag} />}
                 variant="outline"
                 colorScheme="green"

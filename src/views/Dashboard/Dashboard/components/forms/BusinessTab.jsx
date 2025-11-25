@@ -142,7 +142,7 @@ const businessSchema = object({
   }
 });
 
-const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
+const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
   const intl = useIntl();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
@@ -181,41 +181,49 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
   const { watch } = methods;
   const businessType = watch('business_type');
 
-  // Real-time carbon calculation updates - only for carbon-relevant events
-  const watchedFields = watch(['business_type', 'carbon_credits_earned', 'certification_type']);
+  // 🔥 FIX: Watch ALL business form fields for preview consistency
+  // Watch all fields that should appear in preview to ensure real-time sync
+  const watchedFields = watch([
+    'type',
+    'name',
+    'business_type',
+    'certification_type',
+    'carbon_credits_earned',
+    'carbon_credits_unit',
+    'verification_status',
+    'sustainability_practice',
+    'observation'
+  ]);
   const previousValuesRef = useRef({});
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (onDataChange && typeof onDataChange === 'function') {
-        const currentValues = methods.getValues();
-        
-        // Only trigger for carbon-relevant business activities
-        if (currentValues.business_type && 
-            ['certification', 'carbon_credits', 'sustainability_audit'].includes(currentValues.business_type)) {
-          
-          const relevantFields = ['business_type', 'certification_type', 'carbon_credits_earned', 'verification_status'];
-          const currentRelevantValues = {};
-          relevantFields.forEach((field) => {
-            currentRelevantValues[field] = currentValues[field];
+    // 🔥 FIX: Remove debounce - data sync should be immediate for preview
+    // Carbon calculation already has its own debounce in NewEvent.jsx
+    if (onDataChange && typeof onDataChange === 'function') {
+      const currentValues = methods.getValues();
+
+      // 🔥 FIX: Sync ALL business types, not just carbon-relevant ones
+      // This ensures preview works for ALL business event types
+      if (currentValues.business_type) {
+        const hasChanged = JSON.stringify(currentValues) !== JSON.stringify(previousValuesRef.current);
+
+        if (hasChanged) {
+          previousValuesRef.current = currentValues;
+          console.log('🏢 [BusinessTab] Syncing form data to parent:', {
+            business_type: currentValues.business_type,
+            certification_type: currentValues.certification_type,
+            name: currentValues.name,
+            allFields: Object.keys(currentValues)
           });
-
-          const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
-
-          if (hasChanged) {
-            previousValuesRef.current = currentRelevantValues;
-            try {
-              onDataChange(currentValues);
-            } catch (error) {
-              console.error('[BusinessTab]: Error calling onDataChange:', error);
-            }
+          try {
+            onDataChange(currentValues);
+          } catch (error) {
+            console.error('[BusinessTab]: Error calling onDataChange:', error);
           }
         }
       }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, methods]);
+    }
+  }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
   const onSubmit = (data) => {
     // Process numeric data
@@ -433,9 +441,14 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
                           name="carbon_credits_earned"
                           control={methods.control}
                           render={({ field }) => (
-                            <NumberInput min={0} precision={2} step={0.01}>
+                            <NumberInput 
+                              min={0} 
+                              precision={2} 
+                              step={0.01}
+                              value={field.value || ''}
+                              onChange={(valueString) => field.onChange(valueString)}
+                            >
                               <NumberInputField 
-                                {...field}
                                 placeholder="0.00 (required)"
                               />
                               <NumberInputStepper>
@@ -595,24 +608,26 @@ const BusinessTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}
           </StandardField>
 
           {/* Navigation */}
-          <HStack justify="space-between" pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-            <StandardButton
-              variant="outline"
-              onClick={onPrev}
-              leftIcon={<FaChevronLeft />}
-              size="lg"
-            >
-              {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-            </StandardButton>
-            <StandardButton
-              variant="primary"
-              type="submit"
-              rightIcon={<FaChevronRight />}
-              size="lg"
-            >
-              {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-            </StandardButton>
-          </HStack>
+          {!hideActions && (
+            <HStack justify="space-between" pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
+              <StandardButton
+                variant="outline"
+                onClick={onPrev}
+                leftIcon={<FaChevronLeft />}
+                size="lg"
+              >
+                {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+              </StandardButton>
+              <StandardButton
+                variant="primary"
+                type="submit"
+                rightIcon={<FaChevronRight />}
+                size="lg"
+              >
+                {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+              </StandardButton>
+            </HStack>
+          )}
         </VStack>
       </form>
     </FormProvider>

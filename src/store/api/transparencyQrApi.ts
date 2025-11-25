@@ -116,6 +116,11 @@ export interface TimelineEvent {
       thumbnail?: string;
     }>;
   };
+  // NEW ACTIVITY FIELDS for complete transparency
+  activity_type?: string;
+  activity_name?: string;
+  duration?: string;
+  people_involved?: number;
 }
 
 // Complete response structure
@@ -124,6 +129,14 @@ export interface TransparencyResponse {
   standard_view: TransparencyStandardView;
   detailed_view: TransparencyDetailedView;
   timeline_events?: TimelineEvent[];  // Added timeline events for photo display
+  carbon_impact: {  // Added carbon_impact to match API response
+    kg_per_kg: number;
+    total_emissions: number;
+    total_offsets: number;
+    net_impact: number;
+    unit: string;
+    calculation_method: string;
+  };
   api_version: string;
   response_timestamp: string;
   trazo_transparency_certified: boolean;

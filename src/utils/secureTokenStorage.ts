@@ -27,13 +27,16 @@ class SecureTokenStorage implements TokenStorage {
     // In secure implementation, tokens are set by backend as httpOnly cookies
     // This method is primarily for fallback compatibility
     if (process.env.NODE_ENV === 'development') {
-      console.log('SECURITY: Storing token in sessionStorage for development. Token length:', token.length);
+      console.log(
+        'SECURITY: Storing token in sessionStorage for development. Token length:',
+        token.length
+      );
     }
-    
+
     // Store in sessionStorage as a temporary fallback (slightly more secure than localStorage)
     // Remove this fallback once full httpOnly cookie implementation is complete
     sessionStorage.setItem('temp_access_token', token);
-    
+
     // Also check if there are legacy tokens to clean up
     const legacyToken = localStorage.getItem('access');
     if (legacyToken && legacyToken !== token) {
@@ -49,14 +52,13 @@ class SecureTokenStorage implements TokenStorage {
   getToken(): string | null {
     // httpOnly cookies are automatically sent with requests
     // JavaScript cannot access them, which is the security feature
-    
+
     // Temporary fallback for development (remove once backend properly implements httpOnly cookies)
     const fallbackToken = sessionStorage.getItem('temp_access_token');
     if (fallbackToken) {
-      console.log('SECURITY: Retrieved token from sessionStorage for development. Length:', fallbackToken.length);
       return fallbackToken;
     }
-    
+
     // Check if there's a legacy token we should migrate
     const legacyToken = localStorage.getItem('access');
     if (legacyToken) {
@@ -64,7 +66,7 @@ class SecureTokenStorage implements TokenStorage {
       this.setToken(legacyToken);
       return legacyToken;
     }
-    
+
     console.log('SECURITY: No token found in storage');
     return null; // Correct behavior - httpOnly cookies not accessible to JS
   }
@@ -76,7 +78,7 @@ class SecureTokenStorage implements TokenStorage {
     // Remove any fallback storage
     sessionStorage.removeItem('temp_access_token');
     localStorage.removeItem('access'); // Clean up any legacy tokens
-    
+
     // httpOnly cookies must be removed by backend via logout API
     console.log('SECURITY: httpOnly cookies will be removed by backend logout API');
   }
@@ -87,7 +89,7 @@ class SecureTokenStorage implements TokenStorage {
   hasToken(): boolean {
     // For httpOnly cookies, we can't directly check token existence
     // This should be determined by authentication state management
-    
+
     // Temporary fallback check for development
     return !!sessionStorage.getItem('temp_access_token');
   }
@@ -106,7 +108,12 @@ class LegacyTokenStorage implements TokenStorage {
 
   getToken(): string | null {
     const token = localStorage.getItem('access');
-    console.log('🔒 LEGACY: Retrieved token from localStorage. Found:', !!token, 'Length:', token?.length || 0);
+    console.log(
+      '🔒 LEGACY: Retrieved token from localStorage. Found:',
+      !!token,
+      'Length:',
+      token?.length || 0
+    );
     return token;
   }
 
@@ -200,11 +207,11 @@ export const TokenManager = {
     localStorage.removeItem('refresh');
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
-    
+
     // Remove from sessionStorage as well
     sessionStorage.removeItem('access');
     sessionStorage.removeItem('refresh');
-    
+
     console.log('SECURITY: Cleaned up insecure token storage');
   },
 
@@ -233,7 +240,7 @@ export const SecurityAudit = {
     let foundInsecureStorage = false;
 
     // Check localStorage
-    insecureKeys.forEach(key => {
+    insecureKeys.forEach((key) => {
       if (localStorage.getItem(key)) {
         console.error(`SECURITY RISK: Found token in localStorage with key: ${key}`);
         foundInsecureStorage = true;
@@ -241,7 +248,7 @@ export const SecurityAudit = {
     });
 
     // Check sessionStorage
-    insecureKeys.forEach(key => {
+    insecureKeys.forEach((key) => {
       if (sessionStorage.getItem(key)) {
         console.warn(`SECURITY WARNING: Found token in sessionStorage with key: ${key}`);
       }
@@ -255,11 +262,11 @@ export const SecurityAudit = {
    */
   getSecurityReport(): { secure: boolean; issues: string[] } {
     const issues: string[] = [];
-    
+
     if (localStorage.getItem('access')) {
       issues.push('Access token found in localStorage (vulnerable to XSS)');
     }
-    
+
     if (localStorage.getItem('refresh')) {
       issues.push('Refresh token found in localStorage (vulnerable to XSS)');
     }

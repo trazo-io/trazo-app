@@ -258,10 +258,43 @@ export interface CarbonCalculationResult {
     | 'pest_management';
   timestamp: string;
   breakdown?: {
+    // Chemical application fields
     nitrogen_emissions?: number;
     phosphorus_emissions?: number;
     potassium_emissions?: number;
     application_efficiency?: number;
+    volume_applied_liters?: number;
+    area_treated_hectares?: number;
+    application_method?: string;
+    manufacturing_emissions_kg_co2e?: number;
+    application_emissions_kg_co2e?: number;
+    npk_content?: {
+      N?: number;
+      P?: number;
+      K?: number;
+    };
+    nitrogen_kg?: number;
+    phosphorus_kg?: number;
+    potassium_kg?: number;
+    
+    // Production event fields (diesel-based: planting, harvesting, etc.)
+    production_activity?: string;
+    area_covered_acres?: number;
+    area_covered_hectares?: number;
+    diesel_emission_factor_kg_per_gallon?: number;
+    usda_planting_factor_gallons_per_hectare?: number;
+    calculation_basis?: string;
+    confidence_level?: number;
+    actual_fuel_consumed_gallons?: number;
+    equipment_hours?: number;
+    
+    // Irrigation event fields (electricity-based)
+    water_volume_gallons?: number;
+    kwh_consumed?: number;
+    electricity_emission_factor_kg_per_kwh?: number;
+    pump_efficiency_kwh_per_1000_gallons?: number;
+    
+    // Legacy fields for backward compatibility
     volume_liters?: number;
     area_hectares?: number;
     fuel_amount?: number;
@@ -1360,6 +1393,34 @@ export const carbonApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
+      transformResponse: (response: any, meta, arg) => {
+        // 🔧 DEBUG: Log RAW API response for event 178 investigation
+        if (arg === '232') {
+          console.log('🔧 RAW API RESPONSE for production 232:', response);
+          
+          // Check event 178 specifically in the timeline
+          if (response?.timeline) {
+            const event178 = response.timeline.find((event: any) => 
+              String(event.id) === '178' || event.id === 178 || 
+              String(event.id) === 'chemical_178' || event.id === 'chemical_178'
+            );
+            if (event178) {
+              console.log('🔧 EVENT 178 RAW API DATA (FOUND!):', {
+                id: event178.id,
+                area: event178.area,
+                application_timing: event178.application_timing,
+                way_of_application: event178.way_of_application,
+                application_method: event178.application_method,
+                fullEvent: event178
+              });
+            } else {
+              console.log('🔧 EVENT 178 NOT FOUND in API timeline');
+              console.log('🔧 Available event IDs:', response.timeline.map((e: any) => e.id));
+            }
+          }
+        }
+        return response;
+      },
       providesTags: ['CarbonSummary']
     }),
 

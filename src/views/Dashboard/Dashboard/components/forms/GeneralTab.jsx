@@ -44,7 +44,7 @@ const formSchemaMainInfo = object({
   observation: string().optional()
 });
 
-const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
+const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
   const intl = useIntl();
 
   const mainInfoMethods = useForm({
@@ -107,7 +107,7 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, mainInfoMethods]);
+  }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
   const onSubmit = (data) => {
     onSubmitHandler(data);
@@ -272,26 +272,28 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
           </StandardCard>
 
           {/* Navigation Buttons */}
-          <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
-            <HStack justify="space-between">
-              <StandardButton
-                variant="outline"
-                onClick={onPrev}
-                leftIcon={<FaChevronLeft />}
-                size="lg"
-              >
-                {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </StandardButton>
-              <StandardButton
-                variant="primary"
-                type="submit"
-                rightIcon={<FaChevronRight />}
-                size="lg"
-              >
-                {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </StandardButton>
-            </HStack>
-          </Box>
+          {!hideActions && (
+            <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
+              <HStack justify="space-between">
+                <StandardButton
+                  variant="outline"
+                  onClick={onPrev}
+                  leftIcon={<FaChevronLeft />}
+                  size="lg"
+                >
+                  {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                </StandardButton>
+                <StandardButton
+                  variant="primary"
+                  type="submit"
+                  rightIcon={<FaChevronRight />}
+                  size="lg"
+                >
+                  {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                </StandardButton>
+              </HStack>
+            </Box>
+          )}
         </VStack>
       </form>
     </FormProvider>

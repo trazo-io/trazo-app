@@ -112,7 +112,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, methods]);
+  }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
   const onSubmit = (data) => {
     // Convert string numbers to numbers for backend
@@ -234,11 +234,10 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                   control={methods.control}
                   render={({ field }) => (
                     <StandardSelect {...field}>
-                      <option value="diesel">Diesel</option>
-                      <option value="gasoline">Gasoline</option>
-                      <option value="biodiesel">Biodiesel (B20)</option>
-                      <option value="electric">Electric (Grid)</option>
-                      <option value="lng">Liquified Natural Gas</option>
+                      <option value="diesel">Diesel (2.68 kg CO₂e/L)</option>
+                      <option value="gasoline">Gasoline (2.31 kg CO₂e/L)</option>
+                      <option value="natural_gas">Natural Gas (2.03 kg CO₂e/m³)</option>
+                      <option value="lpg">LPG (1.70 kg CO₂e/L)</option>
                     </StandardSelect>
                   )}
                 />

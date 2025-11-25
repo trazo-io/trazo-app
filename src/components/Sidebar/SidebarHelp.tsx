@@ -1,14 +1,6 @@
-import {
-  Button,
-  Flex,
-  Link,
-  Text,
-  VStack,
-  HStack,
-  useColorModeValue,
-  Icon,
-  Box
-} from '@chakra-ui/react';
+import { Button, Flex, Text, VStack, HStack, useColorModeValue, Icon, Box } from '@chakra-ui/react';
+
+import { Link } from 'react-router-dom';
 
 import { QuestionIcon } from '@chakra-ui/icons';
 import { FaBook, FaExternalLinkAlt } from 'react-icons/fa';
@@ -40,8 +32,7 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
       _hover={{
         boxShadow: 'xl',
         transform: 'translateY(-1px)'
-      }}
-    >
+      }}>
       <VStack spacing={3} align="stretch">
         {/* Icon and Title */}
         <HStack spacing={3} align="center">
@@ -52,8 +43,7 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
             borderRadius="lg"
             align="center"
             justify="center"
-            flexShrink={0}
-          >
+            flexShrink={0}>
             <Icon as={QuestionIcon} color={iconColor} w="20px" h="20px" />
           </Flex>
 
@@ -71,29 +61,47 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
 
         {/* Documentation Button */}
         {isExpanded && (
-          <Link href="" w="100%" _hover={{ textDecoration: 'none' }}>
-            <Button
-              size="sm"
-              colorScheme="green"
-              variant="solid"
-              w="100%"
-              leftIcon={<Icon as={FaBook} w="14px" h="14px" />}
-              rightIcon={<Icon as={FaExternalLinkAlt} w="12px" h="12px" />}
-              fontSize="xs"
-              fontWeight="semibold"
-              _hover={{
+          <Button
+            as={Link}
+            to="/admin/dashboard/education"
+            size="sm"
+            colorScheme="green"
+            variant="solid"
+            w="100%"
+            leftIcon={<Icon as={FaBook} w="14px" h="14px" />}
+            rightIcon={<Icon as={FaExternalLinkAlt} w="12px" h="12px" />}
+            fontSize="xs"
+            fontWeight="semibold"
+            bg="green.500"
+            color="white"
+            border="none"
+            transition="all 0.2s ease"
+            sx={{
+              '&:hover': {
+                backgroundColor: 'green.600 !important',
+                color: 'white !important',
+                opacity: '1 !important',
+                visibility: 'visible !important',
                 transform: 'translateY(-1px)',
-                boxShadow: 'md'
-              }}
-              _active={{
-                transform: 'translateY(0)',
-                boxShadow: 'sm'
-              }}
-              transition="all 0.2s ease"
-            >
-              {intl.formatMessage({ id: 'app.documentation' })}
-            </Button>
-          </Link>
+                boxShadow: 'md',
+                textDecoration: 'none !important'
+              },
+              '&:focus': {
+                backgroundColor: 'green.600 !important',
+                color: 'white !important',
+                opacity: '1 !important',
+                visibility: 'visible !important',
+                boxShadow: '0 0 0 3px rgba(72, 187, 120, 0.6)'
+              },
+              '&:active': {
+                backgroundColor: 'green.700 !important',
+                color: 'white !important',
+                opacity: '1 !important',
+                visibility: 'visible !important'
+              }
+            }}>
+            {intl.formatMessage({ id: 'app.documentation' })}
+          </Button>
         )}
       </VStack>
     </Box>

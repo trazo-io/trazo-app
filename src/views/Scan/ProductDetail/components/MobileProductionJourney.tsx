@@ -312,13 +312,6 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
               <Box position="relative">
                 {/* Top-right verification indicators for immediate trust visibility */}
                 <HStack position="absolute" top={3} right={3} spacing={1} zIndex={2}>
-                  {/* Latest event indicator */}
-                  {index === 0 && (
-                    <Badge colorScheme="green" fontSize="xs" px={2} py={1} borderRadius="full">
-                      Latest
-                    </Badge>
-                  )}
-
                   {/* Category badge */}
                   <Badge
                     colorScheme={config.categoryColor}
@@ -389,9 +382,12 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                         <Text fontSize="sm" fontWeight="semibold" color={mutedColor}>
                           Farming Practice Photos
                         </Text>
-                        <SimpleGrid columns={event.album.images.length === 1 ? 1 : 2} spacing={2} w="full">
+                        <SimpleGrid
+                          columns={event.album.images.length === 1 ? 1 : 2}
+                          spacing={2}
+                          w="full">
                           {event.album.images.map((image) => (
-                            <AspectRatio key={image.id} ratio={4/3}>
+                            <AspectRatio key={image.id} ratio={4 / 3}>
                               <Image
                                 src={image.image}
                                 alt={image.caption}
@@ -419,7 +415,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                         </SimpleGrid>
                         {event.album.images.length > 0 && (
                           <Text fontSize="xs" color={mutedColor} textAlign="center">
-                            {event.album.images.length} verification photo{event.album.images.length > 1 ? 's' : ''} available
+                            {event.album.images.length} verification photo
+                            {event.album.images.length > 1 ? 's' : ''} available
                           </Text>
                         )}
                       </VStack>

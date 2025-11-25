@@ -109,9 +109,6 @@ interface Event {
   weather_conditions?: string;
   application_timing?: string;
   target_pest_disease?: string;
-  nitrogen_percentage?: number;
-  phosphorus_percentage?: number;
-  potassium_percentage?: number;
   pre_harvest_interval?: number;
   active_ingredient?: string;
   extra_data?: {
@@ -133,9 +130,6 @@ interface Event {
     application_method?: string;
     area_treated?: number;
     area_unit?: string;
-    nitrogen_percentage?: number;
-    phosphorus_percentage?: number;
-    potassium_percentage?: number;
     volume_applied?: number;
     volume_unit?: string;
     weather_conditions?: string;
@@ -792,11 +786,11 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         'HA': 'Harvesting', 
         'IR': 'Irrigation',
         'PR': 'Pruning/Trimming',
+        'TR': 'Transplanting',
         'cultivation': 'Soil Cultivation',
         'fertilization': 'Fertilizer Application',
         'weeding': 'Weed Management',
         'mulching': 'Mulching Application',
-        'transplanting': 'Transplanting',
         'planting': 'Planting/Seeding',
         'harvesting': 'Harvesting',
         'irrigation': 'Irrigation',
@@ -1133,8 +1127,8 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
   }
 
-  // Pest Management Events (Type 7)
-  if (event.event_type === 7) {
+  // Pest Management Events (Type 6)
+  if (event.event_type === 6) {
     if (extraData.pests_found) {
       fields.push({
         label: 'Pests Found',
@@ -1207,8 +1201,8 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
   }
 
-  // Business Events (Type 6)
-  if (event.event_type === 6) {
+  // Business Events (Type 7)
+  if (event.event_type === 7) {
     if (extraData.certification_type) {
       fields.push({
         label: 'Certification Type',

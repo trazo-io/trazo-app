@@ -63,24 +63,26 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
     if (!isEdit || !parcelData) return {};
 
     console.log('📊 Loading parcel data for transparency form:', parcelData);
-    
+
     return {
       // Core transparency fields (map directly to new schema)
       name: parcelData.name || '',
       area: parcelData.area || 0,
       crop_focus: parcelData.crop_type || '', // Map crop_type → crop_focus
-      
+
       // Transparency story fields (map description → transparency_description)
       transparency_description: parcelData.description || '',
-      sustainability_practices: parcelData.agricultural_details?.carbon_sequestration_practices || 
-                               parcelData.agricultural_details?.cover_crop_management || '',
+      sustainability_practices:
+        parcelData.agricultural_details?.carbon_sequestration_practices ||
+        parcelData.agricultural_details?.cover_crop_management ||
+        '',
       consumer_story: '', // New field, will be empty for existing parcels
-      
+
       // Visual documentation
       images: parcelData.images || [],
       certified: parcelData.certified || false,
       certification_type: parcelData.certification_type || '',
-      
+
       // System fields (maintain compatibility)
       polygon: parcelData.polygon || [],
       map_metadata: parcelData.map_metadata || {
@@ -88,7 +90,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         zoom: 13
       },
       establishment: parseInt(parcelData.establishment) || undefined,
-      
+
       // Legacy fields for backend compatibility (hidden from UI)
       description: parcelData.description || '',
       contact_phone: parcelData.contact_phone || '',
@@ -112,25 +114,27 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
 
       // 🌱 Store transparency narrative in agricultural_details for carbon context
       const agriculturalDetails: any = {};
-      
+
       // Store transparency story for consumer display
       if (data.sustainability_practices) {
         agriculturalDetails.carbon_sequestration_practices = data.sustainability_practices;
         agriculturalDetails.cover_crop_management = data.sustainability_practices;
       }
-      
+
       if (data.consumer_story) {
         agriculturalDetails.consumer_narrative = data.consumer_story;
       }
-      
-      // Basic carbon tracking capability 
-      const hasTransparencyData = !!(data.transparency_description && data.sustainability_practices);
-      
+
+      // Basic carbon tracking capability
+      const hasTransparencyData = !!(
+        data.transparency_description && data.sustainability_practices
+      );
+
       console.log('🌱 Transparency agricultural details:', {
         agriculturalDetails,
         hasTransparencyData
       });
-      
+
       // 🎯 Map transparency form to backend fields
       const parcelData = {
         name: data.name,
@@ -151,12 +155,12 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           zoom: 13
         },
         establishment: parseInt(establishmentId!),
-        
+
         // ✅ Store transparency context for carbon calculations
         agricultural_details: agriculturalDetails,
         carbon_calculation_enabled: hasTransparencyData,
         transparency_ready: true, // Mark as transparency-focused parcel
-        
+
         // Consumer-facing fields
         consumer_story: data.consumer_story || '',
         sustainability_practices: data.sustainability_practices || ''
@@ -207,20 +211,12 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         }).unwrap();
 
         // ✅ CRITICAL FIX: Update Redux state to include new parcel
-        console.log('🔄 Redux: Adding parcel to establishment state', result);
-        dispatch(setEstablishmentParcel({
-          establishmentId: establishmentId!,
-          parcel: result
-        }));
-
-        toast({
-          title: 'Parcel Created',
-          description: 'The parcel has been successfully created.',
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-          position: 'top-right'
-        });
+        dispatch(
+          setEstablishmentParcel({
+            establishmentId: establishmentId!,
+            parcel: result
+          })
+        );
       }
 
       navigate(`/admin/dashboard/establishment/${establishmentId}`);

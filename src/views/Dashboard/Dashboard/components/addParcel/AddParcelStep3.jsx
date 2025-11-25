@@ -29,7 +29,7 @@ import { BsFillCloudLightningRainFill } from 'react-icons/bs';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
-import ChemicalTab from './ChemicalTab.jsx';
+import ChemicalTab from '../forms/ChemicalTab-ENHANCED';
 import { FaPlus } from 'react-icons/fa';
 import FormInput from 'components/Forms/FormInput';
 import OtherTab from './OtherTab.jsx';

@@ -28,7 +28,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardFooter from 'components/Card/CardFooter.tsx';
 import CardHeader from 'components/Card/CardHeader';
-import ChemicalTab from './ChemicalTab.jsx';
+import ChemicalTab from '../forms/ChemicalTab-ENHANCED';
 import { FaPlus } from 'react-icons/fa';
 import OtherTab from './OtherTab.jsx';
 import { RocketIcon } from 'components/Icons/Icons';

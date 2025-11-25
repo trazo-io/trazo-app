@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Button,
   FormControl,
@@ -72,9 +72,12 @@ const pestSchema = object({
   observation: string().optional()
 });
 
-const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
+const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
   const intl = useIntl();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  
+  // INFINITE LOOP FIX: Track last sent values to prevent duplicate onDataChange calls
+  const lastSentValuesRef = useRef(null);
 
   const methods = useForm({
     resolver: zodResolver(pestSchema),
@@ -152,6 +155,13 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
 
+        // INFINITE LOOP FIX: Check if values have actually changed
+        const currentValuesString = JSON.stringify(currentValues);
+        if (lastSentValuesRef.current === currentValuesString) {
+          console.log('[PestManagementTab]: Values unchanged, skipping onDataChange');
+          return;
+        }
+
         // Only trigger if we have meaningful user-provided data
         // Types that need area context for accurate carbon calculations
         const needsAreaValidation = ['SC', 'TM', 'BR', 'IP']; // Scouting, Trap Monitoring, Beneficial Release, IPM Implementation
@@ -168,10 +178,12 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
             console.log('[PestManagementTab]: Triggering onDataChange with values', currentValues);
             try {
               onDataChange(currentValues);
+              lastSentValuesRef.current = currentValuesString; // Store sent values
             } catch (error) {
               console.error('[PestManagementTab]: Error calling onDataChange:', error);
             }
           } else {
+            console.log('[PestManagementTab]: Skipping calculation - missing required fields');
           }
         } else if (hasValidType) {
           // For non-field activities (PI, TA), just require type
@@ -180,22 +192,26 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
           }
           try {
             onDataChange(currentValues);
+            lastSentValuesRef.current = currentValuesString; // Store sent values
           } catch (error) {
             console.error('[PestManagementTab]: Error calling onDataChange:', error);
           }
         } else {
+          console.log('[PestManagementTab]: No valid type, skipping calculation');
         }
       } else {
-        }
+        console.log('[PestManagementTab]: onDataChange not available');
+      }
     }, 500); // Debounced to prevent excessive API calls
 
     return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, methods]);
+  }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
   const onSubmit = (data) => {
     // Convert string numbers to proper format
     const processedData = {
       ...data,
+      // REMOVED: observation → description mapping now handled universally in cleanEventData
       trap_count: data.trap_count ? parseInt(data.trap_count) : null,
       damage_percentage: data.damage_percentage ? parseFloat(data.damage_percentage) : null
     };
@@ -274,13 +290,13 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
           </Box>
 
           {/* Agricultural Context Section - Critical for Carbon Calculations */}
-          <Box p={4} border="1px" borderColor="gray.200" borderRadius="lg">
+          <Box p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
             <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="blue.600">
+              <Text fontSize="md" fontWeight="bold" color="green.600">
                 <Icon as={FaRulerHorizontal} mr={2} />
                 Field Area & Context
               </Text>
-              <Badge colorScheme="blue" fontSize="xs">
+              <Badge colorScheme="green" fontSize="xs">
                 Carbon Calculation Required
               </Badge>
             </HStack>
@@ -418,22 +434,44 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
               </Badge>
             </HStack>
 
-            {/* Pest Scouting, Identification, and Assessment Details */}
-            {(pestType === 'SC' || pestType === 'PI' || pestType === 'TA') && (
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <StandardField
-                  label={intl.formatMessage({ id: 'app.pestSpecies' }) || 'Pest Species'}
-                  helpText="Identify specific pest species found"
-                >
-                  <StandardInput
-                    {...methods.register('pest_species')}
-                    placeholder="e.g., Aphids, Spider mites, Thrips"
-                  />
-                </StandardField>
+            {/* Universal Pest Context Fields - All Types */}
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
+              <StandardField
+                label={intl.formatMessage({ id: 'app.pestSpecies' }) || 'Pest Species'}
+                helpText="Help consumers understand what pests you're managing"
+              >
+                <StandardInput
+                  {...methods.register('pest_species')}
+                  placeholder="e.g., Aphids, Spider mites, Thrips"
+                />
+              </StandardField>
 
+              <StandardField
+                label={intl.formatMessage({ id: 'app.damagePercentage' }) || 'Crop Impact Level (%)'}
+                helpText="Percentage of crop damage observed (for transparency)"
+              >
+                <StandardInput
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  {...methods.register('damage_percentage')}
+                  placeholder="0.0"
+                />
+              </StandardField>
+            </SimpleGrid>
+
+            {/* Pest Pressure Assessment - Most Types */}
+            {(pestType === 'SC' || pestType === 'PI' || pestType === 'TA' || pestType === 'TM' || pestType === 'BR' || pestType === 'IP') && (
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
                 <StandardField
                   label={intl.formatMessage({ id: 'app.pestPressureLevel' }) || 'Pest Pressure Level'}
-                  helpText="Current pest population assessment"
+                  helpText={
+                    pestType === 'TM' ? "Pressure level detected through monitoring" :
+                    pestType === 'BR' ? "Pressure level that prompted beneficial release" :
+                    pestType === 'IP' ? "Pressure level that triggered IPM implementation" :
+                    "Current pest population assessment"
+                  }
                 >
                   <StandardSelect {...methods.register('pest_pressure_level')}>
                     <option value="">Select pressure level</option>
@@ -448,40 +486,35 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                   </StandardSelect>
                 </StandardField>
 
-                <StandardField
-                  label={intl.formatMessage({ id: 'app.damagePercentage' }) || 'Damage Percentage (%)'}
-                  helpText="Percentage of crop damage observed"
-                >
-                  <StandardInput
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    {...methods.register('damage_percentage')}
-                    placeholder="0.0"
-                  />
-                </StandardField>
-
-                {pestType === 'TA' && (
+                {/* Economic Threshold Assessment - Relevant for Assessment and IPM Types */}
+                {(pestType === 'TA' || pestType === 'IP') && (
                   <StandardField
-                    label="Threshold Assessment"
-                    helpText="Economic threshold decision"
+                    label="Economic Threshold Status"
+                    helpText={
+                      pestType === 'TA' ? "Main threshold assessment decision" :
+                      "Was IPM triggered by reaching economic threshold?"
+                    }
                   >
                     <Checkbox {...methods.register('action_threshold_met')}>
                       {intl.formatMessage({ id: 'app.actionThresholdMet' }) ||
-                        'Action threshold has been met'}
+                        'Economic threshold has been met - action required'}
                     </Checkbox>
                   </StandardField>
                 )}
               </SimpleGrid>
             )}
 
+            {/* Type-Specific Implementation Details */}
+            
             {/* Beneficial Release Details */}
-            {pestType === 'BR' && (
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+            {(pestType === 'BR' || pestType === 'IP') && (
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
                 <StandardField
                   label={intl.formatMessage({ id: 'app.beneficialSpecies' }) || 'Beneficial Species'}
-                  helpText="Natural pest control organisms released"
+                  helpText={
+                    pestType === 'BR' ? "Natural pest control organisms released" :
+                    "Beneficial species used in IPM strategy (if applicable)"
+                  }
                 >
                   <StandardInput
                     {...methods.register('beneficial_species')}
@@ -491,7 +524,10 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
 
                 <StandardField
                   label={intl.formatMessage({ id: 'app.releaseQuantity' }) || 'Release Quantity'}
-                  helpText="Number and density of beneficials released"
+                  helpText={
+                    pestType === 'BR' ? "Number and density of beneficials released" :
+                    "Quantity of beneficial organisms used (if applicable)"
+                  }
                 >
                   <StandardInput
                     {...methods.register('release_quantity')}
@@ -503,7 +539,7 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
 
             {/* Trap Monitoring Details */}
             {pestType === 'TM' && (
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
                 <StandardField
                   label={intl.formatMessage({ id: 'app.trapCount' }) || 'Number of Traps'}
                   helpText="Monitoring traps deployed for pest detection"
@@ -521,14 +557,14 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
             {/* IPM Strategy Implementation */}
             {pestType === 'IP' && (
               <StandardField
-                label={intl.formatMessage({ id: 'app.impStrategy' }) || 'IPM Strategy'}
-                helpText="Describe integrated pest management practices implemented"
+                label={intl.formatMessage({ id: 'app.impStrategy' }) || 'IPM Strategy Description'}
+                helpText="Describe the comprehensive integrated pest management approach implemented"
               >
                 <StandardTextarea
                   {...methods.register('imp_strategy')}
                   placeholder={
                     intl.formatMessage({ id: 'app.enterImpStrategy' }) ||
-                    'Describe the integrated pest management strategy implemented - cultural practices, biological controls, targeted treatments...'
+                    'Describe your integrated pest management strategy: cultural practices, biological controls, targeted treatments, monitoring methods, prevention measures...'
                   }
                   rows={4}
                 />
@@ -561,24 +597,26 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
           </Box>
 
           {/* Action Buttons */}
-          <HStack justify="space-between" pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-            <StandardButton
-              variant="outline"
-              onClick={onPrev}
-              leftIcon={<FaChevronLeft />}
-              size="lg"
-            >
-              {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-            </StandardButton>
-            <StandardButton
-              variant="primary"
-              type="submit"
-              rightIcon={<FaChevronRight />}
-              size="lg"
-            >
-              {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-            </StandardButton>
-          </HStack>
+          {!hideActions && (
+            <HStack justify="space-between" pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
+              <StandardButton
+                variant="outline"
+                onClick={onPrev}
+                leftIcon={<FaChevronLeft />}
+                size="lg"
+              >
+                {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+              </StandardButton>
+              <StandardButton
+                variant="primary"
+                type="submit"
+                rightIcon={<FaChevronRight />}
+                size="lg"
+              >
+                {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+              </StandardButton>
+            </HStack>
+          )}
         </VStack>
       </form>
     </FormProvider>

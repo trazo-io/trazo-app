@@ -61,12 +61,14 @@ const equipmentSchema = object({
   observation: string().optional()
 });
 
-// Equipment operation types for transparency tracking
+// Equipment operation types for transparency tracking - MUST match backend EquipmentEvent model choices
 const EQUIPMENT_OPERATION_TYPES = [
-  { value: 'FC', label: 'Fuel Consumption - Field Operations' },
-  { value: 'MA', label: 'Maintenance & Service' },
-  { value: 'TR', label: 'Transportation & Logistics' },
-  { value: 'ST', label: 'Storage & Handling' }
+  { value: 'FC', label: 'Fuel Consumption' },
+  { value: 'MN', label: 'Maintenance' },
+  { value: 'RE', label: 'Repair' },
+  { value: 'CA', label: 'Calibration' },
+  { value: 'BD', label: 'Breakdown' },
+  { value: 'EI', label: 'Inspection' }
 ];
 
 // Equipment types for carbon calculation
@@ -80,16 +82,15 @@ const EQUIPMENT_TYPES = [
   { value: 'other', label: '🔧 Other Equipment' }
 ];
 
-// Fuel types with emission factors
+// Fuel types with backend emission factors (EPA-verified)
 const FUEL_TYPES = [
-  { value: 'diesel', label: '⛽ Diesel' },
-  { value: 'gasoline', label: '⛽ Gasoline' },
-  { value: 'biodiesel', label: '🌱 Biodiesel' },
-  { value: 'electric', label: '🔋 Electric' },
-  { value: 'natural_gas', label: '💨 Natural Gas' }
+  { value: 'diesel', label: '⛽ Diesel', factor: '2.68 kg CO₂e/L' },
+  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.31 kg CO₂e/L' },
+  { value: 'natural_gas', label: '💨 Natural Gas', factor: '2.03 kg CO₂e/m³' },
+  { value: 'lpg', label: '🔥 LPG', factor: '1.70 kg CO₂e/L' }
 ];
 
-const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
+const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
   const intl = useIntl();
 
   const methods = useForm({
@@ -131,8 +132,8 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
   const { watch, handleSubmit, formState: { errors } } = methods;
   const equipmentType = watch('type');
 
-  // Real-time carbon calculation updates - focused on fuel consumption
-  const watchedFields = watch(['equipment_type', 'fuel_consumed', 'fuel_type', 'hours_operated']);
+  // Real-time preview updates - focused on transparency and carbon data
+  const watchedFields = watch(['type', 'name', 'equipment_type', 'fuel_consumed', 'fuel_type', 'hours_operated', 'area_worked', 'observation']);
   const previousValuesRef = useRef({});
 
   useEffect(() => {
@@ -140,12 +141,15 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
         
-        // Only trigger if we have meaningful carbon-relevant data
-        if (currentValues.equipment_type && 
-            currentValues.fuel_consumed && 
-            parseFloat(currentValues.fuel_consumed) > 0 &&
-            currentValues.fuel_type) {
-          const relevantFields = ['equipment_type', 'fuel_consumed', 'fuel_type', 'hours_operated', 'area_worked'];
+        // Trigger for basic equipment info OR meaningful carbon-relevant data
+        const hasBasicEquipmentInfo = currentValues.type && currentValues.name && currentValues.equipment_type;
+        const hasCarbonData = currentValues.equipment_type && 
+                             currentValues.fuel_consumed && 
+                             parseFloat(currentValues.fuel_consumed) > 0 &&
+                             currentValues.fuel_type;
+        
+        if (hasBasicEquipmentInfo || hasCarbonData) {
+          const relevantFields = ['type', 'name', 'equipment_type', 'fuel_consumed', 'fuel_type', 'hours_operated', 'area_worked', 'operation_efficiency', 'observation'];
           const currentRelevantValues = {};
           relevantFields.forEach((field) => {
             currentRelevantValues[field] = currentValues[field];
@@ -166,7 +170,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, methods]);
+  }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
   const onSubmit = (data) => {
     // Convert string numbers to numbers for backend carbon calculations
@@ -280,15 +284,21 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
           </StandardCard>
 
           {/* Section 2: Fuel & Operation Data */}
-          <StandardCard
-            title={
-              <HStack>
-                <Icon as={FaCalculator} color="blue.500" />
-                <Text>Fuel & Operation Data</Text>
-                <Badge colorScheme="blue" size="sm">Carbon Calculation</Badge>
-              </HStack>
-            }
-          >
+          <Box mb={6} p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
+            <HStack justify="space-between" align="center" mb={4}>
+              <Text fontSize="md" fontWeight="bold" color="green.600">
+                <Icon as={FaSeedling} mr={2} />
+                Fuel Consumption & Equipment Data
+              </Text>
+              <Badge colorScheme="green" fontSize="xs">
+                Enhanced Carbon Accuracy
+              </Badge>
+            </HStack>
+
+            <Text fontSize="sm" color="gray.600" mb={4}>
+              Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. 
+              These details help consumers understand the real operational impact of your equipment operations.
+            </Text>
             <VStack spacing={4} align="stretch">
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <StandardField
@@ -308,6 +318,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                           step="0.1"
                           placeholder="0.0"
                           flex="2"
+                          bg="white"
                         />
                       )}
                     />
@@ -315,7 +326,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                       name="fuel_unit"
                       control={methods.control}
                       render={({ field }) => (
-                        <StandardSelect {...field} flex="1">
+                        <StandardSelect {...field} flex="1" bg="white">
                           <option value="L">L</option>
                           <option value="gal">gal</option>
                           <option value="kg">kg</option>
@@ -339,6 +350,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                       <StandardSelect
                         {...field}
                         placeholder="Select fuel type..."
+                        bg="white"
                       >
                         {FUEL_TYPES.map((type) => (
                           <option key={type.value} value={type.value}>
@@ -367,6 +379,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                         type="number"
                         step="0.5"
                         placeholder="0.0"
+                        bg="white"
                       />
                     )}
                   />
@@ -388,6 +401,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                           step="0.1"
                           placeholder="Optional"
                           flex="2"
+                          bg="white"
                         />
                       )}
                     />
@@ -395,7 +409,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                       name="area_unit"
                       control={methods.control}
                       render={({ field }) => (
-                        <StandardSelect {...field} flex="1">
+                        <StandardSelect {...field} flex="1" bg="white">
                           <option value="ha">ha</option>
                           <option value="ac">ac</option>
                           <option value="m2">m²</option>
@@ -414,7 +428,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                     name="operation_efficiency"
                     control={methods.control}
                     render={({ field }) => (
-                      <StandardSelect {...field}>
+                      <StandardSelect {...field} bg="white">
                         <option value="high">High</option>
                         <option value="normal">Normal</option>
                         <option value="low">Low</option>
@@ -424,7 +438,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                 </StandardField>
               </SimpleGrid>
             </VStack>
-          </StandardCard>
+          </Box>
 
           {/* Section 3: Transparency Notes */}
           <StandardCard
@@ -456,26 +470,28 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
           </StandardCard>
 
           {/* Navigation Buttons */}
-          <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
-            <HStack justify="space-between">
-              <StandardButton
-                variant="outline"
-                onClick={onPrev}
-                leftIcon={<FaChevronLeft />}
-                size="lg"
-              >
-                {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </StandardButton>
-              <StandardButton
-                variant="primary"
-                type="submit"
-                rightIcon={<FaChevronRight />}
-                size="lg"
-              >
-                {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </StandardButton>
-            </HStack>
-          </Box>
+          {!hideActions && (
+            <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
+              <HStack justify="space-between">
+                <StandardButton
+                  variant="outline"
+                  onClick={onPrev}
+                  leftIcon={<FaChevronLeft />}
+                  size="lg"
+                >
+                  {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                </StandardButton>
+                <StandardButton
+                  variant="primary"
+                  type="submit"
+                  rightIcon={<FaChevronRight />}
+                  size="lg"
+                >
+                  {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                </StandardButton>
+              </HStack>
+            </Box>
+          )}
         </VStack>
       </form>
     </FormProvider>

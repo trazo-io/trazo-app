@@ -433,10 +433,7 @@ function TimelineRow(props: TimelineRowProps) {
               {carbonData && !carbonData.error ? (
                 <Tooltip
                   label={`Carbon Impact: ${carbonData.co2e > 0 ? '+' : ''}${carbonData.co2e} kg CO₂e${
-                    carbonData.verification_status === 'usda_certified'
-                      ? ' (USDA Certified)'
-                      : carbonData.usda_factors_based ||
-                        carbonData.verification_status === 'factors_verified'
+                    carbonData.verification_status === 'factors_verified' || carbonData.usda_factors_based
                       ? ' (USDA Factors)'
                       : ''
                   }`}
@@ -453,22 +450,16 @@ function TimelineRow(props: TimelineRowProps) {
                       {carbonData.co2e > 0 ? '+' : ''}
                       {carbonData.co2e} kg CO₂
                     </Badge>
-                    {(carbonData.verification_status === 'usda_certified' ||
-                      carbonData.usda_factors_based ||
-                      carbonData.verification_status === 'factors_verified') && (
+                    {(carbonData.verification_status === 'factors_verified' || carbonData.usda_factors_based) && (
                       <Badge
-                        colorScheme={
-                          carbonData.verification_status === 'usda_certified' ? 'green' : 'blue'
-                        }
+                        colorScheme="blue"
                         variant="solid"
                         fontSize="xs"
                         borderRadius="md"
                         px={2}
                         py={1}
                       >
-                        {carbonData.verification_status === 'usda_certified'
-                          ? 'USDA'
-                          : 'USDA Factors'}
+                        USDA Factors
                       </Badge>
                     )}
                   </HStack>
@@ -553,21 +544,6 @@ function TimelineRow(props: TimelineRowProps) {
               )}
             </HStack>
 
-            {/* Data Source Footer */}
-            {carbonData && (
-              <HStack spacing={1} justify="flex-start">
-                <Text fontSize="xs" color="gray.400">
-                  {carbonData.verification_status === 'usda_certified'
-                    ? '✓ USDA Certified Data'
-                    : carbonData.verification_status === 'factors_verified' ||
-                      carbonData.usda_factors_based
-                    ? '📊 USDA Factors Used'
-                    : carbonData.error
-                    ? '⚠ Data Unavailable'
-                    : '📈 Calculated Estimate'}
-                </Text>
-              </HStack>
-            )}
           </VStack>
         </CardBody>
       </Card>

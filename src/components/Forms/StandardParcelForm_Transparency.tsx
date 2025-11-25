@@ -211,7 +211,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     initialData?.polygon || []
   );
 
-  const getPolygonLength = () => polygon && Array.isArray(polygon) ? polygon.length : 0;
+  const getPolygonLength = () => (polygon && Array.isArray(polygon) ? polygon.length : 0);
   const isValidPolygon = () => getPolygonLength() >= 3;
 
   const [mapCenter, setMapCenter] = useState(() => {
@@ -247,17 +247,17 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
   // 🎯 SIMPLIFIED 4-STEP TRANSPARENCY STRUCTURE
   const steps = [
-    { 
-      title: 'Parcel Identity', 
-      description: 'Name, area & crop focus', 
-      icon: FaBuilding, 
-      required: true 
+    {
+      title: 'Parcel Identity',
+      description: 'Name, area & crop focus',
+      icon: FaBuilding,
+      required: true
     },
-    { 
-      title: 'Location', 
-      description: 'Map boundaries', 
-      icon: FaMapMarkedAlt, 
-      required: true 
+    {
+      title: 'Location',
+      description: 'Map boundaries',
+      icon: FaMapMarkedAlt,
+      required: true
     },
     {
       title: 'Transparency Story',
@@ -300,9 +300,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const isStepComplete = (step: number) => {
     const currentFormData = watch();
     const result = validateStep(step, currentFormData);
-    console.log('🔍 isStepComplete:', { 
-      step, 
-      result, 
+    console.log('🔍 isStepComplete:', {
+      step,
+      result,
       currentFormData,
       name: currentFormData.name,
       area: currentFormData.area,
@@ -354,19 +354,19 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
       reset(initialData);
-      
+
       if (initialData.polygon) {
         setPolygon(initialData.polygon);
       }
-      
+
       if (initialData.map_metadata?.center) {
         setMapCenter(initialData.map_metadata.center);
       }
-      
+
       if (initialData.map_metadata?.zoom) {
         setMapZoom(initialData.map_metadata.zoom);
       }
-      
+
       if (initialData.images && initialData.images.length > 0) {
         setUploadedImageUrls(initialData.images);
       }
@@ -382,10 +382,13 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     }
   }, [polygon]);
 
-  const handleImagesChange = useCallback((newImageUrls: string[]) => {
-    setUploadedImageUrls(newImageUrls);
-    setValue('images', newImageUrls);
-  }, [setValue]);
+  const handleImagesChange = useCallback(
+    (newImageUrls: string[]) => {
+      setUploadedImageUrls(newImageUrls);
+      setValue('images', newImageUrls);
+    },
+    [setValue]
+  );
 
   // Google Maps polygon editing
   const onEdit = useCallback(() => {
@@ -422,7 +425,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const onSubmitForm = (data: TransparencyParcelFormData) => {
     try {
       const imageUrls = data.images && data.images.length > 0 ? data.images : uploadedImageUrls;
-      
+
       const finalData = {
         ...data,
         polygon,
@@ -464,7 +467,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       }`}
       showBackButton
       onBack={onCancel}>
-      
       {/* Modern Progress Stepper - 4 Steps */}
       <StandardStepper
         steps={steps}
@@ -476,7 +478,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmitForm)}>
-          
           {/* 🎯 STEP 0: Parcel Identity */}
           {currentStep === 0 && (
             <StandardCard title="Parcel Identity" subtitle="Basic information for transparency">
@@ -575,8 +576,12 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                 <Box borderRadius="lg" overflow="hidden" border="1px solid" borderColor="gray.200">
                   {loadError ? (
                     <Flex h="400px" align="center" justify="center" bg="red.50" direction="column">
-                      <Text color="red.500" mb={2}>Failed to load Google Maps</Text>
-                      <Text fontSize="sm" color="red.400">{loadError.message}</Text>
+                      <Text color="red.500" mb={2}>
+                        Failed to load Google Maps
+                      </Text>
+                      <Text fontSize="sm" color="red.400">
+                        {loadError.message}
+                      </Text>
                     </Flex>
                   ) : !isLoaded ? (
                     <Flex h="400px" align="center" justify="center" bg="gray.100">
@@ -630,27 +635,32 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                           }}
                         />
                       )}
-                      
-                      {polygon && Array.isArray(polygon) && polygon.map((point, index) => (
-                        <Marker
-                          key={index}
-                          position={point}
-                          title={`Point ${index + 1}`}
-                          icon={{
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: 8,
-                            fillColor: isValidPolygon() ? '#16A34A' : '#D97706',
-                            fillOpacity: 1,
-                            strokeColor: '#FFFFFF',
-                            strokeWeight: 2
-                          }}
-                          onClick={() => {
-                            const newPolygon = polygon && Array.isArray(polygon) ? polygon.filter((_, i) => i !== index) : [];
-                            setPolygon(newPolygon);
-                            setValue('polygon', newPolygon);
-                          }}
-                        />
-                      ))}
+
+                      {polygon &&
+                        Array.isArray(polygon) &&
+                        polygon.map((point, index) => (
+                          <Marker
+                            key={index}
+                            position={point}
+                            title={`Point ${index + 1}`}
+                            icon={{
+                              path: google.maps.SymbolPath.CIRCLE,
+                              scale: 8,
+                              fillColor: isValidPolygon() ? '#16A34A' : '#D97706',
+                              fillOpacity: 1,
+                              strokeColor: '#FFFFFF',
+                              strokeWeight: 2
+                            }}
+                            onClick={() => {
+                              const newPolygon =
+                                polygon && Array.isArray(polygon)
+                                  ? polygon.filter((_, i) => i !== index)
+                                  : [];
+                              setPolygon(newPolygon);
+                              setValue('polygon', newPolygon);
+                            }}
+                          />
+                        ))}
                     </GoogleMap>
                   )}
                 </Box>
@@ -709,11 +719,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
           {/* 🎯 STEP 2: Transparency Story */}
           {currentStep === 2 && (
-            <StandardCard
-              title="Transparency Story"
-              subtitle="Tell consumers about this parcel">
+            <StandardCard title="Transparency Story" subtitle="Tell consumers about this parcel">
               <VStack spacing={6} align="stretch">
-                
                 <StandardField
                   label="What makes this parcel special?"
                   required
@@ -788,10 +795,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       rightIcon={<FaChevronRight />}
                       disabled={(() => {
                         const currentStepValid = validateStep(currentStep, watch());
-                        console.log('🔍 Button state:', { 
-                          currentStep, 
-                          currentStepValid, 
-                          formData: watch() 
+                        console.log('🔍 Button state:', {
+                          currentStep,
+                          currentStepValid,
+                          formData: watch()
                         });
                         return !currentStepValid;
                       })()}>
@@ -809,7 +816,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
               title="Visual Documentation"
               subtitle="Build trust through images and certification">
               <VStack spacing={6} align="stretch">
-                
                 <StandardField
                   label="Parcel Images"
                   helpText="Upload high-quality images that show consumers the practices in action (max 5 images)">
@@ -890,7 +896,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
               </VStack>
             </StandardCard>
           )}
-
         </form>
       </FormProvider>
     </StandardPage>

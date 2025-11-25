@@ -39,13 +39,51 @@ interface CarbonCalculation {
   message?: string;
   transparency_note?: string;
   retry_available?: boolean;
+  // Original user input for display purposes
+  original_volume_applied?: number;
+  original_volume_unit?: string;
+  original_area_treated?: number;
+  original_area_unit?: string;
   breakdown?: {
+    // Chemical application fields
     nitrogen_emissions?: number;
     phosphorus_emissions?: number;
     potassium_emissions?: number;
     application_efficiency?: number;
-    volume_liters?: number;
-    area_hectares?: number;
+    volume_applied_liters?: number;
+    area_treated_hectares?: number;
+    application_method?: string;
+    manufacturing_emissions_kg_co2e?: number;
+    application_emissions_kg_co2e?: number;
+    npk_content?: {
+      N?: number;
+      P?: number;
+      K?: number;
+    };
+    nitrogen_kg?: number;
+    phosphorus_kg?: number;
+    potassium_kg?: number;
+    
+    // Production event fields
+    production_activity?: string;
+    area_covered_acres?: number;
+    area_covered_hectares?: number;
+    diesel_emission_factor_kg_per_gallon?: number;
+    usda_planting_factor_gallons_per_hectare?: number;
+    calculation_basis?: string;
+    confidence_level?: number;
+    actual_fuel_consumed_gallons?: number;
+    equipment_hours?: number;
+    
+    // Soil management event fields
+    soil_activity?: string;
+    area_managed?: number;
+    fuel_consumed?: number;
+    fuel_unit?: string;
+    area_emissions?: number;
+    fuel_emissions?: number;
+    emission_factor?: number;
+    total_impact?: number;
   };
   cost_analysis?: {
     estimated_cost: number;
@@ -344,19 +382,119 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                           How we calculated {formattedCO2e} kg CO₂e:
                         </Text>
                         
-                        {/* Input Summary */}
-                        {calculation.breakdown && (
+                        {/* Input Summary - Production Events */}
+                        {calculation.breakdown?.production_activity && (
+                          <Box p={2} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
+                            <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
+                              Your Production Activity:
+                            </Text>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.600">Activity:</Text>
+                              <Text color="blue.800" textTransform="capitalize">{calculation.breakdown.production_activity}</Text>
+                            </HStack>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.600">Fuel Consumed:</Text>
+                              <Text color="blue.800">
+                                {calculation.breakdown.actual_fuel_consumed_gallons 
+                                  ? `${(calculation.breakdown.actual_fuel_consumed_gallons * 3.78541).toFixed(1)} liters`
+                                  : `${((calculation.breakdown.area_covered_hectares || 0) * (calculation.breakdown.usda_planting_factor_gallons_per_hectare || 0) * 3.78541).toFixed(1)} liters (estimated)`
+                                }
+                              </Text>
+                            </HStack>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.600">Area Covered:</Text>
+                              <Text color="blue.800">{calculation.breakdown.area_covered_hectares?.toFixed(1) || 'N/A'} hectares</Text>
+                            </HStack>
+                            {calculation.breakdown.equipment_hours && (
+                              <HStack justify="space-between" fontSize="xs">
+                                <Text color="blue.600">Equipment Hours:</Text>
+                                <Text color="blue.800">{calculation.breakdown.equipment_hours} hours</Text>
+                              </HStack>
+                            )}
+                          </Box>
+                        )}
+
+                        {/* Input Summary - Irrigation Events (Electricity-based) */}
+                        {calculation.breakdown?.water_volume_gallons && (
+                          <Box p={2} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
+                            <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
+                              Your Irrigation Activity:
+                            </Text>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.600">Activity:</Text>
+                              <Text color="blue.800">Irrigation - Water application</Text>
+                            </HStack>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.600">Water Applied:</Text>
+                              <Text color="blue.800">{calculation.breakdown.water_volume_gallons.toFixed(0)} gallons</Text>
+                            </HStack>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.600">Energy Consumed:</Text>
+                              <Text color="blue.800">{calculation.breakdown.kwh_consumed?.toFixed(1)} kWh</Text>
+                            </HStack>
+                          </Box>
+                        )}
+
+                        {/* Input Summary - Soil Management Events */}
+                        {calculation.breakdown?.soil_activity && (
+                          <Box p={2} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
+                            <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
+                              Your Soil Management Activity:
+                            </Text>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.600">Activity:</Text>
+                              <Text color="blue.800" textTransform="capitalize">{calculation.breakdown.soil_activity}</Text>
+                            </HStack>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.600">Area Managed:</Text>
+                              <Text color="blue.800">{calculation.breakdown.area_managed?.toFixed(1) || 'N/A'} hectares</Text>
+                            </HStack>
+                            {calculation.breakdown.fuel_consumed && calculation.breakdown.fuel_consumed > 0 && (
+                              <HStack justify="space-between" fontSize="xs">
+                                <Text color="blue.600">Fuel Consumed:</Text>
+                                <Text color="blue.800">{calculation.breakdown.fuel_consumed} {calculation.breakdown.fuel_unit || 'L'}</Text>
+                              </HStack>
+                            )}
+                            {calculation.breakdown.equipment_hours && calculation.breakdown.equipment_hours > 0 && (
+                              <HStack justify="space-between" fontSize="xs">
+                                <Text color="blue.600">Equipment Hours:</Text>
+                                <Text color="blue.800">{calculation.breakdown.equipment_hours} hours</Text>
+                              </HStack>
+                            )}
+                          </Box>
+                        )}
+                        
+                        {/* Input Summary - Chemical Application Events */}
+                        {calculation.breakdown && !calculation.breakdown.production_activity && !calculation.breakdown.soil_activity && !calculation.breakdown.water_volume_gallons && (
                           <Box p={2} bg="blue.50" borderRadius="md" borderWidth="1px" borderColor="blue.200">
                             <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
                               Your Application:
                             </Text>
                             <HStack justify="space-between" fontSize="xs">
                               <Text color="blue.600">Volume Applied:</Text>
-                              <Text color="blue.800">{calculation.breakdown.volume_applied_liters || 'N/A'} liters</Text>
+                              <Text color="blue.800">
+                                {(() => {
+                                  // DEBUG: Log what we're receiving from backend
+                                  console.log('🔍 Frontend Debug - Display Values:', {
+                                    original_volume_applied: calculation.original_volume_applied,
+                                    original_volume_unit: calculation.original_volume_unit,
+                                    volume_applied_liters: calculation.breakdown?.volume_applied_liters,
+                                    fallback_used: !calculation.original_volume_applied || !calculation.original_volume_unit
+                                  });
+                                  
+                                  return calculation.original_volume_applied && calculation.original_volume_unit
+                                    ? `${calculation.original_volume_applied} ${calculation.original_volume_unit === 'kg' ? 'kilograms' : calculation.original_volume_unit === 'L' ? 'liters' : calculation.original_volume_unit}`
+                                    : `${calculation.breakdown?.volume_applied_liters || 'N/A'} liters`;
+                                })()}
+                              </Text>
                             </HStack>
                             <HStack justify="space-between" fontSize="xs">
                               <Text color="blue.600">Area Treated:</Text>
-                              <Text color="blue.800">{calculation.breakdown.area_treated_hectares || 'N/A'} hectares</Text>
+                              <Text color="blue.800">
+                                {calculation.original_area_treated && calculation.original_area_unit
+                                  ? `${calculation.original_area_treated} ${calculation.original_area_unit === 'ha' ? 'hectares' : calculation.original_area_unit === 'acres' ? 'acres' : calculation.original_area_unit}`
+                                  : `${calculation.breakdown.area_treated_hectares || 'N/A'} hectares`}
+                              </Text>
                             </HStack>
                             <HStack justify="space-between" fontSize="xs">
                               <Text color="blue.600">Application Method:</Text>
@@ -397,17 +535,101 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                           <Text fontSize="xs" fontWeight="semibold" color="orange.700" mb={1}>
                             Emissions Sources:
                           </Text>
-                          {calculation.breakdown?.manufacturing_emissions_kg_co2e && (
-                            <HStack justify="space-between" fontSize="xs">
-                              <Text color="orange.600">Manufacturing:</Text>
-                              <Text color="orange.800">{calculation.breakdown.manufacturing_emissions_kg_co2e.toFixed(1)} kg CO₂e</Text>
-                            </HStack>
+
+                          {/* Production Event Emissions */}
+                          {calculation.breakdown?.production_activity && (
+                            <VStack spacing={1} align="stretch">
+                              <HStack justify="space-between" fontSize="xs">
+                                <Text color="orange.600">Direct Fuel Combustion:</Text>
+                                <Text color="orange.800">{formattedCO2e} kg CO₂e</Text>
+                              </HStack>
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • {calculation.breakdown.actual_fuel_consumed_gallons 
+                                    ? `${(calculation.breakdown.actual_fuel_consumed_gallons * 3.78541).toFixed(1)}L × ${(calculation.breakdown.diesel_emission_factor_kg_per_gallon / 3.78541).toFixed(2)} kg CO₂e/L`
+                                    : `${((calculation.breakdown.area_covered_hectares || 0) * (calculation.breakdown.usda_planting_factor_gallons_per_hectare || 0) * 3.78541).toFixed(1)}L (USDA standard) × ${(calculation.breakdown.diesel_emission_factor_kg_per_gallon / 3.78541).toFixed(2)} kg CO₂e/L`
+                                  }
+                              </Text>
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • EPA Factor: {calculation.breakdown.diesel_emission_factor_kg_per_gallon?.toFixed(2)} kg CO₂e/gallon
+                              </Text>
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • Conversion: {calculation.breakdown.diesel_emission_factor_kg_per_gallon?.toFixed(2)} ÷ 3.785 = {(calculation.breakdown.diesel_emission_factor_kg_per_gallon / 3.78541).toFixed(2)} kg CO₂e/L
+                              </Text>
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • Source: {calculation.breakdown.calculation_basis?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </Text>
+                            </VStack>
                           )}
-                          {calculation.breakdown?.application_emissions_kg_co2e && (
-                            <HStack justify="space-between" fontSize="xs">
-                              <Text color="orange.600">Application Equipment:</Text>
-                              <Text color="orange.800">{calculation.breakdown.application_emissions_kg_co2e.toFixed(1)} kg CO₂e</Text>
-                            </HStack>
+
+                          {/* Irrigation Event Emissions */}
+                          {calculation.breakdown?.water_volume_gallons && (
+                            <VStack spacing={1} align="stretch">
+                              <HStack justify="space-between" fontSize="xs">
+                                <Text color="orange.600">Electricity for Pumping:</Text>
+                                <Text color="orange.800">{formattedCO2e} kg CO₂e</Text>
+                              </HStack>
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • {calculation.breakdown.kwh_consumed?.toFixed(1)} kWh × {calculation.breakdown.electricity_emission_factor_kg_per_kwh?.toFixed(3)} kg CO₂e/kWh
+                              </Text>
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • Water pumped: {calculation.breakdown.water_volume_gallons.toFixed(0)} gallons
+                              </Text>
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • Pump efficiency: {calculation.breakdown.pump_efficiency_kwh_per_1000_gallons?.toFixed(2)} kWh/1000 gallons
+                              </Text>
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • Source: EPA eGRID electricity emission factors + USDA NRCS pump efficiency
+                              </Text>
+                            </VStack>
+                          )}
+
+                          {/* Soil Management Event Emissions */}
+                          {calculation.breakdown?.soil_activity && (
+                            <VStack spacing={1} align="stretch">
+                              {calculation.breakdown.fuel_emissions && calculation.breakdown.fuel_emissions > 0 && (
+                                <>
+                                  <HStack justify="space-between" fontSize="xs">
+                                    <Text color="orange.600">Fuel Combustion:</Text>
+                                    <Text color="orange.800">{calculation.breakdown.fuel_emissions.toFixed(1)} kg CO₂e</Text>
+                                  </HStack>
+                                  <Text fontSize="xs" color="orange.600" pl={2}>
+                                    • {calculation.breakdown.fuel_consumed} {calculation.breakdown.fuel_unit} × EPA diesel factor
+                                  </Text>
+                                </>
+                              )}
+                              {calculation.breakdown.area_emissions && calculation.breakdown.area_emissions > 0 && (
+                                <>
+                                  <HStack justify="space-between" fontSize="xs">
+                                    <Text color="orange.600">Area-Based Emissions:</Text>
+                                    <Text color="orange.800">{calculation.breakdown.area_emissions.toFixed(1)} kg CO₂e</Text>
+                                  </HStack>
+                                  <Text fontSize="xs" color="orange.600" pl={2}>
+                                    • {calculation.breakdown.area_managed?.toFixed(1)} ha × {calculation.breakdown.emission_factor?.toFixed(2)} kg CO₂e/ha
+                                  </Text>
+                                </>
+                              )}
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • Total: {calculation.breakdown.total_impact?.toFixed(1)} kg CO₂e
+                              </Text>
+                            </VStack>
+                          )}
+                          
+                          {/* Chemical Application Emissions */}
+                          {!calculation.breakdown?.production_activity && !calculation.breakdown?.soil_activity && !calculation.breakdown?.water_volume_gallons && (
+                            <>
+                              {calculation.breakdown?.manufacturing_emissions_kg_co2e && (
+                                <HStack justify="space-between" fontSize="xs">
+                                  <Text color="orange.600">Manufacturing:</Text>
+                                  <Text color="orange.800">{calculation.breakdown.manufacturing_emissions_kg_co2e.toFixed(1)} kg CO₂e</Text>
+                                </HStack>
+                              )}
+                              {calculation.breakdown?.application_emissions_kg_co2e && (
+                                <HStack justify="space-between" fontSize="xs">
+                                  <Text color="orange.600">Application Equipment:</Text>
+                                  <Text color="orange.800">{calculation.breakdown.application_emissions_kg_co2e.toFixed(1)} kg CO₂e</Text>
+                                </HStack>
+                              )}
+                            </>
                           )}
                         </Box>
 

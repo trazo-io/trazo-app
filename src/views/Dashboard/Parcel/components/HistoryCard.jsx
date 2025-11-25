@@ -196,7 +196,7 @@ const HistoryCard = ({ amount }) => {
             align={{ base: 'stretch', md: 'center' }}
             pb={4}
             gap={{ base: 3, md: 0 }}>
-            <HStack spacing={3} justify={{ base: 'center', md: 'flex-start' }}>
+            <HStack spacing={3} justify="flex-start">
               <Text fontSize="lg" color={textColor} fontWeight="600">
                 {intl.formatMessage({ id: 'app.productions' })}
               </Text>

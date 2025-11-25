@@ -84,7 +84,7 @@ const formSchemaMainInfo = object({
   observation: string().optional()
 });
 
-const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} }) => {
+const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
   const intl = useIntl();
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -140,8 +140,10 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
 
   // Update form values when initialValues change (without mainInfoMethods in deps to prevent loops)
   useEffect(() => {
+    console.log('🔍 WeatherTab: initialValues received:', initialValues);
     if (Object.keys(initialValues).length > 0) {
       const mappedType = mapApiTypeToFormType(initialValues.type);
+      console.log('🔍 WeatherTab: mapped type:', mappedType, 'from:', initialValues.type);
       mainInfoMethods.reset({
         type: mappedType || '',
         lower_temperature: initialValues.lower_temperature?.toString() || '',
@@ -165,7 +167,7 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
         observation: initialValues.observation || ''
       });
     }
-  }, [initialValues]); // Removed mainInfoMethods to prevent render loops
+  }, [JSON.stringify(initialValues)]); // Use JSON.stringify to prevent render loops from object reference changes
 
   const {
     reset: mainInfoReset,
@@ -187,13 +189,25 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
 
     // Watch specific fields without causing re-render loops
     const subscription = watch((value, { name }) => {
-      // Only trigger on relevant field changes
+      // Only trigger on relevant field changes - include ALL weather fields for proper persistence
       const relevantFields = [
         'type',
         'lower_temperature',
+        'way_of_protection',
         'highest_temperature',
         'water_deficit',
-        'duration'
+        'weight',
+        'diameter',
+        'duration',
+        'start_date',
+        'end_date',
+        'wind_speed',
+        'precipitation_amount',
+        'damage_assessment',
+        'protection_measures',
+        'humidity_level',
+        'crop_impact',
+        'observation'
       ];
 
       if (relevantFields.includes(name) || !name) {
@@ -214,7 +228,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
         //
         // They do NOT generate carbon emissions and should not call carbon APIs
 
-        // DISABLED: Previously called onDataChange(currentValues) inappropriately
+        // Call onDataChange to save form data for step navigation persistence
+        onDataChange(value);
       }
     });
 
@@ -361,13 +376,13 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
 
           {/* Section 2: Weather Details & Measurements (Dynamic based on type) */}
           {type && (
-            <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
+            <Box mb={6} p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
               <HStack justify="space-between" align="center" mb={4}>
-                <Text fontSize="md" fontWeight="bold" color="blue.600">
+                <Text fontSize="md" fontWeight="bold" color="green.600">
                   <Icon as={FaThermometerHalf} mr={2} />
                   Weather Details & Measurements
                 </Text>
-                <Badge colorScheme="blue" fontSize="xs">
+                <Badge colorScheme="green" fontSize="xs">
                   Climate Context
                 </Badge>
               </HStack>
@@ -569,24 +584,26 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {} 
               />
             </StandardField>
           </Box>
-          <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
-            <HStack justify="space-between">
-              <StandardButton
-                variant="outline"
-                onClick={onPrev}
-                leftIcon={<FaChevronLeft />}
-                size="lg">
-                {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-              </StandardButton>
-              <StandardButton
-                variant="primary"
-                type="submit"
-                rightIcon={<FaChevronRight />}
-                size="lg">
-                {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-              </StandardButton>
-            </HStack>
-          </Box>
+          {!hideActions && (
+            <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
+              <HStack justify="space-between">
+                <StandardButton
+                  variant="outline"
+                  onClick={onPrev}
+                  leftIcon={<FaChevronLeft />}
+                  size="lg">
+                  {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                </StandardButton>
+                <StandardButton
+                  variant="primary"
+                  type="submit"
+                  rightIcon={<FaChevronRight />}
+                  size="lg">
+                  {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                </StandardButton>
+              </HStack>
+            </Box>
+          )}
         </Flex>
       </form>
     </FormProvider>

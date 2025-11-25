@@ -47,7 +47,11 @@ import {
   FaCloudSun,
   FaHandsHelping,
   FaLightbulb,
-  FaAward
+  FaAward,
+  FaQrcode,
+  FaDollarSign,
+  FaRocket,
+  FaHeart
 } from 'react-icons/fa';
 import { MdDashboard, MdSchool, MdHelp } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
@@ -79,8 +83,8 @@ const EducationDashboard: React.FC = () => {
   const toast = useToast();
 
   // Get current user and company
-  const user = useSelector((state: RootState) => state.user.user);
-  const activeCompany = useSelector((state: RootState) => state.company.company);
+  const user = useSelector((state: RootState) => state.user?.user);
+  const activeCompany = useSelector((state: RootState) => state.company?.company);
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -127,16 +131,25 @@ const EducationDashboard: React.FC = () => {
     });
   }, [courses, searchQuery]);
 
-  // Category icons mapping
+  // Category icons mapping - Updated for transparency-first approach
   const getCategoryIcon = (categoryName: string) => {
     const name = categoryName.toLowerCase();
-    if (name.includes('carbon') || name.includes('sustainability')) return FaLeaf;
-    if (name.includes('iot') || name.includes('technology')) return FaTools;
-    if (name.includes('weather') || name.includes('climate')) return FaCloudSun;
-    if (name.includes('farming') || name.includes('agriculture')) return FaTractor;
-    if (name.includes('business') || name.includes('market')) return FaChartLine;
-    if (name.includes('compliance') || name.includes('certification')) return FaCertificate;
-    if (name.includes('pest') || name.includes('soil')) return FaHandsHelping;
+    // Getting Started with Transparency
+    if (name.includes('getting started') || name.includes('transparency fundamentals')) return FaRocket;
+    // Essential Farm Events Mastery  
+    if (name.includes('farm events') || name.includes('essential') || name.includes('mastery')) return FaTractor;
+    // Building Consumer Trust
+    if (name.includes('consumer trust') || name.includes('trust') || name.includes('building')) return FaHeart;
+    // Transparency Technology (QR, Blockchain, Mobile)
+    if (name.includes('technology') || name.includes('qr') || name.includes('blockchain')) return FaQrcode;
+    // Market Success Through Transparency
+    if (name.includes('market success') || name.includes('pricing') || name.includes('premium')) return FaDollarSign;
+    // Carbon Data Supporting Role
+    if (name.includes('carbon') || name.includes('supporting') || name.includes('data')) return FaLeaf;
+    // Compliance Made Simple
+    if (name.includes('compliance') || name.includes('simple') || name.includes('regulatory')) return FaCertificate;
+    // Troubleshooting & Success Tips
+    if (name.includes('troubleshooting') || name.includes('tips') || name.includes('success')) return FaQuestionCircle;
     return FaBookOpen;
   };
 
@@ -166,7 +179,7 @@ const EducationDashboard: React.FC = () => {
                 Educational Resources
               </Heading>
               <Text fontSize="lg" color={mutedTextColor} maxW="2xl" mx="auto">
-                Expand your knowledge with our comprehensive agricultural education platform
+                Master agricultural transparency to build consumer trust and unlock premium pricing
               </Text>
             </Box>
 
@@ -187,9 +200,8 @@ const EducationDashboard: React.FC = () => {
                 Educational Resources Available with Standard & Corporate Plans
               </AlertTitle>
               <AlertDescription maxWidth="lg" mb={6}>
-                Access our comprehensive library of agricultural courses, tutorials, and expert
-                guidance. Learn about sustainable farming practices, carbon management, IoT
-                technology, and more.
+                Access our comprehensive library of agricultural transparency courses, QR code optimization, 
+                consumer trust building strategies, and premium market access techniques.
               </AlertDescription>
               <Button
                 colorScheme="blue"
@@ -200,25 +212,25 @@ const EducationDashboard: React.FC = () => {
               </Button>
             </Alert>
 
-            {/* Preview of what's available */}
+            {/* Preview of what's available - Updated for transparency-first */}
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6} maxW="4xl" mx="auto">
               {[
                 {
-                  title: 'Carbon Management',
-                  description: "Learn to track and reduce your farm's carbon footprint",
-                  icon: FaLeaf,
-                  color: 'green'
-                },
-                {
-                  title: 'IoT Technology',
-                  description: 'Understand how smart sensors can optimize your operations',
-                  icon: FaTools,
+                  title: 'Agricultural Transparency Mastery',
+                  description: 'Master the 8 core event types to achieve 85%+ transparency scores',
+                  icon: FaGraduationCap,
                   color: 'blue'
                 },
                 {
-                  title: 'Sustainable Practices',
-                  description: 'Discover eco-friendly farming techniques',
-                  icon: FaTractor,
+                  title: 'Consumer Trust Building',
+                  description: 'Transform farming documentation into compelling stories',
+                  icon: FaHandsHelping,
+                  color: 'green'
+                },
+                {
+                  title: 'Premium Market Access',
+                  description: 'Convert transparency into 20-30% premium pricing',
+                  icon: FaChartLine,
                   color: 'orange'
                 }
               ].map((item, index) => (
@@ -252,7 +264,7 @@ const EducationDashboard: React.FC = () => {
               Educational Resources
             </Heading>
             <Text fontSize="lg" color={mutedTextColor} maxW="2xl" mx="auto">
-              Expand your knowledge with expert-curated agricultural education
+              Master transparency-driven farming to build consumer trust and unlock premium markets
             </Text>
           </Box>
 
@@ -526,13 +538,22 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
 
   const getCategoryIcon = (categoryName: string) => {
     const name = categoryName.toLowerCase();
-    if (name.includes('carbon') || name.includes('sustainability')) return FaLeaf;
-    if (name.includes('iot') || name.includes('technology')) return FaTools;
-    if (name.includes('weather') || name.includes('climate')) return FaCloudSun;
-    if (name.includes('farming') || name.includes('agriculture')) return FaTractor;
-    if (name.includes('business') || name.includes('market')) return FaChartLine;
-    if (name.includes('compliance') || name.includes('certification')) return FaCertificate;
-    if (name.includes('pest') || name.includes('soil')) return FaHandsHelping;
+    // Getting Started with Transparency
+    if (name.includes('getting started') || name.includes('transparency fundamentals')) return FaRocket;
+    // Essential Farm Events Mastery  
+    if (name.includes('farm events') || name.includes('essential') || name.includes('mastery')) return FaTractor;
+    // Building Consumer Trust
+    if (name.includes('consumer trust') || name.includes('trust') || name.includes('building')) return FaHeart;
+    // Transparency Technology (QR, Blockchain, Mobile)
+    if (name.includes('technology') || name.includes('qr') || name.includes('blockchain')) return FaQrcode;
+    // Market Success Through Transparency
+    if (name.includes('market success') || name.includes('pricing') || name.includes('premium')) return FaDollarSign;
+    // Carbon Data Supporting Role
+    if (name.includes('carbon') || name.includes('supporting') || name.includes('data')) return FaLeaf;
+    // Compliance Made Simple
+    if (name.includes('compliance') || name.includes('simple') || name.includes('regulatory')) return FaCertificate;
+    // Troubleshooting & Success Tips
+    if (name.includes('troubleshooting') || name.includes('tips') || name.includes('success')) return FaQuestionCircle;
     return FaBookOpen;
   };
 

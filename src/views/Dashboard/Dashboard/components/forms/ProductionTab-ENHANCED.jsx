@@ -123,7 +123,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [watchedFields, onDataChange, methods]);
+  }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
   const onSubmit = (data) => {
     // Convert string numbers to numbers for backend carbon calculations
@@ -186,7 +186,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                       <option value="fertilization">Fertilizer Application</option>
                       <option value="weeding">Weed Management</option>
                       <option value="mulching">Mulching Application</option>
-                      <option value="transplanting">Transplanting</option>
+                      <option value="TR">Transplanting</option>
                     </StandardSelect>
                   )}
                 />
