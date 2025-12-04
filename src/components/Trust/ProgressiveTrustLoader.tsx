@@ -12,17 +12,8 @@ import {
   useBreakpointValue
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
-import {
-  FaCertificate,
-  FaLock,
-  FaUsers,
-  FaLeaf,
-  FaChartLine
-} from 'react-icons/fa';
-import {
-  MdVerified,
-  MdScience
-} from 'react-icons/md';
+import { FaCertificate, FaLock, FaUsers, FaLeaf, FaChartLine } from 'react-icons/fa';
+import { MdVerified, MdScience } from 'react-icons/md';
 
 // Animation for elements appearing
 const fadeInScale = keyframes`
@@ -72,11 +63,11 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
 }) => {
   const [loadedMetrics, setLoadedMetrics] = useState<Set<number>>(new Set());
   const [loadingStage, setLoadingStage] = useState(0);
-  
+
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
-  
+
   const isMobile = useBreakpointValue({ base: true, md: false });
   const iconSize = useBreakpointValue({ base: 3, md: 4 });
   const circleSize = useBreakpointValue({ base: 8, md: 10 });
@@ -111,17 +102,25 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
       {
         icon: MdScience,
         label: 'Accuracy',
-        value: data.confidenceScore && data.confidenceScore > 0 ? `${Math.round(data.confidenceScore)}%` : '--',
+        value:
+          data.confidenceScore && data.confidenceScore > 0
+            ? `${Math.round(data.confidenceScore)}%`
+            : '--',
         color: 'purple',
-        verified: Boolean(data.confidenceScore && data.confidenceScore > 0 && data.confidenceScore > 70),
+        verified: Boolean(
+          data.confidenceScore && data.confidenceScore > 0 && data.confidenceScore > 70
+        ),
         priority: 3
       },
       {
         icon: FaUsers,
         label: 'Community',
-        value: data.reviewsCount && data.reviewsCount > 0 ? `${data.averageRating?.toFixed(1)}★` : '--',
+        value:
+          data.reviewsCount && data.reviewsCount > 0 ? `${data.averageRating?.toFixed(1)}★` : '--',
         color: 'orange',
-        verified: Boolean(data.reviewsCount && data.reviewsCount > 0 && data.averageRating && data.averageRating > 0),
+        verified: Boolean(
+          data.reviewsCount && data.reviewsCount > 0 && data.averageRating && data.averageRating > 0
+        ),
         priority: 5
       }
     ];
@@ -137,12 +136,12 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
       // Simulate progressive loading based on priority
       const loadMetrics = async () => {
         for (let i = 0; i < trustMetrics.length; i++) {
-          await new Promise(resolve => setTimeout(resolve, i === 0 ? 100 : 300));
-          setLoadedMetrics(prev => new Set([...prev, i]));
+          await new Promise((resolve) => setTimeout(resolve, i === 0 ? 100 : 300));
+          setLoadedMetrics((prev) => new Set([...prev, i]));
           setLoadingStage(i + 1);
         }
       };
-      
+
       loadMetrics();
     }
   }, [isLoading, data, trustMetrics.length]);
@@ -157,9 +156,9 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
 
   // Calculate overall trust indication
   const getTrustIndication = () => {
-    const verifiedCount = trustMetrics.filter(m => m.verified).length;
+    const verifiedCount = trustMetrics.filter((m) => m.verified).length;
     const percentage = (verifiedCount / trustMetrics.length) * 100;
-    
+
     if (percentage >= 80) return { level: 'High Trust', color: 'green' };
     if (percentage >= 60) return { level: 'Good Trust', color: 'blue' };
     if (percentage >= 40) return { level: 'Moderate Trust', color: 'yellow' };
@@ -173,7 +172,7 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
       <HStack spacing={2} justify="center" flexWrap="wrap">
         {trustMetrics.slice(0, 3).map((metric, index) => {
           const isLoaded = loadedMetrics.has(index);
-          
+
           if (isLoading && showSkeleton && !isLoaded) {
             return (
               <Skeleton
@@ -219,7 +218,10 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
       borderRadius="xl"
       boxShadow="md"
       border="1px solid"
-      borderColor={useColorModeValue(`${trustIndication.color}.200`, `${trustIndication.color}.600`)}
+      borderColor={useColorModeValue(
+        `${trustIndication.color}.200`,
+        `${trustIndication.color}.600`
+      )}
     >
       <VStack spacing={4} align="stretch">
         {/* Trust level header */}
@@ -232,7 +234,7 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
               Verified agricultural data
             </Text>
           </VStack>
-          
+
           {loadingStage > 0 && (
             <Badge
               colorScheme={trustIndication.color}
@@ -252,7 +254,7 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
         <HStack spacing={isMobile ? 2 : 4} justify="space-between" flexWrap="wrap">
           {trustMetrics.map((metric, index) => {
             const isLoaded = loadedMetrics.has(index);
-            
+
             if (isLoading && showSkeleton && !isLoaded) {
               return (
                 <VStack key={index} spacing={2} minW="60px">
@@ -288,7 +290,7 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
                 >
                   <Icon as={metric.icon} boxSize={iconSize} />
                 </Circle>
-                
+
                 <VStack spacing={1}>
                   <Text
                     fontSize="xs"
@@ -299,7 +301,7 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
                   >
                     {metric.label}
                   </Text>
-                  
+
                   <Badge
                     colorScheme={metric.verified ? metric.color : 'gray'}
                     variant={metric.verified ? 'solid' : 'outline'}
@@ -328,10 +330,15 @@ export const ProgressiveTrustLoader: React.FC<ProgressiveTrustLoaderProps> = ({
           >
             <HStack justify="space-between" fontSize="xs">
               <Text color={mutedColor}>
-                {trustMetrics.filter(m => m.verified).length} of {trustMetrics.length} verifications complete
+                {trustMetrics.filter((m) => m.verified).length} of {trustMetrics.length}{' '}
+                verifications complete
               </Text>
               <Text color={`${trustIndication.color}.600`} fontWeight="medium">
-                {((trustMetrics.filter(m => m.verified).length / trustMetrics.length) * 100).toFixed(0)}% verified
+                {(
+                  (trustMetrics.filter((m) => m.verified).length / trustMetrics.length) *
+                  100
+                ).toFixed(0)}
+                % verified
               </Text>
             </HStack>
           </Box>

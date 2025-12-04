@@ -193,7 +193,8 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
         _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
         transition="all 0.3s"
         cursor="pointer"
-        onClick={onOpen}>
+        onClick={onOpen}
+      >
         <MotionCircularProgress
           value={score}
           max={100}
@@ -202,7 +203,8 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
           thickness="8px"
           animate={{ rotate: [0, 360] }}
           transition={{ duration: 2, ease: 'easeInOut' }}
-          className="trazo-carbon-progress">
+          className="trazo-carbon-progress"
+        >
           <CircularProgressLabel fontSize="lg" fontWeight="bold">
             {score}
           </CircularProgressLabel>
@@ -270,7 +272,8 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
                       size="sm"
                       variant="link"
                       onClick={() => setShowAllComparisons(!showAllComparisons)}
-                      mt={2}>
+                      mt={2}
+                    >
                       {showAllComparisons
                         ? 'Show less'
                         : `Show ${comparisons.length - 3} more comparisons`}
@@ -312,7 +315,8 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
         transition={{ duration: 0.3 }}
         cursor="pointer"
         onClick={onOpen}
-        className="trazo-carbon-card">
+        className="trazo-carbon-card"
+      >
         <VStack spacing={spacing}>
           <Flex direction="column" align="center">
             <HStack mb={2}>
@@ -338,7 +342,8 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
                   ]
                 }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                className="trazo-carbon-progress-full">
+                className="trazo-carbon-progress-full"
+              >
                 <CircularProgressLabel fontSize="2xl" fontWeight="bold">
                   {score}
                 </CircularProgressLabel>
@@ -353,7 +358,8 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
                 px={3}
                 py={1}
                 fontSize="sm"
-                fontWeight="bold">
+                fontWeight="bold"
+              >
                 {grade.grade}
               </Badge>
             </Box>
@@ -381,7 +387,8 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
               bg={`${impact.color}.50`}
               borderRadius="md"
               w="full"
-              justify="center">
+              justify="center"
+            >
               <Icon as={impact.icon} color={`${impact.color}.600`} />
               <Text fontSize="sm" color={`${impact.color}.700`} fontWeight="medium">
                 {impact.level}
@@ -458,7 +465,8 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
                       p={4}
                       border="1px solid"
                       borderColor="gray.200"
-                      borderRadius="md">
+                      borderRadius="md"
+                    >
                       <HStack spacing={3}>
                         <Circle size="40px" bg={`${accentColor}.100`}>
                           <Icon as={comp.icon} color={accentColor} boxSize={5} />

@@ -175,6 +175,15 @@ interface CompanyEstablishmentInfoProps {
   };
 }
 
+// Helper function to format snake_case values to Title Case
+const formatLabel = (value: string | undefined): string => {
+  if (!value) return '';
+  return value
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> = ({
   companyData,
   establishmentData,
@@ -239,7 +248,8 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                   leftIcon={<FaInfoCircle />}
                   onClick={onCompanyModalOpen}
                   borderRadius="full"
-                  fontSize="xs">
+                  fontSize="xs"
+                >
                   More Info
                 </Button>
               </HStack>
@@ -316,7 +326,8 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                     leftIcon={<FaInfoCircle />}
                     onClick={onEstablishmentModalOpen}
                     borderRadius="full"
-                    fontSize="xs">
+                    fontSize="xs"
+                  >
                     More Info
                   </Button>
                 </VStack>
@@ -386,7 +397,8 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                             borderRadius="full"
                             px={3}
                             py={1}
-                            fontSize="xs">
+                            fontSize="xs"
+                          >
                             {cert}
                           </Badge>
                         ));
@@ -397,11 +409,13 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
               )}
 
               {/* Operational Details Summary */}
-              {(establishmentData.climate_zone || 
-                (establishmentData.water_sources && establishmentData.water_sources.length > 0) || 
+              {(establishmentData.climate_zone ||
+                (establishmentData.water_sources && establishmentData.water_sources.length > 0) ||
                 (establishmentData.soil_types && establishmentData.soil_types.length > 0) ||
-                (establishmentData.conservation_practices && establishmentData.conservation_practices.length > 0) ||
-                (establishmentData.irrigation_methods && establishmentData.irrigation_methods.length > 0)) && (
+                (establishmentData.conservation_practices &&
+                  establishmentData.conservation_practices.length > 0) ||
+                (establishmentData.irrigation_methods &&
+                  establishmentData.irrigation_methods.length > 0)) && (
                 <>
                   <Divider />
                   <VStack align="start" spacing={3}>
@@ -418,21 +432,25 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                             CLIMATE
                           </Text>
                           <Badge colorScheme="blue" variant="subtle" px={2}>
-                            {establishmentData.climate_zone}
+                            {formatLabel(establishmentData.climate_zone)}
                           </Badge>
                         </VStack>
                       )}
-                      
+
                       {(() => {
                         // Parse water sources
-                        const waterSources = Array.isArray(establishmentData.water_sources) 
+                        const waterSources = Array.isArray(establishmentData.water_sources)
                           ? establishmentData.water_sources
                           : typeof establishmentData.water_sources === 'string'
                           ? (() => {
-                              try { return JSON.parse(establishmentData.water_sources); } catch { return []; }
+                              try {
+                                return JSON.parse(establishmentData.water_sources);
+                              } catch {
+                                return [];
+                              }
                             })()
                           : [];
-                        
+
                         if (waterSources.length > 0) {
                           return (
                             <VStack align="start" spacing={1}>
@@ -440,24 +458,29 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                                 WATER ({waterSources.length})
                               </Text>
                               <Text fontSize="xs" color={textColor} noOfLines={1}>
-                                {waterSources.slice(0, 2).join(', ')}{waterSources.length > 2 && '...'}
+                                {waterSources.slice(0, 2).join(', ')}
+                                {waterSources.length > 2 && '...'}
                               </Text>
                             </VStack>
                           );
                         }
                         return null;
                       })()}
-                      
+
                       {(() => {
                         // Parse soil types
-                        const soilTypes = Array.isArray(establishmentData.soil_types) 
+                        const soilTypes = Array.isArray(establishmentData.soil_types)
                           ? establishmentData.soil_types
                           : typeof establishmentData.soil_types === 'string'
                           ? (() => {
-                              try { return JSON.parse(establishmentData.soil_types); } catch { return []; }
+                              try {
+                                return JSON.parse(establishmentData.soil_types);
+                              } catch {
+                                return [];
+                              }
                             })()
                           : [];
-                        
+
                         if (soilTypes.length > 0) {
                           return (
                             <VStack align="start" spacing={1}>
@@ -465,7 +488,8 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                                 SOILS ({soilTypes.length})
                               </Text>
                               <Text fontSize="xs" color={textColor} noOfLines={1}>
-                                {soilTypes.slice(0, 2).join(', ')}{soilTypes.length > 2 && '...'}
+                                {soilTypes.slice(0, 2).join(', ')}
+                                {soilTypes.length > 2 && '...'}
                               </Text>
                             </VStack>
                           );
@@ -622,9 +646,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
       )}
 
       {/* Parcel Information with Map */}
-      {parcelData && (
-        <ParcelMapInfo parcelData={parcelData} />
-      )}
+      {parcelData && <ParcelMapInfo parcelData={parcelData} />}
     </VStack>
   );
 };

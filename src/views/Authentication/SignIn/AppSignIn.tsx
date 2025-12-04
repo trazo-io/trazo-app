@@ -192,7 +192,8 @@ const AppSignIn: React.FC = () => {
           alignItems="center"
           justifyContent="center"
           position="relative"
-          overflow="hidden">
+          overflow="hidden"
+        >
           {/* Sophisticated gradient foundation */}
           <Box
             position="absolute"
@@ -283,13 +284,15 @@ const AppSignIn: React.FC = () => {
             color="white"
             px={12}
             maxW="lg"
-            zIndex={10}>
+            zIndex={10}
+          >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
                 Turn Sustainability Into Profit
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                USDA-verified carbon tracking with blockchain verification enables premium pricing and carbon credit revenue for agricultural operations
+                USDA-verified carbon tracking with blockchain verification enables premium pricing
+                and carbon credit revenue for agricultural operations
               </Text>
             </VStack>
 
@@ -315,14 +318,16 @@ const AppSignIn: React.FC = () => {
           bg={useColorModeValue('white', 'gray.900')}
           px={8}
           pt={'112px'}
-          pb={12}>
+          pb={12}
+        >
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
             maxW="420px"
-            my={{ base: 4, lg: 8 }}>
+            my={{ base: 4, lg: 8 }}
+          >
             {/* Header */}
             <VStack spacing={6} mb={10}>
               <VStack spacing={2}>
@@ -330,13 +335,15 @@ const AppSignIn: React.FC = () => {
                   fontSize="2xl"
                   fontWeight="700"
                   color={useColorModeValue('gray.900', 'white')}
-                  letterSpacing="tight">
+                  letterSpacing="tight"
+                >
                   Access Carbon Intelligence
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
-                  textAlign="center">
+                  textAlign="center"
+                >
                   Track carbon footprints and unlock premium market opportunities
                 </Text>
               </VStack>
@@ -351,7 +358,8 @@ const AppSignIn: React.FC = () => {
                   p={4}
                   mb={6}
                   borderLeft="4px solid"
-                  borderLeftColor="red.500">
+                  borderLeftColor="red.500"
+                >
                   <Text color="red.700" fontSize="sm" fontWeight="500">
                     {error}
                   </Text>
@@ -366,7 +374,8 @@ const AppSignIn: React.FC = () => {
                       fontSize="sm"
                       fontWeight="medium"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={2}>
+                      mb={2}
+                    >
                       Email Address
                     </Text>
                     <InputGroup size="lg">
@@ -431,7 +440,8 @@ const AppSignIn: React.FC = () => {
                       fontSize="sm"
                       fontWeight="medium"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={2}>
+                      mb={2}
+                    >
                       Password
                     </Text>
                     <InputGroup size="lg">
@@ -488,7 +498,8 @@ const AppSignIn: React.FC = () => {
                           variant="ghost"
                           onClick={() => setShowPassword(!showPassword)}
                           size="sm"
-                          _hover={{ bg: 'transparent' }}>
+                          _hover={{ bg: 'transparent' }}
+                        >
                           <Icon
                             as={showPassword ? FaEyeSlash : FaEye}
                             color={useColorModeValue('gray.400', 'gray.500')}
@@ -516,7 +527,8 @@ const AppSignIn: React.FC = () => {
                           textDecoration: 'underline',
                           color: 'green.600'
                         }}
-                        transition="all 0.2s">
+                        transition="all 0.2s"
+                      >
                         Forgot password?
                       </Text>
                     </Link>
@@ -541,7 +553,8 @@ const AppSignIn: React.FC = () => {
                     _active={{
                       transform: 'translateY(0)'
                     }}
-                    transition="all 0.2s">
+                    transition="all 0.2s"
+                  >
                     Access Carbon Dashboard
                   </Button>
                 </VStack>
@@ -555,7 +568,8 @@ const AppSignIn: React.FC = () => {
                     fontSize="sm"
                     color={useColorModeValue('gray.400', 'gray.400')}
                     flexShrink={0}
-                    fontWeight="500">
+                    fontWeight="500"
+                  >
                     Or continue with
                   </Text>
                   <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
@@ -583,7 +597,8 @@ const AppSignIn: React.FC = () => {
                         transform: 'translateY(-1px)',
                         boxShadow: 'sm'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       <Icon as={social.icon} fontSize="18px" color={social.color} />
                     </Button>
                   ))}
@@ -604,7 +619,8 @@ const AppSignIn: React.FC = () => {
                       textDecoration: 'underline',
                       color: 'green.600'
                     }}
-                    transition="all 0.2s">
+                    transition="all 0.2s"
+                  >
                     Create account
                   </Text>
                 </Link>
@@ -621,21 +637,24 @@ const AppSignIn: React.FC = () => {
         borderTop="1px solid"
         borderColor={useColorModeValue('gray.200', 'gray.700')}
         py={6}
-        px={8}>
+        px={8}
+      >
         <Flex
           maxW="7xl"
           mx="auto"
           direction={{ base: 'column', md: 'row' }}
           align="center"
           justify="space-between"
-          gap={4}>
+          gap={4}
+        >
           <HStack spacing={6} flexWrap="wrap" justify="center">
             <Link to="/about">
               <Text
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 About
               </Text>
             </Link>
@@ -644,7 +663,8 @@ const AppSignIn: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Why Trazo?
               </Text>
             </Link>
@@ -653,7 +673,8 @@ const AppSignIn: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Blog
               </Text>
             </Link>
@@ -662,7 +683,8 @@ const AppSignIn: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Contact
               </Text>
             </Link>

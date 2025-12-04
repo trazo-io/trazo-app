@@ -77,7 +77,7 @@ const companyApi = baseApi.injectEndpoints({
       async onQueryStarted({ companyId, establishment }, { dispatch, queryFulfilled }) {
         try {
           const { data: newEstablishment } = await queryFulfilled;
-          
+
           // Immediately update the company cache with the new establishment
           // This prevents the redirect race condition during cache invalidation
           dispatch(
@@ -285,11 +285,14 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getCarbonEntries: build.query<any[], { 
-      establishmentId?: number; 
-      productionId?: number; 
-      year?: number 
-    }>({
+    getCarbonEntries: build.query<
+      any[],
+      {
+        establishmentId?: number;
+        productionId?: number;
+        year?: number;
+      }
+    >({
       query: ({ establishmentId, productionId, year }) => {
         let url;
         if (productionId) {
@@ -404,7 +407,7 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       providesTags: ['CarbonSummary']
-    }),
+    })
   }),
   overrideExisting: false
 });

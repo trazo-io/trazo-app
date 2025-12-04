@@ -2,7 +2,7 @@
 
 /**
  * Comprehensive Event Type Test - Post-Fix Validation
- * 
+ *
  * This test validates that all 8 event types work correctly after the
  * standardization fixes, with focus on:
  * - Correct event_type mapping (0-7 vs 8)
@@ -19,7 +19,8 @@ console.log('='.repeat(60));
 
 // Test data scenarios for all 8 event types
 const COMPREHENSIVE_TEST_DATA = {
-  0: { // Weather Event
+  0: {
+    // Weather Event
     name: 'Weather Event',
     formData: {
       id: 'weather-test-1',
@@ -39,11 +40,18 @@ const COMPREHENSIVE_TEST_DATA = {
       event_type: 0,
       weather_type: 'FR',
       title_should_contain: 'Frost Weather Event',
-      details_should_contain: ['Type: Frost event', 'Min temp: -2°C', 'Max temp: 12°C', 'Protection:', 'Impact:'],
+      details_should_contain: [
+        'Type: Frost event',
+        'Min temp: -2°C',
+        'Max temp: 12°C',
+        'Protection:',
+        'Impact:'
+      ],
       photo_count: 2
     }
   },
-  1: { // Production Event
+  1: {
+    // Production Event
     name: 'Production Event',
     formData: {
       id: 'production-test-1',
@@ -70,7 +78,8 @@ const COMPREHENSIVE_TEST_DATA = {
       photo_count: 1
     }
   },
-  2: { // Chemical Event
+  2: {
+    // Chemical Event
     name: 'Chemical Event',
     formData: {
       id: 'chemical-test-1',
@@ -97,7 +106,8 @@ const COMPREHENSIVE_TEST_DATA = {
       photo_count: 1
     }
   },
-  3: { // General Event
+  3: {
+    // General Event
     name: 'General Event',
     formData: {
       id: 'general-test-1',
@@ -118,7 +128,8 @@ const COMPREHENSIVE_TEST_DATA = {
       photo_count: 0
     }
   },
-  4: { // Equipment Event
+  4: {
+    // Equipment Event
     name: 'Equipment Event',
     formData: {
       id: 'equipment-test-1',
@@ -142,7 +153,8 @@ const COMPREHENSIVE_TEST_DATA = {
       photo_count: 0
     }
   },
-  5: { // Soil Management Event  
+  5: {
+    // Soil Management Event
     name: 'Soil Management Event',
     formData: {
       id: 'soil-test-1',
@@ -167,7 +179,8 @@ const COMPREHENSIVE_TEST_DATA = {
       photo_count: 0
     }
   },
-  6: { // Pest Management Event
+  6: {
+    // Pest Management Event
     name: 'Pest Management Event',
     formData: {
       id: 'pest-test-1',
@@ -192,7 +205,8 @@ const COMPREHENSIVE_TEST_DATA = {
       photo_count: 0
     }
   },
-  7: { // Business Event
+  7: {
+    // Business Event
     name: 'Business Event',
     formData: {
       id: 'business-test-1',
@@ -228,7 +242,7 @@ function simulateStandardization(eventType, formData) {
     type: 'test',
     date: formData.date,
     description: formData.observation || 'Test event',
-    
+
     // Event-specific fields based on type
     ...(eventType === 0 && {
       weather_type: formData.type,
@@ -239,7 +253,7 @@ function simulateStandardization(eventType, formData) {
       crop_impact: formData.crop_impact,
       duration: formData.duration
     }),
-    
+
     ...(eventType === 1 && {
       production_type: formData.production_type,
       production_name: formData.production_name,
@@ -252,7 +266,7 @@ function simulateStandardization(eventType, formData) {
       equipment_hours_raw: formData.equipment_hours,
       production_efficiency: formData.production_efficiency
     }),
-    
+
     ...(eventType === 2 && {
       chemical_type: formData.chemical_type,
       commercial_name: formData.commercial_name,
@@ -265,7 +279,7 @@ function simulateStandardization(eventType, formData) {
       volume_unit: formData.volume_unit,
       concentration: formData.concentration
     }),
-    
+
     ...(eventType === 3 && {
       activity_type: formData.activity_type,
       activity_name: formData.activity_name,
@@ -273,7 +287,7 @@ function simulateStandardization(eventType, formData) {
       people_involved: formData.people_involved,
       activity_notes: formData.activity_notes
     }),
-    
+
     ...(eventType === 4 && {
       operation_type: formData.operation_type,
       operation_name: formData.operation_name,
@@ -284,7 +298,7 @@ function simulateStandardization(eventType, formData) {
       area_worked: formData.area_worked,
       operation_efficiency: formData.operation_efficiency
     }),
-    
+
     ...(eventType === 5 && {
       soil_management_type: formData.soil_management_type,
       soil_management_name: formData.soil_management_name,
@@ -296,7 +310,7 @@ function simulateStandardization(eventType, formData) {
       organic_matter: formData.organic_matter_percentage,
       soil_texture: formData.soil_texture
     }),
-    
+
     ...(eventType === 6 && {
       pest_management_type: formData.pest_management_type,
       pest_management_name: formData.pest_management_name,
@@ -308,7 +322,7 @@ function simulateStandardization(eventType, formData) {
       weather_conditions: formData.weather_conditions,
       action_recommended: formData.action_recommended
     }),
-    
+
     ...(eventType === 7 && {
       business_event_type: formData.business_event_type,
       business_event_name: formData.business_event_name,
@@ -320,18 +334,20 @@ function simulateStandardization(eventType, formData) {
       sustainability_practice: formData.sustainability_practice,
       trust_impact: formData.trust_impact
     }),
-    
+
     // Photo handling
-    album: formData.acceptedFiles ? {
-      id: 'test-album',
-      images: formData.acceptedFiles.map((file, index) => ({
-        id: `test-${index}`,
-        image: file,
-        caption: `Photo ${index + 1}`
-      }))
-    } : undefined
+    album: formData.acceptedFiles
+      ? {
+          id: 'test-album',
+          images: formData.acceptedFiles.map((file, index) => ({
+            id: `test-${index}`,
+            image: file,
+            caption: `Photo ${index + 1}`
+          }))
+        }
+      : undefined
   };
-  
+
   return standardized;
 }
 
@@ -346,44 +362,67 @@ console.log('Testing all 8 event types with comprehensive scenarios...\n');
 for (const [eventType, scenario] of Object.entries(COMPREHENSIVE_TEST_DATA)) {
   const eventTypeNum = parseInt(eventType);
   console.log(`🧪 Event Type ${eventTypeNum} - ${scenario.name}:`);
-  
+
   try {
     // Simulate standardization
     const standardizedEvent = simulateStandardization(eventTypeNum, scenario.formData);
     const expected = scenario.expectedOutput;
-    
+
     // Test 1: Event Type Mapping
     totalTests++;
     if (standardizedEvent.event_type === expected.event_type) {
       console.log(`  ✅ Event type mapping: ${standardizedEvent.event_type}`);
       passedTests++;
     } else {
-      console.log(`  ❌ Event type mismatch: expected ${expected.event_type}, got ${standardizedEvent.event_type}`);
+      console.log(
+        `  ❌ Event type mismatch: expected ${expected.event_type}, got ${standardizedEvent.event_type}`
+      );
       issues.push(`Event Type ${eventTypeNum}: Event type mismatch`);
       failedTests++;
     }
-    
+
     // Test 2: Type-specific field mapping
     totalTests++;
     let typeFieldMapped = false;
     if (eventTypeNum === 0 && standardizedEvent.weather_type === scenario.formData.type) {
       typeFieldMapped = true;
-    } else if (eventTypeNum === 1 && standardizedEvent.production_type === scenario.formData.production_type) {
+    } else if (
+      eventTypeNum === 1 &&
+      standardizedEvent.production_type === scenario.formData.production_type
+    ) {
       typeFieldMapped = true;
-    } else if (eventTypeNum === 2 && standardizedEvent.chemical_type === scenario.formData.chemical_type) {
+    } else if (
+      eventTypeNum === 2 &&
+      standardizedEvent.chemical_type === scenario.formData.chemical_type
+    ) {
       typeFieldMapped = true;
-    } else if (eventTypeNum === 3 && standardizedEvent.activity_type === scenario.formData.activity_type) {
+    } else if (
+      eventTypeNum === 3 &&
+      standardizedEvent.activity_type === scenario.formData.activity_type
+    ) {
       typeFieldMapped = true;
-    } else if (eventTypeNum === 4 && standardizedEvent.operation_type === scenario.formData.operation_type) {
+    } else if (
+      eventTypeNum === 4 &&
+      standardizedEvent.operation_type === scenario.formData.operation_type
+    ) {
       typeFieldMapped = true;
-    } else if (eventTypeNum === 5 && standardizedEvent.soil_management_type === scenario.formData.soil_management_type) {
+    } else if (
+      eventTypeNum === 5 &&
+      standardizedEvent.soil_management_type === scenario.formData.soil_management_type
+    ) {
       typeFieldMapped = true;
-    } else if (eventTypeNum === 6 && standardizedEvent.pest_management_type === scenario.formData.pest_management_type) {
+    } else if (
+      eventTypeNum === 6 &&
+      standardizedEvent.pest_management_type === scenario.formData.pest_management_type
+    ) {
       typeFieldMapped = true;
-    } else if (eventTypeNum === 7 && standardizedEvent.business_event_type === scenario.formData.business_event_type) {
+    } else if (
+      eventTypeNum === 7 &&
+      standardizedEvent.business_event_type === scenario.formData.business_event_type
+    ) {
       typeFieldMapped = true;
     }
-    
+
     if (typeFieldMapped) {
       console.log(`  ✅ Type-specific field mapping works`);
       passedTests++;
@@ -392,7 +431,7 @@ for (const [eventType, scenario] of Object.entries(COMPREHENSIVE_TEST_DATA)) {
       issues.push(`Event Type ${eventTypeNum}: Type-specific field mapping failed`);
       failedTests++;
     }
-    
+
     // Test 3: Name/Title handling
     totalTests++;
     let titleFieldExists = false;
@@ -413,7 +452,7 @@ for (const [eventType, scenario] of Object.entries(COMPREHENSIVE_TEST_DATA)) {
     } else if (eventTypeNum === 0) {
       titleFieldExists = true; // Weather events use type-based titles
     }
-    
+
     if (titleFieldExists) {
       console.log(`  ✅ Name/title field available for consumer display`);
       passedTests++;
@@ -422,12 +461,12 @@ for (const [eventType, scenario] of Object.entries(COMPREHENSIVE_TEST_DATA)) {
       issues.push(`Event Type ${eventTypeNum}: Name/title field missing`);
       failedTests++;
     }
-    
+
     // Test 4: Photo handling
     totalTests++;
     const expectedPhotoCount = expected.photo_count;
     const actualPhotoCount = standardizedEvent.album ? standardizedEvent.album.images.length : 0;
-    
+
     if (actualPhotoCount === expectedPhotoCount) {
       console.log(`  ✅ Photo handling: ${actualPhotoCount} photos`);
       passedTests++;
@@ -436,10 +475,9 @@ for (const [eventType, scenario] of Object.entries(COMPREHENSIVE_TEST_DATA)) {
       issues.push(`Event Type ${eventTypeNum}: Photo count mismatch`);
       failedTests++;
     }
-    
+
     console.log(`  📊 Event fields: {${Object.keys(standardizedEvent).length} total}`);
     console.log('');
-    
   } catch (error) {
     console.log(`  ❌ Error during testing: ${error.message}`);
     issues.push(`Event Type ${eventTypeNum}: Testing error - ${error.message}`);
@@ -459,7 +497,7 @@ console.log(`Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%\n`)
 if (issues.length > 0) {
   console.log('🚨 ISSUES FOUND:');
   console.log('-'.repeat(15));
-  issues.forEach(issue => console.log(`❌ ${issue}`));
+  issues.forEach((issue) => console.log(`❌ ${issue}`));
   console.log('');
 }
 
@@ -467,7 +505,7 @@ console.log('🎯 KEY FIXES VALIDATED:');
 console.log('-'.repeat(25));
 console.log('✅ Event type 0 (weather) vs 8 mismatch fixed');
 console.log('✅ Weather field extraction from main event object');
-console.log('✅ Production name handling for custom titles');  
+console.log('✅ Production name handling for custom titles');
 console.log('✅ Photo/image ID generation and consistency');
 console.log('✅ All 8 event type field mappings complete');
 
@@ -477,7 +515,7 @@ console.log('-'.repeat(20));
 if (failedTests === 0) {
   console.log('🎉 EXCELLENT! All event types working correctly after fixes.');
   console.log('✅ Weather events: Proper event_type (0) and field extraction');
-  console.log('✅ Production events: Custom names and measurements');  
+  console.log('✅ Production events: Custom names and measurements');
   console.log('✅ All types: Complete field mapping and photo handling');
   console.log('✅ Ready for production use!');
 } else {

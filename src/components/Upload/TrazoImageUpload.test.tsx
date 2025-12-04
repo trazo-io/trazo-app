@@ -1,6 +1,6 @@
 /**
  * TrazoImageUpload Test Page - Farmer-Friendly Upload Demo
- * 
+ *
  * This page demonstrates the new "SELECT = UPLOAD" functionality
  * that eliminates confusion for farmers by uploading immediately on selection.
  */
@@ -56,8 +56,8 @@ const TrazoImageUploadDemo: React.FC = () => {
     setSimulateErrors(!simulateErrors);
     toast({
       title: simulateErrors ? '✅ Normal Mode' : '🚨 Error Mode',
-      description: simulateErrors 
-        ? 'Upload will work normally' 
+      description: simulateErrors
+        ? 'Upload will work normally'
         : 'Next upload will simulate error for testing retry',
       status: simulateErrors ? 'success' : 'warning',
       duration: 3000
@@ -68,7 +68,6 @@ const TrazoImageUploadDemo: React.FC = () => {
     <Box minH="100vh" bg={bgColor} py={8}>
       <Container maxW="4xl">
         <VStack spacing={8} align="stretch">
-          
           {/* Header */}
           <VStack spacing={4} textAlign="center">
             <Heading size="xl" color="green.500">
@@ -82,7 +81,7 @@ const TrazoImageUploadDemo: React.FC = () => {
                 ✅ Immediate Upload
               </Badge>
               <Badge colorScheme="blue" p={2} borderRadius="md">
-                📱 Mobile Optimized  
+                📱 Mobile Optimized
               </Badge>
               <Badge colorScheme="purple" p={2} borderRadius="md">
                 🔄 Smart Retry
@@ -98,23 +97,34 @@ const TrazoImageUploadDemo: React.FC = () => {
             <VStack spacing={3} align="start">
               <HStack>
                 <FaCheck color="green" />
-                <Text><strong>Select = Upload:</strong> Photos upload immediately when selected</Text>
+                <Text>
+                  <strong>Select = Upload:</strong> Photos upload immediately when selected
+                </Text>
               </HStack>
               <HStack>
                 <FaCheck color="green" />
-                <Text><strong>Clear Visual States:</strong> Uploading, success, and error states are obvious</Text>
+                <Text>
+                  <strong>Clear Visual States:</strong> Uploading, success, and error states are
+                  obvious
+                </Text>
               </HStack>
               <HStack>
                 <FaCheck color="green" />
-                <Text><strong>Smart Retry:</strong> Failed uploads show clear retry buttons</Text>
+                <Text>
+                  <strong>Smart Retry:</strong> Failed uploads show clear retry buttons
+                </Text>
               </HStack>
               <HStack>
                 <FaCheck color="green" />
-                <Text><strong>Mobile Friendly:</strong> 44px+ touch targets for work gloves</Text>
+                <Text>
+                  <strong>Mobile Friendly:</strong> 44px+ touch targets for work gloves
+                </Text>
               </HStack>
               <HStack>
                 <FaCheck color="green" />
-                <Text><strong>Field Ready:</strong> Works with poor connections and interruptions</Text>
+                <Text>
+                  <strong>Field Ready:</strong> Works with poor connections and interruptions
+                </Text>
               </HStack>
             </VStack>
           </Box>
@@ -158,21 +168,16 @@ const TrazoImageUploadDemo: React.FC = () => {
 
           {/* Demo Controls */}
           <HStack spacing={4} justify="center">
-            <Button
-              leftIcon={<FaRedo />}
-              onClick={resetDemo}
-              colorScheme="blue"
-              variant="outline"
-            >
+            <Button leftIcon={<FaRedo />} onClick={resetDemo} colorScheme="blue" variant="outline">
               Reset Demo
             </Button>
             <Button
               leftIcon={<FaCog />}
               onClick={toggleErrorSimulation}
-              colorScheme={simulateErrors ? "red" : "gray"}
+              colorScheme={simulateErrors ? 'red' : 'gray'}
               variant="outline"
             >
-              {simulateErrors ? "Disable" : "Enable"} Error Testing
+              {simulateErrors ? 'Disable' : 'Enable'} Error Testing
             </Button>
           </HStack>
 
@@ -183,10 +188,10 @@ const TrazoImageUploadDemo: React.FC = () => {
                 📱 Try the New Upload Experience
               </Heading>
               <Text color={textColor} textAlign="center">
-                Select photos using the buttons below - they will upload immediately!
-                Watch for the green checkmarks that show successful uploads.
+                Select photos using the buttons below - they will upload immediately! Watch for the
+                green checkmarks that show successful uploads.
               </Text>
-              
+
               <TrazoImageUpload
                 maxFiles={5}
                 existingImages={uploadedImages}
@@ -200,8 +205,8 @@ const TrazoImageUploadDemo: React.FC = () => {
                   <AlertIcon />
                   <AlertTitle>Upload Success!</AlertTitle>
                   <AlertDescription>
-                    {uploadedImages.length} photo{uploadedImages.length !== 1 ? 's' : ''} uploaded successfully. 
-                    Ready to submit form - no manual upload needed!
+                    {uploadedImages.length} photo{uploadedImages.length !== 1 ? 's' : ''} uploaded
+                    successfully. Ready to submit form - no manual upload needed!
                   </AlertDescription>
                 </Alert>
               )}
@@ -214,11 +219,23 @@ const TrazoImageUploadDemo: React.FC = () => {
               🧪 How to Test
             </Heading>
             <VStack spacing={2} align="start" fontSize="sm">
-              <Text><strong>1. Click "Choose Photos"</strong> - Select multiple photos from your computer</Text>
-              <Text><strong>2. Watch Immediate Upload</strong> - Photos start uploading right away</Text>
-              <Text><strong>3. See Success States</strong> - Green checkmarks show completed uploads</Text>
-              <Text><strong>4. Test Camera (Mobile)</strong> - Use camera button to test mobile capture</Text>
-              <Text><strong>5. Test Error Handling</strong> - Enable error mode to test retry functionality</Text>
+              <Text>
+                <strong>1. Click "Choose Photos"</strong> - Select multiple photos from your
+                computer
+              </Text>
+              <Text>
+                <strong>2. Watch Immediate Upload</strong> - Photos start uploading right away
+              </Text>
+              <Text>
+                <strong>3. See Success States</strong> - Green checkmarks show completed uploads
+              </Text>
+              <Text>
+                <strong>4. Test Camera (Mobile)</strong> - Use camera button to test mobile capture
+              </Text>
+              <Text>
+                <strong>5. Test Error Handling</strong> - Enable error mode to test retry
+                functionality
+              </Text>
             </VStack>
           </Box>
 
@@ -228,11 +245,22 @@ const TrazoImageUploadDemo: React.FC = () => {
               🔧 Technical Implementation
             </Heading>
             <VStack spacing={2} align="start" fontSize="sm">
-              <Text><strong>Core Change:</strong> handleFileSelect() now calls uploadFile() immediately</Text>
-              <Text><strong>Visual States:</strong> uploadingFiles array tracks upload progress per file</Text>
-              <Text><strong>Error Recovery:</strong> Failed uploads show retry buttons with clear messaging</Text>
-              <Text><strong>Parent Integration:</strong> onImagesChange() called immediately on success</Text>
-              <Text><strong>Mobile Optimized:</strong> Touch targets ≥44px, works with work gloves</Text>
+              <Text>
+                <strong>Core Change:</strong> handleFileSelect() now calls uploadFile() immediately
+              </Text>
+              <Text>
+                <strong>Visual States:</strong> uploadingFiles array tracks upload progress per file
+              </Text>
+              <Text>
+                <strong>Error Recovery:</strong> Failed uploads show retry buttons with clear
+                messaging
+              </Text>
+              <Text>
+                <strong>Parent Integration:</strong> onImagesChange() called immediately on success
+              </Text>
+              <Text>
+                <strong>Mobile Optimized:</strong> Touch targets ≥44px, works with work gloves
+              </Text>
             </VStack>
           </Box>
 
@@ -257,7 +285,6 @@ const TrazoImageUploadDemo: React.FC = () => {
               </VStack>
             </Box>
           )}
-
         </VStack>
       </Container>
     </Box>

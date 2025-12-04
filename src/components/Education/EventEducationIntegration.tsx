@@ -44,7 +44,7 @@ import CardHeader from 'components/Card/CardHeader';
 
 // Define event types and their educational content
 const eventEducationMap = {
-  'production': {
+  production: {
     title: 'Production Event Best Practices',
     description: 'Maximize transparency points for planting, irrigation, and harvest activities',
     tips: [
@@ -63,7 +63,7 @@ const eventEducationMap = {
     consumerImpact: 'Production events show consumers your planning expertise and crop care',
     practiceId: 'practice_event_documentation'
   },
-  'chemical': {
+  chemical: {
     title: 'Chemical Application Transparency',
     description: 'Build consumer trust through honest chemical documentation',
     tips: [
@@ -82,7 +82,7 @@ const eventEducationMap = {
     consumerImpact: 'Honest chemical transparency builds more trust than hiding applications',
     practiceId: 'practice_transparency_basics'
   },
-  'equipment': {
+  equipment: {
     title: 'Equipment Operation Documentation',
     description: 'Demonstrate farm efficiency and equipment management',
     tips: [
@@ -101,7 +101,7 @@ const eventEducationMap = {
     consumerImpact: 'Equipment transparency shows professional farm management',
     practiceId: 'practice_event_documentation'
   },
-  'soil': {
+  soil: {
     title: 'Soil Health & Amendment Documentation',
     description: 'Showcase soil stewardship and long-term thinking',
     tips: [
@@ -120,7 +120,7 @@ const eventEducationMap = {
     consumerImpact: 'Soil care demonstrates environmental stewardship to consumers',
     practiceId: 'practice_event_documentation'
   },
-  'pest': {
+  pest: {
     title: 'Pest Management Transparency',
     description: 'Show integrated pest management and responsible treatment',
     tips: [
@@ -139,7 +139,7 @@ const eventEducationMap = {
     consumerImpact: 'IPM transparency shows responsible pest management approach',
     practiceId: 'practice_transparency_basics'
   },
-  'business': {
+  business: {
     title: 'Business & Certification Documentation',
     description: 'Highlight certifications and business practices',
     tips: [
@@ -158,7 +158,7 @@ const eventEducationMap = {
     consumerImpact: 'Certifications provide third-party validation of your claims',
     practiceId: 'practice_trust_indicators'
   },
-  'weather': {
+  weather: {
     title: 'Weather & Environmental Documentation',
     description: 'Show environmental adaptation and climate response',
     tips: [
@@ -177,7 +177,7 @@ const eventEducationMap = {
     consumerImpact: 'Environmental adaptation shows farming expertise and resilience',
     practiceId: 'practice_event_documentation'
   },
-  'general': {
+  general: {
     title: 'General Farm Activity Documentation',
     description: 'Document other important farming activities',
     tips: [
@@ -213,20 +213,20 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [showTips, setShowTips] = useState(false);
-  
+
   // Theme colors
   const cardBgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
   const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
   const successColor = useColorModeValue('green.500', 'green.300');
   const primaryColor = useColorModeValue('blue.500', 'blue.300');
-  
+
   const educationContent = eventEducationMap[eventType];
-  
+
   if (!educationContent) {
     return null;
   }
-  
+
   const EducationContent = () => (
     <VStack spacing={6} align="stretch">
       {/* Header */}
@@ -242,7 +242,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
           </VStack>
           <Icon as={FaGraduationCap} boxSize={6} color={primaryColor} />
         </HStack>
-        
+
         {/* Consumer impact highlight */}
         <Alert status="info" borderRadius="lg" bg={useColorModeValue('blue.50', 'blue.900')}>
           <AlertIcon as={FaLightbulb} color="blue.500" />
@@ -251,7 +251,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
           </Text>
         </Alert>
       </VStack>
-      
+
       {/* Transparency points breakdown */}
       <Box>
         <HStack justify="space-between" mb={3}>
@@ -262,35 +262,74 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
             Up to {educationContent.transparencyPoints.complete} points
           </Badge>
         </HStack>
-        
+
         <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
-          <Box textAlign="center" p={3} bg={useColorModeValue('gray.50', 'gray.700')} borderRadius="lg">
+          <Box
+            textAlign="center"
+            p={3}
+            bg={useColorModeValue('gray.50', 'gray.700')}
+            borderRadius="lg"
+          >
             <Text fontSize="lg" fontWeight="bold" color={textColor}>
               {educationContent.transparencyPoints.base}
             </Text>
-            <Text fontSize="xs" color={mutedTextColor}>Base Event</Text>
-          </Box>
-          <Box textAlign="center" p={3} bg={useColorModeValue('green.50', 'green.900')} borderRadius="lg">
-            <Text fontSize="lg" fontWeight="bold" color={successColor}>
-              +{educationContent.transparencyPoints.withPhotos - educationContent.transparencyPoints.base}
+            <Text fontSize="xs" color={mutedTextColor}>
+              Base Event
             </Text>
-            <Text fontSize="xs" color={mutedTextColor}>With Photos</Text>
           </Box>
-          <Box textAlign="center" p={3} bg={useColorModeValue('green.50', 'green.900')} borderRadius="lg">
+          <Box
+            textAlign="center"
+            p={3}
+            bg={useColorModeValue('green.50', 'green.900')}
+            borderRadius="lg"
+          >
             <Text fontSize="lg" fontWeight="bold" color={successColor}>
-              +{educationContent.transparencyPoints.withGPS || educationContent.transparencyPoints.withJustification || educationContent.transparencyPoints.withMaintenance || educationContent.transparencyPoints.withTestResults || educationContent.transparencyPoints.withIPM || educationContent.transparencyPoints.withCertifications || educationContent.transparencyPoints.withAdaptation || educationContent.transparencyPoints.withDetails - educationContent.transparencyPoints.withPhotos}
+              +
+              {educationContent.transparencyPoints.withPhotos -
+                educationContent.transparencyPoints.base}
             </Text>
-            <Text fontSize="xs" color={mutedTextColor}>Enhanced Data</Text>
+            <Text fontSize="xs" color={mutedTextColor}>
+              With Photos
+            </Text>
           </Box>
-          <Box textAlign="center" p={3} bg={useColorModeValue('green.100', 'green.800')} borderRadius="lg">
+          <Box
+            textAlign="center"
+            p={3}
+            bg={useColorModeValue('green.50', 'green.900')}
+            borderRadius="lg"
+          >
+            <Text fontSize="lg" fontWeight="bold" color={successColor}>
+              +
+              {educationContent.transparencyPoints.withGPS ||
+                educationContent.transparencyPoints.withJustification ||
+                educationContent.transparencyPoints.withMaintenance ||
+                educationContent.transparencyPoints.withTestResults ||
+                educationContent.transparencyPoints.withIPM ||
+                educationContent.transparencyPoints.withCertifications ||
+                educationContent.transparencyPoints.withAdaptation ||
+                educationContent.transparencyPoints.withDetails -
+                  educationContent.transparencyPoints.withPhotos}
+            </Text>
+            <Text fontSize="xs" color={mutedTextColor}>
+              Enhanced Data
+            </Text>
+          </Box>
+          <Box
+            textAlign="center"
+            p={3}
+            bg={useColorModeValue('green.100', 'green.800')}
+            borderRadius="lg"
+          >
             <Text fontSize="lg" fontWeight="bold" color={successColor}>
               {educationContent.transparencyPoints.complete}
             </Text>
-            <Text fontSize="xs" color={mutedTextColor}>Complete</Text>
+            <Text fontSize="xs" color={mutedTextColor}>
+              Complete
+            </Text>
           </Box>
         </SimpleGrid>
       </Box>
-      
+
       {/* Best practices tips */}
       <Box>
         <HStack justify="space-between" mb={3}>
@@ -306,7 +345,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
             {showTips ? 'Hide' : 'Show'} Tips
           </Button>
         </HStack>
-        
+
         <Collapse in={showTips} animateOpacity>
           <List spacing={2}>
             {educationContent.tips.map((tip, index) => (
@@ -318,7 +357,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
           </List>
         </Collapse>
       </Box>
-      
+
       {/* Action buttons */}
       <VStack spacing={3} align="stretch">
         <Button
@@ -329,7 +368,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
         >
           Start Related Learning Practice
         </Button>
-        
+
         <Button
           variant="outline"
           colorScheme="blue"
@@ -342,7 +381,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
       </VStack>
     </VStack>
   );
-  
+
   // Inline display for event creation forms
   if (!showInModal) {
     return (
@@ -362,15 +401,17 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
             </Tooltip>
           </HStack>
         </CardHeader>
-        
+
         <CardBody pt={0}>
           <Alert status="success" borderRadius="lg" size="sm">
             <AlertIcon as={FaStar} />
             <Text fontSize="sm">
-              Up to <strong>{educationContent.transparencyPoints.complete} transparency points</strong> available for this event type
+              Up to{' '}
+              <strong>{educationContent.transparencyPoints.complete} transparency points</strong>{' '}
+              available for this event type
             </Text>
           </Alert>
-          
+
           {/* Quick tips */}
           <List spacing={1} mt={3} fontSize="xs">
             {educationContent.tips.slice(0, 2).map((tip, index) => (
@@ -380,7 +421,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
               </ListItem>
             ))}
           </List>
-          
+
           <Button
             size="xs"
             variant="outline"
@@ -392,7 +433,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
             View All Tips
           </Button>
         </CardBody>
-        
+
         {/* Full content modal */}
         <Modal isOpen={isOpen} onClose={onClose} size="lg">
           <ModalOverlay />
@@ -410,7 +451,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
       </Card>
     );
   }
-  
+
   // Modal-only display
   return (
     <>
@@ -422,7 +463,7 @@ const EventEducationIntegration: React.FC<EventEducationIntegrationProps> = ({
       >
         View Transparency Guide
       </Button>
-      
+
       <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />
         <ModalContent>

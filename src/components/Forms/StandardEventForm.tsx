@@ -118,8 +118,18 @@ const EVENT_TYPES = [
     carbonRelevance: 'variable',
     subtypes: [
       { id: 'tillage', name: 'Tillage Operations', icon: FaTractor, carbonImpact: 'high' },
-      { id: 'cover_crops', name: 'Cover Crop Management', icon: FaSeedling, carbonImpact: 'negative' },
-      { id: 'conservation', name: 'Conservation Practices', icon: FaLeaf, carbonImpact: 'negative' },
+      {
+        id: 'cover_crops',
+        name: 'Cover Crop Management',
+        icon: FaSeedling,
+        carbonImpact: 'negative'
+      },
+      {
+        id: 'conservation',
+        name: 'Conservation Practices',
+        icon: FaLeaf,
+        carbonImpact: 'negative'
+      },
       { id: 'energy', name: 'Energy & Infrastructure', icon: FaFire, carbonImpact: 'high' },
       { id: 'verification', name: 'Carbon Verification', icon: FaCheck, carbonImpact: 'neutral' },
       { id: 'other', name: 'Other Activities', icon: FaSeedling, carbonImpact: 'low' }
@@ -152,7 +162,12 @@ const EVENT_TYPES = [
     subtypes: [
       { id: 'soil_test', name: 'Soil Test', icon: FaFlask, carbonImpact: 'neutral' },
       { id: 'ph_adjustment', name: 'pH Adjustment/Lime', icon: FaMountain, carbonImpact: 'high' },
-      { id: 'organic_matter', name: 'Organic Matter Addition', icon: FaLeaf, carbonImpact: 'negative' },
+      {
+        id: 'organic_matter',
+        name: 'Organic Matter Addition',
+        icon: FaLeaf,
+        carbonImpact: 'negative'
+      },
       { id: 'compost', name: 'Compost Application', icon: FaLeaf, carbonImpact: 'negative' },
       { id: 'biochar', name: 'Biochar Application', icon: FaFire, carbonImpact: 'very_negative' },
       { id: 'manure', name: 'Manure Application', icon: FaMountain, carbonImpact: 'neutral' }
@@ -168,9 +183,19 @@ const EVENT_TYPES = [
     carbonRelevance: 'indirect',
     subtypes: [
       { id: 'scouting', name: 'Scouting', icon: FaBug, carbonImpact: 'neutral' },
-      { id: 'beneficial_release', name: 'Beneficial Release', icon: FaLeaf, carbonImpact: 'negative' },
+      {
+        id: 'beneficial_release',
+        name: 'Beneficial Release',
+        icon: FaLeaf,
+        carbonImpact: 'negative'
+      },
       { id: 'trap_monitoring', name: 'Trap Monitoring', icon: FaBug, carbonImpact: 'neutral' },
-      { id: 'biological_control', name: 'Biological Control', icon: FaLeaf, carbonImpact: 'negative' }
+      {
+        id: 'biological_control',
+        name: 'Biological Control',
+        icon: FaLeaf,
+        carbonImpact: 'negative'
+      }
     ]
   },
   {
@@ -182,7 +207,12 @@ const EVENT_TYPES = [
     value: 7, // ✅ BUSINESS_EVENT_TYPE = 7
     carbonRelevance: 'indirect',
     subtypes: [
-      { id: 'certification', name: 'Certification Activity', icon: FaCheck, carbonImpact: 'neutral' },
+      {
+        id: 'certification',
+        name: 'Certification Activity',
+        icon: FaCheck,
+        carbonImpact: 'neutral'
+      },
       { id: 'audit', name: 'Audit/Inspection', icon: FaFlask, carbonImpact: 'neutral' },
       { id: 'planning', name: 'Planning Activity', icon: FaSeedling, carbonImpact: 'neutral' },
       { id: 'training', name: 'Training/Education', icon: FaBug, carbonImpact: 'neutral' },
@@ -263,37 +293,56 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
     if (formData.eventType && formData.subtype) {
       // Enhanced carbon impact estimation based on EPA/USDA factors
       // Values represent typical kg CO₂e per activity (order of magnitude estimates)
-      const impacts: Record<string, Record<string, { value: number; confidence: string; note: string }>> = {
+      const impacts: Record<
+        string,
+        Record<string, { value: number; confidence: string; note: string }>
+      > = {
         // Chemical applications - redirect to precise calculation for chemicals
-        chemical: { 
-          fertilizer: { value: 50, confidence: 'Use Smart Product for precision', note: 'Varies greatly by NPK content' },
+        chemical: {
+          fertilizer: {
+            value: 50,
+            confidence: 'Use Smart Product for precision',
+            note: 'Varies greatly by NPK content'
+          },
           pesticide: { value: 3, confidence: 'Medium', note: 'Manufacturing emissions primary' },
           herbicide: { value: 2, confidence: 'Medium', note: 'Application method dependent' },
           fungicide: { value: 3, confidence: 'Medium', note: 'Product-specific variations' },
           growth_regulator: { value: 1, confidence: 'Low', note: 'Minimal application rates' }
         },
-        
+
         // General events - reorganized to include tillage, cover crops, etc.
         general: {
-          tillage: { value: 8, confidence: 'High', note: 'Varies by method - conventional tillage releases soil carbon' },
+          tillage: {
+            value: 8,
+            confidence: 'High',
+            note: 'Varies by method - conventional tillage releases soil carbon'
+          },
           cover_crops: { value: -5, confidence: 'High', note: 'Carbon sequestration potential' },
-          conservation: { value: -15, confidence: 'High', note: 'NRCS practices for carbon storage' },
+          conservation: {
+            value: -15,
+            confidence: 'High',
+            note: 'NRCS practices for carbon storage'
+          },
           energy: { value: 20, confidence: 'High', note: 'Facility energy consumption' },
-          verification: { value: 1, confidence: 'Low', note: 'Documentation and sampling activities' },
+          verification: {
+            value: 1,
+            confidence: 'Low',
+            note: 'Documentation and sampling activities'
+          },
           other: { value: 2, confidence: 'Low', note: 'General farming activities' }
         },
-        
+
         // Equipment and fuel - direct emissions
-        equipment: { 
+        equipment: {
           field_operations: { value: 12, confidence: 'High', note: 'Diesel consumption primary' },
           fuel_consumption: { value: 25, confidence: 'High', note: '2.68 kg CO₂/L diesel' },
           maintenance: { value: 1, confidence: 'Low', note: 'Minimal emissions' },
           repair: { value: 2, confidence: 'Low', note: 'Parts manufacturing' },
           transport: { value: 15, confidence: 'Medium', note: 'Distance dependent' }
         },
-        
+
         // Production activities
-        production: { 
+        production: {
           planting: { value: 8, confidence: 'Medium', note: 'Equipment + seed transport' },
           harvesting: { value: 20, confidence: 'High', note: 'Heavy equipment intensive' },
           irrigation: { value: 12, confidence: 'High', note: 'Pump energy primary' },
@@ -301,9 +350,9 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
           grain_drying: { value: 45, confidence: 'High', note: 'Energy intensive process' },
           storage: { value: 5, confidence: 'Medium', note: 'Ventilation and handling' }
         },
-        
+
         // Soil management
-        soil: { 
+        soil: {
           soil_test: { value: 0, confidence: 'Low', note: 'Minimal emissions' },
           ph_adjustment: { value: 12, confidence: 'High', note: 'Limestone decomposition' },
           organic_matter: { value: -8, confidence: 'High', note: 'Carbon sequestration' },
@@ -311,15 +360,15 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
           biochar: { value: -20, confidence: 'High', note: 'Long-term sequestration' },
           manure: { value: 3, confidence: 'Medium', note: 'Transport vs. soil benefit' }
         },
-        
+
         // Pest management
-        pest: { 
+        pest: {
           scouting: { value: 1, confidence: 'Low', note: 'Travel emissions minimal' },
           beneficial_release: { value: -2, confidence: 'Medium', note: 'Reduces chemical need' },
           trap_monitoring: { value: 0, confidence: 'Low', note: 'Minimal emissions' },
           biological_control: { value: -3, confidence: 'Medium', note: 'Replaces chemicals' }
         },
-        
+
         // Business activities
         business: {
           certification: { value: 2, confidence: 'Low', note: 'Travel and documentation' },
@@ -328,9 +377,9 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
           training: { value: 1, confidence: 'Low', note: 'Educational activities' },
           documentation: { value: 0, confidence: 'Low', note: 'Record keeping' }
         },
-        
+
         // Weather events
-        weather: { 
+        weather: {
           frost: { value: 0, confidence: 'Low', note: 'No direct emissions' },
           drought: { value: 5, confidence: 'Medium', note: 'Increased irrigation needs' },
           heavy_rain: { value: 0, confidence: 'Low', note: 'No direct emissions' },
@@ -344,7 +393,7 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
       if (impactData) {
         setEstimatedCarbonImpact(impactData.value);
         // Store additional metadata for display
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           carbonConfidence: impactData.confidence,
           carbonNote: impactData.note
@@ -369,7 +418,8 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
       title="Add New Event"
       description="Record agricultural activities and environmental conditions"
       showBackButton
-      onBack={onCancel}>
+      onBack={onCancel}
+    >
       {/* Progress Indicator */}
       <StandardCard>
         <HStack spacing={8} justify="center" mb={6}>
@@ -409,7 +459,8 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
       {currentStep === 1 && (
         <StandardCard
           title="Step 1: What happened?"
-          subtitle="Select the type of event you want to record">
+          subtitle="Select the type of event you want to record"
+        >
           <VStack spacing={6} align="stretch">
             {/* Event Type Selection */}
             <StandardField label="Event Type" required>
@@ -432,12 +483,14 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
                     }}
                     onClick={() =>
                       setFormData((prev) => ({ ...prev, eventType: eventType.id, subtype: '' }))
-                    }>
+                    }
+                  >
                     <VStack spacing={3}>
                       <Circle
                         size="50px"
                         bg={`${eventType.color}.100`}
-                        color={`${eventType.color}.600`}>
+                        color={`${eventType.color}.600`}
+                      >
                         <Icon as={eventType.icon} boxSize={6} />
                       </Circle>
 
@@ -482,12 +535,14 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
                       cursor="pointer"
                       transition="all 0.2s"
                       _hover={{ borderColor: `${selectedEventType.color}.300` }}
-                      onClick={() => setFormData((prev) => ({ ...prev, subtype: subtype.id }))}>
+                      onClick={() => setFormData((prev) => ({ ...prev, subtype: subtype.id }))}
+                    >
                       <HStack spacing={2}>
                         <Icon as={subtype.icon} color={`${selectedEventType.color}.600`} />
                         <Text
                           fontSize="sm"
-                          fontWeight={formData.subtype === subtype.id ? 'semibold' : 'normal'}>
+                          fontWeight={formData.subtype === subtype.id ? 'semibold' : 'normal'}
+                        >
                           {subtype.name}
                         </Text>
                       </HStack>
@@ -538,7 +593,8 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
                     : estimatedCarbonImpact < 0
                     ? 'green.50'
                     : 'blue.50'
-                }>
+                }
+              >
                 <VStack spacing={3} align="stretch">
                   <HStack spacing={3}>
                     <Circle
@@ -556,7 +612,8 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
                           : estimatedCarbonImpact < 0
                           ? 'green.600'
                           : 'blue.600'
-                      }>
+                      }
+                    >
                       <Icon
                         as={
                           estimatedCarbonImpact > 0
@@ -573,13 +630,17 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
                       <Text fontWeight="bold" fontSize="md">
                         Carbon Impact Estimate
                       </Text>
-                      <Text fontSize="lg" fontWeight="bold" color={
-                        estimatedCarbonImpact > 0
-                          ? 'orange.600'
-                          : estimatedCarbonImpact < 0
-                          ? 'green.600'
-                          : 'blue.600'
-                      }>
+                      <Text
+                        fontSize="lg"
+                        fontWeight="bold"
+                        color={
+                          estimatedCarbonImpact > 0
+                            ? 'orange.600'
+                            : estimatedCarbonImpact < 0
+                            ? 'green.600'
+                            : 'blue.600'
+                        }
+                      >
                         {estimatedCarbonImpact > 0 ? '+' : ''}
                         {estimatedCarbonImpact} kg CO₂e
                       </Text>
@@ -593,7 +654,8 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
                           ? 'yellow'
                           : 'gray'
                       }
-                      variant="solid">
+                      variant="solid"
+                    >
                       {formData.carbonConfidence || 'Low'} Confidence
                     </Badge>
                   </HStack>
@@ -604,27 +666,48 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
 
                   {/* Special message for chemical events */}
                   {formData.eventType === 'chemical' && formData.subtype === 'fertilizer' && (
-                    <Box p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
+                    <Box
+                      p={3}
+                      bg="blue.50"
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor="blue.200"
+                    >
                       <Text fontSize="sm" color="blue.700" fontWeight="medium">
-                        💡 For precise fertilizer calculations, use the Chemical Application event type with Smart Product validation
+                        💡 For precise fertilizer calculations, use the Chemical Application event
+                        type with Smart Product validation
                       </Text>
                     </Box>
                   )}
 
                   {/* Carbon sequestration highlight */}
                   {estimatedCarbonImpact < 0 && (
-                    <Box p={3} bg="green.50" borderRadius="md" border="1px solid" borderColor="green.200">
+                    <Box
+                      p={3}
+                      bg="green.50"
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor="green.200"
+                    >
                       <Text fontSize="sm" color="green.700" fontWeight="medium">
-                        🌱 This practice helps sequester carbon and may be eligible for carbon credit programs
+                        🌱 This practice helps sequester carbon and may be eligible for carbon
+                        credit programs
                       </Text>
                     </Box>
                   )}
 
                   {/* High impact warning */}
                   {estimatedCarbonImpact > 20 && (
-                    <Box p={3} bg="orange.50" borderRadius="md" border="1px solid" borderColor="orange.200">
+                    <Box
+                      p={3}
+                      bg="orange.50"
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor="orange.200"
+                    >
                       <Text fontSize="sm" color="orange.700" fontWeight="medium">
-                        ⚠️ High carbon impact activity - consider efficiency improvements or carbon offsets
+                        ⚠️ High carbon impact activity - consider efficiency improvements or carbon
+                        offsets
                       </Text>
                     </Box>
                   )}
@@ -640,7 +723,8 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
               <StandardButton
                 onClick={() => setCurrentStep(2)}
                 rightIcon={<FaChevronRight />}
-                disabled={!isStepComplete(1)}>
+                disabled={!isStepComplete(1)}
+              >
                 Continue to Details
               </StandardButton>
             </HStack>
@@ -652,12 +736,14 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
       {currentStep === 2 && (
         <StandardCard
           title="Step 2: Additional Details"
-          subtitle="Optional information to enhance your record">
+          subtitle="Optional information to enhance your record"
+        >
           <VStack spacing={6} align="stretch">
             {/* Description */}
             <StandardField
               label="Description"
-              helpText="Add any notes, observations, or additional context">
+              helpText="Add any notes, observations, or additional context"
+            >
               <StandardTextarea
                 value={formData.description}
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
@@ -682,7 +768,8 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
             {/* 2025 Modern Image Upload */}
             <StandardField
               label="Event Photos"
-              helpText="Upload up to 5 high-quality images to document this event (JPG, PNG, GIF, WEBP - max 5MB each)">
+              helpText="Upload up to 5 high-quality images to document this event (JPG, PNG, GIF, WEBP - max 5MB each)"
+            >
               <TrazoImageUpload
                 maxFiles={5}
                 maxSize={5 * 1024 * 1024} // 5MB
@@ -697,7 +784,8 @@ export const StandardEventForm: React.FC<StandardEventFormProps> = ({
               <StandardButton
                 variant="outline"
                 leftIcon={<FaChevronLeft />}
-                onClick={() => setCurrentStep(1)}>
+                onClick={() => setCurrentStep(1)}
+              >
                 Back to Event Details
               </StandardButton>
 
@@ -724,7 +812,6 @@ const DynamicEventFields: React.FC<{
   formData: EventFormData;
   setFormData: React.Dispatch<React.SetStateAction<EventFormData>>;
 }> = ({ eventType, subtype, formData, setFormData }) => {
-  
   // General Event Fields - Enhanced for multiple activity types
   if (eventType === 'general') {
     // Tillage-specific fields
@@ -747,7 +834,8 @@ const DynamicEventFields: React.FC<{
               value={formData.tillageMethod || ''}
               onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                 setFormData((prev) => ({ ...prev, tillageMethod: e.target.value }))
-              }>
+              }
+            >
               <option value="">Select method...</option>
               <option value="no_till">No-Till</option>
               <option value="minimum_till">Minimum Till</option>
@@ -800,7 +888,8 @@ const DynamicEventFields: React.FC<{
               value={formData.coverCropActivity || ''}
               onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                 setFormData((prev) => ({ ...prev, coverCropActivity: e.target.value }))
-              }>
+              }
+            >
               <option value="">Select activity...</option>
               <option value="establishment">Planting/Establishment</option>
               <option value="termination">Termination</option>
@@ -842,7 +931,8 @@ const DynamicEventFields: React.FC<{
               value={formData.energyType || ''}
               onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                 setFormData((prev) => ({ ...prev, energyType: e.target.value }))
-              }>
+              }
+            >
               <option value="">Select type...</option>
               <option value="electricity">Electricity</option>
               <option value="natural_gas">Natural Gas</option>
@@ -944,7 +1034,8 @@ const DynamicEventFields: React.FC<{
               value={formData.verificationType || ''}
               onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                 setFormData((prev) => ({ ...prev, verificationType: e.target.value }))
-              }>
+              }
+            >
               <option value="">Select type...</option>
               <option value="soil_sampling">Soil Carbon Sampling</option>
               <option value="biomass_measurement">Biomass Measurement</option>
@@ -968,7 +1059,8 @@ const DynamicEventFields: React.FC<{
             <NumberInput
               value={formData.sampleCount || ''}
               onChange={(value) => setFormData((prev) => ({ ...prev, sampleCount: value }))}
-              min={0}>
+              min={0}
+            >
               <NumberInputField placeholder="e.g., 15" />
               <NumberInputStepper>
                 <NumberIncrementStepper />
@@ -1010,10 +1102,11 @@ const DynamicEventFields: React.FC<{
       <>
         <Box p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
           <Text fontSize="sm" color="blue.700" fontWeight="medium">
-            💡 For precise carbon calculations with Smart Product validation, use the dedicated Chemical Application event type
+            💡 For precise carbon calculations with Smart Product validation, use the dedicated
+            Chemical Application event type
           </Text>
         </Box>
-        
+
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
           <StandardField label="Product Name">
             <StandardInput
@@ -1050,7 +1143,8 @@ const DynamicEventFields: React.FC<{
               value={formData.applicationMethod || ''}
               onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                 setFormData((prev) => ({ ...prev, applicationMethod: e.target.value }))
-              }>
+              }
+            >
               <option value="">Select method...</option>
               <option value="spray">Spray Application</option>
               <option value="granular">Granular Broadcast</option>
@@ -1059,7 +1153,6 @@ const DynamicEventFields: React.FC<{
             </StandardSelect>
           </StandardField>
         </SimpleGrid>
-
       </>
     );
   }
@@ -1084,7 +1177,8 @@ const DynamicEventFields: React.FC<{
               <NumberInput
                 value={formData.fuelAmount || ''}
                 onChange={(value) => setFormData((prev) => ({ ...prev, fuelAmount: value }))}
-                min={0}>
+                min={0}
+              >
                 <NumberInputField />
                 <NumberInputStepper>
                   <NumberIncrementStepper />
@@ -1098,7 +1192,8 @@ const DynamicEventFields: React.FC<{
                 value={formData.fuelType || ''}
                 onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                   setFormData((prev) => ({ ...prev, fuelType: e.target.value }))
-                }>
+                }
+              >
                 <option value="">Select fuel type...</option>
                 <option value="diesel">Diesel</option>
                 <option value="gasoline">Gasoline</option>
@@ -1112,7 +1207,8 @@ const DynamicEventFields: React.FC<{
           <NumberInput
             value={formData.hoursUsed || ''}
             onChange={(value) => setFormData((prev) => ({ ...prev, hoursUsed: value }))}
-            min={0}>
+            min={0}
+          >
             <NumberInputField />
             <NumberInputStepper>
               <NumberIncrementStepper />

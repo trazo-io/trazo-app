@@ -39,14 +39,7 @@ import {
   FaInfoCircle,
   FaCalendarAlt
 } from 'react-icons/fa';
-import {
-  MdVerified,
-  MdScience,
-  MdSecurity,
-  MdTrendingUp,
-  MdPublic,
-  MdTimer
-} from 'react-icons/md';
+import { MdVerified, MdScience, MdSecurity, MdTrendingUp, MdPublic, MdTimer } from 'react-icons/md';
 import { BsShieldCheck, BsStarFill } from 'react-icons/bs';
 
 // Animation for trust elements appearing
@@ -103,7 +96,7 @@ export const EnhancedTrustIndicators: React.FC<EnhancedTrustIndicatorsProps> = (
 }) => {
   const [visibleElements, setVisibleElements] = useState(0);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  
+
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('green.200', 'green.600');
   const textColor = useColorModeValue('gray.800', 'white');
@@ -119,7 +112,7 @@ export const EnhancedTrustIndicators: React.FC<EnhancedTrustIndicatorsProps> = (
   useEffect(() => {
     if (!isLoading) {
       const timer = setInterval(() => {
-        setVisibleElements(prev => {
+        setVisibleElements((prev) => {
           if (prev < 6) return prev + 1;
           clearInterval(timer);
           return prev;
@@ -132,24 +125,24 @@ export const EnhancedTrustIndicators: React.FC<EnhancedTrustIndicatorsProps> = (
   // Calculate overall trust score (0-100)
   const calculateTrustScore = () => {
     let score = 0;
-    
+
     // Core verification (40 points)
     if (trustData.isUSDAVerified) score += 20;
     if (trustData.isBlockchainVerified) score += 20;
-    
+
     // Data quality (30 points)
     score += (trustData.confidenceScore / 100) * 15;
     score += (trustData.transparencyScore / 100) * 15;
-    
+
     // Social proof (20 points)
     if (trustData.reviewsCount > 10) score += 10;
     if (trustData.averageRating >= 4.5) score += 5;
     if (trustData.scansCount > 100) score += 5;
-    
+
     // Longevity (10 points)
     if (trustData.farmHistory >= 5) score += 5;
     if (trustData.certifications.length >= 2) score += 5;
-    
+
     return Math.min(Math.round(score), 100);
   };
 
@@ -216,11 +209,7 @@ export const EnhancedTrustIndicators: React.FC<EnhancedTrustIndicatorsProps> = (
           >
             <HStack justify="space-between" align="center" mb={4}>
               <HStack spacing={3}>
-                <Circle
-                  size={12}
-                  bg={`${trustLevel.color}.100`}
-                  color={`${trustLevel.color}.600`}
-                >
+                <Circle size={12} bg={`${trustLevel.color}.100`} color={`${trustLevel.color}.600`}>
                   <Icon as={trustLevel.icon} boxSize={6} />
                 </Circle>
                 <VStack align="start" spacing={0}>
@@ -232,7 +221,7 @@ export const EnhancedTrustIndicators: React.FC<EnhancedTrustIndicatorsProps> = (
                   </Text>
                 </VStack>
               </HStack>
-              
+
               <Badge
                 colorScheme={trustLevel.color}
                 variant="solid"
@@ -314,11 +303,7 @@ export const EnhancedTrustIndicators: React.FC<EnhancedTrustIndicatorsProps> = (
               animation={visibleElements >= 4 ? `${fadeInUp} 0.6s ease-out 0.6s both` : undefined}
             >
               <VStack spacing={2}>
-                <Circle
-                  size={10}
-                  bg="purple.100"
-                  color="purple.600"
-                >
+                <Circle size={10} bg="purple.100" color="purple.600">
                   <Icon as={MdScience} boxSize={iconSize} />
                 </Circle>
                 <VStack spacing={0}>
@@ -339,11 +324,7 @@ export const EnhancedTrustIndicators: React.FC<EnhancedTrustIndicatorsProps> = (
               animation={visibleElements >= 5 ? `${fadeInUp} 0.6s ease-out 0.8s both` : undefined}
             >
               <VStack spacing={2}>
-                <Circle
-                  size={10}
-                  bg="orange.100"
-                  color="orange.600"
-                >
+                <Circle size={10} bg="orange.100" color="orange.600">
                   <Icon as={FaUsers} boxSize={iconSize} />
                 </Circle>
                 <VStack spacing={0}>
@@ -353,7 +334,8 @@ export const EnhancedTrustIndicators: React.FC<EnhancedTrustIndicatorsProps> = (
                   <HStack spacing={1}>
                     <Icon as={BsStarFill} color="orange.400" boxSize={3} />
                     <Text fontSize="xs" color={mutedColor}>
-                      {trustData.averageRating > 0 ? trustData.averageRating.toFixed(1) : '--'} ({trustData.reviewsCount})
+                      {trustData.averageRating > 0 ? trustData.averageRating.toFixed(1) : '--'} (
+                      {trustData.reviewsCount})
                     </Text>
                   </HStack>
                 </VStack>
@@ -483,14 +465,17 @@ const DetailedTrustModal: React.FC<{
             <Box p={4} bg="gray.50" borderRadius="lg">
               <VStack spacing={3}>
                 <Circle size={16} bg={`${trustLevel.color}.100`} color={`${trustLevel.color}.600`}>
-                  <Text fontSize="2xl" fontWeight="bold">{trustScore}</Text>
+                  <Text fontSize="2xl" fontWeight="bold">
+                    {trustScore}
+                  </Text>
                 </Circle>
                 <VStack spacing={1}>
                   <Text fontSize="lg" fontWeight="bold" color={textColor}>
                     {trustLevel.level} Transparency Level
                   </Text>
                   <Text fontSize="sm" color={mutedColor} textAlign="center">
-                    This farm demonstrates exceptional commitment to carbon transparency and sustainable practices.
+                    This farm demonstrates exceptional commitment to carbon transparency and
+                    sustainable practices.
                   </Text>
                 </VStack>
                 <Progress
@@ -521,10 +506,9 @@ const DetailedTrustModal: React.FC<{
                   </Badge>
                 </HStack>
                 <Text fontSize="sm" color={mutedColor}>
-                  {trustData.isUSDAVerified 
+                  {trustData.isUSDAVerified
                     ? 'Carbon calculations verified against official USDA emission factors and agricultural standards.'
-                    : 'USDA verification in progress. Calculations use best available emission factors.'
-                  }
+                    : 'USDA verification in progress. Calculations use best available emission factors.'}
                 </Text>
               </Box>
 
@@ -535,15 +519,17 @@ const DetailedTrustModal: React.FC<{
                     <Icon as={FaLock} color="blue.600" boxSize={5} />
                     <Text fontWeight="medium">Blockchain Security</Text>
                   </HStack>
-                  <Badge colorScheme={trustData.isBlockchainVerified ? 'blue' : 'gray'} variant="solid">
+                  <Badge
+                    colorScheme={trustData.isBlockchainVerified ? 'blue' : 'gray'}
+                    variant="solid"
+                  >
                     {trustData.isBlockchainVerified ? 'Secured' : 'Pending'}
                   </Badge>
                 </HStack>
                 <Text fontSize="sm" color={mutedColor}>
                   {trustData.isBlockchainVerified
                     ? 'All carbon data is cryptographically secured on the blockchain, ensuring immutability and transparency.'
-                    : 'Blockchain verification in progress. Data integrity maintained through secure databases.'
-                  }
+                    : 'Blockchain verification in progress. Data integrity maintained through secure databases.'}
                 </Text>
                 {trustData.verificationDate && (
                   <Text fontSize="xs" color="blue.600" mt={2}>
@@ -571,7 +557,8 @@ const DetailedTrustModal: React.FC<{
                   mb={2}
                 />
                 <Text fontSize="sm" color={mutedColor}>
-                  Statistical confidence in carbon calculations based on data completeness, measurement precision, and verification checks.
+                  Statistical confidence in carbon calculations based on data completeness,
+                  measurement precision, and verification checks.
                 </Text>
               </Box>
 
@@ -588,7 +575,9 @@ const DetailedTrustModal: React.FC<{
                         <Icon
                           key={i}
                           as={BsStarFill}
-                          color={i < Math.floor(trustData.averageRating) ? 'orange.400' : 'gray.300'}
+                          color={
+                            i < Math.floor(trustData.averageRating) ? 'orange.400' : 'gray.300'
+                          }
                           boxSize={3}
                         />
                       ))}
@@ -600,16 +589,28 @@ const DetailedTrustModal: React.FC<{
                 </HStack>
                 <VStack spacing={2} align="stretch">
                   <HStack justify="space-between">
-                    <Text fontSize="sm" color={mutedColor}>Consumer Reviews</Text>
-                    <Text fontSize="sm" fontWeight="medium">{trustData.reviewsCount > 0 ? trustData.reviewsCount : 0} reviews</Text>
+                    <Text fontSize="sm" color={mutedColor}>
+                      Consumer Reviews
+                    </Text>
+                    <Text fontSize="sm" fontWeight="medium">
+                      {trustData.reviewsCount > 0 ? trustData.reviewsCount : 0} reviews
+                    </Text>
                   </HStack>
                   <HStack justify="space-between">
-                    <Text fontSize="sm" color={mutedColor}>QR Code Scans</Text>
-                    <Text fontSize="sm" fontWeight="medium">{trustData.scansCount > 0 ? trustData.scansCount.toLocaleString() : 0} scans</Text>
+                    <Text fontSize="sm" color={mutedColor}>
+                      QR Code Scans
+                    </Text>
+                    <Text fontSize="sm" fontWeight="medium">
+                      {trustData.scansCount > 0 ? trustData.scansCount.toLocaleString() : 0} scans
+                    </Text>
                   </HStack>
                   <HStack justify="space-between">
-                    <Text fontSize="sm" color={mutedColor}>Industry Ranking</Text>
-                    <Text fontSize="sm" fontWeight="medium">Top {100 - trustData.industryPercentile}%</Text>
+                    <Text fontSize="sm" color={mutedColor}>
+                      Industry Ranking
+                    </Text>
+                    <Text fontSize="sm" fontWeight="medium">
+                      Top {100 - trustData.industryPercentile}%
+                    </Text>
                   </HStack>
                 </VStack>
               </Box>
@@ -625,25 +626,40 @@ const DetailedTrustModal: React.FC<{
                   <HStack justify="space-between">
                     <HStack spacing={2}>
                       <Icon as={FaCalendarAlt} color={mutedColor} boxSize={4} />
-                      <Text fontSize="sm" color={mutedColor}>Farm History</Text>
+                      <Text fontSize="sm" color={mutedColor}>
+                        Farm History
+                      </Text>
                     </HStack>
-                    <Text fontSize="sm" fontWeight="medium">{trustData.farmHistory > 0 ? trustData.farmHistory : 0} years</Text>
+                    <Text fontSize="sm" fontWeight="medium">
+                      {trustData.farmHistory > 0 ? trustData.farmHistory : 0} years
+                    </Text>
                   </HStack>
                   {trustData.certifications.length > 0 && (
                     <HStack justify="space-between">
                       <HStack spacing={2}>
                         <Icon as={FaAward} color={mutedColor} boxSize={4} />
-                        <Text fontSize="sm" color={mutedColor}>Certifications</Text>
+                        <Text fontSize="sm" color={mutedColor}>
+                          Certifications
+                        </Text>
                       </HStack>
-                      <Text fontSize="sm" fontWeight="medium">{trustData.certifications && trustData.certifications.length > 0 ? trustData.certifications.length : 0} active</Text>
+                      <Text fontSize="sm" fontWeight="medium">
+                        {trustData.certifications && trustData.certifications.length > 0
+                          ? trustData.certifications.length
+                          : 0}{' '}
+                        active
+                      </Text>
                     </HStack>
                   )}
                   <HStack justify="space-between">
                     <HStack spacing={2}>
                       <Icon as={FaGlobe} color={mutedColor} boxSize={4} />
-                      <Text fontSize="sm" color={mutedColor}>Public Views</Text>
+                      <Text fontSize="sm" color={mutedColor}>
+                        Public Views
+                      </Text>
                     </HStack>
-                    <Text fontSize="sm" fontWeight="medium">{trustData.publicViews > 0 ? trustData.publicViews.toLocaleString() : 0}</Text>
+                    <Text fontSize="sm" fontWeight="medium">
+                      {trustData.publicViews > 0 ? trustData.publicViews.toLocaleString() : 0}
+                    </Text>
                   </HStack>
                 </VStack>
               </Box>

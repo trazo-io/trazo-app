@@ -466,7 +466,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
         establishmentName ? ` in ${establishmentName}` : ''
       }`}
       showBackButton
-      onBack={onCancel}>
+      onBack={onCancel}
+    >
       {/* Modern Progress Stepper - 4 Steps */}
       <StandardStepper
         steps={steps}
@@ -487,7 +488,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     label="Parcel Name"
                     required
                     error={errors.name?.message}
-                    helpText="Consumer-friendly name for this parcel">
+                    helpText="Consumer-friendly name for this parcel"
+                  >
                     <Input
                       {...methods.register('name')}
                       placeholder="e.g., North Avocado Grove, Organic Block A"
@@ -503,7 +505,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     label="Area (hectares)"
                     required
                     error={errors.area?.message}
-                    helpText="Area in hectares - provides scale context for consumers and carbon calculations">
+                    helpText="Area in hectares - provides scale context for consumers and carbon calculations"
+                  >
                     <Controller
                       name="area"
                       control={methods.control}
@@ -513,7 +516,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                           onChange={(_, num) => field.onChange(num || 0)}
                           min={0.01}
                           step={0.1}
-                          precision={2}>
+                          precision={2}
+                        >
                           <NumberInputField borderRadius="lg" />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -528,7 +532,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                 <StandardField
                   label="Primary Crop Focus"
                   error={errors.crop_focus?.message}
-                  helpText="What crop is primarily grown here? (helps connect to products)">
+                  helpText="What crop is primarily grown here? (helps connect to products)"
+                >
                   <Select
                     {...methods.register('crop_focus')}
                     placeholder="Select primary crop"
@@ -536,7 +541,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     borderColor="gray.300"
                     _hover={{ borderColor: 'green.400' }}
                     _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                    size="lg">
+                    size="lg"
+                  >
                     <option value="avocado">Avocado</option>
                     <option value="citrus">Citrus</option>
                     <option value="tomato">Tomato</option>
@@ -561,7 +567,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}>
+                    disabled={!isStepComplete(0)}
+                  >
                     Continue to Location
                   </StandardButton>
                 </HStack>
@@ -618,7 +625,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                         gestureHandling: 'cooperative',
                         clickableIcons: false,
                         mapTypeId: 'satellite'
-                      }}>
+                      }}
+                    >
                       {getPolygonLength() > 2 && (
                         <Polygon
                           path={polygon}
@@ -685,7 +693,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                           size="sm"
                           variant="outline"
                           leftIcon={<FaTrash />}
-                          onClick={() => setPolygon([])}>
+                          onClick={() => setPolygon([])}
+                        >
                           Clear Points
                         </StandardButton>
                       )}
@@ -697,7 +706,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
+                    onClick={previousStep}
+                  >
                     Back to Identity
                   </StandardButton>
 
@@ -708,7 +718,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(1)}>
+                      disabled={!isStepComplete(1)}
+                    >
                       Continue to Story
                     </StandardButton>
                   </HStack>
@@ -725,7 +736,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   label="What makes this parcel special?"
                   required
                   error={errors.transparency_description?.message}
-                  helpText="Describe this parcel in a way that helps consumers understand its role in sustainable food production">
+                  helpText="Describe this parcel in a way that helps consumers understand its role in sustainable food production"
+                >
                   <Textarea
                     {...methods.register('transparency_description')}
                     placeholder="e.g., This 12.5-acre organic avocado grove uses precision irrigation and cover cropping to reduce water usage by 30% while maintaining soil health. The grove has been certified organic since 2018 and serves as a demonstration site for sustainable farming practices..."
@@ -742,7 +754,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardField
                     label="Key Sustainability Practices"
                     error={errors.sustainability_practices?.message}
-                    helpText="Highlight practices that consumers care about">
+                    helpText="Highlight practices that consumers care about"
+                  >
                     <Textarea
                       {...methods.register('sustainability_practices')}
                       placeholder="e.g., Water conservation through drip irrigation, soil health improvement through cover crops, biodiversity support through native plant borders..."
@@ -758,7 +771,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardField
                     label="Why should consumers care?"
                     error={errors.consumer_story?.message}
-                    helpText="Connect this parcel to the consumer's values">
+                    helpText="Connect this parcel to the consumer's values"
+                  >
                     <Textarea
                       {...methods.register('consumer_story')}
                       placeholder="e.g., By choosing products from this parcel, consumers support regenerative agriculture that builds soil health, protects water resources, and creates habitat for beneficial insects..."
@@ -782,7 +796,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
+                    onClick={previousStep}
+                  >
                     Back to Location
                   </StandardButton>
 
@@ -801,7 +816,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                           formData: watch()
                         });
                         return !currentStepValid;
-                      })()}>
+                      })()}
+                    >
                       Continue to Documentation
                     </StandardButton>
                   </HStack>
@@ -814,11 +830,13 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
           {currentStep === 3 && (
             <StandardCard
               title="Visual Documentation"
-              subtitle="Build trust through images and certification">
+              subtitle="Build trust through images and certification"
+            >
               <VStack spacing={6} align="stretch">
                 <StandardField
                   label="Parcel Images"
-                  helpText="Upload high-quality images that show consumers the practices in action (max 5 images)">
+                  helpText="Upload high-quality images that show consumers the practices in action (max 5 images)"
+                >
                   <TrazoImageUpload
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
@@ -832,7 +850,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
                 <StandardField
                   label="Certification Status"
-                  helpText="Mark this parcel as certified to build consumer trust">
+                  helpText="Mark this parcel as certified to build consumer trust"
+                >
                   <VStack align="stretch" spacing={4}>
                     <HStack>
                       <Switch {...methods.register('certified')} colorScheme="green" size="md" />
@@ -844,7 +863,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     {watch('certified') && (
                       <StandardField
                         label="Certification Type"
-                        helpText="Type of certification (shown to consumers)">
+                        helpText="Type of certification (shown to consumers)"
+                      >
                         <Select
                           {...methods.register('certification_type')}
                           placeholder="Select certification type"
@@ -852,7 +872,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
                           _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                          size="lg">
+                          size="lg"
+                        >
                           <option value="usda_organic">USDA Organic</option>
                           <option value="biodynamic">Biodynamic</option>
                           <option value="fair_trade">Fair Trade</option>
@@ -876,7 +897,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
+                    onClick={previousStep}
+                  >
                     Back to Story
                   </StandardButton>
 
@@ -888,7 +910,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       type="submit"
                       isLoading={isLoading}
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
-                      leftIcon={<FaCheckCircle />}>
+                      leftIcon={<FaCheckCircle />}
+                    >
                       {isEdit ? 'Update Parcel' : 'Create Parcel'}
                     </StandardButton>
                   </HStack>

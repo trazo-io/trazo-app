@@ -111,7 +111,8 @@ const ErrorFallback = ({
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center'
-    }}>
+    }}
+  >
     <h2 style={{ color: '#2d3748', marginBottom: '16px' }}>Something went wrong</h2>
     <p style={{ color: '#718096', marginBottom: '24px' }}>
       We apologize for the inconvenience. Please try refreshing the page.
@@ -125,7 +126,8 @@ const ErrorFallback = ({
         border: 'none',
         borderRadius: '8px',
         cursor: 'pointer'
-      }}>
+      }}
+    >
       Try again
     </button>
     <details style={{ marginTop: '24px', color: '#a0aec0', fontSize: '14px' }}>
@@ -383,11 +385,14 @@ const App = () => {
           {subdomain === 'consumer' && (
             <>
               <Route element={<ConsumerProductLayout />}>
-                <Route path="/production/:productionId" element={
-                  <Suspense fallback={<div />}>
-                    <ProductDetail />
-                  </Suspense>
-                } />
+                <Route
+                  path="/production/:productionId"
+                  element={
+                    <Suspense fallback={<div />}>
+                      <ProductDetail />
+                    </Suspense>
+                  }
+                />
               </Route>
               <Route element={<AuthLayout />}>
                 <Route
@@ -396,7 +401,14 @@ const App = () => {
                 />
               </Route>
               <Route element={<Authenticated allowedRoles={config.protected.roles} />}>
-                <Route path={config.protected.path} element={<RedirectGuard><AdminConsumerLayout /></RedirectGuard>}>
+                <Route
+                  path={config.protected.path}
+                  element={
+                    <RedirectGuard>
+                      <AdminConsumerLayout />
+                    </RedirectGuard>
+                  }
+                >
                   {/* Consumer routes */}
                   <Route index element={<Navigate to="impact" replace />} />
                   <Route path="impact" element={<ImpactDashboard />} />

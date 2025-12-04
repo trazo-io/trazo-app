@@ -8,58 +8,84 @@ import {
   Icon,
   Badge,
   useToast,
-  Input as ChakraInput,
-  Image,
-  IconButton,
-  Flex,
-  Textarea,
-  FormLabel,
-  Input,
-  Button,
-  CircularProgress,
-  useColorModeValue,
-  Tabs,
-  TabPanels,
-  TabPanel
+  useColorModeValue
 } from '@chakra-ui/react';
 import {
   StandardPage,
-  StandardCard,
   StandardField,
   StandardInput,
+  StandardSelect,
   StandardTextarea,
   StandardButton,
   StandardAlert,
-  StandardStepper
+  StandardStepper,
+  SectionBox,
+  SectionHeader
 } from '../../../../../components/Design/StandardComponents';
-import { FaLeaf, FaCalendarAlt, FaCamera, FaUpload, FaImage, FaTrash } from 'react-icons/fa';
+import {
+  FaLeaf,
+  FaCalendarAlt,
+  FaCamera,
+  FaBoxes,
+  FaClipboardCheck
+} from 'react-icons/fa';
 import { MdDescription, MdInventory, MdNumbers } from 'react-icons/md';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { TrazoImageUpload } from 'components/Upload';
 import { useIntl } from 'react-intl';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useFinishCurrentHistoryMutation } from 'store/api/historyApi.js';
-import Card from 'components/Card/Card';
-import CardBody from 'components/Card/CardBody';
-import CardHeader from 'components/Card/CardHeader';
-import FormInput from 'components/Forms/FormInput';
 
-// Enhanced form schema with better validation
+// Unit options for production amount
+const UNIT_OPTIONS = [
+  { value: 'kg', label: 'Kilograms (kg)' },
+  { value: 'lb', label: 'Pounds (lb)' },
+  { value: 'boxes', label: 'Boxes' },
+  { value: 'crates', label: 'Crates' },
+  { value: 'tons', label: 'Tons' },
+  { value: 'bushels', label: 'Bushels' },
+  { value: 'units', label: 'Units' }
+];
+
+// Quality grade options
+const QUALITY_GRADE_OPTIONS = [
+  { value: 'premium', label: 'Premium Grade' },
+  { value: 'grade_a', label: 'Grade A' },
+  { value: 'grade_b', label: 'Grade B' },
+  { value: 'standard', label: 'Standard' },
+  { value: 'processing', label: 'Processing Grade' }
+];
+
+// Harvest method options
+const HARVEST_METHOD_OPTIONS = [
+  { value: 'manual', label: 'Manual Harvest' },
+  { value: 'mechanical', label: 'Mechanical Harvest' },
+  { value: 'mixed', label: 'Mixed (Manual + Mechanical)' }
+];
+
+// Enhanced form schema with new fields
 const finishProductionSchema = z.object({
   production_amount: z
     .string()
     .min(1, 'Production amount is required')
     .transform((val) => Number(val))
     .refine((val) => val > 0, 'Production amount must be greater than 0'),
+  production_unit: z.string().min(1, 'Unit is required'),
   lot_id: z.string().min(1, 'Lot number is required').max(50, 'Lot number is too long'),
   finish_date: z.string().min(1, 'Finish date is required'),
+  quality_grade: z.string().optional(),
+  harvest_method: z.string().optional(),
   observation: z.string().optional()
 });
 
 function FinishProduction() {
+  // DEBUG: Version check - if you see this, new form is loaded
+  console.log('🚀🚀🚀 FINISH PRODUCTION v2.0 - NEW DESIGN LOADED 🚀🚀🚀');
+  console.log('📦 Features: Unit selector, Quality Grade, Harvest Method');
+
   const [uploadedImages, setUploadedImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -69,9 +95,8 @@ function FinishProduction() {
   const { parcelId, establishmentId } = useParams();
   const currentCompany = useSelector((state) => state.company.currentCompany);
 
-  // Chakra color mode (keep for compatibility with old UI)
-  const textColor = useColorModeValue('gray.700', 'white');
-  const bgColor = useColorModeValue('white', 'gray.700');
+  // Color mode values
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   // Define steps for the finish production process
   const steps = [
@@ -93,30 +118,20 @@ function FinishProduction() {
     resolver: zodResolver(finishProductionSchema),
     defaultValues: {
       production_amount: '',
+      production_unit: 'kg',
       lot_id: '',
       finish_date: '',
+      quality_grade: '',
+      harvest_method: '',
       observation: ''
     }
   });
 
   const {
     handleSubmit,
-    register,
+    control,
     formState: { errors }
   } = methods;
-
-
-  // Remove image handler
-  const removeImage = (index) => {
-    const newImages = uploadedImages.filter((_, i) => i !== index);
-    const newUrls = previewUrls.filter((_, i) => i !== index);
-
-    // Clean up removed URL
-    URL.revokeObjectURL(previewUrls[index]);
-
-    setUploadedImages(newImages);
-    setPreviewUrls(newUrls);
-  };
 
   // Form submission handler
   const onSubmitForm = (data) => {
@@ -191,12 +206,15 @@ function FinishProduction() {
   // Check if current step is valid
   const isStepValid = (step) => {
     if (step === 0) {
-      // Production info step - check required fields
       const formData = methods.getValues();
-      return formData.production_amount && formData.lot_id && formData.finish_date;
+      return (
+        formData.production_amount &&
+        formData.lot_id &&
+        formData.finish_date &&
+        formData.production_unit
+      );
     }
     if (step === 1) {
-      // Media step - no required validation
       return true;
     }
     return false;
@@ -226,8 +244,7 @@ function FinishProduction() {
             <Text fontSize="sm">Final Step</Text>
           </HStack>
         </Badge>
-      }
-    >
+      }>
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmitForm)}>
           <VStack spacing={8} align="stretch">
@@ -242,85 +259,197 @@ function FinishProduction() {
 
             {/* Step 1: Production Information */}
             {currentStep === 0 && (
-              <StandardCard
-                title="Production Information"
-                subtitle="Enter the final details for this production cycle"
-              >
-                <VStack spacing={6} align="stretch">
-                  {/* Production Amount & Lot Number */}
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                    <StandardField
-                      label={
-                        intl.formatMessage({ id: 'app.productionAmount' }) || 'Production Amount'
-                      }
-                      error={errors.production_amount?.message}
-                      helpText="Total volume or quantity produced"
-                      required
-                    >
-                      <StandardInput
-                        {...methods.register('production_amount')}
-                        placeholder={
-                          intl.formatMessage({ id: 'app.volumeOfTheProduct' }) ||
-                          'Enter production volume'
-                        }
-                        leftElement={<Icon as={MdInventory} color="gray.400" />}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                      />
-                    </StandardField>
+              <VStack spacing={6} align="stretch">
+                {/* Core Harvest Information Section */}
+                <SectionBox variant="default">
+                  <SectionHeader
+                    icon={FaBoxes}
+                    iconColor="green.500"
+                    title="Harvest Output"
+                    badge="Required"
+                    badgeColorScheme="green"
+                  />
+                  <VStack spacing={4} align="stretch">
+                    {/* Production Amount with Unit Selector */}
+                    <HStack spacing={4} align="flex-start">
+                      <Box flex={2}>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'app.productionAmount' }) ||
+                            'Production Amount'
+                          }
+                          error={errors.production_amount?.message}
+                          helpText="Total volume or quantity harvested"
+                          required>
+                          <StandardInput
+                            {...methods.register('production_amount')}
+                            placeholder="Enter amount harvested"
+                            leftElement={<Icon as={MdInventory} color="gray.400" />}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                          />
+                        </StandardField>
+                      </Box>
+                      <Box flex={1}>
+                        <StandardField
+                          label="Unit"
+                          error={errors.production_unit?.message}
+                          required>
+                          <Controller
+                            name="production_unit"
+                            control={control}
+                            render={({ field }) => (
+                              <StandardSelect {...field}>
+                                {UNIT_OPTIONS.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </StandardSelect>
+                            )}
+                          />
+                        </StandardField>
+                      </Box>
+                    </HStack>
 
+                    {/* Lot Number */}
                     <StandardField
                       label={intl.formatMessage({ id: 'app.lotNumber' }) || 'Lot Number'}
                       error={errors.lot_id?.message}
-                      helpText="Unique identifier for this batch"
-                      required
-                    >
+                      helpText="Unique identifier for traceability"
+                      required>
                       <StandardInput
                         {...methods.register('lot_id')}
-                        placeholder={
-                          intl.formatMessage({ id: 'app.lotNumber' }) || 'Enter lot number'
-                        }
+                        placeholder="Enter lot number (e.g., LOT-2025-001)"
                         leftElement={<Icon as={MdNumbers} color="gray.400" />}
                         maxLength={50}
                       />
                     </StandardField>
-                  </SimpleGrid>
 
-                  {/* Finish Date */}
-                  <StandardField
-                    label={intl.formatMessage({ id: 'app.finishDate' }) || 'Completion Date'}
-                    error={errors.finish_date?.message}
-                    helpText="When was this production cycle completed?"
-                    required
-                  >
-                    <StandardInput
-                      {...methods.register('finish_date')}
-                      placeholder="Select completion date and time"
-                      leftElement={<Icon as={FaCalendarAlt} color="gray.400" />}
-                      type="datetime-local"
-                    />
-                  </StandardField>
+                    {/* Finish Date */}
+                    <StandardField
+                      label={intl.formatMessage({ id: 'app.finishDate' }) || 'Completion Date'}
+                      error={errors.finish_date?.message}
+                      helpText="When was this harvest completed?"
+                      required>
+                      <StandardInput
+                        {...methods.register('finish_date')}
+                        placeholder="Select completion date and time"
+                        leftElement={<Icon as={FaCalendarAlt} color="gray.400" />}
+                        type="datetime-local"
+                      />
+                    </StandardField>
+                  </VStack>
+                </SectionBox>
 
-                  {/* Observations */}
-                  <StandardField
-                    label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-                    error={errors.observation?.message}
-                    helpText="Additional notes about this production cycle (optional)"
-                  >
-                    <StandardTextarea
-                      {...methods.register('observation')}
-                      placeholder={
-                        intl.formatMessage({ id: 'app.descriptionOfTheEvent' }) ||
-                        'Enter any observations or notes'
-                      }
-                      rows={4}
-                      leftElement={<Icon as={MdDescription} color="gray.400" />}
-                    />
-                  </StandardField>
+                {/* Quality & Method Section */}
+                <SectionBox variant="highlighted">
+                  <SectionHeader
+                    icon={FaClipboardCheck}
+                    iconColor="blue.500"
+                    title="Quality & Harvest Details"
+                    badge="Consumer Transparency"
+                    badgeColorScheme="blue"
+                  />
+                  <VStack spacing={4} align="stretch">
+                    <Text fontSize="sm" color="gray.600" mb={2}>
+                      This information helps consumers understand the quality of your product
+                    </Text>
 
-                  {/* Step Navigation */}
-                  <HStack spacing={4} justify="flex-end" pt={4}>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      {/* Quality Grade */}
+                      <StandardField
+                        label="Quality Grade"
+                        error={errors.quality_grade?.message}
+                        helpText="Quality classification of harvest">
+                        <Controller
+                          name="quality_grade"
+                          control={control}
+                          render={({ field }) => (
+                            <StandardSelect {...field} placeholder="Select quality grade">
+                              <option value="">Select quality grade</option>
+                              {QUALITY_GRADE_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+
+                      {/* Harvest Method */}
+                      <StandardField
+                        label="Harvest Method"
+                        error={errors.harvest_method?.message}
+                        helpText="How was this harvest performed?">
+                        <Controller
+                          name="harvest_method"
+                          control={control}
+                          render={({ field }) => (
+                            <StandardSelect {...field} placeholder="Select harvest method">
+                              <option value="">Select harvest method</option>
+                              {HARVEST_METHOD_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+
+                    {/* Info box about transparency */}
+                    <Box
+                      bg="blue.50"
+                      p={4}
+                      borderRadius="lg"
+                      borderLeft="4px solid"
+                      borderLeftColor="blue.400">
+                      <HStack spacing={3} align="flex-start">
+                        <Icon as={FaLeaf} color="blue.500" boxSize={5} mt={0.5} />
+                        <Box>
+                          <Text fontWeight="medium" color="blue.700" fontSize="sm">
+                            Consumer Transparency Tip
+                          </Text>
+                          <Text fontSize="sm" color="blue.600">
+                            Sharing quality grade and harvest method helps build trust with
+                            consumers who want to know how their food was produced.
+                          </Text>
+                        </Box>
+                      </HStack>
+                    </Box>
+                  </VStack>
+                </SectionBox>
+
+                {/* Observations Section */}
+                <SectionBox variant="default">
+                  <SectionHeader
+                    icon={MdDescription}
+                    iconColor="gray.500"
+                    title="Notes & Observations"
+                    badge="Optional"
+                    badgeColorScheme="gray"
+                  />
+                  <VStack spacing={4} align="stretch">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
+                      error={errors.observation?.message}
+                      helpText="Additional notes about this harvest (optional)">
+                      <StandardTextarea
+                        {...methods.register('observation')}
+                        placeholder="Enter any observations, challenges, or special notes about this harvest cycle..."
+                        rows={4}
+                      />
+                    </StandardField>
+                  </VStack>
+                </SectionBox>
+
+                {/* Step Navigation */}
+                <Box pt={4} mt={2} borderTop="1px" borderColor={borderColor}>
+                  <HStack spacing={4} justify="flex-end">
                     <StandardButton variant="outline" onClick={handleCancel} isDisabled={isLoading}>
                       Cancel
                     </StandardButton>
@@ -329,46 +458,78 @@ function FinishProduction() {
                       Continue to Media
                     </StandardButton>
                   </HStack>
-                </VStack>
-              </StandardCard>
+                </Box>
+              </VStack>
             )}
 
             {/* Step 2: Media Upload */}
             {currentStep === 1 && (
-              <StandardCard
-                title="Production Images"
-                subtitle="Upload photos documenting the completed production"
-              >
-                <VStack spacing={6} align="stretch">
-                  {/* Image Upload */}
-                  <StandardField
-                    label={
-                      intl.formatMessage({ id: 'app.productionImages' }) || 'Production Images'
-                    }
-                    helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
-                  >
-                    <TrazoImageUpload
-                      maxFiles={5}
-                      maxSize={5 * 1024 * 1024} // 5MB
-                      existingImages={uploadedImages.map(img => img.url).filter(Boolean)}
-                      onImagesChange={(urls) => {
-                        const imageObjects = urls.map(url => ({ url }));
-                        setUploadedImages(imageObjects);
-                      }}
-                    />
-                  </StandardField>
+              <VStack spacing={6} align="stretch">
+                <SectionBox variant="default">
+                  <SectionHeader
+                    icon={FaCamera}
+                    iconColor="purple.500"
+                    title="Production Images"
+                    badge="Documentation"
+                    badgeColorScheme="purple"
+                  />
+                  <VStack spacing={4} align="stretch">
+                    <Text fontSize="sm" color="gray.600" mb={2}>
+                      Upload photos documenting the completed harvest for consumer transparency
+                    </Text>
 
-                  {/* Upload Limit Notice */}
-                  {uploadedImages.length >= 5 && (
-                    <StandardAlert
-                      status="info"
-                      title="Upload Limit Reached"
-                      description="Maximum of 5 images allowed. Remove an image to add a new one."
-                    />
-                  )}
+                    {/* Image Upload */}
+                    <StandardField
+                      label={
+                        intl.formatMessage({ id: 'app.productionImages' }) || 'Production Images'
+                      }
+                      helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)">
+                      <TrazoImageUpload
+                        maxFiles={5}
+                        maxSize={5 * 1024 * 1024}
+                        existingImages={uploadedImages.map((img) => img.url).filter(Boolean)}
+                        onImagesChange={(urls) => {
+                          const imageObjects = urls.map((url) => ({ url }));
+                          setUploadedImages(imageObjects);
+                        }}
+                      />
+                    </StandardField>
 
-                  {/* Step Navigation */}
-                  <HStack spacing={4} justify="space-between" pt={4}>
+                    {/* Upload Limit Notice */}
+                    {uploadedImages.length >= 5 && (
+                      <StandardAlert
+                        status="info"
+                        title="Upload Limit Reached"
+                        description="Maximum of 5 images allowed. Remove an image to add a new one."
+                      />
+                    )}
+
+                    {/* Info box about images for transparency */}
+                    <Box
+                      bg="purple.50"
+                      p={4}
+                      borderRadius="lg"
+                      borderLeft="4px solid"
+                      borderLeftColor="purple.400">
+                      <HStack spacing={3} align="flex-start">
+                        <Icon as={FaCamera} color="purple.500" boxSize={5} mt={0.5} />
+                        <Box>
+                          <Text fontWeight="medium" color="purple.700" fontSize="sm">
+                            Photo Documentation
+                          </Text>
+                          <Text fontSize="sm" color="purple.600">
+                            Images of your harvest help verify quality and build consumer trust
+                            through transparency.
+                          </Text>
+                        </Box>
+                      </HStack>
+                    </Box>
+                  </VStack>
+                </SectionBox>
+
+                {/* Step Navigation */}
+                <Box pt={4} mt={2} borderTop="1px" borderColor={borderColor}>
+                  <HStack spacing={4} justify="space-between">
                     <StandardButton variant="outline" onClick={previousStep}>
                       Back to Production Info
                     </StandardButton>
@@ -378,13 +539,12 @@ function FinishProduction() {
                       isLoading={isLoading}
                       loadingText="Finishing Production..."
                       size="lg"
-                      px={8}
-                    >
+                      px={8}>
                       {intl.formatMessage({ id: 'app.finishProduction' }) || 'Finish Production'}
                     </StandardButton>
                   </HStack>
-                </VStack>
-              </StandardCard>
+                </Box>
+              </VStack>
             )}
           </VStack>
         </form>

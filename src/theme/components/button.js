@@ -108,7 +108,7 @@ export const buttonStyles = {
         _focus: {
           boxShadow: {
             base: '0 0 0 3px #C6F6D5', // green.100
-            _dark: '0 0 0 3px #276749'  // green.800
+            _dark: '0 0 0 3px #276749' // green.800
           }
         },
         _disabled: {

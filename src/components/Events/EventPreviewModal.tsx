@@ -64,25 +64,29 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
     : { description: 'Please fill in more details to see preview' };
 
   // Use official event type names to prevent mapping errors
-  const eventTypeName = EVENT_TYPE_NAMES[activeEventType as keyof typeof EVENT_TYPE_NAMES] || 'Farming Activity';
+  const eventTypeName =
+    EVENT_TYPE_NAMES[activeEventType as keyof typeof EVENT_TYPE_NAMES] || 'Farming Activity';
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       size={{ base: 'full', md: 'xl', lg: '2xl' }}
-      scrollBehavior="inside">
+      scrollBehavior="inside"
+    >
       <ModalOverlay bg="blackAlpha.600" />
       <ModalContent
         maxH={{ base: '100vh', md: '90vh' }}
         bg={bgColor}
         mx={{ base: 0, md: 4 }}
         my={{ base: 0, md: 4 }}
-        borderRadius={{ base: 0, md: 'xl' }}>
+        borderRadius={{ base: 0, md: 'xl' }}
+      >
         <ModalHeader
           pb={3}
           borderBottom="1px solid"
-          borderColor={useColorModeValue('gray.200', 'gray.600')}>
+          borderColor={useColorModeValue('gray.200', 'gray.600')}
+        >
           <VStack spacing={2} align="start">
             <HStack spacing={3}>
               <Icon as={MdPreview} color="green.500" boxSize={6} />
@@ -107,7 +111,8 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
               border="1px solid"
               borderColor={useColorModeValue('blue.200', 'blue.700')}
               borderRadius="lg"
-              p={4}>
+              p={4}
+            >
               <HStack spacing={3} align="start">
                 <Icon as={FaInfoCircle} color="blue.500" boxSize={5} mt={1} />
                 <VStack spacing={2} align="start" flex={1}>
@@ -117,7 +122,8 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                   <Text
                     fontSize="xs"
                     color={useColorModeValue('blue.700', 'blue.200')}
-                    lineHeight="1.4">
+                    lineHeight="1.4"
+                  >
                     This preview shows how consumers will see your event in the Production Journey.
                     All verification badges shown are for preview only - actual verification will be
                     applied when the event is saved.
@@ -151,7 +157,8 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                 border="1px solid"
                 borderColor={useColorModeValue('gray.200', 'gray.600')}
                 overflow="hidden"
-                p={4}>
+                p={4}
+              >
                 <ConsumerEventCard event={previewEvent} isFirst={true} isLast={true} />
               </Box>
             </Box>
@@ -197,11 +204,13 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
               border="1px solid"
               borderColor={useColorModeValue('green.200', 'green.700')}
               borderRadius="lg"
-              p={4}>
+              p={4}
+            >
               <Text
                 fontSize="xs"
                 color={useColorModeValue('green.700', 'green.200')}
-                textAlign="center">
+                textAlign="center"
+              >
                 💡 <strong>Tip:</strong> The more details you provide in the form, the more
                 informative and trustworthy your event will appear to consumers. Complete
                 transparency builds consumer confidence!

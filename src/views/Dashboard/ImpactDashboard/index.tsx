@@ -90,7 +90,10 @@ export default function ImpactDashboard() {
   const recommendations = dashboardData?.recommendations || [];
 
   return (
-    <StandardPage title="My Transparency Journey" description="Discover the story behind your food choices">
+    <StandardPage
+      title="My Transparency Journey"
+      description="Discover the story behind your food choices"
+    >
       <VStack spacing={8} align="stretch">
         {/* Hero Section with Stats */}
         <StandardCard variant="elevated">
@@ -216,7 +219,11 @@ export default function ImpactDashboard() {
         {/* Two Column Layout */}
         <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8}>
           {/* Recent Product Scans */}
-          <StandardCard title="Recent Transparency Discoveries" subtitle="Farms you've explored" variant="outline">
+          <StandardCard
+            title="Recent Transparency Discoveries"
+            subtitle="Farms you've explored"
+            variant="outline"
+          >
             <VStack spacing={5}>
               {recentScans.map((scan) => (
                 <Box
@@ -269,12 +276,7 @@ export default function ImpactDashboard() {
                         label="Farming Events Viewed"
                         explanation="This shows how many farming activities you explored for this product, from planting to harvest. Each event gives you insight into the care and attention that went into growing your food."
                       >
-                        <Text
-                          fontSize="sm"
-                          color="green.600"
-                          fontWeight="bold"
-                          cursor="help"
-                        >
+                        <Text fontSize="sm" color="green.600" fontWeight="bold" cursor="help">
                           {scan.events_viewed || '12'} events
                         </Text>
                       </ConsumerTooltip>

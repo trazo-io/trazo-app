@@ -43,10 +43,12 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
   const toast = useToast();
   const [searchParams] = useSearchParams();
   const [confirmPasswordReset, { isLoading }] = useConfirmPasswordResetMutation();
-  
+
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult | null>(null);
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult | null>(
+    null
+  );
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
@@ -132,7 +134,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
       }).unwrap();
 
       setResetSuccess(true);
-      
+
       toast({
         title: 'Password Reset Successfully',
         description: 'Your password has been updated. You can now sign in with your new password.',
@@ -145,7 +147,6 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
       setTimeout(() => {
         navigate(userType === 'producer' ? '/auth/signin' : '/consumidor/auth/signin');
       }, 3000);
-
     } catch (error: any) {
       const errorMessage = error?.data?.error || 'Failed to reset password. Please try again.';
       toast({
@@ -177,9 +178,9 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
       <StandardCard>
         <VStack spacing={6} textAlign="center">
           <Box>
-            <Icon 
-              as={FaCheckCircle} 
-              boxSize={16} 
+            <Icon
+              as={FaCheckCircle}
+              boxSize={16}
               color={userType === 'producer' ? 'green.500' : 'blue.500'}
             />
           </Box>
@@ -189,7 +190,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
               Password Reset Successfully
             </Text>
             <Text color="gray.600" fontSize="sm" maxW="md" lineHeight="1.6">
-              Your password has been updated successfully. You can now sign in with your new password.
+              Your password has been updated successfully. You can now sign in with your new
+              password.
             </Text>
           </VStack>
 
@@ -218,12 +220,17 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
       <VStack spacing={6} textAlign="center">
         {/* Header */}
         <VStack spacing={3}>
-          <Icon as={FaLock} boxSize={8} color={userType === 'producer' ? 'green.500' : 'blue.500'} />
+          <Icon
+            as={FaLock}
+            boxSize={8}
+            color={userType === 'producer' ? 'green.500' : 'blue.500'}
+          />
           <Text fontSize="xl" fontWeight="semibold" color="gray.800">
             Create New Password
           </Text>
           <Text color="gray.600" fontSize="sm" maxW="md" lineHeight="1.6">
-            Your new password must be different from your previous password and meet our security requirements.
+            Your new password must be different from your previous password and meet our security
+            requirements.
           </Text>
         </VStack>
 
@@ -279,13 +286,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
 
             {/* Password Requirements */}
             <Collapse in={showPasswordRequirements} animateOpacity>
-              <Box
-                bg="gray.50"
-                p={4}
-                borderRadius="lg"
-                borderWidth="1px"
-                borderColor="gray.200"
-              >
+              <Box bg="gray.50" p={4} borderRadius="lg" borderWidth="1px" borderColor="gray.200">
                 <Text fontSize="sm" fontWeight="semibold" mb={2}>
                   Password Requirements:
                 </Text>
@@ -321,7 +322,9 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
                   <ListItem>
                     <ListIcon
                       as={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword || '') ? FaCheck : FaTimes}
-                      color={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword || '') ? 'green.500' : 'gray.400'}
+                      color={
+                        /[!@#$%^&*(),.?":{}|<>]/.test(newPassword || '') ? 'green.500' : 'gray.400'
+                      }
                     />
                     One special character (!@#$%^&*(),.?":{}|&lt;&gt;)
                   </ListItem>
@@ -353,8 +356,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
                   placeholder="Confirm new password"
                   {...register('confirmPassword', {
                     required: 'Please confirm your password',
-                    validate: (value) =>
-                      value === newPassword || 'Passwords do not match'
+                    validate: (value) => value === newPassword || 'Passwords do not match'
                   })}
                 />
                 <InputRightElement>

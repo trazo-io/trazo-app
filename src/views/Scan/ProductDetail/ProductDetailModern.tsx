@@ -33,7 +33,8 @@ import {
   ModernProductHeader,
   ModernEducationalSection,
   ModernSidebar,
-  UltraMobileProductionJourney
+  UltraMobileProductionJourney,
+  HarvestInfoCard
 } from './components';
 
 // Other components
@@ -70,7 +71,16 @@ function ProductDetailModern() {
     error: completeError,
     isLoading: isCompleteLoading
   } = useGetCompleteSummaryQuery(productionId || '', {
-    skip: !productionId
+    skip: !productionId,
+    refetchOnMountOrArgChange: true // Force fresh data to include harvestDetails
+  });
+
+  // Debug harvestDetails
+  console.log('🌾 HARVEST DETAILS DEBUG:', {
+    productionId,
+    hasCompleteData: !!completeData,
+    harvestDetails: completeData?.harvestDetails,
+    allKeys: completeData ? Object.keys(completeData) : []
   });
 
   // Get complete transparency data with all chemical event fields
@@ -230,6 +240,34 @@ function ProductDetailModern() {
               {/* Educational Section */}
               <ModernEducationalSection onEducationOpen={handleEducationOpen} />
 
+              {/* Harvest Details Card - Only shown when harvest data is available */}
+              {/* 🌾 DEBUG: Check if harvestDetails is available */}
+              {(() => {
+                console.log('🌾 RENDER CHECK - harvestDetails:', {
+                  exists: !!completeData?.harvestDetails,
+                  value: completeData?.harvestDetails,
+                  completeDataKeys: completeData ? Object.keys(completeData) : [],
+                  fullCompleteData: completeData
+                });
+                return null;
+              })()}
+
+              {/* 🧪 TEST: Always visible debug box */}
+              <Box bg="yellow.200" p={4} borderRadius="md" mb={4}>
+                <Text fontWeight="bold">🧪 DEBUG: harvestDetails check</Text>
+                <Text>Has harvestDetails: {completeData?.harvestDetails ? 'YES ✅' : 'NO ❌'}</Text>
+                <Text fontSize="sm">Keys: {completeData ? Object.keys(completeData).join(', ') : 'none'}</Text>
+                {completeData?.harvestDetails && (
+                  <Text fontSize="sm" color="green.600">
+                    Amount: {completeData.harvestDetails.amount} {completeData.harvestDetails.unit}
+                  </Text>
+                )}
+              </Box>
+
+              {completeData?.harvestDetails && (
+                <HarvestInfoCard harvestDetails={completeData.harvestDetails} />
+              )}
+
               {/* Production Journey */}
               <Card bg={useColorModeValue('white', 'gray.800')} shadow="lg" borderRadius="xl">
                 <CardHeader>
@@ -254,10 +292,11 @@ function ProductDetailModern() {
 
                     // Helper function to find transparency data for an event
                     const findTransparencyEventData = (eventId: string | number) => {
-                      return transparencyEvents.find(tEvent => 
-                        tEvent.id === String(eventId) || 
-                        tEvent.id === `chemical_${eventId}` ||
-                        String(tEvent.id).includes(String(eventId))
+                      return transparencyEvents.find(
+                        (tEvent) =>
+                          tEvent.id === String(eventId) ||
+                          tEvent.id === `chemical_${eventId}` ||
+                          String(tEvent.id).includes(String(eventId))
                       );
                     };
 
@@ -265,7 +304,7 @@ function ProductDetailModern() {
                       const timelineEvents = events.map((event, index) => {
                         // Get complete transparency data for this event
                         const transparencyEventData = findTransparencyEventData(event.id) || {};
-                        
+
                         console.log(`🔍 MERGING EVENT DATA for ID ${event.id}:`, {
                           carbonEvent: event,
                           transparencyEvent: transparencyEventData,
@@ -273,8 +312,12 @@ function ProductDetailModern() {
                         });
 
                         // 🔧 DIRECT FIX: Add missing chemical event fields for event ID 177
-                        const isChemicalEvent177 = event.id === 177 || event.id === '177' || event.id === 'chemical_177' || String(event.id).endsWith('177');
-                        
+                        const isChemicalEvent177 =
+                          event.id === 177 ||
+                          event.id === '177' ||
+                          event.id === 'chemical_177' ||
+                          String(event.id).endsWith('177');
+
                         // 🔧 DEBUG: Log ALL event data for debugging
                         console.log('🔧 MISSING FIELDS FIX - ALL EVENT DATA:', {
                           eventId: event.id,
@@ -289,7 +332,7 @@ function ProductDetailModern() {
                           transparencyAppMethod: transparencyEventData.way_of_application,
                           transparencyArea: transparencyEventData.area
                         });
-                        
+
                         const finalEventData = {
                           id: event.id?.toString() || `event_${index}`,
                           type: event.type || 'general',
@@ -303,21 +346,33 @@ function ProductDetailModern() {
                           area: event.area?.toString(),
                           equipment: event.equipment,
                           // Chemical event fields - prioritize transparency data if available
-                          application_timing: transparencyEventData.application_timing || event.application_timing || (isChemicalEvent177 ? 'Pre Plant' : undefined),
-                          application_method: transparencyEventData.way_of_application || event.application_method || (isChemicalEvent177 ? 'Broadcast Incorporated' : undefined),
-                          commercial_name: transparencyEventData.commercial_name || event.commercial_name,
-                          active_ingredient: transparencyEventData.active_ingredient || event.active_ingredient,
+                          application_timing:
+                            transparencyEventData.application_timing ||
+                            event.application_timing ||
+                            (isChemicalEvent177 ? 'Pre Plant' : undefined),
+                          application_method:
+                            transparencyEventData.way_of_application ||
+                            event.application_method ||
+                            (isChemicalEvent177 ? 'Broadcast Incorporated' : undefined),
+                          commercial_name:
+                            transparencyEventData.commercial_name || event.commercial_name,
+                          active_ingredient:
+                            transparencyEventData.active_ingredient || event.active_ingredient,
                           npk_ratio: transparencyEventData.concentration || event.npk_ratio,
-                          area_covered: transparencyEventData.area || event.area_covered || (isChemicalEvent177 ? '20 ha' : undefined),
+                          area_covered:
+                            transparencyEventData.area ||
+                            event.area_covered ||
+                            (isChemicalEvent177 ? '20 ha' : undefined),
                           chemical_name: transparencyEventData.chemical_name || event.chemical_name,
-                          target_pest_disease: transparencyEventData.target_pest_disease || event.target_pest_disease
+                          target_pest_disease:
+                            transparencyEventData.target_pest_disease || event.target_pest_disease
                         };
-                        
+
                         // 🔧 DEBUG: Log final processed event data for event 177
                         if (isChemicalEvent177) {
                           console.log('🔧 FINAL PROCESSED EVENT 177 DATA:', finalEventData);
                         }
-                        
+
                         return finalEventData;
                       });
                       return <UltraMobileProductionJourney events={timelineEvents} />;

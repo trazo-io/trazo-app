@@ -784,6 +784,32 @@ export function getConsumerEventDescription(
         title: 'Pruning Operation',
         icon: '✂️',
         description: 'Strategic pruning to improve plant health, air circulation, and fruit quality'
+      },
+      // Sprint 2: EQ (Equipment Operations) subtype
+      EQ: {
+        title: 'Equipment Operations',
+        icon: '🔧',
+        description: 'Farm equipment used and maintained for optimal performance and efficiency'
+      },
+      equipment: {
+        title: 'Equipment Operations',
+        icon: '🔧',
+        description: 'Farm equipment used and maintained for optimal performance'
+      },
+      'production.EQ': {
+        title: 'Equipment Operations',
+        icon: '🔧',
+        description: 'Farm equipment used and maintained for optimal performance'
+      },
+      'production.equipment': {
+        title: 'Equipment Operations',
+        icon: '🔧',
+        description: 'Farm equipment used and maintained for optimal performance'
+      },
+      'event.production.equipment': {
+        title: 'Equipment Operations',
+        icon: '🔧',
+        description: 'Farm equipment used and maintained for optimal performance'
       }
     };
 
@@ -948,6 +974,7 @@ export function getConsumerEventDescription(
           PL: 'Planting Operation',
           PR: 'Pruning Operation',
           TR: 'Transplanting Operation',
+          EQ: 'Equipment Operations', // Sprint 2: EQ subtype
           SO: 'Soil Operation',
           FE: 'Fertilizer Operation',
           WE: 'Weather Monitoring'

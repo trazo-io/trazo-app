@@ -1,7 +1,7 @@
 /**
  * Event Type Mapping Utility
  * Ensures consistent mapping of event names/types to backend carbon calculation types
- * 
+ *
  * Backend expects these event types:
  * - 'chemical': Fertilizers, pesticides, herbicides (highest carbon impact)
  * - 'equipment': Heavy machinery, tractors, fuel consumption
@@ -20,7 +20,7 @@ export interface EventTypeMapping {
  */
 export function getEventTypeMapping(eventName: string): EventTypeMapping {
   const name = eventName.toLowerCase();
-  
+
   // Chemical events - highest carbon impact
   if (
     name.includes('fertiliz') ||
@@ -40,7 +40,7 @@ export function getEventTypeMapping(eventName: string): EventTypeMapping {
       carbonImpactLevel: 'high'
     };
   }
-  
+
   // Equipment events - medium to high carbon impact
   if (
     name.includes('equipment') ||
@@ -60,7 +60,7 @@ export function getEventTypeMapping(eventName: string): EventTypeMapping {
       carbonImpactLevel: 'medium'
     };
   }
-  
+
   // Production events - low carbon impact (manual/biological operations)
   return {
     backendType: 'production',
@@ -79,13 +79,13 @@ export function getEventDataForType(
 ): Record<string, any> {
   const mapping = getEventTypeMapping(eventName);
   const name = eventName.toLowerCase();
-  
+
   // Add type field
   const eventData = {
     ...baseData,
     type: mapping.subType
   };
-  
+
   // Add chemical-specific data for fertilizers
   if (mapping.backendType === 'chemical' && name.includes('fertiliz')) {
     return {
@@ -99,7 +99,7 @@ export function getEventDataForType(
       unit: baseData.unit || 'kg/ha'
     };
   }
-  
+
   // Add chemical-specific data for pesticides/herbicides
   if (mapping.backendType === 'chemical' && !name.includes('fertiliz')) {
     return {
@@ -113,7 +113,7 @@ export function getEventDataForType(
       unit: baseData.unit || 'L/ha'
     };
   }
-  
+
   // Equipment events
   if (mapping.backendType === 'equipment') {
     return {
@@ -123,7 +123,7 @@ export function getEventDataForType(
       equipment_name: baseData.equipment_name || 'Tractor'
     };
   }
-  
+
   // Default production events
   return eventData;
 }
@@ -135,7 +135,7 @@ export function getEventDataForType(
 export function estimateCarbonImpact(eventName: string): number {
   const mapping = getEventTypeMapping(eventName);
   const name = eventName.toLowerCase();
-  
+
   // Chemical events have highest impact
   if (mapping.backendType === 'chemical') {
     if (name.includes('fertiliz')) {
@@ -143,7 +143,7 @@ export function estimateCarbonImpact(eventName: string): number {
     }
     return 15; // 10-20 kg CO2e/ha for pesticides
   }
-  
+
   // Equipment events have medium impact
   if (mapping.backendType === 'equipment') {
     if (name.includes('harvest')) {
@@ -151,11 +151,11 @@ export function estimateCarbonImpact(eventName: string): number {
     }
     return 25; // 20-30 kg CO2e/ha for general equipment use
   }
-  
+
   // Production events have lowest impact
   if (name.includes('irrigation')) {
     return 0.018; // Very low for gravity-fed irrigation
   }
-  
+
   return 0.01; // Minimal for manual operations
 }

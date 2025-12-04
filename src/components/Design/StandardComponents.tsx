@@ -30,7 +30,9 @@ import {
   Portal,
   IconButton,
   Image,
-  CloseButton
+  CloseButton,
+  Collapse,
+  useDisclosure
 } from '@chakra-ui/react';
 import { S3Image } from '../Media/S3Image';
 import { ReactNode, ReactElement, useState, useEffect, useCallback } from 'react';
@@ -38,6 +40,8 @@ import {
   FaLeaf,
   FaChevronLeft,
   FaChevronRight,
+  FaChevronDown,
+  FaChevronUp,
   FaCheckCircle,
   FaQuestionCircle,
   FaCamera,
@@ -105,7 +109,8 @@ export const StandardPage = ({
                           variant="outline"
                           leftIcon={<FaChevronLeft />}
                           onClick={onBack}
-                          size="sm">
+                          size="sm"
+                        >
                           Back
                         </Button>
                       </Flex>
@@ -119,7 +124,8 @@ export const StandardPage = ({
                         fontWeight="bold"
                         textAlign="center"
                         letterSpacing="-0.02em"
-                        w="full">
+                        w="full"
+                      >
                         {title}
                       </Heading>
                       {description && (
@@ -129,7 +135,8 @@ export const StandardPage = ({
                           fontWeight="normal"
                           maxW="90%"
                           lineHeight="1.7"
-                          textAlign="center">
+                          textAlign="center"
+                        >
                           {description}
                         </Text>
                       )}
@@ -144,13 +151,15 @@ export const StandardPage = ({
                     align="center"
                     gap={4}
                     w="full"
-                    justify={showBackButton ? 'space-between' : 'center'}>
+                    justify={showBackButton ? 'space-between' : 'center'}
+                  >
                     {showBackButton && (
                       <Button
                         variant="outline"
                         leftIcon={<FaChevronLeft />}
                         onClick={onBack}
-                        size="sm">
+                        size="sm"
+                      >
                         Back
                       </Button>
                     )}
@@ -162,7 +171,8 @@ export const StandardPage = ({
                         color="green.600"
                         fontWeight="bold"
                         textAlign="center"
-                        letterSpacing="-0.02em">
+                        letterSpacing="-0.02em"
+                      >
                         {title}
                       </Heading>
                       {description && (
@@ -172,7 +182,8 @@ export const StandardPage = ({
                           fontWeight="normal"
                           maxW="70%"
                           lineHeight="1.7"
-                          textAlign="center">
+                          textAlign="center"
+                        >
                           {description}
                         </Text>
                       )}
@@ -307,7 +318,8 @@ export const StandardStepper = ({
           minW="100%"
           maxW={manySteps ? 'none' : '800px'}
           mx="auto"
-          px={{ base: 6, md: manySteps ? 4 : 0 }}>
+          px={{ base: 6, md: manySteps ? 4 : 0 }}
+        >
           {steps.map((step, index) => (
             <React.Fragment key={index}>
               <VStack
@@ -318,7 +330,8 @@ export const StandardStepper = ({
                 cursor={allowStepClick ? 'pointer' : 'default'}
                 onClick={() => allowStepClick && onStepClick?.(index)}
                 _hover={allowStepClick ? { opacity: 0.8 } : {}}
-                transition="all 0.3s ease">
+                transition="all 0.3s ease"
+              >
                 <Circle
                   size={circleSize}
                   bg={
@@ -332,7 +345,8 @@ export const StandardStepper = ({
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="bold"
                   boxShadow={index === currentStep ? 'lg' : 'md'}
-                  transition="all 0.3s">
+                  transition="all 0.3s"
+                >
                   {completedSteps.includes(index) || index < currentStep ? (
                     <Icon as={step.icon || FaCheckCircle} boxSize={iconSize} />
                   ) : (
@@ -347,7 +361,8 @@ export const StandardStepper = ({
                     textAlign="center"
                     lineHeight="1.2"
                     noOfLines={2}
-                    maxW={manySteps ? '70px' : 'auto'}>
+                    maxW={manySteps ? '70px' : 'auto'}
+                  >
                     {step.title}
                   </Text>
                   {step.description && !manySteps && (
@@ -356,7 +371,8 @@ export const StandardStepper = ({
                       color="gray.500"
                       textAlign="center"
                       display={{ base: 'none', md: 'block' }}
-                      lineHeight="1.2">
+                      lineHeight="1.2"
+                    >
                       {step.description}
                     </Text>
                   )}
@@ -440,13 +456,15 @@ export const StandardSelectionGrid = ({
                 }
               : {}
           }
-          onClick={() => !disabled && onSelect(option.id)}>
+          onClick={() => !disabled && onSelect(option.id)}
+        >
           <VStack spacing={3} justify="center" height="100%">
             {option.icon && (
               <Circle
                 size="50px"
                 bg={`${option.color || 'green'}.100`}
-                color={`${option.color || 'green'}.600`}>
+                color={`${option.color || 'green'}.600`}
+              >
                 <Icon as={option.icon} boxSize={iconSize} />
               </Circle>
             )}
@@ -461,7 +479,8 @@ export const StandardSelectionGrid = ({
                   color="gray.600"
                   textAlign="center"
                   noOfLines={2}
-                  display={{ base: 'none', md: 'block' }}>
+                  display={{ base: 'none', md: 'block' }}
+                >
                   {option.description}
                 </Text>
               )}
@@ -522,7 +541,8 @@ export const StandardForm = ({
               isLoading={isLoading}
               loadingText="Saving..."
               size="lg"
-              px={8}>
+              px={8}
+            >
               {submitText}
             </Button>
           </HStack>
@@ -685,7 +705,8 @@ export const StandardButton = ({
         }
       }}
       transition="all 0.2s ease"
-      {...rest}>
+      {...rest}
+    >
       {children}
     </Button>
   );
@@ -715,7 +736,8 @@ export const StandardAlert = ({ status, title, description, children }: Standard
       bg={`${status}.50`}
       borderLeft="4px solid"
       marginBottom={6}
-      borderLeftColor={`${status}.500`}>
+      borderLeftColor={`${status}.500`}
+    >
       <AlertIcon as={icons[status]} />
       <VStack align="start" spacing={1}>
         {title && (
@@ -794,6 +816,174 @@ export const StandardSection = ({ title, description, action, children }: Standa
   </Box>
 );
 
+// Sprint 2 Epic 2.3: Section Header Component for Form Tabs
+// Provides consistent header styling across all event form tabs
+
+interface SectionHeaderProps {
+  icon: IconType;
+  iconColor?: string;
+  title: string;
+  badge?: string;
+  badgeColorScheme?: string;
+  description?: string;
+}
+
+export const SectionHeader = ({
+  icon,
+  iconColor = 'green.500',
+  title,
+  badge,
+  badgeColorScheme = 'green',
+  description
+}: SectionHeaderProps) => (
+  <Box mb={4}>
+    <HStack justify="space-between" align="center" mb={description ? 2 : 0}>
+      <HStack spacing={2}>
+        <Icon as={icon} color={iconColor} boxSize={5} />
+        <Text fontSize="md" fontWeight="bold" color="gray.700">
+          {title}
+        </Text>
+      </HStack>
+      {badge && (
+        <Badge colorScheme={badgeColorScheme} fontSize="xs">
+          {badge}
+        </Badge>
+      )}
+    </HStack>
+    {description && (
+      <Text fontSize="sm" color="gray.600">
+        {description}
+      </Text>
+    )}
+  </Box>
+);
+
+// Section Box Component - wrapper with border styling for form sections
+interface SectionBoxProps {
+  children: ReactNode;
+  variant?: 'default' | 'highlighted';
+  borderColor?: string;
+  bg?: string;
+}
+
+export const SectionBox = ({ children, variant = 'default', borderColor, bg }: SectionBoxProps) => {
+  const defaultBorderColor = variant === 'highlighted' ? 'green.200' : 'gray.200';
+  const defaultBg = variant === 'highlighted' ? 'green.50' : 'white';
+
+  return (
+    <Box
+      mb={6}
+      p={{ base: 3, md: 4 }}
+      border="1px"
+      borderColor={borderColor || defaultBorderColor}
+      borderRadius="lg"
+      bg={bg || defaultBg}
+    >
+      {children}
+    </Box>
+  );
+};
+
+// Sprint 3 Epic 3.3: Collapsible Section for Progressive Field Display
+// Provides expandable/collapsible sections for advanced or optional fields
+
+interface CollapsibleSectionProps {
+  title: string;
+  icon?: IconType;
+  iconColor?: string;
+  badge?: string;
+  badgeColorScheme?: string;
+  description?: string;
+  children: ReactNode;
+  defaultIsOpen?: boolean;
+  variant?: 'default' | 'highlighted';
+}
+
+export const CollapsibleSection = ({
+  title,
+  icon,
+  iconColor = 'gray.500',
+  badge,
+  badgeColorScheme = 'gray',
+  description,
+  children,
+  defaultIsOpen = false,
+  variant = 'default'
+}: CollapsibleSectionProps) => {
+  const { isOpen, onToggle } = useDisclosure({ defaultIsOpen });
+  const borderColor = variant === 'highlighted' ? 'green.200' : 'gray.200';
+  const bgColor = variant === 'highlighted' ? 'green.50' : 'white';
+  const headerBg = useColorModeValue('gray.50', 'gray.700');
+
+  return (
+    <Box
+      mb={6}
+      border="1px"
+      borderColor={borderColor}
+      borderRadius="lg"
+      bg={bgColor}
+      overflow="hidden"
+    >
+      {/* Clickable Header */}
+      <Box
+        as="button"
+        type="button"
+        onClick={onToggle}
+        w="100%"
+        p={4}
+        bg={headerBg}
+        borderBottom={isOpen ? '1px' : '0'}
+        borderColor={borderColor}
+        cursor="pointer"
+        _hover={{ bg: variant === 'highlighted' ? 'green.100' : 'gray.100' }}
+        transition="all 0.2s"
+      >
+        <Flex justify="space-between" align="center">
+          <HStack spacing={2}>
+            {icon && <Icon as={icon} color={iconColor} boxSize={5} />}
+            <Text fontSize="md" fontWeight="bold" color="gray.700">
+              {title}
+            </Text>
+            {badge && (
+              <Badge colorScheme={badgeColorScheme} fontSize="xs">
+                {badge}
+              </Badge>
+            )}
+          </HStack>
+          <HStack spacing={2}>
+            <Text fontSize="sm" color="gray.500">
+              {isOpen ? 'Hide' : 'Show'}
+            </Text>
+            <Icon
+              as={isOpen ? FaChevronUp : FaChevronDown}
+              color="gray.500"
+              boxSize={4}
+              transition="transform 0.2s"
+            />
+          </HStack>
+        </Flex>
+        {description && !isOpen && (
+          <Text fontSize="sm" color="gray.500" mt={2} textAlign="left">
+            {description}
+          </Text>
+        )}
+      </Box>
+
+      {/* Collapsible Content */}
+      <Collapse in={isOpen} animateOpacity>
+        <Box p={4}>
+          {description && (
+            <Text fontSize="sm" color="gray.600" mb={4}>
+              {description}
+            </Text>
+          )}
+          {children}
+        </Box>
+      </Collapse>
+    </Box>
+  );
+};
+
 // Consumer-Friendly Tooltip Component
 
 interface ConsumerTooltipProps {
@@ -828,7 +1018,8 @@ export const ConsumerTooltip = ({
       fontSize="xs"
       hasArrow
       closeOnClick={false}
-      openDelay={300}>
+      openDelay={300}
+    >
       {children}
     </Tooltip>
   );
@@ -1039,7 +1230,8 @@ export const StandardMediaUpload = ({
             boxShadow="md"
             border="1px solid"
             borderColor="gray.200"
-            position="relative">
+            position="relative"
+          >
             <Image
               src={objectUrl}
               alt={file.name}
@@ -1085,7 +1277,8 @@ export const StandardMediaUpload = ({
         borderColor={borderColor}
         borderRadius="lg"
         bg="gray.50"
-        position="relative">
+        position="relative"
+      >
         <Icon as={FaCheckCircle} boxSize={6} color="green.500" mb={2} />
         <Text fontSize="xs" color={textColor} noOfLines={1} fontWeight="medium">
           {file.name}
@@ -1121,7 +1314,8 @@ export const StandardMediaUpload = ({
           boxShadow="md"
           border="2px solid"
           borderColor={successColor}
-          position="relative">
+          position="relative"
+        >
           <S3Image
             src={url}
             alt={`Uploaded image ${index + 1}`}
@@ -1139,7 +1333,8 @@ export const StandardMediaUpload = ({
             bg={successColor}
             color="white"
             borderRadius="full"
-            p={1}>
+            p={1}
+          >
             <Icon as={FaCheckCircle} boxSize={3} />
           </Box>
 
@@ -1234,7 +1429,8 @@ export const StandardMediaUpload = ({
                 : 'repeat(auto-fill, minmax(140px, 1fr))'
             }
             gap={3}
-            w="100%">
+            w="100%"
+          >
             {uploadedFiles.map((url, index) => renderUploadedImage(url, index))}
           </Grid>
         </Box>
@@ -1261,7 +1457,8 @@ export const StandardMediaUpload = ({
           boxShadow: disabled || isUploading ? 'none' : 'md'
         }}
         opacity={disabled ? 0.6 : 1}
-        {...getRootProps()}>
+        {...getRootProps()}
+      >
         <input {...getInputProps()} style={{ display: 'none' }} />
 
         {acceptedFiles.length > 0 ? (
@@ -1270,7 +1467,8 @@ export const StandardMediaUpload = ({
               <Circle
                 size="40px"
                 bg={isUploading ? 'blue.100' : 'green.100'}
-                color={isUploading ? 'blue.600' : 'green.600'}>
+                color={isUploading ? 'blue.600' : 'green.600'}
+              >
                 {isUploading ? <Spinner size="sm" /> : <Icon as={FaCheckCircle} boxSize={5} />}
               </Circle>
               <VStack spacing={0} align="start">
@@ -1295,7 +1493,8 @@ export const StandardMediaUpload = ({
                 gap={3}
                 w="100%"
                 maxW="500px"
-                mx="auto">
+                mx="auto"
+              >
                 {acceptedFiles
                   .slice(0, 3)
                   .map((file, index) => renderFilePreview(file, index, true))}
@@ -1306,7 +1505,8 @@ export const StandardMediaUpload = ({
                     borderRadius="lg"
                     bg="gray.100"
                     border="1px dashed"
-                    borderColor="gray.300">
+                    borderColor="gray.300"
+                  >
                     <Text fontSize="sm" color="gray.600" fontWeight="medium">
                       +{acceptedFiles.length - 3} more
                     </Text>
@@ -1325,7 +1525,8 @@ export const StandardMediaUpload = ({
                 fontSize={variantStyles.textSize}
                 color="gray.600"
                 fontWeight="semibold"
-                textAlign="center">
+                textAlign="center"
+              >
                 {placeholder || 'Drag & drop images here, or click to select'}
               </Text>
               <Text fontSize="sm" color="gray.500" textAlign="center">
@@ -1350,5 +1551,117 @@ export const StandardMediaUpload = ({
         </Alert>
       )}
     </VStack>
+  );
+};
+
+// Sprint 3 Epic 3.3: Draft Restoration Alert Component
+// Shows when a saved draft is available for restoration
+
+interface DraftRestorationAlertProps {
+  /** Whether there's a draft available */
+  hasDraft: boolean;
+  /** Timestamp of the last save */
+  lastSaved: Date | null;
+  /** Callback to restore the draft */
+  onRestore: () => void;
+  /** Callback to discard the draft */
+  onDiscard: () => void;
+  /** Whether to show the alert */
+  show?: boolean;
+}
+
+export const DraftRestorationAlert = ({
+  hasDraft,
+  lastSaved,
+  onRestore,
+  onDiscard,
+  show = true
+}: DraftRestorationAlertProps) => {
+  if (!hasDraft || !show) return null;
+
+  const formatTimeAgo = (date: Date | null): string => {
+    if (!date) return 'some time ago';
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+  };
+
+  return (
+    <Alert
+      status="info"
+      borderRadius="lg"
+      variant="left-accent"
+      bg="blue.50"
+      borderLeft="4px solid"
+      borderLeftColor="blue.500"
+      mb={4}
+    >
+      <AlertIcon color="blue.500" />
+      <Flex
+        direction={{ base: 'column', md: 'row' }}
+        justify="space-between"
+        align={{ base: 'flex-start', md: 'center' }}
+        flex={1}
+        gap={3}
+      >
+        <VStack align="flex-start" spacing={0}>
+          <Text fontWeight="semibold" fontSize="sm" color="blue.700">
+            Draft Available
+          </Text>
+          <Text fontSize="xs" color="blue.600">
+            You have an unsaved draft from {formatTimeAgo(lastSaved)}
+          </Text>
+        </VStack>
+        <HStack spacing={2}>
+          <Button size="sm" colorScheme="blue" variant="solid" onClick={onRestore}>
+            Restore Draft
+          </Button>
+          <Button size="sm" colorScheme="gray" variant="outline" onClick={onDiscard}>
+            Discard
+          </Button>
+        </HStack>
+      </Flex>
+    </Alert>
+  );
+};
+
+// Sprint 3 Epic 3.3: Auto-Save Status Indicator
+// Shows when form data was last auto-saved
+
+interface AutoSaveStatusProps {
+  /** Timestamp of the last save */
+  lastSaved: Date | null;
+  /** Whether currently saving */
+  isSaving: boolean;
+}
+
+export const AutoSaveStatus = ({ lastSaved, isSaving }: AutoSaveStatusProps) => {
+  if (!lastSaved && !isSaving) return null;
+
+  return (
+    <HStack spacing={2} fontSize="xs" color="gray.500">
+      {isSaving ? (
+        <>
+          <Spinner size="xs" color="green.500" />
+          <Text>Saving draft...</Text>
+        </>
+      ) : lastSaved ? (
+        <>
+          <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
+          <Text>
+            Draft saved at{' '}
+            {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
+        </>
+      ) : null}
+    </HStack>
   );
 };

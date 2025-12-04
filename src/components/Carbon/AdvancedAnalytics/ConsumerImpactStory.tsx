@@ -24,14 +24,14 @@ import {
   StatLabel,
   StatNumber,
   StatHelpText,
-  Center,
+  Center
 } from '@chakra-ui/react';
-import { 
-  FaLeaf, 
-  FaCar, 
-  FaTree, 
-  FaShieldAlt, 
-  FaMedal, 
+import {
+  FaLeaf,
+  FaCar,
+  FaTree,
+  FaShieldAlt,
+  FaMedal,
   FaHeart,
   FaCheckCircle,
   FaStar,
@@ -82,15 +82,15 @@ interface ConsumerImpactStoryProps {
 export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
   consumerImpactStory,
   trustIndicators,
-  transparencyScore,
+  transparencyScore
 }) => {
   const bg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const gradientBg = useColorModeValue(
-    'linear(to-r, green.50, blue.50)', 
+    'linear(to-r, green.50, blue.50)',
     'linear(to-r, green.900, blue.900)'
   );
-  
+
   const getTrustScoreColor = (score: number) => {
     if (score >= 90) return 'green';
     if (score >= 80) return 'blue';
@@ -121,30 +121,36 @@ export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
             <Heading size="lg" color="green.700">
               {consumerImpactStory.headline_message}
             </Heading>
-            
+
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} width="full">
               <VStack spacing={2}>
                 <Icon as={FaLeaf} boxSize={12} color="green.500" />
                 <Text fontSize="2xl" fontWeight="bold" color="green.600">
                   {consumerImpactStory.key_impacts.carbon_removed}
                 </Text>
-                <Text fontSize="sm" color="gray.600">Carbon Removed</Text>
+                <Text fontSize="sm" color="gray.600">
+                  Carbon Removed
+                </Text>
               </VStack>
-              
+
               <VStack spacing={2}>
                 <Icon as={FaCar} boxSize={12} color="blue.500" />
                 <Text fontSize="2xl" fontWeight="bold" color="blue.600">
                   {consumerImpactStory.key_impacts.equivalent_cars_offset}
                 </Text>
-                <Text fontSize="sm" color="gray.600">Cars Offset</Text>
+                <Text fontSize="sm" color="gray.600">
+                  Cars Offset
+                </Text>
               </VStack>
-              
+
               <VStack spacing={2}>
                 <Icon as={FaTree} boxSize={12} color="green.500" />
                 <Text fontSize="2xl" fontWeight="bold" color="green.600">
                   {consumerImpactStory.key_impacts.equivalent_trees_planted}
                 </Text>
-                <Text fontSize="sm" color="gray.600">Trees Equivalent</Text>
+                <Text fontSize="sm" color="gray.600">
+                  Trees Equivalent
+                </Text>
               </VStack>
             </SimpleGrid>
           </VStack>
@@ -179,12 +185,18 @@ export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
             <VStack spacing={6} align="stretch">
               {/* Trust Score */}
               <Box textAlign="center">
-                <Text fontSize="sm" color="gray.600" mb={2}>Trust Score</Text>
-                <Text fontSize="3xl" fontWeight="bold" color={getTrustScoreColor(trustIndicators.trust_score)}>
+                <Text fontSize="sm" color="gray.600" mb={2}>
+                  Trust Score
+                </Text>
+                <Text
+                  fontSize="3xl"
+                  fontWeight="bold"
+                  color={getTrustScoreColor(trustIndicators.trust_score)}
+                >
                   {trustIndicators.trust_score}/100
                 </Text>
-                <Progress 
-                  value={trustIndicators.trust_score} 
+                <Progress
+                  value={trustIndicators.trust_score}
                   colorScheme={getTrustScoreColor(trustIndicators.trust_score)}
                   size="lg"
                   borderRadius="full"
@@ -195,7 +207,7 @@ export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
               {/* Verification Status */}
               <VStack spacing={3} align="stretch">
                 <Heading size="sm">Verification Status</Heading>
-                
+
                 <HStack justify="space-between">
                   <HStack>
                     <Icon as={FaCheckCircle} color="green.500" />
@@ -211,8 +223,15 @@ export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
                     <Icon as={FaShieldAlt} color="blue.500" />
                     <Text fontSize="sm">Blockchain Verified</Text>
                   </HStack>
-                  <Badge colorScheme={trustIndicators.verification_status.blockchain_verified ? 'green' : 'gray'} size="sm">
-                    {trustIndicators.verification_status.blockchain_verified ? 'Active' : 'Inactive'}
+                  <Badge
+                    colorScheme={
+                      trustIndicators.verification_status.blockchain_verified ? 'green' : 'gray'
+                    }
+                    size="sm"
+                  >
+                    {trustIndicators.verification_status.blockchain_verified
+                      ? 'Active'
+                      : 'Inactive'}
                   </Badge>
                 </HStack>
 
@@ -221,8 +240,15 @@ export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
                     <Icon as={FaMedal} color="purple.500" />
                     <Text fontSize="sm">Third-party Audited</Text>
                   </HStack>
-                  <Badge colorScheme={trustIndicators.verification_status.third_party_audited ? 'green' : 'gray'} size="sm">
-                    {trustIndicators.verification_status.third_party_audited ? 'Verified' : 'Pending'}
+                  <Badge
+                    colorScheme={
+                      trustIndicators.verification_status.third_party_audited ? 'green' : 'gray'
+                    }
+                    size="sm"
+                  >
+                    {trustIndicators.verification_status.third_party_audited
+                      ? 'Verified'
+                      : 'Pending'}
                   </Badge>
                 </HStack>
 
@@ -231,7 +257,12 @@ export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
                     <Icon as={FaCheckCircle} color="green.500" />
                     <Text fontSize="sm">Real-time Tracking</Text>
                   </HStack>
-                  <Badge colorScheme={trustIndicators.verification_status.real_time_tracking ? 'green' : 'gray'} size="sm">
+                  <Badge
+                    colorScheme={
+                      trustIndicators.verification_status.real_time_tracking ? 'green' : 'gray'
+                    }
+                    size="sm"
+                  >
                     {trustIndicators.verification_status.real_time_tracking ? 'Active' : 'Inactive'}
                   </Badge>
                 </HStack>
@@ -268,12 +299,14 @@ export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
             <VStack spacing={6} align="stretch">
               {/* Transparency Score */}
               <Box textAlign="center">
-                <Text fontSize="sm" color="gray.600" mb={2}>Transparency Score</Text>
+                <Text fontSize="sm" color="gray.600" mb={2}>
+                  Transparency Score
+                </Text>
                 <Text fontSize="3xl" fontWeight="bold" color="yellow.500">
                   {transparencyScore.toFixed(0)}/100
                 </Text>
-                <Progress 
-                  value={transparencyScore} 
+                <Progress
+                  value={transparencyScore}
                   colorScheme="yellow"
                   size="lg"
                   borderRadius="full"
@@ -296,12 +329,16 @@ export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
               <SimpleGrid columns={2} spacing={4}>
                 <Stat size="sm">
                   <StatLabel fontSize="xs">Data Complete</StatLabel>
-                  <StatNumber fontSize="lg">{trustIndicators.credibility_indicators.data_completeness}%</StatNumber>
+                  <StatNumber fontSize="lg">
+                    {trustIndicators.credibility_indicators.data_completeness}%
+                  </StatNumber>
                 </Stat>
-                
+
                 <Stat size="sm">
                   <StatLabel fontSize="xs">Verification</StatLabel>
-                  <StatNumber fontSize="lg">{trustIndicators.credibility_indicators.verification_depth}%</StatNumber>
+                  <StatNumber fontSize="lg">
+                    {trustIndicators.credibility_indicators.verification_depth}%
+                  </StatNumber>
                 </Stat>
               </SimpleGrid>
             </VStack>
@@ -361,7 +398,7 @@ export const ConsumerImpactStory: React.FC<ConsumerImpactStoryProps> = ({
               Support Climate-Positive Agriculture
             </Heading>
             <Text color="green.600">
-              Every purchase of this product actively fights climate change by supporting farmers 
+              Every purchase of this product actively fights climate change by supporting farmers
               who remove more CO₂ from the atmosphere than they produce.
             </Text>
             <HStack spacing={4}>

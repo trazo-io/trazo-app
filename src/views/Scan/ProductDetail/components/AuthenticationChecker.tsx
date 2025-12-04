@@ -19,8 +19,8 @@ interface AuthenticationCheckerProps {
   onAuthStateChange: (authState: AuthenticationState) => void;
 }
 
-export const AuthenticationChecker: React.FC<AuthenticationCheckerProps> = ({ 
-  onAuthStateChange 
+export const AuthenticationChecker: React.FC<AuthenticationCheckerProps> = ({
+  onAuthStateChange
 }) => {
   // Get authentication state from Redux store
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);

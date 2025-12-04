@@ -9,10 +9,10 @@ const path = require('path');
 
 // Bundle size limits (in bytes)
 const BUNDLE_LIMITS = {
-  'index.js': 500 * 1024,      // 500KB for main bundle
+  'index.js': 500 * 1024, // 500KB for main bundle
   'vendor.js': 2 * 1024 * 1024, // 2MB for vendor bundle
-  'index.css': 100 * 1024,     // 100KB for CSS
-  totalJS: 2.5 * 1024 * 1024   // 2.5MB total JS
+  'index.css': 100 * 1024, // 100KB for CSS
+  totalJS: 2.5 * 1024 * 1024 // 2.5MB total JS
 };
 
 // Color codes for console output
@@ -38,7 +38,7 @@ function formatBytes(bytes) {
 
 function checkBundleSize() {
   const distPath = path.join(__dirname, '../dist');
-  
+
   if (!fs.existsSync(distPath)) {
     log('red', 'Error: dist folder not found. Please run "npm run build" first.');
     process.exit(1);
@@ -52,10 +52,10 @@ function checkBundleSize() {
   let hasErrors = false;
 
   // Analyze bundle files
-  assets.forEach(file => {
+  assets.forEach((file) => {
     const filePath = path.join(distPath, file);
     const stats = fs.statSync(filePath);
-    
+
     if (stats.isFile()) {
       const size = stats.size;
       bundleStats[file] = size;
@@ -66,13 +66,13 @@ function checkBundleSize() {
       }
 
       // Check individual file limits
-      Object.keys(BUNDLE_LIMITS).forEach(pattern => {
+      Object.keys(BUNDLE_LIMITS).forEach((pattern) => {
         if (pattern === 'totalJS') return; // Handle separately
-        
+
         if (file.includes(pattern.replace('.js', '').replace('.css', ''))) {
           const limit = BUNDLE_LIMITS[pattern];
           const isOverLimit = size > limit;
-          
+
           if (isOverLimit) {
             hasErrors = true;
             log('red', `❌ ${file}: ${formatBytes(size)} (exceeds ${formatBytes(limit)})`);
@@ -89,9 +89,9 @@ function checkBundleSize() {
   // Check total JS size
   const totalJSLimit = BUNDLE_LIMITS.totalJS;
   const isTotalOverLimit = totalJSSize > totalJSLimit;
-  
+
   log('blue', `\n📊 Total JS bundle size: ${formatBytes(totalJSSize)}`);
-  
+
   if (isTotalOverLimit) {
     hasErrors = true;
     log('red', `❌ Total JS size exceeds limit of ${formatBytes(totalJSLimit)}`);
@@ -103,24 +103,26 @@ function checkBundleSize() {
 
   // Performance recommendations
   log('blue', '\n💡 Performance Recommendations:');
-  
-  if (totalJSSize > 1.5 * 1024 * 1024) { // 1.5MB
+
+  if (totalJSSize > 1.5 * 1024 * 1024) {
+    // 1.5MB
     log('yellow', '  • Consider code splitting for better initial load performance');
   }
-  
-  const cssFiles = assets.filter(f => f.endsWith('.css'));
+
+  const cssFiles = assets.filter((f) => f.endsWith('.css'));
   const totalCSSSize = cssFiles.reduce((sum, file) => {
     return sum + bundleStats[file];
   }, 0);
-  
-  if (totalCSSSize > 150 * 1024) { // 150KB
+
+  if (totalCSSSize > 150 * 1024) {
+    // 150KB
     log('yellow', '  • Consider CSS optimization and unused styles removal');
   }
 
   // Bundle composition analysis
   log('blue', '\n📈 Bundle Composition:');
   const sortedAssets = Object.entries(bundleStats)
-    .sort(([,a], [,b]) => b - a)
+    .sort(([, a], [, b]) => b - a)
     .slice(0, 10); // Top 10 largest files
 
   sortedAssets.forEach(([file, size]) => {

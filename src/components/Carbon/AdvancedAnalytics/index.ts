@@ -10,17 +10,17 @@ export { default as ConsumerImpactStory } from './ConsumerImpactStory';
 export type {
   CarbonTimelineEntry,
   CarbonFlowDiagram,
-  CarbonHotspot,
+  CarbonHotspot
 } from './CarbonJourneyVisualization';
 
 export type {
   CarbonROI,
   MarketValueImpact,
   CarbonCreditPotential,
-  PremiumPricingOpportunity,
+  PremiumPricingOpportunity
 } from './CarbonROIAnalysis';
 
 export type {
   ConsumerImpactStory as ConsumerImpactStoryType,
-  TrustIndicators,
+  TrustIndicators
 } from './ConsumerImpactStory';

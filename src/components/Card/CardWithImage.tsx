@@ -29,11 +29,11 @@ type CardWithImageProps = {
   zone?: string;
 };
 
-const CardWithImage = ({ 
-  title, 
-  name, 
-  image, 
-  readMoreLink, 
+const CardWithImage = ({
+  title,
+  name,
+  image,
+  readMoreLink,
   borderLeft,
   borderColor,
   boxShadow,
@@ -52,9 +52,9 @@ const CardWithImage = ({
   const textColor = useColorModeValue('gray.700', 'white');
 
   return (
-    <Card 
+    <Card
       maxHeight={{ base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }}
-      height={{ base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }} 
+      height={{ base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }}
       p="0"
       overflow="hidden"
       className="trazo-card"
@@ -72,9 +72,9 @@ const CardWithImage = ({
               {name}
             </Text>
           </Box>
-          
+
           <Spacer />
-          
+
           {/* Action button */}
           <Flex align="center">
             <Button
@@ -122,56 +122,51 @@ const CardWithImage = ({
           </Box>
           <Spacer />
           <Flex align="center">
-              <Button
-                p="0px"
-                variant="no-hover"
-                bg="transparent"
-                onClick={() => navigate(readMoreLink)}
+            <Button
+              p="0px"
+              variant="no-hover"
+              bg="transparent"
+              onClick={() => navigate(readMoreLink)}
+            >
+              <Text
+                fontSize="sm"
+                color={textColor}
+                fontWeight="bold"
+                cursor="pointer"
+                transition="all .5s ease"
+                _hover={{ me: '4px' }}
               >
-                <Text
-                  fontSize="sm"
-                  color={textColor}
-                  fontWeight="bold"
-                  cursor="pointer"
-                  transition="all .5s ease"
-                  _hover={{ me: '4px' }}
-                >
-                  {intl.formatMessage({ id: 'app.readMore' })}
-                </Text>
-                <Icon
-                  as={BsArrowRight}
-                  w="20px"
-                  h="20px"
-                  fontSize="2xl"
-                  transition="all .5s ease"
-                  mx=".3rem"
-                  cursor="pointer"
-                  pt="4px"
-                  _hover={{ transform: 'translateX(20%)' }}
-                />
-              </Button>
+                {intl.formatMessage({ id: 'app.readMore' })}
+              </Text>
+              <Icon
+                as={BsArrowRight}
+                w="20px"
+                h="20px"
+                fontSize="2xl"
+                transition="all .5s ease"
+                mx=".3rem"
+                cursor="pointer"
+                pt="4px"
+                _hover={{ transform: 'translateX(20%)' }}
+              />
+            </Button>
           </Flex>
         </Flex>
-        <Box
-          position="relative"
-          width="55%"
-          height="100%"
-          overflow="hidden"
-        >
-            {!imageLoaded && <Shimmer />}
-            <Box
-              position={!imageLoaded ? 'absolute' : 'relative'}
-              top="0"
-              left="0"
-              width="100%"
-              height="100%"
-              opacity={imageLoaded ? 1 : 0}
-              transition="opacity 0.3s ease-in-out"
-            >
-              {React.cloneElement(image as React.ReactElement, {
-                onLoad: () => setImageLoaded(true)
-              })}
-            </Box>
+        <Box position="relative" width="55%" height="100%" overflow="hidden">
+          {!imageLoaded && <Shimmer />}
+          <Box
+            position={!imageLoaded ? 'absolute' : 'relative'}
+            top="0"
+            left="0"
+            width="100%"
+            height="100%"
+            opacity={imageLoaded ? 1 : 0}
+            transition="opacity 0.3s ease-in-out"
+          >
+            {React.cloneElement(image as React.ReactElement, {
+              onLoad: () => setImageLoaded(true)
+            })}
+          </Box>
         </Box>
       </Flex>
     </Card>

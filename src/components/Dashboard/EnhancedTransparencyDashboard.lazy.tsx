@@ -3,21 +3,21 @@ import { VStack, Skeleton } from '@chakra-ui/react';
 import { StandardCard } from '../Design/StandardComponents';
 
 // Lazy load heavy components for mobile performance
-const EnhancedTransparencyDashboard = lazy(() => 
-  import('./EnhancedTransparencyDashboard').then(module => ({ 
-    default: module.EnhancedTransparencyDashboard 
+const EnhancedTransparencyDashboard = lazy(() =>
+  import('./EnhancedTransparencyDashboard').then((module) => ({
+    default: module.EnhancedTransparencyDashboard
   }))
 );
 
-const CarbonAnalysisExpandable = lazy(() => 
-  import('./CarbonAnalysisExpandable').then(module => ({ 
-    default: module.CarbonAnalysisExpandable 
+const CarbonAnalysisExpandable = lazy(() =>
+  import('./CarbonAnalysisExpandable').then((module) => ({
+    default: module.CarbonAnalysisExpandable
   }))
 );
 
-const TrustIndicators = lazy(() => 
-  import('./TrustIndicators').then(module => ({ 
-    default: module.TrustIndicators 
+const TrustIndicators = lazy(() =>
+  import('./TrustIndicators').then((module) => ({
+    default: module.TrustIndicators
   }))
 );
 
@@ -31,7 +31,7 @@ const DashboardSkeleton = () => (
         <Skeleton height="40px" borderRadius="lg" />
       </VStack>
     </StandardCard>
-    
+
     <StandardCard variant="elevated" title="Loading Trust Indicators...">
       <VStack spacing={4}>
         <Skeleton height="100px" borderRadius="full" alignSelf="center" />
@@ -49,30 +49,30 @@ export const LazyEnhancedTransparencyDashboard = (props: any) => (
 );
 
 export const LazyCarbonAnalysisExpandable = (props: any) => (
-  <Suspense fallback={
-    <VStack spacing={4}>
-      <Skeleton height="60px" borderRadius="lg" />
-      <Skeleton height="40px" borderRadius="lg" />
-    </VStack>
-  }>
+  <Suspense
+    fallback={
+      <VStack spacing={4}>
+        <Skeleton height="60px" borderRadius="lg" />
+        <Skeleton height="40px" borderRadius="lg" />
+      </VStack>
+    }
+  >
     <CarbonAnalysisExpandable {...props} />
   </Suspense>
 );
 
 export const LazyTrustIndicators = (props: any) => (
-  <Suspense fallback={
-    <VStack spacing={4}>
-      <Skeleton height="100px" borderRadius="full" alignSelf="center" />
-      <Skeleton height="80px" borderRadius="lg" />
-    </VStack>
-  }>
+  <Suspense
+    fallback={
+      <VStack spacing={4}>
+        <Skeleton height="100px" borderRadius="full" alignSelf="center" />
+        <Skeleton height="80px" borderRadius="lg" />
+      </VStack>
+    }
+  >
     <TrustIndicators {...props} />
   </Suspense>
 );
 
 // Export individual components for granular loading
-export {
-  EnhancedTransparencyDashboard,
-  CarbonAnalysisExpandable, 
-  TrustIndicators
-};
+export { EnhancedTransparencyDashboard, CarbonAnalysisExpandable, TrustIndicators };

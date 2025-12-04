@@ -283,7 +283,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
         transition={{ duration: 0.6 }}
         bg={`${impactColor}.50`}
         borderColor={`${impactColor}.200`}
-        borderWidth="2px">
+        borderWidth="2px"
+      >
         <CardBody>
           <VStack spacing={4} textAlign="center">
             <HStack spacing={3}>
@@ -352,7 +353,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
                 value={profile.householdSize}
                 min={1}
                 max={10}
-                onChange={(_, value) => setProfile({ ...profile, householdSize: value || 1 })}>
+                onChange={(_, value) => setProfile({ ...profile, householdSize: value || 1 })}
+              >
                 <NumberInputField />
                 <NumberInputStepper>
                   <NumberIncrementStepper />
@@ -373,7 +375,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
                   max={20}
                   step={1}
                   onChange={(value) => setProfile({ ...profile, consumptionFrequency: value })}
-                  colorScheme={impactColor}>
+                  colorScheme={impactColor}
+                >
                   <SliderMark value={1} fontSize="xs" mt={2}>
                     Daily
                   </SliderMark>
@@ -413,7 +416,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
               size="sm"
               colorScheme={impactColor}
               variant="outline"
-              onClick={() => setShowComparison(!showComparison)}>
+              onClick={() => setShowComparison(!showComparison)}
+            >
               {showComparison ? 'Hide' : 'Show'} Comparison
             </Button>
           </HStack>
@@ -425,12 +429,14 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
                 key={equiv.category}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}>
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+              >
                 <Card
                   bg={`${equiv.color}.50`}
                   borderColor={`${equiv.color}.200`}
                   borderWidth="1px"
-                  h="full">
+                  h="full"
+                >
                   <CardBody>
                     <VStack spacing={3} align="center" textAlign="center">
                       <Circle size="50px" bg={`${equiv.color}.100`}>
@@ -457,7 +463,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.3 }}
                             overflow="hidden"
-                            w="full">
+                            w="full"
+                          >
                             <Divider my={2} />
                             <Text fontSize="xs" color={`${equiv.color}.600`} textAlign="center">
                               {equiv.explanation}
@@ -537,7 +544,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
                 borderRadius="lg"
                 border="1px"
                 borderColor="teal.200"
-                spacing={2}>
+                spacing={2}
+              >
                 <Text fontSize="sm" fontWeight="bold" color={textColor}>
                   1 Month
                 </Text>
@@ -556,7 +564,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
                 borderRadius="lg"
                 border="1px"
                 borderColor="teal.200"
-                spacing={2}>
+                spacing={2}
+              >
                 <Text fontSize="sm" fontWeight="bold" color={textColor}>
                   1 Year
                 </Text>
@@ -575,7 +584,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
                 borderRadius="lg"
                 border="1px"
                 borderColor="teal.200"
-                spacing={2}>
+                spacing={2}
+              >
                 <Text fontSize="sm" fontWeight="bold" color={textColor}>
                   5 Years
                 </Text>
@@ -595,7 +605,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
               borderRadius="lg"
               border="1px"
               borderColor={productCO2e <= 0 ? 'green.200' : 'blue.200'}
-              textAlign="center">
+              textAlign="center"
+            >
               <HStack justify="center" spacing={2} mb={2}>
                 <Icon
                   as={productCO2e <= 0 ? FaRecycle : FaLeaf}
@@ -605,7 +616,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
                 <Text
                   fontSize="sm"
                   fontWeight="bold"
-                  color={productCO2e <= 0 ? 'green.700' : 'blue.700'}>
+                  color={productCO2e <= 0 ? 'green.700' : 'blue.700'}
+                >
                   {productCO2e <= 0 ? 'Climate Hero!' : 'Making a Difference'}
                 </Text>
               </HStack>
@@ -626,7 +638,8 @@ export const ConsumerImpactCalculator: React.FC<ConsumerImpactCalculatorProps> =
         borderRadius="lg"
         border="1px"
         borderColor="green.200"
-        textAlign="center">
+        textAlign="center"
+      >
         <VStack spacing={4}>
           <Circle size="60px" bg="green.100">
             <Icon as={FaHeart} color="green.500" boxSize={8} />

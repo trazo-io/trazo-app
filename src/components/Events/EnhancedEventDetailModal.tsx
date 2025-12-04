@@ -45,6 +45,7 @@ import {
 } from 'react-icons/fa';
 import { MdVerified, MdEco } from 'react-icons/md';
 import { format, parseISO } from 'date-fns';
+import { getReadableFieldValue } from '../../utils/fieldDisplayUtils';
 
 interface CarbonCalculation {
   co2e: number;
@@ -82,6 +83,7 @@ interface EnhancedTimelineEvent {
   concentration?: string;
   area?: string;
   equipment?: string;
+  chemical_subtype?: string; // Added 2025-01-21: organic vs synthetic differentiation
   carbon_data?: CarbonCalculation;
 }
 
@@ -209,10 +211,23 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                   )}
 
                   {/* Technical Metadata */}
-                  {(event.volume || event.area || event.concentration) && (
+                  {(event.volume ||
+                    event.area ||
+                    event.concentration ||
+                    event.chemical_subtype) && (
                     <>
                       <Divider />
                       <SimpleGrid columns={2} spacing={3}>
+                        {event.chemical_subtype && (
+                          <Box>
+                            <Text fontSize="xs" color={mutedColor}>
+                              Chemical Type
+                            </Text>
+                            <Text fontSize="sm" fontWeight="semibold" color={textColor}>
+                              {getReadableFieldValue('chemical_subtype', event.chemical_subtype)}
+                            </Text>
+                          </Box>
+                        )}
                         {event.volume && (
                           <Box>
                             <Text fontSize="xs" color={mutedColor}>

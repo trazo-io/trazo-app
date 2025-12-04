@@ -23,12 +23,12 @@ function debugWeatherEventDetection(eventDescription, event) {
   console.log(`Type: ${event.type}`);
   console.log(`All Event Keys: [${Object.keys(event).join(', ')}]`);
   console.log('');
-  
+
   // Check the weather event detection condition from the actual code
   const isEventType0 = event.event_type === 0;
-  const hasWeatherTypeOrType = (event.weather_type || event.type);
-  const notGenericWeather = (event.weather_type !== 'weather' && event.type !== 'weather');
-  
+  const hasWeatherTypeOrType = event.weather_type || event.type;
+  const notGenericWeather = event.weather_type !== 'weather' && event.type !== 'weather';
+
   console.log('🧪 CONDITION ANALYSIS:');
   console.log('---------------------');
   console.log(`event.event_type === 0: ${isEventType0}`);
@@ -39,29 +39,29 @@ function debugWeatherEventDetection(eventDescription, event) {
   console.log(`  weather_type !== 'weather': ${event.weather_type !== 'weather'}`);
   console.log(`  type !== 'weather': ${event.type !== 'weather'}`);
   console.log('');
-  
+
   const finalCondition = isEventType0 && hasWeatherTypeOrType && notGenericWeather;
   console.log(`🎯 FINAL CONDITION RESULT: ${finalCondition}`);
   console.log('');
-  
+
   if (finalCondition) {
     console.log('✅ SHOULD ENTER WEATHER BRANCH');
-    
+
     // Check weather type mapping
     const weatherTypeMap = {
-      'FR': 'Frost Weather Event',
-      'DR': 'Drought Monitoring',
-      'HL': 'Hail Damage Assessment',
-      'HT': 'Heat Stress Monitoring',
-      'TS': 'Storm & Wind Event'
+      FR: 'Frost Weather Event',
+      DR: 'Drought Monitoring',
+      HL: 'Hail Damage Assessment',
+      HT: 'Heat Stress Monitoring',
+      TS: 'Storm & Wind Event'
     };
-    
+
     const weatherTypeCode = event.weather_type || event.type;
     const mappedTitle = weatherTypeMap[weatherTypeCode];
-    
+
     console.log(`Weather Type Code: ${weatherTypeCode}`);
     console.log(`Mapped Title: ${mappedTitle || 'NOT FOUND IN MAP'}`);
-    
+
     // Check temperature data
     console.log('');
     console.log('🌡️ TEMPERATURE DATA CHECK:');
@@ -69,24 +69,26 @@ function debugWeatherEventDetection(eventDescription, event) {
     console.log(`lower_temperature: ${event.lower_temperature}`);
     console.log(`upper_temperature: ${event.upper_temperature}`);
     console.log(`highest_temperature: ${event.highest_temperature}`);
-    
+
     // Check protection method data
     console.log('');
     console.log('🛡️ PROTECTION METHOD CHECK:');
     console.log('---------------------------');
     console.log(`way_of_protection: ${event.way_of_protection}`);
     console.log(`protection_measures: ${event.protection_measures}`);
-    
+
     return {
       shouldEnterWeatherBranch: true,
       weatherTitle: mappedTitle || `${weatherTypeCode} Weather Event`,
-      hasTemperature: event.lower_temperature !== undefined || event.upper_temperature !== undefined,
-      hasProtection: event.way_of_protection !== undefined || event.protection_measures !== undefined
+      hasTemperature:
+        event.lower_temperature !== undefined || event.upper_temperature !== undefined,
+      hasProtection:
+        event.way_of_protection !== undefined || event.protection_measures !== undefined
     };
   } else {
     console.log('❌ WILL NOT ENTER WEATHER BRANCH');
     console.log('Will fall through to default case: "Agricultural Activity"');
-    
+
     return {
       shouldEnterWeatherBranch: false,
       weatherTitle: 'Agricultural Activity',
@@ -97,12 +99,12 @@ function debugWeatherEventDetection(eventDescription, event) {
 }
 
 // Test case 1: What the user might have (based on the issue description)
-console.log('🧪 TEST CASE 1: User\'s Likely Event Data');
+console.log("🧪 TEST CASE 1: User's Likely Event Data");
 console.log('==========================================');
 
 const userEvent1 = {
   event_type: 0,
-  weather_type: 'FR',  // Frost
+  weather_type: 'FR', // Frost
   lower_temperature: 32,
   way_of_protection: 'Row covers',
   description: 'Frost monitoring event'
@@ -118,7 +120,7 @@ console.log('==========================================');
 
 const userEvent2 = {
   event_type: 0,
-  type: 'FR',  // Frost in type field instead
+  type: 'FR', // Frost in type field instead
   lower_temperature: 32,
   way_of_protection: 'Row covers',
   description: 'Frost monitoring event'
@@ -134,7 +136,7 @@ console.log('====================================');
 
 const userEvent3 = {
   event_type: 0,
-  weather_type: 'weather',  // This would fail the condition
+  weather_type: 'weather', // This would fail the condition
   lower_temperature: 32,
   way_of_protection: 'Row covers',
   description: 'Weather monitoring'

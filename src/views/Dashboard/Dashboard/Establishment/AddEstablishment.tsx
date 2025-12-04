@@ -184,7 +184,7 @@ function AddEstablishment({ isEdit = false }: Props) {
         console.log('✅ Establishment created successfully:', result);
         console.log('🚀 New establishment ID:', result.id);
 
-        // CRITICAL FIX: Dispatch Redux action to set currentEstablishment 
+        // CRITICAL FIX: Dispatch Redux action to set currentEstablishment
         // This ensures the newly created establishment becomes the active one in Redux state
         dispatch(addCompanyEstablishment(result));
         console.log('🔄 Redux: Set currentEstablishment to newly created establishment');
@@ -201,7 +201,7 @@ function AddEstablishment({ isEdit = false }: Props) {
           duration: 5000,
           isClosable: true
         });
-        
+
         // Navigate immediately - RTK Query optimistic update + sessionStorage flags prevent race conditions
         const targetUrl = `/admin/dashboard/establishment/${result.id}`;
         console.log('🔄 Navigating to:', targetUrl);
@@ -214,16 +214,19 @@ function AddEstablishment({ isEdit = false }: Props) {
         data: error?.data,
         message: error?.message
       });
-      
+
       // Show specific error message to user
       toast({
         title: `Error ${isEdit ? 'Updating' : 'Creating'} Establishment`,
-        description: error?.data?.message || error?.message || 'Please check all required fields and try again.',
+        description:
+          error?.data?.message ||
+          error?.message ||
+          'Please check all required fields and try again.',
         status: 'error',
         duration: 6000,
         isClosable: true
       });
-      
+
       // Re-throw error so form component can handle it properly
       throw error;
     }

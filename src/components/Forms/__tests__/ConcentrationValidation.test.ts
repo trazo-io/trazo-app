@@ -3,16 +3,9 @@ import { validateConcentration } from '../ConcentrationValidation';
 describe('ConcentrationValidation', () => {
   describe('Fertilizer (FE) NPK Validation', () => {
     test('validates correct NPK formats', () => {
-      const testCases = [
-        '10-10-10',
-        '16-16-16', 
-        '20-5-5',
-        '15-30-15',
-        '0-0-50',
-        '10.5-5.2-8.1'
-      ];
+      const testCases = ['10-10-10', '16-16-16', '20-5-5', '15-30-15', '0-0-50', '10.5-5.2-8.1'];
 
-      testCases.forEach(input => {
+      testCases.forEach((input) => {
         const result = validateConcentration(input, 'FE');
         expect(result.isValid).toBe(true);
         expect(result.format).toBe('npk');
@@ -22,8 +15,8 @@ describe('ConcentrationValidation', () => {
 
     test('rejects percentage format for fertilizers', () => {
       const testCases = ['70%', '2.5%', '100%'];
-      
-      testCases.forEach(input => {
+
+      testCases.forEach((input) => {
         const result = validateConcentration(input, 'FE');
         expect(result.isValid).toBe(false);
         expect(result.format).toBe('percentage');
@@ -33,14 +26,14 @@ describe('ConcentrationValidation', () => {
 
     test('rejects invalid NPK formats', () => {
       const testCases = [
-        '10-10',        // Missing third number
-        '10-10-10-10',  // Too many numbers
-        'abc-def-ghi',  // Non-numeric
-        '10_10_10',     // Wrong separator
-        '10/10/10'      // Wrong separator
+        '10-10', // Missing third number
+        '10-10-10-10', // Too many numbers
+        'abc-def-ghi', // Non-numeric
+        '10_10_10', // Wrong separator
+        '10/10/10' // Wrong separator
       ];
 
-      testCases.forEach(input => {
+      testCases.forEach((input) => {
         const result = validateConcentration(input, 'FE');
         expect(result.isValid).toBe(false);
         expect(result.errors[0]).toContain('Invalid NPK format');
@@ -53,7 +46,7 @@ describe('ConcentrationValidation', () => {
       expect(result1.isValid).toBe(false);
       expect(result1.errors[0]).toContain('Total NPK (150.0%) cannot exceed 100%');
 
-      // Test negative values  
+      // Test negative values
       const result2 = validateConcentration('-10-10-10', 'FE');
       expect(result2.isValid).toBe(false);
 
@@ -71,7 +64,7 @@ describe('ConcentrationValidation', () => {
         { input: '70%', type: 'HE' },
         { input: '0.5%', type: 'FU' },
         { input: '100%', type: 'PE' },
-        { input: '25', type: 'HE' }  // Without % symbol
+        { input: '25', type: 'HE' } // Without % symbol
       ];
 
       testCases.forEach(({ input, type }) => {
@@ -84,12 +77,14 @@ describe('ConcentrationValidation', () => {
 
     test('rejects NPK format for pesticides', () => {
       const testCases = ['10-10-10', '16-16-16'];
-      
-      testCases.forEach(input => {
+
+      testCases.forEach((input) => {
         const result = validateConcentration(input, 'PE');
         expect(result.isValid).toBe(false);
         expect(result.format).toBe('npk');
-        expect(result.errors[0]).toContain('Pesticides/herbicides/fungicides require percentage format');
+        expect(result.errors[0]).toContain(
+          'Pesticides/herbicides/fungicides require percentage format'
+        );
       });
     });
 
@@ -139,7 +134,7 @@ describe('ConcentrationValidation', () => {
     test('handles whitespace correctly', () => {
       const result1 = validateConcentration('  10-10-10  ', 'FE');
       expect(result1.isValid).toBe(true);
-      
+
       const result2 = validateConcentration('  2.5%  ', 'PE');
       expect(result2.isValid).toBe(true);
     });

@@ -71,7 +71,7 @@ export const WEATHER_FIELD_MAPPING: DataSourceMapping = {
 
 /**
  * Production Event Field Mappings (Type 1)
- * Handles: PL, HA, IR, PR, TR
+ * Handles: PL, HA, IR, PR, TR, EQ (Equipment Operations - Sprint 2)
  */
 export const PRODUCTION_FIELD_MAPPING: DataSourceMapping = {
   form: {
@@ -97,7 +97,12 @@ export const PRODUCTION_FIELD_MAPPING: DataSourceMapping = {
     transportation_distance: 'transportation_distance_raw',
     transportation_unit: 'transportation_unit',
     production_efficiency: 'production_efficiency',
-    observation: 'observation'
+    observation: 'observation',
+    // Sprint 2: EQ (Equipment Operations) subtype fields
+    equipment_operation_type: 'equipment_operation_type',
+    equipment_type: 'equipment_type',
+    fuel_type: 'fuel_type',
+    operation_efficiency: 'operation_efficiency'
   },
   backend: {
     // Backend field names → Standardized field names
@@ -111,13 +116,19 @@ export const PRODUCTION_FIELD_MAPPING: DataSourceMapping = {
     equipment_hours: 'equipment_hours', // Backend already formatted with units
     transportation_distance: 'transportation_distance', // Backend already formatted with units
     observation: 'observation',
-    description: 'description'
+    description: 'description',
+    // Sprint 2: EQ (Equipment Operations) subtype fields
+    equipment_operation_type: 'equipment_operation_type',
+    equipment_type: 'equipment_type',
+    fuel_type: 'fuel_type',
+    operation_efficiency: 'operation_efficiency'
   }
 };
 
 /**
  * Chemical Event Field Mappings (Type 2)
  * Handles: FE, PE, FU, HE
+ * Includes EPA Worker Protection Standard (WPS) compliance fields per 40 CFR 170.309
  */
 export const CHEMICAL_FIELD_MAPPING: DataSourceMapping = {
   form: {
@@ -142,7 +153,18 @@ export const CHEMICAL_FIELD_MAPPING: DataSourceMapping = {
     potassiumPercentage: 'potassium_percentage',
     application_timing: 'application_timing',
     weather_conditions: 'weather_conditions',
-    observation: 'observation'
+    observation: 'observation',
+    // EPA WPS Compliance Fields - 40 CFR 170.309
+    applicator_name: 'applicator_name',
+    epa_registration_number: 'epa_registration_number',
+    restricted_use_pesticide: 'restricted_use_pesticide',
+    applicator_certification: 'applicator_certification',
+    rei_hours: 'rei_hours',
+    phi_days: 'phi_days',
+    // Sprint 1 Epic 1.1: Additional EPA WPS Fields
+    signal_word: 'signal_word',
+    ppe_required: 'ppe_required',
+    environmental_hazards: 'environmental_hazards'
   },
   backend: {
     // Backend field names → Standardized field names
@@ -167,7 +189,18 @@ export const CHEMICAL_FIELD_MAPPING: DataSourceMapping = {
     application_timing: 'application_timing',
     weather_conditions: 'weather_conditions',
     observation: 'observation',
-    description: 'description'
+    description: 'description',
+    // EPA WPS Compliance Fields - 40 CFR 170.309
+    applicator_name: 'applicator_name',
+    epa_registration_number: 'epa_registration_number',
+    restricted_use_pesticide: 'restricted_use_pesticide',
+    applicator_certification: 'applicator_certification',
+    rei_hours: 'rei_hours',
+    phi_days: 'phi_days',
+    // Sprint 1 Epic 1.1: Additional EPA WPS Fields
+    signal_word: 'signal_word',
+    ppe_required: 'ppe_required',
+    environmental_hazards: 'environmental_hazards'
   }
 };
 
@@ -326,6 +359,12 @@ export const PEST_MANAGEMENT_FIELD_MAPPING: DataSourceMapping = {
     pest_management_name: 'pest_management_name', // Direct mapping for form field
     type: 'pest_management_type',
     name: 'pest_management_name',
+    // Sprint 2 Epic 2.2: Flexible units - support both old and new field names
+    field_area: 'field_area',
+    area_unit: 'area_unit',
+    travel_distance: 'travel_distance',
+    distance_unit: 'distance_unit',
+    // Legacy field names for backward compatibility
     field_area_hectares: 'field_area_hectares',
     travel_distance_km: 'travel_distance_km',
     time_spent_hours: 'time_spent_hours',
@@ -350,6 +389,12 @@ export const PEST_MANAGEMENT_FIELD_MAPPING: DataSourceMapping = {
     type: 'pest_management_type',
     pest_management_name: 'pest_management_name',
     name: 'pest_management_name',
+    // Sprint 2 Epic 2.2: Flexible units - support both old and new field names
+    field_area: 'field_area',
+    area_unit: 'area_unit',
+    travel_distance: 'travel_distance',
+    distance_unit: 'distance_unit',
+    // Legacy field names for backward compatibility
     field_area_hectares: 'field_area_hectares',
     travel_distance_km: 'travel_distance_km',
     time_spent_hours: 'time_spent_hours',
@@ -429,6 +474,8 @@ export const COMMON_FIELD_MAPPING: DataSourceMapping = {
     acceptedFiles: 'album', // Special handling needed for file arrays
     album: 'album',
     imageUrls: 'album', // Special handling needed for URL arrays
+    // Sprint 1 Epic 1.4: USDA GAP Traceability field
+    performed_by: 'performed_by',
     // Verification fields
     certified: 'certified',
     blockchain_verified: 'blockchain_verified',
@@ -450,6 +497,8 @@ export const COMMON_FIELD_MAPPING: DataSourceMapping = {
     type: 'type',
     event_type: 'event_type',
     album: 'album',
+    // Sprint 1 Epic 1.4: USDA GAP Traceability field
+    performed_by: 'performed_by',
     // Verification fields
     certified: 'certified',
     blockchain_verified: 'blockchain_verified',

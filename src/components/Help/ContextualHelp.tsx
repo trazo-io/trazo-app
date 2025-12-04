@@ -93,7 +93,8 @@ const ContextualHelp: React.FC<ContextualHelpProps> = ({
         type: 'interactive',
         duration: '3 min',
         difficulty: 'beginner',
-        content: 'Your dashboard shows real-time carbon metrics, USDA-verified calculations, and revenue opportunities.'
+        content:
+          'Your dashboard shows real-time carbon metrics, USDA-verified calculations, and revenue opportunities.'
       },
       {
         id: 'carbon-score-meaning',
@@ -102,7 +103,8 @@ const ContextualHelp: React.FC<ContextualHelpProps> = ({
         type: 'article',
         duration: '5 min',
         difficulty: 'beginner',
-        content: 'Carbon scores represent kg CO2e per kg of product. Lower scores mean more climate-friendly practices.'
+        content:
+          'Carbon scores represent kg CO2e per kg of product. Lower scores mean more climate-friendly practices.'
       }
     ],
     '/admin/dashboard/production/create': [
@@ -113,7 +115,8 @@ const ContextualHelp: React.FC<ContextualHelpProps> = ({
         type: 'video',
         duration: '8 min',
         difficulty: 'beginner',
-        content: 'Smart templates include pre-configured events, emission factors, and best practices for your crop type.'
+        content:
+          'Smart templates include pre-configured events, emission factors, and best practices for your crop type.'
       },
       {
         id: 'carbon-tracking-basics',
@@ -122,7 +125,8 @@ const ContextualHelp: React.FC<ContextualHelpProps> = ({
         type: 'article',
         duration: '6 min',
         difficulty: 'intermediate',
-        content: 'We use USDA Agricultural Research Service data and real-time calculations for accurate carbon tracking.'
+        content:
+          'We use USDA Agricultural Research Service data and real-time calculations for accurate carbon tracking.'
       }
     ],
     '/scan': [
@@ -133,7 +137,8 @@ const ContextualHelp: React.FC<ContextualHelpProps> = ({
         type: 'interactive',
         duration: '2 min',
         difficulty: 'beginner',
-        content: 'Point your camera at the QR code to instantly see verified carbon footprint and farm story.'
+        content:
+          'Point your camera at the QR code to instantly see verified carbon footprint and farm story.'
       },
       {
         id: 'carbon-literacy',
@@ -142,7 +147,8 @@ const ContextualHelp: React.FC<ContextualHelpProps> = ({
         type: 'article',
         duration: '4 min',
         difficulty: 'beginner',
-        content: 'Food production accounts for 26% of global greenhouse gas emissions. Every choice matters.'
+        content:
+          'Food production accounts for 26% of global greenhouse gas emissions. Every choice matters.'
       }
     ]
   };
@@ -152,17 +158,19 @@ const ContextualHelp: React.FC<ContextualHelpProps> = ({
     const detectHelpNeeds = () => {
       const currentPath = location.pathname;
       const relevantHelp = helpContent[currentPath] || [];
-      
+
       // Update current help based on location
       setCurrentHelp(relevantHelp);
 
       // Trigger help suggestions based on user behavior
       const timeOnPage = Date.now() - userActivity.lastAction;
-      
+
       // Show help after 30 seconds of inactivity on complex pages
-      if (timeOnPage > 30000 && 
-          (currentPath.includes('/create') || currentPath.includes('/edit')) &&
-          !showSuggestion) {
+      if (
+        timeOnPage > 30000 &&
+        (currentPath.includes('/create') || currentPath.includes('/edit')) &&
+        !showSuggestion
+      ) {
         setShowSuggestion(true);
       }
 
@@ -179,7 +187,7 @@ const ContextualHelp: React.FC<ContextualHelpProps> = ({
   // Track user activity
   useEffect(() => {
     const handleActivity = () => {
-      setUserActivity(prev => ({
+      setUserActivity((prev) => ({
         ...prev,
         lastAction: Date.now(),
         interactions: prev.interactions + 1
@@ -219,18 +227,25 @@ const ContextualHelp: React.FC<ContextualHelpProps> = ({
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'green';
-      case 'intermediate': return 'orange';
-      case 'advanced': return 'red';
-      default: return 'gray';
+      case 'beginner':
+        return 'green';
+      case 'intermediate':
+        return 'orange';
+      case 'advanced':
+        return 'red';
+      default:
+        return 'gray';
     }
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'video': return FiVideo;
-      case 'interactive': return FiZap;
-      default: return FiBook;
+      case 'video':
+        return FiVideo;
+      case 'interactive':
+        return FiZap;
+      default:
+        return FiBook;
     }
   };
 

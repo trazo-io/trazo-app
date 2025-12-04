@@ -41,21 +41,21 @@ import {
   FaChevronLeft
 } from 'react-icons/fa';
 import { MdCheck } from 'react-icons/md';
-import { 
-  validateConcentration, 
-  ConcentrationFeedback, 
-  getFormatExamples 
+import {
+  validateConcentration,
+  ConcentrationFeedback,
+  getFormatExamples
 } from './ConcentrationValidation';
 
 // Map form values to validation codes
 const mapChemicalTypeToCode = (formType: string): string => {
   const mapping: Record<string, string> = {
-    'fertilizer': 'FE',
-    'pesticide': 'PE', 
-    'herbicide': 'HE',
-    'fungicide': 'FU',
-    'insecticide': 'PE', // Insecticides use pesticide validation
-    'growth_regulator': 'PE' // Growth regulators use pesticide validation
+    fertilizer: 'FE',
+    pesticide: 'PE',
+    herbicide: 'HE',
+    fungicide: 'FU',
+    insecticide: 'PE', // Insecticides use pesticide validation
+    growth_regulator: 'PE' // Growth regulators use pesticide validation
   };
   return mapping[formType] || formType;
 };
@@ -65,30 +65,34 @@ const chemicalSchema = object({
   type: string().min(1, 'Chemical type is required'),
   commercialName: string().min(1, 'Commercial name is required'),
   activeIngredient: string().optional(),
-  concentration: string().min(1, 'Concentration is required for carbon calculations')
-    .refine((value, context) => {
-      // Safety checks for validation
-      if (!value || typeof value !== 'string') return false;
-      
-      // Get chemical type from context with fallback
-      const parent = context?.parent;
-      const chemicalType = parent?.type;
-      
-      // Skip validation if no chemical type selected yet
-      if (!chemicalType || typeof chemicalType !== 'string') return true;
-      
-      try {
-        // Map form value to validation code
-        const typeCode = mapChemicalTypeToCode(chemicalType);
-        const validation = validateConcentration(value, typeCode);
-        return validation.isValid;
-      } catch (error) {
-        console.error('Concentration validation error:', error);
-        return false;
+  concentration: string()
+    .min(1, 'Concentration is required for carbon calculations')
+    .refine(
+      (value, context) => {
+        // Safety checks for validation
+        if (!value || typeof value !== 'string') return false;
+
+        // Get chemical type from context with fallback
+        const parent = context?.parent;
+        const chemicalType = parent?.type;
+
+        // Skip validation if no chemical type selected yet
+        if (!chemicalType || typeof chemicalType !== 'string') return true;
+
+        try {
+          // Map form value to validation code
+          const typeCode = mapChemicalTypeToCode(chemicalType);
+          const validation = validateConcentration(value, typeCode);
+          return validation.isValid;
+        } catch (error) {
+          console.error('Concentration validation error:', error);
+          return false;
+        }
+      },
+      {
+        message: 'Invalid concentration format for selected chemical type'
       }
-    }, {
-      message: 'Invalid concentration format for selected chemical type'
-    }),
+    ),
   volume: number().min(0, 'Volume must be positive'),
   applicationRate: string().min(1, 'Application rate is required'),
   area: number().min(0, 'Area must be positive'),
@@ -171,11 +175,12 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
   const watchedVolume = watch('volume');
   const watchedArea = watch('area');
   const watchedConcentration = watch('concentration');
-  
+
   // Real-time concentration validation
-  const concentrationValidation = watchedType && watchedConcentration 
-    ? validateConcentration(watchedConcentration, mapChemicalTypeToCode(watchedType))
-    : null;
+  const concentrationValidation =
+    watchedType && watchedConcentration
+      ? validateConcentration(watchedConcentration, mapChemicalTypeToCode(watchedType))
+      : null;
 
   // Calculate carbon impact
   useEffect(() => {
@@ -229,9 +234,14 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
     switch (step) {
       case 0:
         // Include concentration validation for step 0
-        const hasBasicFields = formData.type && formData.commercialName && formData.volume && formData.area && formData.concentration;
+        const hasBasicFields =
+          formData.type &&
+          formData.commercialName &&
+          formData.volume &&
+          formData.area &&
+          formData.concentration;
         if (!hasBasicFields) return false;
-        
+
         // Validate concentration format if all basic fields are present
         try {
           if (formData.type && formData.concentration) {
@@ -265,7 +275,8 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
   };
 
   const nextStep = () => {
-    if (currentStep < 2) { // We have 3 steps (0, 1, 2)
+    if (currentStep < 2) {
+      // We have 3 steps (0, 1, 2)
       setCurrentStep(currentStep + 1);
     }
   };
@@ -392,49 +403,70 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                     label={
                       <HStack spacing={2}>
                         <Text>
-                          {mapChemicalTypeToCode(watchedType || '') === 'FE' ? 'NPK Ratio' :
-                           mapChemicalTypeToCode(watchedType || '') === 'PE' ? 'Pesticide Concentration' :
-                           mapChemicalTypeToCode(watchedType || '') === 'HE' ? 'Herbicide Concentration' :
-                           mapChemicalTypeToCode(watchedType || '') === 'FU' ? 'Fungicide Concentration' :
-                           'Concentration'}
+                          {mapChemicalTypeToCode(watchedType || '') === 'FE'
+                            ? 'NPK Ratio'
+                            : mapChemicalTypeToCode(watchedType || '') === 'PE'
+                            ? 'Pesticide Concentration'
+                            : mapChemicalTypeToCode(watchedType || '') === 'HE'
+                            ? 'Herbicide Concentration'
+                            : mapChemicalTypeToCode(watchedType || '') === 'FU'
+                            ? 'Fungicide Concentration'
+                            : 'Concentration'}
                         </Text>
-                        <Badge 
-                          size="sm" 
+                        <Badge
+                          size="sm"
                           colorScheme={concentrationValidation?.isValid ? 'green' : 'red'}
                           variant={concentrationValidation ? 'solid' : 'outline'}
                         >
-                          {mapChemicalTypeToCode(watchedType || '') === 'FE' ? 'NPK' :
-                           ['PE', 'HE', 'FU'].includes(mapChemicalTypeToCode(watchedType || '')) ? '%' :
-                           'Required'}
+                          {mapChemicalTypeToCode(watchedType || '') === 'FE'
+                            ? 'NPK'
+                            : ['PE', 'HE', 'FU'].includes(mapChemicalTypeToCode(watchedType || ''))
+                            ? '%'
+                            : 'Required'}
                         </Badge>
                       </HStack>
                     }
                     required
                     error={errors.concentration?.message}
                     helpText={
-                      watchedType ? 
-                        `Enter ${mapChemicalTypeToCode(watchedType) === 'FE' ? 'NPK format (e.g., "10-10-10")' : 'percentage (e.g., "2.5%")'} for accurate carbon calculations` :
-                        'Select chemical type first'
+                      watchedType
+                        ? `Enter ${
+                            mapChemicalTypeToCode(watchedType) === 'FE'
+                              ? 'NPK format (e.g., "10-10-10")'
+                              : 'percentage (e.g., "2.5%")'
+                          } for accurate carbon calculations`
+                        : 'Select chemical type first'
                     }
                   >
                     <StandardInput
                       {...methods.register('concentration')}
                       placeholder={
-                        watchedType ? getFormatExamples(mapChemicalTypeToCode(watchedType))[0] || 'Enter concentration...' :
-                        'Select chemical type first...'
+                        watchedType
+                          ? getFormatExamples(mapChemicalTypeToCode(watchedType))[0] ||
+                            'Enter concentration...'
+                          : 'Select chemical type first...'
                       }
                       isDisabled={!watchedType}
                       borderColor={
-                        concentrationValidation?.isValid ? 'green.300' :
-                        concentrationValidation && !concentrationValidation.isValid ? 'red.300' :
-                        undefined
+                        concentrationValidation?.isValid
+                          ? 'green.300'
+                          : concentrationValidation && !concentrationValidation.isValid
+                          ? 'red.300'
+                          : undefined
                       }
                     />
-                    
+
                     {/* Real-time Validation Feedback */}
                     {watchedType && (
                       <ConcentrationFeedback
-                        validation={concentrationValidation || { isValid: false, format: 'unknown', errors: [], suggestions: [] }}
+                        validation={
+                          concentrationValidation || {
+                            isValid: false,
+                            format: 'unknown',
+                            errors: [],
+                            suggestions: []
+                          }
+                        }
                         chemicalType={mapChemicalTypeToCode(watchedType)}
                         concentration={watchedConcentration || ''}
                       />

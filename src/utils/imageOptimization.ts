@@ -118,9 +118,7 @@ export const lazyImageLoader = new LazyImageLoader({
 
 // Responsive image srcset generator
 export const generateSrcSet = (baseSrc: string, widths: number[] = [400, 800, 1200]): string => {
-  return widths
-    .map(width => `${baseSrc}?w=${width}&f=webp ${width}w`)
-    .join(', ');
+  return widths.map((width) => `${baseSrc}?w=${width}&f=webp ${width}w`).join(', ');
 };
 
 // Calculate optimal image dimensions for mobile
@@ -131,15 +129,15 @@ export const calculateMobileImageSize = (
   maxHeight: number = 200
 ): { width: number; height: number } => {
   const aspectRatio = originalWidth / originalHeight;
-  
+
   let width = Math.min(containerWidth, originalWidth);
   let height = width / aspectRatio;
-  
+
   if (height > maxHeight) {
     height = maxHeight;
     width = height * aspectRatio;
   }
-  
+
   return {
     width: Math.round(width),
     height: Math.round(height)
@@ -148,7 +146,7 @@ export const calculateMobileImageSize = (
 
 // Image preloading for critical assets
 export const preloadCriticalImages = (imageSrcs: string[]): Promise<void[]> => {
-  const promises = imageSrcs.map(src => {
+  const promises = imageSrcs.map((src) => {
     return new Promise<void>((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve();
@@ -156,7 +154,7 @@ export const preloadCriticalImages = (imageSrcs: string[]): Promise<void[]> => {
       img.src = src;
     });
   });
-  
+
   return Promise.all(promises);
 };
 
@@ -174,21 +172,21 @@ export const optimizeSVGIcon = (svgString: string): string => {
 // Image format detection for optimal loading
 export const detectOptimalImageFormat = (): 'avif' | 'webp' | 'jpeg' => {
   if (typeof window === 'undefined') return 'jpeg';
-  
+
   const canvas = document.createElement('canvas');
   canvas.width = 1;
   canvas.height = 1;
-  
+
   // Check AVIF support
   if (canvas.toDataURL('image/avif').indexOf('data:image/avif') === 0) {
     return 'avif';
   }
-  
+
   // Check WebP support
   if (canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0) {
     return 'webp';
   }
-  
+
   return 'jpeg';
 };
 
@@ -201,28 +199,28 @@ export const useResponsiveImage = (
   const [isLoading, setIsLoading] = React.useState(true);
   const [hasError, setHasError] = React.useState(false);
   const [optimalFormat, setOptimalFormat] = React.useState<string>('webp');
-  
+
   React.useEffect(() => {
     setOptimalFormat(detectOptimalImageFormat());
   }, []);
-  
+
   const imageData = React.useMemo(() => {
     return createProgressiveImageData(src, alt, {
       ...options,
       format: optimalFormat as any
     });
   }, [src, alt, options, optimalFormat]);
-  
+
   const handleLoad = React.useCallback(() => {
     setIsLoading(false);
     setHasError(false);
   }, []);
-  
+
   const handleError = React.useCallback(() => {
     setIsLoading(false);
     setHasError(true);
   }, []);
-  
+
   return {
     imageData,
     isLoading,
@@ -246,7 +244,7 @@ export const generateImagePlaceholder = (
       </text>
     </svg>
   `;
-  
+
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 };
 

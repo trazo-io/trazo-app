@@ -15,17 +15,8 @@ import {
   HStack,
   Text
 } from '@chakra-ui/react';
-import {
-  StandardField,
-  StandardInput,
-  StandardSelect
-} from '../Design';
-import {
-  MultiStepForm,
-  StepWrapper,
-  createStepConfig,
-  type StepConfig
-} from './MultiStepForm';
+import { StandardField, StandardInput, StandardSelect } from '../Design';
+import { MultiStepForm, StepWrapper, createStepConfig, type StepConfig } from './MultiStepForm';
 import {
   FaBuilding,
   FaMapMarkedAlt,
@@ -169,7 +160,7 @@ const ExampleParcelForm: React.FC<ExampleParcelFormProps> = ({
 
   // 4. Custom validators (if needed)
   const [polygon, setPolygon] = useState<Array<{ lat: number; lng: number }>>([]);
-  
+
   const customValidators = {
     polygon: () => polygon && polygon.length > 0
   };
@@ -191,7 +182,8 @@ const ExampleParcelForm: React.FC<ExampleParcelFormProps> = ({
           label="Parcel Name"
           required
           error={formMethods.formState.errors.name?.message}
-          helpText="Enter a descriptive name for this parcel">
+          helpText="Enter a descriptive name for this parcel"
+        >
           <StandardInput
             {...register('name')}
             placeholder="e.g., North Field, Orchard Block A"
@@ -203,13 +195,15 @@ const ExampleParcelForm: React.FC<ExampleParcelFormProps> = ({
           label="Area (Hectares)"
           required
           error={formMethods.formState.errors.area?.message}
-          helpText="Total area of the parcel in hectares">
+          helpText="Total area of the parcel in hectares"
+        >
           <NumberInput
             value={watch('area') || ''}
             onChange={(_, num) => setValue('area', num || 0)}
             min={0.01}
             step={0.01}
-            precision={2}>
+            precision={2}
+          >
             <NumberInputField />
           </NumberInput>
         </StandardField>
@@ -246,7 +240,8 @@ const ExampleParcelForm: React.FC<ExampleParcelFormProps> = ({
         label="Description"
         required
         error={formMethods.formState.errors.description?.message}
-        helpText="Describe the parcel, its characteristics, soil type, drainage, etc.">
+        helpText="Describe the parcel, its characteristics, soil type, drainage, etc."
+      >
         <Textarea
           {...register('description')}
           placeholder="Describe the parcel including soil type, drainage, topography..."
@@ -275,7 +270,11 @@ const ExampleParcelForm: React.FC<ExampleParcelFormProps> = ({
         </StandardField>
 
         <StandardField label="Contact Email" helpText="Email address for parcel contact">
-          <StandardInput {...register('contact_email')} type="email" placeholder="e.g., manager@farm.com" />
+          <StandardInput
+            {...register('contact_email')}
+            type="email"
+            placeholder="e.g., manager@farm.com"
+          />
         </StandardField>
 
         <StandardField label="Address" helpText="Specific address or location details">
@@ -327,7 +326,10 @@ const ExampleParcelForm: React.FC<ExampleParcelFormProps> = ({
       isLoading={isLoading}
     >
       <VStack align="stretch" spacing={6}>
-        <StandardField label="Certification" helpText="Mark this parcel as certified if it meets certification standards">
+        <StandardField
+          label="Certification"
+          helpText="Mark this parcel as certified if it meets certification standards"
+        >
           <HStack>
             <Switch
               {...register('certified')}
@@ -336,15 +338,25 @@ const ExampleParcelForm: React.FC<ExampleParcelFormProps> = ({
               size="lg"
             />
             <VStack align="start" spacing={1}>
-              <Text fontSize="md" fontWeight="medium">Certified Parcel</Text>
-              <Text fontSize="sm" color="gray.500">This parcel meets professional certification standards</Text>
+              <Text fontSize="md" fontWeight="medium">
+                Certified Parcel
+              </Text>
+              <Text fontSize="sm" color="gray.500">
+                This parcel meets professional certification standards
+              </Text>
             </VStack>
           </HStack>
         </StandardField>
 
         {watch('certified') && (
-          <StandardField label="Certification Type" helpText="Type of certification this parcel holds">
-            <StandardSelect {...register('certification_type')} placeholder="Select certification type">
+          <StandardField
+            label="Certification Type"
+            helpText="Type of certification this parcel holds"
+          >
+            <StandardSelect
+              {...register('certification_type')}
+              placeholder="Select certification type"
+            >
               <option value="organic">Organic</option>
               <option value="gmo-free">Non-GMO</option>
               <option value="sustainable">Sustainable Agriculture</option>

@@ -54,7 +54,7 @@ export const ModernSkeletonCard: React.FC<ModernSkeletonCardProps> = ({
                 <Skeleton height="16px" width="40px" {...commonProps} />
               </VStack>
             </HStack>
-            
+
             {/* Progress bar */}
             <VStack spacing={2} w="full">
               <Progress size="lg" isIndeterminate colorScheme="green" borderRadius="full" />
@@ -63,7 +63,7 @@ export const ModernSkeletonCard: React.FC<ModernSkeletonCardProps> = ({
                 <Skeleton height="12px" width="30px" {...commonProps} />
               </HStack>
             </VStack>
-            
+
             {/* Action buttons */}
             <HStack spacing={3}>
               <Skeleton height="40px" width="120px" {...commonProps} borderRadius="md" />
@@ -102,7 +102,12 @@ export const ModernSkeletonCard: React.FC<ModernSkeletonCardProps> = ({
                       <HStack justify="space-between" w="full">
                         <Skeleton height="18px" width="150px" {...commonProps} />
                         <HStack spacing={2}>
-                          <Skeleton height="20px" width="60px" {...commonProps} borderRadius="full" />
+                          <Skeleton
+                            height="20px"
+                            width="60px"
+                            {...commonProps}
+                            borderRadius="full"
+                          />
                           <Skeleton height="14px" width="30px" {...commonProps} />
                         </HStack>
                       </HStack>

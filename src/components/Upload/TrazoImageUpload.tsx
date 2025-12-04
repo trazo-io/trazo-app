@@ -454,7 +454,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                 boxShadow: 'lg'
               }
             : {}
-        }>
+        }
+      >
         <input {...getInputProps()} accept="image/jpeg,image/png,image/gif,image/webp" />
 
         {/* Content based on state */}
@@ -465,7 +466,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}>
+            transition={{ duration: 0.3 }}
+          >
             <VStack spacing={6} py={8}>
               <Circle size="80px" bg={useColorModeValue('green.50', 'green.900')}>
                 <Icon as={IoMdImages} boxSize={10} color={accentColor} />
@@ -490,7 +492,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   leftIcon={<FaPlus />}
                   onClick={openFilePicker}
                   _hover={{ bg: useColorModeValue('green.600', 'green.500') }}
-                  borderRadius="xl">
+                  borderRadius="xl"
+                >
                   Choose Photos
                 </Button>
 
@@ -529,7 +532,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             key="grid"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}>
+            exit={{ opacity: 0 }}
+          >
             <Grid templateColumns={`repeat(${gridColumns}, 1fr)`} gap={3}>
               {/* Uploaded images - CLEARLY SUCCESSFUL */}
               {uploadedUrls.map((url, index) => (
@@ -543,7 +547,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                     onClick={() => openPreview(index)}
                     transition="all 0.2s"
                     _hover={{ transform: 'scale(1.05)', boxShadow: 'lg' }}
-                    role="group">
+                    role="group"
+                  >
                     <S3Image
                       src={url}
                       alt={`Farm photo ${index + 1}`}
@@ -560,7 +565,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                       size="28px"
                       bg={successColor}
                       color="white"
-                      boxShadow="md">
+                      boxShadow="md"
+                    >
                       <Icon as={FaCheck} boxSize={4} />
                     </Circle>
 
@@ -602,7 +608,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                         : item.status === 'success'
                         ? successColor
                         : accentColor
-                    }>
+                    }
+                  >
                     <Image
                       src={item.previewUrl}
                       alt={item.file.name}
@@ -618,7 +625,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                         position="absolute"
                         top="50%"
                         left="50%"
-                        transform="translate(-50%, -50%)">
+                        transform="translate(-50%, -50%)"
+                      >
                         <VStack spacing={2}>
                           <Spinner size="lg" color={accentColor} thickness="4px" />
                           <Text
@@ -627,7 +635,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                             bg="blackAlpha.700"
                             px={2}
                             py={1}
-                            borderRadius="md">
+                            borderRadius="md"
+                          >
                             Uploading...
                           </Text>
                         </VStack>
@@ -640,7 +649,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                         top="50%"
                         left="50%"
                         transform="translate(-50%, -50%)"
-                        textAlign="center">
+                        textAlign="center"
+                      >
                         <VStack spacing={2}>
                           <Circle size="40px" bg="red.500" color="white">
                             <Icon as={FaExclamationTriangle} boxSize={5} />
@@ -650,7 +660,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                             colorScheme="red"
                             leftIcon={<FaRedo />}
                             onClick={() => retryUpload(index)}
-                            borderRadius="full">
+                            borderRadius="full"
+                          >
                             Retry
                           </Button>
                         </VStack>
@@ -664,7 +675,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                         left={2}
                         size="28px"
                         bg={successColor}
-                        color="white">
+                        color="white"
+                      >
                         <Icon as={FaCheck} boxSize={4} />
                       </Circle>
                     )}
@@ -705,7 +717,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                       borderColor: accentColor,
                       bg: uploadHoverBg,
                       transform: 'scale(1.05)'
-                    }}>
+                    }}
+                  >
                     <VStack spacing={2}>
                       <Icon as={FaPlus} boxSize={6} color={mutedColor} />
                       <Text fontSize="xs" color={mutedColor}>
@@ -768,7 +781,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   colorScheme="green"
                   leftIcon={<FaCamera />}
                   onClick={capturePhoto}
-                  borderRadius="xl">
+                  borderRadius="xl"
+                >
                   Capture Photo
                 </Button>
                 <Button
@@ -776,7 +790,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   size="lg"
                   variant="ghost"
                   onClick={closeCamera}
-                  borderRadius="xl">
+                  borderRadius="xl"
+                >
                   Cancel
                 </Button>
               </HStack>

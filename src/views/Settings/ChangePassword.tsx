@@ -22,8 +22,8 @@ const ChangePassword: React.FC = () => {
             <Icon as={FaLock} boxSize={8} color="green.500" />
           </HStack>
           <Text fontSize="sm" color="gray.600">
-            We recommend changing your password regularly to keep your account secure.
-            Choose a strong password that you don't use for other accounts.
+            We recommend changing your password regularly to keep your account secure. Choose a
+            strong password that you don't use for other accounts.
           </Text>
         </Box>
 

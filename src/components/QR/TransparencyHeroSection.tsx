@@ -1,12 +1,12 @@
 /**
  * Trazo Transparency Hero Section
- * 
- * REPLACES: CarbonHeroSection with competitive rankings  
+ *
+ * REPLACES: CarbonHeroSection with competitive rankings
  * NEW APPROACH: Transparency-first display that solves farmer incentive problems
- * 
+ *
  * Key Changes:
  * - Shows transparency percentage instead of competitive rankings
- * - Maintains carbon score but without "better than X% of farms"  
+ * - Maintains carbon score but without "better than X% of farms"
  * - Uses Trazo modern, clean, minimalist design patterns
  * - Progressive disclosure: quick view → detailed insights
  * - Trust-building messaging focused on completeness
@@ -62,10 +62,7 @@ import { MdVerified, MdScience, MdEco } from 'react-icons/md';
 // Import our new components
 import { TransparencyIndicator } from 'components/Design';
 import { useGetCompleteSummaryQuery } from '../../store/api/carbonApi';
-import { 
-  formatCarbonScore,
-  isTrazoTransparencyCertified
-} from '../../store/api/transparencyQrApi';
+import { formatCarbonScore, isTrazoTransparencyCertified } from '../../store/api/transparencyQrApi';
 
 const MotionBox = motion(Box);
 const MotionVStack = motion(VStack);
@@ -97,7 +94,7 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
   const [showDetails, setShowDetails] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  
+
   const isMobile = useBreakpointValue({ base: true, md: false });
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -118,7 +115,10 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
     // Extract transparency information from carbon API
     const timelineLength = carbonData.timeline?.length || 0;
     const expectedEvents = 15; // Baseline for typical production
-    const transparency_percentage = Math.min(Math.round((timelineLength / expectedEvents) * 100), 100);
+    const transparency_percentage = Math.min(
+      Math.round((timelineLength / expectedEvents) * 100),
+      100
+    );
 
     return {
       quick_view: {
@@ -126,13 +126,18 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
         product_name: carbonData.product?.name || 'Product',
         transparency_score: {
           percentage: transparency_percentage,
-          message: transparency_percentage >= 80 
-            ? 'Comprehensive farm record'
-            : transparency_percentage >= 60 
-            ? 'Good record keeping'
-            : 'Basic farm information',
-          status: transparency_percentage >= 80 ? 'excellent' : 
-                 transparency_percentage >= 60 ? 'good' : 'basic'
+          message:
+            transparency_percentage >= 80
+              ? 'Comprehensive farm record'
+              : transparency_percentage >= 60
+              ? 'Good record keeping'
+              : 'Basic farm information',
+          status:
+            transparency_percentage >= 80
+              ? 'excellent'
+              : transparency_percentage >= 60
+              ? 'good'
+              : 'basic'
         },
         carbon_score: {
           kg_per_kg: carbonData.netFootprint || 0,
@@ -224,10 +229,10 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
         spacing={6}
       >
         {/* Main Hero Card */}
-        <Card 
-          bg={bgColor} 
-          shadow="2xl" 
-          borderRadius="3xl" 
+        <Card
+          bg={bgColor}
+          shadow="2xl"
+          borderRadius="3xl"
           overflow="hidden"
           border="2px solid"
           borderColor={isCertified ? 'green.500' : borderColor}
@@ -246,14 +251,9 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
           )}
 
           <CardBody p={{ base: 6, md: 8 }}>
-            <Grid 
-              templateColumns={{ base: '1fr', lg: '2fr 1fr' }} 
-              gap={8} 
-              alignItems="center"
-            >
+            <Grid templateColumns={{ base: '1fr', lg: '2fr 1fr' }} gap={8} alignItems="center">
               {/* Left Side - Product & Transparency Info */}
               <VStack spacing={6} align="start">
-                
                 {/* Farm & Product Header */}
                 <VStack spacing={3} align="start" w="100%">
                   <HStack spacing={3}>
@@ -269,13 +269,7 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
                   </HStack>
 
                   {isCertified && (
-                    <Badge 
-                      colorScheme="green" 
-                      size="lg" 
-                      borderRadius="full"
-                      px={4}
-                      py={2}
-                    >
+                    <Badge colorScheme="green" size="lg" borderRadius="full" px={4} py={2}>
                       <HStack spacing={2}>
                         <Icon as={FaShieldAlt} boxSize={4} />
                         <Text>Trazo Transparency Certified</Text>
@@ -286,15 +280,19 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
 
                 {/* Dual Score Display */}
                 <HStack spacing={6} wrap="wrap">
-                  
                   {/* Transparency Score (PRIMARY) */}
                   <VStack spacing={2} align="center">
-                    <Text fontSize="sm" color={mutedColor} textTransform="uppercase" letterSpacing="wide">
+                    <Text
+                      fontSize="sm"
+                      color={mutedColor}
+                      textTransform="uppercase"
+                      letterSpacing="wide"
+                    >
                       Farm Transparency
                     </Text>
-                    <Circle 
-                      size="80px" 
-                      bg="green.500" 
+                    <Circle
+                      size="80px"
+                      bg="green.500"
                       color="white"
                       animation={hasAnimated ? `${pulseGreen} 2s ease-in-out` : undefined}
                     >
@@ -302,7 +300,9 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
                         <Text fontSize="2xl" fontWeight="bold">
                           {Math.round(quickView.transparency_score.percentage)}
                         </Text>
-                        <Text fontSize="xs" opacity={0.9}>%</Text>
+                        <Text fontSize="xs" opacity={0.9}>
+                          %
+                        </Text>
                       </VStack>
                     </Circle>
                     <Text fontSize="sm" color="green.600" fontWeight="medium" textAlign="center">
@@ -312,7 +312,12 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
 
                   {/* Carbon Score (SECONDARY) */}
                   <VStack spacing={2} align="center">
-                    <Text fontSize="sm" color={mutedColor} textTransform="uppercase" letterSpacing="wide">
+                    <Text
+                      fontSize="sm"
+                      color={mutedColor}
+                      textTransform="uppercase"
+                      letterSpacing="wide"
+                    >
                       Carbon Impact
                     </Text>
                     <Circle size="80px" bg="blue.500" color="white">
@@ -320,7 +325,9 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
                         <Text fontSize="lg" fontWeight="bold">
                           {quickView.carbon_score.kg_per_kg.toFixed(2)}
                         </Text>
-                        <Text fontSize="xs" opacity={0.9}>kg CO₂</Text>
+                        <Text fontSize="xs" opacity={0.9}>
+                          kg CO₂
+                        </Text>
                       </VStack>
                     </Circle>
                     <Text fontSize="xs" color={mutedColor} textAlign="center" maxW="100px">
@@ -330,7 +337,7 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
                 </HStack>
 
                 {/* Trust Message */}
-                <Box 
+                <Box
                   p={4}
                   bg={useColorModeValue('green.50', 'green.900')}
                   borderRadius="lg"
@@ -345,7 +352,8 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
                         Why Transparency Matters
                       </Text>
                       <Text fontSize="xs" color="green.700">
-                        Higher transparency means you can see more of the complete story about how your food was grown
+                        Higher transparency means you can see more of the complete story about how
+                        your food was grown
                       </Text>
                     </VStack>
                   </HStack>
@@ -370,12 +378,12 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
                   <Button
                     leftIcon={<Icon as={FaChartLine} />}
                     colorScheme="green"
-                    variant={showDetails ? "solid" : "outline"}
+                    variant={showDetails ? 'solid' : 'outline'}
                     size="sm"
                     onClick={() => setShowDetails(!showDetails)}
                     borderRadius="full"
                   >
-                    {showDetails ? "Less Details" : "More Details"}
+                    {showDetails ? 'Less Details' : 'More Details'}
                   </Button>
 
                   <Tooltip label="Learn about transparency scoring">
@@ -405,32 +413,33 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
                 >
                   <Divider mb={6} />
                   <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} gap={6}>
-                    
                     {/* Transparency Breakdown */}
                     <VStack spacing={4} align="start">
                       <Text fontSize="lg" fontWeight="semibold" color={textColor}>
                         📊 Record Completeness
                       </Text>
                       <VStack spacing={3} w="100%">
-                        {Object.entries(standardView.transparency_details.category_breakdown).map(([category, data]) => (
-                          <HStack key={category} justify="space-between" w="100%">
-                            <Text fontSize="sm" color={textColor} textTransform="capitalize">
-                              {category.replace('_', ' ')}
-                            </Text>
-                            <HStack spacing={2}>
-                              <Progress
-                                value={data.completeness_percentage}
-                                colorScheme="green"
-                                size="sm"
-                                width="80px"
-                                borderRadius="full"
-                              />
-                              <Text fontSize="xs" color={mutedColor} minW="40px">
-                                {Math.round(data.completeness_percentage)}%
+                        {Object.entries(standardView.transparency_details.category_breakdown).map(
+                          ([category, data]) => (
+                            <HStack key={category} justify="space-between" w="100%">
+                              <Text fontSize="sm" color={textColor} textTransform="capitalize">
+                                {category.replace('_', ' ')}
                               </Text>
+                              <HStack spacing={2}>
+                                <Progress
+                                  value={data.completeness_percentage}
+                                  colorScheme="green"
+                                  size="sm"
+                                  width="80px"
+                                  borderRadius="full"
+                                />
+                                <Text fontSize="xs" color={mutedColor} minW="40px">
+                                  {Math.round(data.completeness_percentage)}%
+                                </Text>
+                              </HStack>
                             </HStack>
-                          </HStack>
-                        ))}
+                          )
+                        )}
                       </VStack>
                     </VStack>
 
@@ -476,10 +485,11 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
             <ModalBody pb={6}>
               <VStack spacing={4} align="start">
                 <Text>
-                  Trazo transparency scores show how completely a farm has documented their growing practices. 
-                  Higher scores mean more complete information about how your food was grown.
+                  Trazo transparency scores show how completely a farm has documented their growing
+                  practices. Higher scores mean more complete information about how your food was
+                  grown.
                 </Text>
-                
+
                 <VStack spacing={2} align="start">
                   <Text fontWeight="semibold">What we track:</Text>
                   <Text fontSize="sm">• Planting and harvesting activities</Text>
@@ -488,11 +498,11 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
                   <Text fontSize="sm">• Equipment use and maintenance</Text>
                   <Text fontSize="sm">• Weather and environmental factors</Text>
                 </VStack>
-                
+
                 <Box p={3} bg="green.50" borderRadius="md" w="100%">
                   <Text fontSize="sm" color="green.800">
-                    💚 <strong>Why it matters:</strong> Complete transparency lets you see the real story 
-                    behind your food and support farmers who practice full openness.
+                    💚 <strong>Why it matters:</strong> Complete transparency lets you see the real
+                    story behind your food and support farmers who practice full openness.
                   </Text>
                 </Box>
               </VStack>
@@ -505,14 +515,6 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
 };
 
 // Card components for consistency
-const Card: React.FC<any> = ({ children, ...props }) => (
-  <Box {...props}>
-    {children}
-  </Box>
-);
+const Card: React.FC<any> = ({ children, ...props }) => <Box {...props}>{children}</Box>;
 
-const CardBody: React.FC<any> = ({ children, ...props }) => (
-  <Box {...props}>
-    {children}
-  </Box>
-);
+const CardBody: React.FC<any> = ({ children, ...props }) => <Box {...props}>{children}</Box>;

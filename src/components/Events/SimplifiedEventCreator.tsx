@@ -63,10 +63,10 @@ import { StandardButton, StandardField } from 'components/Design/StandardCompone
 import { CarbonImpactPreview } from './CarbonImpactPreview';
 import { VoiceEventCapture } from './VoiceEventCapture';
 import { TrazoImageUpload } from 'components/Upload';
-import { 
+import {
   useCreateEventMutation,
   useGetEventQuery,
-  useUpdateEventMutation 
+  useUpdateEventMutation
 } from 'store/api/historyApi';
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
 
@@ -226,13 +226,11 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
   // API mutations
   const [createEvent, { isLoading: isCreatingEvent }] = useCreateEventMutation();
   const [updateEvent, { isLoading: isUpdatingEvent }] = useUpdateEventMutation();
-  const [calculateCarbonImpact, { isLoading: isCalculating }] = useCalculateEventCarbonImpactMutation();
+  const [calculateCarbonImpact, { isLoading: isCalculating }] =
+    useCalculateEventCarbonImpactMutation();
 
   // Load existing event if editing
-  const {
-    data: existingEvent,
-    isLoading: isLoadingEvent
-  } = useGetEventQuery(
+  const { data: existingEvent, isLoading: isLoadingEvent } = useGetEventQuery(
     {
       companyId: currentCompany?.id,
       establishmentId: parseInt(establishmentId || '0'),
@@ -245,7 +243,7 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
 
   // Get selected event type configuration
   const selectedEventConfig = useMemo(() => {
-    return AGRICULTURAL_EVENT_TYPES.find(type => type.id === selectedEventType);
+    return AGRICULTURAL_EVENT_TYPES.find((type) => type.id === selectedEventType);
   }, [selectedEventType]);
 
   // Auto-fill template data when event type changes
@@ -253,7 +251,7 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
     if (selectedEventConfig && !isEdit) {
       setValue('duration', selectedEventConfig.template.duration);
       setValue('area', selectedEventConfig.template.typical_area);
-      
+
       // Set a smart default description
       const smartDescription = `${selectedEventConfig.name} - ${new Date().toLocaleDateString()}`;
       setValue('description', smartDescription);
@@ -275,7 +273,10 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
           eventSubType = 'PE'; // Pesticide
         } else if (formData.event_type === 'irrigation') {
           eventSubType = 'IR'; // Irrigation
-        } else if (formData.event_type === 'equipment_operation' || formData.event_type === 'harvest') {
+        } else if (
+          formData.event_type === 'equipment_operation' ||
+          formData.event_type === 'harvest'
+        ) {
           eventSubType = 'EQ'; // Equipment
         } else if (formData.event_type === 'soil_management') {
           eventSubType = 'SM'; // Soil Management
@@ -292,39 +293,52 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
           establishment_id: parseInt(establishmentId || '0'),
           area_covered: parseFloat(formData.area) || 1,
           area_unit: 'ha',
-          
+
           // Extract chemical data for more accurate calculations
-          ...(formData.event_type === 'fertilizer_application' ? {
-            commercial_name: 'NPK Fertilizer',
-            concentration: '10-10-10', // Standard NPK ratio
-            volume: formData.amount || '100',
-            volume_unit: 'liters',
-            way_of_application: 'broadcast',
-            applicationRate: 200, // kg/ha standard rate
-            unit: 'kg/ha'
-          } : {}),
-          
-          ...(formData.event_type === 'pest_control' ? {
-            commercial_name: 'Pesticide Application',
-            concentration: '5%',
-            volume: formData.amount || '10',
-            volume_unit: 'liters',
-            way_of_application: 'spray',
-            applicationRate: 2, // L/ha standard rate
-            unit: 'L/ha'
-          } : {})
+          ...(formData.event_type === 'fertilizer_application'
+            ? {
+                commercial_name: 'NPK Fertilizer',
+                concentration: '10-10-10', // Standard NPK ratio
+                volume: formData.amount || '100',
+                volume_unit: 'liters',
+                way_of_application: 'broadcast',
+                applicationRate: 200, // kg/ha standard rate
+                unit: 'kg/ha'
+              }
+            : {}),
+
+          ...(formData.event_type === 'pest_control'
+            ? {
+                commercial_name: 'Pesticide Application',
+                concentration: '5%',
+                volume: formData.amount || '10',
+                volume_unit: 'liters',
+                way_of_application: 'spray',
+                applicationRate: 2, // L/ha standard rate
+                unit: 'L/ha'
+              }
+            : {})
         };
 
         // Map frontend event types to backend types
         let backendEventType = 'production'; // default
-        if (formData.event_type === 'fertilizer_application' || formData.event_type === 'pest_control') {
+        if (
+          formData.event_type === 'fertilizer_application' ||
+          formData.event_type === 'pest_control'
+        ) {
           backendEventType = 'chemical';
-        } else if (formData.event_type === 'equipment_operation' || formData.event_type === 'harvest') {
+        } else if (
+          formData.event_type === 'equipment_operation' ||
+          formData.event_type === 'harvest'
+        ) {
           backendEventType = 'equipment';
-        } else if (formData.event_type === 'irrigation' || formData.event_type === 'soil_management') {
+        } else if (
+          formData.event_type === 'irrigation' ||
+          formData.event_type === 'soil_management'
+        ) {
           backendEventType = 'production';
         }
-        
+
         const result = await calculateCarbonImpact({
           event_type: backendEventType,
           event_data
@@ -348,27 +362,30 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
   }, [watchedData, debouncedCarbonCalculation]);
 
   // Handle voice event detection
-  const handleVoiceEventDetected = useCallback((voiceEventData: any) => {
-    // Map voice data to form fields
-    setValue('event_type', voiceEventData.type || 'equipment_operation');
-    setValue('description', voiceEventData.description);
-    setValue('date', voiceEventData.date || new Date().toISOString().slice(0, 16));
-    
-    if (voiceEventData.detected_amounts?.length > 0) {
-      setValue('amount', voiceEventData.detected_amounts[0]);
-    }
-    
-    // Move to step 2 automatically
-    setCurrentStep(2);
-    setIsVoiceMode(false);
-    
-    toast({
-      title: 'Voice Event Captured! 🎤',
-      description: 'Event details filled automatically. Review and submit.',
-      status: 'success',
-      duration: 3000
-    });
-  }, [setValue, toast]);
+  const handleVoiceEventDetected = useCallback(
+    (voiceEventData: any) => {
+      // Map voice data to form fields
+      setValue('event_type', voiceEventData.type || 'equipment_operation');
+      setValue('description', voiceEventData.description);
+      setValue('date', voiceEventData.date || new Date().toISOString().slice(0, 16));
+
+      if (voiceEventData.detected_amounts?.length > 0) {
+        setValue('amount', voiceEventData.detected_amounts[0]);
+      }
+
+      // Move to step 2 automatically
+      setCurrentStep(2);
+      setIsVoiceMode(false);
+
+      toast({
+        title: 'Voice Event Captured! 🎤',
+        description: 'Event details filled automatically. Review and submit.',
+        status: 'success',
+        duration: 3000
+      });
+    },
+    [setValue, toast]
+  );
 
   // Handle form submission
   const handleSubmit = async (data: any) => {
@@ -399,7 +416,7 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
           status: 'success',
           duration: 3000
         });
-        
+
         if (onEventCreated) {
           onEventCreated(result);
         }
@@ -488,7 +505,9 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
                 key={eventType.id}
                 cursor="pointer"
                 borderWidth="2px"
-                borderColor={selectedEventType === eventType.id ? `${eventType.color}.500` : borderColor}
+                borderColor={
+                  selectedEventType === eventType.id ? `${eventType.color}.500` : borderColor
+                }
                 bg={selectedEventType === eventType.id ? `${eventType.color}.50` : bgColor}
                 _hover={{
                   borderColor: `${eventType.color}.400`,
@@ -535,18 +554,20 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
                   <Heading size="sm" color="green.700">
                     Quick Event Details
                   </Heading>
-                  
+
                   <StandardField
                     name="date"
                     label="When did this happen?"
                     type="datetime-local"
                     isRequired
                   />
-                  
+
                   <StandardField
                     name="description"
                     label="Brief description"
-                    placeholder={`${selectedEventConfig?.name} on ${new Date().toLocaleDateString()}`}
+                    placeholder={`${
+                      selectedEventConfig?.name
+                    } on ${new Date().toLocaleDateString()}`}
                     as="textarea"
                     isRequired
                   />
@@ -559,9 +580,7 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
                         <Text fontSize="sm" fontWeight="semibold">
                           💡 Best Practice Tip:
                         </Text>
-                        <Text fontSize="sm">
-                          {selectedEventConfig.template.best_practices}
-                        </Text>
+                        <Text fontSize="sm">{selectedEventConfig.template.best_practices}</Text>
                       </VStack>
                     </Alert>
                   )}
@@ -581,7 +600,11 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
       <Card>
         <CardHeader>
           <HStack>
-            <Icon as={selectedEventConfig?.icon || FaLeaf} color={`${selectedEventConfig?.color || 'green'}.500`} boxSize={5} />
+            <Icon
+              as={selectedEventConfig?.icon || FaLeaf}
+              color={`${selectedEventConfig?.color || 'green'}.500`}
+              boxSize={5}
+            />
             <VStack align="start" spacing={0}>
               <Text fontWeight="bold">{selectedEventConfig?.name}</Text>
               <Text fontSize="sm" color="gray.500">
@@ -617,7 +640,7 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
             </Button>
           </HStack>
         </CardHeader>
-        
+
         {showAdvancedOptions && (
           <CardBody>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -626,19 +649,19 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
                 label="Duration"
                 placeholder={selectedEventConfig?.template.duration}
               />
-              
+
               <StandardField
                 name="area"
                 label="Area Covered"
                 placeholder={selectedEventConfig?.template.typical_area}
               />
-              
+
               <StandardField
                 name="amount"
                 label="Amount/Quantity"
                 placeholder={selectedEventConfig?.template.common_amounts[0]}
               />
-              
+
               <StandardField
                 name="notes"
                 label="Additional Notes"
@@ -684,9 +707,7 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
             <Heading size="lg" color={textColor}>
               {isEdit ? 'Update Agricultural Event' : 'Record Your Farming Activity'}
             </Heading>
-            <Text color="gray.500">
-              Quick 2-step process designed for field conditions
-            </Text>
+            <Text color="gray.500">Quick 2-step process designed for field conditions</Text>
           </VStack>
 
           {/* Progress Indicator */}
@@ -699,11 +720,11 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
                 2. Confirm Details
               </Text>
             </HStack>
-            <Progress 
-              value={(currentStep / 2) * 100} 
-              colorScheme="green" 
-              size="lg" 
-              borderRadius="full" 
+            <Progress
+              value={(currentStep / 2) * 100}
+              colorScheme="green"
+              size="lg"
+              borderRadius="full"
             />
           </Box>
 
@@ -717,11 +738,7 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
           <HStack spacing={4} w="full" justify="space-between">
             <Box>
               {currentStep > 1 && (
-                <Button
-                  leftIcon={<FaChevronLeft />}
-                  variant="outline"
-                  onClick={goToPreviousStep}
-                >
+                <Button leftIcon={<FaChevronLeft />} variant="outline" onClick={goToPreviousStep}>
                   Back
                 </Button>
               )}
@@ -733,7 +750,7 @@ export const SimplifiedEventCreator: React.FC<SimplifiedEventCreatorProps> = ({
                   Cancel
                 </Button>
               )}
-              
+
               {currentStep === 1 ? (
                 <StandardButton
                   rightIcon={<FaChevronRight />}

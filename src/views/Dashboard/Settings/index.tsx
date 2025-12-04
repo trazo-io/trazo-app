@@ -180,7 +180,7 @@ export default function SettingsView() {
   // Copy company code to clipboard
   const handleCopyCode = async () => {
     if (!currentCompany?.invitation_code) return;
-    
+
     try {
       await navigator.clipboard.writeText(currentCompany.invitation_code);
       setCodeCopied(true);
@@ -191,7 +191,7 @@ export default function SettingsView() {
         duration: 2000,
         isClosable: true
       });
-      
+
       // Reset copied state after 2 seconds
       setTimeout(() => setCodeCopied(false), 2000);
     } catch (error) {
@@ -224,25 +224,25 @@ export default function SettingsView() {
   return (
     <StandardPage
       title={intl.formatMessage({ id: 'app.companySettings' }) || 'Configuración de la Compañía'}
-      description={intl.formatMessage({ id: 'app.companySettingsDescription' }) || 'Gestiona la configuración y miembros de tu compañía'}
+      description={
+        intl.formatMessage({ id: 'app.companySettingsDescription' }) ||
+        'Gestiona la configuración y miembros de tu compañía'
+      }
       showBackButton
-      onBack={() => navigate(-1)}>
-      <Box
-        w="100%"
-        maxW="1200px"
-        mx="auto"
-        className="main-content-area">
+      onBack={() => navigate(-1)}
+    >
+      <Box w="100%" maxW="1200px" mx="auto" className="main-content-area">
         <VStack spacing={10} w="100%" pb={12}>
           {/* Members Overview Section - Most Important First */}
           <Box w="100%">
             <StandardCard
               title={
-                intl.formatMessage({ id: 'app.membersInThisCompany' }) ||
-                'Miembros de la Compañía'
+                intl.formatMessage({ id: 'app.membersInThisCompany' }) || 'Miembros de la Compañía'
               }
               subtitle="Gestiona los miembros actuales y sus permisos"
               variant="elevated"
-              shadow="lg">
+              shadow="lg"
+            >
               <Box py={4}>
                 <VStack spacing={8} align="stretch">
                   {/* Search Bar */}
@@ -276,7 +276,8 @@ export default function SettingsView() {
                       bg="green.100"
                       color="green.800"
                       fontSize="sm"
-                      fontWeight="medium">
+                      fontWeight="medium"
+                    >
                       {filteredMembers.length} miembro{filteredMembers.length !== 1 ? 's' : ''}
                     </Badge>
                   </Flex>
@@ -289,7 +290,8 @@ export default function SettingsView() {
                     border="1px solid"
                     borderColor="gray.100"
                     bg="white"
-                    boxShadow="sm">
+                    boxShadow="sm"
+                  >
                     <Table variant="simple" size="lg">
                       <Thead bg="gray.50" borderBottom="2px solid" borderColor="gray.100">
                         <Tr>
@@ -300,7 +302,8 @@ export default function SettingsView() {
                             textTransform="uppercase"
                             letterSpacing="wider"
                             py={5}
-                            px={6}>
+                            px={6}
+                          >
                             {intl.formatMessage({ id: 'app.name' }) || 'NOMBRE'}
                           </Th>
                           <Th
@@ -310,7 +313,8 @@ export default function SettingsView() {
                             textTransform="uppercase"
                             letterSpacing="wider"
                             py={5}
-                            px={6}>
+                            px={6}
+                          >
                             {intl.formatMessage({ id: 'app.currentWorkingEstablishments' }) ||
                               'ESTABLECIMIENTOS EN LOS QUE TRABAJA'}
                           </Th>
@@ -321,7 +325,8 @@ export default function SettingsView() {
                             textTransform="uppercase"
                             letterSpacing="wider"
                             py={5}
-                            px={6}>
+                            px={6}
+                          >
                             {intl.formatMessage({ id: 'app.role' }) || 'ROL'}
                           </Th>
                           <Th
@@ -331,7 +336,8 @@ export default function SettingsView() {
                             textTransform="uppercase"
                             letterSpacing="wider"
                             py={5}
-                            px={6}>
+                            px={6}
+                          >
                             {intl.formatMessage({ id: 'app.actions' }) || 'ACCIONES'}
                           </Th>
                         </Tr>
@@ -360,7 +366,8 @@ export default function SettingsView() {
                                   display="flex"
                                   alignItems="center"
                                   justifyContent="center"
-                                  mb={2}>
+                                  mb={2}
+                                >
                                   <Text fontSize="2xl">👥</Text>
                                 </Box>
                                 <Text color="gray.600" fontSize="lg" fontWeight="semibold">
@@ -372,7 +379,8 @@ export default function SettingsView() {
                                   color="gray.500"
                                   fontSize="md"
                                   maxW="300px"
-                                  textAlign="center">
+                                  textAlign="center"
+                                >
                                   {searchTerm
                                     ? 'Intenta con otros términos de búsqueda'
                                     : 'Invita a tu primer miembro del equipo usando el formulario abajo'}
@@ -396,7 +404,8 @@ export default function SettingsView() {
                 intl.formatMessage({ id: 'app.inviteNewMembers' }) || 'Invitar nuevos miembros'
               }
               variant="elevated"
-              shadow="lg">
+              shadow="lg"
+            >
               <Box py={4}>
                 <VStack spacing={10} align="stretch">
                   <VStack spacing={6} w="100%">
@@ -430,7 +439,8 @@ export default function SettingsView() {
                                           size="md"
                                           borderRadius="full"
                                           variant="solid"
-                                          colorScheme="green">
+                                          colorScheme="green"
+                                        >
                                           <TagLabel>{establishment?.name}</TagLabel>
                                           <TagCloseButton
                                             onClick={() => {
@@ -454,7 +464,8 @@ export default function SettingsView() {
                                 p={4}
                                 maxH="200px"
                                 overflowY="auto"
-                                bg="white">
+                                bg="white"
+                              >
                                 <Stack spacing={2}>
                                   {establishmentOptions.map((est: EstablishmentOption) => (
                                     <Checkbox
@@ -473,10 +484,12 @@ export default function SettingsView() {
                                           );
                                         }
                                       }}
-                                      colorScheme="green">
+                                      colorScheme="green"
+                                    >
                                       <Text
                                         fontSize="sm"
-                                        color={selectedRole === 'CA' ? 'gray.500' : 'inherit'}>
+                                        color={selectedRole === 'CA' ? 'gray.500' : 'inherit'}
+                                      >
                                         {est.name}
                                         {selectedRole === 'CA' && (
                                           <Text as="span" fontSize="xs" color="blue.600" ml={2}>
@@ -503,7 +516,8 @@ export default function SettingsView() {
                                 bg="blue.50"
                                 border="1px solid"
                                 borderColor="blue.200"
-                                borderRadius="lg">
+                                borderRadius="lg"
+                              >
                                 <HStack spacing={2}>
                                   <Box
                                     w="6px"
@@ -543,7 +557,8 @@ export default function SettingsView() {
                                 else if (value && value !== 'CA') {
                                   setSelectedEstablishments([]);
                                 }
-                              }}>
+                              }}
+                            >
                               <option value="">Selecciona un rol...</option>
                               {roleOptions.map((role: RoleOption) => (
                                 <option key={role.id} value={role.id}>
@@ -565,7 +580,8 @@ export default function SettingsView() {
                         onClick={handleInviteSubmit}
                         size="lg"
                         isLoading={isSendingInvitation}
-                        loadingText="Enviando...">
+                        loadingText="Enviando..."
+                      >
                         {intl.formatMessage({ id: 'app.sendInvite' }) || 'Enviar invitación'}
                       </StandardButton>
                     </HStack>
@@ -581,7 +597,8 @@ export default function SettingsView() {
               title="Código de Invitación"
               subtitle="Comparte este código para que nuevos miembros se unan durante el registro"
               variant="elevated"
-              shadow="lg">
+              shadow="lg"
+            >
               <Box py={3}>
                 <VStack spacing={4} align="stretch">
                   {/* Company Info Display */}
@@ -593,21 +610,23 @@ export default function SettingsView() {
                     bg="green.50"
                     borderRadius="lg"
                     border="1px solid"
-                    borderColor="green.200">
-                    
+                    borderColor="green.200"
+                  >
                     {/* Company Icon */}
                     <Flex
                       align="center"
                       justify="center"
                       w={{ base: 'full', md: 'auto' }}
-                      mb={{ base: 4, md: 0 }}>
+                      mb={{ base: 4, md: 0 }}
+                    >
                       <Box
                         bg="green.500"
                         p={4}
                         borderRadius="full"
                         display="flex"
                         alignItems="center"
-                        justifyContent="center">
+                        justifyContent="center"
+                      >
                         <Icon as={FaUsers} color="white" boxSize={6} />
                       </Box>
                     </Flex>
@@ -617,7 +636,12 @@ export default function SettingsView() {
                       <Text fontSize="md" fontWeight="semibold" color="gray.700">
                         {currentCompany?.name || 'Tu Compañía'}
                       </Text>
-                      <Text fontSize="xs" color="gray.500" textAlign={{ base: 'center', md: 'left' }} lineHeight="1.4">
+                      <Text
+                        fontSize="xs"
+                        color="gray.500"
+                        textAlign={{ base: 'center', md: 'left' }}
+                        lineHeight="1.4"
+                      >
                         Los nuevos miembros pueden unirse usando este código durante el registro
                       </Text>
                     </VStack>
@@ -635,7 +659,8 @@ export default function SettingsView() {
                         fontFamily="mono"
                         letterSpacing="wide"
                         minW="120px"
-                        textAlign="center">
+                        textAlign="center"
+                      >
                         {currentCompany?.invitation_code || 'LOADING...'}
                       </Badge>
 
@@ -644,7 +669,8 @@ export default function SettingsView() {
                         label={codeCopied ? 'Copiado!' : 'Copiar código'}
                         placement="top"
                         closeOnClick={false}
-                        fontSize="xs">
+                        fontSize="xs"
+                      >
                         <IconButton
                           aria-label="Copiar código de compañía"
                           icon={codeCopied ? <CheckIcon /> : <CopyIcon />}
@@ -669,7 +695,8 @@ export default function SettingsView() {
                     bg="blue.50"
                     borderRadius="lg"
                     border="1px solid"
-                    borderColor="blue.200">
+                    borderColor="blue.200"
+                  >
                     <HStack spacing={2} align="start">
                       <Icon as={FaShare} color="blue.500" mt={0.5} flexShrink={0} boxSize={3} />
                       <VStack align="start" spacing={1}>
@@ -684,7 +711,8 @@ export default function SettingsView() {
                             • Durante el registro, deben elegir "Unirse a compañía existente"
                           </Text>
                           <Text fontSize="2xs" color="blue.600" lineHeight="1.3">
-                            • Ingresar el código para unirse automáticamente como Trabajador de Dominio
+                            • Ingresar el código para unirse automáticamente como Trabajador de
+                            Dominio
                           </Text>
                         </VStack>
                       </VStack>

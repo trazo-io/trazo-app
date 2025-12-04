@@ -271,23 +271,19 @@ export default function TransparencyComparison() {
                             label="Transparency Score"
                             explanation="Transparency scores show how completely a farm documents their practices, from 0% (minimal information) to 100% (complete documentation). Higher scores mean more detailed farming information available."
                           >
-                            <Text
-                              fontSize="2xl"
-                              fontWeight="bold"
-                              color="green.600"
-                              cursor="help"
-                            >
+                            <Text fontSize="2xl" fontWeight="bold" color="green.600" cursor="help">
                               {product.carbonScore}%
                             </Text>
                           </ConsumerTooltip>
-                          <Badge
-                            colorScheme="green"
-                            variant="solid"
-                            fontSize="xs"
-                          >
-                            {product.carbonScore >= 95 ? 'Complete' : 
-                             product.carbonScore >= 85 ? 'Excellent' :
-                             product.carbonScore >= 70 ? 'Good' : 'Basic'} Documentation
+                          <Badge colorScheme="green" variant="solid" fontSize="xs">
+                            {product.carbonScore >= 95
+                              ? 'Complete'
+                              : product.carbonScore >= 85
+                              ? 'Excellent'
+                              : product.carbonScore >= 70
+                              ? 'Good'
+                              : 'Basic'}{' '}
+                            Documentation
                           </Badge>
                         </VStack>
                       </HStack>
@@ -308,7 +304,8 @@ export default function TransparencyComparison() {
                             </Text>
                           </ConsumerTooltip>
                           <Text fontWeight="medium" color="gray.700">
-                            {Math.round(product.carbonScore / 100 * 15)} of 15 practices documented
+                            {Math.round((product.carbonScore / 100) * 15)} of 15 practices
+                            documented
                           </Text>
                         </VStack>
                       </HStack>
@@ -356,57 +353,60 @@ export default function TransparencyComparison() {
                         </Tr>
                       </Thead>
                       <Tbody>
-                        {selectedProductData
-                          .map((product, index) => (
-                            <Tr key={product.id}>
-                              <Td>
-                                <VStack align="start" spacing={1}>
-                                  <Text fontWeight="medium">{product.name}</Text>
-                                  <Text fontSize="xs" color="gray.600">
-                                    {product.farm}
-                                  </Text>
-                                  <HStack spacing={1}>
-                                    <Icon as={FaMapMarkerAlt} color="gray.500" boxSize={3} />
-                                    <Text fontSize="xs" color="gray.500">
-                                      {product.location}
-                                    </Text>
-                                  </HStack>
-                                </VStack>
-                              </Td>
-                              <Td textAlign="center">
-                                <VStack spacing={1}>
-                                  <Text fontSize="xl" fontWeight="bold" color="green.600">
-                                    {product.carbonScore}%
-                                  </Text>
-                                  <Badge colorScheme="green" size="sm">
-                                    {product.carbonScore >= 95 ? 'Complete' : 
-                                     product.carbonScore >= 85 ? 'Excellent' :
-                                     product.carbonScore >= 70 ? 'Good' : 'Basic'}
-                                  </Badge>
-                                </VStack>
-                              </Td>
-                              <Td textAlign="center">
-                                <Text fontWeight="medium">
-                                  {Math.round(product.carbonScore / 100 * 15)} practices
+                        {selectedProductData.map((product, index) => (
+                          <Tr key={product.id}>
+                            <Td>
+                              <VStack align="start" spacing={1}>
+                                <Text fontWeight="medium">{product.name}</Text>
+                                <Text fontSize="xs" color="gray.600">
+                                  {product.farm}
                                 </Text>
-                              </Td>
-                              <Td textAlign="center">
-                                <Badge colorScheme="blue" variant="outline" size="sm">
-                                  {product.farmingMethod}
-                                </Badge>
-                              </Td>
-                              <Td textAlign="center">
-                                <VStack spacing={1}>
-                                  <Text fontSize="sm" color="green.600">
-                                    {product.certifications?.length || 0} verified
-                                  </Text>
+                                <HStack spacing={1}>
+                                  <Icon as={FaMapMarkerAlt} color="gray.500" boxSize={3} />
                                   <Text fontSize="xs" color="gray.500">
-                                    practices
+                                    {product.location}
                                   </Text>
-                                </VStack>
-                              </Td>
-                            </Tr>
-                          ))}
+                                </HStack>
+                              </VStack>
+                            </Td>
+                            <Td textAlign="center">
+                              <VStack spacing={1}>
+                                <Text fontSize="xl" fontWeight="bold" color="green.600">
+                                  {product.carbonScore}%
+                                </Text>
+                                <Badge colorScheme="green" size="sm">
+                                  {product.carbonScore >= 95
+                                    ? 'Complete'
+                                    : product.carbonScore >= 85
+                                    ? 'Excellent'
+                                    : product.carbonScore >= 70
+                                    ? 'Good'
+                                    : 'Basic'}
+                                </Badge>
+                              </VStack>
+                            </Td>
+                            <Td textAlign="center">
+                              <Text fontWeight="medium">
+                                {Math.round((product.carbonScore / 100) * 15)} practices
+                              </Text>
+                            </Td>
+                            <Td textAlign="center">
+                              <Badge colorScheme="blue" variant="outline" size="sm">
+                                {product.farmingMethod}
+                              </Badge>
+                            </Td>
+                            <Td textAlign="center">
+                              <VStack spacing={1}>
+                                <Text fontSize="sm" color="green.600">
+                                  {product.certifications?.length || 0} verified
+                                </Text>
+                                <Text fontSize="xs" color="gray.500">
+                                  practices
+                                </Text>
+                              </VStack>
+                            </Td>
+                          </Tr>
+                        ))}
                       </Tbody>
                     </Table>
                   </TableContainer>
@@ -419,40 +419,45 @@ export default function TransparencyComparison() {
                     description="Compare documentation completeness across farms"
                   >
                     <VStack spacing={6}>
-                      {selectedProductData
-                        .map((product, index) => (
-                          <Box key={product.id} w="full">
-                            <HStack justify="space-between" mb={2}>
-                              <VStack align="start" spacing={0}>
-                                <Text fontWeight="bold">{product.name}</Text>
-                                <Text fontSize="sm" color="gray.600">
-                                  {product.farm}
-                                </Text>
-                              </VStack>
-                              <VStack align="end" spacing={0}>
-                                <Text fontSize="xl" fontWeight="bold" color="green.600">
-                                  {product.carbonScore}%
-                                </Text>
-                                <Badge colorScheme="green">
-                                  {product.carbonScore >= 95 ? 'Complete Documentation' : 
-                                   product.carbonScore >= 85 ? 'Excellent Transparency' :
-                                   product.carbonScore >= 70 ? 'Good Documentation' : 'Basic Information'}
-                                </Badge>
-                              </VStack>
-                            </HStack>
-                            <Progress
-                              value={product.carbonScore}
-                              size="lg"
-                              colorScheme="green"
-                              borderRadius="full"
-                              bg="gray.100"
-                            />
-                            <HStack justify="space-between" mt={2} fontSize="xs" color="gray.600">
-                              <Text>{Math.round(product.carbonScore / 100 * 15)} practices documented</Text>
-                              <Text>{product.farmingMethod} farming</Text>
-                            </HStack>
-                          </Box>
-                        ))}
+                      {selectedProductData.map((product, index) => (
+                        <Box key={product.id} w="full">
+                          <HStack justify="space-between" mb={2}>
+                            <VStack align="start" spacing={0}>
+                              <Text fontWeight="bold">{product.name}</Text>
+                              <Text fontSize="sm" color="gray.600">
+                                {product.farm}
+                              </Text>
+                            </VStack>
+                            <VStack align="end" spacing={0}>
+                              <Text fontSize="xl" fontWeight="bold" color="green.600">
+                                {product.carbonScore}%
+                              </Text>
+                              <Badge colorScheme="green">
+                                {product.carbonScore >= 95
+                                  ? 'Complete Documentation'
+                                  : product.carbonScore >= 85
+                                  ? 'Excellent Transparency'
+                                  : product.carbonScore >= 70
+                                  ? 'Good Documentation'
+                                  : 'Basic Information'}
+                              </Badge>
+                            </VStack>
+                          </HStack>
+                          <Progress
+                            value={product.carbonScore}
+                            size="lg"
+                            colorScheme="green"
+                            borderRadius="full"
+                            bg="gray.100"
+                          />
+                          <HStack justify="space-between" mt={2} fontSize="xs" color="gray.600">
+                            <Text>
+                              {Math.round((product.carbonScore / 100) * 15)} practices documented
+                            </Text>
+                            <Text>{product.farmingMethod} farming</Text>
+                          </HStack>
+                        </Box>
+                      ))}
                     </VStack>
                   </StandardSection>
                 </TabPanel>
@@ -464,71 +469,73 @@ export default function TransparencyComparison() {
                     description="Highlighting excellent transparency and documentation"
                   >
                     <VStack spacing={4}>
-                      {selectedProductData
-                        .map((product, index) => {
-                          const transparencyLevel = product.carbonScore >= 95 ? 'Complete' : 
-                                                   product.carbonScore >= 85 ? 'Excellent' :
-                                                   product.carbonScore >= 70 ? 'Good' : 'Basic';
+                      {selectedProductData.map((product, index) => {
+                        const transparencyLevel =
+                          product.carbonScore >= 95
+                            ? 'Complete'
+                            : product.carbonScore >= 85
+                            ? 'Excellent'
+                            : product.carbonScore >= 70
+                            ? 'Good'
+                            : 'Basic';
 
-                          return (
-                            <StandardCard key={product.id} variant="flat" padding={6}>
-                              <HStack spacing={6} align="center">
-                                <Circle size="50px" bg="green.100">
-                                  <Icon as={FaCheckCircle} color="green.500" boxSize={6} />
-                                </Circle>
+                        return (
+                          <StandardCard key={product.id} variant="flat" padding={6}>
+                            <HStack spacing={6} align="center">
+                              <Circle size="50px" bg="green.100">
+                                <Icon as={FaCheckCircle} color="green.500" boxSize={6} />
+                              </Circle>
 
-                                <VStack align="start" spacing={1} flex={1}>
-                                  <HStack spacing={3}>
-                                    <Heading size="md">{product.name}</Heading>
-                                    <Badge colorScheme="green">{transparencyLevel}</Badge>
+                              <VStack align="start" spacing={1} flex={1}>
+                                <HStack spacing={3}>
+                                  <Heading size="md">{product.name}</Heading>
+                                  <Badge colorScheme="green">{transparencyLevel}</Badge>
+                                </HStack>
+                                <Text color="gray.600">
+                                  {product.farm} • {product.location}
+                                </Text>
+                                <HStack spacing={4} fontSize="sm">
+                                  <HStack spacing={1}>
+                                    <Icon as={FaClipboardList} color="green.500" boxSize={4} />
+                                    <Text>Documentation: {product.carbonScore}%</Text>
                                   </HStack>
-                                  <Text color="gray.600">
-                                    {product.farm} • {product.location}
-                                  </Text>
-                                  <HStack spacing={4} fontSize="sm">
-                                    <HStack spacing={1}>
-                                      <Icon as={FaClipboardList} color="green.500" boxSize={4} />
-                                      <Text>Documentation: {product.carbonScore}%</Text>
-                                    </HStack>
-                                    <HStack spacing={1}>
-                                      <Icon as={MdVerified} color="blue.500" boxSize={4} />
-                                      <Text>Practices: {Math.round(product.carbonScore / 100 * 15)}</Text>
-                                    </HStack>
-                                    <HStack spacing={1}>
-                                      <Icon as={FaLeaf} color="green.500" boxSize={4} />
-                                      <Text>Method: {product.farmingMethod}</Text>
-                                    </HStack>
+                                  <HStack spacing={1}>
+                                    <Icon as={MdVerified} color="blue.500" boxSize={4} />
+                                    <Text>
+                                      Practices: {Math.round((product.carbonScore / 100) * 15)}
+                                    </Text>
                                   </HStack>
-                                </VStack>
+                                  <HStack spacing={1}>
+                                    <Icon as={FaLeaf} color="green.500" boxSize={4} />
+                                    <Text>Method: {product.farmingMethod}</Text>
+                                  </HStack>
+                                </HStack>
+                              </VStack>
 
-                                <VStack align="end" spacing={2}>
-                                  <Text fontSize="2xl" fontWeight="bold" color="green.600">
-                                    {product.carbonScore}%
-                                  </Text>
-                                  <Text fontSize="sm" color="gray.600">
-                                    Transparency
-                                  </Text>
-                                  <HStack spacing={2}>
-                                    <StandardButton
-                                      size="sm"
-                                      variant="outline"
-                                      leftIcon={<FaEye />}
-                                    >
-                                      View Practices
-                                    </StandardButton>
-                                    <StandardButton
-                                      size="sm"
-                                      variant="ghost"
-                                      leftIcon={<FaShareAlt />}
-                                    >
-                                      Share Story
-                                    </StandardButton>
-                                  </HStack>
-                                </VStack>
-                              </HStack>
-                            </StandardCard>
-                          );
-                        })}
+                              <VStack align="end" spacing={2}>
+                                <Text fontSize="2xl" fontWeight="bold" color="green.600">
+                                  {product.carbonScore}%
+                                </Text>
+                                <Text fontSize="sm" color="gray.600">
+                                  Transparency
+                                </Text>
+                                <HStack spacing={2}>
+                                  <StandardButton size="sm" variant="outline" leftIcon={<FaEye />}>
+                                    View Practices
+                                  </StandardButton>
+                                  <StandardButton
+                                    size="sm"
+                                    variant="ghost"
+                                    leftIcon={<FaShareAlt />}
+                                  >
+                                    Share Story
+                                  </StandardButton>
+                                </HStack>
+                              </VStack>
+                            </HStack>
+                          </StandardCard>
+                        );
+                      })}
                     </VStack>
                   </StandardSection>
                 </TabPanel>
@@ -558,10 +565,12 @@ export default function TransparencyComparison() {
                         </Text>
                       </HStack>
                       <Text fontSize="sm" color="blue.600">
-                        • Farms with higher transparency scores document {Math.round(15 * 0.95)} of 15 key farming practices
+                        • Farms with higher transparency scores document {Math.round(15 * 0.95)} of
+                        15 key farming practices
                       </Text>
                       <Text fontSize="sm" color="blue.600">
-                        • Complete documentation includes soil management, water use, and harvesting methods
+                        • Complete documentation includes soil management, water use, and harvesting
+                        methods
                       </Text>
                       <Text fontSize="sm" color="blue.600">
                         • Transparent farms help you make informed choices about your food

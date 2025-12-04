@@ -50,7 +50,10 @@ export class PasswordValidator {
   /**
    * Validate password against all requirements
    */
-  public validate(password: string, userInfo?: { email?: string; firstName?: string; lastName?: string }): PasswordValidationResult {
+  public validate(
+    password: string,
+    userInfo?: { email?: string; firstName?: string; lastName?: string }
+  ): PasswordValidationResult {
     const errors: string[] = [];
     const warnings: string[] = [];
     let score = 0;
@@ -90,7 +93,11 @@ export class PasswordValidator {
     // Check entropy
     const entropy = this.calculateEntropy(password);
     if (entropy < this.requirements.minEntropy) {
-      errors.push(`Password complexity is too low (${entropy.toFixed(1)} bits). Use more character types or increase length.`);
+      errors.push(
+        `Password complexity is too low (${entropy.toFixed(
+          1
+        )} bits). Use more character types or increase length.`
+      );
     } else {
       score += 20;
     }
@@ -147,14 +154,34 @@ export class PasswordValidator {
    */
   private hasSequentialChars(password: string): boolean {
     const sequential = [
-      '123', '234', '345', '456', '567', '678', '789', '890',
-      'abc', 'bcd', 'cde', 'def', 'efg', 'fgh', 'ghi', 'hij',
-      'qwerty', 'asdf', 'zxcv', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm'
+      '123',
+      '234',
+      '345',
+      '456',
+      '567',
+      '678',
+      '789',
+      '890',
+      'abc',
+      'bcd',
+      'cde',
+      'def',
+      'efg',
+      'fgh',
+      'ghi',
+      'hij',
+      'qwerty',
+      'asdf',
+      'zxcv',
+      'qwertyuiop',
+      'asdfghjkl',
+      'zxcvbnm'
     ];
 
     const lowerPassword = password.toLowerCase();
-    return sequential.some(seq => 
-      lowerPassword.includes(seq) || lowerPassword.includes(seq.split('').reverse().join(''))
+    return sequential.some(
+      (seq) =>
+        lowerPassword.includes(seq) || lowerPassword.includes(seq.split('').reverse().join(''))
     );
   }
 
@@ -163,19 +190,37 @@ export class PasswordValidator {
    */
   private hasCommonWords(password: string): boolean {
     const commonWords = [
-      'password', 'pass', 'admin', 'user', 'login', 'welcome',
-      'trazo', 'farm', 'agriculture', 'carbon', 'green', 'eco',
-      'company', 'business', 'office', 'work', 'home', 'family'
+      'password',
+      'pass',
+      'admin',
+      'user',
+      'login',
+      'welcome',
+      'trazo',
+      'farm',
+      'agriculture',
+      'carbon',
+      'green',
+      'eco',
+      'company',
+      'business',
+      'office',
+      'work',
+      'home',
+      'family'
     ];
 
     const lowerPassword = password.toLowerCase();
-    return commonWords.some(word => lowerPassword.includes(word));
+    return commonWords.some((word) => lowerPassword.includes(word));
   }
 
   /**
    * Check if password contains personal information
    */
-  private containsPersonalInfo(password: string, userInfo: { email?: string; firstName?: string; lastName?: string }): boolean {
+  private containsPersonalInfo(
+    password: string,
+    userInfo: { email?: string; firstName?: string; lastName?: string }
+  ): boolean {
     const lowerPassword = password.toLowerCase();
 
     if (userInfo.email) {
@@ -230,7 +275,7 @@ export const passwordValidator = new PasswordValidator();
  * Utility function for quick password validation
  */
 export function validatePassword(
-  password: string, 
+  password: string,
   userInfo?: { email?: string; firstName?: string; lastName?: string }
 ): PasswordValidationResult {
   return passwordValidator.validate(password, userInfo);
@@ -239,16 +284,18 @@ export function validatePassword(
 /**
  * Generate password requirements text for UI
  */
-export function getPasswordRequirementsText(requirements: PasswordRequirements = DEFAULT_REQUIREMENTS): string[] {
+export function getPasswordRequirementsText(
+  requirements: PasswordRequirements = DEFAULT_REQUIREMENTS
+): string[] {
   const reqs: string[] = [];
 
   reqs.push(`At least ${requirements.minLength} characters long`);
-  
+
   if (requirements.requireUppercase) reqs.push('One uppercase letter (A-Z)');
   if (requirements.requireLowercase) reqs.push('One lowercase letter (a-z)');
   if (requirements.requireNumbers) reqs.push('One number (0-9)');
   if (requirements.requireSpecialChars) reqs.push('One special character (!@#$%^&*(),.?":{}|<>)');
-  
+
   reqs.push('No sequential characters or keyboard patterns');
   reqs.push('No common words or personal information');
 

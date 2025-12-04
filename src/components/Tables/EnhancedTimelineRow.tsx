@@ -152,11 +152,11 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
         bgGradient: 'linear(to-r, orange.50, orange.100)',
         borderColor: 'orange.200'
       };
-    case 3: // General Event
+    case 3: // Other Farm Activities (Sprint 2: renamed from General Event)
       return {
         icon: FaLeaf,
         color: 'gray.500',
-        category: 'General Activity',
+        category: 'Other Farm Activity',
         bgGradient: 'linear(to-r, gray.50, gray.100)',
         borderColor: 'gray.200'
       };
@@ -206,13 +206,20 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
 // Enhanced field extraction based on event type
 const extractEventFields = (event: Event) => {
   const fields: Array<{ label: string; value: string; icon?: any; color?: string }> = [];
-  
+
   // DEBUG: Log the entire event object
   console.log('🐛 DEBUG: Full event object:', event);
-  console.log('🐛 DEBUG: Event ID:', event.id, 'Event Type:', event.event_type, 'Description:', event.description);
-  
+  console.log(
+    '🐛 DEBUG: Event ID:',
+    event.id,
+    'Event Type:',
+    event.event_type,
+    'Description:',
+    event.description
+  );
+
   // Weather events now extract data from extra_data field
-  
+
   switch (event.event_type) {
     case 0: // Weather Event
       // First check extra_data for weather fields
@@ -227,7 +234,7 @@ const extractEventFields = (event: Event) => {
         duration: event.duration,
         way_of_protection: event.way_of_protection
       });
-      
+
       // Temperature fields
       if (event.highest_temperature || extraData.highest_temperature) {
         fields.push({
@@ -245,7 +252,7 @@ const extractEventFields = (event: Event) => {
           color: 'blue.500'
         });
       }
-      
+
       // Water-related fields
       const waterDeficit = event.water_deficit || extraData.water_deficit;
       console.log('💧 DEBUG Water Deficit search:', {
@@ -253,7 +260,7 @@ const extractEventFields = (event: Event) => {
         extraDataWaterDeficit: extraData.water_deficit,
         finalValue: waterDeficit
       });
-      
+
       if (waterDeficit) {
         console.log('✅ Adding Water Deficit field:', waterDeficit);
         fields.push({
@@ -279,9 +286,10 @@ const extractEventFields = (event: Event) => {
           color: 'gray.500'
         });
       }
-      
+
       // Hailstorm specific fields - check multiple possible field names
-      const hailDiameter = event.diameter || extraData.diameter || extraData.average_hailstone_diameter;
+      const hailDiameter =
+        event.diameter || extraData.diameter || extraData.average_hailstone_diameter;
       console.log('🌨️ DEBUG Hail Diameter search:', {
         eventDiameter: event.diameter,
         extraDataDiameter: extraData.diameter,
@@ -297,7 +305,7 @@ const extractEventFields = (event: Event) => {
           color: 'gray.600'
         });
       }
-      
+
       const hailWeight = event.weight || extraData.weight || extraData.average_hailstone_weight;
       console.log('⚖️ DEBUG Hail Weight search:', {
         eventWeight: event.weight,
@@ -314,7 +322,7 @@ const extractEventFields = (event: Event) => {
           color: 'gray.700'
         });
       }
-      
+
       const weatherDuration = event.duration || extraData.duration || extraData.event_duration;
       console.log('⏱️ DEBUG Duration search:', {
         eventDuration: event.duration,
@@ -324,15 +332,19 @@ const extractEventFields = (event: Event) => {
       });
       if (weatherDuration) {
         console.log('✅ Adding Duration field:', weatherDuration);
+        // Weather event duration is stored in hours (from WeatherTab.jsx form)
+        const durationStr = weatherDuration.toString().toLowerCase();
+        const hasUnit = durationStr.includes('hour') || durationStr.includes('hr') || durationStr.includes('min');
         fields.push({
           label: 'Duration',
-          value: `${weatherDuration} ${weatherDuration.toString().includes('min') ? '' : 'min'}`,
+          value: `${weatherDuration}${hasUnit ? '' : ' hours'}`,
           icon: FaClock,
           color: 'purple.500'
         });
       }
-      
-      const protectionMethod = event.way_of_protection || extraData.way_of_protection || extraData.protection_method;
+
+      const protectionMethod =
+        event.way_of_protection || extraData.way_of_protection || extraData.protection_method;
       console.log('🛡️ DEBUG Protection search:', {
         eventProtection: event.way_of_protection,
         extraDataProtection: extraData.way_of_protection,
@@ -348,7 +360,7 @@ const extractEventFields = (event: Event) => {
           color: 'green.500'
         });
       }
-      
+
       if (event.humidity_level || extraData.humidity_level) {
         fields.push({
           label: 'Humidity',
@@ -365,7 +377,7 @@ const extractEventFields = (event: Event) => {
           color: 'red.500'
         });
       }
-      
+
       // If no weather-specific fields are found, show a message
       if (fields.length === 0) {
         fields.push({
@@ -376,7 +388,7 @@ const extractEventFields = (event: Event) => {
         });
       }
       break;
-      
+
     case 1: // Production Event
       if (event.area_covered && event.area_covered > 0) {
         fields.push({
@@ -411,7 +423,7 @@ const extractEventFields = (event: Event) => {
         });
       }
       break;
-      
+
     case 2: // Chemical Event
       if (event.commercial_name) {
         fields.push({
@@ -446,7 +458,7 @@ const extractEventFields = (event: Event) => {
         });
       }
       break;
-      
+
     case 4: // Equipment Event
       if (event.fuel_consumed) {
         fields.push({
@@ -473,8 +485,8 @@ const extractEventFields = (event: Event) => {
         });
       }
       break;
-      
-    case 3: // General Event
+
+    case 3: // Other Farm Activity (Sprint 2: renamed from General Event)
       if (event.duration) {
         fields.push({
           label: 'Duration',
@@ -500,7 +512,7 @@ const extractEventFields = (event: Event) => {
         });
       }
       break;
-      
+
     case 5: // Soil Management
       // Use actual database field names from soil management events
       if (event.area_covered) {
@@ -536,7 +548,7 @@ const extractEventFields = (event: Event) => {
         });
       }
       break;
-      
+
     case 6: // Pest Management
       if (event.pest_species) {
         fields.push({
@@ -571,7 +583,7 @@ const extractEventFields = (event: Event) => {
         });
       }
       break;
-      
+
     case 7: // Business Event
       if (event.carbon_credits_earned) {
         fields.push({
@@ -607,10 +619,10 @@ const extractEventFields = (event: Event) => {
       }
       break;
   }
-  
+
   console.log('📊 DEBUG: Final fields array for event', event.id, ':', fields);
   console.log('📊 DEBUG: Returning fields (max 4):', fields.slice(0, 4));
-  
+
   return fields.slice(0, 4); // Limit to 4 most important fields
 };
 
@@ -623,11 +635,14 @@ const getOperatorName = (event: Event, members: Member[]) => {
 // Enhanced description generation
 const getEnhancedDescription = (event: Event) => {
   // Use the observation field if it contains meaningful content
-  if (event.observation && event.observation.trim() && 
-      !event.observation.toLowerCase().includes('no additional details')) {
+  if (
+    event.observation &&
+    event.observation.trim() &&
+    !event.observation.toLowerCase().includes('no additional details')
+  ) {
     return event.observation;
   }
-  
+
   // Generate smart description based on event type and data
   switch (event.event_type) {
     case 0: // Weather
@@ -638,41 +653,49 @@ const getEnhancedDescription = (event: Event) => {
         return `Rainfall event with ${event.precipitation_amount}mm precipitation`;
       }
       return 'Weather event recorded for agricultural monitoring';
-      
+
     case 1: // Production
       const productionDetails = [];
-      if (event.area_covered) productionDetails.push(`${event.area_covered} ${event.area_unit || 'ha'}`);
-      if (event.yield_quantity) productionDetails.push(`${event.yield_quantity} ${event.yield_unit || 'units'}`);
-      
+      if (event.area_covered)
+        productionDetails.push(`${event.area_covered} ${event.area_unit || 'ha'}`);
+      if (event.yield_quantity)
+        productionDetails.push(`${event.yield_quantity} ${event.yield_unit || 'units'}`);
+
       if (productionDetails.length > 0) {
         return `Agricultural production activity covering ${productionDetails.join(' • ')}`;
       }
       return 'Production activity completed as part of sustainable farming';
-      
+
     case 2: // Chemical
       if (event.commercial_name && event.area_treated) {
-        return `Applied ${event.commercial_name} to ${event.area_treated} ${event.area_unit || 'ha'}`;
+        return `Applied ${event.commercial_name} to ${event.area_treated} ${
+          event.area_unit || 'ha'
+        }`;
       }
       return 'Chemical application for crop management';
-      
+
     case 3: // General
       if (event.activity_name) {
-        return `${event.activity_name} completed with ${event.people_involved || '1'} participant(s)`;
+        return `${event.activity_name} completed with ${
+          event.people_involved || '1'
+        } participant(s)`;
       }
       return 'General farm activity completed';
-      
+
     case 4: // Equipment
       if (event.hours_operated && event.area_worked) {
         return `Equipment operation for ${event.hours_operated} hours covering ${event.area_worked} ha`;
       }
       return 'Equipment operation completed';
-      
+
     case 5: // Soil Management
       if (event.area_covered) {
-        return `Soil management activities covering ${event.area_covered} ${event.area_unit || 'ha'}`;
+        return `Soil management activities covering ${event.area_covered} ${
+          event.area_unit || 'ha'
+        }`;
       }
       return 'Soil management activities completed';
-      
+
     case 6: // Pest Management
       if (event.pest_species && event.damage_percentage) {
         return `${event.pest_species} management with ${event.damage_percentage}% damage level`;
@@ -681,16 +704,18 @@ const getEnhancedDescription = (event: Event) => {
         return `Pest management targeting ${event.pest_species}`;
       }
       return 'Integrated pest management activities';
-      
+
     case 7: // Business
       if (event.carbon_credits_earned) {
-        return `Earned ${event.carbon_credits_earned} ${event.carbon_credits_unit || 'tons'} carbon credits`;
+        return `Earned ${event.carbon_credits_earned} ${
+          event.carbon_credits_unit || 'tons'
+        } carbon credits`;
       }
       if (event.certification_type) {
         return `${event.certification_type} certification activities`;
       }
       return 'Business sustainability activities completed';
-      
+
     default:
       return event.observation || 'Agricultural activity completed';
   }
@@ -703,7 +728,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
   const navigate = useNavigate();
-  
+
   // State to handle timeline rendering after mount
   const [isMounted, setIsMounted] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -716,18 +741,18 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
   // Get enhanced event configuration
   const eventConfig = getEventConfig(event.event_type, event.type, event.description);
-  
+
   // Extract event-specific fields
   const eventFields = extractEventFields(event);
   const operatorName = getOperatorName(event, members);
   const enhancedDescription = getEnhancedDescription(event);
-  
+
   // Force re-render after mount to fix timeline positioning
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsMounted(true);
     }, 10);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -748,7 +773,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
           transition="all 0.3s ease-in-out"
         />
       )}
-      
+
       <HStack spacing={isMobile ? 0 : 4} align="flex-start" w="100%">
         {/* Minimal Timeline Icon */}
         {!isMobile && (
@@ -761,7 +786,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
               color={eventConfig.color}
               boxShadow="0 2px 8px rgba(0,0,0,0.1)"
               _hover={{
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 transform: 'translateY(-1px)'
               }}
               transition="all 0.2s ease"
@@ -784,7 +809,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
           overflow="hidden"
           _hover={{
             borderColor: eventConfig.color,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             transform: 'translateY(-2px)'
           }}
           onClick={() => (onEventClick ? onEventClick(event) : navigate(url))}
@@ -797,17 +822,18 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                 <HStack spacing={3} flex={1} minW={0}>
                   {/* Mobile icon */}
                   {isMobile && (
-                    <Circle
-                      size="32px"
-                      bg={eventConfig.color}
-                      color="white"
-                      flexShrink={0}
-                    >
+                    <Circle size="32px" bg={eventConfig.color} color="white" flexShrink={0}>
                       <Icon as={eventConfig.icon} boxSize={4} />
                     </Circle>
                   )}
                   <VStack align="flex-start" spacing={1} flex={1} minW={0}>
-                    <Text fontSize="lg" fontWeight="600" color={textColor} noOfLines={1} letterSpacing="-0.02em">
+                    <Text
+                      fontSize="lg"
+                      fontWeight="600"
+                      color={textColor}
+                      noOfLines={1}
+                      letterSpacing="-0.02em"
+                    >
                       {title}
                     </Text>
                     <HStack spacing={2} wrap="wrap">
@@ -823,43 +849,52 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                         {eventConfig.category}
                       </Badge>
                       {carbonData?.usda_factors_based && (
-                        <Badge colorScheme="blue" variant="solid" fontSize="xs" px={2} py={1} borderRadius="6px">
+                        <Badge
+                          colorScheme="blue"
+                          variant="solid"
+                          fontSize="xs"
+                          px={2}
+                          py={1}
+                          borderRadius="6px"
+                        >
                           USDA
                         </Badge>
                       )}
                       {event.image && (
-                        <Badge colorScheme="green" variant="solid" fontSize="xs" px={2} py={1} borderRadius="6px">
+                        <Badge
+                          colorScheme="green"
+                          variant="solid"
+                          fontSize="xs"
+                          px={2}
+                          py={1}
+                          borderRadius="6px"
+                        >
                           📷 VERIFIED
                         </Badge>
                       )}
                     </HStack>
                   </VStack>
                 </HStack>
-                
+
                 {/* Clean Date Display */}
                 <VStack align="flex-end" spacing={0} flexShrink={0} ml={4}>
                   <Text fontSize="sm" fontWeight="600" color="gray.700">
-                    {new Date(event.date).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      day: 'numeric' 
+                    {new Date(event.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric'
                     })}
                   </Text>
                   <Text fontSize="xs" color="gray.500">
-                    {new Date(event.date).toLocaleTimeString([], { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
+                    {new Date(event.date).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit'
                     })}
                   </Text>
                 </VStack>
               </Flex>
 
               {/* Clean Description */}
-              <Text 
-                fontSize="sm" 
-                color="gray.600" 
-                lineHeight="relaxed"
-                noOfLines={2}
-              >
+              <Text fontSize="sm" color="gray.600" lineHeight="relaxed" noOfLines={2}>
                 {enhancedDescription}
               </Text>
 
@@ -872,9 +907,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                         {field.label}
                       </Text>
                       <HStack spacing={1}>
-                        {field.icon && (
-                          <Icon as={field.icon} color={field.color} boxSize={3} />
-                        )}
+                        {field.icon && <Icon as={field.icon} color={field.color} boxSize={3} />}
                         <Text fontSize="sm" fontWeight="600" color="gray.700" noOfLines={1}>
                           {field.value}
                         </Text>
@@ -886,12 +919,20 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
               {/* Clean Metrics Section */}
               <Divider />
-              
+
               <HStack justify="space-between" align="center" spacing={4}>
                 {/* Carbon Impact */}
                 {carbonData && !carbonData.error ? (
-                  <Tooltip 
-                    label={`Environmental Impact: ${carbonData.co2e > 0 ? '+' : ''}${carbonData.co2e} kg CO₂e ${carbonData.co2e < 0 ? '(carbon absorbed from atmosphere)' : carbonData.co2e > 0 ? '(carbon released to atmosphere)' : '(carbon neutral activity)'}`}
+                  <Tooltip
+                    label={`Environmental Impact: ${carbonData.co2e > 0 ? '+' : ''}${
+                      carbonData.co2e
+                    } kg CO₂e ${
+                      carbonData.co2e < 0
+                        ? '(carbon absorbed from atmosphere)'
+                        : carbonData.co2e > 0
+                        ? '(carbon released to atmosphere)'
+                        : '(carbon neutral activity)'
+                    }`}
                     placement="top"
                     hasArrow
                     bg="gray.700"
@@ -902,22 +943,29 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     py={2}
                   >
                     <HStack spacing={2} flex={1} cursor="help">
-                      <Circle 
-                        size="24px" 
-                        bg={carbonData.co2e < 0 ? 'green.100' : 'orange.100'}
-                      >
-                        <Icon 
-                          as={MdEco} 
-                          color={carbonData.co2e < 0 ? 'green.600' : 'orange.600'} 
+                      <Circle size="24px" bg={carbonData.co2e < 0 ? 'green.100' : 'orange.100'}>
+                        <Icon
+                          as={MdEco}
+                          color={carbonData.co2e < 0 ? 'green.600' : 'orange.600'}
                           boxSize={3}
                         />
                       </Circle>
                       <VStack spacing={0} align="flex-start" flex={1} minW={0}>
-                        <Text fontSize="sm" fontWeight="600" color={carbonData.co2e < 0 ? 'green.700' : 'orange.700'} noOfLines={1}>
-                          {carbonData.co2e > 0 ? '+' : ''}{carbonData.co2e} kg CO₂
+                        <Text
+                          fontSize="sm"
+                          fontWeight="600"
+                          color={carbonData.co2e < 0 ? 'green.700' : 'orange.700'}
+                          noOfLines={1}
+                        >
+                          {carbonData.co2e > 0 ? '+' : ''}
+                          {carbonData.co2e} kg CO₂
                         </Text>
                         <Text fontSize="xs" color="gray.500">
-                          {carbonData.co2e < 0 ? 'Reduced' : carbonData.co2e > 0 ? 'Added' : 'Neutral'}
+                          {carbonData.co2e < 0
+                            ? 'Reduced'
+                            : carbonData.co2e > 0
+                            ? 'Added'
+                            : 'Neutral'}
                         </Text>
                       </VStack>
                     </HStack>
@@ -940,10 +988,17 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       <Text fontSize="xs" color="gray.500">
                         Efficiency
                       </Text>
-                      <Text fontSize="sm" fontWeight="600" color={
-                        carbonData.efficiency_score >= 70 ? 'green.600' : 
-                        carbonData.efficiency_score >= 50 ? 'yellow.600' : 'red.600'
-                      }>
+                      <Text
+                        fontSize="sm"
+                        fontWeight="600"
+                        color={
+                          carbonData.efficiency_score >= 70
+                            ? 'green.600'
+                            : carbonData.efficiency_score >= 50
+                            ? 'yellow.600'
+                            : 'red.600'
+                        }
+                      >
                         {carbonData.efficiency_score}/100
                       </Text>
                     </VStack>

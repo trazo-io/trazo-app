@@ -171,14 +171,22 @@ function ProfileParcel() {
   }
 
   return (
-    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%" position="relative">
+    <Flex
+      direction="column"
+      alignSelf="center"
+      justifySelf="center"
+      overflow="hidden"
+      w="100%"
+      position="relative"
+    >
       {/* Clean Modern Header - Standardized with Establishment */}
-      <Box 
-        bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" 
+      <Box
+        bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
         pt={{ base: '140px', md: '100px' }}
-        pb={{ base: '80px', md: '100px' }} 
+        pb={{ base: '80px', md: '100px' }}
         px={{ base: 3, sm: 4, md: 4 }}
-        position="relative">
+        position="relative"
+      >
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
             {/* Back Button - Responsive positioning like StandardPage */}
@@ -190,7 +198,8 @@ function ProfileParcel() {
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
-                    size="sm">
+                    size="sm"
+                  >
                     Back
                   </Button>
                 </Flex>
@@ -202,12 +211,13 @@ function ProfileParcel() {
                   variant="outline"
                   leftIcon={<FaChevronLeft />}
                   onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
-                  size="sm">
+                  size="sm"
+                >
                   Back
                 </Button>
               </Flex>
             )}
-            
+
             {/* Main Title - Standardized */}
             <VStack spacing={{ base: 4, sm: 3 }}>
               <Heading
@@ -220,7 +230,8 @@ function ProfileParcel() {
                 px={{ base: 2, sm: 0 }}
                 lineHeight={{ base: '1.1', sm: '1.2', md: '1.2' }}
                 maxW={{ base: '90%', sm: '85%', md: '100%' }}
-                noOfLines={{ base: 2, md: 3 }}>
+                noOfLines={{ base: 2, md: 3 }}
+              >
                 {parcelData?.name || 'Loading...'}
               </Heading>
               <Text
@@ -230,24 +241,27 @@ function ProfileParcel() {
                 maxW={{ base: '95%', sm: '85%', lg: '60%' }}
                 lineHeight={{ base: '1.6', md: '1.7' }}
                 textAlign="center"
-                px={{ base: 2, sm: 0 }}>
+                px={{ base: 2, sm: 0 }}
+              >
                 {establishment?.name || 'Sustainable Agriculture'}
               </Text>
             </VStack>
 
             {/* Quick Stats - Standardized with Establishment */}
-            <SimpleGrid 
-              columns={{ base: 2, md: 4 }} 
-              spacing={{ base: 4, sm: 6, md: 6 }} 
-              w="full" 
+            <SimpleGrid
+              columns={{ base: 2, md: 4 }}
+              spacing={{ base: 4, sm: 6, md: 6 }}
+              w="full"
               maxW="2xl"
-              px={{ base: 2, sm: 0 }}>
+              px={{ base: 2, sm: 0 }}
+            >
               <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle 
-                  size={{ base: '60px', sm: '50px' }} 
-                  bg="green.100" 
+                <Circle
+                  size={{ base: '60px', sm: '50px' }}
+                  bg="green.100"
                   color="green.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaTractor} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -266,11 +280,12 @@ function ProfileParcel() {
               </VStack>
 
               <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle 
-                  size={{ base: '60px', sm: '50px' }} 
-                  bg="blue.100" 
+                <Circle
+                  size={{ base: '60px', sm: '50px' }}
+                  bg="blue.100"
                   color="blue.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaSeedling} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -284,11 +299,12 @@ function ProfileParcel() {
               </VStack>
 
               <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle 
-                  size={{ base: '60px', sm: '50px' }} 
-                  bg="purple.100" 
+                <Circle
+                  size={{ base: '60px', sm: '50px' }}
+                  bg="purple.100"
                   color="purple.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={MdEco} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -302,11 +318,12 @@ function ProfileParcel() {
               </VStack>
 
               <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle 
-                  size={{ base: '60px', sm: '50px' }} 
-                  bg="orange.100" 
+                <Circle
+                  size={{ base: '60px', sm: '50px' }}
+                  bg="orange.100"
                   color="orange.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaCertificate} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -330,7 +347,8 @@ function ProfileParcel() {
         mb={{ base: '60px', md: '80px' }}
         mt="-60px"
         position="relative"
-        zIndex={10}>
+        zIndex={10}
+      >
         <Card
           w={{ base: '100%', sm: '98%', md: '95%', lg: '90%', xl: '85%' }}
           p={{ base: 4, sm: 5, md: 6, lg: 8 }}
@@ -341,7 +359,8 @@ function ProfileParcel() {
           borderRadius={{ base: 'xl', md: '2xl' }}
           bg={bgColor}
           mx={{ base: 1, sm: 'auto' }}
-          position="relative">
+          position="relative"
+        >
           {/* Header with Actions - Standardized */}
           <CardHeader mb={{ base: '16px', md: '24px' }} position="relative">
             {/* Actions Menu - Top Right Corner */}
@@ -367,19 +386,22 @@ function ProfileParcel() {
                       )
                     }
                     icon={<FaEdit />}
-                    minH={{ base: '44px', md: '40px' }}>
+                    minH={{ base: '44px', md: '40px' }}
+                  >
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       {intl.formatMessage({ id: 'app.edit' }) || 'Edit'}
                     </Text>
                   </MenuItem>
-                  <MenuItem icon={<FaShare />} onClick={handleShare}
-                    minH={{ base: '44px', md: '40px' }}>
+                  <MenuItem
+                    icon={<FaShare />}
+                    onClick={handleShare}
+                    minH={{ base: '44px', md: '40px' }}
+                  >
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       Share
                     </Text>
                   </MenuItem>
-                  <MenuItem icon={<FaTrash />} color="red.500"
-                    minH={{ base: '44px', md: '40px' }}>
+                  <MenuItem icon={<FaTrash />} color="red.500" minH={{ base: '44px', md: '40px' }}>
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       {intl.formatMessage({ id: 'app.delete' }) || 'Delete'}
                     </Text>
@@ -387,152 +409,161 @@ function ProfileParcel() {
                 </MenuList>
               </Menu>
             </Box>
-            
+
             <VStack spacing={{ base: 4, md: 3 }} align="stretch">
               {/* Status Badges - Standardized */}
-              <Flex 
-                wrap="wrap" 
-                gap={{ base: 3, sm: 4 }} 
+              <Flex
+                wrap="wrap"
+                gap={{ base: 3, sm: 4 }}
                 justify={{ base: 'center', md: 'flex-start' }}
-                align="center">
+                align="center"
+              >
                 {/* Active Badge - Standardized */}
-                <Badge 
+                <Badge
                   variant="subtle"
                   colorScheme="green"
-                  fontSize="sm" 
-                  px={4} 
-                  py={2} 
+                  fontSize="sm"
+                  px={4}
+                  py={2}
                   borderRadius="lg"
                   fontWeight="600"
                   textTransform="none"
                   bg="green.50"
                   color="green.700"
                   border="1px solid"
-                  borderColor="green.200">
-                <HStack spacing={2}>
-                  <Circle size="8px" bg="green.500" />
-                  <Text>Active</Text>
-                </HStack>
-              </Badge>
-              
-              {parcelData?.certified && (
-                <Badge 
-                  variant="subtle"
-                  colorScheme="blue"
-                  fontSize="sm" 
-                  px={4} 
-                  py={2} 
-                  borderRadius="lg"
-                  fontWeight="600"
-                  textTransform="none"
-                  bg="blue.50"
-                  color="blue.700"
-                  border="1px solid"
-                  borderColor="blue.200">
+                  borderColor="green.200"
+                >
                   <HStack spacing={2}>
-                    <Icon as={FaCertificate} boxSize={3} color="blue.500" />
-                    <Text>Certified</Text>
+                    <Circle size="8px" bg="green.500" />
+                    <Text>Active</Text>
                   </HStack>
                 </Badge>
-              )}
-              
-              {parcelData?.carbon_calculation_enabled && (
-                <Badge 
-                  variant="subtle"
-                  colorScheme="purple"
-                  fontSize="sm" 
-                  px={4} 
-                  py={2} 
-                  borderRadius="lg"
-                  fontWeight="500"
-                  textTransform="none"
-                  bg="purple.50"
-                  color="purple.700"
-                  border="1px solid"
-                  borderColor="purple.200">
-                  <HStack spacing={2}>
-                    <Icon as={FaLeaf} boxSize={3} color="purple.500" />
-                    <Text>Carbon Tracking</Text>
-                  </HStack>
-                </Badge>
-              )}
-              
-              {parcelData?.usda_compliance_eligible && (
-                <Badge 
-                  variant="subtle"
-                  colorScheme="orange"
-                  fontSize="sm" 
-                  px={4} 
-                  py={2} 
-                  borderRadius="lg"
-                  fontWeight="500"
-                  textTransform="none"
-                  bg="orange.50"
-                  color="orange.700"
-                  border="1px solid"
-                  borderColor="orange.200">
-                  <HStack spacing={2}>
-                    <Icon as={MdVerified} boxSize={3} color="orange.500" />
-                    <Text>USDA Eligible</Text>
-                  </HStack>
-                </Badge>
-              )}
-              
-              {parcelData?.transparency_ready && (
-                <Badge 
-                  variant="subtle"
-                  colorScheme="cyan"
-                  fontSize="sm" 
-                  px={4} 
-                  py={2} 
-                  borderRadius="lg"
-                  fontWeight="600"
-                  textTransform="none"
-                  bg="cyan.50"
-                  color="cyan.700"
-                  border="1px solid"
-                  borderColor="cyan.200">
-                  <HStack spacing={2}>
-                    <Icon as={FaEye} boxSize={3} color="cyan.500" />
-                    <Text>Consumer Ready</Text>
-                  </HStack>
-                </Badge>
-              )}
-              
-              {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
-                <Badge 
-                  variant="subtle"
-                  colorScheme="teal"
-                  fontSize="sm" 
-                  px={4} 
-                  py={2} 
-                  borderRadius="lg"
-                  fontWeight="600"
-                  textTransform="none"
-                  bg="teal.50"
-                  color="teal.700"
-                  border="1px solid"
-                  borderColor="teal.200">
-                  <HStack spacing={2}>
-                    <Circle size="8px" bg="teal.500" />
-                    <Text>Transparency: {parcelData.transparency_score}%</Text>
-                  </HStack>
-                </Badge>
-              )}
+
+                {parcelData?.certified && (
+                  <Badge
+                    variant="subtle"
+                    colorScheme="blue"
+                    fontSize="sm"
+                    px={4}
+                    py={2}
+                    borderRadius="lg"
+                    fontWeight="600"
+                    textTransform="none"
+                    bg="blue.50"
+                    color="blue.700"
+                    border="1px solid"
+                    borderColor="blue.200"
+                  >
+                    <HStack spacing={2}>
+                      <Icon as={FaCertificate} boxSize={3} color="blue.500" />
+                      <Text>Certified</Text>
+                    </HStack>
+                  </Badge>
+                )}
+
+                {parcelData?.carbon_calculation_enabled && (
+                  <Badge
+                    variant="subtle"
+                    colorScheme="purple"
+                    fontSize="sm"
+                    px={4}
+                    py={2}
+                    borderRadius="lg"
+                    fontWeight="500"
+                    textTransform="none"
+                    bg="purple.50"
+                    color="purple.700"
+                    border="1px solid"
+                    borderColor="purple.200"
+                  >
+                    <HStack spacing={2}>
+                      <Icon as={FaLeaf} boxSize={3} color="purple.500" />
+                      <Text>Carbon Tracking</Text>
+                    </HStack>
+                  </Badge>
+                )}
+
+                {parcelData?.usda_compliance_eligible && (
+                  <Badge
+                    variant="subtle"
+                    colorScheme="orange"
+                    fontSize="sm"
+                    px={4}
+                    py={2}
+                    borderRadius="lg"
+                    fontWeight="500"
+                    textTransform="none"
+                    bg="orange.50"
+                    color="orange.700"
+                    border="1px solid"
+                    borderColor="orange.200"
+                  >
+                    <HStack spacing={2}>
+                      <Icon as={MdVerified} boxSize={3} color="orange.500" />
+                      <Text>USDA Eligible</Text>
+                    </HStack>
+                  </Badge>
+                )}
+
+                {parcelData?.transparency_ready && (
+                  <Badge
+                    variant="subtle"
+                    colorScheme="cyan"
+                    fontSize="sm"
+                    px={4}
+                    py={2}
+                    borderRadius="lg"
+                    fontWeight="600"
+                    textTransform="none"
+                    bg="cyan.50"
+                    color="cyan.700"
+                    border="1px solid"
+                    borderColor="cyan.200"
+                  >
+                    <HStack spacing={2}>
+                      <Icon as={FaEye} boxSize={3} color="cyan.500" />
+                      <Text>Consumer Ready</Text>
+                    </HStack>
+                  </Badge>
+                )}
+
+                {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
+                  <Badge
+                    variant="subtle"
+                    colorScheme="teal"
+                    fontSize="sm"
+                    px={4}
+                    py={2}
+                    borderRadius="lg"
+                    fontWeight="600"
+                    textTransform="none"
+                    bg="teal.50"
+                    color="teal.700"
+                    border="1px solid"
+                    borderColor="teal.200"
+                  >
+                    <HStack spacing={2}>
+                      <Circle size="8px" bg="teal.500" />
+                      <Text>Transparency: {parcelData.transparency_score}%</Text>
+                    </HStack>
+                  </Badge>
+                )}
               </Flex>
-              
+
               {/* Header Row */}
-              <Flex 
-                align="center" 
-                justify="space-between" 
+              <Flex
+                align="center"
+                justify="space-between"
                 flexWrap={{ base: 'wrap', md: 'nowrap' }}
-                gap={{ base: 3, md: 4 }}>
-                <Heading 
-                  color={textColor} 
-                  fontSize={{ base: 'md', sm: 'lg', md: 'xl' }} 
+                gap={{ base: 3, md: 4 }}
+              >
+                <Heading
+                  color={textColor}
+                  fontSize={{ base: 'md', sm: 'lg', md: 'xl' }}
                   fontWeight="bold"
                   textAlign={{ base: 'center', md: 'left' }}
-                  flex="1">
+                  flex="1"
+                >
                   Parcel Information
                 </Heading>
               </Flex>
@@ -540,7 +571,11 @@ function ProfileParcel() {
           </CardHeader>
 
           <CardBody>
-            <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 6, md: 8 }} mb={{ base: 6, md: 10 }}>
+            <SimpleGrid
+              columns={{ base: 1, lg: 2 }}
+              spacing={{ base: 6, md: 8 }}
+              mb={{ base: 6, md: 10 }}
+            >
               {/* Left Column */}
               <Box>
                 {/* Image Gallery */}
@@ -559,7 +594,12 @@ function ProfileParcel() {
                 </Box>
 
                 {/* Basic Information */}
-                <StandardCard title="Basic Information" variant="flat" icon={FaBuilding} mb={{ base: 4, md: 6 }}>
+                <StandardCard
+                  title="Basic Information"
+                  variant="flat"
+                  icon={FaBuilding}
+                  mb={{ base: 4, md: 6 }}
+                >
                   <VStack spacing={3} align="stretch">
                     <HStack>
                       <Icon as={FaTractor} color="green.600" />
@@ -569,7 +609,11 @@ function ProfileParcel() {
                     <HStack>
                       <Icon as={FaMapMarkedAlt} color="blue.500" />
                       <Text fontWeight="medium">Area:</Text>
-                      <Text>{parcelData?.area ? formatAreaWithBothUnits(parcelData.area, 'METRIC') : '--'}</Text>
+                      <Text>
+                        {parcelData?.area
+                          ? formatAreaWithBothUnits(parcelData.area, 'METRIC')
+                          : '--'}
+                      </Text>
                     </HStack>
                     {parcelData?.unique_code && (
                       <HStack>
@@ -596,12 +640,25 @@ function ProfileParcel() {
                 </StandardCard>
 
                 {/* 🎯 TRANSPARENCY STORY SECTION - Consumer-Facing Narrative */}
-                {(parcelData?.transparency_description || parcelData?.sustainability_practices || parcelData?.consumer_story) && (
-                  <StandardCard title="Consumer Transparency" variant="flat" icon={FaEye} mb={{ base: 4, md: 6 }}>
+                {(parcelData?.transparency_description ||
+                  parcelData?.sustainability_practices ||
+                  parcelData?.consumer_story) && (
+                  <StandardCard
+                    title="Consumer Transparency"
+                    variant="flat"
+                    icon={FaEye}
+                    mb={{ base: 4, md: 6 }}
+                  >
                     <VStack spacing={4} align="stretch">
                       {/* Main Transparency Description */}
                       {parcelData?.transparency_description && (
-                        <Box p={4} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
+                        <Box
+                          p={4}
+                          bg="green.50"
+                          borderRadius="lg"
+                          border="1px"
+                          borderColor="green.200"
+                        >
                           <VStack spacing={2} align="stretch">
                             <HStack>
                               <Icon as={FaLeaf} color="green.600" />
@@ -615,10 +672,16 @@ function ProfileParcel() {
                           </VStack>
                         </Box>
                       )}
-                      
+
                       {/* Sustainability Practices */}
                       {parcelData?.sustainability_practices && (
-                        <Box p={4} bg="blue.50" borderRadius="lg" border="1px" borderColor="blue.200">
+                        <Box
+                          p={4}
+                          bg="blue.50"
+                          borderRadius="lg"
+                          border="1px"
+                          borderColor="blue.200"
+                        >
                           <VStack spacing={2} align="stretch">
                             <HStack>
                               <Icon as={FaSeedling} color="blue.600" />
@@ -632,10 +695,16 @@ function ProfileParcel() {
                           </VStack>
                         </Box>
                       )}
-                      
+
                       {/* Consumer Story */}
                       {parcelData?.consumer_story && (
-                        <Box p={4} bg="purple.50" borderRadius="lg" border="1px" borderColor="purple.200">
+                        <Box
+                          p={4}
+                          bg="purple.50"
+                          borderRadius="lg"
+                          border="1px"
+                          borderColor="purple.200"
+                        >
                           <VStack spacing={2} align="stretch">
                             <HStack>
                               <Icon as={FaUsers} color="purple.600" />
@@ -649,10 +718,16 @@ function ProfileParcel() {
                           </VStack>
                         </Box>
                       )}
-                      
+
                       {/* Transparency Quality Indicator */}
                       {parcelData?.transparency_score && (
-                        <Box p={3} bg="gray.50" borderRadius="md" border="1px" borderColor="gray.200">
+                        <Box
+                          p={3}
+                          bg="gray.50"
+                          borderRadius="md"
+                          border="1px"
+                          borderColor="gray.200"
+                        >
                           <HStack justify="space-between">
                             <HStack>
                               <Icon as={FaEye} color="gray.600" />
@@ -660,10 +735,19 @@ function ProfileParcel() {
                                 Consumer Transparency Score
                               </Text>
                             </HStack>
-                            <Badge 
-                              colorScheme={parcelData.transparency_score >= 80 ? "green" : parcelData.transparency_score >= 60 ? "yellow" : "gray"}
+                            <Badge
+                              colorScheme={
+                                parcelData.transparency_score >= 80
+                                  ? 'green'
+                                  : parcelData.transparency_score >= 60
+                                  ? 'yellow'
+                                  : 'gray'
+                              }
                               variant="solid"
-                              px={3} py={1} borderRadius="full">
+                              px={3}
+                              py={1}
+                              borderRadius="full"
+                            >
                               {parcelData.transparency_score}%
                             </Badge>
                           </HStack>
@@ -674,7 +758,12 @@ function ProfileParcel() {
                 )}
 
                 {/* Technology & Features Card - CRITICAL for trust building */}
-                <StandardCard title="Technology & Features" variant="flat" icon={FaLeaf} mb={{ base: 4, md: 6 }}>
+                <StandardCard
+                  title="Technology & Features"
+                  variant="flat"
+                  icon={FaLeaf}
+                  mb={{ base: 4, md: 6 }}
+                >
                   <VStack spacing={4} align="stretch">
                     {/* Carbon Calculation Status */}
                     <HStack justify="space-between">
@@ -682,14 +771,21 @@ function ProfileParcel() {
                         <Icon as={FaLeaf} color="green.600" />
                         <Text fontWeight="medium">Carbon Calculation:</Text>
                       </HStack>
-                      <Badge 
-                        variant="subtle" 
-                        colorScheme={parcelData?.carbon_calculation_enabled ? "green" : "gray"}
-                        px={3} py={1} borderRadius="full"
+                      <Badge
+                        variant="subtle"
+                        colorScheme={parcelData?.carbon_calculation_enabled ? 'green' : 'gray'}
+                        px={3}
+                        py={1}
+                        borderRadius="full"
                       >
                         <HStack spacing={2}>
-                          <Circle size="8px" bg={parcelData?.carbon_calculation_enabled ? "green.500" : "gray.400"} />
-                          <Text>{parcelData?.carbon_calculation_enabled ? 'Enabled' : 'Disabled'}</Text>
+                          <Circle
+                            size="8px"
+                            bg={parcelData?.carbon_calculation_enabled ? 'green.500' : 'gray.400'}
+                          />
+                          <Text>
+                            {parcelData?.carbon_calculation_enabled ? 'Enabled' : 'Disabled'}
+                          </Text>
                         </HStack>
                       </Badge>
                     </HStack>
@@ -700,14 +796,21 @@ function ProfileParcel() {
                         <Icon as={FaCertificate} color="blue.600" />
                         <Text fontWeight="medium">USDA Compliance:</Text>
                       </HStack>
-                      <Badge 
-                        variant="subtle" 
-                        colorScheme={parcelData?.usda_compliance_eligible ? "blue" : "gray"}
-                        px={3} py={1} borderRadius="full"
+                      <Badge
+                        variant="subtle"
+                        colorScheme={parcelData?.usda_compliance_eligible ? 'blue' : 'gray'}
+                        px={3}
+                        py={1}
+                        borderRadius="full"
                       >
                         <HStack spacing={2}>
-                          <Circle size="8px" bg={parcelData?.usda_compliance_eligible ? "blue.500" : "gray.400"} />
-                          <Text>{parcelData?.usda_compliance_eligible ? 'Eligible' : 'Not Eligible'}</Text>
+                          <Circle
+                            size="8px"
+                            bg={parcelData?.usda_compliance_eligible ? 'blue.500' : 'gray.400'}
+                          />
+                          <Text>
+                            {parcelData?.usda_compliance_eligible ? 'Eligible' : 'Not Eligible'}
+                          </Text>
                         </HStack>
                       </Badge>
                     </HStack>
@@ -715,177 +818,325 @@ function ProfileParcel() {
                 </StandardCard>
 
                 {/* Agricultural Data Section */}
-                {parcelData?.agricultural_details && Object.keys(parcelData.agricultural_details).length > 0 && (
-                  <StandardCard title="Agricultural Practices" variant="flat" icon={FaSeedling} mb={{ base: 4, md: 6 }}>
-                    
-                    <VStack spacing={6} align="stretch">
-                      {/* Soil Health Section */}
-                      {(parcelData.agricultural_details.soil_ph || parcelData.agricultural_details.soil_organic_matter || 
-                        parcelData.agricultural_details.soil_nitrogen || parcelData.agricultural_details.soil_phosphorus) && (
-                        <Box>
-                          <HStack spacing={2} mb={3}>
-                            <Circle size="20px" bg="orange.100">
-                              <Icon as={FaLeaf} color="orange.500" boxSize={3} />
-                            </Circle>
-                            <Text fontWeight="bold" color="orange.600" fontSize="sm">
-                              SOIL HEALTH
-                            </Text>
-                          </HStack>
-                          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
-                            {parcelData.agricultural_details.soil_ph && (
-                              <VStack spacing={1} p={3} bg="orange.50" borderRadius="md" border="1px" borderColor="orange.200">
-                                <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                  {parseFloat(parcelData.agricultural_details.soil_ph).toFixed(1)}
-                                </Text>
-                                <Text fontSize="xs" color="gray.600">pH Level</Text>
-                              </VStack>
-                            )}
-                            {parcelData.agricultural_details.soil_organic_matter && (
-                              <VStack spacing={1} p={3} bg="green.50" borderRadius="md" border="1px" borderColor="green.200">
-                                <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                  {parseFloat(parcelData.agricultural_details.soil_organic_matter).toFixed(1)}%
-                                </Text>
-                                <Text fontSize="xs" color="gray.600">Organic Matter</Text>
-                              </VStack>
-                            )}
-                            {parcelData.agricultural_details.soil_nitrogen && (
-                              <VStack spacing={1} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
-                                <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                  {parseFloat(parcelData.agricultural_details.soil_nitrogen).toFixed(0)}
-                                </Text>
-                                <Text fontSize="xs" color="gray.600">Nitrogen (ppm)</Text>
-                              </VStack>
-                            )}
-                            {parcelData.agricultural_details.soil_phosphorus && (
-                              <VStack spacing={1} p={3} bg="purple.50" borderRadius="md" border="1px" borderColor="purple.200">
-                                <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                  {parseFloat(parcelData.agricultural_details.soil_phosphorus).toFixed(0)}
-                                </Text>
-                                <Text fontSize="xs" color="gray.600">Phosphorus (ppm)</Text>
-                              </VStack>
-                            )}
-                          </SimpleGrid>
-                        </Box>
-                      )}
+                {parcelData?.agricultural_details &&
+                  Object.keys(parcelData.agricultural_details).length > 0 && (
+                    <StandardCard
+                      title="Agricultural Practices"
+                      variant="flat"
+                      icon={FaSeedling}
+                      mb={{ base: 4, md: 6 }}
+                    >
+                      <VStack spacing={6} align="stretch">
+                        {/* Soil Health Section */}
+                        {(parcelData.agricultural_details.soil_ph ||
+                          parcelData.agricultural_details.soil_organic_matter ||
+                          parcelData.agricultural_details.soil_nitrogen ||
+                          parcelData.agricultural_details.soil_phosphorus) && (
+                          <Box>
+                            <HStack spacing={2} mb={3}>
+                              <Circle size="20px" bg="orange.100">
+                                <Icon as={FaLeaf} color="orange.500" boxSize={3} />
+                              </Circle>
+                              <Text fontWeight="bold" color="orange.600" fontSize="sm">
+                                SOIL HEALTH
+                              </Text>
+                            </HStack>
+                            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
+                              {parcelData.agricultural_details.soil_ph && (
+                                <VStack
+                                  spacing={1}
+                                  p={3}
+                                  bg="orange.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="orange.200"
+                                >
+                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                    {parseFloat(parcelData.agricultural_details.soil_ph).toFixed(1)}
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.600">
+                                    pH Level
+                                  </Text>
+                                </VStack>
+                              )}
+                              {parcelData.agricultural_details.soil_organic_matter && (
+                                <VStack
+                                  spacing={1}
+                                  p={3}
+                                  bg="green.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="green.200"
+                                >
+                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                    {parseFloat(
+                                      parcelData.agricultural_details.soil_organic_matter
+                                    ).toFixed(1)}
+                                    %
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.600">
+                                    Organic Matter
+                                  </Text>
+                                </VStack>
+                              )}
+                              {parcelData.agricultural_details.soil_nitrogen && (
+                                <VStack
+                                  spacing={1}
+                                  p={3}
+                                  bg="blue.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="blue.200"
+                                >
+                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                    {parseFloat(
+                                      parcelData.agricultural_details.soil_nitrogen
+                                    ).toFixed(0)}
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.600">
+                                    Nitrogen (ppm)
+                                  </Text>
+                                </VStack>
+                              )}
+                              {parcelData.agricultural_details.soil_phosphorus && (
+                                <VStack
+                                  spacing={1}
+                                  p={3}
+                                  bg="purple.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="purple.200"
+                                >
+                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                    {parseFloat(
+                                      parcelData.agricultural_details.soil_phosphorus
+                                    ).toFixed(0)}
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.600">
+                                    Phosphorus (ppm)
+                                  </Text>
+                                </VStack>
+                              )}
+                            </SimpleGrid>
+                          </Box>
+                        )}
 
-                      {/* Water Management Section */}
-                      {(parcelData.agricultural_details.irrigation_efficiency || parcelData.agricultural_details.water_source_type || 
-                        parcelData.agricultural_details.water_quality_ph || parcelData.agricultural_details.water_allocation_acre_feet) && (
-                        <Box>
-                          <HStack spacing={2} mb={3}>
-                            <Circle size="20px" bg="blue.100">
-                              <Icon as={FaTint} color="blue.500" boxSize={3} />
-                            </Circle>
-                            <Text fontWeight="bold" color="blue.600" fontSize="sm">
-                              WATER MANAGEMENT
-                            </Text>
-                          </HStack>
-                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                            {parcelData.agricultural_details.irrigation_efficiency && (
-                              <HStack spacing={3} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
-                                <VStack spacing={0}>
-                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                    {parseFloat(parcelData.agricultural_details.irrigation_efficiency).toFixed(0)}%
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.600">Irrigation Efficiency</Text>
-                                </VStack>
-                              </HStack>
-                            )}
-                            {parcelData.agricultural_details.water_source_type && (
-                              <HStack spacing={3} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
-                                <VStack spacing={0} align="start">
-                                  <Text fontSize="sm" fontWeight="bold" color="gray.800">
-                                    {parcelData.agricultural_details.water_source_type.replace(/([A-Z])/g, ' $1').trim()}
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.600">Water Source</Text>
-                                </VStack>
-                              </HStack>
-                            )}
-                            {parcelData.agricultural_details.water_quality_ph && (
-                              <HStack spacing={3} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
-                                <VStack spacing={0}>
-                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                    {parseFloat(parcelData.agricultural_details.water_quality_ph).toFixed(1)}
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.600">Water pH</Text>
-                                </VStack>
-                              </HStack>
-                            )}
-                            {parcelData.agricultural_details.water_allocation_acre_feet && (
-                              <HStack spacing={3} p={3} bg="blue.50" borderRadius="md" border="1px" borderColor="blue.200">
-                                <VStack spacing={0}>
-                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                    {parseFloat(parcelData.agricultural_details.water_allocation_acre_feet).toFixed(1)}
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.600">Acre-Feet Allocated</Text>
-                                </VStack>
-                              </HStack>
-                            )}
-                          </SimpleGrid>
-                        </Box>
-                      )}
+                        {/* Water Management Section */}
+                        {(parcelData.agricultural_details.irrigation_efficiency ||
+                          parcelData.agricultural_details.water_source_type ||
+                          parcelData.agricultural_details.water_quality_ph ||
+                          parcelData.agricultural_details.water_allocation_acre_feet) && (
+                          <Box>
+                            <HStack spacing={2} mb={3}>
+                              <Circle size="20px" bg="blue.100">
+                                <Icon as={FaTint} color="blue.500" boxSize={3} />
+                              </Circle>
+                              <Text fontWeight="bold" color="blue.600" fontSize="sm">
+                                WATER MANAGEMENT
+                              </Text>
+                            </HStack>
+                            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                              {parcelData.agricultural_details.irrigation_efficiency && (
+                                <HStack
+                                  spacing={3}
+                                  p={3}
+                                  bg="blue.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="blue.200"
+                                >
+                                  <VStack spacing={0}>
+                                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                      {parseFloat(
+                                        parcelData.agricultural_details.irrigation_efficiency
+                                      ).toFixed(0)}
+                                      %
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.600">
+                                      Irrigation Efficiency
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              )}
+                              {parcelData.agricultural_details.water_source_type && (
+                                <HStack
+                                  spacing={3}
+                                  p={3}
+                                  bg="blue.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="blue.200"
+                                >
+                                  <VStack spacing={0} align="start">
+                                    <Text fontSize="sm" fontWeight="bold" color="gray.800">
+                                      {parcelData.agricultural_details.water_source_type
+                                        .replace(/([A-Z])/g, ' $1')
+                                        .trim()}
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.600">
+                                      Water Source
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              )}
+                              {parcelData.agricultural_details.water_quality_ph && (
+                                <HStack
+                                  spacing={3}
+                                  p={3}
+                                  bg="blue.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="blue.200"
+                                >
+                                  <VStack spacing={0}>
+                                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                      {parseFloat(
+                                        parcelData.agricultural_details.water_quality_ph
+                                      ).toFixed(1)}
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.600">
+                                      Water pH
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              )}
+                              {parcelData.agricultural_details.water_allocation_acre_feet && (
+                                <HStack
+                                  spacing={3}
+                                  p={3}
+                                  bg="blue.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="blue.200"
+                                >
+                                  <VStack spacing={0}>
+                                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                                      {parseFloat(
+                                        parcelData.agricultural_details.water_allocation_acre_feet
+                                      ).toFixed(1)}
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.600">
+                                      Acre-Feet Allocated
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              )}
+                            </SimpleGrid>
+                          </Box>
+                        )}
 
-                      {/* Conservation Practices Section */}
-                      {(parcelData.agricultural_details.cover_crop_management || parcelData.agricultural_details.crop_rotation_pattern || 
-                        parcelData.agricultural_details.pest_management_strategy || parcelData.agricultural_details.fertilization_program) && (
-                        <Box>
-                          <HStack spacing={2} mb={3}>
-                            <Circle size="20px" bg="green.100">
-                              <Icon as={MdEco} color="green.500" boxSize={3} />
-                            </Circle>
-                            <Text fontWeight="bold" color="green.600" fontSize="sm">
-                              CONSERVATION PRACTICES
-                            </Text>
-                          </HStack>
-                          <VStack spacing={2} align="stretch">
-                            {parcelData.agricultural_details.cover_crop_management && (
-                              <HStack spacing={3} p={3} bg="green.50" borderRadius="md" border="1px" borderColor="green.200">
-                                <Icon as={FaSeedling} color="green.600" />
-                                <VStack spacing={0} align="start">
-                                  <Text fontSize="sm" fontWeight="medium" color="gray.700">Cover Crops</Text>
-                                  <Text fontSize="xs" color="gray.600">{parcelData.agricultural_details.cover_crop_management}</Text>
-                                </VStack>
-                              </HStack>
-                            )}
-                            {parcelData.agricultural_details.crop_rotation_pattern && (
-                              <HStack spacing={3} p={3} bg="green.50" borderRadius="md" border="1px" borderColor="green.200">
-                                <Icon as={FaLeaf} color="green.500" />
-                                <VStack spacing={0} align="start">
-                                  <Text fontSize="sm" fontWeight="medium" color="gray.700">Crop Rotation</Text>
-                                  <Text fontSize="xs" color="gray.600">{parcelData.agricultural_details.crop_rotation_pattern}</Text>
-                                </VStack>
-                              </HStack>
-                            )}
-                            {parcelData.agricultural_details.pest_management_strategy && (
-                              <HStack spacing={3} p={3} bg="yellow.50" borderRadius="md" border="1px" borderColor="yellow.200">
-                                <Icon as={FaUsers} color="yellow.600" />
-                                <VStack spacing={0} align="start">
-                                  <Text fontSize="sm" fontWeight="medium" color="gray.700">Pest Management</Text>
-                                  <Text fontSize="xs" color="gray.600">{parcelData.agricultural_details.pest_management_strategy}</Text>
-                                </VStack>
-                              </HStack>
-                            )}
-                            {parcelData.agricultural_details.fertilization_program && (
-                              <HStack spacing={3} p={3} bg="purple.50" borderRadius="md" border="1px" borderColor="purple.200">
-                                <Icon as={MdEco} color="purple.500" />
-                                <VStack spacing={0} align="start">
-                                  <Text fontSize="sm" fontWeight="medium" color="gray.700">Fertilization Program</Text>
-                                  <Text fontSize="xs" color="gray.600">{parcelData.agricultural_details.fertilization_program}</Text>
-                                </VStack>
-                              </HStack>
-                            )}
-                          </VStack>
-                        </Box>
-                      )}
-                    </VStack>
-                  </StandardCard>
-                )}
+                        {/* Conservation Practices Section */}
+                        {(parcelData.agricultural_details.cover_crop_management ||
+                          parcelData.agricultural_details.crop_rotation_pattern ||
+                          parcelData.agricultural_details.pest_management_strategy ||
+                          parcelData.agricultural_details.fertilization_program) && (
+                          <Box>
+                            <HStack spacing={2} mb={3}>
+                              <Circle size="20px" bg="green.100">
+                                <Icon as={MdEco} color="green.500" boxSize={3} />
+                              </Circle>
+                              <Text fontWeight="bold" color="green.600" fontSize="sm">
+                                CONSERVATION PRACTICES
+                              </Text>
+                            </HStack>
+                            <VStack spacing={2} align="stretch">
+                              {parcelData.agricultural_details.cover_crop_management && (
+                                <HStack
+                                  spacing={3}
+                                  p={3}
+                                  bg="green.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="green.200"
+                                >
+                                  <Icon as={FaSeedling} color="green.600" />
+                                  <VStack spacing={0} align="start">
+                                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                                      Cover Crops
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.600">
+                                      {parcelData.agricultural_details.cover_crop_management}
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              )}
+                              {parcelData.agricultural_details.crop_rotation_pattern && (
+                                <HStack
+                                  spacing={3}
+                                  p={3}
+                                  bg="green.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="green.200"
+                                >
+                                  <Icon as={FaLeaf} color="green.500" />
+                                  <VStack spacing={0} align="start">
+                                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                                      Crop Rotation
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.600">
+                                      {parcelData.agricultural_details.crop_rotation_pattern}
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              )}
+                              {parcelData.agricultural_details.pest_management_strategy && (
+                                <HStack
+                                  spacing={3}
+                                  p={3}
+                                  bg="yellow.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="yellow.200"
+                                >
+                                  <Icon as={FaUsers} color="yellow.600" />
+                                  <VStack spacing={0} align="start">
+                                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                                      Pest Management
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.600">
+                                      {parcelData.agricultural_details.pest_management_strategy}
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              )}
+                              {parcelData.agricultural_details.fertilization_program && (
+                                <HStack
+                                  spacing={3}
+                                  p={3}
+                                  bg="purple.50"
+                                  borderRadius="md"
+                                  border="1px"
+                                  borderColor="purple.200"
+                                >
+                                  <Icon as={MdEco} color="purple.500" />
+                                  <VStack spacing={0} align="start">
+                                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                                      Fertilization Program
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.600">
+                                      {parcelData.agricultural_details.fertilization_program}
+                                    </Text>
+                                  </VStack>
+                                </HStack>
+                              )}
+                            </VStack>
+                          </Box>
+                        )}
+                      </VStack>
+                    </StandardCard>
+                  )}
 
                 {/* Contact Information */}
                 {(parcelData?.contact_person ||
                   parcelData?.contact_email ||
                   parcelData?.contact_phone) && (
-                  <StandardCard title="Contact Information" variant="flat" icon={FaPhone} mb={{ base: 4, md: 6 }}>
+                  <StandardCard
+                    title="Contact Information"
+                    variant="flat"
+                    icon={FaPhone}
+                    mb={{ base: 4, md: 6 }}
+                  >
                     <VStack spacing={3} align="stretch">
                       {parcelData?.contact_person && (
                         <HStack>
@@ -920,7 +1171,12 @@ function ProfileParcel() {
               {/* Right Column */}
               <Box>
                 {/* Enhanced Location Information */}
-                <StandardCard title="Location Details" variant="flat" icon={MdLocationOn} mb={{ base: 4, md: 6 }}>
+                <StandardCard
+                  title="Location Details"
+                  variant="flat"
+                  icon={MdLocationOn}
+                  mb={{ base: 4, md: 6 }}
+                >
                   <VStack spacing={3} align="stretch">
                     {/* Complete Address */}
                     {parcelData?.address && (
@@ -958,16 +1214,19 @@ function ProfileParcel() {
                         <Text>{establishment.zone}</Text>
                       </HStack>
                     )}
-                    
+
                     {/* Add Coordinates if available */}
-                    {(parcelData?.latitude && parcelData?.longitude) && (
+                    {parcelData?.latitude && parcelData?.longitude && (
                       <HStack>
                         <Icon as={FaGlobe} color="blue.600" />
                         <Text fontWeight="medium">Coordinates:</Text>
-                        <Text>{parseFloat(parcelData.latitude).toFixed(6)}, {parseFloat(parcelData.longitude).toFixed(6)}</Text>
+                        <Text>
+                          {parseFloat(parcelData.latitude).toFixed(6)},{' '}
+                          {parseFloat(parcelData.longitude).toFixed(6)}
+                        </Text>
                       </HStack>
                     )}
-                    
+
                     {/* Add Elevation if available */}
                     {parcelData?.elevation && (
                       <HStack>
@@ -981,7 +1240,12 @@ function ProfileParcel() {
 
                 {/* Certification Information */}
                 {(parcelData?.certified || parcelData?.certification_type) && (
-                  <StandardCard title="Certification" variant="flat" icon={FaCertificate} mb={{ base: 4, md: 6 }}>
+                  <StandardCard
+                    title="Certification"
+                    variant="flat"
+                    icon={FaCertificate}
+                    mb={{ base: 4, md: 6 }}
+                  >
                     <VStack spacing={3} align="stretch">
                       <HStack>
                         <Icon
@@ -1005,7 +1269,12 @@ function ProfileParcel() {
                 )}
 
                 {/* Company Information */}
-                <StandardCard title="Company & Establishment" variant="flat" icon={FaBuilding} mb={{ base: 4, md: 6 }}>
+                <StandardCard
+                  title="Company & Establishment"
+                  variant="flat"
+                  icon={FaBuilding}
+                  mb={{ base: 4, md: 6 }}
+                >
                   <VStack spacing={3} align="stretch">
                     <HStack>
                       <Icon as={FaBuilding} color="green.600" />

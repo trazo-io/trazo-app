@@ -190,7 +190,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
           direction={{ base: 'column', sm: 'row' }}
           justify="space-between"
           align={{ base: 'stretch', sm: 'center' }}
-          gap={4}>
+          gap={4}
+        >
           <VStack align={{ base: 'center', sm: 'start' }} spacing={1}>
             <Heading size="md" color={textColor} textAlign={{ base: 'center', sm: 'left' }}>
               Production Journey
@@ -206,7 +207,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
             px={3}
             py={1}
             borderRadius="full"
-            alignSelf={{ base: 'center', sm: 'flex-start' }}>
+            alignSelf={{ base: 'center', sm: 'flex-start' }}
+          >
             <HStack spacing={1}>
               <Icon as={MdVerified} boxSize={3} />
               <Text>{filteredEvents.filter((e) => e.certified).length} Verified</Text>
@@ -221,7 +223,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
             borderRadius="lg"
             p={4}
             border="1px solid"
-            borderColor={useColorModeValue('green.200', 'green.700')}>
+            borderColor={useColorModeValue('green.200', 'green.700')}
+          >
             <VStack spacing={3} align="stretch">
               <Flex justify="space-between" align="center">
                 <Text fontSize="sm" fontWeight="semibold" color="green.800">
@@ -265,14 +268,16 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
           direction={{ base: 'column', sm: 'row' }}
           spacing={2}
           wrap="wrap"
-          justify={{ base: 'center', sm: 'flex-start' }}>
+          justify={{ base: 'center', sm: 'flex-start' }}
+        >
           <Button
             size="sm"
             variant={selectedCategory === 'all' ? 'solid' : 'outline'}
             colorScheme="green"
             onClick={() => setSelectedCategory('all')}
             borderRadius="full"
-            fontSize="xs">
+            fontSize="xs"
+          >
             All Activities
           </Button>
           {categories.slice(1, 3).map((category) => (
@@ -284,7 +289,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
               onClick={() => setSelectedCategory(category)}
               borderRadius="full"
               fontSize="xs"
-              display={{ base: 'none', sm: 'flex' }}>
+              display={{ base: 'none', sm: 'flex' }}
+            >
               {category.replace(' Activity', '').replace(' Application', '')}
             </Button>
           ))}
@@ -307,7 +313,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
               _hover={{ shadow: 'xl', transform: 'translateY(-1px)' }}
               transition="all 0.2s"
               overflow="hidden"
-              w="full">
+              w="full"
+            >
               {/* MOBILE-OPTIMIZED: Full-width card layout for maximum space utilization */}
               <Box position="relative">
                 {/* Top-right verification indicators for immediate trust visibility */}
@@ -318,7 +325,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                     fontSize="xs"
                     px={2}
                     py={1}
-                    borderRadius="full">
+                    borderRadius="full"
+                  >
                     {config.category.replace(' Activity', '').replace(' Application', '')}
                   </Badge>
 
@@ -338,7 +346,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                       size={{ base: 'md', md: 'lg' }}
                       color={textColor}
                       lineHeight="short"
-                      w="full">
+                      w="full"
+                    >
                       {event.description}
                     </Heading>
 
@@ -357,7 +366,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                         fontSize="xs"
                         px={3}
                         py={1}
-                        borderRadius="full">
+                        borderRadius="full"
+                      >
                         <HStack spacing={1}>
                           <Icon as={config.icon} boxSize={3} />
                           <Text>LOW IMPACT</Text>
@@ -371,7 +381,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                         fontSize={{ base: 'md', md: 'lg' }}
                         color={useColorModeValue('gray.700', 'gray.300')}
                         lineHeight="relaxed"
-                        w="full">
+                        w="full"
+                      >
                         {event.observation}
                       </Text>
                     )}
@@ -385,7 +396,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                         <SimpleGrid
                           columns={event.album.images.length === 1 ? 1 : 2}
                           spacing={2}
-                          w="full">
+                          w="full"
+                        >
                           {event.album.images.map((image) => (
                             <AspectRatio key={image.id} ratio={4 / 3}>
                               <Image
@@ -399,7 +411,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                                     borderRadius="lg"
                                     display="flex"
                                     alignItems="center"
-                                    justifyContent="center">
+                                    justifyContent="center"
+                                  >
                                     <Text fontSize="xs" color={mutedColor}>
                                       Photo verification
                                     </Text>
@@ -436,7 +449,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                               fontSize="sm"
                               px={3}
                               py={1}
-                              borderRadius="lg">
+                              borderRadius="lg"
+                            >
                               Volume: {event.volume}
                             </Badge>
                           )}
@@ -447,7 +461,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                               fontSize="sm"
                               px={3}
                               py={1}
-                              borderRadius="lg">
+                              borderRadius="lg"
+                            >
                               Area: {event.area} ha
                             </Badge>
                           )}
@@ -458,7 +473,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                               fontSize="sm"
                               px={3}
                               py={1}
-                              borderRadius="lg">
+                              borderRadius="lg"
+                            >
                               Concentration: {event.concentration}
                             </Badge>
                           )}
@@ -477,7 +493,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                       _hover={{
                         bg: useColorModeValue('green.50', 'gray.700'),
                         borderColor: 'green.500'
-                      }}>
+                      }}
+                    >
                       Learn More
                     </Button>
                   </VStack>
@@ -497,7 +514,8 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
             leftIcon={<Icon as={showAll ? FaChevronUp : FaChevronDown} />}
             onClick={() => setShowAll(!showAll)}
             size="sm"
-            borderRadius="full">
+            borderRadius="full"
+          >
             {showAll ? `Show Less` : `Show ${filteredEvents.length - 3} More Activities`}
           </Button>
         </Flex>

@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  SimpleGrid,
-  VStack,
-  Icon,
-  Text,
-  useColorModeValue
-} from '@chakra-ui/react';
+import { SimpleGrid, VStack, Icon, Text, useColorModeValue } from '@chakra-ui/react';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 

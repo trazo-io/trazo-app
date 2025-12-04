@@ -51,7 +51,10 @@ export const HeroShimmer: React.FC = () => {
 
   return (
     <Box
-      bg={`linear-gradient(135deg, ${useColorModeValue('green.50', 'green.900')}15 0%, ${useColorModeValue('green.50', 'green.900')}05 100%)`}
+      bg={`linear-gradient(135deg, ${useColorModeValue(
+        'green.50',
+        'green.900'
+      )}15 0%, ${useColorModeValue('green.50', 'green.900')}05 100%)`}
       minH="60vh"
       position="relative"
       pt="145px"
@@ -72,7 +75,7 @@ export const HeroShimmer: React.FC = () => {
         bgSize="20px 20px"
         color="green.500"
       />
-      
+
       {/* Container with max width */}
       <Box maxW="container.md" mx="auto" position="relative" zIndex={1}>
         <VStack spacing={6} align="center" textAlign="center">
@@ -141,14 +144,7 @@ export const JourneyShimmer: React.FC = () => {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   return (
-    <Box
-      bg={cardBg}
-      borderRadius="xl"
-      border="1px solid"
-      borderColor={borderColor}
-      p={6}
-      w="full"
-    >
+    <Box bg={cardBg} borderRadius="xl" border="1px solid" borderColor={borderColor} p={6} w="full">
       <VStack spacing={6}>
         {/* Header */}
         <HStack justify="space-between" w="full">
@@ -200,14 +196,7 @@ export const TransparencyShimmer: React.FC = () => {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   return (
-    <Box
-      bg={cardBg}
-      borderRadius="xl"
-      border="1px solid"
-      borderColor={borderColor}
-      p={6}
-      w="full"
-    >
+    <Box bg={cardBg} borderRadius="xl" border="1px solid" borderColor={borderColor} p={6} w="full">
       <VStack spacing={6}>
         {/* Header with score */}
         <HStack justify="space-between" w="full" align="start">
@@ -342,7 +331,7 @@ export const SidebarShimmer: React.FC = () => {
 };
 
 // Simple card shimmer for various use cases
-export const CardShimmer: React.FC<{ height?: string }> = ({ height = "200px" }) => {
+export const CardShimmer: React.FC<{ height?: string }> = ({ height = '200px' }) => {
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 

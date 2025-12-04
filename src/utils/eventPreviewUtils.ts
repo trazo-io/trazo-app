@@ -22,6 +22,7 @@ export interface PreviewEventData {
   data_integrity_score?: number;
   usda_verified?: boolean;
   volume?: string;
+  volume_unit?: string;
   area?: string;
   carbon_impact?: number;
   event_type?: number;
@@ -46,6 +47,8 @@ export interface PreviewEventData {
   npk_ratio?: string;
   active_ingredient?: string;
   application_method?: string;
+  chemical_type?: string; // FE, PE, FU, HE - the main chemical category
+  chemical_subtype?: string; // Added 2025-01-21: organic vs synthetic differentiation
   target_pest_disease_need?: string;
   weather_conditions?: string;
   application_timing?: string;
@@ -97,8 +100,8 @@ const EVENT_TYPE_MAP = {
   3: 'general',
   4: 'equipment',
   5: 'soil_management',
-  6: 'pest_management',  // ✅ FIXED: Event Type 6 = Pest Management
-  7: 'business'          // ✅ FIXED: Event Type 7 = Business
+  6: 'pest_management', // ✅ FIXED: Event Type 6 = Pest Management
+  7: 'business' // ✅ FIXED: Event Type 7 = Business
 };
 
 /**
@@ -413,6 +416,11 @@ export function transformFormDataToEvent(
       // CRITICAL: Preserve specific chemical type (FE, PE, FU, HE) for event descriptions
       if (formData.type && ['FE', 'PE', 'FU', 'HE'].includes(formData.type)) {
         event.chemical_type = formData.type;
+      }
+      // Chemical subtype for accurate carbon emission calculations (organic, synthetic, biological, etc.)
+      // Added 2025-01-21: Ensures preview matches ProductDetail display for transparency
+      if (formData.chemical_subtype) {
+        event.chemical_subtype = formData.chemical_subtype;
       }
       if (formData.volume) event.volume = String(formData.volume);
       if (formData.volume_applied) event.volume = String(formData.volume_applied);

@@ -3,10 +3,10 @@ import { useLazyGetBatchPresignedReadUrlsQuery } from '../store/api/mediaApi';
 
 /**
  * 2025 Best Practice: Batch S3 Image Loading Hook
- * 
+ *
  * This hook implements the modern pattern for loading multiple S3 images
  * using a single batch API request instead of individual requests per image.
- * 
+ *
  * Benefits:
  * - Reduces HTTP request overhead
  * - Utilizes HTTP/2 multiplexing
@@ -41,17 +41,17 @@ export interface BatchS3ImagesResult {
 
 /**
  * Hook to batch load presigned URLs for multiple S3 images
- * 
+ *
  * @example
  * ```tsx
  * const establishments = [
  *   { image: 'https://bucket.s3.amazonaws.com/image1.jpg' },
  *   { image: 'https://bucket.s3.amazonaws.com/image2.jpg' }
  * ];
- * 
+ *
  * const s3Urls = establishments.map(e => e.image).filter(Boolean);
  * const { presignedUrls, isLoading } = useBatchS3Images({ s3Urls });
- * 
+ *
  * // Later in component:
  * <S3Image src={establishment.image} presignedUrl={presignedUrls[establishment.image]} />
  * ```
@@ -61,22 +61,21 @@ export const useBatchS3Images = ({
   enabled = true,
   skipEmpty = true
 }: BatchS3ImagesOptions): BatchS3ImagesResult => {
-  
   // Filter valid URLs
   const validS3Urls = useMemo(() => {
     console.log('🔍 [useBatchS3Images] Processing URLs:', { s3Urls, enabled, skipEmpty });
-    
+
     if (!Array.isArray(s3Urls)) {
       console.log('❌ [useBatchS3Images] s3Urls is not an array:', s3Urls);
       return [];
     }
-    
+
     let filtered = s3Urls;
-    
+
     if (skipEmpty) {
-      filtered = filtered.filter(url => url && url.trim() && url !== '');
+      filtered = filtered.filter((url) => url && url.trim() && url !== '');
     }
-    
+
     // Remove duplicates
     const result = Array.from(new Set(filtered));
     console.log('✅ [useBatchS3Images] Valid URLs after filtering:', result);
@@ -84,25 +83,21 @@ export const useBatchS3Images = ({
   }, [s3Urls, skipEmpty]);
 
   // Initialize the lazy query
-  const [triggerBatchQuery, { 
-    data, 
-    isLoading, 
-    error, 
-    isSuccess 
-  }] = useLazyGetBatchPresignedReadUrlsQuery();
+  const [triggerBatchQuery, { data, isLoading, error, isSuccess }] =
+    useLazyGetBatchPresignedReadUrlsQuery();
 
   // Trigger the batch request when conditions are met
   useEffect(() => {
-    console.log('🚀 [useBatchS3Images] useEffect trigger check:', { 
-      enabled, 
-      urlCount: validS3Urls.length, 
+    console.log('🚀 [useBatchS3Images] useEffect trigger check:', {
+      enabled,
+      urlCount: validS3Urls.length,
       urls: validS3Urls,
       timestamp: new Date().toISOString()
     });
-    
+
     if (enabled && validS3Urls.length > 0) {
       console.log('📡 [useBatchS3Images] Triggering FRESH batch query for URLs:', validS3Urls);
-      
+
       // Add a debug marker to the document for easier identification
       if (typeof window !== 'undefined') {
         window.__TRAZO_BATCH_DEBUG = {
@@ -113,12 +108,15 @@ export const useBatchS3Images = ({
           urlsHash: validS3Urls.join('|') // Help identify URL changes
         };
       }
-      
+
       // Force fresh request by using forceRefetch
       triggerBatchQuery({ s3_urls: validS3Urls }, true);
     } else {
-      console.log('⏸️ [useBatchS3Images] Batch query NOT triggered:', { enabled, urlCount: validS3Urls.length });
-      
+      console.log('⏸️ [useBatchS3Images] Batch query NOT triggered:', {
+        enabled,
+        urlCount: validS3Urls.length
+      });
+
       if (typeof window !== 'undefined') {
         window.__TRAZO_BATCH_DEBUG = {
           batchTriggered: false,
@@ -140,20 +138,23 @@ export const useBatchS3Images = ({
   // Process the response data
   const presignedUrls = useMemo(() => {
     console.log('📥 [useBatchS3Images] Processing response data:', { data, isLoading, error });
-    
+
     if (!data?.presigned_urls) {
       console.log('❌ [useBatchS3Images] No presigned_urls in response:', data);
       return {};
     }
-    
-    console.log('✅ [useBatchS3Images] Successfully processed presigned URLs:', data.presigned_urls);
+
+    console.log(
+      '✅ [useBatchS3Images] Successfully processed presigned URLs:',
+      data.presigned_urls
+    );
     return data.presigned_urls;
   }, [data, isLoading, error]);
 
   // Extract performance metrics
   const metrics = useMemo(() => {
     if (!data) return undefined;
-    
+
     return {
       batch_size: data.batch_size,
       processing_time_ms: data.processing_time_ms,

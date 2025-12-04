@@ -226,7 +226,8 @@ export const LocationImporter: React.FC<LocationImporterProps> = ({ data, onChan
                   variant="outline"
                   onClick={handleGetCurrentLocation}
                   isLoading={isLoadingLocation}
-                  loadingText="Getting location...">
+                  loadingText="Getting location..."
+                >
                   Get Location
                 </Button>
               </HStack>
@@ -261,7 +262,8 @@ export const LocationImporter: React.FC<LocationImporterProps> = ({ data, onChan
                         colorScheme="green"
                         onClick={handleAddressSearch}
                         isLoading={isLoadingLocation}
-                        minW="100px">
+                        minW="100px"
+                      >
                         Search
                       </Button>
                     </HStack>
@@ -322,8 +324,8 @@ export const LocationImporter: React.FC<LocationImporterProps> = ({ data, onChan
                   {data.farmLocation.lng.toFixed(6)}
                 </Text>
                 <Text>
-                  <strong>Farm Size:</strong> {(data.farmLocation.acres * 0.40468564224).toFixed(2)} hectares (
-                  {data.farmLocation.acres} acres)
+                  <strong>Farm Size:</strong> {(data.farmLocation.acres * 0.40468564224).toFixed(2)}{' '}
+                  hectares ({data.farmLocation.acres} acres)
                 </Text>
               </VStack>
 

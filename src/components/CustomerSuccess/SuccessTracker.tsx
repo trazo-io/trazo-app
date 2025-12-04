@@ -61,7 +61,7 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
 }) => {
   const [milestones, setMilestones] = useState<SuccessMilestone[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
-  
+
   const bg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
@@ -199,16 +199,19 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
 
   // Calculate overall progress
   useEffect(() => {
-    const completedMilestones = milestones.filter(m => m.status === 'completed').length;
+    const completedMilestones = milestones.filter((m) => m.status === 'completed').length;
     const totalMilestones = milestones.length;
     setOverallProgress(totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0);
   }, [milestones]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'green';
-      case 'in_progress': return 'blue';
-      default: return 'gray';
+      case 'completed':
+        return 'green';
+      case 'in_progress':
+        return 'blue';
+      default:
+        return 'gray';
     }
   };
 
@@ -219,8 +222,8 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
     return 'red';
   };
 
-  const completedCount = milestones.filter(m => m.status === 'completed').length;
-  const inProgressCount = milestones.filter(m => m.status === 'in_progress').length;
+  const completedCount = milestones.filter((m) => m.status === 'completed').length;
+  const inProgressCount = milestones.filter((m) => m.status === 'in_progress').length;
 
   return (
     <Card bg={bg} borderColor={borderColor}>
@@ -235,16 +238,22 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
             </Text>
           </VStack>
           <VStack align="end" spacing={1}>
-            <Text fontSize="2xl" fontWeight="700" color={`${getProgressColor(overallProgress)}.500`}>
+            <Text
+              fontSize="2xl"
+              fontWeight="700"
+              color={`${getProgressColor(overallProgress)}.500`}
+            >
               {Math.round(overallProgress)}%
             </Text>
-            <Text fontSize="xs" color="gray.500">Complete</Text>
+            <Text fontSize="xs" color="gray.500">
+              Complete
+            </Text>
           </VStack>
         </Flex>
-        <Progress 
-          value={overallProgress} 
+        <Progress
+          value={overallProgress}
           colorScheme={getProgressColor(overallProgress)}
-          size="sm" 
+          size="sm"
           mt={4}
           borderRadius="full"
         />
@@ -255,12 +264,16 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
         <SimpleGrid columns={3} spacing={4} mb={6}>
           <Stat>
             <StatLabel fontSize="xs">Completed</StatLabel>
-            <StatNumber fontSize="lg" color="green.500">{completedCount}</StatNumber>
+            <StatNumber fontSize="lg" color="green.500">
+              {completedCount}
+            </StatNumber>
             <StatHelpText fontSize="xs">milestones</StatHelpText>
           </Stat>
           <Stat>
             <StatLabel fontSize="xs">In Progress</StatLabel>
-            <StatNumber fontSize="lg" color="blue.500">{inProgressCount}</StatNumber>
+            <StatNumber fontSize="lg" color="blue.500">
+              {inProgressCount}
+            </StatNumber>
             <StatHelpText fontSize="xs">active</StatHelpText>
           </Stat>
           <Stat>
@@ -279,10 +292,9 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
             <Box>
               <AlertTitle fontSize="sm">Next Step Recommendation</AlertTitle>
               <AlertDescription fontSize="xs">
-                {userType === 'farmer' 
+                {userType === 'farmer'
                   ? 'Complete your first carbon score to unlock premium pricing opportunities'
-                  : 'Scan your first product to discover its carbon story and support sustainable farming'
-                }
+                  : 'Scan your first product to discover its carbon story and support sustainable farming'}
               </AlertDescription>
             </Box>
           </Alert>
@@ -294,7 +306,7 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
             const progress = (milestone.currentValue / milestone.targetValue) * 100;
             const isCompleted = milestone.status === 'completed';
             const isInProgress = milestone.status === 'in_progress';
-            
+
             return (
               <Box
                 key={milestone.id}
@@ -316,7 +328,7 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
                   >
                     <Icon as={milestone.icon} boxSize={5} />
                   </Circle>
-                  
+
                   <Box flex="1">
                     <Flex justify="space-between" align="start" mb={2}>
                       <VStack align="start" spacing={1}>
@@ -329,15 +341,18 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
                             variant={isCompleted ? 'solid' : 'subtle'}
                             size="sm"
                           >
-                            {milestone.status === 'completed' ? 'Done' : 
-                             milestone.status === 'in_progress' ? 'Active' : 'Pending'}
+                            {milestone.status === 'completed'
+                              ? 'Done'
+                              : milestone.status === 'in_progress'
+                              ? 'Active'
+                              : 'Pending'}
                           </Badge>
                         </HStack>
                         <Text fontSize="xs" color="gray.600">
                           {milestone.description}
                         </Text>
                       </VStack>
-                      
+
                       <VStack align="end" spacing={1}>
                         <Text fontSize="xs" color="gray.500">
                           <Icon as={FiClock} mr={1} />
@@ -351,7 +366,7 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
                         )}
                       </VStack>
                     </Flex>
-                    
+
                     {!isCompleted && (
                       <Progress
                         value={progress}
@@ -375,11 +390,10 @@ const SuccessTracker: React.FC<SuccessTrackerProps> = ({
             <Box>
               <AlertTitle fontSize="sm">Congratulations! 🎉</AlertTitle>
               <AlertDescription fontSize="xs">
-                You've mastered carbon intelligence! 
-                {userType === 'farmer' 
-                  ? ' You\'re now ready to unlock premium markets and carbon credits.'
-                  : ' You\'re now a carbon-conscious consumer making climate-positive choices.'
-                }
+                You've mastered carbon intelligence!
+                {userType === 'farmer'
+                  ? " You're now ready to unlock premium markets and carbon credits."
+                  : " You're now a carbon-conscious consumer making climate-positive choices."}
               </AlertDescription>
             </Box>
           </Alert>

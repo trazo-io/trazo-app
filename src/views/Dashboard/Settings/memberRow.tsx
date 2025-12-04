@@ -36,7 +36,8 @@ const MemberRow = (props: MemberRowProps) => {
       _hover={{ bg: 'gray.50' }}
       transition="all 0.2s"
       borderBottom="1px solid"
-      borderColor="gray.100">
+      borderColor="gray.100"
+    >
       <Td py={5} px={6}>
         <Text color={textColor} fontSize="md" fontWeight="semibold">
           {name}
@@ -59,7 +60,8 @@ const MemberRow = (props: MemberRowProps) => {
                 fontWeight="medium"
                 border="1px solid"
                 w="fit-content"
-                borderColor="green.200">
+                borderColor="green.200"
+              >
                 {establishment}
               </Badge>
             ))
@@ -74,7 +76,8 @@ const MemberRow = (props: MemberRowProps) => {
               fontSize="xs"
               fontWeight="medium"
               border="1px solid"
-              borderColor="gray.200">
+              borderColor="gray.200"
+            >
               Sin establecimientos
             </Badge>
           )}
@@ -92,7 +95,8 @@ const MemberRow = (props: MemberRowProps) => {
           fontWeight="semibold"
           border="1px solid"
           borderColor="blue.200"
-          textTransform="capitalize">
+          textTransform="capitalize"
+        >
           {role}
         </Badge>
       </Td>
@@ -113,7 +117,8 @@ const MemberRow = (props: MemberRowProps) => {
               bg: 'gray.200',
               borderColor: 'gray.300'
             }}
-            transition="all 0.2s">
+            transition="all 0.2s"
+          >
             <Icon as={IoEllipsisVerticalSharp} color="gray.600" w="18px" h="18px" />
           </MenuButton>
           <MenuList
@@ -121,13 +126,15 @@ const MemberRow = (props: MemberRowProps) => {
             boxShadow="lg"
             border="1px solid"
             borderColor="gray.100"
-            py={2}>
+            py={2}
+          >
             <MenuItem
               onClick={() => {}}
               _hover={{ bg: 'green.50' }}
               borderRadius="lg"
               mx={2}
-              mb={1}>
+              mb={1}
+            >
               <Flex color={textColor} cursor="pointer" align="center">
                 <Text fontSize="sm" fontWeight="medium">
                   {intl.formatMessage({ id: 'app.edit' })}

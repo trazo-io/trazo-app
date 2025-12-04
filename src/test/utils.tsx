@@ -1,57 +1,51 @@
-import React, { ReactElement } from 'react'
-import { render, RenderOptions } from '@testing-library/react'
-import { ChakraProvider } from '@chakra-ui/react'
-import { Provider } from 'react-redux'
-import { BrowserRouter } from 'react-router-dom'
-import { configureStore } from '@reduxjs/toolkit'
-import theme from '../theme/theme'
-import { api } from '../store/api/api'
+import React, { ReactElement } from 'react';
+import { render, RenderOptions } from '@testing-library/react';
+import { ChakraProvider } from '@chakra-ui/react';
+import { Provider } from 'react-redux';
+import { BrowserRouter } from 'react-router-dom';
+import { configureStore } from '@reduxjs/toolkit';
+import theme from '../theme/theme';
+import { api } from '../store/api/api';
 
 // Mock store for testing
 const createTestStore = (preloadedState = {}) => {
   return configureStore({
     reducer: {
-      api: api.reducer,
+      api: api.reducer
     },
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware().concat(api.middleware),
-    preloadedState,
-  })
-}
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+    preloadedState
+  });
+};
 
 interface AllTheProvidersProps {
-  children: React.ReactNode
-  initialState?: any
+  children: React.ReactNode;
+  initialState?: any;
 }
 
-const AllTheProviders: React.FC<AllTheProvidersProps> = ({ 
-  children, 
-  initialState = {} 
-}) => {
-  const store = createTestStore(initialState)
-  
+const AllTheProviders: React.FC<AllTheProvidersProps> = ({ children, initialState = {} }) => {
+  const store = createTestStore(initialState);
+
   return (
     <Provider store={store}>
       <ChakraProvider theme={theme}>
-        <BrowserRouter>
-          {children}
-        </BrowserRouter>
+        <BrowserRouter>{children}</BrowserRouter>
       </ChakraProvider>
     </Provider>
-  )
-}
+  );
+};
 
 const customRender = (
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'> & { initialState?: any }
 ) => {
-  const { initialState, ...renderOptions } = options || {}
-  
+  const { initialState, ...renderOptions } = options || {};
+
   return render(ui, {
     wrapper: (props) => <AllTheProviders {...props} initialState={initialState} />,
-    ...renderOptions,
-  })
-}
+    ...renderOptions
+  });
+};
 
 // Mock API responses
 export const mockApiResponse = {
@@ -59,21 +53,21 @@ export const mockApiResponse = {
     data,
     isLoading: false,
     isError: false,
-    error: null,
+    error: null
   }),
   loading: () => ({
     data: undefined,
     isLoading: true,
     isError: false,
-    error: null,
+    error: null
   }),
   error: (message: string) => ({
     data: undefined,
     isLoading: false,
     isError: true,
-    error: { message },
-  }),
-}
+    error: { message }
+  })
+};
 
 // Mock user data
 export const mockUser = {
@@ -82,8 +76,8 @@ export const mockUser = {
   first_name: 'Test',
   last_name: 'User',
   user_type: 'producer',
-  is_active: true,
-}
+  is_active: true
+};
 
 // Mock company data
 export const mockCompany = {
@@ -100,12 +94,12 @@ export const mockCompany = {
           id: 1,
           name: 'Test Field',
           area: 100,
-          certified: false,
+          certified: false
         }
       ]
     }
   ]
-}
+};
 
 // Mock production data
 export const mockProduction = {
@@ -123,8 +117,8 @@ export const mockProduction = {
     id: 1,
     name: 'Test Field'
   }
-}
+};
 
 // Export everything
-export * from '@testing-library/react'
-export { customRender as render }
+export * from '@testing-library/react';
+export { customRender as render };

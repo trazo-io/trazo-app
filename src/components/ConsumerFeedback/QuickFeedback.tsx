@@ -282,7 +282,8 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
         borderRadius="xl"
         border="1px"
         borderColor={borderColor}
-        boxShadow="sm">
+        boxShadow="sm"
+      >
         <VStack spacing={5} align="stretch">
           {/* Header */}
           <HStack spacing={3}>
@@ -345,7 +346,8 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
                     }
                   : {}
               }
-              opacity={hasConsent ? 1 : 0.6}>
+              opacity={hasConsent ? 1 : 0.6}
+            >
               {hasConsent ? 'Submit Feedback' : 'Consent Required for Feedback'}
             </Button>
 
@@ -362,7 +364,8 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
               onClick={handleFullReview}
               leftIcon={<Icon as={FaStar} />}
               borderRadius="lg"
-              w="full">
+              w="full"
+            >
               {isAuthenticated ? 'Write Detailed Review' : 'Sign In for Full Review'}
             </Button>
           </VStack>

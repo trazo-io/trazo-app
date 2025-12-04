@@ -552,13 +552,15 @@ const getDataSourceConfidence = (
   carbonData: CarbonCalculationResult
 ): 'high' | 'medium' | 'low' => {
   if (carbonData.error) return 'low';
-  
+
   // Check for USDA verification using new field (usda_factors_based) with fallback to old field
   if (carbonData.usda_factors_based || carbonData.usda_verified) return 'high';
-  
+
   // Check verification status for certified data
-  if (carbonData.verification_status === 'usda_certified' || 
-      carbonData.verification_status === 'factors_verified') {
+  if (
+    carbonData.verification_status === 'usda_certified' ||
+    carbonData.verification_status === 'factors_verified'
+  ) {
     return 'high';
   }
 
@@ -575,79 +577,135 @@ const getDataSourceConfidence = (
 // Helper function to render specific event fields based on event type
 const renderSpecificEventFields = (event: Event, cardBg: string, textColor: string) => {
   const fields: Array<{ label: string; value: string; priority: 'immediate' | 'secondary' }> = [];
-  
+
   // Extract extra_data for easier access
   const extraData = event.extra_data || {};
 
   // Weather Events (Type 0)
   if (event.event_type === 0) {
-    if (extraData.lower_temperature !== undefined) {
+    // Cast event to access weather-specific fields that come at root level from backend
+    const weatherEvent = event as any;
+
+    // Frost event fields
+    if (extraData.lower_temperature !== undefined || weatherEvent.lower_temperature !== undefined) {
+      const temp = extraData.lower_temperature ?? weatherEvent.lower_temperature;
       fields.push({
         label: 'Lower Temperature',
-        value: `${extraData.lower_temperature}°C (${(extraData.lower_temperature * 9/5 + 32).toFixed(1)}°F)`,
+        value: `${temp}°C (${((temp * 9) / 5 + 32).toFixed(1)}°F)`,
         priority: 'immediate'
       });
     }
-    if (extraData.way_of_protection) {
+    if (extraData.way_of_protection || weatherEvent.way_of_protection) {
       fields.push({
         label: 'Protection Method',
-        value: extraData.way_of_protection,
+        value: extraData.way_of_protection || weatherEvent.way_of_protection,
         priority: 'immediate'
       });
     }
-    if (extraData.highest_temperature !== undefined) {
+
+    // Drought event fields - water_deficit comes at root level from backend
+    if (extraData.water_deficit !== undefined || weatherEvent.water_deficit !== undefined) {
+      const waterDeficit = extraData.water_deficit ?? weatherEvent.water_deficit;
+      if (waterDeficit !== 0) {
+        fields.push({
+          label: 'Water Deficit',
+          value: `${waterDeficit}mm`,
+          priority: 'immediate'
+        });
+      }
+    }
+
+    // High temperature event fields
+    if (extraData.highest_temperature !== undefined || weatherEvent.highest_temperature !== undefined) {
+      const temp = extraData.highest_temperature ?? weatherEvent.highest_temperature;
       fields.push({
         label: 'Highest Temperature',
-        value: `${extraData.highest_temperature}°C (${(extraData.highest_temperature * 9/5 + 32).toFixed(1)}°F)`,
+        value: `${temp}°C (${((temp * 9) / 5 + 32).toFixed(1)}°F)`,
         priority: 'immediate'
       });
     }
-    if (extraData.duration !== undefined) {
-      fields.push({
-        label: 'Duration',
-        value: `${extraData.duration} hours`,
-        priority: 'secondary'
-      });
+
+    // Hailstorm event fields - these come at root level from backend
+    if (extraData.weight !== undefined || weatherEvent.weight !== undefined) {
+      const weight = extraData.weight ?? weatherEvent.weight;
+      if (weight !== 0) {
+        fields.push({
+          label: 'Hail Weight',
+          value: `${weight} g`,
+          priority: 'immediate'
+        });
+      }
     }
-    if (extraData.damage_assessment) {
+    if (extraData.diameter !== undefined || weatherEvent.diameter !== undefined) {
+      const diameter = extraData.diameter ?? weatherEvent.diameter;
+      if (diameter !== 0) {
+        fields.push({
+          label: 'Hail Diameter',
+          value: `${diameter} mm`,
+          priority: 'immediate'
+        });
+      }
+    }
+
+    // Common weather fields
+    if (extraData.duration !== undefined || weatherEvent.duration !== undefined) {
+      const duration = extraData.duration ?? weatherEvent.duration;
+      if (duration !== 0) {
+        fields.push({
+          label: 'Duration',
+          value: `${duration} hours`,
+          priority: 'secondary'
+        });
+      }
+    }
+    if (extraData.damage_assessment || weatherEvent.damage_assessment) {
       fields.push({
         label: 'Damage Assessment',
-        value: extraData.damage_assessment,
+        value: extraData.damage_assessment || weatherEvent.damage_assessment,
         priority: 'immediate'
       });
     }
-    if (extraData.protection_measures) {
+    if (extraData.protection_measures || weatherEvent.protection_measures) {
       fields.push({
         label: 'Protection Measures',
-        value: extraData.protection_measures,
+        value: extraData.protection_measures || weatherEvent.protection_measures,
         priority: 'immediate'
       });
     }
-    if (extraData.wind_speed !== undefined) {
-      fields.push({
-        label: 'Wind Speed',
-        value: `${extraData.wind_speed} mph`,
-        priority: 'immediate'
-      });
+    if (extraData.wind_speed !== undefined || weatherEvent.wind_speed !== undefined) {
+      const windSpeed = extraData.wind_speed ?? weatherEvent.wind_speed;
+      if (windSpeed !== 0) {
+        fields.push({
+          label: 'Wind Speed',
+          value: `${windSpeed} mph`,
+          priority: 'immediate'
+        });
+      }
     }
-    if (extraData.precipitation_amount !== undefined) {
-      fields.push({
-        label: 'Rainfall',
-        value: `${extraData.precipitation_amount}mm`,
-        priority: 'immediate'
-      });
+    if (extraData.precipitation_amount !== undefined || weatherEvent.precipitation_amount !== undefined) {
+      const precipitation = extraData.precipitation_amount ?? weatherEvent.precipitation_amount;
+      if (precipitation !== 0) {
+        fields.push({
+          label: 'Rainfall',
+          value: `${precipitation}mm`,
+          priority: 'immediate'
+        });
+      }
     }
-    if (extraData.humidity_level !== undefined) {
-      fields.push({
-        label: 'Humidity Level',
-        value: `${extraData.humidity_level}%`,
-        priority: 'immediate'
-      });
+    if (extraData.humidity_level !== undefined || weatherEvent.humidity_level !== undefined) {
+      const humidity = extraData.humidity_level ?? weatherEvent.humidity_level;
+      if (humidity !== 0) {
+        fields.push({
+          label: 'Humidity Level',
+          value: `${humidity}%`,
+          priority: 'immediate'
+        });
+      }
     }
-    if (extraData.crop_impact) {
+    if (extraData.crop_impact || weatherEvent.crop_impact) {
       fields.push({
         label: 'Crop Impact',
-        value: extraData.crop_impact,
+        value: extraData.crop_impact || weatherEvent.crop_impact,
         priority: 'immediate'
       });
     }
@@ -656,7 +714,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
   // Chemical Events (Type 2)
   if (event.event_type === 2) {
     const eventData = event as any;
-    
+
     // Product Name (commercial_name)
     const commercialName = eventData.commercial_name || extraData.commercial_name;
     if (commercialName) {
@@ -666,8 +724,8 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
-    // Active Ingredient 
+
+    // Active Ingredient
     const activeIngredient = eventData.active_ingredient || extraData.active_ingredient;
     if (activeIngredient) {
       fields.push({
@@ -676,7 +734,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
+
     // Concentration/Application Rate
     const concentration = eventData.concentration || extraData.concentration;
     if (concentration) {
@@ -686,7 +744,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
+
     // Volume Applied
     const volume = eventData.volume;
     if (volume) {
@@ -696,7 +754,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
+
     // Area Treated
     const area = eventData.area;
     if (area) {
@@ -706,9 +764,10 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
+
     // Application Method
-    const applicationMethod = eventData.way_of_application || eventData.application_method || extraData.application_method;
+    const applicationMethod =
+      eventData.way_of_application || eventData.application_method || extraData.application_method;
     if (applicationMethod) {
       fields.push({
         label: 'Application Method',
@@ -716,7 +775,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
+
     // Weather Conditions
     const weatherConditions = eventData.weather_conditions || extraData.weather_conditions;
     if (weatherConditions) {
@@ -726,7 +785,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
+
     // Application Timing
     const applicationTiming = eventData.application_timing || extraData.application_timing;
     if (applicationTiming) {
@@ -736,7 +795,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
+
     // Target/Purpose
     const targetPestDisease = eventData.target_pest_disease || extraData.target_pest_disease;
     if (targetPestDisease) {
@@ -746,12 +805,16 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
+
     // NPK percentages if available (check for actual values, not just undefined)
-    if ((eventData.nitrogen_percentage !== undefined && eventData.nitrogen_percentage !== null) || 
-        (eventData.phosphorus_percentage !== undefined && eventData.phosphorus_percentage !== null) || 
-        (eventData.potassium_percentage !== undefined && eventData.potassium_percentage !== null)) {
-      const npk = `${eventData.nitrogen_percentage || 0}-${eventData.phosphorus_percentage || 0}-${eventData.potassium_percentage || 0}`;
+    if (
+      (eventData.nitrogen_percentage !== undefined && eventData.nitrogen_percentage !== null) ||
+      (eventData.phosphorus_percentage !== undefined && eventData.phosphorus_percentage !== null) ||
+      (eventData.potassium_percentage !== undefined && eventData.potassium_percentage !== null)
+    ) {
+      const npk = `${eventData.nitrogen_percentage || 0}-${eventData.phosphorus_percentage || 0}-${
+        eventData.potassium_percentage || 0
+      }`;
       fields.push({
         label: 'NPK Formula',
         value: npk,
@@ -765,7 +828,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    
+
     // Pre-harvest interval
     const preHarvestInterval = eventData.pre_harvest_interval || extraData.pre_harvest_interval;
     if (preHarvestInterval !== undefined) {
@@ -782,19 +845,19 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     // Production Type - Critical field to understand the operation
     if (event.production_type || event.type) {
       const typeLabels = {
-        'PL': 'Planting/Seeding',
-        'HA': 'Harvesting', 
-        'IR': 'Irrigation',
-        'PR': 'Pruning/Trimming',
-        'TR': 'Transplanting',
-        'cultivation': 'Soil Cultivation',
-        'fertilization': 'Fertilizer Application',
-        'weeding': 'Weed Management',
-        'mulching': 'Mulching Application',
-        'planting': 'Planting/Seeding',
-        'harvesting': 'Harvesting',
-        'irrigation': 'Irrigation',
-        'pruning': 'Pruning/Trimming',
+        PL: 'Planting/Seeding',
+        HA: 'Harvesting',
+        IR: 'Irrigation',
+        PR: 'Pruning/Trimming',
+        TR: 'Transplanting',
+        cultivation: 'Soil Cultivation',
+        fertilization: 'Fertilizer Application',
+        weeding: 'Weed Management',
+        mulching: 'Mulching Application',
+        planting: 'Planting/Seeding',
+        harvesting: 'Harvesting',
+        irrigation: 'Irrigation',
+        pruning: 'Pruning/Trimming',
         // API format mappings
         'event.production.planting': 'Planting/Seeding',
         'event.production.harvesting': 'Harvesting',
@@ -818,10 +881,10 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     if (event.area_covered !== undefined && event.area_covered !== null) {
       const areaUnit = event.area_unit || 'hectares';
       const unitLabels = {
-        'ha': 'hectares',
-        'acres': 'acres', 
-        'm2': 'square meters',
-        'km2': 'square kilometers'
+        ha: 'hectares',
+        acres: 'acres',
+        m2: 'square meters',
+        km2: 'square kilometers'
       };
       fields.push({
         label: 'Area Covered',
@@ -831,20 +894,24 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
 
     // Yield/Output Quantity - For harvesting and planting
-    if (event.yield_quantity !== undefined && event.yield_quantity !== null && event.yield_quantity > 0) {
+    if (
+      event.yield_quantity !== undefined &&
+      event.yield_quantity !== null &&
+      event.yield_quantity > 0
+    ) {
       const yieldUnit = event.yield_unit || 'kg';
       const unitLabels = {
-        'kg': 'kilograms',
-        'tons': 'tonnes',
-        'lbs': 'pounds',
-        'boxes': 'boxes',
-        'plants': 'plants',
-        'seeds': 'seeds'
+        kg: 'kilograms',
+        tons: 'tonnes',
+        lbs: 'pounds',
+        boxes: 'boxes',
+        plants: 'plants',
+        seeds: 'seeds'
       };
       const productionType = event.production_type || event.type;
       const isHarvesting = productionType === 'HA' || productionType === 'harvesting';
       const isPlanting = productionType === 'PL' || productionType === 'planting';
-      
+
       fields.push({
         label: isHarvesting ? 'Quantity Harvested' : isPlanting ? 'Quantity Planted' : 'Quantity',
         value: `${event.yield_quantity} ${unitLabels[yieldUnit] || yieldUnit}`,
@@ -863,12 +930,16 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
 
     // Equipment & Fuel Usage - Critical for carbon calculations
-    if (event.fuel_consumed !== undefined && event.fuel_consumed !== null && event.fuel_consumed > 0) {
+    if (
+      event.fuel_consumed !== undefined &&
+      event.fuel_consumed !== null &&
+      event.fuel_consumed > 0
+    ) {
       const fuelUnit = event.fuel_unit || 'L';
       const unitLabels = {
-        'L': 'liters',
-        'gal': 'gallons',
-        'kg': 'kilograms'
+        L: 'liters',
+        gal: 'gallons',
+        kg: 'kilograms'
       };
       fields.push({
         label: 'Fuel Consumed',
@@ -877,7 +948,11 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
       });
     }
 
-    if (event.equipment_hours !== undefined && event.equipment_hours !== null && event.equipment_hours > 0) {
+    if (
+      event.equipment_hours !== undefined &&
+      event.equipment_hours !== null &&
+      event.equipment_hours > 0
+    ) {
       fields.push({
         label: 'Equipment Operating Hours',
         value: `${event.equipment_hours} hours`,
@@ -886,8 +961,12 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
 
     // Fuel efficiency calculation
-    if (event.fuel_consumed && event.equipment_hours && 
-        event.fuel_consumed > 0 && event.equipment_hours > 0) {
+    if (
+      event.fuel_consumed &&
+      event.equipment_hours &&
+      event.fuel_consumed > 0 &&
+      event.equipment_hours > 0
+    ) {
       const fuelEfficiency = (event.fuel_consumed / event.equipment_hours).toFixed(1);
       const fuelUnit = event.fuel_unit || 'L';
       fields.push({
@@ -898,12 +977,16 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
 
     // Transportation - For harvesting logistics
-    if (event.transportation_distance !== undefined && event.transportation_distance !== null && event.transportation_distance > 0) {
+    if (
+      event.transportation_distance !== undefined &&
+      event.transportation_distance !== null &&
+      event.transportation_distance > 0
+    ) {
       const transportUnit = event.transportation_unit || 'km';
       const unitLabels = {
-        'km': 'kilometers',
-        'miles': 'miles',
-        'm': 'meters'
+        km: 'kilometers',
+        miles: 'miles',
+        m: 'meters'
       };
       fields.push({
         label: 'Transportation Distance',
@@ -915,9 +998,9 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     // Production Efficiency Rating
     if (event.production_efficiency) {
       const efficiencyLabels = {
-        'high': 'High Efficiency (optimal conditions)',
-        'normal': 'Normal Efficiency (standard operation)',
-        'low': 'Low Efficiency (adverse conditions)'
+        high: 'High Efficiency (optimal conditions)',
+        normal: 'Normal Efficiency (standard operation)',
+        low: 'Low Efficiency (adverse conditions)'
       };
       fields.push({
         label: 'Production Efficiency',
@@ -1037,14 +1120,26 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     if (extraData.ph_value !== undefined) {
       fields.push({
         label: 'Soil pH',
-        value: `${extraData.ph_value} ${extraData.ph_value >= 6.0 && extraData.ph_value <= 7.0 ? '(optimal)' : extraData.ph_value < 6.0 ? '(acidic)' : '(alkaline)'}`,
+        value: `${extraData.ph_value} ${
+          extraData.ph_value >= 6.0 && extraData.ph_value <= 7.0
+            ? '(optimal)'
+            : extraData.ph_value < 6.0
+            ? '(acidic)'
+            : '(alkaline)'
+        }`,
         priority: 'immediate'
       });
     }
     if (extraData.organic_matter !== undefined) {
       fields.push({
         label: 'Organic Matter',
-        value: `${extraData.organic_matter}% ${extraData.organic_matter >= 4 ? '(excellent)' : extraData.organic_matter >= 2 ? '(good)' : '(needs improvement)'}`,
+        value: `${extraData.organic_matter}% ${
+          extraData.organic_matter >= 4
+            ? '(excellent)'
+            : extraData.organic_matter >= 2
+            ? '(good)'
+            : '(needs improvement)'
+        }`,
         priority: 'immediate'
       });
     }
@@ -1278,8 +1373,8 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
   if (fields.length === 0) return null;
 
   // Separate immediate and secondary fields for progressive disclosure
-  const immediateFields = fields.filter(field => field.priority === 'immediate');
-  const secondaryFields = fields.filter(field => field.priority === 'secondary');
+  const immediateFields = fields.filter((field) => field.priority === 'immediate');
+  const secondaryFields = fields.filter((field) => field.priority === 'secondary');
 
   return (
     <VStack spacing={4} align="stretch">
@@ -1558,7 +1653,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
                       Event Photos
                     </Text>
-                    <Grid 
+                    <Grid
                       templateColumns={{
                         base: 'repeat(2, 1fr)',
                         md: 'repeat(3, 1fr)',
@@ -1586,9 +1681,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                                 console.error('Image failed to load:', image.image, e);
                               }}
                               fallback={
-                                <Center 
-                                  h="100%" 
-                                  bg={cardBg} 
+                                <Center
+                                  h="100%"
+                                  bg={cardBg}
                                   borderRadius="lg"
                                   border="1px"
                                   borderColor={borderColor}

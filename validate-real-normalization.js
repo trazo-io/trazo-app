@@ -1,6 +1,6 @@
 /**
  * REAL NORMALIZATION VALIDATION
- * 
+ *
  * This script tests the actual normalization functions with real form and backend data
  * to identify actual issues rather than theoretical ones.
  */
@@ -10,7 +10,10 @@ const fs = require('fs');
 const path = require('path');
 
 // Read the actual implementation files
-const normalizationFile = fs.readFileSync(path.join(__dirname, 'src/utils/eventDataNormalizer.ts'), 'utf8');
+const normalizationFile = fs.readFileSync(
+  path.join(__dirname, 'src/utils/eventDataNormalizer.ts'),
+  'utf8'
+);
 const mappingFile = fs.readFileSync(path.join(__dirname, 'src/utils/eventFieldMapping.ts'), 'utf8');
 
 // Mock realistic form submissions based on actual form components
@@ -74,7 +77,7 @@ const REALISTIC_FORM_DATA = {
     activity_notes: 'Prepared soil for spring planting'
   },
 
-  // Equipment Event (Fuel Consumption) - Based on EquipmentTab schema  
+  // Equipment Event (Fuel Consumption) - Based on EquipmentTab schema
   equipment: {
     type: 'FC', // Form submits operation type code
     name: 'Field cultivation - North field',
@@ -159,7 +162,7 @@ const REALISTIC_BACKEND_DATA = {
   // Production Event - Backend format with formatted fields
   production: {
     id: '2',
-    type: 'production.harvesting', 
+    type: 'production.harvesting',
     description: 'Harvesting - Block A',
     date: '2024-01-16T08:00:00Z',
     event_type: 1,
@@ -311,12 +314,21 @@ const REALISTIC_BACKEND_DATA = {
 
 function validateRealNormalization() {
   console.log('🧪 REAL NORMALIZATION VALIDATION');
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
   console.log('Testing actual normalization with realistic data...\n');
-  
-  const eventTypes = ['weather', 'production', 'chemical', 'general', 'equipment', 'soil', 'pest', 'business'];
+
+  const eventTypes = [
+    'weather',
+    'production',
+    'chemical',
+    'general',
+    'equipment',
+    'soil',
+    'pest',
+    'business'
+  ];
   const eventTypeNumbers = [0, 1, 2, 3, 4, 5, 6, 7];
-  
+
   let totalTests = 0;
   let passedTests = 0;
   let criticalIssues = [];
@@ -324,23 +336,25 @@ function validateRealNormalization() {
 
   eventTypes.forEach((eventName, index) => {
     console.log(`\n🔍 Testing ${eventName.toUpperCase()} Events (Type ${eventTypeNumbers[index]})`);
-    console.log('=' .repeat(50));
-    
+    console.log('='.repeat(50));
+
     const formData = REALISTIC_FORM_DATA[eventName];
     const backendData = REALISTIC_BACKEND_DATA[eventName];
     const eventTypeNum = eventTypeNumbers[index];
-    
+
     // Test 1: Form Data Structure Validation
     console.log('\n📝 Test 1: Form Data Structure');
     totalTests++;
-    
+
     try {
       const formFields = Object.keys(formData);
       const criticalMissing = validateFormStructure(eventName, formData);
-      
+
       if (criticalMissing.length > 0) {
         console.log(`   ❌ Missing critical fields: ${criticalMissing.join(', ')}`);
-        criticalIssues.push(`${eventName}: Missing critical form fields: ${criticalMissing.join(', ')}`);
+        criticalIssues.push(
+          `${eventName}: Missing critical form fields: ${criticalMissing.join(', ')}`
+        );
       } else {
         console.log(`   ✅ Form structure looks good (${formFields.length} fields)`);
         passedTests++;
@@ -349,57 +363,63 @@ function validateRealNormalization() {
       console.log(`   ❌ Form validation error: ${error.message}`);
       criticalIssues.push(`${eventName}: Form validation error`);
     }
-    
-    // Test 2: Backend Data Compatibility  
+
+    // Test 2: Backend Data Compatibility
     console.log('\n🔄 Test 2: Backend Data Compatibility');
     totalTests++;
-    
+
     try {
       const legacyFields = detectLegacyFields(eventName, backendData);
       const mappingIssues = validateBackendMapping(eventName, backendData);
-      
+
       if (mappingIssues.length > 0) {
         console.log(`   ⚠️  Mapping issues: ${mappingIssues.join(', ')}`);
         warnings.push(`${eventName}: ${mappingIssues.join(', ')}`);
       }
-      
+
       if (legacyFields.length > 0) {
-        console.log(`   📋 Legacy fields detected: ${legacyFields.join(', ')} (handled by mapping)`);
+        console.log(
+          `   📋 Legacy fields detected: ${legacyFields.join(', ')} (handled by mapping)`
+        );
       }
-      
+
       console.log(`   ✅ Backend compatibility validated`);
       passedTests++;
     } catch (error) {
       console.log(`   ❌ Backend validation error: ${error.message}`);
       criticalIssues.push(`${eventName}: Backend validation error`);
     }
-    
+
     // Test 3: Critical Field Mapping Test
     console.log('\n🔧 Test 3: Critical Field Mappings');
     totalTests++;
-    
+
     try {
       const criticalMappings = validateCriticalMappings(eventName, formData, backendData);
-      
+
       if (criticalMappings.failed.length > 0) {
         console.log(`   ❌ Failed mappings: ${criticalMappings.failed.join(', ')}`);
-        criticalIssues.push(`${eventName}: Failed critical mappings: ${criticalMappings.failed.join(', ')}`);
+        criticalIssues.push(
+          `${eventName}: Failed critical mappings: ${criticalMappings.failed.join(', ')}`
+        );
       } else {
-        console.log(`   ✅ Critical mappings validated (${criticalMappings.passed.length} mappings)`);
+        console.log(
+          `   ✅ Critical mappings validated (${criticalMappings.passed.length} mappings)`
+        );
         passedTests++;
       }
     } catch (error) {
       console.log(`   ❌ Mapping test error: ${error.message}`);
       criticalIssues.push(`${eventName}: Mapping test error`);
     }
-    
+
     // Test 4: Data Consistency Check
-    console.log('\n🔍 Test 4: Data Consistency'); 
+    console.log('\n🔍 Test 4: Data Consistency');
     totalTests++;
-    
+
     try {
       const consistencyIssues = checkDataConsistency(eventName, formData, backendData);
-      
+
       if (consistencyIssues.length > 0) {
         console.log(`   ⚠️  Consistency issues: ${consistencyIssues.join(', ')}`);
         warnings.push(`${eventName}: ${consistencyIssues.join(', ')}`);
@@ -412,7 +432,7 @@ function validateRealNormalization() {
       criticalIssues.push(`${eventName}: Consistency check error`);
     }
   });
-  
+
   // Final Summary
   console.log('\n' + '='.repeat(60));
   console.log('📊 REAL VALIDATION SUMMARY');
@@ -421,21 +441,21 @@ function validateRealNormalization() {
   console.log(`Passed: ${passedTests}`);
   console.log(`Failed: ${totalTests - passedTests}`);
   console.log(`Success Rate: ${Math.round((passedTests / totalTests) * 100)}%`);
-  
+
   if (criticalIssues.length > 0) {
     console.log(`\n🚨 CRITICAL ISSUES (${criticalIssues.length}):`);
     criticalIssues.forEach((issue, index) => {
       console.log(`   ${index + 1}. ${issue}`);
     });
   }
-  
+
   if (warnings.length > 0) {
     console.log(`\n⚠️  WARNINGS (${warnings.length}):`);
     warnings.forEach((warning, index) => {
       console.log(`   ${index + 1}. ${warning}`);
     });
   }
-  
+
   if (criticalIssues.length === 0 && warnings.length === 0) {
     console.log('\n🎉 VALIDATION PASSED: No critical issues found!');
     console.log('✅ Form data structures are complete');
@@ -449,7 +469,7 @@ function validateRealNormalization() {
   } else {
     console.log('\n❌ VALIDATION FAILED: Critical issues need resolution');
   }
-  
+
   return {
     totalTests,
     passedTests,
@@ -463,7 +483,7 @@ function validateRealNormalization() {
 function validateFormStructure(eventType, formData) {
   const requiredFields = {
     weather: ['type', 'description'],
-    production: ['production_type', 'area_covered', 'area_unit'], 
+    production: ['production_type', 'area_covered', 'area_unit'],
     chemical: ['type', 'commercial_name', 'application_method'],
     general: ['activity_type', 'activity_name'],
     equipment: ['type', 'name', 'equipment_type'],
@@ -471,9 +491,9 @@ function validateFormStructure(eventType, formData) {
     pest: ['type', 'name', 'pest_species'],
     business: ['business_type', 'name']
   };
-  
+
   const required = requiredFields[eventType] || [];
-  const missing = required.filter(field => !formData.hasOwnProperty(field));
+  const missing = required.filter((field) => !formData.hasOwnProperty(field));
   return missing;
 }
 
@@ -484,14 +504,14 @@ function detectLegacyFields(eventType, backendData) {
     equipment: ['name'], // Backend might use 'name' instead of 'operation_name'
     general: []
   };
-  
+
   const legacyFields = legacyFieldSets[eventType] || [];
-  return legacyFields.filter(field => backendData.hasOwnProperty(field));
+  return legacyFields.filter((field) => backendData.hasOwnProperty(field));
 }
 
 function validateBackendMapping(eventType, backendData) {
   const issues = [];
-  
+
   // Check for known mapping issues
   if (eventType === 'chemical') {
     if (backendData.way_of_application && !backendData.application_method) {
@@ -501,50 +521,44 @@ function validateBackendMapping(eventType, backendData) {
       issues.push('Backend uses area instead of area_treated (needs mapping)');
     }
   }
-  
+
   return issues;
 }
 
 function validateCriticalMappings(eventType, formData, backendData) {
   const passed = [];
   const failed = [];
-  
+
   // Test critical mappings that were identified as problematic
   const criticalMappings = {
     chemical: [
       { form: 'application_method', backend: 'way_of_application', standard: 'application_method' },
       { form: 'area_treated', backend: 'area', standard: 'area_treated' }
     ],
-    equipment: [
-      { form: 'type', backend: 'operation_type', standard: 'operation_type' }
-    ],
-    soil: [
-      { form: 'type', backend: 'soil_management_type', standard: 'soil_management_type' }
-    ],
-    pest: [
-      { form: 'type', backend: 'pest_management_type', standard: 'pest_management_type' }
-    ]
+    equipment: [{ form: 'type', backend: 'operation_type', standard: 'operation_type' }],
+    soil: [{ form: 'type', backend: 'soil_management_type', standard: 'soil_management_type' }],
+    pest: [{ form: 'type', backend: 'pest_management_type', standard: 'pest_management_type' }]
   };
-  
+
   const mappings = criticalMappings[eventType] || [];
-  
-  mappings.forEach(mapping => {
+
+  mappings.forEach((mapping) => {
     const formHasField = formData.hasOwnProperty(mapping.form);
     const backendHasField = backendData.hasOwnProperty(mapping.backend);
-    
+
     if (formHasField && backendHasField) {
       passed.push(`${mapping.form} → ${mapping.backend}`);
     } else if (formHasField && !backendHasField) {
       failed.push(`Missing backend field: ${mapping.backend} for form field: ${mapping.form}`);
     }
   });
-  
+
   return { passed, failed };
 }
 
 function checkDataConsistency(eventType, formData, backendData) {
   const issues = [];
-  
+
   // Check if form and backend have equivalent data for key fields
   const keyFieldMappings = {
     weather: { form: 'type', backend: 'extra_data' },
@@ -556,17 +570,19 @@ function checkDataConsistency(eventType, formData, backendData) {
     pest: { form: 'pest_species', backend: 'pest_species' },
     business: { form: 'business_type', backend: 'business_activity_type' }
   };
-  
+
   const mapping = keyFieldMappings[eventType];
   if (mapping) {
     const formValue = formData[mapping.form];
     const backendValue = backendData[mapping.backend];
-    
+
     if (formValue && backendValue && formValue !== backendValue) {
-      issues.push(`Value mismatch: form.${mapping.form}='${formValue}' vs backend.${mapping.backend}='${backendValue}'`);
+      issues.push(
+        `Value mismatch: form.${mapping.form}='${formValue}' vs backend.${mapping.backend}='${backendValue}'`
+      );
     }
   }
-  
+
   return issues;
 }
 

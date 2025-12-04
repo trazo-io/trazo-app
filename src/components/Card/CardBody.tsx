@@ -28,12 +28,7 @@ function CardBody(props: CardBodyProps) {
   const { variant, children, ...rest } = props;
   const styles = useStyleConfig('CardBody', { variant });
   return (
-    <Box 
-      __css={styles} 
-      data-component="CardBody"
-      className="trazo-card-body"
-      {...rest}
-    >
+    <Box __css={styles} data-component="CardBody" className="trazo-card-body" {...rest}>
       {children}
     </Box>
   );

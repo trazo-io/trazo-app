@@ -23,7 +23,7 @@ class PerformanceMonitor {
   private startTime: number;
   private metrics: Partial<PerformanceMetrics> = {};
   private vitals: Partial<CoreWebVitals> = {};
-  
+
   constructor() {
     this.startTime = performance.now();
     this.detectConnection();
@@ -44,12 +44,20 @@ class PerformanceMonitor {
   // Mark transparency score display time (critical for mobile UX)
   markTransparencyDisplay(): void {
     this.metrics.transparencyDisplayTime = performance.now() - this.startTime;
-    
+
     // Target: <500ms for transparency score display
     if (this.metrics.transparencyDisplayTime <= 500) {
-      console.log(`✅ Transparency displayed in ${Math.round(this.metrics.transparencyDisplayTime)}ms (target: <500ms)`);
+      console.log(
+        `✅ Transparency displayed in ${Math.round(
+          this.metrics.transparencyDisplayTime
+        )}ms (target: <500ms)`
+      );
     } else {
-      console.warn(`⚠️ Transparency displayed in ${Math.round(this.metrics.transparencyDisplayTime)}ms (over 500ms target)`);
+      console.warn(
+        `⚠️ Transparency displayed in ${Math.round(
+          this.metrics.transparencyDisplayTime
+        )}ms (over 500ms target)`
+      );
     }
   }
 
@@ -57,15 +65,19 @@ class PerformanceMonitor {
   markDashboardComplete(): void {
     this.metrics.loadTime = performance.now() - this.startTime;
     this.metrics.renderTime = this.metrics.loadTime - (this.metrics.transparencyDisplayTime || 0);
-    
+
     // Target: <3000ms total load time on 3G
     const target = this.metrics.connection === '3g' ? 3000 : 1500;
     if (this.metrics.loadTime <= target) {
-      console.log(`✅ Dashboard loaded in ${Math.round(this.metrics.loadTime)}ms (target: <${target}ms)`);
+      console.log(
+        `✅ Dashboard loaded in ${Math.round(this.metrics.loadTime)}ms (target: <${target}ms)`
+      );
     } else {
-      console.warn(`⚠️ Dashboard loaded in ${Math.round(this.metrics.loadTime)}ms (over ${target}ms target)`);
+      console.warn(
+        `⚠️ Dashboard loaded in ${Math.round(this.metrics.loadTime)}ms (over ${target}ms target)`
+      );
     }
-    
+
     this.logPerformanceReport();
   }
 
@@ -115,7 +127,7 @@ class PerformanceMonitor {
         }
       }
     });
-    
+
     try {
       observer.observe({ entryTypes: ['paint'] });
     } catch (e) {
@@ -154,63 +166,67 @@ class PerformanceMonitor {
   // Get current performance score (0-100)
   getPerformanceScore(): number {
     const scores = [];
-    
+
     // Transparency display speed (40% weight)
     if (this.metrics.transparencyDisplayTime) {
-      const transparencyScore = Math.max(0, 100 - (this.metrics.transparencyDisplayTime / 5)); // 500ms = 100 points
+      const transparencyScore = Math.max(0, 100 - this.metrics.transparencyDisplayTime / 5); // 500ms = 100 points
       scores.push({ score: transparencyScore, weight: 0.4 });
     }
-    
+
     // Total load time (30% weight)
     if (this.metrics.loadTime) {
       const target = this.metrics.connection === '3g' ? 3000 : 1500;
-      const loadScore = Math.max(0, 100 - (this.metrics.loadTime / target * 100));
+      const loadScore = Math.max(0, 100 - (this.metrics.loadTime / target) * 100);
       scores.push({ score: loadScore, weight: 0.3 });
     }
-    
+
     // Cache efficiency (20% weight)
     const totalCacheRequests = (this.metrics.cacheHits || 0) + (this.metrics.cacheMisses || 0);
     if (totalCacheRequests > 0) {
-      const cacheScore = (this.metrics.cacheHits || 0) / totalCacheRequests * 100;
+      const cacheScore = ((this.metrics.cacheHits || 0) / totalCacheRequests) * 100;
       scores.push({ score: cacheScore, weight: 0.2 });
     }
-    
+
     // Core Web Vitals (10% weight)
     let vitalsScore = 100;
     if (this.vitals.LCP && this.vitals.LCP > 2500) vitalsScore -= 30;
     if (this.vitals.CLS && this.vitals.CLS > 0.1) vitalsScore -= 20;
     scores.push({ score: Math.max(0, vitalsScore), weight: 0.1 });
-    
+
     // Calculate weighted average
     const totalWeight = scores.reduce((sum, item) => sum + item.weight, 0);
-    const weightedSum = scores.reduce((sum, item) => sum + (item.score * item.weight), 0);
-    
+    const weightedSum = scores.reduce((sum, item) => sum + item.score * item.weight, 0);
+
     return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
   }
 
   // Log comprehensive performance report
   private logPerformanceReport(): void {
     console.group('📊 Dashboard Performance Report');
-    
+
     console.log('🎯 Key Metrics:');
-    console.log(`  • Transparency Display: ${Math.round(this.metrics.transparencyDisplayTime || 0)}ms (target: <500ms)`);
+    console.log(
+      `  • Transparency Display: ${Math.round(
+        this.metrics.transparencyDisplayTime || 0
+      )}ms (target: <500ms)`
+    );
     console.log(`  • Total Load Time: ${Math.round(this.metrics.loadTime || 0)}ms`);
     console.log(`  • Network Requests: ${this.metrics.networkRequests || 0}`);
     console.log(`  • Cache Hit Rate: ${this.getCacheHitRate()}%`);
-    
+
     console.log('📱 Environment:');
     console.log(`  • Screen: ${this.metrics.screenSize}`);
     console.log(`  • Connection: ${this.metrics.connection}`);
-    
+
     console.log('🚀 Core Web Vitals:');
     console.log(`  • FCP: ${Math.round(this.vitals.FCP || 0)}ms (target: <1800ms)`);
     console.log(`  • LCP: ${Math.round(this.vitals.LCP || 0)}ms (target: <2500ms)`);
     console.log(`  • CLS: ${(this.vitals.CLS || 0).toFixed(3)} (target: <0.1)`);
-    
+
     const score = this.getPerformanceScore();
     const emoji = score >= 90 ? '🏆' : score >= 75 ? '✅' : score >= 60 ? '⚠️' : '🚨';
     console.log(`${emoji} Overall Performance Score: ${score}/100`);
-    
+
     console.groupEnd();
   }
 
@@ -223,7 +239,7 @@ class PerformanceMonitor {
   // Export metrics for analytics
   exportMetrics(): PerformanceMetrics & { performanceScore: number; coreWebVitals: CoreWebVitals } {
     return {
-      ...this.metrics as PerformanceMetrics,
+      ...(this.metrics as PerformanceMetrics),
       performanceScore: this.getPerformanceScore(),
       coreWebVitals: this.vitals as CoreWebVitals
     };
@@ -250,22 +266,26 @@ export const usePerformanceMonitor = () => {
 // Performance budget validator
 export const validatePerformanceBudget = (metrics: Partial<PerformanceMetrics>) => {
   const violations = [];
-  
+
   if (metrics.transparencyDisplayTime && metrics.transparencyDisplayTime > 500) {
-    violations.push(`Transparency display: ${Math.round(metrics.transparencyDisplayTime)}ms (budget: 500ms)`);
+    violations.push(
+      `Transparency display: ${Math.round(metrics.transparencyDisplayTime)}ms (budget: 500ms)`
+    );
   }
-  
+
   if (metrics.loadTime && metrics.loadTime > 3000) {
     violations.push(`Total load time: ${Math.round(metrics.loadTime)}ms (budget: 3000ms)`);
   }
-  
-  const cacheHitRate = metrics.cacheHits && metrics.cacheMisses ? 
-    (metrics.cacheHits / (metrics.cacheHits + metrics.cacheMisses)) * 100 : 100;
-  
+
+  const cacheHitRate =
+    metrics.cacheHits && metrics.cacheMisses
+      ? (metrics.cacheHits / (metrics.cacheHits + metrics.cacheMisses)) * 100
+      : 100;
+
   if (cacheHitRate < 80) {
     violations.push(`Cache hit rate: ${Math.round(cacheHitRate)}% (budget: 80%)`);
   }
-  
+
   return {
     passed: violations.length === 0,
     violations

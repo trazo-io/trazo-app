@@ -50,10 +50,10 @@ import {
   FaCalendarAlt,
   FaTools
 } from 'react-icons/fa';
-import { 
-  useGetCropTemplatesQuery, 
+import {
+  useGetCropTemplatesQuery,
   useGetCropTemplateDetailQuery,
-  useCalculateEventCarbonPreviewMutation 
+  useCalculateEventCarbonPreviewMutation
 } from 'store/api/carbonApi';
 
 interface SmartSetupWizardProps {
@@ -71,7 +71,7 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
 }) => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const { isOpen: isDetailOpen, onOpen: onDetailOpen, onClose: onDetailClose } = useDisclosure();
-  
+
   // ✅ NEW: State for USDA-based carbon calculations
   const [carbonPreviews, setCarbonPreviews] = useState<Record<string, any>>({});
 
@@ -87,7 +87,7 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
       skip: !selectedTemplateId
     }
   );
-  
+
   // ✅ NEW: API hook for real-time USDA carbon calculations
   const [calculateCarbonPreview] = useCalculateEventCarbonPreviewMutation();
 
@@ -179,7 +179,8 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
                 <Heading size="lg">Smart Setup Wizard</Heading>
               </HStack>
               <Text fontSize="sm" color="gray.600" fontWeight="normal">
-                Choose a USDA-verified template to get carbon-intelligent farming guidance in under 15 minutes
+                Choose a USDA-verified template to get carbon-intelligent farming guidance in under
+                15 minutes
               </Text>
               <HStack spacing={2} mt={2}>
                 <Badge colorScheme="green" variant="solid" fontSize="xs">

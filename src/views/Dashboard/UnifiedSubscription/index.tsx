@@ -601,47 +601,47 @@ function UnifiedSubscriptionDashboard() {
             overflow="hidden"
             position="relative"
           >
-          <Box
-            position="absolute"
-            bottom={0}
-            left={0}
-            height="4px"
-            bg="green.400"
-            width={`${getTrialProgressPercentage(subscription)}%`}
-          />
-          <CardBody>
-            <Flex
-              direction={{ base: 'column', md: 'row' }}
-              justify="space-between"
-              align={{ base: 'start', md: 'center' }}
-            >
-              <Box mb={{ base: 3, md: 0 }}>
-                <Text fontSize="lg" fontWeight="bold" color="green.700" mb={2}>
-                  {intl.formatMessage({ id: 'app.trialActive' })}
-                </Text>
-                <Text color="gray.700">
-                  {intl.formatMessage(
-                    { id: 'app.trialEndsOn' },
-                    {
-                      date: formatDate(subscription?.trial_end)
-                    }
-                  )}
-                  {' · '}
-                  <Text as="span" fontWeight="bold">
-                    {getDaysRemaining(subscription?.trial_end)}{' '}
-                    {intl.formatMessage({ id: 'app.daysRemaining' })}
-                  </Text>
-                </Text>
-              </Box>
-              <Button
-                colorScheme="green"
-                size="md"
-                onClick={() => navigate('/admin/dashboard/pricing')}
-                rightIcon={<Icon as={FaCrown} />}
+            <Box
+              position="absolute"
+              bottom={0}
+              left={0}
+              height="4px"
+              bg="green.400"
+              width={`${getTrialProgressPercentage(subscription)}%`}
+            />
+            <CardBody>
+              <Flex
+                direction={{ base: 'column', md: 'row' }}
+                justify="space-between"
+                align={{ base: 'start', md: 'center' }}
               >
-                {intl.formatMessage({ id: 'app.upgradeNow' })}
-              </Button>
-            </Flex>
+                <Box mb={{ base: 3, md: 0 }}>
+                  <Text fontSize="lg" fontWeight="bold" color="green.700" mb={2}>
+                    {intl.formatMessage({ id: 'app.trialActive' })}
+                  </Text>
+                  <Text color="gray.700">
+                    {intl.formatMessage(
+                      { id: 'app.trialEndsOn' },
+                      {
+                        date: formatDate(subscription?.trial_end)
+                      }
+                    )}
+                    {' · '}
+                    <Text as="span" fontWeight="bold">
+                      {getDaysRemaining(subscription?.trial_end)}{' '}
+                      {intl.formatMessage({ id: 'app.daysRemaining' })}
+                    </Text>
+                  </Text>
+                </Box>
+                <Button
+                  colorScheme="green"
+                  size="md"
+                  onClick={() => navigate('/admin/dashboard/pricing')}
+                  rightIcon={<Icon as={FaCrown} />}
+                >
+                  {intl.formatMessage({ id: 'app.upgradeNow' })}
+                </Button>
+              </Flex>
             </CardBody>
           </Card>
         )}
@@ -649,519 +649,629 @@ function UnifiedSubscriptionDashboard() {
         {/* Main Content with Tabs */}
         <Card bg={cardBg} borderColor={borderColor}>
           <CardBody p={0}>
-          <Tabs variant="enclosed" colorScheme="blue">
-            <TabList px={6} pt={6} borderBottom="1px" borderColor={borderColor}>
-              <Tab
-                _selected={{
-                  color: 'blue.600',
-                  borderColor: 'blue.600',
-                  fontWeight: 'semibold'
-                }}
-              >
-                <Icon as={FaChartBar} mr={2} />
-                {intl.formatMessage({ id: 'app.overview' })}
-              </Tab>
-              <Tab
-                _selected={{
-                  color: 'blue.600',
-                  borderColor: 'blue.600',
-                  fontWeight: 'semibold'
-                }}
-              >
-                <Icon as={FaCreditCard} mr={2} />
-                {intl.formatMessage({ id: 'app.billing' })}
-              </Tab>
-              <Tab
-                _selected={{
-                  color: 'blue.600',
-                  borderColor: 'blue.600',
-                  fontWeight: 'semibold'
-                }}
-              >
-                <Icon as={FaFileInvoiceDollar} mr={2} />
-                {intl.formatMessage({ id: 'app.invoices' })}
-              </Tab>
-            </TabList>
+            <Tabs variant="enclosed" colorScheme="blue">
+              <TabList px={6} pt={6} borderBottom="1px" borderColor={borderColor}>
+                <Tab
+                  _selected={{
+                    color: 'blue.600',
+                    borderColor: 'blue.600',
+                    fontWeight: 'semibold'
+                  }}
+                >
+                  <Icon as={FaChartBar} mr={2} />
+                  {intl.formatMessage({ id: 'app.overview' })}
+                </Tab>
+                <Tab
+                  _selected={{
+                    color: 'blue.600',
+                    borderColor: 'blue.600',
+                    fontWeight: 'semibold'
+                  }}
+                >
+                  <Icon as={FaCreditCard} mr={2} />
+                  {intl.formatMessage({ id: 'app.billing' })}
+                </Tab>
+                <Tab
+                  _selected={{
+                    color: 'blue.600',
+                    borderColor: 'blue.600',
+                    fontWeight: 'semibold'
+                  }}
+                >
+                  <Icon as={FaFileInvoiceDollar} mr={2} />
+                  {intl.formatMessage({ id: 'app.invoices' })}
+                </Tab>
+              </TabList>
 
-            <TabPanels>
-              {/* Overview Tab */}
-              <TabPanel p={6}>
-                <VStack spacing={6} align="stretch">
-                  {/* Current Plan Card */}
-                  <Box>
-                    <Text fontSize="lg" fontWeight="bold" mb={4}>
-                      {intl.formatMessage({ id: 'app.currentPlan' })}
-                    </Text>
-                    <Card bg={tabBg} borderWidth="1px" borderColor={borderColor}>
-                      <CardBody>
-                        <Flex justify="space-between" align="start" mb={4}>
-                          <Box>
-                            <HStack mb={2}>
-                              <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                                {plan?.name}
+              <TabPanels>
+                {/* Overview Tab */}
+                <TabPanel p={6}>
+                  <VStack spacing={6} align="stretch">
+                    {/* Current Plan Card */}
+                    <Box>
+                      <Text fontSize="lg" fontWeight="bold" mb={4}>
+                        {intl.formatMessage({ id: 'app.currentPlan' })}
+                      </Text>
+                      <Card bg={tabBg} borderWidth="1px" borderColor={borderColor}>
+                        <CardBody>
+                          <Flex justify="space-between" align="start" mb={4}>
+                            <Box>
+                              <HStack mb={2}>
+                                <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                                  {plan?.name}
+                                </Text>
+                                <Badge
+                                  colorScheme={
+                                    subscription?.status === 'active' ||
+                                    subscription?.status === 'trialing'
+                                      ? 'green'
+                                      : subscription?.status === 'canceled'
+                                      ? 'red'
+                                      : 'gray'
+                                  }
+                                  fontSize="sm"
+                                  px={2}
+                                  py={1}
+                                >
+                                  {subscription?.status?.charAt(0).toUpperCase() +
+                                    subscription?.status?.slice(1)}
+                                </Badge>
+                              </HStack>
+                              <Text fontSize="3xl" fontWeight="bold" color="blue.600">
+                                ${plan?.price}
+                                <Text as="span" fontSize="lg" color="gray.500" fontWeight="normal">
+                                  /{intl.formatMessage({ id: `app.${plan?.interval}` })}
+                                </Text>
                               </Text>
-                              <Badge
-                                colorScheme={
-                                  subscription?.status === 'active' ||
-                                  subscription?.status === 'trialing'
-                                    ? 'green'
-                                    : subscription?.status === 'canceled'
-                                    ? 'red'
-                                    : 'gray'
-                                }
-                                fontSize="sm"
-                                px={2}
-                                py={1}
-                              >
-                                {subscription?.status?.charAt(0).toUpperCase() +
-                                  subscription?.status?.slice(1)}
-                              </Badge>
-                            </HStack>
-                            <Text fontSize="3xl" fontWeight="bold" color="blue.600">
-                              ${plan?.price}
-                              <Text as="span" fontSize="lg" color="gray.500" fontWeight="normal">
-                                /{intl.formatMessage({ id: `app.${plan?.interval}` })}
-                              </Text>
-                            </Text>
-                          </Box>
-                          <VStack align="end" spacing={2}>
-                            {subscription?.cancel_at_period_end ? (
-                              <Button
-                                size="sm"
-                                colorScheme="blue"
-                                onClick={handleReactivateSubscription}
-                                isLoading={isReactivatingSubscription}
-                              >
-                                {intl.formatMessage({ id: 'app.reactivate' })}
-                              </Button>
-                            ) : (
-                              <>
+                            </Box>
+                            <VStack align="end" spacing={2}>
+                              {subscription?.cancel_at_period_end ? (
                                 <Button
                                   size="sm"
                                   colorScheme="blue"
-                                  variant="outline"
-                                  onClick={() => navigate('/admin/dashboard/pricing')}
+                                  onClick={handleReactivateSubscription}
+                                  isLoading={isReactivatingSubscription}
                                 >
-                                  {intl.formatMessage({ id: 'app.changePlan' })}
+                                  {intl.formatMessage({ id: 'app.reactivate' })}
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  colorScheme="red"
-                                  variant="ghost"
-                                  onClick={handleCancelSubscription}
-                                  isLoading={isCancellingSubscription}
-                                >
-                                  {intl.formatMessage({ id: 'app.cancel' })}
-                                </Button>
-                              </>
-                            )}
-                          </VStack>
-                        </Flex>
+                              ) : (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    colorScheme="blue"
+                                    variant="outline"
+                                    onClick={() => navigate('/admin/dashboard/pricing')}
+                                  >
+                                    {intl.formatMessage({ id: 'app.changePlan' })}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    colorScheme="red"
+                                    variant="ghost"
+                                    onClick={handleCancelSubscription}
+                                    isLoading={isCancellingSubscription}
+                                  >
+                                    {intl.formatMessage({ id: 'app.cancel' })}
+                                  </Button>
+                                </>
+                              )}
+                            </VStack>
+                          </Flex>
 
-                        {subscription?.cancel_at_period_end && (
-                          <Alert status="warning" borderRadius="md" mb={4}>
-                            <AlertIcon />
-                            <Text fontSize="sm">
-                              {intl.formatMessage({ id: 'app.subscriptionWillCancel' })}{' '}
-                              {formatDate(subscription?.current_period_end)}
-                            </Text>
-                          </Alert>
-                        )}
+                          {subscription?.cancel_at_period_end && (
+                            <Alert status="warning" borderRadius="md" mb={4}>
+                              <AlertIcon />
+                              <Text fontSize="sm">
+                                {intl.formatMessage({ id: 'app.subscriptionWillCancel' })}{' '}
+                                {formatDate(subscription?.current_period_end)}
+                              </Text>
+                            </Alert>
+                          )}
 
-                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                          <Box>
-                            <Text color="gray.500" fontSize="sm">
-                              {intl.formatMessage({ id: 'app.currentPeriod' })}
-                            </Text>
-                            <Text fontWeight="medium">
-                              {formatDate(subscription?.current_period_start)} -{' '}
-                              {formatDate(subscription?.current_period_end)}
-                            </Text>
-                          </Box>
-                          <Box>
-                            <Text color="gray.500" fontSize="sm">
-                              {intl.formatMessage({ id: 'app.nextBillingDate' })}
-                            </Text>
-                            <Text fontWeight="medium">
-                              {formatDate(subscription?.current_period_end)}
-                            </Text>
-                          </Box>
-                        </SimpleGrid>
-                      </CardBody>
-                    </Card>
-                  </Box>
+                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                            <Box>
+                              <Text color="gray.500" fontSize="sm">
+                                {intl.formatMessage({ id: 'app.currentPeriod' })}
+                              </Text>
+                              <Text fontWeight="medium">
+                                {formatDate(subscription?.current_period_start)} -{' '}
+                                {formatDate(subscription?.current_period_end)}
+                              </Text>
+                            </Box>
+                            <Box>
+                              <Text color="gray.500" fontSize="sm">
+                                {intl.formatMessage({ id: 'app.nextBillingDate' })}
+                              </Text>
+                              <Text fontWeight="medium">
+                                {formatDate(subscription?.current_period_end)}
+                              </Text>
+                            </Box>
+                          </SimpleGrid>
+                        </CardBody>
+                      </Card>
+                    </Box>
 
-                  {/* Usage Metrics */}
-                  <Box>
-                    <Text fontSize="lg" fontWeight="bold" mb={4}>
-                      {intl.formatMessage({ id: 'app.usageMetrics' })}
-                    </Text>
-                    <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
-                      {usageMetrics.map((metric) => (
+                    {/* Usage Metrics */}
+                    <Box>
+                      <Text fontSize="lg" fontWeight="bold" mb={4}>
+                        {intl.formatMessage({ id: 'app.usageMetrics' })}
+                      </Text>
+                      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                        {usageMetrics.map((metric) => (
+                          <Card
+                            key={metric.name}
+                            borderColor={borderColor}
+                            bg={cardBg}
+                            _hover={{ boxShadow: 'md' }}
+                          >
+                            <CardBody>
+                              <Flex align="center" mb={3}>
+                                <Icon
+                                  as={metric.icon}
+                                  mr={3}
+                                  boxSize={5}
+                                  color={`${metric.colorScheme}.500`}
+                                />
+                                <Text fontWeight="medium">
+                                  {intl.formatMessage({ id: metric.name })}
+                                </Text>
+                              </Flex>
+                              <Stat mb={2}>
+                                <StatNumber fontSize="xl">
+                                  {metric.used}
+                                  <Text as="span" fontSize="md" color="gray.500">
+                                    /{metric.limit} {metric.unit}
+                                  </Text>
+                                </StatNumber>
+                                <StatHelpText mb={0}>
+                                  {Math.round((metric.used / Math.max(metric.limit, 1)) * 100)}%{' '}
+                                  {intl.formatMessage({ id: 'app.used' })}
+                                </StatHelpText>
+                              </Stat>
+                              <Progress
+                                value={(metric.used / Math.max(metric.limit, 1)) * 100}
+                                size="sm"
+                                colorScheme={metric.colorScheme}
+                                borderRadius="full"
+                              />
+                            </CardBody>
+                          </Card>
+                        ))}
+                      </SimpleGrid>
+                    </Box>
+
+                    {/* Plan Features */}
+                    <Box>
+                      <Text fontSize="lg" fontWeight="bold" mb={4}>
+                        {intl.formatMessage({ id: 'app.planFeatures' })}
+                      </Text>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        <Card borderWidth="1px" borderColor="blue.200" bg="blue.50">
+                          <CardBody>
+                            <Flex align="center" mb={3}>
+                              <Icon as={FaCog} mr={3} boxSize={5} color="blue.500" />
+                              <Text fontWeight="bold" color="blue.700">
+                                {intl.formatMessage({ id: 'app.iotAutomation' })}
+                              </Text>
+                            </Flex>
+                            <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={1}>
+                              {features?.iot_automation_level || 50}%
+                            </Text>
+                            <Text fontSize="sm" color="gray.600">
+                              {intl.formatMessage({ id: 'app.iotAutomationDescription' })}
+                            </Text>
+                          </CardBody>
+                        </Card>
+
+                        <Card borderWidth="1px" borderColor="green.200" bg="green.50">
+                          <CardBody>
+                            <Flex align="center" mb={3}>
+                              <Icon as={FaLeaf} mr={3} boxSize={5} color="green.500" />
+                              <Text fontWeight="bold" color="green.700">
+                                {intl.formatMessage({ id: 'app.carbonTracking' })}
+                              </Text>
+                            </Flex>
+                            <Text
+                              fontSize="lg"
+                              fontWeight="bold"
+                              color="green.600"
+                              mb={1}
+                              textTransform="capitalize"
+                            >
+                              {features?.carbon_tracking === 'manual'
+                                ? intl.formatMessage({ id: 'app.manual' })
+                                : intl.formatMessage({ id: 'app.automated' })}{' '}
+                              {intl.formatMessage({ id: 'app.mode' })}
+                            </Text>
+                            <Text fontSize="sm" color="gray.600">
+                              {features?.carbon_tracking === 'manual'
+                                ? intl.formatMessage({ id: 'app.manualCarbonTrackingDescription' })
+                                : intl.formatMessage({
+                                    id: 'app.automatedCarbonTrackingDescription'
+                                  })}
+                            </Text>
+                          </CardBody>
+                        </Card>
+
+                        <Card borderWidth="1px" borderColor="purple.200" bg="purple.50">
+                          <CardBody>
+                            <Flex align="center" mb={3}>
+                              <Icon as={FaHeadset} mr={3} boxSize={5} color="purple.500" />
+                              <Text fontWeight="bold" color="purple.700">
+                                {intl.formatMessage({ id: 'app.supportResponse' })}
+                              </Text>
+                            </Flex>
+                            <Text fontSize="2xl" fontWeight="bold" color="purple.600" mb={1}>
+                              {features?.support_response_time || 48}h
+                            </Text>
+                            <Text fontSize="sm" color="gray.600">
+                              {intl.formatMessage({ id: 'app.supportResponseDescription' })}
+                            </Text>
+                          </CardBody>
+                        </Card>
+
                         <Card
-                          key={metric.name}
-                          borderColor={borderColor}
-                          bg={cardBg}
-                          _hover={{ boxShadow: 'md' }}
+                          borderWidth="1px"
+                          borderColor={features?.priority_support ? 'orange.200' : 'gray.200'}
+                          bg={features?.priority_support ? 'orange.50' : 'gray.50'}
                         >
                           <CardBody>
                             <Flex align="center" mb={3}>
                               <Icon
-                                as={metric.icon}
+                                as={features?.priority_support ? FaCheckCircle : FaTimesCircle}
                                 mr={3}
                                 boxSize={5}
-                                color={`${metric.colorScheme}.500`}
+                                color={features?.priority_support ? 'orange.500' : 'gray.400'}
                               />
-                              <Text fontWeight="medium">
-                                {intl.formatMessage({ id: metric.name })}
+                              <Text
+                                fontWeight="bold"
+                                color={features?.priority_support ? 'orange.700' : 'gray.600'}
+                              >
+                                {intl.formatMessage({ id: 'app.prioritySupport' })}
                               </Text>
                             </Flex>
-                            <Stat mb={2}>
-                              <StatNumber fontSize="xl">
-                                {metric.used}
-                                <Text as="span" fontSize="md" color="gray.500">
-                                  /{metric.limit} {metric.unit}
-                                </Text>
-                              </StatNumber>
-                              <StatHelpText mb={0}>
-                                {Math.round((metric.used / Math.max(metric.limit, 1)) * 100)}%{' '}
-                                {intl.formatMessage({ id: 'app.used' })}
-                              </StatHelpText>
-                            </Stat>
-                            <Progress
-                              value={(metric.used / Math.max(metric.limit, 1)) * 100}
-                              size="sm"
-                              colorScheme={metric.colorScheme}
-                              borderRadius="full"
-                            />
+                            <Text
+                              fontSize="lg"
+                              fontWeight="bold"
+                              color={features?.priority_support ? 'orange.600' : 'gray.500'}
+                              mb={1}
+                            >
+                              {features?.priority_support
+                                ? intl.formatMessage({ id: 'app.included' })
+                                : intl.formatMessage({ id: 'app.notIncluded' })}
+                            </Text>
+                            <Text fontSize="sm" color="gray.600">
+                              {features?.priority_support
+                                ? intl.formatMessage({ id: 'app.prioritySupportDescription' })
+                                : intl.formatMessage({ id: 'app.upgradeForPrioritySupport' })}
+                            </Text>
                           </CardBody>
                         </Card>
-                      ))}
-                    </SimpleGrid>
-                  </Box>
+                      </SimpleGrid>
+                    </Box>
 
-                  {/* Plan Features */}
-                  <Box>
-                    <Text fontSize="lg" fontWeight="bold" mb={4}>
-                      {intl.formatMessage({ id: 'app.planFeatures' })}
-                    </Text>
-                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                      <Card borderWidth="1px" borderColor="blue.200" bg="blue.50">
-                        <CardBody>
-                          <Flex align="center" mb={3}>
-                            <Icon as={FaCog} mr={3} boxSize={5} color="blue.500" />
-                            <Text fontWeight="bold" color="blue.700">
-                              {intl.formatMessage({ id: 'app.iotAutomation' })}
-                            </Text>
-                          </Flex>
-                          <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={1}>
-                            {features?.iot_automation_level || 50}%
-                          </Text>
-                          <Text fontSize="sm" color="gray.600">
-                            {intl.formatMessage({ id: 'app.iotAutomationDescription' })}
-                          </Text>
-                        </CardBody>
-                      </Card>
-
-                      <Card borderWidth="1px" borderColor="green.200" bg="green.50">
-                        <CardBody>
-                          <Flex align="center" mb={3}>
-                            <Icon as={FaLeaf} mr={3} boxSize={5} color="green.500" />
-                            <Text fontWeight="bold" color="green.700">
-                              {intl.formatMessage({ id: 'app.carbonTracking' })}
-                            </Text>
-                          </Flex>
-                          <Text
-                            fontSize="lg"
-                            fontWeight="bold"
-                            color="green.600"
-                            mb={1}
-                            textTransform="capitalize"
-                          >
-                            {features?.carbon_tracking === 'manual'
-                              ? intl.formatMessage({ id: 'app.manual' })
-                              : intl.formatMessage({ id: 'app.automated' })}{' '}
-                            {intl.formatMessage({ id: 'app.mode' })}
-                          </Text>
-                          <Text fontSize="sm" color="gray.600">
-                            {features?.carbon_tracking === 'manual'
-                              ? intl.formatMessage({ id: 'app.manualCarbonTrackingDescription' })
-                              : intl.formatMessage({
-                                  id: 'app.automatedCarbonTrackingDescription'
-                                })}
-                          </Text>
-                        </CardBody>
-                      </Card>
-
-                      <Card borderWidth="1px" borderColor="purple.200" bg="purple.50">
-                        <CardBody>
-                          <Flex align="center" mb={3}>
-                            <Icon as={FaHeadset} mr={3} boxSize={5} color="purple.500" />
-                            <Text fontWeight="bold" color="purple.700">
-                              {intl.formatMessage({ id: 'app.supportResponse' })}
-                            </Text>
-                          </Flex>
-                          <Text fontSize="2xl" fontWeight="bold" color="purple.600" mb={1}>
-                            {features?.support_response_time || 48}h
-                          </Text>
-                          <Text fontSize="sm" color="gray.600">
-                            {intl.formatMessage({ id: 'app.supportResponseDescription' })}
-                          </Text>
-                        </CardBody>
-                      </Card>
-
+                    {/* Blockchain Verification */}
+                    <Box>
+                      <Text fontSize="lg" fontWeight="bold" mb={4}>
+                        {intl.formatMessage({ id: 'app.blockchainVerification' })}
+                      </Text>
                       <Card
                         borderWidth="1px"
-                        borderColor={features?.priority_support ? 'orange.200' : 'gray.200'}
-                        bg={features?.priority_support ? 'orange.50' : 'gray.50'}
+                        borderColor={
+                          blockchainStatus?.blockchainSubscribed ? 'green.200' : 'gray.200'
+                        }
                       >
                         <CardBody>
-                          <Flex align="center" mb={3}>
-                            <Icon
-                              as={features?.priority_support ? FaCheckCircle : FaTimesCircle}
-                              mr={3}
-                              boxSize={5}
-                              color={features?.priority_support ? 'orange.500' : 'gray.400'}
-                            />
-                            <Text
-                              fontWeight="bold"
-                              color={features?.priority_support ? 'orange.700' : 'gray.600'}
-                            >
-                              {intl.formatMessage({ id: 'app.prioritySupport' })}
-                            </Text>
+                          <Flex justify="space-between" align="center">
+                            <Flex align="center">
+                              <Icon
+                                as={FaShieldAlt}
+                                mr={3}
+                                boxSize={6}
+                                color={
+                                  blockchainStatus?.blockchainSubscribed ? 'green.500' : 'gray.400'
+                                }
+                              />
+                              <Box>
+                                <Text fontWeight="bold" fontSize="lg">
+                                  {blockchainStatus?.blockchainSubscribed ? 'Active' : 'Not Active'}
+                                </Text>
+                                <Text fontSize="sm" color="gray.600">
+                                  {blockchainStatus?.blockchainSubscribed
+                                    ? 'Your carbon data is being verified on blockchain'
+                                    : 'Add blockchain verification for $5/month'}
+                                </Text>
+                              </Box>
+                            </Flex>
+                            {!blockchainStatus?.blockchainSubscribed && (
+                              <Button
+                                colorScheme="green"
+                                size="sm"
+                                onClick={handleSubscribeBlockchain}
+                                isLoading={isSubscribingBlockchain}
+                              >
+                                Add Verification
+                              </Button>
+                            )}
                           </Flex>
-                          <Text
-                            fontSize="lg"
-                            fontWeight="bold"
-                            color={features?.priority_support ? 'orange.600' : 'gray.500'}
-                            mb={1}
-                          >
-                            {features?.priority_support
-                              ? intl.formatMessage({ id: 'app.included' })
-                              : intl.formatMessage({ id: 'app.notIncluded' })}
-                          </Text>
-                          <Text fontSize="sm" color="gray.600">
-                            {features?.priority_support
-                              ? intl.formatMessage({ id: 'app.prioritySupportDescription' })
-                              : intl.formatMessage({ id: 'app.upgradeForPrioritySupport' })}
-                          </Text>
                         </CardBody>
                       </Card>
-                    </SimpleGrid>
-                  </Box>
+                    </Box>
 
-                  {/* Blockchain Verification */}
-                  <Box>
-                    <Text fontSize="lg" fontWeight="bold" mb={4}>
-                      {intl.formatMessage({ id: 'app.blockchainVerification' })}
-                    </Text>
-                    <Card
-                      borderWidth="1px"
-                      borderColor={
-                        blockchainStatus?.blockchainSubscribed ? 'green.200' : 'gray.200'
-                      }
-                    >
-                      <CardBody>
-                        <Flex justify="space-between" align="center">
-                          <Flex align="center">
-                            <Icon
-                              as={FaShieldAlt}
-                              mr={3}
-                              boxSize={6}
-                              color={
-                                blockchainStatus?.blockchainSubscribed ? 'green.500' : 'gray.400'
-                              }
-                            />
-                            <Box>
-                              <Text fontWeight="bold" fontSize="lg">
-                                {blockchainStatus?.blockchainSubscribed ? 'Active' : 'Not Active'}
-                              </Text>
-                              <Text fontSize="sm" color="gray.600">
-                                {blockchainStatus?.blockchainSubscribed
-                                  ? 'Your carbon data is being verified on blockchain'
-                                  : 'Add blockchain verification for $5/month'}
-                              </Text>
-                            </Box>
-                          </Flex>
-                          {!blockchainStatus?.blockchainSubscribed && (
-                            <Button
-                              colorScheme="green"
-                              size="sm"
-                              onClick={handleSubscribeBlockchain}
-                              isLoading={isSubscribingBlockchain}
-                            >
-                              Add Verification
-                            </Button>
-                          )}
-                        </Flex>
-                      </CardBody>
-                    </Card>
-                  </Box>
+                    {/* Add-ons Section */}
+                    <Box>
+                      <Flex justify="space-between" align="center" mb={4}>
+                        <Text fontSize="lg" fontWeight="bold">
+                          {intl.formatMessage({ id: 'app.addons' })}
+                        </Text>
+                        <IconButton
+                          aria-label="Toggle add-ons"
+                          icon={showAddons ? <FaChevronUp /> : <FaChevronDown />}
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setShowAddons(!showAddons)}
+                        />
+                      </Flex>
 
-                  {/* Add-ons Section */}
-                  <Box>
-                    <Flex justify="space-between" align="center" mb={4}>
-                      <Text fontSize="lg" fontWeight="bold">
-                        {intl.formatMessage({ id: 'app.addons' })}
-                      </Text>
-                      <IconButton
-                        aria-label="Toggle add-ons"
-                        icon={showAddons ? <FaChevronUp /> : <FaChevronDown />}
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setShowAddons(!showAddons)}
-                      />
-                    </Flex>
+                      <Collapse in={showAddons} animateOpacity>
+                        <VStack spacing={4} align="stretch">
+                          {/* Current Add-ons */}
+                          {subscription?.addons &&
+                            Array.isArray(subscription.addons) &&
+                            subscription.addons.length > 0 && (
+                              <Box>
+                                <Text fontWeight="medium" mb={2}>
+                                  {intl.formatMessage({ id: 'app.currentAddons' })}
+                                </Text>
+                                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                                  {subscription.addons.map((addonItem: any) => (
+                                    <Card key={addonItem.id} size="sm">
+                                      <CardBody>
+                                        <Flex justify="space-between" align="center">
+                                          <Box>
+                                            <Text fontWeight="medium">{addonItem.addon?.name}</Text>
+                                            <Text fontSize="sm" color="gray.600">
+                                              Quantity: {addonItem.quantity}
+                                            </Text>
+                                          </Box>
+                                          <Badge colorScheme="green" fontSize="md">
+                                            {formatPrice(
+                                              addonItem.addon?.price,
+                                              addonItem.quantity
+                                            )}
+                                          </Badge>
+                                        </Flex>
+                                      </CardBody>
+                                    </Card>
+                                  ))}
+                                </SimpleGrid>
+                              </Box>
+                            )}
 
-                    <Collapse in={showAddons} animateOpacity>
-                      <VStack spacing={4} align="stretch">
-                        {/* Current Add-ons */}
-                        {subscription?.addons &&
-                          Array.isArray(subscription.addons) &&
-                          subscription.addons.length > 0 && (
-                            <Box>
-                              <Text fontWeight="medium" mb={2}>
-                                {intl.formatMessage({ id: 'app.currentAddons' })}
-                              </Text>
-                              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                                {subscription.addons.map((addonItem: any) => (
-                                  <Card key={addonItem.id} size="sm">
+                          {/* Available Add-ons */}
+                          <Box>
+                            <Text fontWeight="medium" mb={2}>
+                              {intl.formatMessage({ id: 'app.availableAddons' })}
+                            </Text>
+                            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                              {addons
+                                .filter(
+                                  (addon: any) => addon && addon.id && addon.name && addon.price
+                                )
+                                .map((addon: any) => (
+                                  <Card
+                                    key={addon.id}
+                                    size="sm"
+                                    _hover={{ boxShadow: 'md', borderColor: 'blue.300' }}
+                                  >
                                     <CardBody>
-                                      <Flex justify="space-between" align="center">
-                                        <Box>
-                                          <Text fontWeight="medium">{addonItem.addon?.name}</Text>
-                                          <Text fontSize="sm" color="gray.600">
-                                            Quantity: {addonItem.quantity}
+                                      <Flex justify="space-between" align="start">
+                                        <Box flex="1">
+                                          <Text fontWeight="medium">{addon.name}</Text>
+                                          <Text fontSize="sm" color="gray.600" mb={2}>
+                                            {addon.description}
                                           </Text>
+                                          <Badge colorScheme="blue">
+                                            {formatPrice(addon.price)}
+                                          </Badge>
                                         </Box>
-                                        <Badge colorScheme="green" fontSize="md">
-                                          {formatPrice(addonItem.addon?.price, addonItem.quantity)}
-                                        </Badge>
+                                        <Button
+                                          size="sm"
+                                          colorScheme="blue"
+                                          variant="outline"
+                                          ml={3}
+                                          onClick={() => handleOpenAddonModal(addon)}
+                                        >
+                                          <FaPlus />
+                                        </Button>
                                       </Flex>
                                     </CardBody>
                                   </Card>
                                 ))}
-                              </SimpleGrid>
-                            </Box>
-                          )}
+                            </SimpleGrid>
+                          </Box>
+                        </VStack>
+                      </Collapse>
+                    </Box>
+                  </VStack>
+                </TabPanel>
 
-                        {/* Available Add-ons */}
-                        <Box>
-                          <Text fontWeight="medium" mb={2}>
-                            {intl.formatMessage({ id: 'app.availableAddons' })}
-                          </Text>
-                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                            {addons
-                              .filter(
-                                (addon: any) => addon && addon.id && addon.name && addon.price
-                              )
-                              .map((addon: any) => (
-                                <Card
-                                  key={addon.id}
-                                  size="sm"
-                                  _hover={{ boxShadow: 'md', borderColor: 'blue.300' }}
-                                >
-                                  <CardBody>
-                                    <Flex justify="space-between" align="start">
-                                      <Box flex="1">
-                                        <Text fontWeight="medium">{addon.name}</Text>
-                                        <Text fontSize="sm" color="gray.600" mb={2}>
-                                          {addon.description}
-                                        </Text>
-                                        <Badge colorScheme="blue">{formatPrice(addon.price)}</Badge>
-                                      </Box>
-                                      <Button
-                                        size="sm"
-                                        colorScheme="blue"
-                                        variant="outline"
-                                        ml={3}
-                                        onClick={() => handleOpenAddonModal(addon)}
-                                      >
-                                        <FaPlus />
-                                      </Button>
-                                    </Flex>
-                                  </CardBody>
-                                </Card>
-                              ))}
-                          </SimpleGrid>
-                        </Box>
-                      </VStack>
-                    </Collapse>
-                  </Box>
-                </VStack>
-              </TabPanel>
+                {/* Billing Tab */}
+                <TabPanel p={6}>
+                  <VStack spacing={6} align="stretch">
+                    {/* Payment Methods */}
+                    <Box>
+                      <Flex justify="space-between" align="center" mb={4}>
+                        <Text fontSize="lg" fontWeight="bold">
+                          {intl.formatMessage({ id: 'app.paymentMethods' })}
+                        </Text>
+                        <Button
+                          size="sm"
+                          leftIcon={<FaPlus />}
+                          colorScheme="blue"
+                          isLoading={isCreatingCheckoutSession}
+                          onClick={handleAddPaymentMethod}
+                        >
+                          {intl.formatMessage({ id: 'app.addPaymentMethod' })}
+                        </Button>
+                      </Flex>
 
-              {/* Billing Tab */}
-              <TabPanel p={6}>
-                <VStack spacing={6} align="stretch">
-                  {/* Payment Methods */}
-                  <Box>
-                    <Flex justify="space-between" align="center" mb={4}>
-                      <Text fontSize="lg" fontWeight="bold">
-                        {intl.formatMessage({ id: 'app.paymentMethods' })}
+                      {paymentMethods.length > 0 ? (
+                        <Stack spacing={3}>
+                          {paymentMethods.map((method: any, index: number) => (
+                            <Card key={index} size="sm">
+                              <CardBody>
+                                <Flex justify="space-between" align="center">
+                                  <Flex align="center">
+                                    <Box
+                                      w="40px"
+                                      h="40px"
+                                      borderRadius="md"
+                                      bg="gray.100"
+                                      display="flex"
+                                      alignItems="center"
+                                      justifyContent="center"
+                                      mr={3}
+                                    >
+                                      {method.card_brand === 'visa' ? (
+                                        <VisaIcon w="70%" h="70%" />
+                                      ) : method.card_brand === 'mastercard' ? (
+                                        <MastercardIcon w="70%" h="70%" />
+                                      ) : (
+                                        <Icon as={FaWallet} w="60%" h="60%" />
+                                      )}
+                                    </Box>
+                                    <Box>
+                                      <Text fontWeight="medium">
+                                        {method.card_brand.charAt(0).toUpperCase() +
+                                          method.card_brand.slice(1)}
+                                        {method.is_default && (
+                                          <Badge ml={2} colorScheme="green" fontSize="xs">
+                                            Default
+                                          </Badge>
+                                        )}
+                                      </Text>
+                                      <Text fontSize="sm" color="gray.600">
+                                        •••• {method.last_4} | Expires: {method.exp_month}/
+                                        {method.exp_year}
+                                      </Text>
+                                    </Box>
+                                  </Flex>
+                                  {!method.is_default && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      colorScheme="blue"
+                                      onClick={() => handleSetDefaultPaymentMethod(method.id)}
+                                    >
+                                      Set Default
+                                    </Button>
+                                  )}
+                                </Flex>
+                              </CardBody>
+                            </Card>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Card>
+                          <CardBody textAlign="center" py={8}>
+                            <Icon as={FaCreditCard} boxSize={10} color="gray.300" mb={3} />
+                            <Text color="gray.500" mb={4}>
+                              {intl.formatMessage({ id: 'app.noPaymentMethods' })}
+                            </Text>
+                            <Button
+                              colorScheme="blue"
+                              leftIcon={<FaPlus />}
+                              isLoading={isCreatingCheckoutSession}
+                              onClick={handleAddPaymentMethod}
+                            >
+                              {intl.formatMessage({ id: 'app.addPaymentMethod' })}
+                            </Button>
+                          </CardBody>
+                        </Card>
+                      )}
+                    </Box>
+
+                    {/* Billing Information */}
+                    <Box>
+                      <Text fontSize="lg" fontWeight="bold" mb={4}>
+                        {intl.formatMessage({ id: 'app.billingInformation' })}
                       </Text>
-                      <Button
-                        size="sm"
-                        leftIcon={<FaPlus />}
-                        colorScheme="blue"
-                        isLoading={isCreatingCheckoutSession}
-                        onClick={handleAddPaymentMethod}
-                      >
-                        {intl.formatMessage({ id: 'app.addPaymentMethod' })}
-                      </Button>
-                    </Flex>
+                      <Card>
+                        <CardBody>
+                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                            <Box>
+                              <Text color="gray.500" fontSize="sm">
+                                Company Name
+                              </Text>
+                              <Text fontWeight="medium">{activeCompany?.name}</Text>
+                            </Box>
+                            <Box>
+                              <Text color="gray.500" fontSize="sm">
+                                Email
+                              </Text>
+                              <Text fontWeight="medium">{activeCompany?.email}</Text>
+                            </Box>
+                            <Box>
+                              <Text color="gray.500" fontSize="sm">
+                                Phone
+                              </Text>
+                              <Text fontWeight="medium">{activeCompany?.phone || '-'}</Text>
+                            </Box>
+                            <Box>
+                              <Text color="gray.500" fontSize="sm">
+                                Tax ID
+                              </Text>
+                              <Text fontWeight="medium">{activeCompany?.tax_id || '-'}</Text>
+                            </Box>
+                          </SimpleGrid>
+                        </CardBody>
+                      </Card>
+                    </Box>
+                  </VStack>
+                </TabPanel>
 
-                    {paymentMethods.length > 0 ? (
+                {/* Invoices Tab */}
+                <TabPanel p={6}>
+                  <VStack spacing={6} align="stretch">
+                    <Text fontSize="lg" fontWeight="bold">
+                      {intl.formatMessage({ id: 'app.invoiceHistory' })}
+                    </Text>
+
+                    {invoices.length > 0 ? (
                       <Stack spacing={3}>
-                        {paymentMethods.map((method: any, index: number) => (
+                        {invoices.map((invoice: any, index: number) => (
                           <Card key={index} size="sm">
                             <CardBody>
                               <Flex justify="space-between" align="center">
-                                <Flex align="center">
-                                  <Box
-                                    w="40px"
-                                    h="40px"
-                                    borderRadius="md"
-                                    bg="gray.100"
-                                    display="flex"
-                                    alignItems="center"
-                                    justifyContent="center"
-                                    mr={3}
+                                <Box>
+                                  <Text fontWeight="medium">
+                                    Invoice #{invoice.number || invoice.id}
+                                  </Text>
+                                  <Text fontSize="sm" color="gray.600">
+                                    {formatDate(invoice.created || invoice.invoice_date)} ·{' '}
+                                    {formatPrice((invoice.amount_paid || invoice.amount) / 100)}
+                                  </Text>
+                                </Box>
+                                <HStack>
+                                  <Badge
+                                    colorScheme={invoice.status === 'paid' ? 'green' : 'gray'}
+                                    fontSize="xs"
                                   >
-                                    {method.card_brand === 'visa' ? (
-                                      <VisaIcon w="70%" h="70%" />
-                                    ) : method.card_brand === 'mastercard' ? (
-                                      <MastercardIcon w="70%" h="70%" />
-                                    ) : (
-                                      <Icon as={FaWallet} w="60%" h="60%" />
-                                    )}
-                                  </Box>
-                                  <Box>
-                                    <Text fontWeight="medium">
-                                      {method.card_brand.charAt(0).toUpperCase() +
-                                        method.card_brand.slice(1)}
-                                      {method.is_default && (
-                                        <Badge ml={2} colorScheme="green" fontSize="xs">
-                                          Default
-                                        </Badge>
-                                      )}
-                                    </Text>
-                                    <Text fontSize="sm" color="gray.600">
-                                      •••• {method.last_4} | Expires: {method.exp_month}/
-                                      {method.exp_year}
-                                    </Text>
-                                  </Box>
-                                </Flex>
-                                {!method.is_default && (
+                                    {invoice.status}
+                                  </Badge>
                                   <Button
                                     size="sm"
                                     variant="ghost"
                                     colorScheme="blue"
-                                    onClick={() => handleSetDefaultPaymentMethod(method.id)}
+                                    rightIcon={<FaExternalLinkAlt />}
+                                    as="a"
+                                    href={invoice.invoice_pdf}
+                                    target="_blank"
                                   >
-                                    Set Default
+                                    Download
                                   </Button>
-                                )}
+                                </HStack>
                               </Flex>
                             </CardBody>
                           </Card>
@@ -1170,122 +1280,17 @@ function UnifiedSubscriptionDashboard() {
                     ) : (
                       <Card>
                         <CardBody textAlign="center" py={8}>
-                          <Icon as={FaCreditCard} boxSize={10} color="gray.300" mb={3} />
-                          <Text color="gray.500" mb={4}>
-                            {intl.formatMessage({ id: 'app.noPaymentMethods' })}
+                          <Icon as={FaFileInvoiceDollar} boxSize={10} color="gray.300" mb={3} />
+                          <Text color="gray.500">
+                            {intl.formatMessage({ id: 'app.noInvoicesYet' })}
                           </Text>
-                          <Button
-                            colorScheme="blue"
-                            leftIcon={<FaPlus />}
-                            isLoading={isCreatingCheckoutSession}
-                            onClick={handleAddPaymentMethod}
-                          >
-                            {intl.formatMessage({ id: 'app.addPaymentMethod' })}
-                          </Button>
                         </CardBody>
                       </Card>
                     )}
-                  </Box>
-
-                  {/* Billing Information */}
-                  <Box>
-                    <Text fontSize="lg" fontWeight="bold" mb={4}>
-                      {intl.formatMessage({ id: 'app.billingInformation' })}
-                    </Text>
-                    <Card>
-                      <CardBody>
-                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                          <Box>
-                            <Text color="gray.500" fontSize="sm">
-                              Company Name
-                            </Text>
-                            <Text fontWeight="medium">{activeCompany?.name}</Text>
-                          </Box>
-                          <Box>
-                            <Text color="gray.500" fontSize="sm">
-                              Email
-                            </Text>
-                            <Text fontWeight="medium">{activeCompany?.email}</Text>
-                          </Box>
-                          <Box>
-                            <Text color="gray.500" fontSize="sm">
-                              Phone
-                            </Text>
-                            <Text fontWeight="medium">{activeCompany?.phone || '-'}</Text>
-                          </Box>
-                          <Box>
-                            <Text color="gray.500" fontSize="sm">
-                              Tax ID
-                            </Text>
-                            <Text fontWeight="medium">{activeCompany?.tax_id || '-'}</Text>
-                          </Box>
-                        </SimpleGrid>
-                      </CardBody>
-                    </Card>
-                  </Box>
-                </VStack>
-              </TabPanel>
-
-              {/* Invoices Tab */}
-              <TabPanel p={6}>
-                <VStack spacing={6} align="stretch">
-                  <Text fontSize="lg" fontWeight="bold">
-                    {intl.formatMessage({ id: 'app.invoiceHistory' })}
-                  </Text>
-
-                  {invoices.length > 0 ? (
-                    <Stack spacing={3}>
-                      {invoices.map((invoice: any, index: number) => (
-                        <Card key={index} size="sm">
-                          <CardBody>
-                            <Flex justify="space-between" align="center">
-                              <Box>
-                                <Text fontWeight="medium">
-                                  Invoice #{invoice.number || invoice.id}
-                                </Text>
-                                <Text fontSize="sm" color="gray.600">
-                                  {formatDate(invoice.created || invoice.invoice_date)} ·{' '}
-                                  {formatPrice((invoice.amount_paid || invoice.amount) / 100)}
-                                </Text>
-                              </Box>
-                              <HStack>
-                                <Badge
-                                  colorScheme={invoice.status === 'paid' ? 'green' : 'gray'}
-                                  fontSize="xs"
-                                >
-                                  {invoice.status}
-                                </Badge>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  colorScheme="blue"
-                                  rightIcon={<FaExternalLinkAlt />}
-                                  as="a"
-                                  href={invoice.invoice_pdf}
-                                  target="_blank"
-                                >
-                                  Download
-                                </Button>
-                              </HStack>
-                            </Flex>
-                          </CardBody>
-                        </Card>
-                      ))}
-                    </Stack>
-                  ) : (
-                    <Card>
-                      <CardBody textAlign="center" py={8}>
-                        <Icon as={FaFileInvoiceDollar} boxSize={10} color="gray.300" mb={3} />
-                        <Text color="gray.500">
-                          {intl.formatMessage({ id: 'app.noInvoicesYet' })}
-                        </Text>
-                      </CardBody>
-                    </Card>
-                  )}
-                </VStack>
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+                  </VStack>
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
           </CardBody>
         </Card>
       </VStack>

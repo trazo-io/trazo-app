@@ -45,7 +45,8 @@ const MetricCard = ({
         _hover={{
           transform: 'translateY(-2px)',
           boxShadow: 'xl'
-        }}>
+        }}
+      >
         <CardBody>
           <VStack spacing={3}>
             <HStack justify="space-between" w="full">

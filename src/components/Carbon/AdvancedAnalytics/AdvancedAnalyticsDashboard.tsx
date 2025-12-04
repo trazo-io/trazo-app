@@ -22,16 +22,16 @@ import {
   TabPanels,
   Button,
   useToast,
-  useColorModeValue,
+  useColorModeValue
 } from '@chakra-ui/react';
-import { 
-  FaChartLine, 
-  FaDollarSign, 
-  FaGlobe, 
+import {
+  FaChartLine,
+  FaDollarSign,
+  FaGlobe,
   FaRocket,
   FaDownload,
   FaShare,
-  FaSync,
+  FaSync
 } from 'react-icons/fa';
 
 import { CarbonJourneyVisualization } from './CarbonJourneyVisualization';
@@ -50,18 +50,18 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
   productionId,
   productionName = 'Unknown Production',
   cropType = 'Unknown Crop',
-  onDataLoad,
+  onDataLoad
 }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
-  
+
   const {
     data: analyticsData,
     isLoading,
     isError,
     error,
-    refetch,
+    refetch
   } = useGetAdvancedAnalyticsQuery(productionId);
 
   const bg = useColorModeValue('white', 'gray.800');
@@ -82,7 +82,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
         description: 'Carbon analytics data has been updated successfully.',
         status: 'success',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
     } catch (err) {
       toast({
@@ -90,7 +90,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
         description: 'Failed to refresh analytics data. Please try again.',
         status: 'error',
         duration: 5000,
-        isClosable: true,
+        isClosable: true
       });
     } finally {
       setRefreshing(false);
@@ -104,7 +104,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
       description: 'Analytics report export is being prepared...',
       status: 'info',
       duration: 3000,
-      isClosable: true,
+      isClosable: true
     });
   };
 
@@ -115,7 +115,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
       description: 'Analytics dashboard link copied to clipboard.',
       status: 'success',
       duration: 3000,
-      isClosable: true,
+      isClosable: true
     });
   };
 
@@ -130,7 +130,8 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
                 Generating Advanced Carbon Analytics...
               </Text>
               <Text fontSize="sm" color="gray.600" textAlign="center">
-                Analyzing carbon journey, calculating ROI, and creating impact insights.<br />
+                Analyzing carbon journey, calculating ROI, and creating impact insights.
+                <br />
                 This may take a few moments.
               </Text>
             </VStack>
@@ -147,15 +148,11 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
         <Box>
           <AlertTitle>Analytics Generation Failed</AlertTitle>
           <AlertDescription>
-            {error?.data?.details || 'Unable to generate advanced carbon analytics. Please try again later.'}
+            {error?.data?.details ||
+              'Unable to generate advanced carbon analytics. Please try again later.'}
           </AlertDescription>
         </Box>
-        <Button
-          ml="auto"
-          size="sm"
-          onClick={() => refetch()}
-          leftIcon={<Icon as={FaSync} />}
-        >
+        <Button ml="auto" size="sm" onClick={() => refetch()} leftIcon={<Icon as={FaSync} />}>
           Retry
         </Button>
       </Alert>
@@ -233,12 +230,7 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
       </Card>
 
       {/* Main Analytics Tabs */}
-      <Tabs 
-        variant="enclosed" 
-        colorScheme="green" 
-        index={activeTab} 
-        onChange={setActiveTab}
-      >
+      <Tabs variant="enclosed" colorScheme="green" index={activeTab} onChange={setActiveTab}>
         <TabList>
           <Tab>
             <HStack spacing={2}>
@@ -265,11 +257,13 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
           <TabPanel p={0} pt={6}>
             <CarbonJourneyVisualization
               timeline={analytics.carbon_timeline || []}
-              flowDiagram={analytics.carbon_flow_diagram || {
-                inputs: { emissions: [], total_emissions: 0 },
-                outputs: { offsets: [], total_offsets: 0 },
-                net_result: { net_carbon: 0, carbon_negative: false, offset_ratio: 0 }
-              }}
+              flowDiagram={
+                analytics.carbon_flow_diagram || {
+                  inputs: { emissions: [], total_emissions: 0 },
+                  outputs: { offsets: [], total_offsets: 0 },
+                  net_result: { net_carbon: 0, carbon_negative: false, offset_ratio: 0 }
+                }
+              }
               hotspots={analytics.carbon_hotspots || []}
               carbonEfficiencyScore={analytics.carbon_efficiency_score || 0}
               carbonIntensity={analytics.carbon_intensity || 0}
@@ -279,69 +273,81 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
           {/* ROI & Market Value Tab */}
           <TabPanel p={0} pt={6}>
             <CarbonROIAnalysis
-              carbonROI={analytics.carbon_roi || {
-                investment_estimate: 0,
-                carbon_credit_value: 0,
-                premium_pricing_value: 0,
-                total_annual_benefits: 0,
-                roi_percentage: 0,
-                payback_period_years: 0,
-                cost_per_ton_co2e: 0
-              }}
-              marketValueImpact={analytics.market_value_impact || {
-                current_market_tier: 'Standard',
-                base_production_value: 0,
-                enhanced_market_value: 0,
-                value_uplift: 0,
-                value_uplift_percentage: 0,
-                consumer_appeal_rating: 'Average',
-                market_differentiation: 'Standard',
-                competitive_advantage: 'None'
-              }}
-              carbonCreditPotential={analytics.carbon_credit_potential || {
-                eligible: false,
-                reason: 'Data not available'
-              }}
-              premiumPricingOpportunity={analytics.premium_pricing_opportunity || {
-                total_opportunities: 0,
-                opportunities: [],
-                total_potential_value: 0,
-                recommended_priority: 'None'
-              }}
+              carbonROI={
+                analytics.carbon_roi || {
+                  investment_estimate: 0,
+                  carbon_credit_value: 0,
+                  premium_pricing_value: 0,
+                  total_annual_benefits: 0,
+                  roi_percentage: 0,
+                  payback_period_years: 0,
+                  cost_per_ton_co2e: 0
+                }
+              }
+              marketValueImpact={
+                analytics.market_value_impact || {
+                  current_market_tier: 'Standard',
+                  base_production_value: 0,
+                  enhanced_market_value: 0,
+                  value_uplift: 0,
+                  value_uplift_percentage: 0,
+                  consumer_appeal_rating: 'Average',
+                  market_differentiation: 'Standard',
+                  competitive_advantage: 'None'
+                }
+              }
+              carbonCreditPotential={
+                analytics.carbon_credit_potential || {
+                  eligible: false,
+                  reason: 'Data not available'
+                }
+              }
+              premiumPricingOpportunity={
+                analytics.premium_pricing_opportunity || {
+                  total_opportunities: 0,
+                  opportunities: [],
+                  total_potential_value: 0,
+                  recommended_priority: 'None'
+                }
+              }
             />
           </TabPanel>
 
           {/* Consumer Impact Tab */}
           <TabPanel p={0} pt={6}>
             <ConsumerImpactStory
-              consumerImpactStory={analytics.consumer_impact_story || {
-                headline_message: 'Carbon data available',
-                key_impacts: {
-                  carbon_removed: '0 kg CO₂',
-                  equivalent_cars_offset: '0 cars',
-                  equivalent_trees_planted: '0 trees'
-                },
-                story_narrative: 'Carbon impact information is being calculated.',
-                transparency_highlights: [],
-                sustainability_achievements: [],
-                consumer_benefits: []
-              }}
-              trustIndicators={analytics.trust_indicators || {
-                verification_status: {
-                  usda_verification_rate: '0%',
-                  blockchain_verified: false,
-                  third_party_audited: false,
-                  real_time_tracking: false
-                },
-                trust_score: 0,
-                trust_factors: [],
-                credibility_indicators: {
-                  data_completeness: 0,
-                  verification_depth: 0,
-                  audit_frequency: 'None',
-                  transparency_level: 'Limited'
+              consumerImpactStory={
+                analytics.consumer_impact_story || {
+                  headline_message: 'Carbon data available',
+                  key_impacts: {
+                    carbon_removed: '0 kg CO₂',
+                    equivalent_cars_offset: '0 cars',
+                    equivalent_trees_planted: '0 trees'
+                  },
+                  story_narrative: 'Carbon impact information is being calculated.',
+                  transparency_highlights: [],
+                  sustainability_achievements: [],
+                  consumer_benefits: []
                 }
-              }}
+              }
+              trustIndicators={
+                analytics.trust_indicators || {
+                  verification_status: {
+                    usda_verification_rate: '0%',
+                    blockchain_verified: false,
+                    third_party_audited: false,
+                    real_time_tracking: false
+                  },
+                  trust_score: 0,
+                  trust_factors: [],
+                  credibility_indicators: {
+                    data_completeness: 0,
+                    verification_depth: 0,
+                    audit_frequency: 'None',
+                    transparency_level: 'Limited'
+                  }
+                }
+              }
               transparencyScore={analytics.transparency_score || 0}
             />
           </TabPanel>
@@ -356,22 +362,25 @@ export const AdvancedAnalyticsDashboard: React.FC<AdvancedAnalyticsDashboardProp
           </CardHeader>
           <CardBody>
             <VStack spacing={3} align="stretch">
-              {analytics.ai_recommendations.slice(0, 3).map((recommendation: any, index: number) => (
-                <Alert key={index} status="info" borderRadius="md">
-                  <AlertIcon />
-                  <Box>
-                    <AlertTitle fontSize="sm">{recommendation.category}</AlertTitle>
-                    <AlertDescription fontSize="sm">
-                      {recommendation.recommendation}
-                      {recommendation.estimated_annual_value && (
-                        <Text as="span" color="green.600" fontWeight="bold">
-                          {' '}(Value: {recommendation.estimated_annual_value})
-                        </Text>
-                      )}
-                    </AlertDescription>
-                  </Box>
-                </Alert>
-              ))}
+              {analytics.ai_recommendations
+                .slice(0, 3)
+                .map((recommendation: any, index: number) => (
+                  <Alert key={index} status="info" borderRadius="md">
+                    <AlertIcon />
+                    <Box>
+                      <AlertTitle fontSize="sm">{recommendation.category}</AlertTitle>
+                      <AlertDescription fontSize="sm">
+                        {recommendation.recommendation}
+                        {recommendation.estimated_annual_value && (
+                          <Text as="span" color="green.600" fontWeight="bold">
+                            {' '}
+                            (Value: {recommendation.estimated_annual_value})
+                          </Text>
+                        )}
+                      </AlertDescription>
+                    </Box>
+                  </Alert>
+                ))}
             </VStack>
           </CardBody>
         </Card>

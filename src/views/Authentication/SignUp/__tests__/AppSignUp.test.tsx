@@ -61,26 +61,28 @@ vi.mock('react-router-dom', async () => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    Link: ({ children, to, ...props }: any) => <a href={to} {...props}>{children}</a>
+    Link: ({ children, to, ...props }: any) => (
+      <a href={to} {...props}>
+        {children}
+      </a>
+    )
   };
 });
 
 // Test store setup
-const createTestStore = () => configureStore({
-  reducer: {
-    [authApi.reducerPath]: authApi.reducer
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(authApi.middleware)
-});
+const createTestStore = () =>
+  configureStore({
+    reducer: {
+      [authApi.reducerPath]: authApi.reducer
+    },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(authApi.middleware)
+  });
 
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <ChakraProvider theme={theme}>
     <Provider store={createTestStore()}>
-      <BrowserRouter>
-        {children}
-      </BrowserRouter>
+      <BrowserRouter>{children}</BrowserRouter>
     </Provider>
   </ChakraProvider>
 );
@@ -88,7 +90,7 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 describe('AppSignUp Component', () => {
   const mockSignUp = vi.fn();
   const mockUnwrap = vi.fn();
-  
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockSignUp.mockReturnValue({ unwrap: mockUnwrap });
@@ -113,7 +115,7 @@ describe('AppSignUp Component', () => {
 
   it('switches to join company mode when toggle is clicked', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -133,7 +135,7 @@ describe('AppSignUp Component', () => {
 
   it('shows company code input only in join mode', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -162,7 +164,7 @@ describe('AppSignUp Component', () => {
 
   it('validates company code format', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -193,7 +195,7 @@ describe('AppSignUp Component', () => {
 
   it('auto-transforms company code to uppercase', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -204,13 +206,13 @@ describe('AppSignUp Component', () => {
     const codeInput = await screen.findByPlaceholderText('Enter 6-character company code');
 
     await user.type(codeInput, 'test123');
-    
+
     expect(codeInput).toHaveValue('TEST123');
   });
 
   it('filters invalid characters from company code', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -221,13 +223,13 @@ describe('AppSignUp Component', () => {
     const codeInput = await screen.findByPlaceholderText('Enter 6-character company code');
 
     await user.type(codeInput, 'TEST@#$123');
-    
+
     expect(codeInput).toHaveValue('TEST123');
   });
 
   it('validates all required fields', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -248,7 +250,7 @@ describe('AppSignUp Component', () => {
 
   it('validates password strength', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -256,10 +258,10 @@ describe('AppSignUp Component', () => {
     );
 
     const passwordInput = screen.getByPlaceholderText('Create secure password (8+ characters)');
-    
+
     // Test weak password
     await user.type(passwordInput, '123');
-    
+
     await waitFor(() => {
       expect(screen.getByText('Password strength: Weak')).toBeInTheDocument();
     });
@@ -267,7 +269,7 @@ describe('AppSignUp Component', () => {
     // Test strong password
     await user.clear(passwordInput);
     await user.type(passwordInput, 'StrongPass123!');
-    
+
     await waitFor(() => {
       expect(screen.getByText('Password strength: Strong')).toBeInTheDocument();
     });
@@ -275,7 +277,7 @@ describe('AppSignUp Component', () => {
 
   it('validates password confirmation', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -284,10 +286,10 @@ describe('AppSignUp Component', () => {
 
     const passwordInput = screen.getByPlaceholderText('Create secure password (8+ characters)');
     const confirmInput = screen.getByPlaceholderText('Confirm your password');
-    
+
     await user.type(passwordInput, 'password123');
     await user.type(confirmInput, 'differentpass');
-    
+
     await waitFor(() => {
       expect(screen.getByText('✗ Passwords do not match')).toBeInTheDocument();
     });
@@ -295,7 +297,7 @@ describe('AppSignUp Component', () => {
     // Fix the confirmation
     await user.clear(confirmInput);
     await user.type(confirmInput, 'password123');
-    
+
     await waitFor(() => {
       expect(screen.getByText('✓ Passwords match')).toBeInTheDocument();
     });
@@ -304,7 +306,7 @@ describe('AppSignUp Component', () => {
   it('submits form with correct data for new company', async () => {
     const user = userEvent.setup();
     mockUnwrap.mockResolvedValue({ success: true });
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -315,7 +317,10 @@ describe('AppSignUp Component', () => {
     await user.type(screen.getByPlaceholderText('First name'), 'John');
     await user.type(screen.getByPlaceholderText('Last name'), 'Doe');
     await user.type(screen.getByPlaceholderText('Enter business email address'), 'john@test.com');
-    await user.type(screen.getByPlaceholderText('Create secure password (8+ characters)'), 'password123');
+    await user.type(
+      screen.getByPlaceholderText('Create secure password (8+ characters)'),
+      'password123'
+    );
     await user.type(screen.getByPlaceholderText('Confirm your password'), 'password123');
     await user.click(screen.getByLabelText(/I agree to the Terms of Service/));
 
@@ -336,7 +341,7 @@ describe('AppSignUp Component', () => {
   it('submits form with company code for joining existing company', async () => {
     const user = userEvent.setup();
     mockUnwrap.mockResolvedValue({ success: true });
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -351,7 +356,10 @@ describe('AppSignUp Component', () => {
     await user.type(screen.getByPlaceholderText('Last name'), 'Smith');
     await user.type(screen.getByPlaceholderText('Enter business email address'), 'jane@test.com');
     await user.type(screen.getByPlaceholderText('Enter 6-character company code'), 'TEST123');
-    await user.type(screen.getByPlaceholderText('Create secure password (8+ characters)'), 'password123');
+    await user.type(
+      screen.getByPlaceholderText('Create secure password (8+ characters)'),
+      'password123'
+    );
     await user.type(screen.getByPlaceholderText('Confirm your password'), 'password123');
     await user.click(screen.getByLabelText(/I agree to the Terms of Service/));
 
@@ -377,7 +385,7 @@ describe('AppSignUp Component', () => {
         company_code: ['Invalid company code']
       }
     });
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -390,7 +398,10 @@ describe('AppSignUp Component', () => {
     await user.type(screen.getByPlaceholderText('Last name'), 'User');
     await user.type(screen.getByPlaceholderText('Enter business email address'), 'test@test.com');
     await user.type(screen.getByPlaceholderText('Enter 6-character company code'), 'INVALID');
-    await user.type(screen.getByPlaceholderText('Create secure password (8+ characters)'), 'password123');
+    await user.type(
+      screen.getByPlaceholderText('Create secure password (8+ characters)'),
+      'password123'
+    );
     await user.type(screen.getByPlaceholderText('Confirm your password'), 'password123');
     await user.click(screen.getByLabelText(/I agree to the Terms of Service/));
 
@@ -404,13 +415,13 @@ describe('AppSignUp Component', () => {
 
   it('shows loading state during submission', async () => {
     const user = userEvent.setup();
-    
+
     // Mock loading state
     (require('../../../../store/api/authApi').useSignUpMutation as any).mockReturnValue([
       mockSignUp,
       { isLoading: true }
     ]);
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -418,7 +429,7 @@ describe('AppSignUp Component', () => {
     );
 
     expect(screen.getByText('Creating account...')).toBeInTheDocument();
-    
+
     // Button should be disabled during loading
     const submitButton = screen.getByText('Creating account...');
     expect(submitButton).toBeDisabled();
@@ -426,7 +437,7 @@ describe('AppSignUp Component', () => {
 
   it('toggles password visibility', async () => {
     const user = userEvent.setup();
-    
+
     render(
       <TestWrapper>
         <AppSignUp />
@@ -457,7 +468,7 @@ describe('AppSignUp Component', () => {
     // Check for green color scheme usage (should use theme colors)
     const createButton = screen.getByText('Create New Company');
     const joinButton = screen.getByText('Join Existing Company');
-    
+
     // These should have proper styling classes
     expect(createButton).toBeInTheDocument();
     expect(joinButton).toBeInTheDocument();
@@ -488,7 +499,7 @@ describe('AppSignUp Component', () => {
     // Test keyboard navigation
     const user = userEvent.setup();
     const firstInput = screen.getByPlaceholderText('First name');
-    
+
     await user.tab();
     expect(document.activeElement).toBe(firstInput);
   });

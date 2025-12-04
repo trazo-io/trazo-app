@@ -50,10 +50,10 @@ const ProducerForgotPassword: React.FC = () => {
     try {
       setError(null);
       await requestPasswordReset({ email: data.email.toLowerCase() }).unwrap();
-      
+
       setSubmittedEmail(data.email);
       setEmailSent(true);
-      
+
       toast({
         title: 'Reset Link Sent',
         description: 'Check your email for password reset instructions',
@@ -77,7 +77,8 @@ const ProducerForgotPassword: React.FC = () => {
           alignItems="center"
           justifyContent="center"
           position="relative"
-          overflow="hidden">
+          overflow="hidden"
+        >
           {/* Sophisticated gradient foundation */}
           <Box
             position="absolute"
@@ -145,28 +146,31 @@ const ProducerForgotPassword: React.FC = () => {
             color="white"
             px={12}
             maxW="lg"
-            zIndex={10}>
+            zIndex={10}
+          >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
                 Secure Account Recovery
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Your carbon intelligence data is protected with enterprise-grade security. 
-                Reset your password safely and get back to tracking your environmental impact.
+                Your carbon intelligence data is protected with enterprise-grade security. Reset
+                your password safely and get back to tracking your environmental impact.
               </Text>
             </VStack>
 
             <VStack spacing={3} pt={4}>
-              {['15-minute secure token expiration', 'One-time use password reset links', 'Enhanced password validation'].map(
-                (feature, index) => (
-                  <HStack key={index} spacing={3}>
-                    <Box w={2} h={2} bg="white" borderRadius="50%" />
-                    <Text fontSize="sm" fontWeight="500" opacity={0.9}>
-                      {feature}
-                    </Text>
-                  </HStack>
-                )
-              )}
+              {[
+                '15-minute secure token expiration',
+                'One-time use password reset links',
+                'Enhanced password validation'
+              ].map((feature, index) => (
+                <HStack key={index} spacing={3}>
+                  <Box w={2} h={2} bg="white" borderRadius="50%" />
+                  <Text fontSize="sm" fontWeight="500" opacity={0.9}>
+                    {feature}
+                  </Text>
+                </HStack>
+              ))}
             </VStack>
           </VStack>
         </Box>
@@ -178,15 +182,16 @@ const ProducerForgotPassword: React.FC = () => {
           bg={useColorModeValue('white', 'gray.900')}
           px={8}
           pt={'112px'}
-          pb={12}>
+          pb={12}
+        >
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
             maxW="420px"
-            my={{ base: 4, lg: 8 }}>
-            
+            my={{ base: 4, lg: 8 }}
+          >
             {emailSent ? (
               // Success State - Following exact Trazo design standards
               <VStack spacing={8} textAlign="center">
@@ -199,32 +204,36 @@ const ProducerForgotPassword: React.FC = () => {
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  mb={2}>
+                  mb={2}
+                >
                   <Icon as={FaCheckCircle} boxSize={8} color="white" />
                 </Box>
 
                 {/* Success Message */}
                 <VStack spacing={3}>
-                  <Text 
-                    fontSize="2xl" 
-                    fontWeight="700" 
-                    color={useColorModeValue('gray.900', 'white')} 
-                    letterSpacing="tight">
+                  <Text
+                    fontSize="2xl"
+                    fontWeight="700"
+                    color={useColorModeValue('gray.900', 'white')}
+                    letterSpacing="tight"
+                  >
                     Check Your Email
                   </Text>
-                  <Text 
-                    color={useColorModeValue('gray.500', 'gray.400')} 
-                    fontSize="md" 
-                    maxW="md" 
+                  <Text
+                    color={useColorModeValue('gray.500', 'gray.400')}
+                    fontSize="md"
+                    maxW="md"
                     lineHeight="1.6"
-                    textAlign="center">
+                    textAlign="center"
+                  >
                     We've sent password reset instructions to
                   </Text>
-                  <Text 
-                    fontWeight="600" 
+                  <Text
+                    fontWeight="600"
                     fontSize="lg"
                     color={useColorModeValue('gray.900', 'gray.100')}
-                    letterSpacing="-0.5px">
+                    letterSpacing="-0.5px"
+                  >
                     {submittedEmail}
                   </Text>
                 </VStack>
@@ -236,7 +245,8 @@ const ProducerForgotPassword: React.FC = () => {
                   border="1px solid"
                   borderColor={useColorModeValue('blue.200', 'blue.700')}
                   borderRadius="xl"
-                  p={4}>
+                  p={4}
+                >
                   <VStack spacing={3} align="start">
                     <HStack spacing={3}>
                       <Icon as={FaClock} boxSize={4} color="blue.600" />
@@ -245,7 +255,8 @@ const ProducerForgotPassword: React.FC = () => {
                       </Text>
                     </HStack>
                     <Text fontSize="sm" color="blue.700" lineHeight="1.5">
-                      Don't see the email? Check your spam folder or click the button below to request a new link.
+                      Don't see the email? Check your spam folder or click the button below to
+                      request a new link.
                     </Text>
                   </VStack>
                 </Box>
@@ -275,10 +286,11 @@ const ProducerForgotPassword: React.FC = () => {
                     _active={{
                       transform: 'translateY(0)'
                     }}
-                    transition="all 0.2s">
+                    transition="all 0.2s"
+                  >
                     Send Another Email
                   </Button>
-                  
+
                   <Link to="/auth/signin">
                     <Button
                       variant="ghost"
@@ -291,7 +303,8 @@ const ProducerForgotPassword: React.FC = () => {
                         color: 'green.500',
                         bg: useColorModeValue('gray.50', 'gray.700')
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       Back to Sign In
                     </Button>
                   </Link>
@@ -307,13 +320,15 @@ const ProducerForgotPassword: React.FC = () => {
                       fontSize="2xl"
                       fontWeight="700"
                       color={useColorModeValue('gray.900', 'white')}
-                      letterSpacing="tight">
+                      letterSpacing="tight"
+                    >
                       Reset Your Password
                     </Text>
                     <Text
                       fontSize="md"
                       color={useColorModeValue('gray.500', 'gray.400')}
-                      textAlign="center">
+                      textAlign="center"
+                    >
                       Enter your email address and we'll send you a link to reset your password
                     </Text>
                   </VStack>
@@ -328,7 +343,8 @@ const ProducerForgotPassword: React.FC = () => {
                       p={4}
                       mb={6}
                       borderLeft="4px solid"
-                      borderLeftColor="red.500">
+                      borderLeftColor="red.500"
+                    >
                       <Text color="red.700" fontSize="sm" fontWeight="500">
                         {error}
                       </Text>
@@ -343,7 +359,8 @@ const ProducerForgotPassword: React.FC = () => {
                           fontSize="sm"
                           fontWeight="medium"
                           color={useColorModeValue('gray.700', 'gray.300')}
-                          mb={2}>
+                          mb={2}
+                        >
                           Email Address *
                         </Text>
                         <InputGroup size="lg">
@@ -422,7 +439,8 @@ const ProducerForgotPassword: React.FC = () => {
                         _active={{
                           transform: 'translateY(0)'
                         }}
-                        transition="all 0.2s">
+                        transition="all 0.2s"
+                      >
                         Send Reset Link
                       </Button>
                     </VStack>
@@ -440,17 +458,28 @@ const ProducerForgotPassword: React.FC = () => {
                       _hover={{
                         color: 'green.500'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       Back to Sign In
                     </Button>
                   </Link>
                 </Box>
 
                 {/* Security Note */}
-                <Box mt={6} p={4} bg={useColorModeValue('gray.50', 'gray.800')} borderRadius="xl" w="full">
-                  <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')} textAlign="center">
-                    For your security, password reset links expire after 15 minutes.
-                    If you don't receive an email, check your spam folder.
+                <Box
+                  mt={6}
+                  p={4}
+                  bg={useColorModeValue('gray.50', 'gray.800')}
+                  borderRadius="xl"
+                  w="full"
+                >
+                  <Text
+                    fontSize="xs"
+                    color={useColorModeValue('gray.600', 'gray.400')}
+                    textAlign="center"
+                  >
+                    For your security, password reset links expire after 15 minutes. If you don't
+                    receive an email, check your spam folder.
                   </Text>
                 </Box>
               </>
@@ -466,21 +495,24 @@ const ProducerForgotPassword: React.FC = () => {
         borderTop="1px solid"
         borderColor={useColorModeValue('gray.200', 'gray.700')}
         py={6}
-        px={8}>
+        px={8}
+      >
         <Flex
           maxW="7xl"
           mx="auto"
           direction={{ base: 'column', md: 'row' }}
           align="center"
           justify="space-between"
-          gap={4}>
+          gap={4}
+        >
           <HStack spacing={6} flexWrap="wrap" justify="center">
             <Link to="/about">
               <Text
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 About
               </Text>
             </Link>
@@ -489,7 +521,8 @@ const ProducerForgotPassword: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Why Trazo?
               </Text>
             </Link>
@@ -498,7 +531,8 @@ const ProducerForgotPassword: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Blog
               </Text>
             </Link>
@@ -507,7 +541,8 @@ const ProducerForgotPassword: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Contact
               </Text>
             </Link>

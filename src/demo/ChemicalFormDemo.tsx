@@ -18,7 +18,9 @@ const demoStore = configureStore({
 const ChemicalFormDemo: React.FC = () => {
   const handleSubmit = (data: any) => {
     console.log('Form submitted:', data);
-    alert(`Form submitted successfully!\n\nChemical: ${data.commercialName}\nType: ${data.type}\nConcentration: ${data.concentration}`);
+    alert(
+      `Form submitted successfully!\n\nChemical: ${data.commercialName}\nType: ${data.type}\nConcentration: ${data.concentration}`
+    );
   };
 
   const handleCancel = () => {

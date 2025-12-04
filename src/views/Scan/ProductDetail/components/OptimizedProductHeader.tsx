@@ -18,13 +18,15 @@ import { MdLocationOn } from 'react-icons/md';
 import { useIntl } from 'react-intl';
 
 // Import our new trust components
-import { 
-  EnhancedTrustIndicators, 
-  MobileTrustHeader, 
+import {
+  EnhancedTrustIndicators,
+  MobileTrustHeader,
   ProgressiveTrustLoader,
-  TrustData 
+  TrustData
 } from '../../../../components/Trust';
-import TransparencyTrustBadge, { TransparencyTrustData } from '../../../../components/Trust/TransparencyTrustBadge';
+import TransparencyTrustBadge, {
+  TransparencyTrustData
+} from '../../../../components/Trust/TransparencyTrustBadge';
 
 interface OptimizedProductHeaderProps {
   productName: string;
@@ -77,11 +79,11 @@ export const OptimizedProductHeader: React.FC<OptimizedProductHeaderProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const intl = useIntl();
   const toast = useToast();
-  
+
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
-  
+
   const isMobile = useBreakpointValue({ base: true, md: false });
   const { isOpen: isDetailOpen, onOpen: onDetailOpen, onClose: onDetailClose } = useDisclosure();
 
@@ -141,11 +143,11 @@ export const OptimizedProductHeader: React.FC<OptimizedProductHeaderProps> = ({
   const handleShare = () => {
     onShare();
     toast({
-      title: "Link copied!",
-      description: "Product transparency link copied to clipboard",
-      status: "success",
+      title: 'Link copied!',
+      description: 'Product transparency link copied to clipboard',
+      status: 'success',
       duration: 2000,
-      isClosable: true,
+      isClosable: true
     });
   };
 
@@ -175,7 +177,13 @@ export const OptimizedProductHeader: React.FC<OptimizedProductHeaderProps> = ({
             <Box px={4} pt={6} pb={4}>
               <HStack justify="space-between" align="start" mb={4}>
                 <VStack align="start" spacing={1} flex={1}>
-                  <Heading as="h1" size="lg" color={textColor} fontWeight="bold" lineHeight="shorter">
+                  <Heading
+                    as="h1"
+                    size="lg"
+                    color={textColor}
+                    fontWeight="bold"
+                    lineHeight="shorter"
+                  >
                     {productName}
                   </Heading>
                   <HStack color={mutedColor} fontSize="sm">
@@ -204,7 +212,7 @@ export const OptimizedProductHeader: React.FC<OptimizedProductHeaderProps> = ({
               variant="compact"
               showAnimation={true}
             />
-            
+
             {/* Original Mobile Trust Header - SECONDARY (for comparison) */}
             <Box pt={3}>
               <MobileTrustHeader
@@ -314,7 +322,7 @@ export const OptimizedProductHeader: React.FC<OptimizedProductHeaderProps> = ({
             variant="hero"
             showAnimation={true}
           />
-          
+
           {/* Enhanced Trust Indicators - SECONDARY (for detailed verification) */}
           <Box pt={4}>
             <EnhancedTrustIndicators

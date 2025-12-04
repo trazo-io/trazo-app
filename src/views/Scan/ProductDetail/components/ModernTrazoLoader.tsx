@@ -171,7 +171,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
                 {carbonPreview.score}
               </Text>
             </Circle>
-            
+
             <VStack spacing={2} textAlign="center">
               <Text fontSize="lg" fontWeight="semibold" color={textColor}>
                 {carbonPreview.productName || 'Product'}
@@ -228,7 +228,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
                 <ModernSkeletonCard type="chart" />
               </VStack>
             </Box>
-            
+
             {/* Sidebar skeleton */}
             <Box>
               <VStack spacing={4}>
@@ -268,11 +268,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
         {/* Main Loading State */}
         <VStack spacing={6}>
           {/* Icon with Animation */}
-          <Circle
-            size="80px"
-            bg={`${stageInfo.color.split('.')[0]}.100`}
-            position="relative"
-          >
+          <Circle size="80px" bg={`${stageInfo.color.split('.')[0]}.100`} position="relative">
             <Icon
               as={stageInfo.icon}
               boxSize={8}

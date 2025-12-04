@@ -32,8 +32,12 @@ export const EstablishmentImageCard: React.FC<{ establishment: any }> = ({ estab
       onLoad={() => console.log('Establishment image loaded')}
       onError={() => console.log('Establishment image failed')}
     />
-    <Text mt={2} fontWeight="semibold">{establishment.name}</Text>
-    <Text fontSize="sm" color="gray.600">{establishment.location}</Text>
+    <Text mt={2} fontWeight="semibold">
+      {establishment.name}
+    </Text>
+    <Text fontSize="sm" color="gray.600">
+      {establishment.location}
+    </Text>
   </Box>
 );
 
@@ -44,9 +48,9 @@ export const CustomImageWithHook: React.FC<{ imageUrl: string }> = ({ imageUrl }
   return (
     <VStack spacing={3}>
       <Box position="relative">
-        <img 
-          src={displayUrl} 
-          alt="Custom component" 
+        <img
+          src={displayUrl}
+          alt="Custom component"
           style={{ width: '200px', height: '200px', objectFit: 'cover' }}
         />
         {needsPresigning && (
@@ -63,7 +67,9 @@ export const CustomImageWithHook: React.FC<{ imageUrl: string }> = ({ imageUrl }
 };
 
 // Example 4: Image gallery with lazy loading
-export const ImageGallery: React.FC<{ images: Array<{ url: string; title: string }> }> = ({ images }) => (
+export const ImageGallery: React.FC<{ images: Array<{ url: string; title: string }> }> = ({
+  images
+}) => (
   <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={4}>
     {images.map((image, index) => (
       <S3Image
@@ -100,12 +106,12 @@ export const HeroImage: React.FC<{ imageUrl: string }> = ({ imageUrl }) => (
     height="400px"
     objectFit="cover"
     placeholder={
-      <Box 
-        width="100%" 
-        height="400px" 
-        bg="gray.100" 
-        display="flex" 
-        alignItems="center" 
+      <Box
+        width="100%"
+        height="400px"
+        bg="gray.100"
+        display="flex"
+        alignItems="center"
         justifyContent="center"
       >
         <Text color="gray.500">Loading hero image...</Text>

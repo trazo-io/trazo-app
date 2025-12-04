@@ -2,7 +2,7 @@
 
 /**
  * Migration script to help identify Image components that should use S3Image
- * 
+ *
  * Usage: node src/scripts/migrateToS3Image.js
  */
 
@@ -10,17 +10,14 @@ const fs = require('fs');
 const path = require('path');
 
 // Files to search
-const searchDirectories = [
-  'src/views',
-  'src/components'
-];
+const searchDirectories = ['src/views', 'src/components'];
 
 // Pattern to find Image components
 const imagePatterns = [
   /<Image\s+[^>]*src=\{[^}]*\.image[^}]*\}[^>]*>/g,
   /<Image\s+[^>]*src=\{[^}]*establishment[^}]*\}[^>]*>/g,
   /<Image\s+[^>]*src=\{[^}]*user[^}]*\}[^>]*>/g,
-  /<Image\s+[^>]*src=\{[^}]*product[^}]*\}[^>]*>/g,
+  /<Image\s+[^>]*src=\{[^}]*product[^}]*\}[^>]*>/g
 ];
 
 // Results
@@ -29,24 +26,24 @@ let totalMatches = 0;
 
 function searchFiles(dir) {
   const files = fs.readdirSync(dir);
-  
-  files.forEach(file => {
+
+  files.forEach((file) => {
     const filePath = path.join(dir, file);
     const stat = fs.statSync(filePath);
-    
+
     if (stat.isDirectory()) {
       searchFiles(filePath);
     } else if (file.endsWith('.tsx') || file.endsWith('.jsx')) {
       const content = fs.readFileSync(filePath, 'utf8');
       const matches = [];
-      
-      imagePatterns.forEach(pattern => {
+
+      imagePatterns.forEach((pattern) => {
         const found = content.match(pattern);
         if (found) {
           matches.push(...found);
         }
       });
-      
+
       if (matches.length > 0) {
         foundFiles.push({
           file: filePath,
@@ -61,7 +58,7 @@ function searchFiles(dir) {
 
 console.log('🔍 Searching for Image components that may need S3Image migration...\n');
 
-searchDirectories.forEach(dir => {
+searchDirectories.forEach((dir) => {
   if (fs.existsSync(dir)) {
     searchFiles(dir);
   }
@@ -71,7 +68,7 @@ console.log(`📊 Found ${totalMatches} potential Image components in ${foundFil
 
 foundFiles.forEach(({ file, matches, count }) => {
   console.log(`📄 ${file} (${count} matches)`);
-  matches.forEach(match => {
+  matches.forEach((match) => {
     console.log(`   ${match.substring(0, 100)}...`);
   });
   console.log('');

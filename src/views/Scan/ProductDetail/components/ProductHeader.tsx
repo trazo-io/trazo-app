@@ -19,11 +19,7 @@ import {
   useColorModeValue
 } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
-import {
-  FaLeaf,
-  FaCertificate,
-  FaChartLine
-} from 'react-icons/fa';
+import { FaLeaf, FaCertificate, FaChartLine } from 'react-icons/fa';
 
 interface ProductHeaderProps {
   completeData: any;
@@ -38,7 +34,8 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({ completeData }) =>
       bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
       pt={{ base: '120px', md: '150px' }}
       pb={{ base: '80px', md: '120px' }}
-      px={{ base: 3, md: 4 }}>
+      px={{ base: 3, md: 4 }}
+    >
       <Container maxW={{ base: '100%', md: '6xl' }} mx="auto" px={{ base: 3, md: 8 }}>
         <VStack spacing={6} textAlign="center">
           {/* Trust Indicators - TRUST IN 3 SECONDS framework */}
@@ -49,7 +46,8 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({ completeData }) =>
               fontSize="sm"
               px={3}
               py={1}
-              borderRadius="full">
+              borderRadius="full"
+            >
               <HStack spacing={2}>
                 <Icon as={FaLeaf} boxSize={3} />
                 <Text fontWeight="600">USDA Verified</Text>
@@ -61,7 +59,8 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({ completeData }) =>
               fontSize="sm"
               px={3}
               py={1}
-              borderRadius="full">
+              borderRadius="full"
+            >
               <HStack spacing={2}>
                 <Icon as={FaCertificate} boxSize={3} />
                 <Text fontWeight="600">Blockchain Secured</Text>
@@ -73,7 +72,8 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({ completeData }) =>
               fontSize="sm"
               px={3}
               py={1}
-              borderRadius="full">
+              borderRadius="full"
+            >
               <HStack spacing={2}>
                 <Icon as={FaChartLine} boxSize={3} />
                 <Text fontWeight="600">Real Farm Data</Text>
@@ -87,7 +87,7 @@ export const ProductHeader: React.FC<ProductHeaderProps> = ({ completeData }) =>
           </Heading>
 
           <Text fontSize="lg" color="gray.600" maxW="2xl" textAlign="center">
-            This product's verified carbon footprint and the farmer's sustainability story - 
+            This product's verified carbon footprint and the farmer's sustainability story -
             transparency that drives climate-positive choices.
           </Text>
 

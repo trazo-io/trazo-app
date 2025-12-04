@@ -260,7 +260,6 @@ function NewParcel() {
 
   const [createParcel, { data, error, isSuccess, isLoading }] = useCreateParcelMutation();
 
-
   const onSubmitCertificate = (data) => {
     const { product, ...currentParcelData } = currentParcel;
     if (product) {
@@ -531,7 +530,7 @@ function NewParcel() {
                     }
                   }}
                 />
-                
+
                 <Flex justify="space-between" mt={6}>
                   <Button
                     variant="no-hover"

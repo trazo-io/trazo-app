@@ -210,7 +210,8 @@ const ConsumerSignIn: React.FC = () => {
           alignItems="center"
           justifyContent="center"
           position="relative"
-          overflow="hidden">
+          overflow="hidden"
+        >
           {/* Sophisticated gradient foundation */}
           <Box
             position="absolute"
@@ -301,7 +302,8 @@ const ConsumerSignIn: React.FC = () => {
             color="white"
             px={12}
             maxW="lg"
-            zIndex={10}>
+            zIndex={10}
+          >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
                 Know Your Food's Climate Impact
@@ -334,14 +336,16 @@ const ConsumerSignIn: React.FC = () => {
           bg={useColorModeValue('white', 'gray.900')}
           px={8}
           py={12}
-          pt="145px">
+          pt="145px"
+        >
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
             maxW="420px"
-            my={{ base: 4, lg: 8 }}>
+            my={{ base: 4, lg: 8 }}
+          >
             {/* Header */}
             <VStack spacing={6} mb={10}>
               <VStack spacing={2}>
@@ -349,13 +353,15 @@ const ConsumerSignIn: React.FC = () => {
                   fontSize="2xl"
                   fontWeight="700"
                   color={useColorModeValue('gray.900', 'white')}
-                  letterSpacing="tight">
+                  letterSpacing="tight"
+                >
                   Continue Your Carbon Journey
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
-                  textAlign="center">
+                  textAlign="center"
+                >
                   Access verified carbon transparency and sustainable choices
                 </Text>
               </VStack>
@@ -370,7 +376,8 @@ const ConsumerSignIn: React.FC = () => {
                   borderColor="red.200"
                   borderRadius="lg"
                   p={4}
-                  mb={6}>
+                  mb={6}
+                >
                   <Text color="red.600" fontSize="sm">
                     {error}
                   </Text>
@@ -385,7 +392,8 @@ const ConsumerSignIn: React.FC = () => {
                       fontSize="sm"
                       fontWeight="medium"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={2}>
+                      mb={2}
+                    >
                       Email Address
                     </Text>
                     <InputGroup size="lg">
@@ -450,7 +458,8 @@ const ConsumerSignIn: React.FC = () => {
                       fontSize="sm"
                       fontWeight="medium"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={2}>
+                      mb={2}
+                    >
                       Password
                     </Text>
                     <InputGroup size="lg">
@@ -503,7 +512,8 @@ const ConsumerSignIn: React.FC = () => {
                           variant="ghost"
                           onClick={() => setShowPassword(!showPassword)}
                           size="sm"
-                          _hover={{ bg: 'transparent' }}>
+                          _hover={{ bg: 'transparent' }}
+                        >
                           <Icon
                             as={showPassword ? FaEyeSlash : FaEye}
                             color={useColorModeValue('gray.400', 'gray.500')}
@@ -531,7 +541,8 @@ const ConsumerSignIn: React.FC = () => {
                           textDecoration: 'underline',
                           color: 'blue.700'
                         }}
-                        transition="all 0.2s">
+                        transition="all 0.2s"
+                      >
                         Forgot password?
                       </Text>
                     </Link>
@@ -556,7 +567,8 @@ const ConsumerSignIn: React.FC = () => {
                     _active={{
                       transform: 'translateY(0)'
                     }}
-                    transition="all 0.2s">
+                    transition="all 0.2s"
+                  >
                     Access Carbon Transparency
                   </Button>
                 </VStack>
@@ -570,7 +582,8 @@ const ConsumerSignIn: React.FC = () => {
                     fontSize="sm"
                     color={useColorModeValue('gray.500', 'gray.400')}
                     flexShrink={0}
-                    fontWeight="medium">
+                    fontWeight="medium"
+                  >
                     Or continue with
                   </Text>
                   <Divider borderColor={useColorModeValue('gray.300', 'gray.600')} />
@@ -613,11 +626,13 @@ const ConsumerSignIn: React.FC = () => {
                         bg: useColorModeValue('gray.50', 'gray.600'),
                         borderColor: useColorModeValue('gray.400', 'gray.500')
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       <Text
                         fontSize="sm"
                         fontWeight="medium"
-                        color={useColorModeValue('gray.700', 'gray.300')}>
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                      >
                         {social.text}
                       </Text>
                     </Button>
@@ -640,7 +655,8 @@ const ConsumerSignIn: React.FC = () => {
                         textDecoration: 'underline',
                         color: 'blue.700'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       Sign up for free
                     </Text>
                   </Link>
@@ -658,7 +674,8 @@ const ConsumerSignIn: React.FC = () => {
                         textDecoration: 'underline',
                         color: 'blue.700'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       Business login
                     </Text>
                   </Link>
@@ -676,21 +693,24 @@ const ConsumerSignIn: React.FC = () => {
         borderTop="1px solid"
         borderColor={useColorModeValue('gray.200', 'gray.700')}
         py={6}
-        px={8}>
+        px={8}
+      >
         <Flex
           maxW="7xl"
           mx="auto"
           direction={{ base: 'column', md: 'row' }}
           align="center"
           justify="space-between"
-          gap={4}>
+          gap={4}
+        >
           <HStack spacing={6} flexWrap="wrap" justify="center">
             <Link to="/about">
               <Text
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'blue.600' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 About
               </Text>
             </Link>
@@ -699,7 +719,8 @@ const ConsumerSignIn: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'blue.600' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Why Trazo?
               </Text>
             </Link>
@@ -708,7 +729,8 @@ const ConsumerSignIn: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'blue.600' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Blog
               </Text>
             </Link>
@@ -717,7 +739,8 @@ const ConsumerSignIn: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'blue.600' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Contact
               </Text>
             </Link>

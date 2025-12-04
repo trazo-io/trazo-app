@@ -68,6 +68,9 @@ interface ConsumerEventData {
   date: string;
   event_type?: number;
 
+  // Sprint 1 Epic 1.4: USDA GAP Traceability
+  performed_by?: string;
+
   // Verification and trust indicators
   certified?: boolean;
   blockchain_verified?: boolean;
@@ -118,6 +121,20 @@ interface ConsumerEventData {
   activity_name?: string;
   duration?: string;
   people_involved?: number;
+
+  // ENHANCED: IPCC 2006 Lime Dissolution Fields (PA - Soil Amendment events)
+  amendment_type?: string;
+  amendment_amount?: string | number;
+  amendment_unit?: string;
+
+  // ENHANCED: Tillage Depth for Soil CO2 Flux Calculations (TI events)
+  tillage_depth?: string | number;
+  tillage_depth_unit?: string;
+
+  // ENHANCED: USDA NASS 2023 Irrigation Fields (IR events)
+  irrigation_method?: string;
+  irrigation_depth?: string | number;
+  irrigation_depth_unit?: string;
 
   // Additional structured data
   extra_data?: {
@@ -335,7 +352,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             position="relative"
             boxShadow={
               verificationLevel === 'ultimate' ? '0 0 20px rgba(72, 187, 120, 0.4)' : 'none'
-            }>
+            }
+          >
             <Icon
               as={verificationLevel === 'ultimate' ? MdSecurity : FaSeedling}
               boxSize={{ base: 4, md: 5 }}
@@ -352,7 +370,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 position="absolute"
                 top="-1px"
                 right="-1px"
-                border="1px solid white">
+                border="1px solid white"
+              >
                 <Icon as={FaCertificate} boxSize="8px" color="white" />
               </Circle>
             )}
@@ -365,7 +384,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 position="absolute"
                 bottom="-1px"
                 right="-1px"
-                border="1px solid white">
+                border="1px solid white"
+              >
                 <Icon as={MdVerified} boxSize="8px" color="white" />
               </Circle>
             )}
@@ -378,7 +398,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 position="absolute"
                 bottom="-1px"
                 left="-1px"
-                border="1px solid white">
+                border="1px solid white"
+              >
                 <Text fontSize="6px" color="white" fontWeight="bold">
                   USDA
                 </Text>
@@ -405,7 +426,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
           overflow="hidden"
           transition="all 0.2s"
           _hover={{ shadow: 'md', transform: 'translateY(-1px)' }}
-          mb={{ base: 4, md: 0 }}>
+          mb={{ base: 4, md: 0 }}
+        >
           {/* Mobile-Optimized Card Header */}
           <Box p={{ base: 4, md: 4 }}>
             <HStack justify="space-between" align="flex-start" mb={2}>
@@ -414,13 +436,23 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   <Text
                     fontSize={{ base: 'md', md: 'lg' }}
                     fontWeight="bold"
-                    color={useColorModeValue('gray.800', 'white')}>
+                    color={useColorModeValue('gray.800', 'white')}
+                  >
                     {eventInfo.title}
                   </Text>
                 </HStack>
                 <Text fontSize={{ base: 'xs', md: 'sm' }} color={mutedColor}>
                   {formattedDate}
                 </Text>
+                {/* Sprint 1 Epic 1.4: USDA GAP Traceability - Show who performed the activity */}
+                {event.performed_by && (
+                  <HStack spacing={1}>
+                    <Icon as={FaCheckCircle} boxSize={3} color="green.500" />
+                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.600" fontWeight="medium">
+                      Performed by: {event.performed_by}
+                    </Text>
+                  </HStack>
+                )}
               </VStack>
 
               {/* Sustainability badge */}
@@ -429,7 +461,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 fontSize="xs"
                 px={2}
                 py={1}
-                borderRadius="full">
+                borderRadius="full"
+              >
                 <HStack spacing={1}>
                   <Icon as={MdEco} boxSize={3} />
                   <Text>{sustainabilityLevel.toUpperCase()} IMPACT</Text>
@@ -442,7 +475,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               <Text
                 fontSize={{ base: 'md', md: 'md' }}
                 color={useColorModeValue('gray.700', 'gray.300')}
-                lineHeight={{ base: '1.6', md: '1.5' }}>
+                lineHeight={{ base: '1.6', md: '1.5' }}
+              >
                 {eventInfo.shortDescription}
               </Text>
 
@@ -453,7 +487,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   border="1px solid"
                   borderColor={useColorModeValue('green.200', 'green.700')}
                   borderRadius="md"
-                  p={3}>
+                  p={3}
+                >
                   <HStack spacing={2} mb={2}>
                     <Icon as={FaEye} boxSize={3} color="green.500" />
                     <Text fontSize="xs" fontWeight="semibold" color="green.600">
@@ -464,7 +499,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     fontSize="sm"
                     color={useColorModeValue('green.800', 'green.100')}
                     fontStyle="italic"
-                    lineHeight="1.4">
+                    lineHeight="1.4"
+                  >
                     "{event.description}"
                   </Text>
                 </Box>
@@ -483,7 +519,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       colorScheme="blue"
                       fontSize="xs"
                       px={2}
-                      py={1}>
+                      py={1}
+                    >
                       <HStack spacing={1}>
                         <Icon as={FaCheckCircle} boxSize={3} />
                         <Text>{indicator}</Text>
@@ -501,7 +538,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {blockchainData.verified && (
                   <Tooltip
                     label={`Blockchain verified with ${blockchainData.confidence}% confidence. View transaction on Polygon explorer.`}
-                    placement="top">
+                    placement="top"
+                  >
                     <Badge
                       colorScheme={verificationLevel === 'ultimate' ? 'green' : 'blue'}
                       variant="solid"
@@ -509,7 +547,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       px={3}
                       py={1}
                       borderRadius="full"
-                      cursor="pointer">
+                      cursor="pointer"
+                    >
                       <HStack spacing={1}>
                         <Icon as={MdVerified} boxSize={3} />
                         <Text>BLOCKCHAIN VERIFIED</Text>
@@ -528,14 +567,16 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {photoVerification.hasPhotos && (
                   <Tooltip
                     label="Visual evidence provided with verified photos from the farm"
-                    placement="top">
+                    placement="top"
+                  >
                     <Badge
                       colorScheme="blue"
                       variant="solid"
                       fontSize="xs"
                       px={3}
                       py={1}
-                      borderRadius="full">
+                      borderRadius="full"
+                    >
                       <HStack spacing={1}>
                         <Icon as={FaCamera} boxSize={3} />
                         <Text>PHOTO VERIFIED</Text>
@@ -548,14 +589,16 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {blockchainData.integrityScore >= 95 && (
                   <Tooltip
                     label={`Data integrity score: ${blockchainData.integrityScore}%. This indicates extremely high data quality and trustworthiness.`}
-                    placement="top">
+                    placement="top"
+                  >
                     <Badge
                       colorScheme="purple"
                       variant="solid"
                       fontSize="xs"
                       px={3}
                       py={1}
-                      borderRadius="full">
+                      borderRadius="full"
+                    >
                       <HStack spacing={1}>
                         <Icon as={FaShieldAlt} boxSize={3} />
                         <Text>HIGH INTEGRITY ({blockchainData.integrityScore}%)</Text>
@@ -574,7 +617,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     py={1}
                     borderRadius="full"
                     bg="linear-gradient(45deg, #FFD700, #FFA500)"
-                    color="white">
+                    color="white"
+                  >
                     <HStack spacing={1}>
                       <Icon as={MdSecurity} boxSize={3} />
                       <Text fontWeight="bold">ULTIMATE TRUST</Text>
@@ -596,7 +640,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               justifyContent={{ base: 'space-between', md: 'flex-start' }}
               minH={{ base: '44px', md: 'auto' }}
               fontSize={{ base: 'md', md: 'sm' }}
-              fontWeight="semibold">
+              fontWeight="semibold"
+            >
               {isExpanded ? 'Show Less Details' : 'See More Details'}
             </Button>
           </Box>
@@ -649,7 +694,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           bg={useColorModeValue('green.50', 'green.900')}
                           borderRadius="lg"
                           border="1px solid"
-                          borderColor={useColorModeValue('green.200', 'green.700')}>
+                          borderColor={useColorModeValue('green.200', 'green.700')}
+                        >
                           <HStack spacing={2} mb={1}>
                             <Icon
                               as={getCategoryIcon(field.category)}
@@ -734,7 +780,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                               border="1px solid"
                               borderColor="gray.100"
                               _hover={{ borderColor: 'green.200', bg: 'green.50' }}
-                              transition="all 0.2s">
+                              transition="all 0.2s"
+                            >
                               <Text fontSize="xs" fontWeight="500" color="gray.500" mb={1}>
                                 {field.label}
                               </Text>
@@ -753,7 +800,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           bg="green.50"
                           borderRadius="xl"
                           border="1px solid"
-                          borderColor="green.200">
+                          borderColor="green.200"
+                        >
                           <HStack spacing={3}>
                             <Circle size="40px" bg="green.100">
                               <Icon as={FaGlobeAmericas} color="green.600" boxSize={5} />
@@ -823,13 +871,15 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         bg={useColorModeValue('blue.50', 'blue.900')}
                         borderRadius="lg"
                         border="1px solid"
-                        borderColor={useColorModeValue('blue.200', 'blue.700')}>
+                        borderColor={useColorModeValue('blue.200', 'blue.700')}
+                      >
                         <VStack align="stretch" spacing={2}>
                           <HStack justify="space-between">
                             <Text
                               fontSize="sm"
                               fontWeight="semibold"
-                              color={useColorModeValue('blue.700', 'blue.200')}>
+                              color={useColorModeValue('blue.700', 'blue.200')}
+                            >
                               Verification Status
                             </Text>
                             <Badge colorScheme="green" variant="solid">
@@ -866,7 +916,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                               color="blue.500"
                               fontSize="sm"
                               fontWeight="medium"
-                              _hover={{ color: 'blue.600' }}>
+                              _hover={{ color: 'blue.600' }}
+                            >
                               <HStack spacing={1}>
                                 <Icon as={FaEye} boxSize={3} />
                                 <Text>View on Explorer</Text>
@@ -904,7 +955,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           bg={useColorModeValue('green.50', 'green.900')}
                           borderRadius="md"
                           border="1px solid"
-                          borderColor={useColorModeValue('green.200', 'green.700')}>
+                          borderColor={useColorModeValue('green.200', 'green.700')}
+                        >
                           <HStack justify="space-between">
                             <HStack>
                               <Icon as={FaShieldAlt} color="green.500" boxSize={4} />
@@ -978,14 +1030,16 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         bg={useColorModeValue('gray.50', 'gray.800')}
                         borderRadius="lg"
                         border="1px solid"
-                        borderColor={useColorModeValue('gray.200', 'gray.700')}>
+                        borderColor={useColorModeValue('gray.200', 'gray.700')}
+                      >
                         <HStack spacing={{ base: 3, md: 2 }}>
                           <Icon as={FaShieldAlt} boxSize={{ base: 5, md: 4 }} color="green.500" />
                           <VStack align="start" spacing={0} flex={1}>
                             <Text
                               fontSize={{ base: 'sm', md: 'xs' }}
                               fontWeight="semibold"
-                              color="gray.700">
+                              color="gray.700"
+                            >
                               Photo Verification:{' '}
                               {photoVerification.verificationLevel === 'strong'
                                 ? 'Excellent'

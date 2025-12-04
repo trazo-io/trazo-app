@@ -9,7 +9,7 @@ interface RedirectGuardProps {
 
 /**
  * RedirectGuard - Professional auth redirect handler
- * 
+ *
  * This component follows best practices from top-tier apps:
  * 1. Intercepts navigation after authentication
  * 2. Executes pending redirects with priority
@@ -32,17 +32,19 @@ export const RedirectGuard: React.FC<RedirectGuardProps> = ({ children }) => {
 
     // Check for pending auth redirect
     const pendingAction = getAuthRedirectAction();
-    
+
     if (pendingAction && pendingAction.type === 'review' && pendingAction.productionId) {
       console.log('🛡️ RedirectGuard: Executing pending redirect for review');
-      
+
       // Generate review URL
-      const reviewUrl = `/admin/dashboard/production/${pendingAction.productionId}/review/web-${Date.now()}`;
-      
+      const reviewUrl = `/admin/dashboard/production/${
+        pendingAction.productionId
+      }/review/web-${Date.now()}`;
+
       // Clear the action first to prevent loops
       clearAuthRedirectAction();
       setHasExecutedRedirect(true);
-      
+
       // Execute redirect with a small delay to ensure state is updated
       setTimeout(() => {
         console.log('🛡️ RedirectGuard: Navigating to:', reviewUrl);

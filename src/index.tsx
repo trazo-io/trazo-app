@@ -39,7 +39,7 @@ const root = createRoot(container!);
 // Initialize mobile optimizations
 if (process.env.NODE_ENV === 'production') {
   // Register service worker and setup mobile optimizations
-  optimizeForMobile().catch(error => {
+  optimizeForMobile().catch((error) => {
     console.warn('Mobile optimization failed:', error);
   });
 }

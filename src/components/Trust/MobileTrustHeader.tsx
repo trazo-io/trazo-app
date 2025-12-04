@@ -23,11 +23,7 @@ import {
   FaLeaf,
   FaChartLine
 } from 'react-icons/fa';
-import {
-  MdVerified,
-  MdScience,
-  MdSecurity
-} from 'react-icons/md';
+import { MdVerified, MdScience, MdSecurity } from 'react-icons/md';
 import { BsShieldCheck, BsStarFill } from 'react-icons/bs';
 
 // Animation for progressive loading
@@ -76,7 +72,7 @@ export const MobileTrustHeader: React.FC<MobileTrustHeaderProps> = ({
   onDetailClick
 }) => {
   const [visibleElements, setVisibleElements] = useState(0);
-  
+
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
@@ -86,7 +82,7 @@ export const MobileTrustHeader: React.FC<MobileTrustHeaderProps> = ({
   useEffect(() => {
     if (!isLoading) {
       const timer = setInterval(() => {
-        setVisibleElements(prev => {
+        setVisibleElements((prev) => {
           if (prev < 4) return prev + 1;
           clearInterval(timer);
           return prev;
@@ -100,37 +96,37 @@ export const MobileTrustHeader: React.FC<MobileTrustHeaderProps> = ({
   const calculateTrustScore = () => {
     let score = 0;
     let possibleScore = 0;
-    
+
     // Only add to score if data is actually available
     if (trustData.isUSDAVerified) score += 25;
     possibleScore += 25;
-    
+
     if (trustData.isBlockchainVerified) score += 25;
     possibleScore += 25;
-    
+
     if (trustData.confidenceScore > 0) {
       score += (trustData.confidenceScore / 100) * 20;
       possibleScore += 20;
     }
-    
+
     if (trustData.transparencyScore > 0) {
       score += (trustData.transparencyScore / 100) * 15;
       possibleScore += 15;
     }
-    
+
     if (trustData.reviewsCount > 0) {
       if (trustData.reviewsCount > 5) score += 10;
       possibleScore += 10;
     }
-    
+
     if (trustData.averageRating > 0) {
       if (trustData.averageRating >= 4.0) score += 5;
       possibleScore += 5;
     }
-    
+
     // If no data is available, return 0
     if (possibleScore === 0) return 0;
-    
+
     // Calculate percentage based on available data
     return Math.min(Math.round((score / possibleScore) * 100), 100);
   };
@@ -139,7 +135,8 @@ export const MobileTrustHeader: React.FC<MobileTrustHeaderProps> = ({
 
   // Trust level based on score
   const getTrustLevel = () => {
-    if (trustScore === 0) return { level: 'Pending Verification', color: 'gray', icon: FaInfoCircle };
+    if (trustScore === 0)
+      return { level: 'Pending Verification', color: 'gray', icon: FaInfoCircle };
     if (trustScore >= 90) return { level: 'Exceptional', color: 'green', icon: MdSecurity };
     if (trustScore >= 80) return { level: 'Excellent', color: 'green', icon: BsShieldCheck };
     if (trustScore >= 70) return { level: 'Very Good', color: 'blue', icon: MdVerified };
@@ -151,14 +148,7 @@ export const MobileTrustHeader: React.FC<MobileTrustHeaderProps> = ({
 
   if (isLoading) {
     return (
-      <Box
-        bg={bgColor}
-        p={4}
-        borderRadius="xl"
-        boxShadow="lg"
-        mx={4}
-        mt={4}
-      >
+      <Box bg={bgColor} p={4} borderRadius="xl" boxShadow="lg" mx={4} mt={4}>
         <VStack spacing={3}>
           <Box h="60px" w="100%" bg="gray.200" borderRadius="lg" />
           <HStack spacing={2} w="100%">
@@ -205,11 +195,7 @@ export const MobileTrustHeader: React.FC<MobileTrustHeaderProps> = ({
         >
           <HStack justify="space-between" align="center">
             <HStack spacing={3}>
-              <Circle
-                size={10}
-                bg={`${trustLevel.color}.100`}
-                color={`${trustLevel.color}.600`}
-              >
+              <Circle size={10} bg={`${trustLevel.color}.100`} color={`${trustLevel.color}.600`}>
                 <Icon as={trustLevel.icon} boxSize={5} />
               </Circle>
               <VStack align="start" spacing={0}>
@@ -221,7 +207,7 @@ export const MobileTrustHeader: React.FC<MobileTrustHeaderProps> = ({
                 </Text>
               </VStack>
             </HStack>
-            
+
             <VStack spacing={0} align="end">
               <Text
                 fontSize="2xl"
@@ -316,11 +302,7 @@ export const MobileTrustHeader: React.FC<MobileTrustHeaderProps> = ({
             animation={visibleElements >= 3 ? `${slideInLeft} 0.5s ease-out 0.4s both` : undefined}
             minW="60px"
           >
-            <Circle
-              size={8}
-              bg="purple.100"
-              color="purple.600"
-            >
+            <Circle size={8} bg="purple.100" color="purple.600">
               <Icon as={MdScience} boxSize={3} />
             </Circle>
             <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="medium">
@@ -345,11 +327,7 @@ export const MobileTrustHeader: React.FC<MobileTrustHeaderProps> = ({
             animation={visibleElements >= 3 ? `${slideInLeft} 0.5s ease-out 0.5s both` : undefined}
             minW="60px"
           >
-            <Circle
-              size={8}
-              bg="orange.100"
-              color="orange.600"
-            >
+            <Circle size={8} bg="orange.100" color="orange.600">
               <Icon as={FaUsers} boxSize={3} />
             </Circle>
             <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="medium">

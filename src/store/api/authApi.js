@@ -27,24 +27,27 @@ const authApi = baseApi.injectEndpoints({
         try {
           const result = await queryFulfilled;
           console.log('🔒 LOGIN: Login successful, processing result');
-          
+
           // SECURITY: Store tokens using secure token manager only
           TokenManager.setAccessToken(result.data.access);
           console.log('🔒 LOGIN: Access token stored securely. Length:', result.data.access.length);
-          
+
           // Store refresh token if provided
           if (result.data.refresh) {
             TokenManager.setRefreshToken(result.data.refresh);
-            console.log('🔒 LOGIN: Refresh token stored securely. Length:', result.data.refresh.length);
+            console.log(
+              '🔒 LOGIN: Refresh token stored securely. Length:',
+              result.data.refresh.length
+            );
           }
-          
+
           // WAIT a brief moment to ensure token is available for subsequent requests
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           // SECOND: Set user data
           dispatch(setUser(result.data.user));
           console.log('🔒 LOGIN: User data set in Redux');
-          
+
           // THIRD: Get company data if available (but don't let this fail everything)
           if (result.data.user['companies'].length > 0) {
             try {
@@ -54,11 +57,14 @@ const authApi = baseApi.injectEndpoints({
               dispatch(setCompany(data));
               console.log('🔒 LOGIN: Company data loaded successfully');
             } catch (companyError) {
-              console.warn('🔒 LOGIN: Company data fetch failed, but continuing with login:', companyError);
+              console.warn(
+                '🔒 LOGIN: Company data fetch failed, but continuing with login:',
+                companyError
+              );
               // Don't clear tokens if company fetch fails
             }
           }
-          
+
           console.log('🔒 LOGIN: Login flow completed successfully');
         } catch (error) {
           console.error('🔒 LOGIN: Login flow failed:', error);

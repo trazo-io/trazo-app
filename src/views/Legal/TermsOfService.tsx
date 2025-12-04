@@ -370,7 +370,8 @@ const TermsOfService: React.FC = () => {
                     as={RouterLink}
                     to="/privacy-policy"
                     color={linkColor}
-                    fontWeight="medium">
+                    fontWeight="medium"
+                  >
                     Privacy Policy
                   </ChakraLink>
                   , which is incorporated into these Terms by reference.

@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  SimpleGrid,
-  GridItem,
-  Text,
-  useColorModeValue
-} from '@chakra-ui/react';
+import { Box, SimpleGrid, GridItem, Text, useColorModeValue } from '@chakra-ui/react';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';

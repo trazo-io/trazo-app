@@ -16,7 +16,7 @@ export const DEFAULT_SW_CONFIG: ServiceWorkerConfig = {
 // Service Worker registration
 export const registerServiceWorker = async (config: Partial<ServiceWorkerConfig> = {}) => {
   const finalConfig = { ...DEFAULT_SW_CONFIG, ...config };
-  
+
   if (!finalConfig.enabled || !('serviceWorker' in navigator)) {
     console.log('📴 Service Worker not supported or disabled');
     return null;
@@ -24,7 +24,7 @@ export const registerServiceWorker = async (config: Partial<ServiceWorkerConfig>
 
   try {
     console.log('📦 Registering Service Worker for mobile optimization...');
-    
+
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/'
     });
@@ -37,7 +37,7 @@ export const registerServiceWorker = async (config: Partial<ServiceWorkerConfig>
       newWorker.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
           console.log('🔄 New service worker available - dashboard will update on next load');
-          
+
           if (finalConfig.updateOnReload) {
             // Automatically update for better mobile experience
             window.location.reload();
@@ -54,7 +54,6 @@ export const registerServiceWorker = async (config: Partial<ServiceWorkerConfig>
 
     console.log('✅ Service Worker registered successfully');
     return registration;
-    
   } catch (error) {
     console.error('❌ Service Worker registration failed:', error);
     return null;
@@ -64,7 +63,7 @@ export const registerServiceWorker = async (config: Partial<ServiceWorkerConfig>
 // Handle messages from service worker
 const handleServiceWorkerMessage = (event: MessageEvent) => {
   const { data } = event;
-  
+
   if (data.type === 'CACHE_UPDATED') {
     console.log('📱 Dashboard cache updated - fresh data available');
   } else if (data.type === 'OFFLINE_MODE') {
@@ -99,15 +98,12 @@ export const getCacheStats = async (): Promise<Record<string, number>> => {
 
   return new Promise((resolve) => {
     const channel = new MessageChannel();
-    
+
     channel.port1.onmessage = (event) => {
       resolve(event.data || {});
     };
 
-    navigator.serviceWorker.controller.postMessage(
-      { type: 'CACHE_STATS' },
-      [channel.port2]
-    );
+    navigator.serviceWorker.controller.postMessage({ type: 'CACHE_STATS' }, [channel.port2]);
   });
 };
 
@@ -119,15 +115,12 @@ export const clearOldCache = async (): Promise<boolean> => {
 
   return new Promise((resolve) => {
     const channel = new MessageChannel();
-    
+
     channel.port1.onmessage = (event) => {
       resolve(event.data?.success || false);
     };
 
-    navigator.serviceWorker.controller.postMessage(
-      { type: 'CLEAR_OLD_CACHE' },
-      [channel.port2]
-    );
+    navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_OLD_CACHE' }, [channel.port2]);
   });
 };
 
@@ -147,8 +140,10 @@ export const prefetchCriticalResources = async (urls: string[]) => {
 
 // Check if app is running in standalone mode (PWA)
 export const isStandalonePWA = (): boolean => {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         (window.navigator as any).standalone === true;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true
+  );
 };
 
 // Network status monitoring for mobile
@@ -165,10 +160,10 @@ export const setupNetworkMonitoring = () => {
 
   window.addEventListener('online', updateOnlineStatus);
   window.addEventListener('offline', updateOnlineStatus);
-  
+
   // Initial status
   updateOnlineStatus();
-  
+
   return () => {
     window.removeEventListener('online', updateOnlineStatus);
     window.removeEventListener('offline', updateOnlineStatus);
@@ -192,7 +187,7 @@ export const requestBackgroundSync = async (tag: string) => {
   } catch (error) {
     console.error('Background sync registration failed:', error);
   }
-  
+
   return false;
 };
 
@@ -202,26 +197,26 @@ let offlineNotificationShown = false;
 
 const showUpdateNotification = () => {
   if (updateNotificationShown) return;
-  
+
   updateNotificationShown = true;
   console.log('🔄 New version available - will update on next reload');
-  
+
   // Could integrate with app's notification system here
 };
 
 const showOfflineNotification = () => {
   if (offlineNotificationShown) return;
-  
+
   offlineNotificationShown = true;
   console.log('📴 Operating offline - some features may be limited');
-  
+
   // Could show offline banner or notification
 };
 
 const hideOfflineNotification = () => {
   offlineNotificationShown = false;
   console.log('📡 Back online - all features restored');
-  
+
   // Could hide offline banner
 };
 
@@ -232,18 +227,18 @@ export const optimizeForMobile = async () => {
     cacheStrategy: 'moderate',
     offlineSupport: true
   });
-  
+
   // Setup network monitoring
   setupNetworkMonitoring();
-  
+
   // Request permission for notifications (for offline status)
   if ('Notification' in window && Notification.permission === 'default') {
     await Notification.requestPermission();
   }
-  
+
   // Setup background sync for dashboard data
   await requestBackgroundSync('dashboard-sync');
-  
+
   console.log('📱 Mobile optimization complete');
 };
 

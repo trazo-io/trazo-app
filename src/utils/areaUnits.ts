@@ -1,7 +1,7 @@
 /**
  * Professional Area Unit Conversion System for Agricultural Applications
  * Following 2025 agricultural software standards with precise conversion factors
- * 
+ *
  * @author Trazo Platform
  * @version 2.0.0
  * @date 2025-01-15
@@ -12,14 +12,14 @@ export const AREA_CONVERSION_FACTORS = {
   // Base conversions to hectares
   ACRES_TO_HECTARES: 0.40468564224,
   HECTARES_TO_ACRES: 2.47105381467,
-  
+
   // Square meter conversions
   SQ_METERS_TO_HECTARES: 0.0001,
   HECTARES_TO_SQ_METERS: 10000,
-  
+
   // Square feet conversions
   SQ_FEET_TO_HECTARES: 0.000009290304,
-  HECTARES_TO_SQ_FEET: 107639.1041671,
+  HECTARES_TO_SQ_FEET: 107639.1041671
 } as const;
 
 /**
@@ -94,7 +94,7 @@ export function convertArea(
 
   // Convert to hectares first (base unit)
   let hectares: number;
-  
+
   switch (fromUnit) {
     case 'acres':
       hectares = value * AREA_CONVERSION_FACTORS.ACRES_TO_HECTARES;
@@ -113,7 +113,7 @@ export function convertArea(
 
   // Convert from hectares to target unit
   let result: number;
-  
+
   switch (toUnit) {
     case 'acres':
       result = hectares * AREA_CONVERSION_FACTORS.HECTARES_TO_ACRES;
@@ -153,7 +153,7 @@ export function formatAreaForDisplay(
   region: keyof typeof REGIONAL_AREA_PREFERENCES = 'GLOBAL'
 ): AreaMeasurement {
   const config = REGIONAL_AREA_PREFERENCES[region];
-  
+
   if (config.primary === 'hectares') {
     return {
       value: parseFloat(hectares.toFixed(config.precision)),
@@ -161,7 +161,7 @@ export function formatAreaForDisplay(
       precision: config.precision
     };
   }
-  
+
   return {
     value: convertArea(hectares, 'hectares', config.primary, config.precision),
     unit: config.primary,
@@ -181,17 +181,19 @@ export function formatAreaWithBothUnits(
 ): string {
   const config = REGIONAL_AREA_PREFERENCES[region];
   const primary = formatAreaForDisplay(hectares, region);
-  
+
   if (!config.showBothUnits || !config.secondary) {
     return `${primary.value} ${getUnitDisplayName(primary.unit)}`;
   }
-  
+
   const secondary = {
     value: convertArea(hectares, 'hectares', config.secondary, config.precision),
     unit: config.secondary
   };
-  
-  return `${primary.value} ${getUnitDisplayName(primary.unit)} (${secondary.value} ${getUnitDisplayName(secondary.unit)})`;
+
+  return `${primary.value} ${getUnitDisplayName(primary.unit)} (${
+    secondary.value
+  } ${getUnitDisplayName(secondary.unit)})`;
 }
 
 /**
@@ -206,7 +208,7 @@ export function getUnitDisplayName(unit: AreaUnit): string {
     sq_meters: 'm²',
     sq_feet: 'ft²'
   };
-  
+
   return displayNames[unit];
 }
 
@@ -222,7 +224,7 @@ export function getUnitAbbreviation(unit: AreaUnit): string {
     sq_meters: 'm²',
     sq_feet: 'ft²'
   };
-  
+
   return abbreviations[unit];
 }
 
@@ -242,28 +244,28 @@ export function validateAreaValue(area: AreaMeasurement): {
       error: 'Area must be greater than zero'
     };
   }
-  
+
   // Convert to hectares for validation
   const hectares = normalizeAreaToHectares(area);
-  
+
   // Agricultural validation limits (reasonable farm sizes)
   const MIN_AREA_HECTARES = 0.001; // 10 m² minimum
   const MAX_AREA_HECTARES = 100000; // 100,000 hectares maximum (large commercial farms)
-  
+
   if (hectares < MIN_AREA_HECTARES) {
     return {
       isValid: false,
       error: `Minimum area is ${MIN_AREA_HECTARES} hectares`
     };
   }
-  
+
   if (hectares > MAX_AREA_HECTARES) {
     return {
       isValid: false,
       error: `Maximum area is ${MAX_AREA_HECTARES} hectares`
     };
   }
-  
+
   return {
     isValid: true,
     normalizedValue: hectares
@@ -277,17 +279,20 @@ export function validateAreaValue(area: AreaMeasurement): {
  */
 export function parseAreaInput(input: string): AreaMeasurement | null {
   const trimmed = input.trim();
-  
+
   // Regex patterns for different formats
   const patterns = [
     { regex: /^(\d+(?:\.\d+)?)\s*(hectares?|ha)$/i, unit: 'hectares' as AreaUnit },
     { regex: /^(\d+(?:\.\d+)?)\s*(acres?|ac)$/i, unit: 'acres' as AreaUnit },
-    { regex: /^(\d+(?:\.\d+)?)\s*(m²|sq\.?\s*m|square\s*meters?)$/i, unit: 'sq_meters' as AreaUnit },
+    {
+      regex: /^(\d+(?:\.\d+)?)\s*(m²|sq\.?\s*m|square\s*meters?)$/i,
+      unit: 'sq_meters' as AreaUnit
+    },
     { regex: /^(\d+(?:\.\d+)?)\s*(ft²|sq\.?\s*ft|square\s*feet?)$/i, unit: 'sq_feet' as AreaUnit },
     // Default to hectares if no unit specified
     { regex: /^(\d+(?:\.\d+)?)$/i, unit: 'hectares' as AreaUnit }
   ];
-  
+
   for (const pattern of patterns) {
     const match = trimmed.match(pattern.regex);
     if (match) {
@@ -301,7 +306,7 @@ export function parseAreaInput(input: string): AreaMeasurement | null {
       }
     }
   }
-  
+
   return null;
 }
 

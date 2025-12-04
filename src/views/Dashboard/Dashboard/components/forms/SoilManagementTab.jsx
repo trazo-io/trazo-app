@@ -1,55 +1,21 @@
+// Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
 import React, { useEffect, useState } from 'react';
+import { Icon, Text, useColorModeValue, HStack, Box, SimpleGrid, Flex } from '@chakra-ui/react';
 import {
-  Button,
-  Flex,
-  FormControl,
-  FormLabel,
-  Icon,
-  Input,
-  Text,
-  Textarea,
-  useColorModeValue,
-  HStack,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
-  Select as ChakraSelect,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
-  Box,
-  SimpleGrid,
-  Badge,
-  Tooltip,
-  FormErrorMessage,
-  Collapse,
-  useDisclosure
-} from '@chakra-ui/react';
-import {
-  StandardCard,
   StandardButton,
   StandardField,
   StandardInput,
   StandardSelect,
-  StandardTextarea
+  StandardTextarea,
+  StandardAlert,
+  SectionHeader,
+  SectionBox
 } from 'components/Design/StandardComponents';
-import {
-  FaChevronLeft,
-  FaChevronRight,
-  FaSeedling,
-  FaRulerHorizontal,
-  FaThermometerHalf,
-  FaInfoCircle,
-  FaChevronDown,
-  FaChevronUp
-} from 'react-icons/fa';
+// Sprint 3 Epic 3.1: Cleaned unused icon imports
+import { FaChevronLeft, FaChevronRight, FaSeedling, FaThermometerHalf } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, number } from 'zod';
-import { FaPlus } from 'react-icons/fa';
+import { object, string } from 'zod';
 import { useIntl } from 'react-intl';
 
 const formSchemaSoilManagement = object({
@@ -63,7 +29,7 @@ const formSchemaSoilManagement = object({
   soil_ph: string().optional(),
   organic_matter_percentage: string().optional(),
   soil_texture: string().optional(),
-  soil_moisture: string().optional(),
+  // Sprint 2 Epic 2.1.3: Removed soil_moisture (duplicates Weather event)
   depth: string().optional(),
   depth_unit: string().optional(),
   // Standardized fuel consumption fields (matching ProductionEvent pattern)
@@ -72,19 +38,22 @@ const formSchemaSoilManagement = object({
   fuel_unit: string().optional(),
   equipment_hours: string().optional(),
   production_efficiency: string().optional(),
-  transportation_distance: string().optional(),
-  transportation_unit: string().optional(),
+  // Sprint 2 Epic 2.1.3: Removed transportation_distance (duplicates Production event)
   // Tillage-specific fields for carbon calculations
   tillage_type: string().optional(),
   tillage_intensity: string().optional(),
   tillage_direction: string().optional(),
   residue_management: string().optional(),
   equipment_used: string().optional(),
-  weather_conditions: string().optional(),
-  temperature_range: string().optional(),
+  // Sprint 2 Epic 2.1.3: Removed weather_conditions (duplicates Weather event)
+  // ENHANCED: Soil Amendment (PA) fields for IPCC 2006 lime dissolution calculations
+  amendment_amount: string().optional(),
+  amendment_unit: string().optional(),
+  amendment_type: string().optional(),
   observation: string().optional()
 });
 
+// Sprint 2 Epic 2.1.3: Removed soil_moisture, weather_conditions, temperature_range from defaults
 const getSoilManagementDefaults = (soilType) => {
   const defaults = {
     ST: {
@@ -93,23 +62,23 @@ const getSoilManagementDefaults = (soilType) => {
       soil_ph: '6.5',
       organic_matter_percentage: '3.5',
       soil_texture: 'loam',
-      soil_moisture: 'moderate',
       depth: '30',
-      depth_unit: 'cm',
-      weather_conditions: 'dry conditions',
-      temperature_range: '20-25°C'
+      depth_unit: 'cm'
     },
+    // Sprint 2 Epic 2.1.3: PA (Planting/Amendment) kept but simplified - overlaps with Production "Planting"
+    // ENHANCED: Added amendment fields for IPCC 2006 lime dissolution calculations
     PA: {
       area_covered: '2.0',
       area_unit: 'ha',
       soil_ph: '6.8',
       organic_matter_percentage: '4.0',
       soil_texture: 'clay loam',
-      soil_moisture: 'moist',
       depth: '20',
       depth_unit: 'cm',
-      weather_conditions: 'optimal planting conditions',
-      temperature_range: '18-22°C'
+      // Amendment fields for carbon calculation (IPCC 2006 lime dissolution)
+      amendment_amount: '',
+      amendment_unit: 'kg',
+      amendment_type: ''
     },
     TI: {
       area_covered: '2.0',
@@ -117,11 +86,8 @@ const getSoilManagementDefaults = (soilType) => {
       soil_ph: '7.0',
       organic_matter_percentage: '3.0',
       soil_texture: 'sandy loam',
-      soil_moisture: 'moderate',
       depth: '25',
-      depth_unit: 'cm',
-      weather_conditions: 'dry, workable conditions',
-      temperature_range: '15-25°C'
+      depth_unit: 'cm'
     }
   };
 
@@ -141,15 +107,16 @@ const SoilManagementTab = ({
   const iconColor = useColorModeValue('gray.300', 'gray.700');
   const [selectedSoilType, setSelectedSoilType] = useState('');
 
-  // Progressive disclosure for advanced options
-  const { isOpen: isAdvancedOpen, onToggle: onAdvancedToggle } = useDisclosure();
+  // Sprint 3 Epic 3.1: Removed progressive disclosure - consolidated sections
 
   const mapApiTypeToFormType = (apiType) => {
     if (!apiType) return '';
 
+    // Sprint 2 Epic 2.1.3: PA renamed from "Planting/Amendment" to "Soil Amendment" to reduce overlap with Production
     const typeMapping = {
       'event.soil.testing': 'ST',
-      'event.soil.planting': 'PA',
+      'event.soil.planting': 'PA', // Legacy - now "Soil Amendment"
+      'event.soil.amendment': 'PA', // New mapping
       'event.soil.tillage': 'TI'
     };
 
@@ -170,7 +137,7 @@ const SoilManagementTab = ({
       soil_ph: initialValues.soil_ph || '',
       organic_matter_percentage: initialValues.organic_matter_percentage || '',
       soil_texture: initialValues.soil_texture || '',
-      soil_moisture: initialValues.soil_moisture || '',
+      // Sprint 2 Epic 2.1.3: Removed soil_moisture
       depth: initialValues.depth || '',
       depth_unit: initialValues.depth_unit || 'cm',
       // Standardized fuel consumption fields (matching ProductionEvent pattern)
@@ -179,16 +146,18 @@ const SoilManagementTab = ({
       fuel_unit: initialValues.fuel_unit || 'L',
       equipment_hours: initialValues.equipment_hours || '',
       production_efficiency: initialValues.production_efficiency || '',
-      transportation_distance: initialValues.transportation_distance || '',
-      transportation_unit: initialValues.transportation_unit || 'km',
+      // Sprint 2 Epic 2.1.3: Removed transportation_distance
       // Tillage-specific fields for carbon calculations
       tillage_type: initialValues.tillage_type || '',
       tillage_intensity: initialValues.tillage_intensity || '',
       tillage_direction: initialValues.tillage_direction || '',
       residue_management: initialValues.residue_management || '',
       equipment_used: initialValues.equipment_used || '',
-      weather_conditions: initialValues.weather_conditions || '',
-      temperature_range: initialValues.temperature_range || '',
+      // Sprint 2 Epic 2.1.3: Removed weather_conditions, temperature_range
+      // ENHANCED: Amendment fields for IPCC 2006 lime dissolution calculations
+      amendment_amount: initialValues.amendment_amount || '',
+      amendment_unit: initialValues.amendment_unit || 'kg',
+      amendment_type: initialValues.amendment_type || '',
       observation: initialValues.observation || ''
     }
   });
@@ -215,14 +184,19 @@ const SoilManagementTab = ({
   const watchedSoilPh = watch('soil_ph'); // +5 confidence
   const watchedOrganicMatter = watch('organic_matter_percentage'); // +5 confidence
 
+  // ENHANCED: Amendment fields for IPCC 2006 lime dissolution calculations (PA events)
+  const watchedAmendmentAmount = watch('amendment_amount'); // Required for lime CO2 calculation
+  const watchedAmendmentUnit = watch('amendment_unit'); // Unit conversion for lime amount
+  const watchedAmendmentType = watch('amendment_type'); // Determines emission factor (limestone vs dolomite)
+
   // Watch non-calculation fields to ensure they get sent to backend (but don't trigger carbon API)
-  const watchedTransportationDistance = watch('transportation_distance'); // For form data completeness
+  // Sprint 2 Epic 2.1.3: Removed watchedTransportationDistance
   const watchedObservation = watch('observation'); // For backend description field
   const watchedDepth = watch('depth'); // For preview display
   const watchedDepthUnit = watch('depth_unit'); // For preview display
   const watchedEquipmentUsed = watch('equipment_used'); // For preview display
 
-  // Note: transportation_distance, observation, depth, depth_unit, and equipment_used are watched to ensure form data updates
+  // Note: observation, depth, depth_unit, and equipment_used are watched to ensure form data updates
   // but are NOT included in the carbon calculation useEffect dependencies
 
   // Carbon calculation trigger - ONLY for calculation-relevant fields
@@ -268,6 +242,10 @@ const SoilManagementTab = ({
     watchedEquipmentHours, // Fuel estimation
     watchedSoilPh, // +5 confidence
     watchedOrganicMatter, // +5 confidence
+    // ENHANCED: Amendment fields for IPCC 2006 lime dissolution calculations
+    watchedAmendmentAmount, // Required for lime CO2 calculation
+    watchedAmendmentUnit, // Unit conversion
+    watchedAmendmentType, // Determines emission factor
     onDataChange
   ]); // OPTIMIZED: Only trigger carbon calculations for relevant field changes
 
@@ -292,7 +270,7 @@ const SoilManagementTab = ({
     return () => clearTimeout(timeoutId);
   }, [
     // Non-calculation fields to ensure they get captured in form data
-    watchedTransportationDistance, // Ensures transportation_distance gets sent
+    // Sprint 2 Epic 2.1.3: Removed watchedTransportationDistance
     watchedObservation, // Ensures observation gets mapped to description
     watchedDepth, // Ensures working depth appears in preview
     watchedDepthUnit, // Ensures depth unit appears in preview
@@ -352,8 +330,18 @@ const SoilManagementTab = ({
     // USDA API mapping happens in backend based on production's crop type
 
     // Extract tillage fields for extra_data storage
-    const { tillage_type, tillage_intensity, tillage_direction, residue_management, ...coreData } =
+    // ENHANCED: For TI (Tillage) events, map depth → tillage_depth for backend carbon calculation
+    const { tillage_type, tillage_intensity, tillage_direction, residue_management, depth, depth_unit, ...coreData } =
       data;
+
+    // For Tillage events, rename depth to tillage_depth for backend compatibility
+    const tillageDepthData = data.type === 'TI' ? {
+      tillage_depth: depth || '',
+      tillage_depth_unit: depth_unit || 'cm'
+    } : {
+      depth: depth || '',
+      depth_unit: depth_unit || 'cm'
+    };
 
     // Process data for backend compatibility
     // Ensure all numeric fields are strings (not Decimal objects)
@@ -374,6 +362,8 @@ const SoilManagementTab = ({
 
     const processedData = {
       ...cleanedCoreData,
+      // ENHANCED: Include depth data with proper field naming for backend
+      ...tillageDepthData,
       // Map observation field to description (required by backend CommonEvent model)
       // Backend requires non-empty description, so provide fallback if observation is empty
       description:
@@ -397,6 +387,20 @@ const SoilManagementTab = ({
       equipment_hours: processedData.equipment_hours
     });
 
+    // ENHANCED: Log amendment and tillage fields for carbon calculation debugging
+    console.log('[SoilManagementTab] Carbon calculation fields:', {
+      type: data.type,
+      // Amendment fields (PA events - IPCC 2006 lime dissolution)
+      amendment_amount: processedData.amendment_amount,
+      amendment_unit: processedData.amendment_unit,
+      amendment_type: processedData.amendment_type,
+      // Tillage depth fields (TI events - soil CO2 flux)
+      tillage_depth: processedData.tillage_depth,
+      tillage_depth_unit: processedData.tillage_depth_unit,
+      depth: processedData.depth,
+      depth_unit: processedData.depth_unit
+    });
+
     console.log('[SoilManagementTab] Submitting processed data:', {
       ...processedData,
       extra_data: JSON.stringify(processedData.extra_data, null, 2)
@@ -408,28 +412,23 @@ const SoilManagementTab = ({
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleEnhancedSubmit)} style={{ width: '100%' }}>
         <Flex direction="column" w="100%">
-          <Alert status="info" mb={4} borderRadius="md">
-            <AlertIcon />
-            <Box>
-              <AlertTitle fontSize="sm">Soil Management & Transparency Documentation</AlertTitle>
-              <AlertDescription fontSize="xs">
-                All fields marked with * are required for accurate carbon footprint calculations and
-                transparency documentation. Soil management practices help build consumer trust
-                through documented sustainable farming methods.
-              </AlertDescription>
-            </Box>
-          </Alert>
+          <StandardAlert status="info" title="Soil Management & Transparency Documentation">
+            <Text fontSize="sm">
+              All fields marked with * are required for accurate carbon footprint calculations and
+              transparency documentation. Soil management practices help build consumer trust
+              through documented sustainable farming methods.
+            </Text>
+          </StandardAlert>
 
-          <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaSeedling} mr={2} />
-                Soil Management Information
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Transparency Tracking
-              </Badge>
-            </HStack>
+          {/* Sprint 3 Epic 3.1: Consolidated Section 1 - Soil Management Details (merged Info + Area) */}
+          <SectionBox variant="highlighted" mt={4}>
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.600"
+              title="Soil Management Details"
+              badge="Carbon Calculation Required"
+              badgeColorScheme="green"
+            />
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
               <StandardField
@@ -437,38 +436,26 @@ const SoilManagementTab = ({
                   intl.formatMessage({ id: 'app.soilManagementType' }) || 'Soil Management Type'
                 }`}
                 required
-                error={errors.type?.message}>
+                error={errors.type?.message}
+              >
                 <StandardSelect placeholder="Select soil management type" {...register('type')}>
                   <option value="ST">Soil Testing</option>
-                  <option value="PA">Planting/Amendment</option>
+                  <option value="PA">Soil Amendment</option>
                   <option value="TI">Tillage</option>
                 </StandardSelect>
               </StandardField>
 
               <StandardField
                 label="Event Name"
-                helpText="Descriptive name for this soil management operation">
+                helpText="Descriptive name for this soil management operation"
+              >
                 <StandardInput
                   type="text"
                   placeholder="e.g., Spring Tillage - North Field"
                   {...register('name')}
                 />
               </StandardField>
-            </SimpleGrid>
-          </Box>
 
-          <Box mb={6} p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaRulerHorizontal} mr={2} />
-                Area and Physical Measurements
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Carbon Calculation Required
-              </Badge>
-            </HStack>
-
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
               <StandardField label="Area Covered" required error={errors.area_covered?.message}>
                 <HStack spacing={2}>
                   <StandardInput
@@ -503,30 +490,24 @@ const SoilManagementTab = ({
                 </HStack>
               </StandardField>
             </SimpleGrid>
-          </Box>
+          </SectionBox>
 
-          {/* Fuel Consumption Fields - Standardized across all event types */}
-          <Box mb={6} p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaSeedling} mr={2} />
-                Fuel Consumption & Equipment Data
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Enhanced Carbon Accuracy
-              </Badge>
-            </HStack>
-
-            <Text fontSize="sm" color="gray.600" mb={4}>
-              Document your actual equipment usage and fuel consumption to build consumer trust
-              through transparent farming practices. These details help consumers understand the
-              real operational impact of your soil management.
-            </Text>
+          {/* Sprint 3 Epic 3.1: Consolidated Section 2 - Fuel & Equipment Operations (merged Fuel + Environmental) */}
+          <SectionBox variant="highlighted">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.600"
+              title="Fuel & Equipment Operations"
+              badge="Enhanced Carbon Accuracy"
+              badgeColorScheme="green"
+              description="Document your equipment usage, fuel consumption, and operational details to build consumer trust through transparent farming practices."
+            />
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
               <StandardField
                 label="Fuel Consumed"
-                helpText="Total fuel used for soil management equipment">
+                helpText="Total fuel used for soil management equipment"
+              >
                 <HStack spacing={2}>
                   <StandardInput
                     flex={2}
@@ -553,7 +534,8 @@ const SoilManagementTab = ({
 
               <StandardField
                 label="Production Efficiency"
-                helpText="Equipment efficiency rating for carbon scoring">
+                helpText="Equipment efficiency rating for carbon scoring"
+              >
                 <StandardSelect {...register('production_efficiency')}>
                   <option value="">Select efficiency level</option>
                   <option value="high">High Efficiency</option>
@@ -562,22 +544,12 @@ const SoilManagementTab = ({
                 </StandardSelect>
               </StandardField>
 
-              <StandardField
-                label="Transportation Distance"
-                helpText="Distance traveled to/from field">
-                <HStack spacing={2}>
-                  <StandardInput
-                    flex={2}
-                    type="number"
-                    step="0.1"
-                    placeholder="5.0"
-                    {...register('transportation_distance')}
-                  />
-                  <StandardSelect flex={1} {...register('transportation_unit')}>
-                    <option value="km">Kilometers</option>
-                    <option value="miles">Miles</option>
-                  </StandardSelect>
-                </HStack>
+              <StandardField label="Equipment Used" helpText="Equipment used for this operation">
+                <StandardInput
+                  type="text"
+                  placeholder="e.g., tractor with disc harrow, soil auger"
+                  {...register('equipment_used')}
+                />
               </StandardField>
             </SimpleGrid>
 
@@ -587,7 +559,8 @@ const SoilManagementTab = ({
               borderRadius="md"
               borderLeft="4px"
               borderLeftColor="blue.400"
-              mt={4}>
+              mt={4}
+            >
               <HStack spacing={2} mb={1}>
                 <Icon as={FaSeedling} color="blue.500" fontSize="sm" />
                 <Text fontSize="sm" fontWeight="semibold" color="blue.700">
@@ -596,28 +569,122 @@ const SoilManagementTab = ({
               </HStack>
               <Text fontSize="xs" color="blue.600">
                 Documenting actual fuel consumption and equipment usage provides consumers with
-                complete transparency into your farming operations, building trust through detailed
-                agricultural practices.
+                complete transparency into your farming operations.
               </Text>
             </Box>
-          </Box>
+          </SectionBox>
+
+          {/* ENHANCED: Soil Amendment (PA) specific fields for IPCC 2006 lime dissolution */}
+          {watch('type') === 'PA' && (
+            <SectionBox variant="highlighted" borderColor="green.200">
+              <SectionHeader
+                icon={FaSeedling}
+                iconColor="green.600"
+                title="Soil Amendment Details"
+                badge="IPCC 2006 Carbon Calculation"
+                badgeColorScheme="green"
+                description="Document lime or soil amendment application for accurate carbon emissions calculation using IPCC 2006 methodology."
+              />
+
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <StandardField
+                  label="Amendment Type"
+                  helpText="Type of soil amendment applied"
+                >
+                  <StandardSelect
+                    placeholder="Select amendment type"
+                    {...register('amendment_type')}
+                  >
+                    <option value="limestone">Limestone (CaCO3) - 0.44 kg CO2/kg</option>
+                    <option value="dolomite">Dolomite (CaMg(CO3)2) - 0.477 kg CO2/kg</option>
+                    <option value="calcium_oxide">Quick Lime (CaO) - High reactivity</option>
+                    <option value="calcium_hydroxide">Hydrated Lime (Ca(OH)2)</option>
+                    <option value="gypsum">Gypsum (CaSO4) - No CO2 emissions</option>
+                    <option value="compost">Compost - Organic amendment</option>
+                    <option value="manure">Manure - Organic fertilizer</option>
+                    <option value="other">Other Amendment</option>
+                  </StandardSelect>
+                </StandardField>
+
+                <StandardField
+                  label="Amendment Amount"
+                  helpText="Total quantity of amendment applied"
+                >
+                  <HStack spacing={2}>
+                    <StandardInput
+                      flex={2}
+                      type="number"
+                      step="0.1"
+                      placeholder="500"
+                      {...register('amendment_amount')}
+                    />
+                    <StandardSelect flex={1} {...register('amendment_unit')}>
+                      <option value="kg">kg</option>
+                      <option value="tons">Metric Tons</option>
+                      <option value="lbs">Pounds</option>
+                      <option value="short_tons">Short Tons (US)</option>
+                    </StandardSelect>
+                  </HStack>
+                </StandardField>
+
+                <StandardField
+                  label="Application Depth"
+                  helpText="Depth of amendment incorporation"
+                >
+                  <HStack spacing={2}>
+                    <StandardInput
+                      flex={2}
+                      type="number"
+                      step="1"
+                      placeholder="15"
+                      {...register('depth')}
+                    />
+                    <StandardSelect flex={1} {...register('depth_unit')}>
+                      <option value="cm">cm</option>
+                      <option value="inches">inches</option>
+                    </StandardSelect>
+                  </HStack>
+                </StandardField>
+              </SimpleGrid>
+
+              <Box
+                bg="green.50"
+                p={3}
+                borderRadius="md"
+                borderLeft="4px"
+                borderLeftColor="green.400"
+                mt={4}
+              >
+                <HStack spacing={2} mb={1}>
+                  <Icon as={FaSeedling} color="green.500" fontSize="sm" />
+                  <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                    IPCC 2006 Lime Dissolution Methodology
+                  </Text>
+                </HStack>
+                <Text fontSize="xs" color="green.600">
+                  Carbon emissions from lime application are calculated using IPCC 2006 guidelines.
+                  Limestone (CaCO₃) releases 0.44 kg CO₂ per kg applied, while dolomite releases
+                  0.477 kg CO₂ per kg. Gypsum and organic amendments do not directly release CO₂.
+                </Text>
+              </Box>
+            </SectionBox>
+          )}
 
           {(watch('type') === 'ST' || watch('type') === 'PA') && (
-            <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-              <HStack justify="space-between" align="center" mb={4}>
-                <Text fontSize="md" fontWeight="bold" color="orange.600">
-                  <Icon as={FaThermometerHalf} mr={2} />
-                  Soil Properties
-                </Text>
-                <Badge colorScheme="orange" fontSize="xs">
-                  Improves Carbon Accuracy
-                </Badge>
-              </HStack>
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaThermometerHalf}
+                iconColor="orange.600"
+                title="Soil Properties"
+                badge="Improves Carbon Accuracy"
+                badgeColorScheme="orange"
+              />
 
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                 <StandardField
                   label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
-                  helpText="pH affects nutrient availability">
+                  helpText="pH affects nutrient availability"
+                >
                   <StandardInput
                     type="number"
                     min="0"
@@ -633,7 +700,8 @@ const SoilManagementTab = ({
                     intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
                     'Organic Matter (%)'
                   }
-                  helpText="Higher organic matter improves soil carbon">
+                  helpText="Higher organic matter improves soil carbon"
+                >
                   <StandardInput
                     type="number"
                     min="0"
@@ -656,32 +724,20 @@ const SoilManagementTab = ({
                   </StandardSelect>
                 </StandardField>
               </SimpleGrid>
-            </Box>
+            </SectionBox>
           )}
 
           {/* Tillage-Specific Fields - Only for Tillage Operations */}
           {watch('type') === 'TI' && (
-            <Box
-              mb={6}
-              p={4}
-              border="1px"
-              borderColor="orange.200"
-              borderRadius="lg"
-              bg="orange.50">
-              <HStack justify="space-between" align="center" mb={4}>
-                <Text fontSize="md" fontWeight="bold" color="orange.600">
-                  <Icon as={FaSeedling} mr={2} />
-                  Tillage Operation Details
-                </Text>
-                <Badge colorScheme="orange" fontSize="xs">
-                  Carbon Impact Calculation
-                </Badge>
-              </HStack>
-
-              <Text fontSize="sm" color="gray.600" mb={4}>
-                Provide specific tillage details for accurate carbon impact assessment. Tillage
-                practices significantly affect soil carbon sequestration and emissions.
-              </Text>
+            <SectionBox variant="highlighted" borderColor="orange.200">
+              <SectionHeader
+                icon={FaSeedling}
+                iconColor="orange.600"
+                title="Tillage Operation Details"
+                badge="Carbon Impact Calculation"
+                badgeColorScheme="orange"
+                description="Provide specific tillage details for accurate carbon impact assessment. Tillage practices significantly affect soil carbon sequestration and emissions."
+              />
 
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <StandardField label="Tillage Type" helpText="Primary tillage operation performed">
@@ -699,7 +755,8 @@ const SoilManagementTab = ({
 
                 <StandardField
                   label="Tillage Intensity"
-                  helpText="Intensity affects carbon emissions">
+                  helpText="Intensity affects carbon emissions"
+                >
                   <StandardSelect placeholder="Select intensity" {...register('tillage_intensity')}>
                     <option value="high">High - Heavy disturbance</option>
                     <option value="medium">Medium - Moderate disturbance</option>
@@ -710,7 +767,8 @@ const SoilManagementTab = ({
 
                 <StandardField
                   label="Tillage Direction"
-                  helpText="Direction affects soil erosion and carbon retention">
+                  helpText="Direction affects soil erosion and carbon retention"
+                >
                   <StandardSelect placeholder="Select direction" {...register('tillage_direction')}>
                     <option value="across_slope">🏔️ Across Slope - Erosion control</option>
                     <option value="up_down_slope">⬇️ Up/Down Slope - Standard</option>
@@ -721,10 +779,12 @@ const SoilManagementTab = ({
 
                 <StandardField
                   label="Residue Management"
-                  helpText="Crop residue handling affects carbon sequestration">
+                  helpText="Crop residue handling affects carbon sequestration"
+                >
                   <StandardSelect
                     placeholder="Select residue management"
-                    {...register('residue_management')}>
+                    {...register('residue_management')}
+                  >
                     <option value="incorporated">♻️ Incorporated - Mixed into soil</option>
                     <option value="surface_left">🌾 Surface Left - Protective cover</option>
                     <option value="removed">🚛 Removed - Harvested/burned</option>
@@ -740,7 +800,8 @@ const SoilManagementTab = ({
                 borderRadius="md"
                 borderLeft="4px"
                 borderLeftColor="green.400"
-                mt={4}>
+                mt={4}
+              >
                 <HStack spacing={2} mb={1}>
                   <Icon as={FaSeedling} color="green.500" fontSize="sm" />
                   <Text fontSize="sm" fontWeight="semibold" color="green.700">
@@ -753,91 +814,30 @@ const SoilManagementTab = ({
                   incorporated or on the surface also improves carbon retention.
                 </Text>
               </Box>
-            </Box>
+            </SectionBox>
           )}
 
-          <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <HStack justify="space-between" align="center" mb={4}>
-              <HStack>
-                <Text fontSize="md" fontWeight="bold" color="purple.600">
-                  <Icon as={FaThermometerHalf} mr={2} />
-                  Environmental Conditions & Equipment
-                </Text>
-                <StandardButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={onAdvancedToggle}
-                  rightIcon={<Icon as={isAdvancedOpen ? FaChevronUp : FaChevronDown} />}>
-                  {isAdvancedOpen ? 'Hide Details' : 'Show Details'}
-                </StandardButton>
-              </HStack>
-              <Badge colorScheme="purple" fontSize="xs">
-                Context for Transparency
-              </Badge>
-            </HStack>
+          {/* Sprint 3 Epic 3.1: Removed "Environmental Conditions & Equipment" section - merged into "Fuel & Equipment Operations" above */}
 
-            <Collapse in={isAdvancedOpen} animateOpacity>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <StandardField
-                  label="Weather Conditions"
-                  helpText="Weather during soil management affects carbon impact">
-                  <StandardInput
-                    type="text"
-                    placeholder="e.g., dry, workable conditions"
-                    {...register('weather_conditions')}
-                  />
-                </StandardField>
-
-                <StandardField label="Temperature Range">
-                  <StandardInput
-                    type="text"
-                    placeholder="e.g., 18-25°C or 65-77°F"
-                    {...register('temperature_range')}
-                  />
-                </StandardField>
-              </SimpleGrid>
-
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <StandardField label="Soil Moisture">
-                  <StandardSelect placeholder="Select soil moisture" {...register('soil_moisture')}>
-                    <option value="dry">Dry</option>
-                    <option value="moderate">Moderate</option>
-                    <option value="moist">Moist</option>
-                    <option value="wet">Wet</option>
-                  </StandardSelect>
-                </StandardField>
-
-                <StandardField label="Equipment Used">
-                  <StandardInput
-                    type="text"
-                    placeholder="e.g., tractor with disc harrow, soil auger"
-                    {...register('equipment_used')}
-                  />
-                </StandardField>
-              </SimpleGrid>
-            </Collapse>
-          </Box>
-
-          <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaSeedling} mr={2} />
-                Additional Notes & Transparency Details
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Consumer Transparency
-              </Badge>
-            </HStack>
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.500"
+              title="Farmer's Field Notes & Consumer Transparency"
+              badge="Consumer Transparency"
+              badgeColorScheme="green"
+            />
             <StandardField
-              label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
-              helpText="Share details about your soil management approach that help consumers understand your sustainable farming practices">
+              label="Observations & Notes"
+              helpText="Share details about your soil management approach that help consumers understand your sustainable farming practices"
+            >
               <StandardTextarea
                 placeholder="Optional: Describe your soil management approach, goals for soil health, organic practices used, sustainability goals, etc. These details help consumers understand your farming methods."
                 rows={4}
                 {...register('observation')}
               />
             </StandardField>
-          </Box>
+          </SectionBox>
 
           {!hideActions && (
             <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
@@ -846,14 +846,16 @@ const SoilManagementTab = ({
                   variant="outline"
                   onClick={onPrev}
                   leftIcon={<FaChevronLeft />}
-                  size="lg">
+                  size="lg"
+                >
                   {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
                 </StandardButton>
                 <StandardButton
                   variant="primary"
                   type="submit"
                   rightIcon={<FaChevronRight />}
-                  size="lg">
+                  size="lg"
+                >
                   {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                 </StandardButton>
               </HStack>

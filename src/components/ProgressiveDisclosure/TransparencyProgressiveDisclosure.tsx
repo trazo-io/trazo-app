@@ -65,16 +65,16 @@ export interface TransparencyProgressiveDisclosureProps {
   showPriorities?: boolean;
 }
 
-export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressiveDisclosureProps> = ({
+export const TransparencyProgressiveDisclosure: React.FC<
+  TransparencyProgressiveDisclosureProps
+> = ({
   sections,
   defaultExpanded = [],
   transparencyScore = 0,
   variant = 'transparency',
   showPriorities = true
 }) => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(defaultExpanded)
-  );
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(defaultExpanded));
   const [visibleSections, setVisibleSections] = useState(0);
 
   // Theme colors following Trazo patterns
@@ -92,7 +92,7 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
   // Progressive loading animation
   useEffect(() => {
     const timer = setInterval(() => {
-      setVisibleSections(prev => {
+      setVisibleSections((prev) => {
         if (prev < sections.length) return prev + 1;
         clearInterval(timer);
         return prev;
@@ -103,7 +103,7 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
 
   // Toggle section expansion
   const toggleSection = (sectionId: string) => {
-    setExpandedSections(prev => {
+    setExpandedSections((prev) => {
       const newExpanded = new Set(prev);
       if (newExpanded.has(sectionId)) {
         newExpanded.delete(sectionId);
@@ -117,16 +117,16 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
   // Expand all essential sections
   const expandEssentials = () => {
     const essentials = sections
-      .filter(section => section.priority === 'essential')
-      .map(section => section.id);
+      .filter((section) => section.priority === 'essential')
+      .map((section) => section.id);
     setExpandedSections(new Set(essentials));
   };
 
   // Expand all available sections
   const expandAll = () => {
     const available = sections
-      .filter(section => section.isAvailable)
-      .map(section => section.id);
+      .filter((section) => section.isAvailable)
+      .map((section) => section.id);
     setExpandedSections(new Set(available));
   };
 
@@ -170,7 +170,7 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
   };
 
   // Filter sections by availability
-  const availableSections = sections.filter(section => section.isAvailable);
+  const availableSections = sections.filter((section) => section.isAvailable);
   const expandedCount = expandedSections.size;
 
   return (
@@ -181,14 +181,18 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         bg={bg}
-        borderRadius="xl">
+        borderRadius="xl"
+      >
         <CardHeader pb={2}>
           <VStack spacing={3} align="stretch">
             <HStack justify="space-between" align="center" flexWrap="wrap">
               <VStack align="start" spacing={1}>
                 <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                  {variant === 'transparency' ? 'Transparency Details' : 
-                   variant === 'carbon' ? 'Carbon Journey Details' : 'Technical Information'}
+                  {variant === 'transparency'
+                    ? 'Transparency Details'
+                    : variant === 'carbon'
+                    ? 'Carbon Journey Details'
+                    : 'Technical Information'}
                 </Text>
                 <Text fontSize="sm" color={mutedColor}>
                   {expandedCount} of {availableSections.length} sections visible
@@ -218,7 +222,8 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
                 variant="outline"
                 colorScheme="green"
                 onClick={expandEssentials}
-                leftIcon={<FaEye />}>
+                leftIcon={<FaEye />}
+              >
                 Essentials
               </Button>
               <Button
@@ -226,14 +231,11 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
                 variant="outline"
                 colorScheme="blue"
                 onClick={expandAll}
-                leftIcon={<MdExpandMore />}>
+                leftIcon={<MdExpandMore />}
+              >
                 Show All
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={collapseAll}
-                leftIcon={<MdExpandLess />}>
+              <Button size="sm" variant="ghost" onClick={collapseAll} leftIcon={<MdExpandLess />}>
                 Hide All
               </Button>
             </HStack>
@@ -259,7 +261,8 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
                 borderColor="gray.200"
                 borderWidth="1px"
                 borderStyle="dashed"
-                borderRadius="lg">
+                borderRadius="lg"
+              >
                 <CardBody p={4}>
                   <HStack justify="space-between" align="center">
                     <HStack spacing={3}>
@@ -298,8 +301,8 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
                 transform: 'translateY(-2px)',
                 shadow: 'lg'
               }}
-              transition="all 0.2s">
-              
+              transition="all 0.2s"
+            >
               {/* Section Header - Always Visible */}
               <CardBody p={cardSpacing}>
                 <VStack spacing={3} align="stretch">
@@ -310,14 +313,11 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
                     h="auto"
                     justifyContent="space-between"
                     onClick={() => toggleSection(section.id)}
-                    _hover={{ bg: 'transparent' }}>
+                    _hover={{ bg: 'transparent' }}
+                  >
                     <HStack spacing={4} align="center" flex={1}>
                       <HStack spacing={3}>
-                        <Icon 
-                          as={section.icon} 
-                          color={`${section.color}.500`} 
-                          boxSize={iconSize} 
-                        />
+                        <Icon as={section.icon} color={`${section.color}.500`} boxSize={iconSize} />
                         <VStack align="start" spacing={1}>
                           <Text fontSize="md" fontWeight="bold" color={textColor} textAlign="left">
                             {section.title}
@@ -327,19 +327,16 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
                           </Text>
                         </VStack>
                       </HStack>
-                      
+
                       <HStack spacing={2}>
                         {showPriorities && (
                           <Tooltip label={priorityStyle.description} hasArrow>
-                            <Badge
-                              colorScheme={priorityStyle.color}
-                              variant="subtle"
-                              size="sm">
+                            <Badge colorScheme={priorityStyle.color} variant="subtle" size="sm">
                               {priorityStyle.badge}
                             </Badge>
                           </Tooltip>
                         )}
-                        
+
                         {section.metrics && (
                           <VStack spacing={0} align="end" minW="60px">
                             <Text fontSize="xs" fontWeight="bold" color={`${section.color}.600`}>
@@ -356,7 +353,7 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
                         )}
                       </HStack>
                     </HStack>
-                    
+
                     <Icon
                       as={isExpanded ? FaChevronUp : FaChevronDown}
                       color={mutedColor}
@@ -381,7 +378,8 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
-                        overflow="hidden">
+                        overflow="hidden"
+                      >
                         <Divider mb={4} />
                         {section.isLoading ? (
                           <VStack spacing={3}>
@@ -412,15 +410,22 @@ export const TransparencyProgressiveDisclosure: React.FC<TransparencyProgressive
         borderRadius="lg"
         border="1px"
         borderColor={`${variant === 'transparency' ? 'green' : 'blue'}.200`}
-        textAlign="center">
+        textAlign="center"
+      >
         <VStack spacing={2}>
-          <Icon 
-            as={variant === 'transparency' ? FaShieldAlt : FaLeaf} 
-            color={`${variant === 'transparency' ? 'green' : 'blue'}.500`} 
-            boxSize={6} 
+          <Icon
+            as={variant === 'transparency' ? FaShieldAlt : FaLeaf}
+            color={`${variant === 'transparency' ? 'green' : 'blue'}.500`}
+            boxSize={6}
           />
-          <Text fontSize="sm" fontWeight="bold" color={`${variant === 'transparency' ? 'green' : 'blue'}.700`}>
-            {variant === 'transparency' ? 'Transparency Information Complete' : 'Carbon Journey Information Complete'}
+          <Text
+            fontSize="sm"
+            fontWeight="bold"
+            color={`${variant === 'transparency' ? 'green' : 'blue'}.700`}
+          >
+            {variant === 'transparency'
+              ? 'Transparency Information Complete'
+              : 'Carbon Journey Information Complete'}
           </Text>
           <Text fontSize="xs" color={mutedColor}>
             {availableSections.length} sections available • {expandedCount} currently expanded

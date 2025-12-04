@@ -211,7 +211,8 @@ const SmartUsageCard = ({
         bg={cardBg}
         borderRadius="15px"
         boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
-        className="trazo-smart-usage-card">
+        className="trazo-smart-usage-card"
+      >
         <VStack spacing={4} align="center" justify="center" h="full">
           <Circle size="40px" bg={accentColor} color="white">
             <Icon as={FaChartLine} w="20px" h="20px" />
@@ -236,7 +237,8 @@ const SmartUsageCard = ({
         bg={cardBg}
         borderRadius="15px"
         boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
-        className="trazo-smart-usage-card">
+        className="trazo-smart-usage-card"
+      >
         <VStack spacing={4} align="center" justify="center" h="full">
           <Circle size="40px" bg="red.500" color="white">
             <Icon as={FaChartLine} w="20px" h="20px" />
@@ -261,7 +263,8 @@ const SmartUsageCard = ({
       boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
       position="relative"
       overflow="hidden"
-      className="trazo-smart-usage-card">
+      className="trazo-smart-usage-card"
+    >
       {/* High-performance celebration gradient */}
       {smartInsight.priority === 'celebration' && (
         <Box
@@ -285,7 +288,8 @@ const SmartUsageCard = ({
                 fontSize={{ base: 'xs', md: 'sm' }}
                 fontWeight="700"
                 color={textColor}
-                lineHeight="1.2">
+                lineHeight="1.2"
+              >
                 {smartInsight.status}
               </Text>
               {industryPercentile > 75 && (
@@ -366,7 +370,8 @@ const SmartUsageCard = ({
           p={3}
           borderRadius="md"
           border="1px solid"
-          borderColor={useColorModeValue('green.100', 'green.700')}>
+          borderColor={useColorModeValue('green.100', 'green.700')}
+        >
           <Flex align="center" justify="space-between">
             <HStack spacing={3}>
               <Circle size="32px" bg={accentColor} color="white">
@@ -380,7 +385,8 @@ const SmartUsageCard = ({
                   <Tooltip
                     label="Transparency engagement score based on consumer reach, QR scan frequency, and verification status. Higher scores indicate stronger consumer trust and engagement with your farm's transparency."
                     hasArrow
-                    placement="top">
+                    placement="top"
+                  >
                     <Text fontSize="sm" fontWeight="700" color={textColor} cursor="help">
                       {transparencyEngagement} transparency score
                     </Text>
@@ -432,7 +438,8 @@ const SmartUsageCard = ({
             _active={{
               transform: 'translateY(0px)'
             }}
-            transition="all 0.2s ease">
+            transition="all 0.2s ease"
+          >
             {smartInsight.action}
           </Button>
         </Box>

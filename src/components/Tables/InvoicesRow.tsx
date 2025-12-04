@@ -15,7 +15,16 @@
 
 */
 
-import { Box, Button, Flex, Icon, Spacer, Text, useColorModeValue, useToast } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Flex,
+  Icon,
+  Spacer,
+  Text,
+  useColorModeValue,
+  useToast
+} from '@chakra-ui/react';
 import { FaDownload } from 'react-icons/fa';
 import { useDownloadInvoiceMutation } from 'store/api/billingApi';
 
@@ -42,14 +51,14 @@ function InvoicesRow(props: InvoicesRowProps) {
         description: 'Invoice PDF is not available',
         status: 'error',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
       return;
     }
 
     try {
       const result = await downloadInvoice(id).unwrap();
-      
+
       // Create blob URL and trigger download
       const blob = new Blob([result], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
@@ -66,7 +75,7 @@ function InvoicesRow(props: InvoicesRowProps) {
         description: 'Invoice downloaded successfully',
         status: 'success',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
     } catch (error: any) {
       console.error('Download failed:', error);
@@ -75,7 +84,7 @@ function InvoicesRow(props: InvoicesRowProps) {
         description: error?.data?.detail || 'Unable to download invoice. Please try again.',
         status: 'error',
         duration: 5000,
-        isClosable: true,
+        isClosable: true
       });
     }
   };
@@ -107,8 +116,8 @@ function InvoicesRow(props: InvoicesRowProps) {
           isLoading={isDownloading}
           loadingText="Downloading..."
           onClick={handleDownload}
-          _hover={{ bg: "green.600", transform: "translateY(-1px)" }}
-          _active={{ bg: "green.700" }}
+          _hover={{ bg: 'green.600', transform: 'translateY(-1px)' }}
+          _active={{ bg: 'green.700' }}
           leftIcon={<FaDownload />}
         >
           Download

@@ -37,48 +37,53 @@ import { MdFactCheck, MdTrendingUp } from 'react-icons/md';
 import { StandardMetricCard, ConsumerTooltip } from '../Design/StandardComponents';
 
 interface CarbonAnalysisExpandableProps {
-  carbonScopeData: {
-    establishment_id: string;
-    scope_breakdown: {
-      scope_1: {
-        total: number;
-        categories: Record<string, number>;
-        percentage: number;
-      };
-      scope_2: {
-        total: number;
-        categories: Record<string, number>;
-        percentage: number;
-      };
-      scope_3: {
-        total: number;
-        categories: Record<string, number>;
-        percentage: number;
-      };
-    };
-    carbon_intensity_metrics: {
-      per_hectare: number;
-      per_kg_product: number;
-      industry_comparison: {
-        percentile: number;
-        benchmark: number;
-      };
-    };
-    improvement_opportunities: Array<{
-      scope: 'scope_1' | 'scope_2' | 'scope_3';
-      category: string;
-      potential_reduction: number;
-      implementation_cost: 'low' | 'medium' | 'high';
-      roi_estimate: string;
-    }>;
-    generated_at: string;
-  } | null | undefined;
-  carbonSummary: {
-    total_emissions: number;
-    total_offsets: number;
-    net_carbon: number;
-    carbon_intensity: number;
-  } | undefined;
+  carbonScopeData:
+    | {
+        establishment_id: string;
+        scope_breakdown: {
+          scope_1: {
+            total: number;
+            categories: Record<string, number>;
+            percentage: number;
+          };
+          scope_2: {
+            total: number;
+            categories: Record<string, number>;
+            percentage: number;
+          };
+          scope_3: {
+            total: number;
+            categories: Record<string, number>;
+            percentage: number;
+          };
+        };
+        carbon_intensity_metrics: {
+          per_hectare: number;
+          per_kg_product: number;
+          industry_comparison: {
+            percentile: number;
+            benchmark: number;
+          };
+        };
+        improvement_opportunities: Array<{
+          scope: 'scope_1' | 'scope_2' | 'scope_3';
+          category: string;
+          potential_reduction: number;
+          implementation_cost: 'low' | 'medium' | 'high';
+          roi_estimate: string;
+        }>;
+        generated_at: string;
+      }
+    | null
+    | undefined;
+  carbonSummary:
+    | {
+        total_emissions: number;
+        total_offsets: number;
+        net_carbon: number;
+        carbon_intensity: number;
+      }
+    | undefined;
   isLoading?: boolean;
   isMobile?: boolean;
 }
@@ -197,8 +202,8 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
           label="Total Emissions"
           size={isMobile ? 'sm' : 'md'}
           tooltip={{
-            label: "Total Carbon Footprint",
-            explanation: "Combined emissions from all sources across your operations"
+            label: 'Total Carbon Footprint',
+            explanation: 'Combined emissions from all sources across your operations'
           }}
         />
 
@@ -210,8 +215,13 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
           label="Industry Percentile"
           subtitle="Lower is better"
           size={isMobile ? 'sm' : 'md'}
-          colorScheme={processedData.industryComparison.percentile <= 25 ? 'green' : 
-                     processedData.industryComparison.percentile <= 50 ? 'yellow' : 'red'}
+          colorScheme={
+            processedData.industryComparison.percentile <= 25
+              ? 'green'
+              : processedData.industryComparison.percentile <= 50
+              ? 'yellow'
+              : 'red'
+          }
         />
 
         <StandardMetricCard
@@ -244,10 +254,13 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
             transform: 'scale(0.98)' // Better mobile feedback
           }}
         >
-          {isExpanded ? 
-            (isMobile ? 'Hide Details' : 'Hide Details') : 
-            (isMobile ? 'View Analysis' : 'View Carbon Analysis')
-          }
+          {isExpanded
+            ? isMobile
+              ? 'Hide Details'
+              : 'Hide Details'
+            : isMobile
+            ? 'View Analysis'
+            : 'View Carbon Analysis'}
         </Button>
       </Flex>
 
@@ -258,21 +271,21 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
 
           <Tabs index={activeTab} onChange={setActiveTab} colorScheme="green" isFitted={isMobile}>
             <TabList>
-              <Tab 
+              <Tab
                 fontSize={isMobile ? 'xs' : 'sm'}
                 minHeight={isMobile ? '44px' : 'auto'} // Touch target
                 px={isMobile ? 2 : 4}
               >
                 {isMobile ? 'Scopes' : 'Scope Breakdown'}
               </Tab>
-              <Tab 
+              <Tab
                 fontSize={isMobile ? 'xs' : 'sm'}
                 minHeight={isMobile ? '44px' : 'auto'}
                 px={isMobile ? 2 : 4}
               >
                 {isMobile ? 'Industry' : 'Industry Comparison'}
               </Tab>
-              <Tab 
+              <Tab
                 fontSize={isMobile ? 'xs' : 'sm'}
                 minHeight={isMobile ? '44px' : 'auto'}
                 px={isMobile ? 2 : 4}
@@ -286,7 +299,13 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
               <TabPanel px={0}>
                 <VStack spacing={4} align="stretch">
                   {processedData.scopeData.map((scope) => (
-                    <Box key={scope.id} p={4} borderRadius="lg" border="1px solid" borderColor={borderColor}>
+                    <Box
+                      key={scope.id}
+                      p={4}
+                      borderRadius="lg"
+                      border="1px solid"
+                      borderColor={borderColor}
+                    >
                       <VStack spacing={3} align="stretch">
                         <HStack justify="space-between">
                           <HStack spacing={3}>
@@ -310,8 +329,8 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
                           </VStack>
                         </HStack>
 
-                        <Progress 
-                          value={scope.percentage} 
+                        <Progress
+                          value={scope.percentage}
                           colorScheme={scope.color}
                           borderRadius="full"
                           bg="gray.100"
@@ -341,7 +360,13 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
               {/* Industry Comparison Tab */}
               <TabPanel px={0}>
                 <VStack spacing={4} align="stretch">
-                  <Box p={4} borderRadius="lg" bg={useColorModeValue('blue.50', 'blue.900')} border="1px solid" borderColor="blue.200">
+                  <Box
+                    p={4}
+                    borderRadius="lg"
+                    bg={useColorModeValue('blue.50', 'blue.900')}
+                    border="1px solid"
+                    borderColor="blue.200"
+                  >
                     <VStack spacing={3}>
                       <Icon as={MdTrendingUp} color="blue.500" boxSize={8} />
                       <VStack spacing={1}>
@@ -349,7 +374,8 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
                           {processedData.industryComparison.percentile}th Percentile
                         </Heading>
                         <Text fontSize="sm" color="blue.600" textAlign="center">
-                          Your farm performs better than {100 - processedData.industryComparison.percentile}% of similar operations
+                          Your farm performs better than{' '}
+                          {100 - processedData.industryComparison.percentile}% of similar operations
                         </Text>
                       </VStack>
                     </VStack>
@@ -362,7 +388,9 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
                       iconBg="blue.100"
                       value={processedData.carbonIntensity.per_hectare.toFixed(1)}
                       label="CO2e per Hectare"
-                      subtitle={`Benchmark: ${processedData.industryComparison.benchmark.toFixed(1)}`}
+                      subtitle={`Benchmark: ${processedData.industryComparison.benchmark.toFixed(
+                        1
+                      )}`}
                       size="md"
                     />
 
@@ -383,22 +411,31 @@ export const CarbonAnalysisExpandable: React.FC<CarbonAnalysisExpandableProps> =
               <TabPanel px={0}>
                 <VStack spacing={4} align="stretch">
                   {processedData.improvements.map((improvement, index) => (
-                    <Box key={index} p={4} borderRadius="lg" border="1px solid" borderColor={borderColor}>
+                    <Box
+                      key={index}
+                      p={4}
+                      borderRadius="lg"
+                      border="1px solid"
+                      borderColor={borderColor}
+                    >
                       <HStack justify="space-between" align="start" spacing={4}>
                         <VStack align="start" spacing={2} flex={1}>
                           <HStack spacing={2}>
-                            <Badge colorScheme={getCostColor(improvement.implementation_cost)} variant="solid">
+                            <Badge
+                              colorScheme={getCostColor(improvement.implementation_cost)}
+                              variant="solid"
+                            >
                               {improvement.implementation_cost} cost
                             </Badge>
-                            <Badge variant="outline">
-                              {improvement.scope.replace('_', ' ')}
-                            </Badge>
+                            <Badge variant="outline">{improvement.scope.replace('_', ' ')}</Badge>
                           </HStack>
-                          
+
                           <Text fontWeight="semibold" color={textColor}>
-                            {improvement.category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {improvement.category
+                              .replace('_', ' ')
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
                           </Text>
-                          
+
                           <HStack spacing={4}>
                             <ConsumerTooltip
                               label="Potential Reduction"

@@ -45,8 +45,13 @@ export const mediaApi = createApi({
     prepareHeaders: (headers) => {
       // Get token from TokenManager (same as other working APIs)
       const token = TokenManager.getAccessToken();
-      console.log('🔒 MEDIA API: Getting token for S3 request. Token found:', !!token, 'Length:', token?.length || 0);
-      
+      console.log(
+        '🔒 MEDIA API: Getting token for S3 request. Token found:',
+        !!token,
+        'Length:',
+        token?.length || 0
+      );
+
       if (token) {
         headers.set('authorization', `Bearer ${token}`);
         console.log('🔒 MEDIA API: Added Authorization header');
@@ -54,9 +59,9 @@ export const mediaApi = createApi({
         console.log('🔒 MEDIA API: No token found, request will be unauthenticated');
       }
       headers.set('content-type', 'application/json');
-      
+
       return headers;
-    },
+    }
   }),
   tagTypes: ['Media', 'PresignedUrl'],
   endpoints: (builder) => ({
@@ -65,47 +70,49 @@ export const mediaApi = createApi({
       query: (data) => ({
         url: 'get-presigned-read-url/',
         method: 'POST',
-        body: data,
+        body: data
       }),
       // Cache for 30 minutes (presigned URLs last 1 hour)
       keepUnusedDataFor: 1800,
-      providesTags: ['PresignedUrl'],
+      providesTags: ['PresignedUrl']
     }),
 
     // 2025 Best Practice: Batch presigned URLs for optimal performance
-    getBatchPresignedReadUrls: builder.query<BatchPresignedUrlsResponse, BatchPresignedUrlsRequest>({
-      query: (data) => ({
-        url: 'get-presigned-read-urls-batch/',
-        method: 'POST',
-        body: data,
-      }),
-      // Cache for 5 minutes (short cache to allow fresh requests when establishment changes)
-      keepUnusedDataFor: 300,
-      providesTags: (result, error, arg) => [
-        { type: 'PresignedUrl', id: 'BATCH' },
-        // Create unique cache keys based on the URLs being requested
-        ...arg.s3_urls.map(url => ({ type: 'PresignedUrl' as const, id: url }))
-      ],
-    }),
-    
+    getBatchPresignedReadUrls: builder.query<BatchPresignedUrlsResponse, BatchPresignedUrlsRequest>(
+      {
+        query: (data) => ({
+          url: 'get-presigned-read-urls-batch/',
+          method: 'POST',
+          body: data
+        }),
+        // Cache for 5 minutes (short cache to allow fresh requests when establishment changes)
+        keepUnusedDataFor: 300,
+        providesTags: (result, error, arg) => [
+          { type: 'PresignedUrl', id: 'BATCH' },
+          // Create unique cache keys based on the URLs being requested
+          ...arg.s3_urls.map((url) => ({ type: 'PresignedUrl' as const, id: url }))
+        ]
+      }
+    ),
+
     // Get presigned URL for uploading new files
     getUploadUrl: builder.mutation<UploadUrlResponse, UploadUrlRequest>({
       query: (data) => ({
         url: 'get-presigned-url/',
         method: 'POST',
-        body: data,
+        body: data
       }),
-      invalidatesTags: ['Media'],
-    }),
-  }),
+      invalidatesTags: ['Media']
+    })
+  })
 });
 
-export const { 
-  useGetPresignedReadUrlQuery, 
+export const {
+  useGetPresignedReadUrlQuery,
   useLazyGetPresignedReadUrlQuery,
   useGetBatchPresignedReadUrlsQuery,
   useLazyGetBatchPresignedReadUrlsQuery,
-  useGetUploadUrlMutation 
+  useGetUploadUrlMutation
 } = mediaApi;
 
 export default mediaApi;

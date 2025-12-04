@@ -90,7 +90,7 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
     shareRate: 23,
     returnVisitorRate: 34
   },
-  dateRange = "Last 30 days",
+  dateRange = 'Last 30 days',
   isLoading = false
 }) => {
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -98,7 +98,7 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const accentColor = useColorModeValue('green.500', 'green.400');
-  
+
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Calculate performance indicators
@@ -210,7 +210,7 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
                       </Text>
                     </HStack>
                   </HStack>
-                  
+
                   <VStack align="start" spacing={1}>
                     <Text fontSize="sm" color={mutedColor} fontWeight="medium">
                       {metric.label}
@@ -259,28 +259,34 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
                               </Text>
                             </VStack>
                           </HStack>
-                          <Badge 
-                            colorScheme={parseInt(metric.value) >= metric.target ? 'green' : 'yellow'}
+                          <Badge
+                            colorScheme={
+                              parseInt(metric.value) >= metric.target ? 'green' : 'yellow'
+                            }
                             variant="solid"
                           >
-                            {parseInt(metric.value) >= metric.target ? 'Target Met' : 'Below Target'}
+                            {parseInt(metric.value) >= metric.target
+                              ? 'Target Met'
+                              : 'Below Target'}
                           </Badge>
                         </HStack>
-                        
+
                         <Box w="full">
                           <HStack justify="space-between" fontSize="xs" color={mutedColor} mb={1}>
                             <Text>0%</Text>
                             <Text>Target: {metric.target}%</Text>
                             <Text>100%</Text>
                           </HStack>
-                          <Progress 
-                            value={parseInt(metric.value)} 
-                            colorScheme={parseInt(metric.value) >= metric.target ? 'green' : 'yellow'}
+                          <Progress
+                            value={parseInt(metric.value)}
+                            colorScheme={
+                              parseInt(metric.value) >= metric.target ? 'green' : 'yellow'
+                            }
                             borderRadius="full"
                             bg="gray.100"
                           />
                         </Box>
-                        
+
                         <Text fontSize="sm" color={mutedColor}>
                           {metric.description}
                         </Text>
@@ -353,11 +359,11 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
                       </Text>
                       <HStack>
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <Icon 
-                            key={star} 
-                            as={FaStar} 
-                            color={star <= 4.8 ? "yellow.400" : "gray.300"} 
-                            boxSize={4} 
+                          <Icon
+                            key={star}
+                            as={FaStar}
+                            color={star <= 4.8 ? 'yellow.400' : 'gray.300'}
+                            boxSize={4}
                           />
                         ))}
                       </HStack>
@@ -372,30 +378,44 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
               <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
                 <Card bg={bgColor} borderColor={borderColor} borderWidth="1px">
                   <CardHeader>
-                    <Text fontWeight="bold" fontSize="lg">Mobile QR Performance</Text>
+                    <Text fontWeight="bold" fontSize="lg">
+                      Mobile QR Performance
+                    </Text>
                   </CardHeader>
                   <CardBody pt={0}>
                     <VStack spacing={4}>
                       <Box w="full">
                         <HStack justify="space-between" mb={2}>
-                          <Text fontSize="sm" color={mutedColor}>Load Time</Text>
-                          <Text fontSize="sm" fontWeight="bold" color="green.500">1.2s</Text>
+                          <Text fontSize="sm" color={mutedColor}>
+                            Load Time
+                          </Text>
+                          <Text fontSize="sm" fontWeight="bold" color="green.500">
+                            1.2s
+                          </Text>
                         </HStack>
                         <Progress value={92} colorScheme="green" borderRadius="full" />
                       </Box>
-                      
+
                       <Box w="full">
                         <HStack justify="space-between" mb={2}>
-                          <Text fontSize="sm" color={mutedColor}>Core Web Vitals</Text>
-                          <Text fontSize="sm" fontWeight="bold" color="green.500">Excellent</Text>
+                          <Text fontSize="sm" color={mutedColor}>
+                            Core Web Vitals
+                          </Text>
+                          <Text fontSize="sm" fontWeight="bold" color="green.500">
+                            Excellent
+                          </Text>
                         </HStack>
                         <Progress value={94} colorScheme="green" borderRadius="full" />
                       </Box>
-                      
+
                       <Box w="full">
                         <HStack justify="space-between" mb={2}>
-                          <Text fontSize="sm" color={mutedColor}>Progressive Loading</Text>
-                          <Text fontSize="sm" fontWeight="bold" color="green.500">Optimized</Text>
+                          <Text fontSize="sm" color={mutedColor}>
+                            Progressive Loading
+                          </Text>
+                          <Text fontSize="sm" fontWeight="bold" color="green.500">
+                            Optimized
+                          </Text>
                         </HStack>
                         <Progress value={89} colorScheme="green" borderRadius="full" />
                       </Box>
@@ -405,25 +425,39 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
 
                 <Card bg={bgColor} borderColor={borderColor} borderWidth="1px">
                   <CardHeader>
-                    <Text fontWeight="bold" fontSize="lg">Device Distribution</Text>
+                    <Text fontWeight="bold" fontSize="lg">
+                      Device Distribution
+                    </Text>
                   </CardHeader>
                   <CardBody pt={0}>
                     <VStack spacing={4}>
                       <HStack justify="space-between" w="full">
-                        <Text fontSize="sm" color={mutedColor}>Mobile</Text>
-                        <Text fontSize="sm" fontWeight="bold">73%</Text>
+                        <Text fontSize="sm" color={mutedColor}>
+                          Mobile
+                        </Text>
+                        <Text fontSize="sm" fontWeight="bold">
+                          73%
+                        </Text>
                       </HStack>
                       <Progress value={73} colorScheme="blue" borderRadius="full" />
-                      
+
                       <HStack justify="space-between" w="full">
-                        <Text fontSize="sm" color={mutedColor}>Desktop</Text>
-                        <Text fontSize="sm" fontWeight="bold">19%</Text>
+                        <Text fontSize="sm" color={mutedColor}>
+                          Desktop
+                        </Text>
+                        <Text fontSize="sm" fontWeight="bold">
+                          19%
+                        </Text>
                       </HStack>
                       <Progress value={19} colorScheme="purple" borderRadius="full" />
-                      
+
                       <HStack justify="space-between" w="full">
-                        <Text fontSize="sm" color={mutedColor}>Tablet</Text>
-                        <Text fontSize="sm" fontWeight="bold">8%</Text>
+                        <Text fontSize="sm" color={mutedColor}>
+                          Tablet
+                        </Text>
+                        <Text fontSize="sm" fontWeight="bold">
+                          8%
+                        </Text>
                       </HStack>
                       <Progress value={8} colorScheme="teal" borderRadius="full" />
                     </VStack>
@@ -452,9 +486,10 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
                           89.2% increase from last month
                         </StatHelpText>
                       </Stat>
-                      
+
                       <Text fontSize="sm" color={mutedColor}>
-                        High-transparency products triggering celebrations show 340% higher engagement rates.
+                        High-transparency products triggering celebrations show 340% higher
+                        engagement rates.
                       </Text>
                     </VStack>
                   </CardBody>
@@ -470,20 +505,23 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
                   <CardBody pt={0}>
                     <VStack align="start" spacing={4}>
                       <HStack justify="space-between" w="full">
-                        <Text fontSize="sm" color={mutedColor}>Celebration Engagement</Text>
+                        <Text fontSize="sm" color={mutedColor}>
+                          Celebration Engagement
+                        </Text>
                         <Text fontSize="lg" fontWeight="bold" color="red.500">
                           {consumerBehavior.celebrationEngagement}%
                         </Text>
                       </HStack>
-                      
-                      <Progress 
-                        value={consumerBehavior.celebrationEngagement} 
-                        colorScheme="red" 
-                        borderRadius="full" 
+
+                      <Progress
+                        value={consumerBehavior.celebrationEngagement}
+                        colorScheme="red"
+                        borderRadius="full"
                       />
-                      
+
                       <Text fontSize="sm" color={mutedColor}>
-                        Users who interact with celebration modals show significantly higher trust in farming practices.
+                        Users who interact with celebration modals show significantly higher trust
+                        in farming practices.
                       </Text>
                     </VStack>
                   </CardBody>
@@ -506,27 +544,44 @@ export const TransparencyAnalyticsDashboard: React.FC<TransparencyAnalyticsDashb
                     Transparency-First Transformation Success
                   </Text>
                   <Text color="green.600">
-                    The strategic shift from carbon-competitive to transparency-first approach is delivering exceptional results
+                    The strategic shift from carbon-competitive to transparency-first approach is
+                    delivering exceptional results
                   </Text>
                 </VStack>
               </HStack>
-              
+
               <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4} w="full">
                 <VStack>
-                  <Text fontSize="2xl" fontWeight="bold" color="green.600">+340%</Text>
-                  <Text fontSize="sm" color="green.700" textAlign="center">Consumer Engagement</Text>
+                  <Text fontSize="2xl" fontWeight="bold" color="green.600">
+                    +340%
+                  </Text>
+                  <Text fontSize="sm" color="green.700" textAlign="center">
+                    Consumer Engagement
+                  </Text>
                 </VStack>
                 <VStack>
-                  <Text fontSize="2xl" fontWeight="bold" color="green.600">78%</Text>
-                  <Text fontSize="sm" color="green.700" textAlign="center">Completion Rate</Text>
+                  <Text fontSize="2xl" fontWeight="bold" color="green.600">
+                    78%
+                  </Text>
+                  <Text fontSize="sm" color="green.700" textAlign="center">
+                    Completion Rate
+                  </Text>
                 </VStack>
                 <VStack>
-                  <Text fontSize="2xl" fontWeight="bold" color="green.600">+89%</Text>
-                  <Text fontSize="sm" color="green.700" textAlign="center">Celebration Events</Text>
+                  <Text fontSize="2xl" fontWeight="bold" color="green.600">
+                    +89%
+                  </Text>
+                  <Text fontSize="sm" color="green.700" textAlign="center">
+                    Celebration Events
+                  </Text>
                 </VStack>
                 <VStack>
-                  <Text fontSize="2xl" fontWeight="bold" color="green.600">4.8/5</Text>
-                  <Text fontSize="sm" color="green.700" textAlign="center">Trust Rating</Text>
+                  <Text fontSize="2xl" fontWeight="bold" color="green.600">
+                    4.8/5
+                  </Text>
+                  <Text fontSize="sm" color="green.700" textAlign="center">
+                    Trust Rating
+                  </Text>
                 </VStack>
               </SimpleGrid>
             </VStack>

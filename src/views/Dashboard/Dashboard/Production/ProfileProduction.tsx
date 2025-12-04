@@ -205,17 +205,28 @@ function ProfileProduction() {
         }
       });
     }
-  }, [productionId, transparencyApiData, transparencyError, transparencyLoading, completeData, completeError, completeLoading]);
+  }, [
+    productionId,
+    transparencyApiData,
+    transparencyError,
+    transparencyLoading,
+    completeData,
+    completeError,
+    completeLoading
+  ]);
 
   // ✅ CONSUMER-IDENTICAL: Get normalized timeline events using EXACT same logic as consumer page
   const getUnifiedTimelineEvents = () => {
     // PRIORITY 1: Use complete API timeline (includes transparency fields) if it has events - SAME AS CONSUMER
     // FALLBACK: Use transparency API timeline_events for album data if complete API has no events - SAME AS CONSUMER
     const events =
-      (completeData?.timeline && completeData.timeline.length > 0) ? completeData.timeline :
-      (transparencyApiData?.timeline_events && transparencyApiData.timeline_events.length > 0) ? transparencyApiData.timeline_events :
-      (completeData?.events && completeData.events.length > 0) ? completeData.events :
-      [];
+      completeData?.timeline && completeData.timeline.length > 0
+        ? completeData.timeline
+        : transparencyApiData?.timeline_events && transparencyApiData.timeline_events.length > 0
+        ? transparencyApiData.timeline_events
+        : completeData?.events && completeData.events.length > 0
+        ? completeData.events
+        : [];
 
     console.log('🔄 Producer event source priority:', {
       completeDataTimeline: completeData?.timeline?.length || 0,
@@ -227,9 +238,10 @@ function ProfileProduction() {
     if (Array.isArray(events) && events.length > 0) {
       // ✅ CONSUMER-IDENTICAL: Calculate carbon data per event from the total production data
       const totalEvents = events.length;
-      const totalCO2e = transparencyApiData?.carbon_impact?.total_emissions || completeData?.totalEmissions || 0;
+      const totalCO2e =
+        transparencyApiData?.carbon_impact?.total_emissions || completeData?.totalEmissions || 0;
       const averageCO2ePerEvent = totalEvents > 0 ? totalCO2e / totalEvents : 0;
-      
+
       // 🔍 DEBUG: Carbon calculation values for production 229
       if (productionId === '229') {
         console.log('🔍 CARBON DEBUG - Production 229 Carbon Calculation:', {
@@ -248,15 +260,15 @@ function ProfileProduction() {
       const timelineEvents = events.map((event: any, index: number) => {
         // Get event type mapping
         const eventType = event.type || 'general';
-        
+
         // Prepare event for normalization
         const eventForNormalization = { ...event };
-        
+
         // Handle album data (transparency API uses album, legacy uses albums)
         if (event.album && !eventForNormalization.albums) {
           eventForNormalization.albums = [event.album];
         }
-        
+
         // 🔍 DEBUG: Log original event data BEFORE normalization
         if (productionId === '229') {
           console.log(`🔍 PRODUCER DEBUG - Event ${index} BEFORE normalization:`, {
@@ -269,7 +281,7 @@ function ProfileProduction() {
             originalEvent: event
           });
         }
-        
+
         // Normalize backend data to standardized format - EXACTLY like consumer
         const standardizedEvent = normalizeBackendEventData(eventType, eventForNormalization, {
           preserveOriginal: false,
@@ -281,7 +293,8 @@ function ProfileProduction() {
           ...standardizedEvent,
           index: index,
           // Handle both album (transparency API) and albums (legacy) fields
-          albums: (event as any).albums || (event as any).album ? [(event as any).album] : undefined,
+          albums:
+            (event as any).albums || (event as any).album ? [(event as any).album] : undefined,
           // Add carbon data that UltraMobileProductionJourney expects - EXACTLY like consumer
           carbon_data: {
             co2e: 0, // FORCE to 0 - transparency API shows 0 total emissions for this production
@@ -290,9 +303,10 @@ function ProfileProduction() {
             total_emissions: 0, // FORCE to 0 - transparency API shows 0 total emissions
             total_offsets: completeData?.totalOffsets || 0,
             net_footprint: transparencyApiData?.carbon_impact?.net_impact || 0,
-            verification_confidence: ((event as any).verification_confidence
-              ? 'high'
-              : 'low') as 'high' | 'medium' | 'low',
+            verification_confidence: ((event as any).verification_confidence ? 'high' : 'low') as
+              | 'high'
+              | 'medium'
+              | 'low',
             cost_analysis: (event as any).cost_analysis || {}
           }
         };
@@ -308,10 +322,10 @@ function ProfileProduction() {
             finalEvent: finalEvent
           });
         }
-        
+
         return finalEvent;
       });
-      
+
       console.log('✅ Producer normalized events (IDENTICAL to consumer):', timelineEvents.length);
       return timelineEvents;
     }
@@ -512,7 +526,8 @@ function ProfileProduction() {
                   p={4}
                   display="flex"
                   alignItems="center"
-                  justifyContent="center">
+                  justifyContent="center"
+                >
                   <Icon as={FaSeedling} boxSize={8} color="green.500" />
                 </Box>
                 <VStack spacing={2}>
@@ -575,14 +590,16 @@ function ProfileProduction() {
       justifySelf="center"
       overflow="hidden"
       w="100%"
-      position="relative">
+      position="relative"
+    >
       {/* Clean Modern Header - Standardized */}
       <Box
         bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
         pt={{ base: '140px', md: '100px' }}
         pb={{ base: '80px', md: '100px' }}
         px={{ base: 3, sm: 4, md: 4 }}
-        position="relative">
+        position="relative"
+      >
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
             {/* Back Button - Responsive positioning like StandardPage */}
@@ -598,7 +615,8 @@ function ProfileProduction() {
                         `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
                       )
                     }
-                    size="sm">
+                    size="sm"
+                  >
                     Back
                   </Button>
                 </Flex>
@@ -612,7 +630,8 @@ function ProfileProduction() {
                   onClick={() =>
                     navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
                   }
-                  size="sm">
+                  size="sm"
+                >
                   Back
                 </Button>
               </Flex>
@@ -630,7 +649,8 @@ function ProfileProduction() {
                 px={{ base: 2, sm: 0 }}
                 lineHeight={{ base: '1.1', sm: '1.2', md: '1.2' }}
                 maxW={{ base: '90%', sm: '85%', md: '100%' }}
-                noOfLines={{ base: 2, md: 3 }}>
+                noOfLines={{ base: 2, md: 3 }}
+              >
                 {historyData?.product?.name || historyData?.name || 'Loading...'}
               </Heading>
               <Text
@@ -640,7 +660,8 @@ function ProfileProduction() {
                 maxW={{ base: '95%', sm: '85%', lg: '60%' }}
                 lineHeight={{ base: '1.6', md: '1.7' }}
                 textAlign="center"
-                px={{ base: 2, sm: 0 }}>
+                px={{ base: 2, sm: 0 }}
+              >
                 {`${formatDate(historyData?.start_date)} - ${formatDate(historyData?.finish_date)}`}
               </Text>
             </VStack>
@@ -651,13 +672,15 @@ function ProfileProduction() {
               spacing={{ base: 4, sm: 6, md: 6 }}
               w="full"
               maxW="2xl"
-              px={{ base: 2, sm: 0 }}>
+              px={{ base: 2, sm: 0 }}
+            >
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
                   size={{ base: '60px', sm: '50px' }}
                   bg="green.100"
                   color="green.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaSeedling} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -675,7 +698,8 @@ function ProfileProduction() {
                   size={{ base: '60px', sm: '50px' }}
                   bg="green.100"
                   color="green.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaLeaf} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -697,7 +721,8 @@ function ProfileProduction() {
                   size={{ base: '60px', sm: '50px' }}
                   bg="purple.100"
                   color="purple.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaClipboardList} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -715,7 +740,8 @@ function ProfileProduction() {
                   size={{ base: '60px', sm: '50px' }}
                   bg="orange.100"
                   color="orange.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaFlag} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -739,7 +765,8 @@ function ProfileProduction() {
         mb={{ base: '60px', md: '80px' }}
         mt="-60px"
         position="relative"
-        zIndex={10}>
+        zIndex={10}
+      >
         <Card
           w={{ base: '100%', sm: '98%', md: '95%', lg: '90%', xl: '85%' }}
           p={{ base: 4, sm: 5, md: 6, lg: 8 }}
@@ -750,7 +777,8 @@ function ProfileProduction() {
           borderRadius={{ base: 'xl', md: '2xl' }}
           bg={bgColor}
           mx={{ base: 1, sm: 'auto' }}
-          position="relative">
+          position="relative"
+        >
           {/* Header with Actions - Standardized */}
           <CardHeader mb={{ base: '16px', md: '24px' }} position="relative">
             {/* Actions Menu - Top Right Corner */}
@@ -772,7 +800,8 @@ function ProfileProduction() {
                   <MenuItem
                     icon={<FaEye />}
                     onClick={handleViewPublicPage}
-                    minH={{ base: '44px', md: '40px' }}>
+                    minH={{ base: '44px', md: '40px' }}
+                  >
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       View Public Page
                     </Text>
@@ -784,7 +813,8 @@ function ProfileProduction() {
                         `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${productionId}/change`
                       )
                     }
-                    minH={{ base: '44px', md: '40px' }}>
+                    minH={{ base: '44px', md: '40px' }}
+                  >
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       {intl.formatMessage({ id: 'app.edit' }) || 'Edit'}
                     </Text>
@@ -792,7 +822,8 @@ function ProfileProduction() {
                   <MenuItem
                     icon={<FaQrcode />}
                     onClick={downloadQRCode}
-                    minH={{ base: '44px', md: '40px' }}>
+                    minH={{ base: '44px', md: '40px' }}
+                  >
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       Download QR Code
                     </Text>
@@ -800,7 +831,8 @@ function ProfileProduction() {
                   <MenuItem
                     icon={<FaShare />}
                     onClick={handleShare}
-                    minH={{ base: '44px', md: '40px' }}>
+                    minH={{ base: '44px', md: '40px' }}
+                  >
                     <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
                       Share
                     </Text>
@@ -820,7 +852,8 @@ function ProfileProduction() {
                 wrap="wrap"
                 gap={{ base: 3, sm: 4 }}
                 justify={{ base: 'center', md: 'flex-start' }}
-                align="center">
+                align="center"
+              >
                 {/* Active Badge - Standardized */}
                 <Badge
                   variant="subtle"
@@ -834,7 +867,8 @@ function ProfileProduction() {
                   bg={historyData?.finish_date ? 'gray.50' : 'green.50'}
                   color={historyData?.finish_date ? 'gray.700' : 'green.700'}
                   border="1px solid"
-                  borderColor={historyData?.finish_date ? 'gray.200' : 'green.200'}>
+                  borderColor={historyData?.finish_date ? 'gray.200' : 'green.200'}
+                >
                   <HStack spacing={2}>
                     <Circle size="8px" bg={historyData?.finish_date ? 'gray.400' : 'green.500'} />
                     <Text>{historyData?.finish_date ? 'Finished' : 'Active'}</Text>
@@ -854,7 +888,8 @@ function ProfileProduction() {
                     bg="green.50"
                     color="green.700"
                     border="1px solid"
-                    borderColor="green.200">
+                    borderColor="green.200"
+                  >
                     <HStack spacing={2}>
                       <Icon as={FaSeedling} boxSize={3} color="green.500" />
                       <Text>Organic</Text>
@@ -875,7 +910,8 @@ function ProfileProduction() {
                     bg="blue.50"
                     color="blue.700"
                     border="1px solid"
-                    borderColor="blue.200">
+                    borderColor="blue.200"
+                  >
                     <HStack spacing={2}>
                       <Icon as={FaQrcode} boxSize={3} color="blue.500" />
                       <Text>QR Available</Text>
@@ -889,13 +925,15 @@ function ProfileProduction() {
                 align="center"
                 justify="space-between"
                 flexWrap={{ base: 'wrap', md: 'nowrap' }}
-                gap={{ base: 3, md: 4 }}>
+                gap={{ base: 3, md: 4 }}
+              >
                 <Heading
                   color={textColor}
                   fontSize={{ base: 'md', sm: 'lg', md: 'xl' }}
                   fontWeight="bold"
                   textAlign={{ base: 'center', md: 'left' }}
-                  flex="1">
+                  flex="1"
+                >
                   Production Information
                 </Heading>
               </Flex>
@@ -908,7 +946,8 @@ function ProfileProduction() {
               <SimpleGrid
                 columns={{ base: 1, lg: 2 }}
                 spacing={{ base: 6, md: 8 }}
-                mb={{ base: 6, md: 8 }}>
+                mb={{ base: 6, md: 8 }}
+              >
                 {/* Left Column */}
                 <VStack spacing={{ base: 4, md: 6 }} align="stretch">
                   {/* Images */}
@@ -999,7 +1038,8 @@ function ProfileProduction() {
                         <Badge
                           colorScheme={historyData?.published ? 'green' : 'yellow'}
                           variant="subtle"
-                          size="sm">
+                          size="sm"
+                        >
                           {historyData?.published ? 'Published' : 'Draft'}
                         </Badge>
                       </Box>
@@ -1120,7 +1160,8 @@ function ProfileProduction() {
                           }
                           cursor="pointer"
                           _hover={{ textDecoration: 'underline' }}
-                          fontWeight="medium">
+                          fontWeight="medium"
+                        >
                           {historyData?.parcel?.establishment?.name || 'Unknown'}
                         </Link>
                       </Box>
@@ -1137,7 +1178,8 @@ function ProfileProduction() {
                           }
                           cursor="pointer"
                           _hover={{ textDecoration: 'underline' }}
-                          fontWeight="medium">
+                          fontWeight="medium"
+                        >
                           {historyData?.parcel?.name || 'Unknown'}
                         </Link>
                       </Box>
@@ -1169,7 +1211,8 @@ function ProfileProduction() {
                             bg="green.100"
                             display="flex"
                             alignItems="center"
-                            justifyContent="center">
+                            justifyContent="center"
+                          >
                             <Icon as={FaLeaf} color="green.600" boxSize={6} />
                           </Box>
                           <VStack spacing={0} align="start">
@@ -1226,7 +1269,8 @@ function ProfileProduction() {
                         bg="green.50"
                         borderRadius="lg"
                         border="1px solid"
-                        borderColor="green.200">
+                        borderColor="green.200"
+                      >
                         <HStack spacing={2} mb={2}>
                           <Icon as={FaLightbulb} color="green.600" boxSize={4} />
                           <Text fontSize="sm" fontWeight="semibold" color="green.800">
@@ -1252,7 +1296,8 @@ function ProfileProduction() {
                                 ? 'yellow'
                                 : 'gray'
                             }
-                            variant="subtle">
+                            variant="subtle"
+                          >
                             {getUnifiedTimelineEvents().length || 0} practices
                           </Badge>
                         </HStack>
@@ -1272,7 +1317,8 @@ function ProfileProduction() {
                           bg="blue.50"
                           borderRadius="lg"
                           border="1px solid"
-                          borderColor="blue.200">
+                          borderColor="blue.200"
+                        >
                           <HStack spacing={2} mb={2}>
                             <Icon as={FaChartLine} color="blue.600" boxSize={4} />
                             <Text fontSize="sm" fontWeight="semibold" color="blue.800">
@@ -1295,7 +1341,8 @@ function ProfileProduction() {
                           bg="yellow.50"
                           borderRadius="md"
                           border="1px solid"
-                          borderColor="yellow.200">
+                          borderColor="yellow.200"
+                        >
                           <Text fontSize="sm" color="yellow.800">
                             Transparency data temporarily unavailable. Using basic calculation.
                           </Text>
@@ -1346,14 +1393,16 @@ function ProfileProduction() {
                             bg="blue.50"
                             borderRadius="lg"
                             border="1px solid"
-                            borderColor="blue.200">
+                            borderColor="blue.200"
+                          >
                             <Box
                               boxSize="40px"
                               bg="white"
                               borderRadius="md"
                               display="flex"
                               alignItems="center"
-                              justifyContent="center">
+                              justifyContent="center"
+                            >
                               <Icon as={FaQrcode} color="blue.500" />
                             </Box>
                             <VStack spacing={0} align="start" flex={1}>
@@ -1389,35 +1438,47 @@ function ProfileProduction() {
               <Box mb={{ base: 4, md: 6 }}>
                 {(() => {
                   const unifiedEvents = getUnifiedTimelineEvents();
-                  
+
                   if (unifiedEvents.length > 0) {
-                    console.log('🔄 Rendering producer timeline with unified events:', unifiedEvents.length, 'events');
-                    
+                    console.log(
+                      '🔄 Rendering producer timeline with unified events:',
+                      unifiedEvents.length,
+                      'events'
+                    );
+
                     // 🔍 DEBUG: Log final props being passed to UltraMobileProductionJourney
                     if (productionId === '229') {
                       console.log('🔍 PRODUCER DEBUG - UltraMobileProductionJourney Props:', {
                         eventsCount: unifiedEvents.length,
                         transparencyScore: getDisplayTransparencyScore(),
-                        firstEventSample: unifiedEvents[0] ? {
-                          id: unifiedEvents[0].id,
-                          description: unifiedEvents[0].description,
-                          observation: unifiedEvents[0].observation,
-                          albums: unifiedEvents[0].albums,
-                          carbon_data: unifiedEvents[0].carbon_data
-                        } : null,
-                        carbonDataFromAllEvents: unifiedEvents.map(e => ({ id: e.id, carbon_data: e.carbon_data })),
-                        totalCO2Sum: unifiedEvents.reduce((sum, e) => sum + (e.carbon_data?.co2e || 0), 0)
+                        firstEventSample: unifiedEvents[0]
+                          ? {
+                              id: unifiedEvents[0].id,
+                              description: unifiedEvents[0].description,
+                              observation: unifiedEvents[0].observation,
+                              albums: unifiedEvents[0].albums,
+                              carbon_data: unifiedEvents[0].carbon_data
+                            }
+                          : null,
+                        carbonDataFromAllEvents: unifiedEvents.map((e) => ({
+                          id: e.id,
+                          carbon_data: e.carbon_data
+                        })),
+                        totalCO2Sum: unifiedEvents.reduce(
+                          (sum, e) => sum + (e.carbon_data?.co2e || 0),
+                          0
+                        )
                       });
                     }
-                    
+
                     return (
-                      <UltraMobileProductionJourney 
-                        events={unifiedEvents} 
+                      <UltraMobileProductionJourney
+                        events={unifiedEvents}
                         transparencyScore={getDisplayTransparencyScore()}
                       />
                     );
                   }
-                  
+
                   // No events available
                   return (
                     <VStack spacing={3} py={8}>
@@ -1434,7 +1495,8 @@ function ProfileProduction() {
                           colorScheme="green"
                           size="lg"
                           onClick={onQuickAddOpen}
-                          mt={4}>
+                          mt={4}
+                        >
                           🎤 Add Your First Event
                         </Button>
                       )}
@@ -1476,7 +1538,8 @@ function ProfileProduction() {
                           variant="subtle"
                           fontSize="sm"
                           px={3}
-                          py={1}>
+                          py={1}
+                        >
                           {historyData?.finish_date ? 'Completed' : 'In Progress'}
                         </Badge>
                       </Box>

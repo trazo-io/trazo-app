@@ -7,7 +7,7 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { S3Image } from '../S3Image';
 
 // Mock the mediaApi
-const mockGetPresignedReadUrl = vi.fn()
+const mockGetPresignedReadUrl = vi.fn();
 
 vi.mock('store/api/mediaApi', () => ({
   useLazyGetPresignedReadUrlQuery: () => [
@@ -18,22 +18,20 @@ vi.mock('store/api/mediaApi', () => ({
       error: null
     }
   ]
-}))
+}));
 
 // Mock store setup
 const mockStore = configureStore({
   reducer: {
     // Add a minimal reducer to avoid store errors
     test: (state = {}) => state
-  },
+  }
 });
 
 // Test wrapper component
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <Provider store={mockStore}>
-    <ChakraProvider>
-      {children}
-    </ChakraProvider>
+    <ChakraProvider>{children}</ChakraProvider>
   </Provider>
 );
 
@@ -84,8 +82,8 @@ describe('S3Image Component', () => {
       </TestWrapper>
     );
 
-    // Should show skeleton initially for S3 URLs with lazy loading  
-    // Since the component shows skeleton when not in view or loading, 
+    // Should show skeleton initially for S3 URLs with lazy loading
+    // Since the component shows skeleton when not in view or loading,
     // we can check for the skeleton class or the absence of img role
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
@@ -110,19 +108,14 @@ describe('S3Image Component', () => {
   it('handles lazy loading properly', () => {
     render(
       <TestWrapper>
-        <S3Image
-          src="https://example.com/image.jpg"
-          alt="Lazy image"
-          boxSize="200px"
-          lazy={true}
-        />
+        <S3Image src="https://example.com/image.jpg" alt="Lazy image" boxSize="200px" lazy={true} />
       </TestWrapper>
     );
 
     // When lazy=true, component should show skeleton until in view
     // Since IntersectionObserver is mocked to not trigger, no image should render
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
-    
+
     // Should show skeleton instead
     expect(document.querySelector('.chakra-skeleton')).toBeInTheDocument();
   });
@@ -207,7 +200,7 @@ describe('S3Image URL Detection', () => {
       '/local/image.jpg'
     ];
 
-    regularUrls.forEach(url => {
+    regularUrls.forEach((url) => {
       render(
         <TestWrapper>
           <S3Image src={url} alt="Regular image" lazy={false} />
@@ -234,7 +227,7 @@ describe('S3Image Error Handling', () => {
     );
 
     const image = screen.getByRole('img');
-    
+
     // Simulate image error
     const errorEvent = new Event('error');
     image.dispatchEvent(errorEvent);
@@ -258,7 +251,7 @@ describe('S3Image Error Handling', () => {
 
     const image = screen.getByRole('img');
     expect(image).toHaveAttribute('src', 'https://example.com/broken-image.jpg');
-    
+
     // The component passes fallbackSrc to Chakra UI Image component
     // In tests, this may not be visible as an attribute, but the prop is set
     expect(image).toHaveAttribute('alt', 'Image with fallback');

@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Grid,
-  VStack,
-  Text,
-  Icon,
-  HStack,
-  useColorModeValue
-} from '@chakra-ui/react';
+import { Box, Grid, VStack, Text, Icon, HStack, useColorModeValue } from '@chakra-ui/react';
 import { FaLeaf, FaShieldAlt, FaLock, FaHeart } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { ResetPasswordForm } from '../../../components/Forms/ResetPasswordForm';
@@ -19,10 +11,7 @@ const ConsumerResetPassword: React.FC = () => {
 
   return (
     <Box minH="calc(100vh - 80px)" maxH="calc(100vh - 80px)" overflow="hidden">
-      <Grid 
-        templateColumns={{ base: '1fr', lg: '1fr 1fr' }} 
-        h="calc(100vh - 80px)"
-      >
+      <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} h="calc(100vh - 80px)">
         {/* Left Panel - Form */}
         <VStack
           spacing={0}
@@ -39,7 +28,7 @@ const ConsumerResetPassword: React.FC = () => {
                 <Icon as={FaShieldAlt} boxSize={6} color="blue.600" />
                 <Icon as={FaLeaf} boxSize={6} color="blue.700" />
               </HStack>
-              
+
               <VStack spacing={2}>
                 <Text fontSize="2xl" fontWeight="700" color="gray.800">
                   Secure Reset
@@ -72,7 +61,7 @@ const ConsumerResetPassword: React.FC = () => {
           overflow="hidden"
           initial={{ opacity: 0, x: 100 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
         >
           {/* Geometric Background Elements */}
           <Box
@@ -137,7 +126,7 @@ const ConsumerResetPassword: React.FC = () => {
                   Impact
                 </Text>
                 <Text fontSize="lg" opacity={0.9} maxW="md" lineHeight="1.6">
-                  Secure your sustainable choices and carbon footprint data with a strong password. 
+                  Secure your sustainable choices and carbon footprint data with a strong password.
                   Your environmental journey deserves the best protection we can provide.
                 </Text>
               </VStack>
@@ -146,19 +135,27 @@ const ConsumerResetPassword: React.FC = () => {
               <VStack spacing={3} align="start" color="white" mt={6}>
                 <HStack spacing={3}>
                   <Box w={2} h={2} bg="blue.200" borderRadius="full" />
-                  <Text fontSize="sm" opacity={0.9}>Comprehensive password strength</Text>
+                  <Text fontSize="sm" opacity={0.9}>
+                    Comprehensive password strength
+                  </Text>
                 </HStack>
                 <HStack spacing={3}>
                   <Box w={2} h={2} bg="blue.200" borderRadius="full" />
-                  <Text fontSize="sm" opacity={0.9}>Real-time security validation</Text>
+                  <Text fontSize="sm" opacity={0.9}>
+                    Real-time security validation
+                  </Text>
                 </HStack>
                 <HStack spacing={3}>
                   <Box w={2} h={2} bg="blue.200" borderRadius="full" />
-                  <Text fontSize="sm" opacity={0.9}>Personal information protection</Text>
+                  <Text fontSize="sm" opacity={0.9}>
+                    Personal information protection
+                  </Text>
                 </HStack>
                 <HStack spacing={3}>
                   <Box w={2} h={2} bg="blue.200" borderRadius="full" />
-                  <Text fontSize="sm" opacity={0.9}>Secure environmental data</Text>
+                  <Text fontSize="sm" opacity={0.9}>
+                    Secure environmental data
+                  </Text>
                 </HStack>
               </VStack>
             </VStack>

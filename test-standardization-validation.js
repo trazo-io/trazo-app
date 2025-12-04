@@ -1,6 +1,6 @@
 /**
  * Comprehensive Standardization Validation Test
- * 
+ *
  * Tests all 8 event types in both preview (form data) and product detail (backend data) flows
  * to ensure identical event information display after normalization.
  */
@@ -17,12 +17,12 @@ const FORM_DATA_SAMPLES = {
     observation: 'Successfully protected 80% of crop'
   },
 
-  // Production Event (Type 1) - Harvesting  
+  // Production Event (Type 1) - Harvesting
   production: {
     production_type: 'HA',
     production_name: 'Avocado harvest - Block A',
     area_covered: '5',
-    area_unit: 'hectares', 
+    area_unit: 'hectares',
     yield_quantity: '12500',
     yield_unit: 'kg',
     fuel_consumed: '45',
@@ -144,7 +144,7 @@ const BACKEND_DATA_SAMPLES = {
 
   // Production Event (Type 1)
   production: {
-    id: '2', 
+    id: '2',
     type: 'production.harvesting',
     description: 'Avocado harvest - Block A',
     date: '2024-01-16T08:00:00Z',
@@ -164,7 +164,7 @@ const BACKEND_DATA_SAMPLES = {
   // Chemical Event (Type 2)
   chemical: {
     id: '3',
-    type: 'chemical.fertilizer', 
+    type: 'chemical.fertilizer',
     description: 'NPK Complete 15-15-15 application',
     date: '2024-01-17T09:00:00Z',
     event_type: 2,
@@ -172,7 +172,7 @@ const BACKEND_DATA_SAMPLES = {
     way_of_application: 'broadcast_surface', // Backend uses old field name
     target_pest_disease: 'Nutrient deficiency',
     area: 10, // Backend uses different field name
-    volume: 150, // Backend uses different field name  
+    volume: 150, // Backend uses different field name
     application_timing: 'pre_plant',
     weather_conditions: 'calm_dry',
     npk_ratio: '15-15-15',
@@ -186,7 +186,7 @@ const BACKEND_DATA_SAMPLES = {
     id: '4',
     type: 'general.soil_preparation',
     description: 'Pre-season tillage',
-    date: '2024-01-18T10:00:00Z', 
+    date: '2024-01-18T10:00:00Z',
     event_type: 3,
     activity_type: 'Soil Preparation',
     activity_name: 'Pre-season tillage',
@@ -201,7 +201,7 @@ const BACKEND_DATA_SAMPLES = {
   equipment: {
     id: '5',
     type: 'equipment.fuel_consumption',
-    description: 'Field cultivation - North field', 
+    description: 'Field cultivation - North field',
     date: '2024-01-19T11:00:00Z',
     event_type: 4,
     operation_type: 'FC',
@@ -225,7 +225,7 @@ const BACKEND_DATA_SAMPLES = {
     date: '2024-01-20T12:00:00Z',
     event_type: 5,
     soil_management_type: 'ST',
-    soil_management_name: 'Annual soil analysis - Main field', 
+    soil_management_name: 'Annual soil analysis - Main field',
     area_managed: 15,
     area_unit: 'hectares',
     working_depth: 30,
@@ -251,7 +251,7 @@ const BACKEND_DATA_SAMPLES = {
     pest_management_name: 'Weekly pest monitoring - East block',
     pest_species: 'Aphids',
     damage_percentage: 5,
-    pest_pressure_level: 'low', 
+    pest_pressure_level: 'low',
     time_spent_hours: 2,
     field_area_hectares: 8,
     weather_conditions: 'Calm and clear',
@@ -290,49 +290,58 @@ const BACKEND_DATA_SAMPLES = {
  */
 function runStandardizationTests() {
   console.log('🧪 Starting Comprehensive Standardization Validation Tests\n');
-  
-  const eventTypes = ['weather', 'production', 'chemical', 'general', 'equipment', 'soil', 'pest', 'business'];
+
+  const eventTypes = [
+    'weather',
+    'production',
+    'chemical',
+    'general',
+    'equipment',
+    'soil',
+    'pest',
+    'business'
+  ];
   const eventTypeNumbers = [0, 1, 2, 3, 4, 5, 6, 7];
-  
+
   let totalTests = 0;
   let passedTests = 0;
-  
+
   // Test each event type
   eventTypes.forEach((eventName, index) => {
     console.log(`\n🔍 Testing ${eventName.toUpperCase()} Events (Type ${eventTypeNumbers[index]})`);
-    console.log('=' .repeat(60));
-    
+    console.log('='.repeat(60));
+
     const formData = FORM_DATA_SAMPLES[eventName];
     const backendData = BACKEND_DATA_SAMPLES[eventName];
     const eventTypeNum = eventTypeNumbers[index];
-    
+
     try {
       // Test 1: Form data normalization
       console.log('\n📝 Test 1: Form Data Normalization');
       totalTests++;
-      
+
       // Mock the normalization (we can't actually import in this test file)
       // This would normally be: normalizeFormEventData(eventTypeNum, formData)
       console.log('✅ Form data normalization - SIMULATED PASS');
       console.log(`   Event Type: ${eventTypeNum}`);
       console.log(`   Form Fields: ${Object.keys(formData).length} fields detected`);
       passedTests++;
-      
-      // Test 2: Backend data normalization  
+
+      // Test 2: Backend data normalization
       console.log('\n🔄 Test 2: Backend Data Normalization');
       totalTests++;
-      
+
       // Mock the normalization (we can't actually import in this test file)
       // This would normally be: normalizeBackendEventData(eventTypeNum, backendData)
       console.log('✅ Backend data normalization - SIMULATED PASS');
       console.log(`   Event Type: ${eventTypeNum}`);
       console.log(`   Backend Fields: ${Object.keys(backendData).length} fields detected`);
       passedTests++;
-      
+
       // Test 3: Field consistency validation
       console.log('\n🔍 Test 3: Field Consistency Validation');
       totalTests++;
-      
+
       // Test key field mappings
       const keyFieldTests = {
         weather: ['lower_temperature', 'way_of_protection'],
@@ -344,26 +353,25 @@ function runStandardizationTests() {
         pest: ['pest_management_type', 'pest_species'],
         business: ['business_event_type', 'business_activity_type']
       };
-      
+
       const fieldsToTest = keyFieldTests[eventName] || [];
       console.log(`✅ Field mapping validation - Testing ${fieldsToTest.length} key fields`);
       console.log(`   Key fields: ${fieldsToTest.join(', ')}`);
       passedTests++;
-      
+
       // Test 4: Event card display compatibility
       console.log('\n🎨 Test 4: Event Card Display Compatibility');
       totalTests++;
-      
+
       // Simulate field display extraction
       console.log('✅ Event card display compatibility - SIMULATED PASS');
       console.log('   Both normalized events should produce identical field displays');
       passedTests++;
-      
     } catch (error) {
       console.log(`❌ Error testing ${eventName}: ${error.message}`);
     }
   });
-  
+
   // Summary
   console.log('\n' + '='.repeat(60));
   console.log('📊 TEST SUMMARY');
@@ -372,7 +380,7 @@ function runStandardizationTests() {
   console.log(`Passed: ${passedTests}`);
   console.log(`Failed: ${totalTests - passedTests}`);
   console.log(`Success Rate: ${Math.round((passedTests / totalTests) * 100)}%`);
-  
+
   if (passedTests === totalTests) {
     console.log('\n🎉 ALL TESTS PASSED! Standardization implementation is ready.');
     console.log('\n✅ The standardization layer successfully:');
@@ -380,12 +388,12 @@ function runStandardizationTests() {
     console.log('   • Maps inconsistent field names to standardized names');
     console.log('   • Ensures identical event display in preview and product detail flows');
     console.log('   • Maintains backward compatibility with existing code');
-    
+
     console.log('\n🚀 Ready for production deployment!');
   } else {
     console.log('\n⚠️  Some tests failed. Please review the standardization implementation.');
   }
-  
+
   return { total: totalTests, passed: passedTests };
 }
 
@@ -394,8 +402,8 @@ function runStandardizationTests() {
  */
 function testCriticalFieldMappings() {
   console.log('\n🔧 Testing Critical Field Mappings');
-  console.log('=' .repeat(50));
-  
+  console.log('='.repeat(50));
+
   const criticalMappings = [
     {
       issue: 'Chemical Application Method',
@@ -406,7 +414,7 @@ function testCriticalFieldMappings() {
     {
       issue: 'Chemical Area Coverage',
       formField: 'area_treated + area_unit',
-      standardField: 'area_treated + area_unit', 
+      standardField: 'area_treated + area_unit',
       backendField: 'area (legacy)'
     },
     {
@@ -422,7 +430,7 @@ function testCriticalFieldMappings() {
       backendField: 'soil_management_type'
     }
   ];
-  
+
   criticalMappings.forEach((mapping, index) => {
     console.log(`\n${index + 1}. ${mapping.issue}`);
     console.log(`   Form Field: ${mapping.formField}`);
@@ -435,7 +443,12 @@ function testCriticalFieldMappings() {
 // Run the tests
 if (typeof module !== 'undefined' && module.exports) {
   // Node.js environment
-  module.exports = { runStandardizationTests, testCriticalFieldMappings, FORM_DATA_SAMPLES, BACKEND_DATA_SAMPLES };
+  module.exports = {
+    runStandardizationTests,
+    testCriticalFieldMappings,
+    FORM_DATA_SAMPLES,
+    BACKEND_DATA_SAMPLES
+  };
 } else {
   // Browser environment - run tests immediately
   runStandardizationTests();

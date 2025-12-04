@@ -272,7 +272,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
           </Box>
 
           {/* 🎯 CONSUMER TRANSPARENCY SECTION - New transparency data for consumers */}
-          {(parcelData?.transparency_description || parcelData?.sustainability_practices || parcelData?.consumer_story || parcelData?.transparency_ready) && (
+          {(parcelData?.transparency_description ||
+            parcelData?.sustainability_practices ||
+            parcelData?.consumer_story ||
+            parcelData?.transparency_ready) && (
             <>
               <Divider />
               <Box>
@@ -282,14 +285,32 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                     Consumer Transparency
                   </Text>
                   {parcelData?.transparency_ready && (
-                    <Badge colorScheme="cyan" variant="solid" px={2} py={1} borderRadius="full" fontSize="xs">
+                    <Badge
+                      colorScheme="cyan"
+                      variant="solid"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                      fontSize="xs"
+                    >
                       ✓ Consumer Ready
                     </Badge>
                   )}
                   {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
-                    <Badge 
-                      colorScheme={parcelData.transparency_score >= 80 ? "green" : parcelData.transparency_score >= 60 ? "yellow" : "gray"}
-                      variant="solid" px={2} py={1} borderRadius="full" fontSize="xs">
+                    <Badge
+                      colorScheme={
+                        parcelData.transparency_score >= 80
+                          ? 'green'
+                          : parcelData.transparency_score >= 60
+                          ? 'yellow'
+                          : 'gray'
+                      }
+                      variant="solid"
+                      px={2}
+                      py={1}
+                      borderRadius="full"
+                      fontSize="xs"
+                    >
                       {parcelData.transparency_score}% Complete
                     </Badge>
                   )}
@@ -333,7 +354,13 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
 
                     {/* Why consumers should care */}
                     {parcelData?.consumer_story && (
-                      <Box p={4} bg="purple.50" borderRadius="lg" border="1px" borderColor="purple.200">
+                      <Box
+                        p={4}
+                        bg="purple.50"
+                        borderRadius="lg"
+                        border="1px"
+                        borderColor="purple.200"
+                      >
                         <VStack spacing={2} align="stretch">
                           <HStack>
                             <Icon as={FaUsers} color="purple.600" boxSize={4} />

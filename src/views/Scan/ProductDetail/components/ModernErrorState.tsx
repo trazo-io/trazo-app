@@ -119,7 +119,8 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
           borderRadius="xl"
           p={8}
           w="full"
-          maxW="lg">
+          maxW="lg"
+        >
           <VStack spacing={6}>
             {/* Error Icon */}
             <Circle size="80px" bg={`${config.iconColor.split('.')[0]}.100`}>
@@ -145,7 +146,8 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
                   w="full"
                   maxW="sm"
                   onClick={onRetry}
-                  leftIcon={<FaRedo />}>
+                  leftIcon={<FaRedo />}
+                >
                   Try Again
                 </Button>
               )}
@@ -157,7 +159,8 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
                   w="full"
                   maxW="sm"
                   onClick={onGoHome}
-                  leftIcon={<FaHome />}>
+                  leftIcon={<FaHome />}
+                >
                   Go to Dashboard
                 </Button>
               )}
@@ -173,7 +176,8 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
           borderRadius="lg"
           p={6}
           w="full"
-          maxW="lg">
+          maxW="lg"
+        >
           <VStack spacing={4} align="start">
             <Text fontSize="sm" fontWeight="semibold" color={textColor}>
               💡 Troubleshooting Tips
@@ -201,7 +205,8 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
           borderRadius="lg"
           p={4}
           w="full"
-          maxW="lg">
+          maxW="lg"
+        >
           <VStack spacing={3}>
             <Text fontSize="sm" color="blue.700" fontWeight="medium">
               Still having trouble? Our support team is here to help.

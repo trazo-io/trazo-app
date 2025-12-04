@@ -34,13 +34,13 @@ const MIN_SEARCH_LENGTH = 2;
 
 export const useGlobalSearch = (query: string): UseGlobalSearchReturn => {
   const [searchHistory, setSearchHistory] = useState<SearchResult[]>([]);
-  
+
   // Debounce search query to avoid excessive API calls
   const debouncedQuery = useDebounce(query, SEARCH_DEBOUNCE_MS);
-  
+
   // Only search if query is long enough
   const shouldSearch = debouncedQuery.length >= MIN_SEARCH_LENGTH;
-  
+
   // RTK Query for search API call
   const {
     data: searchResponse,
@@ -86,12 +86,10 @@ export const useGlobalSearch = (query: string): UseGlobalSearchReturn => {
 
   // Add item to search history
   const addToHistory = (result: SearchResult) => {
-    setSearchHistory(prev => {
+    setSearchHistory((prev) => {
       // Remove if already exists
-      const filtered = prev.filter(item => 
-        !(item.type === result.type && item.id === result.id)
-      );
-      
+      const filtered = prev.filter((item) => !(item.type === result.type && item.id === result.id));
+
       // Add to beginning and limit size
       return [result, ...filtered].slice(0, MAX_HISTORY_ITEMS);
     });
@@ -109,20 +107,22 @@ export const useGlobalSearch = (query: string): UseGlobalSearchReturn => {
       return [];
     }
 
-    return searchResponse.results.map((item: any): SearchResult => ({
-      id: item.id.toString(),
-      type: item.type,
-      name: item.name,
-      description: item.description,
-      location: item.location,
-      imageUrl: item.image_url,
-      metadata: {
-        carbonScore: item.carbon_score,
-        area: item.area,
-        status: item.status
-      },
-      href: generateResultHref(item)
-    }));
+    return searchResponse.results.map(
+      (item: any): SearchResult => ({
+        id: item.id.toString(),
+        type: item.type,
+        name: item.name,
+        description: item.description,
+        location: item.location,
+        imageUrl: item.image_url,
+        metadata: {
+          carbonScore: item.carbon_score,
+          area: item.area,
+          status: item.status
+        },
+        href: generateResultHref(item)
+      })
+    );
   }, [searchResponse]);
 
   return {
@@ -139,7 +139,7 @@ export const useGlobalSearch = (query: string): UseGlobalSearchReturn => {
 // Helper function to generate navigation URLs for results
 const generateResultHref = (item: any): string => {
   const { type, id, establishment_id, company_id } = item;
-  
+
   switch (type) {
     case 'establishment':
       return `/admin/dashboard/establishment/${id}`;
@@ -149,4 +149,3 @@ const generateResultHref = (item: any): string => {
       return '/admin/dashboard';
   }
 };
-

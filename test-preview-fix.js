@@ -2,7 +2,7 @@
 // This simulates the exact issue the user reported
 
 console.log('🧪 TESTING PREVIEW FIX FOR PRODUCTION EVENTS\n');
-console.log('=' .repeat(60));
+console.log('='.repeat(60));
 
 // Mock form data exactly as it comes from ProductionTab (NO DATE)
 const mockFormDataPL = {
@@ -45,12 +45,12 @@ const hasMinimalPreviewDataFixed = (activeEventType, formData) => {
   // For production events, we need at least a type or some measurable data
   if (activeEventType === 1) {
     return Boolean(
-      formData.type || 
-      formData.area_covered || 
-      formData.yield_quantity || 
-      formData.equipment_hours ||
-      formData.operating_hours ||
-      formData.name  // Allow preview if we have an event name
+      formData.type ||
+        formData.area_covered ||
+        formData.yield_quantity ||
+        formData.equipment_hours ||
+        formData.operating_hours ||
+        formData.name // Allow preview if we have an event name
     );
   }
 
@@ -62,15 +62,15 @@ const hasMinimalPreviewDataFixed = (activeEventType, formData) => {
 // Simulate the old broken function
 const hasMinimalPreviewDataOld = (activeEventType, formData) => {
   // Always allow preview if we have a date
-  if (!formData.date) return false;  // THIS WAS THE BUG!
-  
+  if (!formData.date) return false; // THIS WAS THE BUG!
+
   if (activeEventType === 1) {
     return Boolean(
-      formData.type || 
-      formData.area_covered || 
-      formData.yield_quantity || 
-      formData.equipment_hours ||
-      formData.operating_hours
+      formData.type ||
+        formData.area_covered ||
+        formData.yield_quantity ||
+        formData.equipment_hours ||
+        formData.operating_hours
     );
   }
   return true;
@@ -95,7 +95,7 @@ console.log('\n📱 EXPECTED USER EXPERIENCE:');
 console.log('   • Event Name: "Spring Avocado" ✅');
 console.log('   • Event Title: "Planting Operation" / "Harvest Operation" ✅');
 console.log('   • Area Covered: "11 ha" ✅');
-console.log('   • Quantity: "22 kg" ✅'); 
+console.log('   • Quantity: "22 kg" ✅');
 console.log('   • Fuel Consumed: "33 L" ✅');
 console.log('   • Equipment Hours: "44 hours" ✅');
 console.log('   • Transportation (HA only): "55 km" ✅');

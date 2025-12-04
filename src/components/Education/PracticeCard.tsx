@@ -87,22 +87,22 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
   imageUrl
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   // Responsive values
   const isMobile = useBreakpointValue({ base: true, md: false });
   const cardPadding = useBreakpointValue({ base: 4, md: 6 });
-  
+
   // Theme colors
   const cardBgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
   const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const successColor = useColorModeValue('green.500', 'green.300');
-  
+
   // Calculate completion progress
   const completionPercentage = (completedSteps.length / practiceSteps.length) * 100;
   const isStarted = completedSteps.length > 0;
-  
+
   // Get category color
   const getCategoryColor = (cat: string) => {
     const name = cat.toLowerCase();
@@ -115,30 +115,35 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
     if (name.includes('compliance')) return 'yellow';
     return 'gray';
   };
-  
+
   const categoryColor = getCategoryColor(category);
-  
+
   // Get step action icon
   const getStepActionIcon = (actionType?: string) => {
     switch (actionType) {
-      case 'documentation': return FaTractor;
-      case 'photo': return FaCamera;
-      case 'verification': return FaAward;
-      case 'analysis': return FaLeaf;
-      default: return FaCheck;
+      case 'documentation':
+        return FaTractor;
+      case 'photo':
+        return FaCamera;
+      case 'verification':
+        return FaAward;
+      case 'analysis':
+        return FaLeaf;
+      default:
+        return FaCheck;
     }
   };
 
   return (
-    <Card 
-      bg={cardBgColor} 
-      borderRadius="xl" 
+    <Card
+      bg={cardBgColor}
+      borderRadius="xl"
       boxShadow="lg"
       border="1px"
       borderColor={isCompleted ? successColor : borderColor}
       transition="all 0.3s ease"
-      _hover={{ 
-        transform: 'translateY(-4px)', 
+      _hover={{
+        transform: 'translateY(-4px)',
         boxShadow: '2xl',
         borderColor: `${categoryColor}.200`
       }}
@@ -147,13 +152,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
       {/* Header with image if available */}
       {imageUrl && (
         <Box position="relative" overflow="hidden" h="180px">
-          <Image 
-            src={imageUrl} 
-            alt={title}
-            w="full"
-            h="full"
-            objectFit="cover"
-          />
+          <Image src={imageUrl} alt={title} w="full" h="full" objectFit="cover" />
           <Box
             position="absolute"
             top={0}
@@ -176,7 +175,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
           </Box>
         </Box>
       )}
-      
+
       <CardHeader pb={2}>
         {!imageUrl && (
           <VStack align="stretch" spacing={2}>
@@ -184,11 +183,14 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
               <Badge colorScheme={categoryColor} size="sm">
                 {category}
               </Badge>
-              <Badge 
+              <Badge
                 colorScheme={
-                  difficulty === 'beginner' ? 'green' : 
-                  difficulty === 'intermediate' ? 'yellow' : 'red'
-                } 
+                  difficulty === 'beginner'
+                    ? 'green'
+                    : difficulty === 'intermediate'
+                    ? 'yellow'
+                    : 'red'
+                }
                 size="sm"
               >
                 {difficulty}
@@ -199,7 +201,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
             </Heading>
           </VStack>
         )}
-        
+
         {/* Progress indicator for started practices */}
         {isStarted && !isCompleted && (
           <Box mt={3}>
@@ -211,8 +213,8 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
                 {completedSteps.length} of {practiceSteps.length} steps
               </Text>
             </HStack>
-            <Progress 
-              value={completionPercentage} 
+            <Progress
+              value={completionPercentage}
               colorScheme={categoryColor}
               size="md"
               borderRadius="full"
@@ -220,15 +222,10 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
             />
           </Box>
         )}
-        
+
         {/* Completion celebration */}
         {isCompleted && (
-          <HStack 
-            p={3} 
-            bg={useColorModeValue('green.50', 'green.900')}
-            borderRadius="lg"
-            mt={3}
-          >
+          <HStack p={3} bg={useColorModeValue('green.50', 'green.900')} borderRadius="lg" mt={3}>
             <Icon as={FaAward} color={successColor} boxSize={5} />
             <Text color={successColor} fontWeight="semibold" fontSize="sm">
               Practice Completed! 🎉
@@ -252,29 +249,29 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
               </HStack>
             )}
           </HStack>
-          
+
           {/* Description */}
           <Text fontSize="sm" color={textColor} lineHeight="tall">
             {description}
           </Text>
-          
+
           {/* Transparency impact highlight */}
-          <Box 
-            p={3} 
+          <Box
+            p={3}
             bg={useColorModeValue(`${categoryColor}.50`, `${categoryColor}.900`)}
             borderRadius="lg"
             borderLeft="4px"
             borderLeftColor={`${categoryColor}.500`}
           >
-            <Text 
-              fontSize="sm" 
+            <Text
+              fontSize="sm"
               color={useColorModeValue(`${categoryColor}.700`, `${categoryColor}.200`)}
               fontWeight="medium"
             >
               💡 {transparencyImpact}
             </Text>
           </Box>
-          
+
           {/* Action buttons */}
           <VStack align="stretch" spacing={3}>
             {!isStarted ? (
@@ -309,7 +306,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
                 Review Completed Practice
               </Button>
             )}
-            
+
             {/* Expand/collapse for details */}
             <Button
               variant="ghost"
@@ -321,12 +318,12 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
               {isExpanded ? 'Hide' : 'Show'} Practice Details
             </Button>
           </VStack>
-          
+
           {/* Expanded content */}
           <Collapse in={isExpanded} animateOpacity>
             <VStack align="stretch" spacing={4} pt={2}>
               <Divider />
-              
+
               {/* Learning objectives */}
               <Box>
                 <Heading size="sm" color={textColor} mb={3}>
@@ -341,7 +338,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
                   ))}
                 </List>
               </Box>
-              
+
               {/* Practice steps preview */}
               <Box>
                 <Heading size="sm" color={textColor} mb={3}>
@@ -349,34 +346,32 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
                 </Heading>
                 <VStack align="stretch" spacing={2}>
                   {practiceSteps.slice(0, 3).map((step, index) => (
-                    <HStack 
+                    <HStack
                       key={step.id}
                       p={3}
                       bg={
-                        completedSteps.includes(step.id) 
+                        completedSteps.includes(step.id)
                           ? useColorModeValue('green.50', 'green.900')
                           : useColorModeValue('gray.50', 'gray.700')
                       }
                       borderRadius="lg"
                       spacing={3}
                     >
-                      <Icon 
+                      <Icon
                         as={
-                          completedSteps.includes(step.id) 
-                            ? FaCheck 
+                          completedSteps.includes(step.id)
+                            ? FaCheck
                             : getStepActionIcon(step.actionType)
                         }
                         color={
-                          completedSteps.includes(step.id)
-                            ? successColor
-                            : `${categoryColor}.500`
+                          completedSteps.includes(step.id) ? successColor : `${categoryColor}.500`
                         }
                         boxSize={4}
                       />
                       <VStack align="start" spacing={1} flex={1}>
-                        <Text 
-                          fontSize="sm" 
-                          fontWeight="medium" 
+                        <Text
+                          fontSize="sm"
+                          fontWeight="medium"
                           color={textColor}
                           textDecor={completedSteps.includes(step.id) ? 'line-through' : 'none'}
                         >
@@ -394,7 +389,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
                       </VStack>
                     </HStack>
                   ))}
-                  
+
                   {practiceSteps.length > 3 && (
                     <Text fontSize="sm" color={mutedTextColor} textAlign="center">
                       ... and {practiceSteps.length - 3} more steps
@@ -402,7 +397,7 @@ const PracticeCard: React.FC<PracticeCardProps> = ({
                   )}
                 </VStack>
               </Box>
-              
+
               {/* Success metrics */}
               {successMetrics && (
                 <Box>

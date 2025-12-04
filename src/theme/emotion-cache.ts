@@ -7,8 +7,9 @@ export const emotionCache = createCache({
   speedy: false, // Disable speedy mode to ensure consistent class generation in production
   container: typeof document !== 'undefined' ? document.head : undefined,
   // Ensure proper stylesheet insertion order - fix TypeScript error
-  insertionPoint: typeof document !== 'undefined' 
-    ? (document.querySelector('meta[name="emotion-insertion-point"]') as HTMLElement) || undefined 
-    : undefined,
+  insertionPoint:
+    typeof document !== 'undefined'
+      ? (document.querySelector('meta[name="emotion-insertion-point"]') as HTMLElement) || undefined
+      : undefined,
   stylisPlugins: []
 });

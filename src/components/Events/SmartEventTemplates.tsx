@@ -39,18 +39,18 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 // Import API hooks for real-time USDA-based carbon calculations
-import { 
+import {
   useGetEventTemplatesByCropTypeQuery,
-  useCalculateEventCarbonPreviewMutation 
+  useCalculateEventCarbonPreviewMutation
 } from 'store/api/carbonApi';
 import { getEventTypeMapping, getEventDataForType } from 'utils/eventTypeMapping';
 
 // Utility function for formatting carbon values with appropriate precision
 const formatCarbonValue = (value: number): string => {
   if (value < 0.01) return value.toFixed(4); // Very small values: 0.0018 -> "0.0018"
-  if (value < 0.1) return value.toFixed(3);  // Small values: 0.018 -> "0.018"  
-  if (value < 10) return value.toFixed(2);   // Medium values: 2.45 -> "2.45"
-  return value.toFixed(1);                   // Large values: 15.3 -> "15.3"
+  if (value < 0.1) return value.toFixed(3); // Small values: 0.018 -> "0.018"
+  if (value < 10) return value.toFixed(2); // Medium values: 2.45 -> "2.45"
+  return value.toFixed(1); // Large values: 15.3 -> "15.3"
 };
 
 interface CarbonEventTemplate {
@@ -106,19 +106,19 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
 }) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
-  
+
   // State for area-based carbon calculations
   const [areaInput, setAreaInput] = useState<number>(defaultArea);
   const [applicationRates, setApplicationRates] = useState<Record<string, number>>({});
   const [carbonPreviews, setCarbonPreviews] = useState<Record<string, CarbonPreview>>({});
-  
+
   // API hooks for real-time calculations
-  const { 
-    data: backendTemplates, 
+  const {
+    data: backendTemplates,
     isLoading: templatesLoading,
-    error: templatesError 
+    error: templatesError
   } = useGetEventTemplatesByCropTypeQuery({ cropType });
-  
+
   const [calculateCarbonPreview] = useCalculateEventCarbonPreviewMutation();
 
   // USDA-compliant event templates (removing hardcoded carbon values)
@@ -265,13 +265,17 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
   );
 
   // Real-time carbon calculation function using USDA emission factors
-  const calculateCarbonPreviewForTemplate = async (template: CarbonEventTemplate, applicationRate?: number) => {
+  const calculateCarbonPreviewForTemplate = async (
+    template: CarbonEventTemplate,
+    applicationRate?: number
+  ) => {
     if (template.excludeFromCarbonCalculation) {
       return null; // No carbon calculation for General Events
     }
 
-    const rate = applicationRate || parseFloat(template.defaultValues.typical_application_rate || '0');
-    
+    const rate =
+      applicationRate || parseFloat(template.defaultValues.typical_application_rate || '0');
+
     if (rate <= 0 || areaInput <= 0) {
       return null;
     }
@@ -286,24 +290,24 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
         if (name.includes('pesticide')) return 'chemical';
         if (name.includes('herbicide')) return 'chemical';
         if (name.includes('fungicide')) return 'chemical';
-        
+
         // Equipment events (heavy machinery operations)
         if (name.includes('equipment')) return 'equipment';
         if (name.includes('tillage')) return 'equipment';
         if (name.includes('preparation')) return 'equipment';
-        
+
         // Production events (biological/manual operations)
         if (name.includes('irrigation')) return 'production';
         if (name.includes('harvest')) return 'production';
         if (name.includes('planting')) return 'production';
         if (name.includes('pruning')) return 'production';
         if (name.includes('bloom')) return 'production';
-        
+
         return 'production'; // Default for agricultural activities
       };
 
       const eventType = getEventTypeFromTemplate(template);
-      
+
       // Map event type to proper sub-type
       const getEventSubType = (eventType: string, templateName: string) => {
         if (eventType === 'chemical') {
@@ -323,7 +327,7 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
       };
 
       const eventSubType = getEventSubType(eventType, template.name);
-      
+
       const response = await calculateCarbonPreview({
         event_type: eventType,
         event_data: {
@@ -348,7 +352,8 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
 
       const preview: CarbonPreview = {
         estimated_carbon: response.co2e || 0,
-        calculation_source: response.calculation_method || template.emission_factor_source || 'USDA ARS',
+        calculation_source:
+          response.calculation_method || template.emission_factor_source || 'USDA ARS',
         area_hectares: areaInput,
         application_rate: rate,
         emission_factor: response.emission_factor || 0,
@@ -356,7 +361,7 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
         usda_verified: response.usda_verified || false
       };
 
-      setCarbonPreviews(prev => ({
+      setCarbonPreviews((prev) => ({
         ...prev,
         [template.id]: preview
       }));
@@ -370,7 +375,7 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
 
   // Update carbon previews when area or application rates change
   useEffect(() => {
-    relevantTemplates.forEach(template => {
+    relevantTemplates.forEach((template) => {
       if (!template.excludeFromCarbonCalculation) {
         calculateCarbonPreviewForTemplate(template, applicationRates[template.id]);
       }
@@ -443,7 +448,7 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
               Area in {areaUnit} - affects carbon calculations
             </FormHelperText>
           </FormControl>
-          
+
           <Alert status="info" size="sm" maxW="300px">
             <FaInfoCircle />
             <Text fontSize="xs" ml={2}>
@@ -470,7 +475,8 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
               transform: 'translateY(-2px)',
               boxShadow: 'lg'
             }}
-            transition="all 0.2s">
+            transition="all 0.2s"
+          >
             <CardBody p={4}>
               <VStack spacing={3} align="start">
                 {/* Header with Icon and Real-Time Carbon Impact */}
@@ -481,7 +487,7 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
                       {template.name}
                     </Text>
                   </HStack>
-                  
+
                   {/* ✅ USDA-Based Carbon Display Logic */}
                   {template.excludeFromCarbonCalculation ? (
                     <Badge colorScheme="blue" size="sm">
@@ -489,7 +495,7 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
                       Documentation
                     </Badge>
                   ) : carbonPreviews[template.id] ? (
-                    <Tooltip 
+                    <Tooltip
                       label={`Calculated using ${carbonPreviews[template.id].calculation_source}`}
                       placement="top"
                     >
@@ -545,7 +551,8 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
                 <HStack justify="space-between" width="100%">
                   <Badge
                     colorScheme={template.usageFrequency === 'common' ? 'green' : 'blue'}
-                    size="xs">
+                    size="xs"
+                  >
                     {template.usageFrequency}
                   </Badge>
                   <Text fontSize="xs" color="gray.500">
@@ -555,17 +562,29 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
 
                 {/* ✅ USDA Application Rate Input (for carbon calculations) */}
                 {!template.excludeFromCarbonCalculation && (
-                  <Box p={3} bg="green.50" borderRadius="md" width="100%" borderWidth="1px" borderColor="green.200">
+                  <Box
+                    p={3}
+                    bg="green.50"
+                    borderRadius="md"
+                    width="100%"
+                    borderWidth="1px"
+                    borderColor="green.200"
+                  >
                     <FormControl size="sm">
                       <FormLabel fontSize="xs" fontWeight="bold" color="green.700">
                         Application Rate ({template.defaultValues.unit})
                       </FormLabel>
                       <NumberInput
-                        value={applicationRates[template.id] || parseFloat(template.defaultValues.typical_application_rate || '0')}
-                        onChange={(_, value) => setApplicationRates(prev => ({
-                          ...prev,
-                          [template.id]: value || 0
-                        }))}
+                        value={
+                          applicationRates[template.id] ||
+                          parseFloat(template.defaultValues.typical_application_rate || '0')
+                        }
+                        onChange={(_, value) =>
+                          setApplicationRates((prev) => ({
+                            ...prev,
+                            [template.id]: value || 0
+                          }))
+                        }
                         min={0}
                         step={1}
                         size="sm"
@@ -577,18 +596,24 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
                         </NumberInputStepper>
                       </NumberInput>
                       <FormHelperText fontSize="xs">
-                        Typical: {template.defaultValues.typical_application_rate} {template.defaultValues.unit}
+                        Typical: {template.defaultValues.typical_application_rate}{' '}
+                        {template.defaultValues.unit}
                       </FormHelperText>
                     </FormControl>
-                    
+
                     {/* Carbon Calculation Transparency */}
                     {carbonPreviews[template.id] && (
                       <Box mt={2} p={2} bg="white" borderRadius="sm" fontSize="xs">
-                        <Text fontWeight="bold" color="green.600">Carbon Calculation:</Text>
+                        <Text fontWeight="bold" color="green.600">
+                          Carbon Calculation:
+                        </Text>
                         <Text color="gray.600">
-                          {carbonPreviews[template.id].emission_factor.toFixed(3)} kg CO₂/{template.defaultValues.unit} × {' '}
-                          {applicationRates[template.id] || parseFloat(template.defaultValues.typical_application_rate || '0')} {template.defaultValues.unit} × {' '}
-                          {areaInput} {areaUnit} = {formatCarbonValue(carbonPreviews[template.id].estimated_carbon)} kg CO₂
+                          {carbonPreviews[template.id].emission_factor.toFixed(3)} kg CO₂/
+                          {template.defaultValues.unit} ×{' '}
+                          {applicationRates[template.id] ||
+                            parseFloat(template.defaultValues.typical_application_rate || '0')}{' '}
+                          {template.defaultValues.unit} × {areaInput} {areaUnit} ={' '}
+                          {formatCarbonValue(carbonPreviews[template.id].estimated_carbon)} kg CO₂
                         </Text>
                         <Text fontSize="xs" color="blue.500">
                           Source: {carbonPreviews[template.id].calculation_source}
@@ -628,7 +653,7 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
               <Text fontWeight="bold" color="green.700">
                 Ready to create: {selectedTemplate.name}
               </Text>
-              
+
               {/* ✅ Show USDA-calculated carbon impact instead of hardcoded */}
               {selectedTemplate.excludeFromCarbonCalculation ? (
                 <Badge colorScheme="blue">
@@ -638,7 +663,8 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
               ) : carbonPreviews[selectedTemplate.id] ? (
                 <Badge colorScheme="green">
                   <Icon as={FaCheckCircle} boxSize={3} mr={1} />
-                  USDA Carbon: {formatCarbonValue(carbonPreviews[selectedTemplate.id].estimated_carbon)} kg CO₂
+                  USDA Carbon:{' '}
+                  {formatCarbonValue(carbonPreviews[selectedTemplate.id].estimated_carbon)} kg CO₂
                 </Badge>
               ) : (
                 <Badge colorScheme="yellow">
@@ -656,7 +682,9 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
             {/* ✅ Enhanced Details with USDA Compliance */}
             <HStack spacing={2} wrap="wrap" justify="center">
               <Badge colorScheme="blue" size="sm">
-                {applicationRates[selectedTemplate.id] || selectedTemplate.defaultValues.typical_application_rate} {selectedTemplate.defaultValues.unit}
+                {applicationRates[selectedTemplate.id] ||
+                  selectedTemplate.defaultValues.typical_application_rate}{' '}
+                {selectedTemplate.defaultValues.unit}
               </Badge>
               <Badge colorScheme="purple" size="sm">
                 {selectedTemplate.defaultValues.duration}
@@ -672,15 +700,19 @@ export const SmartEventTemplates: React.FC<SmartEventTemplatesProps> = ({
             </HStack>
 
             {/* ✅ Carbon Calculation Source Transparency */}
-            {carbonPreviews[selectedTemplate.id] && !selectedTemplate.excludeFromCarbonCalculation && (
-              <Box p={2} bg="white" borderRadius="md" width="100%">
-                <Text fontSize="xs" color="gray.600" textAlign="center">
-                  <Icon as={FaInfoCircle} mr={1} />
-                  Carbon calculated using {carbonPreviews[selectedTemplate.id].calculation_source}
-                  {' '}(Confidence: {(carbonPreviews[selectedTemplate.id].confidence_level * 100).toFixed(0)}%)
-                </Text>
-              </Box>
-            )}
+            {carbonPreviews[selectedTemplate.id] &&
+              !selectedTemplate.excludeFromCarbonCalculation && (
+                <Box p={2} bg="white" borderRadius="md" width="100%">
+                  <Text fontSize="xs" color="gray.600" textAlign="center">
+                    <Icon as={FaInfoCircle} mr={1} />
+                    Carbon calculated using {
+                      carbonPreviews[selectedTemplate.id].calculation_source
+                    }{' '}
+                    (Confidence:{' '}
+                    {(carbonPreviews[selectedTemplate.id].confidence_level * 100).toFixed(0)}%)
+                  </Text>
+                </Box>
+              )}
           </VStack>
         </Box>
       )}

@@ -76,6 +76,23 @@ function getOperationEfficiencyDisplayName(efficiencyCode: string): string {
 }
 
 /**
+ * Convert equipment operation type codes to display names
+ * MUST match EQUIPMENT_OPERATION_TYPES from ProductionTab.jsx
+ * Sprint 2: Production EQ (Equipment Operations) subtype
+ */
+function getEquipmentOperationTypeDisplayName(operationTypeCode: string): string {
+  const operationTypeMapping: Record<string, string> = {
+    FC: 'Fuel Consumption',
+    MN: 'Maintenance',
+    RE: 'Repair',
+    CA: 'Calibration',
+    BD: 'Breakdown',
+    EI: 'Inspection'
+  };
+  return operationTypeMapping[operationTypeCode] || operationTypeCode;
+}
+
+/**
  * Data source type
  */
 export type DataSource = 'form' | 'backend';
@@ -220,6 +237,7 @@ function createBaseEvent(
   const commonFields = [
     'name',
     'observation',
+    'performed_by', // Sprint 1: Traceability - operator who performed the activity
     'certified',
     'blockchain_verified',
     'blockchain_transaction',
@@ -576,6 +594,51 @@ function normalizeProductionEventData(
       'transportation_distance_raw',
       'transportation_distance'
     );
+
+    // Sprint 2: EQ (Equipment Operations) subtype fields extraction
+    if (productionData.production_type === 'EQ') {
+      // Extract EQ-specific fields from form data
+      if (rawData.equipment_operation_type) {
+        // Convert operation type code to display name
+        (productionData as any).equipment_operation_type = getEquipmentOperationTypeDisplayName(
+          rawData.equipment_operation_type
+        );
+      }
+      if (rawData.equipment_type) {
+        // Convert equipment type code to display name
+        (productionData as any).equipment_type = getEquipmentTypeDisplayName(
+          rawData.equipment_type
+        );
+      }
+      if (rawData.fuel_type) {
+        // Convert fuel type code to display name
+        (productionData as any).fuel_type = getFuelTypeDisplayName(rawData.fuel_type);
+      }
+      if (rawData.operation_efficiency) {
+        // Convert efficiency code to display name
+        (productionData as any).operation_efficiency = getOperationEfficiencyDisplayName(
+          rawData.operation_efficiency
+        );
+      }
+    }
+
+    // Sprint 3 Epic 3.2: Consumer Trust Fields for Production events
+    if (rawData.seeds_source) {
+      (productionData as any).seeds_source = rawData.seeds_source;
+    }
+    if (rawData.water_source) {
+      (productionData as any).water_source = rawData.water_source;
+    }
+    // ENHANCED: USDA NASS 2023 irrigation water estimation fields
+    if (rawData.irrigation_method) {
+      (productionData as any).irrigation_method = rawData.irrigation_method;
+    }
+    if (rawData.irrigation_depth) {
+      (productionData as any).irrigation_depth = rawData.irrigation_depth;
+    }
+    if (rawData.irrigation_depth_unit) {
+      (productionData as any).irrigation_depth_unit = rawData.irrigation_depth_unit;
+    }
   } else {
     // Backend data already formatted
     if (rawData.area_covered) productionData.area_covered = rawData.area_covered;
@@ -584,6 +647,43 @@ function normalizeProductionEventData(
     if (rawData.equipment_hours) productionData.equipment_hours = rawData.equipment_hours;
     if (rawData.transportation_distance)
       productionData.transportation_distance = rawData.transportation_distance;
+
+    // Sprint 3 Epic 3.2: Consumer Trust Fields for Production events (backend)
+    if (rawData.seeds_source) {
+      (productionData as any).seeds_source = rawData.seeds_source;
+    }
+    if (rawData.water_source) {
+      (productionData as any).water_source = rawData.water_source;
+    }
+    // ENHANCED: USDA NASS 2023 irrigation water estimation fields (backend)
+    if (rawData.irrigation_method) {
+      (productionData as any).irrigation_method = rawData.irrigation_method;
+    }
+    if (rawData.irrigation_depth) {
+      (productionData as any).irrigation_depth = rawData.irrigation_depth;
+    }
+    if (rawData.irrigation_depth_unit) {
+      (productionData as any).irrigation_depth_unit = rawData.irrigation_depth_unit;
+    }
+
+    // Sprint 2: EQ (Equipment Operations) subtype fields extraction from backend
+    if (productionData.production_type === 'EQ' || rawData.production_type === 'EQ') {
+      if (rawData.equipment_operation_type) {
+        // Convert operation type code to display name
+        (productionData as any).equipment_operation_type = getEquipmentOperationTypeDisplayName(
+          rawData.equipment_operation_type
+        );
+      }
+      if (rawData.equipment_type) {
+        (productionData as any).equipment_type = rawData.equipment_type;
+      }
+      if (rawData.fuel_type) {
+        (productionData as any).fuel_type = rawData.fuel_type;
+      }
+      if (rawData.operation_efficiency) {
+        (productionData as any).operation_efficiency = rawData.operation_efficiency;
+      }
+    }
   }
 
   return productionData;
@@ -602,6 +702,7 @@ function normalizeChemicalEventData(
   // Map chemical-specific fields
   const chemicalFields = [
     'chemical_type',
+    'chemical_subtype', // Added 2025-01-21: For organic vs synthetic differentiation in carbon calculations
     'commercial_name',
     'active_ingredient',
     'application_method',
@@ -616,7 +717,21 @@ function normalizeChemicalEventData(
     'phosphorus_percentage',
     'potassium_percentage',
     'application_timing',
-    'weather_conditions'
+    'weather_conditions',
+    // EPA WPS Compliance Fields - 40 CFR 170.309
+    'applicator_name',
+    'epa_registration_number',
+    'restricted_use_pesticide',
+    'applicator_certification',
+    'rei_hours',
+    'phi_days',
+    // Sprint 1 Epic 1.1: Additional EPA WPS Fields
+    'signal_word',
+    'ppe_required',
+    'environmental_hazards',
+    // Sprint 3 Epic 3.2: Consumer Trust Fields
+    'organic_approved',
+    'buffer_zone_meters'
   ];
 
   mapFields(rawData, chemicalData, chemicalFields, fieldMapping);
@@ -1011,10 +1126,42 @@ function normalizeSoilManagementEventData(
     'tillage_direction',
     'residue_management',
     'soil_management_notes',
-    'production_efficiency'
+    'production_efficiency',
+    // ENHANCED: IPCC 2006 lime dissolution fields (PA events)
+    'amendment_amount',
+    'amendment_unit',
+    'amendment_type',
+    // ENHANCED: Tillage depth fields for soil CO2 flux calculation (TI events)
+    'tillage_depth',
+    'tillage_depth_unit',
+    'depth'
   ];
 
   mapFields(rawData, soilData, soilFields, fieldMapping);
+
+  // Handle direct field mapping for amendment and tillage fields
+  if (rawData.amendment_amount !== undefined) {
+    soilData.amendment_amount = rawData.amendment_amount;
+  }
+  if (rawData.amendment_unit !== undefined) {
+    soilData.amendment_unit = rawData.amendment_unit;
+  }
+  if (rawData.amendment_type !== undefined) {
+    soilData.amendment_type = rawData.amendment_type;
+  }
+  if (rawData.tillage_depth !== undefined) {
+    soilData.tillage_depth = rawData.tillage_depth;
+  }
+  if (rawData.tillage_depth_unit !== undefined) {
+    soilData.tillage_depth_unit = rawData.tillage_depth_unit;
+  }
+  // Handle depth → tillage_depth mapping for TI events
+  if (rawData.depth !== undefined && !soilData.tillage_depth) {
+    soilData.tillage_depth = rawData.depth;
+  }
+  if (rawData.depth_unit !== undefined && !soilData.tillage_depth_unit) {
+    soilData.tillage_depth_unit = rawData.depth_unit;
+  }
 
   return soilData;
 }
@@ -1048,7 +1195,10 @@ function normalizePestManagementEventData(
     'action_recommended',
     'action_threshold_met',
     'imp_strategy',
-    'pest_management_notes'
+    'pest_management_notes',
+    // Sprint 3 Epic 3.2: Consumer Trust Fields
+    'beneficial_insects_used',
+    'chemical_free_period_days'
   ];
 
   mapFields(rawData, pestData, pestFields, fieldMapping);
@@ -1078,7 +1228,9 @@ function normalizeBusinessEventData(
     'sustainability_practice',
     'trust_impact',
     'transparency_benefit',
-    'business_observation'
+    'business_observation',
+    // Sprint 3 Epic 3.2: Consumer Trust Fields
+    'verified_certifier_name'
   ];
 
   mapFields(rawData, businessData, businessFields, fieldMapping);

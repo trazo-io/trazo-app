@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  Box,
-  Grid,
-  VStack,
-  Text,
-  Icon,
-  HStack,
-  useColorModeValue
-} from '@chakra-ui/react';
+import { Box, Grid, VStack, Text, Icon, HStack, useColorModeValue } from '@chakra-ui/react';
 import { FaLeaf, FaLock, FaShieldAlt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { ForgotPasswordForm } from '../../../components/Forms/ForgotPasswordForm';
@@ -19,10 +11,7 @@ const ConsumerForgotPassword: React.FC = () => {
 
   return (
     <Box minH="calc(100vh - 80px)" maxH="calc(100vh - 80px)" overflow="hidden">
-      <Grid 
-        templateColumns={{ base: '1fr', lg: '1fr 1fr' }} 
-        h="calc(100vh - 80px)"
-      >
+      <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} h="calc(100vh - 80px)">
         {/* Left Panel - Form */}
         <VStack
           spacing={0}
@@ -39,7 +28,7 @@ const ConsumerForgotPassword: React.FC = () => {
                 <Icon as={FaLock} boxSize={6} color="blue.600" />
                 <Icon as={FaLeaf} boxSize={6} color="blue.700" />
               </HStack>
-              
+
               <VStack spacing={2}>
                 <Text fontSize="2xl" fontWeight="700" color="gray.800">
                   Reset Password
@@ -72,7 +61,7 @@ const ConsumerForgotPassword: React.FC = () => {
           overflow="hidden"
           initial={{ opacity: 0, x: 100 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
         >
           {/* Geometric Background Elements */}
           <Box
@@ -137,9 +126,8 @@ const ConsumerForgotPassword: React.FC = () => {
                   Green Journey
                 </Text>
                 <Text fontSize="lg" opacity={0.9} maxW="md" lineHeight="1.6">
-                  Your sustainable shopping data and carbon tracking information 
-                  are protected. Safely reset your password and continue making 
-                  environmentally conscious choices.
+                  Your sustainable shopping data and carbon tracking information are protected.
+                  Safely reset your password and continue making environmentally conscious choices.
                 </Text>
               </VStack>
 
@@ -147,15 +135,21 @@ const ConsumerForgotPassword: React.FC = () => {
               <VStack spacing={3} align="start" color="white" mt={6}>
                 <HStack spacing={3}>
                   <Box w={2} h={2} bg="blue.200" borderRadius="full" />
-                  <Text fontSize="sm" opacity={0.9}>Protected purchase history</Text>
+                  <Text fontSize="sm" opacity={0.9}>
+                    Protected purchase history
+                  </Text>
                 </HStack>
                 <HStack spacing={3}>
                   <Box w={2} h={2} bg="blue.200" borderRadius="full" />
-                  <Text fontSize="sm" opacity={0.9}>Secure carbon footprint data</Text>
+                  <Text fontSize="sm" opacity={0.9}>
+                    Secure carbon footprint data
+                  </Text>
                 </HStack>
                 <HStack spacing={3}>
                   <Box w={2} h={2} bg="blue.200" borderRadius="full" />
-                  <Text fontSize="sm" opacity={0.9}>Safe sustainable product reviews</Text>
+                  <Text fontSize="sm" opacity={0.9}>
+                    Safe sustainable product reviews
+                  </Text>
                 </HStack>
               </VStack>
             </VStack>

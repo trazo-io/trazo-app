@@ -22,11 +22,11 @@ const CardHeader = {
   },
   sizes: {},
   variants: {},
-  defaultProps: {},
+  defaultProps: {}
 };
 
 export const CardHeaderComponent = {
   components: {
-    CardHeader,
-  },
+    CardHeader
+  }
 };

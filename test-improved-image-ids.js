@@ -11,16 +11,23 @@ console.log('===================================');
 // Mock the IMPROVED stable ID generation function
 const generateStableId = (imageUrl) => {
   if (!imageUrl) return 'preview-fallback';
-  
+
   // Extract filename and folder for better uniqueness
-  return imageUrl.split('/').slice(-2).join('_').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+  return imageUrl
+    .split('/')
+    .slice(-2)
+    .join('_')
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .substring(0, 30);
 };
 
-console.log('Testing with the user\'s reported image paths...\n');
+console.log("Testing with the user's reported image paths...\n");
 
 // User's reported paths
-const userPath1 = '/var/folders/tf/8n2ckxsd3p38q1hhsfc2pdxw0000gp/T/TemporaryItems/NSIRD_screencaptureui_QgKKGz/Screenshot 2025-11-07 at 10.14.37.heic';
-const userPath2 = '/var/folders/tf/8n2ckxsd3p38q1hhsfc2pdxw0000gp/T/TemporaryItems/NSIRD_screencaptureui_fue1xT/Screenshot 2025-11-07 at 10.14.56.heic';
+const userPath1 =
+  '/var/folders/tf/8n2ckxsd3p38q1hhsfc2pdxw0000gp/T/TemporaryItems/NSIRD_screencaptureui_QgKKGz/Screenshot 2025-11-07 at 10.14.37.heic';
+const userPath2 =
+  '/var/folders/tf/8n2ckxsd3p38q1hhsfc2pdxw0000gp/T/TemporaryItems/NSIRD_screencaptureui_fue1xT/Screenshot 2025-11-07 at 10.14.56.heic';
 
 console.log('🧪 User Reported Paths:');
 console.log('Form completion path:', userPath1);

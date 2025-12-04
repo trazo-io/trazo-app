@@ -167,70 +167,71 @@ const extractEventData = (event: Event) => {
 // Generate transparency-focused description for events
 const getEventDescription = (event: Event) => {
   const eventData = event as any;
-  
+
   // For production events (Type 1), show key transparency metrics
   if (event.event_type === 1) {
     const details = [];
-    
+
     // Area covered - most important for transparency
     if (eventData.area_covered && eventData.area_covered > 0) {
-      const areaUnit = eventData.area_unit === 'ha' ? 'hectares' : eventData.area_unit || 'hectares';
+      const areaUnit =
+        eventData.area_unit === 'ha' ? 'hectares' : eventData.area_unit || 'hectares';
       details.push(`${eventData.area_covered} ${areaUnit}`);
     }
-    
+
     // Quantity for planting/harvesting
     if (eventData.yield_quantity && eventData.yield_quantity > 0) {
       const unit = eventData.yield_unit || 'units';
       const quantity = parseFloat(eventData.yield_quantity);
-      
+
       // Format large numbers nicely
-      const formattedQuantity = quantity >= 1000 
-        ? `${(quantity / 1000).toFixed(0)}K` 
-        : quantity.toLocaleString();
-      
+      const formattedQuantity =
+        quantity >= 1000 ? `${(quantity / 1000).toFixed(0)}K` : quantity.toLocaleString();
+
       details.push(`${formattedQuantity} ${unit}`);
     }
-    
+
     // Fuel consumption - key for carbon transparency
     if (eventData.fuel_consumed && eventData.fuel_consumed > 0) {
       const fuelUnit = eventData.fuel_unit || 'L';
       details.push(`${eventData.fuel_consumed} ${fuelUnit} fuel`);
     }
-    
+
     // Equipment hours
     if (eventData.equipment_hours && eventData.equipment_hours > 0) {
       details.push(`${eventData.equipment_hours}h equipment`);
     }
-    
+
     // If we have transparency data, show it
     if (details.length > 0) {
       return details.join(' • ');
     }
   }
-  
+
   // For chemical events (Type 2), show chemical details
   if (event.event_type === 2) {
     const details = [];
-    
+
     if (eventData.commercial_name) {
       details.push(eventData.commercial_name);
     }
-    
+
     if (eventData.area_covered && eventData.area_covered > 0) {
-      const areaUnit = eventData.area_unit === 'ha' ? 'hectares' : eventData.area_unit || 'hectares';
+      const areaUnit =
+        eventData.area_unit === 'ha' ? 'hectares' : eventData.area_unit || 'hectares';
       details.push(`${eventData.area_covered} ${areaUnit}`);
     }
-    
+
     if (eventData.volume_applied && eventData.volume_applied > 0) {
       const volumeUnit = eventData.volume_unit || 'L';
       details.push(`${eventData.volume_applied} ${volumeUnit}`);
     }
-    
+
     if (details.length > 0) {
       return details.join(' • ');
     }
   }
-  
+
   // Fallback to observation or default message
   return event.observation || 'No additional details';
 };
@@ -270,7 +271,7 @@ function TimelineRow(props: TimelineRowProps) {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
   const navigate = useNavigate();
-  
+
   // State to handle timeline rendering after mount
   const [isMounted, setIsMounted] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -289,14 +290,14 @@ function TimelineRow(props: TimelineRowProps) {
   const eventData = extractEventData(event);
   const operatorName = getOperatorName(event, members);
   const qrVisibility = getQRVisibility(event);
-  
+
   // Force re-render after mount to fix timeline positioning
   useEffect(() => {
     // Small delay to ensure DOM is fully rendered
     const timer = setTimeout(() => {
       setIsMounted(true);
     }, 10);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -307,9 +308,9 @@ function TimelineRow(props: TimelineRowProps) {
         <Box
           position="absolute"
           left="19px"
-          top="42px"  // Center of 40px circle + small offset
+          top="42px" // Center of 40px circle + small offset
           w="3px"
-          h={`calc(100% - 2px)`}  // Dynamic height calculation
+          h={`calc(100% - 2px)`} // Dynamic height calculation
           bg={useColorModeValue('gray.200', 'gray.600')}
           borderRadius="full"
           zIndex={0}
@@ -317,7 +318,7 @@ function TimelineRow(props: TimelineRowProps) {
           transition="opacity 0.2s ease-in-out"
         />
       )}
-      
+
       <HStack spacing={isMobile ? 0 : 4} align="flex-start" w="100%">
         {/* Timeline Icon Column - Hidden on mobile to save space */}
         {!isMobile && (
@@ -359,194 +360,191 @@ function TimelineRow(props: TimelineRowProps) {
           onClick={() => (onEventClick ? onEventClick(event) : navigate(url))}
           className="trazo-card"
         >
-        <CardBody p={isMobile ? 3 : 4}>
-          <VStack align="stretch" spacing={isMobile ? 2 : 3}>
-            {/* Header Row - Title and Date */}
-            <HStack justify="space-between" align="flex-start">
-              <HStack spacing={2} flex={1}>
-                {/* Mobile: Compact icon indicator to replace left emoji */}
-                {isMobile && (
-                  <Circle
-                    size="24px"
-                    bg={eventConfig.color}
-                    color="white"
-                    flexShrink={0}
-                  >
-                    <Icon as={eventConfig.icon} boxSize={3} />
-                  </Circle>
-                )}
-                <VStack align="flex-start" spacing={1} flex={1}>
-                  <Text fontSize="sm" fontWeight="600" color={textColor} noOfLines={1}>
-                    {title}
+          <CardBody p={isMobile ? 3 : 4}>
+            <VStack align="stretch" spacing={isMobile ? 2 : 3}>
+              {/* Header Row - Title and Date */}
+              <HStack justify="space-between" align="flex-start">
+                <HStack spacing={2} flex={1}>
+                  {/* Mobile: Compact icon indicator to replace left emoji */}
+                  {isMobile && (
+                    <Circle size="24px" bg={eventConfig.color} color="white" flexShrink={0}>
+                      <Icon as={eventConfig.icon} boxSize={3} />
+                    </Circle>
+                  )}
+                  <VStack align="flex-start" spacing={1} flex={1}>
+                    <Text fontSize="sm" fontWeight="600" color={textColor} noOfLines={1}>
+                      {title}
+                    </Text>
+                    <Badge
+                      colorScheme={eventConfig.color.split('.')[0]}
+                      variant="subtle"
+                      fontSize="xs"
+                      borderRadius="full"
+                      px={2}
+                      py={1}
+                    >
+                      {eventConfig.category}
+                    </Badge>
+                  </VStack>
+                </HStack>
+                <Text fontSize="xs" color="gray.500" fontWeight="medium" minW="fit-content">
+                  {date}
+                </Text>
+              </HStack>
+
+              {/* Description */}
+              <Text fontSize="xs" color="gray.600" lineHeight="tall">
+                {getEventDescription(event)}
+              </Text>
+
+              {/* Operator Info */}
+              <HStack spacing={2}>
+                <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                  Operator:
+                </Text>
+                <Text fontSize="xs" color="gray.600">
+                  {operatorName}
+                </Text>
+              </HStack>
+
+              {/* Photo Status Indicator - CRITICAL for transparency improvement */}
+              {!event.image && (
+                <HStack
+                  spacing={2}
+                  p={2}
+                  bg="orange.50"
+                  borderRadius="md"
+                  border="1px solid"
+                  borderColor="orange.200"
+                >
+                  <Icon as={FaCamera} color="orange.500" boxSize={3} />
+                  <Text fontSize="xs" color="orange.700" fontWeight="600">
+                    📷 Photo Needed for Transparency
                   </Text>
+                </HStack>
+              )}
+
+              {/* Metrics Row - Consistent Layout */}
+              <HStack spacing={isMobile ? 2 : 3} wrap="wrap" justify="flex-start">
+                {/* Carbon Impact */}
+                {carbonData && !carbonData.error ? (
+                  <Tooltip
+                    label={`Carbon Impact: ${carbonData.co2e > 0 ? '+' : ''}${
+                      carbonData.co2e
+                    } kg CO₂e${
+                      carbonData.verification_status === 'factors_verified' ||
+                      carbonData.usda_factors_based
+                        ? ' (USDA Factors)'
+                        : ''
+                    }`}
+                  >
+                    <HStack spacing={1}>
+                      <Badge
+                        colorScheme={carbonData.co2e < 0 ? 'green' : 'orange'}
+                        variant="subtle"
+                        fontSize="xs"
+                        borderRadius="md"
+                        px={2}
+                        py={1}
+                      >
+                        {carbonData.co2e > 0 ? '+' : ''}
+                        {carbonData.co2e} kg CO₂
+                      </Badge>
+                      {(carbonData.verification_status === 'factors_verified' ||
+                        carbonData.usda_factors_based) && (
+                        <Badge
+                          colorScheme="blue"
+                          variant="solid"
+                          fontSize="xs"
+                          borderRadius="md"
+                          px={2}
+                          py={1}
+                        >
+                          USDA Factors
+                        </Badge>
+                      )}
+                    </HStack>
+                  </Tooltip>
+                ) : (
                   <Badge
-                    colorScheme={eventConfig.color.split('.')[0]}
-                    variant="subtle"
+                    variant="outline"
                     fontSize="xs"
-                    borderRadius="full"
+                    colorScheme="gray"
+                    borderRadius="md"
                     px={2}
                     py={1}
                   >
-                    {eventConfig.category}
+                    No CO₂ data
                   </Badge>
-                </VStack>
-              </HStack>
-              <Text fontSize="xs" color="gray.500" fontWeight="medium" minW="fit-content">
-                {date}
-              </Text>
-            </HStack>
+                )}
 
-            {/* Description */}
-            <Text fontSize="xs" color="gray.600" lineHeight="tall">
-              {getEventDescription(event)}
-            </Text>
-
-            {/* Operator Info */}
-            <HStack spacing={2}>
-              <Text fontSize="xs" color="gray.500" fontWeight="medium">
-                Operator:
-              </Text>
-              <Text fontSize="xs" color="gray.600">
-                {operatorName}
-              </Text>
-            </HStack>
-
-            {/* Photo Status Indicator - CRITICAL for transparency improvement */}
-            {!event.image && (
-              <HStack 
-                spacing={2} 
-                p={2} 
-                bg="orange.50" 
-                borderRadius="md" 
-                border="1px solid"
-                borderColor="orange.200">
-                <Icon as={FaCamera} color="orange.500" boxSize={3} />
-                <Text fontSize="xs" color="orange.700" fontWeight="600">
-                  📷 Photo Needed for Transparency
-                </Text>
-              </HStack>
-            )}
-
-            {/* Metrics Row - Consistent Layout */}
-            <HStack spacing={isMobile ? 2 : 3} wrap="wrap" justify="flex-start">
-              {/* Carbon Impact */}
-              {carbonData && !carbonData.error ? (
-                <Tooltip
-                  label={`Carbon Impact: ${carbonData.co2e > 0 ? '+' : ''}${carbonData.co2e} kg CO₂e${
-                    carbonData.verification_status === 'factors_verified' || carbonData.usda_factors_based
-                      ? ' (USDA Factors)'
-                      : ''
-                  }`}
-                >
-                  <HStack spacing={1}>
+                {/* Cost Analysis */}
+                {carbonData?.cost_analysis?.estimated_cost && (
+                  <Tooltip label={`Estimated Cost: $${carbonData.cost_analysis.estimated_cost}`}>
                     <Badge
-                      colorScheme={carbonData.co2e < 0 ? 'green' : 'orange'}
+                      colorScheme="purple"
                       variant="subtle"
                       fontSize="xs"
                       borderRadius="md"
                       px={2}
                       py={1}
                     >
-                      {carbonData.co2e > 0 ? '+' : ''}
-                      {carbonData.co2e} kg CO₂
+                      ${carbonData.cost_analysis.estimated_cost}
                     </Badge>
-                    {(carbonData.verification_status === 'factors_verified' || carbonData.usda_factors_based) && (
-                      <Badge
-                        colorScheme="blue"
-                        variant="solid"
-                        fontSize="xs"
-                        borderRadius="md"
-                        px={2}
-                        py={1}
-                      >
-                        USDA Factors
-                      </Badge>
-                    )}
+                  </Tooltip>
+                )}
+
+                {/* QR Visibility */}
+                <Tooltip label={`QR Code Visibility: ${qrVisibility} - Consumer relevance level`}>
+                  <HStack spacing={1}>
+                    <Icon
+                      as={
+                        qrVisibility === 'high'
+                          ? FaEye
+                          : qrVisibility === 'medium'
+                          ? FaMinus
+                          : FaEyeSlash
+                      }
+                      color={
+                        qrVisibility === 'high'
+                          ? 'green.500'
+                          : qrVisibility === 'medium'
+                          ? 'yellow.500'
+                          : 'gray.400'
+                      }
+                      boxSize="10px"
+                    />
+                    <Text fontSize="xs" color="gray.500" textTransform="capitalize">
+                      {qrVisibility}
+                    </Text>
                   </HStack>
                 </Tooltip>
-              ) : (
-                <Badge 
-                  variant="outline" 
-                  fontSize="xs" 
-                  colorScheme="gray"
-                  borderRadius="md"
-                  px={2}
-                  py={1}
-                >
-                  No CO₂ data
-                </Badge>
-              )}
 
-              {/* Cost Analysis */}
-              {carbonData?.cost_analysis?.estimated_cost && (
-                <Tooltip label={`Estimated Cost: $${carbonData.cost_analysis.estimated_cost}`}>
-                  <Badge
-                    colorScheme="purple"
-                    variant="subtle"
-                    fontSize="xs"
-                    borderRadius="md"
-                    px={2}
-                    py={1}
-                  >
-                    ${carbonData.cost_analysis.estimated_cost}
-                  </Badge>
-                </Tooltip>
-              )}
-
-              {/* QR Visibility */}
-              <Tooltip
-                label={`QR Code Visibility: ${qrVisibility} - Consumer relevance level`}
-              >
-                <HStack spacing={1}>
-                  <Icon
-                    as={
-                      qrVisibility === 'high'
-                        ? FaEye
-                        : qrVisibility === 'medium'
-                        ? FaMinus
-                        : FaEyeSlash
-                    }
-                    color={
-                      qrVisibility === 'high'
-                        ? 'green.500'
-                        : qrVisibility === 'medium'
-                        ? 'yellow.500'
-                        : 'gray.400'
-                    }
-                    boxSize="10px"
-                  />
-                  <Text fontSize="xs" color="gray.500" textTransform="capitalize">
-                    {qrVisibility}
-                  </Text>
-                </HStack>
-              </Tooltip>
-
-              {/* Efficiency Score */}
-              {carbonData?.efficiency_score && carbonData.efficiency_score > 0 && (
-                <Tooltip label={`Efficiency Score: ${carbonData.efficiency_score}/100`}>
-                  <Badge
-                    colorScheme={
-                      carbonData.efficiency_score >= 70
-                        ? 'green'
-                        : carbonData.efficiency_score >= 50
-                        ? 'yellow'
-                        : 'red'
-                    }
-                    variant="subtle"
-                    fontSize="xs"
-                    borderRadius="md"
-                    px={2}
-                    py={1}
-                  >
-                    {carbonData.efficiency_score}/100
-                  </Badge>
-                </Tooltip>
-              )}
-            </HStack>
-
-          </VStack>
-        </CardBody>
-      </Card>
+                {/* Efficiency Score */}
+                {carbonData?.efficiency_score && carbonData.efficiency_score > 0 && (
+                  <Tooltip label={`Efficiency Score: ${carbonData.efficiency_score}/100`}>
+                    <Badge
+                      colorScheme={
+                        carbonData.efficiency_score >= 70
+                          ? 'green'
+                          : carbonData.efficiency_score >= 50
+                          ? 'yellow'
+                          : 'red'
+                      }
+                      variant="subtle"
+                      fontSize="xs"
+                      borderRadius="md"
+                      px={2}
+                      py={1}
+                    >
+                      {carbonData.efficiency_score}/100
+                    </Badge>
+                  </Tooltip>
+                )}
+              </HStack>
+            </VStack>
+          </CardBody>
+        </Card>
       </HStack>
     </Box>
   );

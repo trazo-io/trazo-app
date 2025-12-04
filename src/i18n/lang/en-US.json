@@ -1018,5 +1018,11 @@
   "app.selectIntensity": "Select intensity",
   "app.selectDirection": "Select direction",
   "app.selectResidueManagement": "Select residue management",
-  "app.selectSoilMoisture": "Select soil moisture"
+  "app.selectSoilMoisture": "Select soil moisture",
+  "app.batchDetails": "Batch Details",
+  "app.batchDetailsSubtitle": "Production batch traceability",
+  "app.lotNumber": "Lot Number",
+  "app.quality": "Quality",
+  "app.harvestMethod": "Method",
+  "app.batchTraceabilityNote": "Batch data documented by the farmer for full traceability"
 }

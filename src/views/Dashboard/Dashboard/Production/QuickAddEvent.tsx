@@ -362,26 +362,17 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     setEventDescription(`${template.name} - ${template.description}`);
     setApplicationRate(getDefaultApplicationRate(template));
     setDuration(template.typical_duration);
-    
+
     // Updated observations to show USDA-based calculations instead of hardcoded values
     if (template.excludeFromCarbonCalculation) {
       setEventObservations(
-        `General Event (no carbon calculation). Sustainability Score: ${template.sustainabilityScore}/10. QR Visibility: ${template.qrVisibility}. Efficiency Tip: ${template.efficiency_tip}`
+        `Other Farm Activity (no carbon calculation). Sustainability Score: ${template.sustainabilityScore}/10. QR Visibility: ${template.qrVisibility}. Efficiency Tip: ${template.efficiency_tip}`
       );
     } else {
       setEventObservations(
         `USDA-based carbon calculation will be applied. Sustainability Score: ${template.sustainabilityScore}/10. QR Visibility: ${template.qrVisibility}. Efficiency Tip: ${template.efficiency_tip}`
       );
     }
-
-    // Show success feedback
-    toast({
-      title: '🎯 Template Selected',
-      description: `${template.name} ready to create with ${template.excludeFromCarbonCalculation ? 'documentation tracking' : 'USDA carbon calculations'}`,
-      status: 'info',
-      duration: 2000,
-      isClosable: true
-    });
   };
 
   // 🆕 Enhanced application rate defaults
@@ -567,7 +558,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         type: 'pruning',
         excludeFromCarbonCalculation: false
       },
-      // Add General Events that exclude carbon calculations
+      // Add Other Farm Activities that exclude carbon calculations (Sprint 2: renamed from General Events)
       {
         id: 'general_documentation',
         name: 'Documentación General',
@@ -661,7 +652,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         parcels: [parseInt(parcelId || '0')],
         event_type: getTemplateEventType(selectedTemplate),
         date: new Date().toISOString(),
-        description: selectedTemplate.excludeFromCarbonCalculation 
+        description: selectedTemplate.excludeFromCarbonCalculation
           ? `${selectedTemplate.name} - Documentation only (no carbon calculation)`
           : `${selectedTemplate.name} - USDA-based carbon calculation will be applied`,
         album: { images: [] },
@@ -677,7 +668,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
 
       toast({
         title: '🌱 Event Created Successfully!',
-        description: selectedTemplate.excludeFromCarbonCalculation 
+        description: selectedTemplate.excludeFromCarbonCalculation
           ? `${selectedTemplate.name} created for documentation tracking. Visible to consumers via QR codes.`
           : `${selectedTemplate.name} created with USDA-based carbon calculation. Visible to consumers via QR codes.`,
         status: 'success',
@@ -735,7 +726,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         console.log('Reclassifying general event as production based on content');
         return 2; // Production Event
       }
-      return 3; // General Event
+      return 3; // Other Farm Activities (Sprint 2: renamed from General Event)
     }
 
     return 2; // Default to Production instead of General
@@ -751,15 +742,17 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       // For production events, use the production_type field
       const productionType = eventData.production_type || 'IR';
       const productionTypeNames = {
-        'IR': 'Irrigation Event',
-        'HA': 'Harvest Event',
-        'PL': 'Planting Event', 
-        'PR': 'Pruning Event'
+        IR: 'Irrigation Event',
+        HA: 'Harvest Event',
+        PL: 'Planting Event',
+        PR: 'Pruning Event'
       };
       return {
         type: productionType, // Use production_type from VoiceEventCapture
-        production_name: productionTypeNames[productionType] || `${eventData.description || 'Production Event'}`,
-        name: productionTypeNames[productionType] || `${eventData.description || 'Production Event'}`,
+        production_name:
+          productionTypeNames[productionType] || `${eventData.description || 'Production Event'}`,
+        name:
+          productionTypeNames[productionType] || `${eventData.description || 'Production Event'}`,
         observation:
           eventData.observation ||
           `Production activity: ${eventData.description || 'Not specified'}`
@@ -920,14 +913,14 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
           : aiCategory?.includes('pruning')
           ? 'PR'
           : 'IR'; // Default to irrigation
-        
+
         const productionTypeNames = {
-          'IR': 'Irrigation Operation',
-          'HA': 'Harvest Operation',
-          'PL': 'Planting Operation', 
-          'PR': 'Pruning Operation'
+          IR: 'Irrigation Operation',
+          HA: 'Harvest Operation',
+          PL: 'Planting Operation',
+          PR: 'Pruning Operation'
         };
-        
+
         return {
           type: productionType,
           production_name: productionTypeNames[productionType] || template.name.replace('🤖 ', ''),
@@ -1264,8 +1257,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                           {selectedTemplate.name}
                         </Text>
                         <Text fontSize="xs" color={`${selectedTemplate.color}.600`}>
-                          {selectedTemplate.excludeFromCarbonCalculation 
-                            ? 'Documentation only - No carbon calculation' 
+                          {selectedTemplate.excludeFromCarbonCalculation
+                            ? 'Documentation only - No carbon calculation'
                             : 'USDA-based carbon calculation will be applied'}
                         </Text>
                       </VStack>
@@ -1616,7 +1609,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                 {/* General Templates */}
                 <Box mb={6}>
                   <Text fontWeight="medium" fontSize="md" color="gray.700" mb={3}>
-                    📋 General Events
+                    📋 Other Farm Activities
                   </Text>
                   <Grid templateColumns="repeat(2, 1fr)" gap={4}>
                     {eventTemplates

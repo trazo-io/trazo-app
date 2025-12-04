@@ -11,3 +11,4 @@ export { SimilarProducts } from './SimilarProducts';
 export { CompanyModal } from './CompanyModal';
 export { EstablishmentModal } from './EstablishmentModal';
 export { ParcelModal } from './ParcelModal';
+export { HarvestInfoCard } from './HarvestInfoCard';

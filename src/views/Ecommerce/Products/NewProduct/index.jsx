@@ -109,7 +109,6 @@ function NewProduct() {
   const socialsTab = useRef();
   const pricingTab = useRef();
 
-
   const keyPress = (e) => {
     if (e.keyCode === 13) {
       setSkills([

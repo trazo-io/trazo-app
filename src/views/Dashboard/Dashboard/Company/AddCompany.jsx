@@ -232,7 +232,11 @@ function AddCompany({ isEdit = false }) {
   console.log('🏢 AddCompany: Component rendered', { isEdit, currentUser: currentUser?.id });
 
   // Get crop options from API
-  const { data: cropOptionsResponse, isLoading: cropOptionsLoading, error: cropOptionsError } = useGetCompanyCropOptionsQuery();
+  const {
+    data: cropOptionsResponse,
+    isLoading: cropOptionsLoading,
+    error: cropOptionsError
+  } = useGetCompanyCropOptionsQuery();
   console.log('🌾 AddCompany: API crop options', {
     hasData: !!cropOptionsResponse?.crops,
     loading: cropOptionsLoading,
@@ -243,40 +247,44 @@ function AddCompany({ isEdit = false }) {
   // Icon mapping for API crops
   const getIconForCrop = (cropId) => {
     const iconMap = {
-      'citrus': FaAppleAlt,
-      'almonds': GiTreeBranch,
-      'avocados': GiAvocado,
-      'corn': GiCorn,
-      'soybeans': FaSeedling,
+      citrus: FaAppleAlt,
+      almonds: GiTreeBranch,
+      avocados: GiAvocado,
+      corn: GiCorn,
+      soybeans: FaSeedling
     };
     return iconMap[cropId] || FaSeedling;
   };
 
   // Transform API data to match expected format
-  const apiCropTemplates = cropOptionsResponse?.crops?.map(crop => ({
-    id: crop.id,
-    title: crop.name,
-    description: crop.description,
-    icon: getIconForCrop(crop.id),
-    region: crop.region,
-    carbonBenchmark: crop.carbon_benchmark,
-    seasonality: crop.season_length,
-    industry: crop.id === 'corn' || crop.id === 'soybeans' ? 'Grain & Cereal Production' : 'Fruit Production',
-    sustainabilityTips: [
-      'USDA-verified carbon tracking',
-      'Blockchain verification ready',
-      'QR code transparency enabled'
-    ],
-    recommendedGoals: ['carbon_reduction', 'water_conservation', 'soil_health']
-  })) || CROP_TEMPLATES; // Fallback to hardcoded if API fails
+  const apiCropTemplates =
+    cropOptionsResponse?.crops?.map((crop) => ({
+      id: crop.id,
+      title: crop.name,
+      description: crop.description,
+      icon: getIconForCrop(crop.id),
+      region: crop.region,
+      carbonBenchmark: crop.carbon_benchmark,
+      seasonality: crop.season_length,
+      industry:
+        crop.id === 'corn' || crop.id === 'soybeans'
+          ? 'Grain & Cereal Production'
+          : 'Fruit Production',
+      sustainabilityTips: [
+        'USDA-verified carbon tracking',
+        'Blockchain verification ready',
+        'QR code transparency enabled'
+      ],
+      recommendedGoals: ['carbon_reduction', 'water_conservation', 'soil_health']
+    })) || CROP_TEMPLATES; // Fallback to hardcoded if API fails
 
   // Use API data if available, otherwise use hardcoded fallback
   const cropTemplates = apiCropTemplates;
-  
+
   console.log('🌾 AddCompany: Final crop templates to render', {
     usingApiData: !!cropOptionsResponse?.crops,
     templateCount: cropTemplates.length,
-    cropIds: cropTemplates.map(c => c.id),
+    cropIds: cropTemplates.map((c) => c.id),
     firstCrop: cropTemplates[0]
   });
 
@@ -633,7 +641,8 @@ function AddCompany({ isEdit = false }) {
       transition="all 0.2s"
       cursor="pointer"
       position="relative"
-      w="full">
+      w="full"
+    >
       {isSelected && (
         <Box
           position="absolute"
@@ -642,7 +651,8 @@ function AddCompany({ isEdit = false }) {
           bg={`${goal.color}.500`}
           color="white"
           borderRadius="full"
-          p={1}>
+          p={1}
+        >
           <Icon as={FaCheckCircle} boxSize={3} />
         </Box>
       )}
@@ -652,7 +662,8 @@ function AddCompany({ isEdit = false }) {
           bg={isSelected ? `${goal.color}.500` : `${goal.color}.100`}
           color={isSelected ? 'white' : `${goal.color}.600`}
           p={3}
-          borderRadius="full">
+          borderRadius="full"
+        >
           <Icon as={goal.icon} boxSize={6} />
         </Box>
 
@@ -661,13 +672,15 @@ function AddCompany({ isEdit = false }) {
             fontWeight="bold"
             fontSize="sm"
             color={isSelected ? `${goal.color}.700` : 'gray.700'}
-            textAlign="center">
+            textAlign="center"
+          >
             {goal.title}
           </Text>
           <Text
             fontSize="xs"
             color={isSelected ? `${goal.color}.600` : 'gray.500'}
-            textAlign="center">
+            textAlign="center"
+          >
             {goal.description}
           </Text>
         </VStack>
@@ -680,7 +693,8 @@ function AddCompany({ isEdit = false }) {
     return (
       <BoxBackground
         title={intl.formatMessage({ id: 'app.editCompany' })}
-        subtitle={intl.formatMessage({ id: 'app.modifyForm' })}>
+        subtitle={intl.formatMessage({ id: 'app.modifyForm' })}
+      >
         <NewCompany />
       </BoxBackground>
     );
@@ -691,7 +705,8 @@ function AddCompany({ isEdit = false }) {
       title="Set Up Your Agricultural Company"
       description="Create your company profile with crop-specific insights and sustainability tracking"
       showBackButton
-      onBack={handleCancel}>
+      onBack={handleCancel}
+    >
       {/* Modern Progress Stepper */}
       <StandardStepper
         steps={steps}
@@ -707,7 +722,8 @@ function AddCompany({ isEdit = false }) {
           {currentStep === 0 && (
             <StandardCard
               title="What's Your Primary Crop?"
-              subtitle="Choose your main agricultural focus to get personalized insights and benchmarks">
+              subtitle="Choose your main agricultural focus to get personalized insights and benchmarks"
+            >
               <VStack spacing={6} align="stretch">
                 <StandardSelectionGrid
                   options={cropTemplates.map((crop) => ({
@@ -736,7 +752,8 @@ function AddCompany({ isEdit = false }) {
                       borderRadius="lg"
                       border="1px solid"
                       borderColor="green.200"
-                      w="full">
+                      w="full"
+                    >
                       <Text fontWeight="bold" color="green.700" mb={3}>
                         🌱 Smart Setup Benefits:
                       </Text>
@@ -779,7 +796,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}>
+                    disabled={!isStepComplete(0)}
+                  >
                     Continue to Company Info
                   </StandardButton>
                 </HStack>
@@ -795,7 +813,8 @@ function AddCompany({ isEdit = false }) {
                 selectedCropTemplate
                   ? `${selectedCropTemplate.title} farming company details`
                   : 'Basic details about your agricultural company'
-              }>
+              }
+            >
               <VStack spacing={6} align="stretch">
                 {selectedCropTemplate && (
                   <Flex justify="space-between" align="center" bg="gray.50" p={3} borderRadius="lg">
@@ -822,7 +841,8 @@ function AddCompany({ isEdit = false }) {
                     label="Company Name"
                     required
                     error={errors.name?.message}
-                    helpText="Enter your company's legal name">
+                    helpText="Enter your company's legal name"
+                  >
                     <StandardInput
                       {...methods.register('name')}
                       placeholder="e.g., Green Valley Farms LLC"
@@ -833,7 +853,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Trade Name"
                     error={errors.tradename?.message}
-                    helpText="Business name if different from legal name">
+                    helpText="Business name if different from legal name"
+                  >
                     <StandardInput
                       {...methods.register('tradename')}
                       placeholder="e.g., Green Valley Organics"
@@ -848,7 +869,8 @@ function AddCompany({ isEdit = false }) {
                     label="Email Address"
                     required
                     error={errors.email?.message}
-                    helpText="Primary contact email for the company">
+                    helpText="Primary contact email for the company"
+                  >
                     <StandardInput
                       {...methods.register('email')}
                       type="email"
@@ -860,7 +882,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Phone Number"
                     error={errors.phone?.message}
-                    helpText="Company contact phone number">
+                    helpText="Company contact phone number"
+                  >
                     <StandardInput
                       {...methods.register('phone')}
                       type="tel"
@@ -875,7 +898,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Website"
                     error={errors.website?.message}
-                    helpText="Company website URL">
+                    helpText="Company website URL"
+                  >
                     <StandardInput
                       {...methods.register('website')}
                       type="url"
@@ -890,10 +914,12 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Industry Type"
                     error={errors.industry?.message}
-                    helpText="Primary agricultural focus">
+                    helpText="Primary agricultural focus"
+                  >
                     <StandardSelect
                       {...methods.register('industry')}
-                      value={watch('industry') || ''}>
+                      value={watch('industry') || ''}
+                    >
                       <option value="">Select industry...</option>
                       <option value="Fruit Production">Fruit Production</option>
                       <option value="Vegetable Production">Vegetable Production</option>
@@ -908,11 +934,13 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Employee Count"
                     error={errors.employeeCount?.message}
-                    helpText="Approximate number of employees">
+                    helpText="Approximate number of employees"
+                  >
                     <NumberInput
                       value={watch('employeeCount') || 1}
                       onChange={(_, num) => setValue('employeeCount', num || 1)}
-                      min={1}>
+                      min={1}
+                    >
                       <NumberInputField borderRadius="lg" />
                       <NumberInputStepper>
                         <NumberIncrementStepper />
@@ -931,7 +959,8 @@ function AddCompany({ isEdit = false }) {
                     currentDescription?.includes('Agricultural company specializing')
                       ? '✨ Auto-generated based on your crop selection. Feel free to customize it!'
                       : 'Describe your agricultural operations, products, and mission'
-                  }>
+                  }
+                >
                   <Controller
                     name="description"
                     control={methods.control}
@@ -969,7 +998,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Facebook Page"
                     error={errors.facebook?.message}
-                    helpText="Facebook business page URL (optional)">
+                    helpText="Facebook business page URL (optional)"
+                  >
                     <StandardInput
                       {...methods.register('facebook')}
                       type="url"
@@ -981,7 +1011,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Instagram Profile"
                     error={errors.instagram?.message}
-                    helpText="Instagram business profile URL (optional)">
+                    helpText="Instagram business profile URL (optional)"
+                  >
                     <StandardInput
                       {...methods.register('instagram')}
                       type="url"
@@ -995,7 +1026,8 @@ function AddCompany({ isEdit = false }) {
                 <StandardField
                   label="Certifications"
                   error={errors.certifications?.message}
-                  helpText="List any agricultural certifications (e.g., Organic, Fair Trade, USDA, etc.)">
+                  helpText="List any agricultural certifications (e.g., Organic, Fair Trade, USDA, etc.)"
+                >
                   <StandardTextarea
                     {...methods.register('certifications')}
                     placeholder="e.g., USDA Organic, Fair Trade Certified, Rainforest Alliance, etc."
@@ -1006,7 +1038,8 @@ function AddCompany({ isEdit = false }) {
                 {/* Active Status */}
                 <StandardField
                   label="Company Status"
-                  helpText="Activate the company to start using Trazo services">
+                  helpText="Activate the company to start using Trazo services"
+                >
                   <HStack>
                     <Switch {...methods.register('isActive')} colorScheme="green" size="md" />
                     <Text fontSize="sm" color="gray.600">
@@ -1020,7 +1053,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
+                    onClick={previousStep}
+                  >
                     Back to Crop Selection
                   </StandardButton>
 
@@ -1031,7 +1065,8 @@ function AddCompany({ isEdit = false }) {
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(1)}>
+                      disabled={!isStepComplete(1)}
+                    >
                       Continue to Location
                     </StandardButton>
                   </HStack>
@@ -1044,13 +1079,15 @@ function AddCompany({ isEdit = false }) {
           {currentStep === 2 && (
             <StandardCard
               title="Location Details"
-              subtitle="Where is your agricultural operation based?">
+              subtitle="Where is your agricultural operation based?"
+            >
               <VStack spacing={6} align="stretch">
                 {/* Address */}
                 <StandardField
                   label="Street Address"
                   error={errors.address?.message}
-                  helpText="Physical address of your main operation">
+                  helpText="Physical address of your main operation"
+                >
                   <StandardInput
                     {...methods.register('address')}
                     placeholder="123 Farm Road"
@@ -1102,7 +1139,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Tax ID / RUT"
                     error={errors.fiscalId?.message}
-                    helpText="Tax identification number - useful for B2B relationships and compliance reporting">
+                    helpText="Tax identification number - useful for B2B relationships and compliance reporting"
+                  >
                     <StandardInput
                       {...methods.register('fiscalId')}
                       placeholder="12-3456789-0"
@@ -1127,7 +1165,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
+                    onClick={previousStep}
+                  >
                     Back to Company Info
                   </StandardButton>
 
@@ -1148,7 +1187,8 @@ function AddCompany({ isEdit = false }) {
           {currentStep === 3 && (
             <StandardCard
               title="Sustainability Goals"
-              subtitle="Review and customize your sustainability objectives">
+              subtitle="Review and customize your sustainability objectives"
+            >
               <VStack spacing={6} align="stretch">
                 {selectedCropTemplate && (
                   <Box
@@ -1156,7 +1196,8 @@ function AddCompany({ isEdit = false }) {
                     p={4}
                     borderRadius="lg"
                     border="1px solid"
-                    borderColor="blue.200">
+                    borderColor="blue.200"
+                  >
                     <Text fontWeight="bold" color="blue.700" mb={2}>
                       🎯 Pre-selected for {selectedCropTemplate.title}:
                     </Text>
@@ -1202,7 +1243,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
+                    onClick={previousStep}
+                  >
                     Back to Location
                   </StandardButton>
 
@@ -1214,7 +1256,8 @@ function AddCompany({ isEdit = false }) {
                       type="submit"
                       isLoading={isLoading}
                       loadingText="Creating Company..."
-                      leftIcon={<FaRocket />}>
+                      leftIcon={<FaRocket />}
+                    >
                       Create Company
                     </StandardButton>
                   </HStack>

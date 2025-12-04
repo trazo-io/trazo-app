@@ -45,7 +45,7 @@ import { useGetEstablishmentProductReputationQuery } from 'store/api/reviewApi';
 import { useGetScansByEstablishmentQuery } from 'store/api/historyApi';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
-import { 
+import {
   Stat,
   StatLabel,
   StatNumber,
@@ -69,7 +69,7 @@ interface CustomerQualityAnalyticsProps {
 
 const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnalyticsProps) => {
   const textColor = useColorModeValue('gray.700', 'white');
-  
+
   // Calculate quality metrics from actual filtered scan data
   const calculateQualityMetrics = () => {
     if (!scansData || scansData.length === 0) {
@@ -83,51 +83,51 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
     }
 
     const totalScans = scansData.length;
-    
+
     // Calculate real metrics from actual scan data
-    const humanScans = scansData.filter(scan => {
+    const humanScans = scansData.filter((scan) => {
       // If we have bot_score from backend, use it
       if (scan.bot_score !== undefined) {
         return scan.bot_score < 0.5;
       }
-      
+
       // Otherwise, assume most scans are human unless proven otherwise
       // This is more realistic - most QR scans come from real consumers
       // Only mark as bot if we have strong indicators
       const hasComment = scan.comment && scan.comment.trim().length > 0;
-      
+
       // DEFAULT: Assume human unless we have evidence of bot behavior
       // Real consumers often scan quickly without leaving comments
       // We should only mark as bot if we detect automated patterns
       return true; // Default to human for all scans without bot_score
     }).length;
-    
-    const highEngagement = scansData.filter(scan => {
+
+    const highEngagement = scansData.filter((scan) => {
       // If we have engagement_score from backend, use it
       if (scan.engagement_score !== undefined) {
         return scan.engagement_score > 0.6;
       }
-      
+
       // Otherwise, calculate based on available data
       const hasComment = scan.comment && scan.comment.trim().length > 0;
       const timeOnPage = scan.time_on_page || 0;
       const interactions = scan.interactions || 0;
-      
+
       // High engagement indicators:
       // - Has comment (shows active participation)
       // - Spent more than 10 seconds
       // - Had more than 50 interactions
       const highlyEngaged = hasComment || timeOnPage > 10 || interactions > 50;
-      
+
       return highlyEngaged;
     }).length;
-    
-    const uniqueSessions = scansData.filter(scan => {
+
+    const uniqueSessions = scansData.filter((scan) => {
       // Unique sessions: not marked as duplicate
       return !scan.is_duplicate;
     }).length;
-    
-    const consentedScans = scansData.filter(scan => {
+
+    const consentedScans = scansData.filter((scan) => {
       // Consented scans: consent_given is true or undefined (assume consent)
       return scan.consent_given !== false;
     }).length;
@@ -142,11 +142,15 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
   };
 
   const metrics = calculateQualityMetrics();
-  
-  const humanPercentage = metrics.totalScans > 0 ? Math.round((metrics.humanScans / metrics.totalScans) * 100) : 0;
-  const engagementPercentage = metrics.totalScans > 0 ? Math.round((metrics.highEngagement / metrics.totalScans) * 100) : 0;
-  const uniquePercentage = metrics.totalScans > 0 ? Math.round((metrics.uniqueSessions / metrics.totalScans) * 100) : 0;
-  const consentPercentage = metrics.totalScans > 0 ? Math.round((metrics.consentedScans / metrics.totalScans) * 100) : 0;
+
+  const humanPercentage =
+    metrics.totalScans > 0 ? Math.round((metrics.humanScans / metrics.totalScans) * 100) : 0;
+  const engagementPercentage =
+    metrics.totalScans > 0 ? Math.round((metrics.highEngagement / metrics.totalScans) * 100) : 0;
+  const uniquePercentage =
+    metrics.totalScans > 0 ? Math.round((metrics.uniqueSessions / metrics.totalScans) * 100) : 0;
+  const consentPercentage =
+    metrics.totalScans > 0 ? Math.round((metrics.consentedScans / metrics.totalScans) * 100) : 0;
 
   if (isLoading) {
     return (
@@ -159,8 +163,8 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
   }
 
   return (
-    <StandardCard 
-      title="Customer Quality Analytics" 
+    <StandardCard
+      title="Customer Quality Analytics"
       subtitle="Authentic customer engagement insights"
       variant="elevated"
     >
@@ -169,7 +173,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
         <Stat>
           <StatLabel fontSize="sm" color="gray.600">
             <HStack spacing={2}>
-              <Tooltip 
+              <Tooltip
                 label="Escaneos realizados por consumidores reales vs sistemas automatizados. Los humanos dedican más tiempo a leer y explorar la información."
                 placement="top"
                 hasArrow
@@ -186,8 +190,16 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500">
             {metrics.humanScans} of {metrics.totalScans} scans
-            <Badge ml={2} colorScheme={humanPercentage > 80 ? 'green' : humanPercentage > 60 ? 'yellow' : 'red'} size="sm">
-              {humanPercentage > 80 ? 'Excellent' : humanPercentage > 60 ? 'Good' : 'Needs Attention'}
+            <Badge
+              ml={2}
+              colorScheme={humanPercentage > 80 ? 'green' : humanPercentage > 60 ? 'yellow' : 'red'}
+              size="sm"
+            >
+              {humanPercentage > 80
+                ? 'Excellent'
+                : humanPercentage > 60
+                ? 'Good'
+                : 'Needs Attention'}
             </Badge>
           </StatHelpText>
         </Stat>
@@ -205,8 +217,18 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500">
             {metrics.highEngagement} deeply engaged
-            <Badge ml={2} colorScheme={engagementPercentage > 70 ? 'green' : engagementPercentage > 50 ? 'yellow' : 'red'} size="sm">
-              {engagementPercentage > 70 ? 'Excellent' : engagementPercentage > 50 ? 'Good' : 'Improving'}
+            <Badge
+              ml={2}
+              colorScheme={
+                engagementPercentage > 70 ? 'green' : engagementPercentage > 50 ? 'yellow' : 'red'
+              }
+              size="sm"
+            >
+              {engagementPercentage > 70
+                ? 'Excellent'
+                : engagementPercentage > 50
+                ? 'Good'
+                : 'Improving'}
             </Badge>
           </StatHelpText>
         </Stat>
@@ -224,8 +246,18 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500">
             {metrics.uniqueSessions} unique visitors
-            <Badge ml={2} colorScheme={uniquePercentage > 90 ? 'green' : uniquePercentage > 75 ? 'yellow' : 'red'} size="sm">
-              {uniquePercentage > 90 ? 'Excellent' : uniquePercentage > 75 ? 'Good' : 'Check Quality'}
+            <Badge
+              ml={2}
+              colorScheme={
+                uniquePercentage > 90 ? 'green' : uniquePercentage > 75 ? 'yellow' : 'red'
+              }
+              size="sm"
+            >
+              {uniquePercentage > 90
+                ? 'Excellent'
+                : uniquePercentage > 75
+                ? 'Good'
+                : 'Check Quality'}
             </Badge>
           </StatHelpText>
         </Stat>
@@ -258,26 +290,26 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
             <HStack spacing={4} wrap="wrap">
               <VStack align="start" spacing={1}>
                 <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                  Quality Score: {Math.round((humanPercentage + engagementPercentage + uniquePercentage) / 3)}%
+                  Quality Score:{' '}
+                  {Math.round((humanPercentage + engagementPercentage + uniquePercentage) / 3)}%
                 </Text>
                 <Text fontSize="xs" color="green.600">
                   Based on authenticity, engagement, and uniqueness metrics
                 </Text>
               </VStack>
-              
+
               <Divider orientation="vertical" h="40px" borderColor="green.300" />
-              
+
               <VStack align="start" spacing={1}>
                 <Text fontSize="sm" fontWeight="semibold" color="green.700">
                   Recommendation
                 </Text>
                 <Text fontSize="xs" color="green.600">
-                  {humanPercentage > 85 
-                    ? "Excellent customer authenticity! Continue current marketing strategies."
+                  {humanPercentage > 85
+                    ? 'Excellent customer authenticity! Continue current marketing strategies.'
                     : humanPercentage > 70
-                    ? "Good customer quality. Consider enhancing engagement tactics."
-                    : "Monitor for automated scanning. Focus on genuine customer outreach."
-                  }
+                    ? 'Good customer quality. Consider enhancing engagement tactics.'
+                    : 'Monitor for automated scanning. Focus on genuine customer outreach.'}
                 </Text>
               </VStack>
             </HStack>
@@ -291,21 +323,34 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
               </Text>
               <VStack align="start" spacing={2} fontSize="xs" color="blue.600">
                 <Text>
-                  <strong>Escaneos Humanos (Todos):</strong> Actualmente clasificamos TODOS los escaneos como humanos por defecto. 
-                  Esta es una decisión conservadora que favorece a los productores.
+                  <strong>Escaneos Humanos (Todos):</strong> Actualmente clasificamos TODOS los
+                  escaneos como humanos por defecto. Esta es una decisión conservadora que favorece
+                  a los productores.
                 </Text>
                 <Text>
-                  <strong>Sistema de Detección:</strong> Nuestro sistema usa dos métodos para clasificar escaneos:
+                  <strong>Sistema de Detección:</strong> Nuestro sistema usa dos métodos para
+                  clasificar escaneos:
                 </Text>
                 <VStack align="start" spacing={1} pl={4} fontSize="xs">
-                  <Text>• <strong>Automático:</strong> Si el backend proporciona un puntaje de bot, lo usamos</Text>
-                  <Text>• <strong>Por defecto:</strong> Sin puntaje del backend, asumimos que es humano</Text>
-                  <Text>• <strong>Realista:</strong> La mayoría de escaneos QR son de consumidores genuinos</Text>
-                  <Text>• <strong>Conservador:</strong> Preferimos contar como humano en caso de duda</Text>
+                  <Text>
+                    • <strong>Automático:</strong> Si el backend proporciona un puntaje de bot, lo
+                    usamos
+                  </Text>
+                  <Text>
+                    • <strong>Por defecto:</strong> Sin puntaje del backend, asumimos que es humano
+                  </Text>
+                  <Text>
+                    • <strong>Realista:</strong> La mayoría de escaneos QR son de consumidores
+                    genuinos
+                  </Text>
+                  <Text>
+                    • <strong>Conservador:</strong> Preferimos contar como humano en caso de duda
+                  </Text>
                 </VStack>
                 <Text>
-                  <strong>Compromiso con la Transparencia:</strong> Los consumidores que escanean sin comentarios son completamente normales.
-                  Valoramos cada escaneo como una muestra legítima del interés del consumidor en su producción.
+                  <strong>Compromiso con la Transparencia:</strong> Los consumidores que escanean
+                  sin comentarios son completamente normales. Valoramos cada escaneo como una
+                  muestra legítima del interés del consumidor en su producción.
                 </Text>
               </VStack>
             </VStack>
@@ -526,9 +571,9 @@ export default function CommercialView() {
   const scansColumnsNames = [
     intl.formatMessage({ id: 'app.date' }),
     intl.formatMessage({ id: 'app.product' }),
-    'Customer Type',  // NEW: Customer classification
-    'Engagement',     // NEW: Engagement level
-    'Quality',        // NEW: Human vs Bot detection
+    'Customer Type', // NEW: Customer classification
+    'Engagement', // NEW: Engagement level
+    'Quality', // NEW: Human vs Bot detection
     intl.formatMessage({ id: 'app.location' }),
     intl.formatMessage({ id: 'app.comment' })
   ];
@@ -717,7 +762,7 @@ export default function CommercialView() {
         {/* Main Dashboard Content */}
         <VStack spacing={6} w="100%">
           {/* Customer Quality Analytics Section - NEW */}
-          <CustomerQualityAnalytics 
+          <CustomerQualityAnalytics
             scansData={dataEstablishmentScans}
             isLoading={!dataEstablishmentScans}
           />
@@ -752,11 +797,16 @@ export default function CommercialView() {
                   </Flex>
                 ) : (
                   <ModernLineBarChart
-                    data={dataEstablishmentScansVsSaleInfo.scans_vs_sales.options.map((category, index) => ({
-                      name: formatCategories([category])[0],
-                      scans: dataEstablishmentScansVsSaleInfo.scans_vs_sales.series.scans?.[index] || 0,
-                      sales: dataEstablishmentScansVsSaleInfo.scans_vs_sales.series.sales?.[index] || 0
-                    }))}
+                    data={dataEstablishmentScansVsSaleInfo.scans_vs_sales.options.map(
+                      (category, index) => ({
+                        name: formatCategories([category])[0],
+                        scans:
+                          dataEstablishmentScansVsSaleInfo.scans_vs_sales.series.scans?.[index] ||
+                          0,
+                        sales:
+                          dataEstablishmentScansVsSaleInfo.scans_vs_sales.series.sales?.[index] || 0
+                      })
+                    )}
                     lineDataKey="scans"
                     barDataKey="sales"
                     xDataKey="name"
@@ -779,9 +829,13 @@ export default function CommercialView() {
                   </Flex>
                 ) : (
                   <ModernBarChart
-                    data={(dataEstablishmentProductsReputation?.products_reputation?.options || []).map((product, index) => ({
+                    data={(
+                      dataEstablishmentProductsReputation?.products_reputation?.options || []
+                    ).map((product, index) => ({
                       name: product,
-                      value: dataEstablishmentProductsReputation?.products_reputation?.series?.[index] || 0
+                      value:
+                        dataEstablishmentProductsReputation?.products_reputation?.series?.[index] ||
+                        0
                     }))}
                     dataKey="value"
                     xDataKey="name"

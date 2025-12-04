@@ -217,16 +217,16 @@ body.photo-modal-open {
 /* Target common bottom navigation patterns and ensure they're hidden behind modal */
 body.photo-modal-open nav,
 body.photo-modal-open .bottom-navigation,
-body.photo-modal-open [data-testid="bottom-navigation"],
+body.photo-modal-open [data-testid='bottom-navigation'],
 body.photo-modal-open .chakra-tabs__tablist,
 body.photo-modal-open .consumer-navigation,
 body.photo-modal-open footer,
 body.photo-modal-open .chakra-stack,
-body.photo-modal-open div[class*="trazo-css-fluq49"],
-body.photo-modal-open div[class*="trazo-css-brl7ik"],
-body.photo-modal-open div[class*="trazo-css-3uuo4v"],
-body.photo-modal-open div[class*="trazo-css-15y92lb"],
-body.photo-modal-open div[class*="trazo-css-12d83pb"] {
+body.photo-modal-open div[class*='trazo-css-fluq49'],
+body.photo-modal-open div[class*='trazo-css-brl7ik'],
+body.photo-modal-open div[class*='trazo-css-3uuo4v'],
+body.photo-modal-open div[class*='trazo-css-15y92lb'],
+body.photo-modal-open div[class*='trazo-css-12d83pb'] {
   z-index: 0 !important;
   opacity: 0 !important;
   visibility: hidden !important;

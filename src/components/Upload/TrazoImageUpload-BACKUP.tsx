@@ -372,7 +372,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                 boxShadow: 'lg'
               }
             : {}
-        }>
+        }
+      >
         <input {...getInputProps()} />
 
         {/* Content based on state */}
@@ -383,7 +384,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}>
+            transition={{ duration: 0.3 }}
+          >
             <VStack spacing={6} py={8}>
               <Circle size="80px" bg={useColorModeValue('green.50', 'green.900')}>
                 <Icon as={IoMdImages} boxSize={10} color={accentColor} />
@@ -408,7 +410,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   leftIcon={<FaPlus />}
                   onClick={openFilePicker}
                   _hover={{ bg: useColorModeValue('green.600', 'green.500') }}
-                  borderRadius="xl">
+                  borderRadius="xl"
+                >
                   Choose Files
                 </Button>
 
@@ -447,7 +450,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             key="grid"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}>
+            exit={{ opacity: 0 }}
+          >
             <Grid templateColumns={`repeat(${gridColumns}, 1fr)`} gap={3}>
               {/* Uploaded images */}
               {uploadedUrls.map((url, index) => (
@@ -460,7 +464,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                     cursor="pointer"
                     onClick={() => openPreview(index)}
                     transition="all 0.2s"
-                    _hover={{ transform: 'scale(1.05)', boxShadow: 'lg' }}>
+                    _hover={{ transform: 'scale(1.05)', boxShadow: 'lg' }}
+                  >
                     <S3Image
                       src={url}
                       alt={`Image ${index + 1}`}
@@ -476,7 +481,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                       left={2}
                       size="24px"
                       bg="green.500"
-                      color="white">
+                      color="white"
+                    >
                       <Icon as={FaCheck} boxSize={3} />
                     </Circle>
 
@@ -513,7 +519,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                     bg="gray.100"
                     border="2px solid"
                     borderColor={accentColor}
-                    opacity={isUploading ? 0.7 : 1}>
+                    opacity={isUploading ? 0.7 : 1}
+                  >
                     <Image
                       src={previewUrls[index]}
                       alt={file.name}
@@ -561,7 +568,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                       borderColor: accentColor,
                       bg: uploadHoverBg,
                       transform: 'scale(1.05)'
-                    }}>
+                    }}
+                  >
                     <VStack spacing={2}>
                       <Icon as={FaPlus} boxSize={6} color={mutedColor} />
                       <Text fontSize="xs" color={mutedColor}>
@@ -587,7 +595,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                 isLoading={isUploading}
                 loadingText="Uploading..."
                 _hover={{ bg: useColorModeValue('green.600', 'green.500') }}
-                borderRadius="xl">
+                borderRadius="xl"
+              >
                 Upload {selectedFiles.length} image{selectedFiles.length > 1 ? 's' : ''}
               </Button>
             )}
@@ -632,10 +641,17 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   colorScheme="green"
                   leftIcon={<FaCamera />}
                   onClick={capturePhoto}
-                  borderRadius="xl">
+                  borderRadius="xl"
+                >
                   Capture Photo
                 </Button>
-                <Button type="button" size="lg" variant="ghost" onClick={closeCamera} borderRadius="xl">
+                <Button
+                  type="button"
+                  size="lg"
+                  variant="ghost"
+                  onClick={closeCamera}
+                  borderRadius="xl"
+                >
                   Cancel
                 </Button>
               </HStack>

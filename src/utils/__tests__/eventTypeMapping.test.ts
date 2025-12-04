@@ -16,8 +16,8 @@ const EVENT_TYPE_MAP: Record<number, string> = {
   3: 'general',
   4: 'equipment',
   5: 'soil_management',
-  6: 'pest_management',  // FIXED: Event Type 6 = Pest Management
-  7: 'business'          // FIXED: Event Type 7 = Business
+  6: 'pest_management', // FIXED: Event Type 6 = Pest Management
+  7: 'business' // FIXED: Event Type 7 = Business
 };
 
 describe('Event Type Mapping Validation', () => {

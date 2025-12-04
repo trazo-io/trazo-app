@@ -13,13 +13,7 @@ import {
   Container,
   Flex
 } from '@chakra-ui/react';
-import {
-  FaShieldAlt,
-  FaCheckCircle,
-  FaLeaf,
-  FaEye,
-  FaSeedling
-} from 'react-icons/fa';
+import { FaShieldAlt, FaCheckCircle, FaLeaf, FaEye, FaSeedling } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 
 interface InstantTrustDisplayProps {
@@ -88,7 +82,7 @@ export const InstantTrustDisplay: React.FC<InstantTrustDisplayProps> = ({
         // Show fallback trust indicators
         setTrustData({
           transparencyScore: 75,
-          farmName: 'Verified Farm', 
+          farmName: 'Verified Farm',
           productName: 'Farm Product',
           practicesDocumented: 12,
           isVerified: true,
@@ -190,7 +184,7 @@ export const InstantTrustDisplay: React.FC<InstantTrustDisplayProps> = ({
                   </Text>
                 </VStack>
               </HStack>
-              
+
               {trustData.isVerified && (
                 <Badge
                   colorScheme="green"
@@ -230,13 +224,7 @@ export const InstantTrustDisplay: React.FC<InstantTrustDisplayProps> = ({
               </VStack>
 
               {/* Clear consumer message */}
-              <Text
-                fontSize="md"
-                textAlign="center"
-                color="gray.700"
-                lineHeight="1.5"
-                px={2}
-              >
+              <Text fontSize="md" textAlign="center" color="gray.700" lineHeight="1.5" px={2}>
                 {trustData.trustMessage}
               </Text>
 
@@ -252,7 +240,7 @@ export const InstantTrustDisplay: React.FC<InstantTrustDisplayProps> = ({
                     Documented
                   </Text>
                 </VStack>
-                
+
                 <VStack spacing={1}>
                   <Text fontSize="xl" fontWeight="bold" color={accentColor}>
                     {trustData.isVerified ? '✓' : '○'}
@@ -268,7 +256,10 @@ export const InstantTrustDisplay: React.FC<InstantTrustDisplayProps> = ({
               {/* Farm attribution */}
               <Box textAlign="center" pt={2} borderTopWidth="1px" borderTopColor={borderColor}>
                 <Text fontSize="sm" color="gray.600">
-                  Grown by <Text as="span" fontWeight="semibold">{trustData.farmName}</Text>
+                  Grown by{' '}
+                  <Text as="span" fontWeight="semibold">
+                    {trustData.farmName}
+                  </Text>
                 </Text>
               </Box>
             </VStack>

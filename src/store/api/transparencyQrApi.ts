@@ -1,9 +1,9 @@
 /**
  * Trazo Transparency-First QR API
- * 
+ *
  * NEW: Eliminates competitive carbon ranking to solve farmer incentive problems
  * Focuses on transparency percentage and authentic farm stories
- * 
+ *
  * Progressive loading: 2s → 10s → 30s+ disclosure pattern
  * Following Trazo's modern, clean, minimalist design standards
  */
@@ -128,8 +128,9 @@ export interface TransparencyResponse {
   quick_view: TransparencyQuickView;
   standard_view: TransparencyStandardView;
   detailed_view: TransparencyDetailedView;
-  timeline_events?: TimelineEvent[];  // Added timeline events for photo display
-  carbon_impact: {  // Added carbon_impact to match API response
+  timeline_events?: TimelineEvent[]; // Added timeline events for photo display
+  carbon_impact: {
+    // Added carbon_impact to match API response
     kg_per_kg: number;
     total_emissions: number;
     total_offsets: number;
@@ -180,7 +181,6 @@ export interface TransparencyExplanation {
 // NEW Transparency-First QR API
 const transparencyQrApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    
     // Ultra-fast mobile summary (< 1 second target)
     getTransparencySummary: build.query<TransparencySummary, string>({
       query: (productionId) => ({
@@ -242,10 +242,10 @@ export default transparencyQrApi;
  * Get Trazo-branded transparency badge color following design system
  */
 export const getTransparencyBadgeColor = (percentage: number): string => {
-  if (percentage >= 90) return 'green.500';   // Excellent - Trazo primary green
-  if (percentage >= 70) return 'green.400';   // Good - Lighter green  
-  if (percentage >= 50) return 'yellow.500';  // Basic - Warning yellow
-  return 'gray.500';                          // Limited - Neutral gray
+  if (percentage >= 90) return 'green.500'; // Excellent - Trazo primary green
+  if (percentage >= 70) return 'green.400'; // Good - Lighter green
+  if (percentage >= 50) return 'yellow.500'; // Basic - Warning yellow
+  return 'gray.500'; // Limited - Neutral gray
 };
 
 /**
@@ -264,11 +264,16 @@ export const getTransparencyMessage = (percentage: number): string => {
  */
 export const getTransparencyTrustIcon = (status: string): string => {
   switch (status) {
-    case 'excellent': return '🏆';
-    case 'certification': return '✅'; 
-    case 'good': return '👍';
-    case 'minimum': return '📋';
-    default: return '❓';
+    case 'excellent':
+      return '🏆';
+    case 'certification':
+      return '✅';
+    case 'good':
+      return '👍';
+    case 'minimum':
+      return '📋';
+    default:
+      return '❓';
   }
 };
 

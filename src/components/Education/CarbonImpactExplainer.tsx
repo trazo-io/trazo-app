@@ -79,8 +79,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       });
     }
 
-    // Home energy comparison (1 kg CO2e ≈ 2.4 kWh electricity)
-    const kwhEquivalent = Math.round(co2eKg * 2.4);
+    // Home energy comparison (1 kg CO2e ≈ 2.56 kWh electricity)
+    // Based on EPA eGRID 2023: 0.39 kg CO2/kWh → 1/0.39 = 2.56 kWh per kg CO2
+    const kwhEquivalent = Math.round(co2eKg * 2.56);
     if (kwhEquivalent > 0) {
       const days = Math.round(kwhEquivalent / 30); // Average 30 kWh/day per home
       comparisons.push({
@@ -120,14 +121,16 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   };
 
   // Use backend relatableFootprint if available, otherwise fall back to frontend calculations
-  const comparisons = relatableFootprint 
-    ? [{ 
-        icon: FaCar, 
-        label: 'Carbon Impact', 
-        description: relatableFootprint, 
-        value: `${Math.abs(totalCO2e).toFixed(1)}kg`, 
-        color: 'green' 
-      }]
+  const comparisons = relatableFootprint
+    ? [
+        {
+          icon: FaCar,
+          label: 'Carbon Impact',
+          description: relatableFootprint,
+          value: `${Math.abs(totalCO2e).toFixed(1)}kg`,
+          color: 'green'
+        }
+      ]
     : generateComparisons(Math.abs(totalCO2e));
 
   // Score interpretation
@@ -171,7 +174,8 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
         p={4}
         borderRadius="xl"
         border="1px solid"
-        borderColor={useColorModeValue('green.200', 'green.700')}>
+        borderColor={useColorModeValue('green.200', 'green.700')}
+      >
         <HStack spacing={4} align="center">
           <Circle size="50px" bg={`${scoreInfo.color}.500`} color="white">
             <Text fontSize="lg" fontWeight="bold">
@@ -208,7 +212,8 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       borderRadius="xl"
       border="1px solid"
       borderColor={useColorModeValue('gray.200', 'gray.600')}
-      overflow="hidden">
+      overflow="hidden"
+    >
       {/* Header */}
       <Box p={4} bg={cardBg}>
         <HStack justify="space-between" align="start">
@@ -309,7 +314,8 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             p={3}
             borderRadius="lg"
             borderLeft="3px solid"
-            borderLeftColor={`${scoreInfo.color}.500`}>
+            borderLeftColor={`${scoreInfo.color}.500`}
+          >
             <Text fontSize="sm" color={`${scoreInfo.color}.700`} fontWeight="medium">
               💡 {scoreInfo.advice}
             </Text>
@@ -321,8 +327,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             variant="ghost"
             colorScheme="green"
             onClick={() => setIsExpanded(!isExpanded)}
-            rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}>
-{isExpanded ? 'Show Less' : 'What This Means in Real Life'}
+            rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+          >
+            {isExpanded ? 'Show Less' : 'What This Means in Real Life'}
           </Button>
         </VStack>
       </Box>
@@ -346,7 +353,8 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                       bg={useColorModeValue(`${comp.color}.50`, `${comp.color}.900`)}
                       borderRadius="lg"
                       border="1px solid"
-                      borderColor={useColorModeValue(`${comp.color}.200`, `${comp.color}.700`)}>
+                      borderColor={useColorModeValue(`${comp.color}.200`, `${comp.color}.700`)}
+                    >
                       <VStack spacing={2}>
                         <Circle size="40px" bg={`${comp.color}.500`} color="white">
                           <Icon as={comp.icon} boxSize={5} />
@@ -374,7 +382,8 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                 p={4}
                 borderRadius="lg"
                 border="1px solid"
-                borderColor={useColorModeValue('green.200', 'green.700')}>
+                borderColor={useColorModeValue('green.200', 'green.700')}
+              >
                 <HStack mb={2}>
                   <Icon as={FaRecycle} color="green.500" boxSize={5} />
                   <Text fontSize="md" fontWeight="bold" color="green.600">
@@ -434,13 +443,73 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               </VStack>
             </Box>
 
+            {/* Scientific Methodology Explanation */}
+            <Box
+              bg={useColorModeValue('purple.50', 'purple.900')}
+              p={4}
+              borderRadius="lg"
+              border="1px solid"
+              borderColor={useColorModeValue('purple.200', 'purple.700')}
+            >
+              <HStack mb={3}>
+                <Icon as={FaIndustry} color="purple.500" boxSize={5} />
+                <Text fontSize="md" fontWeight="bold" color="purple.600">
+                  Scientific Methodologies Used
+                </Text>
+              </HStack>
+              <VStack align="start" spacing={3}>
+                <Box>
+                  <Text fontSize="sm" fontWeight="semibold" color="purple.700">
+                    IPCC 2006 Guidelines - Lime Application
+                  </Text>
+                  <Text fontSize="xs" color="purple.600">
+                    When limestone (CaCO3) or dolomite is applied to soil for pH correction, CO2 is
+                    released through chemical dissolution. We use IPCC Tier 1 emission factors:
+                    limestone releases 0.44 kg CO2/kg, dolomite releases 0.477 kg CO2/kg.
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="semibold" color="purple.700">
+                    Research-Based Tillage Emissions
+                  </Text>
+                  <Text fontSize="xs" color="purple.600">
+                    Soil disturbance from tillage releases stored carbon. Based on peer-reviewed
+                    research: shallow tillage (less than 10cm) releases ~50 kg CO2e/ha, medium depth
+                    (10-25cm) releases ~150 kg CO2e/ha, and deep tillage (over 25cm) releases ~300 kg
+                    CO2e/ha.
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="semibold" color="purple.700">
+                    USDA NASS 2023 - Irrigation Water
+                  </Text>
+                  <Text fontSize="xs" color="purple.600">
+                    Water usage is calculated using USDA National Agricultural Statistics Service
+                    2023 data: approximately 27,154 gallons of water per acre per 1-inch of
+                    irrigation depth. This helps estimate energy used for pumping and distribution.
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontSize="sm" fontWeight="semibold" color="purple.700">
+                    EPA Emission Factors
+                  </Text>
+                  <Text fontSize="xs" color="purple.600">
+                    Fuel combustion emissions use EPA verified factors: diesel releases 10.21 kg
+                    CO2e per gallon, gasoline releases 8.78 kg CO2e per gallon. Grid electricity
+                    emissions are based on EPA eGRID 2023 regional averages.
+                  </Text>
+                </Box>
+              </VStack>
+            </Box>
+
             {/* Why This Matters */}
             <Box
               bg={useColorModeValue('blue.50', 'blue.900')}
               p={4}
               borderRadius="lg"
               border="1px solid"
-              borderColor={useColorModeValue('blue.200', 'blue.700')}>
+              borderColor={useColorModeValue('blue.200', 'blue.700')}
+            >
               <HStack mb={2}>
                 <Icon as={FaChartLine} color="blue.500" boxSize={5} />
                 <Text fontSize="md" fontWeight="bold" color="blue.600">

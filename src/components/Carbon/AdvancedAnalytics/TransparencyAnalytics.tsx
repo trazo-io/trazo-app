@@ -237,7 +237,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
         transition={{ duration: 0.6 }}
         bg={`${transparencyGrade.color}.50`}
         borderColor={`${transparencyGrade.color}.200`}
-        borderWidth="2px">
+        borderWidth="2px"
+      >
         <CardBody>
           <HStack justify="space-between" align="center">
             <VStack align="start" spacing={3}>
@@ -258,7 +259,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                       variant="solid"
                       px={2}
                       py={1}
-                      borderRadius="md">
+                      borderRadius="md"
+                    >
                       Grade {transparencyGrade.grade}
                     </Badge>
                   </HStack>
@@ -297,7 +299,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                 top="50%"
                 left="50%"
                 transform="translate(-50%, -50%)"
-                textAlign="center">
+                textAlign="center"
+              >
                 <Text fontSize="lg" fontWeight="bold" color={textColor}>
                   {data.overallTransparencyScore}%
                 </Text>
@@ -401,7 +404,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
               borderRadius="lg"
               border="1px"
               borderColor={data.trustIndicators.blockchainVerified ? 'green.200' : 'gray.200'}
-              spacing={2}>
+              spacing={2}
+            >
               <Icon
                 as={BsShieldCheck}
                 color={data.trustIndicators.blockchainVerified ? 'green.500' : 'gray.400'}
@@ -412,7 +416,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
               </Text>
               <Badge
                 colorScheme={data.trustIndicators.blockchainVerified ? 'green' : 'gray'}
-                size="sm">
+                size="sm"
+              >
                 {data.trustIndicators.blockchainVerified ? 'Active' : 'Inactive'}
               </Badge>
             </VStack>
@@ -423,7 +428,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
               borderRadius="lg"
               border="1px"
               borderColor={data.trustIndicators.usdaCompliant ? 'blue.200' : 'gray.200'}
-              spacing={2}>
+              spacing={2}
+            >
               <Icon
                 as={FaUniversity}
                 color={data.trustIndicators.usdaCompliant ? 'blue.500' : 'gray.400'}
@@ -443,7 +449,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
               borderRadius="lg"
               border="1px"
               borderColor={data.trustIndicators.realTimeTracking ? 'teal.200' : 'gray.200'}
-              spacing={2}>
+              spacing={2}
+            >
               <Icon
                 as={BsGraphUp}
                 color={data.trustIndicators.realTimeTracking ? 'teal.500' : 'gray.400'}
@@ -454,7 +461,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
               </Text>
               <Badge
                 colorScheme={data.trustIndicators.realTimeTracking ? 'teal' : 'gray'}
-                size="sm">
+                size="sm"
+              >
                 {data.trustIndicators.realTimeTracking ? 'Active' : 'Inactive'}
               </Badge>
             </VStack>
@@ -488,7 +496,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                   key={source.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}>
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                >
                   <Card
                     cursor="pointer"
                     bg={isSelected ? `${sourceType.color}.50` : cardBg}
@@ -500,7 +509,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                       shadow: 'md'
                     }}
                     transition="all 0.2s"
-                    onClick={() => setSelectedSource(isSelected ? null : source.id)}>
+                    onClick={() => setSelectedSource(isSelected ? null : source.id)}
+                  >
                     <CardBody>
                       <HStack justify="space-between" align="start" spacing={4}>
                         <HStack spacing={3} align="start" flex={1} minW={0}>
@@ -540,9 +550,9 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                         </HStack>
 
                         <VStack spacing={1} align="end" w="70px" flexShrink={0}>
-                          <Text 
-                            fontSize="lg" 
-                            fontWeight="bold" 
+                          <Text
+                            fontSize="lg"
+                            fontWeight="bold"
                             color={`${sourceType.color}.600`}
                             textAlign="right"
                             lineHeight={1.2}
@@ -563,7 +573,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.3 }}
-                            overflow="hidden">
+                            overflow="hidden"
+                          >
                             <Divider my={4} />
                             <VStack align="start" spacing={4}>
                               <Box>
@@ -581,7 +592,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                                     fontSize="sm"
                                     fontWeight="semibold"
                                     color={textColor}
-                                    mb={2}>
+                                    mb={2}
+                                  >
                                     Trust Factors:
                                   </Text>
                                   <List spacing={1}>
@@ -673,7 +685,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                     size="sm"
                     variant="outline"
                     colorScheme="purple"
-                    onClick={() => setShowAuditTrail(!showAuditTrail)}>
+                    onClick={() => setShowAuditTrail(!showAuditTrail)}
+                  >
                     {showAuditTrail ? 'Hide' : 'Show'} Details
                   </Button>
                 </HStack>
@@ -685,7 +698,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
-                      overflow="hidden">
+                      overflow="hidden"
+                    >
                       <Accordion allowToggle>
                         {data.verificationDepth.auditTrail.map((step, index) => (
                           <AccordionItem key={step.id}>
@@ -693,7 +707,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
                               <HStack flex={1} textAlign="left" spacing={3}>
                                 <Circle
                                   size="20px"
-                                  bg={step.result === 'verified' ? 'green.100' : 'orange.100'}>
+                                  bg={step.result === 'verified' ? 'green.100' : 'orange.100'}
+                                >
                                   <Icon
                                     as={step.result === 'verified' ? FaCheckCircle : FaRegClock}
                                     color={step.result === 'verified' ? 'green.500' : 'orange.500'}
@@ -736,7 +751,6 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
         </CardBody>
       </Card>
 
-
       {/* Consumer Trust Message */}
       <Box
         bg="green.50"
@@ -744,7 +758,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
         borderRadius="lg"
         border="1px"
         borderColor="green.200"
-        textAlign="center">
+        textAlign="center"
+      >
         <VStack spacing={4}>
           <Icon as={FaShieldAlt} color="green.500" boxSize={10} />
           <VStack spacing={2}>
@@ -765,7 +780,8 @@ export const TransparencyAnalytics: React.FC<TransparencyAnalyticsProps> = ({
               variant="outline"
               colorScheme="green"
               size="sm"
-              leftIcon={<FaExternalLinkAlt />}>
+              leftIcon={<FaExternalLinkAlt />}
+            >
               Verify on Blockchain
             </Button>
           </HStack>

@@ -2,7 +2,7 @@
 
 /**
  * Final Validation Test
- * 
+ *
  * This test performs a comprehensive validation to ensure that the standardization
  * layer implementation did not introduce any regressions and that all systems
  * work correctly together.
@@ -20,7 +20,7 @@ const validationTests = [];
 console.log('📁 File Existence Validation...');
 const requiredFiles = [
   'src/types/standardizedEvents.ts',
-  'src/utils/eventFieldMapping.ts', 
+  'src/utils/eventFieldMapping.ts',
   'src/utils/eventDataNormalizer.ts',
   'src/components/Events/EventPreviewModal.tsx',
   'src/views/Scan/ProductDetail/ProductDetail.tsx',
@@ -37,16 +37,23 @@ for (const file of requiredFiles) {
     console.log(`  ❌ Missing: ${file}`);
   }
 }
-validationTests.push({ name: 'File Existence', passed: fileTestsPassed, total: requiredFiles.length });
+validationTests.push({
+  name: 'File Existence',
+  passed: fileTestsPassed,
+  total: requiredFiles.length
+});
 
 // Test 2: Verify TypeScript interfaces are properly defined
 console.log('\n🏗️  TypeScript Interface Validation...');
-const standardizedEventsContent = fs.readFileSync(path.join(__dirname, 'src/types/standardizedEvents.ts'), 'utf8');
+const standardizedEventsContent = fs.readFileSync(
+  path.join(__dirname, 'src/types/standardizedEvents.ts'),
+  'utf8'
+);
 
 const requiredInterfaces = [
   'StandardizedEventBase',
   'StandardizedWeatherEvent',
-  'StandardizedProductionEvent', 
+  'StandardizedProductionEvent',
   'StandardizedChemicalEvent',
   'StandardizedGeneralEvent',
   'StandardizedEquipmentEvent',
@@ -65,16 +72,23 @@ for (const interfaceName of requiredInterfaces) {
     console.log(`  ❌ Missing: ${interfaceName}`);
   }
 }
-validationTests.push({ name: 'TypeScript Interfaces', passed: interfaceTestsPassed, total: requiredInterfaces.length });
+validationTests.push({
+  name: 'TypeScript Interfaces',
+  passed: interfaceTestsPassed,
+  total: requiredInterfaces.length
+});
 
 // Test 3: Verify field mappings exist for all 8 event types
 console.log('\n🗺️  Field Mapping Validation...');
-const fieldMappingContent = fs.readFileSync(path.join(__dirname, 'src/utils/eventFieldMapping.ts'), 'utf8');
+const fieldMappingContent = fs.readFileSync(
+  path.join(__dirname, 'src/utils/eventFieldMapping.ts'),
+  'utf8'
+);
 
 const requiredMappings = [
   'WEATHER_FIELD_MAPPING',
   'PRODUCTION_FIELD_MAPPING',
-  'CHEMICAL_FIELD_MAPPING', 
+  'CHEMICAL_FIELD_MAPPING',
   'GENERAL_FIELD_MAPPING',
   'EQUIPMENT_FIELD_MAPPING',
   'SOIL_MANAGEMENT_FIELD_MAPPING',
@@ -92,11 +106,18 @@ for (const mapping of requiredMappings) {
     console.log(`  ❌ Missing: ${mapping}`);
   }
 }
-validationTests.push({ name: 'Field Mappings', passed: mappingTestsPassed, total: requiredMappings.length });
+validationTests.push({
+  name: 'Field Mappings',
+  passed: mappingTestsPassed,
+  total: requiredMappings.length
+});
 
 // Test 4: Verify normalization functions exist
 console.log('\n🔄 Normalization Function Validation...');
-const normalizerContent = fs.readFileSync(path.join(__dirname, 'src/utils/eventDataNormalizer.ts'), 'utf8');
+const normalizerContent = fs.readFileSync(
+  path.join(__dirname, 'src/utils/eventDataNormalizer.ts'),
+  'utf8'
+);
 
 const requiredFunctions = [
   'normalizeFormEventData',
@@ -113,16 +134,23 @@ for (const functionName of requiredFunctions) {
     console.log(`  ❌ Missing: ${functionName}`);
   }
 }
-validationTests.push({ name: 'Normalization Functions', passed: functionTestsPassed, total: requiredFunctions.length });
+validationTests.push({
+  name: 'Normalization Functions',
+  passed: functionTestsPassed,
+  total: requiredFunctions.length
+});
 
 // Test 5: Verify EventPreviewModal integration
 console.log('\n📋 EventPreviewModal Integration Validation...');
-const previewModalContent = fs.readFileSync(path.join(__dirname, 'src/components/Events/EventPreviewModal.tsx'), 'utf8');
+const previewModalContent = fs.readFileSync(
+  path.join(__dirname, 'src/components/Events/EventPreviewModal.tsx'),
+  'utf8'
+);
 
 const previewModalChecks = [
   'normalizeFormEventData',
   'StandardizedEvent',
-  'from \'../../utils/eventDataNormalizer\''
+  "from '../../utils/eventDataNormalizer'"
 ];
 
 let previewTestsPassed = 0;
@@ -134,16 +162,23 @@ for (const check of previewModalChecks) {
     console.log(`  ❌ Missing: ${check}`);
   }
 }
-validationTests.push({ name: 'EventPreviewModal Integration', passed: previewTestsPassed, total: previewModalChecks.length });
+validationTests.push({
+  name: 'EventPreviewModal Integration',
+  passed: previewTestsPassed,
+  total: previewModalChecks.length
+});
 
-// Test 6: Verify ProductDetail integration  
+// Test 6: Verify ProductDetail integration
 console.log('\n📄 ProductDetail Integration Validation...');
-const productDetailContent = fs.readFileSync(path.join(__dirname, 'src/views/Scan/ProductDetail/ProductDetail.tsx'), 'utf8');
+const productDetailContent = fs.readFileSync(
+  path.join(__dirname, 'src/views/Scan/ProductDetail/ProductDetail.tsx'),
+  'utf8'
+);
 
 const productDetailChecks = [
   'normalizeBackendEventData',
   'StandardizedEvent',
-  'from \'../../../utils/eventDataNormalizer\''
+  "from '../../../utils/eventDataNormalizer'"
 ];
 
 let productDetailTestsPassed = 0;
@@ -155,11 +190,18 @@ for (const check of productDetailChecks) {
     console.log(`  ❌ Missing: ${check}`);
   }
 }
-validationTests.push({ name: 'ProductDetail Integration', passed: productDetailTestsPassed, total: productDetailChecks.length });
+validationTests.push({
+  name: 'ProductDetail Integration',
+  passed: productDetailTestsPassed,
+  total: productDetailChecks.length
+});
 
 // Test 7: Verify fieldDisplayUtils simplification
 console.log('\n🛠️  FieldDisplayUtils Simplification Validation...');
-const fieldUtilsContent = fs.readFileSync(path.join(__dirname, 'src/utils/fieldDisplayUtils.ts'), 'utf8');
+const fieldUtilsContent = fs.readFileSync(
+  path.join(__dirname, 'src/utils/fieldDisplayUtils.ts'),
+  'utf8'
+);
 
 // Check that dual field checking patterns were removed
 const dualFieldPatterns = [
@@ -190,7 +232,11 @@ if (fieldUtilsContent.includes('expects standardized event data')) {
   totalSimplificationTests++;
 }
 
-validationTests.push({ name: 'FieldDisplayUtils Simplification', passed: simplificationTestsPassed, total: totalSimplificationTests });
+validationTests.push({
+  name: 'FieldDisplayUtils Simplification',
+  passed: simplificationTestsPassed,
+  total: totalSimplificationTests
+});
 
 // Test 8: Critical field mapping verification
 console.log('\n⚠️  Critical Field Mapping Verification...');
@@ -210,7 +256,11 @@ for (const check of criticalMappingChecks) {
     console.log(`  ❌ Missing critical mapping: ${check.field}`);
   }
 }
-validationTests.push({ name: 'Critical Field Mappings', passed: criticalTestsPassed, total: criticalMappingChecks.length });
+validationTests.push({
+  name: 'Critical Field Mappings',
+  passed: criticalTestsPassed,
+  total: criticalMappingChecks.length
+});
 
 // Summary
 console.log('\n📊 VALIDATION SUMMARY:');

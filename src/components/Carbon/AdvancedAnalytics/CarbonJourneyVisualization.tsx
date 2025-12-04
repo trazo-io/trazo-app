@@ -25,14 +25,14 @@ import {
   Alert,
   AlertIcon,
   Tooltip,
-  useBreakpointValue,
+  useBreakpointValue
 } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaLeaf, 
-  FaTractor, 
-  FaRocket, 
-  FaTree, 
+import {
+  FaLeaf,
+  FaTractor,
+  FaRocket,
+  FaTree,
   FaSeedling,
   FaSun,
   FaWater,
@@ -89,7 +89,7 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
 }) => {
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
   const [visiblePhases, setVisiblePhases] = useState<string[]>([]);
-  
+
   // Theme colors
   const bg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
@@ -108,7 +108,7 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
   useEffect(() => {
     if (!isLoading && data?.phases?.length > 0) {
       const timer = setInterval(() => {
-        setVisiblePhases(prev => {
+        setVisiblePhases((prev) => {
           if (prev.length < data.phases.length) {
             return [...prev, data.phases[prev.length].id];
           }
@@ -146,8 +146,8 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
     );
   }
 
-  const getPhaseDirection = (co2e: number) => co2e >= 0 ? 'emission' : 'sequestration';
-  
+  const getPhaseDirection = (co2e: number) => (co2e >= 0 ? 'emission' : 'sequestration');
+
   const formatCO2e = (value: number) => {
     const abs = Math.abs(value);
     if (abs >= 1000) return `${(abs / 1000).toFixed(1)}t`;
@@ -157,24 +157,25 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
   const getNetImpactMessage = () => {
     if (data.isCarbonNegative) {
       return {
-        title: "🌟 Carbon Negative Product!",
+        title: '🌟 Carbon Negative Product!',
         subtitle: `Removes ${formatCO2e(Math.abs(data.netFootprint))} CO₂ from atmosphere`,
-        description: "This product actually helps fight climate change by storing more carbon than it produces.",
-        color: "green"
+        description:
+          'This product actually helps fight climate change by storing more carbon than it produces.',
+        color: 'green'
       };
     } else if (data.netFootprint < 5) {
       return {
-        title: "🌿 Ultra Low Carbon",
+        title: '🌿 Ultra Low Carbon',
         subtitle: `Only ${formatCO2e(data.netFootprint)} CO₂ footprint`,
-        description: "Exceptionally low environmental impact for this type of product.",
-        color: "green"
+        description: 'Exceptionally low environmental impact for this type of product.',
+        color: 'green'
       };
     } else {
       return {
-        title: "🌱 Working Toward Carbon Neutral",
+        title: '🌱 Working Toward Carbon Neutral',
         subtitle: `${formatCO2e(data.netFootprint)} CO₂ footprint`,
-        description: "Continuous improvement in carbon reduction practices.",
-        color: "blue"
+        description: 'Continuous improvement in carbon reduction practices.',
+        color: 'blue'
       };
     }
   };
@@ -229,13 +230,7 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
                 Complete transparency from farm to your table
               </Text>
             </VStack>
-            <Badge 
-              colorScheme="green" 
-              variant="solid" 
-              px={3} 
-              py={1} 
-              borderRadius="full"
-            >
+            <Badge colorScheme="green" variant="solid" px={3} py={1} borderRadius="full">
               {data.verificationLevel}% Verified
             </Badge>
           </HStack>
@@ -252,26 +247,28 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
             >
               <HStack justify="space-between" align="center">
                 <VStack align="start" spacing={1}>
-                  <Text fontSize="sm" color={mutedColor}>Net Carbon Impact</Text>
+                  <Text fontSize="sm" color={mutedColor}>
+                    Net Carbon Impact
+                  </Text>
                   <HStack spacing={2}>
-                    <Text 
-                      fontSize="2xl" 
-                      fontWeight="bold" 
+                    <Text
+                      fontSize="2xl"
+                      fontWeight="bold"
                       color={data.isCarbonNegative ? 'green.600' : 'blue.600'}
                     >
-                      {data.isCarbonNegative ? '-' : ''}{formatCO2e(Math.abs(data.netFootprint))}
+                      {data.isCarbonNegative ? '-' : ''}
+                      {formatCO2e(Math.abs(data.netFootprint))}
                     </Text>
-                    <Text fontSize="lg" color={mutedColor}>CO₂e</Text>
+                    <Text fontSize="lg" color={mutedColor}>
+                      CO₂e
+                    </Text>
                   </HStack>
                 </VStack>
-                <Circle 
-                  size="60px" 
-                  bg={data.isCarbonNegative ? 'green.100' : 'blue.100'}
-                >
-                  <Icon 
-                    as={data.isCarbonNegative ? FaRecycle : FaLeaf} 
+                <Circle size="60px" bg={data.isCarbonNegative ? 'green.100' : 'blue.100'}>
+                  <Icon
+                    as={data.isCarbonNegative ? FaRecycle : FaLeaf}
                     color={data.isCarbonNegative ? 'green.500' : 'blue.500'}
-                    boxSize={6} 
+                    boxSize={6}
                   />
                 </Circle>
               </HStack>
@@ -279,24 +276,26 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
 
             {/* Phase Timeline */}
             <VStack spacing={4} align="stretch">
-              <Heading size="sm" color={textColor}>Production Phases</Heading>
-              
+              <Heading size="sm" color={textColor}>
+                Production Phases
+              </Heading>
+
               <AnimatePresence>
                 {data.phases.map((phase, index) => {
                   const isVisible = visiblePhases.includes(phase.id);
                   const isSelected = selectedPhase === phase.id;
-                  
+
                   if (!isVisible) return null;
-                  
+
                   return (
                     <MotionBox
                       key={phase.id}
                       initial={{ opacity: 0, x: -30 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ 
-                        duration: 0.5, 
+                      transition={{
+                        duration: 0.5,
                         delay: index * 0.1,
-                        type: "spring",
+                        type: 'spring',
                         damping: 25,
                         stiffness: 120
                       }}
@@ -305,7 +304,7 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
                         cursor="pointer"
                         bg={isSelected ? `${phase.color}.50` : cardBg}
                         borderColor={isSelected ? `${phase.color}.300` : borderColor}
-                        borderWidth={isSelected ? "2px" : "1px"}
+                        borderWidth={isSelected ? '2px' : '1px'}
                         _hover={{
                           borderColor: `${phase.color}.300`,
                           transform: 'translateY(-2px)',
@@ -317,18 +316,10 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
                         <CardBody>
                           <HStack spacing={4} align="start">
                             {/* Phase Icon */}
-                            <Circle 
-                              size="50px" 
-                              bg={`${phase.color}.100`}
-                              flexShrink={0}
-                            >
-                              <Icon 
-                                as={phase.icon} 
-                                color={`${phase.color}.500`}
-                                boxSize={6}
-                              />
+                            <Circle size="50px" bg={`${phase.color}.100`} flexShrink={0}>
+                              <Icon as={phase.icon} color={`${phase.color}.500`} boxSize={6} />
                             </Circle>
-                            
+
                             {/* Phase Content */}
                             <VStack align="start" spacing={2} flex={1} minW={0}>
                               <HStack justify="space-between" w="full">
@@ -356,11 +347,11 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
                                   </Text>
                                 </HStack>
                               </HStack>
-                              
+
                               <Text fontSize="sm" color={mutedColor} noOfLines={2}>
                                 {phase.description}
                               </Text>
-                              
+
                               {/* Consumer Benefit */}
                               <Box
                                 bg={`${phase.color}.100`}
@@ -369,13 +360,17 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
                                 borderRadius="md"
                                 alignSelf="start"
                               >
-                                <Text fontSize="xs" fontWeight="medium" color={`${phase.color}.700`}>
+                                <Text
+                                  fontSize="xs"
+                                  fontWeight="medium"
+                                  color={`${phase.color}.700`}
+                                >
                                   💡 {phase.consumerBenefit}
                                 </Text>
                               </Box>
                             </VStack>
                           </HStack>
-                          
+
                           {/* Detailed View */}
                           <AnimatePresence>
                             {isSelected && showDetailedView && (
@@ -394,10 +389,10 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
                                   <VStack align="start" spacing={2} pl={4}>
                                     {phase.practices.map((practice, idx) => (
                                       <HStack key={idx} align="start" spacing={2}>
-                                        <Icon 
-                                          as={FaCheckCircle} 
-                                          color="green.500" 
-                                          boxSize={3} 
+                                        <Icon
+                                          as={FaCheckCircle}
+                                          color="green.500"
+                                          boxSize={3}
                                           mt={0.5}
                                         />
                                         <Text fontSize="sm" color={mutedColor}>
@@ -426,7 +421,7 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
                 </Heading>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                   {data.keyAchievements.map((achievement, index) => (
-                    <HStack 
+                    <HStack
                       key={index}
                       bg="green.50"
                       p={3}
@@ -459,7 +454,7 @@ export const CarbonJourneyVisualization: React.FC<CarbonJourneyVisualizationProp
                   Understanding Carbon Impact
                 </Text>
                 <Text fontSize="xs" color="blue.600" maxW="md">
-                  Every choice you make matters. By choosing products with transparent carbon data, 
+                  Every choice you make matters. By choosing products with transparent carbon data,
                   you're supporting farmers who prioritize environmental sustainability.
                 </Text>
                 <Button size="sm" colorScheme="blue" variant="outline">

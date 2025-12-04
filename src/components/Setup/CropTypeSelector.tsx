@@ -43,11 +43,11 @@ interface CropTemplate {
 // Icon mapping for crop types
 const getIconForCrop = (cropId: string) => {
   const iconMap: Record<string, any> = {
-    'citrus': FaAppleAlt,
-    'almonds': FaSeedling,
-    'avocados': GiAvocado,
-    'corn': GiCorn,
-    'soybeans': FaLeaf,
+    citrus: FaAppleAlt,
+    almonds: FaSeedling,
+    avocados: GiAvocado,
+    corn: GiCorn,
+    soybeans: FaLeaf
   };
   return iconMap[cropId] || FaSeedling;
 };
@@ -127,7 +127,7 @@ interface CropTypeSelectorProps {
 export const CropTypeSelector: React.FC<CropTypeSelectorProps> = ({ data, onChange, onNext }) => {
   console.log('🚀 CropTypeSelector COMPONENT RENDERING');
   console.log('🚀 Props received:', { data, hasOnChange: !!onChange, hasOnNext: !!onNext });
-  
+
   // Test if the hook function exists
   console.log('🔍 Hook function check:', {
     hookExists: !!useGetCompanyCropOptionsQuery,
@@ -140,11 +140,12 @@ export const CropTypeSelector: React.FC<CropTypeSelectorProps> = ({ data, onChan
     refetchOnMountOrArgChange: true
   });
   console.log('📞 API hook called, result:', apiResult);
-  
+
   const { data: cropOptionsResponse, isLoading, error } = apiResult;
-  
+
   // Use API data if available, otherwise fallback to updated hardcoded data
-  const cropTemplates = cropOptionsResponse?.crops?.map(transformCropOption) || fallbackCropTemplates;
+  const cropTemplates =
+    cropOptionsResponse?.crops?.map(transformCropOption) || fallbackCropTemplates;
 
   // Comprehensive debug logging
   console.log('🐛 DETAILED DEBUG INFO:', {
@@ -202,8 +203,8 @@ export const CropTypeSelector: React.FC<CropTypeSelectorProps> = ({ data, onChan
           What's your primary crop?
         </Text>
         <Text color="gray.600" maxW="600px" mx="auto">
-          Choose your main crop to get carbon transparency tools, QR code generation, and consumer trust features
-          specifically designed for your agricultural operation.
+          Choose your main crop to get carbon transparency tools, QR code generation, and consumer
+          trust features specifically designed for your agricultural operation.
         </Text>
       </Box>
 
@@ -280,17 +281,19 @@ export const CropTypeSelector: React.FC<CropTypeSelectorProps> = ({ data, onChan
 
                 {/* Trust Indicators - using API data */}
                 <HStack spacing={2} justify="center">
-                  {cropOptionsResponse?.crops?.find(c => c.id === crop.id)?.usda_verified && (
+                  {cropOptionsResponse?.crops?.find((c) => c.id === crop.id)?.usda_verified && (
                     <Badge colorScheme="green" variant="solid" fontSize="xs">
                       🏆 USDA Verified
                     </Badge>
                   )}
-                  {cropOptionsResponse?.crops?.find(c => c.id === crop.id)?.transparency_ready && (
+                  {cropOptionsResponse?.crops?.find((c) => c.id === crop.id)
+                    ?.transparency_ready && (
                     <Badge colorScheme="blue" variant="solid" fontSize="xs">
                       📱 QR Ready
                     </Badge>
                   )}
-                  {cropOptionsResponse?.crops?.find(c => c.id === crop.id)?.transparency_ready && (
+                  {cropOptionsResponse?.crops?.find((c) => c.id === crop.id)
+                    ?.transparency_ready && (
                     <Badge colorScheme="purple" variant="solid" fontSize="xs">
                       ⛓️ Blockchain
                     </Badge>

@@ -111,7 +111,7 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
   const toast = useToast();
   const navigate = useNavigate();
   const { parcelId, establishmentId } = useParams();
-  
+
   // Component state
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [batteryLevel, setBatteryLevel] = useState(100);
@@ -119,17 +119,15 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
   const [selectedQuickAction, setSelectedQuickAction] = useState<string | null>(null);
 
   // Modal controls
-  const { 
-    isOpen: isHelpOpen, 
-    onOpen: onHelpOpen, 
-    onClose: onHelpClose 
-  } = useDisclosure();
+  const { isOpen: isHelpOpen, onOpen: onHelpOpen, onClose: onHelpClose } = useDisclosure();
 
   // Redux state
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
-  const currentParcel = parcelData || currentCompany?.establishments
-    ?.find((est: any) => est.id === parseInt(establishmentId || '0'))
-    ?.parcels?.find((p: any) => p.id === parseInt(parcelId || '0'));
+  const currentParcel =
+    parcelData ||
+    currentCompany?.establishments
+      ?.find((est: any) => est.id === parseInt(establishmentId || '0'))
+      ?.parcels?.find((p: any) => p.id === parseInt(parcelId || '0'));
 
   // Theme colors optimized for outdoor readability
   const bgColor = useColorModeValue('#FFFFFF', '#1A202C');
@@ -149,7 +147,7 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
     if ('getBattery' in navigator) {
       (navigator as any).getBattery().then((battery: any) => {
         setBatteryLevel(Math.round(battery.level * 100));
-        
+
         battery.addEventListener('levelchange', () => {
           setBatteryLevel(Math.round(battery.level * 100));
         });
@@ -165,11 +163,16 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
   // Weather condition colors
   const getWeatherColor = (condition: string) => {
     switch (condition) {
-      case 'excellent': return 'green';
-      case 'good': return 'green';
-      case 'fair': return 'yellow';
-      case 'poor': return 'red';
-      default: return 'gray';
+      case 'excellent':
+        return 'green';
+      case 'good':
+        return 'green';
+      case 'fair':
+        return 'yellow';
+      case 'poor':
+        return 'red';
+      default:
+        return 'gray';
     }
   };
 
@@ -188,7 +191,7 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
   const handleEventCreated = (event: any) => {
     setCurrentInterface('main');
     setSelectedQuickAction(null);
-    
+
     if (onEventCreated) {
       onEventCreated(event);
     }
@@ -227,7 +230,7 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
               </Badge>
             )}
           </HStack>
-          
+
           <HStack spacing={2}>
             <Tooltip label="Field conditions and help">
               <IconButton
@@ -254,7 +257,9 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
         <VStack spacing={3}>
           <HStack justify="space-between" w="full">
             <VStack align="start" spacing={0}>
-              <Text fontSize="sm" color="gray.500">Field Conditions</Text>
+              <Text fontSize="sm" color="gray.500">
+                Field Conditions
+              </Text>
               <Text fontWeight="bold">{weatherData.conditions}</Text>
             </VStack>
             <HStack spacing={3}>
@@ -277,7 +282,12 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
                   bg={`${getWeatherColor(condition as string)}.100`}
                   color={`${getWeatherColor(condition as string)}.600`}
                 >
-                  <Box w="8px" h="8px" bg={`${getWeatherColor(condition as string)}.500`} borderRadius="full" />
+                  <Box
+                    w="8px"
+                    h="8px"
+                    bg={`${getWeatherColor(condition as string)}.500`}
+                    borderRadius="full"
+                  />
                 </Circle>
                 <Text fontSize="xs" textAlign="center" textTransform="capitalize">
                   {activity}
@@ -303,11 +313,15 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
       <CardBody py={3}>
         <HStack justify="space-between">
           <VStack align="start" spacing={0}>
-            <Text fontSize="sm" color="gray.500">Current Parcel</Text>
+            <Text fontSize="sm" color="gray.500">
+              Current Parcel
+            </Text>
             <Text fontWeight="semibold">{currentParcel?.name || 'Field #1'}</Text>
           </VStack>
           <VStack align="end" spacing={0}>
-            <Text fontSize="sm" color="gray.500">Crop</Text>
+            <Text fontSize="sm" color="gray.500">
+              Crop
+            </Text>
             <Text fontSize="sm">{currentParcel?.crop_type || 'Mixed Crops'}</Text>
           </VStack>
         </HStack>
@@ -335,7 +349,9 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
           >
             <VStack spacing={0}>
               <Text fontWeight="bold">Speak Your Activity</Text>
-              <Text fontSize="xs" opacity={0.8}>Fastest way to log events</Text>
+              <Text fontSize="xs" opacity={0.8}>
+                Fastest way to log events
+              </Text>
             </VStack>
           </Button>
         </CardBody>
@@ -362,11 +378,7 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
             >
               <CardBody py={4}>
                 <VStack spacing={2}>
-                  <Circle
-                    size="40px"
-                    bg={`${action.color}.100`}
-                    color={`${action.color}.600`}
-                  >
+                  <Circle size="40px" bg={`${action.color}.100`} color={`${action.color}.600`}>
                     <Icon as={action.icon} boxSize={5} />
                   </Circle>
                   <VStack spacing={0}>
@@ -411,7 +423,7 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
             View All
           </Button>
         </HStack>
-        
+
         <Card bg={cardBg}>
           <CardBody py={3}>
             <Text fontSize="sm" color="gray.500" textAlign="center">
@@ -444,28 +456,21 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
   );
 
   return (
-    <Box
-      minH="100vh"
-      bg={bgColor}
-      px={4}
-      py={4}
-      pb={8}
-      position="relative"
-    >
+    <Box minH="100vh" bg={bgColor} px={4} py={4} pb={8} position="relative">
       {/* Status Bar */}
       {renderStatusBar()}
-      
+
       {/* Parcel Info */}
       {renderParcelInfo()}
-      
+
       {/* Weather Conditions */}
       {renderWeatherCard()}
 
       {/* Main Content */}
       {currentInterface === 'main' && renderMainInterface()}
-      
+
       {currentInterface === 'voice' && renderVoiceInterface()}
-      
+
       {currentInterface === 'creator' && (
         <Box>
           <HStack justify="space-between" mb={4}>
@@ -475,7 +480,7 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
             <Text fontWeight="bold">Create Event</Text>
             <Box w="60px" /> {/* Spacer */}
           </HStack>
-          
+
           <SimplifiedEventCreator
             onClose={() => setCurrentInterface('main')}
             onEventCreated={handleEventCreated}
@@ -494,17 +499,13 @@ export const MobileFieldInterface: React.FC<MobileFieldInterfaceProps> = ({
 
       {/* Offline Indicator */}
       {isOffline && (
-        <Box
-          position="fixed"
-          bottom={4}
-          left={4}
-          right={4}
-          zIndex={1000}
-        >
+        <Box position="fixed" bottom={4} left={4} right={4} zIndex={1000}>
           <Alert status="warning" borderRadius="lg" boxShadow="lg">
             <AlertIcon />
             <VStack align="start" spacing={0}>
-              <Text fontSize="sm" fontWeight="semibold">Working Offline</Text>
+              <Text fontSize="sm" fontWeight="semibold">
+                Working Offline
+              </Text>
               <Text fontSize="xs">Events will sync when connection is restored</Text>
             </VStack>
           </Alert>

@@ -17,77 +17,77 @@
   === PRIMARY BRAND COLORS ===
   Forest Green Family - Core brand identity
   */
-  --trazo-forest: #2E7D32;        /* Legacy - use green.700 instead */
-  --trazo-emerald: #059669;       /* Legacy - use green.600 instead */
-  --trazo-deep: #1B5E20;          /* Legacy - use green.800 instead */
-  --trazo-light: #81C784;         /* Legacy - use green.400 instead */
-  
+  --trazo-forest: #2e7d32; /* Legacy - use green.700 instead */
+  --trazo-emerald: #059669; /* Legacy - use green.600 instead */
+  --trazo-deep: #1b5e20; /* Legacy - use green.800 instead */
+  --trazo-light: #81c784; /* Legacy - use green.400 instead */
+
   /* NEW: 2025 Professional Clean Green System */
-  --trazo-primary: #4CAF50;       /* PRIMARY: Clean professional green */
-  --trazo-hover: #388E3C;         /* HOVER: Deeper professional green */
-  --trazo-active: #2E7D32;        /* ACTIVE: Forest green */
+  --trazo-primary: #4caf50; /* PRIMARY: Clean professional green */
+  --trazo-hover: #388e3c; /* HOVER: Deeper professional green */
+  --trazo-active: #2e7d32; /* ACTIVE: Forest green */
 
   /* 
   === NEUTRAL COLOR SYSTEM ===
   Professional gray scale for text, backgrounds, and UI elements
   */
-  --neutral-white: #FFFFFF;       /* Pure white - clean backgrounds */
-  --neutral-lightest: #FAFAFA;    /* Lightest gray - subtle backgrounds */
-  --neutral-light: #F8F9FA;       /* Light gray - page backgrounds */
-  --neutral-border: #E0E0E0;      /* Medium gray - borders and dividers */
-  --neutral-medium: #BDBDBD;      /* Medium gray - disabled states */
-  --neutral-text: #424242;        /* Dark gray - body text and labels */
-  --neutral-heading: #1A1A1A;     /* Charcoal - headings and emphasis */
-  --neutral-black: #000000;       /* Pure black - maximum contrast */
+  --neutral-white: #ffffff; /* Pure white - clean backgrounds */
+  --neutral-lightest: #fafafa; /* Lightest gray - subtle backgrounds */
+  --neutral-light: #f8f9fa; /* Light gray - page backgrounds */
+  --neutral-border: #e0e0e0; /* Medium gray - borders and dividers */
+  --neutral-medium: #bdbdbd; /* Medium gray - disabled states */
+  --neutral-text: #424242; /* Dark gray - body text and labels */
+  --neutral-heading: #1a1a1a; /* Charcoal - headings and emphasis */
+  --neutral-black: #000000; /* Pure black - maximum contrast */
 
   /* 
   === ACCENT COLORS ===
   Supporting colors for CTAs, highlights, and semantic states
   */
-  --accent-amber: #FF9800;        /* Warm amber - primary CTAs and highlights */
-  --accent-amber-light: #FFE082;  /* Light amber - hover states */
-  --accent-amber-dark: #F57C00;   /* Dark amber - active states */
+  --accent-amber: #ff9800; /* Warm amber - primary CTAs and highlights */
+  --accent-amber-light: #ffe082; /* Light amber - hover states */
+  --accent-amber-dark: #f57c00; /* Dark amber - active states */
 
   /* 
   === SEMANTIC COLORS ===
   Status and feedback colors with accessibility compliance
   */
-  --success: #4CAF50;             /* Success states - confirmations */
-  --success-light: #C8E6C8;       /* Light success - backgrounds */
-  --success-dark: #388E3C;        /* Dark success - emphasis */
+  --success: #4caf50; /* Success states - confirmations */
+  --success-light: #c8e6c8; /* Light success - backgrounds */
+  --success-dark: #388e3c; /* Dark success - emphasis */
 
-  --warning: #FF9800;             /* Warning states - caution */
-  --warning-light: #FFE082;       /* Light warning - backgrounds */
-  --warning-dark: #F57C00;        /* Dark warning - emphasis */
+  --warning: #ff9800; /* Warning states - caution */
+  --warning-light: #ffe082; /* Light warning - backgrounds */
+  --warning-dark: #f57c00; /* Dark warning - emphasis */
 
-  --error: #F44336;               /* Error states - failures */
-  --error-light: #FFCDD2;         /* Light error - backgrounds */
-  --error-dark: #D32F2F;          /* Dark error - emphasis */
+  --error: #f44336; /* Error states - failures */
+  --error-light: #ffcdd2; /* Light error - backgrounds */
+  --error-dark: #d32f2f; /* Dark error - emphasis */
 
-  --info: #2196F3;                /* Information states - guidance */
-  --info-light: #BBDEFB;          /* Light info - backgrounds */
-  --info-dark: #1976D2;           /* Dark info - emphasis */
+  --info: #2196f3; /* Information states - guidance */
+  --info-light: #bbdefb; /* Light info - backgrounds */
+  --info-dark: #1976d2; /* Dark info - emphasis */
 
   /* 
   === EXTENDED GREEN PALETTE ===
   Complete green scale for consistent brand application
   */
-  --green-50: #F8FDF9;           /* Ultra light sage */
-  --green-100: #E8F5E8;          /* Very light sage background */
-  --green-200: #C8E6C8;          /* Light sage */
-  --green-300: #A5D6A5;          /* Soft sage accent */
-  --green-400: #81C784;          /* Modern sage green */
-  --green-500: #4CAF50;          /* Clean professional green (PRIMARY) */
-  --green-600: #388E3C;          /* Deeper professional green */
-  --green-700: #2E7D32;          /* Forest green */
-  --green-800: #1B5E20;          /* Dark forest */
-  --green-900: #0D3D0F;          /* Deepest forest */
+  --green-50: #f8fdf9; /* Ultra light sage */
+  --green-100: #e8f5e8; /* Very light sage background */
+  --green-200: #c8e6c8; /* Light sage */
+  --green-300: #a5d6a5; /* Soft sage accent */
+  --green-400: #81c784; /* Modern sage green */
+  --green-500: #4caf50; /* Clean professional green (PRIMARY) */
+  --green-600: #388e3c; /* Deeper professional green */
+  --green-700: #2e7d32; /* Forest green */
+  --green-800: #1b5e20; /* Dark forest */
+  --green-900: #0d3d0f; /* Deepest forest */
 
   /* 
   === COMPONENT-SPECIFIC COLORS ===
   Pre-defined combinations for common UI patterns
   */
-  
+
   /* Buttons - Updated 2025 */
   --btn-primary-bg: var(--trazo-primary);
   --btn-primary-hover: var(--trazo-hover);
@@ -145,13 +145,13 @@ Alternative color scheme for dark mode interfaces
 @media (prefers-color-scheme: dark) {
   :root {
     --neutral-white: #121212;
-    --neutral-lightest: #1E1E1E;
-    --neutral-light: #2D2D2D;
+    --neutral-lightest: #1e1e1e;
+    --neutral-light: #2d2d2d;
     --neutral-border: #404040;
     --neutral-medium: #606060;
-    --neutral-text: #E0E0E0;
-    --neutral-heading: #FFFFFF;
-    
+    --neutral-text: #e0e0e0;
+    --neutral-heading: #ffffff;
+
     --page-bg: var(--neutral-lightest);
     --section-bg: var(--neutral-light);
     --card-bg: var(--neutral-light);
@@ -176,21 +176,47 @@ High contrast mode support
 === UTILITY CLASSES ===
 Helper classes for quick color application
 */
-.text-trazo-forest { color: var(--trazo-forest) !important; }
-.text-trazo-emerald { color: var(--trazo-emerald) !important; }
-.text-trazo-primary { color: var(--trazo-primary) !important; }
-.text-neutral-heading { color: var(--neutral-heading) !important; }
-.text-neutral-text { color: var(--neutral-text) !important; }
+.text-trazo-forest {
+  color: var(--trazo-forest) !important;
+}
+.text-trazo-emerald {
+  color: var(--trazo-emerald) !important;
+}
+.text-trazo-primary {
+  color: var(--trazo-primary) !important;
+}
+.text-neutral-heading {
+  color: var(--neutral-heading) !important;
+}
+.text-neutral-text {
+  color: var(--neutral-text) !important;
+}
 
-.bg-trazo-forest { background-color: var(--trazo-forest) !important; }
-.bg-trazo-primary { background-color: var(--trazo-primary) !important; }
-.bg-trazo-light { background-color: var(--trazo-light) !important; }
-.bg-neutral-light { background-color: var(--neutral-light) !important; }
-.bg-neutral-white { background-color: var(--neutral-white) !important; }
+.bg-trazo-forest {
+  background-color: var(--trazo-forest) !important;
+}
+.bg-trazo-primary {
+  background-color: var(--trazo-primary) !important;
+}
+.bg-trazo-light {
+  background-color: var(--trazo-light) !important;
+}
+.bg-neutral-light {
+  background-color: var(--neutral-light) !important;
+}
+.bg-neutral-white {
+  background-color: var(--neutral-white) !important;
+}
 
-.border-trazo-forest { border-color: var(--trazo-forest) !important; }
-.border-trazo-primary { border-color: var(--trazo-primary) !important; }
-.border-neutral-border { border-color: var(--neutral-border) !important; }
+.border-trazo-forest {
+  border-color: var(--trazo-forest) !important;
+}
+.border-trazo-primary {
+  border-color: var(--trazo-primary) !important;
+}
+.border-neutral-border {
+  border-color: var(--neutral-border) !important;
+}
 
 /* 
 === BRAND GRADIENTS ===

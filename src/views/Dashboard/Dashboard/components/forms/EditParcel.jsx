@@ -425,7 +425,8 @@ function NewParcel() {
                     mt="24px"
                     w="100px"
                     h="35px"
-                    type="submit">
+                    type="submit"
+                  >
                     <Text fontSize="xs" color="#fff" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.next' })}
                     </Text>
@@ -555,7 +556,8 @@ function NewParcel() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      onClick={() => mainInfoTab.current.click()}>
+                      onClick={() => mainInfoTab.current.click()}
+                    >
                       <Text fontSize="xs" color="gray.700" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.prev' })}
                       </Text>
@@ -567,7 +569,8 @@ function NewParcel() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      type="submit">
+                      type="submit"
+                    >
                       <Text fontSize="xs" color="#fff" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.next' })}
                       </Text>
@@ -605,7 +608,8 @@ function NewParcel() {
                   alignSelf="flex-end"
                   w="100px"
                   h="35px"
-                  onClick={() => descriptionTab.current.click()}>
+                  onClick={() => descriptionTab.current.click()}
+                >
                   <Text fontSize="xs" color="gray.700" fontWeight="bold">
                     {intl.formatMessage({ id: 'app.prev' })}
                   </Text>
@@ -616,7 +620,8 @@ function NewParcel() {
                   alignSelf="flex-end"
                   w="100px"
                   h="35px"
-                  onClick={() => certificationTab.current.click()}>
+                  onClick={() => certificationTab.current.click()}
+                >
                   <Text fontSize="xs" color="#fff" fontWeight="bold">
                     {intl.formatMessage({ id: 'app.next' })}
                   </Text>
@@ -635,7 +640,8 @@ function NewParcel() {
               justify="center"
               textAlign="center"
               w="80%"
-              mx="auto">
+              mx="auto"
+            >
               <Text color={textColor} fontSize="lg" fontWeight="bold" mb="4px">
                 {intl.formatMessage({ id: 'app.doYouWantToCertificateThisParcel' })}
               </Text>
@@ -652,7 +658,8 @@ function NewParcel() {
                 <FormProvider {...methodsCertificate}>
                   <form
                     onSubmit={handleSubmitCertificate(onSubmitCertificate)}
-                    style={{ width: '100%' }}>
+                    style={{ width: '100%' }}
+                  >
                     <FormControl display="flex" alignItems="center" mb="25px">
                       <Switch
                         id="certificate"
@@ -692,7 +699,8 @@ function NewParcel() {
                         mt="24px"
                         w={{ sm: '75px', lg: '100px' }}
                         h="35px"
-                        onClick={() => mediaTab.current.click()}>
+                        onClick={() => mediaTab.current.click()}
+                      >
                         <Text fontSize="xs" color="gray.700" fontWeight="bold">
                           {intl.formatMessage({ id: 'app.prev' })}
                         </Text>
@@ -706,7 +714,8 @@ function NewParcel() {
                         mt="24px"
                         w={{ sm: '75px', lg: '100px' }}
                         h="35px"
-                        type="submit">
+                        type="submit"
+                      >
                         {isLoading ? (
                           <CircularProgress isIndeterminate value={1} color="#313860" size="25px" />
                         ) : (

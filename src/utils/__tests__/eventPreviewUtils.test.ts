@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { transformFormDataToEvent, hasMinimalPreviewData, formatPreviewDate } from '../eventPreviewUtils';
+import {
+  transformFormDataToEvent,
+  hasMinimalPreviewData,
+  formatPreviewDate
+} from '../eventPreviewUtils';
 
 describe('eventPreviewUtils', () => {
   describe('transformFormDataToEvent', () => {
@@ -157,7 +161,7 @@ describe('eventPreviewUtils', () => {
       const resultMinimal = hasMinimalPreviewData(2, formDataMinimal);
       expect(resultMinimal).toBe(false);
 
-      const formDataWithProduct = { 
+      const formDataWithProduct = {
         date: '2024-01-20T10:30:00.000Z',
         commercial_name: 'Test Product'
       };
@@ -170,7 +174,7 @@ describe('eventPreviewUtils', () => {
       const resultMinimal = hasMinimalPreviewData(1, formDataMinimal);
       expect(resultMinimal).toBe(false);
 
-      const formDataWithType = { 
+      const formDataWithType = {
         date: '2024-01-20T10:30:00.000Z',
         type: 'HA'
       };

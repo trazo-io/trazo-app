@@ -25,9 +25,16 @@ import {
   AlertDescription,
   List,
   ListItem,
-  ListIcon,
+  ListIcon
 } from '@chakra-ui/react';
-import { FaDollarSign, FaLeaf, FaTrophy, FaChartLine, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import {
+  FaDollarSign,
+  FaLeaf,
+  FaTrophy,
+  FaChartLine,
+  FaCheckCircle,
+  FaExclamationTriangle
+} from 'react-icons/fa';
 
 interface CarbonROI {
   investment_estimate: number;
@@ -96,19 +103,19 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
   carbonROI,
   marketValueImpact,
   carbonCreditPotential,
-  premiumPricingOpportunity,
+  premiumPricingOpportunity
 }) => {
   const bg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const successColor = useColorModeValue('green.500', 'green.400');
   const warningColor = useColorModeValue('orange.500', 'orange.400');
-  
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(amount);
   };
 
@@ -121,10 +128,14 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
 
   const getMarketTierColor = (tier: string) => {
     switch (tier) {
-      case 'Premium Sustainable': return 'green';
-      case 'Sustainable': return 'blue';
-      case 'Standard': return 'gray';
-      default: return 'orange';
+      case 'Premium Sustainable':
+        return 'green';
+      case 'Sustainable':
+        return 'blue';
+      case 'Standard':
+        return 'gray';
+      default:
+        return 'orange';
     }
   };
 
@@ -145,7 +156,7 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
               <StatNumber>{formatCurrency(carbonROI.investment_estimate)}</StatNumber>
               <StatHelpText>Carbon practices</StatHelpText>
             </Stat>
-            
+
             <Stat>
               <StatLabel>Annual Benefits</StatLabel>
               <StatNumber color="green.500">
@@ -153,7 +164,7 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
               </StatNumber>
               <StatHelpText>Credits + Premiums</StatHelpText>
             </Stat>
-            
+
             <Stat>
               <StatLabel>ROI</StatLabel>
               <StatNumber color={getROIColor(carbonROI.roi_percentage)}>
@@ -164,12 +175,13 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                 Annual return
               </StatHelpText>
             </Stat>
-            
+
             <Stat>
               <StatLabel>Payback Period</StatLabel>
               <StatNumber>
-                {carbonROI.payback_period_years === Infinity ? 'N/A' : 
-                 `${carbonROI.payback_period_years.toFixed(1)} years`}
+                {carbonROI.payback_period_years === Infinity
+                  ? 'N/A'
+                  : `${carbonROI.payback_period_years.toFixed(1)} years`}
               </StatNumber>
               <StatHelpText>Time to break even</StatHelpText>
             </Stat>
@@ -180,9 +192,18 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
             {/* Benefits Breakdown */}
             <Box>
-              <Heading size="sm" mb={3}>Annual Benefits Breakdown</Heading>
+              <Heading size="sm" mb={3}>
+                Annual Benefits Breakdown
+              </Heading>
               <VStack align="stretch" spacing={3}>
-                <HStack justify="space-between" p={3} bg={bg} borderRadius="md" border="1px" borderColor={borderColor}>
+                <HStack
+                  justify="space-between"
+                  p={3}
+                  bg={bg}
+                  borderRadius="md"
+                  border="1px"
+                  borderColor={borderColor}
+                >
                   <HStack>
                     <Icon as={FaLeaf} color="green.500" />
                     <Text>Carbon Credits</Text>
@@ -191,8 +212,15 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                     {formatCurrency(carbonROI.carbon_credit_value)}
                   </Text>
                 </HStack>
-                
-                <HStack justify="space-between" p={3} bg={bg} borderRadius="md" border="1px" borderColor={borderColor}>
+
+                <HStack
+                  justify="space-between"
+                  p={3}
+                  bg={bg}
+                  borderRadius="md"
+                  border="1px"
+                  borderColor={borderColor}
+                >
                   <HStack>
                     <Icon as={FaTrophy} color="blue.500" />
                     <Text>Premium Pricing</Text>
@@ -201,8 +229,15 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                     {formatCurrency(carbonROI.premium_pricing_value)}
                   </Text>
                 </HStack>
-                
-                <HStack justify="space-between" p={3} bg="green.50" borderRadius="md" border="2px" borderColor="green.200">
+
+                <HStack
+                  justify="space-between"
+                  p={3}
+                  bg="green.50"
+                  borderRadius="md"
+                  border="2px"
+                  borderColor="green.200"
+                >
                   <Text fontWeight="bold">Total Annual Value</Text>
                   <Text fontWeight="bold" color="green.600" fontSize="lg">
                     {formatCurrency(carbonROI.total_annual_benefits)}
@@ -213,21 +248,24 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
 
             {/* Cost Efficiency */}
             <Box>
-              <Heading size="sm" mb={3}>Cost Efficiency Metrics</Heading>
+              <Heading size="sm" mb={3}>
+                Cost Efficiency Metrics
+              </Heading>
               <VStack align="stretch" spacing={3}>
                 <Stat>
                   <StatLabel>Cost per Ton CO₂e</StatLabel>
                   <StatNumber>{formatCurrency(carbonROI.cost_per_ton_co2e)}</StatNumber>
                   <StatHelpText>Investment efficiency</StatHelpText>
                 </Stat>
-                
+
                 {carbonROI.roi_percentage > 0 ? (
                   <Alert status="success" borderRadius="md">
                     <AlertIcon />
                     <Box>
                       <AlertTitle>Profitable Carbon Investment!</AlertTitle>
                       <AlertDescription>
-                        Your carbon practices generate {carbonROI.roi_percentage.toFixed(1)}% annual ROI.
+                        Your carbon practices generate {carbonROI.roi_percentage.toFixed(1)}% annual
+                        ROI.
                       </AlertDescription>
                     </Box>
                   </Alert>
@@ -260,12 +298,18 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
             <VStack align="stretch" spacing={4}>
               <Box textAlign="center">
-                <Badge colorScheme={getMarketTierColor(marketValueImpact.current_market_tier)} size="lg" p={2}>
+                <Badge
+                  colorScheme={getMarketTierColor(marketValueImpact.current_market_tier)}
+                  size="lg"
+                  p={2}
+                >
                   {marketValueImpact.current_market_tier}
                 </Badge>
-                <Text fontSize="sm" color="gray.600" mt={1}>Market Tier</Text>
+                <Text fontSize="sm" color="gray.600" mt={1}>
+                  Market Tier
+                </Text>
               </Box>
-              
+
               <Stat textAlign="center">
                 <StatLabel>Consumer Appeal</StatLabel>
                 <StatNumber color="blue.500">{marketValueImpact.consumer_appeal_rating}</StatNumber>
@@ -278,7 +322,7 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                 <StatLabel>Base Production Value</StatLabel>
                 <StatNumber>{formatCurrency(marketValueImpact.base_production_value)}</StatNumber>
               </Stat>
-              
+
               <Stat>
                 <StatLabel>Enhanced Market Value</StatLabel>
                 <StatNumber color="green.500">
@@ -292,7 +336,9 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
             </VStack>
 
             <Box>
-              <Heading size="sm" mb={3}>Competitive Advantages</Heading>
+              <Heading size="sm" mb={3}>
+                Competitive Advantages
+              </Heading>
               <VStack align="stretch" spacing={2}>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.500" />
@@ -307,7 +353,7 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                   <Text fontSize="sm">Verified sustainability claims</Text>
                 </HStack>
               </VStack>
-              
+
               <Text fontSize="lg" fontWeight="bold" color="green.500" mt={4} textAlign="center">
                 +{formatCurrency(marketValueImpact.value_uplift)} Value Uplift
               </Text>
@@ -332,7 +378,8 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                 <Box>
                   <AlertTitle>Eligible for Carbon Credits!</AlertTitle>
                   <AlertDescription>
-                    Your production sequesters {carbonCreditPotential.sequestered_tons_co2e?.toFixed(1)} tons CO₂e annually.
+                    Your production sequesters{' '}
+                    {carbonCreditPotential.sequestered_tons_co2e?.toFixed(1)} tons CO₂e annually.
                   </AlertDescription>
                 </Box>
               </Alert>
@@ -361,7 +408,10 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                         <HStack justify="space-between">
                           <Text>Verification cost:</Text>
                           <Text color="red.500">
-                            -{formatCurrency(carbonCreditPotential.voluntary_market.verification_cost)}
+                            -
+                            {formatCurrency(
+                              carbonCreditPotential.voluntary_market.verification_cost
+                            )}
                           </Text>
                         </HStack>
                         <Divider />
@@ -404,7 +454,10 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                         <HStack justify="space-between">
                           <Text>Verification cost:</Text>
                           <Text color="red.500">
-                            -{formatCurrency(carbonCreditPotential.compliance_market.verification_cost)}
+                            -
+                            {formatCurrency(
+                              carbonCreditPotential.compliance_market.verification_cost
+                            )}
                           </Text>
                         </HStack>
                         <Divider />
@@ -425,7 +478,8 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                   Recommended Strategy: {carbonCreditPotential.recommendation}
                 </Text>
                 <Text fontSize="sm" color="blue.600">
-                  Conservative annual potential: {formatCurrency(carbonCreditPotential.annual_potential || 0)}
+                  Conservative annual potential:{' '}
+                  {formatCurrency(carbonCreditPotential.annual_potential || 0)}
                 </Text>
               </Box>
             </VStack>
@@ -435,10 +489,9 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
               <Box>
                 <AlertTitle>Not Currently Eligible</AlertTitle>
                 <AlertDescription>
-                  {carbonCreditPotential.reason} 
-                  {carbonCreditPotential.improvement_needed && 
-                    ` Reduce emissions by ${carbonCreditPotential.improvement_needed.toLocaleString()} kg CO₂e to become eligible.`
-                  }
+                  {carbonCreditPotential.reason}
+                  {carbonCreditPotential.improvement_needed &&
+                    ` Reduce emissions by ${carbonCreditPotential.improvement_needed.toLocaleString()} kg CO₂e to become eligible.`}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -485,7 +538,9 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                       <HStack justify="space-between">
                         <VStack align="start" spacing={1}>
                           <Heading size="sm">{opportunity.category}</Heading>
-                          <Badge colorScheme="purple">{opportunity.potential_premium} Premium</Badge>
+                          <Badge colorScheme="purple">
+                            {opportunity.potential_premium} Premium
+                          </Badge>
                         </VStack>
                         <Text fontSize="lg" fontWeight="bold" color="purple.500">
                           {formatCurrency(opportunity.estimated_value)}
@@ -493,16 +548,22 @@ export const CarbonROIAnalysis: React.FC<CarbonROIAnalysisProps> = ({
                       </HStack>
 
                       <Box>
-                        <Text fontSize="sm" fontWeight="medium" mb={2}>Target Markets:</Text>
+                        <Text fontSize="sm" fontWeight="medium" mb={2}>
+                          Target Markets:
+                        </Text>
                         <HStack spacing={1} flexWrap="wrap">
                           {opportunity.target_markets.map((market, idx) => (
-                            <Badge key={idx} variant="outline" size="sm">{market}</Badge>
+                            <Badge key={idx} variant="outline" size="sm">
+                              {market}
+                            </Badge>
                           ))}
                         </HStack>
                       </Box>
 
                       <Box>
-                        <Text fontSize="sm" fontWeight="medium" mb={2}>Requirements:</Text>
+                        <Text fontSize="sm" fontWeight="medium" mb={2}>
+                          Requirements:
+                        </Text>
                         <List spacing={1}>
                           {opportunity.requirements.map((req, idx) => (
                             <ListItem key={idx} fontSize="sm">

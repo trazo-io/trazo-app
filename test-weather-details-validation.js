@@ -11,23 +11,39 @@ const path = require('path');
 // Mock the modules
 const mockGetConsumerEventDescription = (description, event) => {
   // Simulate the fixed getConsumerEventDescription function
-  console.log(`🔍 Checking event with type: ${event.event_type}, weather_type: ${event.weather_type || event.type}`);
-  
+  console.log(
+    `🔍 Checking event with type: ${event.event_type}, weather_type: ${
+      event.weather_type || event.type
+    }`
+  );
+
   // Check for weather events with the FIXED logic
-  if (event && event.event_type === 0 && (event.weather_type || event.type) && 
-      (event.weather_type !== 'weather' && event.type !== 'weather')) {
-    
-    console.log(`✅ Weather event detected with specific type: ${event.weather_type || event.type}`);
-    
+  if (
+    event &&
+    event.event_type === 0 &&
+    (event.weather_type || event.type) &&
+    event.weather_type !== 'weather' &&
+    event.type !== 'weather'
+  ) {
+    console.log(
+      `✅ Weather event detected with specific type: ${event.weather_type || event.type}`
+    );
+
     // Extract weather details using the FIXED logic
-    const lowerTempValue = event.lower_temperature !== undefined ? event.lower_temperature : 
-                          (event.extra_data && event.extra_data.lower_temperature);
-    const upperTempValue = event.upper_temperature !== undefined ? event.upper_temperature : 
-                          (event.extra_data && event.extra_data.upper_temperature);
-    const humidityValue = event.humidity !== undefined ? event.humidity : 
-                         (event.extra_data && event.extra_data.humidity);
-    const precipitationValue = event.precipitation !== undefined ? event.precipitation : 
-                              (event.extra_data && event.extra_data.precipitation);
+    const lowerTempValue =
+      event.lower_temperature !== undefined
+        ? event.lower_temperature
+        : event.extra_data && event.extra_data.lower_temperature;
+    const upperTempValue =
+      event.upper_temperature !== undefined
+        ? event.upper_temperature
+        : event.extra_data && event.extra_data.upper_temperature;
+    const humidityValue =
+      event.humidity !== undefined ? event.humidity : event.extra_data && event.extra_data.humidity;
+    const precipitationValue =
+      event.precipitation !== undefined
+        ? event.precipitation
+        : event.extra_data && event.extra_data.precipitation;
 
     console.log(`📊 Weather Details Found:`);
     console.log(`   Lower Temperature: ${lowerTempValue}°F`);
@@ -36,9 +52,10 @@ const mockGetConsumerEventDescription = (description, event) => {
     console.log(`   Precipitation: ${precipitationValue}"`);
 
     // Generate specific title for weather type
-    const weatherTypeTitle = (event.weather_type || event.type).replace('_', ' ')
-                                                               .replace(/\b\w/g, l => l.toUpperCase());
-    
+    const weatherTypeTitle = (event.weather_type || event.type)
+      .replace('_', ' ')
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+
     return {
       title: `${weatherTypeTitle} Weather Event`,
       description: `Weather conditions recorded during ${weatherTypeTitle.toLowerCase()}`,
@@ -70,13 +87,13 @@ console.log('');
 console.log('🧪 TEST CASE 1: Standardized Weather Event');
 console.log('-------------------------------------------');
 const standardizedWeatherEvent = {
-  event_type: 0,  // Fixed: was checking for 8 before
-  weather_type: 'drought',  // Specific weather type
+  event_type: 0, // Fixed: was checking for 8 before
+  weather_type: 'drought', // Specific weather type
   description: 'Drought monitoring',
-  lower_temperature: 85,    // Direct on event object (FIXED)
-  upper_temperature: 102,   // Direct on event object (FIXED)
-  humidity: 25,            // Direct on event object (FIXED)
-  precipitation: 0.1,      // Direct on event object (FIXED)
+  lower_temperature: 85, // Direct on event object (FIXED)
+  upper_temperature: 102, // Direct on event object (FIXED)
+  humidity: 25, // Direct on event object (FIXED)
+  precipitation: 0.1, // Direct on event object (FIXED)
   duration: 8,
   location: 'Field A-12'
 };
@@ -113,11 +130,11 @@ const mixedWeatherEvent = {
   event_type: 0,
   weather_type: 'frost',
   description: 'Frost protection',
-  lower_temperature: 28,    // In main object
-  upper_temperature: 35,    // In main object
+  lower_temperature: 28, // In main object
+  upper_temperature: 35, // In main object
   extra_data: {
-    humidity: 80,           // In extra_data
-    precipitation: 0.3      // In extra_data
+    humidity: 80, // In extra_data
+    precipitation: 0.3 // In extra_data
   },
   protection_measures: ['Row covers', 'Heaters'],
   duration: 6
@@ -132,7 +149,7 @@ console.log('🧪 TEST CASE 4: Generic Weather Event');
 console.log('-------------------------------------');
 const genericWeatherEvent = {
   event_type: 0,
-  weather_type: 'weather',  // Generic type
+  weather_type: 'weather', // Generic type
   description: 'Weather monitoring',
   temperature: 75
 };

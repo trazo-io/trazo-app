@@ -123,14 +123,14 @@ function TransparencyDashboard() {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Get productions data for this establishment
-  const { 
-    data: productions = [], 
+  const {
+    data: productions = [],
     isLoading: isProductionsLoading,
     error: productionsError,
-    refetch: refetchProductions 
+    refetch: refetchProductions
   } = useGetProductionsByEstablishmentQuery(
     { establishmentId: Number(establishmentId) },
-    { 
+    {
       skip: !establishmentId,
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
@@ -154,7 +154,12 @@ function TransparencyDashboard() {
   // Force refetch productions data to ensure we get the latest enhanced data
   useEffect(() => {
     if (establishmentId && refetchProductions) {
-      console.log('🔄 DEBUG - Forcing productions refetch for establishment:', establishmentId, 'Type:', typeof establishmentId);
+      console.log(
+        '🔄 DEBUG - Forcing productions refetch for establishment:',
+        establishmentId,
+        'Type:',
+        typeof establishmentId
+      );
       refetchProductions();
     }
   }, [establishmentId, refetchProductions]); // ✅ Fixed: Removed productions and isProductionsLoading from dependencies
@@ -166,18 +171,18 @@ function TransparencyDashboard() {
         historyId: productionId,
         published: !currentlyPublished
       }).unwrap();
-      
+
       // Refetch productions to get updated data
       refetchProductions();
-      
+
       toast({
         title: !currentlyPublished ? 'Production Activated' : 'Production Deactivated',
-        description: !currentlyPublished 
-          ? 'Production is now visible to consumers' 
+        description: !currentlyPublished
+          ? 'Production is now visible to consumers'
           : 'Production is no longer visible to consumers',
         status: 'success',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
     } catch (error) {
       console.error('Error updating production:', error);
@@ -186,7 +191,7 @@ function TransparencyDashboard() {
         description: 'Failed to update production visibility',
         status: 'error',
         duration: 3000,
-        isClosable: true,
+        isClosable: true
       });
     }
   };
@@ -208,13 +213,15 @@ function TransparencyDashboard() {
         justifySelf="center"
         overflow="hidden"
         w="100%"
-        position="relative">
+        position="relative"
+      >
         <Box
           bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
           pt={{ base: '140px', md: '100px' }}
           pb={{ base: '80px', md: '100px' }}
           px={{ base: 3, sm: 4, md: 4 }}
-          position="relative">
+          position="relative"
+        >
           <Container maxW="6xl" mx="auto">
             <VStack spacing={8} align="center" justify="center" minH="40vh">
               <Spinner size="xl" color="green.500" thickness="4px" />
@@ -242,13 +249,15 @@ function TransparencyDashboard() {
         justifySelf="center"
         overflow="hidden"
         w="100%"
-        position="relative">
+        position="relative"
+      >
         <Box
           bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
           pt={{ base: '140px', md: '100px' }}
           pb={{ base: '80px', md: '100px' }}
           px={{ base: 3, sm: 4, md: 4 }}
-          position="relative">
+          position="relative"
+        >
           <Container maxW="6xl" mx="auto">
             <VStack spacing={6} align="center" justify="center" minH="40vh">
               <Alert status="error" borderRadius="lg" maxW="md">
@@ -383,14 +392,16 @@ function TransparencyDashboard() {
       justifySelf="center"
       overflow="hidden"
       w="100%"
-      position="relative">
+      position="relative"
+    >
       {/* Clean Modern Header - EXACT SAME as ProfileEstablishment */}
       <Box
         bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
         pt={{ base: '140px', md: '100px' }}
         pb={{ base: '80px', md: '100px' }}
         px={{ base: 3, sm: 4, md: 4 }}
-        position="relative">
+        position="relative"
+      >
         <Container maxW="6xl" mx="auto">
           <VStack spacing={6} textAlign="center">
             {/* Back Button - EXACT SAME responsive positioning as ProfileEstablishment */}
@@ -402,7 +413,8 @@ function TransparencyDashboard() {
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={() => navigate('/admin/dashboard')}
-                    size="sm">
+                    size="sm"
+                  >
                     Back
                   </Button>
                 </Flex>
@@ -414,7 +426,8 @@ function TransparencyDashboard() {
                   variant="outline"
                   leftIcon={<FaChevronLeft />}
                   onClick={() => navigate('/admin/dashboard')}
-                  size="sm">
+                  size="sm"
+                >
                   Back
                 </Button>
               </Flex>
@@ -432,7 +445,8 @@ function TransparencyDashboard() {
                 px={{ base: 2, sm: 0 }}
                 lineHeight={{ base: '1.1', sm: '1.2', md: '1.2' }}
                 maxW={{ base: '90%', sm: '85%', md: '100%' }}
-                noOfLines={{ base: 2, md: 3 }}>
+                noOfLines={{ base: 2, md: 3 }}
+              >
                 Transparency Dashboard
               </Heading>
 
@@ -443,7 +457,8 @@ function TransparencyDashboard() {
                 maxW={{ base: '95%', sm: '85%', lg: '60%' }}
                 lineHeight={{ base: '1.6', md: '1.7' }}
                 textAlign="center"
-                px={{ base: 2, sm: 0 }}>
+                px={{ base: 2, sm: 0 }}
+              >
                 Monitor and improve transparency for {establishment?.name || 'Loading...'}
               </Text>
             </VStack>
@@ -454,13 +469,15 @@ function TransparencyDashboard() {
               spacing={{ base: 4, sm: 6, md: 6 }}
               w="full"
               maxW="2xl"
-              px={{ base: 2, sm: 0 }}>
+              px={{ base: 2, sm: 0 }}
+            >
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
                   size={{ base: '60px', sm: '50px' }}
                   bg="green.100"
                   color="green.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaLeaf} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -478,7 +495,8 @@ function TransparencyDashboard() {
                   size={{ base: '60px', sm: '50px' }}
                   bg="blue.100"
                   color="blue.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaCertificate} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -496,7 +514,8 @@ function TransparencyDashboard() {
                   size={{ base: '60px', sm: '50px' }}
                   bg="purple.100"
                   color="purple.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaPhotoVideo} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -514,7 +533,8 @@ function TransparencyDashboard() {
                   size={{ base: '60px', sm: '50px' }}
                   bg="orange.100"
                   color="orange.600"
-                  cursor="default">
+                  cursor="default"
+                >
                   <Icon as={FaDatabase} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
@@ -538,7 +558,8 @@ function TransparencyDashboard() {
         mb={{ base: '60px', md: '80px' }}
         mt="-60px"
         position="relative"
-        zIndex={10}>
+        zIndex={10}
+      >
         <Card
           w={{ base: '100%', sm: '98%', md: '95%', lg: '90%', xl: '85%' }}
           p={cardPadding}
@@ -549,7 +570,8 @@ function TransparencyDashboard() {
           borderRadius={mobileCardRadius}
           bg={bgColor}
           mx={{ base: 1, sm: 'auto' }}
-          position="relative">
+          position="relative"
+        >
           {/* Header - EXACT SAME as ProfileEstablishment */}
           <CardHeader mb={{ base: '16px', md: '24px' }} position="relative">
             <VStack spacing={{ base: 4, md: 3 }} align="stretch">
@@ -557,13 +579,15 @@ function TransparencyDashboard() {
                 align="center"
                 justify="space-between"
                 flexWrap={{ base: 'wrap', md: 'nowrap' }}
-                gap={{ base: 3, md: 4 }}>
+                gap={{ base: 3, md: 4 }}
+              >
                 <Heading
                   color={textColor}
                   fontSize={headingSize}
                   fontWeight="bold"
                   textAlign={{ base: 'center', md: 'left' }}
-                  flex="1">
+                  flex="1"
+                >
                   Transparency Analytics & Action Center
                 </Heading>
               </Flex>
@@ -617,7 +641,8 @@ function TransparencyDashboard() {
                     border="1px solid"
                     borderColor="purple.100"
                     bg="purple.25"
-                    borderRadius="xl">
+                    borderRadius="xl"
+                  >
                     <CardBody p={4}>
                       <VStack spacing={3} align="stretch">
                         <HStack justify="space-between">
@@ -651,7 +676,8 @@ function TransparencyDashboard() {
                     border="1px solid"
                     borderColor="orange.100"
                     bg="orange.25"
-                    borderRadius="xl">
+                    borderRadius="xl"
+                  >
                     <CardBody p={4}>
                       <VStack spacing={3} align="stretch">
                         <HStack justify="space-between">
@@ -698,7 +724,8 @@ function TransparencyDashboard() {
                         borderLeftColor="orange.400"
                         borderRadius="lg"
                         transition="all 0.2s"
-                        _hover={{ bg: 'orange.75', borderLeftColor: 'orange.500' }}>
+                        _hover={{ bg: 'orange.75', borderLeftColor: 'orange.500' }}
+                      >
                         <CardBody p={4}>
                           <VStack align="stretch" spacing={3}>
                             <HStack justify="space-between">
@@ -710,7 +737,8 @@ function TransparencyDashboard() {
                                     ? 'orange'
                                     : 'yellow'
                                 }
-                                variant="solid">
+                                variant="solid"
+                              >
                                 {(opportunity.priority || 'medium') === 'high'
                                   ? 'URGENT'
                                   : (opportunity.priority || 'medium') === 'medium'
@@ -755,7 +783,8 @@ function TransparencyDashboard() {
                                 colorScheme="orange"
                                 variant="solid"
                                 leftIcon={<FaEdit />}
-                                onClick={() => navigate(generateEditUrl(opportunity))}>
+                                onClick={() => navigate(generateEditUrl(opportunity))}
+                              >
                                 Edit
                               </Button>
                             </HStack>
@@ -778,7 +807,8 @@ function TransparencyDashboard() {
                       bg="green.50"
                       border="1px solid"
                       borderColor="green.100"
-                      borderRadius="xl">
+                      borderRadius="xl"
+                    >
                       <CardBody p={4} textAlign="center">
                         <VStack spacing={2}>
                           <Icon as={FaLeaf} color="green.500" boxSize={6} />
@@ -810,7 +840,8 @@ function TransparencyDashboard() {
                       bg="purple.50"
                       border="1px solid"
                       borderColor="purple.100"
-                      borderRadius="xl">
+                      borderRadius="xl"
+                    >
                       <CardBody p={4} textAlign="center">
                         <VStack spacing={2}>
                           <Icon as={FaChartLine} color="purple.500" boxSize={6} />
@@ -837,17 +868,32 @@ function TransparencyDashboard() {
                 </Heading>
 
                 <Text fontSize="md" color={textColor} mb={4} lineHeight="1.6">
-                  Your {Math.round(actualTransparencyScore * 100)}% transparency score helps consumers understand your farming practices. 
-                  Transparent farms see <Text as="span" fontWeight="bold" color="green.600">23% higher consumer engagement</Text> and 
-                  <Text as="span" fontWeight="bold" color="green.600"> stronger market trust</Text>.
+                  Your {Math.round(actualTransparencyScore * 100)}% transparency score helps
+                  consumers understand your farming practices. Transparent farms see{' '}
+                  <Text as="span" fontWeight="bold" color="green.600">
+                    23% higher consumer engagement
+                  </Text>{' '}
+                  and
+                  <Text as="span" fontWeight="bold" color="green.600">
+                    {' '}
+                    stronger market trust
+                  </Text>
+                  .
                 </Text>
-                
+
                 <Text fontSize="sm" color="gray.600" mb={6} lineHeight="1.5">
-                  Trazo showcases your existing farming practices to build consumer confidence in your agricultural methods.
+                  Trazo showcases your existing farming practices to build consumer confidence in
+                  your agricultural methods.
                 </Text>
 
                 {/* Active Productions Section */}
-                <Card bg="white" border="2px solid" borderColor="green.200" borderRadius="xl" mb={6}>
+                <Card
+                  bg="white"
+                  border="2px solid"
+                  borderColor="green.200"
+                  borderRadius="xl"
+                  mb={6}
+                >
                   <CardHeader pb={4}>
                     <HStack spacing={3}>
                       <Icon as={FaEye} color="green.500" boxSize={6} />
@@ -865,14 +911,20 @@ function TransparencyDashboard() {
                     {isProductionsLoading ? (
                       <VStack spacing={4} py={8}>
                         <Spinner size="lg" color="green.500" />
-                        <Text fontSize="sm" color="gray.600">Loading productions...</Text>
+                        <Text fontSize="sm" color="gray.600">
+                          Loading productions...
+                        </Text>
                       </VStack>
                     ) : productionsError ? (
                       <Alert status="error" borderRadius="md">
                         <AlertIcon />
                         <VStack align="start" spacing={1}>
-                          <Text fontSize="sm" fontWeight="semibold">Failed to load productions</Text>
-                          <Text fontSize="xs" color="gray.600">Please try refreshing the page</Text>
+                          <Text fontSize="sm" fontWeight="semibold">
+                            Failed to load productions
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            Please try refreshing the page
+                          </Text>
                         </VStack>
                       </Alert>
                     ) : productions.length === 0 ? (
@@ -902,33 +954,38 @@ function TransparencyDashboard() {
                           </Thead>
                           <Tbody>
                             {productions.map((production: any) => (
-                              <Tr 
+                              <Tr
                                 key={production.id}
-                                bg={production.finish_date ? "gray.50" : "green.50"}
-                                borderLeft={production.finish_date ? "4px solid" : "4px solid"}
-                                borderLeftColor={production.finish_date ? "gray.300" : "green.400"}
+                                bg={production.finish_date ? 'gray.50' : 'green.50'}
+                                borderLeft={production.finish_date ? '4px solid' : '4px solid'}
+                                borderLeftColor={production.finish_date ? 'gray.300' : 'green.400'}
                                 _hover={{
-                                  bg: production.finish_date ? "gray.100" : "green.100"
+                                  bg: production.finish_date ? 'gray.100' : 'green.100'
                                 }}
                               >
                                 <Td>
                                   <VStack align="start" spacing={1}>
-                                    <Text fontWeight="semibold" fontSize="sm">{production.name}</Text>
-                                    <Text fontSize="xs" color="gray.500">ID: {production.id}</Text>
+                                    <Text fontWeight="semibold" fontSize="sm">
+                                      {production.name}
+                                    </Text>
+                                    <Text fontSize="xs" color="gray.500">
+                                      ID: {production.id}
+                                    </Text>
                                   </VStack>
                                 </Td>
                                 <Td>
                                   <VStack align="start" spacing={1}>
-                                    <Badge 
-                                      colorScheme={production.finish_date ? "gray" : "green"} 
+                                    <Badge
+                                      colorScheme={production.finish_date ? 'gray' : 'green'}
                                       size="sm"
-                                      variant={production.finish_date ? "subtle" : "solid"}
+                                      variant={production.finish_date ? 'subtle' : 'solid'}
                                     >
-                                      {production.finish_date ? "Completed" : "Active Production"}
+                                      {production.finish_date ? 'Completed' : 'Active Production'}
                                     </Badge>
                                     {production.finish_date ? (
                                       <Text fontSize="xs" color="gray.500">
-                                        Ended: {new Date(production.finish_date).toLocaleDateString()}
+                                        Ended:{' '}
+                                        {new Date(production.finish_date).toLocaleDateString()}
                                       </Text>
                                     ) : (
                                       <Text fontSize="xs" color="green.600" fontWeight="medium">
@@ -940,21 +997,39 @@ function TransparencyDashboard() {
                                 <Td>
                                   <VStack align="start" spacing={1}>
                                     <HStack spacing={1}>
-                                      <Text fontSize="sm" fontWeight="semibold" color={
-                                        production.transparency_score >= 80 ? "green.600" :
-                                        production.transparency_score >= 60 ? "yellow.600" : "red.500"
-                                      }>
+                                      <Text
+                                        fontSize="sm"
+                                        fontWeight="semibold"
+                                        color={
+                                          production.transparency_score >= 80
+                                            ? 'green.600'
+                                            : production.transparency_score >= 60
+                                            ? 'yellow.600'
+                                            : 'red.500'
+                                        }
+                                      >
                                         {production.transparency_score || 0}%
                                       </Text>
-                                      <Icon as={FaLeaf} boxSize={3} color={
-                                        production.transparency_score >= 80 ? "green.500" :
-                                        production.transparency_score >= 60 ? "yellow.500" : "red.400"
-                                      } />
+                                      <Icon
+                                        as={FaLeaf}
+                                        boxSize={3}
+                                        color={
+                                          production.transparency_score >= 80
+                                            ? 'green.500'
+                                            : production.transparency_score >= 60
+                                            ? 'yellow.500'
+                                            : 'red.400'
+                                        }
+                                      />
                                     </HStack>
                                     <Text fontSize="xs" color="gray.500">
-                                      {production.transparency_score >= 80 ? "Excellent" :
-                                       production.transparency_score >= 60 ? "Good" : 
-                                       production.transparency_score > 0 ? "Needs Improvement" : "No Data"}
+                                      {production.transparency_score >= 80
+                                        ? 'Excellent'
+                                        : production.transparency_score >= 60
+                                        ? 'Good'
+                                        : production.transparency_score > 0
+                                        ? 'Needs Improvement'
+                                        : 'No Data'}
                                     </Text>
                                   </VStack>
                                 </Td>
@@ -964,12 +1039,16 @@ function TransparencyDashboard() {
                                       <Text fontSize="sm" fontWeight="semibold" color="gray.700">
                                         {production.carbon_footprint || 0}
                                       </Text>
-                                      <Text fontSize="xs" color="gray.500">kg CO₂e</Text>
+                                      <Text fontSize="xs" color="gray.500">
+                                        kg CO₂e
+                                      </Text>
                                     </HStack>
                                     <Text fontSize="xs" color="gray.500">
-                                      {production.carbon_footprint > 0 ? 
-                                        (production.finish_date ? "Final" : "Estimated") : 
-                                        "Calculating..."}
+                                      {production.carbon_footprint > 0
+                                        ? production.finish_date
+                                          ? 'Final'
+                                          : 'Estimated'
+                                        : 'Calculating...'}
                                     </Text>
                                   </VStack>
                                 </Td>
@@ -980,11 +1059,13 @@ function TransparencyDashboard() {
                                 </Td>
                                 <Td>
                                   <HStack spacing={2}>
-                                    <Switch 
-                                      colorScheme="green" 
+                                    <Switch
+                                      colorScheme="green"
                                       isChecked={production.published}
-                                      onChange={() => handleToggleProduction(production.id, production.published)}
-                                      size="sm" 
+                                      onChange={() =>
+                                        handleToggleProduction(production.id, production.published)
+                                      }
+                                      size="sm"
                                     />
                                     <Tooltip label="View Consumer Page">
                                       <Button
@@ -992,7 +1073,12 @@ function TransparencyDashboard() {
                                         colorScheme="blue"
                                         variant="ghost"
                                         leftIcon={<FaExternalLinkAlt />}
-                                        onClick={() => window.open(`http://consumer.localhost:3000/production/${production.id}`, '_blank')}
+                                        onClick={() =>
+                                          window.open(
+                                            `http://consumer.localhost:3000/production/${production.id}`,
+                                            '_blank'
+                                          )
+                                        }
                                       >
                                         View QR
                                       </Button>
@@ -1010,10 +1096,10 @@ function TransparencyDashboard() {
 
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
                   {/* Transparency Insights */}
-                  <Card 
-                    bg="gradient-to-br from-green.50 to-green.100" 
-                    border="2px solid" 
-                    borderColor="green.200" 
+                  <Card
+                    bg="gradient-to-br from-green.50 to-green.100"
+                    border="2px solid"
+                    borderColor="green.200"
                     borderRadius="xl"
                     boxShadow="md"
                     position="relative"
@@ -1030,28 +1116,50 @@ function TransparencyDashboard() {
                               </Text>
                             </HStack>
                             <Text fontSize="sm" color="green.700" lineHeight="1.5">
-                              Your {Math.round(actualTransparencyScore * 100)}% transparency helps consumers see how their food is grown
+                              Your {Math.round(actualTransparencyScore * 100)}% transparency helps
+                              consumers see how their food is grown
                             </Text>
                           </VStack>
                           <Badge colorScheme="green" fontSize="xs" px={2} py={1}>
                             {Math.round(actualTransparencyScore * 100)}%
                           </Badge>
                         </HStack>
-                        
+
                         <VStack spacing={3} align="stretch">
-                          <Box bg="white" p={3} borderRadius="lg" border="1px solid" borderColor="green.200">
+                          <Box
+                            bg="white"
+                            p={3}
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor="green.200"
+                          >
                             <HStack justify="space-between">
-                              <Text fontSize="xs" color="gray.600">Consumer Engagement</Text>
+                              <Text fontSize="xs" color="gray.600">
+                                Consumer Engagement
+                              </Text>
                               <Text fontSize="xs" fontWeight="semibold" color="green.600">
-                                +{(dashboardData?.transparency_metrics as any)?.transparency_analytics?.consumer_engagement_boost || 0}% higher
+                                +
+                                {(dashboardData?.transparency_metrics as any)
+                                  ?.transparency_analytics?.consumer_engagement_boost || 0}
+                                % higher
                               </Text>
                             </HStack>
                           </Box>
-                          <Box bg="white" p={3} borderRadius="lg" border="1px solid" borderColor="green.200">
+                          <Box
+                            bg="white"
+                            p={3}
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor="green.200"
+                          >
                             <HStack justify="space-between">
-                              <Text fontSize="xs" color="gray.600">Market Trust Score</Text>
+                              <Text fontSize="xs" color="gray.600">
+                                Market Trust Score
+                              </Text>
                               <Text fontSize="xs" fontWeight="semibold" color="green.600">
-                                {(dashboardData?.transparency_metrics as any)?.transparency_analytics?.market_trust_score || 0}/100
+                                {(dashboardData?.transparency_metrics as any)
+                                  ?.transparency_analytics?.market_trust_score || 0}
+                                /100
                               </Text>
                             </HStack>
                           </Box>
@@ -1072,10 +1180,10 @@ function TransparencyDashboard() {
                   </Card>
 
                   {/* Production Performance */}
-                  <Card 
-                    bg="gradient-to-br from-blue.50 to-blue.100" 
-                    border="2px solid" 
-                    borderColor="blue.200" 
+                  <Card
+                    bg="gradient-to-br from-blue.50 to-blue.100"
+                    border="2px solid"
+                    borderColor="blue.200"
                     borderRadius="xl"
                     boxShadow="md"
                     position="relative"
@@ -1092,29 +1200,50 @@ function TransparencyDashboard() {
                               </Text>
                             </HStack>
                             <Text fontSize="sm" color="blue.700" lineHeight="1.5">
-                              {totalProductions} production{totalProductions !== 1 ? 's' : ''} documented this season
+                              {totalProductions} production{totalProductions !== 1 ? 's' : ''}{' '}
+                              documented this season
                             </Text>
                           </VStack>
                           <Badge colorScheme="blue" fontSize="xs" px={2} py={1}>
                             {totalProductions} Total
                           </Badge>
                         </HStack>
-                        
+
                         <VStack spacing={3} align="stretch">
-                          <Box bg="white" p={3} borderRadius="lg" border="1px solid" borderColor="blue.200">
+                          <Box
+                            bg="white"
+                            p={3}
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor="blue.200"
+                          >
                             <HStack justify="space-between">
-                              <Text fontSize="xs" color="gray.600">Average Carbon Score</Text>
+                              <Text fontSize="xs" color="gray.600">
+                                Average Carbon Score
+                              </Text>
                               <Text fontSize="xs" fontWeight="semibold" color="blue.600">
-                                {productions.length > 0 ? 
-                                  `${(productions.reduce((sum: number, p: any) => sum + (p.carbon_footprint || 0), 0) / productions.length).toFixed(1)} kg CO₂e` : 
-                                  'Calculating...'
-                                }
+                                {productions.length > 0
+                                  ? `${(
+                                      productions.reduce(
+                                        (sum: number, p: any) => sum + (p.carbon_footprint || 0),
+                                        0
+                                      ) / productions.length
+                                    ).toFixed(1)} kg CO₂e`
+                                  : 'Calculating...'}
                               </Text>
                             </HStack>
                           </Box>
-                          <Box bg="white" p={3} borderRadius="lg" border="1px solid" borderColor="blue.200">
+                          <Box
+                            bg="white"
+                            p={3}
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor="blue.200"
+                          >
                             <HStack justify="space-between">
-                              <Text fontSize="xs" color="gray.600">Documentation Rate</Text>
+                              <Text fontSize="xs" color="gray.600">
+                                Documentation Rate
+                              </Text>
                               <Text fontSize="xs" fontWeight="semibold" color="blue.600">
                                 {Math.round(actualTransparencyScore * 100)}% Complete
                               </Text>
@@ -1127,7 +1256,12 @@ function TransparencyDashboard() {
                           colorScheme="blue"
                           variant="solid"
                           rightIcon={<FaArrowRight />}
-                          onClick={() => window.open(`http://consumer.localhost:3000/production/${productions[0]?.id}`, '_blank')}
+                          onClick={() =>
+                            window.open(
+                              `http://consumer.localhost:3000/production/${productions[0]?.id}`,
+                              '_blank'
+                            )
+                          }
                           isDisabled={!productions.length}
                           _hover={{ transform: 'translateY(-1px)', boxShadow: 'lg' }}
                         >
@@ -1138,10 +1272,10 @@ function TransparencyDashboard() {
                   </Card>
 
                   {/* Next Steps */}
-                  <Card 
-                    bg="gradient-to-br from-purple.50 to-purple.100" 
-                    border="2px solid" 
-                    borderColor="purple.200" 
+                  <Card
+                    bg="gradient-to-br from-purple.50 to-purple.100"
+                    border="2px solid"
+                    borderColor="purple.200"
                     borderRadius="xl"
                     boxShadow="md"
                     position="relative"
@@ -1158,40 +1292,77 @@ function TransparencyDashboard() {
                               </Text>
                             </HStack>
                             <Text fontSize="sm" color="purple.700" lineHeight="1.5">
-                              {actualTransparencyScore < 0.3 ? 
-                                'Document more agricultural events to build trust' :
-                                actualTransparencyScore < 0.7 ?
-                                'Add photos and details to boost transparency' :
-                                'Optimize consumer experience and market reach'
-                              }
+                              {actualTransparencyScore < 0.3
+                                ? 'Document more agricultural events to build trust'
+                                : actualTransparencyScore < 0.7
+                                ? 'Add photos and details to boost transparency'
+                                : 'Optimize consumer experience and market reach'}
                             </Text>
                           </VStack>
-                          <Badge 
-                            colorScheme={actualTransparencyScore < 0.3 ? "red" : actualTransparencyScore < 0.7 ? "yellow" : "green"} 
-                            fontSize="xs" px={2} py={1}
+                          <Badge
+                            colorScheme={
+                              actualTransparencyScore < 0.3
+                                ? 'red'
+                                : actualTransparencyScore < 0.7
+                                ? 'yellow'
+                                : 'green'
+                            }
+                            fontSize="xs"
+                            px={2}
+                            py={1}
                           >
-                            {actualTransparencyScore < 0.3 ? "Priority" : actualTransparencyScore < 0.7 ? "Medium" : "Optimized"}
+                            {actualTransparencyScore < 0.3
+                              ? 'Priority'
+                              : actualTransparencyScore < 0.7
+                              ? 'Medium'
+                              : 'Optimized'}
                           </Badge>
                         </HStack>
-                        
+
                         <VStack spacing={3} align="stretch">
-                          <Box bg="white" p={3} borderRadius="lg" border="1px solid" borderColor="purple.200">
+                          <Box
+                            bg="white"
+                            p={3}
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor="purple.200"
+                          >
                             <HStack justify="space-between">
-                              <Text fontSize="xs" color="gray.600">Recommended Action</Text>
+                              <Text fontSize="xs" color="gray.600">
+                                Recommended Action
+                              </Text>
                               <Text fontSize="xs" fontWeight="semibold" color="purple.600">
-                                {(dashboardData?.transparency_metrics as any)?.transparency_analytics?.recommended_action || 
-                                  (actualTransparencyScore < 0.3 ? 'Add 3+ events' : 
-                                   actualTransparencyScore < 0.7 ? 'Upload photos' : 'Share QR codes')
-                                }
+                                {(dashboardData?.transparency_metrics as any)
+                                  ?.transparency_analytics?.recommended_action ||
+                                  (actualTransparencyScore < 0.3
+                                    ? 'Add 3+ events'
+                                    : actualTransparencyScore < 0.7
+                                    ? 'Upload photos'
+                                    : 'Share QR codes')}
                               </Text>
                             </HStack>
                           </Box>
-                          <Box bg="white" p={3} borderRadius="lg" border="1px solid" borderColor="purple.200">
+                          <Box
+                            bg="white"
+                            p={3}
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor="purple.200"
+                          >
                             <HStack justify="space-between">
-                              <Text fontSize="xs" color="gray.600">Potential Impact</Text>
+                              <Text fontSize="xs" color="gray.600">
+                                Potential Impact
+                              </Text>
                               <Text fontSize="xs" fontWeight="semibold" color="purple.600">
-                                +{(dashboardData?.transparency_metrics as any)?.transparency_analytics?.potential_impact || 
-                                   (actualTransparencyScore < 0.3 ? '30' : actualTransparencyScore < 0.7 ? '20' : '10')}% transparency
+                                +
+                                {(dashboardData?.transparency_metrics as any)
+                                  ?.transparency_analytics?.potential_impact ||
+                                  (actualTransparencyScore < 0.3
+                                    ? '30'
+                                    : actualTransparencyScore < 0.7
+                                    ? '20'
+                                    : '10')}
+                                % transparency
                               </Text>
                             </HStack>
                           </Box>
@@ -1221,9 +1392,12 @@ function TransparencyDashboard() {
                 {/* Transparency Information */}
                 <Box mt={6} p={4} bg="gray.50" borderRadius="xl">
                   <Text fontSize="sm" color="gray.700" lineHeight="1.6" textAlign="center">
-                    <Text as="span" fontWeight="bold">Trazo showcases your existing farming practices</Text> to help consumers 
-                    understand how their food is grown. The transparency score reflects how well your current agricultural 
-                    information is documented and verified for consumer confidence.
+                    <Text as="span" fontWeight="bold">
+                      Trazo showcases your existing farming practices
+                    </Text>{' '}
+                    to help consumers understand how their food is grown. The transparency score
+                    reflects how well your current agricultural information is documented and
+                    verified for consumer confidence.
                   </Text>
                 </Box>
               </Box>
@@ -1231,7 +1405,6 @@ function TransparencyDashboard() {
           </CardBody>
         </Card>
       </Flex>
-
     </Flex>
   );
 }

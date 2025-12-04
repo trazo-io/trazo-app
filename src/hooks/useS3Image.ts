@@ -27,7 +27,7 @@ export interface UseS3ImageResult {
 
 /**
  * Hook for handling S3 image URLs with automatic presigned URL conversion
- * 
+ *
  * @param imageUrl - The image URL (S3 or regular)
  * @param options - Configuration options
  * @returns Object with display URL and loading state
@@ -36,20 +36,15 @@ export const useS3Image = (
   imageUrl: string | null | undefined,
   options: UseS3ImageOptions = {}
 ): UseS3ImageResult => {
-  const { 
-    autoFetch = true, 
-    fallbackUrl = '/images/placeholder.jpg' 
-  } = options;
+  const { autoFetch = true, fallbackUrl = '/images/placeholder.jpg' } = options;
 
   const [displayUrl, setDisplayUrl] = useState<string>(imageUrl || fallbackUrl);
-  
+
   const [getPresignedUrl, { data, isLoading, error }] = useLazyGetPresignedReadUrlQuery();
 
   // Check if URL needs presigning
   const needsPresigning = Boolean(
-    imageUrl && 
-    S3_BUCKET_PATTERN.test(imageUrl) && 
-    !PRESIGNED_URL_PATTERN.test(imageUrl)
+    imageUrl && S3_BUCKET_PATTERN.test(imageUrl) && !PRESIGNED_URL_PATTERN.test(imageUrl)
   );
 
   // Auto-fetch presigned URL if needed

@@ -53,9 +53,9 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
   );
 };
 
-export const ProductMainCard: React.FC<ProductMainCardProps> = ({ 
-  completeData, 
-  onAuthRequired 
+export const ProductMainCard: React.FC<ProductMainCardProps> = ({
+  completeData,
+  onAuthRequired
 }) => {
   const textColor = useColorModeValue('gray.800', 'white');
   const headerFontSize = { base: 'xl', sm: '2xl', md: '3xl' };
@@ -74,7 +74,8 @@ export const ProductMainCard: React.FC<ProductMainCardProps> = ({
       mt={{ base: '-60px', md: '-80px' }}
       position="relative"
       zIndex={10}
-      px={{ base: 2, md: 0 }}>
+      px={{ base: 2, md: 0 }}
+    >
       <Card
         w={{ base: '98%', sm: '96%', md: '90%', lg: '85%' }}
         p={{ base: '16px', sm: '20px', md: '32px', lg: '48px' }}
@@ -84,8 +85,8 @@ export const ProductMainCard: React.FC<ProductMainCardProps> = ({
         }}
         borderRadius={{ base: 'xl', md: '2xl' }}
         bg={useColorModeValue('white', 'gray.800')}
-        overflow="hidden">
-        
+        overflow="hidden"
+      >
         <CardHeader mb={{ base: '16px', md: '24px' }} pb={{ base: 2, md: 4 }}>
           <VStack spacing={3} w="full">
             <Heading
@@ -93,12 +94,13 @@ export const ProductMainCard: React.FC<ProductMainCardProps> = ({
               fontSize={headerFontSize}
               fontWeight="bold"
               noOfLines={2}
-              textAlign="start">
+              textAlign="start"
+            >
               {(completeData as any)?.product?.name ||
                 (completeData as any)?.farmer?.name ||
                 'Product'}
             </Heading>
-            
+
             <HStack>
               <VStack spacing={{ base: 2, md: 4 }} align="start" w="full">
                 <StarRating rating={safeReputation} />
@@ -119,7 +121,8 @@ export const ProductMainCard: React.FC<ProductMainCardProps> = ({
                       color="green.500"
                       fontWeight="medium"
                       fontSize={{ base: 'sm', md: 'md' }}
-                      noOfLines={2}>
+                      noOfLines={2}
+                    >
                       Greener than {completeData.industryPercentile}% of similar products
                     </Text>
                   </HStack>
@@ -132,7 +135,8 @@ export const ProductMainCard: React.FC<ProductMainCardProps> = ({
           <SimpleGrid
             columns={{ base: 1, lg: 2 }}
             spacing={{ base: 6, md: 8 }}
-            mb={{ base: 6, md: 10 }}>
+            mb={{ base: 6, md: 10 }}
+          >
             <Box>
               {/* Product Images */}
               <Box mb={6}>

@@ -54,36 +54,36 @@ export const globalStyles = {
   colors: {
     // Trazo Primary Color System
     trazo: {
-      forest: '#2E7D32',      // Primary brand color - premium forest green
-      emerald: '#059669',     // Growth and sustainability
-      deep: '#1B5E20',        // Professional enterprise
-      light: '#81C784'        // Light accent
+      forest: '#2E7D32', // Primary brand color - premium forest green
+      emerald: '#059669', // Growth and sustainability
+      deep: '#1B5E20', // Professional enterprise
+      light: '#81C784' // Light accent
     },
     // Trazo Professional Clean Green Scale - 2025
     green: {
-      50: '#F8FDF9',          // Ultra light sage
-      100: '#E8F5E8',         // Very light sage background
-      200: '#C8E6C8',         // Light sage
-      300: '#A5D6A5',         // Soft sage accent
-      400: '#81C784',         // Modern sage green
-      500: '#4CAF50',         // Clean professional green (PRIMARY)
-      600: '#388E3C',         // Deeper professional green
-      700: '#2E7D32',         // Forest green
-      800: '#1B5E20',         // Dark forest
-      900: '#0D3D0F'          // Deepest forest
+      50: '#F8FDF9', // Ultra light sage
+      100: '#E8F5E8', // Very light sage background
+      200: '#C8E6C8', // Light sage
+      300: '#A5D6A5', // Soft sage accent
+      400: '#81C784', // Modern sage green
+      500: '#4CAF50', // Clean professional green (PRIMARY)
+      600: '#388E3C', // Deeper professional green
+      700: '#2E7D32', // Forest green
+      800: '#1B5E20', // Dark forest
+      900: '#0D3D0F' // Deepest forest
     },
     // Professional Neutral Scale
     gray: {
       50: '#FAFAFA',
-      100: '#F8F9FA',         // Light backgrounds
-      200: '#E0E0E0',         // Borders
+      100: '#F8F9FA', // Light backgrounds
+      200: '#E0E0E0', // Borders
       300: '#BDBDBD',
       400: '#9E9E9E',
       500: '#757575',
       600: '#616161',
-      700: '#424242',         // Body text
+      700: '#424242', // Body text
       800: '#303030',
-      900: '#1A1A1A'          // Headings
+      900: '#1A1A1A' // Headings
     },
     // Accent Colors
     amber: {
@@ -92,7 +92,7 @@ export const globalStyles = {
       200: '#FFE082',
       300: '#FFD54F',
       400: '#FFCA28',
-      500: '#FF9800',         // Primary accent
+      500: '#FF9800', // Primary accent
       600: '#FB8C00',
       700: '#F57C00',
       800: '#EF6C00',
@@ -105,7 +105,7 @@ export const globalStyles = {
       200: '#EF9A9A',
       300: '#E57373',
       400: '#EF5350',
-      500: '#F44336',         // Error color
+      500: '#F44336', // Error color
       600: '#E53935',
       700: '#D32F2F',
       800: '#C62828',
@@ -117,7 +117,7 @@ export const globalStyles = {
       200: '#90CAF9',
       300: '#64B5F6',
       400: '#42A5F5',
-      500: '#2196F3',         // Info color
+      500: '#2196F3', // Info color
       600: '#1E88E5',
       700: '#1976D2',
       800: '#1565C0',

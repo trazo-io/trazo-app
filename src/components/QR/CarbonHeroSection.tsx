@@ -206,7 +206,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     if (score >= 95) {
       return {
         primary: '🌟 Open Book Farm',
-        secondary: 'This farmer shares their complete growing story - from seed to harvest, you can see it all',
+        secondary:
+          'This farmer shares their complete growing story - from seed to harvest, you can see it all',
         action: 'Discover every step of how your food was grown'
       };
     }
@@ -251,7 +252,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     if (score >= 80) {
       return {
         primary: '🌱 Sustainable Farming Practices',
-        secondary: 'This farm demonstrates excellent environmental stewardship with documented sustainable practices',
+        secondary:
+          'This farm demonstrates excellent environmental stewardship with documented sustainable practices',
         action: 'Learn about the specific farming methods used'
       };
     }
@@ -265,7 +267,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     if (score >= 40) {
       return {
         primary: '🌾 Standard Environmental Practices',
-        secondary: 'This farm meets environmental standards and provides transparency about their methods',
+        secondary:
+          'This farm meets environmental standards and provides transparency about their methods',
         action: 'Explore the farming methods documented'
       };
     }
@@ -305,8 +308,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     // In transparency mode, show transparency-related information instead of carbon comparisons
     if (carbonData?.level === 'transparency') {
       const score = carbonData.score || 0;
-      const eventCount = Math.round(score / 100 * 15); // Approximate events based on score
-      
+      const eventCount = Math.round((score / 100) * 15); // Approximate events based on score
+
       if (score >= 95) {
         return {
           icon: BsShieldCheck,
@@ -369,7 +372,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
         minH={heroHeight}
         bg={`linear-gradient(135deg, ${successColor}15 0%, ${successColor}05 100%)`}
         p={spacing}
-        position="relative">
+        position="relative"
+      >
         <Container maxW="container.md" py={spacing}>
           <VStack spacing={6} align="center" textAlign="center">
             <SkeletonCircle size={scoreSize} />
@@ -395,7 +399,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
         p={spacing}
         display="flex"
         alignItems="center"
-        justifyContent="center">
+        justifyContent="center"
+      >
         <VStack spacing={4} textAlign="center">
           <Icon as={FaInfoCircle} boxSize={12} color={mutedColor} />
           <Text fontSize="lg" color={mutedColor}>
@@ -420,7 +425,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
       bg={`linear-gradient(135deg, ${getScoreColor(score)}15 0%, ${getScoreColor(score)}05 100%)`}
       position="relative"
       pt="145px"
-      overflow="hidden">
+      overflow="hidden"
+    >
       {/* Background pattern */}
       <Box
         position="absolute"
@@ -442,14 +448,16 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
             textAlign="center"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}>
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          >
             {/* Product name and company */}
             {productData && (
               <MotionVStack
                 spacing={2}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: visibleElements >= 1 ? 1 : 0, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.6 }}>
+                transition={{ delay: 0.1, duration: 0.6 }}
+              >
                 <Text fontSize={fontSize} fontWeight="bold" color={textColor}>
                   {productData.name}
                 </Text>
@@ -463,51 +471,59 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
             <MotionBox
               pt="20px"
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: visibleElements >= 2 ? 1 : 0, scale: visibleElements >= 2 ? 1 : 0.8 }}
+              animate={{
+                opacity: visibleElements >= 2 ? 1 : 0,
+                scale: visibleElements >= 2 ? 1 : 0.8
+              }}
               transition={{ delay: 0.2, duration: 0.8, type: 'spring', bounce: 0.3 }}
-              position="relative">
-                <Circle
-                  size={scoreSize}
-                  bg={bgColor}
-                  borderWidth="8px"
-                  borderColor={getScoreColor(score)}
-                  boxShadow="xl"
-                  animation={`${scoreGlow} 3s ease-in-out infinite`}
-                  position="relative">
-                  <VStack spacing={0}>
-                    <Text
-                      fontSize={{ base: '3xl', md: '4xl' }}
-                      fontWeight="black"
-                      color={getScoreColor(score)}
-                      lineHeight="1">
-                      {Math.round(score)}
-                    </Text>
-                    <Text
-                      fontSize={{ base: 'sm', md: 'md' }}
-                      fontWeight="bold"
-                      color={textColor}
-                      lineHeight="1">
-                      {carbonData?.level === 'transparency' ? 'Transparency Score' : 'Carbon Score'}
-                    </Text>
-                  </VStack>
-
-                  {/* Grade badge */}
-                  <Badge
-                    position="absolute"
-                    top="-3"
-                    right="-3"
-                    colorScheme={grade.color}
-                    variant="solid"
-                    px={3}
-                    py={1}
-                    borderRadius="full"
-                    fontSize="sm"
+              position="relative"
+            >
+              <Circle
+                size={scoreSize}
+                bg={bgColor}
+                borderWidth="8px"
+                borderColor={getScoreColor(score)}
+                boxShadow="xl"
+                animation={`${scoreGlow} 3s ease-in-out infinite`}
+                position="relative"
+              >
+                <VStack spacing={0}>
+                  <Text
+                    fontSize={{ base: '3xl', md: '4xl' }}
+                    fontWeight="black"
+                    color={getScoreColor(score)}
+                    lineHeight="1"
+                  >
+                    {Math.round(score)}
+                  </Text>
+                  <Text
+                    fontSize={{ base: 'sm', md: 'md' }}
                     fontWeight="bold"
-                    boxShadow="md">
-                    {grade.grade}
-                  </Badge>
-                </Circle>
-              </MotionBox>
+                    color={textColor}
+                    lineHeight="1"
+                  >
+                    {carbonData?.level === 'transparency' ? 'Transparency Score' : 'Carbon Score'}
+                  </Text>
+                </VStack>
+
+                {/* Grade badge */}
+                <Badge
+                  position="absolute"
+                  top="-3"
+                  right="-3"
+                  colorScheme={grade.color}
+                  variant="solid"
+                  px={3}
+                  py={1}
+                  borderRadius="full"
+                  fontSize="sm"
+                  fontWeight="bold"
+                  boxShadow="md"
+                >
+                  {grade.grade}
+                </Badge>
+              </Circle>
+            </MotionBox>
 
             {/* Consumer-friendly message */}
             <MotionVStack
@@ -515,7 +531,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: visibleElements >= 3 ? 1 : 0, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              maxW="md">
+              maxW="md"
+            >
               <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color={successColor}>
                 {message.primary}
               </Text>
@@ -530,7 +547,10 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
             {/* Impact comparison */}
             <MotionBox
               initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: visibleElements >= 4 ? 1 : 0, scale: visibleElements >= 4 ? 1 : 0.9 }}
+              animate={{
+                opacity: visibleElements >= 4 ? 1 : 0,
+                scale: visibleElements >= 4 ? 1 : 0.9
+              }}
               transition={{ delay: 0.4, duration: 0.6 }}
               bg={cardBg}
               p={4}
@@ -538,7 +558,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               borderWidth="1px"
               borderColor={borderColor}
               maxW="sm"
-              w="full">
+              w="full"
+            >
               <HStack justify="center" spacing={3}>
                 <Circle size="40px" bg={`${comparison.color}20`}>
                   <Icon as={comparison.icon} color={comparison.color} boxSize={5} />
@@ -562,7 +583,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                 animate={{ opacity: visibleElements >= 5 ? 1 : 0, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
                 wrap="wrap"
-                justify="center">
+                justify="center"
+              >
                 {trustData.isUSDAVerified && (
                   <Badge
                     colorScheme="green"
@@ -571,7 +593,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                     py={2}
                     borderRadius="full"
                     fontSize="xs"
-                    animation={`${trustPulse} 2s ease-in-out infinite`}>
+                    animation={`${trustPulse} 2s ease-in-out infinite`}
+                  >
                     <HStack spacing={1}>
                       <Icon as={MdVerified} boxSize={3} />
                       <Text>USDA Verified</Text>
@@ -587,7 +610,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                     py={2}
                     borderRadius="full"
                     fontSize="xs"
-                    animation={`${trustPulse} 2.5s ease-in-out infinite`}>
+                    animation={`${trustPulse} 2.5s ease-in-out infinite`}
+                  >
                     <HStack spacing={1}>
                       <Icon as={BsShieldCheck} boxSize={3} />
                       <Text>Blockchain Verified</Text>
@@ -602,7 +626,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                     px={3}
                     py={2}
                     borderRadius="full"
-                    fontSize="xs">
+                    fontSize="xs"
+                  >
                     <HStack spacing={1}>
                       <Icon as={FaUsers} boxSize={3} />
                       <Text>{trustData.scansCount}+ scans</Text>
@@ -618,7 +643,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: visibleElements >= 5 ? 1 : 0, y: 0 }}
               transition={{ delay: 0.6, duration: 0.6 }}
-              pt={2}>
+              pt={2}
+            >
               <Button
                 colorScheme="green"
                 size="md"
@@ -630,7 +656,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                   transform: 'translateY(-2px)',
                   boxShadow: 'lg'
                 }}
-                transition="all 0.2s">
+                transition="all 0.2s"
+              >
                 Learn More
               </Button>
 
@@ -647,7 +674,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                     transform: 'translateY(-2px)',
                     boxShadow: 'lg'
                   }}
-                  transition="all 0.2s">
+                  transition="all 0.2s"
+                >
                   Trust Score: {trustScore}%
                 </Button>
               )}

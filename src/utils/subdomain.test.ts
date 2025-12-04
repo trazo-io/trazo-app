@@ -36,10 +36,10 @@ describe('getSubdomainType', () => {
   test('handles localhost development correctly', () => {
     const originalEnv = import.meta.env.VITE_APP_BASE_DOMAIN;
     import.meta.env.VITE_APP_BASE_DOMAIN = 'localhost';
-    
+
     expect(getSubdomainType('app.localhost:3000')).toBe('producer');
     expect(getSubdomainType('consumer.localhost:3000')).toBe('consumer');
-    
+
     import.meta.env.VITE_APP_BASE_DOMAIN = originalEnv;
   });
 });

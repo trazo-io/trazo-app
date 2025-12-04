@@ -186,7 +186,8 @@ const HistoryCard = ({ amount }) => {
       maxH={{ base: '650px', md: '700px' }}
       transition="all 0.3s ease"
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
-      className="trazo-card">
+      className="trazo-card"
+    >
       <CardHeader px={{ base: 4, md: 6 }} py={5}>
         <Flex direction="column" w="100%">
           {/* Header with divider */}
@@ -195,7 +196,8 @@ const HistoryCard = ({ amount }) => {
             justify="space-between"
             align={{ base: 'stretch', md: 'center' }}
             pb={4}
-            gap={{ base: 3, md: 0 }}>
+            gap={{ base: 3, md: 0 }}
+          >
             <HStack spacing={3} justify="flex-start">
               <Text fontSize="lg" color={textColor} fontWeight="600">
                 {intl.formatMessage({ id: 'app.productions' })}
@@ -211,7 +213,8 @@ const HistoryCard = ({ amount }) => {
                 textTransform="none"
                 w="fit-content"
                 border="1px solid"
-                borderColor="green.200">
+                borderColor="green.200"
+              >
                 Carbon Tracked
               </Badge>
             </HStack>
@@ -220,7 +223,8 @@ const HistoryCard = ({ amount }) => {
               direction={{ base: 'column', sm: 'row' }}
               align="center"
               gap={{ base: 2, sm: 3 }}
-              w={{ base: '100%', md: 'auto' }}>
+              w={{ base: '100%', md: 'auto' }}
+            >
               {/* Simple Controls - Hide on very small screens */}
               {data && data.length > 1 && !isMobile && (
                 <HStack spacing={1}>
@@ -282,7 +286,8 @@ const HistoryCard = ({ amount }) => {
                     navigate(
                       `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
                     )
-                  }>
+                  }
+                >
                   {isMobile ? 'New' : 'New Production'}
                 </Button>
               )}
@@ -299,7 +304,8 @@ const HistoryCard = ({ amount }) => {
               justify="space-between"
               pt={4}
               wrap="wrap"
-              gap={{ base: 2, sm: 4 }}>
+              gap={{ base: 2, sm: 4 }}
+            >
               <VStack spacing={1} flex="1" minW="60px">
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="green.500">
                   {productionStats.completed}
@@ -366,7 +372,8 @@ const HistoryCard = ({ amount }) => {
                     bg: 'green.600'
                   }
                 }
-              }}>
+              }}
+            >
               <VStack spacing={4} align="stretch" w="100%" py={3} pb={6}>
                 {(() => {
                   // Sort productions: ongoing first, then completed by most recent
@@ -620,7 +627,8 @@ const HistoryCard = ({ amount }) => {
                                   );
                                 }
                               }}
-                              className="trazo-card">
+                              className="trazo-card"
+                            >
                               <CardBody p={4}>
                                 <VStack align="stretch" spacing={3}>
                                   {/* Header Row - Production Info and Status */}
@@ -632,7 +640,8 @@ const HistoryCard = ({ amount }) => {
                                         borderRadius="lg"
                                         border="1px solid"
                                         borderColor={isCompleted ? 'green.200' : 'blue.200'}
-                                        flexShrink={0}>
+                                        flexShrink={0}
+                                      >
                                         <Icon
                                           as={isCompleted ? FaChartLine : FaClock}
                                           color={isCompleted ? 'green.500' : 'blue.500'}
@@ -644,7 +653,8 @@ const HistoryCard = ({ amount }) => {
                                           fontSize="sm"
                                           fontWeight="600"
                                           color={textColor}
-                                          noOfLines={1}>
+                                          noOfLines={1}
+                                        >
                                           {production.name ||
                                             `${production.product || 'Organic'} Production ${
                                               production.id
@@ -660,7 +670,8 @@ const HistoryCard = ({ amount }) => {
                                             px={2}
                                             py={1}
                                             textTransform="uppercase"
-                                            letterSpacing="wide">
+                                            letterSpacing="wide"
+                                          >
                                             {isCompleted ? 'Complete' : 'Ongoing'}
                                           </Badge>
                                           <Text fontSize="xs" color="gray.500" fontWeight="medium">
@@ -868,7 +879,8 @@ const HistoryCard = ({ amount }) => {
                                           borderRadius="md"
                                           px={2}
                                           py={1}
-                                          fontWeight="500">
+                                          fontWeight="500"
+                                        >
                                           <HStack spacing={1}>
                                             <Icon as={FaAward} boxSize={2.5} />
                                             <Text>USDA</Text>
@@ -883,7 +895,8 @@ const HistoryCard = ({ amount }) => {
                                           borderRadius="md"
                                           px={2}
                                           py={1}
-                                          fontWeight="500">
+                                          fontWeight="500"
+                                        >
                                           <HStack spacing={1}>
                                             <Icon as={FaAward} boxSize={2.5} />
                                             <Text>Blockchain</Text>
@@ -900,14 +913,16 @@ const HistoryCard = ({ amount }) => {
                                       align="center"
                                       pt={2}
                                       borderTop="1px solid"
-                                      borderColor={useColorModeValue('gray.200', 'gray.600')}>
+                                      borderColor={useColorModeValue('gray.200', 'gray.600')}
+                                    >
                                       <HStack spacing={2}>
                                         <Box
                                           p={1.5}
                                           bg="green.50"
                                           borderRadius="md"
                                           border="1px solid"
-                                          borderColor="green.200">
+                                          borderColor="green.200"
+                                        >
                                           <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
                                         </Box>
                                         <VStack align="start" spacing={0}>
@@ -916,7 +931,8 @@ const HistoryCard = ({ amount }) => {
                                             color="gray.500"
                                             fontWeight="600"
                                             textTransform="uppercase"
-                                            letterSpacing="wide">
+                                            letterSpacing="wide"
+                                          >
                                             Transparency Score
                                           </Text>
                                           <Text fontSize="xs" color="gray.600">
@@ -929,13 +945,15 @@ const HistoryCard = ({ amount }) => {
                                           fontSize="xl"
                                           fontWeight="700"
                                           color="green.500"
-                                          lineHeight="1">
+                                          lineHeight="1"
+                                        >
                                           {transparencyScore}
                                           <Text
                                             as="span"
                                             fontSize="xs"
                                             color="gray.500"
-                                            fontWeight="400">
+                                            fontWeight="400"
+                                          >
                                             /100
                                           </Text>
                                         </Text>
@@ -948,7 +966,8 @@ const HistoryCard = ({ amount }) => {
                                           py={0.5}
                                           borderRadius="full"
                                           textTransform="uppercase"
-                                          letterSpacing="wide">
+                                          letterSpacing="wide"
+                                        >
                                           {transparencyScore >= 80
                                             ? 'HIGH'
                                             : transparencyScore >= 60
@@ -968,14 +987,16 @@ const HistoryCard = ({ amount }) => {
                                         align="center"
                                         pt={2}
                                         borderTop="1px solid"
-                                        borderColor={useColorModeValue('gray.200', 'gray.600')}>
+                                        borderColor={useColorModeValue('gray.200', 'gray.600')}
+                                      >
                                         <HStack spacing={2}>
                                           <Box
                                             p={1.5}
                                             bg={`${carbonImpact.color.split('.')[0]}.50`}
                                             borderRadius="md"
                                             border="1px solid"
-                                            borderColor={`${carbonImpact.color.split('.')[0]}.200`}>
+                                            borderColor={`${carbonImpact.color.split('.')[0]}.200`}
+                                          >
                                             <Icon
                                               as={carbonImpact.icon}
                                               color={carbonImpact.color}
@@ -988,7 +1009,8 @@ const HistoryCard = ({ amount }) => {
                                               color="gray.500"
                                               fontWeight="600"
                                               textTransform="uppercase"
-                                              letterSpacing="wide">
+                                              letterSpacing="wide"
+                                            >
                                               Transparency Score
                                             </Text>
                                             <Text fontSize="xs" color="gray.600">
@@ -1001,13 +1023,15 @@ const HistoryCard = ({ amount }) => {
                                             fontSize="xl"
                                             fontWeight="700"
                                             color={carbonImpact.color}
-                                            lineHeight="1">
+                                            lineHeight="1"
+                                          >
                                             {carbonScore}
                                             <Text
                                               as="span"
                                               fontSize="xs"
                                               color="gray.500"
-                                              fontWeight="400">
+                                              fontWeight="400"
+                                            >
                                               /100
                                             </Text>
                                           </Text>
@@ -1020,7 +1044,8 @@ const HistoryCard = ({ amount }) => {
                                             py={0.5}
                                             borderRadius="full"
                                             textTransform="uppercase"
-                                            letterSpacing="wide">
+                                            letterSpacing="wide"
+                                          >
                                             {carbonImpact.level}
                                           </Badge>
                                         </VStack>

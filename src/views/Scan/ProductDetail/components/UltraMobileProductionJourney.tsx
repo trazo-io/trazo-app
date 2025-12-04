@@ -429,7 +429,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       borderRadius="xl"
       overflow="hidden"
       border="1px solid"
-      borderColor={useColorModeValue('gray.100', 'gray.700')}>
+      borderColor={useColorModeValue('gray.100', 'gray.700')}
+    >
       <CardBody p={{ base: 4, md: 6 }}>
         {/* Next-Level Mobile Header */}
         <VStack spacing={5} mb={6}>
@@ -458,7 +459,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 px={3}
                 py={1}
                 borderRadius="full"
-                fontWeight="600">
+                fontWeight="600"
+              >
                 <HStack spacing={1}>
                   <Icon as={MdVerified} boxSize={3} />
                   <Text>
@@ -476,7 +478,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 borderRadius="lg"
                 p={3}
                 border="1px solid"
-                borderColor={useColorModeValue('blue.200', 'blue.700')}>
+                borderColor={useColorModeValue('blue.200', 'blue.700')}
+              >
                 <Text fontSize="lg" fontWeight="bold" color="blue.600">
                   {filteredEvents.length}
                 </Text>
@@ -491,7 +494,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 borderRadius="lg"
                 p={3}
                 border="1px solid"
-                borderColor={useColorModeValue('green.200', 'green.700')}>
+                borderColor={useColorModeValue('green.200', 'green.700')}
+              >
                 <Text fontSize="lg" fontWeight="bold" color="green.600">
                   {(() => {
                     const totalCO2 = filteredEvents.reduce(
@@ -527,7 +531,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 borderRadius="lg"
                 p={3}
                 border="1px solid"
-                borderColor={useColorModeValue('purple.200', 'purple.700')}>
+                borderColor={useColorModeValue('purple.200', 'purple.700')}
+              >
                 <Text fontSize="lg" fontWeight="bold" color="purple.600">
                   {(() => {
                     const verifiedEvents = filteredEvents.filter(
@@ -550,7 +555,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 borderRadius="lg"
                 p={3}
                 border="1px solid"
-                borderColor={useColorModeValue('orange.200', 'orange.700')}>
+                borderColor={useColorModeValue('orange.200', 'orange.700')}
+              >
                 <Text fontSize="lg" fontWeight="bold" color="orange.600">
                   {transparencyScore || 0}
                 </Text>
@@ -570,7 +576,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 p={4}
                 border="1px solid"
                 borderColor={useColorModeValue('green.200', 'green.700')}
-                w="full">
+                w="full"
+              >
                 <VStack spacing={3} align="stretch">
                   <Flex justify="space-between" align="center">
                     <Text fontSize="sm" fontWeight="semibold" color="green.800">
@@ -686,7 +693,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       fontWeight="medium"
                       px={3}
                       py={2}
-                      h="32px">
+                      h="32px"
+                    >
                       {displayName} {eventCount > 0 && `(${eventCount})`}
                     </Button>
                   );
@@ -852,7 +860,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               variant="ghost"
               colorScheme="green"
               onClick={() => setShowAll(!showAll)}
-              rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}>
+              rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}
+            >
               {showAll ? 'Show Less' : `Show ${filteredEvents.length - 3} More Events`}
             </Button>
           </Box>

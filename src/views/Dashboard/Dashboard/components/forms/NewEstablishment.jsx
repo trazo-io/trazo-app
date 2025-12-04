@@ -350,7 +350,6 @@ function NewEstablishment() {
     }
   ];
 
-
   // Removed handleDirectFileUpload - using only the standardized upload service
 
   // Add a static country list for the dropdown
@@ -904,7 +903,7 @@ function NewEstablishment() {
                       }
                     }}
                   />
-                  
+
                   <Flex justify="space-between" mt={6}>
                     <Button
                       variant="no-hover"

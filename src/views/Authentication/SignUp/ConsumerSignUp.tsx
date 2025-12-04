@@ -21,7 +21,16 @@ import {
   Badge,
   Progress
 } from '@chakra-ui/react';
-import { FaGoogle, FaFacebook, FaApple, FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash } from 'react-icons/fa';
+import {
+  FaGoogle,
+  FaFacebook,
+  FaApple,
+  FaEnvelope,
+  FaLock,
+  FaUser,
+  FaEye,
+  FaEyeSlash
+} from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useSignUpMutation } from '../../../store/api/authApi';
 
@@ -111,7 +120,6 @@ const ConsumerSignUp: React.FC = () => {
     });
   };
 
-
   return (
     <Box minH="100vh" display="flex" flexDirection="column">
       <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} flex="1" minH="calc(100vh - 80px)">
@@ -122,7 +130,8 @@ const ConsumerSignUp: React.FC = () => {
           alignItems="center"
           justifyContent="center"
           position="relative"
-          overflow="hidden">
+          overflow="hidden"
+        >
           {/* Sophisticated gradient foundation */}
           <Box
             position="absolute"
@@ -132,7 +141,7 @@ const ConsumerSignUp: React.FC = () => {
             bottom="0"
             bg="linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)"
           />
-          
+
           {/* Subtle background floating element - positioned to not interfere */}
           <Box
             position="absolute"
@@ -147,7 +156,7 @@ const ConsumerSignUp: React.FC = () => {
             transform="rotate(-8deg)"
             zIndex={0}
           />
-          
+
           {/* Bottom accent element */}
           <Box
             position="absolute"
@@ -161,7 +170,7 @@ const ConsumerSignUp: React.FC = () => {
             backdropFilter="blur(60px)"
             zIndex={0}
           />
-          
+
           {/* Minimal line accents */}
           <Box
             position="absolute"
@@ -172,7 +181,7 @@ const ConsumerSignUp: React.FC = () => {
             bg="linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)"
             zIndex={0}
           />
-          
+
           <Box
             position="absolute"
             bottom="35%"
@@ -182,7 +191,7 @@ const ConsumerSignUp: React.FC = () => {
             bg="linear-gradient(to right, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)"
             zIndex={0}
           />
-          
+
           {/* Tiny accent dots */}
           <Box
             position="absolute"
@@ -194,7 +203,7 @@ const ConsumerSignUp: React.FC = () => {
             borderRadius="50%"
             zIndex={0}
           />
-          
+
           <Box
             position="absolute"
             bottom="45%"
@@ -213,7 +222,8 @@ const ConsumerSignUp: React.FC = () => {
             color="white"
             px={12}
             maxW="lg"
-            zIndex={10}>
+            zIndex={10}
+          >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
                 Join the Carbon Transparency Movement
@@ -251,14 +261,16 @@ const ConsumerSignUp: React.FC = () => {
           bg={useColorModeValue('white', 'gray.900')}
           px={8}
           pt={24}
-          pb={8}>
+          pb={8}
+        >
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
             maxW="480px"
-            my={{ base: 4, lg: 8 }}>
+            my={{ base: 4, lg: 8 }}
+          >
             {/* Header */}
             <VStack spacing={4} mb={6}>
               <VStack spacing={1}>
@@ -268,7 +280,8 @@ const ConsumerSignUp: React.FC = () => {
                 <Text
                   fontSize="sm"
                   color={useColorModeValue('gray.500', 'gray.400')}
-                  textAlign="center">
+                  textAlign="center"
+                >
                   Start your sustainable food journey
                 </Text>
               </VStack>
@@ -283,7 +296,8 @@ const ConsumerSignUp: React.FC = () => {
                   borderColor="red.200"
                   borderRadius="lg"
                   p={4}
-                  mb={6}>
+                  mb={6}
+                >
                   <Text color="red.600" fontSize="sm">
                     {error}
                   </Text>
@@ -557,12 +571,24 @@ const ConsumerSignUp: React.FC = () => {
                           size="sm"
                           borderRadius="full"
                           colorScheme={
-                            passwordStrength < 50 ? 'red' : passwordStrength < 75 ? 'yellow' : 'green'
+                            passwordStrength < 50
+                              ? 'red'
+                              : passwordStrength < 75
+                              ? 'yellow'
+                              : 'green'
                           }
                         />
-                        <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mt={1}>
+                        <Text
+                          fontSize="xs"
+                          color={useColorModeValue('gray.500', 'gray.400')}
+                          mt={1}
+                        >
                           Password strength:{' '}
-                          {passwordStrength < 50 ? 'Weak' : passwordStrength < 75 ? 'Medium' : 'Strong'}
+                          {passwordStrength < 50
+                            ? 'Weak'
+                            : passwordStrength < 75
+                            ? 'Medium'
+                            : 'Strong'}
                         </Text>
                       </Box>
                     )}
@@ -627,7 +653,8 @@ const ConsumerSignUp: React.FC = () => {
                         transition="all 0.2s"
                         {...registerField('confirmPassword', {
                           required: 'Please confirm your password',
-                          validate: (value: string) => value === password || 'Passwords do not match'
+                          validate: (value: string) =>
+                            value === password || 'Passwords do not match'
                         })}
                         onFocus={() => setFocusedField('confirmPassword')}
                         onBlur={() => setFocusedField(null)}
@@ -656,7 +683,9 @@ const ConsumerSignUp: React.FC = () => {
                         color={password === confirmPassword ? 'green.500' : 'red.500'}
                         mt={1}
                       >
-                        {password === confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+                        {password === confirmPassword
+                          ? '✓ Passwords match'
+                          : '✗ Passwords do not match'}
                       </Text>
                     )}
 
@@ -676,7 +705,8 @@ const ConsumerSignUp: React.FC = () => {
                         spacing={3}
                         {...registerField('acceptTerms', {
                           required: 'You must accept the terms and conditions'
-                        })}>
+                        })}
+                      >
                         <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
                           I agree to the{' '}
                           <Link to="/terms" target="_blank">
@@ -684,7 +714,8 @@ const ConsumerSignUp: React.FC = () => {
                               as="span"
                               color="blue.600"
                               fontWeight="medium"
-                              _hover={{ textDecoration: 'underline' }}>
+                              _hover={{ textDecoration: 'underline' }}
+                            >
                               Terms of Service
                             </Text>
                           </Link>{' '}
@@ -694,7 +725,8 @@ const ConsumerSignUp: React.FC = () => {
                               as="span"
                               color="blue.600"
                               fontWeight="medium"
-                              _hover={{ textDecoration: 'underline' }}>
+                              _hover={{ textDecoration: 'underline' }}
+                            >
                               Privacy Policy
                             </Text>
                           </Link>
@@ -711,7 +743,8 @@ const ConsumerSignUp: React.FC = () => {
                       size="md"
                       colorScheme="green"
                       spacing={3}
-                      {...registerField('subscribeNewsletter')}>
+                      {...registerField('subscribeNewsletter')}
+                    >
                       <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
                         Send me updates about sustainable food choices and new features
                       </Text>
@@ -737,7 +770,8 @@ const ConsumerSignUp: React.FC = () => {
                     _active={{
                       transform: 'translateY(0)'
                     }}
-                    transition="all 0.2s">
+                    transition="all 0.2s"
+                  >
                     Create Free Account
                   </Button>
                 </VStack>
@@ -751,7 +785,8 @@ const ConsumerSignUp: React.FC = () => {
                     fontSize="sm"
                     color={useColorModeValue('gray.400', 'gray.400')}
                     flexShrink={0}
-                    fontWeight="500">
+                    fontWeight="500"
+                  >
                     Or continue with
                   </Text>
                   <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
@@ -779,7 +814,8 @@ const ConsumerSignUp: React.FC = () => {
                         transform: 'translateY(-1px)',
                         boxShadow: 'sm'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       <Icon as={social.icon} fontSize="18px" color={social.color} />
                     </Button>
                   ))}
@@ -801,7 +837,8 @@ const ConsumerSignUp: React.FC = () => {
                         textDecoration: 'underline',
                         color: 'blue.700'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       Sign in
                     </Text>
                   </Link>
@@ -819,7 +856,8 @@ const ConsumerSignUp: React.FC = () => {
                         textDecoration: 'underline',
                         color: 'blue.700'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       Create business account
                     </Text>
                   </Link>
@@ -837,21 +875,24 @@ const ConsumerSignUp: React.FC = () => {
         borderTop="1px solid"
         borderColor={useColorModeValue('gray.200', 'gray.700')}
         py={6}
-        px={8}>
+        px={8}
+      >
         <Flex
           maxW="7xl"
           mx="auto"
           direction={{ base: 'column', md: 'row' }}
           align="center"
           justify="space-between"
-          gap={4}>
+          gap={4}
+        >
           <HStack spacing={6} flexWrap="wrap" justify="center">
             <Link to="/about">
               <Text
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'blue.600' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 About
               </Text>
             </Link>
@@ -860,7 +901,8 @@ const ConsumerSignUp: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'blue.600' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Why Trazo?
               </Text>
             </Link>
@@ -869,7 +911,8 @@ const ConsumerSignUp: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'blue.600' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Blog
               </Text>
             </Link>
@@ -878,7 +921,8 @@ const ConsumerSignUp: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'blue.600' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Contact
               </Text>
             </Link>

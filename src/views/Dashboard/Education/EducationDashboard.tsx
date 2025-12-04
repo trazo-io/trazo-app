@@ -135,21 +135,29 @@ const EducationDashboard: React.FC = () => {
   const getCategoryIcon = (categoryName: string) => {
     const name = categoryName.toLowerCase();
     // Getting Started with Transparency
-    if (name.includes('getting started') || name.includes('transparency fundamentals')) return FaRocket;
-    // Essential Farm Events Mastery  
-    if (name.includes('farm events') || name.includes('essential') || name.includes('mastery')) return FaTractor;
+    if (name.includes('getting started') || name.includes('transparency fundamentals'))
+      return FaRocket;
+    // Essential Farm Events Mastery
+    if (name.includes('farm events') || name.includes('essential') || name.includes('mastery'))
+      return FaTractor;
     // Building Consumer Trust
-    if (name.includes('consumer trust') || name.includes('trust') || name.includes('building')) return FaHeart;
+    if (name.includes('consumer trust') || name.includes('trust') || name.includes('building'))
+      return FaHeart;
     // Transparency Technology (QR, Blockchain, Mobile)
-    if (name.includes('technology') || name.includes('qr') || name.includes('blockchain')) return FaQrcode;
+    if (name.includes('technology') || name.includes('qr') || name.includes('blockchain'))
+      return FaQrcode;
     // Market Success Through Transparency
-    if (name.includes('market success') || name.includes('pricing') || name.includes('premium')) return FaDollarSign;
+    if (name.includes('market success') || name.includes('pricing') || name.includes('premium'))
+      return FaDollarSign;
     // Carbon Data Supporting Role
-    if (name.includes('carbon') || name.includes('supporting') || name.includes('data')) return FaLeaf;
+    if (name.includes('carbon') || name.includes('supporting') || name.includes('data'))
+      return FaLeaf;
     // Compliance Made Simple
-    if (name.includes('compliance') || name.includes('simple') || name.includes('regulatory')) return FaCertificate;
+    if (name.includes('compliance') || name.includes('simple') || name.includes('regulatory'))
+      return FaCertificate;
     // Troubleshooting & Success Tips
-    if (name.includes('troubleshooting') || name.includes('tips') || name.includes('success')) return FaQuestionCircle;
+    if (name.includes('troubleshooting') || name.includes('tips') || name.includes('success'))
+      return FaQuestionCircle;
     return FaBookOpen;
   };
 
@@ -194,20 +202,23 @@ const EducationDashboard: React.FC = () => {
               maxW="2xl"
               mx="auto"
               borderRadius="xl"
-              py={8}>
+              py={8}
+            >
               <AlertIcon boxSize="40px" mr={0} />
               <AlertTitle mt={4} mb={2} fontSize="lg">
                 Educational Resources Available with Standard & Corporate Plans
               </AlertTitle>
               <AlertDescription maxWidth="lg" mb={6}>
-                Access our comprehensive library of agricultural transparency courses, QR code optimization, 
-                consumer trust building strategies, and premium market access techniques.
+                Access our comprehensive library of agricultural transparency courses, QR code
+                optimization, consumer trust building strategies, and premium market access
+                techniques.
               </AlertDescription>
               <Button
                 colorScheme="blue"
                 size="lg"
                 onClick={handleSubscriptionRequired}
-                leftIcon={<Icon as={FaGraduationCap} />}>
+                leftIcon={<Icon as={FaGraduationCap} />}
+              >
                 Upgrade to Access Education
               </Button>
             </Alert>
@@ -426,7 +437,8 @@ const EducationDashboard: React.FC = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => setSelectedCategory(null)}>
+                            onClick={() => setSelectedCategory(null)}
+                          >
                             Clear Filter
                           </Button>
                         )}
@@ -498,7 +510,8 @@ const EducationDashboard: React.FC = () => {
                       <Button
                         variant="outline"
                         colorScheme="blue"
-                        onClick={() => navigate('/education/faq')}>
+                        onClick={() => navigate('/education/faq')}
+                      >
                         View All Questions
                       </Button>
                     </VStack>
@@ -539,21 +552,29 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
   const getCategoryIcon = (categoryName: string) => {
     const name = categoryName.toLowerCase();
     // Getting Started with Transparency
-    if (name.includes('getting started') || name.includes('transparency fundamentals')) return FaRocket;
-    // Essential Farm Events Mastery  
-    if (name.includes('farm events') || name.includes('essential') || name.includes('mastery')) return FaTractor;
+    if (name.includes('getting started') || name.includes('transparency fundamentals'))
+      return FaRocket;
+    // Essential Farm Events Mastery
+    if (name.includes('farm events') || name.includes('essential') || name.includes('mastery'))
+      return FaTractor;
     // Building Consumer Trust
-    if (name.includes('consumer trust') || name.includes('trust') || name.includes('building')) return FaHeart;
+    if (name.includes('consumer trust') || name.includes('trust') || name.includes('building'))
+      return FaHeart;
     // Transparency Technology (QR, Blockchain, Mobile)
-    if (name.includes('technology') || name.includes('qr') || name.includes('blockchain')) return FaQrcode;
+    if (name.includes('technology') || name.includes('qr') || name.includes('blockchain'))
+      return FaQrcode;
     // Market Success Through Transparency
-    if (name.includes('market success') || name.includes('pricing') || name.includes('premium')) return FaDollarSign;
+    if (name.includes('market success') || name.includes('pricing') || name.includes('premium'))
+      return FaDollarSign;
     // Carbon Data Supporting Role
-    if (name.includes('carbon') || name.includes('supporting') || name.includes('data')) return FaLeaf;
+    if (name.includes('carbon') || name.includes('supporting') || name.includes('data'))
+      return FaLeaf;
     // Compliance Made Simple
-    if (name.includes('compliance') || name.includes('simple') || name.includes('regulatory')) return FaCertificate;
+    if (name.includes('compliance') || name.includes('simple') || name.includes('regulatory'))
+      return FaCertificate;
     // Troubleshooting & Success Tips
-    if (name.includes('troubleshooting') || name.includes('tips') || name.includes('success')) return FaQuestionCircle;
+    if (name.includes('troubleshooting') || name.includes('tips') || name.includes('success'))
+      return FaQuestionCircle;
     return FaBookOpen;
   };
 
@@ -565,7 +586,8 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, onSelect }) => {
       cursor="pointer"
       onClick={onSelect}
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
-      transition="all 0.2s">
+      transition="all 0.2s"
+    >
       <CardBody p={6} textAlign="center">
         <Icon as={getCategoryIcon(category.name)} boxSize={8} color="blue.500" mb={3} />
         <Heading size="sm" mb={2} color={textColor}>
@@ -601,7 +623,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect, showProgress 
       cursor="pointer"
       onClick={onSelect}
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'md' }}
-      transition="all 0.2s">
+      transition="all 0.2s"
+    >
       <CardBody p={6}>
         <VStack align="stretch" spacing={3}>
           <HStack justify="space-between" align="start">
@@ -613,7 +636,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect, showProgress 
                   ? 'blue'
                   : 'purple'
               }
-              size="sm">
+              size="sm"
+            >
               {course.level}
             </Badge>
             <HStack fontSize="sm" color={mutedTextColor}>
@@ -655,7 +679,8 @@ const CourseCard: React.FC<CourseCardProps> = ({ course, onSelect, showProgress 
             onClick={(e) => {
               e.stopPropagation();
               onSelect();
-            }}>
+            }}
+          >
             {progressPercentage > 0 ? 'Continue' : 'Start Course'}
           </Button>
         </VStack>
@@ -683,7 +708,8 @@ const FAQCard: React.FC<FAQCardProps> = ({ faq }) => {
             justify="space-between"
             align="start"
             cursor="pointer"
-            onClick={() => setIsExpanded(!isExpanded)}>
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
             <Heading size="sm" color={textColor} flex={1}>
               {faq.question}
             </Heading>

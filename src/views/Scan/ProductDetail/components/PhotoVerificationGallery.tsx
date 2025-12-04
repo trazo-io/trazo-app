@@ -24,13 +24,7 @@ import {
   Flex,
   Circle
 } from '@chakra-ui/react';
-import {
-  FaShieldAlt,
-  FaCheckCircle,
-  FaCamera,
-  FaEye,
-  FaExclamationTriangle
-} from 'react-icons/fa';
+import { FaShieldAlt, FaCheckCircle, FaCamera, FaEye, FaExclamationTriangle } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 
 interface PhotoVerificationProps {
@@ -56,7 +50,7 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  
+
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const accentColor = useColorModeValue('green.500', 'green.400');
@@ -84,11 +78,16 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
 
   const getVerificationBadgeColor = (strength: string) => {
     switch (strength) {
-      case 'strong': return 'green';
-      case 'moderate': return 'blue';
-      case 'basic': return 'yellow';
-      case 'minimal': return 'orange';
-      default: return 'gray';
+      case 'strong':
+        return 'green';
+      case 'moderate':
+        return 'blue';
+      case 'basic':
+        return 'yellow';
+      case 'minimal':
+        return 'orange';
+      default:
+        return 'gray';
     }
   };
 
@@ -100,13 +99,15 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
   const renderCategoryPhotos = (categoryName: string, data: CategoryData) => {
     // For MVP, we'll show placeholder verification status
     // In production, this would connect to actual event photo galleries
-    const mockPhotos = data.photo_verified_count > 0 ? 
-      Array.from({ length: Math.min(data.photo_verified_count, 4) }, (_, i) => ({
-        id: i,
-        url: `/api/placeholder/300x200?text=Verified+${data.consumer_name}+${i + 1}`,
-        alt: `${data.consumer_name} verification photo ${i + 1}`,
-        description: `${data.consumer_name} practice documentation`
-      })) : [];
+    const mockPhotos =
+      data.photo_verified_count > 0
+        ? Array.from({ length: Math.min(data.photo_verified_count, 4) }, (_, i) => ({
+            id: i,
+            url: `/api/placeholder/300x200?text=Verified+${data.consumer_name}+${i + 1}`,
+            alt: `${data.consumer_name} verification photo ${i + 1}`,
+            description: `${data.consumer_name} practice documentation`
+          }))
+        : [];
 
     const verificationInfo = getVerificationIcon(data.verification_strength);
 
@@ -122,7 +123,7 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
                 <Text fontSize="md" fontWeight="semibold" textAlign="left">
                   {data.consumer_name}
                 </Text>
-                <Badge 
+                <Badge
                   colorScheme={getVerificationBadgeColor(data.verification_strength)}
                   variant="solid"
                   fontSize="xs"
@@ -137,13 +138,15 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
           </HStack>
           <AccordionIcon />
         </AccordionButton>
-        
+
         <AccordionPanel px={0} py={4}>
           <VStack spacing={4} align="stretch">
             {/* Verification Status */}
             <Box p={3} bg="gray.50" borderRadius="md">
               <HStack justify="space-between" mb={2}>
-                <Text fontSize="sm" fontWeight="medium">Verification Status</Text>
+                <Text fontSize="sm" fontWeight="medium">
+                  Verification Status
+                </Text>
                 <Icon as={MdVerified} color={verificationInfo.color} boxSize={4} />
               </HStack>
               <Text fontSize="sm" color="gray.700">
@@ -162,7 +165,7 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
                 </Text>
                 <SimpleGrid columns={2} spacing={3}>
                   {mockPhotos.map((photo) => (
-                    <Box 
+                    <Box
                       key={photo.id}
                       position="relative"
                       cursor="pointer"
@@ -218,9 +221,11 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
     (data: any) => data.photo_verified_count > 0
   ).length;
   const totalCategories = Object.keys(categoryBreakdown).length;
-  const overallPhotoRate = Object.values(categoryBreakdown).reduce(
-    (sum: number, data: any) => sum + (data.photo_verification_rate || 0), 0
-  ) / totalCategories;
+  const overallPhotoRate =
+    Object.values(categoryBreakdown).reduce(
+      (sum: number, data: any) => sum + (data.photo_verification_rate || 0),
+      0
+    ) / totalCategories;
 
   return (
     <Box
@@ -252,7 +257,7 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
               Visual proof of farming practices
             </Text>
           </VStack>
-          
+
           <VStack align="end" spacing={0}>
             <Text fontSize="2xl" fontWeight="bold" color={accentColor}>
               {Math.round(overallPhotoRate)}%
@@ -279,11 +284,12 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
                 Photo Verification
               </Text>
             </VStack>
-            
+
             <VStack spacing={1}>
               <Text fontSize="xl" fontWeight="bold" color={accentColor}>
                 {Object.values(categoryBreakdown).reduce(
-                  (sum: number, data: any) => sum + (data.photo_verified_count || 0), 0
+                  (sum: number, data: any) => sum + (data.photo_verified_count || 0),
+                  0
                 )}
               </Text>
               <Text fontSize="xs" color="gray.600" textAlign="center">

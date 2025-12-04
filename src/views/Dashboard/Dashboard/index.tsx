@@ -330,7 +330,7 @@ export default function DashboardView() {
         establishmentId,
         establishment: establishment?.name,
         parcelCount: establishment?.parcels?.length,
-        parcels: establishment?.parcels?.map(p => p.name || p.id)
+        parcels: establishment?.parcels?.map((p) => p.name || p.id)
       });
       setEstablishment(establishment);
     }
@@ -410,7 +410,8 @@ export default function DashboardView() {
       pt={{ base: '120px', md: '75px' }}
       px={{ base: 3, md: 6 }}
       pb={{ base: 8, md: 8 }}
-      minH="100vh">
+      minH="100vh"
+    >
       {/* Enhanced Trial Status Banner */}
       <TrialStatusBanner />
 
@@ -423,7 +424,8 @@ export default function DashboardView() {
           p={4}
           mb={4}
           borderRadius="md"
-          position="relative">
+          position="relative"
+        >
           <Flex justify="space-between" align="center">
             <Box>
               <Text fontSize="lg" fontWeight="bold" color="green.800" mb={2}>
@@ -442,7 +444,8 @@ export default function DashboardView() {
               variant="ghost"
               color="green.600"
               onClick={() => setWelcomeBannerVisible(false)}
-              _hover={{ bg: 'green.100' }}>
+              _hover={{ bg: 'green.100' }}
+            >
               ✕
             </Button>
           </Flex>
@@ -461,7 +464,8 @@ export default function DashboardView() {
         <Flex
           direction={{ base: 'column', xl: 'row' }}
           gap={{ base: 4, md: 4, lg: 5, xl: 6 }}
-          align="flex-start">
+          align="flex-start"
+        >
           <Box flex="2" w="100%" pt={{ base: 3, md: 4, lg: 6, xl: 0 }}>
             <VStack spacing={3} align="stretch">
               {/* Mobile: Simple Horizontal Scrollable Layout */}
@@ -480,7 +484,8 @@ export default function DashboardView() {
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
                       WebkitOverflowScrolling: 'touch'
-                    }}>
+                    }}
+                  >
                     <HStack spacing={3} pb={2} px={1} w="max-content">
                       {establishments ? (
                         <>
@@ -488,7 +493,8 @@ export default function DashboardView() {
                             <NavLink
                               key={prop.id}
                               to={`/admin/dashboard/establishment/${prop.id}`}
-                              style={{ textDecoration: 'none' }}>
+                              style={{ textDecoration: 'none' }}
+                            >
                               <Card
                                 p={4}
                                 cursor="pointer"
@@ -505,13 +511,15 @@ export default function DashboardView() {
                                   transform: 'translateY(-2px)',
                                   boxShadow: 'lg',
                                   transition: 'all 0.2s'
-                                }}>
+                                }}
+                              >
                                 <Flex align="center" gap={4} h="full" px={2}>
                                   <Box
                                     bg={prop.id === establishment?.id ? 'white' : 'green.500'}
                                     p={{ base: 3, md: 2 }}
                                     borderRadius="lg"
-                                    flexShrink={0}>
+                                    flexShrink={0}
+                                  >
                                     <HomeIcon
                                       h={{ base: '28px', md: '24px' }}
                                       w={{ base: '28px', md: '24px' }}
@@ -525,7 +533,8 @@ export default function DashboardView() {
                                       color={prop.id === establishment?.id ? 'white' : textColor}
                                       noOfLines={2}
                                       lineHeight="1.3"
-                                      title={prop.name}>
+                                      title={prop.name}
+                                    >
                                       {prop.name}
                                     </Text>
                                     <Text
@@ -535,7 +544,8 @@ export default function DashboardView() {
                                       }
                                       noOfLines={1}
                                       mt={1}
-                                      title={`${prop.city || prop.zone || ''}, ${prop.state}`}>
+                                      title={`${prop.city || prop.zone || ''}, ${prop.state}`}
+                                    >
                                       {`${prop.city || prop.zone || ''}, ${prop.state}`}
                                     </Text>
                                   </Box>
@@ -561,7 +571,8 @@ export default function DashboardView() {
                                 transform: 'translateY(-2px)',
                                 boxShadow: 'lg'
                               }}
-                              onClick={toggleAddEstablishment}>
+                              onClick={toggleAddEstablishment}
+                            >
                               <Flex direction="column" align="center" justify="center" gap={1}>
                                 <Icon as={FaPlus} color="green.500" fontSize="20px" />
                                 <Text fontSize="xs" fontWeight="medium" color="green.600">
@@ -597,14 +608,16 @@ export default function DashboardView() {
                   templateColumns={{
                     md: 'repeat(auto-fill, minmax(240px, 1fr))'
                   }}
-                  gap={4}>
+                  gap={4}
+                >
                   {establishments ? (
                     <>
                       {establishments.map((prop) => (
                         <NavLink
                           key={prop.id}
                           to={`/admin/dashboard/establishment/${prop.id}`}
-                          style={{ textDecoration: 'none' }}>
+                          style={{ textDecoration: 'none' }}
+                        >
                           <Card
                             p={4}
                             cursor="pointer"
@@ -619,13 +632,15 @@ export default function DashboardView() {
                               transform: 'translateY(-2px)',
                               boxShadow: 'lg',
                               transition: 'all 0.2s'
-                            }}>
+                            }}
+                          >
                             <Flex align="center" gap={3} h="full">
                               <Box
                                 bg={prop.id === establishment?.id ? 'white' : 'green.500'}
                                 p={2}
                                 borderRadius="md"
-                                flexShrink={0}>
+                                flexShrink={0}
+                              >
                                 <HomeIcon
                                   h="24px"
                                   w="24px"
@@ -638,14 +653,16 @@ export default function DashboardView() {
                                   fontSize="md"
                                   color={prop.id === establishment?.id ? 'white' : textColor}
                                   noOfLines={1}
-                                  title={prop.name}>
+                                  title={prop.name}
+                                >
                                   {prop.name}
                                 </Text>
                                 <Text
                                   fontSize="sm"
                                   color={prop.id === establishment?.id ? 'green.100' : 'gray.500'}
                                   noOfLines={1}
-                                  title={`${prop.city || prop.zone || ''}, ${prop.state}`}>
+                                  title={`${prop.city || prop.zone || ''}, ${prop.state}`}
+                                >
                                   {`${prop.city || prop.zone || ''}, ${prop.state}`}
                                 </Text>
                               </Box>
@@ -669,7 +686,8 @@ export default function DashboardView() {
                             transform: 'translateY(-2px)',
                             boxShadow: 'lg'
                           }}
-                          onClick={toggleAddEstablishment}>
+                          onClick={toggleAddEstablishment}
+                        >
                           <Flex direction="column" align="center" justify="center" gap={1}>
                             <Icon as={FaPlus} color="green.500" fontSize="20px" />
                             <Text fontSize="xs" fontWeight="medium" color="green.600">
@@ -696,7 +714,8 @@ export default function DashboardView() {
         templateColumns={{ base: '1fr', md: '1fr', lg: '1.8fr 1.2fr' }}
         templateRows={{ base: 'auto', md: '1fr auto', lg: '1fr' }}
         my={{ base: 6, md: 6 }}
-        gap={{ base: 4, md: 6 }}>
+        gap={{ base: 4, md: 6 }}
+      >
         {establishment ? (
           <CardWithImage
             title={intl.formatMessage({ id: 'app.establishmentProfile' })}
@@ -752,14 +771,14 @@ export default function DashboardView() {
           <Card minH="290px" bg={cardBg} />
         )}
       </Grid>
-      
+
       {/* Single Transparency Overview Card for selected establishment */}
       {establishment?.id && (
         <Box width="100%" mb={{ base: 4, md: 6 }}>
           <TransparencySummaryCard establishmentId={establishment.id} />
         </Box>
       )}
-      
+
       <CarouselHorizontal
         title={intl.formatMessage({ id: 'app.parcels' })}
         description={intl.formatMessage({ id: 'app.establishmentParcels' })}

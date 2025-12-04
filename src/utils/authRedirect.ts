@@ -20,7 +20,7 @@ export const setAuthRedirectAction = (productionId: string): void => {
 
   console.log('🔐 Setting auth redirect action:', action);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(action));
-  
+
   // Verify it was stored correctly
   const verify = localStorage.getItem(STORAGE_KEY);
   console.log('🔐 Verified stored action:', verify);

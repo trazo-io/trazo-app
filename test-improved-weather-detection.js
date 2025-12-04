@@ -12,33 +12,45 @@ console.log('============================================');
 function mockImprovedWeatherDetection(eventDescription, event) {
   // Step 1: Check if this is a weather event (event_type: 0)
   const isWeatherEvent = event && event.event_type === 0;
-  
+
   // Step 2: IMPROVED detection logic
-  const hasSpecificWeatherType = (event.weather_type && event.weather_type !== 'weather') || 
-                                 (event.type && event.type !== 'weather') ||
-                                 // Check for temperature data as indicator of weather event
-                                 (event.lower_temperature !== undefined || event.upper_temperature !== undefined || event.highest_temperature !== undefined) ||
-                                 // Check for weather-specific fields
-                                 (event.way_of_protection !== undefined);
-  
-  const hasWeatherKeywords = eventDescription.toLowerCase().includes('weather') || 
-                            eventDescription.toLowerCase().includes('frost') || 
-                            eventDescription.toLowerCase().includes('temperature');
-  
+  const hasSpecificWeatherType =
+    (event.weather_type && event.weather_type !== 'weather') ||
+    (event.type && event.type !== 'weather') ||
+    // Check for temperature data as indicator of weather event
+    event.lower_temperature !== undefined ||
+    event.upper_temperature !== undefined ||
+    event.highest_temperature !== undefined ||
+    // Check for weather-specific fields
+    event.way_of_protection !== undefined;
+
+  const hasWeatherKeywords =
+    eventDescription.toLowerCase().includes('weather') ||
+    eventDescription.toLowerCase().includes('frost') ||
+    eventDescription.toLowerCase().includes('temperature');
+
   const shouldEnterWeatherBranch = isWeatherEvent && (hasSpecificWeatherType || hasWeatherKeywords);
-  
+
   console.log('🔍 DETECTION ANALYSIS:');
   console.log('---------------------');
   console.log(`Is weather event (type 0): ${isWeatherEvent}`);
   console.log(`Has specific weather type: ${hasSpecificWeatherType}`);
   console.log(`  - weather_type: ${event.weather_type}`);
   console.log(`  - type: ${event.type}`);
-  console.log(`  - has temperature data: ${event.lower_temperature !== undefined || event.upper_temperature !== undefined}`);
+  console.log(
+    `  - has temperature data: ${
+      event.lower_temperature !== undefined || event.upper_temperature !== undefined
+    }`
+  );
   console.log(`  - has protection data: ${event.way_of_protection !== undefined}`);
   console.log(`Has weather keywords: ${hasWeatherKeywords}`);
-  console.log(`FINAL DECISION: ${shouldEnterWeatherBranch ? '✅ ENTER WEATHER BRANCH' : '❌ SKIP WEATHER BRANCH'}`);
+  console.log(
+    `FINAL DECISION: ${
+      shouldEnterWeatherBranch ? '✅ ENTER WEATHER BRANCH' : '❌ SKIP WEATHER BRANCH'
+    }`
+  );
   console.log('');
-  
+
   if (!shouldEnterWeatherBranch) {
     return {
       title: 'Agricultural Activity',
@@ -46,19 +58,19 @@ function mockImprovedWeatherDetection(eventDescription, event) {
       weatherDetected: false
     };
   }
-  
+
   // Step 3: Weather type mapping with improved fallbacks
   const weatherTypeMap = {
-    'FR': 'Frost Weather Event',
-    'DR': 'Drought Monitoring', 
-    'HL': 'Hail Damage Assessment',
-    'HT': 'Heat Stress Monitoring',
-    'TS': 'Storm & Wind Event'
+    FR: 'Frost Weather Event',
+    DR: 'Drought Monitoring',
+    HL: 'Hail Damage Assessment',
+    HT: 'Heat Stress Monitoring',
+    TS: 'Storm & Wind Event'
   };
-  
+
   const weatherTypeCode = event.weather_type || event.type;
   let weatherTitle = weatherTypeMap[weatherTypeCode];
-  
+
   if (!weatherTitle) {
     // IMPROVED: Infer weather type from data
     if (event.lower_temperature !== undefined && event.lower_temperature < 35) {
@@ -75,36 +87,45 @@ function mockImprovedWeatherDetection(eventDescription, event) {
       weatherTitle = 'Weather Monitoring';
     }
   }
-  
+
   // Step 4: Extract temperature and protection details
   const details = [];
-  
+
   // Temperature data (main object first, then extra_data)
-  const lowerTempValue = event.lower_temperature !== undefined ? event.lower_temperature : 
-                        (event.extra_data && event.extra_data.lower_temperature);
+  const lowerTempValue =
+    event.lower_temperature !== undefined
+      ? event.lower_temperature
+      : event.extra_data && event.extra_data.lower_temperature;
   if (lowerTempValue !== undefined) {
     details.push(`Min temp: ${lowerTempValue}°C`);
   }
-  
-  const upperTempValue = event.upper_temperature !== undefined ? event.upper_temperature : 
-                        (event.extra_data && event.extra_data.upper_temperature);
+
+  const upperTempValue =
+    event.upper_temperature !== undefined
+      ? event.upper_temperature
+      : event.extra_data && event.extra_data.upper_temperature;
   if (upperTempValue !== undefined) {
     details.push(`Max temp: ${upperTempValue}°C`);
   }
-  
+
   // Protection measures
-  const protectionValue = event.way_of_protection || (event.extra_data && event.extra_data.way_of_protection);
+  const protectionValue =
+    event.way_of_protection || (event.extra_data && event.extra_data.way_of_protection);
   if (protectionValue && String(protectionValue).trim()) {
     details.push(`Protection: ${protectionValue}`);
   }
-  
+
   console.log('📊 EXTRACTED DATA:');
   console.log('-----------------');
   console.log(`Weather Title: ${weatherTitle}`);
-  console.log(`Temperature Details: ${details.filter(d => d.includes('temp')).join(', ') || 'None'}`);
-  console.log(`Protection Details: ${details.filter(d => d.includes('Protection')).join(', ') || 'None'}`);
+  console.log(
+    `Temperature Details: ${details.filter((d) => d.includes('temp')).join(', ') || 'None'}`
+  );
+  console.log(
+    `Protection Details: ${details.filter((d) => d.includes('Protection')).join(', ') || 'None'}`
+  );
   console.log(`All Details: [${details.join(', ')}]`);
-  
+
   return {
     title: weatherTitle,
     details: details.length > 0 ? ` • ${details.join(' • ')}` : '',
@@ -115,7 +136,7 @@ function mockImprovedWeatherDetection(eventDescription, event) {
 }
 
 // Test Case 1: User's problematic event - minimal weather data
-console.log('🧪 TEST CASE 1: User\'s Problem Event (Minimal Data)');
+console.log("🧪 TEST CASE 1: User's Problem Event (Minimal Data)");
 console.log('===================================================');
 
 const userProblemEvent = {
@@ -136,7 +157,7 @@ console.log('====================================');
 
 const genericWeatherEvent = {
   event_type: 0,
-  weather_type: 'weather',  // Generic type that was failing before
+  weather_type: 'weather', // Generic type that was failing before
   lower_temperature: 28,
   way_of_protection: 'Frost blankets',
   description: 'Frost protection event'
@@ -158,7 +179,10 @@ const frostIndicatorEvent = {
   description: 'Frost protection measures implemented'
 };
 
-const result3 = mockImprovedWeatherDetection('Frost protection measures implemented', frostIndicatorEvent);
+const result3 = mockImprovedWeatherDetection(
+  'Frost protection measures implemented',
+  frostIndicatorEvent
+);
 console.log(`Result: ${JSON.stringify(result3, null, 2)}`);
 console.log('');
 
@@ -167,7 +191,7 @@ console.log('🧪 TEST CASE 4: Should Fail Detection');
 console.log('=====================================');
 
 const nonWeatherEvent = {
-  event_type: 1,  // Not weather event type
+  event_type: 1, // Not weather event type
   name: 'Regular farming activity',
   description: 'General farm work'
 };
@@ -193,7 +217,7 @@ console.log('   - Checks main event object first');
 console.log('   - Falls back to extra_data if needed');
 console.log('   - Properly formats temperature and protection info');
 console.log('');
-console.log('🔧 This should fix the user\'s issue with:');
+console.log("🔧 This should fix the user's issue with:");
 console.log('   ❌ "Agricultural Activity" → ✅ Specific weather event title');
-console.log('   ❌ Missing temperature → ✅ "Min temp: 32°C"'); 
+console.log('   ❌ Missing temperature → ✅ "Min temp: 32°C"');
 console.log('   ❌ Missing protection → ✅ "Protection: Row covers"');

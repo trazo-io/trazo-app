@@ -73,6 +73,7 @@ import { useGetCompleteSummaryQuery } from '../../../store/api/carbonApi';
 import { TransparencyCelebration } from '../../../components/Notifications/TransparencyCelebration';
 import { useTransparencyCelebration } from '../../../hooks/useTransparencyCelebration';
 import { useGetTransparencyDetailsQuery } from '../../../store/api/transparencyQrApi';
+import { HarvestInfoCard } from './components/HarvestInfoCard';
 
 // Data normalization imports
 import { normalizeBackendEventData } from '../../../utils/eventDataNormalizer';
@@ -861,7 +862,8 @@ function ProductDetail() {
         alignSelf="center"
         justifySelf="center"
         overflow="hidden"
-        w="100%">
+        w="100%"
+      >
         {/* Show instant trust display while main data loads */}
         {showInstantTrust && productionId ? (
           <Box py={8}>
@@ -939,7 +941,8 @@ function ProductDetail() {
       justifySelf="center"
       overflow="hidden"
       w="100%"
-      pb={{ base: '100px', xl: 0 }}>
+      pb={{ base: '100px', xl: 0 }}
+    >
       {/* Transparency Hero Section - Primary Navigation Target */}
       <Box id="transparency-section">
         <CarbonHeroSection
@@ -985,7 +988,8 @@ function ProductDetail() {
                 borderRadius="xl"
                 border="1px solid"
                 borderColor="gray.200"
-                overflow="hidden">
+                overflow="hidden"
+              >
                 <Box bg="linear-gradient(135deg, green.50, blue.50)" p={6} textAlign="center">
                   <VStack spacing={4}>
                     <Circle size="60px" bg="green.100">
@@ -1038,7 +1042,8 @@ function ProductDetail() {
                 borderRadius="xl"
                 border="1px solid"
                 borderColor="gray.200"
-                overflow="hidden">
+                overflow="hidden"
+              >
                 <Box bg="linear-gradient(135deg, green.50, blue.50)" p={6}>
                   <VStack spacing={4}>
                     <HStack spacing={3} justify="center">
@@ -1063,7 +1068,8 @@ function ProductDetail() {
                               variant="solid"
                               fontSize="md"
                               p={2}
-                              borderRadius="lg">
+                              borderRadius="lg"
+                            >
                               🏆 Complete Transparency Champion
                             </Badge>
                             <Text color="gray.700" fontSize="sm" textAlign="center">
@@ -1079,7 +1085,8 @@ function ProductDetail() {
                               variant="outline"
                               fontSize="md"
                               p={2}
-                              borderRadius="lg">
+                              borderRadius="lg"
+                            >
                               ⭐ Transparency Leader
                             </Badge>
                             <Text color="gray.700" fontSize="sm" textAlign="center">
@@ -1095,7 +1102,8 @@ function ProductDetail() {
                               variant="solid"
                               fontSize="md"
                               p={2}
-                              borderRadius="lg">
+                              borderRadius="lg"
+                            >
                               📋 Good Documentation
                             </Badge>
                             <Text color="gray.700" fontSize="sm" textAlign="center">
@@ -1111,7 +1119,8 @@ function ProductDetail() {
                               variant="solid"
                               fontSize="md"
                               p={2}
-                              borderRadius="lg">
+                              borderRadius="lg"
+                            >
                               🌱 Building Transparency
                             </Badge>
                             <Text color="gray.700" fontSize="sm" textAlign="center">
@@ -1158,7 +1167,8 @@ function ProductDetail() {
                     bg="green.50"
                     borderRadius="md"
                     borderLeft="3px solid"
-                    borderLeftColor="green.500">
+                    borderLeftColor="green.500"
+                  >
                     <Text fontSize="sm" color="green.800">
                       💡 <strong>Why transparency matters:</strong> Complete documentation helps
                       consumers trust authentic farming practices and supports farmers who share
@@ -1186,7 +1196,8 @@ function ProductDetail() {
                 borderColor="gray.200"
                 p={6}
                 shadow="sm"
-                mb={6}>
+                mb={6}
+              >
                 <VStack align="start" spacing={4}>
                   <Flex align="center" justify="space-between" w="full">
                     <Heading size="md" color="gray.800">
@@ -1198,7 +1209,8 @@ function ProductDetail() {
                       py={1}
                       borderRadius="full"
                       fontSize="sm"
-                      fontWeight="semibold">
+                      fontWeight="semibold"
+                    >
                       {getDisplayTransparencyScore()}% Transparent
                     </Badge>
                   </Flex>
@@ -1289,7 +1301,8 @@ function ProductDetail() {
                     borderRadius="lg"
                     border="1px solid"
                     borderColor="green.200"
-                    w="full">
+                    w="full"
+                  >
                     <Text fontSize="sm" color="green.800" fontWeight="medium">
                       🏡 <strong>Farm:</strong> {completeData?.farmer?.name || 'Sustainable Farm'} •
                       📅 <strong>Harvest:</strong>{' '}
@@ -1300,6 +1313,11 @@ function ProductDetail() {
                   </Box>
                 </VStack>
               </Box>
+
+              {/* Batch Details Card - Production traceability info */}
+              {completeData?.harvestDetails && (
+                <HarvestInfoCard harvestDetails={completeData.harvestDetails} />
+              )}
 
               {/* Production Journey - Carbon Impact Section */}
               <Box id="carbon-section">
@@ -1559,7 +1577,8 @@ function ProductDetail() {
             border="1px solid"
             borderColor="gray.200"
             p={6}
-            textAlign="center">
+            textAlign="center"
+          >
             <VStack spacing={4}>
               <HStack spacing={3} justify="center">
                 <Icon as={FaTractor} color="green.500" boxSize={6} />

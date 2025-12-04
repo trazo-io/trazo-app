@@ -152,9 +152,8 @@ export const ProductionSelector: React.FC<ProductionSelectorProps> = ({
         borderColor={borderColor}
         _hover={{ bg: hoverBg }}
         transition="all 0.2s"
-        onClick={() =>
-          handleSelect(isEstablishmentOverview ? '' : production?.id.toString() || '')
-        }>
+        onClick={() => handleSelect(isEstablishmentOverview ? '' : production?.id.toString() || '')}
+      >
         <HStack justify="space-between" spacing={3}>
           <HStack spacing={3} flex={1}>
             <Icon
@@ -203,7 +202,8 @@ export const ProductionSelector: React.FC<ProductionSelectorProps> = ({
                   variant="subtle"
                   fontSize="xs"
                   px={2}
-                  py={1}>
+                  py={1}
+                >
                   {getProductionStatus(production!).label}
                 </Badge>
                 {production!.finish_date && (
@@ -277,7 +277,8 @@ export const ProductionSelector: React.FC<ProductionSelectorProps> = ({
           py={2}
           bg={useColorModeValue('gray.50', 'gray.700')}
           borderTop="1px solid"
-          borderColor={borderColor}>
+          borderColor={borderColor}
+        >
           <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="medium">
             {filteredProductions.length} of {productions.length} productions
             {searchTerm && ' (filtered)'}
@@ -293,9 +294,10 @@ export const ProductionSelector: React.FC<ProductionSelectorProps> = ({
       <Box
         ref={ref}
         position="relative"
-        w={width || "fit-content"}
+        w={width || 'fit-content'}
         minW="240px"
-        maxW={width ? "none" : { base: '320px', md: '380px', lg: '420px' }}>
+        maxW={width ? 'none' : { base: '320px', md: '380px', lg: '420px' }}
+      >
         <Button
           onClick={handleButtonClick}
           rightIcon={
@@ -329,7 +331,8 @@ export const ProductionSelector: React.FC<ProductionSelectorProps> = ({
             transform: 'translateY(0)'
           }}
           transition="all 0.2s ease"
-          isDisabled={isLoading}>
+          isDisabled={isLoading}
+        >
           <HStack spacing={2} flex={1} justify="space-between">
             <HStack spacing={2}>
               <Icon as={selectedProductionId ? FaLeaf : FaBuilding} boxSize={3} color="green.500" />
@@ -355,7 +358,8 @@ export const ProductionSelector: React.FC<ProductionSelectorProps> = ({
             zIndex={9999}
             maxH="400px"
             w={dropdownMaxWidth}
-            overflow="hidden">
+            overflow="hidden"
+          >
             <SearchInput />
             <OptionsList />
             <Footer />

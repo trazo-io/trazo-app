@@ -26,7 +26,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     // Log to monitoring service in production
     if (process.env.NODE_ENV === 'production') {
       // You can log to your monitoring service here

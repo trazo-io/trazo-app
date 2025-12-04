@@ -18,11 +18,7 @@ export default function I18n(props: I18nProps) {
 
   return (
     <LocaleContext.Provider value={{ locale: currentLocale, setLocale }}>
-      <IntlProvider
-        locale={currentLocale}
-        defaultLocale="en-US"
-        messages={messages}
-      >
+      <IntlProvider locale={currentLocale} defaultLocale="en-US" messages={messages}>
         {props.children}
       </IntlProvider>
     </LocaleContext.Provider>

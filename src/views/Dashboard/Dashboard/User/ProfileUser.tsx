@@ -79,7 +79,11 @@ function ProfileUser() {
     }
   };
 
-  const { acceptedFiles: droppedFiles, getRootProps, getInputProps } = useDropzone({
+  const {
+    acceptedFiles: droppedFiles,
+    getRootProps,
+    getInputProps
+  } = useDropzone({
     // onDrop,
     accept: 'image/*', // Accepted file types for v11 syntax
     maxFiles: 1 // Maximum number of files
@@ -235,7 +239,7 @@ function ProfileUser() {
             <Text fontSize="sm" color="gray.600">
               Manage your account security and authentication settings
             </Text>
-            
+
             {/* Change Password Link */}
             <Box
               as="button"

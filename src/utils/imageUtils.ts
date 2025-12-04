@@ -55,14 +55,16 @@ export const getFileExtension = (url: string): string => {
 /**
  * Generate a placeholder URL based on image type
  */
-export const getPlaceholderUrl = (imageType: 'avatar' | 'establishment' | 'product' | 'general' = 'general'): string => {
+export const getPlaceholderUrl = (
+  imageType: 'avatar' | 'establishment' | 'product' | 'general' = 'general'
+): string => {
   const placeholders = {
     avatar: '/images/default-avatar.jpg',
     establishment: '/images/establishment-placeholder.jpg',
     product: '/images/product-placeholder.jpg',
     general: '/images/placeholder.jpg'
   };
-  
+
   return placeholders[imageType];
 };
 
@@ -77,7 +79,7 @@ export const getImageDimensions = (usage: 'thumbnail' | 'card' | 'hero' | 'avata
     avatar: { boxSize: '48px', borderRadius: 'full' },
     gallery: { boxSize: '250px' }
   };
-  
+
   return dimensions[usage];
 };
 
@@ -86,7 +88,7 @@ export const getImageDimensions = (usage: 'thumbnail' | 'card' | 'hero' | 'avata
  */
 export const isValidImageUrl = (url: string | null | undefined): boolean => {
   if (!url) return false;
-  
+
   try {
     new URL(url);
     // Check for common image extensions
@@ -102,7 +104,7 @@ export const isValidImageUrl = (url: string | null | undefined): boolean => {
  */
 export const migrateImageProps = (props: any) => {
   const { src, alt, ...rest } = props;
-  
+
   return {
     src,
     alt: alt || 'Image',

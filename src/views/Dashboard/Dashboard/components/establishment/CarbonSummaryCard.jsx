@@ -313,7 +313,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             size="sm"
             colorScheme="red"
             variant="outline"
-            onClick={() => window.location.reload()}>
+            onClick={() => window.location.reload()}
+          >
             Reintentar
           </Button>
         </VStack>
@@ -327,7 +328,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
       p={{ base: 4, md: 6 }}
       borderRadius="xl"
       className="trazo-card"
-      boxShadow="md">
+      boxShadow="md"
+    >
       <CardHeader p={0} mb={{ base: 4, md: 4 }}>
         <Flex direction="column">
           <HStack spacing={2} align="center">
@@ -350,7 +352,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             bg={{ base: 'green.50', md: 'transparent' }}
             borderRadius={{ base: 'lg', md: 'none' }}
             border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'green.200', md: 'transparent' }}>
+            borderColor={{ base: 'green.200', md: 'transparent' }}
+          >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 Puntaje de Transparencia
@@ -369,7 +372,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             bg={{ base: 'blue.50', md: 'transparent' }}
             borderRadius={{ base: 'lg', md: 'none' }}
             border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'blue.200', md: 'transparent' }}>
+            borderColor={{ base: 'blue.200', md: 'transparent' }}
+          >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 Eventos Documentados
@@ -388,7 +392,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             bg={{ base: 'orange.50', md: 'transparent' }}
             borderRadius={{ base: 'lg', md: 'none' }}
             border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'orange.200', md: 'transparent' }}>
+            borderColor={{ base: 'orange.200', md: 'transparent' }}
+          >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 Fotos Documentadas
@@ -407,7 +412,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             bg={{ base: 'teal.50', md: 'transparent' }}
             borderRadius={{ base: 'lg', md: 'none' }}
             border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'teal.200', md: 'transparent' }}>
+            borderColor={{ base: 'teal.200', md: 'transparent' }}
+          >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 Producciones Activas
@@ -426,7 +432,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             bg={{ base: 'purple.50', md: 'transparent' }}
             borderRadius={{ base: 'lg', md: 'none' }}
             border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'purple.200', md: 'transparent' }}>
+            borderColor={{ base: 'purple.200', md: 'transparent' }}
+          >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 Verificación
@@ -450,7 +457,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             size={{ base: 'xs', md: 'sm' }}
             mb={{ base: 2, md: 3 }}
             color="green.700"
-            fontWeight="600">
+            fontWeight="600"
+          >
             Progreso de Transparencia
           </Heading>
           <Progress
@@ -466,7 +474,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             textAlign="center"
             fontSize={{ base: 'xs', md: 'sm' }}
             color="gray.600"
-            fontWeight="500">
+            fontWeight="500"
+          >
             {getTransparencyScore()}% de documentación completa
             {getTransparencyScore() >= 95 && (
               <Text as="span" color="green.500" fontWeight="bold">
@@ -484,7 +493,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             size={{ base: 'xs', md: 'sm' }}
             mb={{ base: 2, md: 3 }}
             color="gray.600"
-            fontWeight="500">
+            fontWeight="500"
+          >
             Impacto Ambiental
           </Heading>
           <VStack spacing={2}>
@@ -517,7 +527,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             }}
             _active={{
               bg: 'green.700'
-            }}>
+            }}
+          >
             Aumentar Transparencia
           </Button>
           <Button
@@ -534,7 +545,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             _hover={{
               transform: 'translateY(-1px)',
               boxShadow: 'md'
-            }}>
+            }}
+          >
             Ver Transparencia Completa
           </Button>
         </Flex>

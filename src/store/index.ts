@@ -37,7 +37,12 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: false,
       immutableCheck: config.IS_DEVELOPMENT // Only run expensive checks in development
-    }).concat(baseApi.middleware, carbonApi.middleware, mediaApi.middleware, globalSearchApi.middleware)
+    }).concat(
+      baseApi.middleware,
+      carbonApi.middleware,
+      mediaApi.middleware,
+      globalSearchApi.middleware
+    )
 });
 
 // Set up listeners for refetching behavior

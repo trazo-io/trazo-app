@@ -52,7 +52,7 @@ export const useCarbonCalculation = (parcelId, establishmentId) => {
           setShouldShowCarbonTips(true);
         } catch (error) {
           console.error('Carbon calculation failed:', error);
-          
+
           // CRITICAL FIX: Don't show misleading fallback values
           // Instead, show transparent error state
           setCarbonCalculation({

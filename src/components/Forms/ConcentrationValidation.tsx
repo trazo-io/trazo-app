@@ -20,7 +20,7 @@ export interface ConcentrationValidationResult {
   suggestions: string[];
   parsed?: {
     nitrogen?: number;
-    phosphorus?: number; 
+    phosphorus?: number;
     potassium?: number;
     percentage?: number;
     unit?: string;
@@ -29,11 +29,11 @@ export interface ConcentrationValidationResult {
 
 /**
  * Validates concentration input based on chemical type
- * FE (Fertilizer) = NPK format (e.g., "10-10-10", "16-16-16")  
+ * FE (Fertilizer) = NPK format (e.g., "10-10-10", "16-16-16")
  * PE/HE/FU (Pesticide/Herbicide/Fungicide) = Percentage format (e.g., "2.5%", "70%")
  */
 export const validateConcentration = (
-  concentration: string, 
+  concentration: string,
   chemicalType: string
 ): ConcentrationValidationResult => {
   // Safety checks for invalid inputs
@@ -75,7 +75,7 @@ export const validateConcentration = (
   } else {
     return {
       isValid: false,
-      format: 'unknown', 
+      format: 'unknown',
       errors: ['Unknown chemical type'],
       suggestions: []
     };
@@ -107,7 +107,7 @@ const validateNPKFormat = (input: string): ConcentrationValidationResult => {
   }
 
   const nitrogen = parseFloat(match[1]);
-  const phosphorus = parseFloat(match[2]); 
+  const phosphorus = parseFloat(match[2]);
   const potassium = parseFloat(match[3]);
 
   // Validate individual NPK values
@@ -175,7 +175,7 @@ const validatePercentageFormat = (input: string): ConcentrationValidationResult 
   if (percentage < 0) {
     errors.push('Concentration cannot be negative');
   }
-  
+
   if (unit === 'EC') {
     // EC format validation (Emulsifiable Concentrate - pounds per gallon)
     if (percentage > 50) {
@@ -221,12 +221,9 @@ const validatePercentageFormat = (input: string): ConcentrationValidationResult 
 const getFormatSuggestions = (chemicalType: string): string[] => {
   switch (chemicalType) {
     case 'FE':
-      return [
-        'Use NPK format: "10-10-10"',
-        'Examples: "16-16-16", "20-5-5", "15-30-15"'
-      ];
+      return ['Use NPK format: "10-10-10"', 'Examples: "16-16-16", "20-5-5", "15-30-15"'];
     case 'PE':
-    case 'HE': 
+    case 'HE':
     case 'FU':
       return [
         'Use percentage format: "2.5%" or EC format: "2.08 EC"',
@@ -265,24 +262,32 @@ export const ConcentrationFeedback: React.FC<ConcentrationFeedbackProps> = ({
     <VStack spacing={2} mt={2} align="stretch">
       {/* Validation Status */}
       <HStack spacing={2}>
-        <Icon 
+        <Icon
           as={validation.isValid ? FaCheckCircle : FaExclamationTriangle}
           color={validation.isValid ? 'green.500' : 'red.500'}
         />
-        <Text 
-          fontSize="sm" 
+        <Text
+          fontSize="sm"
           fontWeight="medium"
           color={validation.isValid ? 'green.700' : 'red.700'}
         >
           {validation.isValid ? 'Valid format' : 'Invalid format'}
         </Text>
-        <Badge 
+        <Badge
           size="sm"
-          colorScheme={validation.format === 'npk' ? 'green' : validation.format === 'percentage' ? 'blue' : 'gray'}
+          colorScheme={
+            validation.format === 'npk'
+              ? 'green'
+              : validation.format === 'percentage'
+              ? 'blue'
+              : 'gray'
+          }
         >
-          {validation.format === 'npk' ? 'NPK Format' : 
-           validation.format === 'percentage' ? 'Percentage Format' : 
-           'Unknown Format'}
+          {validation.format === 'npk'
+            ? 'NPK Format'
+            : validation.format === 'percentage'
+            ? 'Percentage Format'
+            : 'Unknown Format'}
         </Badge>
       </HStack>
 
@@ -291,17 +296,30 @@ export const ConcentrationFeedback: React.FC<ConcentrationFeedbackProps> = ({
         <Box p={2} bg="green.50" borderRadius="md" borderWidth="1px" borderColor="green.200">
           {validation.format === 'npk' && validation.parsed.nitrogen !== undefined && (
             <HStack spacing={4} fontSize="sm">
-              <Text><strong>N:</strong> {validation.parsed.nitrogen}%</Text>
-              <Text><strong>P:</strong> {validation.parsed.phosphorus}%</Text>
-              <Text><strong>K:</strong> {validation.parsed.potassium}%</Text>
+              <Text>
+                <strong>N:</strong> {validation.parsed.nitrogen}%
+              </Text>
+              <Text>
+                <strong>P:</strong> {validation.parsed.phosphorus}%
+              </Text>
+              <Text>
+                <strong>K:</strong> {validation.parsed.potassium}%
+              </Text>
               <Text color="gray.600">
-                Total: {((validation.parsed.nitrogen || 0) + (validation.parsed.phosphorus || 0) + (validation.parsed.potassium || 0)).toFixed(1)}%
+                Total:{' '}
+                {(
+                  (validation.parsed.nitrogen || 0) +
+                  (validation.parsed.phosphorus || 0) +
+                  (validation.parsed.potassium || 0)
+                ).toFixed(1)}
+                %
               </Text>
             </HStack>
           )}
           {validation.format === 'percentage' && validation.parsed.percentage !== undefined && (
             <Text fontSize="sm">
-              <strong>Concentration:</strong> {validation.parsed.percentage}{validation.parsed.unit || '%'}
+              <strong>Concentration:</strong> {validation.parsed.percentage}
+              {validation.parsed.unit || '%'}
             </Text>
           )}
         </Box>
@@ -313,7 +331,9 @@ export const ConcentrationFeedback: React.FC<ConcentrationFeedbackProps> = ({
           <AlertIcon />
           <VStack align="start" spacing={1}>
             {validation.errors.map((error, index) => (
-              <Text key={index} fontSize="sm">{error}</Text>
+              <Text key={index} fontSize="sm">
+                {error}
+              </Text>
             ))}
           </VStack>
         </Alert>
@@ -325,7 +345,9 @@ export const ConcentrationFeedback: React.FC<ConcentrationFeedbackProps> = ({
           <AlertIcon />
           <VStack align="start" spacing={1}>
             {validation.suggestions.map((suggestion, index) => (
-              <Text key={index} fontSize="sm">{suggestion}</Text>
+              <Text key={index} fontSize="sm">
+                {suggestion}
+              </Text>
             ))}
           </VStack>
         </Alert>

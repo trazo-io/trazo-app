@@ -12,7 +12,7 @@ const invitationApi = baseApi.injectEndpoints({
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          Accept: 'application/json'
         }
       }),
       invalidatesTags: ['CompanyInvitations', 'Company']

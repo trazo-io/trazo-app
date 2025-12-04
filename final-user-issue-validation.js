@@ -72,7 +72,7 @@ console.log('--------------------------------------------------------');
 const formWeatherEvent = {
   event_type: 0,
   // User might have minimal weather type info
-  weather_type: 'weather',  // Generic type that was problematic
+  weather_type: 'weather', // Generic type that was problematic
   lower_temperature: 32,
   way_of_protection: 'Row covers',
   description: 'Frost protection monitoring',
@@ -93,10 +93,11 @@ console.log('2️⃣ EVENT PROCESSING (FIXED):');
 
 // Weather detection
 const isWeatherEvent = formWeatherEvent.event_type === 0;
-const hasSpecificWeatherType = (formWeatherEvent.weather_type && formWeatherEvent.weather_type !== 'weather') || 
-                               (formWeatherEvent.type && formWeatherEvent.type !== 'weather') ||
-                               (formWeatherEvent.lower_temperature !== undefined) ||
-                               (formWeatherEvent.way_of_protection !== undefined);
+const hasSpecificWeatherType =
+  (formWeatherEvent.weather_type && formWeatherEvent.weather_type !== 'weather') ||
+  (formWeatherEvent.type && formWeatherEvent.type !== 'weather') ||
+  formWeatherEvent.lower_temperature !== undefined ||
+  formWeatherEvent.way_of_protection !== undefined;
 const hasWeatherKeywords = formWeatherEvent.description.toLowerCase().includes('frost');
 const shouldEnterWeatherBranch = isWeatherEvent && (hasSpecificWeatherType || hasWeatherKeywords);
 
@@ -106,15 +107,15 @@ if (shouldEnterWeatherBranch) {
   // Weather type inference
   const weatherTypeCode = formWeatherEvent.weather_type || formWeatherEvent.type;
   let weatherTitle = 'Weather Monitoring'; // Default
-  
+
   if (formWeatherEvent.lower_temperature !== undefined && formWeatherEvent.lower_temperature < 35) {
     weatherTitle = 'Frost Weather Event';
   } else if (formWeatherEvent.description.toLowerCase().includes('frost')) {
     weatherTitle = 'Frost Weather Event';
   }
-  
+
   console.log(`   Inferred Title: ${weatherTitle}`);
-  
+
   // Field extraction
   const details = [];
   if (formWeatherEvent.lower_temperature !== undefined) {
@@ -123,12 +124,17 @@ if (shouldEnterWeatherBranch) {
   if (formWeatherEvent.way_of_protection) {
     details.push(`Protection: ${formWeatherEvent.way_of_protection}`);
   }
-  
+
   console.log(`   Extracted Details: ${details.join(' • ')}`);
-  
+
   // Image ID generation
   const imageUrl = formWeatherEvent.images[0];
-  const stableId = imageUrl.split('/').slice(-2).join('_').replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+  const stableId = imageUrl
+    .split('/')
+    .slice(-2)
+    .join('_')
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .substring(0, 30);
   console.log(`   Image ID: ${stableId}`);
 } else {
   console.log(`   ❌ Would show: "Agricultural Activity" (OLD BUG)`);

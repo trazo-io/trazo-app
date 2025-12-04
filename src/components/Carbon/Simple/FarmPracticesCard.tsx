@@ -7,14 +7,14 @@ import {
   Badge,
   Icon,
   SimpleGrid,
-  useColorModeValue,
+  useColorModeValue
 } from '@chakra-ui/react';
-import { 
-  FaTractor, 
-  FaSeedling, 
-  FaWater, 
-  FaRecycle, 
-  FaBug, 
+import {
+  FaTractor,
+  FaSeedling,
+  FaWater,
+  FaRecycle,
+  FaBug,
   FaLeaf,
   FaShieldAlt
 } from 'react-icons/fa';
@@ -80,24 +80,22 @@ export const FarmPracticesCard: React.FC<FarmPracticesCardProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'verified': return 'green';
-      case 'active': return 'blue';
-      case 'implemented': return 'teal';
-      case 'ongoing': return 'orange';
-      default: return 'gray';
+      case 'verified':
+        return 'green';
+      case 'active':
+        return 'blue';
+      case 'implemented':
+        return 'teal';
+      case 'ongoing':
+        return 'orange';
+      default:
+        return 'gray';
     }
   };
 
   if (isLoading) {
     return (
-      <Box
-        bg={bg}
-        p={6}
-        borderRadius="xl"
-        border="1px"
-        borderColor="gray.200"
-        boxShadow="sm"
-      >
+      <Box bg={bg} p={6} borderRadius="xl" border="1px" borderColor="gray.200" boxShadow="sm">
         <Text fontSize="sm" color={mutedColor}>
           Loading sustainable practices...
         </Text>
@@ -106,14 +104,7 @@ export const FarmPracticesCard: React.FC<FarmPracticesCardProps> = ({
   }
 
   return (
-    <Box
-      bg={bg}
-      p={6}
-      borderRadius="xl"
-      border="1px"
-      borderColor="green.200"
-      boxShadow="sm"
-    >
+    <Box bg={bg} p={6} borderRadius="xl" border="1px" borderColor="green.200" boxShadow="sm">
       <VStack spacing={4} align="stretch">
         {/* Header */}
         <HStack justify="space-between">
@@ -125,7 +116,7 @@ export const FarmPracticesCard: React.FC<FarmPracticesCardProps> = ({
               {farmName} implements verified sustainable methods
             </Text>
           </VStack>
-          
+
           <Badge colorScheme="green" variant="outline">
             {totalPractices || displayPractices.length} practices
           </Badge>
@@ -134,7 +125,7 @@ export const FarmPracticesCard: React.FC<FarmPracticesCardProps> = ({
         {/* Practices Grid */}
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
           {displayPractices.slice(0, 4).map((practice, index) => (
-            <HStack 
+            <HStack
               key={index}
               p={3}
               bg={`${practice.color}.50`}
@@ -143,23 +134,14 @@ export const FarmPracticesCard: React.FC<FarmPracticesCardProps> = ({
               borderColor={`${practice.color}.200`}
               spacing={3}
             >
-              <Icon
-                as={practice.icon}
-                color={`${practice.color}.500`}
-                boxSize={5}
-                flexShrink={0}
-              />
-              
+              <Icon as={practice.icon} color={`${practice.color}.500`} boxSize={5} flexShrink={0} />
+
               <VStack align="start" spacing={0} flex={1} minW={0}>
                 <HStack spacing={2} w="full">
                   <Text fontSize="sm" fontWeight="medium" color={textColor} noOfLines={1}>
                     {practice.name}
                   </Text>
-                  <Badge 
-                    colorScheme={getStatusColor(practice.status)} 
-                    size="sm"
-                    flexShrink={0}
-                  >
+                  <Badge colorScheme={getStatusColor(practice.status)} size="sm" flexShrink={0}>
                     {practice.status}
                   </Badge>
                 </HStack>

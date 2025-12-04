@@ -22,7 +22,7 @@ export const ConsumerProductLayout: React.FC<ConsumerProductLayoutProps> = ({ ch
       <Portal containerRef={navRef}>
         <AuthNavbar secondary={false} logoText="trazo" logo="" />
       </Portal>
-      
+
       <Flex direction="column" minH="100vh" bg="gray.50">
         {/* Main Content - Full width for product detail */}
         <Box flex="1" w="100%">
@@ -30,14 +30,7 @@ export const ConsumerProductLayout: React.FC<ConsumerProductLayoutProps> = ({ ch
         </Box>
 
         {/* Footer - Following Trazo standards */}
-        <Box 
-          as="footer" 
-          bg="white" 
-          borderTop="1px solid" 
-          borderTopColor="gray.200"
-          px={4}
-          py={6}
-        >
+        <Box as="footer" bg="white" borderTop="1px solid" borderTopColor="gray.200" px={4} py={6}>
           <Footer />
         </Box>
       </Flex>

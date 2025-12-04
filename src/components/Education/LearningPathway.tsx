@@ -99,11 +99,11 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
   onStageComplete
 }) => {
   const [selectedStage, setSelectedStage] = useState(userProgress?.currentStage || 0);
-  
+
   // Responsive values
   const isMobile = useBreakpointValue({ base: true, md: false });
   const cardPadding = useBreakpointValue({ base: 4, md: 6 });
-  
+
   // Theme colors
   const cardBgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -111,22 +111,22 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const successColor = useColorModeValue('green.500', 'green.300');
   const primaryColor = useColorModeValue('blue.500', 'blue.300');
-  
+
   // Calculate overall progress
   const totalPractices = stages.reduce((total, stage) => total + stage.practices.length, 0);
   const completedPractices = userProgress?.completedPractices.length || 0;
   const overallProgress = totalPractices > 0 ? (completedPractices / totalPractices) * 100 : 0;
-  
+
   // Get stage completion status
   const getStageStatus = (stageIndex: number, stage: PathwayStage) => {
-    const stageCompletedPractices = stage.practices.filter(practice =>
+    const stageCompletedPractices = stage.practices.filter((practice) =>
       userProgress?.completedPractices.includes(practice.id)
     ).length;
-    
+
     const isUnlocked = stageIndex <= (userProgress?.currentStage || 0);
     const isCompleted = stageCompletedPractices >= stage.requiredCompletions;
     const isInProgress = isUnlocked && stageCompletedPractices > 0 && !isCompleted;
-    
+
     return { isUnlocked, isCompleted, isInProgress, stageCompletedPractices };
   };
 
@@ -141,13 +141,11 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                 <Heading size="lg" color={textColor}>
                   {title}
                 </Heading>
-                <Text color={mutedTextColor}>
-                  {description}
-                </Text>
+                <Text color={mutedTextColor}>{description}</Text>
               </VStack>
               <Icon as={FaRocket} boxSize={8} color={primaryColor} />
             </HStack>
-            
+
             {/* Overall progress */}
             <Box>
               <HStack justify="space-between" mb={2}>
@@ -158,16 +156,11 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                   {completedPractices} of {totalPractices} practices
                 </Text>
               </HStack>
-              <Progress 
-                value={overallProgress} 
-                colorScheme="blue"
-                size="lg"
-                borderRadius="full"
-              />
+              <Progress value={overallProgress} colorScheme="blue" size="lg" borderRadius="full" />
             </Box>
-            
+
             {/* Goal statement */}
-            <Box 
+            <Box
               p={4}
               bg={useColorModeValue('blue.50', 'blue.900')}
               borderRadius="lg"
@@ -181,7 +174,7 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                 </Text>
               </HStack>
             </Box>
-            
+
             {/* User progress stats */}
             {userProgress && (
               <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
@@ -222,7 +215,7 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
           </VStack>
         </CardHeader>
       </Card>
-      
+
       {/* Stage Navigation */}
       <Card bg={cardBgColor} borderRadius="xl" boxShadow="sm">
         <CardBody>
@@ -230,7 +223,7 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
             <Heading size="md" color={textColor}>
               Learning Stages
             </Heading>
-            
+
             {/* Stage progress line for desktop */}
             {!isMobile && (
               <Flex align="center" justify="center" position="relative" py={4}>
@@ -253,12 +246,12 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                   zIndex={2}
                   width={`${((userProgress?.currentStage || 0) / (stages.length - 1)) * 80}%`}
                 />
-                
+
                 {/* Stage indicators */}
                 <HStack spacing={0} justify="space-between" w="80%" zIndex={3}>
                   {stages.map((stage, index) => {
                     const { isUnlocked, isCompleted, isInProgress } = getStageStatus(index, stage);
-                    
+
                     return (
                       <VStack
                         key={stage.id}
@@ -269,13 +262,13 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                         <Circle
                           size={12}
                           bg={
-                            isCompleted 
-                              ? successColor 
-                              : isInProgress 
-                                ? primaryColor 
-                                : isUnlocked 
-                                  ? 'gray.300' 
-                                  : 'gray.100'
+                            isCompleted
+                              ? successColor
+                              : isInProgress
+                              ? primaryColor
+                              : isUnlocked
+                              ? 'gray.300'
+                              : 'gray.100'
                           }
                           color="white"
                           border="3px"
@@ -283,21 +276,21 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                           transition="all 0.2s"
                           _hover={isUnlocked ? { transform: 'scale(1.1)' } : {}}
                         >
-                          <Icon 
+                          <Icon
                             as={
-                              isCompleted 
-                                ? FaCheck 
-                                : isInProgress 
-                                  ? FaChartLine
-                                  : !isUnlocked 
-                                    ? FaLock 
-                                    : FaRocket
-                            } 
-                            boxSize={5} 
+                              isCompleted
+                                ? FaCheck
+                                : isInProgress
+                                ? FaChartLine
+                                : !isUnlocked
+                                ? FaLock
+                                : FaRocket
+                            }
+                            boxSize={5}
                           />
                         </Circle>
-                        <Text 
-                          fontSize="xs" 
+                        <Text
+                          fontSize="xs"
                           color={isUnlocked ? textColor : mutedTextColor}
                           textAlign="center"
                           maxW="60px"
@@ -311,13 +304,13 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                 </HStack>
               </Flex>
             )}
-            
+
             {/* Mobile stage selector */}
             {isMobile && (
               <HStack spacing={2} overflowX="auto" pb={2}>
                 {stages.map((stage, index) => {
                   const { isUnlocked, isCompleted, isInProgress } = getStageStatus(index, stage);
-                  
+
                   return (
                     <Button
                       key={stage.id}
@@ -325,15 +318,7 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                       variant={selectedStage === index ? 'solid' : 'outline'}
                       colorScheme={isCompleted ? 'green' : isInProgress ? 'blue' : 'gray'}
                       leftIcon={
-                        <Icon 
-                          as={
-                            isCompleted 
-                              ? FaCheck 
-                              : !isUnlocked 
-                                ? FaLock 
-                                : FaRocket
-                          } 
-                        />
+                        <Icon as={isCompleted ? FaCheck : !isUnlocked ? FaLock : FaRocket} />
                       }
                       onClick={() => isUnlocked && setSelectedStage(index)}
                       isDisabled={!isUnlocked}
@@ -348,7 +333,7 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
           </VStack>
         </CardBody>
       </Card>
-      
+
       {/* Selected Stage Content */}
       {stages[selectedStage] && (
         <Card bg={cardBgColor} borderRadius="xl" boxShadow="lg">
@@ -364,12 +349,10 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                       <Icon as={FaAward} color={successColor} boxSize={6} />
                     )}
                   </HStack>
-                  <Text color={mutedTextColor}>
-                    {stages[selectedStage].description}
-                  </Text>
+                  <Text color={mutedTextColor}>{stages[selectedStage].description}</Text>
                 </VStack>
               </HStack>
-              
+
               {/* Stage metrics */}
               <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
                 <Box>
@@ -405,7 +388,7 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                   </Text>
                 </Box>
               </SimpleGrid>
-              
+
               {/* Stage progress */}
               <Box>
                 <HStack justify="space-between" mb={2}>
@@ -413,11 +396,16 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                     Stage Progress
                   </Text>
                   <Text fontSize="sm" color={textColor}>
-                    {getStageStatus(selectedStage, stages[selectedStage]).stageCompletedPractices} of {stages[selectedStage].requiredCompletions} required
+                    {getStageStatus(selectedStage, stages[selectedStage]).stageCompletedPractices}{' '}
+                    of {stages[selectedStage].requiredCompletions} required
                   </Text>
                 </HStack>
-                <Progress 
-                  value={(getStageStatus(selectedStage, stages[selectedStage]).stageCompletedPractices / stages[selectedStage].requiredCompletions) * 100}
+                <Progress
+                  value={
+                    (getStageStatus(selectedStage, stages[selectedStage]).stageCompletedPractices /
+                      stages[selectedStage].requiredCompletions) *
+                    100
+                  }
                   colorScheme="blue"
                   size="md"
                   borderRadius="full"
@@ -425,7 +413,7 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
               </Box>
             </VStack>
           </CardHeader>
-          
+
           <CardBody pt={0}>
             {/* Practices grid */}
             <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
@@ -445,8 +433,12 @@ const LearningPathway: React.FC<LearningPathwayProps> = ({
                   isCompleted={practice.isCompleted}
                   completedSteps={practice.completedSteps}
                   onStartPractice={() => onPracticeStart?.(practice.id)}
-                  onStepComplete={(stepId) => {/* Handle step completion */}}
-                  onViewProgress={() => {/* Handle progress view */}}
+                  onStepComplete={(stepId) => {
+                    /* Handle step completion */
+                  }}
+                  onViewProgress={() => {
+                    /* Handle progress view */
+                  }}
                 />
               ))}
             </SimpleGrid>

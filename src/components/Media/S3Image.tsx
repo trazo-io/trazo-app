@@ -110,12 +110,12 @@ export const S3Image: React.FC<S3ImageProps> = ({
 
   // Get presigned URL for S3 images (fallback to individual requests)
   useEffect(() => {
-    console.log('🖼️ [S3Image] Individual fallback check:', { 
-      src, 
-      isInView, 
-      presignedUrl, 
+    console.log('🖼️ [S3Image] Individual fallback check:', {
+      src,
+      isInView,
+      presignedUrl,
       presignedUrlType: typeof presignedUrl,
-      needsPresigned: src ? needsPresignedUrl(src) : false 
+      needsPresigned: src ? needsPresignedUrl(src) : false
     });
 
     // Skip individual request if:
@@ -123,10 +123,14 @@ export const S3Image: React.FC<S3ImageProps> = ({
     // 2. No src
     // 3. presignedUrl is provided (either string or null from batch loading)
     if (!isInView || !src || presignedUrl !== undefined) {
-      console.log('⏸️ [S3Image] Skipping individual request:', { 
-        reason: !isInView ? 'not in view' : 
-                !src ? 'no src' : 
-                presignedUrl !== undefined ? 'presignedUrl provided (batch loading)' : 'unknown'
+      console.log('⏸️ [S3Image] Skipping individual request:', {
+        reason: !isInView
+          ? 'not in view'
+          : !src
+          ? 'no src'
+          : presignedUrl !== undefined
+          ? 'presignedUrl provided (batch loading)'
+          : 'unknown'
       });
       return;
     }
@@ -141,11 +145,11 @@ export const S3Image: React.FC<S3ImageProps> = ({
 
   // Determine display URL (prioritize batch presigned URL)
   const displayUrl = (() => {
-    console.log('🎯 [S3Image] Determining display URL:', { 
-      src, 
-      presignedUrl, 
+    console.log('🎯 [S3Image] Determining display URL:', {
+      src,
+      presignedUrl,
       presignedData: presignedData?.presigned_url,
-      needsPresigned: src ? needsPresignedUrl(src) : false 
+      needsPresigned: src ? needsPresignedUrl(src) : false
     });
 
     if (!src) {
@@ -192,7 +196,8 @@ export const S3Image: React.FC<S3ImageProps> = ({
 
   // Loading state - only show loading for URLs that actually need presigning
   const needsPresigning = src ? needsPresignedUrl(src) : false;
-  const shouldShowLoading = !isInView || (needsPresigning && isLoading && !presignedData && !presignedUrl);
+  const shouldShowLoading =
+    !isInView || (needsPresigning && isLoading && !presignedData && !presignedUrl);
 
   // Debug loading state
   console.log('🔍 [S3Image] Loading state check:', {
@@ -204,7 +209,7 @@ export const S3Image: React.FC<S3ImageProps> = ({
     needsPresigning,
     shouldShowLoading
   });
-  
+
   if (shouldShowLoading) {
     return (
       <Box
@@ -212,7 +217,8 @@ export const S3Image: React.FC<S3ImageProps> = ({
         boxSize={boxSize}
         borderRadius={borderRadius}
         className={className}
-        {...props}>
+        {...props}
+      >
         {placeholder || (
           <Skeleton
             boxSize={boxSize}
@@ -239,7 +245,8 @@ export const S3Image: React.FC<S3ImageProps> = ({
         bg="gray.50"
         border="1px solid"
         borderColor="gray.200"
-        {...props}>
+        {...props}
+      >
         {showErrorMessage ? (
           <Alert status="warning" variant="subtle" borderRadius={borderRadius} fontSize="sm">
             <AlertIcon />
@@ -265,7 +272,8 @@ export const S3Image: React.FC<S3ImageProps> = ({
       className={className}
       position="relative"
       overflow="hidden"
-      {...props}>
+      {...props}
+    >
       {/* Loading skeleton overlay */}
       {!imageLoaded && (
         <Skeleton

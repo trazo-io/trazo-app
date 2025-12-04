@@ -81,7 +81,11 @@ export const ProgressiveQRLoader: React.FC<ProgressiveQRLoaderProps> = ({
 
   // Show transparency score with animation when available
   useEffect(() => {
-    if (loadingStage === 'transparency' && transparencyScore !== undefined && !hasCalledStageComplete.current) {
+    if (
+      loadingStage === 'transparency' &&
+      transparencyScore !== undefined &&
+      !hasCalledStageComplete.current
+    ) {
       setTimeout(() => setShowTransparencyScore(true), 500);
       hasCalledStageComplete.current = true;
       onStageComplete?.('transparency');

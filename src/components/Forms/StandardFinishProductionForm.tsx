@@ -2,46 +2,72 @@ import React, { useState, useEffect } from 'react';
 import {
   VStack,
   HStack,
-  SimpleGrid,
   Box,
   Text,
   Icon,
   Badge,
   useToast,
-  Input as ChakraInput,
   Input,
-  InputGroup,
-  InputLeftElement,
-  Image,
-  IconButton
+  Select
 } from '@chakra-ui/react';
 import {
   StandardPage,
-  StandardCard,
   StandardField,
-  StandardInput,
   StandardTextarea,
   StandardButton,
   StandardAlert,
-  StandardStepper
+  StandardStepper,
+  SectionBox,
+  SectionHeader
 } from '../Design/StandardComponents';
 import { TrazoImageUpload } from '../Upload';
-import { FaLeaf, FaCalendarAlt, FaCamera, FaUpload, FaImage, FaTrash } from 'react-icons/fa';
-import { MdDescription, MdInventory, MdNumbers } from 'react-icons/md';
-import { useForm, FormProvider } from 'react-hook-form';
+import { FaLeaf, FaCamera, FaBoxes, FaClipboardCheck } from 'react-icons/fa';
+import { MdDescription, MdInventory } from 'react-icons/md';
+import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-// Removed useDropzone import as we're using StandardMediaUpload
 import { useIntl } from 'react-intl';
 
-// Enhanced form schema with better validation
+// Unit options for production amount
+const UNIT_OPTIONS = [
+  { value: 'kg', label: 'Kilograms (kg)' },
+  { value: 'lb', label: 'Pounds (lb)' },
+  { value: 'boxes', label: 'Boxes' },
+  { value: 'crates', label: 'Crates' },
+  { value: 'tons', label: 'Tons' },
+  { value: 'bushels', label: 'Bushels' },
+  { value: 'units', label: 'Units' }
+];
+
+// Quality grade options
+const QUALITY_GRADE_OPTIONS = [
+  { value: '', label: 'Select quality grade...' },
+  { value: 'premium', label: 'Premium Grade' },
+  { value: 'grade_a', label: 'Grade A' },
+  { value: 'grade_b', label: 'Grade B' },
+  { value: 'standard', label: 'Standard' },
+  { value: 'processing', label: 'Processing Grade' }
+];
+
+// Harvest method options
+const HARVEST_METHOD_OPTIONS = [
+  { value: '', label: 'Select harvest method...' },
+  { value: 'manual', label: 'Manual Harvest' },
+  { value: 'mechanical', label: 'Mechanical Harvest' },
+  { value: 'mixed', label: 'Mixed (Manual + Mechanical)' }
+];
+
+// Enhanced form schema with new fields
 const finishProductionSchema = z.object({
   production_amount: z
     .union([z.string(), z.number()])
     .transform((val) => Number(val))
     .refine((val) => !isNaN(val) && val > 0, 'Production amount must be a number greater than 0'),
+  production_unit: z.string().min(1, 'Unit is required'),
   lot_id: z.string().min(1, 'Lot number is required').max(50, 'Lot number is too long'),
   finish_date: z.string().min(1, 'Finish date is required'),
+  quality_grade: z.string().optional(),
+  harvest_method: z.string().optional(),
   observation: z.string().optional()
 });
 
@@ -50,13 +76,18 @@ type FinishProductionFormData = z.infer<typeof finishProductionSchema>;
 // Internal form state type that matches HTML form fields
 type FormStateData = {
   production_amount: string;
+  production_unit: string;
   lot_id: string;
   finish_date: string;
+  quality_grade: string;
+  harvest_method: string;
   observation: string;
 };
 
 interface StandardFinishProductionFormProps {
-  onSubmit: (data: FinishProductionFormData & { uploaded_image_urls: string[]; images: string[] }) => void;
+  onSubmit: (
+    data: FinishProductionFormData & { uploaded_image_urls: string[]; images: string[] }
+  ) => void;
   onCancel: () => void;
   initialData?: Partial<FinishProductionFormData>;
   isLoading?: boolean;
@@ -74,9 +105,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   productName = '',
   parcelName = ''
 }) => {
+  // DEBUG log on component mount
+  console.log('📦 StandardFinishProductionForm v2.0 rendered');
+
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
-  // Enhanced state management for persisting form data across steps
   const [savedFormData, setSavedFormData] = useState<Partial<FormStateData>>({});
   const intl = useIntl();
   const toast = useToast();
@@ -97,11 +130,14 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
   const methods = useForm<FormStateData>({
     resolver: zodResolver(finishProductionSchema),
-    mode: 'onChange', // Enable real-time validation
+    mode: 'onChange',
     defaultValues: {
       production_amount: '',
+      production_unit: 'kg',
       lot_id: '',
       finish_date: '',
+      quality_grade: '',
+      harvest_method: '',
       observation: ''
     }
   });
@@ -112,6 +148,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     watch,
     setValue,
     getValues,
+    control,
     formState: { errors }
   } = methods;
 
@@ -120,8 +157,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     if (initialData) {
       const formDefaults: FormStateData = {
         production_amount: initialData.production_amount?.toString() || '',
+        production_unit: initialData.production_unit || 'kg',
         lot_id: initialData.lot_id || '',
         finish_date: initialData.finish_date || '',
+        quality_grade: initialData.quality_grade || '',
+        harvest_method: initialData.harvest_method || '',
         observation: initialData.observation || ''
       };
       reset(formDefaults);
@@ -132,35 +172,27 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   // Restore saved form data when returning to step 1
   useEffect(() => {
     if (currentStep === 0 && Object.keys(savedFormData).length > 0) {
-      console.log('🔄 Restoring saved form data to step 1:', savedFormData);
       Object.entries(savedFormData).forEach(([key, value]) => {
         setValue(key as keyof FormStateData, value);
       });
     }
   }, [currentStep, savedFormData, setValue]);
 
-
   // Enhanced form submission handler
   const onSubmitForm = (data: FormStateData) => {
     try {
-      console.log('🚀 Form submission triggered!');
-      console.log('📋 Current form data:', data);
-      console.log('💾 Saved form data:', savedFormData);
-      console.log('📷 Uploaded images:', uploadedImageUrls);
-
-      // Merge current form data with saved data to ensure all fields are included
       const mergedData = {
         ...savedFormData,
         ...data
       };
 
-      console.log('🔗 Merged form data:', mergedData);
-
-      // Convert to the expected output format
       const finalFormData: FinishProductionFormData = {
         production_amount: Number(mergedData.production_amount || 0),
+        production_unit: mergedData.production_unit || 'kg',
         lot_id: mergedData.lot_id || '',
         finish_date: mergedData.finish_date || '',
+        quality_grade: mergedData.quality_grade,
+        harvest_method: mergedData.harvest_method,
         observation: mergedData.observation
       };
 
@@ -192,29 +224,16 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     }
   };
 
-  // Enhanced manual submit function for the final button
+  // Manual submit function for the final button
   const handleManualSubmit = () => {
-    console.log('🔘 Manual submit button clicked!');
-
-    // Get current form values
     const currentValues = getValues();
-    console.log('📋 Current form values:', currentValues);
-    console.log('💾 Saved form data:', savedFormData);
-    console.log('❌ Form errors:', errors);
-    console.log('✅ Form is valid:', Object.keys(errors).length === 0);
-
-    // Merge all data
     const allFormData = {
       ...savedFormData,
       ...currentValues
     };
 
-    console.log('🔗 All merged form data:', allFormData);
-
-    // Validate the merged data
     try {
-      const validatedData = finishProductionSchema.parse(allFormData);
-      console.log('✅ Data validation passed:', validatedData);
+      finishProductionSchema.parse(allFormData);
       onSubmitForm(allFormData);
     } catch (validationError) {
       console.error('❌ Data validation failed:', validationError);
@@ -228,13 +247,10 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     }
   };
 
-
-  // Enhanced step progression logic with proper data persistence
+  // Step progression logic
   const nextStep = () => {
     if (currentStep === 0) {
-      // Save step 1 data before moving to step 2
       const currentValues = getValues();
-      console.log('💾 Saving step 1 data before progression:', currentValues);
       setSavedFormData(currentValues);
     }
     if (currentStep < steps.length - 1) {
@@ -244,7 +260,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
   const previousStep = () => {
     if (currentStep > 0) {
-      // Save current step data when going back
       const currentValues = getValues();
       setSavedFormData((prev) => ({ ...prev, ...currentValues }));
       setCurrentStep(currentStep - 1);
@@ -252,95 +267,41 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   };
 
   const goToStep = (step: number) => {
-    // Save current data before jumping to another step
     const currentValues = getValues();
     setSavedFormData((prev) => ({ ...prev, ...currentValues }));
     setCurrentStep(step);
   };
 
   // Watch form values for reactive validation
-  const watchedValues = watch(['production_amount', 'lot_id', 'finish_date']);
+  const watchedValues = watch(['production_amount', 'production_unit', 'lot_id', 'finish_date']);
 
-  // Enhanced step validation that considers saved data
-  const isStepValid = (step: number) => {
-    if (step === 0) {
-      // Production info step - check required fields from current values or saved data
-      const currentValues = getValues();
-      const effectiveValues = { ...savedFormData, ...currentValues };
-
-      const amount = effectiveValues.production_amount;
-      const lotId = effectiveValues.lot_id;
-      const finishDate = effectiveValues.finish_date;
-
-      const isValid = !!(
-        amount &&
-        lotId &&
-        finishDate &&
-        String(amount).trim() !== '' &&
-        String(lotId).trim() !== '' &&
-        String(finishDate).trim() !== ''
-      );
-
-      // Only log when debugging is needed (reduce console spam)
-      if (process.env.NODE_ENV === 'development' && Math.random() < 0.1) {
-        console.log('🔍 Step 0 validation:', {
-          currentValues,
-          savedFormData,
-          effectiveValues,
-          amount,
-          lotId,
-          finishDate,
-          isValid
-        });
-      }
-
-      return isValid;
-    }
-    if (step === 1) {
-      // Media step - no required validation
-      return true;
-    }
-    return false;
-  };
-
-  // Memoized validation for performance
+  // Step validation
   const isStep0Valid = React.useMemo(() => {
     const currentValues = getValues();
     const effectiveValues = { ...savedFormData, ...currentValues };
 
     const amount = effectiveValues.production_amount;
+    const unit = effectiveValues.production_unit;
     const lotId = effectiveValues.lot_id;
     const finishDate = effectiveValues.finish_date;
 
-    const isValid = !!(
+    return !!(
       amount &&
+      unit &&
       lotId &&
       finishDate &&
       String(amount).trim() !== '' &&
+      String(unit).trim() !== '' &&
       String(lotId).trim() !== '' &&
       String(finishDate).trim() !== ''
     );
-
-    // Debug log for troubleshooting
-    console.log('🚀 Step 0 validation check:', {
-      amount,
-      lotId,
-      finishDate,
-      isValid,
-      hasFormErrors: Object.keys(errors).length > 0,
-      formErrors: errors
-    });
-
-    return isValid;
-  }, [watchedValues, savedFormData, errors]);
+  }, [watchedValues, savedFormData]);
 
   // Get completed steps
   const getCompletedSteps = () => {
     const completed = [];
     for (let i = 0; i < currentStep; i++) {
-      if (isStepValid(i)) {
-        completed.push(i);
-      }
+      completed.push(i);
     }
     return completed;
   };
@@ -376,133 +337,265 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
             {/* Step 1: Production Information */}
             {currentStep === 0 && (
-              <StandardCard
-                title="Production Information"
-                subtitle="Enter the final details for this production cycle"
-              >
-                <VStack spacing={6} align="stretch">
-                  {/* Production Amount & Lot Number */}
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                    <StandardField
-                      label={
-                        intl.formatMessage({ id: 'app.productionAmount' }) || 'Production Amount'
-                      }
-                      error={errors.production_amount?.message}
-                      helpText="Total volume or quantity produced"
-                      required
-                    >
-                      <Input
-                        {...methods.register('production_amount')}
-                        placeholder={
-                          intl.formatMessage({ id: 'app.volumeOfTheProduct' }) ||
-                          'Enter production volume'
-                        }
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                        size="lg"
+              <VStack spacing={6} align="stretch">
+                {/* Parent Card Container - like Add Event form */}
+                <Box
+                  bg="white"
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="gray.200"
+                  overflow="hidden"
+                  shadow="sm"
+                >
+                  {/* Parent Header - matching Event Details style */}
+                  <Box px={6} py={5} borderBottom="1px solid" borderColor="gray.100">
+                    <Text fontSize="lg" fontWeight="semibold" color="gray.800">
+                      Production Information
+                    </Text>
+                  </Box>
+
+                  {/* Section Cards Container */}
+                  <VStack spacing={4} p={6} align="stretch">
+                    {/* Harvest Output Section */}
+                    <SectionBox variant="default">
+                      <SectionHeader
+                        icon={FaBoxes}
+                        iconColor="green.500"
+                        title="Harvest Output"
+                        badge="Required"
+                        badgeColorScheme="green"
                       />
-                    </StandardField>
+                      <VStack spacing={4} align="stretch">
+                        {/* Production Amount with Unit Selector */}
+                        <HStack spacing={4} align="flex-start">
+                          <Box flex={2}>
+                            <StandardField
+                              label={intl.formatMessage({ id: 'app.productionAmount' }) || 'Production Amount'}
+                              error={errors.production_amount?.message}
+                              helpText="Total volume or quantity harvested"
+                              required
+                            >
+                              <Input
+                                {...methods.register('production_amount')}
+                                placeholder="Enter amount harvested"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                borderRadius="lg"
+                                borderColor="gray.300"
+                                _hover={{ borderColor: 'green.400' }}
+                                _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                                size="lg"
+                              />
+                            </StandardField>
+                          </Box>
+                          <Box flex={1}>
+                            <StandardField
+                              label="Unit"
+                              error={errors.production_unit?.message}
+                              required
+                            >
+                              <Controller
+                                name="production_unit"
+                                control={control}
+                                render={({ field }) => (
+                                  <Select
+                                    {...field}
+                                    borderRadius="lg"
+                                    borderColor="gray.300"
+                                    _hover={{ borderColor: 'green.400' }}
+                                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                                    size="lg"
+                                  >
+                                    {UNIT_OPTIONS.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </Select>
+                                )}
+                              />
+                            </StandardField>
+                          </Box>
+                        </HStack>
 
-                    <StandardField
-                      label={intl.formatMessage({ id: 'app.lotNumber' }) || 'Lot Number'}
-                      error={errors.lot_id?.message}
-                      helpText="Unique identifier for this batch"
-                      required
-                    >
-                      <Input
-                        {...methods.register('lot_id')}
-                        placeholder={
-                          intl.formatMessage({ id: 'app.lotNumber' }) || 'Enter lot number'
-                        }
-                        type="text"
-                        maxLength={50}
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                        size="lg"
+                        {/* Lot Number */}
+                        <StandardField
+                          label={intl.formatMessage({ id: 'app.lotNumber' }) || 'Lot Number'}
+                          error={errors.lot_id?.message}
+                          helpText="Unique identifier for this batch"
+                          required
+                        >
+                          <Input
+                            {...methods.register('lot_id')}
+                            placeholder="Enter lot number"
+                            type="text"
+                            maxLength={50}
+                            borderRadius="lg"
+                            borderColor="gray.300"
+                            _hover={{ borderColor: 'green.400' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            size="lg"
+                          />
+                        </StandardField>
+
+                        {/* Finish Date */}
+                        <StandardField
+                          label={intl.formatMessage({ id: 'app.finishDate' }) || 'Completion Date'}
+                          error={errors.finish_date?.message}
+                          helpText="When was this production cycle completed?"
+                          required
+                        >
+                          <Input
+                            {...methods.register('finish_date')}
+                            placeholder="Select completion date and time"
+                            type="datetime-local"
+                            borderRadius="lg"
+                            borderColor="gray.300"
+                            _hover={{ borderColor: 'green.400' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            size="lg"
+                          />
+                        </StandardField>
+                      </VStack>
+                    </SectionBox>
+
+                    {/* Quality & Harvest Details Section */}
+                    <SectionBox variant="highlighted">
+                      <SectionHeader
+                        icon={FaClipboardCheck}
+                        iconColor="purple.500"
+                        title="Quality & Harvest Details"
+                        badge="Optional"
+                        badgeColorScheme="purple"
                       />
-                    </StandardField>
-                  </SimpleGrid>
+                      <Text fontSize="sm" color="gray.600" mb={4}>
+                        This information helps consumers understand your product better
+                      </Text>
+                      <VStack spacing={4} align="stretch">
+                        <HStack spacing={4} align="flex-start">
+                          <Box flex={1}>
+                            <StandardField
+                              label="Quality Grade"
+                              helpText="Quality classification of harvest"
+                            >
+                              <Controller
+                                name="quality_grade"
+                                control={control}
+                                render={({ field }) => (
+                                  <Select
+                                    {...field}
+                                    borderRadius="lg"
+                                    borderColor="gray.300"
+                                    _hover={{ borderColor: 'green.400' }}
+                                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                                    size="lg"
+                                  >
+                                    {QUALITY_GRADE_OPTIONS.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </Select>
+                                )}
+                              />
+                            </StandardField>
+                          </Box>
+                          <Box flex={1}>
+                            <StandardField
+                              label="Harvest Method"
+                              helpText="How was the crop harvested?"
+                            >
+                              <Controller
+                                name="harvest_method"
+                                control={control}
+                                render={({ field }) => (
+                                  <Select
+                                    {...field}
+                                    borderRadius="lg"
+                                    borderColor="gray.300"
+                                    _hover={{ borderColor: 'green.400' }}
+                                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                                    size="lg"
+                                  >
+                                    {HARVEST_METHOD_OPTIONS.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </Select>
+                                )}
+                              />
+                            </StandardField>
+                          </Box>
+                        </HStack>
+                      </VStack>
+                    </SectionBox>
 
-                  {/* Finish Date */}
-                  <StandardField
-                    label={intl.formatMessage({ id: 'app.finishDate' }) || 'Completion Date'}
-                    error={errors.finish_date?.message}
-                    helpText="When was this production cycle completed?"
-                    required
-                  >
-                    <Input
-                      {...methods.register('finish_date')}
-                      placeholder="Select completion date and time"
-                      type="datetime-local"
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                    />
-                  </StandardField>
+                    {/* Notes Section */}
+                    <SectionBox variant="default">
+                      <SectionHeader
+                        icon={MdDescription}
+                        iconColor="blue.500"
+                        title="Notes & Observations"
+                        badge="Optional"
+                        badgeColorScheme="gray"
+                      />
+                      <StandardField
+                        label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
+                        error={errors.observation?.message}
+                        helpText="Additional notes about this production cycle"
+                      >
+                        <StandardTextarea
+                          {...methods.register('observation')}
+                          placeholder="Enter any observations or notes about the harvest..."
+                          rows={4}
+                        />
+                      </StandardField>
+                    </SectionBox>
+                  </VStack>
+                </Box>
 
-                  {/* Observations */}
-                  <StandardField
-                    label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
-                    error={errors.observation?.message}
-                    helpText="Additional notes about this production cycle (optional)"
-                  >
-                    <StandardTextarea
-                      {...methods.register('observation')}
-                      placeholder={
-                        intl.formatMessage({ id: 'app.descriptionOfTheEvent' }) ||
-                        'Enter any observations or notes'
-                      }
-                      rows={4}
-                    />
-                  </StandardField>
+                {/* Step Navigation */}
+                <HStack spacing={4} justify="flex-end" pt={4}>
+                  <StandardButton variant="outline" onClick={onCancel} disabled={isLoading}>
+                    Cancel
+                  </StandardButton>
 
-                  {/* Step Navigation */}
-                  <HStack spacing={4} justify="flex-end" pt={4}>
-                    <StandardButton variant="outline" onClick={onCancel} disabled={isLoading}>
-                      Cancel
-                    </StandardButton>
-
-                    <StandardButton onClick={nextStep} disabled={!isStep0Valid}>
-                      Continue to Media
-                    </StandardButton>
-                  </HStack>
-                </VStack>
-              </StandardCard>
+                  <StandardButton onClick={nextStep} disabled={!isStep0Valid}>
+                    Continue to Media
+                  </StandardButton>
+                </HStack>
+              </VStack>
             )}
 
             {/* Step 2: Media Upload */}
             {currentStep === 1 && (
-              <StandardCard
-                title="Production Images"
-                subtitle="Upload photos documenting the completed production"
-              >
+              <SectionBox variant="default">
+                <SectionHeader
+                  icon={FaCamera}
+                  iconColor="orange.500"
+                  title="Production Images"
+                  badge="Optional"
+                  badgeColorScheme="orange"
+                />
+                <Text fontSize="sm" color="gray.600" mb={4}>
+                  Upload photos documenting the completed production
+                </Text>
                 <VStack spacing={6} align="stretch">
-                  {/* Image Upload */}
                   <StandardField
-                    label={
-                      intl.formatMessage({ id: 'app.productionImages' }) || 'Production Images'
-                    }
+                    label={intl.formatMessage({ id: 'app.productionImages' }) || 'Production Images'}
                     helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
                   >
                     <TrazoImageUpload
                       maxFiles={5}
-                      maxSize={5 * 1024 * 1024} // 5MB
+                      maxSize={5 * 1024 * 1024}
                       existingImages={uploadedImageUrls}
                       onImagesChange={setUploadedImageUrls}
                       isLoading={false}
                     />
                   </StandardField>
 
-                  {/* Upload Limit Notice */}
                   {uploadedImageUrls.length >= 5 && (
                     <StandardAlert
                       status="info"
@@ -527,7 +620,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                     </StandardButton>
                   </HStack>
                 </VStack>
-              </StandardCard>
+              </SectionBox>
             )}
           </VStack>
         </form>

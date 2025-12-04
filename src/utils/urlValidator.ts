@@ -47,18 +47,18 @@ export function validateRedirectUrl(url: string | null, currentOrigin?: string):
         // Prevent protocol-relative URLs and backslash attacks
         return null;
       }
-      
+
       // Allow only URLs that look like valid paths
       if (!/^\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/.test(url)) {
         return null;
       }
-      
+
       return url;
     }
 
     // For absolute URLs, parse and validate
     const parsed = new URL(url, currentOrigin || window.location.origin);
-    
+
     // Check protocol - only allow HTTP/HTTPS
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       return null;
@@ -66,7 +66,7 @@ export function validateRedirectUrl(url: string | null, currentOrigin?: string):
 
     // Check if domain is in allowed list
     const hostname = parsed.hostname.toLowerCase();
-    const isAllowedDomain = ALLOWED_DOMAINS.some(domain => {
+    const isAllowedDomain = ALLOWED_DOMAINS.some((domain) => {
       // Exact match or subdomain match
       return hostname === domain || hostname.endsWith('.' + domain);
     });
@@ -97,7 +97,7 @@ export function validateRedirectUrl(url: string | null, currentOrigin?: string):
  * @returns Validated URL or fallback
  */
 export function validateNextParameter(
-  searchParams: URLSearchParams, 
+  searchParams: URLSearchParams,
   fallbackUrl: string = '/'
 ): string {
   const nextParam = searchParams.get('next');
@@ -161,5 +161,6 @@ export const URL_PATTERNS = {
   // Safe path pattern (no protocol-relative URLs or dangerous characters)
   SAFE_PATH: /^\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/,
   // Domain validation pattern
-  DOMAIN: /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/
+  DOMAIN:
+    /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$/
 };

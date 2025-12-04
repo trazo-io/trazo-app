@@ -1,44 +1,29 @@
+// Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
 import React, { useEffect, useRef } from 'react';
 import {
-  Button,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
   VStack,
   HStack,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
-  Textarea,
   Checkbox,
   useColorModeValue,
-  Box,
   Text,
   Icon,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
-  SimpleGrid,
-  Badge,
-  Tooltip
+  SimpleGrid
 } from '@chakra-ui/react';
 import {
-  StandardCard,
   StandardButton,
   StandardField,
   StandardInput,
   StandardSelect,
-  StandardTextarea
+  StandardTextarea,
+  StandardAlert,
+  SectionHeader,
+  SectionBox
 } from 'components/Design/StandardComponents';
-import { FormProvider, useForm, Controller } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, number, boolean } from 'zod';
-import { 
-  FaChevronLeft, 
+import { object, string, boolean } from 'zod';
+import {
+  FaChevronLeft,
   FaChevronRight,
   FaBug,
   FaRulerHorizontal,
@@ -52,8 +37,11 @@ const pestSchema = object({
   type: string().min(1, 'Pest management event type is required'),
   name: string().min(1, 'Event name is required'),
   // Agricultural context fields (critical for carbon calculations)
-  field_area_hectares: string().optional(),
-  travel_distance_km: string().optional(), 
+  // Sprint 2 Epic 2.2: Flexible units - user can select hectares/acres and km/miles
+  field_area: string().optional(),
+  area_unit: string().optional(), // 'hectares' | 'acres'
+  travel_distance: string().optional(),
+  distance_unit: string().optional(), // 'km' | 'miles'
   time_spent_hours: string().optional(),
   // Agricultural decision fields
   crop_growth_stage: string().optional(),
@@ -69,13 +57,22 @@ const pestSchema = object({
   damage_percentage: string().optional(),
   action_threshold_met: boolean().optional(),
   imp_strategy: string().optional(),
-  observation: string().optional()
+  observation: string().optional(),
+  // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
+  beneficial_insects_used: string().optional(), // Whether beneficial insects are being used
+  chemical_free_period_days: string().optional() // Days since last chemical application
 });
 
-const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
+const PestManagementTab = ({
+  onSubmitHandler,
+  onDataChange,
+  onPrev,
+  initialValues = {},
+  hideActions = false
+}) => {
   const intl = useIntl();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
-  
+
   // INFINITE LOOP FIX: Track last sent values to prevent duplicate onDataChange calls
   const lastSentValuesRef = useRef(null);
 
@@ -85,8 +82,11 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
       type: initialValues.type || 'SC',
       name: initialValues.name || '',
       // Agricultural context fields - require user input for accurate carbon calculations
-      field_area_hectares: initialValues.field_area_hectares || '',
-      travel_distance_km: initialValues.travel_distance_km || '',
+      // Sprint 2 Epic 2.2: Flexible units - user can select hectares/acres and km/miles
+      field_area: initialValues.field_area || initialValues.field_area_hectares || '',
+      area_unit: initialValues.area_unit || 'acres', // Default to acres for US farmers
+      travel_distance: initialValues.travel_distance || initialValues.travel_distance_km || '',
+      distance_unit: initialValues.distance_unit || 'miles', // Default to miles for US farmers
       time_spent_hours: initialValues.time_spent_hours || '',
       // Agricultural decision fields
       crop_growth_stage: initialValues.crop_growth_stage || '',
@@ -102,7 +102,10 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
       damage_percentage: initialValues.damage_percentage?.toString() || '',
       action_threshold_met: initialValues.action_threshold_met || false,
       imp_strategy: initialValues.imp_strategy || '',
-      observation: initialValues.observation || ''
+      observation: initialValues.observation || '',
+      // Sprint 3 Epic 3.2: Consumer Trust Fields
+      beneficial_insects_used: initialValues.beneficial_insects_used || '',
+      chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || ''
     }
   });
 
@@ -113,8 +116,11 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
         type: initialValues.type || 'SC',
         name: initialValues.name || '',
         // Agricultural context fields
-        field_area_hectares: initialValues.field_area_hectares || '',
-        travel_distance_km: initialValues.travel_distance_km || '',
+        // Sprint 2 Epic 2.2: Flexible units - user can select hectares/acres and km/miles
+        field_area: initialValues.field_area || initialValues.field_area_hectares || '',
+        area_unit: initialValues.area_unit || 'acres',
+        travel_distance: initialValues.travel_distance || initialValues.travel_distance_km || '',
+        distance_unit: initialValues.distance_unit || 'miles',
         time_spent_hours: initialValues.time_spent_hours || '',
         // Agricultural decision fields
         crop_growth_stage: initialValues.crop_growth_stage || '',
@@ -130,19 +136,29 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
         damage_percentage: initialValues.damage_percentage?.toString() || '',
         action_threshold_met: initialValues.action_threshold_met || false,
         imp_strategy: initialValues.imp_strategy || '',
-        observation: initialValues.observation || ''
+        observation: initialValues.observation || '',
+        // Sprint 3 Epic 3.2: Consumer Trust Fields
+        beneficial_insects_used: initialValues.beneficial_insects_used || '',
+        chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || ''
       });
     }
   }, [initialValues, methods]);
 
-  const { watch, handleSubmit, formState: { errors } } = methods;
+  const {
+    watch,
+    handleSubmit,
+    formState: { errors }
+  } = methods;
   const pestType = watch('type');
 
   // Watch critical fields for real-time carbon calculation updates
+  // Sprint 2 Epic 2.2: Updated to use flexible unit fields
   const watchedFields = watch([
     'type',
-    'field_area_hectares',
-    'travel_distance_km',
+    'field_area',
+    'area_unit',
+    'travel_distance',
+    'distance_unit',
     'pest_pressure_level',
     'damage_percentage',
     'release_quantity',
@@ -166,14 +182,14 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
         // Types that need area context for accurate carbon calculations
         const needsAreaValidation = ['SC', 'TM', 'BR', 'IP']; // Scouting, Trap Monitoring, Beneficial Release, IPM Implementation
         const hasValidType = currentValues.type && currentValues.type !== '';
-        
+
         if (needsAreaValidation.includes(currentValues.type)) {
           // For field activities, require area and travel distance for meaningful carbon calculation
-          const hasValidArea = currentValues.field_area_hectares && 
-            parseFloat(currentValues.field_area_hectares) > 0;
-          const hasValidTravel = currentValues.travel_distance_km && 
-            parseFloat(currentValues.travel_distance_km) >= 0;
-            
+          // Sprint 2 Epic 2.2: Updated to use flexible unit fields
+          const hasValidArea = currentValues.field_area && parseFloat(currentValues.field_area) > 0;
+          const hasValidTravel =
+            currentValues.travel_distance && parseFloat(currentValues.travel_distance) >= 0;
+
           if (hasValidType && hasValidArea && hasValidTravel) {
             console.log('[PestManagementTab]: Triggering onDataChange with values', currentValues);
             try {
@@ -187,6 +203,7 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
           }
         } else if (hasValidType) {
           // For non-field activities (PI, TA), just require type
+          // eslint-disable-next-line no-undef
           if (process.env.NODE_ENV === 'development') {
             console.log('[PestManagementTab]: ✅ Triggering carbon calculation (non-field)');
           }
@@ -222,37 +239,36 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
-          {/* Transparency Alert */}
-          <Alert status="info" borderRadius="md">
-            <AlertIcon />
-            <Box>
-              <AlertTitle fontSize="sm">Integrated Pest Management & Transparency Documentation</AlertTitle>
-              <AlertDescription fontSize="xs">
-                All fields marked with * are required for accurate carbon footprint calculations and 
-                transparency documentation. IPM practices help build consumer trust through documented 
-                sustainable pest management methods.
-              </AlertDescription>
-            </Box>
-          </Alert>
+          {/* Transparency Focus Alert */}
+          <StandardAlert status="info" title="Pest Management & Transparency Documentation">
+            <HStack spacing={2} mb={2}>
+              <Icon as={FaBug} color="green.500" />
+              <Text fontSize="sm" fontWeight="bold">
+                Integrated Pest Management Transparency
+              </Text>
+            </HStack>
+            <Text fontSize="sm">
+              Document your IPM practices to build consumer trust through transparent sustainable
+              pest management. This helps consumers understand your commitment to environmentally
+              responsible farming methods.
+            </Text>
+          </StandardAlert>
 
           {/* Basic Event Information */}
-          <Box p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaBug} mr={2} />
-                Pest Management Event Information
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Transparency Tracking
-              </Badge>
-            </HStack>
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaBug}
+              iconColor="green.600"
+              title="Pest Management Event Information"
+              badge="Transparency Tracking"
+              badgeColorScheme="green"
+            />
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
               <StandardField
                 label={intl.formatMessage({ id: 'app.eventName' }) || 'Event Name *'}
                 required
-                error={errors.name?.message}
-              >
+                error={errors.name?.message}>
                 <StandardInput
                   {...methods.register('name')}
                   placeholder="e.g., Pest Scouting, Beneficial Release"
@@ -265,10 +281,11 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                   'Pest Management Event Type *'
                 }
                 required
-                error={errors.type?.message}
-              >
+                error={errors.type?.message}>
                 <StandardSelect {...methods.register('type')}>
-                  <option value="SC">{intl.formatMessage({ id: 'app.scouting' }) || 'Scouting'}</option>
+                  <option value="SC">
+                    {intl.formatMessage({ id: 'app.scouting' }) || 'Scouting'}
+                  </option>
                   <option value="BR">
                     {intl.formatMessage({ id: 'app.beneficialRelease' }) || 'Beneficial Release'}
                   </option>
@@ -279,7 +296,8 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                     {intl.formatMessage({ id: 'app.pestIdentification' }) || 'Pest Identification'}
                   </option>
                   <option value="TA">
-                    {intl.formatMessage({ id: 'app.thresholdAssessment' }) || 'Threshold Assessment'}
+                    {intl.formatMessage({ id: 'app.thresholdAssessment' }) ||
+                      'Threshold Assessment'}
                   </option>
                   <option value="IP">
                     {intl.formatMessage({ id: 'app.impImplementation' }) || 'IPM Implementation'}
@@ -287,26 +305,24 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                 </StandardSelect>
               </StandardField>
             </SimpleGrid>
-          </Box>
+          </SectionBox>
 
           {/* Agricultural Context Section - Critical for Carbon Calculations */}
-          <Box p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaRulerHorizontal} mr={2} />
-                Field Area & Context
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Carbon Calculation Required
-              </Badge>
-            </HStack>
+          <SectionBox variant="highlighted" borderColor="green.200">
+            <SectionHeader
+              icon={FaRulerHorizontal}
+              iconColor="green.600"
+              title="Field Area & Context"
+              badge="Carbon Calculation Required"
+              badgeColorScheme="green"
+            />
 
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-              <StandardField 
-                label="Field Area Treated *" 
-                required 
-                helpText="Area needed for accurate carbon calculation"
-              >
+              {/* Sprint 2 Epic 2.2: Flexible units - user can select hectares or acres */}
+              <StandardField
+                label="Field Area Treated"
+                required
+                helpText="Area needed for carbon calculation (select your preferred unit)">
                 <HStack spacing={2}>
                   <StandardInput
                     flex={2}
@@ -314,19 +330,20 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                     step="0.01"
                     min="0"
                     placeholder="2.5"
-                    {...methods.register('field_area_hectares')}
+                    {...methods.register('field_area')}
                   />
-                  <StandardSelect flex={1} value="hectares" isReadOnly>
+                  <StandardSelect flex={1} {...methods.register('area_unit')}>
+                    <option value="acres">Acres</option>
                     <option value="hectares">Hectares</option>
                   </StandardSelect>
                 </HStack>
               </StandardField>
 
-              <StandardField 
-                label="Travel Distance *" 
-                required 
-                helpText="Distance to field for carbon calculation"
-              >
+              {/* Sprint 2 Epic 2.2: Flexible units - user can select km or miles */}
+              <StandardField
+                label="Travel Distance"
+                required
+                helpText="Distance to field for carbon calculation (select your preferred unit)">
                 <HStack spacing={2}>
                   <StandardInput
                     flex={2}
@@ -334,18 +351,16 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                     step="0.1"
                     min="0"
                     placeholder="2.0"
-                    {...methods.register('travel_distance_km')}
+                    {...methods.register('travel_distance')}
                   />
-                  <StandardSelect flex={1} value="km" isReadOnly>
+                  <StandardSelect flex={1} {...methods.register('distance_unit')}>
+                    <option value="miles">Miles</option>
                     <option value="km">Kilometers</option>
                   </StandardSelect>
                 </HStack>
               </StandardField>
 
-              <StandardField 
-                label="Time Spent" 
-                helpText="Hours spent on this activity"
-              >
+              <StandardField label="Time Spent" helpText="Hours spent on this activity">
                 <HStack spacing={2}>
                   <StandardInput
                     flex={2}
@@ -361,25 +376,20 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                 </HStack>
               </StandardField>
             </SimpleGrid>
-          </Box>
+          </SectionBox>
 
           {/* Agricultural Decision Context */}
-          <Box p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="purple.600">
-                <Icon as={FaCloudSun} mr={2} />
-                Agricultural Context & Conditions
-              </Text>
-              <Badge colorScheme="purple" fontSize="xs">
-                IPM Decision Support
-              </Badge>
-            </HStack>
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaCloudSun}
+              iconColor="purple.600"
+              title="Agricultural Context & Conditions"
+              badge="IPM Decision Support"
+              badgeColorScheme="purple"
+            />
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-              <StandardField 
-                label="Crop Growth Stage" 
-                helpText="Current crop development stage"
-              >
+              <StandardField label="Crop Growth Stage" helpText="Current crop development stage">
                 <StandardSelect {...methods.register('crop_growth_stage')}>
                   <option value="">Select growth stage</option>
                   <option value="seedling">Seedling</option>
@@ -391,55 +401,43 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                 </StandardSelect>
               </StandardField>
 
-              <StandardField 
-                label="Weather Conditions" 
-                helpText="Weather affecting pest activity"
-              >
-                <StandardInput
-                  {...methods.register('weather_conditions')}
-                  placeholder="e.g., warm and humid, dry conditions"
-                />
-              </StandardField>
+              {/* Sprint 2 Epic 2.2: Removed weather_conditions field - duplicates Weather event
+                  Pest pressure is tracked via pest_pressure_level dropdown in the assessment section */}
 
-              <StandardField 
-                label="Economic Threshold Status" 
-                helpText="Has economic threshold been reached?"
-              >
+              <StandardField
+                label="Economic Threshold Status"
+                helpText="Has economic threshold been reached?">
                 <Checkbox {...methods.register('economic_threshold_met')}>
                   Economic threshold met - action recommended
                 </Checkbox>
               </StandardField>
 
-              <StandardField 
-                label="Action Recommended" 
-                helpText="Next steps from this IPM activity"
-              >
+              <StandardField
+                label="Action Recommended"
+                helpText="Next steps from this IPM activity">
                 <StandardInput
                   {...methods.register('action_recommended')}
                   placeholder="e.g., continue monitoring, apply treatment"
                 />
               </StandardField>
             </SimpleGrid>
-          </Box>
+          </SectionBox>
 
           {/* Pest-Specific Details Section */}
-          <Box p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="orange.600">
-                <Icon as={FaEye} mr={2} />
-                Pest Management Details
-              </Text>
-              <Badge colorScheme="orange" fontSize="xs">
-                IPM Documentation
-              </Badge>
-            </HStack>
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaEye}
+              iconColor="orange.600"
+              title="Pest Management Details"
+              badge="IPM Documentation"
+              badgeColorScheme="orange"
+            />
 
             {/* Universal Pest Context Fields - All Types */}
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
               <StandardField
                 label={intl.formatMessage({ id: 'app.pestSpecies' }) || 'Pest Species'}
-                helpText="Help consumers understand what pests you're managing"
-              >
+                helpText="Help consumers understand what pests you're managing">
                 <StandardInput
                   {...methods.register('pest_species')}
                   placeholder="e.g., Aphids, Spider mites, Thrips"
@@ -447,9 +445,10 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
               </StandardField>
 
               <StandardField
-                label={intl.formatMessage({ id: 'app.damagePercentage' }) || 'Crop Impact Level (%)'}
-                helpText="Percentage of crop damage observed (for transparency)"
-              >
+                label={
+                  intl.formatMessage({ id: 'app.damagePercentage' }) || 'Crop Impact Level (%)'
+                }
+                helpText="Percentage of crop damage observed (for transparency)">
                 <StandardInput
                   type="number"
                   min="0"
@@ -462,17 +461,26 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
             </SimpleGrid>
 
             {/* Pest Pressure Assessment - Most Types */}
-            {(pestType === 'SC' || pestType === 'PI' || pestType === 'TA' || pestType === 'TM' || pestType === 'BR' || pestType === 'IP') && (
+            {(pestType === 'SC' ||
+              pestType === 'PI' ||
+              pestType === 'TA' ||
+              pestType === 'TM' ||
+              pestType === 'BR' ||
+              pestType === 'IP') && (
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
                 <StandardField
-                  label={intl.formatMessage({ id: 'app.pestPressureLevel' }) || 'Pest Pressure Level'}
-                  helpText={
-                    pestType === 'TM' ? "Pressure level detected through monitoring" :
-                    pestType === 'BR' ? "Pressure level that prompted beneficial release" :
-                    pestType === 'IP' ? "Pressure level that triggered IPM implementation" :
-                    "Current pest population assessment"
+                  label={
+                    intl.formatMessage({ id: 'app.pestPressureLevel' }) || 'Pest Pressure Level'
                   }
-                >
+                  helpText={
+                    pestType === 'TM'
+                      ? 'Pressure level detected through monitoring'
+                      : pestType === 'BR'
+                      ? 'Pressure level that prompted beneficial release'
+                      : pestType === 'IP'
+                      ? 'Pressure level that triggered IPM implementation'
+                      : 'Current pest population assessment'
+                  }>
                   <StandardSelect {...methods.register('pest_pressure_level')}>
                     <option value="">Select pressure level</option>
                     <option value="Low">{intl.formatMessage({ id: 'app.low' }) || 'Low'}</option>
@@ -491,10 +499,10 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                   <StandardField
                     label="Economic Threshold Status"
                     helpText={
-                      pestType === 'TA' ? "Main threshold assessment decision" :
-                      "Was IPM triggered by reaching economic threshold?"
-                    }
-                  >
+                      pestType === 'TA'
+                        ? 'Main threshold assessment decision'
+                        : 'Was IPM triggered by reaching economic threshold?'
+                    }>
                     <Checkbox {...methods.register('action_threshold_met')}>
                       {intl.formatMessage({ id: 'app.actionThresholdMet' }) ||
                         'Economic threshold has been met - action required'}
@@ -505,17 +513,19 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
             )}
 
             {/* Type-Specific Implementation Details */}
-            
+
             {/* Beneficial Release Details */}
             {(pestType === 'BR' || pestType === 'IP') && (
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
                 <StandardField
-                  label={intl.formatMessage({ id: 'app.beneficialSpecies' }) || 'Beneficial Species'}
-                  helpText={
-                    pestType === 'BR' ? "Natural pest control organisms released" :
-                    "Beneficial species used in IPM strategy (if applicable)"
+                  label={
+                    intl.formatMessage({ id: 'app.beneficialSpecies' }) || 'Beneficial Species'
                   }
-                >
+                  helpText={
+                    pestType === 'BR'
+                      ? 'Natural pest control organisms released'
+                      : 'Beneficial species used in IPM strategy (if applicable)'
+                  }>
                   <StandardInput
                     {...methods.register('beneficial_species')}
                     placeholder="e.g., Ladybugs, Lacewings, Predatory mites"
@@ -525,10 +535,10 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                 <StandardField
                   label={intl.formatMessage({ id: 'app.releaseQuantity' }) || 'Release Quantity'}
                   helpText={
-                    pestType === 'BR' ? "Number and density of beneficials released" :
-                    "Quantity of beneficial organisms used (if applicable)"
-                  }
-                >
+                    pestType === 'BR'
+                      ? 'Number and density of beneficials released'
+                      : 'Quantity of beneficial organisms used (if applicable)'
+                  }>
                   <StandardInput
                     {...methods.register('release_quantity')}
                     placeholder="e.g., 1000 individuals per hectare"
@@ -542,8 +552,7 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
                 <StandardField
                   label={intl.formatMessage({ id: 'app.trapCount' }) || 'Number of Traps'}
-                  helpText="Monitoring traps deployed for pest detection"
-                >
+                  helpText="Monitoring traps deployed for pest detection">
                   <StandardInput
                     type="number"
                     min="0"
@@ -558,8 +567,7 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
             {pestType === 'IP' && (
               <StandardField
                 label={intl.formatMessage({ id: 'app.impStrategy' }) || 'IPM Strategy Description'}
-                helpText="Describe the comprehensive integrated pest management approach implemented"
-              >
+                helpText="Describe the comprehensive integrated pest management approach implemented">
                 <StandardTextarea
                   {...methods.register('imp_strategy')}
                   placeholder={
@@ -570,31 +578,64 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                 />
               </StandardField>
             )}
-          </Box>
+          </SectionBox>
+
+          {/* Sprint 3 Epic 3.2: Consumer Trust & Transparency Fields */}
+          <SectionBox variant="highlighted">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="teal.500"
+              title="Consumer Trust & Transparency"
+              badge="Builds Consumer Trust"
+              badgeColorScheme="teal"
+              description="Document your sustainable pest management practices to help consumers understand your commitment to environmentally responsible farming."
+            />
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <StandardField
+                label="Beneficial Insects Used"
+                helpText="Are you using beneficial insects as part of your IPM strategy?">
+                <StandardSelect {...methods.register('beneficial_insects_used')}>
+                  <option value="">Select status</option>
+                  <option value="yes">Yes - Using beneficial insects</option>
+                  <option value="no">No - Not currently using</option>
+                  <option value="planning">Planning to introduce</option>
+                </StandardSelect>
+              </StandardField>
+
+              <StandardField
+                label="Chemical-Free Period (Days)"
+                helpText="Days since last synthetic chemical application (builds consumer trust)">
+                <StandardInput
+                  type="number"
+                  min="0"
+                  step="1"
+                  {...methods.register('chemical_free_period_days')}
+                  placeholder="e.g., 30"
+                />
+              </StandardField>
+            </SimpleGrid>
+          </SectionBox>
 
           {/* Transparency Notes & Observations */}
-          <Box p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaSeedling} mr={2} />
-                IPM Notes & Consumer Transparency
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Consumer Trust Building
-              </Badge>
-            </HStack>
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.500"
+              title="Farmer's Field Notes & Consumer Transparency"
+              badge="Consumer Transparency"
+              badgeColorScheme="green"
+            />
 
-            <StandardField 
+            <StandardField
               label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
-              helpText="Share details about your pest management approach that help consumers understand your sustainable farming practices"
-            >
+              helpText="Share details about your pest management approach that help consumers understand your sustainable farming practices">
               <StandardTextarea
                 {...methods.register('observation')}
                 placeholder="Optional: Describe your IPM approach, beneficial insect populations observed, organic methods used, sustainability goals, etc. These details help consumers understand your natural pest management methods."
                 rows={4}
               />
             </StandardField>
-          </Box>
+          </SectionBox>
 
           {/* Action Buttons */}
           {!hideActions && (
@@ -603,16 +644,14 @@ const PestManagementTab = ({ onSubmitHandler, onDataChange, onPrev, initialValue
                 variant="outline"
                 onClick={onPrev}
                 leftIcon={<FaChevronLeft />}
-                size="lg"
-              >
+                size="lg">
                 {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
               </StandardButton>
               <StandardButton
                 variant="primary"
                 type="submit"
                 rightIcon={<FaChevronRight />}
-                size="lg"
-              >
+                size="lg">
                 {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
               </StandardButton>
             </HStack>

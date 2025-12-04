@@ -1,14 +1,5 @@
 // Chakra imports
-import {
-  Flex,
-  HStack,
-  Box,
-  VStack,
-  Text,
-  Icon,
-  Badge,
-  SimpleGrid
-} from '@chakra-ui/react';
+import { Flex, HStack, Box, VStack, Text, Icon, Badge, SimpleGrid } from '@chakra-ui/react';
 import {
   StandardButton,
   StandardField,
@@ -16,24 +7,68 @@ import {
   StandardSelect,
   StandardTextarea,
   StandardAlert,
-  StandardCard
+  StandardCard,
+  SectionHeader,
+  SectionBox
 } from 'components/Design/StandardComponents';
-import { FaChevronLeft, FaChevronRight, FaFileAlt, FaClipboardList, FaCalculator, FaSeedling } from 'react-icons/fa';
+import {
+  FaChevronLeft,
+  FaChevronRight,
+  FaFileAlt,
+  FaClipboardList,
+  FaCalculator,
+  FaSeedling
+} from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import React, { useEffect, useRef } from 'react';
 import { object, string } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
-// Simple activity types for general farming activities
-// These are low-impact activities that don't fit in specialized categories
-const GENERAL_ACTIVITY_TYPES = [
-  { value: 'maintenance', label: 'Farm Maintenance' },
-  { value: 'planning', label: 'Planning Activity' },
-  { value: 'training', label: 'Training/Education' },
-  { value: 'documentation', label: 'Record Keeping' },
-  { value: 'inspection', label: 'Inspection/Audit' },
-  { value: 'other', label: 'Other General Activity' }
+// Sprint 2 Epic 2.1: Renamed from "General" to "Other Farm Activities"
+// Activity types for farm activities that don't fit specialized categories
+// Examples: administrative tasks, team coordination, facility maintenance
+const OTHER_FARM_ACTIVITY_TYPES = [
+  {
+    value: 'maintenance',
+    label: '🔧 Farm Maintenance',
+    description: 'Facility repairs, cleaning, organization'
+  },
+  {
+    value: 'planning',
+    label: '📋 Planning Activity',
+    description: 'Crop planning, scheduling, strategy meetings'
+  },
+  {
+    value: 'training',
+    label: '📚 Training/Education',
+    description: 'Staff training, certifications, learning'
+  },
+  {
+    value: 'documentation',
+    label: '📝 Record Keeping',
+    description: 'Documentation, filing, data entry'
+  },
+  {
+    value: 'inspection',
+    label: '🔍 Inspection/Audit',
+    description: 'Quality checks, audits, compliance reviews'
+  },
+  {
+    value: 'meeting',
+    label: '👥 Team Meeting',
+    description: 'Staff coordination, planning sessions'
+  },
+  {
+    value: 'community',
+    label: '🤝 Community Engagement',
+    description: 'Farm tours, community events, outreach'
+  },
+  {
+    value: 'other',
+    label: '📌 Other Activity',
+    description: 'Activities not covered by other categories'
+  }
 ];
 
 const formSchemaMainInfo = object({
@@ -44,7 +79,13 @@ const formSchemaMainInfo = object({
   observation: string().optional()
 });
 
-const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
+const GeneralTab = ({
+  onSubmitHandler,
+  onDataChange,
+  onPrev,
+  initialValues = {},
+  hideActions = false
+}) => {
   const intl = useIntl();
 
   const mainInfoMethods = useForm({
@@ -85,7 +126,7 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = mainInfoMethods.getValues();
-        
+
         // Only trigger if we have meaningful data
         if (currentValues.name && currentValues.name.trim().length > 0) {
           const relevantFields = ['name', 'type', 'duration_hours', 'participants', 'observation'];
@@ -95,8 +136,9 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
           });
 
           // Check if values have actually changed
-          const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
-          
+          const hasChanged =
+            JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+
           if (hasChanged) {
             previousValuesRef.current = currentRelevantValues;
             // General events have minimal carbon impact but still call onDataChange for transparency tracking
@@ -117,49 +159,46 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
     <FormProvider {...mainInfoMethods}>
       <form onSubmit={mainInfoSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
-          
-          {/* Transparency Focus Alert */}
-          <StandardAlert status="info" title="General Farming Activity & Transparency Documentation">
+          {/* Sprint 2: Renamed to "Other Farm Activities" with better guidance */}
+          <StandardAlert status="info" title="Other Farm Activities & Transparency Documentation">
             <HStack spacing={2} mb={2}>
               <Icon as={FaClipboardList} color="blue.500" />
               <Text fontSize="sm" fontWeight="bold">
-                Agricultural Activity Transparency
+                📌 When to use this category:
               </Text>
             </HStack>
             <Text fontSize="sm">
-              Document general farming activities that contribute to operational transparency. These activities 
-              enhance your farm's transparency score and provide valuable context for consumers about daily 
-              farming operations and management practices.
+              Use "Other Farm Activities" for activities that don't fit in specialized event types
+              like Production, Chemical Application, Soil Management, etc. Examples include:
+              administrative tasks, team meetings, farm tours, facility maintenance, record keeping,
+              and community engagement. These activities contribute to your farm's transparency
+              story.
             </Text>
           </StandardAlert>
 
           {/* Section 1: Activity Information */}
-          <StandardCard
-            title={
-              <HStack>
-                <Icon as={FaClipboardList} color="green.500" />
-                <Text>Activity Information</Text>
-                <Badge colorScheme="green" size="sm">Activity Tracking</Badge>
-              </HStack>
-            }
-          >
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaClipboardList}
+              iconColor="green.500"
+              title="Other Farm Activity Information"
+              badge="Activity Tracking"
+              badgeColorScheme="green"
+            />
             <VStack spacing={4} align="stretch">
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <StandardField
                   label="Activity Type"
                   required
                   error={errors.type?.message}
-                  helpText="What type of general farming activity?"
+                  helpText="What type of farm activity?"
                 >
                   <Controller
                     name="type"
                     control={mainInfoMethods.control}
                     render={({ field }) => (
-                      <StandardSelect
-                        {...field}
-                        placeholder="Select activity type..."
-                      >
-                        {GENERAL_ACTIVITY_TYPES.map((type) => (
+                      <StandardSelect {...field} placeholder="Select activity type...">
+                        {OTHER_FARM_ACTIVITY_TYPES.map((type) => (
                           <option key={type.value} value={type.value}>
                             {type.label}
                           </option>
@@ -179,27 +218,23 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                     name="name"
                     control={mainInfoMethods.control}
                     render={({ field }) => (
-                      <StandardInput
-                        {...field}
-                        placeholder="e.g., Weekly equipment maintenance"
-                      />
+                      <StandardInput {...field} placeholder="e.g., Weekly equipment maintenance" />
                     )}
                   />
                 </StandardField>
               </SimpleGrid>
             </VStack>
-          </StandardCard>
+          </SectionBox>
 
           {/* Section 2: Activity Details & Context */}
-          <StandardCard
-            title={
-              <HStack>
-                <Icon as={FaCalculator} color="blue.500" />
-                <Text>Activity Details & Context</Text>
-                <Badge colorScheme="blue" size="sm">Operational Documentation</Badge>
-              </HStack>
-            }
-          >
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaCalculator}
+              iconColor="blue.500"
+              title="Activity Details & Context"
+              badge="Operational Documentation"
+              badgeColorScheme="blue"
+            />
             <VStack spacing={4} align="stretch">
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <StandardField
@@ -211,12 +246,7 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                     name="duration_hours"
                     control={mainInfoMethods.control}
                     render={({ field }) => (
-                      <StandardInput
-                        {...field}
-                        type="number"
-                        step="0.5"
-                        placeholder="e.g., 2.5"
-                      />
+                      <StandardInput {...field} type="number" step="0.5" placeholder="e.g., 2.5" />
                     )}
                   />
                 </StandardField>
@@ -230,30 +260,25 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                     name="participants"
                     control={mainInfoMethods.control}
                     render={({ field }) => (
-                      <StandardInput
-                        {...field}
-                        type="number"
-                        placeholder="e.g., 2"
-                      />
+                      <StandardInput {...field} type="number" placeholder="e.g., 2" />
                     )}
                   />
                 </StandardField>
               </SimpleGrid>
             </VStack>
-          </StandardCard>
+          </SectionBox>
 
-          {/* Section 3: Transparency Notes */}
-          <StandardCard
-            title={
-              <HStack>
-                <Icon as={FaSeedling} color="green.500" />
-                <Text>Activity Notes & Consumer Transparency</Text>
-                <Badge colorScheme="green" size="sm">Consumer Transparency</Badge>
-              </HStack>
-            }
-          >
-            <StandardField 
-              label="Activity Notes & Observations"
+          {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.500"
+              title="Farmer's Field Notes & Consumer Transparency"
+              badge="Consumer Transparency"
+              badgeColorScheme="green"
+            />
+            <StandardField
+              label="Observations & Notes"
               error={errors.observation?.message}
               helpText="Share details about this activity that help consumers understand your farming operations"
             >
@@ -269,7 +294,7 @@ const GeneralTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                 )}
               />
             </StandardField>
-          </StandardCard>
+          </SectionBox>
 
           {/* Navigation Buttons */}
           {!hideActions && (

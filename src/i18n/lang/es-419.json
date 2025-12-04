@@ -961,5 +961,11 @@
   "app.selectIntensity": "Seleccionar intensidad",
   "app.selectDirection": "Seleccionar dirección",
   "app.selectResidueManagement": "Seleccionar manejo de residuos",
-  "app.selectSoilMoisture": "Seleccionar humedad del suelo"
+  "app.selectSoilMoisture": "Seleccionar humedad del suelo",
+  "app.batchDetails": "Detalles del Lote",
+  "app.batchDetailsSubtitle": "Trazabilidad del lote de producción",
+  "app.lotNumber": "Número de Lote",
+  "app.quality": "Calidad",
+  "app.harvestMethod": "Método",
+  "app.batchTraceabilityNote": "Datos del lote documentados por el agricultor para trazabilidad completa"
 }

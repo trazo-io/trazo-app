@@ -48,20 +48,20 @@ interface TrazoGlobalSearchProps {
 }
 
 export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
-  placeholder = "Search",
+  placeholder = 'Search',
   size = 'md'
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  
+
   // Modal state management with close protection
   const handleOnOpen = () => {
     onOpen();
   };
-  
+
   const handleOnClose = () => {
     setIsClosing(true);
     onClose();
-    
+
     // Prevent immediate reopening for 300ms
     setTimeout(() => {
       setIsClosing(false);
@@ -73,14 +73,14 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const modalInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  
+
   // Custom hook for search logic (will implement next)
   const { searchResults, isLoading, searchHistory } = useGlobalSearch(query);
-  
+
   // Responsive settings - Mobile up to 1200px
   const isMobile = useBreakpointValue({ base: true, xl: false });
   const modalSize = useBreakpointValue({ base: 'full', xl: 'xl' });
-  
+
   // Color scheme
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -94,7 +94,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       // Only handle keyboard shortcuts when modal is closed
       if (isOpen) return;
-      
+
       if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
         event.preventDefault();
         handleOnOpen();
@@ -122,17 +122,13 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
       case 'ArrowDown':
         if (searchResults.length > 0) {
           event.preventDefault();
-          setSelectedIndex(prev => 
-            prev < searchResults.length - 1 ? prev + 1 : 0
-          );
+          setSelectedIndex((prev) => (prev < searchResults.length - 1 ? prev + 1 : 0));
         }
         break;
       case 'ArrowUp':
         if (searchResults.length > 0) {
           event.preventDefault();
-          setSelectedIndex(prev => 
-            prev > 0 ? prev - 1 : searchResults.length - 1
-          );
+          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : searchResults.length - 1));
         }
         break;
       case 'Enter':
@@ -144,12 +140,12 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
       case 'Escape':
         event.preventDefault();
         event.stopPropagation();
-        
+
         // Blur the trigger input to prevent focus events
         if (inputRef.current) {
           inputRef.current.blur();
         }
-        
+
         handleOnClose();
         break;
     }
@@ -196,11 +192,12 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
   return (
     <>
       {/* Search Input Trigger - Mobile Enhanced */}
-      <Box 
-        position="relative" 
+      <Box
+        position="relative"
         width={{ base: '100%', sm: '100%', md: '100%', lg: '100%', xl: '320px' }}
         flex="1"
-        maxW={{ base: 'none', sm: 'none', md: 'none', lg: 'none', xl: '320px' }}>
+        maxW={{ base: 'none', sm: 'none', md: 'none', lg: 'none', xl: '320px' }}
+      >
         <InputGroup>
           <InputLeftElement
             pointerEvents="none"
@@ -218,11 +215,11 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
             cursor="pointer"
             bg={bgColor}
             borderColor={borderColor}
-            _hover={{ 
+            _hover={{
               borderColor: hoverBorderColor,
               boxShadow: '0 0 0 1px ' + hoverBorderColor
             }}
-            _focus={{ 
+            _focus={{
               borderColor: focusBorderColor,
               boxShadow: '0 0 0 2px rgba(72, 187, 120, 0.2)'
             }}
@@ -254,14 +251,14 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
 
       {/* Search Modal */}
       <Portal>
-        <Modal 
-          isOpen={isOpen} 
+        <Modal
+          isOpen={isOpen}
           onClose={() => {
             // Blur the trigger input to prevent focus events
             if (inputRef.current) {
               inputRef.current.blur();
             }
-            
+
             handleOnClose();
           }}
           size={modalSize}
@@ -269,10 +266,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
           closeOnEsc={true}
           motionPreset="slideInTop"
         >
-          <ModalOverlay 
-            bg={overlayBg}
-            backdropFilter="blur(8px)"
-          />
+          <ModalOverlay bg={overlayBg} backdropFilter="blur(8px)" />
           <ModalContent
             bg={modalBg}
             backdropFilter="blur(12px)"
@@ -280,20 +274,15 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
             borderColor={borderColor}
             borderRadius="xl"
             boxShadow="xl"
-            mt={isMobile ? 0 : "10vh"}
+            mt={isMobile ? 0 : '10vh'}
             mx={isMobile ? 0 : 4}
-            maxH={isMobile ? "100vh" : "70vh"}
+            maxH={isMobile ? '100vh' : '70vh'}
             overflow="hidden"
             onKeyDown={handleModalKeyDown}
           >
             <VStack spacing={0} align="stretch">
               {/* Search Header */}
-              <Flex
-                align="center"
-                p={4}
-                borderBottom="1px solid"
-                borderColor={borderColor}
-              >
+              <Flex align="center" p={4} borderBottom="1px solid" borderColor={borderColor}>
                 <InputGroup>
                   <InputLeftElement
                     h="auto"
@@ -324,12 +313,12 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    
+
                     // Blur the trigger input to prevent focus events
                     if (inputRef.current) {
                       inputRef.current.blur();
                     }
-                    
+
                     handleOnClose();
                   }}
                   ml={2}
@@ -337,11 +326,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
               </Flex>
 
               {/* Search Results */}
-              <Box
-                flex="1"
-                overflowY="auto"
-                maxH={isMobile ? "calc(100vh - 80px)" : "50vh"}
-              >
+              <Box flex="1" overflowY="auto" maxH={isMobile ? 'calc(100vh - 80px)' : '50vh'}>
                 {isLoading ? (
                   <Flex justify="center" align="center" py={8}>
                     <VStack spacing={3}>
@@ -365,7 +350,14 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
                   </VStack>
                 ) : !query && searchHistory.length > 0 ? (
                   <VStack spacing={0} align="stretch" p={2}>
-                    <Text fontSize="xs" fontWeight="semibold" color="gray.500" px={3} py={2} textTransform="uppercase">
+                    <Text
+                      fontSize="xs"
+                      fontWeight="semibold"
+                      color="gray.500"
+                      px={3}
+                      py={2}
+                      textTransform="uppercase"
+                    >
                       Recent Searches
                     </Text>
                     {searchHistory.slice(0, 5).map((item, index) => (
@@ -486,36 +478,32 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
             {result.type === 'establishment' ? 'Farm' : 'Parcel'}
           </Badge>
         </HStack>
-        
+
         <VStack spacing={1} align="start">
           {result.description && (
             <Text fontSize="xs" color="gray.600" noOfLines={1}>
               {result.description}
             </Text>
           )}
-          
+
           <HStack spacing={3} fontSize="xs" color="gray.500">
-            {result.location && (
-              <Text>{result.location}</Text>
-            )}
+            {result.location && <Text>{result.location}</Text>}
             {result.metadata.carbonScore && (
               <HStack spacing={1}>
                 <Icon as={FaLeaf} color="green.500" />
                 <Text>{result.metadata.carbonScore} kg CO₂</Text>
               </HStack>
             )}
-            {result.metadata.area && (
-              <Text>{result.metadata.area}</Text>
-            )}
+            {result.metadata.area && <Text>{result.metadata.area}</Text>}
           </HStack>
         </VStack>
       </Box>
 
       {/* Arrow Icon */}
-      <Icon 
-        as={FaArrowRight} 
-        boxSize={3} 
-        color="gray.400" 
+      <Icon
+        as={FaArrowRight}
+        boxSize={3}
+        color="gray.400"
         ml={3}
         opacity={isSelected ? 1 : 0}
         transition="opacity 0.2s"

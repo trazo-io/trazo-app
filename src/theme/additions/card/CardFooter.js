@@ -22,11 +22,11 @@ const CardFooter = {
   },
   sizes: {},
   variants: {},
-  defaultProps: {},
+  defaultProps: {}
 };
 
 export const CardFooterComponent = {
   components: {
-    CardFooter,
-  },
+    CardFooter
+  }
 };

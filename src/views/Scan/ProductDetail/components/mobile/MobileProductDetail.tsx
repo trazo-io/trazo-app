@@ -199,9 +199,13 @@ const MobileProductDetail: React.FC = () => {
   // ✅ 2025 UNIFIED ARCHITECTURE: Same unified timeline data logic as producer dashboard
   const getUnifiedTimelineEvents = () => {
     // 🔧 PHOTO FIX: Check if each API has album data
-    const transparencyHasPhotos = transparencyApiData?.timeline?.some((event: any) => event.album && event.album.images?.length > 0);
-    const legacyHasPhotos = productFullDetailsData?.timeline?.some((event: any) => event.album && event.album.images?.length > 0);
-    
+    const transparencyHasPhotos = transparencyApiData?.timeline?.some(
+      (event: any) => event.album && event.album.images?.length > 0
+    );
+    const legacyHasPhotos = productFullDetailsData?.timeline?.some(
+      (event: any) => event.album && event.album.images?.length > 0
+    );
+
     console.log('🔧 PHOTO DATA COMPARISON:', {
       transparencyApiLength: transparencyApiData?.timeline?.length || 0,
       transparencyHasPhotos,
@@ -218,19 +222,23 @@ const MobileProductDetail: React.FC = () => {
         description: event.description || 'No description available',
         date: event.date,
         certified: false,
-        volume: '', concentration: '', area: '', equipment: '',
-        carbon_data: undefined, blockchain_verified: false,
+        volume: '',
+        concentration: '',
+        area: '',
+        equipment: '',
+        carbon_data: undefined,
+        blockchain_verified: false,
         // 🔧 CRITICAL: Preserve album data for photos
         album: event.album
       }));
     }
-    
+
     // PRIORITY 2: Use transparency API data (rich timeline with agricultural details)
     if (transparencyApiData?.timeline && transparencyApiData.timeline.length > 0) {
       console.log('✅ Using transparency API timeline data (unified architecture)');
       return transparencyApiData.timeline;
     }
-    
+
     // FALLBACK: Use legacy productFullDetailsData.timeline if transparency API unavailable
     if (productFullDetailsData?.timeline && productFullDetailsData.timeline.length > 0) {
       console.log('⚠️ Using legacy productFullDetailsData.timeline as fallback');
@@ -251,7 +259,7 @@ const MobileProductDetail: React.FC = () => {
         album: event.album
       }));
     }
-    
+
     return [];
   };
 
@@ -320,7 +328,8 @@ const MobileProductDetail: React.FC = () => {
   };
 
   // Show error state if data loading fails
-  const hasError = carbonScoreError || productBasicsError || productFullDetailsError || transparencyApiError;
+  const hasError =
+    carbonScoreError || productBasicsError || productFullDetailsError || transparencyApiError;
   const isInitialLoading = isCarbonScoreLoading && !carbonScoreData;
 
   if (hasError && !isInitialLoading) {
@@ -341,21 +350,33 @@ const MobileProductDetail: React.FC = () => {
     <Container maxW="container.sm" p={0}>
       {/* NEW: Redesigned Hero Section with Prominent Carbon Score */}
       <CarbonHeroSection
-        carbonData={carbonScoreData ? {
-          score: Math.round((carbonScoreData.carbonScore || 0) * 10) / 10,
-          footprint: carbonScoreData.netFootprint || 0,
-          relatableFootprint: carbonScoreData.relatableFootprint,
-          industryPercentile: productFullDetailsData?.industryPercentile
-        } : undefined}
-        trustData={productFullDetailsData ? {
-          confidenceScore: productFullDetailsData.trustIndicators?.scores?.verification || productFullDetailsData.trustIndicators?.overall_score || 0,
-          isUSDAVerified: productFullDetailsData.isUsdaVerified || false,
-          isBlockchainVerified: productFullDetailsData.blockchainVerification?.verified || false,
-          reviewsCount: productFullDetailsData.socialProof?.totalUsers || 0,
-          averageRating: productFullDetailsData.socialProof?.averageRating || 0,
-          scansCount: productFullDetailsData.socialProof?.totalScans || 0,
-          transparencyScore: productFullDetailsData.socialProof?.transparencyScore || 0
-        } : undefined}
+        carbonData={
+          carbonScoreData
+            ? {
+                score: Math.round((carbonScoreData.carbonScore || 0) * 10) / 10,
+                footprint: carbonScoreData.netFootprint || 0,
+                relatableFootprint: carbonScoreData.relatableFootprint,
+                industryPercentile: productFullDetailsData?.industryPercentile
+              }
+            : undefined
+        }
+        trustData={
+          productFullDetailsData
+            ? {
+                confidenceScore:
+                  productFullDetailsData.trustIndicators?.scores?.verification ||
+                  productFullDetailsData.trustIndicators?.overall_score ||
+                  0,
+                isUSDAVerified: productFullDetailsData.isUsdaVerified || false,
+                isBlockchainVerified:
+                  productFullDetailsData.blockchainVerification?.verified || false,
+                reviewsCount: productFullDetailsData.socialProof?.totalUsers || 0,
+                averageRating: productFullDetailsData.socialProof?.averageRating || 0,
+                scansCount: productFullDetailsData.socialProof?.totalScans || 0,
+                transparencyScore: productFullDetailsData.socialProof?.transparencyScore || 0
+              }
+            : undefined
+        }
         productData={productBasicsData}
         isLoading={isCarbonScoreLoading}
         onLearnMore={() => {
@@ -402,8 +423,13 @@ const MobileProductDetail: React.FC = () => {
       </Box>
 
       {/* Main Content Area - Detailed Information */}
-      <VStack spacing={{ base: 3, md: 4 }} align="stretch" p={{ base: 3, md: 4 }} pb="90px" id="detailed-info">
-        
+      <VStack
+        spacing={{ base: 3, md: 4 }}
+        align="stretch"
+        p={{ base: 3, md: 4 }}
+        pb="90px"
+        id="detailed-info"
+      >
         {/* Educational Section */}
         {carbonScoreData && (
           <Box
@@ -457,21 +483,20 @@ const MobileProductDetail: React.FC = () => {
         {/* ✅ 2025 UNIFIED ARCHITECTURE: Use same timeline data source as producer dashboard */}
         {(() => {
           const unifiedEvents = getUnifiedTimelineEvents();
-          return unifiedEvents.length > 0 && (
-            <Box
-              borderWidth="1px"
-              borderRadius="lg"
-              overflow="hidden"
-              borderColor={borderColor}
-              bg={bgColor}
-            >
-              <Suspense fallback={<TimelineSkeleton />}>
-                <LazyUltraMobileProductionJourney
-                  events={unifiedEvents}
-                  isCompact={true}
-                />
-              </Suspense>
-            </Box>
+          return (
+            unifiedEvents.length > 0 && (
+              <Box
+                borderWidth="1px"
+                borderRadius="lg"
+                overflow="hidden"
+                borderColor={borderColor}
+                bg={bgColor}
+              >
+                <Suspense fallback={<TimelineSkeleton />}>
+                  <LazyUltraMobileProductionJourney events={unifiedEvents} isCompact={true} />
+                </Suspense>
+              </Box>
+            )
           );
         })()}
 

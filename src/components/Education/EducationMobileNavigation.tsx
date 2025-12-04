@@ -123,11 +123,11 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
   className
 }) => {
   const [showAllSections, setShowAllSections] = useState(false);
-  
+
   // Responsive values
   const isMobile = useBreakpointValue({ base: true, md: false });
   const isTablet = useBreakpointValue({ base: false, md: true, lg: false });
-  
+
   // Theme colors
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -135,14 +135,13 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
   const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
   const activeBgColor = useColorModeValue('green.50', 'green.900');
   const activeColor = 'green.500';
-  
+
   // Get current section details
-  const currentSection = educationSections.find(section => section.id === activeSection);
-  
+  const currentSection = educationSections.find((section) => section.id === activeSection);
+
   // Mobile: Show only 3 main sections initially, with expand option
-  const displayedSections = isMobile && !showAllSections 
-    ? educationSections.slice(0, 3)
-    : educationSections;
+  const displayedSections =
+    isMobile && !showAllSections ? educationSections.slice(0, 3) : educationSections;
 
   const handleSectionClick = (sectionId: string) => {
     onSectionChange(sectionId);
@@ -182,7 +181,9 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
               </HStack>
               {currentSection.completedCount && currentSection.itemCount && (
                 <VStack spacing={0} align="end">
-                  <Text fontSize="xs" opacity={0.8}>Progress</Text>
+                  <Text fontSize="xs" opacity={0.8}>
+                    Progress
+                  </Text>
                   <Text fontSize="sm" fontWeight="bold">
                     {currentSection.completedCount}/{currentSection.itemCount}
                   </Text>
@@ -197,9 +198,10 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
           <HStack spacing={3} minW="fit-content" px={1}>
             {displayedSections.map((section) => {
               const isActive = activeSection === section.id;
-              const completionRate = section.completedCount && section.itemCount 
-                ? (section.completedCount / section.itemCount) * 100 
-                : 0;
+              const completionRate =
+                section.completedCount && section.itemCount
+                  ? (section.completedCount / section.itemCount) * 100
+                  : 0;
 
               return (
                 <Button
@@ -226,13 +228,7 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
                       {section.shortTitle}
                     </Text>
                     {completionRate > 0 && (
-                      <Box
-                        w="20px"
-                        h="2px"
-                        bg="gray.200"
-                        borderRadius="full"
-                        overflow="hidden"
-                      >
+                      <Box w="20px" h="2px" bg="gray.200" borderRadius="full" overflow="hidden">
                         <Box
                           h="full"
                           bg={isActive ? 'white' : `${section.color}.500`}
@@ -246,7 +242,7 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
                 </Button>
               );
             })}
-            
+
             {/* Show More Button */}
             {!showAllSections && educationSections.length > 3 && (
               <Button
@@ -345,13 +341,17 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
                   <Text fontSize="lg" fontWeight="bold" color={activeColor}>
                     {userProgress.completedPractices.length}
                   </Text>
-                  <Text fontSize="xs" color={mutedTextColor}>Completed</Text>
+                  <Text fontSize="xs" color={mutedTextColor}>
+                    Completed
+                  </Text>
                 </VStack>
                 <VStack spacing={0}>
                   <Text fontSize="lg" fontWeight="bold" color={activeColor}>
                     {userProgress.currentStage + 1}
                   </Text>
-                  <Text fontSize="xs" color={mutedTextColor}>Stage</Text>
+                  <Text fontSize="xs" color={mutedTextColor}>
+                    Stage
+                  </Text>
                 </VStack>
               </HStack>
             </HStack>
@@ -368,9 +368,10 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
         <SimpleGrid columns={3} spacing={4}>
           {educationSections.map((section) => {
             const isActive = activeSection === section.id;
-            const completionRate = section.completedCount && section.itemCount 
-              ? (section.completedCount / section.itemCount) * 100 
-              : 0;
+            const completionRate =
+              section.completedCount && section.itemCount
+                ? (section.completedCount / section.itemCount) * 100
+                : 0;
 
             return (
               <MotionBox
@@ -383,22 +384,22 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
                 borderRadius="xl"
                 p={4}
                 transition="all 0.3s ease"
-                whileHover={{ 
+                whileHover={{
                   scale: 1.02,
                   boxShadow: 'lg'
                 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <VStack spacing={3} align="center">
-                  <Icon 
-                    as={section.icon} 
-                    boxSize={8} 
+                  <Icon
+                    as={section.icon}
+                    boxSize={8}
                     color={isActive ? `${section.color}.500` : mutedTextColor}
                   />
                   <VStack spacing={1}>
-                    <Text 
-                      fontSize="md" 
-                      fontWeight="bold" 
+                    <Text
+                      fontSize="md"
+                      fontWeight="bold"
                       color={isActive ? `${section.color}.600` : textColor}
                       noOfLines={1}
                     >
@@ -408,16 +409,10 @@ const EducationMobileNavigation: React.FC<EducationMobileNavigationProps> = ({
                       {section.description}
                     </Text>
                   </VStack>
-                  
+
                   {completionRate > 0 && (
                     <HStack spacing={2} w="full">
-                      <Box
-                        flex={1}
-                        h="3px"
-                        bg="gray.200"
-                        borderRadius="full"
-                        overflow="hidden"
-                      >
+                      <Box flex={1} h="3px" bg="gray.200" borderRadius="full" overflow="hidden">
                         <Box
                           h="full"
                           bg={`${section.color}.500`}

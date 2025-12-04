@@ -70,14 +70,14 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
   // Custom Legend following Trazo design
   const CustomLegend = (props: any) => {
     const { payload } = props;
-    
+
     // Filter out unwanted legend entries (like Area component)
     const filteredPayload = payload.filter((entry: any) => {
       const value = entry.value;
       // Only show "Ventas" and "Escaneos", exclude "scans" or any other entries
       return value === 'Ventas' || value === 'Escaneos';
     });
-    
+
     return (
       <Box display="flex" justifyContent="center" gap={6} mt={4}>
         {filteredPayload.map((entry: any, index: number) => (
@@ -99,10 +99,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <ComposedChart
-        data={data}
-        margin={{ top: 20, right: 20, bottom: 20, left: 0 }}
-      >
+      <ComposedChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
         <defs>
           {/* Modern gradient for area fill */}
           <linearGradient id={`${gradientId}-green`} x1="0" y1="0" x2="0" y2="1">
@@ -116,12 +113,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
         </defs>
 
         {showGrid && (
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            stroke={gridColor} 
-            opacity={0.3}
-            vertical={false}
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} opacity={0.3} vertical={false} />
         )}
 
         <XAxis
@@ -131,7 +123,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
           axisLine={{ stroke: gridColor, strokeWidth: 1 }}
           dy={10}
         />
-        
+
         <YAxis
           tick={{ fontSize: 12, fill: textColor }}
           tickLine={false}

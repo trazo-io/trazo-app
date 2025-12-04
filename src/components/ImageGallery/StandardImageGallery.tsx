@@ -91,8 +91,8 @@ const StandardImageGallery = ({
   // 2025 Best Practice: Extract S3 URLs for batch loading
   const s3Urls = useMemo(() => {
     return processedImages
-      .map(img => img.url)
-      .filter(url => {
+      .map((img) => img.url)
+      .filter((url) => {
         // Only include S3 URLs, not external URLs like Unsplash
         return url && (url.includes('s3.amazonaws.com') || url.includes('s3-'));
       });

@@ -5,7 +5,7 @@ import type { BaseQueryFn } from '@reduxjs/toolkit/query/react';
 export interface MobileCacheConfig {
   // Cache duration based on data criticality (in seconds)
   transparency: number;
-  trust: number; 
+  trust: number;
   carbon: number;
   dashboard: number;
   // Network-aware cache settings
@@ -48,7 +48,7 @@ export const getNetworkAwareConfig = (config: MobileCacheConfig): MobileCacheCon
         prefetchCritical: false, // Disable prefetching on slow networks
         backgroundSync: false
       };
-    
+
     case '3g':
       // Moderate caching on 3G
       return {
@@ -60,7 +60,7 @@ export const getNetworkAwareConfig = (config: MobileCacheConfig): MobileCacheCon
         prefetchCritical: true,
         backgroundSync: true
       };
-    
+
     case '4g':
     default:
       // Standard caching on fast networks
@@ -69,14 +69,16 @@ export const getNetworkAwareConfig = (config: MobileCacheConfig): MobileCacheCon
 };
 
 // Battery-aware caching adjustments
-export const getBatteryAwareConfig = async (config: MobileCacheConfig): Promise<MobileCacheConfig> => {
+export const getBatteryAwareConfig = async (
+  config: MobileCacheConfig
+): Promise<MobileCacheConfig> => {
   if (typeof navigator === 'undefined' || !('getBattery' in navigator)) {
     return config;
   }
 
   try {
     const battery = await (navigator as any).getBattery();
-    
+
     // If battery is low (<20%) or not charging, extend cache times
     if (battery.level < 0.2 || !battery.charging) {
       return {
@@ -117,9 +119,9 @@ export const generateMobileCacheKey = (
   }
 ): string => {
   const baseKey = `${endpoint}_${JSON.stringify(args)}`;
-  
+
   if (!deviceInfo) return baseKey;
-  
+
   // Include device context in cache key for mobile-specific caching
   return `${baseKey}_${deviceInfo.screenSize}_${deviceInfo.connection}`;
 };
@@ -132,16 +134,16 @@ export const prefetchCriticalData = async (
   config: MobileCacheConfig
 ) => {
   if (!config.prefetchCritical) return;
-  
+
   try {
     console.log('🚀 Prefetching critical transparency data for mobile...');
-    
+
     // Prefetch dashboard data (most critical)
     api.endpoints.getDashboardComprehensive.initiate(
       { companyId, establishmentId },
       { forceRefetch: false }
     );
-    
+
     // Delay prefetch of carbon data to not block transparency display
     setTimeout(() => {
       api.endpoints.getCarbonScopeBreakdown.initiate(
@@ -149,7 +151,6 @@ export const prefetchCriticalData = async (
         { forceRefetch: false }
       );
     }, 1000); // 1 second delay
-    
   } catch (error) {
     console.warn('Failed to prefetch critical data:', error);
   }
@@ -158,18 +159,18 @@ export const prefetchCriticalData = async (
 // Background sync for mobile
 export const setupBackgroundSync = (config: MobileCacheConfig) => {
   if (!config.backgroundSync || typeof navigator === 'undefined') return;
-  
+
   // Listen for network state changes
   window.addEventListener('online', () => {
     console.log('📡 Network back online - syncing cached data...');
     // Trigger background sync of critical data
     // This would integrate with RTK Query to refresh stale data
   });
-  
+
   window.addEventListener('offline', () => {
     console.log('📴 Network offline - using cached data...');
   });
-  
+
   // Listen for connection type changes
   if (navigator.connection) {
     (navigator as any).connection.addEventListener('change', () => {
@@ -183,13 +184,14 @@ export const setupBackgroundSync = (config: MobileCacheConfig) => {
 // Memory pressure handling for mobile devices
 export const handleMemoryPressure = () => {
   if (typeof window === 'undefined') return;
-  
+
   // Clear old cache entries when memory is low
   if ('memory' in performance && (performance as any).memory) {
     const memory = (performance as any).memory;
     const memoryUsage = memory.usedJSHeapSize / memory.jsHeapSizeLimit;
-    
-    if (memoryUsage > 0.8) { // Over 80% memory usage
+
+    if (memoryUsage > 0.8) {
+      // Over 80% memory usage
       console.warn('⚠️ High memory usage detected - clearing old cache entries');
       // This would integrate with RTK Query cache to clear old entries
     }
@@ -200,22 +202,22 @@ export const handleMemoryPressure = () => {
 export const createMobileQueryBase = (baseQuery: BaseQueryFn): BaseQueryFn => {
   return async (args, api, extraOptions) => {
     cacheStats.networkRequests++;
-    
+
     const result = await baseQuery(args, api, extraOptions);
-    
+
     // Track cache performance
     if (result.meta?.request?.cache === 'hit') {
       cacheStats.hits++;
     } else {
       cacheStats.misses++;
     }
-    
+
     // Log mobile cache performance
     if (cacheStats.networkRequests % 10 === 0) {
       const hitRate = (cacheStats.hits / (cacheStats.hits + cacheStats.misses)) * 100;
       console.log(`📊 Mobile cache hit rate: ${hitRate.toFixed(1)}%`);
     }
-    
+
     return result;
   };
 };
@@ -223,9 +225,10 @@ export const createMobileQueryBase = (baseQuery: BaseQueryFn): BaseQueryFn => {
 // Export cache statistics for monitoring
 export const getMobileCacheStats = () => ({
   ...cacheStats,
-  hitRate: cacheStats.hits + cacheStats.misses > 0 
-    ? (cacheStats.hits / (cacheStats.hits + cacheStats.misses)) * 100 
-    : 0
+  hitRate:
+    cacheStats.hits + cacheStats.misses > 0
+      ? (cacheStats.hits / (cacheStats.hits + cacheStats.misses)) * 100
+      : 0
 });
 
 // Reset cache statistics

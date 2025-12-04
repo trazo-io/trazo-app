@@ -28,12 +28,7 @@ function CardFooter(props: CardFooterProps) {
   const { variant, children, ...rest } = props;
   const styles = useStyleConfig('CardFooter', { variant });
   return (
-    <Box 
-      __css={styles} 
-      data-component="CardFooter"
-      className="trazo-card-footer"
-      {...rest}
-    >
+    <Box __css={styles} data-component="CardFooter" className="trazo-card-footer" {...rest}>
       {children}
     </Box>
   );

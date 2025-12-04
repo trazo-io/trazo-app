@@ -1,26 +1,9 @@
 // EQUIPMENT TAB - ENHANCED FOLLOWING TRAZO STANDARDIZED PATTERN
 // Transparency-first approach with accurate carbon calculations for equipment operations
+// Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
 
 import React, { useEffect, useRef } from 'react';
-import {
-  HStack,
-  Box,
-  VStack,
-  Text,
-  Icon,
-  Badge,
-  SimpleGrid,
-  Flex,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper
-} from '@chakra-ui/react';
+import { HStack, Box, VStack, Text, Icon, SimpleGrid } from '@chakra-ui/react';
 import {
   StandardButton,
   StandardField,
@@ -28,12 +11,22 @@ import {
   StandardSelect,
   StandardTextarea,
   StandardAlert,
-  StandardCard
+  StandardCard,
+  SectionHeader,
+  SectionBox
 } from 'components/Design/StandardComponents';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string } from 'zod';
-import { FaChevronLeft, FaChevronRight, FaTractor, FaCalculator, FaSeedling, FaTools, FaLeaf } from 'react-icons/fa';
+import {
+  FaChevronLeft,
+  FaChevronRight,
+  FaTractor,
+  FaCalculator,
+  FaSeedling,
+  FaTools,
+  FaLeaf
+} from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 // ENHANCED SCHEMA - Following Trazo standardized patterns
@@ -41,21 +34,27 @@ const equipmentSchema = object({
   type: string().min(1, 'Equipment operation type is required'),
   name: string().min(1, 'Event name is required'),
   equipment_type: string().min(1, 'Equipment type is required for carbon calculation'),
-  fuel_consumed: string().min(1, 'Fuel amount is required for emissions calculation').refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0;
-  }, 'Fuel consumed cannot be negative'),
+  fuel_consumed: string()
+    .min(1, 'Fuel amount is required for emissions calculation')
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Fuel consumed cannot be negative'),
   fuel_unit: string().min(1, 'Fuel unit is required'),
   fuel_type: string().min(1, 'Fuel type affects emission factors'),
-  hours_operated: string().min(1, 'Operating hours affect efficiency calculation').refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0;
-  }, 'Hours operated cannot be negative'),
-  area_worked: string().optional().refine((val) => {
-    if (!val || val === '') return true;
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0;
-  }, 'Area worked cannot be negative'),
+  hours_operated: string()
+    .min(1, 'Operating hours affect efficiency calculation')
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Hours operated cannot be negative'),
+  area_worked: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Area worked cannot be negative'),
   area_unit: string().optional(),
   operation_efficiency: string().optional(),
   observation: string().optional()
@@ -90,7 +89,13 @@ const FUEL_TYPES = [
   { value: 'lpg', label: '🔥 LPG', factor: '1.70 kg CO₂e/L' }
 ];
 
-const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
+const EquipmentTab = ({
+  onSubmitHandler,
+  onDataChange,
+  onPrev,
+  initialValues = {},
+  hideActions = false
+}) => {
   const intl = useIntl();
 
   const methods = useForm({
@@ -129,33 +134,59 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
     }
   }, [initialValues, methods]);
 
-  const { watch, handleSubmit, formState: { errors } } = methods;
+  const {
+    watch,
+    handleSubmit,
+    formState: { errors }
+  } = methods;
   const equipmentType = watch('type');
 
   // Real-time preview updates - focused on transparency and carbon data
-  const watchedFields = watch(['type', 'name', 'equipment_type', 'fuel_consumed', 'fuel_type', 'hours_operated', 'area_worked', 'observation']);
+  const watchedFields = watch([
+    'type',
+    'name',
+    'equipment_type',
+    'fuel_consumed',
+    'fuel_type',
+    'hours_operated',
+    'area_worked',
+    'observation'
+  ]);
   const previousValuesRef = useRef({});
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (onDataChange && typeof onDataChange === 'function') {
         const currentValues = methods.getValues();
-        
+
         // Trigger for basic equipment info OR meaningful carbon-relevant data
-        const hasBasicEquipmentInfo = currentValues.type && currentValues.name && currentValues.equipment_type;
-        const hasCarbonData = currentValues.equipment_type && 
-                             currentValues.fuel_consumed && 
-                             parseFloat(currentValues.fuel_consumed) > 0 &&
-                             currentValues.fuel_type;
-        
+        const hasBasicEquipmentInfo =
+          currentValues.type && currentValues.name && currentValues.equipment_type;
+        const hasCarbonData =
+          currentValues.equipment_type &&
+          currentValues.fuel_consumed &&
+          parseFloat(currentValues.fuel_consumed) > 0 &&
+          currentValues.fuel_type;
+
         if (hasBasicEquipmentInfo || hasCarbonData) {
-          const relevantFields = ['type', 'name', 'equipment_type', 'fuel_consumed', 'fuel_type', 'hours_operated', 'area_worked', 'operation_efficiency', 'observation'];
+          const relevantFields = [
+            'type',
+            'name',
+            'equipment_type',
+            'fuel_consumed',
+            'fuel_type',
+            'hours_operated',
+            'area_worked',
+            'operation_efficiency',
+            'observation'
+          ];
           const currentRelevantValues = {};
           relevantFields.forEach((field) => {
             currentRelevantValues[field] = currentValues[field];
           });
 
-          const hasChanged = JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
+          const hasChanged =
+            JSON.stringify(currentRelevantValues) !== JSON.stringify(previousValuesRef.current);
 
           if (hasChanged) {
             previousValuesRef.current = currentRelevantValues;
@@ -187,7 +218,6 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
-          
           {/* Transparency Focus Alert */}
           <StandardAlert status="info" title="Equipment Operations & Carbon Transparency">
             <HStack spacing={2} mb={2}>
@@ -197,21 +227,21 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
               </Text>
             </HStack>
             <Text fontSize="sm">
-              Document equipment operations with accurate fuel consumption and carbon impact calculations. 
-              This information builds consumer trust through transparent farming practices and equipment efficiency.
+              Document equipment operations with accurate fuel consumption and carbon impact
+              calculations. This information builds consumer trust through transparent farming
+              practices and equipment efficiency.
             </Text>
           </StandardAlert>
 
           {/* Section 1: Equipment Information */}
-          <StandardCard
-            title={
-              <HStack>
-                <Icon as={FaTractor} color="orange.500" />
-                <Text>Equipment Information</Text>
-                <Badge colorScheme="orange" size="sm">Equipment Tracking</Badge>
-              </HStack>
-            }
-          >
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaTractor}
+              iconColor="orange.500"
+              title="Equipment Information"
+              badge="Equipment Tracking"
+              badgeColorScheme="orange"
+            />
             <VStack spacing={4} align="stretch">
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <StandardField
@@ -224,10 +254,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                     name="type"
                     control={methods.control}
                     render={({ field }) => (
-                      <StandardSelect
-                        {...field}
-                        placeholder="Select operation type..."
-                      >
+                      <StandardSelect {...field} placeholder="Select operation type...">
                         {EQUIPMENT_OPERATION_TYPES.map((type) => (
                           <option key={type.value} value={type.value}>
                             {type.label}
@@ -248,10 +275,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                     name="name"
                     control={methods.control}
                     render={({ field }) => (
-                      <StandardInput
-                        {...field}
-                        placeholder="e.g., Field plowing with tractor"
-                      />
+                      <StandardInput {...field} placeholder="e.g., Field plowing with tractor" />
                     )}
                   />
                 </StandardField>
@@ -267,10 +291,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                   name="equipment_type"
                   control={methods.control}
                   render={({ field }) => (
-                    <StandardSelect
-                      {...field}
-                      placeholder="Select equipment type..."
-                    >
+                    <StandardSelect {...field} placeholder="Select equipment type...">
                       {EQUIPMENT_TYPES.map((type) => (
                         <option key={type.value} value={type.value}>
                           {type.label}
@@ -281,24 +302,18 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                 />
               </StandardField>
             </VStack>
-          </StandardCard>
+          </SectionBox>
 
           {/* Section 2: Fuel & Operation Data */}
-          <Box mb={6} p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaSeedling} mr={2} />
-                Fuel Consumption & Equipment Data
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Enhanced Carbon Accuracy
-              </Badge>
-            </HStack>
-
-            <Text fontSize="sm" color="gray.600" mb={4}>
-              Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. 
-              These details help consumers understand the real operational impact of your equipment operations.
-            </Text>
+          <SectionBox variant="highlighted">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.600"
+              title="Fuel Consumption & Equipment Data"
+              badge="Enhanced Carbon Accuracy"
+              badgeColorScheme="green"
+              description="Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. These details help consumers understand the real operational impact of your equipment operations."
+            />
             <VStack spacing={4} align="stretch">
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <StandardField
@@ -347,11 +362,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                     name="fuel_type"
                     control={methods.control}
                     render={({ field }) => (
-                      <StandardSelect
-                        {...field}
-                        placeholder="Select fuel type..."
-                        bg="white"
-                      >
+                      <StandardSelect {...field} placeholder="Select fuel type..." bg="white">
                         {FUEL_TYPES.map((type) => (
                           <option key={type.value} value={type.value}>
                             {type.label}
@@ -438,20 +449,19 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                 </StandardField>
               </SimpleGrid>
             </VStack>
-          </Box>
+          </SectionBox>
 
-          {/* Section 3: Transparency Notes */}
-          <StandardCard
-            title={
-              <HStack>
-                <Icon as={FaSeedling} color="green.500" />
-                <Text>Operation Notes & Consumer Transparency</Text>
-                <Badge colorScheme="green" size="sm">Consumer Transparency</Badge>
-              </HStack>
-            }
-          >
-            <StandardField 
-              label="Operation Notes & Observations"
+          {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.500"
+              title="Farmer's Field Notes & Consumer Transparency"
+              badge="Consumer Transparency"
+              badgeColorScheme="green"
+            />
+            <StandardField
+              label="Observations & Notes"
               error={errors.observation?.message}
               helpText="Share details about this equipment operation that help consumers understand your farming practices"
             >
@@ -467,7 +477,7 @@ const EquipmentTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {
                 )}
               />
             </StandardField>
-          </StandardCard>
+          </SectionBox>
 
           {/* Navigation Buttons */}
           {!hideActions && (

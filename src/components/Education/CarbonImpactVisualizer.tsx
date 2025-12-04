@@ -180,14 +180,16 @@ const CarbonImpactVisualizer: React.FC<CarbonImpactVisualizerProps> = ({
           transform: 'translateY(-2px)',
           shadow: 'md'
         }}
-        transition="all 0.2s">
+        transition="all 0.2s"
+      >
         <CardBody p={4}>
           <VStack spacing={3} align="center">
             <Box
               p={3}
               borderRadius="full"
               bg={`${comparisonColor}.50`}
-              color={`${comparisonColor}.600`}>
+              color={`${comparisonColor}.600`}
+            >
               <Icon as={IconComponent} boxSize={6} />
             </Box>
 
@@ -226,7 +228,8 @@ const CarbonImpactVisualizer: React.FC<CarbonImpactVisualizerProps> = ({
         bg={`${impactData.positive_impact ? 'green' : 'red'}.50`}
         borderRadius="md"
         border="1px solid"
-        borderColor={`${impactData.positive_impact ? 'green' : 'red'}.200`}>
+        borderColor={`${impactData.positive_impact ? 'green' : 'red'}.200`}
+      >
         <HStack justify="space-between" mb={3}>
           <HStack>
             <Icon as={ImpactIcon} color={impactColor} boxSize={5} />
@@ -242,7 +245,8 @@ const CarbonImpactVisualizer: React.FC<CarbonImpactVisualizerProps> = ({
 
           <Badge
             colorScheme={impactData.positive_impact ? 'green' : 'red'}
-            textTransform="capitalize">
+            textTransform="capitalize"
+          >
             {impactData.impact_level} Impact
           </Badge>
         </HStack>
@@ -327,7 +331,8 @@ const CarbonImpactVisualizer: React.FC<CarbonImpactVisualizerProps> = ({
       border="1px solid"
       borderColor={borderColor}
       p={compact ? 4 : 6}
-      maxW="100%">
+      maxW="100%"
+    >
       <VStack spacing={6} align="stretch">
         {/* Header */}
         <Box textAlign="center">

@@ -62,10 +62,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, number, boolean, date } from 'zod';
-import { 
-  useGetCropTemplatesQuery, 
+import {
+  useGetCropTemplatesQuery,
   useGetCropTemplateDetailQuery,
-  useCalculateEventCarbonImpactMutation 
+  useCalculateEventCarbonImpactMutation
 } from 'store/api/carbonApi';
 import { useStartProductionMutation, useGetCropTypesDropdownQuery } from 'store/api/companyApi';
 import { useGetParcelQuery } from 'store/api/productApi';
@@ -79,9 +79,9 @@ import { getEventTypeMapping, getEventDataForType } from 'utils/eventTypeMapping
 // Utility function for formatting carbon values with appropriate precision
 const formatCarbonValue = (value: number): string => {
   if (value < 0.01) return value.toFixed(4); // Very small values: 0.0018 -> "0.0018"
-  if (value < 0.1) return value.toFixed(3);  // Small values: 0.018 -> "0.018"  
-  if (value < 10) return value.toFixed(2);   // Medium values: 2.45 -> "2.45"
-  return value.toFixed(1);                   // Large values: 15.3 -> "15.3"
+  if (value < 0.1) return value.toFixed(3); // Small values: 0.018 -> "0.018"
+  if (value < 10) return value.toFixed(2); // Medium values: 2.45 -> "2.45"
+  return value.toFixed(1); // Large values: 15.3 -> "15.3"
 };
 
 // Form validation schema
@@ -137,11 +137,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   const [customEvents, setCustomEvents] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedCropTypeId, setSelectedCropTypeId] = useState<string | null>(null);
-  
+
   // Get parcel data from Redux store
   const currentParcel = useSelector((state: RootState) => state.product?.currentParcel);
   const currentCompany = useSelector((state: RootState) => state.company?.currentCompany);
-  
+
   // Fetch parcel data directly if not in Redux
   const { data: parcelData } = useGetParcelQuery(
     { parcelId, establishmentId, companyId: currentCompany?.id },
@@ -149,27 +149,27 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       skip: !parcelId || !establishmentId || !currentCompany || !!currentParcel
     }
   );
-  
+
   // Update Redux with fetched parcel data
   useEffect(() => {
     if (parcelData && !currentParcel) {
       dispatch(setParcel(parcelData));
     }
   }, [parcelData, currentParcel, dispatch]);
-  
+
   // Update area input when parcel data becomes available
   useEffect(() => {
     if (currentParcel?.area) {
       setAreaInput(currentParcel.area);
     }
   }, [currentParcel?.area]);
-  
+
   // Debug logging (remove in production)
   useEffect(() => {
     console.log('QuickStartProduction - Current parcel:', currentParcel);
     console.log('QuickStartProduction - Fetched parcel data:', parcelData);
   }, [currentParcel, parcelData]);
-  
+
   // ✅ NEW: State for USDA-based carbon calculations
   // IMPORTANT: Area from Redux parcel data, fallback to user input or 10 hectares
   const [areaInput, setAreaInput] = useState<number>(10);
@@ -189,7 +189,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     error: cropTypesError,
     isLoading: isLoadingCropTypes
   } = useGetCropTypesDropdownQuery();
-  
+
   // ✅ NEW: API hook for real-time USDA carbon calculations
   const [calculateCarbonPreview] = useCalculateEventCarbonImpactMutation();
 
@@ -322,7 +322,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   // ✅ NEW: Calculate carbon previews when events change
   useEffect(() => {
     if (customEvents.length > 0) {
-      customEvents.forEach(event => {
+      customEvents.forEach((event) => {
         if (!event.excludeFromCarbonCalculation) {
           calculateCarbonPreviewForEvent(event);
         }
@@ -406,10 +406,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   };
 
   const handleToggleAll = () => {
-    const allSelected = customEvents.every(event => event.enabled);
-    setCustomEvents((events) =>
-      events.map((event) => ({ ...event, enabled: !allSelected }))
-    );
+    const allSelected = customEvents.every((event) => event.enabled);
+    setCustomEvents((events) => events.map((event) => ({ ...event, enabled: !allSelected })));
   };
 
   const handleEventDateChange = (eventId: string, newDate: string) => {
@@ -502,79 +500,209 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       // Map event names to proper backend event types (covers all 29 backend types)
       const getEventType = (eventName: string) => {
         const name = eventName?.toLowerCase() || '';
-        
+
         // Chemical events (fertilizers, pesticides, herbicides, fungicides)
-        if (name.includes('fertiliz') || name.includes('nutrient') || name.includes('nitrogen') || name.includes('phosphor') || name.includes('potassium')) return 'chemical';
-        if (name.includes('spray') || name.includes('pesticide') || name.includes('insecticide') || name.includes('pest control')) return 'chemical';
-        if (name.includes('herbicide') || name.includes('weed') || name.includes('glyphosate')) return 'chemical';
-        if (name.includes('fungicide') || name.includes('fungus') || name.includes('disease control')) return 'chemical';
-        
+        if (
+          name.includes('fertiliz') ||
+          name.includes('nutrient') ||
+          name.includes('nitrogen') ||
+          name.includes('phosphor') ||
+          name.includes('potassium')
+        )
+          return 'chemical';
+        if (
+          name.includes('spray') ||
+          name.includes('pesticide') ||
+          name.includes('insecticide') ||
+          name.includes('pest control')
+        )
+          return 'chemical';
+        if (name.includes('herbicide') || name.includes('weed') || name.includes('glyphosate'))
+          return 'chemical';
+        if (
+          name.includes('fungicide') ||
+          name.includes('fungus') ||
+          name.includes('disease control')
+        )
+          return 'chemical';
+
         // Equipment events (machinery, fuel consumption, maintenance)
-        if (name.includes('equipment') || name.includes('machinery') || name.includes('tractor') || name.includes('harvester')) return 'equipment';
-        if (name.includes('fuel') || name.includes('diesel') || name.includes('gasoline')) return 'equipment';
-        if (name.includes('maintenance') || name.includes('repair') || name.includes('service') || name.includes('calibration')) return 'equipment';
-        if (name.includes('preparation') || name.includes('tillage') || name.includes('cultivation') || name.includes('plowing')) return 'equipment';
-        if (name.includes('field preparation') || name.includes('planting/seeding') || name.includes('seeding equipment')) return 'equipment';
-        
+        if (
+          name.includes('equipment') ||
+          name.includes('machinery') ||
+          name.includes('tractor') ||
+          name.includes('harvester')
+        )
+          return 'equipment';
+        if (name.includes('fuel') || name.includes('diesel') || name.includes('gasoline'))
+          return 'equipment';
+        if (
+          name.includes('maintenance') ||
+          name.includes('repair') ||
+          name.includes('service') ||
+          name.includes('calibration')
+        )
+          return 'equipment';
+        if (
+          name.includes('preparation') ||
+          name.includes('tillage') ||
+          name.includes('cultivation') ||
+          name.includes('plowing')
+        )
+          return 'equipment';
+        if (
+          name.includes('field preparation') ||
+          name.includes('planting/seeding') ||
+          name.includes('seeding equipment')
+        )
+          return 'equipment';
+
         // Weather events (frost, drought, storms, temperature monitoring)
-        if (name.includes('weather') || name.includes('climate') || name.includes('temperature') || name.includes('monitoring weather')) return 'weather';
-        if (name.includes('frost') || name.includes('freeze') || name.includes('cold protection')) return 'weather';
-        if (name.includes('drought') || name.includes('water stress') || name.includes('irrigation need')) return 'weather';
-        if (name.includes('storm') || name.includes('wind') || name.includes('hail') || name.includes('rain')) return 'weather';
-        
+        if (
+          name.includes('weather') ||
+          name.includes('climate') ||
+          name.includes('temperature') ||
+          name.includes('monitoring weather')
+        )
+          return 'weather';
+        if (name.includes('frost') || name.includes('freeze') || name.includes('cold protection'))
+          return 'weather';
+        if (
+          name.includes('drought') ||
+          name.includes('water stress') ||
+          name.includes('irrigation need')
+        )
+          return 'weather';
+        if (
+          name.includes('storm') ||
+          name.includes('wind') ||
+          name.includes('hail') ||
+          name.includes('rain')
+        )
+          return 'weather';
+
         // Soil events (testing, amendments, management)
-        if (name.includes('soil') && (name.includes('test') || name.includes('analysis') || name.includes('ph'))) return 'soil';
-        if (name.includes('soil amendment') || name.includes('lime') || name.includes('compost') || name.includes('organic matter')) return 'soil';
-        if (name.includes('soil preparation') || name.includes('soil management') || name.includes('tillage')) return 'soil';
-        if (name.includes('ph management') || name.includes('ph adjustment') || name.includes('ph control')) return 'soil';
-        
+        if (
+          name.includes('soil') &&
+          (name.includes('test') || name.includes('analysis') || name.includes('ph'))
+        )
+          return 'soil';
+        if (
+          name.includes('soil amendment') ||
+          name.includes('lime') ||
+          name.includes('compost') ||
+          name.includes('organic matter')
+        )
+          return 'soil';
+        if (
+          name.includes('soil preparation') ||
+          name.includes('soil management') ||
+          name.includes('tillage')
+        )
+          return 'soil';
+        if (
+          name.includes('ph management') ||
+          name.includes('ph adjustment') ||
+          name.includes('ph control')
+        )
+          return 'soil';
+
         // Pest management events (scouting, monitoring, biological control)
-        if (name.includes('scout') || name.includes('monitoring') || name.includes('inspection') || name.includes('pest monitoring')) return 'pest';
-        if (name.includes('biological control') || name.includes('beneficial') || name.includes('predator')) return 'pest';
-        if (name.includes('trap') || name.includes('pheromone') || name.includes('ipm')) return 'pest';
-        
+        if (
+          name.includes('scout') ||
+          name.includes('monitoring') ||
+          name.includes('inspection') ||
+          name.includes('pest monitoring')
+        )
+          return 'pest';
+        if (
+          name.includes('biological control') ||
+          name.includes('beneficial') ||
+          name.includes('predator')
+        )
+          return 'pest';
+        if (name.includes('trap') || name.includes('pheromone') || name.includes('ipm'))
+          return 'pest';
+
         // Business events (certification, audit, training)
-        if (name.includes('certif') || name.includes('organic') || name.includes('audit') || name.includes('compliance')) return 'business';
-        if (name.includes('training') || name.includes('education') || name.includes('workshop')) return 'business';
-        if (name.includes('record') || name.includes('documentation') || name.includes('reporting')) return 'business';
-        
+        if (
+          name.includes('certif') ||
+          name.includes('organic') ||
+          name.includes('audit') ||
+          name.includes('compliance')
+        )
+          return 'business';
+        if (name.includes('training') || name.includes('education') || name.includes('workshop'))
+          return 'business';
+        if (name.includes('record') || name.includes('documentation') || name.includes('reporting'))
+          return 'business';
+
         // Production events (biological/manual operations) - must be after more specific checks
-        if (name.includes('irrigation') || name.includes('watering') || name.includes('water application')) return 'production';
-        if (name.includes('harvest') || name.includes('picking') || name.includes('collection')) return 'production';
-        if (name.includes('planting') && !name.includes('equipment') && !name.includes('seeding')) return 'production';
-        if (name.includes('pruning') || name.includes('trimming') || name.includes('cutting back')) return 'production';
-        if (name.includes('bloom') || name.includes('flower') || name.includes('pollination')) return 'production';
-        if (name.includes('thinning') || name.includes('selective removal') || name.includes('crop management')) return 'production';
-        
+        if (
+          name.includes('irrigation') ||
+          name.includes('watering') ||
+          name.includes('water application')
+        )
+          return 'production';
+        if (name.includes('harvest') || name.includes('picking') || name.includes('collection'))
+          return 'production';
+        if (name.includes('planting') && !name.includes('equipment') && !name.includes('seeding'))
+          return 'production';
+        if (name.includes('pruning') || name.includes('trimming') || name.includes('cutting back'))
+          return 'production';
+        if (name.includes('bloom') || name.includes('flower') || name.includes('pollination'))
+          return 'production';
+        if (
+          name.includes('thinning') ||
+          name.includes('selective removal') ||
+          name.includes('crop management')
+        )
+          return 'production';
+
         return 'production'; // Default to production for agricultural events
       };
 
       const eventType = getEventType(event.name);
-      
+
       // Map event type to proper sub-type (covers all 29 backend sub-types)
       const getEventSubType = (eventType: string, eventName: string) => {
         const name = eventName?.toLowerCase() || '';
-        
+
         if (eventType === 'chemical') {
-          if (name.includes('fertiliz') || name.includes('nutrient') || name.includes('nitrogen') || name.includes('phosphor')) return 'FE'; // Fertilizer
-          if (name.includes('pesticide') || name.includes('insecticide') || name.includes('pest control')) return 'PE'; // Pesticide
-          if (name.includes('herbicide') || name.includes('weed') || name.includes('glyphosate')) return 'HE'; // Herbicide
-          if (name.includes('fungicide') || name.includes('fungus') || name.includes('disease')) return 'FU'; // Fungicide
+          if (
+            name.includes('fertiliz') ||
+            name.includes('nutrient') ||
+            name.includes('nitrogen') ||
+            name.includes('phosphor')
+          )
+            return 'FE'; // Fertilizer
+          if (
+            name.includes('pesticide') ||
+            name.includes('insecticide') ||
+            name.includes('pest control')
+          )
+            return 'PE'; // Pesticide
+          if (name.includes('herbicide') || name.includes('weed') || name.includes('glyphosate'))
+            return 'HE'; // Herbicide
+          if (name.includes('fungicide') || name.includes('fungus') || name.includes('disease'))
+            return 'FU'; // Fungicide
           return 'FE'; // Default to fertilizer for chemical events
         }
-        
+
         if (eventType === 'production') {
           if (name.includes('irrigation') || name.includes('watering')) return 'IR'; // Irrigation
           if (name.includes('harvest') || name.includes('picking')) return 'HA'; // Harvest
           if (name.includes('plant') && !name.includes('equipment')) return 'PL'; // Planting
           if (name.includes('pruning') || name.includes('trimming')) return 'PR'; // Pruning
           if (name.includes('thinning') || name.includes('selective removal')) return 'TH'; // Thinning
-          if (name.includes('bloom') || name.includes('flower') || name.includes('pollination')) return 'BL'; // Bloom Support
+          if (name.includes('bloom') || name.includes('flower') || name.includes('pollination'))
+            return 'BL'; // Bloom Support
           return 'GE'; // Default to general for production events
         }
-        
+
         if (eventType === 'equipment') {
-          if (name.includes('fuel') || name.includes('diesel') || name.includes('gasoline')) return 'FC'; // Fuel Consumption
+          if (name.includes('fuel') || name.includes('diesel') || name.includes('gasoline'))
+            return 'FC'; // Fuel Consumption
           if (name.includes('maintenance') || name.includes('service')) return 'MN'; // Maintenance
           if (name.includes('repair') || name.includes('fix')) return 'RE'; // Repair
           if (name.includes('calibration') || name.includes('adjustment')) return 'CA'; // Calibration
@@ -582,7 +710,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           if (name.includes('inspection') || name.includes('check')) return 'IN'; // Inspection
           return 'FC'; // Default to fuel consumption for equipment events
         }
-        
+
         if (eventType === 'weather') {
           if (name.includes('frost') || name.includes('freeze')) return 'FR'; // Frost Protection
           if (name.includes('drought') || name.includes('water stress')) return 'DR'; // Drought Management
@@ -594,17 +722,19 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           if (name.includes('microclimate') || name.includes('local weather')) return 'MC'; // Microclimate Monitoring
           return 'TM'; // Default to temperature monitoring
         }
-        
+
         if (eventType === 'soil') {
           if (name.includes('test') || name.includes('analysis')) return 'ST'; // Soil Testing
-          if (name.includes('amendment') || name.includes('lime') || name.includes('compost')) return 'SA'; // Soil Amendment
-          if (name.includes('ph') || name.includes('acidity') || name.includes('alkalinity')) return 'PH'; // pH Management
+          if (name.includes('amendment') || name.includes('lime') || name.includes('compost'))
+            return 'SA'; // Soil Amendment
+          if (name.includes('ph') || name.includes('acidity') || name.includes('alkalinity'))
+            return 'PH'; // pH Management
           if (name.includes('compaction') || name.includes('aeration')) return 'CO'; // Compaction Management
           if (name.includes('erosion') || name.includes('conservation')) return 'ER'; // Erosion Control
           if (name.includes('organic matter') || name.includes('carbon')) return 'OM'; // Organic Matter
           return 'ST'; // Default to soil testing
         }
-        
+
         if (eventType === 'pest') {
           if (name.includes('scout') || name.includes('monitoring')) return 'SC'; // Scouting
           if (name.includes('biological') || name.includes('beneficial')) return 'BC'; // Biological Control
@@ -614,19 +744,19 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           if (name.includes('integrated') || name.includes('ipm')) return 'IP'; // Integrated Pest Management
           return 'SC'; // Default to scouting
         }
-        
+
         if (eventType === 'business') {
           if (name.includes('certif') || name.includes('organic')) return 'CE'; // Certification
           if (name.includes('audit') || name.includes('compliance')) return 'AU'; // Audit
           if (name.includes('training') || name.includes('education')) return 'TR'; // Training
           return 'CE'; // Default to certification
         }
-        
+
         return 'GE'; // General fallback
       };
 
       const eventSubType = getEventSubType(eventType, event.name);
-      
+
       const response = await calculateCarbonPreview({
         event_type: eventType,
         event_data: {
@@ -693,7 +823,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       }).unwrap();
 
       const preview = {
-        estimated_carbon: response.co2e || 0,  // Backend returns co2e
+        estimated_carbon: response.co2e || 0, // Backend returns co2e
         calculation_source: response.calculation_method || 'USDA Agricultural Research Service',
         area_hectares: areaInput,
         application_rate: event.application_rate || 200,
@@ -702,7 +832,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         usda_verified: response.usda_verified || false
       };
 
-      setCarbonPreviews(prev => ({
+      setCarbonPreviews((prev) => ({
         ...prev,
         [event.id]: preview
       }));
@@ -734,13 +864,15 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       showBackButton
       onBack={() =>
         navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
-      }>
+      }
+    >
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={8} align="stretch">
           {/* Template Selection Section */}
           <StandardCard
             title="Smart Setup Templates"
-            subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes">
+            subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes"
+          >
             <VStack spacing={6} align="stretch">
               {/* Current Template Display */}
               {selectedTemplate ? (
@@ -749,7 +881,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   bg="green.50"
                   borderRadius="lg"
                   borderWidth="2px"
-                  borderColor="green.200">
+                  borderColor="green.200"
+                >
                   <HStack spacing={3}>
                     <Icon
                       as={getCropIcon(selectedTemplate.crop_type)}
@@ -784,7 +917,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                       size="sm"
                       variant="outline"
                       colorScheme="green"
-                      onClick={onTemplateOpen}>
+                      onClick={onTemplateOpen}
+                    >
                       Change Template
                     </Button>
                   </HStack>
@@ -800,7 +934,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   transition="all 0.2s"
                   _hover={{ bg: 'blue.100', borderColor: 'blue.300' }}
                   onClick={selectedCropTypeId ? onTemplateOpen : undefined}
-                  opacity={selectedCropTypeId ? 1 : 0.6}>
+                  opacity={selectedCropTypeId ? 1 : 0.6}
+                >
                   <HStack spacing={3}>
                     <Icon as={FaRocket} color="blue.500" boxSize={6} />
                     <VStack align="start" spacing={1} flex={1}>
@@ -877,7 +1012,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         onChange={(e) => {
                           field.onChange(e);
                           setSelectedCropTypeId(e.target.value);
-                        }}>
+                        }}
+                      >
                         {cropTypesData?.map((cropType) => (
                           <option key={cropType.id} value={cropType.id.toString()}>
                             {cropType.name} - {cropType.category.replace('_', ' ')}
@@ -1005,7 +1141,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   </FormLabel>
                   {currentParcel?.area ? (
                     // Read-only display when parcel data is available
-                    <Input 
+                    <Input
                       value={`${areaInput} hectares`}
                       isReadOnly
                       bg="gray.50"
@@ -1014,10 +1150,10 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     />
                   ) : (
                     // Editable input only when no parcel data available
-                    <NumberInput 
-                      value={areaInput} 
+                    <NumberInput
+                      value={areaInput}
                       onChange={(valueString) => setAreaInput(Number(valueString) || 10)}
-                      min={0.1} 
+                      min={0.1}
                       max={10000}
                       step={0.1}
                       size="lg"
@@ -1030,9 +1166,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     </NumberInput>
                   )}
                   <Text fontSize="sm" color="gray.500" mt={1}>
-                    {currentParcel?.area 
-                      ? `Area from parcel data (read-only). To change, edit the parcel settings.` 
-                      : "Used for carbon footprint calculations. Default: 10 hectares"}
+                    {currentParcel?.area
+                      ? `Area from parcel data (read-only). To change, edit the parcel settings.`
+                      : 'Used for carbon footprint calculations. Default: 10 hectares'}
                   </Text>
                 </FormControl>
               </GridItem>
@@ -1080,21 +1216,23 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           {customEvents.length > 0 && (
             <StandardCard
               title="Pre-configured Events"
-              subtitle="Review and customize the events from your selected template">
+              subtitle="Review and customize the events from your selected template"
+            >
               {/* Master Switch Controls */}
               <HStack justify="space-between" mb={4} p={3} bg="gray.50" borderRadius="md">
                 <Text fontSize="sm" color="gray.600">
-                  {customEvents.filter(event => event.enabled).length} of {customEvents.length} events selected
+                  {customEvents.filter((event) => event.enabled).length} of {customEvents.length}{' '}
+                  events selected
                 </Text>
                 <HStack spacing={3}>
                   <Switch
-                    isChecked={customEvents.every(event => event.enabled)}
+                    isChecked={customEvents.every((event) => event.enabled)}
                     onChange={handleToggleAll}
                     colorScheme="green"
                     size="md"
                   />
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                    {customEvents.every(event => event.enabled) ? 'Unselect All' : 'Select All'}
+                    {customEvents.every((event) => event.enabled) ? 'Unselect All' : 'Select All'}
                   </Text>
                 </HStack>
               </HStack>
@@ -1107,7 +1245,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     borderRadius="md"
                     borderWidth="1px"
                     borderColor={event.enabled ? 'gray.200' : 'gray.300'}
-                    opacity={event.enabled ? 1 : 0.6}>
+                    opacity={event.enabled ? 1 : 0.6}
+                  >
                     <HStack justify="space-between" mb={2}>
                       <HStack>
                         <Switch
@@ -1131,7 +1270,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         ) : carbonPreviews[event.id] ? (
                           <Text fontSize="sm" fontWeight="bold" color="green.600">
                             {formatCarbonValue(carbonPreviews[event.id].estimated_carbon)} kg CO2e
-                            <Text fontSize="xs" color="gray.500">USDA calculated</Text>
+                            <Text fontSize="xs" color="gray.500">
+                              USDA calculated
+                            </Text>
                           </Text>
                         ) : (
                           <Text fontSize="sm" fontWeight="bold" color="blue.500">
@@ -1171,14 +1312,16 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
               variant="outline"
               onClick={() =>
                 navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
-              }>
+              }
+            >
               Cancel
             </StandardButton>
             <StandardButton
               type="submit"
               isLoading={isCreating}
               loadingText="Creating Production..."
-              leftIcon={<FaRocket />}>
+              leftIcon={<FaRocket />}
+            >
               Start Production
             </StandardButton>
           </HStack>
@@ -1225,7 +1368,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         transform: 'translateY(-2px)',
                         shadow: 'lg'
                       }}
-                      onClick={() => handleTemplateSelect(template)}>
+                      onClick={() => handleTemplateSelect(template)}
+                    >
                       <Card
                         key={template.template_id}
                         borderWidth="1px"
@@ -1235,55 +1379,58 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                             : 'gray.200'
                         }
                         bg={
-                          selectedTemplate?.template_id === template.template_id ? 'blue.50' : 'white'
-                        }>
-                      <CardHeader pb={2}>
-                        <HStack justify="space-between">
-                          <HStack>
-                            <Icon as={CropIcon} color="green.500" boxSize={5} />
-                            <VStack align="start" spacing={0}>
-                              <Heading size="md">{template.name}</Heading>
-                              <Text fontSize="sm" color="gray.600">
-                                {template.crop_type.charAt(0).toUpperCase() +
-                                  template.crop_type.slice(1)}
+                          selectedTemplate?.template_id === template.template_id
+                            ? 'blue.50'
+                            : 'white'
+                        }
+                      >
+                        <CardHeader pb={2}>
+                          <HStack justify="space-between">
+                            <HStack>
+                              <Icon as={CropIcon} color="green.500" boxSize={5} />
+                              <VStack align="start" spacing={0}>
+                                <Heading size="md">{template.name}</Heading>
+                                <Text fontSize="sm" color="gray.600">
+                                  {template.crop_type.charAt(0).toUpperCase() +
+                                    template.crop_type.slice(1)}
+                                </Text>
+                              </VStack>
+                            </HStack>
+                            <Badge colorScheme="blue" variant="subtle">
+                              {template.events_count} events
+                            </Badge>
+                          </HStack>
+                        </CardHeader>
+                        <CardBody pt={0}>
+                          <Text fontSize="sm" color="gray.700" mb={4} noOfLines={2}>
+                            {template.description}
+                          </Text>
+                          <Grid templateColumns="repeat(2, 1fr)" gap={3}>
+                            <VStack align="start" spacing={1}>
+                              <HStack>
+                                <Icon as={FaClock} color="blue.500" boxSize={3} />
+                                <Text fontSize="xs" fontWeight="medium">
+                                  Setup Time
+                                </Text>
+                              </HStack>
+                              <Text fontSize="sm" fontWeight="bold">
+                                {template.setup_time_minutes} minutes
                               </Text>
                             </VStack>
-                          </HStack>
-                          <Badge colorScheme="blue" variant="subtle">
-                            {template.events_count} events
-                          </Badge>
-                        </HStack>
-                      </CardHeader>
-                      <CardBody pt={0}>
-                        <Text fontSize="sm" color="gray.700" mb={4} noOfLines={2}>
-                          {template.description}
-                        </Text>
-                        <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-                          <VStack align="start" spacing={1}>
-                            <HStack>
-                              <Icon as={FaClock} color="blue.500" boxSize={3} />
-                              <Text fontSize="xs" fontWeight="medium">
-                                Setup Time
+                            <VStack align="start" spacing={1}>
+                              <HStack>
+                                <Icon as={FaChartLine} color="green.500" boxSize={3} />
+                                <Text fontSize="xs" fontWeight="medium">
+                                  Carbon Credits
+                                </Text>
+                              </HStack>
+                              <Text fontSize="sm" fontWeight="bold">
+                                USDA Calculated
                               </Text>
-                            </HStack>
-                            <Text fontSize="sm" fontWeight="bold">
-                              {template.setup_time_minutes} minutes
-                            </Text>
-                          </VStack>
-                          <VStack align="start" spacing={1}>
-                            <HStack>
-                              <Icon as={FaChartLine} color="green.500" boxSize={3} />
-                              <Text fontSize="xs" fontWeight="medium">
-                                Carbon Credits
-                              </Text>
-                            </HStack>
-                            <Text fontSize="sm" fontWeight="bold">
-                              USDA Calculated
-                            </Text>
-                          </VStack>
-                        </Grid>
-                      </CardBody>
-                    </Card>
+                            </VStack>
+                          </Grid>
+                        </CardBody>
+                      </Card>
                     </Box>
                   );
                 })}
@@ -1307,7 +1454,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   variant="outline"
                   colorScheme="blue"
                   onClick={onTemplateClose}
-                  leftIcon={<FaEdit />}>
+                  leftIcon={<FaEdit />}
+                >
                   Continue Without Template
                 </Button>
               </VStack>

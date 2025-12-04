@@ -224,7 +224,8 @@ export default function AdminNavbar(props: AdminNavbarProps) {
       w={{
         sm: 'calc(100vw - 30px)',
         xl: `calc(100vw - 75px - ${sidebarWidth}px)`
-      }}>
+      }}
+    >
       <Flex
         w="100%"
         h="100%"
@@ -233,14 +234,16 @@ export default function AdminNavbar(props: AdminNavbarProps) {
         justify="space-between"
         gap={{ base: 1, sm: 4, md: 5 }}
         flexDirection={{ base: 'column', smd: 'row' }}
-        py={{ base: 1, smd: 0 }}>
+        py={{ base: 1, smd: 0 }}
+      >
         {/* Action Buttons Container - Mobile First */}
         <Flex
           align="center"
           flexShrink={0}
           w={{ base: '100%', smd: 'auto' }}
           order={{ base: 1, smd: 2 }}
-          justify="flex-end">
+          justify="flex-end"
+        >
           <AdminNavbarLinks
             onOpen={props.onOpen}
             logoText={props.logoText}
@@ -259,7 +262,8 @@ export default function AdminNavbar(props: AdminNavbarProps) {
           justify={{ base: 'flex-start', smd: 'flex-start' }}
           // Simple approach: Reserve fixed space for buttons
           pr={{ base: '160px', sm: '180px', md: '200px', lg: '0px' }}
-          overflow="hidden">
+          overflow="hidden"
+        >
           <Breadcrumb
             fontSize={{ base: 'sm', md: 'md' }}
             spacing={{ base: '4px', sm: '6px', md: '8px' }}
@@ -267,10 +271,12 @@ export default function AdminNavbar(props: AdminNavbarProps) {
               <Box
                 color={secondaryText}
                 fontSize={{ base: 'xs', md: 'sm' }}
-                px={{ base: 0.5, md: 1 }}>
+                px={{ base: 0.5, md: 1 }}
+              >
                 /
               </Box>
-            }>
+            }
+          >
             {/* Home - Always visible, never truncates */}
             <BreadcrumbItem color={mainText}>
               <BreadcrumbLink
@@ -280,7 +286,8 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                 _hover={{ color: mainText, textDecoration: 'none', cursor: 'pointer' }}
                 flexShrink={0}
                 whiteSpace="nowrap"
-                cursor="pointer">
+                cursor="pointer"
+              >
                 {intl.formatMessage({ id: 'app.home' })}
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -313,7 +320,8 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                       : {}
                   }
                   cursor={parcelId ? 'pointer' : 'default'}
-                  transition="all 0.2s ease">
+                  transition="all 0.2s ease"
+                >
                   {currentEstablishment.name}
                 </BreadcrumbLink>
               </BreadcrumbItem>
@@ -330,7 +338,8 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                   // Optimized breakpoints for better space utilization
                   isTruncated
                   maxW={{ base: '100px', sm: '140px', smd: '180px', md: '200px', lg: '250px' }}
-                  cursor="default">
+                  cursor="default"
+                >
                   {currentParcel.name}
                 </BreadcrumbLink>
               </BreadcrumbItem>

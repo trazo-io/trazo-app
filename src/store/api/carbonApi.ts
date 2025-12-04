@@ -276,7 +276,7 @@ export interface CarbonCalculationResult {
     nitrogen_kg?: number;
     phosphorus_kg?: number;
     potassium_kg?: number;
-    
+
     // Production event fields (diesel-based: planting, harvesting, etc.)
     production_activity?: string;
     area_covered_acres?: number;
@@ -287,13 +287,13 @@ export interface CarbonCalculationResult {
     confidence_level?: number;
     actual_fuel_consumed_gallons?: number;
     equipment_hours?: number;
-    
+
     // Irrigation event fields (electricity-based)
     water_volume_gallons?: number;
     kwh_consumed?: number;
     electricity_emission_factor_kg_per_kwh?: number;
     pump_efficiency_kwh_per_1000_gallons?: number;
-    
+
     // Legacy fields for backward compatibility
     volume_liters?: number;
     area_hectares?: number;
@@ -425,6 +425,15 @@ export interface CompleteSummary {
   // Production dates
   start_date?: string;
   finish_date?: string;
+
+  // Harvest details for consumer display
+  harvestDetails?: {
+    amount?: number;
+    unit?: string;
+    lot_number?: string;
+    quality_grade?: string;
+    harvest_method?: string;
+  };
 
   // Carbon metrics (complete from qr-summary)
   carbonScore: number;
@@ -1394,15 +1403,26 @@ export const carbonApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       transformResponse: (response: any, meta, arg) => {
+        // 🌾 DEBUG: Log harvestDetails for ALL productions
+        console.log('🌾 RTK QUERY transformResponse:', {
+          productionId: arg,
+          hasHarvestDetails: !!response?.harvestDetails,
+          harvestDetails: response?.harvestDetails,
+          responseKeys: response ? Object.keys(response) : []
+        });
+
         // 🔧 DEBUG: Log RAW API response for event 178 investigation
         if (arg === '232') {
           console.log('🔧 RAW API RESPONSE for production 232:', response);
-          
+
           // Check event 178 specifically in the timeline
           if (response?.timeline) {
-            const event178 = response.timeline.find((event: any) => 
-              String(event.id) === '178' || event.id === 178 || 
-              String(event.id) === 'chemical_178' || event.id === 'chemical_178'
+            const event178 = response.timeline.find(
+              (event: any) =>
+                String(event.id) === '178' ||
+                event.id === 178 ||
+                String(event.id) === 'chemical_178' ||
+                event.id === 'chemical_178'
             );
             if (event178) {
               console.log('🔧 EVENT 178 RAW API DATA (FOUND!):', {
@@ -1415,7 +1435,10 @@ export const carbonApi = baseApi.injectEndpoints({
               });
             } else {
               console.log('🔧 EVENT 178 NOT FOUND in API timeline');
-              console.log('🔧 Available event IDs:', response.timeline.map((e: any) => e.id));
+              console.log(
+                '🔧 Available event IDs:',
+                response.timeline.map((e: any) => e.id)
+              );
             }
           }
         }
@@ -2135,9 +2158,7 @@ export const carbonApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       keepUnusedDataFor: 300, // Cache for 5 minutes
-      providesTags: (result, error, productionId) => [
-        { type: 'CarbonAnalytics', id: productionId }
-      ]
+      providesTags: (result, error, productionId) => [{ type: 'CarbonAnalytics', id: productionId }]
     }),
 
     // Phase 3: Enhanced Dashboard Endpoints

@@ -7,7 +7,7 @@ const EventFormStepper = ({ steps, activeStep, completedSteps = [] }) => {
   if (!steps || !Array.isArray(steps)) {
     return null;
   }
-  
+
   const activeColor = useColorModeValue('green.500', 'green.400');
   const inactiveColor = useColorModeValue('gray.300', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'white');

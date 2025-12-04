@@ -40,7 +40,7 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
   // Generate color based on value (higher = better)
   const getBarColor = (value: number, index: number) => {
     if (!gradientColors) return '#4CAF50';
-    
+
     // Color scale from red to yellow to green based on reputation (0-5)
     if (value >= 4.5) return '#4CAF50'; // Excellent - Green
     if (value >= 4.0) return '#81C784'; // Very Good - Light Green
@@ -54,7 +54,7 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
     if (active && payload && payload.length) {
       const value = payload[0].value;
       const stars = '⭐'.repeat(Math.round(value));
-      
+
       return (
         <Box
           bg={tooltipBg}
@@ -86,15 +86,9 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
     const { x, y, width, value } = props;
     const stars = Math.round(value);
     const starString = '⭐'.repeat(stars);
-    
+
     return (
-      <text
-        x={x + width / 2}
-        y={y - 5}
-        fill={textColor}
-        textAnchor="middle"
-        fontSize="10"
-      >
+      <text x={x + width / 2} y={y - 5} fill={textColor} textAnchor="middle" fontSize="10">
         {starString}
       </text>
     );
@@ -102,10 +96,7 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart
-        data={data}
-        margin={{ top: 30, right: 20, bottom: 40, left: 0 }}
-      >
+      <BarChart data={data} margin={{ top: 30, right: 20, bottom: 40, left: 0 }}>
         <defs>
           {/* Modern gradients for each reputation level */}
           <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
@@ -131,12 +122,7 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
         </defs>
 
         {showGrid && (
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            stroke={gridColor} 
-            opacity={0.2}
-            vertical={false}
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} opacity={0.2} vertical={false} />
         )}
 
         <XAxis
@@ -149,16 +135,16 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
           textAnchor="end"
           height={60}
         />
-        
+
         <YAxis
           domain={[0, 5]}
           ticks={[0, 1, 2, 3, 4, 5]}
           tick={{ fontSize: 12, fill: textColor }}
           tickLine={false}
           axisLine={false}
-          label={{ 
-            value: 'Reputación', 
-            angle: -90, 
+          label={{
+            value: 'Reputación',
+            angle: -90,
             position: 'insideLeft',
             style: { fontSize: 12, fill: textColor }
           }}
@@ -166,24 +152,25 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
 
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
 
-        <Bar
-          dataKey={dataKey}
-          radius={[8, 8, 0, 0]}
-          maxBarSize={60}
-        >
+        <Bar dataKey={dataKey} radius={[8, 8, 0, 0]} maxBarSize={60}>
           {showValues && <LabelList content={CustomLabel} position="top" />}
           {data.map((entry, index) => (
-            <Cell 
-              key={`cell-${index}`} 
-              fill={gradientColors 
-                ? `url(#${
-                    entry[dataKey] >= 4.5 ? 'greenGradient' :
-                    entry[dataKey] >= 4.0 ? 'lightGreenGradient' :
-                    entry[dataKey] >= 3.5 ? 'yellowGradient' :
-                    entry[dataKey] >= 3.0 ? 'orangeGradient' :
-                    'redGradient'
-                  })`
-                : '#4CAF50'
+            <Cell
+              key={`cell-${index}`}
+              fill={
+                gradientColors
+                  ? `url(#${
+                      entry[dataKey] >= 4.5
+                        ? 'greenGradient'
+                        : entry[dataKey] >= 4.0
+                        ? 'lightGreenGradient'
+                        : entry[dataKey] >= 3.5
+                        ? 'yellowGradient'
+                        : entry[dataKey] >= 3.0
+                        ? 'orangeGradient'
+                        : 'redGradient'
+                    })`
+                  : '#4CAF50'
               }
             />
           ))}

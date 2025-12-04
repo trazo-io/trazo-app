@@ -64,10 +64,22 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
   const trustScore = calculateTrustScore();
 
   const getTrustLevel = (score: number) => {
-    if (score >= 90) return { label: 'Excellent', color: 'green', description: 'Highest trust and verification' };
-    if (score >= 70) return { label: 'Very Good', color: 'green', description: 'Strong verification and transparency' };
-    if (score >= 50) return { label: 'Good', color: 'yellow', description: 'Good verification with room for improvement' };
-    if (score >= 30) return { label: 'Fair', color: 'orange', description: 'Basic verification in place' };
+    if (score >= 90)
+      return { label: 'Excellent', color: 'green', description: 'Highest trust and verification' };
+    if (score >= 70)
+      return {
+        label: 'Very Good',
+        color: 'green',
+        description: 'Strong verification and transparency'
+      };
+    if (score >= 50)
+      return {
+        label: 'Good',
+        color: 'yellow',
+        description: 'Good verification with room for improvement'
+      };
+    if (score >= 30)
+      return { label: 'Fair', color: 'orange', description: 'Basic verification in place' };
     return { label: 'Building Trust', color: 'red', description: 'More verification needed' };
   };
 
@@ -85,7 +97,8 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
       color: hasBlockchainVerification ? 'green' : 'gray',
       tooltip: {
         label: 'Blockchain Verification',
-        explanation: 'Your carbon data is permanently recorded on the blockchain for transparency and cannot be altered'
+        explanation:
+          'Your carbon data is permanently recorded on the blockchain for transparency and cannot be altered'
       }
     },
     {
@@ -98,7 +111,8 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
       color: trustMetrics.photo_evidence_count > 0 ? 'blue' : 'gray',
       tooltip: {
         label: 'Photo Evidence',
-        explanation: 'Photos provide visual proof of agricultural practices and increase consumer trust'
+        explanation:
+          'Photos provide visual proof of agricultural practices and increase consumer trust'
       }
     },
     {
@@ -111,7 +125,8 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
       color: trustMetrics.third_party_verified ? 'purple' : 'gray',
       tooltip: {
         label: 'Third-Party Verification',
-        explanation: 'Independent verification by certified auditors adds credibility to your sustainability claims'
+        explanation:
+          'Independent verification by certified auditors adds credibility to your sustainability claims'
       }
     }
   ];
@@ -121,7 +136,11 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
       {/* Overall Trust Score */}
       <Box textAlign="center">
         <VStack spacing={3}>
-          <Circle size={isMobile ? '100px' : '120px'} bg={`${trustLevel.color}.100`} position="relative">
+          <Circle
+            size={isMobile ? '100px' : '120px'}
+            bg={`${trustLevel.color}.100`}
+            position="relative"
+          >
             {/* Progress ring */}
             <Progress
               value={trustScore}
@@ -133,10 +152,14 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
               height="90%"
               position="absolute"
             />
-            
+
             {/* Score content */}
             <VStack spacing={0} position="relative" zIndex={1}>
-              <Text fontSize={isMobile ? '2xl' : '3xl'} fontWeight="bold" color={`${trustLevel.color}.600`}>
+              <Text
+                fontSize={isMobile ? '2xl' : '3xl'}
+                fontWeight="bold"
+                color={`${trustLevel.color}.600`}
+              >
                 {trustScore}%
               </Text>
               <Text fontSize="xs" color={mutedColor} textAlign="center">
@@ -183,7 +206,7 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
               }}
             >
               <VStack spacing={3}>
-                <Circle 
+                <Circle
                   size={isMobile ? '50px' : '60px'} // Slightly smaller on mobile for space
                   bg={indicator.verified ? `${indicator.color}.500` : 'gray.300'}
                   color="white"
@@ -206,16 +229,16 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
                 </Circle>
 
                 <VStack spacing={1} textAlign="center">
-                  <Text 
-                    fontWeight="semibold" 
-                    fontSize={isMobile ? 'xs' : 'sm'} 
+                  <Text
+                    fontWeight="semibold"
+                    fontSize={isMobile ? 'xs' : 'sm'}
                     color={textColor}
                     lineHeight="tight"
                   >
                     {indicator.name}
                   </Text>
-                  <Text 
-                    fontSize="xs" 
+                  <Text
+                    fontSize="xs"
                     color={mutedColor}
                     display={isMobile ? 'none' : 'block'} // Hide description on mobile to save space
                   >
@@ -239,7 +262,13 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
 
       {/* Trust Building Recommendations */}
       {trustScore < 100 && (
-        <Box p={4} borderRadius="lg" bg={useColorModeValue('blue.50', 'blue.900')} border="1px solid" borderColor="blue.200">
+        <Box
+          p={4}
+          borderRadius="lg"
+          bg={useColorModeValue('blue.50', 'blue.900')}
+          border="1px solid"
+          borderColor="blue.200"
+        >
           <VStack spacing={3} align="start">
             <HStack spacing={2}>
               <Icon as={FaAward} color="blue.500" boxSize={5} />
@@ -281,7 +310,13 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
       )}
 
       {/* Consumer Impact Message */}
-      <Box p={4} borderRadius="lg" bg={useColorModeValue('green.50', 'green.900')} border="1px solid" borderColor="green.200">
+      <Box
+        p={4}
+        borderRadius="lg"
+        bg={useColorModeValue('green.50', 'green.900')}
+        border="1px solid"
+        borderColor="green.200"
+      >
         <HStack spacing={3}>
           <Circle size="40px" bg="green.500" color="white">
             <Icon as={FaUsers} boxSize={5} />
@@ -291,7 +326,8 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
               Consumer Trust Impact
             </Text>
             <Text fontSize="xs" color="green.600">
-              Higher trust scores lead to {trustScore >= 80 ? '3x' : trustScore >= 60 ? '2x' : '1.5x'} more consumer engagement 
+              Higher trust scores lead to{' '}
+              {trustScore >= 80 ? '3x' : trustScore >= 60 ? '2x' : '1.5x'} more consumer engagement
               and premium pricing opportunities
             </Text>
           </VStack>
@@ -301,7 +337,7 @@ export const TrustIndicators: React.FC<TrustIndicatorsProps> = ({
                 <Icon
                   key={i}
                   as={FaStar}
-                  color={i < Math.ceil(trustScore / 20) ? "yellow.400" : "gray.300"}
+                  color={i < Math.ceil(trustScore / 20) ? 'yellow.400' : 'gray.300'}
                   boxSize={3}
                 />
               ))}

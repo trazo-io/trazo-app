@@ -6,14 +6,5 @@ export { StandardParcelFormTransparency } from './StandardParcelForm_Transparenc
 export { StandardFinishProductionForm } from './StandardFinishProductionForm';
 
 // ✅ NEW: Reusable Multi-Step Form Components
-export { 
-  MultiStepForm, 
-  StepWrapper, 
-  createStepConfig, 
-  validateFormFields 
-} from './MultiStepForm';
-export type { 
-  StepConfig, 
-  MultiStepFormProps, 
-  StepWrapperProps 
-} from './MultiStepForm';
+export { MultiStepForm, StepWrapper, createStepConfig, validateFormFields } from './MultiStepForm';
+export type { StepConfig, MultiStepFormProps, StepWrapperProps } from './MultiStepForm';

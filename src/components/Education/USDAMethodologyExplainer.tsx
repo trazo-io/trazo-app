@@ -137,7 +137,8 @@ const USDAMethodologyExplainer: React.FC<USDAMethodologyExplainerProps> = ({
               fontWeight="bold"
               cursor="pointer"
               onClick={() => setCurrentStep(index)}
-              transition="all 0.2s">
+              transition="all 0.2s"
+            >
               {index + 1}
             </Box>
             {index < content.sections.length - 1 && (
@@ -275,7 +276,8 @@ const USDAMethodologyExplainer: React.FC<USDAMethodologyExplainerProps> = ({
         <Button
           variant="outline"
           isDisabled={currentStep === 0}
-          onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}>
+          onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+        >
           Previous
         </Button>
 
@@ -287,7 +289,8 @@ const USDAMethodologyExplainer: React.FC<USDAMethodologyExplainerProps> = ({
           colorScheme="green"
           isDisabled={currentStep === content.sections.length - 1}
           onClick={() => setCurrentStep(Math.min(content.sections.length - 1, currentStep + 1))}
-          rightIcon={<Icon as={FiArrowRight} />}>
+          rightIcon={<Icon as={FiArrowRight} />}
+        >
           Next
         </Button>
       </HStack>
@@ -384,7 +387,8 @@ const USDAMethodologyExplainer: React.FC<USDAMethodologyExplainerProps> = ({
       borderColor={borderColor}
       p={6}
       maxW={compact ? '100%' : '800px'}
-      mx="auto">
+      mx="auto"
+    >
       <ContentBody />
     </Box>
   );

@@ -69,7 +69,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [subdomain, setSubDomain] = useState(null);
-  
+
   // Mobile drawer state
   const { isOpen: isMobileOpen, onOpen: onMobileOpen, onClose: onMobileClose } = useDisclosure();
   const isMobile = useBreakpointValue({ base: true, lg: false });

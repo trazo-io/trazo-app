@@ -7,7 +7,7 @@ import {
   Badge,
   Icon,
   Circle,
-  useColorModeValue,
+  useColorModeValue
 } from '@chakra-ui/react';
 import { FaLeaf, FaCheckCircle, FaUniversity } from 'react-icons/fa';
 import { BsShieldCheck } from 'react-icons/bs';
@@ -43,14 +43,7 @@ export const CarbonVerificationCard: React.FC<CarbonVerificationCardProps> = ({
 
   if (isLoading) {
     return (
-      <Box
-        bg={bg}
-        p={6}
-        borderRadius="xl"
-        border="1px"
-        borderColor="gray.200"
-        boxShadow="sm"
-      >
+      <Box bg={bg} p={6} borderRadius="xl" border="1px" borderColor="gray.200" boxShadow="sm">
         <Text fontSize="sm" color={mutedColor}>
           Loading carbon verification...
         </Text>
@@ -83,7 +76,7 @@ export const CarbonVerificationCard: React.FC<CarbonVerificationCardProps> = ({
               </Text>
             </VStack>
           </HStack>
-          
+
           {verified && (
             <Badge colorScheme="green" variant="subtle">
               <HStack spacing={1}>
@@ -98,7 +91,8 @@ export const CarbonVerificationCard: React.FC<CarbonVerificationCardProps> = ({
         <HStack justify="space-between" align="center">
           <VStack align="start" spacing={1}>
             <Text fontSize="2xl" fontWeight="bold" color={`${impactData.color}.600`}>
-              {co2e < 0 ? '-' : ''}{Math.abs(co2e).toFixed(1)} kg CO₂e
+              {co2e < 0 ? '-' : ''}
+              {Math.abs(co2e).toFixed(1)} kg CO₂e
             </Text>
             <Badge colorScheme={impactData.color} variant="outline">
               {impactData.level}
@@ -132,7 +126,8 @@ export const CarbonVerificationCard: React.FC<CarbonVerificationCardProps> = ({
           </Box>
         ) : (
           <Text fontSize="sm" color={mutedColor}>
-            Lower carbon footprint compared to {Math.round((1 - co2e/15) * 100)}% of similar products
+            Lower carbon footprint compared to {Math.round((1 - co2e / 15) * 100)}% of similar
+            products
           </Text>
         )}
       </VStack>

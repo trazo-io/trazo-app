@@ -28,12 +28,7 @@ function CardHeader(props: CardHeaderProps) {
   const { variant, children, ...rest } = props;
   const styles = useStyleConfig('CardHeader', { variant });
   return (
-    <Box 
-      __css={styles} 
-      data-component="CardHeader"
-      className="trazo-card-header"
-      {...rest}
-    >
+    <Box __css={styles} data-component="CardHeader" className="trazo-card-header" {...rest}>
       {children}
     </Box>
   );

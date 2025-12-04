@@ -264,7 +264,7 @@ function normalizeEventData(event: any): any {
 /**
  * Convert technical field values to consumer-friendly labels
  */
-function getReadableFieldValue(field: string, value: string): string {
+export function getReadableFieldValue(field: string, value: string): string {
   const fieldMappings: Record<string, Record<string, string>> = {
     fuel_type: {
       diesel: 'Diesel',
@@ -436,6 +436,66 @@ function getReadableFieldValue(field: string, value: string): string {
       soil_conservation: 'Soil Conservation Practice',
       moisture_management: 'Soil Moisture Management',
       structure_improvement: 'Soil Structure Improvement'
+    },
+    // ============================================================
+    // Sprint 3 Epic 3.2: Consumer Trust Field Mappings
+    // These provide consumer-friendly labels for trust-building fields
+    // ============================================================
+    organic_approved: {
+      // Chemical event organic certification status
+      omri_listed: '✅ OMRI Listed (Organic Certified)',
+      usda_nop_approved: '🌱 USDA NOP Approved',
+      organic_equivalent: '🌿 Organic Equivalent',
+      not_organic: '⚠️ Conventional (Not Organic)',
+      transitional: '🔄 Transitional (In Certification)',
+      // Legacy backend values
+      yes: '✅ Organic Approved',
+      no: '❌ Not Organic Approved',
+      not_applicable: 'N/A'
+    },
+    seeds_source: {
+      // Production event seed source for transparency
+      local: '🏡 Local Supplier',
+      imported: '✈️ Imported',
+      farm_saved: '🌱 Farm Saved Seeds',
+      certified: '✅ Certified Organic Seeds'
+    },
+    water_source: {
+      // Production event water source for transparency
+      well: '💧 Well Water',
+      rainwater: '🌧️ Rainwater Harvesting',
+      municipal: '🏢 Municipal Supply',
+      river: '🏞️ River/Stream',
+      recycled: '♻️ Recycled Water'
+    },
+    beneficial_insects_used: {
+      // Pest management biological control indicator
+      yes: '🐞 Using Beneficial Insects',
+      no: 'Not Using Beneficial Insects',
+      planning: '📋 Planning to Implement'
+    },
+    // ============================================================
+    // Chemical Subtype Mappings for Accurate Carbon Calculations
+    // Added 2025-01-21: Provides consumer-friendly labels for chemical subtypes
+    // These subtypes have significantly different carbon emission factors
+    // ============================================================
+    chemical_subtype: {
+      // Herbicide subtypes (organic = 78% lower carbon than synthetic)
+      synthetic_herbicide: '🏭 Synthetic Herbicide',
+      organic_herbicide: '🌿 Organic/Natural Herbicide',
+      // Fungicide subtypes (biological = 56% lower carbon than synthetic)
+      synthetic_fungicide: '🏭 Synthetic Fungicide',
+      copper_fungicide: '🔶 Copper-Based Fungicide',
+      sulfur_fungicide: '🟡 Sulfur-Based Fungicide',
+      biological_fungicide: '🌱 Biological Fungicide',
+      // Pesticide subtypes (biological = ~70% lower carbon than synthetic)
+      synthetic_pesticide: '🏭 Synthetic Pesticide',
+      organic_pesticide: '🌿 Organic/Natural Pesticide',
+      biological_pesticide: '🌱 Biological Pesticide',
+      // Fertilizer subtypes (organic = 83% lower carbon than synthetic)
+      synthetic_fertilizer: '🏭 Synthetic Fertilizer',
+      organic_fertilizer: '🌱 Organic Fertilizer',
+      slow_release_fertilizer: '⏳ Slow-Release Fertilizer'
     }
   };
 
@@ -976,6 +1036,20 @@ export function getChemicalEventFields(event: any): EventFieldDisplay {
     });
   }
 
+  // Chemical Subtype - SECONDARY priority for transparency and carbon accuracy
+  // Added 2025-01-21: Shows consumers whether organic/biological/synthetic chemicals were used
+  // This is a key trust indicator since organic/biological options have significantly lower carbon footprints
+  if (event.chemical_subtype) {
+    secondary.push({
+      label: 'Chemical Type',
+      value: getReadableFieldValue('chemical_subtype', event.chemical_subtype),
+      priority: 'secondary',
+      category: 'verification',
+      tooltip:
+        'Type of chemical used - organic and biological options have significantly lower environmental impact'
+    });
+  }
+
   // Area and timing - SECONDARY display
   if (event.area_treated !== undefined && event.area_unit) {
     secondary.push({
@@ -1066,6 +1140,107 @@ export function getChemicalEventFields(event: any): EventFieldDisplay {
     }
   }
 
+  // ============================================================
+  // Sprint 1 Epic 1.1: EPA WPS Compliance Fields
+  // These fields ensure worker and consumer safety transparency
+  // ============================================================
+
+  // REI (Restricted Entry Interval) - SECONDARY priority for worker safety
+  if (event.rei_hours !== undefined && event.rei_hours !== null && event.rei_hours !== '') {
+    secondary.push({
+      label: 'Worker Re-Entry Interval',
+      value: `${event.rei_hours} hours`,
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Time workers must wait before re-entering treated area (EPA WPS requirement)'
+    });
+  }
+
+  // PHI (Pre-Harvest Interval) - SECONDARY priority for consumer safety
+  if (event.phi_days !== undefined && event.phi_days !== null && event.phi_days !== '') {
+    secondary.push({
+      label: 'Pre-Harvest Interval',
+      value: `${event.phi_days} days`,
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Minimum days between application and harvest (EPA food safety requirement)'
+    });
+  }
+
+  // Signal Word - DETAILS for hazard classification
+  if (event.signal_word) {
+    const signalWordMap: Record<string, string> = {
+      caution: '⚠️ CAUTION - Slightly toxic',
+      warning: '⚠️ WARNING - Moderately toxic',
+      danger: '🚨 DANGER - Highly toxic',
+      danger_poison: '☠️ DANGER/POISON - Extremely toxic'
+    };
+    details.push({
+      label: 'EPA Signal Word',
+      value: signalWordMap[event.signal_word] || event.signal_word,
+      priority: 'details',
+      category: 'verification'
+    });
+  }
+
+  // EPA Registration Number - DETAILS for regulatory traceability
+  if (event.epa_registration_number) {
+    details.push({
+      label: 'EPA Registration #',
+      value: event.epa_registration_number,
+      priority: 'details',
+      category: 'verification',
+      tooltip: 'EPA product registration number for regulatory compliance'
+    });
+  }
+
+  // PPE Required - DETAILS for worker safety equipment
+  if (event.ppe_required) {
+    details.push({
+      label: 'Required Safety Equipment',
+      value: event.ppe_required,
+      priority: 'details',
+      category: 'verification'
+    });
+  }
+
+  // Environmental Hazards - DETAILS for environmental awareness
+  if (event.environmental_hazards) {
+    details.push({
+      label: 'Environmental Precautions',
+      value: event.environmental_hazards,
+      priority: 'details',
+      category: 'environmental'
+    });
+  }
+
+  // ============================================================
+  // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
+  // These fields enhance consumer confidence in agricultural practices
+  // ============================================================
+
+  // Organic Approved Status - SECONDARY priority for consumer trust
+  if (event.organic_approved) {
+    secondary.push({
+      label: 'Organic Certification',
+      value: getReadableFieldValue('organic_approved', event.organic_approved),
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Organic certification status for this product (builds consumer trust)'
+    });
+  }
+
+  // Buffer Zone Distance - SECONDARY priority for environmental protection transparency
+  if (event.buffer_zone_meters !== undefined && event.buffer_zone_meters !== null && event.buffer_zone_meters !== '') {
+    secondary.push({
+      label: 'Buffer Zone from Sensitive Areas',
+      value: `${event.buffer_zone_meters} meters`,
+      priority: 'secondary',
+      category: 'environmental',
+      tooltip: 'Distance from sensitive areas like water sources, schools, homes (environmental protection)'
+    });
+  }
+
   return { immediate, secondary, details };
 }
 
@@ -1130,13 +1305,61 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     });
   }
 
+  // Sprint 2: EQ (Equipment Operations) subtype-specific fields
+  if (event.production_type === 'EQ') {
+    // Equipment Operation Type (IMMEDIATE - primary operation info)
+    if (
+      event.equipment_operation_type &&
+      String(event.equipment_operation_type).trim() !== 'null'
+    ) {
+      immediate.push({
+        label: 'Operation Type',
+        value: event.equipment_operation_type,
+        priority: 'immediate',
+        category: 'operational'
+      });
+    }
+
+    // Equipment Type (SECONDARY - what equipment was used)
+    if (event.equipment_type && String(event.equipment_type).trim() !== 'null') {
+      secondary.push({
+        label: 'Equipment Type',
+        value: event.equipment_type,
+        priority: 'secondary',
+        category: 'operational'
+      });
+    }
+
+    // Fuel Type (SECONDARY - fuel used)
+    if (event.fuel_type && String(event.fuel_type).trim() !== 'null') {
+      secondary.push({
+        label: 'Fuel Type',
+        value: event.fuel_type,
+        priority: 'secondary',
+        category: 'operational'
+      });
+    }
+
+    // Operation Efficiency (SECONDARY - efficiency level)
+    if (event.operation_efficiency && String(event.operation_efficiency).trim() !== 'null') {
+      secondary.push({
+        label: 'Operation Efficiency',
+        value: event.operation_efficiency,
+        priority: 'secondary',
+        category: 'operational'
+      });
+    }
+  }
+
   // Production type for better context (DETAILS display)
   if (event.production_type) {
     const typeMapping: Record<string, string> = {
       PL: 'Planting',
       HA: 'Harvesting',
       IR: 'Irrigation',
-      PR: 'Pruning'
+      PR: 'Pruning',
+      TR: 'Transportation',
+      EQ: 'Equipment Operations'
     };
 
     // 🌱 TRANSPARENCY-FIRST: Skip redundant Production Type when title already shows operation type
@@ -1169,7 +1392,54 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     });
   }
 
-  // Irrigation events
+  // ENHANCED: USDA NASS 2023 Irrigation Fields (IR events)
+  // Water estimation: 27,154 gallons per acre per 1-inch irrigation depth
+  if (event.production_type === 'IR' || description.includes('irrigation')) {
+    // Irrigation Method (IMMEDIATE - primary operation info)
+    if (event.irrigation_method) {
+      const irrigationMethodMap: Record<string, string> = {
+        flood: 'Flood Irrigation - Surface flooding',
+        furrow: 'Furrow Irrigation - Channel-based',
+        drip: 'Drip Irrigation - Targeted delivery',
+        sprinkler: 'Sprinkler Irrigation - Overhead spray',
+        center_pivot: 'Center Pivot - Rotational coverage',
+        sub_irrigation: 'Sub-surface Irrigation - Underground delivery',
+        micro_sprinkler: 'Micro-sprinkler - Low-volume spray',
+        hand_watering: 'Hand Watering - Manual application',
+        rain_fed: 'Rain-fed - Natural precipitation only'
+      };
+
+      immediate.push({
+        label: 'Irrigation Method',
+        value: irrigationMethodMap[event.irrigation_method] || event.irrigation_method,
+        priority: 'immediate',
+        category: 'operational'
+      });
+    }
+
+    // Irrigation Depth with USDA NASS water estimation context
+    if (event.irrigation_depth) {
+      const unit = event.irrigation_depth_unit || 'inches';
+      const depthValue = parseFloat(event.irrigation_depth);
+
+      // Calculate approximate water used based on USDA NASS 2023
+      // 27,154 gallons per acre per 1-inch depth
+      let waterEstimate = '';
+      if (unit === 'inches' && depthValue > 0) {
+        const gallonsPerAcre = Math.round(depthValue * 27154);
+        waterEstimate = ` (~${gallonsPerAcre.toLocaleString()} gal/acre)`;
+      }
+
+      immediate.push({
+        label: 'Irrigation Depth',
+        value: `${event.irrigation_depth} ${unit}${waterEstimate}`,
+        priority: 'immediate',
+        category: 'measurement'
+      });
+    }
+  }
+
+  // Legacy fallback: Irrigation events with waterAmount in extra_data
   if (description.includes('irrigation') && extraData.waterAmount !== undefined) {
     immediate.push({
       label: 'Water Applied',
@@ -1457,6 +1727,33 @@ export function getGeneralEventFields(event: any): EventFieldDisplay {
     }
   }
 
+  // ============================================================
+  // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
+  // These fields enhance consumer confidence in agricultural practices
+  // ============================================================
+
+  // Seeds Source - SECONDARY priority for transparency about inputs
+  if (event.seeds_source) {
+    secondary.push({
+      label: 'Seeds/Seedlings Source',
+      value: getReadableFieldValue('seeds_source', event.seeds_source),
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Source of seeds or seedlings used (builds consumer trust in agricultural inputs)'
+    });
+  }
+
+  // Water Source - SECONDARY priority for transparency about water usage
+  if (event.water_source) {
+    secondary.push({
+      label: 'Water Source',
+      value: getReadableFieldValue('water_source', event.water_source),
+      priority: 'secondary',
+      category: 'environmental',
+      tooltip: 'Source of water for irrigation (environmental transparency)'
+    });
+  }
+
   return { immediate, secondary, details };
 }
 
@@ -1688,6 +1985,62 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
     immediate.push({
       label: 'Organic Matter',
       value: `${event.organic_matter_percentage}%`,
+      priority: 'immediate',
+      category: 'measurement'
+    });
+  }
+
+  // ENHANCED: IPCC 2006 Lime Dissolution Fields (PA - Soil Amendment events)
+  // Amendment Type with CO2 emission factor display for consumer transparency
+  if (event.amendment_type) {
+    const amendmentTypeMap: Record<string, string> = {
+      limestone: 'Limestone (CaCO3) - 0.44 kg CO2/kg',
+      dolomite: 'Dolomite (CaMg(CO3)2) - 0.477 kg CO2/kg',
+      calcium_oxide: 'Calcium Oxide (CaO) - 0.785 kg CO2/kg',
+      calcium_hydroxide: 'Calcium Hydroxide (Ca(OH)2) - 0.594 kg CO2/kg',
+      calcium_silicate: 'Calcium Silicate Slag - 0.22 kg CO2/kg',
+      calcium_sulfate: 'Calcium Sulfate (Gypsum) - No CO2 emissions',
+      calcium_ammonium_nitrate: 'Calcium Ammonium Nitrate - 2.8 kg CO2e/kg'
+    };
+
+    immediate.push({
+      label: 'Amendment Type',
+      value: amendmentTypeMap[event.amendment_type] || event.amendment_type,
+      priority: 'immediate',
+      category: 'application'
+    });
+  }
+
+  // Amendment Amount with unit (IPCC 2006 compliance)
+  if (event.amendment_amount) {
+    const unit = event.amendment_unit || 'kg';
+    immediate.push({
+      label: 'Amendment Amount',
+      value: `${event.amendment_amount} ${unit}`,
+      priority: 'immediate',
+      category: 'measurement'
+    });
+  }
+
+  // ENHANCED: Tillage Depth for Soil CO2 Flux Calculations (TI events)
+  // Research-based: shallow=50, medium=150, deep=300 kg CO2e/ha
+  if (event.tillage_depth) {
+    const unit = event.tillage_depth_unit || 'cm';
+    const depthValue = parseFloat(event.tillage_depth);
+    let depthCategory = '';
+
+    // Categorize depth for consumer understanding
+    if (depthValue <= 10) {
+      depthCategory = ' (Shallow - minimal soil disturbance)';
+    } else if (depthValue <= 25) {
+      depthCategory = ' (Medium - moderate soil disturbance)';
+    } else {
+      depthCategory = ' (Deep - significant soil disturbance)';
+    }
+
+    immediate.push({
+      label: 'Tillage Depth',
+      value: `${event.tillage_depth} ${unit}${depthCategory}`,
       priority: 'immediate',
       category: 'measurement'
     });
@@ -2199,6 +2552,40 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
     });
   }
 
+  // ============================================================
+  // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
+  // These fields enhance consumer confidence in sustainable pest management
+  // ============================================================
+
+  // Beneficial Insects Used - SECONDARY priority for organic/sustainable transparency
+  if (event.beneficial_insects_used) {
+    secondary.push({
+      label: 'Beneficial Insects',
+      value: getReadableFieldValue('beneficial_insects_used', event.beneficial_insects_used),
+      priority: 'secondary',
+      category: 'environmental',
+      tooltip: 'Use of beneficial insects as part of sustainable IPM strategy (builds consumer trust)'
+    });
+  }
+
+  // Chemical-Free Period - SECONDARY priority for organic/sustainable transparency
+  if (event.chemical_free_period_days !== undefined && event.chemical_free_period_days !== null && event.chemical_free_period_days !== '') {
+    const days = parseInt(String(event.chemical_free_period_days), 10);
+    let displayValue = `${days} days since last chemical application`;
+    if (days > 365) {
+      displayValue = `Over 1 year chemical-free (${days} days)`;
+    } else if (days > 90) {
+      displayValue = `${days} days chemical-free`;
+    }
+    secondary.push({
+      label: 'Chemical-Free Period',
+      value: displayValue,
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Days since last synthetic chemical application (consumer food safety transparency)'
+    });
+  }
+
   return { immediate, secondary, details };
 }
 
@@ -2369,6 +2756,22 @@ export function getBusinessEventFields(event: any): EventFieldDisplay {
       value: event.business_observation,
       priority: 'details',
       category: 'documentation'
+    });
+  }
+
+  // ============================================================
+  // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
+  // These fields enhance consumer confidence in certifications
+  // ============================================================
+
+  // Verified Certifier Name - SECONDARY priority for certification transparency
+  if (event.verified_certifier_name) {
+    secondary.push({
+      label: 'Certifying Organization',
+      value: event.verified_certifier_name,
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Name of the organization that certified this achievement (builds consumer trust)'
     });
   }
 

@@ -81,14 +81,14 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [fullScreenItem, setFullScreenItem] = useState<string | null>(null);
   const [searchFilter, setSearchFilter] = useState<string>('');
-  
+
   const controls = useAnimation();
   const scrollRef = useRef<HTMLDivElement>(null);
-  
+
   // Responsive values
   const isMobile = useBreakpointValue({ base: true, md: false });
   const cardPadding = useBreakpointValue({ base: 4, md: 6 });
-  
+
   // Theme colors
   const bgColor = useColorModeValue('white', 'gray.800');
   const cardBgColor = useColorModeValue('white', 'gray.700');
@@ -96,19 +96,20 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
   const textColor = useColorModeValue('gray.700', 'white');
   const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
   const successColor = useColorModeValue('green.500', 'green.300');
-  
+
   // Filter content based on search
-  const filteredContent = content.filter(item => 
-    item.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
-    item.content.toLowerCase().includes(searchFilter.toLowerCase()) ||
-    item.tags?.some(tag => tag.toLowerCase().includes(searchFilter.toLowerCase()))
+  const filteredContent = content.filter(
+    (item) =>
+      item.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      item.content.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      item.tags?.some((tag) => tag.toLowerCase().includes(searchFilter.toLowerCase()))
   );
-  
+
   // Calculate progress
   const completedCount = userProgress?.completedItems.length || 0;
   const totalCount = content.length;
   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
-  
+
   // Handle item expansion
   const toggleItemExpansion = (itemId: string) => {
     const newExpanded = new Set(expandedItems);
@@ -119,25 +120,34 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
     }
     setExpandedItems(newExpanded);
   };
-  
+
   // Get difficulty color
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'beginner': return 'green';
-      case 'intermediate': return 'yellow';
-      case 'advanced': return 'red';
-      default: return 'gray';
+      case 'beginner':
+        return 'green';
+      case 'intermediate':
+        return 'yellow';
+      case 'advanced':
+        return 'red';
+      default:
+        return 'gray';
     }
   };
-  
+
   // Get type icon
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'lesson': return FaPlay;
-      case 'practice': return FaStar;
-      case 'faq': return FaArrowRight;
-      case 'guide': return FaBookmark;
-      default: return FaPlay;
+      case 'lesson':
+        return FaPlay;
+      case 'practice':
+        return FaStar;
+      case 'faq':
+        return FaArrowRight;
+      case 'guide':
+        return FaBookmark;
+      default:
+        return FaPlay;
     }
   };
 
@@ -167,7 +177,7 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
               </Text>
             )}
           </VStack>
-          
+
           {/* Progress Bar */}
           <Box>
             <HStack justify="space-between" mb={2}>
@@ -178,45 +188,53 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
                 {completedCount} of {totalCount} completed
               </Text>
             </HStack>
-            <Progress 
-              value={progressPercentage} 
+            <Progress
+              value={progressPercentage}
               colorScheme="green"
               size="lg"
               borderRadius="full"
               bg={useColorModeValue('gray.100', 'gray.600')}
             />
-            
+
             {progressPercentage > 0 && (
               <Text fontSize="xs" color={successColor} mt={1}>
                 {Math.round(progressPercentage)}% complete
               </Text>
             )}
           </Box>
-          
+
           {/* Quick Stats */}
           <SimpleGrid columns={3} spacing={4}>
             <Center>
               <VStack spacing={0}>
                 <Text fontSize="xl" fontWeight="bold" color={successColor}>
-                  {content.filter(item => item.type === 'lesson').length}
+                  {content.filter((item) => item.type === 'lesson').length}
                 </Text>
-                <Text fontSize="xs" color={mutedTextColor}>Lessons</Text>
+                <Text fontSize="xs" color={mutedTextColor}>
+                  Lessons
+                </Text>
               </VStack>
             </Center>
             <Center>
               <VStack spacing={0}>
                 <Text fontSize="xl" fontWeight="bold" color="blue.500">
-                  {content.filter(item => item.type === 'practice').length}
+                  {content.filter((item) => item.type === 'practice').length}
                 </Text>
-                <Text fontSize="xs" color={mutedTextColor}>Practices</Text>
+                <Text fontSize="xs" color={mutedTextColor}>
+                  Practices
+                </Text>
               </VStack>
             </Center>
             <Center>
               <VStack spacing={0}>
                 <Text fontSize="xl" fontWeight="bold" color="orange.500">
-                  {content.filter(item => item.estimatedTime).reduce((acc, item) => acc + (item.estimatedTime || 0), 0)}
+                  {content
+                    .filter((item) => item.estimatedTime)
+                    .reduce((acc, item) => acc + (item.estimatedTime || 0), 0)}
                 </Text>
-                <Text fontSize="xs" color={mutedTextColor}>Min Total</Text>
+                <Text fontSize="xs" color={mutedTextColor}>
+                  Min Total
+                </Text>
               </VStack>
             </Center>
           </SimpleGrid>
@@ -230,7 +248,7 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
             const isExpanded = expandedItems.has(item.id);
             const isCompleted = userProgress?.completedItems.includes(item.id) || false;
             const isBookmarked = userProgress?.bookmarkedItems.includes(item.id) || false;
-            
+
             return (
               <MotionBox
                 key={item.id}
@@ -265,25 +283,23 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
                         <Center
                           w={10}
                           h={10}
-                          bg={isCompleted ? successColor : `${getDifficultyColor(item.difficulty)}.500`}
+                          bg={
+                            isCompleted
+                              ? successColor
+                              : `${getDifficultyColor(item.difficulty)}.500`
+                          }
                           borderRadius="lg"
                           color="white"
                         >
-                          <Icon 
-                            as={isCompleted ? FaCheck : getTypeIcon(item.type)} 
-                            boxSize={4} 
-                          />
+                          <Icon as={isCompleted ? FaCheck : getTypeIcon(item.type)} boxSize={4} />
                         </Center>
-                        
+
                         <VStack align="start" spacing={1} flex={1}>
                           <Heading size="md" color={textColor} noOfLines={2}>
                             {item.title}
                           </Heading>
                           <HStack spacing={3} flexWrap="wrap">
-                            <Badge 
-                              colorScheme={getDifficultyColor(item.difficulty)} 
-                              size="sm"
-                            >
+                            <Badge colorScheme={getDifficultyColor(item.difficulty)} size="sm">
                               {item.difficulty}
                             </Badge>
                             <Badge colorScheme="blue" size="sm">
@@ -298,8 +314,8 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
                           </HStack>
                         </VStack>
                       </HStack>
-                      
-                      <Icon 
+
+                      <Icon
                         as={isExpanded ? FaChevronUp : FaChevronDown}
                         color={mutedTextColor}
                         boxSize={5}
@@ -307,28 +323,24 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
                         transform={isExpanded ? 'rotate(180deg)' : 'none'}
                       />
                     </HStack>
-                    
+
                     {/* Quick Preview */}
                     {!isExpanded && (
-                      <Text 
-                        color={mutedTextColor} 
-                        fontSize="sm" 
-                        noOfLines={2}
-                      >
+                      <Text color={mutedTextColor} fontSize="sm" noOfLines={2}>
                         {item.content.slice(0, 120)}...
                       </Text>
                     )}
                   </VStack>
                 </Box>
-                
+
                 {/* Expanded Content */}
                 <Collapse in={isExpanded} animateOpacity>
                   <Box p={cardPadding} pt={0}>
                     <VStack align="stretch" spacing={4}>
                       {/* Media Content */}
                       {item.imageUrl && (
-                        <AspectRatio ratio={16/9} maxH="200px">
-                          <Image 
+                        <AspectRatio ratio={16 / 9} maxH="200px">
+                          <Image
                             src={item.imageUrl}
                             alt={item.title}
                             borderRadius="lg"
@@ -336,18 +348,18 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
                           />
                         </AspectRatio>
                       )}
-                      
+
                       {/* Text Content */}
                       <Box>
                         <Text color={textColor} lineHeight="tall" whiteSpace="pre-wrap">
                           {item.content}
                         </Text>
                       </Box>
-                      
+
                       {/* Transparency Impact */}
                       {item.transparencyImpact && (
-                        <Alert 
-                          status="success" 
+                        <Alert
+                          status="success"
                           borderRadius="lg"
                           bg={useColorModeValue('green.50', 'green.900')}
                         >
@@ -357,7 +369,7 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
                           </Text>
                         </Alert>
                       )}
-                      
+
                       {/* Action Buttons */}
                       <HStack justify="space-between" pt={2}>
                         <HStack spacing={2}>
@@ -372,10 +384,10 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
                               Mark Complete
                             </Button>
                           )}
-                          
+
                           <Button
                             size="sm"
-                            variant={isBookmarked ? "solid" : "outline"}
+                            variant={isBookmarked ? 'solid' : 'outline'}
                             colorScheme="blue"
                             leftIcon={<Icon as={FaBookmark} />}
                             onClick={() => onBookmark?.(item.id)}
@@ -384,7 +396,7 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
                             {isBookmarked ? 'Saved' : 'Save'}
                           </Button>
                         </HStack>
-                        
+
                         <Button
                           size="sm"
                           variant="outline"
@@ -398,7 +410,7 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
                     </VStack>
                   </Box>
                 </Collapse>
-                
+
                 {/* Completion Indicator */}
                 {isCompleted && (
                   <Box
@@ -420,7 +432,7 @@ const MobileContentDisplay: React.FC<MobileContentDisplayProps> = ({
           })}
         </AnimatePresence>
       </VStack>
-      
+
       {/* Empty State */}
       {filteredContent.length === 0 && (
         <MotionBox

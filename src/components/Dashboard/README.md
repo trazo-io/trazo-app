@@ -38,8 +38,8 @@ A mobile-first React dashboard component suite for the Trazo agricultural carbon
 // ✅ CORRECT - Transparency first, carbon details expandable
 <TransparencyHeroSection transparencyScore={95} />
 <TrustIndicators trustMetrics={metrics} />
-<CarbonAnalysisExpandable 
-  carbonScopeData={data} 
+<CarbonAnalysisExpandable
+  carbonScopeData={data}
   isExpandable={true}  // Progressive disclosure
 />
 
@@ -51,7 +51,7 @@ A mobile-first React dashboard component suite for the Trazo agricultural carbon
 ### Responsive Breakpoints
 
 - **Mobile**: 375px+ (base)
-- **Tablet**: 768px+ (md) 
+- **Tablet**: 768px+ (md)
 - **Desktop**: 1440px+ (lg)
 
 ## 🚀 Usage Examples
@@ -96,10 +96,10 @@ function AdvancedDashboard() {
 ### Individual Component Usage
 
 ```tsx
-import { 
+import {
   TransparencyHeroSection,
   TrustIndicators,
-  CarbonAnalysisExpandable 
+  CarbonAnalysisExpandable
 } from '@/components/Dashboard';
 
 function CustomDashboard({ data }) {
@@ -113,7 +113,7 @@ function CustomDashboard({ data }) {
         recentActivity={data.recent_activity}
         isMobile={isMobile}
       />
-      
+
       {/* Trust indicators for credibility */}
       <TrustIndicators
         trustMetrics={data.transparency_metrics.trust_indicators}
@@ -121,7 +121,7 @@ function CustomDashboard({ data }) {
         hasBlockchainVerification={data.blockchain_verified}
         isMobile={isMobile}
       />
-      
+
       {/* Carbon analysis in expandable section */}
       <CarbonAnalysisExpandable
         carbonScopeData={carbonData}
@@ -140,7 +140,7 @@ function CustomDashboard({ data }) {
 
 ```tsx
 // ✅ CORRECT - Use theme tokens
-bg="green.500" 
+bg="green.500"
 _hover={{ bg: "green.600" }}
 
 // ❌ WRONG - Never hardcode hex colors
@@ -175,14 +175,11 @@ padding="17px"
 ### React.memo Implementation
 
 ```tsx
-export const EnhancedTransparencyDashboard = React.memo(({
-  companyId,
-  establishmentId,
-  title,
-  description
-}) => {
-  // Component logic...
-});
+export const EnhancedTransparencyDashboard = React.memo(
+  ({ companyId, establishmentId, title, description }) => {
+    // Component logic...
+  }
+);
 
 EnhancedTransparencyDashboard.displayName = 'EnhancedTransparencyDashboard';
 ```
@@ -193,10 +190,10 @@ EnhancedTransparencyDashboard.displayName = 'EnhancedTransparencyDashboard';
 // Expensive calculations memoized
 const processedData = useMemo(() => {
   if (!dashboardData) return null;
-  
+
   return {
     transparencyScore: dashboardData.transparency_metrics.overall_score,
-    carbonSummary: dashboardData.carbon_summary,
+    carbonSummary: dashboardData.carbon_summary
     // ... other processed data
   };
 }, [dashboardData]);
@@ -212,8 +209,8 @@ const {
 } = useGetDashboardComprehensiveQuery(
   { companyId, establishmentId },
   {
-    pollingInterval: 5 * 60 * 1000,  // 5-minute polling
-    skip: !companyId || !establishmentId,  // Skip invalid requests
+    pollingInterval: 5 * 60 * 1000, // 5-minute polling
+    skip: !companyId || !establishmentId // Skip invalid requests
   }
 );
 ```
@@ -281,13 +278,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { EnhancedTransparencyDashboard } from './EnhancedTransparencyDashboard';
 
 test('displays transparency score prominently', async () => {
-  render(
-    <EnhancedTransparencyDashboard
-      companyId="123"
-      establishmentId="456"
-    />
-  );
-  
+  render(<EnhancedTransparencyDashboard companyId="123" establishmentId="456" />);
+
   await waitFor(() => {
     expect(screen.getByText(/transparency/i)).toBeInTheDocument();
   });
@@ -299,13 +291,13 @@ test('displays transparency score prominently', async () => {
 ```tsx
 test('loads transparency data within 500ms', async () => {
   const startTime = performance.now();
-  
+
   render(<TransparencyHeroSection {...props} />);
-  
+
   await waitFor(() => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
-  
+
   const loadTime = performance.now() - startTime;
   expect(loadTime).toBeLessThan(500);
 });
@@ -321,13 +313,13 @@ const trazoTheme = extendTheme({
   colors: {
     green: {
       500: '#4CAF50', // Trazo primary green
-      600: '#388E3C'  // Trazo hover green
+      600: '#388E3C' // Trazo hover green
     }
   },
   breakpoints: {
-    base: '375px',  // Mobile-first
-    md: '768px',    // Tablet
-    lg: '1440px'    // Desktop
+    base: '375px', // Mobile-first
+    md: '768px', // Tablet
+    lg: '1440px' // Desktop
   }
 });
 ```
@@ -345,12 +337,14 @@ const getTransparencyLevel = (score: number) => {
 ## 📈 Success Metrics
 
 ### Performance KPIs
+
 - **Load Time**: <500ms initial transparency display
 - **Engagement**: >75% user interaction with expandable sections
 - **Trust Score**: Average transparency score >80%
 - **Mobile UX**: <3s complete dashboard load on 3G
 
 ### Quality Metrics
+
 - **Component Reusability**: 95%+ of UI uses StandardComponents
 - **TypeScript Coverage**: 100% type safety
 - **Mobile Responsiveness**: Supports 375px+ viewports

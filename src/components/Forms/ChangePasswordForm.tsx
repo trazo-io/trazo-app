@@ -39,11 +39,13 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
   const navigate = useNavigate();
   const toast = useToast();
   const [changePassword, { isLoading }] = useChangePasswordMutation();
-  
+
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult | null>(null);
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult | null>(
+    null
+  );
   const [showPasswordRequirements, setShowPasswordRequirements] = useState(false);
 
   const {
@@ -141,11 +143,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={6} align="stretch">
           {/* Current Password */}
-          <StandardField
-            label="Current Password"
-            required
-            error={errors.oldPassword?.message}
-          >
+          <StandardField label="Current Password" required error={errors.oldPassword?.message}>
             <InputGroup>
               <StandardInput
                 type={showOldPassword ? 'text' : 'password'}
@@ -215,13 +213,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
 
           {/* Password Requirements */}
           <Collapse in={showPasswordRequirements} animateOpacity>
-            <Box
-              bg="gray.50"
-              p={4}
-              borderRadius="lg"
-              borderWidth="1px"
-              borderColor="gray.200"
-            >
+            <Box bg="gray.50" p={4} borderRadius="lg" borderWidth="1px" borderColor="gray.200">
               <Text fontSize="sm" fontWeight="semibold" mb={2}>
                 Password Requirements:
               </Text>
@@ -257,7 +249,9 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
                 <ListItem>
                   <ListIcon
                     as={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword || '') ? FaCheck : FaTimes}
-                    color={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword || '') ? 'green.500' : 'gray.400'}
+                    color={
+                      /[!@#$%^&*(),.?":{}|<>]/.test(newPassword || '') ? 'green.500' : 'gray.400'
+                    }
                   />
                   One special character (!@#$%^&*(),.?":{}|&lt;&gt;)
                 </ListItem>
@@ -289,8 +283,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
                 placeholder="Confirm new password"
                 {...register('confirmPassword', {
                   required: 'Please confirm your password',
-                  validate: (value) =>
-                    value === newPassword || 'Passwords do not match'
+                  validate: (value) => value === newPassword || 'Passwords do not match'
                 })}
               />
               <InputRightElement>

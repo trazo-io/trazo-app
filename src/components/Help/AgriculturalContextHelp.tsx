@@ -73,7 +73,8 @@ const AGRICULTURAL_GUIDANCE = {
     title: 'Fertilizer Application Best Practices',
     icon: FaSeedling,
     color: 'green',
-    overview: 'Proper fertilizer application ensures optimal nutrient uptake while minimizing environmental impact.',
+    overview:
+      'Proper fertilizer application ensures optimal nutrient uptake while minimizing environmental impact.',
     timing: {
       best_time: 'Early morning (6-10 AM) or late afternoon (4-6 PM)',
       avoid: 'Midday heat, windy conditions, before rain',
@@ -145,7 +146,8 @@ const AGRICULTURAL_GUIDANCE = {
     title: 'Integrated Pest Management (IPM)',
     icon: FaBug,
     color: 'red',
-    overview: 'IPM combines biological, cultural, and chemical controls for sustainable pest management.',
+    overview:
+      'IPM combines biological, cultural, and chemical controls for sustainable pest management.',
     timing: {
       best_time: 'Early morning or late evening when beneficial insects are less active',
       avoid: 'During bloom when pollinators are active, windy conditions',
@@ -217,7 +219,8 @@ const AGRICULTURAL_GUIDANCE = {
     title: 'Soil Health & Management',
     icon: FaSeedling,
     color: 'brown',
-    overview: 'Healthy soils are the foundation of sustainable agriculture and carbon sequestration.',
+    overview:
+      'Healthy soils are the foundation of sustainable agriculture and carbon sequestration.',
     timing: {
       best_time: 'When soil moisture is at field capacity (not too wet or dry)',
       avoid: 'Saturated soils, frozen ground',
@@ -321,14 +324,16 @@ export const AgriculturalContextHelp: React.FC<AgriculturalContextHelpProps> = (
 }) => {
   const intl = useIntl();
   const [activeTab, setActiveTab] = useState(0);
-  
+
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   const guidance = useMemo(() => {
-    return AGRICULTURAL_GUIDANCE[eventType as keyof typeof AGRICULTURAL_GUIDANCE] || 
-           AGRICULTURAL_GUIDANCE.fertilizer_application;
+    return (
+      AGRICULTURAL_GUIDANCE[eventType as keyof typeof AGRICULTURAL_GUIDANCE] ||
+      AGRICULTURAL_GUIDANCE.fertilizer_application
+    );
   }, [eventType]);
 
   const renderBestPracticesTab = () => (
@@ -366,23 +371,29 @@ export const AgriculturalContextHelp: React.FC<AgriculturalContextHelpProps> = (
             <Alert status="success" borderRadius="md">
               <AlertIcon />
               <VStack align="start" spacing={1}>
-                <Text fontSize="sm" fontWeight="semibold">Best Time:</Text>
+                <Text fontSize="sm" fontWeight="semibold">
+                  Best Time:
+                </Text>
                 <Text fontSize="sm">{guidance.timing.best_time}</Text>
               </VStack>
             </Alert>
-            
+
             <Alert status="warning" borderRadius="md">
               <AlertIcon />
               <VStack align="start" spacing={1}>
-                <Text fontSize="sm" fontWeight="semibold">Avoid:</Text>
+                <Text fontSize="sm" fontWeight="semibold">
+                  Avoid:
+                </Text>
                 <Text fontSize="sm">{guidance.timing.avoid}</Text>
               </VStack>
             </Alert>
-            
+
             <Alert status="info" borderRadius="md">
               <AlertIcon />
               <VStack align="start" spacing={1}>
-                <Text fontSize="sm" fontWeight="semibold">Seasonal Considerations:</Text>
+                <Text fontSize="sm" fontWeight="semibold">
+                  Seasonal Considerations:
+                </Text>
                 <Text fontSize="sm">{guidance.timing.seasonal}</Text>
               </VStack>
             </Alert>
@@ -446,25 +457,33 @@ export const AgriculturalContextHelp: React.FC<AgriculturalContextHelpProps> = (
           <Text fontSize="sm" mb={4}>
             Weather significantly impacts the effectiveness and safety of agricultural operations.
           </Text>
-          
+
           <SimpleGrid columns={1} spacing={3}>
             {WEATHER_INDICATORS.map((indicator, index) => (
               <Box key={index} p={3} borderWidth="1px" borderRadius="md">
                 <HStack mb={2}>
                   <Icon as={indicator.icon} color="blue.500" boxSize={4} />
-                  <Text fontWeight="semibold" fontSize="sm">{indicator.label}</Text>
+                  <Text fontWeight="semibold" fontSize="sm">
+                    {indicator.label}
+                  </Text>
                 </HStack>
                 <VStack spacing={1} align="stretch">
                   <HStack justify="space-between">
-                    <Badge colorScheme="green" size="sm">Good</Badge>
+                    <Badge colorScheme="green" size="sm">
+                      Good
+                    </Badge>
                     <Text fontSize="xs">{indicator.good}</Text>
                   </HStack>
                   <HStack justify="space-between">
-                    <Badge colorScheme="yellow" size="sm">Caution</Badge>
+                    <Badge colorScheme="yellow" size="sm">
+                      Caution
+                    </Badge>
                     <Text fontSize="xs">{indicator.caution}</Text>
                   </HStack>
                   <HStack justify="space-between">
-                    <Badge colorScheme="red" size="sm">Avoid</Badge>
+                    <Badge colorScheme="red" size="sm">
+                      Avoid
+                    </Badge>
                     <Text fontSize="xs">{indicator.avoid}</Text>
                   </HStack>
                 </VStack>
@@ -521,7 +540,7 @@ export const AgriculturalContextHelp: React.FC<AgriculturalContextHelpProps> = (
         <CardBody>
           <VStack spacing={3} align="stretch">
             <Text fontSize="sm">{guidance.carbon_impact.factors}</Text>
-            
+
             <Alert status="info" borderRadius="md">
               <AlertIcon />
               <VStack align="start" spacing={1}>
@@ -529,8 +548,8 @@ export const AgriculturalContextHelp: React.FC<AgriculturalContextHelpProps> = (
                   Why Carbon Tracking Matters:
                 </Text>
                 <Text fontSize="sm">
-                  Understanding your farm's carbon footprint helps identify opportunities 
-                  for both environmental improvement and cost savings.
+                  Understanding your farm's carbon footprint helps identify opportunities for both
+                  environmental improvement and cost savings.
                 </Text>
               </VStack>
             </Alert>
@@ -571,23 +590,29 @@ export const AgriculturalContextHelp: React.FC<AgriculturalContextHelpProps> = (
             <Alert status="success" borderRadius="md">
               <AlertIcon />
               <VStack align="start" spacing={1}>
-                <Text fontSize="sm" fontWeight="semibold">Cost Savings</Text>
+                <Text fontSize="sm" fontWeight="semibold">
+                  Cost Savings
+                </Text>
                 <Text fontSize="sm">Improved efficiency reduces input costs</Text>
               </VStack>
             </Alert>
-            
+
             <Alert status="info" borderRadius="md">
               <AlertIcon />
               <VStack align="start" spacing={1}>
-                <Text fontSize="sm" fontWeight="semibold">Market Access</Text>
+                <Text fontSize="sm" fontWeight="semibold">
+                  Market Access
+                </Text>
                 <Text fontSize="sm">Sustainability credentials open new markets</Text>
               </VStack>
             </Alert>
-            
+
             <Alert status="warning" borderRadius="md">
               <AlertIcon />
               <VStack align="start" spacing={1}>
-                <Text fontSize="sm" fontWeight="semibold">Future Compliance</Text>
+                <Text fontSize="sm" fontWeight="semibold">
+                  Future Compliance
+                </Text>
                 <Text fontSize="sm">Stay ahead of evolving regulations</Text>
               </VStack>
             </Alert>
@@ -611,7 +636,9 @@ export const AgriculturalContextHelp: React.FC<AgriculturalContextHelpProps> = (
             size="lg"
             boxShadow="lg"
             zIndex={1000}
-            onClick={() => {/* This would trigger opening the help modal */}}
+            onClick={() => {
+              /* This would trigger opening the help modal */
+            }}
           >
             <Icon as={FaQuestionCircle} boxSize={6} />
           </Button>
@@ -634,7 +661,7 @@ export const AgriculturalContextHelp: React.FC<AgriculturalContextHelpProps> = (
             </HStack>
           </ModalHeader>
           <ModalCloseButton />
-          
+
           <ModalBody pb={6}>
             <Tabs index={activeTab} onChange={setActiveTab} colorScheme="green">
               <TabList>
@@ -659,15 +686,9 @@ export const AgriculturalContextHelp: React.FC<AgriculturalContextHelpProps> = (
               </TabList>
 
               <TabPanels>
-                <TabPanel px={0}>
-                  {renderBestPracticesTab()}
-                </TabPanel>
-                <TabPanel px={0}>
-                  {renderWeatherTab()}
-                </TabPanel>
-                <TabPanel px={0}>
-                  {renderCarbonTab()}
-                </TabPanel>
+                <TabPanel px={0}>{renderBestPracticesTab()}</TabPanel>
+                <TabPanel px={0}>{renderWeatherTab()}</TabPanel>
+                <TabPanel px={0}>{renderCarbonTab()}</TabPanel>
               </TabPanels>
             </Tabs>
           </ModalBody>

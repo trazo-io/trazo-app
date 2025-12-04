@@ -272,7 +272,8 @@ const SetupPassword: React.FC = () => {
             alignItems="center"
             justifyContent="center"
             position="relative"
-            overflow="hidden">
+            overflow="hidden"
+          >
             {/* Sophisticated gradient foundation */}
             <Box
               position="absolute"
@@ -305,7 +306,8 @@ const SetupPassword: React.FC = () => {
               color="white"
               px={12}
               maxW="lg"
-              zIndex={10}>
+              zIndex={10}
+            >
               <VStack spacing={4}>
                 <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
                   Account Created Successfully!
@@ -338,13 +340,15 @@ const SetupPassword: React.FC = () => {
             justify="center"
             bg={useColorModeValue('white', 'gray.900')}
             px={8}
-            py={12}>
+            py={12}
+          >
             <MotionBox
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, type: 'spring', bounce: 0.3 }}
               textAlign="center"
-              maxW="420px">
+              maxW="420px"
+            >
               <VStack spacing={8}>
                 <Box
                   w="100px"
@@ -355,7 +359,8 @@ const SetupPassword: React.FC = () => {
                   alignItems="center"
                   justifyContent="center"
                   boxShadow="0 20px 40px rgba(72, 187, 120, 0.4)"
-                  animation="pulse 2s infinite">
+                  animation="pulse 2s infinite"
+                >
                   <Icon as={FiCheck} color="white" boxSize={12} />
                 </Box>
 
@@ -363,14 +368,16 @@ const SetupPassword: React.FC = () => {
                   <Text
                     fontSize="2xl"
                     fontWeight="700"
-                    color={useColorModeValue('gray.800', 'white')}>
+                    color={useColorModeValue('gray.800', 'white')}
+                  >
                     Welcome to the team!
                   </Text>
                   <Text
                     fontSize="md"
                     color={useColorModeValue('gray.600', 'gray.300')}
                     textAlign="center"
-                    lineHeight="1.6">
+                    lineHeight="1.6"
+                  >
                     Your account has been created successfully. Taking you to your dashboard...
                   </Text>
                 </VStack>
@@ -396,7 +403,8 @@ const SetupPassword: React.FC = () => {
                     <Text
                       fontSize="xs"
                       color={useColorModeValue('gray.500', 'gray.400')}
-                      fontWeight="600">
+                      fontWeight="600"
+                    >
                       {Math.round(redirectProgress)}%
                     </Text>
                   </HStack>
@@ -413,18 +421,21 @@ const SetupPassword: React.FC = () => {
           borderTop="1px solid"
           borderColor={useColorModeValue('gray.200', 'gray.700')}
           py={6}
-          px={8}>
+          px={8}
+        >
           <Flex
             maxW="7xl"
             mx="auto"
             direction={{ base: 'column', md: 'row' }}
             align="center"
             justify="space-between"
-            gap={4}>
+            gap={4}
+          >
             <Text
               fontSize="xs"
               color={useColorModeValue('gray.500', 'gray.400')}
-              textAlign="center">
+              textAlign="center"
+            >
               © 2025 Trazo. Professional Carbon Intelligence Platform.
             </Text>
           </Flex>
@@ -446,7 +457,8 @@ const SetupPassword: React.FC = () => {
             display="flex"
             alignItems="center"
             justifyContent="center"
-            animation="pulse 2s infinite">
+            animation="pulse 2s infinite"
+          >
             <Text fontSize="2xl" fontWeight="900" color="white" letterSpacing="-1px">
               T
             </Text>
@@ -476,7 +488,8 @@ const SetupPassword: React.FC = () => {
           boxShadow="0 25px 50px rgba(0, 0, 0, 0.1)"
           p={8}
           border="1px solid"
-          borderColor="gray.100">
+          borderColor="gray.100"
+        >
           <VStack spacing={6} textAlign="center">
             <Box
               w="80px"
@@ -486,7 +499,8 @@ const SetupPassword: React.FC = () => {
               display="flex"
               alignItems="center"
               justifyContent="center"
-              boxShadow="0 10px 30px rgba(239, 68, 68, 0.3)">
+              boxShadow="0 10px 30px rgba(239, 68, 68, 0.3)"
+            >
               <Icon as={FiCheck} color="white" boxSize={10} />
             </Box>
             <VStack spacing={3}>
@@ -508,7 +522,8 @@ const SetupPassword: React.FC = () => {
               fontSize="sm"
               fontWeight="600"
               borderRadius="xl"
-              _hover={{ bg: 'gray.200' }}>
+              _hover={{ bg: 'gray.200' }}
+            >
               Go to Homepage
             </Button>
           </VStack>
@@ -528,7 +543,8 @@ const SetupPassword: React.FC = () => {
           alignItems="center"
           justifyContent="center"
           position="relative"
-          overflow="hidden">
+          overflow="hidden"
+        >
           {/* Sophisticated gradient foundation */}
           <Box
             position="absolute"
@@ -619,7 +635,8 @@ const SetupPassword: React.FC = () => {
             color="white"
             px={12}
             maxW="lg"
-            zIndex={10}>
+            zIndex={10}
+          >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
                 Welcome to the Team!
@@ -654,14 +671,16 @@ const SetupPassword: React.FC = () => {
           bg={useColorModeValue('white', 'gray.900')}
           px={8}
           py={12}
-          pt={120}>
+          pt={120}
+        >
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
             maxW="420px"
-            my={{ base: 4, lg: 8 }}>
+            my={{ base: 4, lg: 8 }}
+          >
             {/* Header */}
             <VStack spacing={6} mb={10}>
               <VStack spacing={2}>
@@ -670,13 +689,15 @@ const SetupPassword: React.FC = () => {
                   fontWeight="700"
                   color={useColorModeValue('gray.900', 'white')}
                   letterSpacing="tight"
-                  textAlign="center">
+                  textAlign="center"
+                >
                   Complete Your Setup
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
-                  textAlign="center">
+                  textAlign="center"
+                >
                   Create your account to join the team
                 </Text>
               </VStack>
@@ -690,7 +711,8 @@ const SetupPassword: React.FC = () => {
                 p={4}
                 mb={8}
                 border="1px solid"
-                borderColor={useColorModeValue('green.200', 'green.700')}>
+                borderColor={useColorModeValue('green.200', 'green.700')}
+              >
                 <HStack spacing={3}>
                   <Icon
                     as={HiOfficeBuilding}
@@ -701,7 +723,8 @@ const SetupPassword: React.FC = () => {
                     <Text
                       fontSize="sm"
                       fontWeight="600"
-                      color={useColorModeValue('gray.800', 'white')}>
+                      color={useColorModeValue('gray.800', 'white')}
+                    >
                       {invitationDetails.company_name}
                     </Text>
                     <Badge colorScheme="green" variant="subtle" fontSize="xs">
@@ -723,7 +746,8 @@ const SetupPassword: React.FC = () => {
                         fontSize="sm"
                         fontWeight="medium"
                         color={useColorModeValue('gray.700', 'gray.300')}
-                        mb={2}>
+                        mb={2}
+                      >
                         First Name
                       </Text>
                       <Box
@@ -776,7 +800,8 @@ const SetupPassword: React.FC = () => {
                         fontSize="sm"
                         fontWeight="medium"
                         color={useColorModeValue('gray.700', 'gray.300')}
-                        mb={2}>
+                        mb={2}
+                      >
                         Last Name
                       </Text>
                       <Box
@@ -831,7 +856,8 @@ const SetupPassword: React.FC = () => {
                       fontSize="sm"
                       fontWeight="medium"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={2}>
+                      mb={2}
+                    >
                       Password
                     </Text>
                     <InputGroup size="lg">
@@ -884,7 +910,8 @@ const SetupPassword: React.FC = () => {
                         <Button
                           variant="ghost"
                           onClick={() => setShowPassword(!showPassword)}
-                          size="sm">
+                          size="sm"
+                        >
                           <Icon as={showPassword ? FiEyeOff : FiEye} />
                         </Button>
                       </InputRightElement>
@@ -908,7 +935,8 @@ const SetupPassword: React.FC = () => {
                         <Text
                           fontSize="xs"
                           color={useColorModeValue('gray.500', 'gray.400')}
-                          mt={1}>
+                          mt={1}
+                        >
                           Password strength:{' '}
                           {passwordStrength < 50
                             ? 'Weak'
@@ -932,7 +960,8 @@ const SetupPassword: React.FC = () => {
                       fontSize="sm"
                       fontWeight="medium"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={2}>
+                      mb={2}
+                    >
                       Confirm Password
                     </Text>
                     <InputGroup size="lg">
@@ -986,7 +1015,8 @@ const SetupPassword: React.FC = () => {
                         <Button
                           variant="ghost"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          size="sm">
+                          size="sm"
+                        >
                           <Icon as={showConfirmPassword ? FiEyeOff : FiEye} />
                         </Button>
                       </InputRightElement>
@@ -997,7 +1027,8 @@ const SetupPassword: React.FC = () => {
                       <Text
                         fontSize="xs"
                         color={password === passwordConfirm ? 'green.500' : 'red.500'}
-                        mt={1}>
+                        mt={1}
+                      >
                         {password === passwordConfirm
                           ? '✓ Passwords match'
                           : '✗ Passwords do not match'}
@@ -1019,7 +1050,8 @@ const SetupPassword: React.FC = () => {
                       spacing={3}
                       {...register('acceptTerms', {
                         required: 'You must accept the terms and conditions'
-                      })}>
+                      })}
+                    >
                       <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
                         I agree to the{' '}
                         <RouterLink to="/terms" target="_blank">
@@ -1027,7 +1059,8 @@ const SetupPassword: React.FC = () => {
                             as="span"
                             color="green.500"
                             fontWeight="medium"
-                            _hover={{ textDecoration: 'underline' }}>
+                            _hover={{ textDecoration: 'underline' }}
+                          >
                             Terms of Service
                           </Text>
                         </RouterLink>{' '}
@@ -1037,7 +1070,8 @@ const SetupPassword: React.FC = () => {
                             as="span"
                             color="green.500"
                             fontWeight="medium"
-                            _hover={{ textDecoration: 'underline' }}>
+                            _hover={{ textDecoration: 'underline' }}
+                          >
                             Privacy Policy
                           </Text>
                         </RouterLink>
@@ -1069,7 +1103,8 @@ const SetupPassword: React.FC = () => {
                     _active={{
                       transform: 'translateY(0)'
                     }}
-                    transition="all 0.2s">
+                    transition="all 0.2s"
+                  >
                     Complete Setup
                   </Button>
                 </VStack>
@@ -1086,21 +1121,24 @@ const SetupPassword: React.FC = () => {
         borderTop="1px solid"
         borderColor={useColorModeValue('gray.200', 'gray.700')}
         py={6}
-        px={8}>
+        px={8}
+      >
         <Flex
           maxW="7xl"
           mx="auto"
           direction={{ base: 'column', md: 'row' }}
           align="center"
           justify="space-between"
-          gap={4}>
+          gap={4}
+        >
           <HStack spacing={6} flexWrap="wrap" justify="center">
             <RouterLink to="/about">
               <Text
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 About
               </Text>
             </RouterLink>
@@ -1109,7 +1147,8 @@ const SetupPassword: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Why Trazo?
               </Text>
             </RouterLink>
@@ -1118,7 +1157,8 @@ const SetupPassword: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Blog
               </Text>
             </RouterLink>
@@ -1127,7 +1167,8 @@ const SetupPassword: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Contact
               </Text>
             </RouterLink>

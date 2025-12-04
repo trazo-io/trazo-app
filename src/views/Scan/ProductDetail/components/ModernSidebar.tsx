@@ -74,14 +74,14 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
                 size="sm"
                 colorScheme="green"
                 leftIcon={<Icon as={FaMedal} />}
-                onClick={onAuthPrompt}>
+                onClick={onAuthPrompt}
+              >
                 View Achievements
               </Button>
             </VStack>
           </CardBody>
         </Card>
       )}
-
     </VStack>
   );
 };

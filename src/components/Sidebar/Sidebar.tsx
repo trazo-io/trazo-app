@@ -727,8 +727,8 @@ function Sidebar(props: SidebarProps) {
           borderRadius="16px"
           bg={useColorModeValue('white', 'gray.700')}
         >
-          <DrawerCloseButton 
-            _focus={{ boxShadow: 'none' }} 
+          <DrawerCloseButton
+            _focus={{ boxShadow: 'none' }}
             _hover={{ boxShadow: 'none' }}
             aria-label="Close navigation menu"
           />
@@ -745,8 +745,12 @@ function Sidebar(props: SidebarProps) {
     return (
       <Box
         ref={mainPanel}
-        onMouseEnter={toggleSidebar ? () => setSidebarWidth(sidebarWidth === 120 ? 275 : 120) : null}
-        onMouseLeave={toggleSidebar ? () => setSidebarWidth(sidebarWidth === 275 ? 120 : 275) : null}
+        onMouseEnter={
+          toggleSidebar ? () => setSidebarWidth(sidebarWidth === 120 ? 275 : 120) : null
+        }
+        onMouseLeave={
+          toggleSidebar ? () => setSidebarWidth(sidebarWidth === 275 ? 120 : 275) : null
+        }
       >
         <Box display={{ sm: 'none', xl: 'block' }} position="fixed">
           <Box

@@ -48,7 +48,8 @@ console.log('\n🎯 Description should be clean consumer-friendly text:');
 console.log(`"${result.description}"`);
 
 // Check if it's a clean description without technical details
-const isClean = !hasWaterDeficit && !hasTemperature && !hasWindSpeed && !hasHumidity && !hasDuration;
+const isClean =
+  !hasWaterDeficit && !hasTemperature && !hasWindSpeed && !hasHumidity && !hasDuration;
 
 if (isClean) {
   console.log('\n✅ SUCCESS: Weather event descriptions are now clean and consumer-friendly!');

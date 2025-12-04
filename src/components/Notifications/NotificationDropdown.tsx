@@ -15,9 +15,12 @@ import {
   Avatar,
   VStack,
   HStack,
-  useToast
+  useToast,
+  Icon
 } from '@chakra-ui/react';
 import { BellIcon, CloseIcon } from '@chakra-ui/icons';
+import { FaStar, FaLeaf, FaBell } from 'react-icons/fa';
+import { MdSmartphone, MdWarning } from 'react-icons/md';
 import { useDispatch } from 'react-redux';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -40,15 +43,15 @@ interface NotificationDropdownProps {
 const getNotificationIcon = (type: string) => {
   switch (type) {
     case 'product_scan':
-      return '📱';
+      return MdSmartphone;
     case 'product_review':
-      return '⭐';
+      return FaStar;
     case 'carbon_verification':
-      return '🌱';
+      return FaLeaf;
     case 'system_alert':
-      return '⚠️';
+      return MdWarning;
     default:
-      return '🔔';
+      return FaBell;
   }
 };
 
@@ -278,9 +281,8 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
                     display="flex"
                     alignItems="center"
                     justifyContent="center"
-                    fontSize="lg"
                   >
-                    {getNotificationIcon(notification.type)}
+                    <Icon as={getNotificationIcon(notification.type)} boxSize={5} />
                   </Box>
 
                   {/* Content */}
@@ -373,13 +375,6 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
             </Box>
           )
         )}
-
-        {/* Auto-refresh info */}
-        <Box mt="8px" px="8px" textAlign="center">
-          <Text fontSize="xs" color={mutedTextColor}>
-            Updates every 30 seconds
-          </Text>
-        </Box>
       </MenuList>
     </Menu>
   );

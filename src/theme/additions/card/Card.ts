@@ -27,15 +27,15 @@ const Card = {
     bg: 'white',
     backgroundClip: 'border-box',
     boxShadow: '0px 3.5px 5.5px rgba(0, 0, 0, 0.02)',
-    borderRadius: '15px',
+    borderRadius: '15px'
   },
   sizes: {},
   variants: {},
-  defaultProps: {},
+  defaultProps: {}
 };
 
 export const CardComponent = {
   components: {
-    Card,
-  },
+    Card
+  }
 };

@@ -56,18 +56,21 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.certification_type) {
           formData.append('certification_type', parcelData.certification_type);
         }
-        
+
         // ✅ FIXED: Contact fields - Send ALL contact fields (even if empty)
         formData.append('contact_person', parcelData.contact_person || '');
         formData.append('contact_email', parcelData.contact_email || '');
         formData.append('contact_phone', parcelData.contact_phone || '');
         formData.append('address', parcelData.address || '');
-        
+
         // ✅ NEW: Agricultural Details for Carbon Calculations
-        if (parcelData.agricultural_details && Object.keys(parcelData.agricultural_details).length > 0) {
+        if (
+          parcelData.agricultural_details &&
+          Object.keys(parcelData.agricultural_details).length > 0
+        ) {
           formData.append('agricultural_details', JSON.stringify(parcelData.agricultural_details));
         }
-        
+
         // ✅ NEW: Carbon Calculation Flags
         if (parcelData.carbon_calculation_enabled !== undefined) {
           formData.append('carbon_calculation_enabled', parcelData.carbon_calculation_enabled);
@@ -75,9 +78,9 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.usda_compliance_eligible !== undefined) {
           formData.append('usda_compliance_eligible', parcelData.usda_compliance_eligible);
         }
-        
+
         // Note: crop_type field removed - it's now stored in History model for per-production tracking
-        
+
         console.log('🚀 CREATE FormData contents being sent to backend:');
         for (let [key, value] of formData.entries()) {
           console.log(`  ${key}:`, value);
@@ -91,13 +94,13 @@ export const productApi = baseApi.injectEndpoints({
           formData: true
         };
       },
-      invalidatesTags: (result, error, { establishmentId }) => 
-        result 
+      invalidatesTags: (result, error, { establishmentId }) =>
+        result
           ? [
               'Parcel',
               { type: 'Establishment', id: establishmentId },
               'Company' // ✅ CRITICAL: Invalidate Company to refresh establishments with new parcels
-            ] 
+            ]
           : []
     }),
     updateParcel: build.mutation({
@@ -136,18 +139,21 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.certification_type) {
           formData.append('certification_type', parcelData.certification_type);
         }
-        
+
         // ✅ FIXED: Contact fields - Send ALL contact fields (even if empty)
         formData.append('contact_person', parcelData.contact_person || '');
         formData.append('contact_email', parcelData.contact_email || '');
         formData.append('contact_phone', parcelData.contact_phone || '');
         formData.append('address', parcelData.address || '');
-        
+
         // ✅ NEW: Agricultural Details for Carbon Calculations
-        if (parcelData.agricultural_details && Object.keys(parcelData.agricultural_details).length > 0) {
+        if (
+          parcelData.agricultural_details &&
+          Object.keys(parcelData.agricultural_details).length > 0
+        ) {
           formData.append('agricultural_details', JSON.stringify(parcelData.agricultural_details));
         }
-        
+
         // ✅ NEW: Carbon Calculation Flags
         if (parcelData.carbon_calculation_enabled !== undefined) {
           formData.append('carbon_calculation_enabled', parcelData.carbon_calculation_enabled);
@@ -155,9 +161,9 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.usda_compliance_eligible !== undefined) {
           formData.append('usda_compliance_eligible', parcelData.usda_compliance_eligible);
         }
-        
+
         // Note: crop_type field removed - it's now stored in History model for per-production tracking
-        
+
         console.log('🚀 UPDATE FormData contents being sent to backend:');
         for (let [key, value] of formData.entries()) {
           console.log(`  ${key}:`, value);

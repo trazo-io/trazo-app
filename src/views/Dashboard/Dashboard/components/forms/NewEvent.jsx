@@ -18,62 +18,36 @@
 // Chakra imports
 import {
   Box,
-  Button,
-  Select as ChakraSelect,
-  Checkbox,
   Flex,
-  FormControl,
-  FormLabel,
   Icon,
-  Input,
-  NumberDecrementStepper,
-  NumberIncrementStepper,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  Stack,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-  Tag,
-  TagCloseButton,
-  TagLabel,
   Text,
-  Textarea,
   useColorModeValue,
   VStack,
   HStack,
   Badge,
   Progress,
-  Divider,
   Alert,
   AlertIcon,
-  AlertTitle,
-  AlertDescription,
   useToast,
   Spinner,
-  Grid,
-  Circle
+  Grid
 } from '@chakra-ui/react';
-import { BsCircleFill, BsFillCloudLightningRainFill } from 'react-icons/bs';
+import { BsFillCloudLightningRainFill } from 'react-icons/bs';
 import {
   FaLeaf,
-  FaCamera,
   FaEdit,
   FaChevronLeft,
   FaChevronRight,
   FaCheckCircle,
-  FaTools,
   FaSeedling,
   FaBusinessTime,
   FaBug,
-  FaInfoCircle,
-  FaEye
+  FaEye,
+  FaCalendarAlt,
+  FaTasks
 } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
-import React, { useEffect, useReducer, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { clearForm, setForm } from 'store/features/formSlice';
 import { object, string } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
@@ -84,7 +58,10 @@ import {
   StandardButton,
   StandardField,
   StandardInput,
-  StandardStepper
+  StandardStepper,
+  StandardPage,
+  SectionBox,
+  SectionHeader
 } from 'components/Design/StandardComponents';
 import { TrazoImageUpload } from 'components/Upload';
 import Card from 'components/Card/Card';
@@ -94,7 +71,7 @@ import CardWithMap from '../CardWithMap';
 import ChemicalTab from './ChemicalTab-ENHANCED';
 import FormLayout from 'components/Forms/FormLayout';
 import GeneralTab from './GeneralTab';
-import EquipmentTab from './EquipmentTab';
+// EquipmentTab removed - Sprint 2 Epic 2.1: Equipment merged into Production as "Equipment Maintenance (EQ)" subtype
 import SoilManagementTab from './SoilManagementTab';
 import BusinessTab from './BusinessTab-SIMPLIFIED';
 import PestManagementTab from './PestManagementTab';
@@ -121,8 +98,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
 // Enhanced form schemas with better validation
+// Sprint 1 Epic 1.4: Added performed_by for USDA GAP traceability compliance
 const formSchemaBasic = object({
-  date: string().min(1, 'Date is required')
+  date: string().min(1, 'Date is required'),
+  performed_by: string().optional() // Required for non-weather events, validated in onSubmitBasic
 });
 
 const formSchemaMainInfo = object({
@@ -134,6 +113,8 @@ const formSchemaMainInfo = object({
 const formSchemaMedia = object({});
 
 // Event type configuration
+// Sprint 2 Epic 2.1: Equipment (id: 4) is now merged into Production as "Equipment Maintenance" subtype
+// Equipment type is kept here ONLY for backward compatibility with editing existing Equipment events
 const eventTypeConfig = [
   {
     id: 0,
@@ -149,7 +130,7 @@ const eventTypeConfig = [
     label: 'Production',
     icon: RocketIcon,
     color: 'green',
-    description: 'Agricultural production activities'
+    description: 'Agricultural production activities' // Now includes Equipment Maintenance
   },
   {
     id: 2,
@@ -161,20 +142,14 @@ const eventTypeConfig = [
   },
   {
     id: 3,
-    name: 'general',
-    label: 'General',
+    name: 'general', // Backend name stays 'general' for compatibility
+    label: 'Other Farm Activities', // Sprint 2: Renamed from 'General'
     icon: FaEdit,
     color: 'green',
-    description: 'Other farming activities'
+    description: 'Farm activities not covered by other categories'
   },
-  {
-    id: 4,
-    name: 'equipment',
-    label: 'Equipment',
-    icon: FaTools,
-    color: 'orange',
-    description: 'Equipment maintenance and fuel tracking'
-  },
+  // Sprint 2 Epic 2.1: Equipment (id: 4) REMOVED - merged into Production as "Equipment Maintenance (EQ)" subtype
+  // Users should select Production > Equipment Maintenance for equipment operations
   {
     id: 5,
     name: 'soil_management',
@@ -316,7 +291,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   const calculateCarbonWithDebounce = useCallback(
     async (formData, eventType) => {
-      console.log('🧮 calculateCarbonWithDebounce called:', { eventType, formDataKeys: Object.keys(formData || {}) });
+      console.log('🧮 calculateCarbonWithDebounce called:', {
+        eventType,
+        formDataKeys: Object.keys(formData || {})
+      });
       if (!formData || Object.keys(formData).length === 0) {
         console.log('🧮 No form data, clearing calculation');
         setCarbonCalculation(null);
@@ -492,7 +470,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
         weather_conditions: existingEvent.weather_conditions || '',
         application_timing: existingEvent.application_timing || '',
         target_pest_disease: existingEvent.target_pest_disease || '',
-        description: existingEvent.description || ''
+        description: existingEvent.description || '',
+        // 🚨 CRITICAL FIX: Ensure observation field is preserved for Weather Events
+        // Weather Events have both description and observation fields
+        // When creating, observation → description mapping happens
+        // When editing, we need to ensure observation field is populated
+        observation:
+          existingEvent.observation ||
+          existingEvent.description ||
+          '' // Fallback to description if observation is empty
       };
 
       console.log('[NewEvent] Processed initialData:', initialData);
@@ -506,6 +492,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
         '[NewEvent] initialData.area_treated:',
         initialData.area_treated,
         typeof initialData.area_treated
+      );
+      console.log(
+        '[NewEvent] 🚨 WEATHER EVENT FIX - observation field:',
+        initialData.observation,
+        '| description:',
+        initialData.description
       );
       console.log('[NewEvent] Setting eventFormData with initialData');
 
@@ -605,7 +597,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Handle real-time data changes from event tabs (for carbon preview updates)
   const onDataChange = useCallback(
     (data) => {
-      console.log('🔥 onDataChange triggered:', { activeEventType, dataKeys: Object.keys(data || {}) });
+      console.log('🔥 onDataChange triggered:', {
+        activeEventType,
+        dataKeys: Object.keys(data || {})
+      });
       // Use functional update to avoid stale closure
       setEventFormData((prevData) => {
         const updatedData = { ...prevData, ...data };
@@ -700,7 +695,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const onSubmitMedia = async () => {
     try {
       // Use local eventTypeConfig to get the correct backend event type
-      const selectedEventType = eventTypeConfig.find(config => config.id === activeEventType);
+      const selectedEventType = eventTypeConfig.find((config) => config.id === activeEventType);
       const backendEventType = selectedEventType?.id ?? activeEventType;
 
       // Enhanced validation to prevent "Unknown" values
@@ -843,7 +838,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           0: 'Weather',
           1: 'Production',
           2: 'Chemical',
-          3: 'General',
+          3: 'Other Farm Activities', // Sprint 2: Renamed from 'General'
           4: 'Equipment',
           5: 'Soil Management',
           6: 'Pest Management',
@@ -852,7 +847,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         const eventTypeName = eventTypeNames[activeEventType] || 'Unknown';
 
         // Events that require observation → description mapping (all except Chemical)
-        const eventsWithObservation = [0, 1, 3, 4, 5, 6, 7]; // Weather, Production, General, Equipment, Soil Management, Pest Management, Business
+        const eventsWithObservation = [0, 1, 3, 4, 5, 6, 7]; // Weather, Production, Other Farm Activities, Equipment, Soil Management, Pest Management, Business
 
         // Special handling for weather events (activeEventType === 0)
         if (activeEventType === 0) {
@@ -1001,9 +996,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // Only exclude 'type' field for event types that don't use it
         // Weather, Production, and Soil Management events DO use the type field for sub-types
         const eventTypesUsingTypeField = ['weather', 'production', 'soil_management'];
-        const backendEventType = Object.keys(eventTypeMap).find(key => eventTypeMap[key] === eventFormData.event_type) || '1';
-        const currentEventTypeName = eventTypeMap[backendEventType] || 'general';
-        
+        // Use activeEventType and eventTypeConfig to get the current event type name
+        const currentEventConfig = eventTypeConfig.find((config) => config.id === activeEventType);
+        const currentEventTypeName = currentEventConfig?.name || 'general';
+
         if (!eventTypesUsingTypeField.includes(currentEventTypeName)) {
           excludedFields.push('type'); // Remove type field for event types that don't use sub-types
         }
@@ -1126,9 +1122,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
       console.error('🚨 Error data:', JSON.stringify(error?.data, null, 2));
       console.error('🚨 Error status:', error?.status);
       console.error('🚨 Error message:', error?.message);
-      
+
       // Note: Request data logged above before API call
-      
+
       toast({
         title: intl.formatMessage({ id: 'app.error' }) || 'Error',
         description:
@@ -1223,19 +1219,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         />
       )
     },
-    {
-      id: 4,
-      label: intl.formatMessage({ id: 'app.equipment' }),
-      component: (
-        <EquipmentTab
-          onSubmitHandler={onSubmitTab}
-          onDataChange={onDataChange}
-          onPrev={() => setActiveEventType(null)}
-          initialValues={eventFormData}
-          cropType={cropType}
-        />
-      )
-    },
+    // Sprint 2 Epic 2.1: Equipment (id: 4) REMOVED - merged into Production as "Equipment Maintenance (EQ)" subtype
     {
       id: 5,
       label: intl.formatMessage({ id: 'app.soilManagement' }),
@@ -1277,444 +1261,422 @@ function NewEvent({ isEdit = false, eventId = null }) {
     }
   ];
 
+  // Handler for back navigation
+  const handleBack = () => {
+    navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`);
+  };
+
   return (
-    <Box
-      w="100%"
-      bg={useColorModeValue('gray.50', 'gray.900')}
-      minH="100vh"
-      pt={{ base: 4, md: 5, lg: '54px' }}>
+    <StandardPage
+      title={
+        isEdit
+          ? intl.formatMessage({ id: 'app.editEvent' }) || 'Edit Event'
+          : intl.formatMessage({ id: 'app.createNewEvent' }) || 'Add Event'
+      }
+      description={
+        isEdit
+          ? intl.formatMessage({ id: 'app.editEventDescription' }) ||
+            'Update the event information below'
+          : intl.formatMessage({ id: 'app.createNewEventDescription' }) ||
+            'Complete the form to add a new event to your parcel history'
+      }
+      showBackButton
+      onBack={handleBack}
+      rightAction={
+        <Badge colorScheme="green" variant="subtle" px={3} py={1} borderRadius="full">
+          <HStack spacing={1}>
+            <Icon as={FaTasks} boxSize={3} />
+            <Text fontSize="sm">
+              Step {activeStep + 1} of {steps.length}
+            </Text>
+          </HStack>
+        </Badge>
+      }
+    >
       {/* 2025 UX: Enhanced loading state with progress indication */}
       {isEdit && isLoadingEvent && (
-        <Box maxW="1200px" mx="auto" p={{ base: 4, md: 6, lg: 8 }}>
-          <StandardCard>
-            <CardBody py={8} px={6}>
-              <VStack spacing={4} align="center">
-                <Spinner size="xl" color="green.500" />
-                <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                  {intl.formatMessage({ id: 'app.loadingEvent' }) || 'Loading event data...'}
-                </Text>
-                <Progress value={60} colorScheme="green" w="200px" borderRadius="full" />
-                <Text fontSize="sm" color="gray.500">
-                  Retrieving agricultural data and calculations
-                </Text>
-              </VStack>
-            </CardBody>
-          </StandardCard>
-        </Box>
+        <StandardCard>
+          <CardBody py={8} px={6}>
+            <VStack spacing={4} align="center">
+              <Spinner size="xl" color="green.500" />
+              <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+                {intl.formatMessage({ id: 'app.loadingEvent' }) || 'Loading event data...'}
+              </Text>
+              <Progress value={60} colorScheme="green" w="200px" borderRadius="full" />
+              <Text fontSize="sm" color="gray.500">
+                Retrieving agricultural data and calculations
+              </Text>
+            </VStack>
+          </CardBody>
+        </StandardCard>
       )}
 
       {/* Error state when editing */}
       {isEdit && eventError && (
-        <Box maxW="1200px" mx="auto" p={{ base: 4, md: 6, lg: 8 }}>
-          <Card boxShadow="xl" bg={bgColor} borderRadius="2xl">
-            <CardBody py={8} px={6}>
-              <VStack spacing={4} align="center">
-                <Text fontSize="lg" fontWeight="semibold" color="red.500">
-                  {intl.formatMessage({ id: 'app.errorLoadingEvent' }) ||
-                    'Error loading event data'}
-                </Text>
-              </VStack>
-            </CardBody>
-          </Card>
-        </Box>
+        <Card boxShadow="xl" bg={bgColor} borderRadius="2xl">
+          <CardBody py={8} px={6}>
+            <VStack spacing={4} align="center">
+              <Text fontSize="lg" fontWeight="semibold" color="red.500">
+                {intl.formatMessage({ id: 'app.errorLoadingEvent' }) || 'Error loading event data'}
+              </Text>
+            </VStack>
+          </CardBody>
+        </Card>
       )}
 
       {/* Main Content - Show only when not loading or when creating */}
       {(!isEdit || !isLoadingEvent) && !eventError && (
-        <>
-          {/* Main Content */}
-          <Box
-            maxW="1200px"
-            mx="auto"
-            p={{ base: 4, md: 6, lg: 8 }}
-            pt={{ base: '110px', md: '55px' }}>
-            <VStack spacing={{ base: 8, md: 10 }} align="stretch">
-              {/* Header Card - Full Width */}
-              <Card boxShadow="xl" bg={bgColor} borderRadius="2xl">
-                <CardBody py={4} px={4}>
-                  <HStack spacing={4} align="center">
-                    <VStack spacing={2} align="start" flex="1">
-                      <Text fontSize="xl" fontWeight="bold" color={textColor} lineHeight="1.2">
-                        {isEdit
-                          ? intl.formatMessage({ id: 'app.editEvent' }) || 'Edit Event'
-                          : intl.formatMessage({ id: 'app.createNewEvent' }) || 'Add a new event'}
-                      </Text>
-                      <Text fontSize="sm" color="gray.500" fontWeight="400">
-                        {isEdit
-                          ? intl.formatMessage({ id: 'app.editEventDescription' }) ||
-                            'Update the event information below.'
-                          : intl.formatMessage({ id: 'app.createNewEventDescription' }) ||
-                            'Complete the form below to add a new event to your parcel history.'}
+        <VStack spacing={{ base: 6, md: 8 }} align="stretch">
+          {/* Progress Stepper - Using StandardStepper */}
+          <StandardStepper
+            steps={steps}
+            currentStep={activeStep}
+            completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
+          />
+
+          {/* Step Content */}
+          <Flex direction={{ base: 'column', xl1: 'row-reverse' }} gap={10} align="start">
+            {/* Carbon Impact Sidebar */}
+            <Box
+              flex="0 0 auto"
+              w={{ base: '100%', xl1: '370px' }}
+              position={{ xl: 'sticky' }}
+              top="80px"
+              alignSelf="flex-start"
+            >
+              {(() => {
+                const showEmpty =
+                  !carbonCalculation && !isCalculatingCarbon && !isCalculating && activeStep === 0;
+                console.log('🎯 Carbon Preview Decision:', {
+                  showEmpty,
+                  carbonCalculation: !!carbonCalculation,
+                  isCalculatingCarbon,
+                  isCalculating,
+                  activeStep
+                });
+                return showEmpty;
+              })() ? (
+                <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
+                  <CardBody>
+                    <VStack spacing={4} align="center" py={8}>
+                      <Icon as={FaLeaf} color="gray.400" boxSize={12} />
+                      <Text fontSize="sm" color="gray.500" textAlign="center">
+                        {intl.formatMessage({ id: 'app.enterEventDetailsToSeeCarbon' }) ||
+                          'Enter event details to see carbon impact'}
                       </Text>
                     </VStack>
-                  </HStack>
-                </CardBody>
-              </Card>
-
-              {/* Progress Stepper - Full Width */}
-              <Card boxShadow="xl" bg={bgColor} borderRadius="2xl">
-                <CardBody py={0} px={6}>
-                  <HStack
-                    spacing={{ base: 3, md: 6 }}
-                    justify="center"
-                    align="center"
-                    w="100%"
-                    maxW="800px"
-                    mx="auto">
-                    {steps.map((step, index) => (
-                      <React.Fragment key={index}>
-                        <VStack spacing={3} align="center" flex="1">
-                          <Circle
-                            size={{ base: '36px', md: '44px' }}
-                            bg={
-                              index < activeStep
-                                ? 'green.500'
-                                : index === activeStep
-                                ? 'green.400'
-                                : 'gray.200'
-                            }
-                            color={index <= activeStep ? 'white' : 'gray.500'}
-                            fontSize={{ base: 'sm', md: 'md' }}
-                            fontWeight="bold"
-                            boxShadow={index === activeStep ? 'lg' : 'md'}
-                            transition="all 0.3s">
-                            {index < activeStep ? (
-                              <FaCheckCircle size="18px" />
-                            ) : (
-                              <Text>{index + 1}</Text>
-                            )}
-                          </Circle>
-                          <VStack spacing={1} align="center">
-                            <Text
-                              fontSize={{ base: 'xs', md: 'sm' }}
-                              fontWeight="bold"
-                              color={index <= activeStep ? 'green.500' : 'gray.500'}
-                              textAlign="center"
-                              lineHeight="1.2">
-                              {step.title}
-                            </Text>
-                            <Text
-                              fontSize="xs"
-                              color="gray.500"
-                              textAlign="center"
-                              display={{ base: 'none', md: 'block' }}
-                              lineHeight="1.2">
-                              {step.description}
-                            </Text>
-                          </VStack>
-                        </VStack>
-                        {index < steps.length - 1 && (
-                          <Box
-                            height="3px"
-                            flex="1"
-                            bg={index < activeStep ? 'green.500' : 'gray.200'}
-                            borderRadius="full"
-                            mx={{ base: 1, md: 2 }}
-                            transition="all 0.3s"
-                          />
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </HStack>
-                </CardBody>
-              </Card>
-
-              {/* Step Content */}
-              <Flex direction={{ base: 'column', xl1: 'row-reverse' }} gap={10} align="start">
-                {/* Carbon Impact Sidebar */}
-                <Box
-                  flex="0 0 auto"
-                  w={{ base: '100%', xl1: '370px' }}
-                  position={{ xl: 'sticky' }}
-                  top="80px"
-                  alignSelf="flex-start">
-                  {(() => {
-                    const showEmpty = !carbonCalculation && !isCalculatingCarbon && !isCalculating && activeStep === 0;
-                    console.log('🎯 Carbon Preview Decision:', { showEmpty, carbonCalculation: !!carbonCalculation, isCalculatingCarbon, isCalculating, activeStep });
-                    return showEmpty;
-                  })() ? (
-                      <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                        <CardBody>
-                          <VStack spacing={4} align="center" py={8}>
-                            <Icon as={FaLeaf} color="gray.400" boxSize={12} />
-                            <Text fontSize="sm" color="gray.500" textAlign="center">
-                              {intl.formatMessage({ id: 'app.enterEventDetailsToSeeCarbon' }) ||
-                                'Enter event details to see carbon impact'}
-                            </Text>
-                          </VStack>
-                        </CardBody>
-                      </Card>
-                    ) : (
-                      <CarbonImpactPreview
-                        eventType={eventTypeConfig[activeEventType]?.name}
-                        formData={eventFormData}
-                        calculation={carbonCalculation}
-                        isCalculating={isCalculatingCarbon || isCalculating}
-                      />
-                  )}
-                  {/* Tips and Guidelines */}
-                  {activeStep === 1 && shouldShowCarbonTips && (
-                    <Card mt={6} boxShadow="lg" bg={bgColor} borderRadius="xl">
-                      <CardHeader pb={2}>
-                        <HStack spacing={2}>
-                          <Text fontSize="lg">💡</Text>
-                          <Text fontSize="sm" fontWeight="bold" color={textColor}>
-                            {intl.formatMessage({ id: 'app.carbonOptimizationTips' }) ||
-                              'Optimization Suggestions'}
+                  </CardBody>
+                </Card>
+              ) : (
+                <CarbonImpactPreview
+                  eventType={eventTypeConfig[activeEventType]?.name}
+                  formData={eventFormData}
+                  calculation={carbonCalculation}
+                  isCalculating={isCalculatingCarbon || isCalculating}
+                />
+              )}
+              {/* Tips and Guidelines */}
+              {activeStep === 1 && shouldShowCarbonTips && (
+                <Card mt={6} boxShadow="lg" bg={bgColor} borderRadius="xl">
+                  <CardHeader pb={2}>
+                    <HStack spacing={2}>
+                      <Text fontSize="lg">💡</Text>
+                      <Text fontSize="sm" fontWeight="bold" color={textColor}>
+                        {intl.formatMessage({ id: 'app.carbonOptimizationTips' }) ||
+                          'Optimization Suggestions'}
+                      </Text>
+                      {carbonCalculation?.efficiency_score && (
+                        <Badge
+                          colorScheme={
+                            carbonCalculation.efficiency_score >= 70
+                              ? 'green'
+                              : carbonCalculation.efficiency_score >= 50
+                              ? 'yellow'
+                              : 'red'
+                          }
+                          fontSize="xs"
+                          borderRadius="full"
+                          // 2025 ACCESSIBILITY: Screen reader support for efficiency scores
+                          aria-label={`Efficiency score: ${
+                            carbonCalculation.efficiency_score
+                          } out of 100. ${
+                            carbonCalculation.efficiency_score >= 70
+                              ? 'Good'
+                              : carbonCalculation.efficiency_score >= 50
+                              ? 'Moderate'
+                              : 'Needs improvement'
+                          } efficiency rating.`}
+                        >
+                          {carbonCalculation.efficiency_score}/100
+                        </Badge>
+                      )}
+                    </HStack>
+                  </CardHeader>
+                  <CardBody pt={0}>
+                    <VStack spacing={2} align="stretch">
+                      {activeEventType === 2 && (
+                        <>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.usePreciseNPKValues' }) ||
+                              'Use precise NPK values for USDA-compliant carbon calculations'}
                           </Text>
-                          {carbonCalculation?.efficiency_score && (
-                            <Badge
-                              colorScheme={
-                                carbonCalculation.efficiency_score >= 70
-                                  ? 'green'
-                                  : carbonCalculation.efficiency_score >= 50
-                                  ? 'yellow'
-                                  : 'red'
-                              }
-                              fontSize="xs"
-                              borderRadius="full"
-                              // 2025 ACCESSIBILITY: Screen reader support for efficiency scores
-                              aria-label={`Efficiency score: ${
-                                carbonCalculation.efficiency_score
-                              } out of 100. ${
-                                carbonCalculation.efficiency_score >= 70
-                                  ? 'Good'
-                                  : carbonCalculation.efficiency_score >= 50
-                                  ? 'Moderate'
-                                  : 'Needs improvement'
-                              } efficiency rating.`}>
-                              {carbonCalculation.efficiency_score}/100
-                            </Badge>
-                          )}
-                        </HStack>
-                      </CardHeader>
-                      <CardBody pt={0}>
-                        <VStack spacing={2} align="stretch">
-                          {activeEventType === 2 && (
-                            <>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.usePreciseNPKValues' }) ||
-                                  'Use precise NPK values for USDA-compliant carbon calculations'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.considerDripIrrigation' }) ||
-                                  'Drip irrigation reduces emissions by 15-25% vs broadcast'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.applyDuringOptimalWeather' }) ||
-                                  'Apply during calm, dry conditions to minimize losses'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.splitApplicationsReduce' }) ||
-                                  'Split applications reduce N2O emissions by up to 30%'}
-                              </Text>
-                            </>
-                          )}
-                          {activeEventType === 1 && (
-                            <>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.trackFuelConsumption' }) ||
-                                  'Track precise fuel consumption for accurate emissions'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.optimizeRoutePlanning' }) ||
-                                  'Optimize field patterns to reduce fuel use by 10-15%'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.combineOperationsWhenPossible' }) ||
-                                  'Combined operations reduce emissions per hectare'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.maintainEquipmentProperly' }) ||
-                                  'Well-maintained equipment uses 5-10% less fuel'}
-                              </Text>
-                            </>
-                          )}
-                          {activeEventType === 0 && (
-                            <>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.monitorWeatherConditions' }) ||
-                                  'Document weather events for insurance and carbon credits'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.useWeatherData' }) ||
-                                  'Weather data improves yield predictions and planning'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.implementProtectiveMeasures' }) ||
-                                  'Protective measures reduce crop stress and emissions'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.trackExtremeEvents' }) ||
-                                  'Track extreme events for climate resilience planning'}
-                              </Text>
-                            </>
-                          )}
-                          {activeEventType === 3 && (
-                            <>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.documentObservations' }) ||
-                                  'Document observations for USDA compliance verification'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.maintainDetailedRecords' }) ||
-                                  'Detailed records support carbon credit verification'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.considerSustainablePractices' }) ||
-                                  'Sustainable practices often qualify for incentives'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.includePhotosForVerification' }) ||
-                                  'Include photos for stronger verification evidence'}
-                              </Text>
-                            </>
-                          )}
-                          {(activeEventType === 4 ||
-                            activeEventType === 5 ||
-                            activeEventType === 6 ||
-                            activeEventType === 7) && (
-                            <>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.followBestPractices' }) ||
-                                  'Follow USDA best practices for maximum efficiency'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.timingOptimization' }) ||
-                                  'Optimal timing reduces environmental impact'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.precisionAgriculture' }) ||
-                                  'Precision techniques improve cost and carbon efficiency'}
-                              </Text>
-                              <Text fontSize="xs" color="gray.600">
-                                •{' '}
-                                {intl.formatMessage({ id: 'app.monitorOutcomes' }) ||
-                                  'Monitor outcomes to improve future applications'}
-                              </Text>
-                            </>
-                          )}
-                        </VStack>
-                      </CardBody>
-                    </Card>
-                  )}
-                </Box>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.considerDripIrrigation' }) ||
+                              'Drip irrigation reduces emissions by 15-25% vs broadcast'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.applyDuringOptimalWeather' }) ||
+                              'Apply during calm, dry conditions to minimize losses'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.splitApplicationsReduce' }) ||
+                              'Split applications reduce N2O emissions by up to 30%'}
+                          </Text>
+                        </>
+                      )}
+                      {activeEventType === 1 && (
+                        <>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.trackFuelConsumption' }) ||
+                              'Track precise fuel consumption for accurate emissions'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.optimizeRoutePlanning' }) ||
+                              'Optimize field patterns to reduce fuel use by 10-15%'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.combineOperationsWhenPossible' }) ||
+                              'Combined operations reduce emissions per hectare'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.maintainEquipmentProperly' }) ||
+                              'Well-maintained equipment uses 5-10% less fuel'}
+                          </Text>
+                        </>
+                      )}
+                      {activeEventType === 0 && (
+                        <>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.monitorWeatherConditions' }) ||
+                              'Document weather events for insurance and carbon credits'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.useWeatherData' }) ||
+                              'Weather data improves yield predictions and planning'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.implementProtectiveMeasures' }) ||
+                              'Protective measures reduce crop stress and emissions'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.trackExtremeEvents' }) ||
+                              'Track extreme events for climate resilience planning'}
+                          </Text>
+                        </>
+                      )}
+                      {activeEventType === 3 && (
+                        <>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.documentObservations' }) ||
+                              'Document observations for USDA compliance verification'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.maintainDetailedRecords' }) ||
+                              'Detailed records support carbon credit verification'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.considerSustainablePractices' }) ||
+                              'Sustainable practices often qualify for incentives'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.includePhotosForVerification' }) ||
+                              'Include photos for stronger verification evidence'}
+                          </Text>
+                        </>
+                      )}
+                      {(activeEventType === 4 ||
+                        activeEventType === 5 ||
+                        activeEventType === 6 ||
+                        activeEventType === 7) && (
+                        <>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.followBestPractices' }) ||
+                              'Follow USDA best practices for maximum efficiency'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.timingOptimization' }) ||
+                              'Optimal timing reduces environmental impact'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.precisionAgriculture' }) ||
+                              'Precision techniques improve cost and carbon efficiency'}
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            •{' '}
+                            {intl.formatMessage({ id: 'app.monitorOutcomes' }) ||
+                              'Monitor outcomes to improve future applications'}
+                          </Text>
+                        </>
+                      )}
+                    </VStack>
+                  </CardBody>
+                </Card>
+              )}
+            </Box>
 
-                {/* Main Form */}
-                <Box flex="1" maxW={{ base: '100%', xl1: '750px' }} w="100%">
-                  {activeStep === 0 && (
-                    <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                      <CardHeader pb={2}>
-                        <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                          {intl.formatMessage({ id: 'app.basicEventInfo' }) ||
-                            'Basic Event Information'}
-                        </Text>
-                      </CardHeader>
-                      <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
-                        <FormProvider {...basicMethods}>
-                          <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)}>
-                            <VStack spacing={{ base: 5, md: 6 }} align="stretch">
-                              {/* Event Type Selection */}
-                              <Box>
-                                <FormLabel fontSize="sm" fontWeight="bold" mb={4}>
-                                  {intl.formatMessage({ id: 'app.selectEventType' }) ||
-                                    'Select Event Type'}
-                                </FormLabel>
-                                {isEdit && (
-                                  <Box
-                                    mb={4}
-                                    p={3}
-                                    bg="yellow.50"
-                                    borderRadius="md"
-                                    borderWidth="1px"
-                                    borderColor="yellow.200">
-                                    <Text fontSize="sm" color="yellow.800">
-                                      <Icon as={FaInfoCircle} mr={2} />
-                                      {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' }) ||
-                                        'Event type cannot be changed after creation for data integrity reasons.'}
-                                    </Text>
-                                  </Box>
-                                )}
-                                <Grid
-                                  templateColumns={{
-                                    base: 'repeat(2, 1fr)',
-                                    sm: 'repeat(3, 1fr)',
-                                    md: 'repeat(4, 1fr)'
+            {/* Main Form */}
+            <Box flex="1" maxW={{ base: '100%', xl1: '750px' }} w="100%">
+              {activeStep === 0 && (
+                <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
+                  <CardHeader pb={2}>
+                    <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+                      {intl.formatMessage({ id: 'app.basicEventInfo' }) ||
+                        'Basic Event Information'}
+                    </Text>
+                  </CardHeader>
+                  <CardBody pt={4} pb={6} px={{ base: 3, md: 6 }}>
+                    <FormProvider {...basicMethods}>
+                      <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)}>
+                        <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+                          {/* Event Type Selection Section */}
+                          <SectionBox>
+                            <SectionHeader
+                              icon={FaTasks}
+                              iconColor="green.500"
+                              title="Event Type"
+                              badge="Required"
+                              badgeColorScheme="green"
+                              description="Select the type of agricultural activity you want to document"
+                            />
+                            {isEdit && (
+                              <Alert status="warning" borderRadius="md" mb={4}>
+                                <AlertIcon />
+                                <Text fontSize="sm">
+                                  {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' }) ||
+                                    'Event type cannot be changed after creation for data integrity reasons.'}
+                                </Text>
+                              </Alert>
+                            )}
+                            <Grid
+                              templateColumns={{
+                                base: 'repeat(2, 1fr)',
+                                md: 'repeat(3, 1fr)',
+                                lg: 'repeat(4, 1fr)'
+                              }}
+                              gap={{ base: 2, md: 3 }}
+                            >
+                              {/* Sprint 2 Epic 2.1: Equipment removed from event types - now a Production subtype */}
+                              {eventTypeConfig.map((eventType) => (
+                                <Box
+                                  key={eventType.id}
+                                  as="button"
+                                  type="button"
+                                  onClick={() => !isEdit && handleEventTypeChange(eventType.id)}
+                                  disabled={isEdit}
+                                  cursor={isEdit ? 'not-allowed' : 'pointer'}
+                                  opacity={isEdit && activeEventType !== eventType.id ? 0.4 : 1}
+                                  bg={
+                                    activeEventType === eventType.id
+                                      ? `${eventType.color}.500`
+                                      : 'white'
+                                  }
+                                  color={activeEventType === eventType.id ? 'white' : 'gray.700'}
+                                  borderWidth="2px"
+                                  borderColor={
+                                    activeEventType === eventType.id
+                                      ? `${eventType.color}.500`
+                                      : 'gray.200'
+                                  }
+                                  borderRadius={{ base: 'lg', md: 'xl' }}
+                                  p={{ base: 3, md: 4 }}
+                                  minH={{ base: '90px', md: '130px' }}
+                                  display="flex"
+                                  flexDirection="column"
+                                  justifyContent="center"
+                                  alignItems="center"
+                                  gap={2}
+                                  transition="all 0.2s ease"
+                                  _hover={
+                                    !isEdit
+                                      ? {
+                                          transform: 'translateY(-2px)',
+                                          boxShadow: 'lg',
+                                          borderColor: `${eventType.color}.400`
+                                        }
+                                      : {}
+                                  }
+                                  _focus={{
+                                    outline: 'none',
+                                    boxShadow: `0 0 0 3px var(--chakra-colors-${eventType.color}-200)`
                                   }}
-                                  gap={4}>
-                                  {eventTypeConfig.map((eventType) => (
-                                    <Button
-                                      key={eventType.id}
-                                      variant={
-                                        activeEventType === eventType.id ? 'solid' : 'outline'
-                                      }
-                                      colorScheme={eventType.color}
-                                      size="lg"
-                                      height={{ base: '120px', md: '140px' }}
-                                      display="flex"
-                                      flexDirection="column"
-                                      justifyContent="center"
-                                      alignItems="center"
-                                      gap={2}
-                                      p={4}
-                                      onClick={() => handleEventTypeChange(eventType.id)}
-                                      isDisabled={isEdit}
-                                      opacity={isEdit && activeEventType !== eventType.id ? 0.4 : 1}
-                                      _hover={
-                                        !isEdit
-                                          ? {
-                                              transform: 'translateY(-2px)',
-                                              boxShadow: 'lg'
-                                            }
-                                          : {}
-                                      }
-                                      transition="all 0.2s"
-                                      whiteSpace="normal"
-                                      overflow="hidden"
-                                      // 2025 ACCESSIBILITY: Enhanced ARIA support
-                                      aria-label={`Select ${eventType.label} event type. ${eventType.description}`}
-                                      aria-pressed={activeEventType === eventType.id}
-                                      role="button"
-                                      tabIndex={isEdit ? -1 : 0}>
-                                      <Icon as={eventType.icon} boxSize={6} />
-                                      <VStack spacing={1} width="100%">
-                                        <Text fontSize="sm" fontWeight="bold" textAlign="center">
-                                          {eventType.label}
-                                        </Text>
-                                        <Text
-                                          fontSize="xs"
-                                          opacity={0.8}
-                                          textAlign="center"
-                                          lineHeight="1.2"
-                                          noOfLines={2}
-                                          display={{ base: 'none', md: 'block' }}>
-                                          {eventType.description}
-                                        </Text>
-                                      </VStack>
-                                    </Button>
-                                  ))}
-                                </Grid>
-                              </Box>
+                                  aria-label={`Select ${eventType.label} event type. ${eventType.description}`}
+                                  aria-pressed={activeEventType === eventType.id}
+                                  role="button"
+                                  tabIndex={isEdit ? -1 : 0}
+                                >
+                                  <Icon
+                                    as={eventType.icon}
+                                    boxSize={{ base: 5, md: 6 }}
+                                    color={
+                                      activeEventType === eventType.id
+                                        ? 'white'
+                                        : `${eventType.color}.500`
+                                    }
+                                  />
+                                  <VStack spacing={0.5} width="100%">
+                                    <Text
+                                      fontSize={{ base: 'xs', md: 'sm' }}
+                                      fontWeight="semibold"
+                                      textAlign="center"
+                                    >
+                                      {eventType.label}
+                                    </Text>
+                                    <Text
+                                      fontSize="xs"
+                                      opacity={activeEventType === eventType.id ? 0.9 : 0.7}
+                                      textAlign="center"
+                                      lineHeight="1.2"
+                                      noOfLines={2}
+                                      display={{ base: 'none', md: 'block' }}
+                                    >
+                                      {eventType.description}
+                                    </Text>
+                                  </VStack>
+                                </Box>
+                              ))}
+                            </Grid>
+                          </SectionBox>
 
+                          {/* Event Timing & Traceability Section */}
+                          <SectionBox>
+                            <SectionHeader
+                              icon={FaCalendarAlt}
+                              iconColor="blue.500"
+                              title="Event Timing & Traceability"
+                              badge="USDA GAP"
+                              badgeColorScheme="blue"
+                              description="When did this activity occur and who performed it?"
+                            />
+                            <VStack spacing={4} align="stretch">
                               {/* Date Selection */}
                               <StandardField
                                 label={
@@ -1722,230 +1684,274 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   'Event Date & Time'
                                 }
                                 required
-                                error={basicMethods.formState.errors.date?.message}>
+                                helpText="Select the exact date and time when this activity was performed"
+                                error={basicMethods.formState.errors.date?.message}
+                              >
                                 <StandardInput
                                   type="datetime-local"
                                   {...basicMethods.register('date')}
                                 />
                               </StandardField>
 
-                              {/* Action Buttons */}
-                              <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                                <HStack justify="flex-end">
-                                  <StandardButton
-                                    variant="primary"
-                                    type="submit"
-                                    rightIcon={<FaChevronRight />}
-                                    size="lg">
-                                    {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                                  </StandardButton>
-                                </HStack>
-                              </Box>
+                              {/* Sprint 1 Epic 1.4: USDA GAP Traceability - Who performed this activity */}
+                              <StandardField
+                                label="Performed By"
+                                helpText="Name of person who performed this agricultural activity (USDA GAP traceability)"
+                                required={activeEventType !== 0}
+                                error={basicMethods.formState.errors.performed_by?.message}
+                              >
+                                <StandardInput
+                                  placeholder={
+                                    activeEventType === 0
+                                      ? 'Optional for weather observations'
+                                      : 'Enter operator/worker name'
+                                  }
+                                  {...basicMethods.register('performed_by')}
+                                />
+                              </StandardField>
                             </VStack>
-                          </form>
-                        </FormProvider>
-                      </CardBody>
-                    </Card>
-                  )}
+                          </SectionBox>
 
-                  {activeStep === 1 && (
-                    <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                      <CardHeader pb={2}>
-                        <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                          {intl.formatMessage({ id: 'app.eventDetails' }) || 'Event Details'}
-                        </Text>
-                      </CardHeader>
-                      <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
-                        {activeEventType === 0 && (
-                          <WeatherTab
-                            onSubmitHandler={onSubmitMainInfo}
-                            onDataChange={onDataChange}
-                            onPrev={goToPreviousStep}
-                            initialValues={eventFormData}
-                            cropType={cropType}
-                            hideActions={true}
-                          />
-                        )}
-                        {activeEventType === 1 && (
-                          <ProductionTab
-                            onSubmitHandler={onSubmitMainInfo}
-                            onDataChange={onDataChange}
-                            onPrev={goToPreviousStep}
-                            initialValues={eventFormData}
-                            cropType={cropType}
-                            hideActions={true}
-                          />
-                        )}
-                        {activeEventType === 2 && (
-                          <ChemicalTab
-                            onSubmitHandler={onSubmitMainInfo}
-                            onDataChange={onDataChange}
-                            onPrev={goToPreviousStep}
-                            initialValues={eventFormData}
-                            cropType={cropType}
-                            hideActions={true}
-                          />
-                        )}
-                        {activeEventType === 3 && (
-                          <GeneralTab
-                            onSubmitHandler={onSubmitMainInfo}
-                            onDataChange={onDataChange}
-                            onPrev={goToPreviousStep}
-                            initialValues={eventFormData}
-                            cropType={cropType}
-                            hideActions={true}
-                          />
-                        )}
-                        {activeEventType === 4 && (
-                          <EquipmentTab
-                            onSubmitHandler={onSubmitMainInfo}
-                            onDataChange={onDataChange}
-                            onPrev={goToPreviousStep}
-                            initialValues={eventFormData}
-                            cropType={cropType}
-                            hideActions={true}
-                          />
-                        )}
-                        {activeEventType === 5 && (
-                          <SoilManagementTab
-                            onSubmitHandler={onSubmitMainInfo}
-                            onDataChange={onDataChange}
-                            onPrev={goToPreviousStep}
-                            initialValues={eventFormData}
-                            cropType={cropType}
-                            hideActions={true}
-                          />
-                        )}
-                        {activeEventType === 6 && (
-                          <PestManagementTab
-                            onSubmitHandler={onSubmitMainInfo}
-                            onDataChange={onDataChange}
-                            onPrev={goToPreviousStep}
-                            initialValues={eventFormData}
-                            cropType={cropType}
-                            hideActions={true}
-                          />
-                        )}
-                        {activeEventType === 7 && (
-                          <BusinessTab
-                            onSubmitHandler={onSubmitMainInfo}
-                            onDataChange={onDataChange}
-                            onPrev={goToPreviousStep}
-                            initialValues={eventFormData}
-                            cropType={cropType}
-                            hideActions={true}
-                          />
-                        )}
-
-                        {/* Preview button integrated with navigation */}
-                        <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                          <HStack justify="space-between">
-                            <StandardButton
-                              variant="outline"
-                              onClick={goToPreviousStep}
-                              leftIcon={<FaChevronLeft />}
-                              size="lg">
-                              {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-                            </StandardButton>
-                            <HStack spacing={3}>
-                              <StandardButton
-                                variant="outline"
-                                colorScheme="blue"
-                                onClick={handleOpenPreview}
-                                leftIcon={<FaEye />}
-                                size="lg">
-                                Preview Event
-                              </StandardButton>
+                          {/* Action Buttons */}
+                          <Box pt={4}>
+                            <HStack justify="flex-end">
                               <StandardButton
                                 variant="primary"
-                                onClick={() => setActiveStep(2)}
+                                type="submit"
                                 rightIcon={<FaChevronRight />}
-                                size="lg">
+                                size="lg"
+                              >
                                 {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                               </StandardButton>
                             </HStack>
-                          </HStack>
-                        </Box>
-                      </CardBody>
-                    </Card>
-                  )}
-
-                  {activeStep === 2 && (
-                    <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                      <CardHeader pb={2}>
-                        <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                          {intl.formatMessage({ id: 'app.mediaAndDocumentation' }) ||
-                            'Media & Documentation'}
-                        </Text>
-                      </CardHeader>
-                      <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
-                        <VStack spacing={{ base: 5, md: 6 }} align="stretch">
-                          <StandardField
-                            label={intl.formatMessage({ id: 'app.eventPhotos' }) || 'Event Photos'}
-                            helpText="Upload photos documenting this agricultural event">
-                            <TrazoImageUpload
-                              maxFiles={5}
-                              maxSize={10 * 1024 * 1024} // 10MB
-                              existingImages={acceptedFiles.map((f) => f.url).filter(Boolean)}
-                              onImagesChange={(urls) => {
-                                const newAcceptedFiles = urls.map((url) => ({ url }));
-                                setAcceptedFiles(newAcceptedFiles);
-                                // Also update eventFormData to persist photos across steps
-                                setEventFormData((prevData) => ({
-                                  ...prevData,
-                                  acceptedFiles: newAcceptedFiles
-                                }));
-                              }}
-                            />
-                          </StandardField>
-
-                          <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
-                            <HStack justify="space-between">
-                              <StandardButton
-                                variant="outline"
-                                onClick={goToPreviousStep}
-                                leftIcon={<FaChevronLeft />}
-                                size="lg">
-                                {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-                              </StandardButton>
-                              <HStack spacing={3}>
-                                <StandardButton
-                                  variant="outline"
-                                  colorScheme="blue"
-                                  onClick={handleOpenPreview}
-                                  leftIcon={<FaEye />}
-                                  size="lg">
-                                  Preview Event
-                                </StandardButton>
-                                <StandardButton
-                                  variant="primary"
-                                  onClick={onSubmitMedia}
-                                  isLoading={isEdit ? isUpdatingEvent : isCreatingEvent}
-                                  loadingText={
-                                    isEdit
-                                      ? intl.formatMessage({ id: 'app.updating' }) || 'Updating...'
-                                      : intl.formatMessage({ id: 'app.creating' }) || 'Creating...'
-                                  }
-                                  rightIcon={<FaCheckCircle />}
-                                  size="lg">
-                                  {isEdit
-                                    ? intl.formatMessage({ id: 'app.updateEvent' }) ||
-                                      'Update Event'
-                                    : intl.formatMessage({ id: 'app.createEvent' }) ||
-                                      'Create Event'}
-                                </StandardButton>
-                              </HStack>
-                            </HStack>
                           </Box>
                         </VStack>
-                      </CardBody>
-                    </Card>
-                  )}
-                </Box>
-              </Flex>
-            </VStack>
-          </Box>
-        </>
+                      </form>
+                    </FormProvider>
+                  </CardBody>
+                </Card>
+              )}
+
+              {activeStep === 1 && (
+                <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
+                  <CardHeader pb={2}>
+                    <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+                      {intl.formatMessage({ id: 'app.eventDetails' }) || 'Event Details'}
+                    </Text>
+                  </CardHeader>
+                  <CardBody pt={4} pb={6} px={{ base: 3, md: 6 }}>
+                    {activeEventType === 0 && (
+                      <WeatherTab
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        cropType={cropType}
+                        hideActions={true}
+                      />
+                    )}
+                    {activeEventType === 1 && (
+                      <ProductionTab
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        cropType={cropType}
+                        hideActions={true}
+                      />
+                    )}
+                    {activeEventType === 2 && (
+                      <ChemicalTab
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        cropType={cropType}
+                        hideActions={true}
+                      />
+                    )}
+                    {activeEventType === 3 && (
+                      <GeneralTab
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        cropType={cropType}
+                        hideActions={true}
+                      />
+                    )}
+                    {/* Sprint 2 Epic 2.1: Equipment (activeEventType === 4) REMOVED - merged into Production */}
+                    {activeEventType === 5 && (
+                      <SoilManagementTab
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        cropType={cropType}
+                        hideActions={true}
+                      />
+                    )}
+                    {activeEventType === 6 && (
+                      <PestManagementTab
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        cropType={cropType}
+                        hideActions={true}
+                      />
+                    )}
+                    {activeEventType === 7 && (
+                      <BusinessTab
+                        onSubmitHandler={onSubmitMainInfo}
+                        onDataChange={onDataChange}
+                        onPrev={goToPreviousStep}
+                        initialValues={eventFormData}
+                        cropType={cropType}
+                        hideActions={true}
+                      />
+                    )}
+
+                    {/* Preview button integrated with navigation */}
+                    <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
+                      <Flex
+                        direction={{ base: 'column', md: 'row' }}
+                        justify="space-between"
+                        align={{ base: 'stretch', md: 'center' }}
+                        gap={3}
+                      >
+                        <StandardButton
+                          variant="outline"
+                          onClick={goToPreviousStep}
+                          leftIcon={<FaChevronLeft />}
+                          size={{ base: 'md', md: 'lg' }}
+                          order={{ base: 3, md: 1 }}
+                          w={{ base: '100%', md: 'auto' }}
+                        >
+                          {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                        </StandardButton>
+                        <Flex
+                          direction={{ base: 'row', md: 'row' }}
+                          gap={3}
+                          order={{ base: 1, md: 2 }}
+                          w={{ base: '100%', md: 'auto' }}
+                        >
+                          <StandardButton
+                            variant="primary"
+                            onClick={() => setActiveStep(2)}
+                            rightIcon={<FaChevronRight />}
+                            size={{ base: 'md', md: 'lg' }}
+                            flex={{ base: 1, md: 'none' }}
+                          >
+                            {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                          </StandardButton>
+                          <StandardButton
+                            variant="outline"
+                            colorScheme="blue"
+                            onClick={handleOpenPreview}
+                            leftIcon={<FaEye />}
+                            size={{ base: 'md', md: 'lg' }}
+                            flex={{ base: 1, md: 'none' }}
+                          >
+                            Preview
+                          </StandardButton>
+                        </Flex>
+                      </Flex>
+                    </Box>
+                  </CardBody>
+                </Card>
+              )}
+
+              {activeStep === 2 && (
+                <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
+                  <CardHeader pb={2}>
+                    <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+                      {intl.formatMessage({ id: 'app.mediaAndDocumentation' }) ||
+                        'Media & Documentation'}
+                    </Text>
+                  </CardHeader>
+                  <CardBody pt={4} pb={6} px={{ base: 3, md: 6 }}>
+                    <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+                      <StandardField
+                        label={intl.formatMessage({ id: 'app.eventPhotos' }) || 'Event Photos'}
+                        helpText="Upload photos documenting this agricultural event"
+                      >
+                        <TrazoImageUpload
+                          maxFiles={5}
+                          maxSize={10 * 1024 * 1024} // 10MB
+                          existingImages={acceptedFiles.map((f) => f.url).filter(Boolean)}
+                          onImagesChange={(urls) => {
+                            const newAcceptedFiles = urls.map((url) => ({ url }));
+                            setAcceptedFiles(newAcceptedFiles);
+                            // Also update eventFormData to persist photos across steps
+                            setEventFormData((prevData) => ({
+                              ...prevData,
+                              acceptedFiles: newAcceptedFiles
+                            }));
+                          }}
+                        />
+                      </StandardField>
+
+                      <Box pt={6} mt={4} borderTop="1px" borderColor={borderColor}>
+                        <Flex
+                          direction={{ base: 'column', md: 'row' }}
+                          justify="space-between"
+                          align={{ base: 'stretch', md: 'center' }}
+                          gap={3}
+                        >
+                          <StandardButton
+                            variant="outline"
+                            onClick={goToPreviousStep}
+                            leftIcon={<FaChevronLeft />}
+                            size={{ base: 'md', md: 'lg' }}
+                            order={{ base: 3, md: 1 }}
+                            w={{ base: '100%', md: 'auto' }}
+                          >
+                            {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                          </StandardButton>
+                          <Flex
+                            direction={{ base: 'row', md: 'row' }}
+                            gap={3}
+                            order={{ base: 1, md: 2 }}
+                            w={{ base: '100%', md: 'auto' }}
+                          >
+                            <StandardButton
+                              variant="primary"
+                              onClick={onSubmitMedia}
+                              isLoading={isEdit ? isUpdatingEvent : isCreatingEvent}
+                              loadingText={
+                                isEdit
+                                  ? intl.formatMessage({ id: 'app.updating' }) || 'Updating...'
+                                  : intl.formatMessage({ id: 'app.creating' }) || 'Creating...'
+                              }
+                              rightIcon={<FaCheckCircle />}
+                              size={{ base: 'md', md: 'lg' }}
+                              flex={{ base: 1, md: 'none' }}
+                            >
+                              {isEdit
+                                ? intl.formatMessage({ id: 'app.updateEvent' }) || 'Update'
+                                : intl.formatMessage({ id: 'app.createEvent' }) || 'Create'}
+                            </StandardButton>
+                            <StandardButton
+                              variant="outline"
+                              colorScheme="blue"
+                              onClick={handleOpenPreview}
+                              leftIcon={<FaEye />}
+                              size={{ base: 'md', md: 'lg' }}
+                              flex={{ base: 1, md: 'none' }}
+                            >
+                              Preview
+                            </StandardButton>
+                          </Flex>
+                        </Flex>
+                      </Box>
+                    </VStack>
+                  </CardBody>
+                </Card>
+              )}
+            </Box>
+          </Flex>
+        </VStack>
       )}
 
       {/* Event Preview Modal */}
@@ -1955,7 +1961,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         activeEventType={activeEventType}
         formData={getCompleteFormDataForPreview()}
       />
-    </Box>
+    </StandardPage>
   );
 }
 

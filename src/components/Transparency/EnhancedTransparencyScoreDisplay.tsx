@@ -16,14 +16,7 @@ import {
   Flex
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import {
-  FaShieldAlt,
-  FaCheckCircle,
-  FaEye,
-  FaCertificate,
-  FaLeaf,
-  FaRegGem
-} from 'react-icons/fa';
+import { FaShieldAlt, FaCheckCircle, FaEye, FaCertificate, FaLeaf, FaRegGem } from 'react-icons/fa';
 import { BsShieldCheck } from 'react-icons/bs';
 import { MdVerified } from 'react-icons/md';
 
@@ -71,12 +64,23 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
 
   // Transparency grade calculation following Trazo patterns
   const getTransparencyGrade = (score: number) => {
-    if (score >= 95) return { grade: 'A+', text: 'Maximum Transparency', color: 'green', bgColor: 'green.500' };
-    if (score >= 90) return { grade: 'A', text: 'Outstanding Transparency', color: 'green', bgColor: 'green.500' };
-    if (score >= 85) return { grade: 'A-', text: 'Excellent Transparency', color: 'green', bgColor: 'green.400' };
-    if (score >= 80) return { grade: 'B+', text: 'Very Good Transparency', color: 'blue', bgColor: 'blue.500' };
-    if (score >= 70) return { grade: 'B', text: 'Good Transparency', color: 'blue', bgColor: 'blue.400' };
-    if (score >= 60) return { grade: 'C+', text: 'Satisfactory Transparency', color: 'yellow', bgColor: 'yellow.500' };
+    if (score >= 95)
+      return { grade: 'A+', text: 'Maximum Transparency', color: 'green', bgColor: 'green.500' };
+    if (score >= 90)
+      return { grade: 'A', text: 'Outstanding Transparency', color: 'green', bgColor: 'green.500' };
+    if (score >= 85)
+      return { grade: 'A-', text: 'Excellent Transparency', color: 'green', bgColor: 'green.400' };
+    if (score >= 80)
+      return { grade: 'B+', text: 'Very Good Transparency', color: 'blue', bgColor: 'blue.500' };
+    if (score >= 70)
+      return { grade: 'B', text: 'Good Transparency', color: 'blue', bgColor: 'blue.400' };
+    if (score >= 60)
+      return {
+        grade: 'C+',
+        text: 'Satisfactory Transparency',
+        color: 'yellow',
+        bgColor: 'yellow.500'
+      };
     return { grade: 'C', text: 'Building Transparency', color: 'orange', bgColor: 'orange.500' };
   };
 
@@ -122,7 +126,8 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
         bg={`${grade.color}.50`}
         borderColor={`${grade.color}.200`}
         borderWidth="2px"
-        borderRadius="xl">
+        borderRadius="xl"
+      >
         <CardBody p={cardSpacing}>
           <VStack spacing={6}>
             {/* Score Circle and Grade */}
@@ -135,24 +140,27 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                   borderWidth="6px"
                   borderColor={grade.bgColor}
                   boxShadow="xl"
-                  position="relative">
+                  position="relative"
+                >
                   <VStack spacing={1}>
                     <Text
                       fontSize={{ base: '2xl', md: '3xl' }}
                       fontWeight="black"
                       color={grade.bgColor}
-                      lineHeight="1">
+                      lineHeight="1"
+                    >
                       {Math.round(overallScore)}
                     </Text>
                     <Text
                       fontSize={{ base: 'xs', md: 'sm' }}
                       fontWeight="bold"
                       color={textColor}
-                      lineHeight="1">
+                      lineHeight="1"
+                    >
                       Transparency
                     </Text>
                   </VStack>
-                  
+
                   {/* Grade Badge */}
                   <Badge
                     position="absolute"
@@ -164,7 +172,8 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                     py={1}
                     borderRadius="full"
                     fontSize="xs"
-                    fontWeight="bold">
+                    fontWeight="bold"
+                  >
                     {grade.grade}
                   </Badge>
                 </Circle>
@@ -177,7 +186,9 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                   right="0"
                   bottom="0"
                   borderRadius="full"
-                  background={`conic-gradient(${grade.bgColor} 0deg, ${grade.bgColor} ${(overallScore / 100) * 360}deg, transparent ${(overallScore / 100) * 360}deg)`}
+                  background={`conic-gradient(${grade.bgColor} 0deg, ${grade.bgColor} ${
+                    (overallScore / 100) * 360
+                  }deg, transparent ${(overallScore / 100) * 360}deg)`}
                   opacity={0.1}
                   animation="spin 2s linear"
                 />
@@ -193,14 +204,15 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                     py={2}
                     borderRadius="full"
                     border="1px"
-                    borderColor="blue.200">
+                    borderColor="blue.200"
+                  >
                     <Icon as={MdVerified} color="blue.500" boxSize={4} />
                     <Text fontSize="sm" fontWeight="medium" color="blue.700">
                       USDA Verified
                     </Text>
                   </HStack>
                 )}
-                
+
                 {isBlockchainVerified && (
                   <HStack
                     spacing={2}
@@ -209,14 +221,15 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                     py={2}
                     borderRadius="full"
                     border="1px"
-                    borderColor="green.200">
+                    borderColor="green.200"
+                  >
                     <Icon as={BsShieldCheck} color="green.500" boxSize={4} />
                     <Text fontSize="sm" fontWeight="medium" color="green.700">
                       Blockchain Verified
                     </Text>
                   </HStack>
                 )}
-                
+
                 {!isUSDAVerified && !isBlockchainVerified && (
                   <HStack
                     spacing={2}
@@ -225,7 +238,8 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                     py={2}
                     borderRadius="full"
                     border="1px"
-                    borderColor="gray.200">
+                    borderColor="gray.200"
+                  >
                     <Icon as={FaEye} color="gray.500" boxSize={4} />
                     <Text fontSize="sm" fontWeight="medium" color="gray.600">
                       Basic Documentation
@@ -237,7 +251,11 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
 
             {/* Consumer Message */}
             <VStack spacing={3} textAlign="center" maxW="lg">
-              <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color={`${grade.color}.600`}>
+              <Text
+                fontSize={{ base: 'lg', md: 'xl' }}
+                fontWeight="bold"
+                color={`${grade.color}.600`}
+              >
                 {message.primary}
               </Text>
               <Text fontSize={{ base: 'md', md: 'lg' }} color={textColor} fontWeight="medium">
@@ -277,7 +295,8 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
           bg={bg}
-          borderRadius="xl">
+          borderRadius="xl"
+        >
           <CardBody p={cardSpacing}>
             <VStack spacing={4} align="stretch">
               <HStack justify="space-between" align="center">
@@ -300,7 +319,8 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                     key={item.category}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}>
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
                     <Card
                       bg={cardBg}
                       borderWidth="1px"
@@ -311,14 +331,19 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                         transform: 'translateY(-2px)',
                         shadow: 'md'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       <CardBody p={4}>
                         <VStack spacing={3} align="stretch">
                           {/* Category Header */}
                           <HStack justify="space-between" align="start">
                             <HStack spacing={3}>
                               <Circle size="35px" bg={`${item.color}.100`}>
-                                <Icon as={item.icon} color={`${item.color}.500`} boxSize={iconSize} />
+                                <Icon
+                                  as={item.icon}
+                                  color={`${item.color}.500`}
+                                  boxSize={iconSize}
+                                />
                               </Circle>
                               <VStack align="start" spacing={0}>
                                 <Text fontSize="sm" fontWeight="bold" color={textColor}>
@@ -329,7 +354,7 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                                 </Text>
                               </VStack>
                             </HStack>
-                            
+
                             {item.isVerified && (
                               <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
                             )}
@@ -374,7 +399,8 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
         borderRadius="xl"
         border="1px"
         borderColor={`${grade.color}.200`}
-        textAlign="center">
+        textAlign="center"
+      >
         <VStack spacing={4}>
           <Icon as={FaShieldAlt} color={`${grade.color}.500`} boxSize={8} />
           <VStack spacing={2}>
@@ -382,12 +408,14 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
               Why Transparency Matters
             </Text>
             <Text fontSize="sm" color={`${grade.color}.600`} maxW="lg">
-              Transparency scores help you choose products from farms that openly share their practices. 
-              Higher scores mean more complete documentation and verification of sustainable farming methods.
+              Transparency scores help you choose products from farms that openly share their
+              practices. Higher scores mean more complete documentation and verification of
+              sustainable farming methods.
             </Text>
           </VStack>
           <Text fontSize="xs" color={mutedColor} fontStyle="italic">
-            💡 Supporting transparent farms encourages honest, sustainable practices across agriculture
+            💡 Supporting transparent farms encourages honest, sustainable practices across
+            agriculture
           </Text>
         </VStack>
       </MotionBox>

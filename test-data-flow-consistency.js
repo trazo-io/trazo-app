@@ -2,7 +2,7 @@
 
 /**
  * Data Flow Consistency Test
- * 
+ *
  * This test verifies that the form→standard→backend data flow produces
  * consistent results and that the standardization layer works correctly
  * across all 8 event types.
@@ -10,17 +10,46 @@
 
 // Mock imports for the test
 const mockEventDataNormalizer = {
-  normalizeFormEventData: function(eventType, formData, options = {}) {
+  normalizeFormEventData: function (eventType, formData, options = {}) {
     // Simplified version of the normalization logic for testing
     const fieldMappings = {
-      0: { 'type': 'weather_type', 'observation': 'observation' },
-      1: { 'production_type': 'production_type', 'area_covered': 'area_covered_raw', 'production_efficiency': 'production_efficiency', 'observation': 'observation' },
-      2: { 'chemical_type': 'chemical_type', 'application_method': 'application_method', 'observation': 'observation' },
-      3: { 'activity_type': 'activity_type', 'activity_name': 'activity_name', 'observation': 'observation' },
-      4: { 'operation_type': 'operation_type', 'operation_name': 'operation_name', 'observation': 'observation' },
-      5: { 'soil_management_type': 'soil_management_type', 'soil_management_name': 'soil_management_name', 'observation': 'observation' },
-      6: { 'pest_management_type': 'pest_management_type', 'pest_management_name': 'pest_management_name', 'observation': 'observation' },
-      7: { 'business_event_type': 'business_event_type', 'business_event_name': 'business_event_name', 'observation': 'observation' }
+      0: { type: 'weather_type', observation: 'observation' },
+      1: {
+        production_type: 'production_type',
+        area_covered: 'area_covered_raw',
+        production_efficiency: 'production_efficiency',
+        observation: 'observation'
+      },
+      2: {
+        chemical_type: 'chemical_type',
+        application_method: 'application_method',
+        observation: 'observation'
+      },
+      3: {
+        activity_type: 'activity_type',
+        activity_name: 'activity_name',
+        observation: 'observation'
+      },
+      4: {
+        operation_type: 'operation_type',
+        operation_name: 'operation_name',
+        observation: 'observation'
+      },
+      5: {
+        soil_management_type: 'soil_management_type',
+        soil_management_name: 'soil_management_name',
+        observation: 'observation'
+      },
+      6: {
+        pest_management_type: 'pest_management_type',
+        pest_management_name: 'pest_management_name',
+        observation: 'observation'
+      },
+      7: {
+        business_event_type: 'business_event_type',
+        business_event_name: 'business_event_name',
+        observation: 'observation'
+      }
     };
 
     const mapping = fieldMappings[eventType] || {};
@@ -48,17 +77,45 @@ const mockEventDataNormalizer = {
     return normalized;
   },
 
-  normalizeBackendEventData: function(eventType, backendData, options = {}) {
+  normalizeBackendEventData: function (eventType, backendData, options = {}) {
     // Simplified backend normalization
     const backendMapping = {
-      0: { 'type': 'weather_type', 'observation': 'observation' },
-      1: { 'production_type': 'production_type', 'area_covered': 'area_covered', 'observation': 'observation' },
-      2: { 'chemical_type': 'chemical_type', 'way_of_application': 'application_method', 'observation': 'observation' },
-      3: { 'activity_type': 'activity_type', 'activity_name': 'activity_name', 'observation': 'observation' },
-      4: { 'operation_type': 'operation_type', 'operation_name': 'operation_name', 'observation': 'observation' },
-      5: { 'soil_management_type': 'soil_management_type', 'soil_management_name': 'soil_management_name', 'observation': 'observation' },
-      6: { 'pest_management_type': 'pest_management_type', 'pest_management_name': 'pest_management_name', 'observation': 'observation' },
-      7: { 'business_event_type': 'business_event_type', 'business_event_name': 'business_event_name', 'observation': 'observation' }
+      0: { type: 'weather_type', observation: 'observation' },
+      1: {
+        production_type: 'production_type',
+        area_covered: 'area_covered',
+        observation: 'observation'
+      },
+      2: {
+        chemical_type: 'chemical_type',
+        way_of_application: 'application_method',
+        observation: 'observation'
+      },
+      3: {
+        activity_type: 'activity_type',
+        activity_name: 'activity_name',
+        observation: 'observation'
+      },
+      4: {
+        operation_type: 'operation_type',
+        operation_name: 'operation_name',
+        observation: 'observation'
+      },
+      5: {
+        soil_management_type: 'soil_management_type',
+        soil_management_name: 'soil_management_name',
+        observation: 'observation'
+      },
+      6: {
+        pest_management_type: 'pest_management_type',
+        pest_management_name: 'pest_management_name',
+        observation: 'observation'
+      },
+      7: {
+        business_event_type: 'business_event_type',
+        business_event_name: 'business_event_name',
+        observation: 'observation'
+      }
     };
 
     const mapping = backendMapping[eventType] || {};
@@ -92,7 +149,8 @@ console.log('='.repeat(50));
 
 // Test data for all 8 event types
 const TEST_DATA_SCENARIOS = {
-  0: { // Weather
+  0: {
+    // Weather
     name: 'Weather Event',
     formData: {
       type: 'FR', // Frost
@@ -105,7 +163,8 @@ const TEST_DATA_SCENARIOS = {
       observation: 'Light frost in early morning'
     }
   },
-  1: { // Production
+  1: {
+    // Production
     name: 'Production Event',
     formData: {
       production_type: 'planting',
@@ -119,7 +178,8 @@ const TEST_DATA_SCENARIOS = {
       observation: 'Optimal planting conditions'
     }
   },
-  2: { // Chemical
+  2: {
+    // Chemical
     name: 'Chemical Event',
     formData: {
       chemical_type: 'FE',
@@ -132,7 +192,8 @@ const TEST_DATA_SCENARIOS = {
       observation: 'Fertilizer application'
     }
   },
-  3: { // General
+  3: {
+    // General
     name: 'General Event',
     formData: {
       activity_type: 'maintenance',
@@ -145,7 +206,8 @@ const TEST_DATA_SCENARIOS = {
       observation: 'Regular maintenance'
     }
   },
-  4: { // Equipment
+  4: {
+    // Equipment
     name: 'Equipment Event',
     formData: {
       operation_type: 'cultivation',
@@ -158,7 +220,8 @@ const TEST_DATA_SCENARIOS = {
       observation: 'Tractor operation'
     }
   },
-  5: { // Soil Management
+  5: {
+    // Soil Management
     name: 'Soil Management Event',
     formData: {
       soil_management_type: 'TI',
@@ -171,7 +234,8 @@ const TEST_DATA_SCENARIOS = {
       observation: 'Soil preparation'
     }
   },
-  6: { // Pest Management
+  6: {
+    // Pest Management
     name: 'Pest Management Event',
     formData: {
       pest_management_type: 'SC',
@@ -184,7 +248,8 @@ const TEST_DATA_SCENARIOS = {
       observation: 'Weekly pest check'
     }
   },
-  7: { // Business
+  7: {
+    // Business
     name: 'Business Event',
     formData: {
       business_event_type: 'CE',
@@ -210,44 +275,47 @@ console.log('Testing data flow consistency for all 8 event types...\n');
 for (const [eventType, scenario] of Object.entries(TEST_DATA_SCENARIOS)) {
   const eventTypeNum = parseInt(eventType);
   console.log(`🧪 Event Type ${eventTypeNum} - ${scenario.name}:`);
-  
+
   try {
     // Normalize form data
     const normalizedFormData = mockEventDataNormalizer.normalizeFormEventData(
-      eventTypeNum, 
-      scenario.formData, 
+      eventTypeNum,
+      scenario.formData,
       { generateMockVerification: true }
     );
-    
+
     // Normalize backend data
     const normalizedBackendData = mockEventDataNormalizer.normalizeBackendEventData(
-      eventTypeNum, 
-      scenario.backendData, 
+      eventTypeNum,
+      scenario.backendData,
       { preserveOriginal: false }
     );
-    
+
     totalTests++;
-    
+
     // Compare critical fields that should be the same
-    const criticalFieldsMatch = compareStandardizedData(normalizedFormData, normalizedBackendData, eventTypeNum);
-    
+    const criticalFieldsMatch = compareStandardizedData(
+      normalizedFormData,
+      normalizedBackendData,
+      eventTypeNum
+    );
+
     if (criticalFieldsMatch.success) {
       console.log(`  ✅ Data flow consistent - ${criticalFieldsMatch.matched} fields match`);
       passedTests++;
     } else {
       console.log(`  ❌ Data flow inconsistent:`);
-      criticalFieldsMatch.differences.forEach(diff => {
+      criticalFieldsMatch.differences.forEach((diff) => {
         console.log(`    • ${diff}`);
         issues.push(`Event Type ${eventTypeNum}: ${diff}`);
       });
       failedTests++;
     }
-    
+
     // Show standardized data structure
     console.log(`  📋 Form normalized: {${Object.keys(normalizedFormData).length} fields}`);
     console.log(`  📋 Backend normalized: {${Object.keys(normalizedBackendData).length} fields}`);
     console.log('');
-    
   } catch (error) {
     console.log(`  ❌ Error during normalization: ${error.message}`);
     issues.push(`Event Type ${eventTypeNum}: Normalization error - ${error.message}`);
@@ -260,7 +328,7 @@ for (const [eventType, scenario] of Object.entries(TEST_DATA_SCENARIOS)) {
 function compareStandardizedData(formNormalized, backendNormalized, eventType) {
   const differences = [];
   let matchedFields = 0;
-  
+
   // Define event-type specific critical fields
   const criticalFieldsByType = {
     0: ['weather_type', 'observation'],
@@ -272,22 +340,28 @@ function compareStandardizedData(formNormalized, backendNormalized, eventType) {
     6: ['pest_management_type', 'pest_management_name', 'observation'],
     7: ['business_event_type', 'business_event_name', 'observation']
   };
-  
+
   const criticalFields = criticalFieldsByType[eventType] || ['observation'];
-  
+
   // Check if critical fields match
   for (const field of criticalFields) {
     if (formNormalized[field] !== undefined && backendNormalized[field] !== undefined) {
       if (formNormalized[field] === backendNormalized[field]) {
         matchedFields++;
       } else {
-        differences.push(`${field}: form="${formNormalized[field]}" vs backend="${backendNormalized[field]}"`);
+        differences.push(
+          `${field}: form="${formNormalized[field]}" vs backend="${backendNormalized[field]}"`
+        );
       }
     } else if (formNormalized[field] !== backendNormalized[field]) {
-      differences.push(`${field}: form="${formNormalized[field] || 'undefined'}" vs backend="${backendNormalized[field] || 'undefined'}"`);
+      differences.push(
+        `${field}: form="${formNormalized[field] || 'undefined'}" vs backend="${
+          backendNormalized[field] || 'undefined'
+        }"`
+      );
     }
   }
-  
+
   // Check basic structure
   const requiredFields = ['id', 'type', 'date', 'event_type'];
   for (const field of requiredFields) {
@@ -295,7 +369,7 @@ function compareStandardizedData(formNormalized, backendNormalized, eventType) {
       differences.push(`Missing required field: ${field}`);
     }
   }
-  
+
   return {
     success: differences.length === 0,
     differences,
@@ -314,7 +388,7 @@ console.log(`Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%\n`)
 if (issues.length > 0) {
   console.log('🚨 DATA FLOW ISSUES FOUND:');
   console.log('-'.repeat(25));
-  issues.forEach(issue => console.log(`❌ ${issue}`));
+  issues.forEach((issue) => console.log(`❌ ${issue}`));
   console.log('');
 }
 
@@ -322,14 +396,27 @@ if (issues.length > 0) {
 console.log('🔍 CRITICAL FIELD MAPPINGS TEST:');
 console.log('-'.repeat(35));
 
-const chemicalFormData = { chemical_type: 'PE', application_method: 'foliar_spray', observation: 'Test' };
-const chemicalBackendData = { chemical_type: 'PE', way_of_application: 'foliar_spray', observation: 'Test' };
+const chemicalFormData = {
+  chemical_type: 'PE',
+  application_method: 'foliar_spray',
+  observation: 'Test'
+};
+const chemicalBackendData = {
+  chemical_type: 'PE',
+  way_of_application: 'foliar_spray',
+  observation: 'Test'
+};
 
 const chemicalFormNorm = mockEventDataNormalizer.normalizeFormEventData(2, chemicalFormData);
-const chemicalBackendNorm = mockEventDataNormalizer.normalizeBackendEventData(2, chemicalBackendData);
+const chemicalBackendNorm = mockEventDataNormalizer.normalizeBackendEventData(
+  2,
+  chemicalBackendData
+);
 
 console.log(`Form 'application_method': ${chemicalFormNorm.application_method}`);
-console.log(`Backend 'way_of_application' → 'application_method': ${chemicalBackendNorm.application_method}`);
+console.log(
+  `Backend 'way_of_application' → 'application_method': ${chemicalBackendNorm.application_method}`
+);
 
 if (chemicalFormNorm.application_method === chemicalBackendNorm.application_method) {
   console.log('✅ Critical field mapping works correctly!');

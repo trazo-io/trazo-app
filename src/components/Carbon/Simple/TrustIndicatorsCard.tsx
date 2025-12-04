@@ -8,7 +8,7 @@ import {
   Icon,
   Progress,
   SimpleGrid,
-  useColorModeValue,
+  useColorModeValue
 } from '@chakra-ui/react';
 import { FaUniversity, FaTrophy, FaEye } from 'react-icons/fa';
 import { BsShieldCheck } from 'react-icons/bs';
@@ -25,7 +25,7 @@ interface TrustIndicatorsCardProps {
 export const TrustIndicatorsCard: React.FC<TrustIndicatorsCardProps> = ({
   usda,
   blockchain,
-  ranking = "Top 25% sustainability",
+  ranking = 'Top 25% sustainability',
   transparencyScore = 0,
   industryPercentile = 0,
   isLoading = false
@@ -57,14 +57,7 @@ export const TrustIndicatorsCard: React.FC<TrustIndicatorsCardProps> = ({
 
   if (isLoading) {
     return (
-      <Box
-        bg={bg}
-        p={6}
-        borderRadius="xl"
-        border="1px"
-        borderColor="gray.200"
-        boxShadow="sm"
-      >
+      <Box bg={bg} p={6} borderRadius="xl" border="1px" borderColor="gray.200" boxShadow="sm">
         <Text fontSize="sm" color={mutedColor}>
           Loading trust indicators...
         </Text>
@@ -92,7 +85,7 @@ export const TrustIndicatorsCard: React.FC<TrustIndicatorsCardProps> = ({
               Independent verification status
             </Text>
           </VStack>
-          
+
           <Badge colorScheme={trustLevel.color} variant="solid">
             {trustLevel.level} Trust
           </Badge>
@@ -108,8 +101,8 @@ export const TrustIndicatorsCard: React.FC<TrustIndicatorsCardProps> = ({
               {trustScore}/100
             </Text>
           </HStack>
-          <Progress 
-            value={trustScore} 
+          <Progress
+            value={trustScore}
             colorScheme={trustLevel.color}
             size="sm"
             borderRadius="full"
@@ -127,16 +120,12 @@ export const TrustIndicatorsCard: React.FC<TrustIndicatorsCardProps> = ({
             borderColor={usda ? 'blue.200' : 'gray.200'}
             spacing={2}
           >
-            <Icon
-              as={FaUniversity}
-              color={usda ? 'blue.500' : 'gray.400'}
-              boxSize={5}
-            />
+            <Icon as={FaUniversity} color={usda ? 'blue.500' : 'gray.400'} boxSize={5} />
             <Text fontSize="xs" fontWeight="medium" textAlign="center" color={textColor}>
               USDA Verified
             </Text>
-            <Badge 
-              colorScheme={usda ? 'blue' : 'gray'} 
+            <Badge
+              colorScheme={usda ? 'blue' : 'gray'}
               size="sm"
               variant={usda ? 'solid' : 'outline'}
             >
@@ -153,16 +142,12 @@ export const TrustIndicatorsCard: React.FC<TrustIndicatorsCardProps> = ({
             borderColor={blockchain ? 'green.200' : 'gray.200'}
             spacing={2}
           >
-            <Icon
-              as={BsShieldCheck}
-              color={blockchain ? 'green.500' : 'gray.400'}
-              boxSize={5}
-            />
+            <Icon as={BsShieldCheck} color={blockchain ? 'green.500' : 'gray.400'} boxSize={5} />
             <Text fontSize="xs" fontWeight="medium" textAlign="center" color={textColor}>
               Blockchain
             </Text>
-            <Badge 
-              colorScheme={blockchain ? 'green' : 'gray'} 
+            <Badge
+              colorScheme={blockchain ? 'green' : 'gray'}
               size="sm"
               variant={blockchain ? 'solid' : 'outline'}
             >

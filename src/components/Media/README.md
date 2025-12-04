@@ -29,7 +29,7 @@ import { S3Image } from 'components/Design';
   src="https://staging-trazo-media-013640213707.s3.amazonaws.com/media/establishments/image.png"
   alt="Establishment image"
   boxSize="200px"
-/>
+/>;
 ```
 
 ### Establishment Image (Your Use Case)
@@ -48,7 +48,9 @@ const EstablishmentCard = ({ establishment }) => (
       showErrorMessage={true}
       fallbackSrc="/images/establishment-placeholder.jpg"
     />
-    <Text mt={2} fontWeight="semibold">{establishment.name}</Text>
+    <Text mt={2} fontWeight="semibold">
+      {establishment.name}
+    </Text>
   </Box>
 );
 ```
@@ -76,20 +78,20 @@ const EstablishmentCard = ({ establishment }) => (
 
 ## Props API
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `src` | `string` | **required** | Image URL (S3 or regular) |
-| `alt` | `string` | **required** | Alt text for accessibility |
-| `fallbackSrc` | `string` | `'/images/placeholder.jpg'` | Fallback image URL |
-| `placeholder` | `React.ReactNode` | `<Skeleton />` | Custom placeholder component |
-| `objectFit` | `'cover' \| 'contain' \| 'fill' \| 'scale-down' \| 'none'` | `'cover'` | How image fits container |
-| `lazy` | `boolean` | `true` | Enable lazy loading |
-| `boxSize` | `string \| number` | `undefined` | Container size |
-| `borderRadius` | `string` | `'md'` | Border radius |
-| `enableFadeIn` | `boolean` | `true` | Enable fade-in animation |
-| `showErrorMessage` | `boolean` | `false` | Show error text vs icon |
-| `onLoad` | `() => void` | `undefined` | Load callback |
-| `onError` | `() => void` | `undefined` | Error callback |
+| Prop               | Type                                                       | Default                     | Description                  |
+| ------------------ | ---------------------------------------------------------- | --------------------------- | ---------------------------- |
+| `src`              | `string`                                                   | **required**                | Image URL (S3 or regular)    |
+| `alt`              | `string`                                                   | **required**                | Alt text for accessibility   |
+| `fallbackSrc`      | `string`                                                   | `'/images/placeholder.jpg'` | Fallback image URL           |
+| `placeholder`      | `React.ReactNode`                                          | `<Skeleton />`              | Custom placeholder component |
+| `objectFit`        | `'cover' \| 'contain' \| 'fill' \| 'scale-down' \| 'none'` | `'cover'`                   | How image fits container     |
+| `lazy`             | `boolean`                                                  | `true`                      | Enable lazy loading          |
+| `boxSize`          | `string \| number`                                         | `undefined`                 | Container size               |
+| `borderRadius`     | `string`                                                   | `'md'`                      | Border radius                |
+| `enableFadeIn`     | `boolean`                                                  | `true`                      | Enable fade-in animation     |
+| `showErrorMessage` | `boolean`                                                  | `false`                     | Show error text vs icon      |
+| `onLoad`           | `() => void`                                               | `undefined`                 | Load callback                |
+| `onError`          | `() => void`                                               | `undefined`                 | Error callback               |
 
 ## How It Works
 
@@ -106,8 +108,8 @@ const EstablishmentCard = ({ establishment }) => (
 
 ```tsx
 // Before (regular Image)
-<Image 
-  src={establishment.image} 
+<Image
+  src={establishment.image}
   alt={establishment.name}
   boxSize="200px"
 />
@@ -130,10 +132,10 @@ import { useS3Image } from 'hooks/useS3Image';
 
 const CustomImage = ({ imageUrl }) => {
   const { displayUrl, isLoading, error } = useS3Image(imageUrl);
-  
+
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error loading image</div>;
-  
+
   return <img src={displayUrl} alt="Custom image" />;
 };
 ```
@@ -154,6 +156,7 @@ const CustomImage = ({ imageUrl }) => {
 ## Common Patterns
 
 ### Image Gallery
+
 ```tsx
 const images = [
   { url: 's3-url-1', title: 'Image 1' },
@@ -162,18 +165,13 @@ const images = [
 
 <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={4}>
   {images.map((image, index) => (
-    <S3Image
-      key={index}
-      src={image.url}
-      alt={image.title}
-      boxSize="200px"
-      borderRadius="md"
-    />
+    <S3Image key={index} src={image.url} alt={image.title} boxSize="200px" borderRadius="md" />
   ))}
-</Grid>
+</Grid>;
 ```
 
 ### Avatar Component
+
 ```tsx
 <S3Image
   src={user.image}
@@ -188,17 +186,20 @@ const images = [
 ## Troubleshooting
 
 ### Images Not Loading
+
 1. Check browser console for errors
 2. Verify S3 bucket permissions
 3. Ensure presigned URL endpoint is working
 4. Check network connectivity
 
 ### Performance Issues
+
 1. Reduce image sizes for better performance
 2. Use appropriate `boxSize` to avoid layout shifts
 3. Consider using `lazy={false}` for above-the-fold images
 
 ### TypeScript Errors
+
 1. Ensure proper imports: `import { S3Image } from 'components/Design'`
 2. Check that `src` and `alt` props are provided
 3. Verify RTK Query setup in store
@@ -206,6 +207,7 @@ const images = [
 ## Support
 
 For issues or questions:
+
 1. Check the console for error messages
 2. Verify your RTK Query store configuration
 3. Ensure the backend presigned URL endpoint is working

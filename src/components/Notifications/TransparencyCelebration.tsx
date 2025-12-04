@@ -35,12 +35,7 @@ import {
   FaGem,
   FaCrown
 } from 'react-icons/fa';
-import {
-  MdVerified,
-  MdEco,
-  MdStars,
-  MdCelebration
-} from 'react-icons/md';
+import { MdVerified, MdEco, MdStars, MdCelebration } from 'react-icons/md';
 import confetti from 'canvas-confetti';
 
 // Celebration animations
@@ -125,7 +120,7 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
   const [showConfetti, setShowConfetti] = useState(false);
   const [animationStage, setAnimationStage] = useState(0);
   const toast = useToast();
-  
+
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
@@ -135,7 +130,7 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
   useEffect(() => {
     if (isOpen && !showConfetti) {
       setShowConfetti(true);
-      
+
       // Main confetti burst
       setTimeout(() => {
         confetti({
@@ -145,7 +140,7 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
           colors: ['#48BB78', '#38A169', '#68D391', '#9AE6B4', '#C6F6D5']
         });
       }, 300);
-      
+
       // Secondary confetti burst for high transparency
       if (celebrationData.transparencyScore >= 90) {
         setTimeout(() => {
@@ -157,16 +152,16 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
           });
         }, 800);
       }
-      
+
       // Progressive animation stages
       const timer = setInterval(() => {
-        setAnimationStage(prev => {
+        setAnimationStage((prev) => {
           if (prev < 3) return prev + 1;
           clearInterval(timer);
           return prev;
         });
       }, 500);
-      
+
       return () => clearInterval(timer);
     }
   }, [isOpen, showConfetti, celebrationData.transparencyScore]);
@@ -227,15 +222,15 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
       // Fallback to clipboard
       navigator.clipboard.writeText(
         `${celebrationLevel.emoji} ${celebrationLevel.title}\n\n` +
-        `Elegí ${celebrationData.productName} de ${celebrationData.farmName} - ${celebrationData.transparencyScore}% transparente.\n\n` +
-        `${celebrationData.consumerMessage}\n\n${window.location.href}`
+          `Elegí ${celebrationData.productName} de ${celebrationData.farmName} - ${celebrationData.transparencyScore}% transparente.\n\n` +
+          `${celebrationData.consumerMessage}\n\n${window.location.href}`
       );
       toast({
-        title: "¡Copiado!",
-        description: "Texto copiado al portapapeles",
-        status: "success",
+        title: '¡Copiado!',
+        description: 'Texto copiado al portapapeles',
+        status: 'success',
         duration: 2000,
-        isClosable: true,
+        isClosable: true
       });
     }
   };
@@ -246,20 +241,15 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
-      size="xl" 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="xl"
       closeOnOverlayClick={false}
       motionPreset="slideInBottom"
     >
       <ModalOverlay bg="blackAlpha.600" />
-      <ModalContent
-        bg={bgColor}
-        borderRadius="2xl"
-        overflow="hidden"
-        position="relative"
-      >
+      <ModalContent bg={bgColor} borderRadius="2xl" overflow="hidden" position="relative">
         {/* Celebration header with gradient */}
         <Box
           bgGradient={celebrationLevel.gradient}
@@ -292,7 +282,7 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
               />
             ))}
           </Box>
-          
+
           <VStack spacing={4} position="relative" zIndex={1}>
             {/* Main celebration icon */}
             <Circle
@@ -305,7 +295,7 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
             >
               <Icon as={celebrationLevel.icon} boxSize={10} />
             </Circle>
-            
+
             {/* Celebration text */}
             <VStack
               spacing={2}
@@ -319,7 +309,7 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
                 {celebrationLevel.subtitle}
               </Text>
             </VStack>
-            
+
             {/* Transparency score display */}
             <Box
               opacity={animationStage >= 3 ? 1 : 0}
@@ -344,7 +334,7 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
               </VStack>
             </Box>
           </VStack>
-          
+
           <ModalCloseButton color="white" />
         </Box>
 
@@ -409,7 +399,12 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
                           <Icon as={achievement.icon} boxSize={5} />
                         </Circle>
                         <VStack spacing={0}>
-                          <Text fontSize="sm" fontWeight="bold" color={textColor} textAlign="center">
+                          <Text
+                            fontSize="sm"
+                            fontWeight="bold"
+                            color={textColor}
+                            textAlign="center"
+                          >
                             {achievement.name}
                           </Text>
                           <Text fontSize="xs" color={mutedColor} textAlign="center">
@@ -424,13 +419,7 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
             )}
 
             {/* Consumer action message */}
-            <Box
-              p={4}
-              bg="blue.50"
-              borderRadius="xl"
-              w="full"
-              textAlign="center"
-            >
+            <Box p={4} bg="blue.50" borderRadius="xl" w="full" textAlign="center">
               <VStack spacing={3}>
                 <Icon as={MdStars} color="blue.500" boxSize={8} />
                 <VStack spacing={1}>
@@ -460,7 +449,7 @@ export const TransparencyCelebration: React.FC<TransparencyCelebrationProps> = (
               >
                 Compartir Mi Elección Transparente
               </Button>
-              
+
               <Button
                 variant="outline"
                 colorScheme="blue"

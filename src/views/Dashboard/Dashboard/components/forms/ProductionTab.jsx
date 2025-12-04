@@ -1,72 +1,164 @@
 // ENHANCED PRODUCTION TAB - CARBON CALCULATION OPTIMIZED
 // Focuses on production data critical for carbon footprint calculations
+// Sprint 2 Epic 2.1: Equipment Maintenance merged as subtype (EQ)
 
 import {
-  Flex,
   HStack,
   Box,
   VStack,
-  Badge,
   Text,
   Icon,
-  InputGroup,
-  InputRightAddon,
   NumberInput,
   NumberInputField,
   NumberInputStepper,
   NumberIncrementStepper,
   NumberDecrementStepper,
-  useColorModeValue
+  useColorModeValue,
+  SimpleGrid
 } from '@chakra-ui/react';
 import {
-  StandardCard,
   StandardButton,
   StandardField,
   StandardInput,
   StandardSelect,
   StandardTextarea,
-  StandardAlert
+  StandardAlert,
+  SectionHeader,
+  SectionBox
 } from 'components/Design/StandardComponents';
-import { FaChevronLeft, FaChevronRight, FaSeedling, FaTractor, FaBalanceScale, FaTruck } from 'react-icons/fa';
+import {
+  FaChevronLeft,
+  FaChevronRight,
+  FaSeedling,
+  FaBalanceScale,
+  FaTruck,
+  FaTools
+} from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import React, { useEffect, useRef } from 'react';
 import { object, string } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
+// Sprint 2 Epic 2.1: Equipment operation types (merged from EquipmentTab)
+const EQUIPMENT_OPERATION_TYPES = [
+  { value: 'FC', label: '⛽ Fuel Consumption - Regular operation' },
+  { value: 'MN', label: '🔧 Maintenance - Routine maintenance' },
+  { value: 'RE', label: '🔩 Repair - Equipment repair' },
+  { value: 'CA', label: '📐 Calibration - Equipment calibration' },
+  { value: 'BD', label: '⚠️ Breakdown - Equipment failure' },
+  { value: 'EI', label: '🔍 Inspection - Equipment inspection' }
+];
+
+// Sprint 2 Epic 2.1: Equipment types (merged from EquipmentTab)
+const EQUIPMENT_TYPES = [
+  { value: 'tractor', label: '🚜 Tractor' },
+  { value: 'harvester', label: '🌾 Harvester/Combine' },
+  { value: 'sprayer', label: '💨 Sprayer' },
+  { value: 'truck', label: '🚛 Truck/Transport' },
+  { value: 'generator', label: '⚡ Generator' },
+  { value: 'pump', label: '💧 Irrigation Pump' },
+  { value: 'other', label: '🔧 Other Equipment' }
+];
+
+// Sprint 2 Epic 2.1: Fuel types with EPA-verified emission factors (merged from EquipmentTab)
+const FUEL_TYPES = [
+  { value: 'diesel', label: '⛽ Diesel', factor: '2.68 kg CO₂e/L' },
+  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.31 kg CO₂e/L' },
+  { value: 'natural_gas', label: '💨 Natural Gas', factor: '2.03 kg CO₂e/m³' },
+  { value: 'lpg', label: '🔥 LPG', factor: '1.70 kg CO₂e/L' },
+  { value: 'electric', label: '⚡ Electric', factor: '0.42 kg CO₂e/kWh' }
+];
+
+// Sprint 2: Production type display names for auto-generated event names
+// Removes farmer burden of manually typing event names (~20 sec saved per event)
+const PRODUCTION_TYPE_NAMES = {
+  PL: 'Planting/Seeding',
+  HA: 'Harvesting',
+  IR: 'Irrigation',
+  PR: 'Pruning/Trimming',
+  TR: 'Transplanting',
+  CU: 'Cultivation',
+  TH: 'Thinning',
+  EQ: 'Equipment Maintenance'
+};
+
 // ENHANCED SCHEMA - Carbon calculation focused with Phase 1.3 validation
+// Sprint 2 Epic 2.1: Added equipment fields, made area_covered optional for EQ type
+// Sprint 2: Event name is now auto-generated from production type (removes farmer burden)
 const formSchemaMainInfo = object({
   type: string().min(1, 'Production type is required'),
-  name: string().min(1, 'Event name is required for transparency documentation'),
-  area_covered: string().min(1, 'Area is required for carbon calculation').refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num > 0;
-  }, 'Area covered must be greater than 0'),
-  area_unit: string().min(1, 'Area unit is required'),
-  yield_quantity: string().optional().refine((val) => {
-    if (!val || val === '') return true;
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0;
-  }, 'Yield quantity cannot be negative'),
+  name: string().optional(), // Auto-generated from production type - no manual input needed
+  // Sprint 2 Epic 2.1: Area is optional for Equipment Maintenance (EQ) type
+  area_covered: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Area covered cannot be negative'),
+  area_unit: string().optional(),
+  yield_quantity: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Yield quantity cannot be negative'),
   yield_unit: string().optional(),
-  fuel_consumed: string().optional(),
+  fuel_consumed: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Fuel consumed cannot be negative'),
   fuel_unit: string().optional(),
-  equipment_hours: string().optional().refine((val) => {
-    if (!val || val === '') return true;
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0;
-  }, 'Equipment hours cannot be negative'),
-  transportation_distance: string().optional().refine((val) => {
-    if (!val || val === '') return true;
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0;
-  }, 'Transportation distance cannot be negative'),
+  // Sprint 2 Epic 2.1: Fuel type for EPA-verified emission factors (merged from Equipment)
+  fuel_type: string().optional(),
+  equipment_hours: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Equipment hours cannot be negative'),
+  // Sprint 2 Epic 2.1: Equipment-specific fields (merged from EquipmentTab)
+  equipment_type: string().optional(),
+  equipment_operation_type: string().optional(),
+  operation_efficiency: string().optional(),
+  transportation_distance: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Transportation distance cannot be negative'),
   transportation_unit: string().optional(),
   production_efficiency: string().optional(),
-  observation: string().optional()
+  observation: string().optional(),
+  // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
+  seeds_source: string().optional(), // Where seeds/seedlings came from
+  water_source: string().optional(), // Water source for irrigation
+  // ENHANCED: USDA NASS 2023 irrigation water estimation fields
+  irrigation_method: string().optional(), // drip, sprinkler, flood, etc.
+  irrigation_depth: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Irrigation depth cannot be negative'),
+  irrigation_depth_unit: string().optional() // inches, cm
 });
 
-const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
+const ProductionTab = ({
+  onSubmitHandler,
+  onDataChange,
+  onPrev,
+  initialValues = {},
+  hideActions = false
+}) => {
   const intl = useIntl();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
@@ -74,41 +166,72 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
     resolver: zodResolver(formSchemaMainInfo),
     defaultValues: {
       type: initialValues.type || 'PL',
-      name: initialValues.name || '',
+      // Sprint 2: Auto-generate name from type - fallback to initial name if provided
+      name: initialValues.name || PRODUCTION_TYPE_NAMES[initialValues.type || 'PL'] || '',
       area_covered: initialValues.area_covered?.toString() || '',
       area_unit: initialValues.area_unit || 'ha',
       yield_quantity: initialValues.yield_quantity?.toString() || '',
       yield_unit: initialValues.yield_unit || 'kg',
       fuel_consumed: initialValues.fuel_consumed?.toString() || '',
       fuel_unit: initialValues.fuel_unit || 'L',
+      // Sprint 2 Epic 2.1: Fuel type for Equipment Maintenance
+      fuel_type: initialValues.fuel_type || '',
       equipment_hours: initialValues.equipment_hours?.toString() || '',
+      // Sprint 2 Epic 2.1: Equipment-specific fields (merged from EquipmentTab)
+      equipment_type: initialValues.equipment_type || '',
+      equipment_operation_type: initialValues.equipment_operation_type || 'FC',
+      operation_efficiency: initialValues.operation_efficiency || 'normal',
       transportation_distance: initialValues.transportation_distance?.toString() || '',
       transportation_unit: initialValues.transportation_unit || 'km',
       production_efficiency: initialValues.production_efficiency || 'normal',
-      observation: initialValues.observation || ''
+      observation: initialValues.observation || '',
+      // Sprint 3 Epic 3.2: Consumer Trust Fields
+      seeds_source: initialValues.seeds_source || '',
+      water_source: initialValues.water_source || '',
+      // ENHANCED: USDA NASS 2023 irrigation water estimation fields
+      irrigation_method: initialValues.irrigation_method || '',
+      irrigation_depth: initialValues.irrigation_depth?.toString() || '',
+      irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches'
     }
   });
 
   // Update form values when initialValues change
   useEffect(() => {
     // Better condition check: ensure we have actual form data, not just an empty object
-    if (initialValues && (Object.keys(initialValues).length > 2 || initialValues.name || initialValues.area_covered)) {
+    if (
+      initialValues &&
+      (Object.keys(initialValues).length > 2 || initialValues.name || initialValues.area_covered)
+    ) {
       const resetData = {
         type: initialValues.type || 'PL',
-        name: initialValues.name || '',
+        // Sprint 2: Auto-generate name from type - fallback to initial name if provided
+        name: initialValues.name || PRODUCTION_TYPE_NAMES[initialValues.type || 'PL'] || '',
         area_covered: initialValues.area_covered?.toString() || '',
         area_unit: initialValues.area_unit || 'ha',
         yield_quantity: initialValues.yield_quantity?.toString() || '',
         yield_unit: initialValues.yield_unit || 'kg',
         fuel_consumed: initialValues.fuel_consumed?.toString() || '',
         fuel_unit: initialValues.fuel_unit || 'L',
+        // Sprint 2 Epic 2.1: Fuel type for Equipment Maintenance
+        fuel_type: initialValues.fuel_type || '',
         equipment_hours: initialValues.equipment_hours?.toString() || '',
+        // Sprint 2 Epic 2.1: Equipment-specific fields (merged from EquipmentTab)
+        equipment_type: initialValues.equipment_type || '',
+        equipment_operation_type: initialValues.equipment_operation_type || 'FC',
+        operation_efficiency: initialValues.operation_efficiency || 'normal',
         transportation_distance: initialValues.transportation_distance?.toString() || '',
         transportation_unit: initialValues.transportation_unit || 'km',
         production_efficiency: initialValues.production_efficiency || 'normal',
-        observation: initialValues.observation || ''
+        observation: initialValues.observation || '',
+        // Sprint 3 Epic 3.2: Consumer Trust Fields
+        seeds_source: initialValues.seeds_source || '',
+        water_source: initialValues.water_source || '',
+        // ENHANCED: USDA NASS 2023 irrigation water estimation fields
+        irrigation_method: initialValues.irrigation_method || '',
+        irrigation_depth: initialValues.irrigation_depth?.toString() || '',
+        irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches'
       };
-      
+
       console.log('🔧 ProductionTab: Resetting form with data:', resetData);
       methods.reset(resetData);
     }
@@ -122,12 +245,20 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
 
   const productionType = watch('type');
 
+  // Sprint 2: Auto-generate event name from production type (removes farmer burden ~20 sec per event)
+  useEffect(() => {
+    if (productionType && PRODUCTION_TYPE_NAMES[productionType]) {
+      const autoGeneratedName = PRODUCTION_TYPE_NAMES[productionType];
+      methods.setValue('name', autoGeneratedName, { shouldDirty: false });
+    }
+  }, [productionType, methods]);
+
   // Production events carbon calculation - LIMITED SCOPE to avoid double-counting
-  // 
+  //
   // CRITICAL ISSUE IDENTIFIED: Production events were double-counting emissions
   // that should be tracked in specialized event types:
   // - Fertilization → Use Chemical Events
-  // - Soil Cultivation → Use Soil Management Events  
+  // - Soil Cultivation → Use Soil Management Events
   // - Weed Management → Use Pest Management Events
   // - Equipment fuel → Use Equipment Events
   //
@@ -135,8 +266,22 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
   // - Yield documentation (no direct emissions)
   // - Harvest transportation (separate from field equipment)
   // - Post-harvest processing (if applicable)
-  
-  const watchedFields = watch(['type', 'name', 'area_covered', 'yield_quantity', 'transportation_distance', 'fuel_consumed', 'equipment_hours', 'observation']);
+
+  // Sprint 2 Epic 2.1: Added equipment-specific fields to watched fields
+  const watchedFields = watch([
+    'type',
+    'name',
+    'area_covered',
+    'yield_quantity',
+    'transportation_distance',
+    'fuel_consumed',
+    'fuel_type',
+    'equipment_type',
+    'equipment_operation_type',
+    'operation_efficiency',
+    'equipment_hours',
+    'observation'
+  ]);
   const previousValuesRef = useRef({});
   const isInitialMountRef = useRef(true);
 
@@ -155,6 +300,11 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
           'yield_unit',
           'fuel_consumed',
           'fuel_unit',
+          // Sprint 2 Epic 2.1: Added equipment-specific fields
+          'fuel_type',
+          'equipment_type',
+          'equipment_operation_type',
+          'operation_efficiency',
           'equipment_hours',
           'transportation_distance',
           'transportation_unit',
@@ -169,15 +319,22 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
         const currentValuesStr = JSON.stringify(currentRelevantValues);
         const hasChanged = previousValuesStr !== currentValuesStr;
 
-        const hasMeaningfulData = 
-          currentValues.type && 
-          currentValues.area_covered && 
-          parseFloat(currentValues.area_covered) > 0;
+        // Sprint 2 Epic 2.1: Equipment Maintenance (EQ) doesn't require area_covered
+        const hasMeaningfulData =
+          currentValues.type &&
+          // For EQ type, require equipment_type and fuel_consumed instead of area
+          ((currentValues.type === 'EQ' &&
+            currentValues.equipment_type &&
+            currentValues.fuel_consumed) ||
+            // For other types, require area_covered
+            (currentValues.type !== 'EQ' &&
+              currentValues.area_covered &&
+              parseFloat(currentValues.area_covered) > 0));
 
         const shouldTrigger = hasMeaningfulData && (hasChanged || isInitialMountRef.current);
 
         if (shouldTrigger) {
-          if (process.env.NODE_ENV === 'development') {
+          if (import.meta.env.MODE === 'development') {
             console.log('[ProductionTab]: ✅ Triggering carbon calculation', {
               type: currentValues.type,
               area_covered: currentValues.area_covered,
@@ -201,13 +358,23 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
 
   const onSubmit = (data) => {
     // Convert string numbers to numbers for backend carbon calculations
+    // Sprint 2 Epic 2.1: Handle Equipment Maintenance (EQ) type with equipment-specific fields
     const processedData = {
       ...data,
-      area_covered: parseFloat(data.area_covered) || 0,
+      area_covered: data.area_covered ? parseFloat(data.area_covered) : undefined,
       yield_quantity: data.yield_quantity ? parseFloat(data.yield_quantity) : undefined,
       fuel_consumed: data.fuel_consumed ? parseFloat(data.fuel_consumed) : undefined,
       equipment_hours: data.equipment_hours ? parseFloat(data.equipment_hours) : undefined,
-      transportation_distance: data.transportation_distance ? parseFloat(data.transportation_distance) : undefined
+      transportation_distance: data.transportation_distance
+        ? parseFloat(data.transportation_distance)
+        : undefined,
+      // Sprint 2 Epic 2.1: Include equipment-specific data when type is EQ
+      ...(data.type === 'EQ' && {
+        equipment_type: data.equipment_type,
+        equipment_operation_type: data.equipment_operation_type,
+        fuel_type: data.fuel_type,
+        operation_efficiency: data.operation_efficiency
+      })
     };
     onSubmitHandler(processedData);
   };
@@ -216,31 +383,31 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
         <VStack spacing={6} align="stretch">
-          
           {/* Transparency Focus Alert */}
           <StandardAlert status="success" title="Agricultural Production Transparency">
             <HStack spacing={2} mb={2}>
               <Icon as={FaSeedling} color="green.500" />
-              <Text fontSize="sm" fontWeight="bold">Yield & Transportation Documentation</Text>
+              <Text fontSize="sm" fontWeight="bold">
+                Yield & Transportation Documentation
+              </Text>
             </HStack>
             <Text fontSize="sm">
-              Document production activities and yields to complete your agricultural transparency story.
-              Transportation emissions from harvest to storage are calculated to avoid double-counting with field equipment.
+              Document production activities and yields to complete your agricultural transparency
+              story. Transportation emissions from harvest to storage are calculated to avoid
+              double-counting with field equipment.
             </Text>
           </StandardAlert>
 
           {/* Basic Production Information */}
-          <StandardCard
-            title={
-              <HStack>
-                <Icon as={FaSeedling} color="green.500" />
-                <Text>Production Activity</Text>
-                <Badge colorScheme="green" size="sm">Carbon Critical</Badge>
-              </HStack>
-            }
-          >
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.500"
+              title="Production Activity"
+              badge="Carbon Critical"
+              badgeColorScheme="green"
+            />
             <VStack spacing={4} align="stretch">
-              
               {/* Production Type - Structured for carbon calculations */}
               <StandardField
                 label="Production Type"
@@ -252,36 +419,34 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                   name="type"
                   control={methods.control}
                   render={({ field }) => (
-                    <StandardSelect
-                      {...field}
-                      placeholder="Select production activity..."
-                    >
+                    <StandardSelect {...field} placeholder="Select production activity...">
                       <option value="PL">🌱 Planting/Seeding - Crop establishment</option>
                       <option value="HA">🚜 Harvesting - Crop collection & transport</option>
                       <option value="IR">💧 Irrigation - Water application</option>
                       <option value="PR">✂️ Pruning/Trimming - Plant maintenance</option>
                       <option value="TR">🌿 Transplanting - Plant relocation</option>
+                      {/* Sprint 2 Epic 2.2: Added CU and TH production types */}
+                      <option value="CU">🌾 Cultivation - Soil cultivation & weed control</option>
+                      <option value="TH">✂️ Thinning - Plant spacing optimization</option>
+                      {/* Sprint 2 Epic 2.1: Equipment Operations merged from Equipment tab */}
+                      <option value="EQ">
+                        🔧 Equipment Operations - Equipment usage & maintenance
+                      </option>
                     </StandardSelect>
                   )}
                 />
               </StandardField>
 
-              {/* Event Name - Required for transparency documentation */}
+              {/* Sprint 2: Event Name - Auto-generated from production type (removes farmer burden) */}
               <StandardField
                 label="Event Name"
-                required
-                error={errors.name?.message}
-                helpText="Descriptive name for this production activity"
+                helpText="Auto-generated from production type - no manual input needed"
               >
-                <Controller
-                  name="name"
-                  control={methods.control}
-                  render={({ field }) => (
-                    <StandardInput
-                      {...field}
-                      placeholder="e.g., Spring avocado planting, Winter harvest - Field A"
-                    />
-                  )}
+                <StandardInput
+                  value={PRODUCTION_TYPE_NAMES[productionType] || 'Select production type...'}
+                  isReadOnly
+                  bg="gray.50"
+                  _dark={{ bg: 'gray.700' }}
                 />
               </StandardField>
 
@@ -298,16 +463,14 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                       name="area_covered"
                       control={methods.control}
                       render={({ field }) => (
-                        <NumberInput 
-                          min={0} 
-                          precision={2} 
+                        <NumberInput
+                          min={0}
+                          precision={2}
                           step={0.01}
                           value={field.value || ''}
                           onChange={(valueString) => field.onChange(valueString)}
                         >
-                          <NumberInputField 
-                            placeholder="0.00"
-                          />
+                          <NumberInputField placeholder="0.00" />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
                             <NumberDecrementStepper />
@@ -319,11 +482,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                 </Box>
 
                 <Box flex={1}>
-                  <StandardField
-                    label="Unit"
-                    required
-                    error={errors.area_unit?.message}
-                  >
+                  <StandardField label="Unit" required error={errors.area_unit?.message}>
                     <Controller
                       name="area_unit"
                       control={methods.control}
@@ -340,25 +499,125 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                 </Box>
               </HStack>
             </VStack>
-          </StandardCard>
+          </SectionBox>
+
+          {/* Sprint 2 Epic 2.1: Equipment Operations Section - Only for EQ type */}
+          {productionType === 'EQ' && (
+            <SectionBox variant="highlighted">
+              <SectionHeader
+                icon={FaTools}
+                iconColor="orange.500"
+                title="Equipment Details"
+                badge="Equipment Operations"
+                badgeColorScheme="orange"
+                description="Specify equipment operation type and equipment used for accurate carbon emission calculations."
+              />
+              <VStack spacing={4} align="stretch">
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <StandardField
+                    label="Operation Type"
+                    required
+                    error={errors.equipment_operation_type?.message}
+                    helpText="What type of equipment operation?"
+                  >
+                    <Controller
+                      name="equipment_operation_type"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardSelect {...field} placeholder="Select operation type...">
+                          {EQUIPMENT_OPERATION_TYPES.map((type) => (
+                            <option key={type.value} value={type.value}>
+                              {type.label}
+                            </option>
+                          ))}
+                        </StandardSelect>
+                      )}
+                    />
+                  </StandardField>
+
+                  <StandardField
+                    label="Equipment Type"
+                    required
+                    error={errors.equipment_type?.message}
+                    helpText="Select the type of equipment used"
+                  >
+                    <Controller
+                      name="equipment_type"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardSelect {...field} placeholder="Select equipment type...">
+                          {EQUIPMENT_TYPES.map((type) => (
+                            <option key={type.value} value={type.value}>
+                              {type.label}
+                            </option>
+                          ))}
+                        </StandardSelect>
+                      )}
+                    />
+                  </StandardField>
+                </SimpleGrid>
+
+                <StandardField
+                  label="Fuel Type"
+                  required
+                  error={errors.fuel_type?.message}
+                  helpText="Fuel type determines EPA emission factors for carbon calculation"
+                >
+                  <Controller
+                    name="fuel_type"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardSelect {...field} placeholder="Select fuel type...">
+                        {FUEL_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label} ({type.factor})
+                          </option>
+                        ))}
+                      </StandardSelect>
+                    )}
+                  />
+                </StandardField>
+
+                <StandardField
+                  label="Operation Efficiency"
+                  error={errors.operation_efficiency?.message}
+                  helpText="Equipment condition and performance rating"
+                >
+                  <Controller
+                    name="operation_efficiency"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardSelect {...field}>
+                        <option value="high">
+                          High Efficiency (well-maintained, optimal conditions)
+                        </option>
+                        <option value="normal">Normal Efficiency (standard operation)</option>
+                        <option value="low">
+                          Low Efficiency (needs maintenance, suboptimal conditions)
+                        </option>
+                      </StandardSelect>
+                    )}
+                  />
+                </StandardField>
+              </VStack>
+            </SectionBox>
+          )}
 
           {/* Yield & Output - For carbon efficiency calculation */}
           {(productionType === 'HA' || productionType === 'PL') && (
-            <StandardCard
-              title={
-                <HStack>
-                  <Icon as={FaBalanceScale} color="blue.500" />
-                  <Text>Yield & Output</Text>
-                  <Badge colorScheme="blue" size="sm">Efficiency Calculation</Badge>
-                </HStack>
-              }
-            >
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaBalanceScale}
+                iconColor="blue.500"
+                title="Yield & Output"
+                badge="Efficiency Calculation"
+                badgeColorScheme="blue"
+              />
               <VStack spacing={4} align="stretch">
-                
                 <HStack spacing={4} align="stretch">
                   <Box flex={2}>
                     <StandardField
-                      label={productionType === 'HA' ? "Quantity Harvested" : "Quantity Planted"}
+                      label={productionType === 'HA' ? 'Quantity Harvested' : 'Quantity Planted'}
                       error={errors.yield_quantity?.message}
                       helpText="Used to calculate carbon efficiency per unit of production"
                     >
@@ -366,16 +625,14 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                         name="yield_quantity"
                         control={methods.control}
                         render={({ field }) => (
-                          <NumberInput 
-                            min={0} 
-                            precision={1} 
+                          <NumberInput
+                            min={0}
+                            precision={1}
                             step={0.1}
                             value={field.value || ''}
                             onChange={(valueString) => field.onChange(valueString)}
                           >
-                            <NumberInputField 
-                              placeholder="0.0"
-                            />
+                            <NumberInputField placeholder="0.0" />
                             <NumberInputStepper>
                               <NumberIncrementStepper />
                               <NumberDecrementStepper />
@@ -387,9 +644,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                   </Box>
 
                   <Box flex={1}>
-                    <StandardField
-                      label="Unit"
-                    >
+                    <StandardField label="Unit">
                       <Controller
                         name="yield_unit"
                         control={methods.control}
@@ -408,28 +663,21 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                   </Box>
                 </HStack>
               </VStack>
-            </StandardCard>
+            </SectionBox>
           )}
 
           {/* Equipment & Fuel Usage */}
-          <Box mb={6} p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaSeedling} mr={2} />
-                Fuel Consumption & Equipment Data
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Enhanced Carbon Accuracy
-              </Badge>
-            </HStack>
-
-            <Text fontSize="sm" color="gray.600" mb={4}>
-              Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. 
-              These details help consumers understand the real operational impact of your production operations.
-            </Text>
+          <SectionBox variant="highlighted">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.600"
+              title="Fuel Consumption & Equipment Data"
+              badge="Enhanced Carbon Accuracy"
+              badgeColorScheme="green"
+              description="Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. These details help consumers understand the real operational impact of your production operations."
+            />
 
             <VStack spacing={4} align="stretch">
-              
               {/* Fuel Consumption */}
               <HStack spacing={4} align="stretch">
                 <Box flex={2}>
@@ -442,16 +690,14 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                       name="fuel_consumed"
                       control={methods.control}
                       render={({ field }) => (
-                        <NumberInput 
-                          min={0} 
-                          precision={1} 
+                        <NumberInput
+                          min={0}
+                          precision={1}
                           step={0.1}
                           value={field.value || ''}
                           onChange={(valueString) => field.onChange(valueString)}
                         >
-                          <NumberInputField 
-                            placeholder="Optional"
-                          />
+                          <NumberInputField placeholder="Optional" />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
                             <NumberDecrementStepper />
@@ -463,9 +709,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                 </Box>
 
                 <Box flex={1}>
-                  <StandardField
-                    label="Unit"
-                  >
+                  <StandardField label="Unit">
                     <Controller
                       name="fuel_unit"
                       control={methods.control}
@@ -491,16 +735,14 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                   name="equipment_hours"
                   control={methods.control}
                   render={({ field }) => (
-                    <NumberInput 
-                      min={0} 
-                      precision={1} 
+                    <NumberInput
+                      min={0}
+                      precision={1}
                       step={0.1}
                       value={field.value || ''}
                       onChange={(valueString) => field.onChange(valueString)}
                     >
-                      <NumberInputField 
-                        placeholder="Optional"
-                      />
+                      <NumberInputField placeholder="Optional" />
                       <NumberInputStepper>
                         <NumberIncrementStepper />
                         <NumberDecrementStepper />
@@ -510,21 +752,19 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                 />
               </StandardField>
             </VStack>
-          </Box>
+          </SectionBox>
 
           {/* Transportation - For logistics emissions */}
           {productionType === 'HA' && (
-            <StandardCard
-              title={
-                <HStack>
-                  <Icon as={FaTruck} color="purple.500" />
-                  <Text>Transportation</Text>
-                  <Badge colorScheme="purple" size="sm">Logistics Emissions</Badge>
-                </HStack>
-              }
-            >
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaTruck}
+                iconColor="purple.500"
+                title="Transportation"
+                badge="Logistics Emissions"
+                badgeColorScheme="purple"
+              />
               <VStack spacing={4} align="stretch">
-                
                 <HStack spacing={4} align="stretch">
                   <Box flex={2}>
                     <StandardField
@@ -536,16 +776,14 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                         name="transportation_distance"
                         control={methods.control}
                         render={({ field }) => (
-                          <NumberInput 
-                            min={0} 
-                            precision={1} 
+                          <NumberInput
+                            min={0}
+                            precision={1}
                             step={0.1}
                             value={field.value || ''}
                             onChange={(valueString) => field.onChange(valueString)}
                           >
-                            <NumberInputField 
-                              placeholder="Optional"
-                            />
+                            <NumberInputField placeholder="Optional" />
                             <NumberInputStepper>
                               <NumberIncrementStepper />
                               <NumberDecrementStepper />
@@ -557,9 +795,7 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                   </Box>
 
                   <Box flex={1}>
-                    <StandardField
-                      label="Unit"
-                    >
+                    <StandardField label="Unit">
                       <Controller
                         name="transportation_unit"
                         control={methods.control}
@@ -586,35 +822,187 @@ const ProductionTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = 
                     control={methods.control}
                     render={({ field }) => (
                       <StandardSelect {...field}>
-                        <option value="high">High Efficiency (optimal conditions, planned operations)</option>
+                        <option value="high">
+                          High Efficiency (optimal conditions, planned operations)
+                        </option>
                         <option value="normal">Normal Efficiency (standard operation)</option>
-                        <option value="low">Low Efficiency (adverse conditions, unplanned operations)</option>
+                        <option value="low">
+                          Low Efficiency (adverse conditions, unplanned operations)
+                        </option>
                       </StandardSelect>
                     )}
                   />
                 </StandardField>
               </VStack>
-            </StandardCard>
+            </SectionBox>
+          )}
+
+          {/* Sprint 3 Epic 3.2: Consumer Trust & Transparency Fields */}
+          {(productionType === 'PL' || productionType === 'TR' || productionType === 'IR') && (
+            <SectionBox variant="highlighted">
+              <SectionHeader
+                icon={FaSeedling}
+                iconColor="teal.500"
+                title="Consumer Trust & Transparency"
+                badge="Builds Consumer Trust"
+                badgeColorScheme="teal"
+                description="Document your sourcing practices to help consumers understand the origins and quality of your farming inputs."
+              />
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                {(productionType === 'PL' || productionType === 'TR') && (
+                  <StandardField
+                    label="Seed/Seedling Source"
+                    helpText="Where did your seeds or seedlings come from?"
+                  >
+                    <Controller
+                      name="seeds_source"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardSelect {...field} placeholder="Select seed source...">
+                          <option value="organic_certified">🌱 Organic Certified Supplier</option>
+                          <option value="farm_saved">🏠 Farm-Saved Seeds</option>
+                          <option value="commercial_supplier">🏭 Commercial Supplier</option>
+                          <option value="local_nursery">🌿 Local Nursery</option>
+                          <option value="cooperative">🤝 Agricultural Cooperative</option>
+                          <option value="government_program">🏛️ Government Program</option>
+                          <option value="other">📝 Other (specify in notes)</option>
+                        </StandardSelect>
+                      )}
+                    />
+                  </StandardField>
+                )}
+
+                {productionType === 'IR' && (
+                  <>
+                    <StandardField
+                      label="Water Source"
+                      helpText="Primary water source for this irrigation"
+                    >
+                      <Controller
+                        name="water_source"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field} placeholder="Select water source...">
+                            <option value="well_groundwater">Well/Groundwater</option>
+                            <option value="municipal">Municipal Water Supply</option>
+                            <option value="rainwater_harvesting">Rainwater Harvesting</option>
+                            <option value="irrigation_canal">Irrigation Canal/District</option>
+                            <option value="river_stream">River/Stream</option>
+                            <option value="pond_reservoir">Pond/Reservoir</option>
+                            <option value="recycled_water">Recycled/Reclaimed Water</option>
+                            <option value="other">Other (specify in notes)</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+
+                    {/* ENHANCED: USDA NASS 2023 irrigation method for water estimation */}
+                    <StandardField
+                      label="Irrigation Method"
+                      helpText="Type of irrigation system used (affects water usage calculation)"
+                    >
+                      <Controller
+                        name="irrigation_method"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field} placeholder="Select irrigation method...">
+                            <option value="drip">Drip/Micro-irrigation (most efficient)</option>
+                            <option value="sprinkler">Sprinkler System</option>
+                            <option value="center_pivot">Center Pivot</option>
+                            <option value="flood">Flood/Furrow Irrigation</option>
+                            <option value="subsurface">Subsurface Drip</option>
+                            <option value="hand_watering">Hand Watering</option>
+                            <option value="other">Other Method</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+
+                    {/* ENHANCED: Irrigation depth for USDA NASS 2023 water volume calculation */}
+                    <StandardField
+                      label="Irrigation Depth"
+                      helpText="Water depth applied (USDA: 27,154 gal/acre per inch)"
+                    >
+                      <HStack spacing={2}>
+                        <Controller
+                          name="irrigation_depth"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              flex={2}
+                              type="number"
+                              step="0.1"
+                              placeholder="1.0"
+                            />
+                          )}
+                        />
+                        <Controller
+                          name="irrigation_depth_unit"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect {...field} flex={1}>
+                              <option value="inches">Inches</option>
+                              <option value="cm">Centimeters</option>
+                            </StandardSelect>
+                          )}
+                        />
+                      </HStack>
+                    </StandardField>
+                  </>
+                )}
+              </SimpleGrid>
+
+              <Box
+                bg="teal.50"
+                p={3}
+                borderRadius="md"
+                borderLeft="4px"
+                borderLeftColor="teal.400"
+                mt={4}
+              >
+                <HStack spacing={2} mb={1}>
+                  <Icon as={FaSeedling} color="teal.500" fontSize="sm" />
+                  <Text fontSize="sm" fontWeight="semibold" color="teal.700">
+                    Why This Matters to Consumers
+                  </Text>
+                </HStack>
+                <Text fontSize="xs" color="teal.600">
+                  Consumers increasingly want to know where their food comes from and how it was
+                  produced. Documenting your input sources builds trust and demonstrates your
+                  commitment to sustainable, transparent farming practices.
+                </Text>
+              </Box>
+            </SectionBox>
           )}
 
           {/* Observations */}
-          <StandardField 
-            label={intl.formatMessage({ id: 'app.observations' })}
-            error={errors.observation?.message}
-            helpText="Optional: Note conditions that affected production efficiency or carbon impact"
-          >
-            <Controller
-              name="observation"
-              control={methods.control}
-              render={({ field }) => (
-                <StandardTextarea
-                  {...field}
-                  placeholder="e.g., Perfect weather conditions for harvesting, equipment performed optimally, higher yield than expected..."
-                  rows={3}
-                />
-              )}
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.500"
+              title="Farmer's Field Notes & Consumer Transparency"
+              badge="Consumer Transparency"
+              badgeColorScheme="green"
             />
-          </StandardField>
+            <StandardField
+              label="Observations & Notes"
+              error={errors.observation?.message}
+              helpText="Share details about this production activity that help consumers understand your farming practices"
+            >
+              <Controller
+                name="observation"
+                control={methods.control}
+                render={({ field }) => (
+                  <StandardTextarea
+                    {...field}
+                    placeholder="Optional: Describe the conditions that affected this production activity, efficiency measures taken, or any observations that consumers might find valuable."
+                    rows={4}
+                  />
+                )}
+              />
+            </StandardField>
+          </SectionBox>
 
           {/* Navigation */}
           {!hideActions && (

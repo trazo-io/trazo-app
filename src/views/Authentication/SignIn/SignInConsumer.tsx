@@ -134,12 +134,16 @@ export default function SignInConsumer() {
             </Text>
             <Flex mb="12px" align="center" gap={2}>
               <Box w="4px" h="4px" bg="green.500" borderRadius="full" />
-              <Text fontSize="xs" color="gray.600">Blockchain-verified transparency</Text>
+              <Text fontSize="xs" color="gray.600">
+                Blockchain-verified transparency
+              </Text>
             </Flex>
             <FormProvider {...methods}>
               <form onSubmit={handleSubmit(onSubmitHandler)}>
                 <FormControl isInvalid={isError} mb={4}>
-                  <FormLabel color="gray.700" fontWeight="500" mb={1}>Email</FormLabel>
+                  <FormLabel color="gray.700" fontWeight="500" mb={1}>
+                    Email
+                  </FormLabel>
                   <StandardInput
                     {...methods.register('email')}
                     placeholder="Your email address"
@@ -147,13 +151,13 @@ export default function SignInConsumer() {
                     h="44px"
                     fontSize="sm"
                   />
-                  {errors.email && (
-                    <FormErrorMessage>{errors.email.message}</FormErrorMessage>
-                  )}
+                  {errors.email && <FormErrorMessage>{errors.email.message}</FormErrorMessage>}
                 </FormControl>
-                
+
                 <FormControl isInvalid={isError} mb={4}>
-                  <FormLabel color="gray.700" fontWeight="500" mb={1}>Password</FormLabel>
+                  <FormLabel color="gray.700" fontWeight="500" mb={1}>
+                    Password
+                  </FormLabel>
                   <StandardInput
                     {...methods.register('password')}
                     placeholder="Your password"
@@ -165,7 +169,7 @@ export default function SignInConsumer() {
                     <FormErrorMessage>{errors.password.message}</FormErrorMessage>
                   )}
                 </FormControl>
-                
+
                 <FormControl isInvalid={isError}>
                   {isError && <FormErrorMessage pl="4px">{error.data.detail}</FormErrorMessage>}
                   <FormControl display="flex" alignItems="center">

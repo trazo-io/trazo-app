@@ -60,10 +60,7 @@ const ScansList = ({ title, labels, scansData }) => {
   const displayedScans = showAllScans ? scansData : scansData?.slice(0, 10);
 
   return (
-    <StandardCard
-      title={title}
-      variant="elevated"
-    >
+    <StandardCard title={title} variant="elevated">
       <VStack spacing={4} align="stretch">
         <Box
           overflowX="auto"
@@ -104,15 +101,24 @@ const ScansList = ({ title, labels, scansData }) => {
                     ...scan,
                     // If backend doesn't provide these fields, calculate them intelligently
                     // DEFAULT ASSUMPTION: Most scans are from real humans (not bots)
-                    bot_score: scan.bot_score !== undefined ? scan.bot_score : 
-                      (scan.comment && scan.comment.trim().length > 0 ? 0.1 : 0.3), // Default to human-like (0.3 = 70% human)
-                    engagement_score: scan.engagement_score !== undefined ? scan.engagement_score :
-                      (scan.comment && scan.comment.trim().length > 0 ? 0.8 : 0.4), // Default to medium engagement
+                    bot_score:
+                      scan.bot_score !== undefined
+                        ? scan.bot_score
+                        : scan.comment && scan.comment.trim().length > 0
+                        ? 0.1
+                        : 0.3, // Default to human-like (0.3 = 70% human)
+                    engagement_score:
+                      scan.engagement_score !== undefined
+                        ? scan.engagement_score
+                        : scan.comment && scan.comment.trim().length > 0
+                        ? 0.8
+                        : 0.4, // Default to medium engagement
                     is_duplicate: scan.is_duplicate !== undefined ? scan.is_duplicate : false,
-                    is_verified_human: scan.is_verified_human !== undefined ? scan.is_verified_human : false,
+                    is_verified_human:
+                      scan.is_verified_human !== undefined ? scan.is_verified_human : false,
                     consent_given: scan.consent_given !== undefined ? scan.consent_given : true
                   };
-                  
+
                   return (
                     <React.Fragment key={index}>
                       <ScansRow
@@ -120,29 +126,29 @@ const ScansList = ({ title, labels, scansData }) => {
                         isExpanded={expandedRowId === index}
                         onExpand={() => handleExpandRow(index)}
                       />
-                    {expandedRowId === index && (
-                      <Tr>
-                        <Td colSpan={labels.length} px={6} py={4} bg="green.50">
-                          <Box
-                            p={4}
-                            bg="white"
-                            borderRadius="md"
-                            border="1px solid"
-                            borderColor="green.200"
-                            boxShadow="sm"
-                          >
-                            <Text
-                              color={textColor}
-                              fontSize="sm"
-                              lineHeight="1.6"
-                              fontStyle={scan.comment ? 'normal' : 'italic'}
+                      {expandedRowId === index && (
+                        <Tr>
+                          <Td colSpan={labels.length} px={6} py={4} bg="green.50">
+                            <Box
+                              p={4}
+                              bg="white"
+                              borderRadius="md"
+                              border="1px solid"
+                              borderColor="green.200"
+                              boxShadow="sm"
                             >
-                              {scan.comment || 'Sin comentarios adicionales'}
-                            </Text>
-                          </Box>
-                        </Td>
-                      </Tr>
-                    )}
+                              <Text
+                                color={textColor}
+                                fontSize="sm"
+                                lineHeight="1.6"
+                                fontStyle={scan.comment ? 'normal' : 'italic'}
+                              >
+                                {scan.comment || 'Sin comentarios adicionales'}
+                              </Text>
+                            </Box>
+                          </Td>
+                        </Tr>
+                      )}
                     </React.Fragment>
                   );
                 })
@@ -178,11 +184,19 @@ const ScansList = ({ title, labels, scansData }) => {
               {scansData.length > 10 && (
                 <>
                   {!showAllScans ? (
-                    <StandardButton variant="outline" size="sm" onClick={() => setShowAllScans(true)}>
+                    <StandardButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAllScans(true)}
+                    >
                       Ver todos
                     </StandardButton>
                   ) : (
-                    <StandardButton variant="outline" size="sm" onClick={() => setShowAllScans(false)}>
+                    <StandardButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAllScans(false)}
+                    >
                       Ver menos
                     </StandardButton>
                   )}

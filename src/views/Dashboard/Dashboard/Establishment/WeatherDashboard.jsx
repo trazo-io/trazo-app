@@ -260,14 +260,16 @@ const WeatherDashboard = () => {
               variant="outline"
               size="sm"
               onClick={refreshAllData}
-              isLoading={weatherLoading || alertsLoading || recommendationsLoading}>
+              isLoading={weatherLoading || alertsLoading || recommendationsLoading}
+            >
               Refresh
             </Button>
             <Button
               variant={autoRefresh ? 'solid' : 'outline'}
               colorScheme={autoRefresh ? 'green' : 'gray'}
               size="sm"
-              onClick={() => setAutoRefresh(!autoRefresh)}>
+              onClick={() => setAutoRefresh(!autoRefresh)}
+            >
               Auto-Refresh {autoRefresh ? 'ON' : 'OFF'}
             </Button>
           </HStack>
@@ -427,7 +429,8 @@ const WeatherDashboard = () => {
                               p={4}
                               borderWidth="1px"
                               borderRadius="md"
-                              borderColor={`${getPriorityColor(priority)}.200`}>
+                              borderColor={`${getPriorityColor(priority)}.200`}
+                            >
                               <Flex justify="space-between" align="start" mb={2}>
                                 <VStack align="start" spacing={1} flex="1">
                                   <Text fontWeight="bold" fontSize="sm">
@@ -443,7 +446,8 @@ const WeatherDashboard = () => {
                                   variant="outline"
                                   leftIcon={<Icon as={FaTractor} />}
                                   onClick={() => handleCreateAlert(rec)}
-                                  isLoading={creatingAlert}>
+                                  isLoading={creatingAlert}
+                                >
                                   Create Alert
                                 </Button>
                               </Flex>

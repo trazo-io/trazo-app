@@ -141,7 +141,10 @@ const transparencyLevels: TransparencyLevel[] = [
   }
 ];
 
-const achievementTemplates: Omit<TransparencyAchievement, 'current' | 'isUnlocked' | 'unlockedAt'>[] = [
+const achievementTemplates: Omit<
+  TransparencyAchievement,
+  'current' | 'isUnlocked' | 'unlockedAt'
+>[] = [
   // Documentation Achievements
   {
     id: 'first_event',
@@ -194,7 +197,7 @@ const achievementTemplates: Omit<TransparencyAchievement, 'current' | 'isUnlocke
     transparencyPoints: 50,
     badge: 'TRANSPARENCY_MASTER'
   },
-  
+
   // Photo Documentation Achievements
   {
     id: 'photo_5',
@@ -226,7 +229,7 @@ const achievementTemplates: Omit<TransparencyAchievement, 'current' | 'isUnlocke
     requirement: 50,
     transparencyPoints: 25
   },
-  
+
   // Consistency Achievements
   {
     id: 'streak_7',
@@ -259,7 +262,7 @@ const achievementTemplates: Omit<TransparencyAchievement, 'current' | 'isUnlocke
     transparencyPoints: 40,
     badge: 'CONSISTENCY_CHAMPION'
   },
-  
+
   // Verification Achievements
   {
     id: 'verify_1',
@@ -292,7 +295,7 @@ const achievementTemplates: Omit<TransparencyAchievement, 'current' | 'isUnlocke
     transparencyPoints: 45,
     badge: 'BLOCKCHAIN_VERIFIED'
   },
-  
+
   // Transparency Score Milestones
   {
     id: 'score_50',
@@ -349,17 +352,17 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
   const [achievements, setAchievements] = useState<TransparencyAchievement[]>([]);
   const [currentLevel, setCurrentLevel] = useState<TransparencyLevel>(transparencyLevels[0]);
   const [newlyUnlocked, setNewlyUnlocked] = useState<TransparencyAchievement[]>([]);
-  
+
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
-  
+
   // Calculate achievements based on current progress
   useEffect(() => {
     const calculateAchievements = (): TransparencyAchievement[] => {
-      return achievementTemplates.map(template => {
+      return achievementTemplates.map((template) => {
         let current = 0;
-        
+
         // Calculate current progress based on achievement type
         switch (template.id) {
           case 'first_event':
@@ -391,9 +394,9 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
             current = transparencyScore;
             break;
         }
-        
+
         const isUnlocked = current >= template.requirement;
-        
+
         return {
           ...template,
           current,
@@ -402,18 +405,18 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
         };
       });
     };
-    
+
     const newAchievements = calculateAchievements();
-    
+
     // Check for newly unlocked achievements
     const justUnlocked = newAchievements.filter(
-      achievement => achievement.isUnlocked && 
-      !achievements.find(a => a.id === achievement.id && a.isUnlocked)
+      (achievement) =>
+        achievement.isUnlocked && !achievements.find((a) => a.id === achievement.id && a.isUnlocked)
     );
-    
+
     if (justUnlocked.length > 0) {
       setNewlyUnlocked(justUnlocked);
-      justUnlocked.forEach(achievement => {
+      justUnlocked.forEach((achievement) => {
         onAchievementUnlocked?.(achievement);
         // Trigger celebration
         confetti({
@@ -424,33 +427,38 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
         });
       });
     }
-    
+
     setAchievements(newAchievements);
   }, [eventCount, photoCount, verificationCount, consecutiveDays, transparencyScore]);
-  
+
   // Calculate current level
   useEffect(() => {
     const level = transparencyLevels.find(
-      l => transparencyScore >= l.minScore && transparencyScore <= l.maxScore
+      (l) => transparencyScore >= l.minScore && transparencyScore <= l.maxScore
     );
     if (level) {
       setCurrentLevel(level);
     }
   }, [transparencyScore]);
-  
+
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'bronze': return 'orange';
-      case 'silver': return 'gray';
-      case 'gold': return 'yellow';
-      case 'platinum': return 'purple';
-      default: return 'gray';
+      case 'bronze':
+        return 'orange';
+      case 'silver':
+        return 'gray';
+      case 'gold':
+        return 'yellow';
+      case 'platinum':
+        return 'purple';
+      default:
+        return 'gray';
     }
   };
-  
-  const getCategoryAchievements = (category: string) => 
-    achievements.filter(a => a.category === category);
-  
+
+  const getCategoryAchievements = (category: string) =>
+    achievements.filter((a) => a.category === category);
+
   return (
     <VStack spacing={6} w="full">
       {/* Transparency Level Card */}
@@ -468,17 +476,18 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
             </Text>
           </Flex>
         </CardHeader>
-        
+
         <CardBody px={0}>
           <VStack spacing={4}>
             {/* Current Level Display */}
-            <Box 
-              textAlign="center" 
-              p={4} 
-              bg={cardBg} 
-              borderRadius="lg" 
+            <Box
+              textAlign="center"
+              p={4}
+              bg={cardBg}
+              borderRadius="lg"
               w="full"
-              animation={newlyUnlocked.length > 0 ? `${glow} 2s infinite` : undefined}>
+              animation={newlyUnlocked.length > 0 ? `${glow} 2s infinite` : undefined}
+            >
               <VStack spacing={3}>
                 <Avatar
                   bg={`${currentLevel.color}.500`}
@@ -493,7 +502,7 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
                     Nivel {currentLevel.level}
                   </Badge>
                 </VStack>
-                
+
                 {/* Level Progress */}
                 <Box w="full">
                   <Flex justify="space-between" mb={2}>
@@ -505,14 +514,17 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
                     </Text>
                   </Flex>
                   <Progress
-                    value={((transparencyScore - currentLevel.minScore) / 
-                            (currentLevel.maxScore - currentLevel.minScore)) * 100}
+                    value={
+                      ((transparencyScore - currentLevel.minScore) /
+                        (currentLevel.maxScore - currentLevel.minScore)) *
+                      100
+                    }
                     colorScheme={currentLevel.color}
                     size="md"
                     borderRadius="full"
                   />
                 </Box>
-                
+
                 {/* Level Benefits */}
                 <VStack spacing={1} mt={2}>
                   <Text fontSize="xs" fontWeight="bold" color="gray.600">
@@ -526,7 +538,7 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
                 </VStack>
               </VStack>
             </Box>
-            
+
             {/* Quick Stats */}
             <SimpleGrid columns={3} spacing={4} w="full">
               <Stat textAlign="center">
@@ -548,19 +560,17 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
               <Stat textAlign="center">
                 <StatLabel fontSize="xs">Racha</StatLabel>
                 <StatNumber fontSize="lg">{consecutiveDays}</StatNumber>
-                <StatHelpText fontSize="xs">
-                  días seguidos
-                </StatHelpText>
+                <StatHelpText fontSize="xs">días seguidos</StatHelpText>
               </Stat>
             </SimpleGrid>
-            
+
             {/* Achievement Categories */}
             <VStack spacing={4} w="full" pt={2}>
               <Divider />
               <Heading size="sm" color={textColor}>
                 Logros de Transparencia
               </Heading>
-              
+
               {/* Documentation Achievements */}
               <Box w="full">
                 <HStack mb={2}>
@@ -570,19 +580,24 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
                   </Text>
                 </HStack>
                 <SimpleGrid columns={{ base: 3, md: 5 }} spacing={2}>
-                  {getCategoryAchievements('documentation').map(achievement => (
-                    <Tooltip 
+                  {getCategoryAchievements('documentation').map((achievement) => (
+                    <Tooltip
                       key={achievement.id}
-                      label={`${achievement.description} (${achievement.current}/${achievement.requirement})`}>
+                      label={`${achievement.description} (${achievement.current}/${achievement.requirement})`}
+                    >
                       <Center>
                         <Avatar
                           size="md"
-                          bg={achievement.isUnlocked ? `${getTierColor(achievement.tier)}.500` : 'gray.300'}
+                          bg={
+                            achievement.isUnlocked
+                              ? `${getTierColor(achievement.tier)}.500`
+                              : 'gray.300'
+                          }
                           icon={<Icon as={achievement.icon} color="white" boxSize={5} />}
                           opacity={achievement.isUnlocked ? 1 : 0.5}
                           animation={
-                            newlyUnlocked.find(a => a.id === achievement.id) 
-                              ? `${pulse} 1s infinite` 
+                            newlyUnlocked.find((a) => a.id === achievement.id)
+                              ? `${pulse} 1s infinite`
                               : undefined
                           }
                         />
@@ -591,7 +606,7 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
                   ))}
                 </SimpleGrid>
               </Box>
-              
+
               {/* Quality Achievements */}
               <Box w="full">
                 <HStack mb={2}>
@@ -601,14 +616,19 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
                   </Text>
                 </HStack>
                 <SimpleGrid columns={{ base: 3, md: 5 }} spacing={2}>
-                  {getCategoryAchievements('quality').map(achievement => (
-                    <Tooltip 
+                  {getCategoryAchievements('quality').map((achievement) => (
+                    <Tooltip
                       key={achievement.id}
-                      label={`${achievement.description} (${achievement.current}/${achievement.requirement})`}>
+                      label={`${achievement.description} (${achievement.current}/${achievement.requirement})`}
+                    >
                       <Center>
                         <Avatar
                           size="md"
-                          bg={achievement.isUnlocked ? `${getTierColor(achievement.tier)}.500` : 'gray.300'}
+                          bg={
+                            achievement.isUnlocked
+                              ? `${getTierColor(achievement.tier)}.500`
+                              : 'gray.300'
+                          }
                           icon={<Icon as={achievement.icon} color="white" boxSize={5} />}
                           opacity={achievement.isUnlocked ? 1 : 0.5}
                         />
@@ -617,7 +637,7 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
                   ))}
                 </SimpleGrid>
               </Box>
-              
+
               {/* Consistency Achievements */}
               <Box w="full">
                 <HStack mb={2}>
@@ -627,14 +647,19 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
                   </Text>
                 </HStack>
                 <SimpleGrid columns={{ base: 3, md: 5 }} spacing={2}>
-                  {getCategoryAchievements('consistency').map(achievement => (
-                    <Tooltip 
+                  {getCategoryAchievements('consistency').map((achievement) => (
+                    <Tooltip
                       key={achievement.id}
-                      label={`${achievement.description} (${achievement.current}/${achievement.requirement})`}>
+                      label={`${achievement.description} (${achievement.current}/${achievement.requirement})`}
+                    >
                       <Center>
                         <Avatar
                           size="md"
-                          bg={achievement.isUnlocked ? `${getTierColor(achievement.tier)}.500` : 'gray.300'}
+                          bg={
+                            achievement.isUnlocked
+                              ? `${getTierColor(achievement.tier)}.500`
+                              : 'gray.300'
+                          }
                           icon={<Icon as={achievement.icon} color="white" boxSize={5} />}
                           opacity={achievement.isUnlocked ? 1 : 0.5}
                         />
@@ -643,17 +668,17 @@ export const TransparencyAchievements: React.FC<TransparencyAchievementsProps> =
                   ))}
                 </SimpleGrid>
               </Box>
-              
+
               {/* Next Achievement to Unlock */}
-              {achievements.filter(a => !a.isUnlocked).length > 0 && (
+              {achievements.filter((a) => !a.isUnlocked).length > 0 && (
                 <Box w="full" p={4} bg="green.50" borderRadius="lg">
                   <Text fontSize="sm" fontWeight="bold" color="green.700" mb={2}>
                     Próximo Logro
                   </Text>
                   {(() => {
                     const next = achievements
-                      .filter(a => !a.isUnlocked)
-                      .sort((a, b) => (a.current / a.requirement) - (b.current / b.requirement))
+                      .filter((a) => !a.isUnlocked)
+                      .sort((a, b) => a.current / a.requirement - b.current / b.requirement)
                       .reverse()[0];
                     return (
                       <HStack spacing={3}>

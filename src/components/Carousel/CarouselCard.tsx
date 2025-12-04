@@ -32,10 +32,18 @@ type CarouselCardProps = {
   presignedUrl?: string;
 };
 
-const CarouselCard = ({ id, image, name, category, buttonText, avatars, presignedUrl }: CarouselCardProps) => {
+const CarouselCard = ({
+  id,
+  image,
+  name,
+  category,
+  buttonText,
+  avatars,
+  presignedUrl
+}: CarouselCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  
+
   // Chakra color mode
   const textColor = useColorModeValue('gray.900', 'white');
   const secondaryText = useColorModeValue('gray.600', 'gray.300');
@@ -49,7 +57,8 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
   const navigate = useNavigate();
 
   // Check if we should show placeholder - handle localhost URLs that don't need presigning
-  const isLocalhost = image?.includes('localhost') || image?.startsWith('http://') || image?.startsWith('https://');
+  const isLocalhost =
+    image?.includes('localhost') || image?.startsWith('http://') || image?.startsWith('https://');
   const isValidImage = image && !image.includes('BgMusicCard');
   const shouldShowPlaceholder = !isValidImage || (!isLocalhost && !presignedUrl);
 
@@ -63,7 +72,7 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
   });
 
   return (
-    <Card 
+    <Card
       p={0}
       w={{ base: '290px', sm: '300px', md: '310px' }}
       minW={{ base: '290px', sm: '300px', md: '310px' }}
@@ -92,23 +101,17 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
     >
       <Flex direction="column" h="100%">
         {/* Modern 4:3 aspect ratio image section */}
-        <Box
-          w="100%"
-          h="180px"
-          position="relative"
-          overflow="hidden"
-          borderTopRadius="20px"
-        >
+        <Box w="100%" h="180px" position="relative" overflow="hidden" borderTopRadius="20px">
           {!imageLoaded && !shouldShowPlaceholder && (
-            <Skeleton 
-              w="100%" 
-              h="100%" 
-              startColor="gray.100" 
+            <Skeleton
+              w="100%"
+              h="100%"
+              startColor="gray.100"
               endColor="gray.200"
               borderTopRadius="20px"
             />
           )}
-          
+
           {/* Simple placeholder or actual image */}
           {shouldShowPlaceholder ? (
             <Box
@@ -123,12 +126,7 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
               borderColor="gray.100"
               borderTopRadius="20px"
             >
-              <Text
-                fontSize="sm"
-                color="gray.400"
-                fontWeight="500"
-                textAlign="center"
-              >
+              <Text fontSize="sm" color="gray.400" fontWeight="500" textAlign="center">
                 No Image
               </Text>
             </Box>
@@ -151,7 +149,7 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
               }}
             />
           )}
-          
+
           {/* Modern gradient overlay for real images only */}
           {!shouldShowPlaceholder && (
             <Box
@@ -162,16 +160,15 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
               bgGradient="linear(to-b, blackAlpha.0, blackAlpha.200)"
             />
           )}
-          
         </Box>
-        
+
         {/* Modern content section with better hierarchy */}
         <Flex direction="column" flex="1" p="20px">
           {/* Product/Category name - primary emphasis with proper sizing */}
-          <Text 
+          <Text
             fontSize="lg"
-            color={textColor} 
-            fontWeight="700" 
+            color={textColor}
+            fontWeight="700"
             mb="4px"
             letterSpacing="-0.01em"
             lineHeight="1.3"
@@ -180,14 +177,14 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
           >
             {category}
           </Text>
-          
+
           {/* Parcel location/name with icon */}
           <HStack spacing={1} mb="16px">
             <Icon as={FiMapPin} boxSize="12px" color={tertiaryText} />
-            <Text 
+            <Text
               fontSize="xs"
-              color={tertiaryText} 
-              fontWeight="500" 
+              color={tertiaryText}
+              fontWeight="500"
               textTransform="uppercase"
               letterSpacing="0.05em"
               noOfLines={1}
@@ -195,8 +192,7 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
               {name}
             </Text>
           </HStack>
-          
-          
+
           <Flex justifyContent="space-between" mt="auto" align="center">
             {/* Trazo standard button design - matching CardWithImage pattern */}
             <Button
@@ -231,13 +227,13 @@ const CarouselCard = ({ id, image, name, category, buttonText, avatars, presigne
                 _hover={{ transform: 'translateX(20%)' }}
               />
             </Button>
-            
+
             {/* Team avatars with improved spacing */}
             {avatars && avatars.length > 0 && (
               <AvatarGroup size="sm" max={3} spacing="-8px">
                 {avatars?.map((el, idx) => (
-                  <Avatar 
-                    src={el} 
+                  <Avatar
+                    src={el}
                     key={idx}
                     borderColor={surfaceBg}
                     borderWidth="2px"

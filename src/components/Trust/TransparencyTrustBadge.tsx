@@ -230,7 +230,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
           px={2}
           py={1}
           borderRadius="full"
-          fontSize="xs">
+          fontSize="xs"
+        >
           {trustLevel.badge}
         </Badge>
       </HStack>
@@ -246,7 +247,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
         borderRadius="xl"
         boxShadow="md"
         border="2px solid"
-        borderColor={borderColor}>
+        borderColor={borderColor}
+      >
         <VStack spacing={3}>
           {/* Header with transparency score */}
           <HStack justify="space-between" w="full">
@@ -269,7 +271,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
               px={3}
               py={2}
               borderRadius="full"
-              fontSize="sm">
+              fontSize="sm"
+            >
               {trustLevel.badge}
             </Badge>
           </HStack>
@@ -338,7 +341,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
       border="2px solid"
       borderColor={borderColor}
       position="relative"
-      overflow="hidden">
+      overflow="hidden"
+    >
       {/* Trust level glow effect for high transparency */}
       {trustScore >= 90 && (
         <Box
@@ -357,7 +361,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
         {/* Header with transparency score */}
         <Box
           opacity={visibleElements >= 1 ? 1 : 0}
-          animation={visibleElements >= 1 ? `${fadeInUp} 0.6s ease-out` : undefined}>
+          animation={visibleElements >= 1 ? `${fadeInUp} 0.6s ease-out` : undefined}
+        >
           <HStack justify="space-between" align="center" mb={4}>
             <HStack spacing={3}>
               <Circle size={14} bg={`${trustLevel.color}.100`} color={`${trustLevel.color}.600`}>
@@ -380,7 +385,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
               py={2}
               borderRadius="full"
               fontSize="md"
-              fontWeight="bold">
+              fontWeight="bold"
+            >
               {trustLevel.badge}
             </Badge>
           </HStack>
@@ -400,7 +406,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
           <Box
             textAlign="center"
             opacity={visibleElements >= 2 ? 1 : 0}
-            animation={visibleElements >= 2 ? `${fadeInUp} 0.6s ease-out 0.2s both` : undefined}>
+            animation={visibleElements >= 2 ? `${fadeInUp} 0.6s ease-out 0.2s both` : undefined}
+          >
             <VStack spacing={2}>
               <Circle size={10} bg="green.100" color="green.600">
                 <Icon as={FaClipboardList} boxSize={iconSize} />
@@ -420,7 +427,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
           <Box
             textAlign="center"
             opacity={visibleElements >= 2 ? 1 : 0}
-            animation={visibleElements >= 2 ? `${fadeInUp} 0.6s ease-out 0.3s both` : undefined}>
+            animation={visibleElements >= 2 ? `${fadeInUp} 0.6s ease-out 0.3s both` : undefined}
+          >
             <VStack spacing={2}>
               <Circle size={10} bg="blue.100" color="blue.600">
                 <Icon as={FaCamera} boxSize={iconSize} />
@@ -440,7 +448,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
           <Box
             textAlign="center"
             opacity={visibleElements >= 3 ? 1 : 0}
-            animation={visibleElements >= 3 ? `${fadeInUp} 0.6s ease-out 0.4s both` : undefined}>
+            animation={visibleElements >= 3 ? `${fadeInUp} 0.6s ease-out 0.4s both` : undefined}
+          >
             <VStack spacing={2}>
               <Circle size={10} bg="purple.100" color="purple.600">
                 <Icon as={MdVerified} boxSize={iconSize} />
@@ -460,7 +469,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
           <Box
             textAlign="center"
             opacity={visibleElements >= 4 ? 1 : 0}
-            animation={visibleElements >= 4 ? `${fadeInUp} 0.6s ease-out 0.5s both` : undefined}>
+            animation={visibleElements >= 4 ? `${fadeInUp} 0.6s ease-out 0.5s both` : undefined}
+          >
             <VStack spacing={2}>
               <Circle size={10} bg="orange.100" color="orange.600">
                 <Icon as={FaUsers} boxSize={iconSize} />
@@ -486,7 +496,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
               px={3}
               py={2}
               borderRadius="full"
-              fontSize="sm">
+              fontSize="sm"
+            >
               <HStack spacing={1}>
                 <Icon as={MdVerified} boxSize={4} />
                 <Text>Trazo Certificado</Text>
@@ -500,7 +511,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
               px={3}
               py={2}
               borderRadius="full"
-              fontSize="sm">
+              fontSize="sm"
+            >
               <HStack spacing={1}>
                 <Icon as={FaCertificate} boxSize={4} />
                 <Text>USDA Verificado</Text>
@@ -514,7 +526,8 @@ export const TransparencyTrustBadge: React.FC<TransparencyTrustBadgeProps> = ({
               px={3}
               py={2}
               borderRadius="full"
-              fontSize="sm">
+              fontSize="sm"
+            >
               <HStack spacing={1}>
                 <Icon as={FaLock} boxSize={4} />
                 <Text>Blockchain Seguro</Text>

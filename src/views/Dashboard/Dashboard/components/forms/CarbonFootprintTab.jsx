@@ -375,7 +375,8 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
                   alignItems="center"
                   justifyContent="center"
                   fontWeight="bold"
-                  fontSize="2xl">
+                  fontSize="2xl"
+                >
                   {footprintsData.carbon_score}/100
                 </Box>
               </Flex>
@@ -465,7 +466,8 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
                   {watch('type') === 'emission' ? 'Fuente de Emisión' : 'Acción de Compensación'}
                 </FormLabel>
                 <Select
-                  {...register(watch('type') === 'emission' ? 'emission_source' : 'offset_action')}>
+                  {...register(watch('type') === 'emission' ? 'emission_source' : 'offset_action')}
+                >
                   <option value="">Seleccionar...</option>
                   {(watch('type') === 'emission' ? emissionSources : offsetActions).map((item) => (
                     <option key={item.id} value={item.id}>
@@ -486,7 +488,8 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
                 type="submit"
                 colorScheme="blue"
                 isLoading={addingFootprint}
-                loadingText="Registrando...">
+                loadingText="Registrando..."
+              >
                 Registrar
               </Button>
             </Stack>
@@ -545,7 +548,6 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
           <CarbonReportTab establishmentId={establishmentId} />
         </CardBody>
       </Card>
-
     </>
   );
 };

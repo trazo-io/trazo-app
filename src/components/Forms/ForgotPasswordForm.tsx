@@ -33,10 +33,7 @@ interface ForgotPasswordFormProps {
   onBack?: () => void;
 }
 
-export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ 
-  userType, 
-  onBack 
-}) => {
+export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ userType, onBack }) => {
   const toast = useToast();
   const [requestPasswordReset, { isLoading }] = useRequestPasswordResetMutation();
   const [emailSent, setEmailSent] = useState(false);
@@ -54,10 +51,10 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
       await requestPasswordReset({ email: data.email.toLowerCase() }).unwrap();
-      
+
       setSubmittedEmail(data.email);
       setEmailSent(true);
-      
+
       toast({
         title: 'Reset Link Sent',
         description: 'Check your email for password reset instructions',
@@ -86,9 +83,9 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         <VStack spacing={6} textAlign="center">
           {/* Success Icon */}
           <Box>
-            <Icon 
-              as={FaCheckCircle} 
-              boxSize={16} 
+            <Icon
+              as={FaCheckCircle}
+              boxSize={16}
               color={userType === 'producer' ? 'green.500' : 'blue.500'}
             />
           </Box>
@@ -115,9 +112,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
                   <Icon as={FaClock} boxSize={3} />
                   <Text>The reset link expires in 15 minutes</Text>
                 </Flex>
-                <Text>
-                  Don't see the email? Check your spam folder or request a new link.
-                </Text>
+                <Text>Don't see the email? Check your spam folder or request a new link.</Text>
               </VStack>
             </AlertDescription>
           </Alert>
@@ -134,14 +129,9 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
             >
               Send Another Email
             </StandardButton>
-            
+
             <Link to={getBackLink()}>
-              <Button
-                variant="ghost"
-                leftIcon={<FaArrowLeft />}
-                color="gray.600"
-                fontSize="sm"
-              >
+              <Button variant="ghost" leftIcon={<FaArrowLeft />} color="gray.600" fontSize="sm">
                 Back to Sign In
               </Button>
             </Link>
@@ -160,21 +150,16 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
             Reset Your Password
           </Text>
           <Text color="gray.600" fontSize="sm" maxW="md" lineHeight="1.6">
-            {userType === 'producer' 
+            {userType === 'producer'
               ? "Enter your email address and we'll send you a link to reset your password and get back to managing your carbon intelligence."
-              : "Enter your email address and we'll send you a link to reset your password and continue your sustainable journey."
-            }
+              : "Enter your email address and we'll send you a link to reset your password and continue your sustainable journey."}
           </Text>
         </VStack>
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
           <VStack spacing={6} align="stretch">
-            <StandardField
-              label="Email Address"
-              required
-              error={errors.email?.message}
-            >
+            <StandardField label="Email Address" required error={errors.email?.message}>
               <InputGroup>
                 <InputLeftElement>
                   <Icon as={FaEnvelope} color="gray.400" />
@@ -209,12 +194,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
 
         {/* Back to Sign In */}
         <Link to={getBackLink()}>
-          <Button
-            variant="ghost"
-            leftIcon={<FaArrowLeft />}
-            color="gray.600"
-            fontSize="sm"
-          >
+          <Button variant="ghost" leftIcon={<FaArrowLeft />} color="gray.600" fontSize="sm">
             Back to Sign In
           </Button>
         </Link>
@@ -222,8 +202,8 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         {/* Security Note */}
         <Box mt={4} p={4} bg="gray.50" borderRadius="lg" w="full">
           <Text fontSize="xs" color="gray.600" textAlign="center">
-            For your security, password reset links expire after 15 minutes.
-            If you don't receive an email, check your spam folder.
+            For your security, password reset links expire after 15 minutes. If you don't receive an
+            email, check your spam folder.
           </Text>
         </Box>
       </VStack>

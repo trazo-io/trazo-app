@@ -13,12 +13,7 @@ import {
   Divider,
   Link
 } from '@chakra-ui/react';
-import {
-  FaEnvelope,
-  FaCheckCircle,
-  FaArrowLeft,
-  FaRedo
-} from 'react-icons/fa';
+import { FaEnvelope, FaCheckCircle, FaArrowLeft, FaRedo } from 'react-icons/fa';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useResendVerificationEmailMutation } from 'store/api/authApi';
 
@@ -28,15 +23,15 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
   const location = useLocation();
   const navigate = useNavigate();
   const toast = useToast();
-  
+
   const [resendCooldown, setResendCooldown] = useState(0);
   const [emailSent, setEmailSent] = useState(false);
-  
+
   // Get email from navigation state
   const userEmail = location.state?.email || 'your email';
   const isCompanyJoin = location.state?.companyJoin || false;
   const customMessage = location.state?.message;
-  
+
   // Determine back navigation based on current subdomain
   const getBackPath = () => {
     const host = window.location.host;
@@ -45,9 +40,9 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
     }
     return '/auth/signup'; // Producer signup (default)
   };
-  
+
   const [resendEmail, { isLoading: isResending }] = useResendVerificationEmailMutation();
-  
+
   // Trazo theme colors
   const bgGradient = useColorModeValue(
     'linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)',
@@ -61,15 +56,15 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
   // Handle resend email
   const handleResendEmail = async () => {
     if (resendCooldown > 0) return;
-    
+
     try {
       await resendEmail({ email: userEmail }).unwrap();
       setEmailSent(true);
       setResendCooldown(60); // 60 second cooldown
-      
+
       toast({
         title: 'Email sent!',
-        description: 'We\'ve sent another verification email to your inbox.',
+        description: "We've sent another verification email to your inbox.",
         status: 'success',
         duration: 4000,
         isClosable: true
@@ -99,12 +94,7 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
   }, []);
 
   return (
-    <Box
-      minH="100vh"
-      background={bgGradient}
-      py={{ base: 8, md: 16 }}
-      px={{ base: 4, md: 8 }}>
-      
+    <Box minH="100vh" background={bgGradient} py={{ base: 8, md: 16 }} px={{ base: 4, md: 8 }}>
       {/* Main Container */}
       <Flex
         maxW="lg"
@@ -112,20 +102,18 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
         direction="column"
         align="center"
         justify="center"
-        minH={{ base: 'auto', md: '80vh' }}>
-        
+        minH={{ base: 'auto', md: '80vh' }}
+      >
         {/* Back Button */}
-        <HStack
-          w="full"
-          justify="flex-start"
-          mb={{ base: 6, md: 8 }}>
+        <HStack w="full" justify="flex-start" mb={{ base: 6, md: 8 }}>
           <Button
             leftIcon={<FaArrowLeft />}
             variant="ghost"
             size="sm"
             onClick={() => navigate(getBackPath())}
             color={textSecondary}
-            _hover={{ color: textPrimary }}>
+            _hover={{ color: textPrimary }}
+          >
             Back to signup
           </Button>
         </HStack>
@@ -139,8 +127,8 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
           w="full"
           border="1px solid"
           borderColor={borderColor}
-          textAlign="center">
-          
+          textAlign="center"
+        >
           {/* Progress Indicator */}
           <HStack justify="center" spacing={4} mb={8}>
             <Circle size="32px" bg="green.500" color="white">
@@ -148,11 +136,15 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
             </Circle>
             <Divider flex={1} borderColor="green.500" />
             <Circle size="32px" bg="green.100" border="2px solid" borderColor="green.500">
-              <Text fontSize="xs" fontWeight="bold" color="green.600">2</Text>
+              <Text fontSize="xs" fontWeight="bold" color="green.600">
+                2
+              </Text>
             </Circle>
             <Divider flex={1} borderColor="gray.300" />
             <Circle size="32px" bg="gray.100" border="2px solid" borderColor="gray.300">
-              <Text fontSize="xs" fontWeight="bold" color="gray.500">3</Text>
+              <Text fontSize="xs" fontWeight="bold" color="gray.500">
+                3
+              </Text>
             </Circle>
           </HStack>
 
@@ -165,23 +157,15 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
 
           {/* Main Content */}
           <VStack spacing={4} mb={8}>
-            <Text
-              fontSize={{ base: 'xl', md: '2xl' }}
-              fontWeight="bold"
-              color={textPrimary}>
+            <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color={textPrimary}>
               Check your email
             </Text>
-            
-            <Text
-              fontSize="md"
-              color={textSecondary}
-              lineHeight="1.6"
-              maxW="md">
-              {customMessage || (
-                isCompanyJoin
+
+            <Text fontSize="md" color={textSecondary} lineHeight="1.6" maxW="md">
+              {customMessage ||
+                (isCompanyJoin
                   ? `We've sent a verification email to help you join the company team.`
-                  : `We've sent a verification email to get you started.`
-              )}
+                  : `We've sent a verification email to get you started.`)}
             </Text>
 
             {/* Email Display */}
@@ -191,21 +175,15 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
               px={4}
               py={3}
               border="1px solid"
-              borderColor={borderColor}>
-              <Text
-                fontSize="sm"
-                fontWeight="semibold"
-                color={textPrimary}
-                fontFamily="mono">
+              borderColor={borderColor}
+            >
+              <Text fontSize="sm" fontWeight="semibold" color={textPrimary} fontFamily="mono">
                 {userEmail}
               </Text>
             </Box>
 
             {/* Next Steps */}
-            <Text
-              fontSize="sm"
-              color={textSecondary}
-              textAlign="center">
+            <Text fontSize="sm" color={textSecondary} textAlign="center">
               Click the link in the email to verify your account and{' '}
               {isCompanyJoin ? 'join the company' : 'complete your registration'}.
             </Text>
@@ -222,13 +200,13 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
               isLoading={isResending}
               isDisabled={resendCooldown > 0}
               loadingText="Sending..."
-              w="full">
-              {resendCooldown > 0 
-                ? `Resend in ${resendCooldown}s` 
-                : emailSent 
-                  ? 'Send again'
-                  : 'Resend email'
-              }
+              w="full"
+            >
+              {resendCooldown > 0
+                ? `Resend in ${resendCooldown}s`
+                : emailSent
+                ? 'Send again'
+                : 'Resend email'}
             </Button>
 
             <Text fontSize="xs" color={textSecondary} textAlign="center">
@@ -241,12 +219,7 @@ const EmailVerificationWaiting: React.FC<EmailVerificationWaitingProps> = () => 
         </Box>
 
         {/* Footer Help */}
-        <Text
-          fontSize="xs"
-          color={textSecondary}
-          textAlign="center"
-          mt={8}
-          maxW="md">
+        <Text fontSize="xs" color={textSecondary} textAlign="center" mt={8} maxW="md">
           Having trouble? We're here to help at{' '}
           <Link color="green.500" href="mailto:support@trazo.io">
             support@trazo.io

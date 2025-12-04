@@ -337,7 +337,6 @@ function EditEstablishment() {
     }
   }, [establishment]);
 
-
   // Chakra color mode
   const textColor = useColorModeValue('gray.700', 'white');
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
@@ -545,7 +544,6 @@ function EditEstablishment() {
         })
     }
   ];
-
 
   return (
     <FormLayout tabsList={tabsList} activeBullets={activeBullets}>
@@ -1070,23 +1068,27 @@ function EditEstablishment() {
                   existingImages={existingImages.map((img) => img.url)}
                   onImagesChange={(urls) => {
                     // Handle real-time image changes (additions/removals)
-                    const currentUrls = existingImages.map(img => img.url);
-                    
+                    const currentUrls = existingImages.map((img) => img.url);
+
                     // Find removed images
-                    const removedUrls = currentUrls.filter(url => !urls.includes(url));
-                    removedUrls.forEach(url => {
-                      const imageToDelete = existingImages.find(img => img.url === url);
-                      if (imageToDelete && !imageToDelete.id.toString().startsWith('new-') && !imageToDelete.is_new) {
-                        setImagesToDelete(prev => [...prev, imageToDelete.id]);
+                    const removedUrls = currentUrls.filter((url) => !urls.includes(url));
+                    removedUrls.forEach((url) => {
+                      const imageToDelete = existingImages.find((img) => img.url === url);
+                      if (
+                        imageToDelete &&
+                        !imageToDelete.id.toString().startsWith('new-') &&
+                        !imageToDelete.is_new
+                      ) {
+                        setImagesToDelete((prev) => [...prev, imageToDelete.id]);
                       }
                     });
 
                     // Check if new images were added (immediate upload complete)
-                    const newUrls = urls.filter(url => !currentUrls.includes(url));
+                    const newUrls = urls.filter((url) => !currentUrls.includes(url));
                     if (newUrls.length > 0) {
                       // Handle the complete upload flow for new images
                       setUploadedImageUrls(newUrls);
-                      
+
                       // Call the API to save changes
                       setIsImageUploadOnly(true);
                       editEstablishment({
@@ -1109,12 +1111,14 @@ function EditEstablishment() {
 
                     // Update existingImages to match the new URL list
                     const updatedImages = urls.map((url, index) => {
-                      const existing = existingImages.find(img => img.url === url);
-                      return existing || {
-                        id: `temp-${Date.now()}-${index}`,
-                        url: url,
-                        is_new: true
-                      };
+                      const existing = existingImages.find((img) => img.url === url);
+                      return (
+                        existing || {
+                          id: `temp-${Date.now()}-${index}`,
+                          url: url,
+                          is_new: true
+                        }
+                      );
                     });
                     setExistingImages(updatedImages);
                   }}

@@ -2,7 +2,7 @@
 // This simulates the exact data structure from ProductionTab.jsx
 
 console.log('🧪 DEBUGGING FORM DATA MAPPING\n');
-console.log('=' .repeat(60));
+console.log('='.repeat(60));
 
 // Mock form data from PL (Planting) - based on screenshot
 const mockPLFormData = {
@@ -10,7 +10,7 @@ const mockPLFormData = {
   name: 'Spring Avocado',
   area_covered: '11.00',
   area_unit: 'ha',
-  yield_quantity: '22.0',  // This is "Quantity Planted" in UI
+  yield_quantity: '22.0', // This is "Quantity Planted" in UI
   yield_unit: 'kg',
   fuel_consumed: '33.0',
   fuel_unit: 'L',
@@ -24,7 +24,7 @@ const mockHAFormData = {
   name: 'Spring Avocado',
   area_covered: '11.00',
   area_unit: 'ha',
-  yield_quantity: '22.0',  // This is "Quantity Harvested" in UI
+  yield_quantity: '22.0', // This is "Quantity Harvested" in UI
   yield_unit: 'kg',
   fuel_consumed: '33.0',
   fuel_unit: 'L',
@@ -59,56 +59,71 @@ const transformFormDataToEvent = (activeEventType, formData, eventId = 'preview'
       event.production_name = formData.name;
       event.name = formData.name;
     }
-    
+
     // Set the correct production type code
     if (formData.type) {
       event.type = formData.type;
     }
-    
+
     // Area covered with units (ALL production types)
     if (formData.area_covered || formData.area) {
       const areaValue = parseFloat(formData.area_covered || formData.area);
       const areaUnit = formData.area_unit || formData.unit || 'hectares';
       event.area_covered = `${areaValue} ${areaUnit}`;
     }
-    
+
     // Yield/Quantity with units (PL and HA only)
     if (formData.yield_quantity || formData.quantity_planted || formData.quantity) {
-      const quantityValue = parseFloat(formData.yield_quantity || formData.quantity_planted || formData.quantity);
-      const quantityUnit = formData.yield_unit || formData.quantity_unit || formData.unit_quantity || 'kg';
+      const quantityValue = parseFloat(
+        formData.yield_quantity || formData.quantity_planted || formData.quantity
+      );
+      const quantityUnit =
+        formData.yield_unit || formData.quantity_unit || formData.unit_quantity || 'kg';
       event.yield_quantity = `${quantityValue} ${quantityUnit}`;
     }
-    
+
     // Fuel consumed with units (ALL production types)
-    if (formData.fuel_consumed !== undefined && formData.fuel_consumed !== '' && formData.fuel_consumed !== null) {
+    if (
+      formData.fuel_consumed !== undefined &&
+      formData.fuel_consumed !== '' &&
+      formData.fuel_consumed !== null
+    ) {
       const fuelValue = parseFloat(formData.fuel_consumed);
       const fuelUnit = formData.fuel_unit || 'liters';
-      
+
       if (!isNaN(fuelValue) && fuelValue >= 0) {
         event.fuel_consumed = `${fuelValue} ${fuelUnit}`;
       }
     }
-    
+
     // Equipment hours (ALL production types)
-    if (formData.equipment_hours !== undefined && formData.equipment_hours !== '' && formData.equipment_hours !== null) {
+    if (
+      formData.equipment_hours !== undefined &&
+      formData.equipment_hours !== '' &&
+      formData.equipment_hours !== null
+    ) {
       const hoursValue = parseFloat(formData.equipment_hours);
-      
+
       if (!isNaN(hoursValue) && hoursValue >= 0) {
         event.equipment_hours = `${hoursValue} hours`;
       }
     }
-    
+
     // Transportation (HA - Harvesting only)
-    if (formData.transportation_distance !== undefined && formData.transportation_distance !== '' && formData.transportation_distance !== null) {
+    if (
+      formData.transportation_distance !== undefined &&
+      formData.transportation_distance !== '' &&
+      formData.transportation_distance !== null
+    ) {
       const transportValue = parseFloat(formData.transportation_distance);
       const transportUnit = formData.transportation_unit || 'km';
-      
+
       if (!isNaN(transportValue) && transportValue >= 0) {
         event.transportation_distance = `${transportValue} ${transportUnit}`;
       }
     }
   }
-  
+
   return event;
 };
 

@@ -21,15 +21,22 @@ const ConsumerChangePassword: React.FC = () => {
           <HStack justify="center">
             <Icon as={FaLock} boxSize={8} color="blue.600" />
           </HStack>
-          <Badge colorScheme="blue" variant="subtle" fontSize="sm" px={4} py={2} borderRadius="full">
+          <Badge
+            colorScheme="blue"
+            variant="subtle"
+            fontSize="sm"
+            px={4}
+            py={2}
+            borderRadius="full"
+          >
             <HStack spacing={2}>
               <Icon as={FaLeaf} boxSize={4} />
               <Text>Protecting Your Sustainable Journey</Text>
             </HStack>
           </Badge>
           <Text fontSize="sm" color="gray.600" maxW="md">
-            Your security is important to us. A strong password helps protect your 
-            sustainable shopping history and carbon tracking data.
+            Your security is important to us. A strong password helps protect your sustainable
+            shopping history and carbon tracking data.
           </Text>
         </VStack>
 

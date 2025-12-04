@@ -56,7 +56,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
 
     const { scrollWidth, clientWidth } = scrollContainerRef.current;
     const canScroll = scrollWidth > clientWidth;
-    
+
     console.log('🔍 [CarouselHorizontal] Checking scrollability:', {
       scrollWidth,
       clientWidth,
@@ -94,7 +94,9 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
     });
 
     if (!data || data.length <= 1) {
-      console.log('⏸️ [CarouselHorizontal] Scroll disabled - not enough data:', { dataLength: data?.length });
+      console.log('⏸️ [CarouselHorizontal] Scroll disabled - not enough data:', {
+        dataLength: data?.length
+      });
       return;
     }
 
@@ -223,7 +225,8 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
               }}
               onClick={() =>
                 navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/add`)
-              }>
+              }
+            >
               <Flex direction="column" align="center" justify="center" gap={1}>
                 <Icon as={FaPlus} color="green.500" fontSize="20px" />
                 <Text fontSize="xs" fontWeight="medium" color="green.600">
@@ -251,10 +254,17 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
                 WebkitOverflowScrolling: 'touch'
-              }}>
+              }}
+            >
               <Flex gap={{ base: 4, md: 6 }} pb={2} pr="16px" pl={2} w="max-content">
                 {data.map((parcel) => (
-                  <Box key={parcel.id} flexShrink={0} w={{ base: "290px", sm: "300px", md: "310px" }} minW={{ base: "290px", sm: "300px", md: "310px" }} maxW={{ base: "290px", sm: "300px", md: "310px" }}>
+                  <Box
+                    key={parcel.id}
+                    flexShrink={0}
+                    w={{ base: '290px', sm: '300px', md: '310px' }}
+                    minW={{ base: '290px', sm: '300px', md: '310px' }}
+                    maxW={{ base: '290px', sm: '300px', md: '310px' }}
+                  >
                     <CarouselCard
                       id={parcel.id}
                       image={parcel.image || BgMusicCard}
@@ -263,7 +273,9 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                         parcel.product || intl.formatMessage({ id: 'app.noCurrentProduction' })
                       }
                       buttonText={intl.formatMessage({ id: 'app.viewParcel' }).toUpperCase()}
-                      avatars={parcel.members?.map((member: any) => member.image).filter(Boolean) || []}
+                      avatars={
+                        parcel.members?.map((member: any) => member.image).filter(Boolean) || []
+                      }
                       presignedUrl={parcel.image ? presignedUrls[parcel.image] : undefined}
                     />
                   </Box>
@@ -273,13 +285,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
 
             {/* Dynamic progress line indicator - only show when content is actually scrollable */}
             {isScrollable && (
-              <Box
-                w="100%"
-                h="3px"
-                bg="gray.200"
-                borderRadius="full"
-                position="relative"
-                mt={3}>
+              <Box w="100%" h="3px" bg="gray.200" borderRadius="full" position="relative" mt={3}>
                 <Box
                   h="full"
                   bg="green.500"
@@ -301,7 +307,8 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
               fontWeight={'300'}
               justifyContent={'center'}
               alignItems={'center'}
-              textAlign={'center'}>
+              textAlign={'center'}
+            >
               {intl.formatMessage({ id: 'app.noParcelsYet' })}
             </Text>
           </Flex>

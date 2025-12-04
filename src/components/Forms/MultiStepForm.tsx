@@ -10,17 +10,12 @@ import {
   useColorModeValue,
   useToast
 } from '@chakra-ui/react';
+import { StandardPage, StandardCard, StandardButton, StandardStepper } from '../Design';
 import {
-  StandardPage,
-  StandardCard,
-  StandardButton,
-  StandardStepper
-} from '../Design';
-import { 
-  FaCheckCircle, 
-  FaChevronLeft, 
-  FaChevronRight, 
-  FaExclamationTriangle 
+  FaCheckCircle,
+  FaChevronLeft,
+  FaChevronRight,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
@@ -44,20 +39,20 @@ export interface MultiStepFormProps<T = any> {
   title: string;
   description?: string;
   steps: StepConfig[];
-  
+
   // Form state
   formMethods: UseFormReturn<T>;
   onSubmit: (data: T) => void;
   onCancel: () => void;
-  
+
   // Form content
   children: ReactNode[];
-  
+
   // Optional props
   isEdit?: boolean;
   isLoading?: boolean;
   showBackButton?: boolean;
-  
+
   // Custom validation
   customValidators?: Record<string, (data: any) => boolean>;
 }
@@ -77,7 +72,7 @@ export const MultiStepForm = <T extends Record<string, any>>({
 }: MultiStepFormProps<T>) => {
   const [currentStep, setCurrentStep] = useState(0);
   const toast = useToast();
-  
+
   const { handleSubmit, watch } = formMethods;
 
   // ✅ REUSABLE STEP VALIDATION
@@ -113,10 +108,10 @@ export const MultiStepForm = <T extends Record<string, any>>({
   // ✅ REUSABLE NAVIGATION LOGIC
   const canNavigateToStep = (targetStep: number): boolean => {
     const formData = watch();
-    
+
     // Always allow navigation backwards
     if (targetStep <= currentStep) return true;
-    
+
     // For forward navigation, validate all intermediate steps
     for (let step = currentStep; step < targetStep; step++) {
       const stepConfig = steps[step];
@@ -124,14 +119,14 @@ export const MultiStepForm = <T extends Record<string, any>>({
         return false;
       }
     }
-    
+
     return true;
   };
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
       const formData = watch();
-      
+
       // Validate current step before proceeding
       if (!validateStep(currentStep, formData)) {
         toast({
@@ -143,7 +138,7 @@ export const MultiStepForm = <T extends Record<string, any>>({
         });
         return;
       }
-      
+
       setCurrentStep(currentStep + 1);
     }
   };
@@ -169,7 +164,9 @@ export const MultiStepForm = <T extends Record<string, any>>({
   };
 
   // ✅ STEP STATUS CALCULATION
-  const getStepStatus = (stepNumber: number): 'completed' | 'current' | 'incomplete' | 'disabled' => {
+  const getStepStatus = (
+    stepNumber: number
+  ): 'completed' | 'current' | 'incomplete' | 'disabled' => {
     if (stepNumber < currentStep) {
       return validateStep(stepNumber, watch()) ? 'completed' : 'incomplete';
     }
@@ -186,18 +183,18 @@ export const MultiStepForm = <T extends Record<string, any>>({
       title={title}
       description={description}
       showBackButton={showBackButton}
-      onBack={onCancel}>
-      
+      onBack={onCancel}
+    >
       {/* ✅ PROGRESS INDICATOR */}
       <VStack spacing={6} align="stretch" mb={8}>
         <Box>
           <Text fontSize="sm" color="gray.600" mb={2}>
             Step {currentStep + 1} of {steps.length}: {steps[currentStep]?.title}
           </Text>
-          <Progress 
-            value={progressPercentage} 
-            colorScheme="green" 
-            borderRadius="full" 
+          <Progress
+            value={progressPercentage}
+            colorScheme="green"
+            borderRadius="full"
             size="lg"
             bg="gray.100"
           />
@@ -272,10 +269,7 @@ export const StepWrapper: React.FC<StepWrapperProps> = ({
         {/* ✅ STANDARDIZED NAVIGATION */}
         <HStack spacing={3} justify="space-between" pt={4}>
           {currentStep > 0 ? (
-            <StandardButton
-              variant="outline"
-              leftIcon={<FaChevronLeft />}
-              onClick={onPrevious}>
+            <StandardButton variant="outline" leftIcon={<FaChevronLeft />} onClick={onPrevious}>
               {previousText}
             </StandardButton>
           ) : (
@@ -286,21 +280,23 @@ export const StepWrapper: React.FC<StepWrapperProps> = ({
             <StandardButton variant="outline" onClick={onCancel}>
               Cancel
             </StandardButton>
-            
+
             {isLastStep ? (
               <StandardButton
                 type="submit"
                 isLoading={isLoading}
                 loadingText="Submitting..."
                 leftIcon={<FaCheckCircle />}
-                onClick={onSubmit}>
+                onClick={onSubmit}
+              >
                 {submitText}
               </StandardButton>
             ) : (
               <StandardButton
                 rightIcon={<FaChevronRight />}
                 onClick={onNext}
-                isDisabled={nextDisabled}>
+                isDisabled={nextDisabled}
+              >
                 {nextText}
               </StandardButton>
             )}
@@ -338,10 +334,11 @@ export const validateFormFields = (
   data: Record<string, any>,
   requiredFields: string[]
 ): boolean => {
-  return requiredFields.every(field => {
+  return requiredFields.every((field) => {
     const value = data[field];
-    return value !== undefined && value !== null && 
-           (typeof value !== 'string' || value.trim() !== '');
+    return (
+      value !== undefined && value !== null && (typeof value !== 'string' || value.trim() !== '')
+    );
   });
 };
 

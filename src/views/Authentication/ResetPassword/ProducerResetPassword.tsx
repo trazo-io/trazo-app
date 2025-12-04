@@ -55,25 +55,27 @@ const ProducerResetPassword: React.FC = () => {
   const onSubmit = async (data: ResetPasswordFormData) => {
     try {
       setError(null);
-      
+
       if (!token) {
         setError('Reset token is missing from the link. Please request a new password reset.');
         return;
       }
-      
+
       if (!email) {
-        setError('Email parameter is missing from the reset link. Please request a new password reset.');
+        setError(
+          'Email parameter is missing from the reset link. Please request a new password reset.'
+        );
         return;
       }
-      
-      await confirmPasswordReset({ 
-        token: token, 
+
+      await confirmPasswordReset({
+        token: token,
         email: email,
-        new_password: data.new_password 
+        new_password: data.new_password
       }).unwrap();
-      
+
       setResetSuccess(true);
-      
+
       toast({
         title: 'Password Reset Successfully',
         description: 'Your password has been updated',
@@ -82,7 +84,8 @@ const ProducerResetPassword: React.FC = () => {
         isClosable: true
       });
     } catch (error: any) {
-      const errorMessage = error?.data?.detail || error?.data?.error || 'Something went wrong. Please try again.';
+      const errorMessage =
+        error?.data?.detail || error?.data?.error || 'Something went wrong. Please try again.';
       setError(errorMessage);
     }
   };
@@ -97,7 +100,8 @@ const ProducerResetPassword: React.FC = () => {
           alignItems="center"
           justifyContent="center"
           position="relative"
-          overflow="hidden">
+          overflow="hidden"
+        >
           {/* Sophisticated gradient foundation */}
           <Box
             position="absolute"
@@ -165,29 +169,32 @@ const ProducerResetPassword: React.FC = () => {
             color="white"
             px={12}
             maxW="lg"
-            zIndex={10}>
+            zIndex={10}
+          >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
                 Enhanced Security
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Create a strong password that meets our enterprise security standards. 
-                Your carbon intelligence platform requires the highest level of protection 
-                for your valuable environmental data.
+                Create a strong password that meets our enterprise security standards. Your carbon
+                intelligence platform requires the highest level of protection for your valuable
+                environmental data.
               </Text>
             </VStack>
 
             <VStack spacing={3} pt={4}>
-              {['12+ character minimum length', 'Mixed case & special characters', 'Real-time strength validation'].map(
-                (feature, index) => (
-                  <HStack key={index} spacing={3}>
-                    <Box w={2} h={2} bg="white" borderRadius="50%" />
-                    <Text fontSize="sm" fontWeight="500" opacity={0.9}>
-                      {feature}
-                    </Text>
-                  </HStack>
-                )
-              )}
+              {[
+                '12+ character minimum length',
+                'Mixed case & special characters',
+                'Real-time strength validation'
+              ].map((feature, index) => (
+                <HStack key={index} spacing={3}>
+                  <Box w={2} h={2} bg="white" borderRadius="50%" />
+                  <Text fontSize="sm" fontWeight="500" opacity={0.9}>
+                    {feature}
+                  </Text>
+                </HStack>
+              ))}
             </VStack>
           </VStack>
         </Box>
@@ -199,15 +206,16 @@ const ProducerResetPassword: React.FC = () => {
           bg={useColorModeValue('white', 'gray.900')}
           px={8}
           pt={'112px'}
-          pb={12}>
+          pb={12}
+        >
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
             maxW="420px"
-            my={{ base: 4, lg: 8 }}>
-            
+            my={{ base: 4, lg: 8 }}
+          >
             {resetSuccess ? (
               // Success State - Following exact Trazo design standards
               <VStack spacing={8} textAlign="center">
@@ -220,25 +228,28 @@ const ProducerResetPassword: React.FC = () => {
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  mb={2}>
+                  mb={2}
+                >
                   <Icon as={FaCheckCircle} boxSize={8} color="white" />
                 </Box>
 
                 {/* Success Message */}
                 <VStack spacing={3}>
-                  <Text 
-                    fontSize="2xl" 
-                    fontWeight="700" 
-                    color={useColorModeValue('gray.900', 'white')} 
-                    letterSpacing="tight">
+                  <Text
+                    fontSize="2xl"
+                    fontWeight="700"
+                    color={useColorModeValue('gray.900', 'white')}
+                    letterSpacing="tight"
+                  >
                     Password Reset Complete
                   </Text>
-                  <Text 
-                    color={useColorModeValue('gray.500', 'gray.400')} 
-                    fontSize="md" 
-                    maxW="md" 
+                  <Text
+                    color={useColorModeValue('gray.500', 'gray.400')}
+                    fontSize="md"
+                    maxW="md"
                     lineHeight="1.6"
-                    textAlign="center">
+                    textAlign="center"
+                  >
                     Your password has been successfully updated with enhanced security.
                   </Text>
                 </VStack>
@@ -250,7 +261,8 @@ const ProducerResetPassword: React.FC = () => {
                   border="1px solid"
                   borderColor={useColorModeValue('green.200', 'green.700')}
                   borderRadius="xl"
-                  p={4}>
+                  p={4}
+                >
                   <VStack spacing={3} align="start">
                     <HStack spacing={3}>
                       <Icon as={FaShieldAlt} boxSize={4} color="green.600" />
@@ -259,7 +271,8 @@ const ProducerResetPassword: React.FC = () => {
                       </Text>
                     </HStack>
                     <Text fontSize="sm" color="green.700" lineHeight="1.5">
-                      You can now sign in with your new password and continue managing your carbon intelligence data.
+                      You can now sign in with your new password and continue managing your carbon
+                      intelligence data.
                     </Text>
                   </VStack>
                 </Box>
@@ -283,7 +296,8 @@ const ProducerResetPassword: React.FC = () => {
                       _active={{
                         transform: 'translateY(0)'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       Sign In to Your Account
                     </Button>
                   </Link>
@@ -299,13 +313,15 @@ const ProducerResetPassword: React.FC = () => {
                       fontSize="2xl"
                       fontWeight="700"
                       color={useColorModeValue('gray.900', 'white')}
-                      letterSpacing="tight">
+                      letterSpacing="tight"
+                    >
                       Create New Password
                     </Text>
                     <Text
                       fontSize="md"
                       color={useColorModeValue('gray.500', 'gray.400')}
-                      textAlign="center">
+                      textAlign="center"
+                    >
                       Enter a strong password that meets our security requirements
                     </Text>
                   </VStack>
@@ -320,7 +336,8 @@ const ProducerResetPassword: React.FC = () => {
                       p={4}
                       mb={6}
                       borderLeft="4px solid"
-                      borderLeftColor="red.500">
+                      borderLeftColor="red.500"
+                    >
                       <Text color="red.700" fontSize="sm" fontWeight="500">
                         {error}
                       </Text>
@@ -335,7 +352,8 @@ const ProducerResetPassword: React.FC = () => {
                           fontSize="sm"
                           fontWeight="medium"
                           color={useColorModeValue('gray.700', 'gray.300')}
-                          mb={2}>
+                          mb={2}
+                        >
                           New Password *
                         </Text>
                         <InputGroup size="lg">
@@ -400,7 +418,8 @@ const ProducerResetPassword: React.FC = () => {
                           fontSize="sm"
                           fontWeight="medium"
                           color={useColorModeValue('gray.700', 'gray.300')}
-                          mb={2}>
+                          mb={2}
+                        >
                           Confirm Password *
                         </Text>
                         <InputGroup size="lg">
@@ -443,8 +462,7 @@ const ProducerResetPassword: React.FC = () => {
                             transition="all 0.2s"
                             {...register('confirm_password', {
                               required: 'Please confirm your password',
-                              validate: (value) => 
-                                value === newPassword || 'Passwords do not match'
+                              validate: (value) => value === newPassword || 'Passwords do not match'
                             })}
                             onFocus={() => setFocusedField('confirm_password')}
                             onBlur={() => setFocusedField(null)}
@@ -477,7 +495,8 @@ const ProducerResetPassword: React.FC = () => {
                         _active={{
                           transform: 'translateY(0)'
                         }}
-                        transition="all 0.2s">
+                        transition="all 0.2s"
+                      >
                         Reset Password
                       </Button>
                     </VStack>
@@ -495,17 +514,28 @@ const ProducerResetPassword: React.FC = () => {
                       _hover={{
                         color: 'green.500'
                       }}
-                      transition="all 0.2s">
+                      transition="all 0.2s"
+                    >
                       Back to Sign In
                     </Button>
                   </Link>
                 </Box>
 
                 {/* Security Note */}
-                <Box mt={6} p={4} bg={useColorModeValue('gray.50', 'gray.800')} borderRadius="xl" w="full">
-                  <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')} textAlign="center">
-                    Your password will be encrypted with enterprise-grade security.
-                    Make sure it's at least 8 characters long and includes mixed case letters.
+                <Box
+                  mt={6}
+                  p={4}
+                  bg={useColorModeValue('gray.50', 'gray.800')}
+                  borderRadius="xl"
+                  w="full"
+                >
+                  <Text
+                    fontSize="xs"
+                    color={useColorModeValue('gray.600', 'gray.400')}
+                    textAlign="center"
+                  >
+                    Your password will be encrypted with enterprise-grade security. Make sure it's
+                    at least 8 characters long and includes mixed case letters.
                   </Text>
                 </Box>
               </>
@@ -521,21 +551,24 @@ const ProducerResetPassword: React.FC = () => {
         borderTop="1px solid"
         borderColor={useColorModeValue('gray.200', 'gray.700')}
         py={6}
-        px={8}>
+        px={8}
+      >
         <Flex
           maxW="7xl"
           mx="auto"
           direction={{ base: 'column', md: 'row' }}
           align="center"
           justify="space-between"
-          gap={4}>
+          gap={4}
+        >
           <HStack spacing={6} flexWrap="wrap" justify="center">
             <Link to="/about">
               <Text
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 About
               </Text>
             </Link>
@@ -544,7 +577,8 @@ const ProducerResetPassword: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Why Trazo?
               </Text>
             </Link>
@@ -553,7 +587,8 @@ const ProducerResetPassword: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Blog
               </Text>
             </Link>
@@ -562,7 +597,8 @@ const ProducerResetPassword: React.FC = () => {
                 fontSize="sm"
                 color={useColorModeValue('gray.600', 'gray.400')}
                 _hover={{ color: 'green.500' }}
-                transition="color 0.2s">
+                transition="color 0.2s"
+              >
                 Contact
               </Text>
             </Link>

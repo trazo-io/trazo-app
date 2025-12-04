@@ -625,7 +625,8 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
 
       toast({
         title: 'Farm Activity Documented! 🌟',
-        description: 'Your transparency score is improving! Consumers love detailed farming stories.',
+        description:
+          'Your transparency score is improving! Consumers love detailed farming stories.',
         status: 'success',
         duration: 4000,
         isClosable: true
@@ -791,7 +792,8 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
                     +{Math.round(Math.random() * 10 + 5)} transparency points
                   </Text>
                   <Text fontSize="xs" color="blue.600">
-                    Environmental data: {carbonCalculation.co2e > 0 ? '+' : ''}{carbonCalculation.co2e.toFixed(2)} kg CO₂e
+                    Environmental data: {carbonCalculation.co2e > 0 ? '+' : ''}
+                    {carbonCalculation.co2e.toFixed(2)} kg CO₂e
                   </Text>
                 </VStack>
               </Box>
@@ -966,7 +968,7 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={
-                  selectedTemplate 
+                  selectedTemplate
                     ? `Tell consumers about your ${selectedTemplate.name.toLowerCase()} practices...`
                     : 'Share details about your farming practices...'
                 }

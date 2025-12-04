@@ -1,22 +1,5 @@
-// Chakra imports
-import {
-  Button,
-  Select as ChakraSelect,
-  CircularProgress,
-  Flex,
-  FormControl,
-  FormLabel,
-  Icon,
-  Input,
-  Select,
-  Text,
-  Textarea,
-  useColorModeValue,
-  HStack,
-  Box,
-  SimpleGrid,
-  Badge
-} from '@chakra-ui/react';
+// Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
+import { Icon, Text, useColorModeValue, HStack, Box, SimpleGrid, VStack, Flex } from '@chakra-ui/react';
 import {
   StandardCard,
   StandardButton,
@@ -24,7 +7,9 @@ import {
   StandardInput,
   StandardSelect,
   StandardTextarea,
-  StandardAlert
+  StandardAlert,
+  SectionHeader,
+  SectionBox
 } from 'components/Design/StandardComponents';
 import {
   FaChevronLeft,
@@ -52,12 +37,7 @@ const formSchemaMainInfo = object({
   water_deficit: string()
     .optional()
     .transform((val) => Number(val)),
-  weight: string()
-    .optional()
-    .transform((val) => Number(val)),
-  diameter: string()
-    .optional()
-    .transform((val) => Number(val)),
+  // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail)
   duration: string()
     .optional()
     .transform((val) => Number(val)),
@@ -84,7 +64,13 @@ const formSchemaMainInfo = object({
   observation: string().optional()
 });
 
-const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }) => {
+const WeatherTab = ({
+  onSubmitHandler,
+  onDataChange,
+  onPrev,
+  initialValues = {},
+  hideActions = false
+}) => {
   const intl = useIntl();
   const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -119,8 +105,7 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
       lower_temperature: initialValues.lower_temperature?.toString() || '',
       way_of_protection: initialValues.way_of_protection || '',
       water_deficit: initialValues.water_deficit?.toString() || '',
-      weight: initialValues.weight?.toString() || '',
-      diameter: initialValues.diameter?.toString() || '',
+      // Sprint 2 Epic 2.1.3: Removed weight and diameter fields
       duration: initialValues.duration?.toString() || '',
       highest_temperature: initialValues.highest_temperature?.toString() || '',
       start_date: initialValues.start_date || '',
@@ -149,8 +134,7 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
         lower_temperature: initialValues.lower_temperature?.toString() || '',
         way_of_protection: initialValues.way_of_protection || '',
         water_deficit: initialValues.water_deficit?.toString() || '',
-        weight: initialValues.weight?.toString() || '',
-        diameter: initialValues.diameter?.toString() || '',
+        // Sprint 2 Epic 2.1.3: Removed weight and diameter fields
         duration: initialValues.duration?.toString() || '',
         highest_temperature: initialValues.highest_temperature?.toString() || '',
         start_date: initialValues.start_date || '',
@@ -190,14 +174,13 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
     // Watch specific fields without causing re-render loops
     const subscription = watch((value, { name }) => {
       // Only trigger on relevant field changes - include ALL weather fields for proper persistence
+      // Sprint 2 Epic 2.1.3: Removed weight and diameter from watched fields
       const relevantFields = [
         'type',
         'lower_temperature',
         'way_of_protection',
         'highest_temperature',
         'water_deficit',
-        'weight',
-        'diameter',
         'duration',
         'start_date',
         'end_date',
@@ -259,10 +242,9 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
         };
         break;
       case 'HL':
+        // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail)
         data = {
           type: data.type,
-          weight: data.weight,
-          diameter: data.diameter,
           duration: data.duration,
           way_of_protection: data.way_of_protection,
           observation: data.observation
@@ -337,23 +319,22 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
           </StandardAlert>
 
           {/* Section 1: Weather Event Information */}
-          <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaCloud} mr={2} />
-                Weather Event Information
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Environmental Documentation
-              </Badge>
-            </HStack>
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaCloud}
+              iconColor="green.600"
+              title="Weather Event Information"
+              badge="Environmental Documentation"
+              badgeColorScheme="green"
+            />
 
             <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
               <StandardField
-                label="Weather Event Type *"
+                label="Weather Event Type"
                 required
                 error={errors.type?.message}
-                helpText="Document weather conditions that affect your agricultural operations">
+                helpText="Document weather conditions that affect your agricultural operations"
+              >
                 <Controller
                   name="type"
                   control={mainInfoMethods.control}
@@ -372,26 +353,25 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                 />
               </StandardField>
             </SimpleGrid>
-          </Box>
+          </SectionBox>
 
           {/* Section 2: Weather Details & Measurements (Dynamic based on type) */}
           {type && (
-            <Box mb={6} p={4} border="1px" borderColor="green.200" borderRadius="lg" bg="green.50">
-              <HStack justify="space-between" align="center" mb={4}>
-                <Text fontSize="md" fontWeight="bold" color="green.600">
-                  <Icon as={FaThermometerHalf} mr={2} />
-                  Weather Details & Measurements
-                </Text>
-                <Badge colorScheme="green" fontSize="xs">
-                  Climate Context
-                </Badge>
-              </HStack>
+            <SectionBox variant="highlighted">
+              <SectionHeader
+                icon={FaThermometerHalf}
+                iconColor="green.600"
+                title="Weather Details & Measurements"
+                badge="Climate Context"
+                badgeColorScheme="green"
+              />
 
               {type === 'FR' ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <StandardField
                     label="Lower Temperature"
-                    helpText="Minimum temperature recorded during frost event">
+                    helpText="Minimum temperature recorded during frost event"
+                  >
                     <StandardInput
                       type="text"
                       placeholder="e.g., -2°C or 28°F"
@@ -400,7 +380,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                   </StandardField>
                   <StandardField
                     label="Protection Method"
-                    helpText="Measures taken to protect crops">
+                    helpText="Measures taken to protect crops"
+                  >
                     <StandardInput
                       type="text"
                       placeholder="e.g., frost blankets, irrigation"
@@ -412,7 +393,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                 <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
                   <StandardField
                     label="Water Deficit"
-                    helpText="Accumulated water deficit during drought period">
+                    helpText="Accumulated water deficit during drought period"
+                  >
                     <StandardInput
                       type="text"
                       placeholder="e.g., 50mm below average"
@@ -421,15 +403,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                   </StandardField>
                 </SimpleGrid>
               ) : type === 'HL' ? (
+                // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail, no consumer impact)
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Average Hailstone Weight"
-                    helpText="Weight of individual hailstones">
-                    <StandardInput type="text" placeholder="e.g., 5g" {...register('weight')} />
-                  </StandardField>
-                  <StandardField label="Average Hailstone Diameter" helpText="Size of hailstones">
-                    <StandardInput type="text" placeholder="e.g., 2cm" {...register('diameter')} />
-                  </StandardField>
                   <StandardField label="Duration" helpText="How long the hailstorm lasted">
                     <StandardInput
                       type="text"
@@ -439,7 +414,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                   </StandardField>
                   <StandardField
                     label="Protection Method"
-                    helpText="Measures taken to protect crops">
+                    helpText="Measures taken to protect crops"
+                  >
                     <StandardInput
                       type="text"
                       placeholder="e.g., hail nets, covered structures"
@@ -451,7 +427,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <StandardField
                     label="Highest Temperature"
-                    helpText="Peak temperature during heat event">
+                    helpText="Peak temperature during heat event"
+                  >
                     <StandardInput
                       type="text"
                       placeholder="e.g., 42°C or 108°F"
@@ -460,7 +437,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                   </StandardField>
                   <StandardField
                     label="Start Date"
-                    helpText="When the high temperature period began">
+                    helpText="When the high temperature period began"
+                  >
                     <StandardInput type="datetime-local" {...register('start_date')} />
                   </StandardField>
                   <StandardField label="End Date" helpText="When the high temperature period ended">
@@ -478,7 +456,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                   </StandardField>
                   <StandardField
                     label="Precipitation Amount"
-                    helpText="Total rainfall during storm">
+                    helpText="Total rainfall during storm"
+                  >
                     <StandardInput
                       type="number"
                       step="0.1"
@@ -496,7 +475,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                   </StandardField>
                   <StandardField
                     label="Damage Assessment"
-                    helpText="Description of damage to crops/infrastructure">
+                    helpText="Description of damage to crops/infrastructure"
+                  >
                     <StandardInput
                       type="text"
                       placeholder="e.g., minor leaf damage, no structural damage"
@@ -523,7 +503,8 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                   </StandardField>
                   <StandardField
                     label="Protection Measures"
-                    helpText="Actions taken to protect crops">
+                    helpText="Actions taken to protect crops"
+                  >
                     <StandardInput
                       type="text"
                       placeholder="e.g., secured equipment, protected young plants"
@@ -559,31 +540,30 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                   </StandardField>
                 </SimpleGrid>
               ) : null}
-            </Box>
+            </SectionBox>
           )}
 
-          {/* Section 3: Transparency Notes */}
-          <Box mb={6} p={4} border="1px" borderColor="gray.200" borderRadius="lg">
-            <HStack justify="space-between" align="center" mb={4}>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                <Icon as={FaSeedling} mr={2} />
-                Environmental Context & Transparency Notes
-              </Text>
-              <Badge colorScheme="green" fontSize="xs">
-                Consumer Transparency
-              </Badge>
-            </HStack>
+          {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
+          <SectionBox variant="default">
+            <SectionHeader
+              icon={FaSeedling}
+              iconColor="green.500"
+              title="Farmer's Field Notes & Consumer Transparency"
+              badge="Consumer Transparency"
+              badgeColorScheme="green"
+            />
 
             <StandardField
-              label="Observations"
-              helpText="Share additional details about weather impact and farming response that help consumers understand your practices">
+              label="Observations & Notes"
+              helpText="Share additional details about weather impact and farming response that help consumers understand your practices"
+            >
               <StandardTextarea
                 placeholder="Optional: Describe how this weather event affected your farming operations, what measures you took, and how it impacts the quality or safety of your produce."
                 rows={4}
                 {...register('observation')}
               />
             </StandardField>
-          </Box>
+          </SectionBox>
           {!hideActions && (
             <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
               <HStack justify="space-between">
@@ -591,14 +571,16 @@ const WeatherTab = ({ onSubmitHandler, onDataChange, onPrev, initialValues = {},
                   variant="outline"
                   onClick={onPrev}
                   leftIcon={<FaChevronLeft />}
-                  size="lg">
+                  size="lg"
+                >
                   {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
                 </StandardButton>
                 <StandardButton
                   variant="primary"
                   type="submit"
                   rightIcon={<FaChevronRight />}
-                  size="lg">
+                  size="lg"
+                >
                   {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                 </StandardButton>
               </HStack>

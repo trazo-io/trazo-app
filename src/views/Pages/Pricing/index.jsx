@@ -467,7 +467,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       console.log('Creating checkout session with:', {
         plan_id: planId,
         company_id: companyId,
-        interval: activeInterval,  // Include the current interval
+        interval: activeInterval, // Include the current interval
         success_url: `${window.location.origin}/admin/pricing?status=success&plan_subscribed=true`,
         cancel_url: window.location.href
       });
@@ -475,7 +475,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       const result = await createCheckoutSession({
         plan_id: planId,
         company_id: companyId,
-        interval: activeInterval,  // Send the active interval (monthly/yearly)
+        interval: activeInterval, // Send the active interval (monthly/yearly)
         success_url: `${window.location.origin}/admin/pricing?status=success&plan_subscribed=true`,
         cancel_url: window.location.href
       }).unwrap();
@@ -540,12 +540,17 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
 
   return (
     <StandardPage
-      title={newCompanyFlow || isNewCompany ? '🎉 ¡Empresa creada exitosamente!' : 'Selecciona Tu Plan'}
+      title={
+        newCompanyFlow || isNewCompany ? '🎉 ¡Empresa creada exitosamente!' : 'Selecciona Tu Plan'
+      }
       description={
         newCompanyFlow || isNewCompany
-          ? `Tu empresa ${activeCompany?.name || 'nueva empresa'} está lista. Ahora selecciona el plan perfecto para comenzar a rastrear tu huella de carbono y optimizar tus operaciones agrícolas.`
+          ? `Tu empresa ${
+              activeCompany?.name || 'nueva empresa'
+            } está lista. Ahora selecciona el plan perfecto para comenzar a rastrear tu huella de carbono y optimizar tus operaciones agrícolas.`
           : 'Actualiza tu plan para desbloquear más funcionalidades'
-      }>
+      }
+    >
       {/* Welcome Badge for New Companies */}
       {(newCompanyFlow || isNewCompany) && (
         <Box textAlign="center" mb={8}>
@@ -574,7 +579,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       <StandardSection
         title="Planes de Suscripción"
         description="Diseñados específicamente para productores agrícolas"
-        className="plans-section">
+        className="plans-section"
+      >
         {/* Interval Toggle */}
         <VStack spacing={8} w="full">
           <VStack spacing={4}>
@@ -587,7 +593,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                 size="sm"
                 onClick={() => setActiveInterval('monthly')}
                 borderRadius="md"
-                px={6}>
+                px={6}
+              >
                 Mensual
               </StandardButton>
               <StandardButton
@@ -595,7 +602,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                 size="sm"
                 onClick={() => setActiveInterval('yearly')}
                 borderRadius="md"
-                px={6}>
+                px={6}
+              >
                 <HStack spacing={2}>
                   <Text>Anual</Text>
                   <Badge colorScheme="green" fontSize="xs" px={2} py={1} borderRadius="full">
@@ -615,7 +623,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                 variant="outline"
                 size="sm"
                 onClick={() => refetch()}
-                isLoading={loading}>
+                isLoading={loading}
+              >
                 Actualizar Precios
               </StandardButton>
             </VStack>
@@ -632,7 +641,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
               w="full"
               justifyItems="center"
               maxW="1400px"
-              mx="auto">
+              mx="auto"
+            >
               {displayPlans.map((plan) => {
                 const isRecommended = plan.id === getRecommendedPlan(displayPlans)?.id;
                 const planIcon = getPlanIcon(plan.name);
@@ -643,7 +653,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                     key={plan.id}
                     whileHover={{ y: -4, scale: 1.01 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    style={{ width: '100%', maxWidth: '320px' }}>
+                    style={{ width: '100%', maxWidth: '320px' }}
+                  >
                     <StandardCard
                       variant={isRecommended ? 'elevated' : 'outline'}
                       borderColor={isRecommended ? `${planColor}.200` : 'gray.200'}
@@ -653,7 +664,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                       overflow="hidden"
                       h="full"
                       display="flex"
-                      flexDirection="column">
+                      flexDirection="column"
+                    >
                       {/* Recommended Badge */}
                       {isRecommended && (
                         <Badge
@@ -667,7 +679,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                           py={1}
                           borderRadius="full"
                           fontWeight="bold"
-                          zIndex={2}>
+                          zIndex={2}
+                        >
                           ⭐ RECOMENDADO
                         </Badge>
                       )}
@@ -680,7 +693,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                             bg={`${planColor}.100`}
                             borderRadius="full"
                             border="2px solid"
-                            borderColor={`${planColor}.200`}>
+                            borderColor={`${planColor}.200`}
+                          >
                             <Icon as={planIcon} boxSize={8} color={`${planColor}.600`} />
                           </Box>
 
@@ -697,7 +711,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               px={2}
                               lineHeight="1.5"
                               display="flex"
-                              alignItems="center">
+                              alignItems="center"
+                            >
                               {plan.description}
                             </Text>
                           </VStack>
@@ -754,7 +769,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               fontWeight="bold"
                               color="gray.700"
                               textTransform="uppercase"
-                              letterSpacing="wide">
+                              letterSpacing="wide"
+                            >
                               Características incluidas
                             </Text>
                             <Box w="40px" h="1px" bg={`${planColor}.300`} mx="auto" mt={2} />
@@ -936,7 +952,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                             _hover={{
                               transform: 'translateY(-1px)',
                               boxShadow: 'md'
-                            }}>
+                            }}
+                          >
                             {newCompanyFlow || isNewCompany
                               ? 'Comenzar Prueba Gratuita'
                               : 'Seleccionar Plan'}
@@ -965,7 +982,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       {/* Compact Blockchain Add-on Section */}
       <StandardSection
         title="Verificación Blockchain"
-        description="Añade verificación inmutable de datos de carbono">
+        description="Añade verificación inmutable de datos de carbono"
+      >
         <Box maxW="4xl" mx="auto">
           <StandardCard variant="outline" borderColor="green.200" bg="green.50">
             <CardBody p={4}>
@@ -1006,7 +1024,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                     bg="white"
                     borderRadius="md"
                     border="1px solid"
-                    borderColor="green.100">
+                    borderColor="green.100"
+                  >
                     <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
                     <VStack align="start" spacing={0} flex={1}>
                       <Text fontSize="xs" fontWeight="bold" color="gray.700">
@@ -1024,7 +1043,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                     bg="white"
                     borderRadius="md"
                     border="1px solid"
-                    borderColor="green.100">
+                    borderColor="green.100"
+                  >
                     <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
                     <VStack align="start" spacing={0} flex={1}>
                       <Text fontSize="xs" fontWeight="bold" color="gray.700">
@@ -1042,7 +1062,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                     bg="white"
                     borderRadius="md"
                     border="1px solid"
-                    borderColor="green.100">
+                    borderColor="green.100"
+                  >
                     <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
                     <VStack align="start" spacing={0} flex={1}>
                       <Text fontSize="xs" fontWeight="bold" color="gray.700">
@@ -1070,14 +1091,16 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                           isLoading={checkoutLoading}
                           loadingText="Procesando..."
                           leftIcon={<Icon as={FaShieldAlt} />}
-                          colorScheme="green">
+                          colorScheme="green"
+                        >
                           Añadir Blockchain ($5/mes)
                         </StandardButton>
                         <StandardButton
                           variant="outline"
                           size="sm"
                           onClick={() => navigate('/admin/dashboard')}
-                          leftIcon={<Icon as={FaRocket} />}>
+                          leftIcon={<Icon as={FaRocket} />}
+                        >
                           Ir al Dashboard
                         </StandardButton>
                       </HStack>
@@ -1100,7 +1123,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                             ?.scrollIntoView({ behavior: 'smooth' })
                         }
                         leftIcon={<Icon as={FaRocket} />}
-                        colorScheme="blue">
+                        colorScheme="blue"
+                      >
                         Ver Planes
                       </StandardButton>
                     </VStack>
@@ -1115,7 +1139,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       {/* Benefits Section */}
       <StandardSection
         title="¿Por qué elegir Trazo?"
-        description="Diseñado específicamente para productores agrícolas">
+        description="Diseñado específicamente para productores agrícolas"
+      >
         <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
           <StandardCard variant="flat">
             <CardBody textAlign="center">
@@ -1166,7 +1191,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       {/* FAQ Section */}
       <StandardSection
         title="Preguntas Frecuentes"
-        description="Respuestas a las dudas más comunes">
+        description="Respuestas a las dudas más comunes"
+      >
         <Accordion allowToggle>
           <AccordionItem>
             <AccordionButton>

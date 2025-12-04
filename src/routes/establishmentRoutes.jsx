@@ -16,7 +16,11 @@ const EstablishmentRoutes = () => (
       element={<AddEstablishment isEdit={true} />}
     />
     <Route path="establishment/:establishmentId/profile" exact element={<ProfileEstablishment />} />
-    <Route path="establishment/:establishmentId/transparency" exact element={<ModernCarbonDashboard />} />
+    <Route
+      path="establishment/:establishmentId/transparency"
+      exact
+      element={<ModernCarbonDashboard />}
+    />
     <Route path="establishment/:establishmentId/iot" exact element={<IoTDashboard />} />
   </>
 );

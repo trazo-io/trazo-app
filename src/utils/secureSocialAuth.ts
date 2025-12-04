@@ -42,7 +42,7 @@ interface OAuthConfig {
 function generateSecureState(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -57,9 +57,9 @@ function validateRedirectUri(uri: string): boolean {
       'consumer.trazo.com',
       'localhost' // Only for development
     ];
-    
-    return allowedDomains.some(domain => 
-      url.hostname === domain || url.hostname.endsWith('.' + domain)
+
+    return allowedDomains.some(
+      (domain) => url.hostname === domain || url.hostname.endsWith('.' + domain)
     );
   } catch {
     return false;
@@ -118,7 +118,7 @@ export class SecureSocialAuth {
       }
 
       const config = await response.json();
-      
+
       // Validate the redirect URI for security
       if (!validateRedirectUri(config.redirectUri)) {
         throw new Error('Invalid redirect URI received from backend');
@@ -164,7 +164,7 @@ export class SecureSocialAuth {
     try {
       const config = await this.getOAuthConfig(SocialProvider.GOOGLE);
       const state = generateSecureState();
-      
+
       // Store state for validation
       this.stateStorage.set(state, {
         provider: SocialProvider.GOOGLE,
@@ -201,30 +201,33 @@ export class SecureSocialAuth {
         }, 1000);
 
         // Listen for OAuth callback
-        window.addEventListener('message', (event) => {
-          if (event.origin !== window.location.origin) return;
-          
-          if (event.data.type === 'OAUTH_SUCCESS') {
-            clearInterval(checkClosed);
-            popup?.close();
-            
-            if (this.validateState(event.data.state, SocialProvider.GOOGLE)) {
-              resolve({
-                success: true,
-                provider: SocialProvider.GOOGLE,
-                authCode: event.data.code
-              });
-            } else {
-              resolve({
-                success: false,
-                provider: SocialProvider.GOOGLE,
-                error: 'Invalid OAuth state'
-              });
-            }
-          }
-        }, { once: true });
-      });
+        window.addEventListener(
+          'message',
+          (event) => {
+            if (event.origin !== window.location.origin) return;
 
+            if (event.data.type === 'OAUTH_SUCCESS') {
+              clearInterval(checkClosed);
+              popup?.close();
+
+              if (this.validateState(event.data.state, SocialProvider.GOOGLE)) {
+                resolve({
+                  success: true,
+                  provider: SocialProvider.GOOGLE,
+                  authCode: event.data.code
+                });
+              } else {
+                resolve({
+                  success: false,
+                  provider: SocialProvider.GOOGLE,
+                  error: 'Invalid OAuth state'
+                });
+              }
+            }
+          },
+          { once: true }
+        );
+      });
     } catch (error) {
       console.error('Google OAuth initialization failed:', error);
       return {
@@ -269,13 +272,12 @@ export class SecureSocialAuth {
       }
 
       const result = await response.json();
-      
+
       return {
         success: true,
         provider,
         token: result.access_token
       };
-
     } catch (error) {
       console.error('Social authentication callback failed:', error);
       return {
@@ -309,7 +311,7 @@ export const OAuthSecurityAudit = {
    */
   auditOAuthSecurity(): { secure: boolean; issues: string[] } {
     const issues: string[] = [];
-    
+
     // Check for client secrets in environment variables
     const dangerousEnvVars = [
       'VITE_GOOGLE_CLIENT_SECRET',
@@ -319,7 +321,7 @@ export const OAuthSecurityAudit = {
       'REACT_APP_FACEBOOK_CLIENT_SECRET'
     ];
 
-    dangerousEnvVars.forEach(varName => {
+    dangerousEnvVars.forEach((varName) => {
       if (import.meta.env[varName]) {
         issues.push(`CRITICAL: Client secret found in environment variable: ${varName}`);
       }
@@ -327,7 +329,7 @@ export const OAuthSecurityAudit = {
 
     // Check for hardcoded secrets in localStorage/sessionStorage
     const secretKeys = ['client_secret', 'oauth_secret', 'app_secret'];
-    secretKeys.forEach(key => {
+    secretKeys.forEach((key) => {
       if (localStorage.getItem(key) || sessionStorage.getItem(key)) {
         issues.push(`CRITICAL: OAuth secret found in browser storage: ${key}`);
       }
@@ -353,7 +355,7 @@ export const OAuthSecurityAudit = {
       'apple_client_secret'
     ];
 
-    keysToRemove.forEach(key => {
+    keysToRemove.forEach((key) => {
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);
     });
