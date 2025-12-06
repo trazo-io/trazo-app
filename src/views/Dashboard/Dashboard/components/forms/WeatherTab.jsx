@@ -32,34 +32,91 @@ const formSchemaMainInfo = object({
   type: string().min(1, 'Name is required'),
   lower_temperature: string()
     .optional()
-    .transform((val) => Number(val)),
+    .refine(
+      (val) => {
+        if (!val || val.trim() === '') return true; // Optional field
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= -50 && num <= 50;
+      },
+      { message: 'Temperature must be between -50°C and 50°C' }
+    )
+    .transform((val) => (val ? Number(val) : undefined)),
   way_of_protection: string().optional(),
   water_deficit: string()
     .optional()
-    .transform((val) => Number(val)),
+    .refine(
+      (val) => {
+        if (!val || val.trim() === '') return true; // Optional field
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0 && num <= 500;
+      },
+      { message: 'Water deficit must be between 0 and 500 mm' }
+    )
+    .transform((val) => (val ? Number(val) : undefined)),
   // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail)
+  // Duration: minutes for hailstorms (0-120), hours for other events (0-168 = 1 week)
   duration: string()
     .optional()
-    .transform((val) => Number(val)),
+    .refine(
+      (val) => {
+        if (!val || val.trim() === '') return true; // Optional field
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0 && num <= 168; // Flexible max for both minutes and hours
+      },
+      { message: 'Duration must be a positive number' }
+    )
+    .transform((val) => (val ? Number(val) : undefined)),
   highest_temperature: string()
     .optional()
-    .transform((val) => Number(val)),
+    .refine(
+      (val) => {
+        if (!val || val.trim() === '') return true; // Optional field
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= -20 && num <= 60;
+      },
+      { message: 'Temperature must be between -20°C and 60°C' }
+    )
+    .transform((val) => (val ? Number(val) : undefined)),
   start_date: string().optional(),
   end_date: string().optional(),
   // Tropical Storm fields
   wind_speed: string()
     .optional()
-    .transform((val) => Number(val)),
+    .refine(
+      (val) => {
+        if (!val || val.trim() === '') return true;
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0 && num <= 400; // Max 400 km/h (category 5+ hurricane)
+      },
+      { message: 'Wind speed must be between 0 and 400 km/h' }
+    )
+    .transform((val) => (val ? Number(val) : undefined)),
   precipitation_amount: string()
     .optional()
-    .transform((val) => Number(val)),
+    .refine(
+      (val) => {
+        if (!val || val.trim() === '') return true;
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0 && num <= 1000; // Max 1000mm (extreme rainfall)
+      },
+      { message: 'Precipitation must be between 0 and 1000 mm' }
+    )
+    .transform((val) => (val ? Number(val) : undefined)),
   damage_assessment: string().optional(),
   // High Winds fields
   protection_measures: string().optional(),
   // Humidity fields (both high and low)
   humidity_level: string()
     .optional()
-    .transform((val) => Number(val)),
+    .refine(
+      (val) => {
+        if (!val || val.trim() === '') return true; // Optional field
+        const num = parseFloat(val);
+        return !isNaN(num) && num >= 0 && num <= 100;
+      },
+      { message: 'Humidity level must be between 0% and 100%' }
+    )
+    .transform((val) => (val ? Number(val) : undefined)),
   crop_impact: string().optional(),
   observation: string().optional()
 });
@@ -67,6 +124,7 @@ const formSchemaMainInfo = object({
 const WeatherTab = ({
   onSubmitHandler,
   onDataChange,
+  onValidationChange,
   onPrev,
   initialValues = {},
   hideActions = false
@@ -100,6 +158,7 @@ const WeatherTab = ({
   // Read fields directly from initialValues
   const mainInfoMethods = useForm({
     resolver: zodResolver(formSchemaMainInfo),
+    mode: 'onBlur', // Validate when user leaves field - shows errors immediately
     defaultValues: {
       type: formType || '',
       lower_temperature: initialValues.lower_temperature?.toString() || '',
@@ -123,10 +182,14 @@ const WeatherTab = ({
     }
   });
 
-  // Update form values when initialValues change (without mainInfoMethods in deps to prevent loops)
+  // Track if this is the initial mount - only reset form on first load, not on every onDataChange
+  const isInitialMount = React.useRef(true);
+
+  // Update form values only on initial mount (for loading existing event data)
+  // Skip reset when changes come from user editing (via onDataChange)
   useEffect(() => {
-    console.log('🔍 WeatherTab: initialValues received:', initialValues);
-    if (Object.keys(initialValues).length > 0) {
+    if (isInitialMount.current && Object.keys(initialValues).length > 0) {
+      console.log('🔍 WeatherTab: Initial load - setting form values:', initialValues);
       const mappedType = mapApiTypeToFormType(initialValues.type);
       console.log('🔍 WeatherTab: mapped type:', mappedType, 'from:', initialValues.type);
       mainInfoMethods.reset({
@@ -150,6 +213,7 @@ const WeatherTab = ({
         crop_impact: initialValues.crop_impact || '',
         observation: initialValues.observation || ''
       });
+      isInitialMount.current = false; // Mark as initialized - skip future resets
     }
   }, [JSON.stringify(initialValues)]); // Use JSON.stringify to prevent render loops from object reference changes
 
@@ -158,11 +222,26 @@ const WeatherTab = ({
     handleSubmit: mainInfoSubmit,
     watch,
     errors: mainInfoErrors,
-    formState: { errors, isSubmitSuccessful },
+    formState: { errors, isSubmitSuccessful, isValid },
     register
   } = mainInfoMethods;
 
   const type = watch('type', '');
+
+  // Report validation errors to parent component
+  useEffect(() => {
+    const hasErrors = Object.keys(errors).length > 0;
+    console.log('🚨 WeatherTab validation:', { hasErrors, errors, onValidationChange: !!onValidationChange });
+    if (onValidationChange) {
+      onValidationChange(hasErrors);
+    }
+    // Cleanup: reset error state when unmounting
+    return () => {
+      if (onValidationChange) {
+        onValidationChange(false);
+      }
+    };
+  }, [errors, onValidationChange]);
 
   // Debug logging for form state (commented out to prevent render loops)
   // console.log('🔍 WeatherTab Debug:', { type, formType, initialValues, errors });
@@ -211,8 +290,10 @@ const WeatherTab = ({
         //
         // They do NOT generate carbon emissions and should not call carbon APIs
 
-        // Call onDataChange to save form data for step navigation persistence
-        onDataChange(value);
+        // Debounce onDataChange to prevent re-renders while typing
+        debounceTimeout = setTimeout(() => {
+          onDataChange(value);
+        }, 500); // 500ms debounce - waits for user to stop typing
       }
     });
 
@@ -369,12 +450,16 @@ const WeatherTab = ({
               {type === 'FR' ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <StandardField
-                    label="Lower Temperature"
+                    label="Lower Temperature (°C)"
                     helpText="Minimum temperature recorded during frost event"
+                    error={errors.lower_temperature?.message}
                   >
                     <StandardInput
-                      type="text"
-                      placeholder="e.g., -2°C or 28°F"
+                      type="number"
+                      step="0.1"
+                      min="-50"
+                      max="50"
+                      placeholder="-2"
                       {...register('lower_temperature')}
                     />
                   </StandardField>
@@ -392,12 +477,16 @@ const WeatherTab = ({
               ) : type === 'DR' ? (
                 <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
                   <StandardField
-                    label="Water Deficit"
+                    label="Water Deficit (mm)"
                     helpText="Accumulated water deficit during drought period"
+                    error={errors.water_deficit?.message}
                   >
                     <StandardInput
-                      type="text"
-                      placeholder="e.g., 50mm below average"
+                      type="number"
+                      step="1"
+                      min="0"
+                      max="500"
+                      placeholder="50"
                       {...register('water_deficit')}
                     />
                   </StandardField>
@@ -405,10 +494,17 @@ const WeatherTab = ({
               ) : type === 'HL' ? (
                 // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail, no consumer impact)
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField label="Duration" helpText="How long the hailstorm lasted">
+                  <StandardField
+                    label="Duration (minutes)"
+                    helpText="How long the hailstorm lasted"
+                    error={errors.duration?.message}
+                  >
                     <StandardInput
-                      type="text"
-                      placeholder="e.g., 15 minutes"
+                      type="number"
+                      step="1"
+                      min="0"
+                      max="1440"
+                      placeholder="15"
                       {...register('duration')}
                     />
                   </StandardField>
@@ -426,12 +522,16 @@ const WeatherTab = ({
               ) : type === 'HT' ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <StandardField
-                    label="Highest Temperature"
+                    label="Highest Temperature (°C)"
                     helpText="Peak temperature during heat event"
+                    error={errors.highest_temperature?.message}
                   >
                     <StandardInput
-                      type="text"
-                      placeholder="e.g., 42°C or 108°F"
+                      type="number"
+                      step="0.1"
+                      min="-20"
+                      max="60"
+                      placeholder="42"
                       {...register('highest_temperature')}
                     />
                   </StandardField>
@@ -447,29 +547,45 @@ const WeatherTab = ({
                 </SimpleGrid>
               ) : type === 'TS' ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField label="Wind Speed" helpText="Maximum wind speed recorded">
+                  <StandardField
+                    label="Wind Speed (km/h)"
+                    helpText="Maximum wind speed recorded"
+                    error={errors.wind_speed?.message}
+                  >
                     <StandardInput
                       type="number"
-                      placeholder="e.g., 120 km/h"
+                      step="1"
+                      min="0"
+                      max="400"
+                      placeholder="120"
                       {...register('wind_speed')}
                     />
                   </StandardField>
                   <StandardField
-                    label="Precipitation Amount"
+                    label="Precipitation Amount (mm)"
                     helpText="Total rainfall during storm"
+                    error={errors.precipitation_amount?.message}
                   >
                     <StandardInput
                       type="number"
                       step="0.1"
-                      placeholder="e.g., 150mm"
+                      min="0"
+                      max="1000"
+                      placeholder="150"
                       {...register('precipitation_amount')}
                     />
                   </StandardField>
-                  <StandardField label="Duration" helpText="Storm duration in hours">
+                  <StandardField
+                    label="Duration (hours)"
+                    helpText="Storm duration in hours"
+                    error={errors.duration?.message}
+                  >
                     <StandardInput
                       type="number"
                       step="0.5"
-                      placeholder="e.g., 6 hours"
+                      min="0"
+                      max="168"
+                      placeholder="6"
                       {...register('duration')}
                     />
                   </StandardField>
@@ -486,18 +602,31 @@ const WeatherTab = ({
                 </SimpleGrid>
               ) : type === 'HW' ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField label="Wind Speed" helpText="Maximum wind speed recorded">
+                  <StandardField
+                    label="Wind Speed (km/h)"
+                    helpText="Maximum wind speed recorded"
+                    error={errors.wind_speed?.message}
+                  >
                     <StandardInput
                       type="number"
-                      placeholder="e.g., 80 km/h"
+                      step="1"
+                      min="0"
+                      max="400"
+                      placeholder="80"
                       {...register('wind_speed')}
                     />
                   </StandardField>
-                  <StandardField label="Duration" helpText="High wind period duration">
+                  <StandardField
+                    label="Duration (hours)"
+                    helpText="High wind period duration"
+                    error={errors.duration?.message}
+                  >
                     <StandardInput
                       type="number"
                       step="0.5"
-                      placeholder="e.g., 3 hours"
+                      min="0"
+                      max="168"
+                      placeholder="3"
                       {...register('duration')}
                     />
                   </StandardField>
@@ -514,20 +643,31 @@ const WeatherTab = ({
                 </SimpleGrid>
               ) : type === 'HH' || type === 'LH' ? (
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField label="Humidity Level" helpText="Humidity percentage recorded">
+                  <StandardField
+                    label="Humidity Level (%)"
+                    helpText="Humidity percentage recorded (0-100%)"
+                    error={errors.humidity_level?.message}
+                  >
                     <StandardInput
                       type="number"
+                      step="1"
                       min="0"
                       max="100"
-                      placeholder="e.g., 85%"
+                      placeholder="85"
                       {...register('humidity_level')}
                     />
                   </StandardField>
-                  <StandardField label="Duration" helpText="How long unusual humidity lasted">
+                  <StandardField
+                    label="Duration (hours)"
+                    helpText="How long unusual humidity lasted"
+                    error={errors.duration?.message}
+                  >
                     <StandardInput
                       type="number"
                       step="0.5"
-                      placeholder="e.g., 48 hours"
+                      min="0"
+                      max="720"
+                      placeholder="48"
                       {...register('duration')}
                     />
                   </StandardField>
@@ -580,6 +720,7 @@ const WeatherTab = ({
                   type="submit"
                   rightIcon={<FaChevronRight />}
                   size="lg"
+                  isDisabled={Object.keys(errors).length > 0}
                 >
                   {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                 </StandardButton>

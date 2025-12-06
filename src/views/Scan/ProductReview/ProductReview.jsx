@@ -249,7 +249,7 @@ function ProductReview() {
                         leftIcon={<FaLeaf />}
                         disabled={!rating || rating === 0}
                       >
-                        Share Transparency Review
+                        Share Review
                       </StandardButton>
                     </Flex>
                   </VStack>

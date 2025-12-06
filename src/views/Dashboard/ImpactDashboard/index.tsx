@@ -1,37 +1,28 @@
 import React from 'react';
 import {
   Box,
-  Container,
   VStack,
   HStack,
   SimpleGrid,
-  Heading,
   Text,
   Icon,
   Badge,
   useColorModeValue,
-  useBreakpointValue,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  Spinner,
   Alert,
-  AlertIcon
+  AlertIcon,
+  Flex,
+  Circle
 } from '@chakra-ui/react';
-import Card from 'components/Card/Card';
-import CardBody from 'components/Card/CardBody';
-import CardHeader from 'components/Card/CardHeader';
 import {
   FaLeaf,
-  FaQrcode,
   FaCheckCircle,
-  FaChartLine,
   FaMapMarkerAlt,
-  FaHeart
+  FaHeart,
+  FaChevronRight,
+  FaQrcode
 } from 'react-icons/fa';
 import { MdTrendingUp } from 'react-icons/md';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useGetImpactDashboardQuery } from '../../../store/api/consumerApi';
 import {
   StandardMetricCard,
@@ -41,46 +32,33 @@ import {
   ConsumerTooltip
 } from '../../../components/Design/StandardComponents';
 
-// Simple Impact Dashboard for US consumers
+// Consumer Discover Dashboard - Main hub for transparency journey
 export default function ImpactDashboard() {
   const navigate = useNavigate();
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
-  const cardColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
-  const isMobile = useBreakpointValue({ base: true, md: false });
+  const cardBorder = useColorModeValue('gray.200', 'gray.600');
 
   // Fetch dynamic impact dashboard data
   const { data: dashboardData, isLoading, error, refetch } = useGetImpactDashboardQuery();
 
-  // Handle loading state
+  // Return null while loading - keeps app-level loading visible
   if (isLoading) {
-    return (
-      <Box bg={bgColor} minH="100vh">
-        <Container maxW="7xl" mx="auto" pt={{ base: '120px', md: '80px' }} pb={8}>
-          <VStack spacing={8} align="center">
-            <Spinner size="xl" color="green.500" />
-            <Text>Loading your impact data...</Text>
-          </VStack>
-        </Container>
-      </Box>
-    );
+    return null;
   }
 
   // Handle error state
   if (error) {
     return (
-      <Box bg={bgColor} minH="100vh">
-        <Container maxW="7xl" mx="auto" pt={{ base: '120px', md: '80px' }} pb={8}>
-          <Alert status="error">
-            <AlertIcon />
-            Unable to load your impact data. Please try again.
-            <StandardButton size="sm" onClick={() => refetch()}>
-              Retry
-            </StandardButton>
-          </Alert>
-        </Container>
-      </Box>
+      <StandardPage title="Discover" description="">
+        <Alert status="error" borderRadius="xl">
+          <AlertIcon />
+          <Text flex={1}>Unable to load your transparency data.</Text>
+          <StandardButton size="sm" onClick={() => refetch()}>
+            Retry
+          </StandardButton>
+        </Alert>
+      </StandardPage>
     );
   }
 
@@ -91,8 +69,8 @@ export default function ImpactDashboard() {
 
   return (
     <StandardPage
-      title="My Transparency Journey"
-      description="Discover the story behind your food choices"
+      title="Discover"
+      description="Your transparency journey at a glance"
     >
       <VStack spacing={8} align="stretch">
         {/* Hero Section with Stats */}
@@ -103,14 +81,14 @@ export default function ImpactDashboard() {
                 icon={MdTrendingUp}
                 iconColor="green.600"
                 iconBg="green.100"
-                value={Math.round(impactMetrics?.transparency_score_avg || 85)}
-                label="Avg Transparency Score"
-                subtitle="Farming practice visibility"
+                value={impactMetrics?.transparency_score_avg ? Math.round(impactMetrics.transparency_score_avg) : impactMetrics?.total_scans || 0}
+                label={impactMetrics?.transparency_score_avg ? "Avg Transparency Score" : "Products Scanned"}
+                subtitle={impactMetrics?.transparency_score_avg ? "Farming practice visibility" : "Start scanning to see scores"}
                 size="lg"
                 tooltip={{
-                  label: 'Average Transparency Score',
+                  label: 'Transparency Score',
                   explanation:
-                    "This shows the average transparency level of products you've scanned. Transparency measures how well farms document their growing practices, from planting to harvest. Higher scores mean you can see exactly how your food was grown, giving you confidence in your food choices."
+                    "This shows the average transparency level of products you've scanned. Transparency measures how many farming activities are documented - from planting to harvest. Higher scores mean you can see exactly how your food was grown, giving you confidence in your food choices."
                 }}
               />
 
@@ -147,173 +125,118 @@ export default function ImpactDashboard() {
           </VStack>
         </StandardCard>
 
-        {/* Three Core MVP Features */}
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-          <StandardCard variant="outline">
-            <VStack spacing={4}>
-              <Icon as={FaQrcode} boxSize={10} color="green.500" />
-              <VStack spacing={2}>
-                <Text fontWeight="bold" fontSize="lg" color={textColor}>
-                  Transparency Discovery
-                </Text>
-                <Text fontSize="sm" color={mutedColor} textAlign="center">
-                  See exactly how your food was grown
-                </Text>
-              </VStack>
-              <StandardButton
-                variant="primary"
-                size="md"
-                width="full"
-                onClick={() => navigate('/admin/dashboard/consumer/education')}
-              >
-                Discover Products
-              </StandardButton>
-            </VStack>
-          </StandardCard>
-
-          <StandardCard variant="outline">
-            <VStack spacing={4}>
-              <Icon as={FaChartLine} boxSize={10} color="blue.500" />
-              <VStack spacing={2}>
-                <Text fontWeight="bold" fontSize="lg" color={textColor}>
-                  Discover Products
-                </Text>
-                <Text fontSize="sm" color={mutedColor} textAlign="center">
-                  Explore transparency options
-                </Text>
-              </VStack>
-              <StandardButton
-                variant="primary"
-                size="md"
-                width="full"
-                onClick={() => navigate('/admin/dashboard/consumer/education')}
-              >
-                Compare Now
-              </StandardButton>
-            </VStack>
-          </StandardCard>
-
-          <StandardCard variant="outline">
-            <VStack spacing={4}>
-              <Icon as={FaMapMarkerAlt} boxSize={10} color="green.500" />
-              <VStack spacing={2}>
-                <Text fontWeight="bold" fontSize="lg" color={textColor}>
-                  My History
-                </Text>
-                <Text fontSize="sm" color={mutedColor} textAlign="center">
-                  See all your past scans
-                </Text>
-              </VStack>
-              <StandardButton
-                variant="primary"
-                size="md"
-                width="full"
-                onClick={() => navigate('/admin/dashboard/journey')}
-              >
-                View History
-              </StandardButton>
-            </VStack>
-          </StandardCard>
-        </SimpleGrid>
-
         {/* Two Column Layout */}
         <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8}>
-          {/* Recent Product Scans */}
+          {/* Recent Product Scans - Mobile-First Compact Cards */}
           <StandardCard
-            title="Recent Transparency Discoveries"
+            title="Recent Discoveries"
             subtitle="Farms you've explored"
             variant="outline"
           >
-            <VStack spacing={5}>
-              {recentScans.map((scan) => (
-                <Box
-                  key={scan.id}
-                  w="full"
-                  p={5}
-                  bg={scan.is_verified ? 'green.50' : 'gray.50'}
-                  borderRadius="xl"
-                  borderWidth="1px"
-                  borderColor="gray.200"
-                >
-                  <VStack align="start" spacing={3}>
-                    <HStack justify="space-between" w="full">
-                      <VStack align="start" spacing={1}>
-                        <HStack>
-                          <Text fontWeight="bold" fontSize="md" color={textColor}>
+            <VStack spacing={3}>
+              {recentScans.length === 0 ? (
+                <VStack py={8} spacing={3}>
+                  <Circle size="60px" bg="gray.100">
+                    <Icon as={FaQrcode} color="gray.400" boxSize={6} />
+                  </Circle>
+                  <Text color={mutedColor} fontSize="sm" textAlign="center">
+                    No scans yet. Start exploring!
+                  </Text>
+                </VStack>
+              ) : (
+                recentScans.map((scan) => (
+                  <Box
+                    as={RouterLink}
+                    to={`/production/${scan.production_id || scan.id}`}
+                    key={scan.id}
+                    w="full"
+                    bg="white"
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor="gray.200"
+                    p={4}
+                    _hover={{
+                      borderColor: 'green.300',
+                      shadow: 'md',
+                      transform: 'translateY(-1px)'
+                    }}
+                    transition="all 0.2s"
+                    textDecoration="none"
+                  >
+                    <Flex gap={3} align="center">
+                      {/* Product Icon/Placeholder */}
+                      <Circle size="50px" bg="green.50" flexShrink={0}>
+                        <Icon as={FaLeaf} color="green.500" boxSize={5} />
+                      </Circle>
+
+                      {/* Content */}
+                      <Box flex={1} minW={0}>
+                        <HStack justify="space-between" align="start" mb={1}>
+                          <Text
+                            fontWeight="semibold"
+                            fontSize="md"
+                            color={textColor}
+                            noOfLines={1}
+                          >
                             {scan.product_name}
                           </Text>
-                          <ConsumerTooltip
-                            label="Transparency Score"
-                            explanation="Transparency scores show how well farms document their growing practices, from planting to harvest. Scores range from 0-100%, with higher scores meaning you can see exactly how your food was grown through detailed farming records."
-                          >
-                            <Badge colorScheme="green" fontSize="xs" cursor="help">
-                              {scan.transparency_score || '85'}%
-                            </Badge>
-                          </ConsumerTooltip>
-                          {scan.is_verified && (
-                            <ConsumerTooltip
-                              label="Farm Practices Verified"
-                              explanation="This farm has verified documentation of their growing practices, giving you confidence in the transparency and authenticity of their farming methods."
-                            >
-                              <Icon
-                                as={FaCheckCircle}
-                                color="green.500"
-                                boxSize={4}
-                                cursor="help"
-                              />
-                            </ConsumerTooltip>
-                          )}
-                          {scan.is_favorite && <Icon as={FaHeart} color="red.500" boxSize={4} />}
+                          <Icon as={FaChevronRight} color="gray.400" boxSize={4} flexShrink={0} />
                         </HStack>
-                        <HStack spacing={2}>
-                          <Icon as={FaMapMarkerAlt} color="gray.500" boxSize={3} />
-                          <Text fontSize="sm" color={mutedColor}>
-                            {scan.farm_name} • {scan.location}
+
+                        <HStack spacing={1} mb={2}>
+                          <Icon as={FaMapMarkerAlt} color="gray.400" boxSize={3} />
+                          <Text fontSize="sm" color={mutedColor} noOfLines={1}>
+                            {scan.farm_name}
                           </Text>
                         </HStack>
-                      </VStack>
-                      <ConsumerTooltip
-                        label="Farming Events Viewed"
-                        explanation="This shows how many farming activities you explored for this product, from planting to harvest. Each event gives you insight into the care and attention that went into growing your food."
-                      >
-                        <Text fontSize="sm" color="green.600" fontWeight="bold" cursor="help">
-                          {scan.events_viewed || '12'} events
-                        </Text>
-                      </ConsumerTooltip>
-                    </HStack>
 
-                    <HStack spacing={1}>
-                      <Text fontSize="sm" color={mutedColor}>
-                        Environmental impact:
-                      </Text>
-                      <ConsumerTooltip
-                        label="Carbon Footprint"
-                        explanation="Carbon footprint measures all greenhouse gases produced to grow, harvest, process, package, and transport this food to you. It's measured in kg CO₂e (carbon dioxide equivalent) per kg of product. Lower numbers are better for the environment."
-                      >
-                        <Text
-                          fontSize="sm"
-                          color={mutedColor}
-                          cursor="help"
-                          textDecoration="underline"
-                          textDecorationStyle="dotted"
-                        >
-                          {scan.carbon_footprint}
-                        </Text>
-                      </ConsumerTooltip>
-                    </HStack>
-
-                    {scan.sustainability_practices.length > 0 && (
-                      <HStack spacing={2} flexWrap="wrap">
-                        {scan.sustainability_practices.slice(0, 2).map((practice, idx) => (
-                          <Badge key={idx} variant="outline" colorScheme="green" fontSize="xs">
-                            {practice}
-                          </Badge>
-                        ))}
-                      </HStack>
-                    )}
-                  </VStack>
-                </Box>
-              ))}
+                        {/* Compact Badges Row */}
+                        <HStack spacing={2} flexWrap="wrap">
+                          {scan.transparency_score && (
+                            <Badge
+                              colorScheme="green"
+                              variant="subtle"
+                              fontSize="xs"
+                              px={2}
+                              py={0.5}
+                              borderRadius="full"
+                            >
+                              {scan.transparency_score}%
+                            </Badge>
+                          )}
+                          {scan.events_viewed > 0 && (
+                            <Badge
+                              colorScheme="blue"
+                              variant="subtle"
+                              fontSize="xs"
+                              px={2}
+                              py={0.5}
+                              borderRadius="full"
+                            >
+                              {scan.events_viewed} events
+                            </Badge>
+                          )}
+                          {scan.is_verified && (
+                            <Badge
+                              colorScheme="green"
+                              variant="outline"
+                              fontSize="xs"
+                              px={2}
+                              py={0.5}
+                              borderRadius="full"
+                            >
+                              <HStack spacing={1}>
+                                <Icon as={FaCheckCircle} boxSize={3} />
+                                <Text>Verified</Text>
+                              </HStack>
+                            </Badge>
+                          )}
+                        </HStack>
+                      </Box>
+                    </Flex>
+                  </Box>
+                ))
+              )}
             </VStack>
           </StandardCard>
 
@@ -328,15 +251,25 @@ export default function ImpactDashboard() {
                   value={quickStats?.better_choices || 0}
                   label="Sustainable Items"
                   size="sm"
+                  tooltip={{
+                    label: 'Sustainable Items',
+                    explanation:
+                      "Products you've scanned that meet high transparency and sustainability standards, showing comprehensive documentation of farming practices."
+                  }}
                 />
 
                 <StandardMetricCard
                   icon={FaMapMarkerAlt}
                   iconColor="blue.600"
                   iconBg="blue.100"
-                  value={quickStats?.local_farms || 0}
-                  label="Local Farms"
+                  value={impactMetrics?.verified_farms_scanned || 0}
+                  label="Farms Discovered"
                   size="sm"
+                  tooltip={{
+                    label: 'Farms Discovered',
+                    explanation:
+                      "The number of unique farms you've explored through product scans, each with documented farming practices and transparency records."
+                  }}
                 />
               </SimpleGrid>
 

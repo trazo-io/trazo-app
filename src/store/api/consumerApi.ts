@@ -22,9 +22,14 @@ export interface UserImpactSummary {
 
 export interface EnhancedScan {
   id: number;
+  production_id: number; // History.id for navigation links (not HistoryScan.id)
   product_name: string;
   farm_name: string;
   location: string;
+  // Transparency-first fields
+  transparency_score?: number;
+  events_viewed?: number;
+  // Carbon fields (secondary)
   carbon_score: string;
   carbon_footprint: string;
   carbon_saved: string;

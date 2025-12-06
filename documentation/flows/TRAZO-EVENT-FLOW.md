@@ -29,7 +29,7 @@ New transparency fields added to build consumer trust:
 
 | Field          | Type   | Purpose                                                                  |
 | -------------- | ------ | ------------------------------------------------------------------------ |
-| `seeds_source` | string | Where seeds/seedlings came from (local, imported, farm-saved, certified) |
+| `seeds_source` | string | Where seeds/seedlings came from (certified_organic, farm_saved, local, cooperative, commercial, other) |
 | `water_source` | string | Water source for irrigation (well, rainwater, municipal, river)          |
 
 ### ChemicalTab-ENHANCED

@@ -73,7 +73,7 @@ const FUEL_TYPES = [
 // Sprint 2: Production type display names for auto-generated event names
 // Removes farmer burden of manually typing event names (~20 sec saved per event)
 const PRODUCTION_TYPE_NAMES = {
-  PL: 'Planting/Seeding',
+  PL: 'Planting',
   HA: 'Harvesting',
   IR: 'Irrigation',
   PR: 'Pruning/Trimming',
@@ -268,13 +268,18 @@ const ProductionTab = ({
   // - Post-harvest processing (if applicable)
 
   // Sprint 2 Epic 2.1: Added equipment-specific fields to watched fields
+  // FIXED: Added unit fields (area_unit, yield_unit, fuel_unit, transportation_unit) so unit changes trigger onDataChange
   const watchedFields = watch([
     'type',
     'name',
     'area_covered',
+    'area_unit',
     'yield_quantity',
+    'yield_unit',
     'transportation_distance',
+    'transportation_unit',
     'fuel_consumed',
+    'fuel_unit',
     'fuel_type',
     'equipment_type',
     'equipment_operation_type',
@@ -338,6 +343,7 @@ const ProductionTab = ({
             console.log('[ProductionTab]: ✅ Triggering carbon calculation', {
               type: currentValues.type,
               area_covered: currentValues.area_covered,
+              area_unit: currentValues.area_unit, // DEBUG: Added to verify unit is passed
               fuel_consumed: currentValues.fuel_consumed,
               transportation_distance: currentValues.transportation_distance
             });
@@ -420,7 +426,7 @@ const ProductionTab = ({
                   control={methods.control}
                   render={({ field }) => (
                     <StandardSelect {...field} placeholder="Select production activity...">
-                      <option value="PL">🌱 Planting/Seeding - Crop establishment</option>
+                      <option value="PL">🌱 Planting - Crop establishment</option>
                       <option value="HA">🚜 Harvesting - Crop collection & transport</option>
                       <option value="IR">💧 Irrigation - Water application</option>
                       <option value="PR">✂️ Pruning/Trimming - Plant maintenance</option>
@@ -859,12 +865,11 @@ const ProductionTab = ({
                       control={methods.control}
                       render={({ field }) => (
                         <StandardSelect {...field} placeholder="Select seed source...">
-                          <option value="organic_certified">🌱 Organic Certified Supplier</option>
-                          <option value="farm_saved">🏠 Farm-Saved Seeds</option>
-                          <option value="commercial_supplier">🏭 Commercial Supplier</option>
-                          <option value="local_nursery">🌿 Local Nursery</option>
-                          <option value="cooperative">🤝 Agricultural Cooperative</option>
-                          <option value="government_program">🏛️ Government Program</option>
+                          <option value="certified_organic">🌱 Certified Organic Seeds</option>
+                          <option value="farm_saved">♻️ Farm-Saved Seeds</option>
+                          <option value="local">🏡 Local Nursery/Supplier</option>
+                          <option value="cooperative">🤝 Farmer Cooperative</option>
+                          <option value="commercial">🏭 Commercial Supplier</option>
                           <option value="other">📝 Other (specify in notes)</option>
                         </StandardSelect>
                       )}

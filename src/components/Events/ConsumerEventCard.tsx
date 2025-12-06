@@ -189,12 +189,14 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   }
 
   // DEBUG: Log field display data for production events
-  if (event.type?.startsWith('production.')) {
+  if (event.type?.startsWith('production.') || event.type === 'production' || event.event_type === 1) {
     console.log('🔧 PRODUCTION EVENT FIELD DISPLAY DEBUG:', {
       eventId: event.id,
       eventType: event.type,
+      event_type_number: event.event_type,
       description: event.description,
       area_covered: event.area_covered,
+      area_unit: (event as any).area_unit, // DEBUG: Check if area_unit is present
       yield_quantity: event.yield_quantity,
       fuel_consumed: event.fuel_consumed,
       equipment_hours: event.equipment_hours,
@@ -865,44 +867,6 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     </HStack>
 
                     <VStack align="stretch" spacing={3} pl={6}>
-                      {/* Verification summary */}
-                      <Box
-                        p={3}
-                        bg={useColorModeValue('blue.50', 'blue.900')}
-                        borderRadius="lg"
-                        border="1px solid"
-                        borderColor={useColorModeValue('blue.200', 'blue.700')}
-                      >
-                        <VStack align="stretch" spacing={2}>
-                          <HStack justify="space-between">
-                            <Text
-                              fontSize="sm"
-                              fontWeight="semibold"
-                              color={useColorModeValue('blue.700', 'blue.200')}
-                            >
-                              Verification Status
-                            </Text>
-                            <Badge colorScheme="green" variant="solid">
-                              {blockchainData.confidence}% Confirmed
-                            </Badge>
-                          </HStack>
-
-                          {blockchainData.confidence > 0 && (
-                            <Progress
-                              value={blockchainData.confidence}
-                              colorScheme="green"
-                              size="sm"
-                              borderRadius="full"
-                            />
-                          )}
-
-                          <Text fontSize="xs" color={useColorModeValue('blue.600', 'blue.300')}>
-                            This event data is cryptographically secured on the Polygon blockchain,
-                            ensuring immutable transparency and preventing tampering.
-                          </Text>
-                        </VStack>
-                      </Box>
-
                       {/* Transaction details */}
                       {blockchainData.transaction && (
                         <Box>

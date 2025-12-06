@@ -786,7 +786,7 @@ export const QuickAddEventModal: React.FC<QuickAddEventModalProps> = ({
                     <Text fontSize="xs" color="blue.700" fontWeight="medium">
                       🌟 Transparency Impact
                     </Text>
-                    {isCalculating && <Spinner size="sm" color="blue.500" />}
+                    {isCalculating && <Spinner size="sm" color="green.500" thickness="3px" />}
                   </HStack>
                   <Text fontSize="sm" fontWeight="semibold" color="blue.800">
                     +{Math.round(Math.random() * 10 + 5)} transparency points

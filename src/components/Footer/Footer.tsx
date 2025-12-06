@@ -34,6 +34,7 @@ export default function Footer() {
       justifyContent="space-between"
       px="30px"
       pb="20px"
+      pt="20px"
     >
       <Text
         color="gray.400"

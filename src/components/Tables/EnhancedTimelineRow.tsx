@@ -253,6 +253,44 @@ const extractEventFields = (event: Event) => {
         });
       }
 
+      // Start Date for High Temperature events
+      if (event.start_date || extraData.start_date) {
+        const startDateValue = event.start_date || extraData.start_date;
+        const formattedStartDate = new Date(startDateValue).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        fields.push({
+          label: 'Start Date',
+          value: formattedStartDate,
+          icon: FaCalendarAlt,
+          color: 'purple.500'
+        });
+      }
+
+      // End Date for High Temperature events
+      if (event.end_date || extraData.end_date) {
+        const endDateValue = event.end_date || extraData.end_date;
+        const formattedEndDate = new Date(endDateValue).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        fields.push({
+          label: 'End Date',
+          value: formattedEndDate,
+          icon: FaCalendarAlt,
+          color: 'purple.600'
+        });
+      }
+
       // Water-related fields
       const waterDeficit = event.water_deficit || extraData.water_deficit;
       console.log('💧 DEBUG Water Deficit search:', {
@@ -332,12 +370,19 @@ const extractEventFields = (event: Event) => {
       });
       if (weatherDuration) {
         console.log('✅ Adding Duration field:', weatherDuration);
-        // Weather event duration is stored in hours (from WeatherTab.jsx form)
+        // Determine duration unit based on weather event type
+        // Hailstorm events use minutes (short events), other weather events use hours
+        const weatherType = event.type || '';
+        const isHailstorm = weatherType.toLowerCase().includes('hailstorm');
+        console.log('⏱️ DEBUG Duration unit detection:', { weatherType, isHailstorm });
+
         const durationStr = weatherDuration.toString().toLowerCase();
         const hasUnit = durationStr.includes('hour') || durationStr.includes('hr') || durationStr.includes('min');
+        const durationUnit = isHailstorm ? ' minutes' : ' hours';
+
         fields.push({
           label: 'Duration',
-          value: `${weatherDuration}${hasUnit ? '' : ' hours'}`,
+          value: `${weatherDuration}${hasUnit ? '' : durationUnit}`,
           icon: FaClock,
           color: 'purple.500'
         });

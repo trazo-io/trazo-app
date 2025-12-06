@@ -396,45 +396,6 @@ function ProductDetailModern() {
               </Card>
             </VStack>
           </Box>
-
-          {/* Sidebar */}
-          <ModernSidebar
-            isAuthenticated={isAuthenticated}
-            productName={completeData?.farmer?.name || completeData?.product?.name}
-            carbonScore={completeData?.carbonScore || 0}
-            onAuthPrompt={() => {
-              console.log('🔍 SIDEBAR BUTTON CLICKED - onAuthPrompt called!');
-              console.log('🔍 Current authentication state - isAuthenticated:', isAuthenticated);
-              console.log('🔍 Current user from Redux:', currentUser);
-              console.log('🔍 User ID:', currentUser?.id);
-
-              // Check if user is already authenticated
-              if (isAuthenticated || currentUser?.id) {
-                console.log('🔍 User already authenticated, navigating directly to review page');
-                const reviewUrl = `/admin/dashboard/production/${productionId}/review/web-${Date.now()}`;
-                console.log('🔍 Navigating to:', reviewUrl);
-                navigate(reviewUrl);
-                return;
-              }
-
-              // Store intended action for after login using the correct key
-              const action = {
-                type: 'review',
-                productionId: productionId
-              };
-              console.log('🔍 Setting auth redirect action:', action);
-              localStorage.setItem(
-                'trazo_pending_auth_action',
-                JSON.stringify({
-                  action,
-                  timestamp: Date.now()
-                })
-              );
-              console.log('🔍 About to navigate to /consumer/auth/signin');
-              navigate('/consumer/auth/signin');
-            }}
-            onNavigateToAchievements={() => navigate('/achievements')}
-          />
         </SimpleGrid>
       </Container>
     </Box>

@@ -89,6 +89,11 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
   // Use existingImages directly - these are successfully uploaded
   const uploadedUrls = existingImages || [];
 
+  // 🚨 CRITICAL FIX: Use ref to track current URLs for async operations
+  // This prevents stale closure issues when uploads complete after parent state changes
+  const uploadedUrlsRef = useRef<string[]>(existingImages || []);
+  uploadedUrlsRef.current = existingImages || [];
+
   // Hooks
   const toast = useToast();
   const { uploadFile } = useFileUpload();
@@ -198,8 +203,16 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
           // IMMEDIATELY remove from uploading files BEFORE adding to uploaded
           setUploadingFiles((prev) => prev.filter((item) => item.file.name !== file.name));
 
-          // Add to uploaded URLs
-          const newUploadedUrls = [...uploadedUrls, uploadedUrl];
+          // 🚨 CRITICAL FIX: Use ref to get CURRENT URLs (not stale closure value)
+          // This ensures we don't re-add URLs that were removed while upload was in progress
+          const currentUrls = uploadedUrlsRef.current;
+          const newUploadedUrls = [...currentUrls, uploadedUrl];
+          console.log('[TrazoImageUpload] Upload complete:', {
+            file: file.name,
+            currentUrls,
+            newUrl: uploadedUrl,
+            newUploadedUrls
+          });
 
           // Notify parent component
           if (onImagesChange) {
@@ -369,7 +382,9 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         )
       );
 
-      const newUploadedUrls = [...uploadedUrls, uploadedUrl];
+      // 🚨 CRITICAL FIX: Use ref to get CURRENT URLs (not stale closure value)
+      const currentUrls = uploadedUrlsRef.current;
+      const newUploadedUrls = [...currentUrls, uploadedUrl];
       if (onImagesChange) {
         onImagesChange(newUploadedUrls);
       }

@@ -736,7 +736,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   label="What makes this parcel special?"
                   required
                   error={errors.transparency_description?.message}
-                  helpText="Describe this parcel in a way that helps consumers understand its role in sustainable food production"
+                  helpText="Describe this parcel in a way that helps consumers understand its role in sustainable food production (100+ characters recommended for full points)"
                 >
                   <Textarea
                     {...methods.register('transparency_description')}
@@ -754,7 +754,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardField
                     label="Key Sustainability Practices"
                     error={errors.sustainability_practices?.message}
-                    helpText="Highlight practices that consumers care about"
+                    helpText="Highlight practices that consumers care about (+30 points)"
                   >
                     <Textarea
                       {...methods.register('sustainability_practices')}
@@ -835,7 +835,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
               <VStack spacing={6} align="stretch">
                 <StandardField
                   label="Parcel Images"
-                  helpText="Upload high-quality images that show consumers the practices in action (max 5 images)"
+                  helpText="Upload high-quality images that show consumers the practices in action (3+ images recommended for full points)"
                 >
                   <TrazoImageUpload
                     maxFiles={5}
@@ -848,44 +848,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
                 <Divider />
 
-                <StandardField
-                  label="Certification Status"
-                  helpText="Mark this parcel as certified to build consumer trust"
-                >
-                  <VStack align="stretch" spacing={4}>
-                    <HStack>
-                      <Switch {...methods.register('certified')} colorScheme="green" size="md" />
-                      <Text fontSize="sm" color="gray.600">
-                        {watch('certified') ? 'Certified for Transparency' : 'Not Certified'}
-                      </Text>
-                    </HStack>
-
-                    {watch('certified') && (
-                      <StandardField
-                        label="Certification Type"
-                        helpText="Type of certification (shown to consumers)"
-                      >
-                        <Select
-                          {...methods.register('certification_type')}
-                          placeholder="Select certification type"
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                          size="lg"
-                        >
-                          <option value="usda_organic">USDA Organic</option>
-                          <option value="biodynamic">Biodynamic</option>
-                          <option value="fair_trade">Fair Trade</option>
-                          <option value="regenerative">Regenerative Organic</option>
-                          <option value="carbon_neutral">Carbon Neutral</option>
-                          <option value="water_steward">Water Stewardship</option>
-                          <option value="other">Other</option>
-                        </Select>
-                      </StandardField>
-                    )}
-                  </VStack>
-                </StandardField>
 
                 <StandardAlert
                   status="info"

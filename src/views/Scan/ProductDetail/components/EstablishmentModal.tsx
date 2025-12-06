@@ -218,7 +218,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
         <ModalCloseButton />
 
         <ModalBody p={6} pb={{ base: 24, md: 6 }} overflowY="auto">
-          <VStack spacing={6} align="stretch">
+          <VStack spacing={6} align="stretch" mb="100px">
             {/* Hero Image and Description */}
             {(establishmentData.images?.length ||
               establishmentData.description ||

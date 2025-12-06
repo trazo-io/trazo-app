@@ -213,6 +213,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // File upload state - declare early to avoid initialization issues
   const [acceptedFiles, setAcceptedFiles] = useState([]);
+  // Track deleted image IDs for edit mode - send to backend for deletion
+  const [deletedImageIds, setDeletedImageIds] = useState([]);
 
   // Redux state
   const currentEvent = useSelector((state) => state.form.currentForm?.event);
@@ -220,6 +222,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // Step management
   const [activeStep, setActiveStep] = useState(0);
+  const [tabHasErrors, setTabHasErrors] = useState(false); // Track validation errors from event tabs
 
   // Form methods for each step
   const basicMethods = useForm({
@@ -504,9 +507,29 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // Set form data directly - no two-phase update needed
       setEventFormData(initialData);
 
+      // 🚨 CRITICAL FIX: Map backend album.images structure to frontend acceptedFiles format
+      // Backend returns: { album: { id: X, images: [{ id, image, caption, created_at }] } }
+      // Frontend expects: acceptedFiles: [{ url: "...", isExisting?: boolean, imageId?: number }]
+      // NOTE: We mark existing images with isExisting: true so we DON'T re-upload them on submit
+      // NOTE: We store imageId so we can tell the backend which images to delete
+      if (existingEvent.album && existingEvent.album.images && existingEvent.album.images.length > 0) {
+        const mappedImages = existingEvent.album.images.map((img) => ({
+          url: img.image, // Backend uses 'image' field, frontend uses 'url'
+          isExisting: true, // 🚨 Mark as existing so we don't duplicate on submit
+          imageId: img.id // 🚨 Store ID so we can delete if removed
+        }));
+        setAcceptedFiles(mappedImages);
+        setDeletedImageIds([]); // Reset deleted IDs when loading existing event
+        // 🚨 ALSO sync to eventFormData for step navigation consistency
+        setEventFormData((prev) => ({ ...prev, acceptedFiles: mappedImages }));
+        console.log('[NewEvent] 🖼️ Loaded existing album images (marked as isExisting with IDs):', mappedImages);
+      }
+
       // Reset forms with existing data
+      // 🚨 CRITICAL FIX: Include performed_by field when editing
       basicMethods.reset({
-        date: eventDate
+        date: eventDate,
+        performed_by: existingEvent.performed_by || ''
       });
 
       // Set event type from existing data
@@ -573,26 +596,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     setActiveStep(2);
   };
 
-  // Handle tab form submission (Event Details step)
-  const onSubmitTab = (data) => {
-    const updatedData = { ...eventFormData, ...data };
-    setEventFormData(updatedData);
-
-    dispatch(
-      setForm({
-        event: {
-          ...currentEvent,
-          ...updatedData
-        }
-      })
-    );
-
-    // Recalculate carbon with new data
-    calculateCarbonWithDebounce(updatedData, activeEventType);
-
-    // Move directly to Photos step (skip redundant description)
-    setActiveStep(2);
-  };
+  // Note: Tab form submission is handled by onSubmitMainInfo (used directly in JSX render)
 
   // Handle real-time data changes from event tabs (for carbon preview updates)
   const onDataChange = useCallback(
@@ -654,7 +658,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
     // Restore photo data when going back to step 2 (where photos are uploaded)
     if (activeStep === 1 && eventFormData && eventFormData.acceptedFiles) {
-      console.log('🔄 Restoring photo data for step 2:', eventFormData.acceptedFiles);
+      console.log('🔄 Restoring photo data for step 2:', {
+        acceptedFilesFromEventFormData: eventFormData.acceptedFiles.map((f) => ({
+          url: f.url?.substring(0, 50) + '...',
+          isExisting: f.isExisting,
+          imageId: f.imageId
+        })),
+        currentAcceptedFiles: acceptedFiles.map((f) => ({
+          url: f.url?.substring(0, 50) + '...',
+          isExisting: f.isExisting,
+          imageId: f.imageId
+        })),
+        currentDeletedImageIds: deletedImageIds
+      });
       // Always restore photos when going back to step 2 to ensure consistency
       if (eventFormData.acceptedFiles.length > 0) {
         setAcceptedFiles(eventFormData.acceptedFiles);
@@ -702,12 +718,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       const validateAndEnhanceEventData = (data) => {
         const enhancedData = { ...data };
 
-        // Get current history's crop type for intelligent defaults
-        const currentParcel = currentCompany?.establishments
-          ?.find((est) => est.id === parseInt(establishmentId || '0'))
-          ?.parcels?.find((p) => p.id === parseInt(parcelId || '0'));
-        const cropType = currentParcel?.current_history?.crop_type?.name || 'general';
-
+        // Note: cropType is already declared at component level (line ~1177) and used in tab components
         // Validate required fields are present - don't add mocked values, instead ensure forms have proper inputs
         // FIXED: Corrected event type mapping to match backend constants
         // Backend constants: WEATHER_EVENT_TYPE = 0, PRODUCTION_EVENT_TYPE = 1, CHEMICAL_EVENT_TYPE = 2
@@ -832,6 +843,38 @@ function NewEvent({ isEdit = false, eventId = null }) {
       const cleanEventData = (data) => {
         const cleaned = {};
 
+        // System/structural fields that should NOT be sent as empty strings
+        // All other fields (user inputs) CAN be cleared to empty
+        const systemFields = [
+          'carbon_data',
+          'carbon_calculation',
+          'image',
+          'index',
+          'companyId',
+          'establishmentId',
+          'parcelId',
+          'extra_data'
+          // NOTE: volume_unit and area_unit ARE now included - they're needed for proper unit display
+        ];
+
+        // Helper: Check if a field value should be included
+        // - Always exclude undefined and null
+        // - For system fields: also exclude empty strings
+        // - For user fields: allow empty strings (so they can be cleared)
+        const shouldIncludeField = (key, value) => {
+          if (value === undefined || value === null) return false;
+          if (value === '' && systemFields.includes(key)) return false;
+          return true;
+        };
+
+        // Debug: Log when user fields are being cleared
+        Object.keys(data).forEach((key) => {
+          const value = data[key];
+          if (value === '' && !systemFields.includes(key)) {
+            console.log(`🔄 [cleanEventData] Clearing user field "${key}" to empty string`);
+          }
+        });
+
         // UNIVERSAL FIELD MAPPING - BEST PRACTICE IMPLEMENTATION
         // Map event type to human-readable name for logging
         const eventTypeNames = {
@@ -855,24 +898,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
           // The backend serializer's to_internal_value will handle moving them to extra_data
           Object.keys(data).forEach((key) => {
             const value = data[key];
-            // Exclude problematic fields but include weather-specific fields and type
-            if (
-              value !== undefined &&
-              value !== null &&
-              value !== '' &&
-              ![
-                'carbon_data',
-                'carbon_calculation',
-                'image',
-                'index',
-                'companyId',
-                'establishmentId',
-                'parcelId',
-                'volume_unit',
-                'area_unit',
-                'extra_data'
-              ].includes(key)
-            ) {
+            // Use shouldIncludeField helper - allows empty strings for user fields
+            if (shouldIncludeField(key, value) && !systemFields.includes(key)) {
               let finalKey = key;
 
               // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
@@ -897,7 +924,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
           // The backend ProductionEvent model requires this field
           Object.keys(data).forEach((key) => {
             const value = data[key];
-            if (value !== undefined && value !== null && value !== '') {
+            // Use shouldIncludeField helper - allows empty strings for user fields
+            if (shouldIncludeField(key, value)) {
               let finalKey = key;
 
               // CRITICAL FIX: Map operating_hours to equipment_hours for backend compatibility
@@ -931,7 +959,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
         if (activeEventType === 5) {
           Object.keys(data).forEach((key) => {
             const value = data[key];
-            if (value !== undefined && value !== null && value !== '') {
+            // Use shouldIncludeField helper - allows empty strings for user fields
+            if (shouldIncludeField(key, value)) {
               let finalKey = key;
 
               // CRITICAL FIX: Map form field 'depth' to backend field 'working_depth'
@@ -960,7 +989,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
         if (eventsWithObservation.includes(activeEventType)) {
           Object.keys(data).forEach((key) => {
             const value = data[key];
-            if (value !== undefined && value !== null && value !== '') {
+            // Use shouldIncludeField helper - allows empty strings for user fields
+            if (shouldIncludeField(key, value)) {
               let finalKey = key;
 
               // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
@@ -988,9 +1018,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
           'index', // Remove index field - not expected by backend
           'companyId', // Remove camelCase fields - use snake_case for backend
           'establishmentId',
-          'parcelId',
-          'volume_unit', // Remove unit fields if they're causing issues
-          'area_unit'
+          'parcelId'
+          // NOTE: volume_unit and area_unit ARE now included - they're needed for proper unit display
         ];
 
         // Only exclude 'type' field for event types that don't use it
@@ -1014,13 +1043,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
         Object.keys(data).forEach((key) => {
           const value = data[key];
-          // Only include defined values and exclude problematic fields
-          if (
-            value !== undefined &&
-            value !== null &&
-            value !== '' &&
-            !excludedFields.includes(key)
-          ) {
+          // Use shouldIncludeField helper - allows empty strings for user fields
+          // Only include valid values and exclude problematic fields
+          if (shouldIncludeField(key, value) && !excludedFields.includes(key)) {
             let finalKey = key;
 
             // CRITICAL FIX: Map operating_hours to equipment_hours for backend compatibility
@@ -1051,12 +1076,43 @@ function NewEvent({ isEdit = false, eventId = null }) {
         return cleaned;
       };
 
+      // 🚨 CRITICAL FIX: Only send NEW images, not existing ones (prevents duplicates on edit)
+      // Existing images have isExisting: true, new uploads do NOT have this flag
+      const newImagesOnly = acceptedFiles
+        .filter((f) => !f.isExisting) // Only include images that are NOT from existing album
+        .map((f) => f.url)
+        .filter(Boolean);
+
+      console.log('[NewEvent] 📸 Images breakdown:', {
+        totalImages: acceptedFiles.length,
+        existingImages: acceptedFiles.filter((f) => f.isExisting).length,
+        newImages: newImagesOnly.length,
+        newImageUrls: newImagesOnly,
+        deletedImageIds: deletedImageIds,
+        isEdit: isEdit,
+        willSendDeleteIds: isEdit ? deletedImageIds : [],
+        allAcceptedFiles: acceptedFiles.map((f) => ({
+          url: f.url?.substring(0, 60) + '...',
+          isExisting: f.isExisting,
+          imageId: f.imageId
+        }))
+      });
+
+      // 🚨 DEBUG: Log specifically for image deletion
+      if (isEdit && deletedImageIds.length > 0) {
+        console.log('[NewEvent] 🗑️ WILL DELETE THESE IMAGES:', deletedImageIds);
+      } else if (isEdit) {
+        console.log('[NewEvent] ⚠️ No images marked for deletion');
+      }
+
       const finalEventData = cleanEventData({
         ...enhancedEventFormData,
         event_type: backendEventType, // Use corrected event_type mapping
         parcels: parcelId ? [parcelId] : [], // Add parcels array required by backend
-        // Add album images from S3 URLs (modern approach)
-        album_images: acceptedFiles.map((f) => f.url).filter(Boolean)
+        // Add ONLY NEW album images from S3 URLs (prevents duplicates on edit)
+        album_images: newImagesOnly,
+        // 🚨 CRITICAL: Send IDs of images to delete (for edit mode)
+        delete_image_ids: isEdit ? deletedImageIds : []
       });
 
       console.log('Final event data being sent:', finalEventData);
@@ -1165,101 +1221,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // 2025 PERFORMANCE: Removed excessive debug logging to prevent render loops and improve performance
   // Debug info available via React DevTools or selective logging when needed
-
-  const tabConfig = [
-    {
-      id: 0,
-      label: intl.formatMessage({ id: 'app.weather' }),
-      component: (
-        <WeatherTab
-          onSubmitHandler={onSubmitTab}
-          onDataChange={onDataChange}
-          onPrev={() => setActiveEventType(null)}
-          initialValues={eventFormData}
-          cropType={cropType}
-        />
-      )
-    },
-    {
-      id: 1,
-      label: intl.formatMessage({ id: 'app.production' }),
-      component: (
-        <ProductionTab
-          onSubmitHandler={onSubmitTab}
-          onDataChange={onDataChange}
-          onPrev={() => setActiveEventType(null)}
-          initialValues={eventFormData}
-          cropType={cropType}
-        />
-      )
-    },
-    {
-      id: 2,
-      label: intl.formatMessage({ id: 'app.chemical' }),
-      component: (
-        <ChemicalTab
-          onSubmitHandler={onSubmitTab}
-          onDataChange={onDataChange}
-          onPrev={() => setActiveEventType(null)}
-          initialValues={eventFormData}
-          cropType={cropType}
-        />
-      )
-    },
-    {
-      id: 3,
-      label: intl.formatMessage({ id: 'app.general' }),
-      component: (
-        <GeneralTab
-          onSubmitHandler={onSubmitTab}
-          onDataChange={onDataChange}
-          onPrev={() => setActiveEventType(null)}
-          initialValues={eventFormData}
-          cropType={cropType}
-        />
-      )
-    },
-    // Sprint 2 Epic 2.1: Equipment (id: 4) REMOVED - merged into Production as "Equipment Maintenance (EQ)" subtype
-    {
-      id: 5,
-      label: intl.formatMessage({ id: 'app.soilManagement' }),
-      component: (
-        <SoilManagementTab
-          onSubmitHandler={onSubmitTab}
-          onDataChange={onDataChange}
-          onPrev={() => setActiveEventType(null)}
-          initialValues={eventFormData}
-          cropType={cropType}
-        />
-      )
-    },
-    {
-      id: 6,
-      label: intl.formatMessage({ id: 'app.pestManagement' }),
-      component: (
-        <PestManagementTab
-          onSubmitHandler={onSubmitTab}
-          onDataChange={onDataChange}
-          onPrev={() => setActiveEventType(null)}
-          initialValues={eventFormData}
-          cropType={cropType}
-        />
-      )
-    },
-    {
-      id: 7,
-      label: intl.formatMessage({ id: 'app.business' }),
-      component: (
-        <BusinessTab
-          onSubmitHandler={onSubmitTab}
-          onDataChange={onDataChange}
-          onPrev={() => setActiveEventType(null)}
-          initialValues={eventFormData}
-          cropType={cropType}
-        />
-      )
-    }
-  ];
+  // Note: Tab components are rendered directly via conditional rendering in JSX (activeEventType === X)
 
   // Handler for back navigation
   const handleBack = () => {
@@ -1744,6 +1706,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       <WeatherTab
                         onSubmitHandler={onSubmitMainInfo}
                         onDataChange={onDataChange}
+                        onValidationChange={setTabHasErrors}
                         onPrev={goToPreviousStep}
                         initialValues={eventFormData}
                         cropType={cropType}
@@ -1837,15 +1800,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           w={{ base: '100%', md: 'auto' }}
                         >
                           <StandardButton
-                            variant="primary"
-                            onClick={() => setActiveStep(2)}
-                            rightIcon={<FaChevronRight />}
-                            size={{ base: 'md', md: 'lg' }}
-                            flex={{ base: 1, md: 'none' }}
-                          >
-                            {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                          </StandardButton>
-                          <StandardButton
                             variant="outline"
                             colorScheme="blue"
                             onClick={handleOpenPreview}
@@ -1854,6 +1808,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             flex={{ base: 1, md: 'none' }}
                           >
                             Preview
+                          </StandardButton>
+                          <StandardButton
+                            variant="primary"
+                            onClick={() => setActiveStep(2)}
+                            rightIcon={<FaChevronRight />}
+                            size={{ base: 'md', md: 'lg' }}
+                            flex={{ base: 1, md: 'none' }}
+                            isDisabled={tabHasErrors}
+                            title={tabHasErrors ? 'Please fix validation errors before continuing' : ''}
+                          >
+                            {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                           </StandardButton>
                         </Flex>
                       </Flex>
@@ -1881,7 +1846,62 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           maxSize={10 * 1024 * 1024} // 10MB
                           existingImages={acceptedFiles.map((f) => f.url).filter(Boolean)}
                           onImagesChange={(urls) => {
-                            const newAcceptedFiles = urls.map((url) => ({ url }));
+                            // 🚨 CRITICAL FIX: Track deleted images and preserve isExisting flag
+                            // This prevents duplicates AND enables proper deletion on edit
+
+                            console.log('[NewEvent] 📸 onImagesChange called:', {
+                              receivedUrls: urls,
+                              currentAcceptedFiles: acceptedFiles.map((f) => ({
+                                url: f.url?.substring(0, 50) + '...',
+                                isExisting: f.isExisting,
+                                imageId: f.imageId
+                              }))
+                            });
+
+                            // Find which existing images were removed (for deletion)
+                            const removedImages = acceptedFiles.filter((f) => {
+                              const isRemoved = f.isExisting && f.imageId && !urls.includes(f.url);
+                              if (f.isExisting) {
+                                console.log('[NewEvent] Checking image for removal:', {
+                                  imageId: f.imageId,
+                                  url: f.url?.substring(0, 50) + '...',
+                                  isInNewUrls: urls.includes(f.url),
+                                  willBeRemoved: isRemoved
+                                });
+                              }
+                              return isRemoved;
+                            });
+
+                            if (removedImages.length > 0) {
+                              const removedIds = removedImages.map((f) => f.imageId);
+                              console.log('[NewEvent] 🗑️ Images marked for deletion:', removedIds);
+                              setDeletedImageIds((prev) => {
+                                const newIds = [...prev, ...removedIds];
+                                console.log('[NewEvent] Updated deletedImageIds:', newIds);
+                                return newIds;
+                              });
+                            }
+
+                            // Build new accepted files array
+                            const newAcceptedFiles = urls.map((url) => {
+                              // Check if this URL was already in acceptedFiles with isExisting flag
+                              const existingEntry = acceptedFiles.find((f) => f.url === url);
+                              if (existingEntry && existingEntry.isExisting) {
+                                return {
+                                  url,
+                                  isExisting: true,
+                                  imageId: existingEntry.imageId // Preserve the ID too
+                                };
+                              }
+                              return { url }; // New image - no flag
+                            });
+
+                            console.log('[NewEvent] New acceptedFiles:', newAcceptedFiles.map((f) => ({
+                              url: f.url?.substring(0, 50) + '...',
+                              isExisting: f.isExisting,
+                              imageId: f.imageId
+                            })));
+
                             setAcceptedFiles(newAcceptedFiles);
                             // Also update eventFormData to persist photos across steps
                             setEventFormData((prevData) => ({
@@ -1915,6 +1935,16 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             order={{ base: 1, md: 2 }}
                             w={{ base: '100%', md: 'auto' }}
                           >
+                             <StandardButton
+                              variant="outline"
+                              colorScheme="blue"
+                              onClick={handleOpenPreview}
+                              leftIcon={<FaEye />}
+                              size={{ base: 'md', md: 'lg' }}
+                              flex={{ base: 1, md: 'none' }}
+                            >
+                              Preview
+                            </StandardButton>
                             <StandardButton
                               variant="primary"
                               onClick={onSubmitMedia}
@@ -1932,16 +1962,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 ? intl.formatMessage({ id: 'app.updateEvent' }) || 'Update'
                                 : intl.formatMessage({ id: 'app.createEvent' }) || 'Create'}
                             </StandardButton>
-                            <StandardButton
-                              variant="outline"
-                              colorScheme="blue"
-                              onClick={handleOpenPreview}
-                              leftIcon={<FaEye />}
-                              size={{ base: 'md', md: 'lg' }}
-                              flex={{ base: 1, md: 'none' }}
-                            >
-                              Preview
-                            </StandardButton>
+                           
                           </Flex>
                         </Flex>
                       </Box>

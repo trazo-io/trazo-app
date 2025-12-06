@@ -198,10 +198,16 @@ export const StandardPage = ({
         </Container>
       </Box>
 
-      {/* Main Content with Overlapping Card Design */}
-      <Container maxW="6xl" mx="auto" px={4} mt="-40px" position="relative" zIndex={10}>
+      {/* Main Content with Overlapping Card Design - Match producer app spacing */}
+      <Box
+        w="100%"
+        px={{ base: 3, md: 6 }}
+        mt="-40px"
+        position="relative"
+        zIndex={10}
+      >
         {children}
-      </Container>
+      </Box>
     </Box>
   );
 };
@@ -221,7 +227,7 @@ export const StandardCard = ({
   subtitle,
   headerAction,
   variant = 'elevated',
-  padding = { base: 4, md: 6 }
+  padding = { base: 3, md: 4 }
 }: StandardCardProps) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');

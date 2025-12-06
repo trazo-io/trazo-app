@@ -27,7 +27,6 @@ import {
   FaCompress,
   FaLeaf,
   FaInfoCircle,
-  FaEye,
   FaUsers,
   FaCertificate
 } from 'react-icons/fa';
@@ -271,51 +270,13 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
             </SimpleGrid>
           </Box>
 
-          {/* 🎯 CONSUMER TRANSPARENCY SECTION - New transparency data for consumers */}
+          {/* 🎯 CONSUMER TRANSPARENCY SECTION - Parcel story for consumers */}
           {(parcelData?.transparency_description ||
             parcelData?.sustainability_practices ||
-            parcelData?.consumer_story ||
-            parcelData?.transparency_ready) && (
+            parcelData?.consumer_story) && (
             <>
               <Divider />
               <Box>
-                <HStack spacing={3} mb={4}>
-                  <Icon as={FaEye} color="cyan.500" boxSize={5} />
-                  <Text fontSize="sm" fontWeight="bold" color={textColor}>
-                    Consumer Transparency
-                  </Text>
-                  {parcelData?.transparency_ready && (
-                    <Badge
-                      colorScheme="cyan"
-                      variant="solid"
-                      px={2}
-                      py={1}
-                      borderRadius="full"
-                      fontSize="xs"
-                    >
-                      ✓ Consumer Ready
-                    </Badge>
-                  )}
-                  {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
-                    <Badge
-                      colorScheme={
-                        parcelData.transparency_score >= 80
-                          ? 'green'
-                          : parcelData.transparency_score >= 60
-                          ? 'yellow'
-                          : 'gray'
-                      }
-                      variant="solid"
-                      px={2}
-                      py={1}
-                      borderRadius="full"
-                      fontSize="xs"
-                    >
-                      {parcelData.transparency_score}% Complete
-                    </Badge>
-                  )}
-                </HStack>
-
                 <VStack spacing={4} align="stretch">
                   {/* What makes this parcel special */}
                   {parcelData?.transparency_description && (

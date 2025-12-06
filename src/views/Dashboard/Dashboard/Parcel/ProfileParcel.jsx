@@ -63,6 +63,7 @@ import defaultParcelImage from 'assets/img/BgMusicCard.png';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+import { ParcelTransparencyScoreBreakdown } from 'components/Transparency/ParcelTransparencyScoreBreakdown';
 // Note: Main container still uses legacy Card, internal cards migrated to StandardCard
 
 // Simplified loading - matching ProfileEstablishment pattern
@@ -639,6 +640,28 @@ function ProfileParcel() {
                   </VStack>
                 </StandardCard>
 
+                {/* 🎯 TRANSPARENCY SCORE BREAKDOWN - Shows farmers how to improve */}
+                <Box mb={{ base: 4, md: 6 }}>
+                  <ParcelTransparencyScoreBreakdown
+                    parcelData={{
+                      transparency_score: parcelData?.transparency_score,
+                      transparency_description: parcelData?.transparency_description,
+                      sustainability_practices: parcelData?.sustainability_practices,
+                      consumer_story: parcelData?.consumer_story,
+                      images: parcelData?.images,
+                      certified: parcelData?.certified,
+                      certification_type: parcelData?.certification_type
+                    }}
+                    variant="full"
+                    showEditButton={true}
+                    onEditClick={() =>
+                      navigate(
+                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
+                      )
+                    }
+                  />
+                </Box>
+
                 {/* 🎯 TRANSPARENCY STORY SECTION - Consumer-Facing Narrative */}
                 {(parcelData?.transparency_description ||
                   parcelData?.sustainability_practices ||
@@ -716,41 +739,6 @@ function ProfileParcel() {
                               {parcelData.consumer_story}
                             </Text>
                           </VStack>
-                        </Box>
-                      )}
-
-                      {/* Transparency Quality Indicator */}
-                      {parcelData?.transparency_score && (
-                        <Box
-                          p={3}
-                          bg="gray.50"
-                          borderRadius="md"
-                          border="1px"
-                          borderColor="gray.200"
-                        >
-                          <HStack justify="space-between">
-                            <HStack>
-                              <Icon as={FaEye} color="gray.600" />
-                              <Text fontWeight="medium" color="gray.700" fontSize="sm">
-                                Consumer Transparency Score
-                              </Text>
-                            </HStack>
-                            <Badge
-                              colorScheme={
-                                parcelData.transparency_score >= 80
-                                  ? 'green'
-                                  : parcelData.transparency_score >= 60
-                                  ? 'yellow'
-                                  : 'gray'
-                              }
-                              variant="solid"
-                              px={3}
-                              py={1}
-                              borderRadius="full"
-                            >
-                              {parcelData.transparency_score}%
-                            </Badge>
-                          </HStack>
                         </Box>
                       )}
                     </VStack>

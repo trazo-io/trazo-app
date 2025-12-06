@@ -1,57 +1,43 @@
-import { ChakraProvider, Portal, useDisclosure, CSSReset } from '@chakra-ui/react';
-import { CacheProvider } from '@emotion/react';
-import { emotionCache } from '../emotion-cache';
+import { Portal, useDisclosure } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
 import React, { useState } from 'react';
 
 import AdminNavbar from 'components/Navbars/AdminNavbar';
 import Configurator from 'components/Configurator/Configurator';
 import FixedPlugin from 'components/FixedPlugin/FixedPlugin';
-import Footer from 'components/Footer/Footer';
+import ConsumerFooter from 'components/Footer/ConsumerFooter';
 import MainPanel from 'components/Layout/MainPanel';
 import PanelContainer from 'components/Layout/PanelContainer';
 import PanelContent from 'components/Layout/PanelContent';
-import { StatsIcon, RocketIcon } from 'components/Icons/Icons';
 import Sidebar from 'components/Sidebar/Sidebar';
 import { SidebarContext } from 'contexts/SidebarContext';
-import theme from 'theme/theme';
-// Unified Sidebar is now imported above
-import {
-  FaQrcode,
-  FaStar,
-  FaLeaf,
-  FaGraduationCap,
-  FaUsers,
-  FaChartLine,
-  FaBalanceScale
-} from 'react-icons/fa';
-import { MdDashboard, MdInsights, MdCompare, MdTimeline, MdSettings } from 'react-icons/md';
+import { MdExplore, MdTimeline, MdPerson, MdSettings } from 'react-icons/md';
 
 export const consumerRoutes = [
   {
-    name: 'My Impact',
-    path: 'impact',
-    icon: <MdDashboard color="inherit" />,
+    name: 'Discover',
+    path: '/dashboard/impact',
+    icon: <MdExplore color="inherit" />,
     layout: '/admin',
     regex: /^\/admin\/dashboard\/impact$/
   },
   {
-    name: 'Compare Products',
-    path: 'compare',
-    icon: <MdCompare color="inherit" />,
-    layout: '/admin',
-    regex: /^\/admin\/dashboard\/compare$/
-  },
-  {
-    name: 'My History',
-    path: 'journey',
+    name: 'My Journey',
+    path: '/dashboard/journey',
     icon: <MdTimeline color="inherit" />,
     layout: '/admin',
     regex: /^\/admin\/dashboard\/journey$/
   },
   {
+    name: 'Profile',
+    path: '/dashboard/profile',
+    icon: <MdPerson color="inherit" />,
+    layout: '/admin',
+    regex: /^\/admin\/dashboard\/profile$/
+  },
+  {
     name: 'Settings',
-    path: 'settings',
+    path: '/dashboard/settings',
     icon: <MdSettings color="inherit" />,
     layout: '/admin',
     regex: /^\/admin\/dashboard\/settings$/
@@ -105,13 +91,16 @@ export default function AdminConsumerLayout(props: any) {
           <AdminNavbar onOpen={onOpen} brandText={getActiveRoute(consumerRoutes)} fixed={fixed} />
         </Portal>
 
-        <PanelContent>
-          <PanelContainer>
+        <PanelContent
+          paddingInlineStart={{ base: '0px', lg: '15px' }}
+          paddingInlineEnd={{ base: '0px', lg: '15px' }}
+        >
+          <PanelContainer padding={{ base: '0px', lg: '30px 15px' }}>
             <Outlet />
           </PanelContainer>
         </PanelContent>
 
-        {/* <Footer />
+        <ConsumerFooter />
         <Portal>
           <FixedPlugin fixed={fixed} onOpen={onOpen} />
         </Portal>
@@ -122,7 +111,7 @@ export default function AdminConsumerLayout(props: any) {
           onSwitch={(value) => setFixed(value)}
           onOpaque={() => setSidebarVariant('opaque')}
           onTransparent={() => setSidebarVariant('transparent')}
-        /> */}
+        />
       </MainPanel>
     </SidebarContext.Provider>
   );

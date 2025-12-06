@@ -214,7 +214,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
         <Card size="sm" bg={bgColor} borderRadius="md">
           <CardBody>
             <HStack spacing={3}>
-              <Spinner size="sm" color="blue.500" />
+              <Spinner size="sm" color="green.500" thickness="3px" />
               <Text fontSize="sm" color={textColor}>
                 Calculating carbon impact...
               </Text>
@@ -418,8 +418,15 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                               </Text>
                             </HStack>
                             <HStack justify="space-between" fontSize="xs">
-                              <Text color="blue.600">Area Covered:</Text>
+                              <Text color="blue.600">Area Input:</Text>
                               <Text color="blue.800">
+                                {calculation.breakdown.area_covered_acres?.toFixed(1) || 'N/A'}{' '}
+                                acres
+                              </Text>
+                            </HStack>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.500" fontStyle="italic">→ Converted:</Text>
+                              <Text color="blue.700" fontStyle="italic">
                                 {calculation.breakdown.area_covered_hectares?.toFixed(1) || 'N/A'}{' '}
                                 hectares
                               </Text>

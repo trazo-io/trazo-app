@@ -68,6 +68,9 @@ import ImpactDashboard from 'views/Dashboard/ImpactDashboard';
 import ConsumerEducationDashboard from 'views/Dashboard/EducationDashboard';
 import CommunityDashboard from 'views/Dashboard/CommunityDashboard';
 import CarbonJourney from 'views/Dashboard/CarbonJourney';
+import AllScansJourney from 'views/Dashboard/CarbonJourney/AllScans';
+import AllReviewsJourney from 'views/Dashboard/CarbonJourney/AllReviews';
+import ConsumerProfile from 'views/Dashboard/ConsumerProfile';
 import { routeConfig } from './routes/config';
 import SubscriptionRequired from './utils/protections/SubscriptionRequired';
 import DashboardPricing from 'views/Dashboard/Dashboard/Pricing';
@@ -415,8 +418,11 @@ const App = () => {
                   <Route path="education" element={<ConsumerEducationDashboard />} />
                   <Route path="community" element={<CommunityDashboard />} />
                   <Route path="journey" element={<CarbonJourney />} />
+                  <Route path="journey/scans" element={<AllScansJourney />} />
+                  <Route path="journey/reviews" element={<AllReviewsJourney />} />
                   <Route path="scans" element={<ScannedProductsView />} />
                   <Route path="reviews" element={<ReviewsListView />} />
+                  <Route path="profile" element={<ConsumerProfile />} />
                   <Route path="settings" element={<ConsumerChangePassword />} />
                   <Route
                     path="production/:productionId/review/:scanId"

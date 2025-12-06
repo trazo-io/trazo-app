@@ -395,13 +395,9 @@ export default function DashboardView() {
   // Step 5: Progressive rendering based on loading stage and mobile optimization - TEMPORARILY DISABLED
   // const shouldShowSecondaryContent = stage === 'complete' || optimizationStrategy === 'standard';
 
-  // Simple loading check for now
+  // Return null while loading - keeps app-level loading visible
   if (isLoadingCompany) {
-    return (
-      <Flex justify="center" align="center" h="100vh">
-        Loading...
-      </Flex>
-    );
+    return null;
   }
 
   return (

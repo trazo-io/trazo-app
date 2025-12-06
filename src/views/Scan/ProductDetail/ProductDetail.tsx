@@ -136,7 +136,7 @@ const CarbonExplainerLoader = () => (
   <Card bg="white" shadow="lg" borderRadius="xl" p={6}>
     <VStack spacing={4}>
       <HStack spacing={3} justify="center">
-        <Spinner size="md" color="blue.500" />
+        <Spinner size="md" color="green.500" thickness="3px" />
         <Text fontSize="sm" color="gray.600">
           Loading carbon impact details...
         </Text>
@@ -969,7 +969,8 @@ function ProductDetail() {
             name: (completeData as any)?.product?.name || 'Product',
             company: {
               name: (completeData as any)?.farmer?.name || 'Farm'
-            }
+            },
+            reputation: (completeData as any)?.reputation || 0
           }}
           isLoading={isCompleteLoading}
           onLearnMore={() => handleEducationOpen('transparency_impact')}
@@ -1547,25 +1548,6 @@ function ProductDetail() {
               </Box>
             </VStack>
           </Box>
-
-          {/* Sidebar */}
-          <ModernSidebar
-            isAuthenticated={finalIsAuthenticated}
-            productName={completeData?.farmer?.name || completeData?.product?.name}
-            carbonScore={getDisplayTransparencyScore()}
-            onAuthPrompt={() => {
-              if (finalIsAuthenticated) {
-                const reviewUrl = `/admin/dashboard/production/${productionId}/review/web-${Date.now()}`;
-                navigate(reviewUrl);
-              } else {
-                if (productionId) {
-                  setAuthRedirectAction(productionId);
-                }
-                navigate('/consumer/auth/signin');
-              }
-            }}
-            onNavigateToAchievements={() => navigate('/achievements')}
-          />
         </SimpleGrid>
 
         {/* Additional Information Sections */}
@@ -1636,7 +1618,10 @@ function ProductDetail() {
                 instagram: (completeData as any)?.farmer?.company?.instagram,
                 logo: (completeData as any)?.farmer?.company?.logo,
                 fiscal_id: (completeData as any)?.farmer?.company?.fiscal_id,
-                contact_email: (completeData as any)?.farmer?.company?.contact_email
+                contact_email: (completeData as any)?.farmer?.company?.contact_email,
+                // Company overview stats for consumer transparency
+                total_establishments: (completeData as any)?.farmer?.company?.total_establishments,
+                total_parcels: (completeData as any)?.farmer?.company?.total_parcels
               }}
               establishmentData={{
                 // Use complete farmer/establishment data from enhanced API response
@@ -1718,6 +1703,17 @@ function ProductDetail() {
                   (completeData as any)?.parcel?.contact_email ||
                   (completeData as any)?.farmer?.contact_email,
                 current_history: (completeData as any)?.parcel?.current_history,
+                // Transparency fields from Add Parcel form
+                transparency_description: (completeData as any)?.parcel?.transparency_description,
+                sustainability_practices: (completeData as any)?.parcel?.sustainability_practices,
+                consumer_story: (completeData as any)?.parcel?.consumer_story,
+                primary_crop: (completeData as any)?.parcel?.primary_crop,
+                transparency_score: (completeData as any)?.parcel?.transparency_score,
+                transparency_ready: (completeData as any)?.parcel?.transparency_ready,
+                // Parcel images from album
+                images: (completeData as any)?.parcel?.images,
+                // Address for location details
+                address: (completeData as any)?.parcel?.address,
                 establishment: {
                   id: (completeData as any)?.farmer?.id,
                   name: (completeData as any)?.farmer?.name || 'Farm',

@@ -12,9 +12,15 @@ import {
   HStack,
   Circle,
   Progress,
-  Heading
+  Heading,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalCloseButton,
+  ModalBody,
+  useDisclosure
 } from '@chakra-ui/react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGetUserReviewsQuery } from 'store/api/historyApi';
 import { format } from 'date-fns';
 import { NavLink } from 'react-router-dom';
@@ -34,6 +40,17 @@ export default function ReviewsListView() {
   const cardColor = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const { data: reviews, isLoading } = useGetUserReviewsQuery();
+
+  // Image modal state
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const handleImageClick = (e: React.MouseEvent, imageUrl: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedImage(imageUrl);
+    onOpen();
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -112,6 +129,53 @@ export default function ReviewsListView() {
                         <Text color="gray.500" mb={4}>
                           {review.written_review}
                         </Text>
+
+                        {/* Review Images */}
+                        {review.images && review.images.length > 0 && (
+                          <HStack spacing={3} mb={4}>
+                            {review.images.slice(0, 4).map((imageUrl: string, imgIndex: number) => (
+                              <Box
+                                key={imgIndex}
+                                position="relative"
+                                cursor="pointer"
+                                onClick={(e) => handleImageClick(e, imageUrl)}
+                                borderRadius="lg"
+                                overflow="hidden"
+                                transition="all 0.2s"
+                                _hover={{ transform: 'scale(1.05)', boxShadow: 'md' }}
+                              >
+                                <Image
+                                  src={imageUrl}
+                                  alt={`Review image ${imgIndex + 1}`}
+                                  w="70px"
+                                  h="70px"
+                                  objectFit="cover"
+                                  borderRadius="lg"
+                                  border="1px solid"
+                                  borderColor="gray.200"
+                                />
+                                {imgIndex === 3 && review.images.length > 4 && (
+                                  <Flex
+                                    position="absolute"
+                                    top={0}
+                                    left={0}
+                                    right={0}
+                                    bottom={0}
+                                    bg="blackAlpha.600"
+                                    align="center"
+                                    justify="center"
+                                    borderRadius="lg"
+                                  >
+                                    <Text color="white" fontWeight="bold" fontSize="sm">
+                                      +{review.images.length - 4}
+                                    </Text>
+                                  </Flex>
+                                )}
+                              </Box>
+                            ))}
+                          </HStack>
+                        )}
+
                         <Stack spacing={2}>
                           <Flex align="center">
                             <Text fontSize="sm" color={textColor} fontWeight="bold" minW="80px">
@@ -138,6 +202,26 @@ export default function ReviewsListView() {
           </VStack>
         </VStack>
       </StandardCard>
+
+      {/* Image Lightbox Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} size="4xl" isCentered>
+        <ModalOverlay bg="blackAlpha.800" />
+        <ModalContent bg="transparent" boxShadow="none" maxW="90vw">
+          <ModalCloseButton color="white" size="lg" top={4} right={4} zIndex={10} />
+          <ModalBody p={0} display="flex" alignItems="center" justifyContent="center">
+            {selectedImage && (
+              <Image
+                src={selectedImage}
+                alt="Review image full size"
+                maxH="85vh"
+                maxW="90vw"
+                objectFit="contain"
+                borderRadius="xl"
+              />
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </StandardPage>
   );
 }

@@ -131,7 +131,7 @@ const SmartSetupWizard: React.FC<SmartSetupWizardProps> = ({
         <ModalContent>
           <ModalBody py={8}>
             <VStack spacing={4}>
-              <Spinner size="xl" color="blue.500" />
+              <Spinner size="xl" color="green.500" thickness="3px" />
               <Text>Loading smart templates...</Text>
             </VStack>
           </ModalBody>

@@ -314,11 +314,6 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                 </VStack>
 
                 <VStack spacing={2} align="end">
-                  {establishmentData.rating && establishmentData.rating > 0 && (
-                    <VStack spacing={1} align="end">
-                      {renderStars(establishmentData.rating)}
-                    </VStack>
-                  )}
                   <Button
                     size="sm"
                     variant="outline"

@@ -8,17 +8,15 @@ import {
   Image,
   Flex,
   Container,
-  useColorModeValue,
-  Badge
+  useColorModeValue
 } from '@chakra-ui/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string } from 'zod';
-import { FaLeaf, FaStar, FaHeart, FaCamera } from 'react-icons/fa';
+import { FaLeaf, FaHeart } from 'react-icons/fa';
 import { BsStarFill, BsStar } from 'react-icons/bs';
-import { MdVerified } from 'react-icons/md';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useSendReviewMutation } from 'store/api/reviewApi';
 import {
@@ -28,9 +26,9 @@ import {
   StandardInput,
   StandardTextarea,
   StandardButton,
-  StandardAlert,
-  StandardMediaUpload
+  StandardAlert
 } from 'components/Design/StandardComponents';
+import { TrazoImageUpload } from 'components/Upload';
 
 // Review schema matching backend model
 const reviewSchema = object({
@@ -48,7 +46,7 @@ export default function ModernProductReview() {
 
   // State
   const [rating, setRating] = useState(0);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
 
   // User data
   const currentUser = useSelector((state: any) => state.userState.user);
@@ -81,17 +79,18 @@ export default function ModernProductReview() {
   // Submit review
   const onSubmitHandler = (data: any) => {
     // For web reviews, we don't send scan_id since it's not a real scan
-    const reviewData = {
+    const reviewData: any = {
       headline: data.headline,
       written_review: data.written_review,
       rating: rating,
       production: historyData?.id,
-      user: currentUser?.id
+      user: currentUser?.id,
+      images: uploadedImageUrls
     };
 
     // Only include scan if it's a valid numeric ID (from actual QR scan)
     if (scanId && !scanId.startsWith('web-')) {
-      (reviewData as any).scan = parseInt(scanId, 10);
+      reviewData.scan = parseInt(scanId, 10);
     }
 
     sendReview(reviewData);
@@ -104,11 +103,11 @@ export default function ModernProductReview() {
       showBackButton={true}
       onBack={() => navigate(-1)}
     >
-      <Container maxW="4xl" mx="auto">
+      <Container maxW="2xl" mx="auto" px={{ base: 0, md: 0 }}>
         <StandardCard variant="elevated">
-          <VStack spacing={6} align="stretch">
+          <VStack spacing={{ base: 5, md: 6 }} align="stretch">
             {/* Product Information Header */}
-            <Box p={6} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
+            <Box p={{ base: 4, md: 6 }} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
               <HStack spacing={4} align="start">
                 {historyData?.images?.length > 0 && (
                   <Image
@@ -156,7 +155,7 @@ export default function ModernProductReview() {
                     </StandardButton>
                   </StandardAlert>
                 ) : (
-                  <VStack spacing={6} align="stretch">
+                  <VStack spacing={{ base: 5, md: 6 }} align="stretch">
                     {/* Rating Section */}
                     <StandardField
                       label="How would you rate this sustainable product?"
@@ -192,7 +191,7 @@ export default function ModernProductReview() {
                     <StandardField
                       label="Review Headline"
                       required
-                      error={errors.headline?.message}
+                      error={errors.headline?.message as string | undefined}
                       helpText="Highlight what's most important about this product's sustainability"
                     >
                       <StandardInput
@@ -206,22 +205,19 @@ export default function ModernProductReview() {
                       label="Add Photo (Optional)"
                       helpText="Share a photo that shows the product's quality or sustainable packaging"
                     >
-                      <StandardMediaUpload
-                        onFilesChange={setUploadedFiles}
-                        acceptedFiles={uploadedFiles}
-                        maxFiles={1}
-                        multiple={false}
-                        variant="consumer"
-                        placeholder="Click or drop a photo here"
-                        description="Upload a photo of the product (up to 10MB)"
+                      <TrazoImageUpload
+                        maxFiles={3}
+                        maxSize={10 * 1024 * 1024}
+                        existingImages={uploadedImageUrls}
+                        onImagesChange={setUploadedImageUrls}
                       />
                     </StandardField>
 
                     {/* Review Text Section */}
                     <StandardField
-                      label="Your Carbon Transparency Review"
+                      label="Your Review"
                       required
-                      error={errors.written_review?.message}
+                      error={errors.written_review?.message as string | undefined}
                       helpText="Share details about the farm's sustainability practices, carbon impact, or transparency that influenced your choice"
                     >
                       <StandardTextarea
@@ -243,7 +239,7 @@ export default function ModernProductReview() {
                         leftIcon={<FaLeaf />}
                         disabled={!rating || rating === 0}
                       >
-                        Share Transparency Review
+                        Share Review
                       </StandardButton>
                     </Flex>
                   </VStack>

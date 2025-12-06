@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Container,
   VStack,
   HStack,
   Text,
@@ -20,21 +19,21 @@ import {
   FaBook,
   FaSearch,
   FaChevronRight,
-  FaLeaf,
   FaQrcode,
   FaChartLine,
   FaRocket,
   FaTractor,
   FaShieldAlt,
-  FaCheckCircle,
   FaPlayCircle,
   FaCamera,
   FaTrophy,
   FaUsers,
   FaCrown,
   FaCogs,
-  FaCalculator
+  FaCalculator,
+  FaLeaf
 } from 'react-icons/fa';
+import { StandardPage } from 'components/Design/StandardComponents';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
@@ -51,13 +50,11 @@ const EducationHub: React.FC = () => {
   const navigate = useNavigate();
 
   // Theme colors
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.600', 'gray.300');
   const headingColor = useColorModeValue('gray.800', 'white');
 
   // Responsive values
-  const containerMaxW = useBreakpointValue({ base: 'full', lg: '6xl' });
   const columns = useBreakpointValue({ base: 1, md: 2, lg: 3 });
 
   // Trazo-specific documentation topics
@@ -177,82 +174,72 @@ const EducationHub: React.FC = () => {
   };
 
   return (
-    <Box bg={bgColor} minH="100vh">
-      <Container maxW={containerMaxW} py={8}>
-        <VStack spacing={8} align="stretch">
-          {/* Header */}
-          <VStack spacing={4} align="start">
-            <Heading size="lg" color={headingColor}>
-              Educational Resources
-            </Heading>
-            <Text color={textColor} fontSize="md">
-              Comprehensive documentation of Trazo's features and capabilities - understand every
-              aspect of the agricultural transparency platform
-            </Text>
-          </VStack>
+    <StandardPage
+      title="Educational Resources"
+      description="Comprehensive documentation of Trazo's features and capabilities - understand every aspect of the agricultural transparency platform"
+    >
+      <VStack spacing={6} w="full" maxW="6xl" mx="auto">
+        {/* Search */}
+        <Box maxW="md" w="full">
+          <InputGroup>
+            <InputLeftElement>
+              <Icon as={FaSearch} color="gray.400" />
+            </InputLeftElement>
+            <Input
+              placeholder="Search documentation..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              bg={cardBg}
+            />
+          </InputGroup>
+        </Box>
 
-          {/* Search */}
-          <Box maxW="md">
-            <InputGroup>
-              <InputLeftElement>
-                <Icon as={FaSearch} color="gray.400" />
-              </InputLeftElement>
-              <Input
-                placeholder="Search documentation..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                bg={cardBg}
-              />
-            </InputGroup>
-          </Box>
+        {/* Documentation Topics */}
+        <SimpleGrid columns={columns} spacing={6} w="full">
+          {filteredTopics.map((topic) => (
+            <Card key={topic.id} bg={cardBg}>
+              <CardBody p={6}>
+                <VStack spacing={4} align="start">
+                  <HStack>
+                    <Icon as={topic.icon} boxSize={6} color="green.500" />
+                    <Text fontSize="sm" color="green.500" fontWeight="medium">
+                      {topic.category}
+                    </Text>
+                  </HStack>
 
-          {/* Documentation Topics */}
-          <SimpleGrid columns={columns} spacing={6}>
-            {filteredTopics.map((topic) => (
-              <Card key={topic.id} bg={cardBg}>
-                <CardBody p={6}>
-                  <VStack spacing={4} align="start">
-                    <HStack>
-                      <Icon as={topic.icon} boxSize={6} color="green.500" />
-                      <Text fontSize="sm" color="green.500" fontWeight="medium">
-                        {topic.category}
-                      </Text>
-                    </HStack>
-
-                    <VStack spacing={2} align="start">
-                      <Heading size="md" color={headingColor}>
-                        {topic.title}
-                      </Heading>
-                      <Text color={textColor} fontSize="sm">
-                        {topic.description}
-                      </Text>
-                    </VStack>
-
-                    <Button
-                      rightIcon={<FaChevronRight />}
-                      variant="outline"
-                      colorScheme="green"
-                      size="sm"
-                      onClick={() => handleTopicClick(topic.id)}
-                    >
-                      Read More
-                    </Button>
+                  <VStack spacing={2} align="start">
+                    <Heading size="md" color={headingColor}>
+                      {topic.title}
+                    </Heading>
+                    <Text color={textColor} fontSize="sm">
+                      {topic.description}
+                    </Text>
                   </VStack>
-                </CardBody>
-              </Card>
-            ))}
-          </SimpleGrid>
 
-          {/* Empty state */}
-          {filteredTopics.length === 0 && (
-            <Box textAlign="center" py={12}>
-              <Icon as={FaBook} boxSize={12} color="gray.300" mb={4} />
-              <Text color={textColor}>No documentation found matching "{searchTerm}"</Text>
-            </Box>
-          )}
-        </VStack>
-      </Container>
-    </Box>
+                  <Button
+                    rightIcon={<FaChevronRight />}
+                    variant="outline"
+                    colorScheme="green"
+                    size="sm"
+                    onClick={() => handleTopicClick(topic.id)}
+                  >
+                    Read More
+                  </Button>
+                </VStack>
+              </CardBody>
+            </Card>
+          ))}
+        </SimpleGrid>
+
+        {/* Empty state */}
+        {filteredTopics.length === 0 && (
+          <Box textAlign="center" py={12}>
+            <Icon as={FaBook} boxSize={12} color="gray.300" mb={4} />
+            <Text color={textColor}>No documentation found matching "{searchTerm}"</Text>
+          </Box>
+        )}
+      </VStack>
+    </StandardPage>
   );
 };
 

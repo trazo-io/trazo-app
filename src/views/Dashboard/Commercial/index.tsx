@@ -15,7 +15,9 @@ import {
   CircularProgress,
   Grid,
   VStack,
-  HStack
+  HStack,
+  IconButton,
+  useDisclosure
 } from '@chakra-ui/react';
 import { NavLink, useLocation, useMatch, useParams } from 'react-router-dom';
 import React, { useEffect, useRef, useState } from 'react';
@@ -32,7 +34,9 @@ import {
   StandardSelect
 } from 'components/Design/StandardComponents';
 import { IoIosArrowDown } from 'react-icons/io';
+import { FiMaximize2 } from 'react-icons/fi';
 import ModernLineBarChart from 'components/Charts/ModernLineBarChart';
+import ExpandableChartModal from 'components/Charts/ExpandableChartModal';
 import ModernBarChart from 'components/Charts/ModernBarChart';
 import MiniStatistics from '../Dashboard/components/MiniStatistics';
 import Reviews from './components/Reviews';
@@ -376,6 +380,19 @@ export default function CommercialView() {
   const [establishment, setEstablishment] = useState(null);
   const [currentView, setCurrentView] = useState(null);
 
+  // Modal state for expandable chart
+  const { isOpen: isChartModalOpen, onOpen: onChartModalOpen, onClose: onChartModalClose } = useDisclosure();
+
+  // Period options for the chart modal filter
+  const periodOptions = React.useMemo(
+    () => [
+      { id: 'week', name: intl.formatMessage({ id: 'app.thisWeek' }) },
+      { id: 'month', name: intl.formatMessage({ id: 'app.thisMonth' }) },
+      { id: 'year', name: intl.formatMessage({ id: 'app.thisYear' }) }
+    ],
+    [intl]
+  );
+
   const cardColor = useColorModeValue('white', 'gray.700');
 
   const establishments = useSelector((state) => state.company.currentCompany?.establishments);
@@ -542,18 +559,32 @@ export default function CommercialView() {
     });
   };
 
-  const formatCategories = (options: string[]) => {
+  const formatCategories = (options: (string | number)[]) => {
     if (!options) return [];
+
+    // Month number to name mapping for backend that returns numbers
+    const monthNumberToName: Record<number, string> = {
+      1: 'january', 2: 'february', 3: 'march', 4: 'april',
+      5: 'may', 6: 'june', 7: 'july', 8: 'august',
+      9: 'september', 10: 'october', 11: 'november', 12: 'december'
+    };
 
     switch (filters.period.id) {
       case 'week':
-        return options.map((day) => intl.formatMessage({ id: `app.days.${day.toLowerCase()}` }));
+        return options.map((day) => {
+          const dayStr = typeof day === 'string' ? day.toLowerCase() : String(day);
+          return intl.formatMessage({ id: `app.days.${dayStr}` });
+        });
       case 'year':
-        return options.map((month) =>
-          intl.formatMessage({ id: `app.months.${month.toLowerCase()}` })
-        );
+        return options.map((month) => {
+          // Handle both number (1-12) and string ("january") formats
+          const monthName = typeof month === 'number'
+            ? monthNumberToName[month]
+            : (typeof month === 'string' ? month.toLowerCase() : String(month));
+          return intl.formatMessage({ id: `app.months.${monthName}` });
+        });
       default:
-        return options;
+        return options.map((item) => String(item));
     }
   };
 
@@ -609,18 +640,24 @@ export default function CommercialView() {
               <HStack spacing={4} flex={1} wrap="wrap">
                 <Menu>
                   <MenuButton
-                    as={StandardButton}
-                    variant="outline"
+                    as={Button}
                     rightIcon={<IoIosArrowDown />}
                     size="md"
                     minW="180px"
+                    variant="outline"
+                    borderColor="green.500"
+                    color="green.500"
+                    fontWeight="medium"
+                    borderRadius="lg"
+                    _hover={{ bg: 'green.50' }}
+                    _active={{ bg: 'green.100' }}
                   >
                     {filters.parcel
                       ? filters.parcel.name
                       : intl.formatMessage({ id: 'app.allParcels' })}
                   </MenuButton>
-                  <MenuList>
-                    <MenuItem onClick={() => onParcelFilterChange(null)} color="gray.500">
+                  <MenuList minW="180px">
+                    <MenuItem onClick={() => onParcelFilterChange(null)} fontSize="sm" color="gray.600" py={2}>
                       {intl.formatMessage({ id: 'app.allParcels' })}
                     </MenuItem>
                     <MenuDivider />
@@ -629,7 +666,9 @@ export default function CommercialView() {
                         <MenuItem
                           key={index}
                           onClick={() => onParcelFilterChange(parcel)}
-                          color="gray.500"
+                          fontSize="sm"
+                          color="gray.600"
+                          py={2}
                         >
                           {parcel.name}
                         </MenuItem>
@@ -639,18 +678,24 @@ export default function CommercialView() {
 
                 <Menu>
                   <MenuButton
-                    as={StandardButton}
-                    variant="outline"
+                    as={Button}
                     rightIcon={<IoIosArrowDown />}
                     size="md"
                     minW="180px"
+                    variant="outline"
+                    borderColor="green.500"
+                    color="green.500"
+                    fontWeight="medium"
+                    borderRadius="lg"
+                    _hover={{ bg: 'green.50' }}
+                    _active={{ bg: 'green.100' }}
                   >
                     {filters.product
                       ? filters.product.name
                       : intl.formatMessage({ id: 'app.allProducts' })}
                   </MenuButton>
-                  <MenuList>
-                    <MenuItem onClick={() => onProductFilterChange(null)} color="gray.500">
+                  <MenuList minW="180px">
+                    <MenuItem onClick={() => onProductFilterChange(null)} fontSize="sm" color="gray.600" py={2}>
                       {intl.formatMessage({ id: 'app.allProducts' })}
                     </MenuItem>
                     <MenuDivider />
@@ -660,7 +705,9 @@ export default function CommercialView() {
                           <MenuItem
                             key={index}
                             onClick={() => onProductFilterChange(product)}
-                            color="gray.500"
+                            fontSize="sm"
+                            color="gray.600"
+                            py={2}
                           >
                             {product.name}
                           </MenuItem>
@@ -670,7 +717,9 @@ export default function CommercialView() {
                           <MenuItem
                             key={index}
                             onClick={() => onProductFilterChange(product)}
-                            color="gray.500"
+                            fontSize="sm"
+                            color="gray.600"
+                            py={2}
                           >
                             {product.name}
                           </MenuItem>
@@ -680,19 +729,25 @@ export default function CommercialView() {
 
                 <Menu>
                   <MenuButton
-                    as={StandardButton}
-                    variant="outline"
+                    as={Button}
                     rightIcon={<IoIosArrowDown />}
                     size="md"
                     minW="180px"
+                    variant="outline"
+                    borderColor="green.500"
+                    color="green.500"
+                    fontWeight="medium"
+                    borderRadius="lg"
+                    _hover={{ bg: 'green.50' }}
+                    _active={{ bg: 'green.100' }}
                     isDisabled={filters.product == null || filters.parcel == null}
                   >
                     {filters.production
                       ? filters.production.period
                       : intl.formatMessage({ id: 'app.allProductions' })}
                   </MenuButton>
-                  <MenuList>
-                    <MenuItem onClick={() => onProductionFilterChange(null)} color="gray.500">
+                  <MenuList minW="180px">
+                    <MenuItem onClick={() => onProductionFilterChange(null)} fontSize="sm" color="gray.600" py={2}>
                       {intl.formatMessage({ id: 'app.allProductions' })}
                     </MenuItem>
                     <MenuDivider />
@@ -701,7 +756,9 @@ export default function CommercialView() {
                         <MenuItem
                           key={index}
                           onClick={() => onProductionFilterChange(history)}
-                          color="gray.500"
+                          fontSize="sm"
+                          color="gray.600"
+                          py={2}
                         >
                           {history.period}
                         </MenuItem>
@@ -712,15 +769,20 @@ export default function CommercialView() {
 
               <Menu>
                 <MenuButton
-                  as={StandardButton}
-                  variant="primary"
+                  as={Button}
                   rightIcon={<IoIosArrowDown />}
                   size="md"
                   minW="150px"
+                  bg="green.500"
+                  color="white"
+                  fontWeight="medium"
+                  borderRadius="lg"
+                  _hover={{ bg: 'green.600' }}
+                  _active={{ bg: 'green.700' }}
                 >
                   {filters.period.name}
                 </MenuButton>
-                <MenuList>
+                <MenuList minW="150px">
                   <MenuItem
                     onClick={() =>
                       onPeriodFilterChange({
@@ -728,7 +790,9 @@ export default function CommercialView() {
                         name: intl.formatMessage({ id: 'app.thisWeek' })
                       })
                     }
-                    color="gray.500"
+                    fontSize="sm"
+                    color="gray.600"
+                    py={2}
                   >
                     {intl.formatMessage({ id: 'app.thisWeek' })}
                   </MenuItem>
@@ -739,7 +803,9 @@ export default function CommercialView() {
                         name: intl.formatMessage({ id: 'app.thisMonth' })
                       })
                     }
-                    color="gray.500"
+                    fontSize="sm"
+                    color="gray.600"
+                    py={2}
                   >
                     {intl.formatMessage({ id: 'app.thisMonth' })}
                   </MenuItem>
@@ -750,7 +816,9 @@ export default function CommercialView() {
                         name: intl.formatMessage({ id: 'app.thisYear' })
                       })
                     }
-                    color="gray.500"
+                    fontSize="sm"
+                    color="gray.600"
+                    py={2}
                   >
                     {intl.formatMessage({ id: 'app.thisYear' })}
                   </MenuItem>
@@ -778,10 +846,20 @@ export default function CommercialView() {
 
           {/* Charts Row - Side by Side */}
           <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6} w="100%">
-            {/* Scans vs Sales Chart */}
+            {/* Scans vs Reviews Chart */}
             <StandardCard
-              title={intl.formatMessage({ id: 'app.numberScansAndSales' })}
+              title={intl.formatMessage({ id: 'app.numberScansAndReviews' })}
               variant="elevated"
+              headerAction={
+                <IconButton
+                  aria-label={intl.formatMessage({ id: 'app.expand' })}
+                  icon={<FiMaximize2 />}
+                  variant="ghost"
+                  size="sm"
+                  colorScheme="green"
+                  onClick={onChartModalOpen}
+                />
+              }
             >
               <Box w="100%" h="350px">
                 {isFetching ? (
@@ -791,27 +869,29 @@ export default function CommercialView() {
                       Cargando datos del gráfico...
                     </Text>
                   </Flex>
-                ) : !dataEstablishmentScansVsSaleInfo?.scans_vs_sales ? (
+                ) : !dataEstablishmentScansVsSaleInfo?.scans_vs_reviews ? (
                   <Flex justify="center" align="center" h="100%">
                     <Text color={textColor}>No hay datos disponibles</Text>
                   </Flex>
                 ) : (
                   <ModernLineBarChart
-                    data={dataEstablishmentScansVsSaleInfo.scans_vs_sales.options.map(
+                    data={dataEstablishmentScansVsSaleInfo.scans_vs_reviews.options.map(
                       (category, index) => ({
                         name: formatCategories([category])[0],
                         scans:
-                          dataEstablishmentScansVsSaleInfo.scans_vs_sales.series.scans?.[index] ||
+                          dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.scans?.[index] ||
                           0,
-                        sales:
-                          dataEstablishmentScansVsSaleInfo.scans_vs_sales.series.sales?.[index] || 0
+                        reviews:
+                          dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.reviews?.[index] || 0
                       })
                     )}
                     lineDataKey="scans"
-                    barDataKey="sales"
+                    barDataKey="reviews"
                     xDataKey="name"
                     height={350}
                     showGrid={true}
+                    lineLabel={intl.formatMessage({ id: 'app.scans' })}
+                    barLabel={intl.formatMessage({ id: 'app.reviews' })}
                   />
                 )}
               </Box>
@@ -855,6 +935,34 @@ export default function CommercialView() {
           <Reviews />
         </Box>
       </Box>
+
+      {/* Expandable Chart Modal */}
+      <ExpandableChartModal
+        isOpen={isChartModalOpen}
+        onClose={onChartModalClose}
+        title={intl.formatMessage({ id: 'app.numberScansAndReviews' })}
+        data={
+          dataEstablishmentScansVsSaleInfo?.scans_vs_reviews
+            ? dataEstablishmentScansVsSaleInfo.scans_vs_reviews.options.map((category, index) => ({
+                name: formatCategories([category])[0],
+                scans:
+                  dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.scans?.[index] || 0,
+                reviews:
+                  dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.reviews?.[index] || 0
+              }))
+            : []
+        }
+        lineDataKey="scans"
+        barDataKey="reviews"
+        xDataKey="name"
+        lineLabel={intl.formatMessage({ id: 'app.scans' })}
+        barLabel={intl.formatMessage({ id: 'app.reviews' })}
+        isLoading={isFetching}
+        noDataMessage={intl.formatMessage({ id: 'app.noDataAvailable' })}
+        currentPeriod={filters.period}
+        periodOptions={periodOptions}
+        onPeriodChange={onPeriodFilterChange}
+      />
     </Box>
   );
 }

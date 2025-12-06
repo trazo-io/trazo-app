@@ -73,7 +73,7 @@ const EducationFAQ: React.FC = () => {
         <Container maxW={containerMaxW} py={{ base: 4, md: 8 }}>
           <Center py={20}>
             <VStack spacing={4}>
-              <Spinner size="xl" color="blue.500" />
+              <Spinner size="xl" color="green.500" thickness="3px" />
               <Text color={textColor}>Loading FAQ database...</Text>
             </VStack>
           </Center>

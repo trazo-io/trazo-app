@@ -185,36 +185,18 @@ const TransparencySummaryCard = ({ establishmentId }) => {
   const getActiveProductionsCount = () => {
     // Use comprehensive dashboard data if available (nested structure)
     const compData = comprehensiveData?.comprehensive_data;
-    if (compData?.total_productions !== undefined) {
-      console.log('🏭 Using comprehensive production count:', compData.total_productions);
-      return compData.total_productions;
+
+    // FIX: Prioritize active_productions (only productions without finish_date)
+    // The UI label says "Producciones Activas" so we should show active only
+    if (compData?.active_productions !== undefined) {
+      console.log('🏭 Using active production count:', compData.active_productions);
+      return compData.active_productions;
     }
 
-    // DEBUG: Try alternative field names that might exist
-    if (comprehensiveData) {
-      console.log(
-        '🏭 DEBUG: Looking for production fields in comprehensiveData keys:',
-        Object.keys(comprehensiveData)
-      );
-      const productionFields = Object.keys(comprehensiveData).filter(
-        (key) => key.toLowerCase().includes('production') || key.toLowerCase().includes('active')
-      );
-      console.log('🏭 DEBUG: Found production-related fields:', productionFields);
-
-      // Try common variations
-      const possibleProductionFields = [
-        'total_productions',
-        'active_productions',
-        'productions_count',
-        'production_count',
-        'active_productions_count'
-      ];
-      for (const field of possibleProductionFields) {
-        if (comprehensiveData[field] !== undefined) {
-          console.log(`🏭 DEBUG: Found productions in field "${field}":`, comprehensiveData[field]);
-          return comprehensiveData[field];
-        }
-      }
+    // Fallback to total_productions if active not available
+    if (compData?.total_productions !== undefined) {
+      console.log('🏭 Fallback to total production count:', compData.total_productions);
+      return compData.total_productions;
     }
 
     // Fallback to carbon data
@@ -232,7 +214,9 @@ const TransparencySummaryCard = ({ establishmentId }) => {
       hasTransparencyMetrics: !!comprehensiveData?.transparency_metrics,
       transparencyKeys: comprehensiveData?.transparency_metrics
         ? Object.keys(comprehensiveData.transparency_metrics)
-        : null
+        : null,
+      // Added: Check comprehensive_data.verification_status path
+      comprehensiveDataVerificationStatus: comprehensiveData?.comprehensive_data?.verification_status
     });
 
     // Check comprehensive dashboard verification data (nested structure)
@@ -241,6 +225,11 @@ const TransparencySummaryCard = ({ establishmentId }) => {
     // If not found at root, check in transparency_metrics
     if (!verificationData && comprehensiveData?.transparency_metrics) {
       verificationData = comprehensiveData.transparency_metrics.verification_breakdown;
+    }
+
+    // FIX: Also check comprehensive_data.verification_status as fallback
+    if (!verificationData && comprehensiveData?.comprehensive_data?.verification_status) {
+      verificationData = comprehensiveData.comprehensive_data.verification_status;
     }
 
     console.log('🔐 Verification Data Found:', verificationData);
@@ -507,7 +496,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
           </VStack>
         </Box>
 
-        {/* Action Buttons - Enhanced for Transparency-First */}
+        {/* Action Buttons - Enhanced for Transparency-First
         <Flex justify="center" gap={3} pt={{ base: 1, md: 2 }}>
           <Button
             bg="green.500"
@@ -549,7 +538,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
           >
             Ver Transparencia Completa
           </Button>
-        </Flex>
+        </Flex> */}
       </CardBody>
     </Card>
   );

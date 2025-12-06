@@ -630,39 +630,6 @@ export function getConsumerEventDescription(
 ): EventDescriptionData {
   const lowerDesc = eventDescription.toLowerCase();
 
-  // Debug logging for ALL event types to understand routing
-  if (event) {
-    console.log('🔍 EVENT ROUTING DEBUG:', {
-      event_type: event.event_type,
-      type: event.type,
-      description: eventDescription.substring(0, 50),
-      willEnterBusinessBlock: event.event_type === 7,
-      willEnterProductionBlock: event.event_type === 1 || event.type?.includes('production'),
-      willEnterWeatherBlock: event.event_type === 0
-    });
-  }
-
-  // Debug logging for weather events
-  if (
-    event &&
-    (event.event_type === 0 || event.weather_type === 'FR' || event.type === 'weather')
-  ) {
-    console.log('🌦️ WEATHER EVENT DEBUG:', {
-      originalDescription: eventDescription,
-      eventType: event.event_type,
-      weather_type: event.weather_type,
-      type: event.type,
-      allEventFields: Object.keys(event),
-      matchesWeatherConditionType:
-        event.event_type === 0 && event.weather_type && event.weather_type !== 'weather',
-      matchesWeatherConditionLegacy:
-        event.event_type === 0 && event.type && event.type !== 'weather',
-      actualEventTypeValue: event.event_type,
-      willEnterWeatherBranch:
-        event.event_type === 0 && event.weather_type && event.weather_type !== 'weather'
-    });
-  }
-
   // For production events (event_type: 1), create specific descriptions based on production data
   if (event && (event.event_type === 1 || event.type?.includes('production'))) {
     let icon = '🌱';
@@ -671,17 +638,17 @@ export function getConsumerEventDescription(
     // Map production type to consumer-friendly titles
     const typeMap: Record<string, { title: string; icon: string; description: string }> = {
       'event.production.planting': {
-        title: 'Planting Operation',
+        title: 'Planting',
         icon: '🌱',
         description: 'Seeds planted to establish healthy crop growth'
       },
       planting: {
-        title: 'Planting Operation',
+        title: 'Planting',
         icon: '🌱',
         description: 'Seeds planted to establish healthy crop growth'
       },
       PL: {
-        title: 'Planting Operation',
+        title: 'Planting',
         icon: '🌱',
         description: 'Seeds or seedlings planted with precision for optimal growth conditions'
       },
@@ -696,7 +663,7 @@ export function getConsumerEventDescription(
         description: 'Agricultural activity completed as part of sustainable farming'
       },
       'production.planting': {
-        title: 'Planting Operation',
+        title: 'Planting',
         icon: '🌱',
         description: 'Seeds planted to establish healthy crop growth'
       },
@@ -971,7 +938,7 @@ export function getConsumerEventDescription(
         const codeToTitle: Record<string, string> = {
           IR: 'Irrigation Operation',
           HA: 'Harvest Operation',
-          PL: 'Planting Operation',
+          PL: 'Planting',
           PR: 'Pruning Operation',
           TR: 'Transplanting Operation',
           EQ: 'Equipment Operations', // Sprint 2: EQ subtype
@@ -1180,15 +1147,6 @@ export function getConsumerEventDescription(
     // User observations are displayed separately in "Farmer's Field Notes" section
     let description = weatherInfo.description;
     description += realDetails;
-
-    console.log('🌦️ FINAL WEATHER DESCRIPTION:', {
-      originalEventDescription: eventDescription,
-      weatherInfoDescription: weatherInfo.description,
-      realDetails: realDetails,
-      finalDescription: description,
-      conditionMet:
-        eventDescription && eventDescription.trim() && eventDescription.trim() !== 'weather'
-    });
 
     return {
       title: weatherInfo.title,
@@ -2828,10 +2786,6 @@ export function getEventTrustIndicators(event: any): string[] {
       if (album.image_url || album.image) return true;
       return false;
     });
-  }
-
-  if (hasPhotos) {
-    indicators.push('Photo Documented');
   }
 
   // USDA verified

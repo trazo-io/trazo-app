@@ -91,8 +91,14 @@ const establishmentSchema = object({
   sustainabilityPractices: array(string()).optional(),
   isActive: boolean().default(true),
   type: string().optional(),
-  latitude: number().optional(),
-  longitude: number().optional(),
+  latitude: number()
+    .min(-90, 'Latitude must be between -90 and 90')
+    .max(90, 'Latitude must be between -90 and 90')
+    .optional(),
+  longitude: number()
+    .min(-180, 'Longitude must be between -180 and 180')
+    .max(180, 'Longitude must be between -180 and 180')
+    .optional(),
   // Additional contact fields for backend compatibility
   contact_person: string().optional(),
   contact_phone: string().optional(),
@@ -672,29 +678,6 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Active Status */}
-                <StandardField
-                  label="Establishment Status"
-                  helpText="Activate the establishment to start managing parcels and production"
-                >
-                  <Controller
-                    name="isActive"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <HStack>
-                        <Switch
-                          isChecked={field.value}
-                          onChange={field.onChange}
-                          colorScheme="green"
-                          size="md"
-                        />
-                        <Text fontSize="sm" color="gray.600">
-                          {field.value ? 'Active' : 'Inactive'}
-                        </Text>
-                      </HStack>
-                    )}
-                  />
-                </StandardField>
 
                 {/* Mobile-First Navigation */}
                 <Box pt={4}>
@@ -896,34 +879,48 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                     <StandardField
                       label="Latitude"
                       error={errors.latitude?.message}
-                      helpText="Decimal degrees (e.g., 40.7128)"
+                      helpText="Decimal degrees (e.g., 40.7128). Range: -90 to 90"
                     >
                       <Controller
                         name="latitude"
                         control={methods.control}
                         render={({ field }) => (
-                          <NumberInput
-                            value={field.value || ''}
-                            onChange={(_, num) => field.onChange(num)}
-                            precision={6}
-                            allowMouseWheel={false}
-                            clampValueOnBlur={false}
-                            min={-90}
-                            max={90}
-                            step={0.000001}
-                          >
-                            <NumberInputField
-                              borderRadius="lg"
-                              placeholder="40.7128"
-                              borderColor="gray.300"
-                              _hover={{ borderColor: 'green.400' }}
-                              _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                            />
-                            <NumberInputStepper>
-                              <NumberIncrementStepper />
-                              <NumberDecrementStepper />
-                            </NumberInputStepper>
-                          </NumberInput>
+                          <Input
+                            value={field.value !== undefined && field.value !== null ? String(field.value) : ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              // Allow empty, minus sign, decimal point, and valid number patterns
+                              if (val === '' || val === '-' || val === '.' || val === '-.' || /^-?\d*\.?\d*$/.test(val)) {
+                                // Store as string during typing, parse on blur
+                                field.onChange(val === '' ? undefined : val);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const val = e.target.value;
+                              if (val && val !== '-' && val !== '.' && val !== '-.') {
+                                const num = parseFloat(val);
+                                if (!isNaN(num)) {
+                                  // Parse to number, zod validates the range
+                                  field.onChange(num);
+                                } else {
+                                  // Invalid number format
+                                  field.onChange(undefined);
+                                }
+                              } else {
+                                // Empty or incomplete input
+                                field.onChange(undefined);
+                              }
+                              // Trigger validation
+                              field.onBlur();
+                            }}
+                            inputMode="decimal"
+                            placeholder="40.7128"
+                            borderRadius="lg"
+                            borderColor="gray.300"
+                            _hover={{ borderColor: 'green.400' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            size="lg"
+                          />
                         )}
                       />
                     </StandardField>
@@ -931,34 +928,48 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                     <StandardField
                       label="Longitude"
                       error={errors.longitude?.message}
-                      helpText="Decimal degrees (e.g., -74.0060)"
+                      helpText="Decimal degrees (e.g., -74.0060). Range: -180 to 180"
                     >
                       <Controller
                         name="longitude"
                         control={methods.control}
                         render={({ field }) => (
-                          <NumberInput
-                            value={field.value || ''}
-                            onChange={(_, num) => field.onChange(num)}
-                            precision={6}
-                            allowMouseWheel={false}
-                            clampValueOnBlur={false}
-                            min={-180}
-                            max={180}
-                            step={0.000001}
-                          >
-                            <NumberInputField
-                              borderRadius="lg"
-                              placeholder="-74.0060"
-                              borderColor="gray.300"
-                              _hover={{ borderColor: 'green.400' }}
-                              _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                            />
-                            <NumberInputStepper>
-                              <NumberIncrementStepper />
-                              <NumberDecrementStepper />
-                            </NumberInputStepper>
-                          </NumberInput>
+                          <Input
+                            value={field.value !== undefined && field.value !== null ? String(field.value) : ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              // Allow empty, minus sign, decimal point, and valid number patterns
+                              if (val === '' || val === '-' || val === '.' || val === '-.' || /^-?\d*\.?\d*$/.test(val)) {
+                                // Store as string during typing, parse on blur
+                                field.onChange(val === '' ? undefined : val);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const val = e.target.value;
+                              if (val && val !== '-' && val !== '.' && val !== '-.') {
+                                const num = parseFloat(val);
+                                if (!isNaN(num)) {
+                                  // Parse to number, zod validates the range
+                                  field.onChange(num);
+                                } else {
+                                  // Invalid number format
+                                  field.onChange(undefined);
+                                }
+                              } else {
+                                // Empty or incomplete input
+                                field.onChange(undefined);
+                              }
+                              // Trigger validation
+                              field.onBlur();
+                            }}
+                            inputMode="decimal"
+                            placeholder="-74.0060"
+                            borderRadius="lg"
+                            borderColor="gray.300"
+                            _hover={{ borderColor: 'green.400' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            size="lg"
+                          />
                         )}
                       />
                     </StandardField>

@@ -127,7 +127,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
         <ModalCloseButton />
 
         <ModalBody p={6} overflowY="auto">
-          <VStack spacing={6} align="stretch">
+          <VStack spacing={6} align="stretch" mb="100px !important">
             {/* Company Logo and Description */}
             {(companyData.logo || companyData.description) && (
               <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>

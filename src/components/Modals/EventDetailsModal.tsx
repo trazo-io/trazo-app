@@ -625,10 +625,49 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
       });
     }
 
-    // Hailstorm event fields - these come at root level from backend
+    // Start Date for High Temperature events
+    if (extraData.start_date || weatherEvent.start_date) {
+      const startDateValue = extraData.start_date || weatherEvent.start_date;
+      const formattedStartDate = new Date(startDateValue).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      fields.push({
+        label: 'Start Date',
+        value: formattedStartDate,
+        priority: 'immediate'
+      });
+    }
+
+    // End Date for High Temperature events
+    if (extraData.end_date || weatherEvent.end_date) {
+      const endDateValue = extraData.end_date || weatherEvent.end_date;
+      const formattedEndDate = new Date(endDateValue).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      fields.push({
+        label: 'End Date',
+        value: formattedEndDate,
+        priority: 'immediate'
+      });
+    }
+
+    // 🚨 DEPRECATED: Hailstorm weight and diameter fields removed in Sprint 2 Epic 2.1.3
+    // Backend no longer sends these fields for Hailstorm events
+    // Keeping defensive checks in case old events still have this data
     if (extraData.weight !== undefined || weatherEvent.weight !== undefined) {
       const weight = extraData.weight ?? weatherEvent.weight;
-      if (weight !== 0) {
+      // Only show if weight exists AND is greater than 0
+      if (weight && weight > 0) {
         fields.push({
           label: 'Hail Weight',
           value: `${weight} g`,
@@ -638,7 +677,8 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
     if (extraData.diameter !== undefined || weatherEvent.diameter !== undefined) {
       const diameter = extraData.diameter ?? weatherEvent.diameter;
-      if (diameter !== 0) {
+      // Only show if diameter exists AND is greater than 0
+      if (diameter && diameter > 0) {
         fields.push({
           label: 'Hail Diameter',
           value: `${diameter} mm`,
@@ -651,9 +691,16 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     if (extraData.duration !== undefined || weatherEvent.duration !== undefined) {
       const duration = extraData.duration ?? weatherEvent.duration;
       if (duration !== 0) {
+        // 🚨 CRITICAL: Hailstorm (HL) uses minutes, other weather events use hours
+        // The event.type field contains a translation key like "event.weather.hailstorm"
+        // We check if it contains 'hailstorm' to determine the unit
+        const weatherType = event.type || '';
+        console.log('[EventDetailsModal] Weather type for duration:', weatherType, 'Duration:', duration);
+        const isHailstorm = weatherType.toLowerCase().includes('hailstorm');
+        const durationUnit = isHailstorm ? 'minutes' : 'hours';
         fields.push({
           label: 'Duration',
-          value: `${duration} hours`,
+          value: `${duration} ${durationUnit}`,
           priority: 'secondary'
         });
       }
@@ -665,7 +712,10 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
-    if (extraData.protection_measures || weatherEvent.protection_measures) {
+    // 🚨 CRITICAL: Only show Protection Measures if way_of_protection wasn't already shown
+    // This prevents duplicate protection fields for Hailstorm events
+    const hasProtectionMethod = extraData.way_of_protection || weatherEvent.way_of_protection;
+    if ((extraData.protection_measures || weatherEvent.protection_measures) && !hasProtectionMethod) {
       fields.push({
         label: 'Protection Measures',
         value: extraData.protection_measures || weatherEvent.protection_measures,
@@ -677,7 +727,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
       if (windSpeed !== 0) {
         fields.push({
           label: 'Wind Speed',
-          value: `${windSpeed} mph`,
+          value: `${windSpeed} km/h`,
           priority: 'immediate'
         });
       }
@@ -845,7 +895,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     // Production Type - Critical field to understand the operation
     if (event.production_type || event.type) {
       const typeLabels = {
-        PL: 'Planting/Seeding',
+        PL: 'Planting',
         HA: 'Harvesting',
         IR: 'Irrigation',
         PR: 'Pruning/Trimming',
@@ -854,12 +904,12 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         fertilization: 'Fertilizer Application',
         weeding: 'Weed Management',
         mulching: 'Mulching Application',
-        planting: 'Planting/Seeding',
+        planting: 'Planting',
         harvesting: 'Harvesting',
         irrigation: 'Irrigation',
         pruning: 'Pruning/Trimming',
         // API format mappings
-        'event.production.planting': 'Planting/Seeding',
+        'event.production.planting': 'Planting',
         'event.production.harvesting': 'Harvesting',
         'event.production.irrigation': 'Irrigation',
         'event.production.pruning': 'Pruning/Trimming',

@@ -16,7 +16,14 @@ import {
   Icon,
   SimpleGrid,
   Spinner,
-  IconButton
+  IconButton,
+  Image,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalCloseButton,
+  ModalBody,
+  useDisclosure
 } from '@chakra-ui/react';
 import { StandardPage, StandardCard, StandardButton } from 'components/Design/StandardComponents';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -42,6 +49,15 @@ const AllReviewsView = () => {
     date_from: '',
     date_to: ''
   });
+
+  // Image modal state
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    onOpen();
+  };
 
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
 
@@ -353,6 +369,53 @@ const AllReviewsView = () => {
                       <Text fontSize="sm" color="gray.600" lineHeight="1.6">
                         {review.written_review || 'Sin comentarios'}
                       </Text>
+
+                      {/* Review Images */}
+                      {review.images && review.images.length > 0 && (
+                        <HStack spacing={3} pt={2}>
+                          {review.images.slice(0, 4).map((imageUrl: string, imgIndex: number) => (
+                            <Box
+                              key={imgIndex}
+                              position="relative"
+                              cursor="pointer"
+                              onClick={() => handleImageClick(imageUrl)}
+                              borderRadius="lg"
+                              overflow="hidden"
+                              transition="all 0.2s"
+                              _hover={{ transform: 'scale(1.05)', boxShadow: 'md' }}
+                            >
+                              <Image
+                                src={imageUrl}
+                                alt={`Review image ${imgIndex + 1}`}
+                                w="80px"
+                                h="80px"
+                                objectFit="cover"
+                                borderRadius="lg"
+                                border="1px solid"
+                                borderColor="gray.200"
+                              />
+                              {imgIndex === 3 && review.images.length > 4 && (
+                                <Flex
+                                  position="absolute"
+                                  top={0}
+                                  left={0}
+                                  right={0}
+                                  bottom={0}
+                                  bg="blackAlpha.600"
+                                  align="center"
+                                  justify="center"
+                                  borderRadius="lg"
+                                >
+                                  <Text color="white" fontWeight="bold" fontSize="sm">
+                                    +{review.images.length - 4}
+                                  </Text>
+                                </Flex>
+                              )}
+                            </Box>
+                          ))}
+                        </HStack>
+                      )}
+
                       <HStack spacing={4} fontSize="xs" color="gray.500">
                         <Text>Producto: {review.product || 'N/A'}</Text>
                         <Text>•</Text>
@@ -407,6 +470,26 @@ const AllReviewsView = () => {
           )}
         </VStack>
       </StandardCard>
+
+      {/* Image Lightbox Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} size="4xl" isCentered>
+        <ModalOverlay bg="blackAlpha.800" />
+        <ModalContent bg="transparent" boxShadow="none" maxW="90vw">
+          <ModalCloseButton color="white" size="lg" top={4} right={4} zIndex={10} />
+          <ModalBody p={0} display="flex" alignItems="center" justifyContent="center">
+            {selectedImage && (
+              <Image
+                src={selectedImage}
+                alt="Review image full size"
+                maxH="85vh"
+                maxW="90vw"
+                objectFit="contain"
+                borderRadius="xl"
+              />
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </StandardPage>
   );
 };

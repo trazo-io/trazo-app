@@ -21,6 +21,8 @@ interface ModernLineBarChartProps {
   height?: number;
   showGrid?: boolean;
   gradientId?: string;
+  lineLabel?: string;
+  barLabel?: string;
 }
 
 const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
@@ -30,7 +32,9 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
   xDataKey = 'name',
   height = 350,
   showGrid = false,
-  gradientId = 'colorGradient'
+  gradientId = 'colorGradient',
+  lineLabel = 'Scans',
+  barLabel = 'Reviews'
 }) => {
   const textColor = useColorModeValue('gray.600', 'white');
   const gridColor = useColorModeValue('#E2E8F0', '#2D3748');
@@ -40,6 +44,11 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
   // Custom Tooltip following Trazo design
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      // Filter out Area component entries (empty name or dataKey name)
+      const filteredPayload = payload.filter((entry: any) =>
+        entry.name === lineLabel || entry.name === barLabel
+      );
+
       return (
         <Box
           bg={tooltipBg}
@@ -52,11 +61,11 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
           <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
             {label}
           </Text>
-          {payload.map((entry: any, index: number) => (
+          {filteredPayload.map((entry: any, index: number) => (
             <Text
               key={index}
               fontSize="xs"
-              color={entry.name === 'Scans' ? 'green.500' : 'blue.500'}
+              color={entry.name === lineLabel ? 'green.500' : 'blue.500'}
             >
               {entry.name}: {entry.value}
             </Text>
@@ -74,8 +83,8 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
     // Filter out unwanted legend entries (like Area component)
     const filteredPayload = payload.filter((entry: any) => {
       const value = entry.value;
-      // Only show "Ventas" and "Escaneos", exclude "scans" or any other entries
-      return value === 'Ventas' || value === 'Escaneos';
+      // Only show the line and bar labels, exclude other entries
+      return value === lineLabel || value === barLabel;
     });
 
     return (
@@ -86,7 +95,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
               w={3}
               h={3}
               borderRadius="full"
-              bg={entry.color || (entry.value === 'Escaneos' ? '#4CAF50' : '#2196F3')}
+              bg={entry.color || (entry.value === lineLabel ? '#4CAF50' : '#2196F3')}
             />
             <Text fontSize="sm" color={textColor}>
               {entry.value}
@@ -141,7 +150,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
           radius={[8, 8, 0, 0]}
           maxBarSize={40}
           opacity={0.9}
-          name="Ventas"
+          name={barLabel}
         />
 
         {/* Modern smooth line - Primary legend entry */}
@@ -152,7 +161,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
           strokeWidth={3}
           dot={{ fill: '#4CAF50', strokeWidth: 2, r: 4 }}
           activeDot={{ r: 6 }}
-          name="Escaneos"
+          name={lineLabel}
         />
 
         {/* Smooth area under line for modern look - NO LEGEND */}
@@ -162,6 +171,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
           stroke="transparent"
           fill={`url(#${gradientId}-green)`}
           legendType="none"
+          name=""
         />
       </ComposedChart>
     </ResponsiveContainer>

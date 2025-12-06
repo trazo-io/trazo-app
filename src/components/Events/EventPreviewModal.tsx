@@ -45,6 +45,14 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
   // Check if we have enough data for preview
   const hasEnoughData = hasMinimalPreviewData(activeEventType, formData);
 
+  // DEBUG: Trace formData received by EventPreviewModal
+  console.log('🔍 [EventPreviewModal] FORM DATA RECEIVED:', {
+    activeEventType,
+    area_covered: formData?.area_covered,
+    area_unit: formData?.area_unit,
+    formDataKeys: formData ? Object.keys(formData) : []
+  });
+
   // Transform form data to standardized event format
   const previewEvent: StandardizedEvent = hasEnoughData
     ? normalizeFormEventData(activeEventType, formData, {
@@ -57,6 +65,14 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
         date: new Date().toISOString(),
         event_type: activeEventType
       } as StandardizedEvent);
+
+  // DEBUG: Trace normalized event
+  if (hasEnoughData) {
+    console.log('🔍 [EventPreviewModal] NORMALIZED EVENT:', {
+      area_covered: (previewEvent as any).area_covered,
+      type: previewEvent.type
+    });
+  }
 
   // Generate proper consumer-friendly description using the same logic as ConsumerEventCard
   const consumerEventInfo = hasEnoughData

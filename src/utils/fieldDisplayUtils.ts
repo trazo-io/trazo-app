@@ -660,9 +660,18 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
     const startDateValue = event.start_date || extraData.start_date;
     if (startDateValue) {
       console.log('✅ Found start date value:', startDateValue);
+      // Format the date to be human-readable
+      const formattedStartDate = new Date(startDateValue).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
       secondary.push({
         label: 'Start Date',
-        value: startDateValue,
+        value: formattedStartDate,
         priority: 'secondary',
         category: 'timing'
       });
@@ -674,9 +683,18 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
     const endDateValue = event.end_date || extraData.end_date;
     if (endDateValue) {
       console.log('✅ Found end date value:', endDateValue);
+      // Format the date to be human-readable
+      const formattedEndDate = new Date(endDateValue).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
       secondary.push({
         label: 'End Date',
-        value: endDateValue,
+        value: formattedEndDate,
         priority: 'secondary',
         category: 'timing'
       });
@@ -789,13 +807,14 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
       console.log('❌ No hail diameter value found');
     }
 
+    // 🚨 CRITICAL FIX: Hailstorm duration should be in MINUTES (short events), not hours
     // Check event object field first (from form), then fallback to extraData and normalized fields
     const durationValue = event.duration || extraData.duration;
     if (durationValue !== undefined) {
       console.log('✅ Found duration value:', durationValue);
       secondary.push({
         label: 'Duration',
-        value: `${durationValue}`,
+        value: `${durationValue} minutes`, // 🚨 FIX: Added "minutes" unit for Hailstorm events
         priority: 'secondary',
         category: 'measurement'
       });
@@ -803,16 +822,18 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
       console.log('❌ No duration value found');
     }
 
+    // 🚨 CRITICAL FIX: Consolidate protection fields to prevent duplicates
     // Check event object field first (from form), then fallback to extraData and normalized fields
+    // ONLY check way_of_protection and protection_measures ONCE, not separately
     const protectionValue =
       event.way_of_protection ||
-      extraData.way_of_protection ||
       event.protection_measures ||
+      extraData.way_of_protection ||
       extraData.protection_measures;
     if (protectionValue) {
       console.log('✅ Found protection method value:', protectionValue);
       immediate.push({
-        label: 'Protection Method',
+        label: 'Protection Method', // 🚨 FIX: Single consolidated label
         value: protectionValue,
         priority: 'immediate',
         category: 'environmental'
@@ -832,11 +853,11 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
   }
 
   // Tropical Storm Events (TS) and High Winds Events (HW)
+  // 🚨 CRITICAL: Exclude Hailstorm (HL) events - they have their own handler above
+  // "Hailstorm" contains "storm" which would cause duplicate fields
   if (
-    description.includes('storm') ||
-    description.includes('wind') ||
-    weatherType === 'TS' ||
-    weatherType === 'HW'
+    (description.includes('storm') || description.includes('wind') || weatherType === 'TS' || weatherType === 'HW') &&
+    weatherType !== 'HL' && !description.includes('hail')
   ) {
     console.log('🔍 TROPICAL STORM DEBUG - Event data:', {
       eventId: event.id,
@@ -973,17 +994,8 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
     }
   }
 
-  // Common weather fields
-  if (extraData.start_date && extraData.end_date) {
-    secondary.push({
-      label: 'Event Period',
-      value: `${new Date(extraData.start_date).toLocaleDateString()} to ${new Date(
-        extraData.end_date
-      ).toLocaleDateString()}`,
-      priority: 'secondary',
-      category: 'operational'
-    });
-  }
+  // Removed: Event Period field was redundant since we now show Start Date and End Date separately
+  // in the High Temperature (HT) event section above
 
   // Removed legacy humidity level fallback - humidity fields should only appear for humidity-specific events
 

@@ -95,6 +95,7 @@ interface ProductBasicData {
   company: {
     name: string;
   };
+  reputation?: number; // 0-5 scale from consumer reviews
 }
 
 interface CarbonHeroSectionProps {
@@ -464,6 +465,22 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                 <Text fontSize="md" color={mutedColor} fontWeight="medium">
                   by {productData.company.name}
                 </Text>
+                {/* Production reputation stars */}
+                {productData.reputation !== undefined && productData.reputation > 0 && (
+                  <HStack spacing={1} justify="center">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Icon
+                        key={star}
+                        as={FaStar}
+                        boxSize={4}
+                        color={star <= Math.round(productData.reputation!) ? 'yellow.400' : 'gray.300'}
+                      />
+                    ))}
+                    <Text fontSize="sm" color={mutedColor} ml={1}>
+                      ({productData.reputation!.toFixed(1)})
+                    </Text>
+                  </HStack>
+                )}
               </MotionVStack>
             )}
 

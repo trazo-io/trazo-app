@@ -325,16 +325,23 @@ export const billingApi = baseApi.injectEndpoints({
     getBlockchainSubscriptionStatus: builder.query<
       {
         blockchainSubscribed: boolean;
+        stripeValidated?: boolean;
         company: { id: number; name: string };
         mainSubscription: any;
       },
-      void
+      { sync?: boolean; session_id?: string } | void
     >({
-      query: () => ({
-        url: 'billing/subscription-status/',
-        method: 'GET',
-        credentials: 'include'
-      }),
+      query: (arg) => {
+        const params = new URLSearchParams();
+        if (arg?.sync) params.append('sync', 'true');
+        if (arg?.session_id) params.append('session_id', arg.session_id);
+        const queryString = params.toString();
+        return {
+          url: `billing/subscription-status/${queryString ? `?${queryString}` : ''}`,
+          method: 'GET',
+          credentials: 'include'
+        };
+      },
       providesTags: [{ type: 'Company', id: 'LIST' }]
     }),
 
@@ -367,5 +374,6 @@ export const {
   useCreateCustomerPortalSessionMutation,
   useSubscribeBlockchainMutation,
   useGetBlockchainSubscriptionStatusQuery,
+  useLazyGetBlockchainSubscriptionStatusQuery,
   useDownloadInvoiceMutation
 } = billingApi;

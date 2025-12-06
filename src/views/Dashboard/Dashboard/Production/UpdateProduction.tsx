@@ -189,28 +189,16 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
     navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
   };
 
-  // Show loading state for edit mode
-  if (isEdit && isLoadingProduction) {
-    return (
-      <Box p={8} textAlign="center">
-        <Text>Loading production data...</Text>
-      </Box>
-    );
+  // Return null while loading - keeps app-level loading visible
+  if (isEdit && (isLoadingProduction || !productionData)) {
+    return null;
   }
 
+  // Show error state for edit mode
   if (isEdit && isProductionError) {
     return (
       <Box p={8} textAlign="center">
         <Text color="red.500">Error loading production data. Please try again.</Text>
-      </Box>
-    );
-  }
-
-  // Don't render the form until we have the production data in edit mode
-  if (isEdit && !productionData) {
-    return (
-      <Box p={8} textAlign="center">
-        <Text>Loading...</Text>
       </Box>
     );
   }

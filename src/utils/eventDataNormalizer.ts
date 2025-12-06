@@ -528,6 +528,14 @@ function normalizeProductionEventData(
   }
 
   if (dataSource === 'form') {
+    // DEBUG: Trace area_covered and area_unit data flow
+    console.log('🔍 [normalizeProductionEventData] FORM DATA DEBUG:', {
+      area_covered: rawData.area_covered,
+      area: rawData.area,
+      area_unit: rawData.area_unit,
+      rawDataKeys: Object.keys(rawData)
+    });
+
     // Form data needs unit formatting
     formatProductionFieldWithUnit(
       rawData,
@@ -537,6 +545,11 @@ function normalizeProductionEventData(
       'area_unit',
       'hectares'
     );
+
+    // DEBUG: Trace result after formatting
+    console.log('🔍 [normalizeProductionEventData] AFTER FORMATTING:', {
+      area_covered_result: productionData.area_covered
+    });
     formatProductionFieldWithUnit(
       rawData,
       productionData,

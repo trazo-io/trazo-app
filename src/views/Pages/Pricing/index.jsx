@@ -1,78 +1,40 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
-  Button,
-  Flex,
   HStack,
   Icon,
   SimpleGrid,
-  Stack,
-  Switch,
-  Tag,
   Text,
   useColorModeValue,
   Spinner,
   useToast,
-  Tooltip,
   Badge,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   Accordion,
   AccordionItem,
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
-  Skeleton,
-  SkeletonText,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  Link,
-  ButtonGroup,
-  UnorderedList,
-  ListItem,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
   VStack,
-  Container,
   Heading,
-  Divider
+  Tooltip
 } from '@chakra-ui/react';
 import {
-  FaCheck,
   FaCheckCircle,
-  FaTimesCircle,
   FaBuilding,
   FaMapMarkedAlt,
   FaLeaf,
   FaQrcode,
   FaDatabase,
   FaHeadset,
-  FaExclamationTriangle,
-  FaSearch,
   FaCreditCard,
-  FaPaypal,
-  FaApplePay,
-  FaGooglePay,
-  FaEnvelope,
-  FaComments,
-  FaExternalLinkAlt,
   FaShieldAlt,
-  FaLink,
-  FaCalculator,
-  FaCogs,
-  FaBook,
-  FaChartBar,
   FaStar,
   FaRocket,
   FaCrown,
   FaIndustry,
-  FaGift
+  FaGift,
+  FaHandshake,
+  FaEnvelope
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { loadStripe } from '@stripe/stripe-js';
@@ -81,10 +43,7 @@ import { useSubscribeBlockchainMutation, useGetAddonsQuery } from 'store/api/bil
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
-import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
-import CardFooter from 'components/Card/CardFooter';
-import CardHeader from 'components/Card/CardHeader';
 
 // Import Trazo Design System
 import {
@@ -213,9 +172,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       if (planSubscribed === 'true') {
         setTimeout(() => {
           toast({
-            title: '🔗 ¿Quieres añadir Verificación Blockchain?',
-            description:
-              'Ahora puedes añadir verificación blockchain por solo $5/mes. Desplázate hacia abajo para verla.',
+            title: t('app.wantAddBlockchainVerification'),
+            description: t('app.scrollDownBlockchainOffer'),
             status: 'info',
             duration: 10000,
             isClosable: true,
@@ -318,8 +276,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     // console.log('Filtered and sorted plans:', limitedPlans); // Debug log (disabled for production)
 
     // If in upgrade flow, filter to show only higher tier plans
-    if (isUpgradeFlow && activeCompany?.subscription?.plan_name) {
-      const currentPlanName = activeCompany.subscription.plan_name.toLowerCase();
+    if (isUpgradeFlow && activeCompany?.subscription?.plan?.name) {
+      const currentPlanName = activeCompany.subscription.plan.name.toLowerCase();
       const currentIndex = planOrder.findIndex((plan) => currentPlanName.includes(plan));
 
       if (currentIndex !== -1) {
@@ -338,8 +296,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     const companyId = getCompanyId();
     if (!companyId) {
       toast({
-        title: 'Error',
-        description: 'Se requiere una empresa para continuar',
+        title: t('app.error'),
+        description: t('app.companyRequiredError'),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -388,7 +346,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       console.error('Blockchain subscription error:', error);
 
       // Enhanced error handling
-      let errorMessage = 'Ocurrió un error al procesar la suscripción blockchain';
+      let errorMessage = t('app.blockchainSubscriptionError');
 
       if (error.data?.error) {
         errorMessage = error.data.error;
@@ -401,15 +359,15 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       // Check if the error is due to missing subscription
       if (errorMessage.includes('subscription') || errorMessage.includes('plan')) {
         toast({
-          title: 'Suscripción requerida',
-          description: 'Necesitas seleccionar un plan primero para añadir verificación blockchain.',
+          title: t('app.subscriptionRequiredTitle'),
+          description: t('app.subscriptionRequiredForBlockchain'),
           status: 'warning',
           duration: 7000,
           isClosable: true
         });
       } else {
         toast({
-          title: 'Error en suscripción blockchain',
+          title: t('app.blockchainSubscriptionErrorTitle'),
           description: errorMessage,
           status: 'error',
           duration: 5000,
@@ -538,24 +496,52 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     }
   };
 
+  // Get current plan name for comparison
+  // The subscription structure is: activeCompany.subscription.plan.name
+  const currentPlanName = activeCompany?.subscription?.plan?.name?.toLowerCase() || '';
+  const isCurrentPlan = (planName) => {
+    if (!currentPlanName) return false;
+    // Handle both exact matches and partial matches (e.g., "Basic" matches "basic-monthly")
+    const planLower = planName.toLowerCase();
+    return currentPlanName === planLower ||
+           currentPlanName.includes(planLower) ||
+           planLower.includes(currentPlanName.split('-')[0]);
+  };
+
+  // Check if selecting a plan would be a downgrade (lower tier than current)
+  // Upgrade-only policy: Users must contact support to downgrade
+  const isDowngrade = (targetPlanName) => {
+    if (!currentPlanName) return false; // No current plan = not a downgrade
+    const planOrder = ['basic', 'standard', 'corporate', 'enterprise'];
+    const currentIndex = planOrder.findIndex(p => currentPlanName.includes(p));
+    const targetIndex = planOrder.findIndex(p => targetPlanName.toLowerCase().includes(p));
+    // If target plan is lower tier than current, it's a downgrade
+    return currentIndex !== -1 && targetIndex !== -1 && targetIndex < currentIndex;
+  };
+
   return (
     <StandardPage
       title={
-        newCompanyFlow || isNewCompany ? '🎉 ¡Empresa creada exitosamente!' : 'Selecciona Tu Plan'
+        newCompanyFlow || isNewCompany
+          ? t('app.companyCreatedSuccessTitle')
+          : t('app.selectPlan')
       }
       description={
         newCompanyFlow || isNewCompany
-          ? `Tu empresa ${
-              activeCompany?.name || 'nueva empresa'
-            } está lista. Ahora selecciona el plan perfecto para comenzar a rastrear tu huella de carbono y optimizar tus operaciones agrícolas.`
-          : 'Actualiza tu plan para desbloquear más funcionalidades'
+          ? intl.formatMessage(
+              { id: 'app.companyReadySelectPlan' },
+              { name: activeCompany?.name || t('app.newCompany') }
+            )
+          : t('app.upgradePlanUnlockFeatures')
       }
+      showBackButton={!newCompanyFlow && !isNewCompany}
+      onBack={() => navigate(-1)}
     >
       {/* Welcome Badge for New Companies */}
       {(newCompanyFlow || isNewCompany) && (
         <Box textAlign="center" mb={8}>
           <Badge colorScheme="green" fontSize="md" px={4} py={2} borderRadius="full">
-            ✨ Paso 2 de 3: Selecciona tu plan
+            {t('app.step2SelectPlan')}
           </Badge>
         </Box>
       )}
@@ -564,38 +550,40 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       {isUpgradeFlow && (
         <StandardAlert
           status="info"
-          title="Actualiza tu plan"
+          title={t('app.updateYourPlanTitle')}
           description={
             upgradeResourceType === 'establishment'
-              ? 'Necesitas más establecimientos para continuar'
+              ? t('app.needMoreEstablishments')
               : upgradeResourceType === 'parcel'
-              ? 'Necesitas más parcelas para continuar'
-              : 'Actualiza tu plan para acceder a más recursos'
+              ? t('app.needMoreParcels')
+              : t('app.upgradeForMoreResources')
           }
         />
       )}
 
       {/* Plans Section */}
       <StandardSection
-        title="Planes de Suscripción"
-        description="Diseñados específicamente para productores agrícolas"
+        title={t('app.subscriptionPlansTitle')}
+        description={t('app.designedForFarmersSubtitle')}
         className="plans-section"
       >
         {/* Interval Toggle */}
         <VStack spacing={8} w="full">
           <VStack spacing={4}>
             <Text fontSize="sm" color="gray.600" textAlign="center">
-              Elige tu ciclo de facturación
+              {t('app.chooseBillingCycle')}
             </Text>
-            <HStack spacing={1} bg="gray.100" p={1} borderRadius="lg">
+            <HStack spacing={1} bg="gray.100" p={1} borderRadius="lg" role="group" aria-label={t('app.chooseBillingCycle')}>
               <StandardButton
                 variant={activeInterval === 'monthly' ? 'primary' : 'ghost'}
                 size="sm"
                 onClick={() => setActiveInterval('monthly')}
                 borderRadius="md"
                 px={6}
+                aria-pressed={activeInterval === 'monthly'}
+                aria-label={t('app.monthlyLabel')}
               >
-                Mensual
+                {t('app.monthlyLabel')}
               </StandardButton>
               <StandardButton
                 variant={activeInterval === 'yearly' ? 'primary' : 'ghost'}
@@ -603,11 +591,13 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                 onClick={() => setActiveInterval('yearly')}
                 borderRadius="md"
                 px={6}
+                aria-pressed={activeInterval === 'yearly'}
+                aria-label={t('app.annualLabel')}
               >
                 <HStack spacing={2}>
-                  <Text>Anual</Text>
+                  <Text>{t('app.annualLabel')}</Text>
                   <Badge colorScheme="green" fontSize="xs" px={2} py={1} borderRadius="full">
-                    Ahorra 10%
+                    {t('app.save10Percent')}
                   </Badge>
                 </HStack>
               </StandardButton>
@@ -618,21 +608,21 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
           {loading ? (
             <VStack spacing={4} py={12}>
               <Spinner size="xl" color="green.500" />
-              <Text color="gray.500">Cargando planes...</Text>
+              <Text color="gray.500">{t('app.loadingPlans')}</Text>
               <StandardButton
                 variant="outline"
                 size="sm"
                 onClick={() => refetch()}
                 isLoading={loading}
               >
-                Actualizar Precios
+                {t('app.refreshPricing')}
               </StandardButton>
             </VStack>
           ) : displayPlans.length === 0 ? (
             <StandardAlert
               status="info"
-              title="Ya tienes el plan más alto"
-              description="Contacta a nuestro equipo de ventas para opciones empresariales personalizadas."
+              title={t('app.alreadyHighestPlanTitle')}
+              description={t('app.contactSalesForCustom')}
             />
           ) : (
             <SimpleGrid
@@ -647,6 +637,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                 const isRecommended = plan.id === getRecommendedPlan(displayPlans)?.id;
                 const planIcon = getPlanIcon(plan.name);
                 const planColor = getPlanColor(plan.name);
+                const isCurrent = isCurrentPlan(plan.name);
 
                 return (
                   <motion.div
@@ -656,18 +647,36 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                     style={{ width: '100%', maxWidth: '320px' }}
                   >
                     <StandardCard
-                      variant={isRecommended ? 'elevated' : 'outline'}
-                      borderColor={isRecommended ? `${planColor}.200` : 'gray.200'}
-                      borderWidth={isRecommended ? '2px' : '1px'}
-                      bg={isRecommended ? `${planColor}.50` : 'white'}
+                      variant={isCurrent ? 'elevated' : isRecommended ? 'elevated' : 'outline'}
+                      borderColor={isCurrent ? 'blue.400' : isRecommended ? `${planColor}.200` : 'gray.200'}
+                      borderWidth={isCurrent ? '3px' : isRecommended ? '2px' : '1px'}
+                      bg={isCurrent ? 'blue.50' : isRecommended ? `${planColor}.50` : 'white'}
                       position="relative"
                       overflow="hidden"
                       h="full"
                       display="flex"
                       flexDirection="column"
                     >
+                      {/* Current Plan Badge */}
+                      {isCurrent && (
+                        <Badge
+                          position="absolute"
+                          top={4}
+                          left={4}
+                          colorScheme="blue"
+                          variant="solid"
+                          fontSize="xs"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          fontWeight="bold"
+                          zIndex={2}
+                        >
+                          {t('app.currentPlanBadge')}
+                        </Badge>
+                      )}
                       {/* Recommended Badge */}
-                      {isRecommended && (
+                      {isRecommended && !isCurrent && (
                         <Badge
                           position="absolute"
                           top={4}
@@ -681,11 +690,11 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                           fontWeight="bold"
                           zIndex={2}
                         >
-                          ⭐ RECOMENDADO
+                          {t('app.recommendedBadge')}
                         </Badge>
                       )}
 
-                      <CardHeader pb={4} pt={6}>
+                      <Box pb={4} pt={6}>
                         <VStack spacing={4} align="center">
                           {/* Plan Icon */}
                           <Box
@@ -735,11 +744,11 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               </Text>
                               <VStack spacing={0} align="start">
                                 <Text color="gray.500" fontSize="sm" fontWeight="medium">
-                                  /{activeInterval === 'monthly' ? 'mes' : 'año'}
+                                  /{activeInterval === 'monthly' ? t('app.perMonthShort') : t('app.perYearShort')}
                                 </Text>
                                 {activeInterval === 'yearly' && (
                                   <Text fontSize="xs" color="green.600" fontWeight="medium">
-                                    Ahorra 10%
+                                    {t('app.save10Percent')}
                                   </Text>
                                 )}
                               </VStack>
@@ -754,12 +763,12 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                                       : parseFloat(plan.price) || 0;
                                   return (price / 12).toFixed(0);
                                 })()}
-                                /mes facturado anualmente
+                                {t('app.billedAnnually')}
                               </Text>
                             )}
                           </VStack>
                         </VStack>
-                      </CardHeader>
+                      </Box>
 
                       <CardBody py={4} flex="1">
                         <VStack spacing={3} align="stretch" h="full">
@@ -771,7 +780,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               textTransform="uppercase"
                               letterSpacing="wide"
                             >
-                              Características incluidas
+                              {t('app.featuresIncluded')}
                             </Text>
                             <Box w="40px" h="1px" bg={`${planColor}.300`} mx="auto" mt={2} />
                           </Box>
@@ -782,10 +791,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               <Icon as={FaBuilding} color={`${planColor}.500`} boxSize={4} />
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
                                 {plan.features.max_establishments === -1
-                                  ? 'Establecimientos ilimitados'
-                                  : `${plan.features.max_establishments} establecimiento${
-                                      plan.features.max_establishments !== 1 ? 's' : ''
-                                    }`}
+                                  ? t('app.unlimitedEstablishmentsFeature')
+                                  : plan.features.max_establishments === 1
+                                  ? intl.formatMessage({ id: 'app.establishmentCount' }, { count: 1 })
+                                  : intl.formatMessage({ id: 'app.establishmentsCount' }, { count: plan.features.max_establishments })}
                               </Text>
                             </HStack>
                           )}
@@ -797,15 +806,15 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
                                 {plan.features.max_parcels_per_establishment
                                   ? plan.features.max_parcels_per_establishment === -1
-                                    ? 'Parcelas ilimitadas por establecimiento'
-                                    : `${plan.features.max_parcels_per_establishment} parcela${
-                                        plan.features.max_parcels_per_establishment !== 1 ? 's' : ''
-                                      } por establecimiento`
+                                    ? t('app.unlimitedParcelsPerEstablishment')
+                                    : plan.features.max_parcels_per_establishment === 1
+                                    ? intl.formatMessage({ id: 'app.parcelPerEstablishment' }, { count: 1 })
+                                    : intl.formatMessage({ id: 'app.parcelsPerEstablishment' }, { count: plan.features.max_parcels_per_establishment })
                                   : plan.features.max_parcels === -1
-                                  ? 'Parcelas ilimitadas'
-                                  : `${plan.features.max_parcels} parcela${
-                                      plan.features.max_parcels !== 1 ? 's' : ''
-                                    }`}
+                                  ? t('app.unlimitedParcelsFeature')
+                                  : plan.features.max_parcels === 1
+                                  ? intl.formatMessage({ id: 'app.parcelCount' }, { count: 1 })
+                                  : intl.formatMessage({ id: 'app.parcelsCount' }, { count: plan.features.max_parcels })}
                               </Text>
                             </HStack>
                           )}
@@ -815,10 +824,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               <Icon as={FaLeaf} color={`${planColor}.500`} boxSize={4} />
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
                                 {plan.features.max_productions_per_year === -1
-                                  ? 'Producciones ilimitadas por año'
-                                  : `${plan.features.max_productions_per_year} producción${
-                                      plan.features.max_productions_per_year !== 1 ? 'es' : ''
-                                    } por año`}
+                                  ? t('app.unlimitedProductionsPerYear')
+                                  : plan.features.max_productions_per_year === 1
+                                  ? intl.formatMessage({ id: 'app.productionPerYear' }, { count: 1 })
+                                  : intl.formatMessage({ id: 'app.productionsPerYear' }, { count: plan.features.max_productions_per_year })}
                               </Text>
                             </HStack>
                           )}
@@ -828,8 +837,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               <Icon as={FaQrcode} color={`${planColor}.500`} boxSize={4} />
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
                                 {plan.features.monthly_scan_limit === -1
-                                  ? 'Escaneos QR ilimitados'
-                                  : `${plan.features.monthly_scan_limit.toLocaleString()} escaneos QR/mes`}
+                                  ? t('app.unlimitedQrScans')
+                                  : intl.formatMessage({ id: 'app.qrScansPerMonth' }, { count: plan.features.monthly_scan_limit.toLocaleString() })}
                               </Text>
                             </HStack>
                           )}
@@ -839,8 +848,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               <Icon as={FaDatabase} color={`${planColor}.500`} boxSize={4} />
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
                                 {plan.features.storage_limit_gb === -1
-                                  ? 'Almacenamiento ilimitado'
-                                  : `${plan.features.storage_limit_gb} GB almacenamiento`}
+                                  ? t('app.unlimitedStorageFeature')
+                                  : intl.formatMessage({ id: 'app.storageGbFeature' }, { size: plan.features.storage_limit_gb })}
                               </Text>
                             </HStack>
                           )}
@@ -849,49 +858,24 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                             <HStack spacing={2} align="center">
                               <Icon as={FaHeadset} color={`${planColor}.500`} boxSize={4} />
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                Soporte en {plan.features.support_response_time}h
+                                {intl.formatMessage({ id: 'app.supportInHours' }, { hours: plan.features.support_response_time })}
                               </Text>
                             </HStack>
                           )}
 
-                          {/* Carbon & Tracking Features */}
-                          {plan.features?.carbon_tracking && (
-                            <HStack spacing={2} align="center">
-                              <Icon as={FaLeaf} color={`${planColor}.500`} boxSize={4} />
-                              <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                {plan.features.carbon_tracking === 'automated'
-                                  ? 'Seguimiento automático de carbono'
-                                  : plan.features.carbon_tracking === 'manual'
-                                  ? 'Seguimiento manual de carbono'
-                                  : 'Seguimiento de carbono'}
-                              </Text>
-                            </HStack>
-                          )}
+                          {/* Transparency Tracking - Available on all plans */}
+                          <HStack spacing={2} align="center">
+                            <Icon as={FaLeaf} color={`${planColor}.500`} boxSize={4} />
+                            <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
+                              {intl.formatMessage({ id: 'app.transparencyTracking' })}
+                            </Text>
+                          </HStack>
 
                           {plan.features?.blockchain_eligible && (
                             <HStack spacing={2} align="center">
                               <Icon as={FaShieldAlt} color={`${planColor}.500`} boxSize={4} />
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                Elegible para blockchain
-                              </Text>
-                            </HStack>
-                          )}
-
-                          {/* Advanced Features */}
-                          {plan.features?.educational_resources && (
-                            <HStack spacing={2} align="center">
-                              <Icon as={FaBook} color={`${planColor}.500`} boxSize={4} />
-                              <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                Recursos educativos
-                              </Text>
-                            </HStack>
-                          )}
-
-                          {plan.features?.custom_reporting && (
-                            <HStack spacing={2} align="center">
-                              <Icon as={FaChartBar} color={`${planColor}.500`} boxSize={4} />
-                              <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                Reportes personalizados
+                                {t('app.blockchainEligible')}
                               </Text>
                             </HStack>
                           )}
@@ -900,76 +884,91 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                             <HStack spacing={2} align="center">
                               <Icon as={FaStar} color={`${planColor}.500`} boxSize={4} />
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                Soporte prioritario
+                                {t('app.prioritySupportFeature')}
                               </Text>
                             </HStack>
                           )}
 
                           {/* Enterprise Features */}
-                          {plan.features?.api_access && (
-                            <HStack spacing={2} align="center">
-                              <Icon as={FaCogs} color={`${planColor}.500`} boxSize={4} />
-                              <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                Acceso completo a API
-                              </Text>
-                            </HStack>
-                          )}
-
-                          {plan.features?.white_label && (
-                            <HStack spacing={2} align="center">
-                              <Icon as={FaCrown} color={`${planColor}.500`} boxSize={4} />
-                              <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                Solución marca blanca
-                              </Text>
-                            </HStack>
-                          )}
-
                           {plan.features?.dedicated_support && (
                             <HStack spacing={2} align="center">
                               <Icon as={FaHeadset} color={`${planColor}.500`} boxSize={4} />
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                Soporte dedicado
+                                {t('app.dedicatedSupportFeature')}
                               </Text>
                             </HStack>
                           )}
                         </VStack>
                       </CardBody>
 
-                      <CardFooter pt={4} pb={6}>
+                      <Box pt={4} pb={6} px={4}>
                         <VStack spacing={3} w="full">
-                          <StandardButton
-                            variant={isRecommended ? 'primary' : 'outline'}
-                            size="md"
-                            onClick={() => handleSubscribe(plan.id)}
-                            isLoading={checkoutLoading}
-                            loadingText="Procesando..."
-                            leftIcon={<Icon as={FaCreditCard} />}
-                            w="full"
-                            h="10"
-                            fontSize="sm"
-                            fontWeight="bold"
-                            colorScheme={planColor}
-                            _hover={{
-                              transform: 'translateY(-1px)',
-                              boxShadow: 'md'
-                            }}
-                          >
-                            {newCompanyFlow || isNewCompany
-                              ? 'Comenzar Prueba Gratuita'
-                              : 'Seleccionar Plan'}
-                          </StandardButton>
+                          {/* Downgrade: Show Contact Support button */}
+                          {isDowngrade(plan.name) ? (
+                            <Tooltip
+                              label={t('app.contactSupportToDowngrade')}
+                              placement="top"
+                              hasArrow
+                            >
+                              <Box w="full">
+                                <StandardButton
+                                  variant="outline"
+                                  size="md"
+                                  leftIcon={<Icon as={FaEnvelope} />}
+                                  w="full"
+                                  h="10"
+                                  fontSize="sm"
+                                  fontWeight="bold"
+                                  colorScheme="gray"
+                                  isDisabled
+                                  aria-label={`${t('app.contactSupport')}: ${plan.name}`}
+                                  cursor="not-allowed"
+                                >
+                                  {t('app.contactSupport')}
+                                </StandardButton>
+                              </Box>
+                            </Tooltip>
+                          ) : (
+                            /* Current or Upgrade: Show appropriate button */
+                            <StandardButton
+                              variant={isCurrent ? 'solid' : isRecommended ? 'primary' : 'outline'}
+                              size="md"
+                              onClick={() => !isCurrent && handleSubscribe(plan.id)}
+                              isLoading={checkoutLoading && !isCurrent}
+                              loadingText={t('app.processingPayment')}
+                              leftIcon={<Icon as={isCurrent ? FaCheckCircle : FaCreditCard} />}
+                              w="full"
+                              h="10"
+                              fontSize="sm"
+                              fontWeight="bold"
+                              colorScheme={isCurrent ? 'blue' : planColor}
+                              isDisabled={isCurrent}
+                              aria-label={isCurrent
+                                ? `${t('app.currentPlanButton')}: ${plan.name}`
+                                : `${t('app.selectPlanButton')}: ${plan.name}`}
+                              _hover={isCurrent ? {} : {
+                                transform: 'translateY(-1px)',
+                                boxShadow: 'md'
+                              }}
+                            >
+                              {isCurrent
+                                ? t('app.currentPlanButton')
+                                : newCompanyFlow || isNewCompany
+                                  ? t('app.startFreeTrialButton')
+                                  : t('app.selectPlanButton')}
+                            </StandardButton>
+                          )}
 
                           {plan.features?.trial_with_card_days && (
                             <HStack spacing={1} justify="center">
                               <Icon as={FaGift} color="green.500" boxSize={3} />
                               <Text fontSize="xs" color="gray.500" textAlign="center">
-                                Prueba gratuita de {plan.features.trial_with_card_days} días
-                                incluida
+                                {intl.formatMessage({ id: 'app.freeTrialIncluded' }, { days: plan.features.trial_with_card_days })}
                               </Text>
                             </HStack>
                           )}
                         </VStack>
-                      </CardFooter>
+                      </Box>
                     </StandardCard>
                   </motion.div>
                 );
@@ -981,8 +980,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
 
       {/* Compact Blockchain Add-on Section */}
       <StandardSection
-        title="Verificación Blockchain"
-        description="Añade verificación inmutable de datos de carbono"
+        title={t('app.blockchainVerificationSection')}
+        description={t('app.addImmutableCarbonData')}
       >
         <Box maxW="4xl" mx="auto">
           <StandardCard variant="outline" borderColor="green.200" bg="green.50">
@@ -997,11 +996,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
 
                     <VStack align="start" spacing={1} flex={1}>
                       <Heading as="h4" size="sm" color="gray.800">
-                        Verificación Blockchain
+                        {t('app.blockchainVerificationSection')}
                       </Heading>
                       <Text color="gray.600" fontSize="xs">
-                        Registros inmutables de carbono, verificación USDA, y acceso a mercados de
-                        créditos
+                        {t('app.immutableCarbonRecords')}
                       </Text>
                     </VStack>
                   </HStack>
@@ -1011,7 +1009,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                       $5
                     </Text>
                     <Text fontSize="xs" color="gray.500">
-                      /mes
+                      /{t('app.perMonthShort')}
                     </Text>
                   </VStack>
                 </HStack>
@@ -1029,10 +1027,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                     <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
                     <VStack align="start" spacing={0} flex={1}>
                       <Text fontSize="xs" fontWeight="bold" color="gray.700">
-                        Verificación USDA
+                        {t('app.usdaVerificationFeature')}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Cumplimiento automático
+                        {t('app.automaticCompliance')}
                       </Text>
                     </VStack>
                   </HStack>
@@ -1048,10 +1046,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                     <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
                     <VStack align="start" spacing={0} flex={1}>
                       <Text fontSize="xs" fontWeight="bold" color="gray.700">
-                        Créditos de Carbono
+                        {t('app.carbonCreditsFeature')}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Acceso a mercados
+                        {t('app.marketAccess')}
                       </Text>
                     </VStack>
                   </HStack>
@@ -1067,10 +1065,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                     <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
                     <VStack align="start" spacing={0} flex={1}>
                       <Text fontSize="xs" fontWeight="bold" color="gray.700">
-                        Registros Inmutables
+                        {t('app.immutableRecordsFeature')}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Blockchain transparente
+                        {t('app.transparentBlockchain')}
                       </Text>
                     </VStack>
                   </HStack>
@@ -1081,7 +1079,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                   {activeCompany?.subscription ? (
                     <VStack spacing={2} w="full">
                       <Text fontSize="xs" color="green.600" textAlign="center" fontWeight="medium">
-                        ✅ ¡Perfecto! Ya tienes un plan activo
+                        {t('app.perfectYouHaveActivePlan')}
                       </Text>
                       <HStack spacing={2} justify="center">
                         <StandardButton
@@ -1089,11 +1087,11 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                           size="sm"
                           onClick={handleSubscribeBlockchain}
                           isLoading={checkoutLoading}
-                          loadingText="Procesando..."
+                          loadingText={t('app.processingPayment')}
                           leftIcon={<Icon as={FaShieldAlt} />}
                           colorScheme="green"
                         >
-                          Añadir Blockchain ($5/mes)
+                          {t('app.addBlockchainPrice')}
                         </StandardButton>
                         <StandardButton
                           variant="outline"
@@ -1101,18 +1099,17 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                           onClick={() => navigate('/admin/dashboard')}
                           leftIcon={<Icon as={FaRocket} />}
                         >
-                          Ir al Dashboard
+                          {t('app.goToDashboard')}
                         </StandardButton>
                       </HStack>
                     </VStack>
                   ) : (
                     <VStack spacing={2} w="full">
                       <Text fontSize="xs" color="blue.600" textAlign="center" fontWeight="medium">
-                        💡 Selecciona un plan primero, luego añade verificación blockchain
+                        {t('app.selectPlanFirstBlockchain')}
                       </Text>
                       <Text fontSize="xs" color="gray.500" textAlign="center" maxW="sm">
-                        Después de suscribirte a cualquier plan, podrás añadir verificación
-                        blockchain por solo $5/mes adicionales
+                        {t('app.afterSubscribingBlockchain')}
                       </Text>
                       <StandardButton
                         variant="outline"
@@ -1125,7 +1122,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                         leftIcon={<Icon as={FaRocket} />}
                         colorScheme="blue"
                       >
-                        Ver Planes
+                        {t('app.viewPlansButton')}
                       </StandardButton>
                     </VStack>
                   )}
@@ -1138,8 +1135,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
 
       {/* Benefits Section */}
       <StandardSection
-        title="¿Por qué elegir Trazo?"
-        description="Diseñado específicamente para productores agrícolas"
+        title={intl.formatMessage({ id: 'app.whyChooseTrazo' })}
+        description={intl.formatMessage({ id: 'app.designedForFarmers' })}
       >
         <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
           <StandardCard variant="flat">
@@ -1147,11 +1144,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
               <VStack spacing={4}>
                 <Icon as={FaLeaf} boxSize={12} color="green.500" />
                 <Heading as="h4" size="md" color="gray.700">
-                  Enfoque Agrícola
+                  {intl.formatMessage({ id: 'app.agriculturalFocus' })}
                 </Heading>
                 <Text color="gray.600" fontSize="sm">
-                  Herramientas diseñadas específicamente para productores de cítricos, almendras,
-                  soja y maíz
+                  {intl.formatMessage({ id: 'app.agriculturalFocusDescription' })}
                 </Text>
               </VStack>
             </CardBody>
@@ -1162,11 +1158,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
               <VStack spacing={4}>
                 <Icon as={FaQrcode} boxSize={12} color="blue.500" />
                 <Heading as="h4" size="md" color="gray.700">
-                  Trazabilidad Total
+                  {intl.formatMessage({ id: 'app.totalTraceability' })}
                 </Heading>
                 <Text color="gray.600" fontSize="sm">
-                  Códigos QR para cada producto, permitiendo a los consumidores ver el origen
-                  completo
+                  {intl.formatMessage({ id: 'app.totalTraceabilityDescription' })}
                 </Text>
               </VStack>
             </CardBody>
@@ -1175,12 +1170,12 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
           <StandardCard variant="flat">
             <CardBody textAlign="center">
               <VStack spacing={4}>
-                <Icon as={FaChartBar} boxSize={12} color="purple.500" />
+                <Icon as={FaHandshake} boxSize={12} color="purple.500" />
                 <Heading as="h4" size="md" color="gray.700">
-                  Análisis de Carbono
+                  {intl.formatMessage({ id: 'app.consumerTrust' })}
                 </Heading>
                 <Text color="gray.600" fontSize="sm">
-                  Seguimiento automático de huella de carbono con benchmarks específicos por cultivo
+                  {intl.formatMessage({ id: 'app.consumerTrustDescription' })}
                 </Text>
               </VStack>
             </CardBody>
@@ -1190,47 +1185,43 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
 
       {/* FAQ Section */}
       <StandardSection
-        title="Preguntas Frecuentes"
-        description="Respuestas a las dudas más comunes"
+        title={intl.formatMessage({ id: 'app.faq' })}
+        description={intl.formatMessage({ id: 'app.faqDescription' })}
       >
         <Accordion allowToggle>
           <AccordionItem>
             <AccordionButton>
               <Box flex="1" textAlign="left" fontWeight="medium">
-                ¿Puedo cambiar mi plan en cualquier momento?
+                {intl.formatMessage({ id: 'app.faqCanChangePlan' })}
               </Box>
               <AccordionIcon />
             </AccordionButton>
             <AccordionPanel pb={4} color="gray.600">
-              Sí, puedes actualizar o cambiar tu plan en cualquier momento desde tu panel de
-              control. Los cambios se aplicarán en tu próximo ciclo de facturación.
+              {intl.formatMessage({ id: 'app.faqCanChangePlanAnswer' })}
             </AccordionPanel>
           </AccordionItem>
 
           <AccordionItem>
             <AccordionButton>
               <Box flex="1" textAlign="left" fontWeight="medium">
-                ¿Cómo funciona la prueba gratuita de 14 días?
+                {intl.formatMessage({ id: 'app.faqHowTrialWorks' })}
               </Box>
               <AccordionIcon />
             </AccordionButton>
             <AccordionPanel pb={4} color="gray.600">
-              Todos los planes incluyen 14 días de prueba gratuita con acceso completo a todas las
-              funciones. No se te cobrará hasta que termine el período de prueba.
+              {intl.formatMessage({ id: 'app.faqHowTrialWorksAnswer' })}
             </AccordionPanel>
           </AccordionItem>
 
           <AccordionItem>
             <AccordionButton>
               <Box flex="1" textAlign="left" fontWeight="medium">
-                ¿Qué incluye la verificación blockchain?
+                {intl.formatMessage({ id: 'app.faqBlockchainIncluded' })}
               </Box>
               <AccordionIcon />
             </AccordionButton>
             <AccordionPanel pb={4} color="gray.600">
-              La verificación blockchain proporciona registros inmutables de tus datos de carbono,
-              verificación automática contra estándares USDA, y acceso a mercados de créditos de
-              carbono.
+              {intl.formatMessage({ id: 'app.faqBlockchainIncludedAnswer' })}
             </AccordionPanel>
           </AccordionItem>
         </Accordion>

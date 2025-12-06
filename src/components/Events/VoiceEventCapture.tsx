@@ -749,7 +749,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
             {(isProcessing || isProcessingVoice) && (
               <VStack spacing={1}>
-                <Spinner size="md" color="blue.500" />
+                <Spinner size="md" color="green.500" thickness="3px" />
                 <Text fontSize="xs" color="gray.500">
                   {processingTime > 0 ? `${processingTime}ms` : 'Processing...'}
                 </Text>

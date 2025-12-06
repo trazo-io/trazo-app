@@ -81,6 +81,7 @@ import { useGetCompanyQuery } from 'store/api/companyApi';
 import {
   useGetBillingDashboardQuery,
   useGetBlockchainSubscriptionStatusQuery,
+  useLazyGetBlockchainSubscriptionStatusQuery,
   useCancelSubscriptionMutation,
   useReactivateSubscriptionMutation,
   useAddAddonMutation,
@@ -154,6 +155,7 @@ function UnifiedSubscriptionDashboard() {
   const dispatch = useDispatch();
   const toast = useToast();
   const activeCompany = useSelector((state: RootState) => state.company.currentCompany) as Company;
+  const isLoadingCompany = useSelector((state: RootState) => state.company.isLoading);
 
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -183,7 +185,8 @@ function UnifiedSubscriptionDashboard() {
     refetchOnMountOrArgChange: true
   });
 
-  const { data: blockchainStatus } = useGetBlockchainSubscriptionStatusQuery();
+  const { data: blockchainStatus, refetch: refetchBlockchainStatus } = useGetBlockchainSubscriptionStatusQuery({});
+  const [syncBlockchainStatus] = useLazyGetBlockchainSubscriptionStatusQuery();
 
   // Mutations
   const [cancelSubscription, { isLoading: isCancellingSubscription }] =
@@ -214,6 +217,8 @@ function UnifiedSubscriptionDashboard() {
   // Handle refresh from URL params
   const queryParams = new URLSearchParams(location.search);
   const fromAddon = queryParams.get('from_addon') === 'true';
+  const fromBlockchainSubscription = queryParams.get('blockchain_subscription') === 'success';
+  const blockchainSessionId = queryParams.get('session_id') || '';
 
   const handleRefreshData = useCallback(async () => {
     try {
@@ -254,6 +259,47 @@ function UnifiedSubscriptionDashboard() {
     }
   }, [fromAddon, handleRefreshData, navigate, toast, intl, location.pathname]);
 
+  // Auto-sync blockchain status after successful subscription
+  useEffect(() => {
+    if (fromBlockchainSubscription) {
+      // Call sync endpoint to validate with Stripe and update database
+      const syncStatus = async () => {
+        try {
+          // First sync with Stripe to update the database
+          // Pass the session_id if available for direct validation
+          const syncResult = await syncBlockchainStatus({
+            sync: true,
+            session_id: blockchainSessionId || undefined
+          });
+          console.log('Blockchain sync result:', syncResult);
+
+          // Wait a moment for database to update
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // Refetch the status to update UI
+          const refetchResult = await refetchBlockchainStatus();
+          console.log('Blockchain refetch result:', refetchResult);
+
+          toast({
+            title: intl.formatMessage({ id: 'app.blockchainSubscriptionSuccessful' }),
+            description: intl.formatMessage({ id: 'app.blockchainSubscriptionSuccessDescription' }),
+            status: 'success',
+            duration: 5000,
+            isClosable: true
+          });
+
+          // Clear the URL params AFTER sync completes
+          navigate(location.pathname, { replace: true });
+        } catch (error) {
+          console.error('Error syncing blockchain status:', error);
+          // Still clear URL params on error
+          navigate(location.pathname, { replace: true });
+        }
+      };
+      syncStatus();
+    }
+  }, [fromBlockchainSubscription, blockchainSessionId, syncBlockchainStatus, refetchBlockchainStatus, navigate, toast, intl, location.pathname]);
+
   // Usage Metrics Calculation
   const countTotalParcels = (): number => {
     try {
@@ -269,40 +315,62 @@ function UnifiedSubscriptionDashboard() {
     }
   };
 
+  // Helper to calculate total parcels limit
+  // Total = parcels_per_establishment × establishments (or unlimited if either is -1)
+  const calculateTotalParcelsLimit = () => {
+    const parcelsPerEst = features?.max_parcels_per_establishment;
+    const maxEst = features?.max_establishments;
+
+    // -1 means unlimited
+    if (parcelsPerEst === -1 || maxEst === -1) {
+      return -1; // Unlimited
+    }
+
+    // Calculate total: parcels per establishment × number of establishments
+    const perEst = Math.max(0, parcelsPerEst || 0);
+    const establishments = Math.max(0, maxEst || 0);
+    return perEst * establishments;
+  };
+
+  // Helper to format limit display (handles -1 = unlimited)
+  const formatLimit = (limit: number) => {
+    return limit === -1 ? -1 : Math.max(0, limit);
+  };
+
   const usageMetrics = [
     {
       icon: FaBuilding,
       name: 'app.establishments',
       used: Math.max(0, activeCompany?.establishments?.length || 0),
-      limit: Math.max(0, features?.max_establishments || 0),
+      limit: formatLimit(features?.max_establishments ?? 0),
       colorScheme: 'blue'
     },
     {
       icon: FaMapMarkedAlt,
       name: 'app.parcels',
       used: countTotalParcels(),
-      limit: Math.max(0, features?.max_parcels || 0),
+      limit: formatLimit(calculateTotalParcelsLimit()),
       colorScheme: 'green'
     },
     {
       icon: FaLeaf,
       name: 'app.productions',
       used: Math.max(0, subscription?.used_productions || 0),
-      limit: Math.max(0, features?.max_productions_per_year || 0),
+      limit: formatLimit(features?.max_productions_per_year ?? 0),
       colorScheme: 'orange'
     },
     {
       icon: FaQrcode,
       name: 'app.scans',
       used: Math.max(0, subscription?.scan_count || 0),
-      limit: Math.max(0, features?.monthly_scan_limit || 0),
+      limit: formatLimit(features?.monthly_scan_limit ?? 0),
       colorScheme: 'purple'
     },
     {
       icon: FaDatabase,
       name: 'app.storage',
       used: Math.max(0, Number(subscription?.used_storage_gb) || 0),
-      limit: Math.max(0, features?.storage_limit_gb || 0),
+      limit: formatLimit(features?.storage_limit_gb ?? 0),
       unit: 'GB',
       colorScheme: 'cyan'
     }
@@ -506,29 +574,10 @@ function UnifiedSubscriptionDashboard() {
     isCreatingCheckoutSession ||
     isSubscribingBlockchain;
 
-  if (!activeCompany) {
-    return (
-      <Box pt={{ base: '120px', md: '60px', xl: '60px' }}>
-        <Alert status="warning" borderRadius="lg">
-          <AlertIcon />
-          <AlertTitle mr={2}>{intl.formatMessage({ id: 'app.noActiveCompany' })}</AlertTitle>
-          <AlertDescription>
-            {intl.formatMessage({ id: 'app.selectCompanyToManageBilling' })}
-          </AlertDescription>
-        </Alert>
-      </Box>
-    );
-  }
-
-  if (isDashboardLoading) {
-    return (
-      <Box pt={{ base: '120px', md: '60px', xl: '60px' }}>
-        <VStack spacing={4}>
-          <Spinner size="xl" color="blue.500" />
-          <Text color="gray.500">{intl.formatMessage({ id: 'app.loading' })}</Text>
-        </VStack>
-      </Box>
-    );
+  // Return null while loading - this keeps the app-level loading visible
+  // and prevents any intermediate states from flashing
+  if (isLoadingCompany || isDashboardLoading || !activeCompany) {
+    return null;
   }
 
   if (!hasSubscription) {
@@ -797,46 +846,58 @@ function UnifiedSubscriptionDashboard() {
                         {intl.formatMessage({ id: 'app.usageMetrics' })}
                       </Text>
                       <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
-                        {usageMetrics.map((metric) => (
-                          <Card
-                            key={metric.name}
-                            borderColor={borderColor}
-                            bg={cardBg}
-                            _hover={{ boxShadow: 'md' }}
-                          >
-                            <CardBody>
-                              <Flex align="center" mb={3}>
-                                <Icon
-                                  as={metric.icon}
-                                  mr={3}
-                                  boxSize={5}
-                                  color={`${metric.colorScheme}.500`}
-                                />
-                                <Text fontWeight="medium">
-                                  {intl.formatMessage({ id: metric.name })}
-                                </Text>
-                              </Flex>
-                              <Stat mb={2}>
-                                <StatNumber fontSize="xl">
-                                  {metric.used}
-                                  <Text as="span" fontSize="md" color="gray.500">
-                                    /{metric.limit} {metric.unit}
+                        {usageMetrics.map((metric) => {
+                          const isUnlimited = metric.limit === -1;
+                          const percentage = isUnlimited
+                            ? 0
+                            : Math.round((metric.used / Math.max(metric.limit, 1)) * 100);
+
+                          return (
+                            <Card
+                              key={metric.name}
+                              borderColor={borderColor}
+                              bg={cardBg}
+                              _hover={{ boxShadow: 'md' }}
+                            >
+                              <CardBody>
+                                <Flex align="center" mb={3}>
+                                  <Icon
+                                    as={metric.icon}
+                                    mr={3}
+                                    boxSize={5}
+                                    color={`${metric.colorScheme}.500`}
+                                  />
+                                  <Text fontWeight="medium">
+                                    {intl.formatMessage({ id: metric.name })}
                                   </Text>
-                                </StatNumber>
-                                <StatHelpText mb={0}>
-                                  {Math.round((metric.used / Math.max(metric.limit, 1)) * 100)}%{' '}
-                                  {intl.formatMessage({ id: 'app.used' })}
-                                </StatHelpText>
-                              </Stat>
-                              <Progress
-                                value={(metric.used / Math.max(metric.limit, 1)) * 100}
-                                size="sm"
-                                colorScheme={metric.colorScheme}
-                                borderRadius="full"
-                              />
-                            </CardBody>
-                          </Card>
-                        ))}
+                                </Flex>
+                                <Stat mb={2}>
+                                  <StatNumber fontSize="xl">
+                                    {metric.used}
+                                    <Text as="span" fontSize="md" color="gray.500">
+                                      /
+                                      {isUnlimited
+                                        ? intl.formatMessage({ id: 'app.unlimited' })
+                                        : metric.limit}{' '}
+                                      {metric.unit}
+                                    </Text>
+                                  </StatNumber>
+                                  <StatHelpText mb={0}>
+                                    {isUnlimited
+                                      ? intl.formatMessage({ id: 'app.unlimited' })
+                                      : `${percentage}% ${intl.formatMessage({ id: 'app.used' })}`}
+                                  </StatHelpText>
+                                </Stat>
+                                <Progress
+                                  value={isUnlimited ? 0 : percentage}
+                                  size="sm"
+                                  colorScheme={metric.colorScheme}
+                                  borderRadius="full"
+                                />
+                              </CardBody>
+                            </Card>
+                          );
+                        })}
                       </SimpleGrid>
                     </Box>
 
@@ -846,29 +907,12 @@ function UnifiedSubscriptionDashboard() {
                         {intl.formatMessage({ id: 'app.planFeatures' })}
                       </Text>
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <Card borderWidth="1px" borderColor="blue.200" bg="blue.50">
-                          <CardBody>
-                            <Flex align="center" mb={3}>
-                              <Icon as={FaCog} mr={3} boxSize={5} color="blue.500" />
-                              <Text fontWeight="bold" color="blue.700">
-                                {intl.formatMessage({ id: 'app.iotAutomation' })}
-                              </Text>
-                            </Flex>
-                            <Text fontSize="2xl" fontWeight="bold" color="blue.600" mb={1}>
-                              {features?.iot_automation_level || 50}%
-                            </Text>
-                            <Text fontSize="sm" color="gray.600">
-                              {intl.formatMessage({ id: 'app.iotAutomationDescription' })}
-                            </Text>
-                          </CardBody>
-                        </Card>
-
                         <Card borderWidth="1px" borderColor="green.200" bg="green.50">
                           <CardBody>
                             <Flex align="center" mb={3}>
                               <Icon as={FaLeaf} mr={3} boxSize={5} color="green.500" />
                               <Text fontWeight="bold" color="green.700">
-                                {intl.formatMessage({ id: 'app.carbonTracking' })}
+                                {intl.formatMessage({ id: 'app.transparencyTracking' })}
                               </Text>
                             </Flex>
                             <Text
@@ -878,17 +922,10 @@ function UnifiedSubscriptionDashboard() {
                               mb={1}
                               textTransform="capitalize"
                             >
-                              {features?.carbon_tracking === 'manual'
-                                ? intl.formatMessage({ id: 'app.manual' })
-                                : intl.formatMessage({ id: 'app.automated' })}{' '}
-                              {intl.formatMessage({ id: 'app.mode' })}
+                              {intl.formatMessage({ id: 'app.included' })}
                             </Text>
                             <Text fontSize="sm" color="gray.600">
-                              {features?.carbon_tracking === 'manual'
-                                ? intl.formatMessage({ id: 'app.manualCarbonTrackingDescription' })
-                                : intl.formatMessage({
-                                    id: 'app.automatedCarbonTrackingDescription'
-                                  })}
+                              {intl.formatMessage({ id: 'app.transparencyTrackingDescription' })}
                             </Text>
                           </CardBody>
                         </Card>
@@ -974,12 +1011,14 @@ function UnifiedSubscriptionDashboard() {
                               />
                               <Box>
                                 <Text fontWeight="bold" fontSize="lg">
-                                  {blockchainStatus?.blockchainSubscribed ? 'Active' : 'Not Active'}
+                                  {blockchainStatus?.blockchainSubscribed
+                                    ? intl.formatMessage({ id: 'app.blockchainActive' })
+                                    : intl.formatMessage({ id: 'app.blockchainNotActive' })}
                                 </Text>
                                 <Text fontSize="sm" color="gray.600">
                                   {blockchainStatus?.blockchainSubscribed
-                                    ? 'Your carbon data is being verified on blockchain'
-                                    : 'Add blockchain verification for $5/month'}
+                                    ? intl.formatMessage({ id: 'app.blockchainVerifiedDescription' })
+                                    : intl.formatMessage({ id: 'app.blockchainAddCta' })}
                                 </Text>
                               </Box>
                             </Flex>
@@ -990,7 +1029,7 @@ function UnifiedSubscriptionDashboard() {
                                 onClick={handleSubscribeBlockchain}
                                 isLoading={isSubscribingBlockchain}
                               >
-                                Add Verification
+                                {intl.formatMessage({ id: 'app.addVerification' })}
                               </Button>
                             )}
                           </Flex>
@@ -998,100 +1037,95 @@ function UnifiedSubscriptionDashboard() {
                       </Card>
                     </Box>
 
-                    {/* Add-ons Section */}
+                    {/* Add-ons Section - Always visible */}
                     <Box>
-                      <Flex justify="space-between" align="center" mb={4}>
-                        <Text fontSize="lg" fontWeight="bold">
-                          {intl.formatMessage({ id: 'app.addons' })}
-                        </Text>
-                        <IconButton
-                          aria-label="Toggle add-ons"
-                          icon={showAddons ? <FaChevronUp /> : <FaChevronDown />}
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setShowAddons(!showAddons)}
-                        />
-                      </Flex>
+                      <Text fontSize="lg" fontWeight="bold" mb={4}>
+                        {intl.formatMessage({ id: 'app.addons' })}
+                      </Text>
 
-                      <Collapse in={showAddons} animateOpacity>
-                        <VStack spacing={4} align="stretch">
-                          {/* Current Add-ons */}
-                          {subscription?.addons &&
-                            Array.isArray(subscription.addons) &&
-                            subscription.addons.length > 0 && (
-                              <Box>
-                                <Text fontWeight="medium" mb={2}>
-                                  {intl.formatMessage({ id: 'app.currentAddons' })}
-                                </Text>
-                                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                                  {subscription.addons.map((addonItem: any) => (
-                                    <Card key={addonItem.id} size="sm">
-                                      <CardBody>
-                                        <Flex justify="space-between" align="center">
-                                          <Box>
-                                            <Text fontWeight="medium">{addonItem.addon?.name}</Text>
-                                            <Text fontSize="sm" color="gray.600">
-                                              Quantity: {addonItem.quantity}
-                                            </Text>
-                                          </Box>
-                                          <Badge colorScheme="green" fontSize="md">
-                                            {formatPrice(
-                                              addonItem.addon?.price,
-                                              addonItem.quantity
-                                            )}
-                                          </Badge>
-                                        </Flex>
-                                      </CardBody>
-                                    </Card>
-                                  ))}
-                                </SimpleGrid>
-                              </Box>
-                            )}
-
-                          {/* Available Add-ons */}
-                          <Box>
-                            <Text fontWeight="medium" mb={2}>
-                              {intl.formatMessage({ id: 'app.availableAddons' })}
-                            </Text>
-                            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                              {addons
-                                .filter(
-                                  (addon: any) => addon && addon.id && addon.name && addon.price
-                                )
-                                .map((addon: any) => (
-                                  <Card
-                                    key={addon.id}
-                                    size="sm"
-                                    _hover={{ boxShadow: 'md', borderColor: 'blue.300' }}
-                                  >
+                      <VStack spacing={4} align="stretch">
+                        {/* Current Add-ons */}
+                        {subscription?.addons &&
+                          Array.isArray(subscription.addons) &&
+                          subscription.addons.length > 0 && (
+                            <Box>
+                              <Text fontWeight="medium" mb={2}>
+                                {intl.formatMessage({ id: 'app.currentAddons' })}
+                              </Text>
+                              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                                {subscription.addons.map((addonItem: any) => (
+                                  <Card key={addonItem.id} size="sm">
                                     <CardBody>
-                                      <Flex justify="space-between" align="start">
-                                        <Box flex="1">
-                                          <Text fontWeight="medium">{addon.name}</Text>
-                                          <Text fontSize="sm" color="gray.600" mb={2}>
-                                            {addon.description}
+                                      <Flex justify="space-between" align="center">
+                                        <Box>
+                                          <Text fontWeight="medium">{addonItem.addon?.name}</Text>
+                                          <Text fontSize="sm" color="gray.600">
+                                            Quantity: {addonItem.quantity}
                                           </Text>
-                                          <Badge colorScheme="blue">
-                                            {formatPrice(addon.price)}
-                                          </Badge>
                                         </Box>
-                                        <Button
-                                          size="sm"
-                                          colorScheme="blue"
-                                          variant="outline"
-                                          ml={3}
-                                          onClick={() => handleOpenAddonModal(addon)}
-                                        >
-                                          <FaPlus />
-                                        </Button>
+                                        <Badge colorScheme="green" fontSize="md">
+                                          {formatPrice(addonItem.addon?.price, addonItem.quantity)}
+                                        </Badge>
                                       </Flex>
                                     </CardBody>
                                   </Card>
                                 ))}
-                            </SimpleGrid>
-                          </Box>
-                        </VStack>
-                      </Collapse>
+                              </SimpleGrid>
+                            </Box>
+                          )}
+
+                        {/* Available Add-ons - Filter out Blockchain if already subscribed */}
+                        <Box>
+                          <Text fontWeight="medium" mb={2}>
+                            {intl.formatMessage({ id: 'app.availableAddons' })}
+                          </Text>
+                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                            {addons
+                              .filter((addon: any) => {
+                                // Basic validation
+                                if (!addon || !addon.id || !addon.name || !addon.price) {
+                                  return false;
+                                }
+                                // Hide Blockchain Verification if already subscribed
+                                const isBlockchainAddon =
+                                  addon.slug === 'blockchain-verification' ||
+                                  addon.name.toLowerCase().includes('blockchain');
+                                if (isBlockchainAddon && blockchainStatus?.blockchainSubscribed) {
+                                  return false;
+                                }
+                                return true;
+                              })
+                              .map((addon: any) => (
+                                <Card
+                                  key={addon.id}
+                                  size="sm"
+                                  _hover={{ boxShadow: 'md', borderColor: 'blue.300' }}
+                                >
+                                  <CardBody>
+                                    <Flex justify="space-between" align="start">
+                                      <Box flex="1">
+                                        <Text fontWeight="medium">{addon.name}</Text>
+                                        <Text fontSize="sm" color="gray.600" mb={2}>
+                                          {addon.description}
+                                        </Text>
+                                        <Badge colorScheme="blue">{formatPrice(addon.price)}</Badge>
+                                      </Box>
+                                      <Button
+                                        size="sm"
+                                        colorScheme="blue"
+                                        variant="outline"
+                                        ml={3}
+                                        onClick={() => handleOpenAddonModal(addon)}
+                                      >
+                                        <FaPlus />
+                                      </Button>
+                                    </Flex>
+                                  </CardBody>
+                                </Card>
+                              ))}
+                          </SimpleGrid>
+                        </Box>
+                      </VStack>
                     </Box>
                   </VStack>
                 </TabPanel>

@@ -105,6 +105,7 @@ function Billing() {
   const navigate = useNavigate();
   const toast = useToast();
   const activeCompany = useSelector((state) => state.company.currentCompany);
+  const isLoadingCompany = useSelector((state) => state.company.isLoading);
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
   const intl = useIntl();
@@ -580,6 +581,11 @@ function Billing() {
     }
   }, [subscribeBlockchain, hasSubscription, toast, intl, handleApiError]);
 
+  // Return null while loading - keeps app-level loading visible
+  if (isLoadingCompany || isDashboardLoading || !activeCompany) {
+    return null;
+  }
+
   return (
     <Box pt={{ base: '120px', md: '60px', xl: '60px' }}>
       {/* Page Title with Refresh Button */}
@@ -606,22 +612,7 @@ function Billing() {
         </Button>
       </Flex>
 
-      {/* No Company Warning */}
-      {!activeCompany && (
-        <Alert status="warning" mb={4} borderRadius="md">
-          <AlertIcon />
-          <AlertTitle mr={2}>{intl.formatMessage({ id: 'app.noActiveCompany' })}</AlertTitle>
-          <AlertDescription>
-            {intl.formatMessage({ id: 'app.selectCompanyToManageBilling' })}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {isDashboardLoading ? (
-        <Flex justify="center" align="center" h="300px">
-          <Spinner size="xl" />
-        </Flex>
-      ) : !hasSubscription && !activeCompany?.subscription ? (
+      {!hasSubscription && !activeCompany?.subscription ? (
         <Box textAlign="center" p={8} bg={cardBg} borderRadius="lg" boxShadow="md">
           <Icon as={FaInfoCircle} boxSize={12} color="blue.500" mb={4} />
           <Text fontSize="xl" fontWeight="bold" mb={4}>

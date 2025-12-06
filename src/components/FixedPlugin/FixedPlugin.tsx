@@ -51,6 +51,7 @@ function FixedPlugin(props: FixedPluginTypes) {
         bottom="30px"
         borderRadius="50px"
         boxShadow="0 2px 12px 0 rgb(0 0 0 / 16%)"
+        zIndex={9999}
       >
         <SettingsIcon cursor="pointer" ref={settingsRef} color={navbarIcon} w="20px" h="20px" />
       </Button>
