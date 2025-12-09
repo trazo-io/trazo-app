@@ -85,7 +85,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 // Components
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
 import { StandardImageGallery } from 'components/ImageGallery';
-import defaultProductionImage from 'assets/img/BgMusicCard.png';
 import TimelineRow from 'components/Tables/TimelineRow';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
@@ -958,7 +957,6 @@ function ProfileProduction() {
                       variant="default"
                       enablePreview={true}
                       showImageCount={true}
-                      fallbackImage={defaultProductionImage}
                       height={{ base: '200px', sm: '250px', md: '280px', lg: '300px' }}
                       showEmptyState={true}
                       maxDisplayImages={3}

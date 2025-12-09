@@ -12,7 +12,6 @@ import TrackList from './components/TrackList';
 // assets
 import imageMap from 'assets/img/imageMap.png';
 import imageParcel1 from 'assets/img/ImageParcel1.png';
-import defaultParcelImage from 'assets/img/BgMusicCard.png';
 import { setParcel } from 'store/features/productSlice';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { useIntl } from 'react-intl';
@@ -141,17 +140,7 @@ export default function ParcelView() {
                   borderRadius="15px"
                   height="100%"
                 />
-              ) : (
-                <Image
-                  src={defaultParcelImage}
-                  alt="default parcel image"
-                  objectFit={'cover'}
-                  minWidth={{ md: '300px', lg: 'auto' }}
-                  width="100%"
-                  borderRadius="15px"
-                  height="100%"
-                />
-              )
+              ) : undefined
             }
           />
         ) : (

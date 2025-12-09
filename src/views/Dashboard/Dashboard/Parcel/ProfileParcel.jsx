@@ -59,7 +59,6 @@ import { useGetParcelQuery } from 'store/api/productApi';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { formatAreaWithBothUnits } from '../../../../utils/areaUnits';
-import defaultParcelImage from 'assets/img/BgMusicCard.png';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
@@ -587,7 +586,6 @@ function ProfileParcel() {
                     variant="default"
                     enablePreview={true}
                     showImageCount={true}
-                    fallbackImage={defaultParcelImage}
                     height={{ base: '200px', sm: '250px', md: '280px', lg: '300px' }}
                     showEmptyState={true}
                     maxDisplayImages={3}

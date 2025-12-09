@@ -20,7 +20,7 @@ import {
   useBreakpointValue
 } from '@chakra-ui/react';
 import { FaCamera, FaChevronLeft, FaChevronRight, FaExpand, FaImage } from 'react-icons/fa';
-import { S3Image } from 'components/Design';
+import { S3Image, EmptyImageState } from 'components/Design';
 import { useBatchS3Images } from 'hooks/useBatchS3Images';
 
 export type ImageItem = string | { id: string; image: string; name?: string; description?: string };
@@ -128,31 +128,14 @@ const StandardImageGallery = ({
     if (!showEmptyState) return null;
 
     return (
-      <Box
-        bg={bgColor}
-        border="2px dashed"
-        borderColor={borderColor}
-        borderRadius={borderRadius}
+      <EmptyImageState
+        variant="large"
         height={height}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        p={8}
-      >
-        <VStack spacing={4} textAlign="center">
-          <Icon as={emptyStateIcon} boxSize={12} color={textColor} />
-          <VStack spacing={1}>
-            <Text fontSize="md" fontWeight="600" color={textColor}>
-              {emptyStateText}
-            </Text>
-            {emptyStateSubtext && (
-              <Text fontSize="sm" color={textColor} opacity={0.8}>
-                {emptyStateSubtext}
-              </Text>
-            )}
-          </VStack>
-        </VStack>
-      </Box>
+        borderRadius={borderRadius}
+        primaryText={emptyStateText}
+        secondaryText={emptyStateSubtext}
+        icon={emptyStateIcon as any}
+      />
     );
   };
 

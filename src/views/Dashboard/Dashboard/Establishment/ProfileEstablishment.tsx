@@ -58,7 +58,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
-import establishmentImage from 'assets/img/basic-auth.png';
 import { useGetEstablishmentQuery } from 'store/api/companyApi';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
@@ -567,7 +566,6 @@ function ProfileEstablishment() {
                         variant="default"
                         enablePreview={true}
                         showImageCount={true}
-                        fallbackImage={establishmentImage}
                         height={{ base: '200px', sm: '250px', md: '280px', lg: '300px' }}
                         maxDisplayImages={3}
                       />

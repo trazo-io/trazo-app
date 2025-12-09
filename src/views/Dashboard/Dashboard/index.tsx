@@ -56,7 +56,6 @@ import LineChart from 'components/Charts/LineChart';
 import MiniStatistics from './components/MiniStatistics';
 import SalesOverview from './components/SalesOverview';
 import bgImage from 'assets/img/backgroundImage.png';
-import defaultEstablishmentImage from 'assets/img/basic-auth.png';
 // assets
 import imageFarm from 'assets/img/imageFarm.png';
 import TransparencySummaryCard from './components/establishment/CarbonSummaryCard';
@@ -729,17 +728,18 @@ export default function DashboardView() {
               boxShadow: shadowHover
             }}
             image={
-              <S3Image
-                src={establishment?.image || defaultEstablishmentImage}
-                alt="establishment image"
-                width="100%"
-                height="100%"
-                objectFit={'cover'}
-                borderRadius="15px"
-                lazy={true}
-                fallbackSrc={defaultEstablishmentImage}
-                presignedUrl={establishment?.image ? presignedUrls[establishment.image] : undefined}
-              />
+              establishment?.image ? (
+                <S3Image
+                  src={establishment.image}
+                  alt="establishment image"
+                  width="100%"
+                  height="100%"
+                  objectFit={'cover'}
+                  borderRadius="15px"
+                  lazy={true}
+                  presignedUrl={presignedUrls[establishment.image]}
+                />
+              ) : undefined
             }
           />
         ) : (

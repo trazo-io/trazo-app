@@ -18,6 +18,9 @@ export {
   StandardMediaUpload
 } from './StandardComponents';
 
+// Empty State Components
+export { EmptyImageState } from './EmptyImageState';
+
 // Transparency Components
 export { TransparencyIndicator } from './TransparencyIndicator';
 

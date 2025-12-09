@@ -10,11 +10,12 @@ import CardHeader from './CardHeader';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import Shimmer from 'components/Shimmer/Shimmer';
+import { EmptyImageState } from 'components/Design/EmptyImageState';
 
 type CardWithImageProps = {
   title: string;
   name: string;
-  image: HTMLImageElement;
+  image?: HTMLImageElement;
   readMoreLink: string;
   // Style props that should be forwarded to the Card component
   borderLeft?: string;
@@ -152,21 +153,31 @@ const CardWithImage = ({
             </Button>
           </Flex>
         </Flex>
-        <Box position="relative" width="55%" height="100%" overflow="hidden">
-          {!imageLoaded && <Shimmer />}
-          <Box
-            position={!imageLoaded ? 'absolute' : 'relative'}
-            top="0"
-            left="0"
-            width="100%"
-            height="100%"
-            opacity={imageLoaded ? 1 : 0}
-            transition="opacity 0.3s ease-in-out"
-          >
-            {React.cloneElement(image as React.ReactElement, {
-              onLoad: () => setImageLoaded(true)
-            })}
-          </Box>
+        <Box position="relative" width="55%" height="100%" overflow="hidden" borderRadius="15px">
+          {!image ? (
+            <EmptyImageState
+              variant="medium"
+              height="100%"
+              borderRadius="15px"
+            />
+          ) : (
+            <>
+              {!imageLoaded && <Shimmer />}
+              <Box
+                position={!imageLoaded ? 'absolute' : 'relative'}
+                top="0"
+                left="0"
+                width="100%"
+                height="100%"
+                opacity={imageLoaded ? 1 : 0}
+                transition="opacity 0.3s ease-in-out"
+              >
+                {React.cloneElement(image as React.ReactElement, {
+                  onLoad: () => setImageLoaded(true)
+                })}
+              </Box>
+            </>
+          )}
         </Box>
       </Flex>
     </Card>

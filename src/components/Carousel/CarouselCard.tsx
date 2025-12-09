@@ -13,7 +13,7 @@ import {
   Icon,
   Skeleton
 } from '@chakra-ui/react';
-import { S3Image } from 'components/Design';
+import { S3Image, EmptyImageState } from 'components/Design';
 
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
@@ -112,24 +112,13 @@ const CarouselCard = ({
             />
           )}
 
-          {/* Simple placeholder or actual image */}
+          {/* Empty state or actual image */}
           {shouldShowPlaceholder ? (
-            <Box
-              w="100%"
-              h="100%"
-              bg="gray.50"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              position="relative"
-              borderBottom="1px solid"
-              borderColor="gray.100"
-              borderTopRadius="20px"
-            >
-              <Text fontSize="sm" color="gray.400" fontWeight="500" textAlign="center">
-                No Image
-              </Text>
-            </Box>
+            <EmptyImageState
+              variant="small"
+              height="100%"
+              borderRadius="20px"
+            />
           ) : (
             <S3Image
               width="100%"

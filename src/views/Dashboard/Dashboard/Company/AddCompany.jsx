@@ -74,7 +74,6 @@ import { setCompany } from 'store/features/companySlice';
 import { setUserCompany } from 'store/features/userSlice';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
-import BoxBackground from '../components/BoxBackground';
 // @ts-ignore: JSX component in TS file
 import NewCompany from '../components/forms/NewCompany';
 
@@ -687,18 +686,6 @@ function AddCompany({ isEdit = false }) {
       </VStack>
     </Box>
   );
-
-  if (isEdit) {
-    console.log('🏢 AddCompany: Rendering edit mode');
-    return (
-      <BoxBackground
-        title={intl.formatMessage({ id: 'app.editCompany' })}
-        subtitle={intl.formatMessage({ id: 'app.modifyForm' })}
-      >
-        <NewCompany />
-      </BoxBackground>
-    );
-  }
 
   return (
     <StandardPage
