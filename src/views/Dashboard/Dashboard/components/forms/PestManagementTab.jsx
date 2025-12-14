@@ -21,7 +21,8 @@ import {
 } from 'components/Design/StandardComponents';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, boolean } from 'zod';
+import { object, string, boolean, array } from 'zod';
+import CustomFieldsForm from './CustomFieldsForm';
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -60,7 +61,18 @@ const pestSchema = object({
   observation: string().optional(),
   // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
   beneficial_insects_used: string().optional(), // Whether beneficial insects are being used
-  chemical_free_period_days: string().optional() // Days since last chemical application
+  chemical_free_period_days: string().optional(), // Days since last chemical application
+  custom_fields: array(object({
+    id: string().optional(),
+    label: string(),
+    value: string(),
+    field_type: string(),
+    visibility: string(),
+    link_url: string().optional(),
+    verification: string().optional(),
+    created_at: string().optional(),
+    photo_id: string().optional()
+  })).optional()
 });
 
 const PestManagementTab = ({
@@ -105,9 +117,13 @@ const PestManagementTab = ({
       observation: initialValues.observation || '',
       // Sprint 3 Epic 3.2: Consumer Trust Fields
       beneficial_insects_used: initialValues.beneficial_insects_used || '',
-      chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || ''
+      chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || '',
+      custom_fields: initialValues.custom_fields || []
     }
   });
+
+  // Custom fields state for Phase 2.3
+  const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
 
   // Update form values when initialValues change
   useEffect(() => {
@@ -139,10 +155,16 @@ const PestManagementTab = ({
         observation: initialValues.observation || '',
         // Sprint 3 Epic 3.2: Consumer Trust Fields
         beneficial_insects_used: initialValues.beneficial_insects_used || '',
-        chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || ''
+        chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || '',
+        custom_fields: initialValues.custom_fields || []
       });
     }
   }, [initialValues, methods]);
+
+  // Sync custom fields with form
+  useEffect(() => {
+    methods.setValue('custom_fields', customFields);
+  }, [customFields, methods]);
 
   const {
     watch,
@@ -636,6 +658,14 @@ const PestManagementTab = ({
               />
             </StandardField>
           </SectionBox>
+
+          {/* Phase 2.3: Custom Fields Section */}
+          <CustomFieldsForm
+            customFields={customFields}
+            onCustomFieldsChange={setCustomFields}
+            eventTypeId={6}
+            disabled={false}
+          />
 
           {/* Action Buttons */}
           {!hideActions && (

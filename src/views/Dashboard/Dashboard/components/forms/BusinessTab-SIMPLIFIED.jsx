@@ -15,8 +15,9 @@ import {
 } from 'components/Design/StandardComponents';
 import { FaChevronLeft, FaChevronRight, FaLeaf, FaSeedling, FaClipboardList } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import React, { useEffect } from 'react';
-import { object, string } from 'zod';
+import React, { useEffect, useState } from 'react';
+import { object, string, array } from 'zod';
+import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
@@ -32,7 +33,18 @@ const formSchemaMainInfo = object({
   transparency_benefit: string().optional(), // NEW: Transparency benefit
   observation: string().optional(),
   // Sprint 3 Epic 3.2: Consumer Trust Field for transparency
-  verified_certifier_name: string().optional() // Name of the certifying organization
+  verified_certifier_name: string().optional(), // Name of the certifying organization
+  custom_fields: array(object({
+    id: string().optional(),
+    label: string(),
+    value: string(),
+    field_type: string(),
+    visibility: string(),
+    link_url: string().optional(),
+    verification: string().optional(),
+    created_at: string().optional(),
+    photo_id: string().optional()
+  })).optional()
 });
 
 const BusinessTab = ({
@@ -57,9 +69,13 @@ const BusinessTab = ({
       transparency_benefit: initialValues.transparency_benefit || '',
       observation: initialValues.observation || '',
       // Sprint 3 Epic 3.2: Consumer Trust Field
-      verified_certifier_name: initialValues.verified_certifier_name || ''
+      verified_certifier_name: initialValues.verified_certifier_name || '',
+      custom_fields: initialValues.custom_fields || []
     }
   });
+
+  // Custom fields state for Phase 2.3
+  const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
 
   // Update form values when initialValues change
   useEffect(() => {
@@ -75,10 +91,16 @@ const BusinessTab = ({
         transparency_benefit: initialValues.transparency_benefit || '',
         observation: initialValues.observation || '',
         // Sprint 3 Epic 3.2: Consumer Trust Field
-        verified_certifier_name: initialValues.verified_certifier_name || ''
+        verified_certifier_name: initialValues.verified_certifier_name || '',
+        custom_fields: initialValues.custom_fields || []
       });
     }
   }, [initialValues, methods]);
+
+  // Sync custom fields with form
+  useEffect(() => {
+    methods.setValue('custom_fields', customFields);
+  }, [customFields, methods]);
 
   const {
     handleSubmit,
@@ -345,6 +367,14 @@ const BusinessTab = ({
               />
             </StandardField>
           </SectionBox>
+
+          {/* Phase 2.3: Custom Fields Section */}
+          <CustomFieldsForm
+            customFields={customFields}
+            onCustomFieldsChange={setCustomFields}
+            eventTypeId={7}
+            disabled={false}
+          />
 
           {/* Navigation - Hidden when hideActions is true */}
           {!hideActions && (

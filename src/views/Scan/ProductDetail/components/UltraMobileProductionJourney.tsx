@@ -219,20 +219,79 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     const type = event.type.toLowerCase();
     const description = event.description.toLowerCase();
 
-    // Weather Events - Check event_type, type string, type codes, then description
+    // 🚨 CRITICAL: Check event_type field FIRST - it's the source of truth from backend
+    // If event_type_field is explicitly set (0, 1, 2, etc.), use it directly without checking description
+    const eventTypeField = (event as any)?.event_type;
+    if (eventTypeField !== undefined && eventTypeField !== null && typeof eventTypeField === 'number') {
+      // Use event_type_field as the primary classifier
+      switch (eventTypeField) {
+        case 0: // Weather
+          return {
+            icon: FaWater,
+            color: 'cyan.500',
+            bgColor: 'cyan.50',
+            category: 'Weather',
+            categoryColor: 'cyan'
+          };
+        case 1: // Production
+          return {
+            icon: MdAgriculture,
+            color: 'green.500',
+            bgColor: 'green.50',
+            category: 'Production',
+            categoryColor: 'green'
+          };
+        case 2: // Chemical
+          return {
+            icon: FaFlask,
+            color: 'orange.500',
+            bgColor: 'orange.50',
+            category: 'Chemical',
+            categoryColor: 'orange'
+          };
+        case 3: // General
+          return {
+            icon: FaClipboard,
+            color: 'gray.500',
+            bgColor: 'gray.50',
+            category: 'General',
+            categoryColor: 'gray'
+          };
+        case 4: // Equipment
+          return {
+            icon: FaTractor,
+            color: 'blue.500',
+            bgColor: 'blue.50',
+            category: 'Equipment',
+            categoryColor: 'blue'
+          };
+        case 5: // Soil Management
+          return {
+            icon: FaSeedling,
+            color: 'teal.500',
+            bgColor: 'teal.50',
+            category: 'Soil Management',
+            categoryColor: 'teal'
+          };
+        case 6: // Pest Management
+          return {
+            icon: FaBug,
+            color: 'purple.500',
+            bgColor: 'purple.50',
+            category: 'Pest Management',
+            categoryColor: 'purple'
+          };
+      }
+    }
+
+    // ⚠️ FALLBACK: Only check type strings and description keywords if event_type_field is missing
+    // This ensures descriptions like "wind" in transplanting events don't override explicit event_type
+
+    // Weather Events - Check type string and type codes ONLY (not description, which has false positives)
     if (
-      (event as any)?.event_type === 0 || // Direct event_type check
       type === 'weather' || // String type check
       ['fr', 'dr', 'hl', 'ht', 'ts', 'hw', 'hh', 'lh'].includes(type) || // Weather type codes
-      type.includes('weather') ||
-      description.includes('weather') ||
-      description.includes('drought') ||
-      description.includes('frost') ||
-      description.includes('climate') ||
-      description.includes('hail') ||
-      description.includes('wind') ||
-      description.includes('humidity') ||
-      description.includes('temperature')
+      type.includes('weather')
     ) {
       return {
         icon: FaWater,
@@ -268,13 +327,17 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     if (
       (event as any)?.event_type === 1 || // Direct event_type check
       type === 'production' || // String type check
-      ['pl', 'ha', 'ir', 'pr'].includes(type) || // Production type codes
+      ['pl', 'ha', 'ir', 'pr', 'tr', 'cu', 'th', 'em'].includes(type) || // ✅ FIXED: Added 'tr', 'cu', 'th', 'em' (Equipment Maintenance)
       type.includes('production') ||
       description.includes('harvest') ||
       description.includes('planting') ||
       description.includes('bee') ||
       description.includes('irrigation') ||
-      description.includes('pruning')
+      description.includes('pruning') ||
+      description.includes('transplant') ||  // ✅ FIXED: Added keyword detection
+      description.includes('cultivation') ||  // ✅ FIXED: Added keyword detection
+      description.includes('thinning') ||  // ✅ FIXED: Added keyword detection
+      description.includes('equipment maintenance')  // ✅ FIXED: Added keyword detection for EM
     ) {
       return {
         icon: MdAgriculture,
@@ -400,6 +463,57 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         });
 
   const displayedEvents = showAll ? filteredEvents : filteredEvents.slice(0, 3);
+
+  // 🔍 DEBUG: Log category generation from events
+  const eventCategories = events.map((event) => {
+    const config = getEventConfig(event);
+    return {
+      eventId: event.id,
+      eventType: event.type,
+      eventDescription: event.description,
+      event_type_field: (event as any)?.event_type,
+      category: config.category
+    };
+  });
+
+  console.log('🔍 CATEGORY GENERATION DEBUG:', {
+    totalEvents: events.length,
+    uniqueCategories: [...new Set(eventCategories.map(ec => ec.category))],
+    eventCategories: eventCategories
+  });
+
+  // 🔍 DEBUG: Show each event's categorization details with full category display
+  console.log('🔍 DETAILED EVENT CATEGORIZATION:');
+  const categoriesFound: { [key: string]: number } = {};
+  eventCategories.forEach((ec, index) => {
+    const category = ec.category;
+    categoriesFound[category] = (categoriesFound[category] || 0) + 1;
+    const typeStr = ec.eventType ? ec.eventType.toUpperCase() : 'UNKNOWN';
+    console.log(`  Event ${index + 1} (ID ${ec.eventId}): ${typeStr} → CATEGORY: ${category}`);
+  });
+  console.log('🚨 CATEGORIES SUMMARY:', categoriesFound);
+  console.log('🚨 UNIQUE CATEGORIES FOUND:', Object.keys(categoriesFound));
+
+  // Find which event is Weather (if any)
+  const weatherEvents = eventCategories.filter(ec => ec.category === 'Weather');
+  if (weatherEvents.length > 0) {
+    console.log('⚠️ WEATHER EVENTS DETECTED:');
+    weatherEvents.forEach(we => {
+      console.log({
+        eventId: we.eventId,
+        type: we.eventType,
+        event_type_field: we.event_type_field,
+        fullDescription: we.eventDescription
+      });
+
+      // Check which weather keyword matched
+      const desc = (we.eventDescription || '').toLowerCase();
+      const weatherKeywords = ['weather', 'drought', 'frost', 'climate', 'hail', 'wind', 'humidity', 'temperature'];
+      const matchedKeywords = weatherKeywords.filter(kw => desc.includes(kw));
+      console.log('   → Matched weather keywords:', matchedKeywords);
+    });
+  }
+
   const categories = [
     'all',
     ...new Set(
@@ -536,7 +650,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 <Text fontSize="lg" fontWeight="bold" color="purple.600">
                   {(() => {
                     const verifiedEvents = filteredEvents.filter(
-                      (e) => e.carbon_data?.usda_verified
+                      (e) => e.extra_data?.carbon_calculation?.usda_compliance
                     );
                     return Math.round((verifiedEvents.length / filteredEvents.length) * 100) || 0;
                   })()}
@@ -736,12 +850,15 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               data_integrity_score:
                 event.extra_data?.data_integrity_score || event.data_integrity_score || 0,
               blockchain_network: event.blockchain_network || 'polygon_amoy',
-              // USDA verification from carbon_data or direct field
-              usda_verified: event.carbon_data?.usda_verified || event.usda_verified || false,
+              // USDA verification from carbon_calculation in extra_data
+              usda_verified: event.extra_data?.carbon_calculation?.usda_compliance || event.usda_verified || false,
               // Carbon impact
-              carbon_impact: event.carbon_data?.co2e,
+              carbon_impact: event.extra_data?.carbon_calculation?.co2e || event.carbon_data?.co2e,
               // Keep certification separate from blockchain verification
               certified: event.certified || false,
+              // MVP Photo Verification: Preserve verification level and photo count
+              verification_level: event.verification_level || 'self_reported',
+              photo_verified_count: event.photo_verified_count || 0,
               // 🔧 TRANSPARENCY FIELDS: Preserve transparency fields from API
               area_covered: event.area_covered,
               yield_quantity: event.yield_quantity,

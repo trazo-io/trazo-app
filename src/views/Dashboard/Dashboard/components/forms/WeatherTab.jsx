@@ -22,7 +22,8 @@ import {
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 // Custom components
 import React, { useState, useEffect, useCallback } from 'react';
-import { number, object, string } from 'zod';
+import { number, object, string, array } from 'zod';
+import CustomFieldsForm from './CustomFieldsForm';
 
 import { FaPlus } from 'react-icons/fa';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -118,7 +119,18 @@ const formSchemaMainInfo = object({
     )
     .transform((val) => (val ? Number(val) : undefined)),
   crop_impact: string().optional(),
-  observation: string().optional()
+  observation: string().optional(),
+  custom_fields: array(object({
+    id: string().optional(),
+    label: string(),
+    value: string(),
+    field_type: string(),
+    visibility: string(),
+    link_url: string().optional(),
+    verification: string().optional(),
+    created_at: string().optional(),
+    photo_id: string().optional()
+  })).optional()
 });
 
 const WeatherTab = ({
@@ -178,9 +190,13 @@ const WeatherTab = ({
       // Humidity fields
       humidity_level: initialValues.humidity_level?.toString() || '',
       crop_impact: initialValues.crop_impact || '',
-      observation: initialValues.observation || ''
+      observation: initialValues.observation || '',
+      custom_fields: initialValues.custom_fields || []
     }
   });
+
+  // Custom fields state for Phase 2.3
+  const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
 
   // Track if this is the initial mount - only reset form on first load, not on every onDataChange
   const isInitialMount = React.useRef(true);
@@ -211,11 +227,17 @@ const WeatherTab = ({
         // Humidity fields
         humidity_level: initialValues.humidity_level?.toString() || '',
         crop_impact: initialValues.crop_impact || '',
-        observation: initialValues.observation || ''
+        observation: initialValues.observation || '',
+        custom_fields: initialValues.custom_fields || []
       });
       isInitialMount.current = false; // Mark as initialized - skip future resets
     }
   }, [JSON.stringify(initialValues)]); // Use JSON.stringify to prevent render loops from object reference changes
+
+  // Sync custom fields with form
+  useEffect(() => {
+    mainInfoMethods.setValue('custom_fields', customFields);
+  }, [customFields, mainInfoMethods]);
 
   const {
     reset: mainInfoReset,
@@ -269,7 +291,8 @@ const WeatherTab = ({
         'protection_measures',
         'humidity_level',
         'crop_impact',
-        'observation'
+        'observation',
+        'custom_fields'
       ];
 
       if (relevantFields.includes(name) || !name) {
@@ -704,6 +727,15 @@ const WeatherTab = ({
               />
             </StandardField>
           </SectionBox>
+
+          {/* Phase 2.3: Custom Fields Section */}
+          <CustomFieldsForm
+            customFields={customFields}
+            onCustomFieldsChange={setCustomFields}
+            eventTypeId={0}
+            disabled={false}
+          />
+
           {!hideActions && (
             <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
               <HStack justify="space-between">

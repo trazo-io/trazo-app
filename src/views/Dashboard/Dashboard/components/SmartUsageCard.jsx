@@ -199,7 +199,7 @@ const SmartUsageCard = ({
   const carbonScore = metrics ? Math.round(metrics.transparency_score / 20) : 0; // Convert transparency score to 1-5 scale
   const blockchainVerified = metrics ? metrics.blockchain_verified_count : 0; // Use correct field for blockchain verification
   const totalProductions = metrics ? metrics.total_productions : 0;
-  const industryPercentile = metrics ? Math.min(95, metrics.transparency_score * 0.95) : 0; // Calculate from transparency score
+  const industryPercentile = metrics ? metrics.industry_percentile : 50; // Use real industry percentile from API (USDA benchmark based, 5-95 scale)
   // Note: Removed isPremium since all Trazo users have subscriptions
 
   // Show loading state
@@ -292,12 +292,31 @@ const SmartUsageCard = ({
               >
                 {smartInsight.status}
               </Text>
-              {industryPercentile > 75 && (
-                <Badge colorScheme="green" fontSize="2xs" px={2} py={1} borderRadius="full">
+              <Tooltip
+                label={`Your farm is in the top ${100 - industryPercentile}% of ${
+                  metrics?.crop_type || 'similar'
+                } farms based on USDA carbon efficiency benchmarks. This compares your actual emissions per kg to industry standards for your crop type. Lower emissions = higher percentile ranking.`}
+                fontSize="xs"
+                bg="gray.800"
+                color="white"
+                borderRadius="md"
+                px={3}
+                py={2}
+                hasArrow
+                placement="top"
+              >
+                <Badge
+                  colorScheme="green"
+                  fontSize="2xs"
+                  px={2}
+                  py={1}
+                  borderRadius="full"
+                  cursor="pointer"
+                >
                   <Icon as={FaMedal} w={2} h={2} mr={1} />
                   Top {100 - industryPercentile}%
                 </Badge>
-              )}
+              </Tooltip>
             </HStack>
             <Text fontSize="2xs" color={subtitleColor} lineHeight="1.3">
               {smartInsight.insight}

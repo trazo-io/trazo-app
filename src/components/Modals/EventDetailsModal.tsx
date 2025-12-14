@@ -232,7 +232,71 @@ interface EventDetailsModalProps {
 }
 
 // Helper functions
-const getEventConfig = (type: string, description: string) => {
+const getEventConfig = (type: string, description: string, eventType?: number) => {
+  // 🚨 PRIORITY 1: Check numeric event_type FIRST (definitive source of truth)
+  // This prevents description keywords from overriding the actual event type
+  if (eventType !== undefined) {
+    switch (eventType) {
+      case 0: // Weather Event
+        return {
+          icon: FaSun,
+          color: 'purple.500',
+          category: 'Weather Event',
+          bgGradient: 'linear(to-r, purple.400, indigo.400)'
+        };
+      case 1: // Production Activity
+        return {
+          icon: FaSeedling,
+          color: 'green.500',
+          category: 'Production',
+          bgGradient: 'linear(to-r, green.400, emerald.400)'
+        };
+      case 2: // Chemical Application
+        return {
+          icon: FaFlask,
+          color: 'orange.500',
+          category: 'Chemical Application',
+          bgGradient: 'linear(to-r, orange.400, yellow.400)'
+        };
+      case 3: // General Activity
+        return {
+          icon: FaLeaf,
+          color: 'green.500',
+          category: 'Farm Activity',
+          bgGradient: 'linear(to-r, green.400, emerald.400)'
+        };
+      case 4: // Equipment Operation
+        return {
+          icon: FaWrench,
+          color: 'blue.500',
+          category: 'Equipment Operation',
+          bgGradient: 'linear(to-r, blue.400, cyan.400)'
+        };
+      case 5: // Soil Management
+        return {
+          icon: FaLeaf,
+          color: 'amber.600',
+          category: 'Soil Management',
+          bgGradient: 'linear(to-r, amber.500, yellow.500)'
+        };
+      case 6: // Pest Management
+        return {
+          icon: FaShieldAlt,
+          color: 'red.500',
+          category: 'Pest Management',
+          bgGradient: 'linear(to-r, red.400, orange.400)'
+        };
+      case 7: // Business Activity
+        return {
+          icon: FaCheckCircle,
+          color: 'blue.600',
+          category: 'Business Activity',
+          bgGradient: 'linear(to-r, blue.500, purple.500)'
+        };
+    }
+  }
+
+  // 🔄 PRIORITY 2: Fallback to description keywords only if event_type is unknown
   const desc = description.toLowerCase();
 
   if (desc.includes('riego') || desc.includes('irrigation') || type.includes('irrigation')) {
@@ -900,6 +964,9 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         IR: 'Irrigation',
         PR: 'Pruning/Trimming',
         TR: 'Transplanting',
+        EM: 'Equipment Maintenance',
+        CU: 'Cultivation',
+        TH: 'Thinning',
         cultivation: 'Soil Cultivation',
         fertilization: 'Fertilizer Application',
         weeding: 'Weed Management',
@@ -917,7 +984,9 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         'event.production.fertilization': 'Fertilizer Application',
         'event.production.weeding': 'Weed Management',
         'event.production.mulching': 'Mulching Application',
-        'event.production.transplanting': 'Transplanting'
+        'event.production.transplanting': 'Transplanting',
+        'event.production.thinning': 'Thinning',
+        'event.production.equipment_maintenance': 'Equipment Maintenance'
       };
       const productionType = event.production_type || event.type;
       fields.push({
@@ -944,36 +1013,67 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
 
     // Yield/Output Quantity - For harvesting and planting
+    // CRITICAL FIX: Check both first-class field AND custom_fields for backward compatibility
+    let yieldQuantityValue = event.yield_quantity;
+    let yieldQuantityUnit = event.yield_unit || 'kg';
+
+    // If first-class field is empty, check custom_fields (backward compatibility)
     if (
-      event.yield_quantity !== undefined &&
-      event.yield_quantity !== null &&
-      event.yield_quantity > 0
+      (!yieldQuantityValue || Number(yieldQuantityValue) === 0) &&
+      event.extra_data?.custom_fields &&
+      Array.isArray(event.extra_data.custom_fields)
     ) {
-      const yieldUnit = event.yield_unit || 'kg';
+      const yieldCustomField = event.extra_data.custom_fields.find(
+        (field: any) => field.label?.toLowerCase() === 'yield quantity' || field.label?.toLowerCase() === 'quantity'
+      );
+      if (yieldCustomField && yieldCustomField.value) {
+        // Extract numeric value from "50 trees" format
+        const parts = yieldCustomField.value.toString().split(' ');
+        const numericValue = parseFloat(parts[0]);
+        if (!isNaN(numericValue)) {
+          yieldQuantityValue = numericValue;
+          // Extract unit from value (e.g., "trees" from "50 trees")
+          if (parts.length > 1) {
+            const unitFromValue = parts[parts.length - 1].toLowerCase();
+            if (unitFromValue === 'trees') yieldQuantityUnit = 'trees';
+            else if (unitFromValue === 'seedlings') yieldQuantityUnit = 'seedlings';
+            // Add more unit mappings as needed
+          }
+        }
+      }
+    }
+
+    if (
+      yieldQuantityValue !== undefined &&
+      yieldQuantityValue !== null &&
+      yieldQuantityValue !== '' &&
+      Number(yieldQuantityValue) > 0  // Handle both string and number types
+    ) {
       const unitLabels = {
         kg: 'kilograms',
         tons: 'tonnes',
         lbs: 'pounds',
         boxes: 'boxes',
         plants: 'plants',
-        seeds: 'seeds'
+        seeds: 'seeds',
+        trees: 'trees',
+        seedlings: 'seedlings'
       };
-      const productionType = event.production_type || event.type;
-      const isHarvesting = productionType === 'HA' || productionType === 'harvesting';
-      const isPlanting = productionType === 'PL' || productionType === 'planting';
-
       fields.push({
-        label: isHarvesting ? 'Quantity Harvested' : isPlanting ? 'Quantity Planted' : 'Quantity',
-        value: `${event.yield_quantity} ${unitLabels[yieldUnit] || yieldUnit}`,
-        priority: 'immediate'
+        label: 'Yield Quantity',
+        value: `${yieldQuantityValue} ${unitLabels[yieldQuantityUnit] || yieldQuantityUnit}`,
+        priority: 'secondary'
       });
 
-      // Calculate yield efficiency for harvesting
+      // Calculate yield efficiency for harvesting events
+      const productionType = event.production_type || event.type;
+      const isHarvesting = productionType === 'HA' || productionType === 'harvesting' || productionType === 'event.production.harvesting';
+
       if (isHarvesting && event.area_covered && event.area_covered > 0) {
-        const yieldPerHa = (event.yield_quantity / event.area_covered).toFixed(2);
+        const yieldPerHa = (Number(yieldQuantityValue) / event.area_covered).toFixed(2);
         fields.push({
           label: 'Yield per Hectare',
-          value: `${yieldPerHa} ${unitLabels[yieldUnit] || yieldUnit}/ha`,
+          value: `${yieldPerHa} ${unitLabels[yieldQuantityUnit] || yieldQuantityUnit}/ha`,
           priority: 'immediate'
         });
       }
@@ -1420,6 +1520,22 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
   }
 
+  // Display all custom fields from custom_fields array (user-added via CustomFieldsForm)
+  // Each custom field is shown with its original label and value
+  // Farmer is responsible for avoiding duplicates during event creation
+  if (event.extra_data?.custom_fields && Array.isArray(event.extra_data.custom_fields)) {
+    event.extra_data.custom_fields.forEach((customField: any) => {
+      // Display the custom field with its original label and value
+      if (customField.label && customField.value) {
+        fields.push({
+          label: customField.label,
+          value: String(customField.value),
+          priority: 'secondary'  // Custom fields shown in Additional Details
+        });
+      }
+    });
+  }
+
   if (fields.length === 0) return null;
 
   // Separate immediate and secondary fields for progressive disclosure
@@ -1542,7 +1658,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
   if (!event) return null;
 
-  const eventConfig = getEventConfig(event.type, event.description);
+  const eventConfig = getEventConfig(event.type, event.description, event.event_type);
   const eventData = extractEventData(event);
   const qrVisibility = getQRVisibility(event);
   const operator = members.find((member) => member.id === event.created_by);

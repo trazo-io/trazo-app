@@ -129,6 +129,7 @@ export interface TransparencyResponse {
   standard_view: TransparencyStandardView;
   detailed_view: TransparencyDetailedView;
   timeline_events?: TimelineEvent[]; // Added timeline events for photo display
+  images?: string[]; // Production images from farmer's finish production form
   carbon_impact: {
     // Added carbon_impact to match API response
     kg_per_kg: number;

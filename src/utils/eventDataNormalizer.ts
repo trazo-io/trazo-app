@@ -265,6 +265,17 @@ function createBaseEvent(
     baseEvent.extra_data = { ...rawData.extra_data };
   }
 
+  // 🚨 CRITICAL FIX: Preserve custom_fields from backend/form data
+  // Custom fields MUST be passed through to EventPreviewModal and ConsumerEventCard
+  // for exact preview-display matching
+  if (rawData.custom_fields && Array.isArray(rawData.custom_fields)) {
+    (baseEvent as any).custom_fields = rawData.custom_fields;
+    console.log('✅ [eventDataNormalizer] Preserved custom_fields:', {
+      count: rawData.custom_fields.length,
+      fields: rawData.custom_fields.map((f: any) => ({ label: f.label, value: f.value }))
+    });
+  }
+
   // Preserve original data if requested
   if (preserveOriginal) {
     baseEvent.extra_data = {
@@ -280,6 +291,32 @@ function createBaseEvent(
  * Normalize photo/album data from various formats
  */
 function normalizePhotoData(rawData: any): StandardizedEventBase['album'] {
+  // MVP Photo Verification: Handle album_images array (from NewEvent form)
+  if (rawData.album_images && Array.isArray(rawData.album_images) && rawData.album_images.length > 0) {
+    return {
+      id: 'preview-album',
+      images: rawData.album_images.map((url: string, index: number) => {
+        // Create stable ID from URL
+        const stableId = url
+          ? url
+              .split('/')
+              .slice(-2)
+              .join('_')
+              .replace(/[^a-zA-Z0-9]/g, '_')
+              .substring(0, 30)
+          : `album-${index}`;
+
+        return {
+          id: stableId,
+          image_url: url,
+          image: url,
+          caption: `Farm photo ${index + 1}`,
+          created_at: new Date().toISOString()
+        };
+      })
+    };
+  }
+
   // Handle accepted files array (form data)
   if (
     rawData.acceptedFiles &&
@@ -536,12 +573,16 @@ function normalizeProductionEventData(
       rawDataKeys: Object.keys(rawData)
     });
 
+    // 🚨 CRITICAL FIX: Use correct source field names that match ProductionTab form
+    // ProductionTab sends: area_covered, yield_quantity, fuel_consumed, equipment_hours
+    // NOT: area, quantity_planted, fuel_amount, operating_hours
+
     // Form data needs unit formatting
     formatProductionFieldWithUnit(
       rawData,
       productionData,
       'area_covered',
-      'area',
+      'area_covered',  // ✅ FIXED: Changed from 'area' to 'area_covered'
       'area_unit',
       'hectares'
     );
@@ -554,7 +595,7 @@ function normalizeProductionEventData(
       rawData,
       productionData,
       'yield_quantity',
-      'quantity_planted',
+      'yield_quantity',  // ✅ FIXED: Changed from 'quantity_planted' to 'yield_quantity'
       'yield_unit',
       'kg'
     );
@@ -562,7 +603,7 @@ function normalizeProductionEventData(
       rawData,
       productionData,
       'fuel_consumed',
-      'fuel_amount',
+      'fuel_consumed',  // ✅ FIXED: Changed from 'fuel_amount' to 'fuel_consumed'
       'fuel_unit',
       'liters'
     );
@@ -570,7 +611,7 @@ function normalizeProductionEventData(
       rawData,
       productionData,
       'equipment_hours',
-      'operating_hours',
+      'equipment_hours',  // ✅ FIXED: Changed from 'operating_hours' to 'equipment_hours'
       null,
       'hours'
     );
@@ -583,34 +624,17 @@ function normalizeProductionEventData(
       'km'
     );
 
-    // Store raw values
-    storeRawValue(rawData, productionData, 'area_covered_raw', 'area_covered', 'area');
-    storeRawValue(
-      rawData,
-      productionData,
-      'yield_quantity_raw',
-      'yield_quantity',
-      'quantity_planted',
-      'quantity'
-    );
-    storeRawValue(rawData, productionData, 'fuel_consumed_raw', 'fuel_consumed', 'fuel_amount');
-    storeRawValue(
-      rawData,
-      productionData,
-      'equipment_hours_raw',
-      'equipment_hours',
-      'operating_hours'
-    );
-    storeRawValue(
-      rawData,
-      productionData,
-      'transportation_distance_raw',
-      'transportation_distance'
-    );
+    // Store raw values - use correct source field names
+    storeRawValue(rawData, productionData, 'area_covered_raw', 'area_covered');
+    storeRawValue(rawData, productionData, 'yield_quantity_raw', 'yield_quantity');
+    storeRawValue(rawData, productionData, 'fuel_consumed_raw', 'fuel_consumed');
+    storeRawValue(rawData, productionData, 'equipment_hours_raw', 'equipment_hours');
+    storeRawValue(rawData, productionData, 'transportation_distance_raw', 'transportation_distance');
 
-    // Sprint 2: EQ (Equipment Operations) subtype fields extraction
-    if (productionData.production_type === 'EQ') {
-      // Extract EQ-specific fields from form data
+    // Sprint 2: EM (Equipment Maintenance) subtype fields extraction
+    // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
+    if (productionData.production_type === 'EM') {
+      // Extract EM-specific fields from form data
       if (rawData.equipment_operation_type) {
         // Convert operation type code to display name
         (productionData as any).equipment_operation_type = getEquipmentOperationTypeDisplayName(
@@ -679,8 +703,11 @@ function normalizeProductionEventData(
       (productionData as any).irrigation_depth_unit = rawData.irrigation_depth_unit;
     }
 
-    // Sprint 2: EQ (Equipment Operations) subtype fields extraction from backend
-    if (productionData.production_type === 'EQ' || rawData.production_type === 'EQ') {
+    // Sprint 2: EM (Equipment Maintenance) subtype fields extraction from backend
+    // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
+    // Note: Kept backward compatibility check for 'EQ' in case old data exists
+    if (productionData.production_type === 'EM' || rawData.production_type === 'EM' ||
+        productionData.production_type === 'EQ' || rawData.production_type === 'EQ') {
       if (rawData.equipment_operation_type) {
         // Convert operation type code to display name
         (productionData as any).equipment_operation_type = getEquipmentOperationTypeDisplayName(
@@ -691,7 +718,9 @@ function normalizeProductionEventData(
         (productionData as any).equipment_type = rawData.equipment_type;
       }
       if (rawData.fuel_type) {
-        (productionData as any).fuel_type = rawData.fuel_type;
+        // 🔧 CRITICAL FIX: Apply fuel type display name mapping for preview-display consistency
+        // Backend returns lowercase codes ("electric", "diesel"), must convert to display names ("Electric", "Diesel")
+        (productionData as any).fuel_type = getFuelTypeDisplayName(rawData.fuel_type);
       }
       if (rawData.operation_efficiency) {
         (productionData as any).operation_efficiency = rawData.operation_efficiency;
@@ -834,7 +863,7 @@ function normalizeChemicalEventData(
  */
 function normalizeGeneralEventData(
   rawData: any,
-  dataSource: DataSource,
+  _dataSource: DataSource,
   fieldMapping: Record<string, string>
 ): Partial<StandardizedGeneralEvent> {
   const generalData: Partial<StandardizedGeneralEvent> = {};
@@ -1108,7 +1137,7 @@ function normalizeEquipmentEventData(
  */
 function normalizeSoilManagementEventData(
   rawData: any,
-  dataSource: DataSource,
+  _dataSource: DataSource,
   fieldMapping: Record<string, string>
 ): Partial<StandardizedSoilManagementEvent> {
   const soilData: Partial<StandardizedSoilManagementEvent> = {};
@@ -1152,6 +1181,12 @@ function normalizeSoilManagementEventData(
 
   mapFields(rawData, soilData, soilFields, fieldMapping);
 
+  // 🔧 CRITICAL FIX: Apply fuel type display name mapping for preview-display consistency
+  // Phase 3 electric equipment support - backend returns lowercase codes, convert to display names
+  if (rawData.fuel_type) {
+    (soilData as any).fuel_type = getFuelTypeDisplayName(rawData.fuel_type);
+  }
+
   // Handle direct field mapping for amendment and tillage fields
   if (rawData.amendment_amount !== undefined) {
     soilData.amendment_amount = rawData.amendment_amount;
@@ -1184,7 +1219,7 @@ function normalizeSoilManagementEventData(
  */
 function normalizePestManagementEventData(
   rawData: any,
-  dataSource: DataSource,
+  _dataSource: DataSource,
   fieldMapping: Record<string, string>
 ): Partial<StandardizedPestManagementEvent> {
   const pestData: Partial<StandardizedPestManagementEvent> = {};
@@ -1224,7 +1259,7 @@ function normalizePestManagementEventData(
  */
 function normalizeBusinessEventData(
   rawData: any,
-  dataSource: DataSource,
+  _dataSource: DataSource,
   fieldMapping: Record<string, string>
 ): Partial<StandardizedBusinessEvent> {
   const businessData: Partial<StandardizedBusinessEvent> = {};

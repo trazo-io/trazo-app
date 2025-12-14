@@ -356,11 +356,11 @@ const AppSignUp: React.FC = () => {
           >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Scale Your Carbon Intelligence
+                Build Your Farm's Transparency Story
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Join leading agricultural enterprises using Trazo to track carbon emissions, verify
-                sustainability claims, and drive consumer transparency
+                Join leading agricultural enterprises using Trazo to document your practices,
+                verify authenticity with blockchain, and connect directly with conscious consumers.
               </Text>
             </VStack>
 
@@ -369,7 +369,7 @@ const AppSignUp: React.FC = () => {
                 Trusted by agricultural businesses worldwide
               </Text>
               <VStack spacing={3}>
-                {['USDA Verified Data', 'Blockchain Secured', 'Enterprise Ready'].map(
+                {['Verified Transparency & Trust', 'Blockchain-Backed Documentation', 'Direct Consumer Connection'].map(
                   (feature, index) => (
                     <HStack key={index} spacing={3}>
                       <Box w={2} h={2} bg="white" borderRadius="50%" />
@@ -418,7 +418,7 @@ const AppSignUp: React.FC = () => {
                         fontWeight="600"
                         color={useColorModeValue('gray.900', 'white')}
                       >
-                        {joinExistingCompany ? 'Join Company Account' : 'Create Business Account'}
+                        {joinExistingCompany ? 'Join Your Farm Team' : "Build Your Farm's Brand"}
                       </Text>
                     </MotionBox>
                     <MotionBox
@@ -434,7 +434,7 @@ const AppSignUp: React.FC = () => {
                       >
                         {joinExistingCompany
                           ? 'Join your team on Trazo'
-                          : 'Join leading agricultural enterprises'}
+                          : 'Start sharing your transparency story'}
                       </Text>
                     </MotionBox>
                   </VStack>

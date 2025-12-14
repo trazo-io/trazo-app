@@ -71,7 +71,8 @@ export const WEATHER_FIELD_MAPPING: DataSourceMapping = {
 
 /**
  * Production Event Field Mappings (Type 1)
- * Handles: PL, HA, IR, PR, TR, EQ (Equipment Operations - Sprint 2)
+ * Handles: PL, HA, IR, PR, TR, EM (Equipment Maintenance - Sprint 2)
+ * CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
  */
 export const PRODUCTION_FIELD_MAPPING: DataSourceMapping = {
   form: {
@@ -98,7 +99,8 @@ export const PRODUCTION_FIELD_MAPPING: DataSourceMapping = {
     transportation_unit: 'transportation_unit',
     production_efficiency: 'production_efficiency',
     observation: 'observation',
-    // Sprint 2: EQ (Equipment Operations) subtype fields
+    // Sprint 2: EM (Equipment Maintenance) subtype fields
+    // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
     equipment_operation_type: 'equipment_operation_type',
     equipment_type: 'equipment_type',
     fuel_type: 'fuel_type',
@@ -117,7 +119,8 @@ export const PRODUCTION_FIELD_MAPPING: DataSourceMapping = {
     transportation_distance: 'transportation_distance', // Backend already formatted with units
     observation: 'observation',
     description: 'description',
-    // Sprint 2: EQ (Equipment Operations) subtype fields
+    // Sprint 2: EM (Equipment Maintenance) subtype fields
+    // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
     equipment_operation_type: 'equipment_operation_type',
     equipment_type: 'equipment_type',
     fuel_type: 'fuel_type',

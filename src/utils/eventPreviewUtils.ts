@@ -408,6 +408,11 @@ export function transformFormDataToEvent(
         event.yield_unit = formData.yield_unit || formData.quantity_unit;
       if (formData.fuel_unit) event.fuel_unit = formData.fuel_unit;
       if (formData.transportation_unit) event.transportation_unit = formData.transportation_unit;
+
+      // 🔧 PHASE 3: Electric equipment fuel type (must preserve for preview consistency)
+      if (formData.fuel_type) {
+        event.fuel_type = getFuelTypeDisplayName(formData.fuel_type);
+      }
       break;
 
     case 2: // Chemical
@@ -441,6 +446,19 @@ export function transformFormDataToEvent(
       if (formData.weather_conditions) event.weather_conditions = formData.weather_conditions;
       if (formData.application_timing) event.application_timing = formData.application_timing;
       if (formData.commercial_name) event.commercial_name = formData.commercial_name;
+
+      // 🔧 PHASE 3: Electric equipment application fuel (must preserve for preview consistency)
+      if (formData.application_fuel_type) {
+        event.application_fuel_type = getFuelTypeDisplayName(formData.application_fuel_type);
+      }
+      if (formData.application_fuel_consumed !== undefined && formData.application_fuel_consumed !== '') {
+        const appFuelValue = parseFloat(formData.application_fuel_consumed);
+        const appFuelUnit = formData.application_fuel_unit || 'L';
+        if (!isNaN(appFuelValue) && appFuelValue >= 0) {
+          event.application_fuel_consumed = `${appFuelValue} ${appFuelUnit}`;
+        }
+      }
+      if (formData.application_fuel_unit) event.application_fuel_unit = formData.application_fuel_unit;
       break;
 
     case 3: // General
@@ -707,6 +725,11 @@ export function transformFormDataToEvent(
       // Legacy fallback for other possible field names
       else if (formData.notes || formData.description) {
         event.soil_management_notes = formData.notes || formData.description;
+      }
+
+      // 🔧 PHASE 3: Electric equipment fuel type (must preserve for preview consistency)
+      if (formData.fuel_type) {
+        event.fuel_type = getFuelTypeDisplayName(formData.fuel_type);
       }
 
       break;

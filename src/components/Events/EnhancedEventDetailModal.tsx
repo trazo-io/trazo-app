@@ -46,6 +46,11 @@ import {
 import { MdVerified, MdEco } from 'react-icons/md';
 import { format, parseISO } from 'date-fns';
 import { getReadableFieldValue } from '../../utils/fieldDisplayUtils';
+import {
+  getVerificationBadgeConfig,
+  getVerificationColor,
+  type VerificationLevel
+} from '../../utils/verificationTierHelpers';
 
 interface CarbonCalculation {
   co2e: number;
@@ -85,6 +90,9 @@ interface EnhancedTimelineEvent {
   equipment?: string;
   chemical_subtype?: string; // Added 2025-01-21: organic vs synthetic differentiation
   carbon_data?: CarbonCalculation;
+  // MVP Photo Verification: Tiered verification levels
+  verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+  photo_verified_count?: number;
 }
 
 interface EnhancedEventDetailModalProps {
@@ -158,10 +166,32 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
               <Heading size="md" color={textColor}>
                 {event.description}
               </Heading>
-              <HStack spacing={2}>
+              <HStack spacing={2} flexWrap="wrap">
                 <Badge colorScheme="gray" size="sm">
                   {config.name}
                 </Badge>
+                {/* MVP Photo Verification: Display tiered verification badge */}
+                {event.verification_level && (
+                  (() => {
+                    const config = getVerificationBadgeConfig(event.verification_level as VerificationLevel);
+                    const colorScheme = getVerificationColor(event.verification_level as VerificationLevel);
+                    return (
+                      <Tooltip label={config.tooltip} placement="top">
+                        <Badge
+                          colorScheme={colorScheme}
+                          variant="subtle"
+                          size="sm"
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                        >
+                          <Icon as={config.icon} boxSize={3} />
+                          <Text>{config.label}</Text>
+                        </Badge>
+                      </Tooltip>
+                    );
+                  })()
+                )}
                 {event.certified && (
                   <Badge colorScheme="green" size="sm">
                     <HStack spacing={1}>

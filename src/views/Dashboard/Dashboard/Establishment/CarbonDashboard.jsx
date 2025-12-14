@@ -1052,7 +1052,7 @@ const CarbonDashboard = () => {
                             % efficiency
                           </>
                         ) : (
-                          '75% efficiency'
+                          '7533333% efficiency'
                         )}
                       </Text>
                       {benchmarkData?.benchmark_comparison?.improvement_vs_average && (

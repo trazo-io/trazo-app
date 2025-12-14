@@ -106,11 +106,19 @@ import {
 // Import Week 2 Voice & Mobile Components
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
 
-// Import StandardComponents for modern design
-import { StandardCard, StandardButton } from 'components/Design/StandardComponents';
+// Import Card components (StandardCard/Button removed - using ProfileSections now)
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+
+// Import new ProfileSections shared components for modern UI
+import {
+  ProfileHeader,
+  ProfileSection,
+  ProfileDataGrid,
+  ProfileImageGallery,
+  TransparencyScoreCard
+} from 'components/ProfileSections';
 
 // Add interface for Redux state
 interface RootState {
@@ -182,43 +190,47 @@ function ProfileProduction() {
     }
   );
 
-  // 🔍 DEBUG: Log API calls and responses for production 229
-  React.useEffect(() => {
-    if (productionId === '229') {
-      console.log('🔍 PRODUCER DEBUG - API Calls Status:', {
-        productionId: productionId,
-        transparencyApi: {
-          isLoading: transparencyLoading,
-          hasData: !!transparencyApiData,
-          error: transparencyError,
-          timelineEventsLength: transparencyApiData?.timeline_events?.length || 0,
-          quickViewScore: transparencyApiData?.quick_view?.transparency_score?.percentage,
-          fullData: transparencyApiData
-        },
-        completeApi: {
-          isLoading: completeLoading,
-          hasData: !!completeData,
-          error: completeError,
-          timelineLength: completeData?.timeline?.length || 0,
-          fullData: completeData
-        }
-      });
+  // ✅ CONSUMER-IDENTICAL: Backend type code to numeric event type mapping - MUST MATCH ProductDetail.tsx
+  const mapBackendTypeToEventType = (backendType: string | number | undefined): number => {
+    // If already numeric, return it
+    if (typeof backendType === 'number') return backendType;
+    if (!backendType) return 3; // Default to general events
+
+    const typeStr = String(backendType).toLowerCase();
+
+    // Handle weather event subtypes from transparency API (FR=Frost, DR=Drought, HL=Hailstorm, etc.)
+    if (['fr', 'dr', 'hl', 'ht', 'ts', 'hw', 'hh', 'lh'].includes(typeStr)) {
+      return 0; // Weather events
     }
-  }, [
-    productionId,
-    transparencyApiData,
-    transparencyError,
-    transparencyLoading,
-    completeData,
-    completeError,
-    completeLoading
-  ]);
+
+    // Handle production event subtypes (PL=Planting, HA=Harvest, IR=Irrigation, etc.)
+    if (['pl', 'ha', 'ir', 'pr', 'tr', 'cu', 'th', 'em'].includes(typeStr)) {
+      return 1; // Production events
+    }
+
+    // Handle chemical event subtypes (FE=Fertilizer, PE=Pesticide, FU=Fungicide, HE=Herbicide)
+    if (['fe', 'pe', 'fu', 'he'].includes(typeStr)) {
+      return 2; // Chemical events
+    }
+
+    // String-based type matching
+    if (typeStr.includes('weather') || typeStr.includes('frost') || typeStr.includes('drought')) return 0;
+    if (typeStr.includes('production') || typeStr.includes('planting') || typeStr.includes('harvest')) return 1;
+    if (typeStr.includes('chemical') || typeStr.includes('fertilizer') || typeStr.includes('pesticide')) return 2;
+    if (typeStr.includes('general')) return 3;
+    if (typeStr.includes('equipment') || typeStr.includes('fuel') || typeStr.includes('machinery')) return 4;
+    if (typeStr.includes('soil') || typeStr.includes('tillage') || typeStr.includes('compost')) return 5;
+    if (typeStr.includes('pest') || typeStr.includes('beneficial') || typeStr.includes('ipm')) return 6;
+    if (typeStr.includes('business') || typeStr.includes('certification') || typeStr.includes('audit')) return 7;
+
+    return 3; // Default to general events
+  };
 
   // ✅ CONSUMER-IDENTICAL: Get normalized timeline events using EXACT same logic as consumer page
   const getUnifiedTimelineEvents = () => {
     // PRIORITY 1: Use complete API timeline (includes transparency fields) if it has events - SAME AS CONSUMER
     // FALLBACK: Use transparency API timeline_events for album data if complete API has no events - SAME AS CONSUMER
-    const events =
+    const rawEvents =
       completeData?.timeline && completeData.timeline.length > 0
         ? completeData.timeline
         : transparencyApiData?.timeline_events && transparencyApiData.timeline_events.length > 0
@@ -231,61 +243,36 @@ function ProfileProduction() {
       completeDataTimeline: completeData?.timeline?.length || 0,
       transparencyApiTimelineEvents: transparencyApiData?.timeline_events?.length || 0,
       completeDataEvents: completeData?.events?.length || 0,
-      finalEventsUsed: events.length
+      finalEventsUsed: rawEvents.length
     });
 
-    if (Array.isArray(events) && events.length > 0) {
+    if (Array.isArray(rawEvents) && rawEvents.length > 0) {
+      // 🚨 CRITICAL FIX: Use mapBackendTypeToEventType() to convert string type codes to numeric types
+      // This is the KEY difference - ProductDetail does this, ProfileProduction was missing it
+      const normalizedEvents = rawEvents.map((event) => {
+        const numericEventType = mapBackendTypeToEventType(event.event_type || event.type);
+
+        console.log('🔍 [ProfileProduction] Event type mapping:', {
+          eventId: event.id,
+          rawType: event.type,
+          rawEventType: event.event_type,
+          mappedNumericType: numericEventType
+        });
+
+        return normalizeBackendEventData(numericEventType, event);
+      });
+
       // ✅ CONSUMER-IDENTICAL: Calculate carbon data per event from the total production data
-      const totalEvents = events.length;
+      const totalEvents = normalizedEvents.length;
       const totalCO2e =
         transparencyApiData?.carbon_impact?.total_emissions || completeData?.totalEmissions || 0;
       const averageCO2ePerEvent = totalEvents > 0 ? totalCO2e / totalEvents : 0;
 
-      // 🔍 DEBUG: Carbon calculation values for production 229
-      if (productionId === '229') {
-        console.log('🔍 CARBON DEBUG - Production 229 Carbon Calculation:', {
-          transparencyApiTotalEmissions: transparencyApiData?.carbon_impact?.total_emissions,
-          completeDataTotalEmissions: completeData?.totalEmissions,
-          finalTotalCO2e: totalCO2e,
-          totalEvents: totalEvents,
-          averageCO2ePerEvent: averageCO2ePerEvent,
-          transparencyApiNetImpact: transparencyApiData?.carbon_impact?.net_impact,
-          carbonImpactFullObject: transparencyApiData?.carbon_impact,
-          completeDataCarbonScore: completeData?.carbonScore
-        });
-      }
-
-      // ✅ CONSUMER-IDENTICAL: Normalize and enhance each event exactly like consumer page
-      const timelineEvents = events.map((event: any, index: number) => {
-        // Get event type mapping
-        const eventType = event.type || 'general';
-
-        // Prepare event for normalization
-        const eventForNormalization = { ...event };
-
-        // Handle album data (transparency API uses album, legacy uses albums)
-        if (event.album && !eventForNormalization.albums) {
-          eventForNormalization.albums = [event.album];
-        }
-
-        // 🔍 DEBUG: Log original event data BEFORE normalization
-        if (productionId === '229') {
-          console.log(`🔍 PRODUCER DEBUG - Event ${index} BEFORE normalization:`, {
-            eventId: event.id,
-            eventType: eventType,
-            description: event.description,
-            observation: event.observation,
-            album: event.album,
-            hasAlbum: event.hasAlbum,
-            originalEvent: event
-          });
-        }
-
-        // Normalize backend data to standardized format - EXACTLY like consumer
-        const standardizedEvent = normalizeBackendEventData(eventType, eventForNormalization, {
-          preserveOriginal: false,
-          generateMockVerification: false
-        }) as StandardizedEvent & { carbon_data?: any; index?: number; albums?: any };
+      // ✅ CONSUMER-IDENTICAL: Enhance normalized events with additional fields
+      const timelineEvents = normalizedEvents.map((event: any, index: number) => {
+        // NOTE: event is already normalized from line 262 above
+        // DO NOT re-normalize - this was causing double-normalization with wrong types
+        const standardizedEvent = event as StandardizedEvent & { carbon_data?: any; index?: number; albums?: any };
 
         // ✅ CONSUMER-IDENTICAL: Add additional fields that UltraMobileProductionJourney expects
         const finalEvent = {
@@ -309,18 +296,6 @@ function ProfileProduction() {
             cost_analysis: (event as any).cost_analysis || {}
           }
         };
-
-        // 🔍 DEBUG: Log final event data AFTER normalization and enhancement
-        if (productionId === '229') {
-          console.log(`🔍 PRODUCER DEBUG - Event ${index} AFTER normalization:`, {
-            eventId: finalEvent.id,
-            description: finalEvent.description,
-            observation: finalEvent.observation,
-            albums: finalEvent.albums,
-            carbon_data: finalEvent.carbon_data,
-            finalEvent: finalEvent
-          });
-        }
 
         return finalEvent;
       });
@@ -675,7 +650,7 @@ function ProfileProduction() {
             >
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
-                  size={{ base: '60px', sm: '50px' }}
+                  size={{ base: '56px', md: '48px' }}
                   bg="green.100"
                   color="green.600"
                   cursor="default"
@@ -683,7 +658,7 @@ function ProfileProduction() {
                   <Icon as={FaSeedling} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {historyData?.product?.name ? 'Organic' : 'General'}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
@@ -694,7 +669,7 @@ function ProfileProduction() {
 
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
-                  size={{ base: '60px', sm: '50px' }}
+                  size={{ base: '56px', md: '48px' }}
                   bg="green.100"
                   color="green.600"
                   cursor="default"
@@ -702,7 +677,7 @@ function ProfileProduction() {
                   <Icon as={FaLeaf} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {getTransparencyScore() > 0
                       ? `${Math.round(getTransparencyScore())}%`
                       : transparencyLoading
@@ -717,7 +692,7 @@ function ProfileProduction() {
 
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
-                  size={{ base: '60px', sm: '50px' }}
+                  size={{ base: '56px', md: '48px' }}
                   bg="purple.100"
                   color="purple.600"
                   cursor="default"
@@ -725,7 +700,7 @@ function ProfileProduction() {
                   <Icon as={FaClipboardList} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {getUnifiedTimelineEvents().length || 0}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
@@ -736,7 +711,7 @@ function ProfileProduction() {
 
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
-                  size={{ base: '60px', sm: '50px' }}
+                  size={{ base: '56px', md: '48px' }}
                   bg="orange.100"
                   color="orange.600"
                   cursor="default"
@@ -744,7 +719,7 @@ function ProfileProduction() {
                   <Icon as={FaFlag} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {historyData?.finish_date ? 'Finished' : 'Active'}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
@@ -757,17 +732,18 @@ function ProfileProduction() {
         </Container>
       </Box>
 
-      {/* Main Content Container - Standardized with Establishment */}
-      <Flex
-        alignItems="center"
-        justifyContent="center"
-        mb={{ base: '60px', md: '80px' }}
+      {/* Main Content Container - Matching TransparencyDashboard layout */}
+      <Box
+        maxW="full"
+        mx="auto"
+        px={6}
         mt="-60px"
+        mb={{ base: '60px', md: '80px' }}
         position="relative"
         zIndex={10}
       >
         <Card
-          w={{ base: '100%', sm: '98%', md: '95%', lg: '90%', xl: '85%' }}
+          w="100%"
           p={{ base: 4, sm: 5, md: 6, lg: 8 }}
           boxShadow={{
             base: '0 8px 16px -4px rgba(0, 0, 0, 0.12)',
@@ -963,134 +939,112 @@ function ProfileProduction() {
                     />
                   </Box>
 
-                  {/* Details */}
-                  <StandardCard title="Production Details" variant="flat">
-                    <VStack spacing={4} align="stretch">
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Product
-                        </Text>
-                        <Text fontWeight="medium">{historyData?.product?.name}</Text>
-                      </Box>
-                      {historyData?.lot_id && (
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>
-                            Lot ID
-                          </Text>
-                          <Text fontWeight="medium" fontFamily="mono" fontSize="sm">
-                            {historyData.lot_id}
-                          </Text>
-                        </Box>
-                      )}
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Type
-                        </Text>
-                        <Badge colorScheme="green" variant="subtle" size="sm">
-                          {historyData?.type === 'OR'
-                            ? 'Orchard'
-                            : historyData?.type === 'GA'
-                            ? 'Garden'
-                            : 'Sustainable Production'}
-                        </Badge>
-                      </Box>
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Environment
-                        </Text>
-                        <Text fontWeight="medium">
-                          {historyData?.is_outdoor ? 'Outdoor' : 'Indoor'}
-                        </Text>
-                      </Box>
-                      {historyData?.production_amount && (
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>
-                            Production Amount
-                          </Text>
-                          <Text fontWeight="medium">{historyData.production_amount} units</Text>
-                        </Box>
-                      )}
-                      {historyData?.earning && (
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>
-                            Revenue
-                          </Text>
-                          <Text fontWeight="medium" color="green.600">
-                            ${historyData.earning.toLocaleString()}
-                          </Text>
-                        </Box>
-                      )}
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Duration
-                        </Text>
-                        <Text fontWeight="medium">
-                          {formatDate(historyData?.start_date)} -{' '}
-                          {formatDate(historyData?.finish_date) || 'In Progress'}
-                        </Text>
-                      </Box>
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Status
-                        </Text>
-                        <Badge
-                          colorScheme={historyData?.published ? 'green' : 'yellow'}
-                          variant="subtle"
-                          size="sm"
-                        >
-                          {historyData?.published ? 'Published' : 'Draft'}
-                        </Badge>
-                      </Box>
-                    </VStack>
-                  </StandardCard>
+                  {/* Production Details - Refactored with ProfileSections */}
+                  <ProfileSection title="Production Details" icon={FaTractor}>
+                    <ProfileDataGrid
+                      data={[
+                        {
+                          label: 'Product',
+                          value: historyData?.product?.name,
+                          type: 'text'
+                        },
+                        {
+                          label: 'Lot ID',
+                          value: historyData?.lot_id,
+                          type: 'text',
+                          conditional: !!historyData?.lot_id
+                        },
+                        {
+                          label: 'Type',
+                          value:
+                            historyData?.type === 'OR'
+                              ? 'Orchard'
+                              : historyData?.type === 'GA'
+                              ? 'Garden'
+                              : 'Sustainable Production',
+                          type: 'badge',
+                          colorScheme: 'green'
+                        },
+                        {
+                          label: 'Environment',
+                          value: historyData?.is_outdoor ? 'Outdoor' : 'Indoor',
+                          type: 'text'
+                        },
+                        {
+                          label: 'Production Amount',
+                          value: historyData?.production_amount
+                            ? `${historyData.production_amount} units`
+                            : undefined,
+                          type: 'text',
+                          conditional: !!historyData?.production_amount
+                        },
+                        {
+                          label: 'Revenue',
+                          value: historyData?.earning ? `$${historyData.earning.toLocaleString()}` : undefined,
+                          type: 'text',
+                          conditional: !!historyData?.earning
+                        },
+                        {
+                          label: 'Duration',
+                          value: `${formatDate(historyData?.start_date)} - ${
+                            formatDate(historyData?.finish_date) || 'In Progress'
+                          }`,
+                          type: 'date'
+                        },
+                        {
+                          label: 'Status',
+                          value: historyData?.published ? 'Published' : 'Draft',
+                          type: 'status',
+                          colorScheme: historyData?.published ? 'green' : 'yellow'
+                        }
+                      ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                      columns={{ base: 1, md: 2 }}
+                    />
+                  </ProfileSection>
 
-                  {/* Agricultural Information */}
+                  {/* Agricultural Information - Refactored with ProfileSections */}
                   {(historyData?.age_of_plants ||
                     historyData?.number_of_plants ||
-                    historyData?.soil_ph) && (
-                    <StandardCard title="Agricultural Information" variant="flat">
-                      <VStack spacing={4} align="stretch">
-                        {historyData?.age_of_plants && (
-                          <Box>
-                            <Text fontSize="sm" color="gray.500" mb={1}>
-                              Plant Age
-                            </Text>
-                            <Text fontWeight="medium">{historyData.age_of_plants}</Text>
-                          </Box>
-                        )}
-                        {historyData?.number_of_plants && (
-                          <Box>
-                            <Text fontSize="sm" color="gray.500" mb={1}>
-                              Number of Plants
-                            </Text>
-                            <Text fontWeight="medium">{historyData.number_of_plants}</Text>
-                          </Box>
-                        )}
-                        {historyData?.soil_ph && (
-                          <Box>
-                            <Text fontSize="sm" color="gray.500" mb={1}>
-                              Soil pH
-                            </Text>
-                            <Text fontWeight="medium">{historyData.soil_ph}</Text>
-                          </Box>
-                        )}
-                        {historyData?.crop_type && (
-                          <Box>
-                            <Text fontSize="sm" color="gray.500" mb={1}>
-                              Crop Type
-                            </Text>
-                            <Text fontWeight="medium">{historyData.crop_type}</Text>
-                          </Box>
-                        )}
-                      </VStack>
-                    </StandardCard>
+                    historyData?.soil_ph ||
+                    historyData?.crop_type) && (
+                    <ProfileSection title="Agricultural Information" icon={FaLeaf}>
+                      <ProfileDataGrid
+                        data={[
+                          {
+                            label: 'Plant Age',
+                            value: historyData?.age_of_plants,
+                            type: 'text',
+                            conditional: !!historyData?.age_of_plants
+                          },
+                          {
+                            label: 'Number of Plants',
+                            value: historyData?.number_of_plants,
+                            type: 'number',
+                            conditional: !!historyData?.number_of_plants
+                          },
+                          {
+                            label: 'Soil pH',
+                            value: historyData?.soil_ph,
+                            type: 'text',
+                            conditional: !!historyData?.soil_ph
+                          },
+                          {
+                            label: 'Crop Type',
+                            value: historyData?.crop_type,
+                            type: 'text',
+                            conditional: !!historyData?.crop_type
+                          }
+                        ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                        columns={{ base: 1, md: 2 }}
+                      />
+                    </ProfileSection>
                   )}
 
-                  {/* Reputation & Operator */}
-                  <StandardCard title="Performance & Management" variant="flat">
+                  {/* Reputation & Operator - Refactored with ProfileSections */}
+                  <ProfileSection title="Reputation & Operator" icon={FaUsers}>
                     <VStack spacing={4} align="stretch">
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
+                      <Box w="full">
+                        <Text fontSize="sm" color="gray.500" mb={2}>
                           Reputation Score
                         </Text>
                         <HStack spacing={2}>
@@ -1104,22 +1058,22 @@ function ProfileProduction() {
                               />
                             ))}
                           </HStack>
-                          <Text fontSize="sm" color="gray.600">
+                          <Text fontSize="sm" color="gray.600" fontWeight="medium">
                             ({safeReputation.toFixed(1)}/5.0)
                           </Text>
                         </HStack>
                       </Box>
                       {historyData?.operator && (
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>
+                        <Box w="full" p={3} bg="gray.50" borderRadius="lg">
+                          <Text fontSize="sm" color="gray.500" mb={2}>
                             Operator
                           </Text>
                           <HStack spacing={2}>
                             <Avatar
-                              size="xs"
+                              size="sm"
                               name={historyData.operator.name || historyData.operator.email}
                             />
-                            <VStack spacing={0} align="start">
+                            <VStack spacing={0} align="start" flex={1}>
                               <Text fontWeight="medium" fontSize="sm">
                                 {historyData.operator.name || 'Unnamed Operator'}
                               </Text>
@@ -1130,8 +1084,8 @@ function ProfileProduction() {
                           </HStack>
                         </Box>
                       )}
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
+                      <Box w="full">
+                        <Text fontSize="sm" color="gray.500" mb={2}>
                           Quality Rating
                         </Text>
                         <Progress
@@ -1142,250 +1096,107 @@ function ProfileProduction() {
                         />
                       </Box>
                     </VStack>
-                  </StandardCard>
+                  </ProfileSection>
 
-                  {/* Location */}
-                  <StandardCard title="Location" variant="flat">
-                    <VStack spacing={4} align="stretch">
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Establishment
-                        </Text>
-                        <Link
-                          color="blue.600"
-                          onClick={() =>
+                  {/* Location - Refactored with ProfileSections */}
+                  <ProfileSection title="Location" icon={MdLocationOn}>
+                    <ProfileDataGrid
+                      data={[
+                        {
+                          label: 'Establishment',
+                          value: historyData?.parcel?.establishment?.name || 'Unknown',
+                          type: 'link',
+                          onClick: () =>
                             navigate(`/admin/dashboard/establishment/${establishmentId}`)
-                          }
-                          cursor="pointer"
-                          _hover={{ textDecoration: 'underline' }}
-                          fontWeight="medium"
-                        >
-                          {historyData?.parcel?.establishment?.name || 'Unknown'}
-                        </Link>
-                      </Box>
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Parcel
-                        </Text>
-                        <Link
-                          color="green.600"
-                          onClick={() =>
+                        },
+                        {
+                          label: 'Parcel',
+                          value: historyData?.parcel?.name || 'Unknown',
+                          type: 'link',
+                          onClick: () =>
                             navigate(
                               `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
                             )
-                          }
-                          cursor="pointer"
-                          _hover={{ textDecoration: 'underline' }}
-                          fontWeight="medium"
-                        >
-                          {historyData?.parcel?.name || 'Unknown'}
-                        </Link>
-                      </Box>
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Address
-                        </Text>
-                        <Text fontWeight="medium">
-                          {historyData?.parcel?.establishment?.location || 'Not specified'}
-                        </Text>
-                      </Box>
-                    </VStack>
-                  </StandardCard>
+                        },
+                        {
+                          label: 'Address',
+                          value: historyData?.parcel?.establishment?.location || 'Not specified',
+                          type: 'text'
+                        }
+                      ]}
+                      columns={{ base: 1, md: 1 }}
+                    />
+                  </ProfileSection>
                 </VStack>
 
                 {/* Right Column */}
                 <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-                  {/* Transparency Score - TRAZO ALIGNED */}
-                  <StandardCard title="🌱 Farm Transparency" variant="flat">
-                    <VStack spacing={4} align="stretch">
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={2}>
-                          Consumer Trust Score
-                        </Text>
-                        <HStack spacing={3} align="center">
-                          <Box
-                            boxSize="60px"
-                            borderRadius="full"
-                            bg="green.100"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                          >
-                            <Icon as={FaLeaf} color="green.600" boxSize={6} />
-                          </Box>
-                          <VStack spacing={0} align="start">
-                            <Text fontSize="3xl" fontWeight="bold" color="green.600">
-                              {getTransparencyScore() > 0
-                                ? `${Math.round(getTransparencyScore())}%`
-                                : transparencyLoading
-                                ? 'Loading...'
-                                : '0%'}
-                            </Text>
-                            <Text fontSize="sm" color="gray.600" fontWeight="medium">
-                              {getTransparencyScore() >= 90
-                                ? '🌟 Exceptional Documentation'
-                                : getTransparencyScore() >= 70
-                                ? '✅ Strong Record Keeping'
-                                : getTransparencyScore() >= 50
-                                ? '📋 Building Transparency'
-                                : getTransparencyScore() > 0
-                                ? '🌱 Getting Started'
-                                : 'Ready to Begin'}
-                            </Text>
-                          </VStack>
-                        </HStack>
-                      </Box>
+                  {/* Transparency Score - Refactored with ProfileSections */}
+                  <Box css={{
+                    '& [data-transparency-score]': {
+                      fontSize: { base: '4xl', md: '5xl' }
+                    }
+                  }}>
+                    <TransparencyScoreCard
+                      score={getTransparencyScore()}
+                      type="production"
+                      label="Farm Transparency Score"
+                      eventCount={getUnifiedTimelineEvents().length}
+                      nextStepTitle="Increase Your Score"
+                      nextSteps={
+                        getTransparencyScore() < 90
+                          ? [
+                              getTransparencyScore() < 30
+                                ? 'Document more farming activities like planting, irrigation, and harvesting'
+                                : 'Add photos to your events and document specialized practices',
+                              'Verify more events and add detailed descriptions'
+                            ]
+                          : []
+                      }
+                      showProgress={true}
+                      compact={false}
+                    />
+                  </Box>
+                  {transparencyError && (
+                    <Box
+                      p={3}
+                      bg="yellow.50"
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor="yellow.200"
+                    >
+                      <Text fontSize="sm" color="yellow.800">
+                        Transparency data temporarily unavailable. Using basic calculation.
+                      </Text>
+                    </Box>
+                  )}
 
-                      {/* Trazo-style Progress Indicator */}
-                      <Box>
-                        <HStack justify="space-between" mb={2}>
-                          <Text fontSize="sm" color="gray.500">
-                            Progress to Next Level
-                          </Text>
-                          <Text fontSize="sm" color="green.600" fontWeight="medium">
-                            {getTransparencyScore() >= 90
-                              ? 'Complete!'
-                              : getTransparencyScore() >= 70
-                              ? `${90 - Math.round(getTransparencyScore())}% to Exceptional`
-                              : getTransparencyScore() >= 50
-                              ? `${70 - Math.round(getTransparencyScore())}% to Strong`
-                              : `${50 - Math.round(getTransparencyScore())}% to Building`}
-                          </Text>
-                        </HStack>
-                        <Progress
-                          value={getTransparencyScore()}
-                          colorScheme="green"
-                          size="md"
-                          borderRadius="full"
-                          bg="gray.100"
-                        />
-                      </Box>
-
-                      {/* Producer Benefits & Encouragement */}
-                      <Box
-                        p={3}
-                        bg="green.50"
-                        borderRadius="lg"
-                        border="1px solid"
-                        borderColor="green.200"
-                      >
-                        <HStack spacing={2} mb={2}>
-                          <Icon as={FaLightbulb} color="green.600" boxSize={4} />
-                          <Text fontSize="sm" fontWeight="semibold" color="green.800">
-                            Why This Matters
-                          </Text>
-                        </HStack>
-                        <Text fontSize="sm" color="green.700" lineHeight="tall">
-                          Higher transparency builds consumer trust, can justify premium pricing,
-                          and differentiates your farm in the marketplace.
-                        </Text>
-                      </Box>
-
-                      <Box>
-                        <HStack justify="space-between" mb={1}>
-                          <Text fontSize="sm" color="gray.500">
-                            Events Documented
-                          </Text>
-                          <Badge
-                            colorScheme={
-                              getUnifiedTimelineEvents().length > 5
-                                ? 'green'
-                                : getUnifiedTimelineEvents().length > 0
-                                ? 'yellow'
-                                : 'gray'
+                  {/* Performance & Management - Refactored with ProfileSections */}
+                  {(historyData?.reputation_score || historyData?.quality_rating || historyData?.qr_code) && (
+                    <ProfileSection title="Performance & Management" icon={FaChartLine}>
+                      <VStack spacing={4} align="stretch">
+                        {/* Reputation & Quality Metrics */}
+                        <ProfileDataGrid
+                          data={[
+                            {
+                              label: 'Reputation Score',
+                              value: historyData?.reputation_score ? `${(historyData.reputation_score * 20).toFixed(1)}/5.0` : undefined,
+                              type: 'text',
+                              conditional: !!historyData?.reputation_score
+                            },
+                            {
+                              label: 'Quality Rating',
+                              value: historyData?.quality_rating,
+                              type: 'text',
+                              conditional: !!historyData?.quality_rating
                             }
-                            variant="subtle"
-                          >
-                            {getUnifiedTimelineEvents().length || 0} practices
-                          </Badge>
-                        </HStack>
-                        <Text fontSize="sm" color="gray.700" fontWeight="medium">
-                          {getUnifiedTimelineEvents().length > 5
-                            ? 'Comprehensive documentation'
-                            : getUnifiedTimelineEvents().length > 0
-                            ? 'Good start - keep documenting!'
-                            : 'Ready to start documenting practices'}
-                        </Text>
-                      </Box>
+                          ].filter((item) => item.conditional !== false && item.value !== undefined)}
+                          columns={{ base: 1, md: 2 }}
+                        />
 
-                      {/* Next Steps for Improvement */}
-                      {getTransparencyScore() < 90 && (
-                        <Box
-                          p={3}
-                          bg="blue.50"
-                          borderRadius="lg"
-                          border="1px solid"
-                          borderColor="blue.200"
-                        >
-                          <HStack spacing={2} mb={2}>
-                            <Icon as={FaChartLine} color="blue.600" boxSize={4} />
-                            <Text fontSize="sm" fontWeight="semibold" color="blue.800">
-                              Increase Your Score
-                            </Text>
-                          </HStack>
-                          <Text fontSize="sm" color="blue.700" lineHeight="tall">
-                            {getTransparencyScore() < 30
-                              ? 'Document more farming activities like planting, irrigation, and harvesting to build trust.'
-                              : getTransparencyScore() < 70
-                              ? 'Add photos to your events and document specialized practices for higher transparency.'
-                              : 'Add detailed descriptions and verify more events to reach exceptional transparency.'}
-                          </Text>
-                        </Box>
-                      )}
-
-                      {transparencyError && (
-                        <Box
-                          p={3}
-                          bg="yellow.50"
-                          borderRadius="md"
-                          border="1px solid"
-                          borderColor="yellow.200"
-                        >
-                          <Text fontSize="sm" color="yellow.800">
-                            Transparency data temporarily unavailable. Using basic calculation.
-                          </Text>
-                        </Box>
-                      )}
-                    </VStack>
-                  </StandardCard>
-
-                  {/* Performance & Management */}
-                  <StandardCard title="Performance & Management" variant="flat">
-                    <VStack spacing={4} align="stretch">
-                      {historyData?.reputation_score && (
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={2}>
-                            Reputation Score
-                          </Text>
-                          <HStack spacing={2}>
-                            <Text fontSize="lg" fontWeight="bold" color="green.600">
-                              {(historyData.reputation_score * 20).toFixed(1)}/5.0
-                            </Text>
-                            <Text fontSize="sm" color="gray.500">
-                              ({historyData.reputation_score}/5 stars)
-                            </Text>
-                          </HStack>
-                        </Box>
-                      )}
-
-                      {historyData?.quality_rating && (
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={2}>
-                            Quality Rating
-                          </Text>
-                          <Text fontSize="lg" fontWeight="bold" color="blue.600">
-                            {historyData.quality_rating}
-                          </Text>
-                        </Box>
-                      )}
-
-                      {/* QR Code Compact Section */}
-                      {historyData?.qr_code && (
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={2}>
-                            Consumer Access
-                          </Text>
-                          <HStack
+                        {/* QR Code Consumer Access */}
+                        {historyData?.qr_code && (
+                          <Box
                             spacing={3}
                             p={3}
                             bg="blue.50"
@@ -1393,37 +1204,41 @@ function ProfileProduction() {
                             border="1px solid"
                             borderColor="blue.200"
                           >
-                            <Box
-                              boxSize="40px"
-                              bg="white"
-                              borderRadius="md"
-                              display="flex"
-                              alignItems="center"
-                              justifyContent="center"
-                            >
-                              <Icon as={FaQrcode} color="blue.500" />
-                            </Box>
-                            <VStack spacing={0} align="start" flex={1}>
-                              <Text fontSize="sm" fontWeight="medium" color="blue.800">
-                                QR Code Available
-                              </Text>
-                              <Text fontSize="xs" color="blue.600">
-                                Consumers can scan to view details
-                              </Text>
-                            </VStack>
-                            <IconButton
-                              icon={<Icon as={FaDownload} />}
-                              size="sm"
-                              variant="outline"
-                              colorScheme="blue"
-                              onClick={downloadQRCode}
-                              aria-label="Download QR Code"
-                            />
-                          </HStack>
-                        </Box>
-                      )}
-                    </VStack>
-                  </StandardCard>
+                            <HStack spacing={3} justify="space-between">
+                              <HStack spacing={3} flex={1}>
+                                <Box
+                                  boxSize="40px"
+                                  bg="white"
+                                  borderRadius="md"
+                                  display="flex"
+                                  alignItems="center"
+                                  justifyContent="center"
+                                >
+                                  <Icon as={FaQrcode} color="blue.500" />
+                                </Box>
+                                <VStack spacing={0} align="start" flex={1}>
+                                  <Text fontSize="sm" fontWeight="medium" color="blue.800">
+                                    QR Code Available
+                                  </Text>
+                                  <Text fontSize="xs" color="blue.600">
+                                    Consumers can scan to view details
+                                  </Text>
+                                </VStack>
+                              </HStack>
+                              <IconButton
+                                icon={<Icon as={FaDownload} />}
+                                size="sm"
+                                variant="outline"
+                                colorScheme="blue"
+                                onClick={downloadQRCode}
+                                aria-label="Download QR Code"
+                              />
+                            </HStack>
+                          </Box>
+                        )}
+                      </VStack>
+                    </ProfileSection>
+                  )}
 
                   {/* Producer Information */}
                   {historyData?.parcel?.establishment && (
@@ -1443,31 +1258,6 @@ function ProfileProduction() {
                       unifiedEvents.length,
                       'events'
                     );
-
-                    // 🔍 DEBUG: Log final props being passed to UltraMobileProductionJourney
-                    if (productionId === '229') {
-                      console.log('🔍 PRODUCER DEBUG - UltraMobileProductionJourney Props:', {
-                        eventsCount: unifiedEvents.length,
-                        transparencyScore: getDisplayTransparencyScore(),
-                        firstEventSample: unifiedEvents[0]
-                          ? {
-                              id: unifiedEvents[0].id,
-                              description: unifiedEvents[0].description,
-                              observation: unifiedEvents[0].observation,
-                              albums: unifiedEvents[0].albums,
-                              carbon_data: unifiedEvents[0].carbon_data
-                            }
-                          : null,
-                        carbonDataFromAllEvents: unifiedEvents.map((e) => ({
-                          id: e.id,
-                          carbon_data: e.carbon_data
-                        })),
-                        totalCO2Sum: unifiedEvents.reduce(
-                          (sum, e) => sum + (e.carbon_data?.co2e || 0),
-                          0
-                        )
-                      });
-                    }
 
                     return (
                       <UltraMobileProductionJourney
@@ -1509,90 +1299,84 @@ function ProfileProduction() {
                 })()}
               </Box>
 
-              {/* Description Section */}
+              {/* Description Section - Refactored with ProfileSections */}
               {historyData?.description && (
-                <Box mb={{ base: 4, md: 6 }}>
-                  <StandardCard title="Production Description" variant="flat">
-                    <Box>
-                      <Text fontSize="sm" color="gray.700" lineHeight="tall">
-                        {historyData.description}
-                      </Text>
-                    </Box>
-                  </StandardCard>
-                </Box>
+                <ProfileSection title="Production Description" icon={FaRegCommentDots}>
+                  <Text fontSize="sm" color="gray.700" lineHeight="tall">
+                    {historyData.description}
+                  </Text>
+                </ProfileSection>
               )}
 
-              {/* Production Summary - Core Information */}
-              <Box mb={{ base: 4, md: 6 }}>
-                <StandardCard title="Production Summary" variant="flat">
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-                    <VStack align="start" spacing={3}>
-                      <Box>
+              {/* Production Summary - Refactored with ProfileSections */}
+              <ProfileSection title="Production Summary" icon={FaClipboardList}>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
+                  <VStack align="start" spacing={4}>
+                    <Box w="full">
+                      <Text fontSize="sm" color="gray.500" mb={2}>
+                        Production Status
+                      </Text>
+                      <Badge
+                        colorScheme={historyData?.finish_date ? 'green' : 'yellow'}
+                        variant="subtle"
+                        fontSize="sm"
+                        px={3}
+                        py={1}
+                      >
+                        {historyData?.finish_date ? 'Completed' : 'In Progress'}
+                      </Badge>
+                    </Box>
+                    {historyData?.start_date && historyData?.finish_date && (
+                      <Box w="full">
                         <Text fontSize="sm" color="gray.500" mb={1}>
-                          Production Status
+                          Duration
                         </Text>
-                        <Badge
-                          colorScheme={historyData?.finish_date ? 'green' : 'yellow'}
-                          variant="subtle"
-                          fontSize="sm"
-                          px={3}
-                          py={1}
-                        >
-                          {historyData?.finish_date ? 'Completed' : 'In Progress'}
-                        </Badge>
-                      </Box>
-                      {historyData?.start_date && historyData?.finish_date && (
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>
-                            Duration
-                          </Text>
-                          <Text fontWeight="medium" fontSize="sm">
-                            {Math.ceil(
-                              (new Date(historyData.finish_date).getTime() -
-                                new Date(historyData.start_date).getTime()) /
-                                (1000 * 60 * 60 * 24)
-                            )}{' '}
-                            days
-                          </Text>
-                        </Box>
-                      )}
-                    </VStack>
-                    <VStack align="start" spacing={3}>
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Events Recorded
-                        </Text>
-                        <Text fontWeight="medium" fontSize="sm" color="green.600">
-                          {getUnifiedTimelineEvents().length || 0} Events
+                        <Text fontWeight="medium" fontSize="sm">
+                          {Math.ceil(
+                            (new Date(historyData.finish_date).getTime() -
+                              new Date(historyData.start_date).getTime()) /
+                              (1000 * 60 * 60 * 24)
+                          )}{' '}
+                          days
                         </Text>
                       </Box>
-                      {getUnifiedTimelineEvents().length > 0 && (
-                        <Box>
-                          <Text fontSize="sm" color="gray.500" mb={1}>
-                            Timeline Progress
+                    )}
+                  </VStack>
+                  <VStack align="start" spacing={4}>
+                    <Box w="full">
+                      <Text fontSize="sm" color="gray.500" mb={2}>
+                        Events Recorded
+                      </Text>
+                      <Text fontWeight="medium" fontSize="lg" color="green.600">
+                        {getUnifiedTimelineEvents().length || 0} Events
+                      </Text>
+                    </Box>
+                    {getUnifiedTimelineEvents().length > 0 && (
+                      <Box w="full">
+                        <Text fontSize="sm" color="gray.500" mb={2}>
+                          Timeline Progress
+                        </Text>
+                        <HStack spacing={2}>
+                          <Progress
+                            value={historyData.finish_date ? 100 : 50}
+                            colorScheme="green"
+                            size="sm"
+                            borderRadius="full"
+                            flex={1}
+                          />
+                          <Text fontSize="sm" color="gray.600" minW="40px">
+                            {historyData.finish_date ? '100%' : '50%'}
                           </Text>
-                          <HStack spacing={2}>
-                            <Progress
-                              value={historyData.finish_date ? 100 : 50}
-                              colorScheme="green"
-                              size="sm"
-                              borderRadius="full"
-                              flex={1}
-                            />
-                            <Text fontSize="sm" color="gray.600">
-                              {historyData.finish_date ? '100%' : '50%'}
-                            </Text>
-                          </HStack>
-                        </Box>
-                      )}
-                    </VStack>
-                  </SimpleGrid>
-                </StandardCard>
-              </Box>
+                        </HStack>
+                      </Box>
+                    )}
+                  </VStack>
+                </SimpleGrid>
+              </ProfileSection>
             </Box>
           </CardBody>
         </Card>
-      </Flex>
+      </Box>
 
       {/* Week 2 Task 2.1: Voice-to-Event System Integration */}
       <QuickAddEvent

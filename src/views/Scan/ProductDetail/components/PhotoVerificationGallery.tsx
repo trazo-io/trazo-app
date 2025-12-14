@@ -97,18 +97,8 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
   };
 
   const renderCategoryPhotos = (categoryName: string, data: CategoryData) => {
-    // For MVP, we'll show placeholder verification status
-    // In production, this would connect to actual event photo galleries
-    const mockPhotos =
-      data.photo_verified_count > 0
-        ? Array.from({ length: Math.min(data.photo_verified_count, 4) }, (_, i) => ({
-            id: i,
-            url: `/api/placeholder/300x200?text=Verified+${data.consumer_name}+${i + 1}`,
-            alt: `${data.consumer_name} verification photo ${i + 1}`,
-            description: `${data.consumer_name} practice documentation`
-          }))
-        : [];
-
+    // Never show placeholder images as verification evidence
+    // Only display photos if actual verified photos are available from the API
     const verificationInfo = getVerificationIcon(data.verification_strength);
 
     return (
@@ -157,49 +147,8 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
               </Text>
             </Box>
 
-            {/* Photo Gallery */}
-            {mockPhotos.length > 0 && (
-              <Box>
-                <Text fontSize="sm" fontWeight="medium" mb={3}>
-                  Verification Photos ({mockPhotos.length})
-                </Text>
-                <SimpleGrid columns={2} spacing={3}>
-                  {mockPhotos.map((photo) => (
-                    <Box
-                      key={photo.id}
-                      position="relative"
-                      cursor="pointer"
-                      onClick={() => openImageModal(photo.url)}
-                      borderRadius="md"
-                      overflow="hidden"
-                      bg="gray.100"
-                      aspectRatio="4/3"
-                    >
-                      <Image
-                        src={photo.url}
-                        alt={photo.alt}
-                        w="full"
-                        h="full"
-                        objectFit="cover"
-                        transition="transform 0.2s"
-                        _hover={{ transform: 'scale(1.05)' }}
-                      />
-                      <Box
-                        position="absolute"
-                        top={2}
-                        right={2}
-                        bg="green.500"
-                        color="white"
-                        borderRadius="full"
-                        p={1}
-                      >
-                        <Icon as={FaCheckCircle} boxSize={3} />
-                      </Box>
-                    </Box>
-                  ))}
-                </SimpleGrid>
-              </Box>
-            )}
+            {/* Photo Gallery - Only show if actual photos available */}
+            {/* Placeholder photos removed - only real verification photos are shown */}
 
             {/* Practice Examples */}
             <Box>

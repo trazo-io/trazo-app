@@ -64,7 +64,16 @@ import { useSelector } from 'react-redux';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
-import { StandardCard, StandardButton, StandardPage } from 'components/Design/StandardComponents';
+import { StandardButton, StandardPage } from 'components/Design/StandardComponents';
+
+// Import new ProfileSections shared components for modern UI
+import {
+  ProfileHeader,
+  ProfileSection,
+  ProfileDataGrid,
+  ProfileImageGallery,
+  TransparencyScoreCard
+} from 'components/ProfileSections';
 
 // Add type for Redux state
 interface RootState {
@@ -321,7 +330,7 @@ function ProfileEstablishment() {
             >
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
-                  size={{ base: '60px', sm: '50px' }}
+                  size={{ base: '56px', md: '48px' }}
                   bg="green.100"
                   color="green.600"
                   cursor="default"
@@ -329,7 +338,7 @@ function ProfileEstablishment() {
                   <Icon as={FaTractor} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {establishmentData?.total_acreage || 0}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
@@ -340,7 +349,7 @@ function ProfileEstablishment() {
 
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
-                  size={{ base: '60px', sm: '50px' }}
+                  size={{ base: '56px', md: '48px' }}
                   bg="blue.100"
                   color="blue.600"
                   cursor="default"
@@ -348,7 +357,7 @@ function ProfileEstablishment() {
                   <Icon as={FaUsers} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {establishmentData?.employee_count || 0}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
@@ -359,7 +368,7 @@ function ProfileEstablishment() {
 
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
-                  size={{ base: '60px', sm: '50px' }}
+                  size={{ base: '56px', md: '48px' }}
                   bg="purple.100"
                   color="purple.600"
                   cursor="default"
@@ -367,7 +376,7 @@ function ProfileEstablishment() {
                   <Icon as={FaCalendar} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {establishmentData?.year_established || '--'}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
@@ -378,7 +387,7 @@ function ProfileEstablishment() {
 
               <VStack spacing={{ base: 3, sm: 2 }}>
                 <Circle
-                  size={{ base: '60px', sm: '50px' }}
+                  size={{ base: '56px', md: '48px' }}
                   bg="orange.100"
                   color="orange.600"
                   cursor="default"
@@ -386,7 +395,7 @@ function ProfileEstablishment() {
                   <Icon as={FaSeedling} boxSize={{ base: 7, sm: 6 }} />
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {getCropsGrown().length}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
@@ -399,17 +408,17 @@ function ProfileEstablishment() {
         </Container>
       </Box>
 
-      {/* Main Content Container - Mobile Enhanced */}
-      <Flex
-        alignItems="center"
-        justifyContent="center"
-        mb={{ base: '60px', md: '80px' }}
+      {/* Main Content Container - Matching TransparencyDashboard layout */}
+      <Box
+        maxW="full"
+        px={6}
         mt="-60px"
+        mb={{ base: '60px', md: '80px' }}
         position="relative"
         zIndex={10}
       >
         <Card
-          w={{ base: '100%', sm: '98%', md: '95%', lg: '90%', xl: '85%' }}
+          w="100%"
           p={cardPadding}
           boxShadow={{
             base: '0 8px 16px -4px rgba(0, 0, 0, 0.12)',
@@ -417,7 +426,6 @@ function ProfileEstablishment() {
           }}
           borderRadius={mobileCardRadius}
           bg={bgColor}
-          mx={{ base: 1, sm: 'auto' }}
           position="relative"
         >
           {/* Header with Actions - Mobile Enhanced */}
@@ -571,147 +579,57 @@ function ProfileEstablishment() {
                       />
                     </Box>
 
-                    {/* Contact Information - Move to left column for better balance */}
-                    <StandardCard title="Contact Information" variant="flat" icon={FaPhone}>
-                      <VStack spacing={{ base: 4, sm: 3 }} align="stretch">
-                        {establishmentData?.email && (
-                          <HStack
-                            spacing={{ base: 3, sm: 3 }}
-                            minH={touchTargetSize}
-                            align="center"
-                            p={{ base: 2, sm: 1 }}
-                            borderRadius="md"
-                            _hover={{ bg: 'gray.50' }}
-                            cursor="pointer"
-                            onClick={() => window.open(`mailto:${establishmentData.email}`)}
-                          >
-                            <Icon
-                              as={FaEnvelope}
-                              color="blue.500"
-                              boxSize={{ base: 5, sm: 5 }}
-                              flexShrink={0}
-                            />
-                            <VStack spacing={0} align="start" flex={1}>
-                              <Text
-                                fontSize={{ base: 'sm', sm: 'sm' }}
-                                color="gray.500"
-                                fontWeight="medium"
-                              >
-                                Email
-                              </Text>
-                              <Text
-                                color="blue.500"
-                                fontSize={{ base: 'md', sm: 'md' }}
-                                fontWeight="medium"
-                                isTruncated
-                                maxW="full"
-                              >
-                                {establishmentData.email}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                        )}
-                        {establishmentData?.phone && (
-                          <HStack
-                            spacing={{ base: 3, sm: 3 }}
-                            minH={touchTargetSize}
-                            align="center"
-                            p={{ base: 2, sm: 1 }}
-                            borderRadius="md"
-                            _hover={{ bg: 'gray.50' }}
-                            cursor="pointer"
-                            onClick={() => window.open(`tel:${establishmentData.phone}`)}
-                          >
-                            <Icon
-                              as={FaPhone}
-                              color="green.500"
-                              boxSize={{ base: 5, sm: 5 }}
-                              flexShrink={0}
-                            />
-                            <VStack spacing={0} align="start" flex={1}>
-                              <Text
-                                fontSize={{ base: 'sm', sm: 'sm' }}
-                                color="gray.500"
-                                fontWeight="medium"
-                              >
-                                Phone
-                              </Text>
-                              <Text
-                                color="green.500"
-                                fontSize={{ base: 'md', sm: 'md' }}
-                                fontWeight="medium"
-                              >
-                                {establishmentData.phone}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                        )}
-                        {establishmentData?.contact_person && (
-                          <HStack
-                            spacing={{ base: 3, sm: 3 }}
-                            minH={touchTargetSize}
-                            align="center"
-                            p={{ base: 2, sm: 1 }}
-                            borderRadius="md"
-                          >
-                            <Icon
-                              as={FaUsers}
-                              color="purple.500"
-                              boxSize={{ base: 5, sm: 5 }}
-                              flexShrink={0}
-                            />
-                            <VStack spacing={0} align="start" flex={1}>
-                              <Text
-                                fontSize={{ base: 'sm', sm: 'sm' }}
-                                color="gray.500"
-                                fontWeight="medium"
-                              >
-                                Contact Person
-                              </Text>
-                              <Text
-                                fontSize={{ base: 'md', sm: 'md' }}
-                                fontWeight="medium"
-                                color="gray.700"
-                              >
-                                {establishmentData.contact_person}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                        )}
-                        {establishmentData?.contact_email &&
-                          establishmentData.contact_email !== establishmentData.email && (
-                            <HStack>
-                              <Icon as={FaEnvelope} color="blue.500" />
-                              <Text fontWeight="medium">Alt Email:</Text>
-                              <Link
-                                color="blue.500"
-                                href={`mailto:${establishmentData.contact_email}`}
-                              >
-                                {establishmentData.contact_email}
-                              </Link>
-                            </HStack>
-                          )}
-                        {establishmentData?.contact_phone &&
-                          establishmentData.contact_phone !== establishmentData.phone && (
-                            <HStack>
-                              <Icon as={FaPhone} color="green.500" />
-                              <Text fontWeight="medium">Alt Phone:</Text>
-                              <Link
-                                color="green.500"
-                                href={`tel:${establishmentData.contact_phone}`}
-                              >
-                                {establishmentData.contact_phone}
-                              </Link>
-                            </HStack>
-                          )}
-                      </VStack>
-                    </StandardCard>
+                    {/* Contact Information - Refactored with ProfileDataGrid */}
+                    <ProfileSection
+                      title="Contact Information"
+                      icon={FaPhone}
+                    >
+                      <ProfileDataGrid
+                        data={[
+                          {
+                            label: 'Email',
+                            value: establishmentData?.email,
+                            type: 'link',
+                            href: establishmentData?.email ? `mailto:${establishmentData.email}` : undefined,
+                            conditional: !!establishmentData?.email
+                          },
+                          {
+                            label: 'Phone',
+                            value: establishmentData?.phone,
+                            type: 'link',
+                            href: establishmentData?.phone ? `tel:${establishmentData.phone}` : undefined,
+                            conditional: !!establishmentData?.phone
+                          },
+                          {
+                            label: 'Contact Person',
+                            value: establishmentData?.contact_person,
+                            type: 'text',
+                            conditional: !!establishmentData?.contact_person
+                          },
+                          {
+                            label: 'Alternative Email',
+                            value: establishmentData?.contact_email,
+                            type: 'link',
+                            href: establishmentData?.contact_email ? `mailto:${establishmentData.contact_email}` : undefined,
+                            conditional: !!(establishmentData?.contact_email && establishmentData.contact_email !== establishmentData.email)
+                          },
+                          {
+                            label: 'Alternative Phone',
+                            value: establishmentData?.contact_phone,
+                            type: 'link',
+                            href: establishmentData?.contact_phone ? `tel:${establishmentData.contact_phone}` : undefined,
+                            conditional: !!(establishmentData?.contact_phone && establishmentData.contact_phone !== establishmentData.phone)
+                          }
+                        ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                        columns={{ base: 1, md: 1 }}
+                      />
+                    </ProfileSection>
 
-                    {/* Social Media & Web Presence - Enhanced with Website */}
+                    {/* Social Media & Web Presence */}
                     {(establishmentData?.company?.website ||
                       establishmentData?.company?.facebook ||
                       establishmentData?.company?.instagram) && (
-                      <StandardCard title="Web Presence" variant="flat" icon={FaGlobe}>
+                      <ProfileSection title="Web Presence" icon={FaGlobe}>
                         <HStack spacing={4} justify="center" flexWrap="wrap">
                           {establishmentData?.company?.website && (
                             <Link
@@ -768,7 +686,7 @@ function ProfileEstablishment() {
                             </Link>
                           )}
                         </HStack>
-                      </StandardCard>
+                      </ProfileSection>
                     )}
                   </VStack>
                 )}
@@ -778,12 +696,12 @@ function ProfileEstablishment() {
                   {/* Compact Empty Photos State - Only show when no photos */}
                   {(!establishmentData?.images || establishmentData.images.length === 0) && (
                     <Box mb={{ base: 4, sm: 5 }}>
-                      <StandardCard title="Establishment Photos" variant="flat" icon={FaBuilding}>
-                        <VStack spacing={3} py={2}>
+                      <ProfileSection title="Establishment Photos" icon={FaBuilding}>
+                        <VStack spacing={3} py={2} align="center">
                           <Circle size="40px" bg="gray.100" color="gray.400">
                             <Icon as={FaBuilding} boxSize={4} />
                           </Circle>
-                          <VStack spacing={1}>
+                          <VStack spacing={1} align="center">
                             <Text
                               fontSize="sm"
                               color="gray.600"
@@ -797,146 +715,58 @@ function ProfileEstablishment() {
                             </Text>
                           </VStack>
                         </VStack>
-                      </StandardCard>
+                      </ProfileSection>
                     </Box>
                   )}
 
-                  {/* Contact Information - Only show when no photos (moved to left column when photos exist) */}
+                  {/* Contact Information - Only show when no photos */}
                   {(!establishmentData?.images || establishmentData.images.length === 0) && (
-                    <StandardCard title="Contact Information" variant="flat" icon={FaPhone}>
-                      <VStack spacing={{ base: 4, sm: 3 }} align="stretch">
-                        {establishmentData?.email && (
-                          <HStack
-                            spacing={{ base: 3, sm: 3 }}
-                            minH={touchTargetSize}
-                            align="center"
-                            p={{ base: 2, sm: 1 }}
-                            borderRadius="md"
-                            _hover={{ bg: 'gray.50' }}
-                            cursor="pointer"
-                            onClick={() => window.open(`mailto:${establishmentData.email}`)}
-                          >
-                            <Icon
-                              as={FaEnvelope}
-                              color="blue.500"
-                              boxSize={{ base: 5, sm: 5 }}
-                              flexShrink={0}
-                            />
-                            <VStack spacing={0} align="start" flex={1}>
-                              <Text
-                                fontSize={{ base: 'sm', sm: 'sm' }}
-                                color="gray.500"
-                                fontWeight="medium"
-                              >
-                                Email
-                              </Text>
-                              <Text
-                                color="blue.500"
-                                fontSize={{ base: 'md', sm: 'md' }}
-                                fontWeight="medium"
-                                isTruncated
-                                maxW="full"
-                              >
-                                {establishmentData.email}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                        )}
-                        {establishmentData?.phone && (
-                          <HStack
-                            spacing={{ base: 3, sm: 3 }}
-                            minH={touchTargetSize}
-                            align="center"
-                            p={{ base: 2, sm: 1 }}
-                            borderRadius="md"
-                            _hover={{ bg: 'gray.50' }}
-                            cursor="pointer"
-                            onClick={() => window.open(`tel:${establishmentData.phone}`)}
-                          >
-                            <Icon
-                              as={FaPhone}
-                              color="green.500"
-                              boxSize={{ base: 5, sm: 5 }}
-                              flexShrink={0}
-                            />
-                            <VStack spacing={0} align="start" flex={1}>
-                              <Text
-                                fontSize={{ base: 'sm', sm: 'sm' }}
-                                color="gray.500"
-                                fontWeight="medium"
-                              >
-                                Phone
-                              </Text>
-                              <Text
-                                color="green.500"
-                                fontSize={{ base: 'md', sm: 'md' }}
-                                fontWeight="medium"
-                              >
-                                {establishmentData.phone}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                        )}
-                        {establishmentData?.contact_person && (
-                          <HStack
-                            spacing={{ base: 3, sm: 3 }}
-                            minH={touchTargetSize}
-                            align="center"
-                            p={{ base: 2, sm: 1 }}
-                            borderRadius="md"
-                          >
-                            <Icon
-                              as={FaUsers}
-                              color="purple.500"
-                              boxSize={{ base: 5, sm: 5 }}
-                              flexShrink={0}
-                            />
-                            <VStack spacing={0} align="start" flex={1}>
-                              <Text
-                                fontSize={{ base: 'sm', sm: 'sm' }}
-                                color="gray.500"
-                                fontWeight="medium"
-                              >
-                                Contact Person
-                              </Text>
-                              <Text
-                                fontSize={{ base: 'md', sm: 'md' }}
-                                fontWeight="medium"
-                                color="gray.700"
-                              >
-                                {establishmentData.contact_person}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                        )}
-                        {establishmentData?.contact_email &&
-                          establishmentData.contact_email !== establishmentData.email && (
-                            <HStack>
-                              <Icon as={FaEnvelope} color="blue.500" />
-                              <Text fontWeight="medium">Alt Email:</Text>
-                              <Link
-                                color="blue.500"
-                                href={`mailto:${establishmentData.contact_email}`}
-                              >
-                                {establishmentData.contact_email}
-                              </Link>
-                            </HStack>
-                          )}
-                        {establishmentData?.contact_phone &&
-                          establishmentData.contact_phone !== establishmentData.phone && (
-                            <HStack>
-                              <Icon as={FaPhone} color="green.500" />
-                              <Text fontWeight="medium">Alt Phone:</Text>
-                              <Link
-                                color="green.500"
-                                href={`tel:${establishmentData.contact_phone}`}
-                              >
-                                {establishmentData.contact_phone}
-                              </Link>
-                            </HStack>
-                          )}
-                      </VStack>
-                    </StandardCard>
+                    <Box mb={{ base: 4, sm: 5 }}>
+                      <ProfileSection
+                        title="Contact Information"
+                        icon={FaPhone}
+                      >
+                        <ProfileDataGrid
+                          data={[
+                            {
+                              label: 'Email',
+                              value: establishmentData?.email,
+                              type: 'link',
+                              href: establishmentData?.email ? `mailto:${establishmentData.email}` : undefined,
+                              conditional: !!establishmentData?.email
+                            },
+                            {
+                              label: 'Phone',
+                              value: establishmentData?.phone,
+                              type: 'link',
+                              href: establishmentData?.phone ? `tel:${establishmentData.phone}` : undefined,
+                              conditional: !!establishmentData?.phone
+                            },
+                            {
+                              label: 'Contact Person',
+                              value: establishmentData?.contact_person,
+                              type: 'text',
+                              conditional: !!establishmentData?.contact_person
+                            },
+                            {
+                              label: 'Alternative Email',
+                              value: establishmentData?.contact_email,
+                              type: 'link',
+                              href: establishmentData?.contact_email ? `mailto:${establishmentData.contact_email}` : undefined,
+                              conditional: !!(establishmentData?.contact_email && establishmentData.contact_email !== establishmentData.email)
+                            },
+                            {
+                              label: 'Alternative Phone',
+                              value: establishmentData?.contact_phone,
+                              type: 'link',
+                              href: establishmentData?.contact_phone ? `tel:${establishmentData.contact_phone}` : undefined,
+                              conditional: !!(establishmentData?.contact_phone && establishmentData.contact_phone !== establishmentData.phone)
+                            }
+                          ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                          columns={{ base: 1, md: 1 }}
+                        />
+                      </ProfileSection>
+                    </Box>
                   )}
 
                   {/* Social Media & Web Presence - Only show when no photos */}
@@ -944,64 +774,66 @@ function ProfileEstablishment() {
                     (establishmentData?.company?.website ||
                       establishmentData?.company?.facebook ||
                       establishmentData?.company?.instagram) && (
-                      <StandardCard title="Web Presence" variant="flat" icon={FaGlobe}>
-                        <HStack spacing={4} justify="center" flexWrap="wrap">
-                          {establishmentData?.company?.website && (
-                            <Link
-                              href={establishmentData.company.website}
-                              isExternal
-                              _hover={{ transform: 'scale(1.05)' }}
-                              transition="all 0.2s"
-                            >
-                              <Circle
-                                size="50px"
-                                bg="green.50"
-                                color="green.600"
-                                border="2px solid"
-                                borderColor="green.200"
+                      <Box mb={{ base: 4, sm: 5 }}>
+                        <ProfileSection title="Web Presence" icon={FaGlobe}>
+                          <HStack spacing={4} justify="center" flexWrap="wrap">
+                            {establishmentData?.company?.website && (
+                              <Link
+                                href={establishmentData.company.website}
+                                isExternal
+                                _hover={{ transform: 'scale(1.05)' }}
+                                transition="all 0.2s"
                               >
-                                <Icon as={FaGlobe} boxSize={5} />
-                              </Circle>
-                            </Link>
-                          )}
-                          {establishmentData?.company?.facebook && (
-                            <Link
-                              href={establishmentData.company.facebook}
-                              isExternal
-                              _hover={{ transform: 'scale(1.05)' }}
-                              transition="all 0.2s"
-                            >
-                              <Circle
-                                size="50px"
-                                bg="blue.50"
-                                color="blue.600"
-                                border="2px solid"
-                                borderColor="blue.200"
+                                <Circle
+                                  size="50px"
+                                  bg="green.50"
+                                  color="green.600"
+                                  border="2px solid"
+                                  borderColor="green.200"
+                                >
+                                  <Icon as={FaGlobe} boxSize={5} />
+                                </Circle>
+                              </Link>
+                            )}
+                            {establishmentData?.company?.facebook && (
+                              <Link
+                                href={establishmentData.company.facebook}
+                                isExternal
+                                _hover={{ transform: 'scale(1.05)' }}
+                                transition="all 0.2s"
                               >
-                                <Icon as={FaFacebook} boxSize={5} />
-                              </Circle>
-                            </Link>
-                          )}
-                          {establishmentData?.company?.instagram && (
-                            <Link
-                              href={establishmentData.company.instagram}
-                              isExternal
-                              _hover={{ transform: 'scale(1.05)' }}
-                              transition="all 0.2s"
-                            >
-                              <Circle
-                                size="50px"
-                                bg="pink.50"
-                                color="pink.600"
-                                border="2px solid"
-                                borderColor="pink.200"
+                                <Circle
+                                  size="50px"
+                                  bg="blue.50"
+                                  color="blue.600"
+                                  border="2px solid"
+                                  borderColor="blue.200"
+                                >
+                                  <Icon as={FaFacebook} boxSize={5} />
+                                </Circle>
+                              </Link>
+                            )}
+                            {establishmentData?.company?.instagram && (
+                              <Link
+                                href={establishmentData.company.instagram}
+                                isExternal
+                                _hover={{ transform: 'scale(1.05)' }}
+                                transition="all 0.2s"
                               >
-                                <Icon as={FaInstagram} boxSize={5} />
-                              </Circle>
-                            </Link>
-                          )}
-                        </HStack>
-                      </StandardCard>
+                                <Circle
+                                  size="50px"
+                                  bg="pink.50"
+                                  color="pink.600"
+                                  border="2px solid"
+                                  borderColor="pink.200"
+                                >
+                                  <Icon as={FaInstagram} boxSize={5} />
+                                </Circle>
+                              </Link>
+                            )}
+                          </HStack>
+                        </ProfileSection>
+                      </Box>
                     )}
                 </Box>
               </SimpleGrid>
@@ -1011,159 +843,70 @@ function ProfileEstablishment() {
                 {/* Location and Operations Grid */}
                 <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 4, md: 6 }}>
                   {/* Location Column */}
-                  <StandardCard title="Location Details" variant="flat" icon={MdLocationOn}>
-                    <VStack spacing={3} align="stretch">
-                      {establishmentData?.address && (
-                        <HStack>
-                          <Icon as={FaMapMarkerAlt} color="green.600" />
-                          <Text fontWeight="medium">Address:</Text>
-                          <Text>{establishmentData.address}</Text>
-                        </HStack>
-                      )}
-                      {establishmentData?.city && (
-                        <HStack>
-                          <Icon as={MdBusiness} color="green.600" />
-                          <Text fontWeight="medium">City:</Text>
-                          <Text>{establishmentData.city}</Text>
-                        </HStack>
-                      )}
-                      {establishmentData?.state && (
-                        <HStack>
-                          <Icon as={MdBusiness} color="green.600" />
-                          <Text fontWeight="medium">State:</Text>
-                          <Text>{establishmentData.state}</Text>
-                        </HStack>
-                      )}
-                      {establishmentData?.country && (
-                        <HStack>
-                          <Icon as={FaGlobe} color="green.600" />
-                          <Text fontWeight="medium">Country:</Text>
-                          <Text>{establishmentData.country}</Text>
-                        </HStack>
-                      )}
-                      {establishmentData?.zip_code && (
-                        <HStack>
-                          <Icon as={FaMapMarkerAlt} color="green.600" />
-                          <Text fontWeight="medium">ZIP Code:</Text>
-                          <Text>{establishmentData.zip_code}</Text>
-                        </HStack>
-                      )}
-                      {establishmentData?.zone && (
-                        <HStack>
-                          <Icon as={MdLocationOn} color="green.600" />
-                          <Text fontWeight="medium">Zone:</Text>
-                          <Text>{establishmentData.zone}</Text>
-                        </HStack>
-                      )}
-                      {typeof establishmentData?.latitude === 'number' &&
-                        typeof establishmentData?.longitude === 'number' &&
-                        !isNaN(establishmentData.latitude) &&
-                        !isNaN(establishmentData.longitude) && (
-                          <HStack>
-                            <Icon as={FaMapMarkerAlt} color="green.600" />
-                            <Text fontWeight="medium">Coordinates:</Text>
-                            <Text>{`${establishmentData.latitude.toFixed(
-                              6
-                            )}, ${establishmentData.longitude.toFixed(6)}`}</Text>
-                          </HStack>
-                        )}
-                    </VStack>
-                  </StandardCard>
+                  <ProfileSection title="Location Details" icon={MdLocationOn}>
+                    <ProfileDataGrid
+                      data={[
+                        { label: 'Address', value: establishmentData?.address, type: 'text', conditional: !!establishmentData?.address },
+                        { label: 'City', value: establishmentData?.city, type: 'text', conditional: !!establishmentData?.city },
+                        { label: 'State', value: establishmentData?.state, type: 'text', conditional: !!establishmentData?.state },
+                        { label: 'Country', value: establishmentData?.country, type: 'text', conditional: !!establishmentData?.country },
+                        { label: 'ZIP Code', value: establishmentData?.zip_code, type: 'text', conditional: !!establishmentData?.zip_code },
+                        { label: 'Zone', value: establishmentData?.zone, type: 'text', conditional: !!establishmentData?.zone },
+                        {
+                          label: 'Coordinates',
+                          value:
+                            typeof establishmentData?.latitude === 'number' &&
+                            typeof establishmentData?.longitude === 'number' &&
+                            !isNaN(establishmentData.latitude) &&
+                            !isNaN(establishmentData.longitude)
+                              ? `${establishmentData.latitude.toFixed(6)}, ${establishmentData.longitude.toFixed(6)}`
+                              : undefined,
+                          type: 'text',
+                          conditional:
+                            typeof establishmentData?.latitude === 'number' &&
+                            typeof establishmentData?.longitude === 'number' &&
+                            !isNaN(establishmentData.latitude) &&
+                            !isNaN(establishmentData.longitude)
+                        }
+                      ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                      columns={{ base: 1, md: 1 }}
+                    />
+                  </ProfileSection>
 
                   {/* Operations and Company Combined Column */}
                   <VStack spacing={{ base: 4, md: 5 }} align="stretch">
                     {/* Operations Information */}
-                    <StandardCard title="Operations" variant="flat" icon={FaTractor}>
-                      <VStack spacing={4} align="stretch">
-                        {establishmentData?.farming_method && (
-                          <HStack spacing={3} p={2} borderRadius="md">
-                            <Icon as={MdEco} color="green.600" boxSize={5} />
-                            <VStack spacing={0} align="start" flex={1}>
-                              <Text fontSize="sm" color="green.600" fontWeight="medium">
-                                Farming Method
-                              </Text>
-                              <Text fontWeight="600" color="green.800">
-                                {establishmentData.farming_method}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                        )}
-                        {establishmentData?.total_acreage && (
-                          <HStack>
-                            <Icon as={FaTractor} color="green.600" />
-                            <Text fontWeight="medium">Total Acreage:</Text>
-                            <Text>{establishmentData.total_acreage} acres</Text>
-                          </HStack>
-                        )}
-                        {establishmentData?.employee_count && (
-                          <HStack>
-                            <Icon as={FaUsers} color="green.600" />
-                            <Text fontWeight="medium">Employees:</Text>
-                            <Text>{establishmentData.employee_count}</Text>
-                          </HStack>
-                        )}
-                        {establishmentData?.year_established && (
-                          <HStack>
-                            <Icon as={FaCalendar} color="green.600" />
-                            <Text fontWeight="medium">Established:</Text>
-                            <Text>{establishmentData.year_established}</Text>
-                          </HStack>
-                        )}
-                      </VStack>
-                    </StandardCard>
+                    <ProfileSection title="Operations" icon={FaTractor}>
+                      <ProfileDataGrid
+                        data={[
+                          { label: 'Farming Method', value: establishmentData?.farming_method, type: 'badge', colorScheme: 'green', conditional: !!establishmentData?.farming_method },
+                          { label: 'Total Acreage', value: establishmentData?.total_acreage ? `${establishmentData.total_acreage} acres` : undefined, type: 'text', conditional: !!establishmentData?.total_acreage },
+                          { label: 'Employees', value: establishmentData?.employee_count, type: 'text', conditional: !!establishmentData?.employee_count },
+                          { label: 'Year Established', value: establishmentData?.year_established, type: 'text', conditional: !!establishmentData?.year_established }
+                        ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                        columns={{ base: 1, md: 2 }}
+                      />
+                    </ProfileSection>
 
-                    {/* Company Information - Enhanced with Missing Fields */}
-                    <StandardCard title="Company Details" variant="flat" icon={FaBuilding}>
-                      <VStack spacing={3} align="stretch">
-                        <HStack>
-                          <Icon as={FaBuilding} color="green.600" />
-                          <Text fontWeight="medium">Company:</Text>
-                          <Text>{establishmentData?.company?.name || 'Not specified'}</Text>
-                        </HStack>
-                        {/* Trade Name (DBA) if different from company name */}
-                        {establishmentData?.company?.tradename &&
-                          establishmentData.company.tradename !==
-                            establishmentData.company.name && (
-                            <HStack>
-                              <Icon as={FaRegIdBadge} color="blue.600" />
-                              <Text fontWeight="medium">Trade Name:</Text>
-                              <Text>{establishmentData.company.tradename}</Text>
-                            </HStack>
-                          )}
-                        {/* Industry - Critical business context */}
-                        {establishmentData?.company?.industry && (
-                          <HStack>
-                            <Icon as={FaLeaf} color="green.600" />
-                            <Text fontWeight="medium">Industry:</Text>
-                            <Text>{establishmentData.company.industry}</Text>
-                          </HStack>
-                        )}
-                        {/* Legal Structure - Important for business transparency */}
-                        {establishmentData?.company?.legal_structure && (
-                          <HStack>
-                            <Icon as={FaCertificate} color="purple.600" />
-                            <Text fontWeight="medium">Legal Structure:</Text>
-                            <Text>{establishmentData.company.legal_structure}</Text>
-                          </HStack>
-                        )}
-                        {/* Primary Commodities - What they produce */}
-                        {establishmentData?.company?.primary_commodities && (
-                          <HStack>
-                            <Icon as={FaSeedling} color="orange.600" />
-                            <Text fontWeight="medium">Primary Commodities:</Text>
-                            <Text>{establishmentData.company.primary_commodities}</Text>
-                          </HStack>
-                        )}
-                        {/* Sustainability Commitment - Valuable for transparency */}
-                        {establishmentData?.company?.sustainability_commitment && (
-                          <HStack>
-                            <Icon as={MdEco} color="green.600" />
-                            <Text fontWeight="medium">Sustainability Commitment:</Text>
-                            <Text>{establishmentData.company.sustainability_commitment}</Text>
-                          </HStack>
-                        )}
-                      </VStack>
-                    </StandardCard>
+                    {/* Company Information */}
+                    <ProfileSection title="Company Details" icon={FaBuilding}>
+                      <ProfileDataGrid
+                        data={[
+                          { label: 'Company', value: establishmentData?.company?.name, type: 'text', conditional: !!establishmentData?.company?.name },
+                          {
+                            label: 'Trade Name',
+                            value: establishmentData?.company?.tradename,
+                            type: 'text',
+                            conditional: !!(establishmentData?.company?.tradename && establishmentData.company.tradename !== establishmentData.company.name)
+                          },
+                          { label: 'Industry', value: establishmentData?.company?.industry, type: 'text', conditional: !!establishmentData?.company?.industry },
+                          { label: 'Legal Structure', value: establishmentData?.company?.legal_structure, type: 'text', conditional: !!establishmentData?.company?.legal_structure },
+                          { label: 'Primary Commodities', value: establishmentData?.company?.primary_commodities, type: 'text', conditional: !!establishmentData?.company?.primary_commodities },
+                          { label: 'Sustainability Commitment', value: establishmentData?.company?.sustainability_commitment, type: 'text', conditional: !!establishmentData?.company?.sustainability_commitment }
+                        ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                        columns={{ base: 1, md: 1 }}
+                      />
+                    </ProfileSection>
                   </VStack>
                 </SimpleGrid>
 
@@ -1173,122 +916,98 @@ function ProfileEstablishment() {
                   getSoilTypes().length > 0 ||
                   getConservationPractices().length > 0 ||
                   getIrrigationMethods().length > 0) && (
-                  <StandardCard title="Agricultural Operations" variant="flat" icon={FaLeaf}>
+                  <ProfileSection title="Agricultural Operations" icon={FaLeaf}>
                     <VStack spacing={4} align="stretch">
-                      {/* Climate Zone - Key Information */}
+                      {/* Climate Zone */}
                       {establishmentData?.climate_zone && (
-                        <HStack
-                          spacing={3}
+                        <Box
                           p={3}
                           bg="green.50"
                           borderRadius="lg"
                           border="1px solid"
                           borderColor="green.200"
                         >
-                          <Icon as={MdEco} color="green.600" boxSize={5} />
-                          <VStack spacing={1} align="start" flex={1}>
+                          <HStack spacing={2} mb={2}>
+                            <Icon as={MdEco} color="green.600" boxSize={5} />
                             <Text fontSize="sm" color="green.600" fontWeight="medium">
                               Climate Zone
                             </Text>
-                            <Text fontWeight="600" color="green.800">
-                              {establishmentData.climate_zone}
-                            </Text>
-                          </VStack>
-                        </HStack>
+                          </HStack>
+                          <Text fontWeight="600" color="green.800" ml={7}>
+                            {establishmentData.climate_zone}
+                          </Text>
+                        </Box>
                       )}
 
-                      {/* Operational Details - Condensed View */}
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                        {/* Water & Irrigation */}
-                        {(getWaterSources().length > 0 || getIrrigationMethods().length > 0) && (
-                          <Box
-                            p={4}
-                            bg="blue.50"
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="blue.200"
-                          >
-                            <HStack spacing={2} mb={3}>
-                              <Icon as={FaTint} color="blue.600" boxSize={4} />
-                              <Text fontSize="sm" fontWeight="600" color="blue.800">
-                                Water & Irrigation
+                      {/* Water & Irrigation Summary */}
+                      {(getWaterSources().length > 0 || getIrrigationMethods().length > 0) && (
+                        <Box
+                          p={3}
+                          bg="blue.50"
+                          borderRadius="lg"
+                          border="1px solid"
+                          borderColor="blue.200"
+                        >
+                          <HStack spacing={2} mb={2}>
+                            <Icon as={FaTint} color="blue.600" boxSize={4} />
+                            <Text fontSize="sm" fontWeight="600" color="blue.800">
+                              Water & Irrigation
+                            </Text>
+                          </HStack>
+                          <VStack spacing={1} align="start" ml={6}>
+                            {getWaterSources().length > 0 && (
+                              <Text fontSize="sm" color="blue.700">
+                                <Text as="span" fontWeight="medium">Sources:</Text> {getWaterSources().join(', ')}
                               </Text>
-                            </HStack>
-                            <VStack spacing={2} align="start">
-                              {getWaterSources().length > 0 && (
-                                <Text fontSize="sm" color="blue.700">
-                                  <Text as="span" fontWeight="medium">
-                                    Sources:
-                                  </Text>{' '}
-                                  {getWaterSources().slice(0, 2).join(', ')}
-                                  {getWaterSources().length > 2 &&
-                                    ` +${getWaterSources().length - 2} more`}
-                                </Text>
-                              )}
-                              {getIrrigationMethods().length > 0 && (
-                                <Text fontSize="sm" color="blue.700">
-                                  <Text as="span" fontWeight="medium">
-                                    Methods:
-                                  </Text>{' '}
-                                  {getIrrigationMethods().slice(0, 2).join(', ')}
-                                  {getIrrigationMethods().length > 2 &&
-                                    ` +${getIrrigationMethods().length - 2} more`}
-                                </Text>
-                              )}
-                            </VStack>
-                          </Box>
-                        )}
+                            )}
+                            {getIrrigationMethods().length > 0 && (
+                              <Text fontSize="sm" color="blue.700">
+                                <Text as="span" fontWeight="medium">Methods:</Text> {getIrrigationMethods().join(', ')}
+                              </Text>
+                            )}
+                          </VStack>
+                        </Box>
+                      )}
 
-                        {/* Soil & Conservation */}
-                        {(getSoilTypes().length > 0 || getConservationPractices().length > 0) && (
-                          <Box
-                            p={4}
-                            bg="green.50"
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="green.200"
-                          >
-                            <HStack spacing={2} mb={3}>
-                              <Icon as={MdEco} color="green.600" boxSize={4} />
-                              <Text fontSize="sm" fontWeight="600" color="green.800">
-                                Soil & Conservation
+                      {/* Soil & Conservation Summary */}
+                      {(getSoilTypes().length > 0 || getConservationPractices().length > 0) && (
+                        <Box
+                          p={3}
+                          bg="green.50"
+                          borderRadius="lg"
+                          border="1px solid"
+                          borderColor="green.200"
+                        >
+                          <HStack spacing={2} mb={2}>
+                            <Icon as={MdEco} color="green.600" boxSize={4} />
+                            <Text fontSize="sm" fontWeight="600" color="green.800">
+                              Soil & Conservation
+                            </Text>
+                          </HStack>
+                          <VStack spacing={1} align="start" ml={6}>
+                            {getSoilTypes().length > 0 && (
+                              <Text fontSize="sm" color="green.700">
+                                <Text as="span" fontWeight="medium">Soil Types:</Text> {getSoilTypes().join(', ')}
                               </Text>
-                            </HStack>
-                            <VStack spacing={2} align="start">
-                              {getSoilTypes().length > 0 && (
-                                <Text fontSize="sm" color="green.700">
-                                  <Text as="span" fontWeight="medium">
-                                    Soil:
-                                  </Text>{' '}
-                                  {getSoilTypes().slice(0, 2).join(', ')}
-                                  {getSoilTypes().length > 2 &&
-                                    ` +${getSoilTypes().length - 2} more`}
-                                </Text>
-                              )}
-                              {getConservationPractices().length > 0 && (
-                                <Text fontSize="sm" color="green.700">
-                                  <Text as="span" fontWeight="medium">
-                                    Practices:
-                                  </Text>{' '}
-                                  {getConservationPractices().slice(0, 2).join(', ')}
-                                  {getConservationPractices().length > 2 &&
-                                    ` +${getConservationPractices().length - 2} more`}
-                                </Text>
-                              )}
-                            </VStack>
-                          </Box>
-                        )}
-                      </SimpleGrid>
+                            )}
+                            {getConservationPractices().length > 0 && (
+                              <Text fontSize="sm" color="green.700">
+                                <Text as="span" fontWeight="medium">Practices:</Text> {getConservationPractices().join(', ')}
+                              </Text>
+                            )}
+                          </VStack>
+                        </Box>
+                      )}
                     </VStack>
-                  </StandardCard>
+                  </ProfileSection>
                 )}
 
-                {/* Crops, Certifications, and Sustainability Section - Compact */}
+                {/* Crops, Certifications, and Sustainability Section */}
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: 4, md: 5 }}>
                   {/* Crops Grown */}
                   {getCropsGrown().length > 0 && (
-                    <StandardCard title="Crops Grown" variant="flat" icon={FaSeedling}>
-                      <Flex gap={3} flexWrap="wrap" justify="center" align="flex-start">
+                    <ProfileSection title="Crops Grown" icon={FaSeedling}>
+                      <Flex gap={3} flexWrap="wrap" justify="flex-start" align="flex-start">
                         {getCropsGrown().map((crop: string, index: number) => (
                           <Tag
                             key={index}
@@ -1304,13 +1023,13 @@ function ProfileEstablishment() {
                           </Tag>
                         ))}
                       </Flex>
-                    </StandardCard>
+                    </ProfileSection>
                   )}
 
                   {/* Certifications */}
                   {getCertifications().length > 0 && (
-                    <StandardCard title="Certifications" variant="flat" icon={FaCertificate}>
-                      <Flex gap={3} flexWrap="wrap" justify="center" align="flex-start">
+                    <ProfileSection title="Certifications" icon={FaCertificate}>
+                      <Flex gap={3} flexWrap="wrap" justify="flex-start" align="flex-start">
                         {getCertifications().map((cert: string, index: number) => (
                           <Tag
                             key={index}
@@ -1326,13 +1045,13 @@ function ProfileEstablishment() {
                           </Tag>
                         ))}
                       </Flex>
-                    </StandardCard>
+                    </ProfileSection>
                   )}
 
                   {/* Sustainability Practices */}
                   {getSustainabilityPractices().length > 0 && (
-                    <StandardCard title="Sustainability Practices" variant="flat" icon={MdEco}>
-                      <Flex gap={3} flexWrap="wrap" justify="center" align="flex-start">
+                    <ProfileSection title="Sustainability Practices" icon={MdEco}>
+                      <Flex gap={3} flexWrap="wrap" justify="flex-start" align="flex-start">
                         {getSustainabilityPractices().map((practice: string, index: number) => (
                           <Tag
                             key={index}
@@ -1348,50 +1067,42 @@ function ProfileEstablishment() {
                           </Tag>
                         ))}
                       </Flex>
-                    </StandardCard>
+                    </ProfileSection>
                   )}
                 </SimpleGrid>
 
-                {/* About and Information Sections - Compact */}
+                {/* About and Information Sections */}
                 <VStack spacing={{ base: 4, md: 4 }} align="stretch">
                   {/* About Section */}
                   {establishmentData?.about && (
-                    <StandardCard
-                      title="About This Establishment"
-                      variant="flat"
-                      icon={FaRegCommentDots}
-                    >
+                    <ProfileSection title="About This Establishment" icon={FaRegCommentDots}>
                       <Text lineHeight="relaxed" textAlign="left" color="gray.700">
                         {establishmentData.about}
                       </Text>
-                    </StandardCard>
+                    </ProfileSection>
                   )}
 
                   {/* Main Activities */}
                   {establishmentData?.main_activities && (
-                    <StandardCard
-                      title="Main Activities & Services"
-                      variant="flat"
-                      icon={FaRegListAlt}
-                    >
+                    <ProfileSection title="Main Activities & Services" icon={FaRegListAlt}>
                       <Text lineHeight="relaxed" textAlign="left" color="gray.700">
                         {establishmentData.main_activities}
                       </Text>
-                    </StandardCard>
+                    </ProfileSection>
                   )}
 
                   {/* Location Highlights */}
                   {establishmentData?.location_highlights && (
-                    <StandardCard title="Location Highlights" variant="flat" icon={FaRegLightbulb}>
+                    <ProfileSection title="Location Highlights" icon={FaRegLightbulb}>
                       <Text lineHeight="relaxed" textAlign="left" color="gray.700">
                         {establishmentData.location_highlights}
                       </Text>
-                    </StandardCard>
+                    </ProfileSection>
                   )}
 
                   {/* Custom Message */}
                   {establishmentData?.custom_message && (
-                    <StandardCard title="Special Message" variant="flat" icon={FaRegCommentDots}>
+                    <ProfileSection title="Special Message" icon={FaRegCommentDots}>
                       <Text
                         lineHeight="relaxed"
                         textAlign="left"
@@ -1400,14 +1111,14 @@ function ProfileEstablishment() {
                       >
                         "{establishmentData.custom_message}"
                       </Text>
-                    </StandardCard>
+                    </ProfileSection>
                   )}
                 </VStack>
               </VStack>
             </Box>
           </CardBody>
         </Card>
-      </Flex>
+      </Box>
     </Flex>
   );
 }

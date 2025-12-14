@@ -69,6 +69,7 @@ import {
   FaCircle
 } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
+import { getVerificationBadgeConfig, VerificationLevel } from '../../utils/verificationTierHelpers';
 
 // Real interfaces matching API data
 interface Member {
@@ -89,6 +90,7 @@ interface Event {
   observation?: string;
   created_by: number;
   image?: string;
+  verification_level?: VerificationLevel;
   carbon_data?: CarbonCalculationResult;
   // Type-specific fields
   [key: string]: any;
@@ -882,6 +884,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       {title}
                     </Text>
                     <HStack spacing={2} wrap="wrap">
+                      {/* Event Category Badge - Subtle */}
                       <Badge
                         colorScheme={eventConfig.color.split('.')[0]}
                         variant="subtle"
@@ -893,29 +896,50 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       >
                         {eventConfig.category}
                       </Badge>
-                      {carbonData?.usda_factors_based && (
-                        <Badge
-                          colorScheme="blue"
-                          variant="solid"
-                          fontSize="xs"
-                          px={2}
-                          py={1}
-                          borderRadius="6px"
-                        >
-                          USDA
-                        </Badge>
+
+                      {/* Verification Badge - COMPACT PRIMARY (Optimized Space) */}
+                      {event.verification_level && (
+                        <Tooltip label={getVerificationBadgeConfig(event.verification_level).tooltip} hasArrow placement="top">
+                          <Badge
+                            colorScheme={getVerificationBadgeConfig(event.verification_level).color.split('.')[0]}
+                            variant="solid"
+                            fontSize="xs"
+                            px={2}
+                            py={1}
+                            fontWeight="600"
+                            borderRadius="6px"
+                            display="flex"
+                            alignItems="center"
+                            gap={1}
+                            boxShadow="0 1px 2px rgba(0,0,0,0.08)"
+                            cursor="help"
+                          >
+                            <Icon as={getVerificationBadgeConfig(event.verification_level).icon} boxSize={3} />
+                            <Text display={{ base: 'none', md: 'inline' }}>
+                              {getVerificationBadgeConfig(event.verification_level).label}
+                            </Text>
+                          </Badge>
+                        </Tooltip>
                       )}
-                      {event.image && (
-                        <Badge
-                          colorScheme="green"
-                          variant="solid"
-                          fontSize="xs"
-                          px={2}
-                          py={1}
-                          borderRadius="6px"
-                        >
-                          📷 VERIFIED
-                        </Badge>
+
+                      {/* USDA Badge - ULTRA-COMPACT SECONDARY (Optimized Space) */}
+                      {carbonData?.usda_factors_based && (
+                        <Tooltip label="Carbon calculation uses USDA-verified emission factors" hasArrow placement="top">
+                          <Badge
+                            colorScheme="blue"
+                            variant="subtle"
+                            fontSize="2xs"
+                            px={1.5}
+                            py={0.5}
+                            fontWeight="600"
+                            borderRadius="4px"
+                            textTransform="uppercase"
+                            letterSpacing="0.05em"
+                            cursor="help"
+                          >
+                            USDA
+                          </Badge>
+                        </Tooltip>
                       )}
                     </HStack>
                   </VStack>

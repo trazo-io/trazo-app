@@ -343,6 +343,7 @@
   "event.production.transplanting": "Transplanting",
   "event.production.cultivation/weed_control": "Cultivation/Weed Control",
   "event.production.thinning": "Thinning",
+  "event.production.equipment_maintenance": "Equipment Maintenance",
   "app.completeTheFormBelowToFinishTheCurrentProductionOnYourParcel": "Complete the form below to finish the current production on your parcel.",
   "app.productionAmount": "Production amount",
   "app.lotNumber": "Lot number",

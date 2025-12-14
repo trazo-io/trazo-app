@@ -288,16 +288,24 @@ const AppSignIn: React.FC = () => {
           >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Turn Sustainability Into Profit
+                Farming Worth Proving
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                USDA-verified carbon tracking with blockchain verification enables premium pricing
-                and carbon credit revenue for agricultural operations
+                Your best farming practices deserve customers who understand them.
+                <br />
+                Trazo connects what you do with people who trust you for it.
               </Text>
             </VStack>
 
             <VStack spacing={3} pt={4}>
-              {['Carbon Credit Revenue', 'Premium Market Access', 'USDA-Verified Tracking'].map(
+              {[
+                '8 Farm Management Categories Documented',
+                'Blockchain Verification for Customer Trust',
+                'Transparent Stories That Sell',
+                'Real-Time Evidence & Monitoring',
+                'Direct Customer Connection',
+                'Premium Positioning Built In'
+              ].map(
                 (feature, index) => (
                   <HStack key={index} spacing={3}>
                     <Box w={2} h={2} bg="white" borderRadius="50%" />
@@ -337,14 +345,14 @@ const AppSignIn: React.FC = () => {
                   color={useColorModeValue('gray.900', 'white')}
                   letterSpacing="tight"
                 >
-                  Access Carbon Intelligence
+                  Your Transparency Awaits
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
                   textAlign="center"
                 >
-                  Track carbon footprints and unlock premium market opportunities
+                  Log in to share what you've built.
                 </Text>
               </VStack>
             </VStack>
@@ -555,7 +563,7 @@ const AppSignIn: React.FC = () => {
                     }}
                     transition="all 0.2s"
                   >
-                    Access Carbon Dashboard
+                    Access Your Transparency Dashboard
                   </Button>
                 </VStack>
               </form>
@@ -609,7 +617,7 @@ const AppSignIn: React.FC = () => {
             {/* Sign up link */}
             <Box textAlign="center" mt={8}>
               <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
-                Don't have a business account?{' '}
+                Don't have an account?{' '}
                 <Link to="/auth/signup">
                   <Text
                     as="span"
@@ -621,7 +629,7 @@ const AppSignIn: React.FC = () => {
                     }}
                     transition="all 0.2s"
                   >
-                    Create account
+                    Build Your Farm's Story
                   </Text>
                 </Link>
               </Text>
@@ -691,7 +699,7 @@ const AppSignIn: React.FC = () => {
           </HStack>
 
           <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
-            © 2025 Trazo. Professional Carbon Intelligence Platform.
+            © 2025 Trazo. Professional Transparency Platform.
           </Text>
         </Flex>
       </Box>

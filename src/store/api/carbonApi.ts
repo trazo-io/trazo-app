@@ -460,6 +460,9 @@ export interface CompleteSummary {
     observation: string;
     date: string;
     certified: boolean;
+    // MVP Photo Verification: Tiered verification levels
+    verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+    photo_verified_count?: number;
     index: number;
     volume?: number;
     concentration?: number;

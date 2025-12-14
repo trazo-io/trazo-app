@@ -12,11 +12,21 @@ import {
   SectionBox
 } from 'components/Design/StandardComponents';
 // Sprint 3 Epic 3.1: Cleaned unused icon imports
-import { FaChevronLeft, FaChevronRight, FaSeedling, FaThermometerHalf } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaSeedling, FaThermometerHalf, FaBolt } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string } from 'zod';
+import { object, string, array } from 'zod';
+import CustomFieldsForm from './CustomFieldsForm';
 import { useIntl } from 'react-intl';
+
+// Phase 3: Fuel types with EPA-verified emission factors (matching ProductionTab pattern)
+const FUEL_TYPES = [
+  { value: 'diesel', label: '⛽ Diesel', factor: '2.68 kg CO₂e/L' },
+  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.31 kg CO₂e/L' },
+  { value: 'natural_gas', label: '💨 Natural Gas', factor: '2.03 kg CO₂e/m³' },
+  { value: 'lpg', label: '🔥 LPG', factor: '1.70 kg CO₂e/L' },
+  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' }
+];
 
 const formSchemaSoilManagement = object({
   type: string().min(1, 'Soil management type is required'),
@@ -34,6 +44,7 @@ const formSchemaSoilManagement = object({
   depth_unit: string().optional(),
   // Standardized fuel consumption fields (matching ProductionEvent pattern)
   name: string().optional(),
+  fuel_type: string().optional(), // Phase 3: Fuel type for EPA emission factor selection
   fuel_consumed: string().optional(),
   fuel_unit: string().optional(),
   equipment_hours: string().optional(),
@@ -50,7 +61,18 @@ const formSchemaSoilManagement = object({
   amendment_amount: string().optional(),
   amendment_unit: string().optional(),
   amendment_type: string().optional(),
-  observation: string().optional()
+  observation: string().optional(),
+  custom_fields: array(object({
+    id: string().optional(),
+    label: string(),
+    value: string(),
+    field_type: string(),
+    visibility: string(),
+    link_url: string().optional(),
+    verification: string().optional(),
+    created_at: string().optional(),
+    photo_id: string().optional()
+  })).optional()
 });
 
 // Sprint 2 Epic 2.1.3: Removed soil_moisture, weather_conditions, temperature_range from defaults
@@ -142,6 +164,7 @@ const SoilManagementTab = ({
       depth_unit: initialValues.depth_unit || 'cm',
       // Standardized fuel consumption fields (matching ProductionEvent pattern)
       name: initialValues.name || '',
+      fuel_type: initialValues.fuel_type || '', // Phase 3: Fuel type for EPA emission factor selection
       fuel_consumed: initialValues.fuel_consumed || '',
       fuel_unit: initialValues.fuel_unit || 'L',
       equipment_hours: initialValues.equipment_hours || '',
@@ -158,9 +181,13 @@ const SoilManagementTab = ({
       amendment_amount: initialValues.amendment_amount || '',
       amendment_unit: initialValues.amendment_unit || 'kg',
       amendment_type: initialValues.amendment_type || '',
-      observation: initialValues.observation || ''
+      observation: initialValues.observation || '',
+      custom_fields: initialValues.custom_fields || []
     }
   });
+
+  // Custom fields state for Phase 2.3
+  const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
 
   const {
     reset,
@@ -198,6 +225,11 @@ const SoilManagementTab = ({
 
   // Note: observation, depth, depth_unit, and equipment_used are watched to ensure form data updates
   // but are NOT included in the carbon calculation useEffect dependencies
+
+  // Sync custom fields with form
+  useEffect(() => {
+    methods.setValue('custom_fields', customFields);
+  }, [customFields, methods]);
 
   // Carbon calculation trigger - ONLY for calculation-relevant fields
   useEffect(() => {
@@ -504,21 +536,37 @@ const SoilManagementTab = ({
             />
 
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              {/* Phase 3: Fuel Type Selector */}
               <StandardField
-                label="Fuel Consumed"
-                helpText="Total fuel used for soil management equipment"
+                label="Fuel Type"
+                helpText="Select fuel type for accurate EPA emission factor calculation"
+              >
+                <StandardSelect placeholder="Select fuel type..." {...register('fuel_type')}>
+                  {FUEL_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label} ({type.factor})
+                    </option>
+                  ))}
+                </StandardSelect>
+              </StandardField>
+
+              <StandardField
+                label={watch('fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'}
+                helpText={watch('fuel_type') === 'electric' ? 'Energy consumption for carbon emission calculation' : 'Total fuel used for soil management equipment'}
               >
                 <HStack spacing={2}>
                   <StandardInput
                     flex={2}
                     type="number"
                     step="0.1"
-                    placeholder="15.5"
+                    placeholder={watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : '15.5'}
                     {...register('fuel_consumed')}
                   />
                   <StandardSelect flex={1} {...register('fuel_unit')}>
                     <option value="L">Liters</option>
                     <option value="gal">Gallons</option>
+                    <option value="kg">Kilograms</option>
+                    <option value="kWh">Kilowatt-hours</option>
                   </StandardSelect>
                 </HStack>
               </StandardField>
@@ -552,6 +600,16 @@ const SoilManagementTab = ({
                 />
               </StandardField>
             </SimpleGrid>
+
+            {/* Phase 3: Electric Equipment Info Box */}
+            {watch('fuel_type') === 'electric' && (
+              <Box p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200" mt={4}>
+                <Text fontSize="sm" color="blue.700">
+                  <Icon as={FaBolt} mr={2} color="blue.600" />
+                  <Text as="span" fontWeight="semibold">Electric Equipment:</Text> Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions.
+                </Text>
+              </Box>
+            )}
 
             <Box
               bg="blue.50"
@@ -838,6 +896,14 @@ const SoilManagementTab = ({
               />
             </StandardField>
           </SectionBox>
+
+          {/* Phase 2.3: Custom Fields Section */}
+          <CustomFieldsForm
+            customFields={customFields}
+            onCustomFieldsChange={setCustomFields}
+            eventTypeId={5}
+            disabled={false}
+          />
 
           {!hideActions && (
             <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">

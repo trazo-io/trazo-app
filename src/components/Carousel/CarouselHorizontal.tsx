@@ -274,7 +274,18 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                       }
                       buttonText={intl.formatMessage({ id: 'app.viewParcel' }).toUpperCase()}
                       avatars={
-                        parcel.members?.map((member: any) => member.image).filter(Boolean) || []
+                        parcel.members
+                          ?.map((member: any) => {
+                            if (!member.image) return null;
+                            // Prepend backend URL if image is a relative path
+                            const backendUrl =
+                              import.meta.env.VITE_APP_BACKEND_URL?.replace('/api', '') ||
+                              'http://localhost:8000';
+                            return member.image.startsWith('http')
+                              ? member.image
+                              : `${backendUrl}${member.image}`;
+                          })
+                          .filter(Boolean) || []
                       }
                       presignedUrl={parcel.image ? presignedUrls[parcel.image] : undefined}
                     />

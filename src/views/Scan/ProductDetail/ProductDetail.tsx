@@ -68,8 +68,7 @@ import { BsStarFill, BsStarHalf, BsStar, BsShieldCheck } from 'react-icons/bs';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
-// API imports
-import { useGetCompleteSummaryQuery } from '../../../store/api/carbonApi';
+// API imports - Using single transparency API (consolidated from dual requests)
 import { TransparencyCelebration } from '../../../components/Notifications/TransparencyCelebration';
 import { useTransparencyCelebration } from '../../../hooks/useTransparencyCelebration';
 import { useGetTransparencyDetailsQuery } from '../../../store/api/transparencyQrApi';
@@ -608,97 +607,27 @@ function ProductDetail() {
   // const textColor = useColorModeValue('gray.800', 'white'); // Unused for now
   // const headerFontSize = { base: 'lg', sm: 'xl', md: '2xl', lg: '3xl' }; // Unused for now
 
-  // API queries
+  // API query - CONSOLIDATED: Using single transparency API call
+  // ✅ 2025 OPTIMIZATION: Removed duplicate useGetCompleteSummaryQuery
+  // Both timeline and transparency data now come from single endpoint
   const {
     data: completeData,
     error: completeError,
     isLoading: isCompleteLoading
-  } = useGetCompleteSummaryQuery(productionId || '', {
-    skip: !productionId
-  });
-
-  // DEBUG: Log complete data when it arrives from API
-  React.useEffect(() => {
-    if (productionId === '226') {
-      console.log('🔧 DEBUG PRODUCTION 226 - Complete API Status:', {
-        hasCompleteData: !!completeData,
-        completeError: completeError,
-        isCompleteLoading: isCompleteLoading,
-        completeDataKeys: completeData ? Object.keys(completeData) : 'NO_DATA'
-      });
-    }
-    if (completeData && productionId === '183') {
-      console.log('🔧 COMPLETE DATA FROM API - PRODUCTION 183:', {
-        hasTimeline: !!completeData.timeline,
-        timelineLength: completeData.timeline?.length,
-        timelineData: completeData.timeline,
-        productionEvents: completeData.timeline?.filter((e) => e.type?.includes('production')),
-        fullCompleteData: completeData
-      });
-
-      // Check if production events have transparency fields
-      const productionEvents =
-        completeData.timeline?.filter((e) => e.type?.includes('production')) || [];
-      if (productionEvents.length > 0) {
-        const firstEvent = productionEvents[0];
-        console.log('🔧 FIRST PRODUCTION EVENT FROM COMPLETE API:', {
-          eventId: firstEvent.id,
-          eventType: firstEvent.type,
-          area_covered: firstEvent.area_covered,
-          yield_quantity: firstEvent.yield_quantity,
-          fuel_consumed: firstEvent.fuel_consumed,
-          equipment_hours: firstEvent.equipment_hours,
-          hasAreaCovered: firstEvent.hasOwnProperty('area_covered'),
-          hasYieldQuantity: firstEvent.hasOwnProperty('yield_quantity'),
-          hasFuelConsumed: firstEvent.hasOwnProperty('fuel_consumed'),
-          hasEquipmentHours: firstEvent.hasOwnProperty('equipment_hours'),
-          allKeys: Object.keys(firstEvent),
-          fullEvent: firstEvent
-        });
-      }
-    }
-  }, [completeData, productionId]);
-
-  // CRITICAL: Use backend TransparencyCalculator for proper transparency scoring
-  const {
-    data: transparencyApiData,
-    error: transparencyError,
-    isLoading: isTransparencyLoading
   } = useGetTransparencyDetailsQuery(productionId || '', {
-    skip: !productionId
+    skip: !productionId,
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false
   });
-
-  // DEBUG: Log transparency data for production 226
-  React.useEffect(() => {
-    if (productionId === '226') {
-      console.log('🔧 DEBUG PRODUCTION 226 - Transparency API Status:', {
-        hasTransparencyData: !!transparencyApiData,
-        transparencyError: transparencyError,
-        isTransparencyLoading: isTransparencyLoading,
-        hasTimelineEvents: !!transparencyApiData?.timeline_events,
-        timelineEventsLength: transparencyApiData?.timeline_events?.length,
-        timelineEvents: transparencyApiData?.timeline_events,
-        fullTransparencyData: transparencyApiData
-      });
-    }
-  }, [transparencyApiData, transparencyError, isTransparencyLoading, productionId]);
 
   // Helper function to get proper transparency score from backend TransparencyCalculator
   const getTransparencyScore = (): number => {
-    // ✅ 2025 BEST PRACTICE: Single source of truth - ONLY use transparency API
-    // The transparency API provides the authoritative score with detailed breakdown
+    // ✅ 2025 BEST PRACTICE: Single source of truth - transparency API
+    // Consolidated from dual API approach to single transparency endpoint
 
-    if (transparencyApiData?.quick_view?.transparency_score?.percentage !== undefined) {
-      console.log(
-        '✅ Using transparency API score (SINGLE SOURCE OF TRUTH):',
-        transparencyApiData.quick_view.transparency_score.percentage
-      );
-      return transparencyApiData.quick_view.transparency_score.percentage;
+    if (completeData?.quick_view?.transparency_score?.percentage !== undefined) {
+      return completeData.quick_view.transparency_score.percentage;
     }
-
-    // ❌ REMOVED: No fallback to complete API - prevents inconsistent scores
-    // The complete API uses different calculation logic (57 vs 12.5)
-    // We only use the dedicated transparency API to ensure consistency
 
     console.warn('⚠️ Transparency API not ready - showing loading state');
     return 0; // Triggers loading state in UI instead of inconsistent score
@@ -738,29 +667,18 @@ function ProductDetail() {
   };
 
   // Helper function to get accurate carbon footprint
-  // Prioritizes transparency API data over complete API data
   const getAccurateCarbonFootprint = (): number => {
-    // CRITICAL FIX: For production 229, transparency API shows 0 total emissions
-    // Force carbon values to 0 to match transparency API response
-    if (productionId === '229') {
-      console.log(
-        '🔍 CONSUMER CARBON FIX - Production 229: Forcing carbon to 0 to match transparency API'
-      );
-      return 0;
+    // Use transparency API carbon data (consolidated endpoint)
+    if (completeData?.carbon_impact?.net_impact !== undefined) {
+      return completeData.carbon_impact.net_impact;
     }
 
-    // Priority 1: Use transparency API carbon data if available
-    if (transparencyApiData?.carbon_impact?.net_impact !== undefined) {
-      return transparencyApiData.carbon_impact.net_impact;
+    // Fallback to total emissions
+    if (completeData?.carbon_impact?.total_emissions !== undefined) {
+      return completeData.carbon_impact.total_emissions;
     }
 
-    // Priority 2: Use transparency API total emissions if available
-    if (transparencyApiData?.carbon_impact?.total_emissions !== undefined) {
-      return transparencyApiData.carbon_impact.total_emissions;
-    }
-
-    // Priority 3: Fallback to complete API data
-    return completeData?.netFootprint || 0;
+    return 0;
   };
 
   // Educational modal
@@ -775,15 +693,15 @@ function ProductDetail() {
   const celebrationTransparencyData = completeData
     ? {
         transparencyScore: getTransparencyScore(),
-        farmName: completeData?.farmer?.name || 'Granja Sostenible',
-        productName: completeData?.product?.name || 'Producto Transparente',
+        farmName: completeData?.farmer?.name,
+        productName: completeData?.product?.name,
         eventsDocumented: completeData?.timeline?.length || 0,
-        photoCount: Math.floor((completeData?.timeline?.length || 0) * 0.6),
+        photoCount: undefined, // Only show if actual photo data available from API
         isUSDAVerified: completeData?.isUsdaVerified || false,
         isBlockchainVerified: getBlockchainScore().isVerified,
         isTrazoVerified: getTransparencyScore() >= 80,
-        scansCount: 0, // TODO: Get from API
-        farmHistory: 5 // TODO: Get from API
+        scansCount: completeData?.scansCount, // Load from API
+        farmHistory: completeData?.farmHistory // Load from API
       }
     : null;
 
@@ -833,8 +751,11 @@ function ProductDetail() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isUserScrolling]);
 
-  // Calculate reputation for stars
-  const safeReputation = Math.max(0, Math.min(5, (completeData as any)?.reputation || 4.2));
+  // ⚠️ TRANSPARENCY FIX: Only show real reputation data, never default to 4.2
+  // If reputation is missing, pass undefined so component can show "No ratings yet"
+  const safeReputation = (completeData as any)?.reputation !== undefined
+    ? Math.max(0, Math.min(5, (completeData as any)?.reputation))
+    : undefined;
 
   // QR Verification loading state
   if (isVerifyingQR) {
@@ -864,22 +785,7 @@ function ProductDetail() {
         overflow="hidden"
         w="100%"
       >
-        {/* Show instant trust display while main data loads */}
-        {showInstantTrust && productionId ? (
-          <Box py={8}>
-            <InstantTrustDisplay
-              productionId={productionId}
-              isVisible={showInstantTrust}
-              onTrustDisplayed={() => {
-                console.log('✅ Instant trust displayed - building consumer confidence');
-              }}
-            />
-          </Box>
-        ) : (
-          /* Hero shimmer for initial loading */
-          <HeroShimmer />
-        )}
-
+        <HeroShimmer />
         {/* Main content with shimmer layout */}
         <Container maxW="container.xl" py={8}>
           <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={6}>
@@ -941,7 +847,6 @@ function ProductDetail() {
       justifySelf="center"
       overflow="hidden"
       w="100%"
-      pb={{ base: '100px', xl: 0 }}
     >
       {/* Transparency Hero Section - Primary Navigation Target */}
       <Box id="transparency-section">
@@ -961,7 +866,8 @@ function ProductDetail() {
             isUSDAVerified: completeData?.isUsdaVerified || false,
             isBlockchainVerified: getBlockchainScore().isVerified,
             reviewsCount: 0,
-            averageRating: safeReputation || 4.2,
+            // ⚠️ TRANSPARENCY FIX: Pass undefined instead of fake 4.2 rating
+            averageRating: safeReputation,
             scansCount: 0,
             transparencyScore: getDisplayTransparencyScore()
           }}
@@ -1056,10 +962,8 @@ function ProductDetail() {
 
                     {(() => {
                       const timelineCount = completeData?.timeline?.length || 0;
-                      const transparencyPercentage = Math.min(
-                        100,
-                        Math.round((timelineCount / 15) * 100)
-                      );
+                      // ✅ FIX: Use API transparency score (single source of truth), not local calculation
+                      const transparencyPercentage = getDisplayTransparencyScore();
 
                       if (transparencyPercentage >= 90) {
                         return (
@@ -1153,9 +1057,11 @@ function ProductDetail() {
                       </Text>
                     </VStack>
                     <VStack spacing={1}>
-                      <Text fontSize="2xl" fontWeight="bold" color="purple.600">
-                        {completeData?.isUsdaVerified ? 'Yes' : 'In Progress'}
-                      </Text>
+                      {completeData?.isUsdaVerified ? (
+                        <Icon as={BsShieldCheck} boxSize={7} color="purple.600" />
+                      ) : (
+                        <Icon as={FaShieldAlt} boxSize={7} color="green.400" opacity={0.5} />
+                      )}
                       <Text fontSize="xs" color="gray.600" textAlign="center">
                         USDA Verified
                       </Text>
@@ -1256,9 +1162,8 @@ function ProductDetail() {
                       <Box>
                         <Text fontWeight="semibold" color="gray.800">
                           {(() => {
-                            // Count actual photos from events with albums (use complete timeline first)
-                            const events =
-                              completeData?.timeline || transparencyApiData?.timeline_events || [];
+                            // Count actual photos from events with albums
+                            const events = completeData?.timeline || [];
                             const eventsWithPhotos = events.filter(
                               (event: any) => event.album || event.hasAlbum
                             );
@@ -1320,34 +1225,41 @@ function ProductDetail() {
                 <HarvestInfoCard harvestDetails={completeData.harvestDetails} />
               )}
 
+              {/* Production Images Gallery - Visual proof of farming practices */}
+              {completeData?.images && completeData.images.length > 0 && (
+                <Box
+                  bg="white"
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="gray.200"
+                  p={6}
+                  mb={6}
+                >
+                  <StandardImageGallery
+                    images={completeData.images}
+                    title="Production Photos"
+                    variant="consumer"
+                    enablePreview={true}
+                    showImageCount={true}
+                    maxDisplayImages={3}
+                    aspectRatio="16/9"
+                  />
+                </Box>
+              )}
+
               {/* Production Journey - Carbon Impact Section */}
               <Box id="carbon-section">
                 <VStack spacing={4} align="stretch">
                   {(() => {
                     // PRIORITY 1: Use complete API timeline (includes transparency fields) if it has events
-                    // FALLBACK: Use transparency API timeline_events for album data if complete API has no events
+                    // Get timeline events from consolidated transparency API response
                     const events =
                       completeData?.timeline && completeData.timeline.length > 0
                         ? completeData.timeline
-                        : transparencyApiData?.timeline_events &&
-                          transparencyApiData.timeline_events.length > 0
-                        ? transparencyApiData.timeline_events
                         : completeData?.events && completeData.events.length > 0
                         ? completeData.events
                         : [];
 
-                    // DEBUG: Log events for production 226
-                    if (productionId === '226') {
-                      console.log('🔧 DEBUG PRODUCTION 226 - Timeline Events Resolution:', {
-                        completeDataTimeline: completeData?.timeline,
-                        transparencyApiTimelineEvents: transparencyApiData?.timeline_events,
-                        completeDataEvents: completeData?.events,
-                        finalEvents: events,
-                        eventsLength: events?.length,
-                        isArray: Array.isArray(events),
-                        hasEvents: Array.isArray(events) && events.length > 0
-                      });
-                    }
 
                     if (Array.isArray(events) && events.length > 0) {
                       // Calculate carbon data per event from the total production data
@@ -1378,7 +1290,7 @@ function ProductDetail() {
                           typeStr.includes('production') ||
                           typeStr.includes('planting') ||
                           typeStr.includes('harvest') ||
-                          ['pl', 'ha', 'ir', 'pr', 'tr'].includes(typeStr)
+                          ['pl', 'ha', 'ir', 'pr', 'tr', 'cu', 'th', 'em'].includes(typeStr)  // ✅ FIXED: Added 'cu', 'th', 'em' (Equipment Maintenance)
                         )
                           return 1;
                         if (
@@ -1507,12 +1419,11 @@ function ProductDetail() {
                           albums: event.albums || (event.album ? [event.album] : undefined),
                           // Add carbon data that UltraMobileProductionJourney expects
                           carbon_data: {
-                            co2e: productionId === '229' ? 0 : averageCO2ePerEvent, // FORCE to 0 for production 229
+                            co2e: averageCO2ePerEvent,
                             usda_verified:
                               completeData?.isUsdaVerified || (event as any).usda_verified || false,
                             efficiency_score: completeData?.carbonScore || 0,
-                            total_emissions:
-                              productionId === '229' ? 0 : completeData?.totalEmissions || 0, // FORCE to 0
+                            total_emissions: completeData?.totalEmissions || 0,
                             total_offsets: completeData?.totalOffsets || 0,
                             net_footprint: getAccurateCarbonFootprint(),
                             verification_confidence: ((event as any).verification_confidence

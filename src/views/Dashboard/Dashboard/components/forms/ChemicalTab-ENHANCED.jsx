@@ -38,11 +38,13 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaUserShield,
-  FaClock
+  FaClock,
+  FaBolt
 } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import React, { useEffect, useRef, useState } from 'react';
-import { object, string } from 'zod';
+import { object, string, array } from 'zod';
+import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 import {
@@ -50,6 +52,15 @@ import {
   ConcentrationFeedback,
   getFormatExamples
 } from 'components/Forms/ConcentrationValidation';
+
+// Phase 3: Fuel types with EPA-verified emission factors (for application equipment)
+const FUEL_TYPES = [
+  { value: 'diesel', label: '⛽ Diesel', factor: '2.68 kg CO₂e/L' },
+  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.31 kg CO₂e/L' },
+  { value: 'natural_gas', label: '💨 Natural Gas', factor: '2.03 kg CO₂e/m³' },
+  { value: 'lpg', label: '🔥 LPG', factor: '1.70 kg CO₂e/L' },
+  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' }
+];
 
 // ENHANCED SCHEMA - Following Equipment/Soil/Pest enhanced patterns with dynamic validation
 // Now includes EPA Worker Protection Standard (WPS) compliance fields per 40 CFR 170.309
@@ -148,7 +159,28 @@ const formSchemaMainInfo = object({
       if (!val || val === '') return true;
       const num = parseFloat(val);
       return !isNaN(num) && num >= 0;
-    }, 'Buffer zone must be a positive number')
+    }, 'Buffer zone must be a positive number'),
+  // Phase 3: Application fuel tracking for equipment fuel emissions
+  application_fuel_type: string().optional(),
+  application_fuel_consumed: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Application fuel amount cannot be negative'),
+  application_fuel_unit: string().optional(),
+  custom_fields: array(object({
+    id: string().optional(),
+    label: string(),
+    value: string(),
+    field_type: string(),
+    visibility: string(),
+    link_url: string().optional(),
+    verification: string().optional(),
+    created_at: string().optional(),
+    photo_id: string().optional()
+  })).optional()
 });
 
 const ChemicalTab = ({
@@ -188,15 +220,29 @@ const ChemicalTab = ({
       phi_days: initialValues.phi_days?.toString() || '',
       // Sprint 3 Epic 3.2: Consumer Trust Fields
       organic_approved: initialValues.organic_approved || '',
-      buffer_zone_meters: initialValues.buffer_zone_meters?.toString() || ''
+      buffer_zone_meters: initialValues.buffer_zone_meters?.toString() || '',
+      // Phase 3: Application fuel tracking
+      application_fuel_type: initialValues.application_fuel_type || '',
+      application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
+      application_fuel_unit: initialValues.application_fuel_unit || 'gal',
+      custom_fields: initialValues.custom_fields || []
     }
   });
 
-  // Helper function to map backend event types to frontend codes
-  const mapBackendTypeToFrontendCode = (backendType) => {
-    if (!backendType) return '';
+  // Custom fields state for Phase 2.3
+  const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
 
-    // Map verbose backend types to frontend codes
+  // Helper function to map backend event types to frontend codes
+  // COMPREHENSIVE CHEMICAL EVENT TYPE MAPPING
+  const mapBackendTypeToFrontendCode = (backendType) => {
+    if (!backendType) {
+      console.log('[ChemicalTab.mapBackendTypeToFrontendCode] No backendType provided, returning empty string');
+      return '';
+    }
+
+    console.log('[ChemicalTab.mapBackendTypeToFrontendCode] Input backendType:', backendType, 'Type:', typeof backendType);
+
+    // CHEMICAL EVENT TYPE MAP: Backend verbose property paths → Frontend short codes
     const typeMap = {
       'event.chemical.fertilizer': 'FE',
       'event.chemical.pesticide': 'PE',
@@ -204,13 +250,27 @@ const ChemicalTab = ({
       'event.chemical.herbicide': 'HE'
     };
 
-    // If it's already a code (FE, PE, FU, HE), return it as is
-    if (['FE', 'PE', 'FU', 'HE'].includes(backendType)) {
+    // ALL VALID CHEMICAL SHORT CODES
+    const validCodes = ['FE', 'PE', 'FU', 'HE'];
+
+    // If it's already a short code, return it as is
+    if (validCodes.includes(backendType)) {
+      console.log('[ChemicalTab.mapBackendTypeToFrontendCode] Already a valid short code:', backendType);
       return backendType;
     }
 
-    // Otherwise, try to map it
-    return typeMap[backendType] || '';
+    // Try to map verbose backend type to short code
+    const mappedCode = typeMap[backendType];
+
+    if (mappedCode) {
+      console.log('[ChemicalTab.mapBackendTypeToFrontendCode] Successfully mapped:', backendType, '→', mappedCode);
+      return mappedCode;
+    } else {
+      console.warn('[ChemicalTab.mapBackendTypeToFrontendCode] Unknown backend type:', backendType, '- no mapping found');
+      console.warn('[ChemicalTab.mapBackendTypeToFrontendCode] Valid short codes:', validCodes);
+      console.warn('[ChemicalTab.mapBackendTypeToFrontendCode] Valid backend types:', Object.keys(typeMap));
+      return ''; // Return empty string for unknown types (form will use default)
+    }
   };
 
   // Initialize form values when initialValues change - ONLY ONCE to prevent form clearing
@@ -288,7 +348,12 @@ const ChemicalTab = ({
         phi_days: initialValues.phi_days?.toString() || '',
         // Sprint 3 Epic 3.2: Consumer Trust Fields
         organic_approved: initialValues.organic_approved || '',
-        buffer_zone_meters: initialValues.buffer_zone_meters?.toString() || ''
+        buffer_zone_meters: initialValues.buffer_zone_meters?.toString() || '',
+        // Phase 3: Application fuel tracking
+        application_fuel_type: initialValues.application_fuel_type || '',
+        application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
+        application_fuel_unit: initialValues.application_fuel_unit || 'gal',
+        custom_fields: initialValues.custom_fields || []
       };
 
       console.log('[ChemicalTab] Calling methods.reset() with:', resetData);
@@ -313,6 +378,11 @@ const ChemicalTab = ({
       );
     }
   }, [initialValues, hasInitialized]); // Only run when initialValues change or when not yet initialized
+
+  // Sync custom fields with form
+  useEffect(() => {
+    methods.setValue('custom_fields', customFields);
+  }, [customFields, methods]);
 
   const {
     handleSubmit,
@@ -389,7 +459,8 @@ const ChemicalTab = ({
             'restricted_use_pesticide',
             'applicator_certification',
             'rei_hours',
-            'phi_days'
+            'phi_days',
+            'custom_fields'
           ];
           const currentRelevantValues = {};
           relevantFields.forEach((field) => {
@@ -1084,7 +1155,108 @@ const ChemicalTab = ({
             </VStack>
           </SectionBox>
 
-          {/* Section 4: EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309 */}
+          {/* Section 4: Application Equipment & Fuel Usage - Phase 3 Electric Equipment Support */}
+          <SectionBox variant="highlighted">
+            <SectionHeader
+              icon={FaBolt}
+              iconColor="blue.600"
+              title="Application Equipment & Fuel Usage"
+              badge="Enhanced Carbon Accuracy"
+              badgeColorScheme="blue"
+              description="Document your sprayer, spreader, or other application equipment fuel consumption for accurate carbon calculations. Electric equipment has significantly lower carbon impact than diesel."
+            />
+
+            <VStack spacing={4} align="stretch">
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                {/* Phase 3: Application Fuel Type Selector */}
+                <StandardField
+                  label="Application Equipment Fuel Type"
+                  helpText="Fuel type used for spraying or spreading equipment"
+                >
+                  <Controller
+                    name="application_fuel_type"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardSelect {...field} placeholder="Select fuel type...">
+                        {FUEL_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label} ({type.factor})
+                          </option>
+                        ))}
+                      </StandardSelect>
+                    )}
+                  />
+                </StandardField>
+
+                <StandardField
+                  label={watch('application_fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'}
+                  helpText={watch('application_fuel_type') === 'electric' ? 'Energy consumption for carbon emission calculation' : 'Fuel consumed during application'}
+                >
+                  <HStack spacing={2}>
+                    <Controller
+                      name="application_fuel_consumed"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardInput
+                          {...field}
+                          flex={2}
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          placeholder={watch('application_fuel_type') === 'electric' ? 'e.g., 5 kWh' : 'e.g., 2.5'}
+                        />
+                      )}
+                    />
+                    <Controller
+                      name="application_fuel_unit"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardSelect flex={1} {...field}>
+                          <option value="L">Liters</option>
+                          <option value="gal">Gallons</option>
+                          <option value="kg">Kilograms</option>
+                          <option value="kWh">Kilowatt-hours</option>
+                        </StandardSelect>
+                      )}
+                    />
+                  </HStack>
+                </StandardField>
+              </SimpleGrid>
+
+              {/* Phase 3: Electric Equipment Info Box */}
+              {watch('application_fuel_type') === 'electric' && (
+                <Box p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
+                  <Text fontSize="sm" color="blue.700">
+                    <Icon as={FaBolt} mr={2} color="blue.600" />
+                    <Text as="span" fontWeight="semibold">Electric Equipment:</Text> Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions.
+                  </Text>
+                </Box>
+              )}
+
+              <Box
+                bg="blue.50"
+                p={3}
+                borderRadius="md"
+                borderLeft="4px"
+                borderLeftColor="blue.400"
+                mt={2}
+              >
+                <HStack spacing={2} mb={1}>
+                  <Icon as={FaFlask} color="blue.500" fontSize="sm" />
+                  <Text fontSize="sm" fontWeight="semibold" color="blue.700">
+                    Application Carbon Tracking
+                  </Text>
+                </HStack>
+                <Text fontSize="xs" color="blue.600">
+                  Application equipment fuel (sprayers, spreaders, etc.) contributes significantly to chemical operation carbon
+                  footprint. Documenting actual fuel usage provides consumers with complete transparency into your chemical
+                  application practices.
+                </Text>
+              </Box>
+            </VStack>
+          </SectionBox>
+
+          {/* Section 5: EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309 */}
           {(chemicalType === 'PE' || chemicalType === 'HE' || chemicalType === 'FU') && (
             <SectionBox variant="default">
               <SectionHeader
@@ -1268,6 +1440,14 @@ const ChemicalTab = ({
               />
             </StandardField>
           </SectionBox>
+
+          {/* Phase 2.3: Custom Fields Section */}
+          <CustomFieldsForm
+            customFields={customFields}
+            onCustomFieldsChange={setCustomFields}
+            eventTypeId={2}
+            disabled={false}
+          />
 
           {/* Navigation */}
           {!hideActions && (

@@ -35,6 +35,10 @@ export interface StandardizedEventBase {
   data_integrity_score?: number;
   usda_verified?: boolean;
 
+  // MVP Photo Verification: Tiered verification levels
+  verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+  photo_verified_count?: number;
+
   // Carbon calculation
   carbon_impact?: number;
 
@@ -272,6 +276,13 @@ export interface StandardizedSoilManagementEvent extends StandardizedEventBase {
   tillage_intensity?: string;
   tillage_direction?: string;
   residue_management?: string;
+  tillage_depth?: number | string;
+  tillage_depth_unit?: string;
+
+  // Amendment details (organic matter / compost applications)
+  amendment_type?: string;
+  amendment_amount?: number | string;
+  amendment_unit?: string;
 
   // Documentation (details priority)
   soil_management_notes?: string;

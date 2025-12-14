@@ -1173,13 +1173,13 @@ const DynamicEventFields: React.FC<{
 
         {subtype === 'fuel_consumption' && (
           <>
-            <StandardField label="Fuel Amount (Gallons)">
+            <StandardField label={formData.fuelType === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Amount (Gallons)'}>
               <NumberInput
                 value={formData.fuelAmount || ''}
                 onChange={(value) => setFormData((prev) => ({ ...prev, fuelAmount: value }))}
                 min={0}
               >
-                <NumberInputField />
+                <NumberInputField placeholder={formData.fuelType === 'electric' ? 'e.g., 50 kWh' : 'e.g., 25 gallons'} />
                 <NumberInputStepper>
                   <NumberIncrementStepper />
                   <NumberDecrementStepper />
@@ -1187,7 +1187,7 @@ const DynamicEventFields: React.FC<{
               </NumberInput>
             </StandardField>
 
-            <StandardField label="Fuel Type">
+            <StandardField label="Fuel/Energy Type" helpText="Select the type of fuel or energy source used">
               <StandardSelect
                 value={formData.fuelType || ''}
                 onChange={(e: ChangeEvent<HTMLSelectElement>) =>
@@ -1195,11 +1195,21 @@ const DynamicEventFields: React.FC<{
                 }
               >
                 <option value="">Select fuel type...</option>
-                <option value="diesel">Diesel</option>
-                <option value="gasoline">Gasoline</option>
-                <option value="biodiesel">Biodiesel</option>
+                <option value="diesel">Diesel (Gallons)</option>
+                <option value="gasoline">Gasoline (Gallons)</option>
+                <option value="biodiesel">Biodiesel (Gallons)</option>
+                <option value="electric">Electric Equipment (kWh)</option>
               </StandardSelect>
             </StandardField>
+
+            {formData.fuelType === 'electric' && (
+              <Box p={3} bg="blue.50" borderRadius="lg" gridColumn={{ base: '1 / -1' }}>
+                <Text fontSize="sm" color="blue.700">
+                  <Icon as={FaCheck} mr={1} />
+                  <Text as="span" fontWeight="semibold">Electric Equipment:</Text> Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions.
+                </Text>
+              </Box>
+            )}
           </>
         )}
 

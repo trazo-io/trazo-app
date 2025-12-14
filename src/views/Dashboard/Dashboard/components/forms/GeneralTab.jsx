@@ -20,8 +20,9 @@ import {
   FaSeedling
 } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import React, { useEffect, useRef } from 'react';
-import { object, string } from 'zod';
+import React, { useEffect, useRef, useState } from 'react';
+import { object, string, array } from 'zod';
+import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
@@ -76,7 +77,18 @@ const formSchemaMainInfo = object({
   type: string().min(1, 'Activity type is required'),
   duration_hours: string().optional(),
   participants: string().optional(),
-  observation: string().optional()
+  observation: string().optional(),
+  custom_fields: array(object({
+    id: string().optional(),
+    label: string(),
+    value: string(),
+    field_type: string(),
+    visibility: string(),
+    link_url: string().optional(),
+    verification: string().optional(),
+    created_at: string().optional(),
+    photo_id: string().optional()
+  })).optional()
 });
 
 const GeneralTab = ({
@@ -95,9 +107,13 @@ const GeneralTab = ({
       type: initialValues.type || '',
       duration_hours: initialValues.duration_hours || '',
       participants: initialValues.participants || '',
-      observation: initialValues.observation || initialValues.description || ''
+      observation: initialValues.observation || initialValues.description || '',
+      custom_fields: initialValues.custom_fields || []
     }
   });
+
+  // Custom fields state for Phase 2.3
+  const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
 
   // Update form values when initialValues change
   useEffect(() => {
@@ -107,10 +123,16 @@ const GeneralTab = ({
         type: initialValues.type || '',
         duration_hours: initialValues.duration_hours || '',
         participants: initialValues.participants || '',
-        observation: initialValues.observation || initialValues.description || ''
+        observation: initialValues.observation || initialValues.description || '',
+        custom_fields: initialValues.custom_fields || []
       });
     }
   }, [initialValues, mainInfoMethods]);
+
+  // Sync custom fields with form
+  useEffect(() => {
+    mainInfoMethods.setValue('custom_fields', customFields);
+  }, [customFields, mainInfoMethods]);
 
   const {
     handleSubmit: mainInfoSubmit,
@@ -129,7 +151,7 @@ const GeneralTab = ({
 
         // Only trigger if we have meaningful data
         if (currentValues.name && currentValues.name.trim().length > 0) {
-          const relevantFields = ['name', 'type', 'duration_hours', 'participants', 'observation'];
+          const relevantFields = ['name', 'type', 'duration_hours', 'participants', 'observation', 'custom_fields'];
           const currentRelevantValues = {};
           relevantFields.forEach((field) => {
             currentRelevantValues[field] = currentValues[field];
@@ -295,6 +317,14 @@ const GeneralTab = ({
               />
             </StandardField>
           </SectionBox>
+
+          {/* Phase 2.3: Custom Fields Section */}
+          <CustomFieldsForm
+            customFields={customFields}
+            onCustomFieldsChange={setCustomFields}
+            eventTypeId={3}
+            disabled={false}
+          />
 
           {/* Navigation Buttons */}
           {!hideActions && (

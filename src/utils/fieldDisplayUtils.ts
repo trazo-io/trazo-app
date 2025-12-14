@@ -458,7 +458,8 @@ export function getReadableFieldValue(field: string, value: string): string {
       local: '🏡 Local Supplier',
       imported: '✈️ Imported',
       farm_saved: '🌱 Farm Saved Seeds',
-      certified: '✅ Certified Organic Seeds'
+      certified: '✅ Certified Organic Seeds',
+      certified_organic: '🌱 Certified Organic Seeds' // Add mapping for form value
     },
     water_source: {
       // Production event water source for transparency
@@ -1270,19 +1271,30 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
   const eventType = event.type?.toLowerCase() || '';
 
   // Core transparency fields from TimelineService (IMMEDIATE display)
+  // 🚨 CRITICAL FIX: Values need to be combined with their unit fields
   if (event.area_covered && String(event.area_covered).trim() !== 'null') {
+    const areaUnit = event.area_unit || 'ha';
+    const areaValue = String(event.area_covered).includes(areaUnit)
+      ? event.area_covered
+      : `${event.area_covered} ${areaUnit}`;
+
     immediate.push({
       label: 'Area Covered',
-      value: event.area_covered, // Already formatted with units
+      value: areaValue,
       priority: 'immediate',
       category: 'measurement'
     });
   }
 
   if (event.yield_quantity && String(event.yield_quantity).trim() !== 'null') {
+    const yieldUnit = event.yield_unit || event.quantity_unit || 'kg';
+    const yieldValue = String(event.yield_quantity).includes(yieldUnit)
+      ? event.yield_quantity
+      : `${event.yield_quantity} ${yieldUnit}`;
+
     immediate.push({
       label: 'Quantity',
-      value: event.yield_quantity, // Already formatted with units
+      value: yieldValue,
       priority: 'immediate',
       category: 'measurement'
     });
@@ -1290,18 +1302,28 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
 
   // Equipment and fuel information (SECONDARY display)
   if (event.fuel_consumed && String(event.fuel_consumed).trim() !== 'null') {
+    const fuelUnit = event.fuel_unit || 'L';
+    const fuelValue = String(event.fuel_consumed).includes(fuelUnit)
+      ? event.fuel_consumed
+      : `${event.fuel_consumed} ${fuelUnit}`;
+
     secondary.push({
       label: 'Fuel Consumed',
-      value: event.fuel_consumed, // Already formatted with units
+      value: fuelValue,
       priority: 'secondary',
       category: 'operational'
     });
   }
 
   if (event.equipment_hours && String(event.equipment_hours).trim() !== 'null') {
+    // Equipment hours should have "hours" suffix if not already present
+    const hoursValue = String(event.equipment_hours).toLowerCase().includes('hour')
+      ? event.equipment_hours
+      : `${event.equipment_hours} hours`;
+
     secondary.push({
       label: 'Equipment Hours',
-      value: event.equipment_hours, // Already formatted with units
+      value: hoursValue,
       priority: 'secondary',
       category: 'operational'
     });
@@ -1309,16 +1331,24 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
 
   // Transportation (HA - Harvesting events only, SECONDARY display)
   if (event.transportation_distance && String(event.transportation_distance).trim() !== 'null') {
+    const transportUnit = event.transportation_unit || event.distance_unit || 'km';
+    const transportValue = String(event.transportation_distance).toLowerCase().includes('km') ||
+                          String(event.transportation_distance).toLowerCase().includes('mi')
+      ? event.transportation_distance
+      : `${event.transportation_distance} ${transportUnit}`;
+
     secondary.push({
       label: 'Transportation Distance',
-      value: event.transportation_distance, // Already formatted with units
+      value: transportValue,
       priority: 'secondary',
       category: 'operational'
     });
   }
 
-  // Sprint 2: EQ (Equipment Operations) subtype-specific fields
-  if (event.production_type === 'EQ') {
+  // Sprint 2: EM (Equipment Maintenance) subtype-specific fields
+  // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
+  // Note: Kept backward compatibility check for 'EQ' in case old data exists
+  if (event.production_type === 'EM' || event.production_type === 'EQ') {
     // Equipment Operation Type (IMMEDIATE - primary operation info)
     if (
       event.equipment_operation_type &&
@@ -1346,7 +1376,7 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     if (event.fuel_type && String(event.fuel_type).trim() !== 'null') {
       secondary.push({
         label: 'Fuel Type',
-        value: event.fuel_type,
+        value: getReadableFieldValue('fuel_type', event.fuel_type),
         priority: 'secondary',
         category: 'operational'
       });
@@ -1363,35 +1393,10 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     }
   }
 
-  // Production type for better context (DETAILS display)
-  if (event.production_type) {
-    const typeMapping: Record<string, string> = {
-      PL: 'Planting',
-      HA: 'Harvesting',
-      IR: 'Irrigation',
-      PR: 'Pruning',
-      TR: 'Transportation',
-      EQ: 'Equipment Operations'
-    };
-
-    // 🌱 TRANSPARENCY-FIRST: Skip redundant Production Type when title already shows operation type
-    // Only show Production Type if it provides additional value beyond the title
-    const eventTitle = event.name || event.production_name || '';
-    const productionTypeValue = typeMapping[event.production_type] || event.production_type;
-
-    // Only include if Production Type provides information not in the title
-    if (
-      productionTypeValue &&
-      !eventTitle.toLowerCase().includes(productionTypeValue.toLowerCase())
-    ) {
-      details.push({
-        label: 'Operation Category',
-        value: productionTypeValue,
-        priority: 'details',
-        category: 'operational'
-      });
-    }
-  }
+  // 🚨 REMOVED: Operation Category (production_type) - Internal metadata, not consumer-facing
+  // Production type (PL, HA, IR, TR, etc.) is for backend routing and should never
+  // be displayed to consumers in event previews or ProductDetail cards.
+  // The event title already communicates the operation type in consumer-friendly language.
 
   // Legacy fallback support for existing extra_data structure
   // Harvesting events
@@ -2867,20 +2872,58 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
   }
 
   // Determine event category and apply appropriate formatter
-  // Enhanced weather event detection including event_type and weather codes
-  const isWeatherEvent =
+  // 🚨 CRITICAL FIX: Check event_type NUMBER first before description keywords
+  // This prevents false positives where description contains words like "storm" or "frost"
+  // Priority: event_type (definitive) > type codes (definitive) > description (fuzzy match)
+
+  // Weather Events (event_type === 0)
+  if (normalizedEvent.event_type === 0) {
+    console.log('✅ Detected as weather event by event_type, calling getWeatherEventFields');
+    const baseFields = getWeatherEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
+  }
+
+  // Production Events (event_type === 1)
+  if (normalizedEvent.event_type === 1) {
+    console.log('✅ Detected as production event by event_type, calling getProductionEventFields');
+    const baseFields = getProductionEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
+  }
+
+  // Chemical Events (event_type === 2)
+  if (normalizedEvent.event_type === 2) {
+    console.log('✅ Detected as chemical event by event_type, calling getChemicalEventFields');
+    const baseFields = getChemicalEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
+  }
+
+  // Fallback: Use type codes and description keywords for events without explicit event_type
+  // Weather event codes
+  if (['FR', 'DR', 'HL', 'HT', 'TS', 'HW', 'HH', 'LH'].includes(normalizedEvent.type)) {
+    console.log('✅ Detected as weather event by type code, calling getWeatherEventFields');
+    const baseFields = getWeatherEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
+  }
+
+  // Production event codes
+  if (['PL', 'HA', 'IR', 'PR', 'TR'].includes(normalizedEvent.type)) {
+    console.log('✅ Detected as production event by type code, calling getProductionEventFields');
+    const baseFields = getProductionEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
+  }
+
+  // Description-based detection (last resort, prone to false positives)
+  if (
     eventType.includes('weather') ||
     description.includes('weather') ||
     description.includes('frost') ||
     description.includes('drought') ||
     description.includes('hail') ||
-    description.includes('storm') ||
-    normalizedEvent.event_type === 0 || // Weather events have event_type 0
-    ['FR', 'DR', 'HL', 'HT', 'TS', 'HW', 'HH', 'LH'].includes(normalizedEvent.type); // Weather event codes
-
-  if (isWeatherEvent) {
-    console.log('✅ Detected as weather event, calling getWeatherEventFields');
-    return getWeatherEventFields(normalizedEvent);
+    description.includes('storm')
+  ) {
+    console.log('⚠️ Detected as weather event by description keyword (fallback), calling getWeatherEventFields');
+    const baseFields = getWeatherEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
 
   if (
@@ -2889,18 +2932,20 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
     description.includes('spray') ||
     description.includes('pesticide')
   ) {
-    return getChemicalEventFields(normalizedEvent);
+    console.log('⚠️ Detected as chemical event by description keyword (fallback), calling getChemicalEventFields');
+    const baseFields = getChemicalEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
 
   if (
     eventType.includes('production') ||
     description.includes('harvest') ||
     description.includes('planting') ||
-    description.includes('irrigation') ||
-    normalizedEvent.event_type === 1 ||
-    ['PL', 'HA', 'IR', 'PR', 'TR'].includes(normalizedEvent.type)
+    description.includes('irrigation')
   ) {
-    return getProductionEventFields(normalizedEvent);
+    console.log('⚠️ Detected as production event by description keyword (fallback), calling getProductionEventFields');
+    const baseFields = getProductionEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
 
   if (
@@ -2929,7 +2974,8 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
         equipmentTypeCodeLower: ['fc', 'mn', 're', 'ca', 'bd', 'ei'].includes(eventType)
       }
     });
-    return getEquipmentEventFields(normalizedEvent);
+    const baseFields = getEquipmentEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
 
   if (
@@ -2942,7 +2988,8 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
     normalizedEvent.event_type === 5 ||
     ['ST', 'PA', 'OM', 'CC', 'TI', 'CO'].includes(normalizedEvent.type)
   ) {
-    return getSoilManagementEventFields(normalizedEvent);
+    const baseFields = getSoilManagementEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
 
   if (
@@ -2957,7 +3004,8 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
     normalizedEvent.event_type === 6 ||
     ['SC', 'TM', 'BR', 'PI', 'TA', 'IP'].includes(normalizedEvent.type)
   ) {
-    return getPestManagementEventFields(normalizedEvent);
+    const baseFields = getPestManagementEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
 
   if (
@@ -2968,9 +3016,95 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
     normalizedEvent.event_type === 7 ||
     ['CE', 'CM', 'IN'].includes(normalizedEvent.type)
   ) {
-    return getBusinessEventFields(normalizedEvent);
+    const baseFields = getBusinessEventFields(normalizedEvent);
+    return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
 
   // Default to general event handling
-  return getGeneralEventFields(normalizedEvent);
+  const baseFields = getGeneralEventFields(normalizedEvent);
+  return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
+}
+
+/**
+ * 🚨 CRITICAL: Merge custom fields into field display arrays
+ *
+ * Custom fields must appear seamlessly integrated with standard fields.
+ * This ensures EventPreviewModal and ConsumerEventCard show identical content.
+ *
+ * @param fieldDisplay Base field display from standard fields
+ * @param event Event object containing custom_fields
+ * @returns Field display with custom fields merged into secondary array
+ */
+function mergeCustomFieldsIntoDisplay(
+  fieldDisplay: EventFieldDisplay,
+  event: any
+): EventFieldDisplay {
+  // 🚨 CRITICAL FIX: Access custom fields from extra_data.custom_fields (matches EventDetailsModal)
+  // This ensures ConsumerEventCard shows the same custom fields as EventPreviewModal
+  const customFields = event?.extra_data?.custom_fields;
+
+  if (!customFields || !Array.isArray(customFields) || customFields.length === 0) {
+    return fieldDisplay;
+  }
+
+  // Filter for consumer-visible, non-empty custom fields
+  const visibleFields = customFields.filter(
+    (field: any) =>
+      field.visibility === 'consumer' &&
+      field.value !== null &&
+      field.value !== undefined &&
+      String(field.value).trim() !== ''
+  );
+
+  if (visibleFields.length === 0) {
+    return fieldDisplay;
+  }
+
+  console.log('✅ [fieldDisplayUtils] Merging custom fields into display:', {
+    totalCustomFields: customFields.length,
+    visibleCustomFields: visibleFields.length,
+    fields: visibleFields.map((f: any) => ({ label: f.label, value: f.value })),
+    eventId: event.id,
+    extraDataPath: 'event.extra_data.custom_fields'
+  });
+
+  // Convert custom fields to FieldDisplayItem format
+  // Display ALL custom fields as-is - farmer is responsible for avoiding duplicates during event creation
+  const customFieldItems: FieldDisplayItem[] = visibleFields
+    .map((field: any) => {
+      let displayValue = String(field.value);
+
+      // Apply type-specific formatting (matches customFieldsUtils.ts logic)
+      switch (field.field_type) {
+        case 'number':
+          const num = parseFloat(displayValue);
+          displayValue = !isNaN(num) ? num.toLocaleString() : displayValue;
+          break;
+        case 'link':
+          if (field.link_url) {
+            displayValue = `${displayValue} 🔗`;
+          }
+          break;
+        case 'photo_ref':
+          displayValue = `${displayValue} 📷`;
+          break;
+      }
+
+      // Add verification indicator if third-party verified
+      if (field.verification === 'third_party') {
+        displayValue = `${displayValue} ✓`;
+      }
+
+      return {
+        label: field.label,
+        value: displayValue,
+        priority: 'secondary' // Custom fields appear in secondary section
+      };
+    });
+
+  // Merge custom fields into secondary array (appears after standard fields)
+  return {
+    ...fieldDisplay,
+    secondary: [...fieldDisplay.secondary, ...customFieldItems]
+  };
 }

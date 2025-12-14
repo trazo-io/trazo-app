@@ -752,21 +752,77 @@ export function getConsumerEventDescription(
         icon: '✂️',
         description: 'Strategic pruning to improve plant health, air circulation, and fruit quality'
       },
-      // Sprint 2: EQ (Equipment Operations) subtype
-      EQ: {
-        title: 'Equipment Operations',
+      // CRITICAL FIX (2025-12-11): Added CU (Cultivation) - Sprint 2 production subtype
+      CU: {
+        title: 'Cultivation',
+        icon: '🚜',
+        description: 'Mechanical cultivation for weed control and soil aeration to optimize crop growth'
+      },
+      // CRITICAL FIX (2025-12-11): Added TH (Thinning) - Sprint 2 production subtype
+      TH: {
+        title: 'Thinning',
+        icon: '🌿',
+        description: 'Fruit or plant thinning to improve size, quality, and overall crop health'
+      },
+      // CRITICAL FIX (2025-01-21): Added EM (Equipment Maintenance) - correct Production subtype
+      EM: {
+        title: 'Equipment Maintenance',
         icon: '🔧',
         description: 'Farm equipment used and maintained for optimal performance and efficiency'
+      },
+      // Sprint 2: EQ (Equipment Operations) subtype - LEGACY, kept for backward compatibility
+      EQ: {
+        title: 'Equipment Operations (Legacy)',
+        icon: '🔧',
+        description: 'Farm equipment used and maintained for optimal performance (Legacy: use EM for new events)'
       },
       equipment: {
         title: 'Equipment Operations',
         icon: '🔧',
         description: 'Farm equipment used and maintained for optimal performance'
       },
-      'production.EQ': {
-        title: 'Equipment Operations',
+      // CRITICAL FIX (2025-12-11): Added CU (Cultivation) entries
+      'production.CU': {
+        title: 'Cultivation',
+        icon: '🚜',
+        description: 'Mechanical cultivation for weed control and soil aeration'
+      },
+      'production.cultivation': {
+        title: 'Cultivation',
+        icon: '🚜',
+        description: 'Mechanical cultivation for weed control and soil aeration'
+      },
+      'event.production.cultivation': {
+        title: 'Cultivation',
+        icon: '🚜',
+        description: 'Mechanical cultivation for weed control and soil aeration'
+      },
+      // CRITICAL FIX (2025-12-11): Added TH (Thinning) entries
+      'production.TH': {
+        title: 'Thinning',
+        icon: '🌿',
+        description: 'Fruit or plant thinning to improve size and quality'
+      },
+      'production.thinning': {
+        title: 'Thinning',
+        icon: '🌿',
+        description: 'Fruit or plant thinning to improve size and quality'
+      },
+      'event.production.thinning': {
+        title: 'Thinning',
+        icon: '🌿',
+        description: 'Fruit or plant thinning to improve size and quality'
+      },
+      // CRITICAL FIX (2025-01-21): Added EM (Equipment Maintenance) entries
+      'production.EM': {
+        title: 'Equipment Maintenance',
         icon: '🔧',
         description: 'Farm equipment used and maintained for optimal performance'
+      },
+      'production.EQ': {
+        title: 'Equipment Operations (Legacy)',
+        icon: '🔧',
+        description: 'Farm equipment used and maintained for optimal performance (Legacy: use EM)'
       },
       'production.equipment': {
         title: 'Equipment Operations',
@@ -914,6 +970,26 @@ export function getConsumerEventDescription(
 
       consumerImpact = `Strategic pruning ${areaInfo}${hoursInfo} improves plant health, air circulation, and fruit quality for better produce.`;
       sustainabilityBenefit = `Documented pruning practices reduce disease pressure and optimize plant productivity through transparency.`;
+    } else if (eventType.includes('cultivation') || eventType === 'CU') {
+      // CRITICAL FIX (2025-12-11): Added cultivation consumer impact
+      const areaInfo = event.area_covered
+        ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
+        : '';
+      const fuelInfo = event.fuel_consumed
+        ? ` using ${event.fuel_consumed} ${event.fuel_unit || 'L'} of fuel`
+        : '';
+
+      consumerImpact = `Mechanical cultivation ${areaInfo} controls weeds naturally and improves soil aeration for healthier plant roots${fuelInfo ? ' with documented resource usage' : ''}.`;
+      sustainabilityBenefit = `Documented cultivation practices demonstrate sustainable weed management and soil health maintenance.`;
+    } else if (eventType.includes('thinning') || eventType === 'TH') {
+      // CRITICAL FIX (2025-12-11): Added thinning consumer impact
+      const areaInfo = event.area_covered
+        ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
+        : '';
+      const hoursInfo = event.equipment_hours ? ` over ${event.equipment_hours} hours` : '';
+
+      consumerImpact = `Fruit thinning ${areaInfo}${hoursInfo} improves individual fruit size, quality, and sugar content by reducing competition for nutrients.`;
+      sustainabilityBenefit = `Documented thinning practices optimize resource allocation and demonstrate commitment to premium quality produce.`;
     }
 
     // 🌱 TRANSPARENCY-FIRST: Enhanced consumer title resolution
@@ -941,7 +1017,10 @@ export function getConsumerEventDescription(
           PL: 'Planting',
           PR: 'Pruning Operation',
           TR: 'Transplanting Operation',
-          EQ: 'Equipment Operations', // Sprint 2: EQ subtype
+          CU: 'Cultivation', // CRITICAL FIX (2025-12-11): Added CU (Cultivation) - Sprint 2 production subtype
+          TH: 'Thinning', // CRITICAL FIX (2025-12-11): Added TH (Thinning) - Sprint 2 production subtype
+          EM: 'Equipment Maintenance', // CRITICAL FIX (2025-01-21): Added EM (correct Production subtype)
+          EQ: 'Equipment Operations (Legacy)', // Sprint 2: EQ subtype - kept for backward compatibility
           SO: 'Soil Operation',
           FE: 'Fertilizer Operation',
           WE: 'Weather Monitoring'

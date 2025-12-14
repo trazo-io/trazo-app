@@ -820,6 +820,7 @@
   "event.organic.cover_crop": "Cultivo de Cobertura Orgánico",
   "event.chemical.unknown": "Evento Químico Desconocido",
   "event.weather.unknown": "Evento Climático Desconocido",
+  "event.production.equipment_maintenance": "Mantenimiento de Equipo de Producción",
   "event.production.unknown": "Evento de Producción Desconocido",
   "event.equipment.unknown": "Evento de Equipo Desconocido",
   "event.soil.unknown": "Evento de Suelo Desconocido",

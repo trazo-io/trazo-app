@@ -54,7 +54,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
 import { StandardImageGallery } from 'components/ImageGallery';
-import { StandardCard, StandardPage } from 'components/Design/StandardComponents';
+import { StandardPage } from 'components/Design/StandardComponents';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
@@ -63,11 +63,86 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { ParcelTransparencyScoreBreakdown } from 'components/Transparency/ParcelTransparencyScoreBreakdown';
-// Note: Main container still uses legacy Card, internal cards migrated to StandardCard
 
-// Simplified loading - matching ProfileEstablishment pattern
+// Import new ProfileSections shared components for modern UI
+import {
+  ProfileHeader,
+  ProfileSection,
+  ProfileDataGrid,
+  ProfileImageGallery,
+  TransparencyScoreCard
+} from 'components/ProfileSections';
 
-function ProfileParcel() {
+// Type definitions for Redux state
+interface Company {
+  id: string;
+  name: string;
+}
+
+interface Establishment {
+  id: string;
+  name: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  zone?: string;
+}
+
+interface AgriculturalDetails {
+  soil_ph?: string;
+  soil_organic_matter?: string;
+  soil_nitrogen?: string;
+  soil_phosphorus?: string;
+  irrigation_efficiency?: string;
+  water_source_type?: string;
+  water_quality_ph?: string;
+  water_allocation_acre_feet?: string;
+  cover_crop_management?: string;
+  crop_rotation_pattern?: string;
+  pest_management_strategy?: string;
+  fertilization_program?: string;
+  [key: string]: any;
+}
+
+interface ParcelData {
+  id: string;
+  name: string;
+  area?: number;
+  primary_crop?: string;
+  crop_type?: string;
+  soil_type?: string;
+  certified?: boolean;
+  certification_type?: string;
+  images?: Array<{ url: string; caption?: string }>;
+  unique_code?: string;
+  carbon_calculation_enabled?: boolean;
+  usda_compliance_eligible?: boolean;
+  transparency_ready?: boolean;
+  transparency_score?: number;
+  transparency_description?: string;
+  sustainability_practices?: string;
+  consumer_story?: string;
+  contact_person?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  elevation?: number;
+  description?: string;
+  agricultural_details?: AgriculturalDetails;
+}
+
+interface RootState {
+  company: {
+    currentCompany?: Company;
+  };
+  product: {
+    currentParcel?: ParcelData;
+  };
+}
+
+function ProfileParcel(): React.ReactElement {
   const intl = useIntl();
   const titleColor = useColorModeValue('green.500', 'green.400');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -75,19 +150,19 @@ function ProfileParcel() {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const navigate = useNavigate();
   const toast = useToast();
-  const { establishmentId, parcelId } = useParams();
-  const [establishment, setEstablishment] = useState(null);
-
-  // Simplified loading - matching ProfileEstablishment pattern
+  const { establishmentId, parcelId } = useParams<{ establishmentId: string; parcelId: string }>();
+  const [establishment, setEstablishment] = useState<Establishment | null>(null);
 
   // Mobile-first responsive design
   const containerPadding = useBreakpointValue({ base: 4, md: 8 });
   const cardSpacing = useBreakpointValue({ base: 4, md: 6 });
   const headerFontSize = useBreakpointValue({ base: 'xl', md: '2xl' });
 
-  const establishments = useSelector((state) => state.company.currentCompany?.establishments);
-  const currentCompany = useSelector((state) => state.company.currentCompany);
-  const currentParcel = useSelector((state) => state.product.currentParcel);
+  const establishments = useSelector(
+    (state: RootState) => state.company.currentCompany?.establishments || []
+  );
+  const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
+  const currentParcel = useSelector((state: RootState) => state.product.currentParcel);
 
   const {
     data: parcelData,
@@ -96,7 +171,7 @@ function ProfileParcel() {
     isFetching,
     refetch
   } = useGetParcelQuery(
-    { companyId: currentCompany?.id, establishmentId, parcelId },
+    { companyId: currentCompany?.id || '', establishmentId: establishmentId || '', parcelId: parcelId || '' },
     {
       skip:
         parcelId === undefined ||
@@ -107,37 +182,39 @@ function ProfileParcel() {
   );
 
   useEffect(() => {
-    let establishment;
-    if (establishments) {
-      establishment = establishments.filter(
-        (establishment) => establishment.id.toString() === establishmentId
-      )[0];
-      setEstablishment(establishment);
+    let foundEstablishment: Establishment | undefined;
+    if (establishments && establishments.length > 0 && establishmentId) {
+      foundEstablishment = establishments.find(
+        (est: Establishment) => est.id.toString() === establishmentId
+      );
+      if (foundEstablishment) {
+        setEstablishment(foundEstablishment);
+      }
     }
   }, [establishmentId, establishments]);
-
-  // Removed progressive loading useEffect - using simple loading like ProfileEstablishment
 
   // Move useBreakpointValue to top level to avoid hooks rule violation
   const isMobile = useBreakpointValue({ base: true, md: false });
 
-  const handleShare = async () => {
+  const handleShare = async (): Promise<void> => {
     try {
-      await navigator.share({
-        title: `${parcelData?.name} - Parcel Profile`,
-        text: `Check out this sustainable parcel! #Trazo #SustainableAgriculture`,
-        url: window.location.href
-      });
-      toast({
-        title: 'Shared Successfully',
-        description: 'Parcel profile shared successfully.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-        position: 'top-right'
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
+      if (navigator.share && parcelData?.name) {
+        await navigator.share({
+          title: `${parcelData.name} - Parcel Profile`,
+          text: `Check out this sustainable parcel! #Trazo #SustainableAgriculture`,
+          url: window.location.href
+        });
+        toast({
+          title: 'Shared Successfully',
+          description: 'Parcel profile shared successfully.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+          position: 'top-right'
+        });
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
     }
   };
 
@@ -149,20 +226,6 @@ function ProfileParcel() {
           <Card bg={bgColor} p={6}>
             <Text textAlign="center" color={textColor}>
               Loading parcel data...
-            </Text>
-          </Card>
-        </Container>
-      </Flex>
-    );
-  }
-
-  if (error || !parcelData) {
-    return (
-      <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
-        <Container maxW="6xl" mx="auto" py={20}>
-          <Card bg={bgColor} p={6}>
-            <Text color="red.500" textAlign="center">
-              Error loading parcel data. Please try again.
             </Text>
           </Card>
         </Container>
@@ -340,17 +403,18 @@ function ProfileParcel() {
         </Container>
       </Box>
 
-      {/* Main Content Container - Standardized with Establishment */}
-      <Flex
-        alignItems="center"
-        justifyContent="center"
-        mb={{ base: '60px', md: '80px' }}
+      {/* Main Content Container - Matching TransparencyDashboard layout */}
+      <Box
+        maxW="full"
+        mx="auto"
+        px={6}
         mt="-60px"
+        mb={{ base: '60px', md: '80px' }}
         position="relative"
         zIndex={10}
       >
         <Card
-          w={{ base: '100%', sm: '98%', md: '95%', lg: '90%', xl: '85%' }}
+          w="100%"
           p={{ base: 4, sm: 5, md: 6, lg: 8 }}
           boxShadow={{
             base: '0 8px 16px -4px rgba(0, 0, 0, 0.12)',
@@ -592,51 +656,28 @@ function ProfileParcel() {
                   />
                 </Box>
 
-                {/* Basic Information */}
-                <StandardCard
+                {/* Basic Information - Refactored with ProfileSection */}
+                <ProfileSection
                   title="Basic Information"
-                  variant="flat"
                   icon={FaBuilding}
                   mb={{ base: 4, md: 6 }}
                 >
-                  <VStack spacing={3} align="stretch">
-                    <HStack>
-                      <Icon as={FaTractor} color="green.600" />
-                      <Text fontWeight="medium">Name:</Text>
-                      <Text>{parcelData?.name}</Text>
-                    </HStack>
-                    <HStack>
-                      <Icon as={FaMapMarkedAlt} color="blue.500" />
-                      <Text fontWeight="medium">Area:</Text>
-                      <Text>
-                        {parcelData?.area
-                          ? formatAreaWithBothUnits(parcelData.area, 'METRIC')
-                          : '--'}
-                      </Text>
-                    </HStack>
-                    {parcelData?.unique_code && (
-                      <HStack>
-                        <Icon as={FaRegListAlt} color="purple.500" />
-                        <Text fontWeight="medium">Code:</Text>
-                        <Text>{parcelData.unique_code}</Text>
-                      </HStack>
-                    )}
-                    {(parcelData?.crop_type || parcelData?.primary_crop) && (
-                      <HStack>
-                        <Icon as={FaSeedling} color="green.600" />
-                        <Text fontWeight="medium">Primary Crop:</Text>
-                        <Text>{parcelData?.primary_crop || parcelData?.crop_type}</Text>
-                      </HStack>
-                    )}
-                    {parcelData?.soil_type && (
-                      <HStack>
-                        <Icon as={MdEco} color="green.600" />
-                        <Text fontWeight="medium">Soil Type:</Text>
-                        <Text>{parcelData.soil_type}</Text>
-                      </HStack>
-                    )}
-                  </VStack>
-                </StandardCard>
+                  <ProfileDataGrid
+                    data={[
+                      { label: 'Name', value: parcelData?.name, type: 'text', conditional: !!parcelData?.name },
+                      {
+                        label: 'Area',
+                        value: parcelData?.area ? formatAreaWithBothUnits(parcelData.area, 'METRIC') : undefined,
+                        type: 'text',
+                        conditional: !!parcelData?.area
+                      },
+                      { label: 'Unique Code', value: parcelData?.unique_code, type: 'text', conditional: !!parcelData?.unique_code },
+                      { label: 'Primary Crop', value: parcelData?.primary_crop || parcelData?.crop_type, type: 'text', conditional: !!(parcelData?.primary_crop || parcelData?.crop_type) },
+                      { label: 'Soil Type', value: parcelData?.soil_type, type: 'text', conditional: !!parcelData?.soil_type }
+                    ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                    columns={{ base: 1, md: 2 }}
+                  />
+                </ProfileSection>
 
                 {/* 🎯 TRANSPARENCY SCORE BREAKDOWN - Shows farmers how to improve */}
                 <Box mb={{ base: 4, md: 6 }}>
@@ -664,9 +705,8 @@ function ProfileParcel() {
                 {(parcelData?.transparency_description ||
                   parcelData?.sustainability_practices ||
                   parcelData?.consumer_story) && (
-                  <StandardCard
+                  <ProfileSection
                     title="Consumer Transparency"
-                    variant="flat"
                     icon={FaEye}
                     mb={{ base: 4, md: 6 }}
                   >
@@ -740,75 +780,78 @@ function ProfileParcel() {
                         </Box>
                       )}
                     </VStack>
-                  </StandardCard>
+                  </ProfileSection>
                 )}
 
                 {/* Technology & Features Card - CRITICAL for trust building */}
-                <StandardCard
+                <ProfileSection
                   title="Technology & Features"
-                  variant="flat"
                   icon={FaLeaf}
                   mb={{ base: 4, md: 6 }}
+                  borderLeft="4px solid"
+                  borderLeftColor="green.500"
+                  bg="green.50"
                 >
-                  <VStack spacing={4} align="stretch">
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {/* Carbon Calculation Status */}
-                    <HStack justify="space-between">
-                      <HStack>
-                        <Icon as={FaLeaf} color="green.600" />
-                        <Text fontWeight="medium">Carbon Calculation:</Text>
-                      </HStack>
-                      <Badge
-                        variant="subtle"
-                        colorScheme={parcelData?.carbon_calculation_enabled ? 'green' : 'gray'}
-                        px={3}
-                        py={1}
-                        borderRadius="full"
+                    {parcelData?.carbon_calculation_enabled !== undefined && (
+                      <HStack
+                        spacing={3}
+                        p={3}
+                        bg={parcelData?.carbon_calculation_enabled ? 'green.50' : 'gray.50'}
+                        borderRadius="xl"
+                        border="1px"
+                        borderColor={parcelData?.carbon_calculation_enabled ? 'green.200' : 'gray.200'}
                       >
-                        <HStack spacing={2}>
-                          <Circle
-                            size="8px"
-                            bg={parcelData?.carbon_calculation_enabled ? 'green.500' : 'gray.400'}
-                          />
-                          <Text>
-                            {parcelData?.carbon_calculation_enabled ? 'Enabled' : 'Disabled'}
+                        <Icon as={FaLeaf} color={parcelData?.carbon_calculation_enabled ? 'green.600' : 'gray.500'} />
+                        <VStack spacing={0} align="start" flex={1}>
+                          <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                            Carbon Calculation
                           </Text>
-                        </HStack>
-                      </Badge>
-                    </HStack>
+                          <Badge
+                            colorScheme={parcelData?.carbon_calculation_enabled ? 'green' : 'gray'}
+                            variant="subtle"
+                            size="sm"
+                          >
+                            {parcelData?.carbon_calculation_enabled ? 'Enabled' : 'Disabled'}
+                          </Badge>
+                        </VStack>
+                      </HStack>
+                    )}
 
                     {/* USDA Compliance Status */}
-                    <HStack justify="space-between">
-                      <HStack>
-                        <Icon as={FaCertificate} color="blue.600" />
-                        <Text fontWeight="medium">USDA Compliance:</Text>
-                      </HStack>
-                      <Badge
-                        variant="subtle"
-                        colorScheme={parcelData?.usda_compliance_eligible ? 'blue' : 'gray'}
-                        px={3}
-                        py={1}
-                        borderRadius="full"
+                    {parcelData?.usda_compliance_eligible !== undefined && (
+                      <HStack
+                        spacing={3}
+                        p={3}
+                        bg={parcelData?.usda_compliance_eligible ? 'blue.50' : 'gray.50'}
+                        borderRadius="xl"
+                        border="1px"
+                        borderColor={parcelData?.usda_compliance_eligible ? 'blue.200' : 'gray.200'}
                       >
-                        <HStack spacing={2}>
-                          <Circle
-                            size="8px"
-                            bg={parcelData?.usda_compliance_eligible ? 'blue.500' : 'gray.400'}
-                          />
-                          <Text>
-                            {parcelData?.usda_compliance_eligible ? 'Eligible' : 'Not Eligible'}
+                        <Icon as={FaCertificate} color={parcelData?.usda_compliance_eligible ? 'blue.600' : 'gray.500'} />
+                        <VStack spacing={0} align="start" flex={1}>
+                          <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                            USDA Compliance
                           </Text>
-                        </HStack>
-                      </Badge>
-                    </HStack>
-                  </VStack>
-                </StandardCard>
+                          <Badge
+                            colorScheme={parcelData?.usda_compliance_eligible ? 'blue' : 'gray'}
+                            variant="subtle"
+                            size="sm"
+                          >
+                            {parcelData?.usda_compliance_eligible ? 'Eligible' : 'Not Eligible'}
+                          </Badge>
+                        </VStack>
+                      </HStack>
+                    )}
+                  </SimpleGrid>
+                </ProfileSection>
 
                 {/* Agricultural Data Section */}
                 {parcelData?.agricultural_details &&
                   Object.keys(parcelData.agricultural_details).length > 0 && (
-                    <StandardCard
+                    <ProfileSection
                       title="Agricultural Practices"
-                      variant="flat"
                       icon={FaSeedling}
                       mb={{ base: 4, md: 6 }}
                     >
@@ -1110,186 +1153,173 @@ function ProfileParcel() {
                           </Box>
                         )}
                       </VStack>
-                    </StandardCard>
+                    </ProfileSection>
                   )}
 
                 {/* Contact Information */}
                 {(parcelData?.contact_person ||
                   parcelData?.contact_email ||
                   parcelData?.contact_phone) && (
-                  <StandardCard
+                  <ProfileSection
                     title="Contact Information"
-                    variant="flat"
                     icon={FaPhone}
                     mb={{ base: 4, md: 6 }}
                   >
-                    <VStack spacing={3} align="stretch">
-                      {parcelData?.contact_person && (
-                        <HStack>
-                          <Icon as={FaUsers} color="purple.500" />
-                          <Text fontWeight="medium">Contact Person:</Text>
-                          <Text>{parcelData.contact_person}</Text>
-                        </HStack>
-                      )}
-                      {parcelData?.contact_email && (
-                        <HStack>
-                          <Icon as={FaEnvelope} color="blue.500" />
-                          <Text fontWeight="medium">Email:</Text>
-                          <Link color="blue.500" href={`mailto:${parcelData.contact_email}`}>
-                            {parcelData.contact_email}
-                          </Link>
-                        </HStack>
-                      )}
-                      {parcelData?.contact_phone && (
-                        <HStack>
-                          <Icon as={FaPhone} color="green.500" />
-                          <Text fontWeight="medium">Phone:</Text>
-                          <Link color="green.500" href={`tel:${parcelData.contact_phone}`}>
-                            {parcelData.contact_phone}
-                          </Link>
-                        </HStack>
-                      )}
-                    </VStack>
-                  </StandardCard>
+                    <ProfileDataGrid
+                      data={[
+                        {
+                          label: 'Contact Person',
+                          value: parcelData?.contact_person,
+                          type: 'text',
+                          conditional: !!parcelData?.contact_person
+                        },
+                        {
+                          label: 'Email',
+                          value: parcelData?.contact_email,
+                          type: 'link',
+                          href: parcelData?.contact_email ? `mailto:${parcelData.contact_email}` : undefined,
+                          conditional: !!parcelData?.contact_email
+                        },
+                        {
+                          label: 'Phone',
+                          value: parcelData?.contact_phone,
+                          type: 'link',
+                          href: parcelData?.contact_phone ? `tel:${parcelData.contact_phone}` : undefined,
+                          conditional: !!parcelData?.contact_phone
+                        }
+                      ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                      columns={{ base: 1, md: 1 }}
+                    />
+                  </ProfileSection>
                 )}
               </Box>
 
               {/* Right Column */}
               <Box>
                 {/* Enhanced Location Information */}
-                <StandardCard
+                <ProfileSection
                   title="Location Details"
-                  variant="flat"
                   icon={MdLocationOn}
                   mb={{ base: 4, md: 6 }}
                 >
-                  <VStack spacing={3} align="stretch">
-                    {/* Complete Address */}
-                    {parcelData?.address && (
-                      <HStack>
-                        <Icon as={FaMapMarkerAlt} color="green.600" />
-                        <Text fontWeight="medium">Address:</Text>
-                        <Text>{parcelData.address}</Text>
-                      </HStack>
-                    )}
-                    {establishment?.city && (
-                      <HStack>
-                        <Icon as={MdBusiness} color="green.600" />
-                        <Text fontWeight="medium">City:</Text>
-                        <Text>{establishment.city}</Text>
-                      </HStack>
-                    )}
-                    {establishment?.state && (
-                      <HStack>
-                        <Icon as={MdBusiness} color="green.600" />
-                        <Text fontWeight="medium">State:</Text>
-                        <Text>{establishment.state}</Text>
-                      </HStack>
-                    )}
-                    {establishment?.country && (
-                      <HStack>
-                        <Icon as={FaGlobe} color="green.600" />
-                        <Text fontWeight="medium">Country:</Text>
-                        <Text>{establishment.country}</Text>
-                      </HStack>
-                    )}
-                    {establishment?.zone && (
-                      <HStack>
-                        <Icon as={MdLocationOn} color="green.600" />
-                        <Text fontWeight="medium">Zone:</Text>
-                        <Text>{establishment.zone}</Text>
-                      </HStack>
-                    )}
-
-                    {/* Add Coordinates if available */}
-                    {parcelData?.latitude && parcelData?.longitude && (
-                      <HStack>
-                        <Icon as={FaGlobe} color="blue.600" />
-                        <Text fontWeight="medium">Coordinates:</Text>
-                        <Text>
-                          {parseFloat(parcelData.latitude).toFixed(6)},{' '}
-                          {parseFloat(parcelData.longitude).toFixed(6)}
-                        </Text>
-                      </HStack>
-                    )}
-
-                    {/* Add Elevation if available */}
-                    {parcelData?.elevation && (
-                      <HStack>
-                        <Icon as={FaMapMarkerAlt} color="gray.600" />
-                        <Text fontWeight="medium">Elevation:</Text>
-                        <Text>{parcelData.elevation} ft</Text>
-                      </HStack>
-                    )}
-                  </VStack>
-                </StandardCard>
+                  <ProfileDataGrid
+                    data={[
+                      {
+                        label: 'Address',
+                        value: parcelData?.address,
+                        type: 'text',
+                        conditional: !!parcelData?.address
+                      },
+                      {
+                        label: 'City',
+                        value: establishment?.city,
+                        type: 'text',
+                        conditional: !!establishment?.city
+                      },
+                      {
+                        label: 'State',
+                        value: establishment?.state,
+                        type: 'text',
+                        conditional: !!establishment?.state
+                      },
+                      {
+                        label: 'Country',
+                        value: establishment?.country,
+                        type: 'text',
+                        conditional: !!establishment?.country
+                      },
+                      {
+                        label: 'Zone',
+                        value: establishment?.zone,
+                        type: 'text',
+                        conditional: !!establishment?.zone
+                      },
+                      {
+                        label: 'Coordinates',
+                        value:
+                          parcelData?.latitude && parcelData?.longitude
+                            ? `${parseFloat(parcelData.latitude.toString()).toFixed(6)}, ${parseFloat(parcelData.longitude.toString()).toFixed(6)}`
+                            : undefined,
+                        type: 'text',
+                        conditional: !!(parcelData?.latitude && parcelData?.longitude)
+                      },
+                      {
+                        label: 'Elevation',
+                        value: parcelData?.elevation ? `${parcelData.elevation} ft` : undefined,
+                        type: 'text',
+                        conditional: !!parcelData?.elevation
+                      }
+                    ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                    columns={{ base: 1, md: 2 }}
+                  />
+                </ProfileSection>
 
                 {/* Certification Information */}
                 {(parcelData?.certified || parcelData?.certification_type) && (
-                  <StandardCard
+                  <ProfileSection
                     title="Certification"
-                    variant="flat"
                     icon={FaCertificate}
                     mb={{ base: 4, md: 6 }}
                   >
-                    <VStack spacing={3} align="stretch">
-                      <HStack>
-                        <Icon
-                          as={FaCertificate}
-                          color={parcelData?.certified ? 'green.600' : 'gray.500'}
-                        />
-                        <Text fontWeight="medium">Status:</Text>
-                        <Badge colorScheme={parcelData?.certified ? 'green' : 'gray'}>
-                          {parcelData?.certified ? 'Certified' : 'Not Certified'}
-                        </Badge>
-                      </HStack>
-                      {parcelData?.certification_type && (
-                        <HStack>
-                          <Icon as={FaCertificate} color="green.600" />
-                          <Text fontWeight="medium">Type:</Text>
-                          <Text>{parcelData.certification_type}</Text>
-                        </HStack>
-                      )}
-                    </VStack>
-                  </StandardCard>
+                    <ProfileDataGrid
+                      data={[
+                        {
+                          label: 'Status',
+                          value: parcelData?.certified ? 'Certified' : 'Not Certified',
+                          type: 'badge',
+                          colorScheme: parcelData?.certified ? 'green' : 'gray',
+                          conditional: parcelData?.certified !== undefined
+                        },
+                        {
+                          label: 'Type',
+                          value: parcelData?.certification_type,
+                          type: 'text',
+                          conditional: !!parcelData?.certification_type
+                        }
+                      ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                      columns={{ base: 1, md: 1 }}
+                    />
+                  </ProfileSection>
                 )}
 
                 {/* Company Information */}
-                <StandardCard
+                <ProfileSection
                   title="Company & Establishment"
-                  variant="flat"
                   icon={FaBuilding}
                   mb={{ base: 4, md: 6 }}
                 >
-                  <VStack spacing={3} align="stretch">
-                    <HStack>
-                      <Icon as={FaBuilding} color="green.600" />
-                      <Text fontWeight="medium">Company:</Text>
-                      <Text>{currentCompany?.name}</Text>
-                    </HStack>
-                    <HStack>
-                      <Icon as={FaTractor} color="green.600" />
-                      <Text fontWeight="medium">Establishment:</Text>
-                      <Text>{establishment?.name}</Text>
-                    </HStack>
-                  </VStack>
-                </StandardCard>
+                  <ProfileDataGrid
+                    data={[
+                      {
+                        label: 'Company',
+                        value: currentCompany?.name,
+                        type: 'text',
+                        conditional: !!currentCompany?.name
+                      },
+                      {
+                        label: 'Establishment',
+                        value: establishment?.name,
+                        type: 'text',
+                        conditional: !!establishment?.name
+                      }
+                    ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
+                    columns={{ base: 1, md: 1 }}
+                  />
+                </ProfileSection>
               </Box>
             </SimpleGrid>
 
             {/* About This Parcel Section */}
             {parcelData?.description && (
-              <VStack spacing={{ base: 4, md: 6 }} align="stretch">
-                <StandardCard title="About This Parcel" variant="flat" icon={FaRegCommentDots}>
-                  <Box>
-                    <HTMLRenderer htmlString={parcelData.description} />
-                  </Box>
-                </StandardCard>
-              </VStack>
+              <ProfileSection title="About This Parcel" icon={FaRegCommentDots} mb={{ base: 4, md: 6 }}>
+                <Box>
+                  <HTMLRenderer htmlString={parcelData.description} />
+                </Box>
+              </ProfileSection>
             )}
           </CardBody>
         </Card>
-      </Flex>
+      </Box>
     </Flex>
   );
 }

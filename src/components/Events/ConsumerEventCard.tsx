@@ -55,6 +55,11 @@ import {
   type EventFieldDisplay,
   type FieldDisplayItem
 } from 'utils/fieldDisplayUtils';
+import {
+  getVerificationBadgeConfig,
+  getVerificationColor,
+  type VerificationLevel
+} from 'utils/verificationTierHelpers';
 import { StandardImageGallery } from 'components/ImageGallery';
 
 // Comprehensive event interface that includes all possible fields across all event types
@@ -83,6 +88,9 @@ interface ConsumerEventData {
   data_integrity_score?: number;
   usda_verified?: boolean;
   carbon_impact?: number;
+  // MVP Photo Verification: Tiered verification levels
+  verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+  photo_verified_count?: number;
 
   // Photo/media data
   photo_count?: number;
@@ -190,19 +198,24 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
   // DEBUG: Log field display data for production events
   if (event.type?.startsWith('production.') || event.type === 'production' || event.event_type === 1) {
-    console.log('🔧 PRODUCTION EVENT FIELD DISPLAY DEBUG:', {
+    console.log('🔧 [ConsumerEventCard] PRODUCTION EVENT FIELD DISPLAY DEBUG:', {
       eventId: event.id,
       eventType: event.type,
       event_type_number: event.event_type,
       description: event.description,
       area_covered: event.area_covered,
-      area_unit: (event as any).area_unit, // DEBUG: Check if area_unit is present
+      area_unit: (event as any).area_unit,
       yield_quantity: event.yield_quantity,
       fuel_consumed: event.fuel_consumed,
       equipment_hours: event.equipment_hours,
+      seeds_source: (event as any).seeds_source,
       fieldDisplay,
       immediateFields: fieldDisplay.immediate,
+      immediateCount: fieldDisplay.immediate.length,
       secondaryFields: fieldDisplay.secondary,
+      secondaryCount: fieldDisplay.secondary.length,
+      detailsFields: fieldDisplay.details,
+      detailsCount: fieldDisplay.details.length,
       fullEvent: event
     });
   }
@@ -234,7 +247,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     blockchainData.blockNumber = event.blockchain_block_number || 0;
   }
 
-  // Photo verification processing (NEW - anti-gaming system)
+  // Photo verification processing (MVP Photo Verification: Use Vision API validation)
   const photoVerification = {
     hasPhotos:
       Boolean(event.album?.images?.length) ||
@@ -242,16 +255,41 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     photoCount: event.album?.images?.length || 0,
     isPhotoVerified: Boolean(event.album?.images?.length && event.album.images?.length >= 1),
     verificationLevel: (() => {
-      const photoCount = event.album?.images?.length || 0;
-      if (photoCount >= 2) return 'strong';
-      if (photoCount >= 1) return 'moderate';
-      return 'none';
+      // MVP Photo Verification: Use the Vision API-validated verification_level
+      // Maps tiered verification to visual strength levels
+      const verificationLevel = event.verification_level || 'self_reported';
+      switch (verificationLevel) {
+        case 'certified':
+          return 'strong'; // 100% trust - blockchain certified
+        case 'data_verified':
+          return 'strong'; // 85% trust - auto-verified (weather, equipment)
+        case 'photo_verified':
+          return 'strong'; // 80% trust - 2+ photos with GPS/timestamp
+        case 'photo_documented':
+          return 'moderate'; // 65% trust - 1+ photo verified by Vision API
+        case 'self_reported':
+        default:
+          return 'none'; // 50% trust - no photo evidence
+      }
     })(),
     trustMessage: (() => {
+      // MVP Photo Verification: Use Vision API validation tier descriptions
+      const verificationLevel = event.verification_level || 'self_reported';
       const photoCount = event.album?.images?.length || 0;
-      if (photoCount >= 2) return `Photo verified (${photoCount} images)`;
-      if (photoCount >= 1) return `Photo documented (${photoCount} image)`;
-      return 'Text documentation only';
+
+      switch (verificationLevel) {
+        case 'certified':
+          return `Blockchain certified (${photoCount} verified image${photoCount !== 1 ? 's' : ''})`;
+        case 'data_verified':
+          return 'Auto-verified (Weather/Equipment data)';
+        case 'photo_verified':
+          return `Photo verified (${photoCount} verified image${photoCount !== 1 ? 's' : ''})`;
+        case 'photo_documented':
+          return `Photo documented (${photoCount} verified image${photoCount !== 1 ? 's' : ''} - AI validated)`;
+        case 'self_reported':
+        default:
+          return 'Text documentation only (no photos)';
+      }
     })()
   };
 
@@ -565,26 +603,35 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {/* USDA verification badge - REMOVED to avoid duplication with EnhancedTrustIndicators */}
                 {/* USDA verification is already shown in the product header via EnhancedTrustIndicators */}
 
-                {/* Photo verification badge */}
-                {photoVerification.hasPhotos && (
-                  <Tooltip
-                    label="Visual evidence provided with verified photos from the farm"
-                    placement="top"
-                  >
-                    <Badge
-                      colorScheme="blue"
-                      variant="solid"
-                      fontSize="xs"
-                      px={3}
-                      py={1}
-                      borderRadius="full"
-                    >
-                      <HStack spacing={1}>
-                        <Icon as={FaCamera} boxSize={3} />
-                        <Text>PHOTO VERIFIED</Text>
-                      </HStack>
-                    </Badge>
-                  </Tooltip>
+                {/* MVP Photo Verification: Tiered verification badge */}
+                {event.verification_level && (
+                  (() => {
+                    const config = getVerificationBadgeConfig(event.verification_level as VerificationLevel);
+                    const colorScheme = getVerificationColor(event.verification_level as VerificationLevel);
+                    return (
+                      <Tooltip label={config.tooltip} placement="top">
+                        <Badge
+                          colorScheme={colorScheme}
+                          variant="subtle"
+                          fontSize="xs"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                        >
+                          <Icon as={config.icon} boxSize={3} />
+                          <Text>{config.label}</Text>
+                          {event.photo_verified_count !== undefined && event.photo_verified_count > 0 && (
+                            <Text fontSize="xs" ml={1}>
+                              ({event.photo_verified_count})
+                            </Text>
+                          )}
+                        </Badge>
+                      </Tooltip>
+                    );
+                  })()
                 )}
 
                 {/* High integrity score badge */}
@@ -679,7 +726,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   </Text>
                 </Box>
 
-                {/* Comprehensive Field Display - IMMEDIATE Priority Fields */}
+                {/* 🚨 PREVIEW-DISPLAY EXACT MATCH: Key Details shown when expanded */}
+                {/* Comprehensive Field Display - IMMEDIATE Priority Fields (INSIDE collapse) */}
                 {fieldDisplay.immediate.length > 0 && (
                   <Box>
                     <HStack mb={3}>
@@ -954,7 +1002,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 )}
 
                 {/* Photo Gallery using StandardImageGallery */}
-                {photoVerification.hasPhotos && (
+                {/* MVP Photo Verification: Only show photos if they passed Vision API validation */}
+                {photoVerification.hasPhotos && event.verification_level !== 'self_reported' && (
                   <Box>
                     <HStack spacing={2} mb={4}>
                       <Icon as={FaCamera} color="green.500" boxSize={{ base: 6, md: 5 }} />

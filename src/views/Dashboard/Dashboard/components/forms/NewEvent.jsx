@@ -93,6 +93,7 @@ import {
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
 import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
+import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
@@ -391,24 +392,108 @@ function NewEvent({ isEdit = false, eventId = null }) {
   }, []);
 
   // Helper function to map backend event types to frontend codes
+  // COMPREHENSIVE EVENT TYPE MAPPING - ALL 8 EVENT TYPES, ALL 30+ SUBTYPES
   const mapBackendTypeToFrontendCode = (backendType) => {
-    if (!backendType) return '';
+    if (!backendType) {
+      console.log('[mapBackendTypeToFrontendCode] No backendType provided, returning empty string');
+      return '';
+    }
 
-    // Map verbose backend types to frontend codes
+    console.log('[mapBackendTypeToFrontendCode] Input backendType:', backendType, 'Type:', typeof backendType);
+
+    // COMPREHENSIVE MAP: Backend verbose property paths → Frontend short codes
+    // Covers all 8 event types (Weather, Production, Chemical, General, Equipment, Soil, Pest, Business)
     const typeMap = {
+      // ================== WEATHER EVENT TYPES (Type 0) ==================
+      // 8 weather subtypes
+      'event.weather.frost': 'FR',
+      'event.weather.drought': 'DR',
+      'event.weather.hail': 'HL',
+      'event.weather.heat': 'HT',
+      'event.weather.storm': 'TS',
+      'event.weather.high_winds': 'HW',
+      'event.weather.heavy_rain': 'HH',
+      'event.weather.low_humidity': 'LH',
+
+      // ================== PRODUCTION EVENT TYPES (Type 1) ==================
+      // 8 production subtypes (including Equipment Maintenance merged in Sprint 2)
+      'event.production.planting': 'PL',
+      'event.production.transplanting': 'TR',
+      'event.production.harvesting': 'HA',
+      'event.production.irrigation': 'IR',
+      'event.production.pruning': 'PR',
+      'event.production.equipment_maintenance': 'EM',
+      'event.production.cultivation': 'CU',
+      'event.production.thinning': 'TH',
+
+      // ================== CHEMICAL EVENT TYPES (Type 2) ==================
+      // 4 chemical subtypes
       'event.chemical.fertilizer': 'FE',
       'event.chemical.pesticide': 'PE',
       'event.chemical.fungicide': 'FU',
-      'event.chemical.herbicide': 'HE'
+      'event.chemical.herbicide': 'HE',
+
+      // ================== GENERAL EVENT TYPES (Type 3) ==================
+      // 1 general subtype (catch-all for other farm activities)
+      'event.general.general': 'GN',
+
+      // ================== EQUIPMENT EVENT TYPES (Type 4) ==================
+      // Note: Sprint 2 Epic 2.1 merged Equipment into Production as "Equipment Maintenance (EM)"
+      // But we keep this for backward compatibility with existing Equipment events
+      'event.equipment.equipment': 'EQ',
+
+      // ================== SOIL MANAGEMENT EVENT TYPES (Type 5) ==================
+      // 1 soil management subtype
+      'event.soil.soil_test': 'ST',
+
+      // ================== PEST MANAGEMENT EVENT TYPES (Type 6) ==================
+      // 2 pest management subtypes
+      'event.pest.scouting': 'SC',
+      'event.pest.trap_monitoring': 'TM',
+
+      // ================== BUSINESS EVENT TYPES (Type 7) ==================
+      // 1 business subtype
+      'event.business.certification': 'CE'
     };
 
-    // If it's already a code (FE, PE, FU, HE), return it as is
-    if (['FE', 'PE', 'FU', 'HE'].includes(backendType)) {
+    // ALL VALID SHORT CODES - Complete reference list
+    const validCodes = [
+      // Weather (8)
+      'FR', 'DR', 'HL', 'HT', 'TS', 'HW', 'HH', 'LH',
+      // Production (8)
+      'PL', 'TR', 'HA', 'IR', 'PR', 'EM', 'CU', 'TH',
+      // Chemical (4)
+      'FE', 'PE', 'FU', 'HE',
+      // General (1)
+      'GN',
+      // Equipment (1)
+      'EQ',
+      // Soil (1)
+      'ST',
+      // Pest (2)
+      'SC', 'TM',
+      // Business (1)
+      'CE'
+    ];
+
+    // If it's already a short code, return it as is
+    if (validCodes.includes(backendType)) {
+      console.log('[mapBackendTypeToFrontendCode] Already a valid short code:', backendType);
       return backendType;
     }
 
-    // Otherwise, try to map it
-    return typeMap[backendType] || '';
+    // Try to map verbose backend type to short code
+    const mappedCode = typeMap[backendType];
+
+    if (mappedCode) {
+      console.log('[mapBackendTypeToFrontendCode] Successfully mapped:', backendType, '→', mappedCode);
+      return mappedCode;
+    } else {
+      console.warn('[mapBackendTypeToFrontendCode] Unknown backend type:', backendType, '- no mapping found');
+      console.warn('[mapBackendTypeToFrontendCode] Valid short codes:', validCodes);
+      console.warn('[mapBackendTypeToFrontendCode] Valid backend types:', Object.keys(typeMap));
+      return ''; // Return empty string for unknown types (form will use default)
+    }
   };
 
   // Load existing event data and pre-fill forms when editing
@@ -533,9 +618,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
       });
 
       // Set event type from existing data
+      // 🚨 CRITICAL FIX: Use eventTypeFromUrl if event_type is missing from backend response
+      // Backend API uses event_type as query param but doesn't always return it in response body
       const eventTypeFromData =
-        existingEvent.event_type !== undefined ? existingEvent.event_type : 0;
-      console.log('[NewEvent] Setting activeEventType:', eventTypeFromData);
+        existingEvent.event_type !== undefined
+          ? existingEvent.event_type
+          : eventTypeFromUrl
+          ? parseInt(eventTypeFromUrl)
+          : 0;
+      console.log('[NewEvent] Setting activeEventType:', eventTypeFromData, {
+        fromBackend: existingEvent.event_type,
+        fromUrl: eventTypeFromUrl
+      });
       setActiveEventType(eventTypeFromData);
 
       // Store in Redux
@@ -1297,12 +1391,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
           />
 
           {/* Step Content */}
-          <Flex direction={{ base: 'column', xl1: 'row-reverse' }} gap={10} align="start">
+          <Flex direction={{ base: 'column', lg: 'row-reverse' }} gap={{ base: 4, lg: 8 }} align="flex-start">
             {/* Carbon Impact Sidebar */}
             <Box
-              flex="0 0 auto"
-              w={{ base: '100%', xl1: '370px' }}
-              position={{ xl: 'sticky' }}
+              flex={{ base: 'none', lg: '0 0 370px', xl1: '0 0 450px' }}
+              w={{ base: '100%', lg: '370px', xl1: '450px' }}
+              position={{ lg: 'sticky' }}
               top="80px"
               alignSelf="flex-start"
             >
@@ -1506,7 +1600,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
             </Box>
 
             {/* Main Form */}
-            <Box flex="1" maxW={{ base: '100%', xl1: '750px' }} w="100%">
+            <Box flex={{ base: 'none', lg: '1' }} w={{ base: '100%', lg: 'auto' }} minW={{ lg: '0' }}>
               {activeStep === 0 && (
                 <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                   <CardHeader pb={2}>
@@ -1837,6 +1931,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
                   </CardHeader>
                   <CardBody pt={4} pb={6} px={{ base: 3, md: 6 }}>
                     <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+                      {/* Photo Recommendations - Event-Type & Subtype-Specific Guidance */}
+                      <PhotoRecommendationsBox
+                        activeEventType={activeEventType}
+                        photoCount={acceptedFiles?.length || 0}
+                        subtype={activeEventType === 1 ? eventFormData.type : undefined}
+                      />
+
                       <StandardField
                         label={intl.formatMessage({ id: 'app.eventPhotos' }) || 'Event Photos'}
                         helpText="Upload photos documenting this agricultural event"

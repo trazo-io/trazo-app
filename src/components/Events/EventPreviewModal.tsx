@@ -22,6 +22,12 @@ import { hasMinimalPreviewData, type PreviewEventData } from '../../utils/eventP
 import { normalizeFormEventData } from '../../utils/eventDataNormalizer';
 import { StandardizedEvent, EVENT_TYPE_NAMES } from '../../types/standardizedEvents';
 import { getConsumerEventDescription } from '../../utils/eventDescriptions';
+import {
+  calculatePreviewVerificationLevel,
+  getPhotoRecommendations,
+  getPhotoGuidanceText,
+  type VerificationLevel
+} from '../../utils/verificationTierHelpers';
 import { useIntl } from 'react-intl';
 
 interface EventPreviewModalProps {
@@ -53,31 +59,50 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
     formDataKeys: formData ? Object.keys(formData) : []
   });
 
+  // Calculate mock verification level based on form photos
+  const photoCount = formData?.album?.images?.length || 0;
+  const hasGpsData = !!(formData?.latitude || formData?.longitude || formData?.gps_coordinates);
+  const hasTimestamp = !!(formData?.timestamp || formData?.date);
+
+  const mockVerificationLevel: VerificationLevel = calculatePreviewVerificationLevel(
+    photoCount,
+    hasGpsData,
+    hasTimestamp,
+    activeEventType
+  );
+
   // Transform form data to standardized event format
   const previewEvent: StandardizedEvent = hasEnoughData
-    ? normalizeFormEventData(activeEventType, formData, {
-        generateMockVerification: true
-      })
+    ? {
+        ...normalizeFormEventData(activeEventType, formData, {
+          generateMockVerification: true
+        }),
+        // MVP Photo Verification: Add calculated verification level for preview
+        verification_level: mockVerificationLevel,
+        photo_verified_count: photoCount > 0 ? photoCount : undefined
+      }
     : ({
         id: 'preview-event',
         type: 'general',
         description: 'Please fill in more details to see preview',
         date: new Date().toISOString(),
-        event_type: activeEventType
+        event_type: activeEventType,
+        verification_level: 'self_reported'
       } as StandardizedEvent);
 
   // DEBUG: Trace normalized event
   if (hasEnoughData) {
     console.log('🔍 [EventPreviewModal] NORMALIZED EVENT:', {
       area_covered: (previewEvent as any).area_covered,
-      type: previewEvent.type
+      fuel_consumed: (previewEvent as any).fuel_consumed,
+      equipment_hours: (previewEvent as any).equipment_hours,
+      seeds_source: (previewEvent as any).seeds_source,
+      yield_quantity: (previewEvent as any).yield_quantity,
+      type: previewEvent.type,
+      event_type: previewEvent.event_type,
+      fullEvent: previewEvent
     });
   }
-
-  // Generate proper consumer-friendly description using the same logic as ConsumerEventCard
-  const consumerEventInfo = hasEnoughData
-    ? getConsumerEventDescription(previewEvent.description, previewEvent)
-    : { description: 'Please fill in more details to see preview' };
 
   // Use official event type names to prevent mapping errors
   const eventTypeName =
@@ -175,7 +200,7 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                 overflow="hidden"
                 p={4}
               >
-                <ConsumerEventCard event={previewEvent} isFirst={true} isLast={true} />
+                <ConsumerEventCard event={previewEvent as any} isFirst={true} isLast={true} />
               </Box>
             </Box>
             {/* Preview Details
@@ -214,6 +239,7 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                 </VStack>
               </Box>
             )} */}
+
             {/* Help Text */}
             <Box
               bg={useColorModeValue('green.50', 'green.900')}

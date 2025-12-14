@@ -42,6 +42,8 @@ export function getEventTypeMapping(eventName: string): EventTypeMapping {
   }
 
   // Equipment events - medium to high carbon impact
+  // CRITICAL FIX (2025-01-21): Changed EQ → EM for Production event subtypes
+  // Note: EQ (type 4) still exists for backward compatibility with standalone Equipment events
   if (
     name.includes('equipment') ||
     name.includes('tractor') ||
@@ -56,7 +58,7 @@ export function getEventTypeMapping(eventName: string): EventTypeMapping {
   ) {
     return {
       backendType: 'equipment',
-      subType: 'EQ', // EQ=Equipment
+      subType: 'EM', // ✅ FIXED: Was EQ, now EM (Production subtype, event_type=1)
       carbonImpactLevel: 'medium'
     };
   }
