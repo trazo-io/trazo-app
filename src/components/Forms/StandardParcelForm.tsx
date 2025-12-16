@@ -784,13 +784,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
       };
 
       onSubmit(finalData as any);
-      toast({
-        title: isEdit ? 'Parcel Updated' : 'Parcel Created',
-        description: `"${data.name}" has been ${isEdit ? 'updated' : 'created'} successfully.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true
-      });
+
     } catch (error) {
       console.error('❌ Form submission error:', error);
       toast({

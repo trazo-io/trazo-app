@@ -143,7 +143,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         contact_phone: data.contact_phone || '',
         address: data.address || '',
         certified: data.certified || false,
-        crop_type: data.crop_focus || '', // Map crop_focus → crop_type for backend
+        crop_focus: data.crop_focus || '', // Use crop_focus for backend transparency mapping
         soil_type: data.soil_type || '',
         unique_code: data.unique_code || '',
         certification_type: data.certification_type || '',
@@ -194,14 +194,9 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           parcelData: finalData
         }).unwrap();
 
-        toast({
-          title: 'Parcel Updated',
-          description: 'The parcel has been successfully updated.',
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-          position: 'top-right'
-        });
+
+        // ✅ Redirect to parcel profile after update
+        navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
       } else {
         // Create new parcel
         const result = await createParcel({
@@ -217,9 +212,19 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
             parcel: result
           })
         );
-      }
 
-      navigate(`/admin/dashboard/establishment/${establishmentId}`);
+        toast({
+          title: 'Parcel Created',
+          description: 'The parcel has been successfully created.',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+          position: 'top-right'
+        });
+
+        // ✅ Redirect to new parcel profile after creation
+        navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${result.id}`);
+      }
     } catch (error: any) {
       console.error('Failed to save parcel:', error);
 

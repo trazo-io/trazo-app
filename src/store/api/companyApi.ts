@@ -35,6 +35,22 @@ const companyApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ['Company']
     }),
+    updateCompany: build.mutation<
+      Company,
+      { companyId: string | number; companyData: Partial<Company> }
+    >({
+      query: ({ companyId, companyData }) => ({
+        url: COMPANY_URL(String(companyId)),
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: companyData
+      }),
+      invalidatesTags: ['Company']
+    }),
     createEstablishment: build.mutation({
       query: ({ companyId, establishment }) => {
         // If we have uploaded image URLs, send them as JSON
@@ -415,6 +431,7 @@ const companyApi = baseApi.injectEndpoints({
 export const {
   useGetCompanyQuery,
   useCreateCompanyMutation,
+  useUpdateCompanyMutation,
   useCreateEstablishmentMutation,
   useEditEstablishmentMutation,
   useGetEstablishmentQuery,

@@ -27,6 +27,25 @@ import {
 } from 'react-icons/fa';
 import { StandardCard } from '../Design/StandardComponents';
 
+// 🏅 Certification type mapping for proper display names
+const CERTIFICATION_DISPLAY_NAMES: Record<string, string> = {
+  organic: 'USDA Organic',
+  eu_organic: 'EU Organic',
+  regenerative: 'Regenerative Organic (ROC)',
+  cng: 'Certified Naturally Grown',
+  global_gap: 'GlobalG.A.P.',
+  fair_trade: 'Fair Trade Certified',
+  rainforest_alliance: 'Rainforest Alliance',
+  carbon_neutral: 'Carbon Neutral',
+  biodynamic: 'Demeter Biodynamic',
+  non_gmo: 'Non-GMO Project Verified'
+};
+
+const formatCertificationType = (value: string | undefined | null): string => {
+  if (!value) return 'Not certified';
+  return CERTIFICATION_DISPLAY_NAMES[value] || value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ');
+};
+
 interface ParcelTransparencyData {
   transparency_score?: number;
   transparency_description?: string;
@@ -161,10 +180,10 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
         icon: FaCertificate,
         color: 'orange',
         requirement: hasCert
-          ? `${parcelData.certification_type}`
+          ? formatCertificationType(parcelData.certification_type)
           : 'Not certified',
         tip: hasCert
-          ? `Your ${parcelData.certification_type} certification adds credibility.`
+          ? `Your ${formatCertificationType(parcelData.certification_type)} certification adds credibility.`
           : 'Add certification (Organic, GAP, etc.) to boost consumer trust.',
         isComplete: certPoints === 10
       }

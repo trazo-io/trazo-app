@@ -79,7 +79,19 @@ export const productApi = baseApi.injectEndpoints({
           formData.append('usda_compliance_eligible', parcelData.usda_compliance_eligible);
         }
 
-        // Note: crop_type field removed - it's now stored in History model for per-production tracking
+        // ✅ TRANSPARENCY FIELDS for consumer display
+        if (parcelData.crop_focus) {
+          formData.append('crop_focus', parcelData.crop_focus);
+        }
+        if (parcelData.consumer_story) {
+          formData.append('consumer_story', parcelData.consumer_story);
+        }
+        if (parcelData.sustainability_practices) {
+          formData.append('sustainability_practices', parcelData.sustainability_practices);
+        }
+        if (parcelData.transparency_ready !== undefined) {
+          formData.append('transparency_ready', parcelData.transparency_ready);
+        }
 
         console.log('🚀 CREATE FormData contents being sent to backend:');
         for (let [key, value] of formData.entries()) {
@@ -162,7 +174,19 @@ export const productApi = baseApi.injectEndpoints({
           formData.append('usda_compliance_eligible', parcelData.usda_compliance_eligible);
         }
 
-        // Note: crop_type field removed - it's now stored in History model for per-production tracking
+        // ✅ TRANSPARENCY FIELDS for consumer display
+        if (parcelData.crop_focus) {
+          formData.append('crop_focus', parcelData.crop_focus);
+        }
+        if (parcelData.consumer_story) {
+          formData.append('consumer_story', parcelData.consumer_story);
+        }
+        if (parcelData.sustainability_practices) {
+          formData.append('sustainability_practices', parcelData.sustainability_practices);
+        }
+        if (parcelData.transparency_ready !== undefined) {
+          formData.append('transparency_ready', parcelData.transparency_ready);
+        }
 
         console.log('🚀 UPDATE FormData contents being sent to backend:');
         for (let [key, value] of formData.entries()) {

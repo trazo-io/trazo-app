@@ -27,10 +27,15 @@ import {
   TagCloseButton,
   Icon,
   IconButton,
-  Tooltip
+  Tooltip,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel
 } from '@chakra-ui/react';
 import { SearchIcon, CopyIcon, CheckIcon } from '@chakra-ui/icons';
-import { FaUsers, FaShare } from 'react-icons/fa';
+import { FaUsers, FaShare, FaBuilding } from 'react-icons/fa';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -42,6 +47,7 @@ import {
   StandardPage
 } from 'components/Design/StandardComponents';
 import MemberRow from './memberRow';
+import CompanyInfoTab from './CompanyInfoTab';
 import { useGetCompanyMembersQuery } from 'store/api/companyApi';
 import { useGetUserRolesQuery } from 'store/api/userApi';
 import { useSendInvitationMutation } from 'store/api/invitationApi';
@@ -232,8 +238,45 @@ export default function SettingsView() {
       onBack={() => navigate(-1)}
     >
       <Box w="100%" maxW="1200px" mx="auto" className="main-content-area">
-        <VStack spacing={10} w="100%" pb={12}>
-          {/* Members Overview Section - Most Important First */}
+        {/* Tab Navigation */}
+        <Tabs variant="soft-rounded" colorScheme="green" mb={8}>
+          <TabList
+            bg="gray.100"
+            p={1}
+            borderRadius="xl"
+            mb={8}
+            flexWrap="wrap"
+            gap={2}
+          >
+            <Tab
+              _selected={{ bg: 'white', color: 'green.600', shadow: 'sm' }}
+              borderRadius="lg"
+              fontWeight="semibold"
+              px={6}
+            >
+              <HStack spacing={2}>
+                <Icon as={FaUsers} boxSize={4} />
+                <Text>Equipo</Text>
+              </HStack>
+            </Tab>
+            <Tab
+              _selected={{ bg: 'white', color: 'green.600', shadow: 'sm' }}
+              borderRadius="lg"
+              fontWeight="semibold"
+              px={6}
+            >
+              <HStack spacing={2}>
+                <Icon as={FaBuilding} boxSize={4} />
+                <Text>Información de Compañía</Text>
+              </HStack>
+            </Tab>
+          </TabList>
+
+          <TabPanels>
+            {/* Team Tab Panel */}
+            <TabPanel p={0}>
+              <VStack spacing={10} w="100%" pb={12}>
+                {/* Members Overview Section - Most Important First */}
           <Box w="100%">
             <StandardCard
               title={
@@ -721,8 +764,16 @@ export default function SettingsView() {
                 </VStack>
               </Box>
             </StandardCard>
-          </Box>
-        </VStack>
+              </Box>
+            </VStack>
+          </TabPanel>
+
+            {/* Company Information Tab Panel */}
+            <TabPanel p={0}>
+              <CompanyInfoTab />
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
       </Box>
     </StandardPage>
   );

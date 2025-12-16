@@ -39,6 +39,15 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 
+// 🎯 Utility to format field values as Title Case (e.g., "loam" → "Loam", "sandy_loam" → "Sandy Loam")
+const formatDisplayValue = (value: string | undefined | null): string => {
+  if (!value) return '--';
+  return value
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 interface ParcelMapInfoProps {
   parcelData?: {
     id?: string;
@@ -198,7 +207,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                   <HStack spacing={2}>
                     <Icon as={MdTerrain} color="brown.500" />
                     <Text fontSize="md" color={textColor}>
-                      {parcelData.soilType}
+                      {formatDisplayValue(parcelData.soilType)}
                     </Text>
                   </HStack>
                 </Box>
@@ -235,7 +244,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                     </Text>
                   </HStack>
                   <Text fontSize="sm" color={textColor}>
-                    {parcelData.primary_crop || parcelData.cropType}
+                    {formatDisplayValue(parcelData.primary_crop || parcelData.cropType)}
                   </Text>
                 </VStack>
               )}

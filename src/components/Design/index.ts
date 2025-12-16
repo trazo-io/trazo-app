@@ -15,7 +15,10 @@ export {
   StandardSection,
   StandardStepper,
   StandardSelectionGrid,
-  StandardMediaUpload
+  StandardMediaUpload,
+  SectionHeader,
+  SectionBox,
+  CollapsibleSection
 } from './StandardComponents';
 
 // Empty State Components

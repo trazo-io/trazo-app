@@ -73,6 +73,34 @@ import {
   TransparencyScoreCard
 } from 'components/ProfileSections';
 
+// 🎯 Utility to format field values as Title Case (e.g., "citrus" → "Citrus", "sandy_loam" → "Sandy Loam")
+const formatDisplayValue = (value: string | undefined | null): string => {
+  if (!value) return '--';
+  return value
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+// 🏅 Certification type mapping for proper display names
+const CERTIFICATION_DISPLAY_NAMES: Record<string, string> = {
+  organic: 'USDA Organic',
+  eu_organic: 'EU Organic',
+  regenerative: 'Regenerative Organic (ROC)',
+  cng: 'Certified Naturally Grown',
+  global_gap: 'GlobalG.A.P.',
+  fair_trade: 'Fair Trade Certified',
+  rainforest_alliance: 'Rainforest Alliance',
+  carbon_neutral: 'Carbon Neutral',
+  biodynamic: 'Demeter Biodynamic',
+  non_gmo: 'Non-GMO Project Verified'
+};
+
+const formatCertificationType = (value: string | undefined | null): string => {
+  if (!value) return '--';
+  return CERTIFICATION_DISPLAY_NAMES[value] || formatDisplayValue(value);
+};
+
 // Type definitions for Redux state
 interface Company {
   id: string;
@@ -353,7 +381,7 @@ function ProfileParcel(): React.ReactElement {
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
                   <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {parcelData?.primary_crop || parcelData?.crop_type || '--'}
+                    {formatDisplayValue(parcelData?.primary_crop || parcelData?.crop_type)}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Primary Crop
@@ -372,7 +400,7 @@ function ProfileParcel(): React.ReactElement {
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
                   <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {parcelData?.soil_type || '--'}
+                    {formatDisplayValue(parcelData?.soil_type)}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Soil Type
@@ -391,7 +419,11 @@ function ProfileParcel(): React.ReactElement {
                 </Circle>
                 <VStack spacing={{ base: 1, sm: 1 }}>
                   <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {parcelData?.certified ? 'Yes' : 'No'}
+                    {parcelData?.certified && parcelData?.certification_type
+                      ? formatCertificationType(parcelData.certification_type)
+                      : parcelData?.certified
+                        ? 'Yes'
+                        : 'No'}
                   </Text>
                   <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
                     Certified
@@ -672,8 +704,8 @@ function ProfileParcel(): React.ReactElement {
                         conditional: !!parcelData?.area
                       },
                       { label: 'Unique Code', value: parcelData?.unique_code, type: 'text', conditional: !!parcelData?.unique_code },
-                      { label: 'Primary Crop', value: parcelData?.primary_crop || parcelData?.crop_type, type: 'text', conditional: !!(parcelData?.primary_crop || parcelData?.crop_type) },
-                      { label: 'Soil Type', value: parcelData?.soil_type, type: 'text', conditional: !!parcelData?.soil_type }
+                      { label: 'Primary Crop', value: formatDisplayValue(parcelData?.primary_crop || parcelData?.crop_type), type: 'text' as const, conditional: !!(parcelData?.primary_crop || parcelData?.crop_type) },
+                      { label: 'Soil Type', value: formatDisplayValue(parcelData?.soil_type), type: 'text' as const, conditional: !!parcelData?.soil_type }
                     ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
                     columns={{ base: 1, md: 2 }}
                   />
@@ -782,70 +814,6 @@ function ProfileParcel(): React.ReactElement {
                     </VStack>
                   </ProfileSection>
                 )}
-
-                {/* Technology & Features Card - CRITICAL for trust building */}
-                <ProfileSection
-                  title="Technology & Features"
-                  icon={FaLeaf}
-                  mb={{ base: 4, md: 6 }}
-                  borderLeft="4px solid"
-                  borderLeftColor="green.500"
-                  bg="green.50"
-                >
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    {/* Carbon Calculation Status */}
-                    {parcelData?.carbon_calculation_enabled !== undefined && (
-                      <HStack
-                        spacing={3}
-                        p={3}
-                        bg={parcelData?.carbon_calculation_enabled ? 'green.50' : 'gray.50'}
-                        borderRadius="xl"
-                        border="1px"
-                        borderColor={parcelData?.carbon_calculation_enabled ? 'green.200' : 'gray.200'}
-                      >
-                        <Icon as={FaLeaf} color={parcelData?.carbon_calculation_enabled ? 'green.600' : 'gray.500'} />
-                        <VStack spacing={0} align="start" flex={1}>
-                          <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                            Carbon Calculation
-                          </Text>
-                          <Badge
-                            colorScheme={parcelData?.carbon_calculation_enabled ? 'green' : 'gray'}
-                            variant="subtle"
-                            size="sm"
-                          >
-                            {parcelData?.carbon_calculation_enabled ? 'Enabled' : 'Disabled'}
-                          </Badge>
-                        </VStack>
-                      </HStack>
-                    )}
-
-                    {/* USDA Compliance Status */}
-                    {parcelData?.usda_compliance_eligible !== undefined && (
-                      <HStack
-                        spacing={3}
-                        p={3}
-                        bg={parcelData?.usda_compliance_eligible ? 'blue.50' : 'gray.50'}
-                        borderRadius="xl"
-                        border="1px"
-                        borderColor={parcelData?.usda_compliance_eligible ? 'blue.200' : 'gray.200'}
-                      >
-                        <Icon as={FaCertificate} color={parcelData?.usda_compliance_eligible ? 'blue.600' : 'gray.500'} />
-                        <VStack spacing={0} align="start" flex={1}>
-                          <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                            USDA Compliance
-                          </Text>
-                          <Badge
-                            colorScheme={parcelData?.usda_compliance_eligible ? 'blue' : 'gray'}
-                            variant="subtle"
-                            size="sm"
-                          >
-                            {parcelData?.usda_compliance_eligible ? 'Eligible' : 'Not Eligible'}
-                          </Badge>
-                        </VStack>
-                      </HStack>
-                    )}
-                  </SimpleGrid>
-                </ProfileSection>
 
                 {/* Agricultural Data Section */}
                 {parcelData?.agricultural_details &&
@@ -1272,8 +1240,8 @@ function ProfileParcel(): React.ReactElement {
                         },
                         {
                           label: 'Type',
-                          value: parcelData?.certification_type,
-                          type: 'text',
+                          value: formatCertificationType(parcelData?.certification_type),
+                          type: 'text' as const,
                           conditional: !!parcelData?.certification_type
                         }
                       ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
@@ -1308,15 +1276,6 @@ function ProfileParcel(): React.ReactElement {
                 </ProfileSection>
               </Box>
             </SimpleGrid>
-
-            {/* About This Parcel Section */}
-            {parcelData?.description && (
-              <ProfileSection title="About This Parcel" icon={FaRegCommentDots} mb={{ base: 4, md: 6 }}>
-                <Box>
-                  <HTMLRenderer htmlString={parcelData.description} />
-                </Box>
-              </ProfileSection>
-            )}
           </CardBody>
         </Card>
       </Box>

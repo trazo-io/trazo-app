@@ -5,7 +5,6 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
-  ModalFooter,
   ModalCloseButton,
   VStack,
   HStack,
@@ -16,13 +15,7 @@ import {
   Badge,
   Box,
   Divider,
-  IconButton,
   useToast,
-  Input,
-  Textarea,
-  FormControl,
-  FormLabel,
-  FormHelperText,
   Skeleton
 } from '@chakra-ui/react';
 import {
@@ -32,9 +25,7 @@ import {
   FaCut,
   FaLeaf,
   FaMicrophone,
-  FaMicrophoneSlash,
   FaCamera,
-  FaMapMarkerAlt,
   FaArrowLeft,
   FaClock,
   FaRuler,
@@ -43,12 +34,27 @@ import {
   FaTools,
   FaBug,
   FaChartLine,
-  FaPlus,
   FaRobot,
-  FaLightbulb
+  FaLightbulb,
+  FaCheckCircle
 } from 'react-icons/fa';
-import { StandardButton } from 'components/Design';
+import {
+  StandardButton,
+  StandardInput,
+  StandardTextarea,
+  StandardField,
+  SectionBox,
+  SectionHeader
+} from 'components/Design';
 import { VoiceEventCapture } from 'components/Events/VoiceEventCapture';
+import {
+  TypeAwareFields,
+  useTypeAwareFields
+} from 'components/QuickEvent';
+import {
+  getQuickEventFields,
+  getFieldsForBackend
+} from 'config/quickEventFields';
 // @ts-ignore - JS file import
 import { useCreateEventMutation } from 'store/api/historyApi.js';
 import {
@@ -58,6 +64,10 @@ import {
 import { useGetCropTypesDropdownQuery } from 'store/api/companyApi';
 import { useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useIntl } from 'react-intl';
+
+// Import crop type mapping service for robust crop matching
+import { findCropTypeId, getCropTypeMapping } from 'utils/cropTypeMapping';
 
 // Import real USDA API hooks for enhanced suggestions
 import {
@@ -83,6 +93,10 @@ interface EventTemplate {
   timing?: string;
   usage_count?: number;
   excludeFromCarbonCalculation?: boolean;
+  // New fields from backend for better organization
+  displayPriority?: number;
+  templateCategory?: string;
+  translationKey?: string;
 }
 
 interface QuickAddEventProps {
@@ -103,14 +117,74 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const [showVoiceCapture, setShowVoiceCapture] = useState(false);
   const [showDetailedForm, setShowDetailedForm] = useState(false);
   const [eventDate, setEventDate] = useState(new Date().toISOString().slice(0, 16));
+  const [performedBy, setPerformedBy] = useState('');
   const [eventDescription, setEventDescription] = useState('');
   const [eventObservations, setEventObservations] = useState('');
   const [applicationRate, setApplicationRate] = useState('');
   const [duration, setDuration] = useState('');
   const [templateSuggestions, setTemplateSuggestions] = useState<EventTemplate[]>([]);
   const [showTemplateSuggestions, setShowTemplateSuggestions] = useState(false);
+  const [typeAwareFieldValues, setTypeAwareFieldValues] = useState<Record<string, unknown>>({});
   const toast = useToast();
   const navigate = useNavigate();
+  const intl = useIntl();
+
+  // Map selected template to quickEventFields templateId
+  const getTypeAwareTemplateId = (template: EventTemplate | null): string => {
+    if (!template) return 'general_documentation';
+
+    const id = template.id.toLowerCase();
+    const type = template.type?.toLowerCase() || '';
+
+    // Map based on template ID patterns
+    if (id.includes('fertiliz') || type.includes('fertiliz')) return 'fertilization';
+    if (id.includes('irrigation') || type.includes('irrigation')) return 'irrigation';
+    if (id.includes('pest') || type.includes('pest')) return 'pest_control';
+    if (id.includes('pruning') || type.includes('pruning') || type.includes('prune')) return 'pruning';
+    if (id.includes('plant') || id.includes('seed') || type.includes('plant') || type.includes('seed')) return 'planting';
+    if (id.includes('harvest') || type.includes('harvest')) return 'harvest';
+    if (id.includes('herbicide') || type.includes('herbicide') || type.includes('weed')) return 'herbicide';
+    if (id.includes('fungicide') || type.includes('fungicide') || type.includes('fungi')) return 'fungicide';
+
+    return 'general_documentation';
+  };
+
+  // Get current type-aware template ID based on selected template
+  const typeAwareTemplateId = React.useMemo(
+    () => getTypeAwareTemplateId(selectedTemplate),
+    [selectedTemplate]
+  );
+
+  // Check if this template has type-aware fields
+  const hasTypeAwareFields = React.useMemo(
+    () => !!getQuickEventFields(typeAwareTemplateId),
+    [typeAwareTemplateId]
+  );
+
+  // Handle type-aware field changes
+  const handleTypeAwareFieldChange = React.useCallback((fieldName: string, value: unknown) => {
+    setTypeAwareFieldValues((prev) => ({
+      ...prev,
+      [fieldName]: value
+    }));
+  }, []);
+
+  // Reset type-aware fields when template changes
+  React.useEffect(() => {
+    if (selectedTemplate) {
+      const config = getQuickEventFields(typeAwareTemplateId);
+      if (config) {
+        // Initialize with defaults
+        const defaults: Record<string, unknown> = {};
+        config.quickFields.forEach((field) => {
+          if (field.default !== undefined) {
+            defaults[field.name] = field.default;
+          }
+        });
+        setTypeAwareFieldValues(defaults);
+      }
+    }
+  }, [selectedTemplate, typeAwareTemplateId]);
 
   // RTK Query mutation and Redux state
   const [createEvent, { isLoading: isCreatingEvent }] = useCreateEventMutation();
@@ -148,26 +222,34 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     }
   );
 
-  // Find the crop type ID based on the cropType prop
+  // Find the crop type ID based on the cropType prop using robust mapping service
+  // This uses USDA-compliant crop type matching with aliases and keyword fallbacks
   const currentCropTypeId = React.useMemo(() => {
     if (!cropTypesData || !cropType) return null;
 
-    // Try to find by exact name match first
-    let matchingCropType = cropTypesData.find(
-      (ct: any) => ct.name.toLowerCase() === cropType.toLowerCase()
-    );
+    // Use the robust crop type mapping service for matching
+    // This handles:
+    // 1. Exact name match (case-insensitive)
+    // 2. Slug match
+    // 3. Alias match (including Spanish names, regional variations)
+    // 4. Keyword match (partial matching)
+    // 5. Category match as fallback
+    const matchedId = findCropTypeId(cropType, cropTypesData);
 
-    // If not found, try to find by category or slug
-    if (!matchingCropType) {
-      matchingCropType = cropTypesData.find(
-        (ct: any) =>
-          ct.category.toLowerCase().includes(cropType.toLowerCase()) ||
-          ct.slug.toLowerCase().includes(cropType.toLowerCase())
-      );
+    if (matchedId) {
+      return matchedId;
     }
 
-    return matchingCropType?.id || null;
+    // If no match found through mapping service, log for debugging
+    // and return null (base templates will still be shown)
+    console.log(`[QuickAddEvent] No crop type match found for "${cropType}"`);
+    return null;
   }, [cropTypesData, cropType]);
+
+  // Get crop type mapping info for display purposes
+  const cropTypeMapping = React.useMemo(() => {
+    return getCropTypeMapping(cropType);
+  }, [cropType]);
 
   // Get event templates from database for the current crop type
   const { data: dbEventTemplatesData } = useGetEventTemplatesByCropTypeQuery(
@@ -358,21 +440,16 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       trackTemplateUsage(template.id);
     }
 
-    // Pre-populate form fields with enhanced template data
-    setEventDescription(`${template.name} - ${template.description}`);
+    // Pre-populate form fields with enhanced template data (clean names without emojis)
+    const cleanName = template.name.replace('🤖 ', '').replace('⭐ ', '');
+    setEventDescription(`${cleanName} - ${template.description}`);
     setApplicationRate(getDefaultApplicationRate(template));
     setDuration(template.typical_duration);
 
-    // Updated observations to show USDA-based calculations instead of hardcoded values
-    if (template.excludeFromCarbonCalculation) {
-      setEventObservations(
-        `Other Farm Activity (no carbon calculation). Sustainability Score: ${template.sustainabilityScore}/10. QR Visibility: ${template.qrVisibility}. Efficiency Tip: ${template.efficiency_tip}`
-      );
-    } else {
-      setEventObservations(
-        `USDA-based carbon calculation will be applied. Sustainability Score: ${template.sustainabilityScore}/10. QR Visibility: ${template.qrVisibility}. Efficiency Tip: ${template.efficiency_tip}`
-      );
-    }
+    // FIXED: Do NOT pre-populate observation with system metadata
+    // The observation field should remain empty for user's actual notes
+    // System metadata (transparency score, QR visibility, tips) is stored in separate backend fields
+    setEventObservations('');
   };
 
   // 🆕 Enhanced application rate defaults
@@ -421,6 +498,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     setShowDetailedForm(false);
     setShowVoiceCapture(false);
     setEventDate(new Date().toISOString().slice(0, 16));
+    setPerformedBy('');
     setEventDescription('');
     setEventObservations('');
     setApplicationRate('');
@@ -496,13 +574,13 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     const baseTemplates = [
       {
         id: 'fertilization',
-        name: 'Fertilización',
+        name: intl.formatMessage({ id: 'quickAdd.template.fertilization.name' }),
         icon: FaSeedling,
         color: 'green',
-        description: 'Aplicación de fertilizante',
+        description: intl.formatMessage({ id: 'quickAdd.template.fertilization.description' }),
         carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 180,
-        efficiency_tip: 'Soil testing can reduce fertilizer needs by 20-30%',
+        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.fertilization.tip' }),
         typical_duration: '2-3 hours',
         carbonCategory: 'high' as const,
         sustainabilityScore: 7,
@@ -512,14 +590,14 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       },
       {
         id: 'irrigation',
-        name: 'Riego',
+        name: intl.formatMessage({ id: 'quickAdd.template.irrigation.name' }),
         icon: FaTint,
         color: 'blue',
-        description: 'Sistema de riego',
+        description: intl.formatMessage({ id: 'quickAdd.template.irrigation.description' }),
         carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 120,
-        efficiency_tip: 'Smart irrigation controllers can save 25% energy',
-        typical_duration: '1-2 hours setup',
+        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.irrigation.tip' }),
+        typical_duration: intl.formatMessage({ id: 'quickAdd.template.irrigation.duration' }),
         carbonCategory: 'medium' as const,
         sustainabilityScore: 8,
         qrVisibility: 'medium' as const,
@@ -528,13 +606,13 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       },
       {
         id: 'pest_control',
-        name: 'Control de Plagas',
+        name: intl.formatMessage({ id: 'quickAdd.template.pestControl.name' }),
         icon: FaSprayCan,
         color: 'orange',
-        description: 'Aplicación de pesticidas',
+        description: intl.formatMessage({ id: 'quickAdd.template.pestControl.description' }),
         carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 150,
-        efficiency_tip: 'IPM practices can reduce pesticide use by 40%',
+        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.pestControl.tip' }),
         typical_duration: '3-4 hours',
         carbonCategory: 'high' as const,
         sustainabilityScore: 6,
@@ -544,13 +622,13 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       },
       {
         id: 'pruning',
-        name: 'Poda',
+        name: intl.formatMessage({ id: 'quickAdd.template.pruning.name' }),
         icon: FaCut,
         color: 'purple',
-        description: 'Poda de plantas',
+        description: intl.formatMessage({ id: 'quickAdd.template.pruning.description' }),
         carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 200,
-        efficiency_tip: 'Precision pruning reduces fuel consumption by 15%',
+        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.pruning.tip' }),
         typical_duration: '4-6 hours',
         carbonCategory: 'low' as const,
         sustainabilityScore: 9,
@@ -561,14 +639,14 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       // Add Other Farm Activities that exclude carbon calculations (Sprint 2: renamed from General Events)
       {
         id: 'general_documentation',
-        name: 'Documentación General',
+        name: intl.formatMessage({ id: 'quickAdd.template.generalDocumentation.name' }),
         icon: FaCamera,
         color: 'gray',
-        description: 'Documentación de actividades sin impacto de carbono',
+        description: intl.formatMessage({ id: 'quickAdd.template.generalDocumentation.description' }),
         carbonImpact: 0,
         costEstimate: 0,
-        efficiency_tip: 'Focus on transparency and documentation quality',
-        typical_duration: '15-30 minutes',
+        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.generalDocumentation.tip' }),
+        typical_duration: intl.formatMessage({ id: 'quickAdd.template.generalDocumentation.duration' }),
         carbonCategory: 'low' as const,
         sustainabilityScore: 8,
         qrVisibility: 'medium' as const,
@@ -578,25 +656,32 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     ];
 
     // Add crop-specific templates from database
+    // Templates are already ordered by display_priority from the backend
+    // NOTE: Database templates use their stored names directly (no translation keys needed)
+    // The translation_key field is reserved for future i18n of database content
     const dbTemplates: EventTemplate[] = [];
     if (dbEventTemplatesData?.templates) {
       dbEventTemplatesData.templates.forEach((template) => {
+        // Use template data directly from database - names are already in the correct language
         dbTemplates.push({
           id: `db-${template.id}`,
           name: template.name,
           icon: getEventIcon(template.event_type),
           color: getEventColor(template.event_type, template.carbon_category),
           description: template.description,
-          carbonImpact: template.carbon_impact || 0, // Backend templates may have estimated values
+          carbonImpact: template.carbon_impact || 0,
           costEstimate: template.cost_estimate || 0,
-          efficiency_tip:
-            template.efficiency_tips || 'Database-sourced template for optimal results',
+          efficiency_tip: template.efficiency_tips || '',
           typical_duration: template.typical_duration || '2-3 hours',
           carbonCategory: template.carbon_category as 'high' | 'medium' | 'low',
           sustainabilityScore: template.sustainability_score || 7,
           qrVisibility: template.qr_visibility as 'high' | 'medium' | 'low',
           type: template.type || template.event_type,
-          excludeFromCarbonCalculation: template.exclude_from_carbon_calculation || false
+          excludeFromCarbonCalculation: template.exclude_from_carbon_calculation || false,
+          // New fields for better organization
+          displayPriority: template.display_priority || 3,
+          templateCategory: template.template_category || 'core',
+          translationKey: template.translation_key || ''
         });
       });
     }
@@ -608,13 +693,13 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     if (crop.toLowerCase().includes('citrus')) {
       allTemplates.push({
         id: 'bloom_nutrition',
-        name: 'Nutrición de Floración',
+        name: intl.formatMessage({ id: 'quickAdd.template.bloomNutrition.name' }),
         icon: FaLeaf,
         color: 'pink',
-        description: 'Nutrición específica para floración',
+        description: intl.formatMessage({ id: 'quickAdd.template.bloomNutrition.description' }),
         carbonImpact: 0, // Will be calculated via USDA API
         costEstimate: 160,
-        efficiency_tip: 'Timing-specific nutrition improves efficiency by 20%',
+        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.bloomNutrition.tip' }),
         typical_duration: '2-3 hours',
         carbonCategory: 'medium' as const,
         sustainabilityScore: 8,
@@ -653,10 +738,10 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         event_type: getTemplateEventType(selectedTemplate),
         date: new Date().toISOString(),
         description: selectedTemplate.excludeFromCarbonCalculation
-          ? `${selectedTemplate.name} - Documentation only (no carbon calculation)`
-          : `${selectedTemplate.name} - USDA-based carbon calculation will be applied`,
+          ? `${selectedTemplate.name} - Documentation activity for transparency`
+          : `${selectedTemplate.name} - USDA-verified farming activity`,
         album: { images: [] },
-        observation: `Template-created event. Sustainability Score: ${selectedTemplate.sustainabilityScore}/10. QR Visibility: ${selectedTemplate.qrVisibility}. Efficiency Tip: ${selectedTemplate.efficiency_tip}`,
+        observation: `Template-created event. Transparency Score: ${selectedTemplate.sustainabilityScore}/10. QR Visibility: ${selectedTemplate.qrVisibility}. Tip: ${selectedTemplate.efficiency_tip}`,
         template_used: selectedTemplate.id,
         template_name: selectedTemplate.name,
         exclude_from_carbon_calculation: selectedTemplate.excludeFromCarbonCalculation || false,
@@ -667,12 +752,10 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       await createEvent(backendEventData).unwrap();
 
       toast({
-        title: '🌱 Event Created Successfully!',
-        description: selectedTemplate.excludeFromCarbonCalculation
-          ? `${selectedTemplate.name} created for documentation tracking. Visible to consumers via QR codes.`
-          : `${selectedTemplate.name} created with USDA-based carbon calculation. Visible to consumers via QR codes.`,
+        title: 'Farm Event Created!',
+        description: `${selectedTemplate.name} added to your transparency timeline. Visible to consumers via QR codes.`,
         status: 'success',
-        duration: 5000,
+        duration: 4000,
         isClosable: true
       });
 
@@ -684,8 +767,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     } catch (error) {
       console.error('Error creating template event:', error);
       toast({
-        title: 'Error Creating Carbon Event',
-        description: 'Failed to create carbon event. Please try again.',
+        title: 'Error Creating Event',
+        description: 'Failed to create farm event. Please try again.',
         status: 'error',
         duration: 4000,
         isClosable: true
@@ -698,22 +781,25 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   // Helper functions for voice data conversion
   const getEventTypeFromVoiceData = (eventData: any): number => {
     // Handle both the old format (event_type: 'irrigation') and new format (event_type: 'production')
+    // Backend constants: WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
     const eventType = eventData.event_type;
 
     console.log('Voice event type mapping:', eventType, eventData);
 
     if (eventType === 'production' || eventType === 'irrigation') {
-      return 2; // Production Event
+      return 1; // Production Event (PRODUCTION_EVENT_TYPE = 1)
     } else if (
       eventType === 'chemical' ||
       eventType === 'fertilizer' ||
-      eventType === 'pesticide'
+      eventType === 'pesticide' ||
+      eventType === 'herbicide' ||
+      eventType === 'fungicide'
     ) {
-      return 1; // Chemical Event
+      return 2; // Chemical Event (CHEMICAL_EVENT_TYPE = 2)
     } else if (eventType === 'equipment') {
-      return 4; // Equipment Event
+      return 4; // Equipment Event (EQUIPMENT_EVENT_TYPE = 4)
     } else if (eventType === 'weather') {
-      return 0; // Weather Event
+      return 0; // Weather Event (WEATHER_EVENT_TYPE = 0)
     } else if (eventType === 'general') {
       // Check if this is actually a production event that was misclassified
       if (
@@ -724,12 +810,12 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         eventData.description?.toLowerCase().includes('prun')
       ) {
         console.log('Reclassifying general event as production based on content');
-        return 2; // Production Event
+        return 1; // Production Event (PRODUCTION_EVENT_TYPE = 1)
       }
-      return 3; // Other Farm Activities (Sprint 2: renamed from General Event)
+      return 3; // General Event (GENERAL_EVENT_TYPE = 3)
     }
 
-    return 2; // Default to Production instead of General
+    return 1; // Default to Production (PRODUCTION_EVENT_TYPE = 1)
   };
 
   const convertVoiceDataToEventFields = (eventData: any): any => {
@@ -834,13 +920,16 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     // Handle AI suggestions (prefixed with 'ai-')
     if (template.id.startsWith('ai-')) {
       // Map AI categories to backend event types
+      // Backend constants: WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
       const aiCategory = template.type?.toLowerCase();
       if (
         aiCategory?.includes('fertilizer') ||
         aiCategory?.includes('pesticide') ||
+        aiCategory?.includes('herbicide') ||
+        aiCategory?.includes('fungicide') ||
         aiCategory?.includes('chemical')
       ) {
-        return 1; // Chemical
+        return 2; // Chemical (CHEMICAL_EVENT_TYPE = 2)
       } else if (
         aiCategory?.includes('irrigation') ||
         aiCategory?.includes('harvest') ||
@@ -848,30 +937,37 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         aiCategory?.includes('planting') ||
         aiCategory?.includes('production')
       ) {
-        return 2; // Production
+        return 1; // Production (PRODUCTION_EVENT_TYPE = 1)
       } else if (aiCategory?.includes('equipment') || aiCategory?.includes('machinery')) {
-        return 4; // Equipment
+        return 4; // Equipment (EQUIPMENT_EVENT_TYPE = 4)
       } else if (aiCategory?.includes('weather') || aiCategory?.includes('climate')) {
-        return 0; // Weather
+        return 0; // Weather (WEATHER_EVENT_TYPE = 0)
       }
-      return 3; // General
+      return 3; // General (GENERAL_EVENT_TYPE = 3)
     }
 
-    // Map template types to backend event types (existing logic)
-    if (template.id.includes('fertilizer') || template.id.includes('pesticide')) {
-      return 1; // Chemical
+    // Map template types to backend event types
+    // Backend constants: WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
+    if (
+      template.id.includes('fertilizer') ||
+      template.id.includes('pesticide') ||
+      template.id.includes('herbicide') ||
+      template.id.includes('fungicide')
+    ) {
+      return 2; // Chemical (CHEMICAL_EVENT_TYPE = 2)
     } else if (
       template.id.includes('irrigation') ||
       template.id.includes('harvest') ||
-      template.id.includes('pruning')
+      template.id.includes('pruning') ||
+      template.id.includes('planting')
     ) {
-      return 2; // Production
+      return 1; // Production (PRODUCTION_EVENT_TYPE = 1)
     } else if (template.id.includes('equipment') || template.id.includes('tractor')) {
-      return 4; // Equipment
+      return 4; // Equipment (EQUIPMENT_EVENT_TYPE = 4)
     } else if (template.id.includes('weather') || template.id.includes('frost')) {
-      return 0; // Weather
+      return 0; // Weather (WEATHER_EVENT_TYPE = 0)
     }
-    return 3; // General
+    return 3; // General (GENERAL_EVENT_TYPE = 3)
   };
 
   const getTemplateEventFields = (template: EventTemplate): any => {
@@ -893,8 +989,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       const aiCategory = template.type?.toLowerCase();
 
       // Map AI suggestions to appropriate backend fields based on event type
-      if (eventType === 1) {
-        // Chemical
+      // Backend constants: WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4
+      if (eventType === 2) {
+        // Chemical (CHEMICAL_EVENT_TYPE = 2)
         return {
           type: 'FE', // Default to fertilizer
           commercial_name: template.name.includes('Fertilizer')
@@ -904,17 +1001,19 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
           way_of_application: 'broadcast',
           time_period: 'morning'
         };
-      } else if (eventType === 2) {
-        // Production
+      } else if (eventType === 1) {
+        // Production (PRODUCTION_EVENT_TYPE = 1)
         const productionType = aiCategory?.includes('irrigation')
           ? 'IR'
           : aiCategory?.includes('harvest')
           ? 'HA'
           : aiCategory?.includes('pruning')
           ? 'PR'
+          : aiCategory?.includes('planting')
+          ? 'PL'
           : 'IR'; // Default to irrigation
 
-        const productionTypeNames = {
+        const productionTypeNames: Record<string, string> = {
           IR: 'Irrigation Operation',
           HA: 'Harvest Operation',
           PL: 'Planting Operation',
@@ -1179,6 +1278,13 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         console.log('Using voice event type mapping:', eventType, eventTypeFields);
       }
 
+      // Get type-aware fields in backend format (with carbon-critical data)
+      const typeAwareBackendFields = hasTypeAwareFields
+        ? getFieldsForBackend(typeAwareTemplateId, typeAwareFieldValues)
+        : {};
+
+      console.log('Type-aware backend fields:', typeAwareBackendFields);
+
       const backendEventData = {
         companyId: currentCompany.id,
         establishmentId: parseInt(establishmentId || '0'),
@@ -1187,9 +1293,13 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         event_type: eventType,
         date: eventDate,
         description: eventDescription,
+        performed_by: performedBy || null,
         album: { images: [] },
-        observation: `${eventObservations}. Application Rate: ${applicationRate}. Duration: ${duration}`,
-        ...eventTypeFields
+        // Merge template fields with type-aware fields (type-aware takes precedence)
+        ...eventTypeFields,
+        ...typeAwareBackendFields,
+        // User observation MUST come AFTER spreads to override template defaults
+        observation: eventObservations || ''
       };
 
       console.log('Final backend event data:', backendEventData);
@@ -1197,8 +1307,11 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       await createEvent(backendEventData).unwrap();
 
       toast({
-        title: 'Voice Event Created! 🎤',
-        description: `${selectedTemplate.name} event created successfully with voice-detected details`,
+        title: intl.formatMessage({ id: 'quickAdd.eventCreatedTitle' }),
+        description: intl.formatMessage(
+          { id: 'quickAdd.eventCreatedDescription' },
+          { name: selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '') }
+        ),
         status: 'success',
         duration: 4000,
         isClosable: true
@@ -1212,8 +1325,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     } catch (error) {
       console.error('Error creating detailed event:', error);
       toast({
-        title: 'Error Creating Event',
-        description: 'Failed to create detailed carbon event. Please try again.',
+        title: intl.formatMessage({ id: 'quickAdd.errorCreatingTitle' }),
+        description: intl.formatMessage({ id: 'quickAdd.errorCreatingDescription' }),
         status: 'error',
         duration: 4000,
         isClosable: true
@@ -1226,12 +1339,34 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="2xl" scrollBehavior="inside">
       <ModalOverlay />
-      <ModalContent maxH="90vh" display="flex" flexDirection="column">
-        <ModalHeader>
-          <HStack>
-            <Icon as={FaSeedling} color="green.500" boxSize={6} />
-            <Text>Quick Add Carbon Event</Text>
-            <Badge colorScheme="green" size="sm">
+      <ModalContent
+        maxH="90vh"
+        display="flex"
+        flexDirection="column"
+        borderRadius="xl"
+        overflow="hidden"
+      >
+        <ModalHeader borderBottom="1px solid" borderColor="gray.100" pb={4}>
+          <HStack spacing={3}>
+            <Box
+              p={2}
+              bg="green.50"
+              borderRadius="lg"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Icon as={FaSeedling} color="green.500" boxSize={5} />
+            </Box>
+            <VStack align="start" spacing={0}>
+              <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                {intl.formatMessage({ id: 'quickAdd.title' })}
+              </Text>
+              <Text fontSize="xs" color="gray.500">
+                {intl.formatMessage({ id: 'quickAdd.subtitle' })}
+              </Text>
+            </VStack>
+            <Badge colorScheme="green" variant="subtle" fontSize="xs" px={2} py={1} borderRadius="md">
               {cropType}
             </Badge>
           </HStack>
@@ -1241,164 +1376,128 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         <ModalBody
           flex="1"
           overflowY="auto"
-          pb={selectedTemplate && !showDetailedForm ? '120px' : '4'}
+          overflowX="hidden"
+          pb={selectedTemplate ? '120px' : '4'}
+          px={4}
         >
           {showDetailedForm ? (
             // DETAILED FORM VIEW
             <VStack spacing={6} align="stretch">
               {/* Selected Template Summary */}
               {selectedTemplate && (
-                <Box p={4} bg={`${selectedTemplate.color}.50`} borderRadius="lg">
+                <Box p={4} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
                   <HStack justify="space-between">
-                    <HStack>
-                      <Icon as={selectedTemplate.icon} color={`${selectedTemplate.color}.500`} />
+                    <HStack spacing={3}>
+                      <Box p={2} bg="green.100" borderRadius="lg">
+                        <Icon as={selectedTemplate.icon} color="green.600" boxSize={5} />
+                      </Box>
                       <VStack align="start" spacing={0}>
-                        <Text fontWeight="bold" color={`${selectedTemplate.color}.700`}>
-                          {selectedTemplate.name}
+                        <Text fontWeight="semibold" color="gray.800" fontSize="sm">
+                          {selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '')}
                         </Text>
-                        <Text fontSize="xs" color={`${selectedTemplate.color}.600`}>
+                        <Text fontSize="xs" color="gray.500">
                           {selectedTemplate.excludeFromCarbonCalculation
-                            ? 'Documentation only - No carbon calculation'
-                            : 'USDA-based carbon calculation will be applied'}
+                            ? intl.formatMessage({ id: 'quickAdd.documentationActivity' })
+                            : intl.formatMessage({ id: 'quickAdd.usdaVerifiedActivity' })}
                         </Text>
                       </VStack>
                     </HStack>
-                    <Badge colorScheme={selectedTemplate.color}>
-                      Score: {selectedTemplate.sustainabilityScore}/10
+                    <Badge colorScheme="green" variant="solid" fontSize="xs" px={3} py={1} borderRadius="full">
+                      {selectedTemplate.sustainabilityScore}/10
                     </Badge>
                   </HStack>
                 </Box>
               )}
 
-              {/* Detailed Form Fields */}
-              <VStack spacing={4} align="stretch">
-                <FormControl>
-                  <FormLabel>
-                    <HStack>
-                      <Icon as={FaClock} color="blue.500" boxSize={4} />
-                      <Text>Event Date & Time</Text>
-                    </HStack>
-                  </FormLabel>
-                  <Input
+              {/* Detailed Form Fields - Using StandardComponents + TypeAwareFields */}
+              <VStack spacing={6} align="stretch" pb={'20px'}>
+                {/* Common fields for all event types */}
+                <StandardField
+                  label={intl.formatMessage({ id: 'quickAdd.eventDateTime' })}
+                  required
+                  helpText={intl.formatMessage({ id: 'quickAdd.eventDateTimeHelp' })}
+                >
+                  <StandardInput
                     type="datetime-local"
                     value={eventDate}
                     onChange={(e) => setEventDate(e.target.value)}
                   />
-                </FormControl>
+                </StandardField>
 
-                <FormControl>
-                  <FormLabel>Event Description</FormLabel>
-                  <Textarea
-                    value={eventDescription}
-                    onChange={(e) => setEventDescription(e.target.value)}
-                    placeholder="Describe what was done..."
-                    rows={3}
+                {/* Performed By - USDA GAP traceability requirement */}
+                <StandardField
+                  label={intl.formatMessage({ id: 'quickAdd.performedBy' })}
+                  required={!selectedTemplate?.excludeFromCarbonCalculation}
+                  helpText={intl.formatMessage({ id: 'quickAdd.performedByHelp' })}
+                >
+                  <StandardInput
+                    value={performedBy}
+                    onChange={(e) => setPerformedBy(e.target.value)}
+                    placeholder={intl.formatMessage({ id: 'quickAdd.performedByPlaceholder' })}
+                    isDisabled={isCreating}
                   />
-                </FormControl>
+                </StandardField>
 
-                <HStack spacing={4}>
-                  <FormControl flex={1}>
-                    <FormLabel>
-                      <HStack>
-                        <Icon as={FaRuler} color="orange.500" boxSize={4} />
-                        <Text>Application Rate</Text>
-                      </HStack>
-                    </FormLabel>
-                    <Input
-                      value={applicationRate}
-                      onChange={(e) => setApplicationRate(e.target.value)}
-                      placeholder="e.g., 200 lbs/acre"
-                    />
-                  </FormControl>
+                {/* Note: Event Description is auto-generated from template name and sent to backend.
+                    The Manual Event form does not have a user-editable Event Description field either.
+                    The Additional Observations field below serves the user's need to add notes. */}
 
-                  <FormControl flex={1}>
-                    <FormLabel>
-                      <HStack>
-                        <Icon as={FaClock} color="purple.500" boxSize={4} />
-                        <Text>Duration</Text>
-                      </HStack>
-                    </FormLabel>
-                    <Input
-                      value={duration}
-                      onChange={(e) => setDuration(e.target.value)}
-                      placeholder="e.g., 2-3 hours"
-                    />
-                  </FormControl>
-                </HStack>
+                {/* Type-Aware Fields - Dynamic based on event type */}
+                {hasTypeAwareFields && (
+                  <>
+                    <Divider borderColor="gray.200" />
+                    <Box>
+                      <Text
+                        fontSize="sm"
+                        fontWeight="semibold"
+                        color="gray.600"
+                        mb={4}
+                      >
+                        {intl.formatMessage({ id: 'quickAdd.typeSpecificFields' })}
+                      </Text>
+                      <TypeAwareFields
+                        templateId={typeAwareTemplateId}
+                        values={typeAwareFieldValues}
+                        onChange={handleTypeAwareFieldChange}
+                        isDisabled={isCreating}
+                      />
+                    </Box>
+                    <Divider borderColor="gray.200" />
+                  </>
+                )}
 
-                <FormControl>
-                  <FormLabel>Additional Observations</FormLabel>
-                  <Textarea
+                {/* Additional Observations */}
+                <StandardField
+                  label={intl.formatMessage({ id: 'quickAdd.additionalObservations' })}
+                  helpText={intl.formatMessage({ id: 'quickAdd.additionalObservationsHelp' })}
+                >
+                  <StandardTextarea
                     value={eventObservations}
                     onChange={(e) => setEventObservations(e.target.value)}
-                    placeholder="Carbon impact notes, efficiency tips, etc..."
-                    rows={4}
+                    placeholder={intl.formatMessage({ id: 'quickAdd.observationsPlaceholder' })}
                   />
-                  <FormHelperText>
-                    This information will be visible to consumers via QR codes
-                  </FormHelperText>
-                </FormControl>
+                </StandardField>
               </VStack>
-
-              {/* Action Buttons */}
-              <HStack spacing={3}>
-                <Button
-                  variant="outline"
-                  onClick={handleBackToTemplates}
-                  leftIcon={<FaArrowLeft />}
-                >
-                  Back to Templates
-                </Button>
-                <Button
-                  flex={1}
-                  colorScheme="green"
-                  onClick={handleDetailedCreate}
-                  isLoading={isCreating}
-                  loadingText="Creating Detailed Event..."
-                >
-                  Create Detailed Event
-                </Button>
-              </HStack>
             </VStack>
           ) : (
             // MAIN TEMPLATE SELECTION VIEW
             <VStack spacing={6} align="stretch">
-              {/* 🆕 Phase 2: Smart Template Suggestions */}
+              {/* Smart Template Suggestions - Transparency First */}
               {showTemplateSuggestions && (
-                <Box p={4} bg="blue.50" borderRadius="lg" borderWidth="2px" borderColor="blue.200">
-                  <VStack spacing={3} align="stretch">
-                    <HStack>
-                      <Icon
-                        as={aiSuggestionsData?.ai_confidence ? FaRobot : FaChartLine}
-                        color="blue.500"
-                      />
-                      <Text fontWeight="bold" color="blue.700">
-                        {aiSuggestionsData?.ai_confidence
-                          ? '🤖 AI Smart Suggestions'
-                          : '🎯 Smart Suggestions'}{' '}
-                        for{' '}
-                        {getCurrentSeason(new Date().getMonth() + 1)
-                          .charAt(0)
-                          .toUpperCase() + getCurrentSeason(new Date().getMonth() + 1).slice(1)}
-                      </Text>
-                      <Badge
-                        colorScheme={aiSuggestionsData?.ai_confidence ? 'purple' : 'blue'}
-                        size="sm"
-                      >
-                        {aiSuggestionsData?.ai_confidence ? 'OpenAI Powered' : 'AI Powered'}
-                      </Badge>
-                      {isLoadingAISuggestions && (
-                        <Badge colorScheme="orange" size="sm">
-                          Loading AI...
-                        </Badge>
-                      )}
-                    </HStack>
-
-                    <Text fontSize="sm" color="blue.600">
-                      {aiSuggestionsData?.ai_confidence
-                        ? `AI Confidence: ${aiSuggestionsData.ai_confidence}% • ${aiSuggestionsData.reasoning}`
-                        : 'Based on timing, usage patterns, and carbon visibility'}
-                    </Text>
+                <SectionBox variant="highlighted" borderColor="green.200" bg="green.50">
+                  <VStack spacing={4} align="stretch">
+                    <SectionHeader
+                      icon={aiSuggestionsData?.ai_confidence ? FaRobot : FaChartLine}
+                      iconColor="green.500"
+                      title={intl.formatMessage({ id: 'quickAdd.aiSuggestionsTitle' }, { season: getCurrentSeason(new Date().getMonth() + 1).charAt(0).toUpperCase() + getCurrentSeason(new Date().getMonth() + 1).slice(1) })}
+                      badge={aiSuggestionsData?.ai_confidence ? 'OpenAI Powered' : 'AI Powered'}
+                      badgeColorScheme="green"
+                      description={
+                        aiSuggestionsData?.ai_confidence
+                          ? `AI Confidence: ${aiSuggestionsData.ai_confidence}% • ${aiSuggestionsData.reasoning}`
+                          : 'Based on timing, usage patterns, and transparency visibility'
+                      }
+                    />
 
                     {/* Skeleton Loading for AI Suggestions */}
                     {isLoadingAISuggestions ? (
@@ -1548,37 +1647,35 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                       </Box>
                     )}
                   </VStack>
-                </Box>
+                </SectionBox>
               )}
 
               {/* Voice Input Section */}
               {!showVoiceCapture ? (
-                <Box p={4} bg="blue.50" borderRadius="lg" borderWidth="2px" borderColor="blue.200">
-                  <VStack spacing={3}>
-                    <HStack>
-                      <Icon as={FaMicrophone} color="blue.500" />
-                      <Text fontWeight="bold" color="blue.700">
-                        🎤 Voice Input
-                      </Text>
-                      <Badge colorScheme="blue" size="sm">
-                        Fastest Method
-                      </Badge>
-                    </HStack>
+                <SectionBox variant="default" borderColor="blue.200" bg="blue.50">
+                  <VStack spacing={4}>
+                    <SectionHeader
+                      icon={FaMicrophone}
+                      iconColor="blue.500"
+                      title={intl.formatMessage({ id: 'quickAdd.voiceInputTitle' })}
+                      badge={intl.formatMessage({ id: 'quickAdd.fastestMethod' })}
+                      badgeColorScheme="blue"
+                    />
 
-                    <Text fontSize="sm" color="blue.600" textAlign="center">
+                    <Text fontSize="sm" color="gray.600" textAlign="center">
                       Say: "Applied fertilizer today, 200 pounds per acre"
                     </Text>
 
-                    <Button
-                      leftIcon={<FaMicrophone />}
-                      colorScheme="blue"
+                    <StandardButton
+                      variant="primary"
+                      leftIcon={<Icon as={FaMicrophone} />}
                       onClick={() => setShowVoiceCapture(true)}
                       size="lg"
                     >
-                      Start Voice Input
-                    </Button>
+                      {intl.formatMessage({ id: 'quickAdd.startVoiceInput' })}
+                    </StandardButton>
                   </VStack>
-                </Box>
+                </SectionBox>
               ) : (
                 <VoiceEventCapture
                   onEventDetected={handleVoiceEventDetected}
@@ -1590,28 +1687,27 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
 
               <Divider />
 
-              {/* 🆕 Enhanced Smart Templates Section */}
+              {/* Enhanced Smart Templates Section - Transparency First */}
               <Box>
-                <HStack mb={4}>
-                  <Icon as={FaSeedling} color="green.500" boxSize={5} />
-                  <Text fontWeight="semibold" fontSize="lg" color="green.700">
-                    🌱 Smart Carbon Templates
-                  </Text>
-                  <Badge colorScheme="green" size="sm">
-                    Consumer Visible
-                  </Badge>
-                </HStack>
-
-                <Text fontSize="sm" color="gray.600" mb={4}>
-                  Pre-configured events optimized for carbon tracking and consumer QR visibility
-                </Text>
+                <SectionHeader
+                  icon={FaSeedling}
+                  iconColor="green.500"
+                  title={intl.formatMessage({ id: 'quickAdd.smartTemplatesTitle' })}
+                  badge={intl.formatMessage({ id: 'quickAdd.consumerVisible' })}
+                  badgeColorScheme="green"
+                  description={intl.formatMessage({ id: 'quickAdd.smartTemplatesDescription' })}
+                />
 
                 {/* General Templates */}
                 <Box mb={6}>
                   <Text fontWeight="medium" fontSize="md" color="gray.700" mb={3}>
-                    📋 Other Farm Activities
+                    📋 {intl.formatMessage({ id: 'quickAdd.otherFarmActivities' })}
                   </Text>
-                  <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                  <Grid
+                    templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
+                    gap={4}
+                    width="100%"
+                  >
                     {eventTemplates
                       .filter((template) => !template.id.startsWith('db-'))
                       .map((template) => (
@@ -1636,38 +1732,45 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                             boxShadow: 'md'
                           }}
                           transition="all 0.2s"
+                          minW={0}
                         >
-                          <VStack spacing={3} align="start">
-                            <HStack justify="space-between" width="100%">
-                              <HStack>
+                          <VStack spacing={3} align="start" width="100%">
+                            <HStack justify="space-between" width="100%" flexWrap="wrap" gap={2}>
+                              <HStack flex="1" minW={0}>
                                 <Icon
                                   as={template.icon}
                                   color={`${template.color}.500`}
                                   boxSize={4}
+                                  flexShrink={0}
                                 />
-                                <Text fontWeight="bold" fontSize="sm">
+                                <Text
+                                  fontWeight="bold"
+                                  fontSize="sm"
+                                  noOfLines={2}
+                                  wordBreak="break-word"
+                                >
                                   {template.name}
                                 </Text>
                               </HStack>
                               {template.excludeFromCarbonCalculation ? (
-                                <Badge colorScheme="gray" size="xs">
-                                  No Carbon Calc
+                                <Badge colorScheme="gray" size="xs" flexShrink={0}>
+                                  {intl.formatMessage({ id: 'quickAdd.documentation' })}
                                 </Badge>
                               ) : (
-                                <Badge colorScheme="blue" size="xs">
-                                  USDA Carbon
+                                <Badge colorScheme="green" size="xs" flexShrink={0}>
+                                  {intl.formatMessage({ id: 'quickAdd.usdaVerified' })}
                                 </Badge>
                               )}
                             </HStack>
 
-                            <Text fontSize="xs" color="gray.600">
+                            <Text fontSize="xs" color="gray.600" noOfLines={2}>
                               {template.description}
                             </Text>
 
                             <HStack justify="space-between" width="100%">
                               <VStack align="start" spacing={0}>
                                 <Text fontSize="xs" color="gray.500">
-                                  Sustainability
+                                  {intl.formatMessage({ id: 'quickAdd.transparency' })}
                                 </Text>
                                 <Text fontSize="sm" fontWeight="bold" color="green.600">
                                   {template.sustainabilityScore}/10
@@ -1675,16 +1778,16 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                               </VStack>
                               <VStack align="end" spacing={0}>
                                 <Text fontSize="xs" color="gray.500">
-                                  QR Visibility
+                                  {intl.formatMessage({ id: 'quickAdd.qrVisibility' })}
                                 </Text>
-                                <Badge colorScheme="blue" size="xs">
+                                <Badge colorScheme="green" variant="subtle" size="xs">
                                   {template.qrVisibility}
                                 </Badge>
                               </VStack>
                             </HStack>
 
-                            <Box p={2} bg="gray.50" borderRadius="md" width="100%">
-                              <Text fontSize="xs" color="gray.600">
+                            <Box p={2} bg="green.50" borderRadius="md" width="100%">
+                              <Text fontSize="xs" color="green.700" noOfLines={2}>
                                 💡 {template.efficiency_tip}
                               </Text>
                             </Box>
@@ -1707,7 +1810,11 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                       </Badge>
                     </HStack>
 
-                    <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+                    <Grid
+                      templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
+                      gap={4}
+                      width="100%"
+                    >
                       {eventTemplates
                         .filter((template) => template.id.startsWith('db-'))
                         .map((template) => (
@@ -1734,38 +1841,45 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                               boxShadow: 'md'
                             }}
                             transition="all 0.2s"
+                            minW={0}
                           >
-                            <VStack spacing={3} align="start">
-                              <HStack justify="space-between" width="100%">
-                                <HStack>
+                            <VStack spacing={3} align="start" width="100%">
+                              <HStack justify="space-between" width="100%" flexWrap="wrap" gap={2}>
+                                <HStack flex="1" minW={0}>
                                   <Icon
                                     as={template.icon}
                                     color={`${template.color}.500`}
                                     boxSize={4}
+                                    flexShrink={0}
                                   />
-                                  <Text fontWeight="bold" fontSize="sm">
+                                  <Text
+                                    fontWeight="bold"
+                                    fontSize="sm"
+                                    noOfLines={2}
+                                    wordBreak="break-word"
+                                  >
                                     {template.name}
                                   </Text>
                                 </HStack>
                                 {template.excludeFromCarbonCalculation ? (
-                                  <Badge colorScheme="gray" size="xs">
-                                    No Carbon Calc
+                                  <Badge colorScheme="gray" size="xs" flexShrink={0}>
+                                    {intl.formatMessage({ id: 'quickAdd.documentation' })}
                                   </Badge>
                                 ) : (
-                                  <Badge colorScheme="blue" size="xs">
-                                    USDA Carbon
+                                  <Badge colorScheme="green" size="xs" flexShrink={0}>
+                                    {intl.formatMessage({ id: 'quickAdd.usdaVerified' })}
                                   </Badge>
                                 )}
                               </HStack>
 
-                              <Text fontSize="xs" color="gray.600">
+                              <Text fontSize="xs" color="gray.600" noOfLines={2}>
                                 {template.description}
                               </Text>
 
                               <HStack justify="space-between" width="100%">
                                 <VStack align="start" spacing={0}>
                                   <Text fontSize="xs" color="gray.500">
-                                    Sustainability
+                                    {intl.formatMessage({ id: 'quickAdd.transparency' })}
                                   </Text>
                                   <Text fontSize="sm" fontWeight="bold" color="green.600">
                                     {template.sustainabilityScore}/10
@@ -1773,19 +1887,21 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                 </VStack>
                                 <VStack align="end" spacing={0}>
                                   <Text fontSize="xs" color="gray.500">
-                                    QR Visibility
+                                    {intl.formatMessage({ id: 'quickAdd.qrVisibility' })}
                                   </Text>
-                                  <Badge colorScheme="blue" size="xs">
+                                  <Badge colorScheme="green" variant="subtle" size="xs">
                                     {template.qrVisibility}
                                   </Badge>
                                 </VStack>
                               </HStack>
 
-                              <Box p={2} bg="green.50" borderRadius="md" width="100%">
-                                <Text fontSize="xs" color="green.700">
-                                  🎯 {template.efficiency_tip}
-                                </Text>
-                              </Box>
+                              {template.efficiency_tip && (
+                                <Box p={2} bg="green.50" borderRadius="md" width="100%">
+                                  <Text fontSize="xs" color="green.700" noOfLines={2}>
+                                    🎯 {template.efficiency_tip}
+                                  </Text>
+                                </Box>
+                              )}
                             </VStack>
                           </Box>
                         ))}
@@ -1797,8 +1913,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
           )}
         </ModalBody>
 
-        {/* Fixed Bottom Action Section - Only show when template is selected and not in detailed form */}
-        {selectedTemplate && !showDetailedForm && (
+        {/* Fixed Bottom Action Section - Show when template is selected */}
+        {selectedTemplate && (
           <Box
             position="absolute"
             bottom="0"
@@ -1806,43 +1922,88 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
             right="0"
             bg="white"
             borderTop="1px solid"
-            borderColor="gray.200"
+            borderColor="gray.100"
             p={4}
-            boxShadow="0 -4px 12px rgba(0, 0, 0, 0.1)"
+            boxShadow="0 -4px 12px rgba(0, 0, 0, 0.08)"
           >
-            <VStack spacing={3}>
-              <HStack justify="space-between" width="100%">
-                <VStack align="start" spacing={0}>
-                  <Text fontWeight="bold" color="green.700" fontSize="sm">
-                    Ready to create: 🤖 {selectedTemplate.name}
-                  </Text>
-                  <Text fontSize="xs" color="green.600">
-                    This event will be visible to consumers with {selectedTemplate.qrVisibility}{' '}
-                    visibility on QR scans
-                  </Text>
-                </VStack>
-                <Badge colorScheme="green" fontSize="xs">
-                  {selectedTemplate.typical_duration}
-                </Badge>
-              </HStack>
+            {showDetailedForm ? (
+              // Detailed Form Footer
+              <VStack spacing={3}>
+                <HStack justify="space-between" width="100%">
+                  <VStack align="start" spacing={0}>
+                    <Text fontWeight="semibold" color="gray.800" fontSize="sm">
+                      {intl.formatMessage({ id: 'quickAdd.addingDetails' }, { name: selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '') })}
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      {intl.formatMessage({ id: 'quickAdd.completeFormDescription' })}
+                    </Text>
+                  </VStack>
+                  <Badge colorScheme="green" variant="solid" fontSize="xs" px={2} py={1}>
+                    {selectedTemplate.sustainabilityScore}/10
+                  </Badge>
+                </HStack>
 
-              <HStack spacing={3} width="100%">
-                <Button
-                  flex={1}
-                  colorScheme="green"
-                  onClick={handleTemplateCreate}
-                  isLoading={isCreating}
-                  loadingText="Creating Carbon Event..."
-                  leftIcon={<Icon as={FaSeedling} />}
-                  size="md"
-                >
-                  Quick Create Event
-                </Button>
-                <Button variant="outline" colorScheme="green" onClick={handleShowDetails} size="md">
-                  Add Details
-                </Button>
-              </HStack>
-            </VStack>
+                <HStack spacing={3} width="100%">
+                  <StandardButton
+                    variant="outline"
+                    onClick={handleBackToTemplates}
+                    leftIcon={<Icon as={FaArrowLeft} />}
+                    size="lg"
+                  >
+                    {intl.formatMessage({ id: 'quickAdd.back' })}
+                  </StandardButton>
+                  <StandardButton
+                    variant="primary"
+                    w="full"
+                    onClick={handleDetailedCreate}
+                    isLoading={isCreating}
+                    loadingText={intl.formatMessage({ id: 'quickAdd.creating' })}
+                    leftIcon={<Icon as={FaCheckCircle} />}
+                    size="lg"
+                  >
+                    {intl.formatMessage({ id: 'quickAdd.createFarmEvent' })}
+                  </StandardButton>
+                </HStack>
+              </VStack>
+            ) : (
+              // Template Selection Footer
+              <VStack spacing={4}>
+                <HStack justify="space-between" width="100%">
+                  <VStack align="start" spacing={1}>
+                    <Text fontWeight="semibold" color="gray.800" fontSize="sm">
+                      {intl.formatMessage({ id: 'quickAdd.readyToCreate' }, { name: selectedTemplate.name.replace('🤖 ', '') })}
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      {intl.formatMessage({ id: 'quickAdd.visibleToConsumers' }, { visibility: selectedTemplate.qrVisibility })}
+                    </Text>
+                  </VStack>
+                  <Badge colorScheme="gray" variant="subtle" fontSize="xs" px={2} py={1}>
+                    {selectedTemplate.typical_duration}
+                  </Badge>
+                </HStack>
+
+                <HStack spacing={3} width="100%">
+                  <StandardButton
+                    variant="primary"
+                    w="full"
+                    onClick={handleTemplateCreate}
+                    isLoading={isCreating}
+                    loadingText={intl.formatMessage({ id: 'quickAdd.creatingEvent' })}
+                    leftIcon={<Icon as={FaSeedling} />}
+                    size="lg"
+                  >
+                    {intl.formatMessage({ id: 'quickAdd.quickCreateEvent' })}
+                  </StandardButton>
+                  <StandardButton
+                    variant="outline"
+                    onClick={handleShowDetails}
+                    size="lg"
+                  >
+                    {intl.formatMessage({ id: 'quickAdd.addDetails' })}
+                  </StandardButton>
+                </HStack>
+              </VStack>
+            )}
           </Box>
         )}
       </ModalContent>

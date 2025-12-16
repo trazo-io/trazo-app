@@ -392,7 +392,7 @@ const TrackList = ({ amount }) => {
                   <HStack>
                     <Icon as={FaLeaf} color="green.500" boxSize={3} />
                     <Text fontSize="xs" fontWeight="bold" color="green.600">
-                      CARBON TRACKING
+                      TRANSPARENCY TRACKING
                     </Text>
                   </HStack>
                   <Text fontSize="xs" color="gray.500" mt={1}>

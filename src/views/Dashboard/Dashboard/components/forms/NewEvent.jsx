@@ -1636,9 +1636,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               templateColumns={{
                                 base: 'repeat(2, 1fr)',
                                 md: 'repeat(3, 1fr)',
-                                lg: 'repeat(4, 1fr)'
+                                lg: 'repeat(3, 1fr)',
+                                '2xl': 'repeat(4, 1fr)'
                               }}
-                              gap={{ base: 2, md: 3 }}
+                              gap={{ base: 2, md: 3, lg: 4 }}
+                              width="100%"
                             >
                               {/* Sprint 2 Epic 2.1: Equipment removed from event types - now a Production subtype */}
                               {eventTypeConfig.map((eventType) => (
@@ -1665,6 +1667,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   borderRadius={{ base: 'lg', md: 'xl' }}
                                   p={{ base: 3, md: 4 }}
                                   minH={{ base: '90px', md: '130px' }}
+                                  minW={0}
                                   display="flex"
                                   flexDirection="column"
                                   justifyContent="center"

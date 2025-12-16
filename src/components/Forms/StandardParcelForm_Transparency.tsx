@@ -56,6 +56,7 @@ const transparencyParcelSchema = object({
   name: string().min(1, 'Parcel name is required').max(100, 'Name too long'),
   area: number().min(0.01, 'Area must be greater than 0'),
   crop_focus: string().optional(),
+  soil_type: string().optional(),
 
   // Step 2: Location (polygon validated separately)
 
@@ -188,6 +189,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       name: '',
       area: 0,
       crop_focus: '',
+      soil_type: '',
       transparency_description: '',
       sustainability_practices: '',
       consumer_story: '',
@@ -440,13 +442,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       };
 
       onSubmit(finalData as any);
-      toast({
-        title: isEdit ? 'Parcel Updated' : 'Parcel Created',
-        description: `"${data.name}" has been ${isEdit ? 'updated' : 'created'} successfully.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true
-      });
     } catch (error) {
       console.error('❌ Form submission error:', error);
       toast({
@@ -529,30 +524,57 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   </StandardField>
                 </SimpleGrid>
 
-                <StandardField
-                  label="Primary Crop Focus"
-                  error={errors.crop_focus?.message}
-                  helpText="What crop is primarily grown here? (helps connect to products)"
-                >
-                  <Select
-                    {...methods.register('crop_focus')}
-                    placeholder="Select primary crop"
-                    borderRadius="lg"
-                    borderColor="gray.300"
-                    _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                    size="lg"
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                  <StandardField
+                    label="Primary Crop Focus"
+                    error={errors.crop_focus?.message}
+                    helpText="What crop is primarily grown here?"
                   >
-                    <option value="avocado">Avocado</option>
-                    <option value="citrus">Citrus</option>
-                    <option value="tomato">Tomato</option>
-                    <option value="lettuce">Lettuce</option>
-                    <option value="strawberry">Strawberry</option>
-                    <option value="grape">Grape</option>
-                    <option value="apple">Apple</option>
-                    <option value="other">Other</option>
-                  </Select>
-                </StandardField>
+                    <Select
+                      {...methods.register('crop_focus')}
+                      placeholder="Select primary crop"
+                      borderRadius="lg"
+                      borderColor="gray.300"
+                      _hover={{ borderColor: 'green.400' }}
+                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      size="lg"
+                    >
+                      <option value="avocado">Avocado</option>
+                      <option value="citrus">Citrus</option>
+                      <option value="tomato">Tomato</option>
+                      <option value="lettuce">Lettuce</option>
+                      <option value="strawberry">Strawberry</option>
+                      <option value="grape">Grape</option>
+                      <option value="apple">Apple</option>
+                      <option value="other">Other</option>
+                    </Select>
+                  </StandardField>
+
+                  <StandardField
+                    label="Soil Type"
+                    error={errors.soil_type?.message}
+                    helpText="Soil classification for growing conditions"
+                  >
+                    <Select
+                      {...methods.register('soil_type')}
+                      placeholder="Select soil type"
+                      borderRadius="lg"
+                      borderColor="gray.300"
+                      _hover={{ borderColor: 'green.400' }}
+                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      size="lg"
+                    >
+                      <option value="clay">Clay</option>
+                      <option value="sandy">Sandy</option>
+                      <option value="loam">Loam</option>
+                      <option value="silt">Silt</option>
+                      <option value="peat">Peat</option>
+                      <option value="chalk">Chalk</option>
+                      <option value="sandy_loam">Sandy Loam</option>
+                      <option value="clay_loam">Clay Loam</option>
+                    </Select>
+                  </StandardField>
+                </SimpleGrid>
 
                 <StandardAlert
                   status="info"
@@ -848,6 +870,74 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
                 <Divider />
 
+                {/* 🏅 Certification Section - Adds 10 points to transparency score */}
+                <Box>
+                  <HStack spacing={2} mb={3}>
+                    <Icon as={FaCertificate} color="green.500" />
+                    <Text fontWeight="semibold" fontSize="md" color="gray.700">
+                      Certification (Optional)
+                    </Text>
+                    <Badge colorScheme="green" fontSize="xs">
+                      +10 points
+                    </Badge>
+                  </HStack>
+                  <Text fontSize="sm" color="gray.500" mb={4}>
+                    If your parcel holds an agricultural certification, add it here to boost consumer
+                    trust and your transparency score.
+                  </Text>
+
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Is this parcel certified?"
+                      helpText="Toggle on if this parcel has an active certification"
+                    >
+                      <Controller
+                        name="certified"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <HStack spacing={3}>
+                            <Switch
+                              id="certified"
+                              isChecked={field.value}
+                              onChange={field.onChange}
+                              colorScheme="green"
+                              size="lg"
+                            />
+                            <Text fontSize="sm" color={field.value ? 'green.600' : 'gray.500'}>
+                              {field.value ? 'Yes, certified' : 'Not certified'}
+                            </Text>
+                          </HStack>
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label="Certification Type"
+                      helpText="Select the certification standard"
+                    >
+                      <Select
+                        {...methods.register('certification_type')}
+                        placeholder="Select certification type"
+                        borderRadius="lg"
+                        size="lg"
+                        isDisabled={!methods.watch('certified')}
+                      >
+                        <option value="organic">USDA Organic</option>
+                        <option value="eu_organic">EU Organic</option>
+                        <option value="regenerative">Regenerative Organic Certified (ROC)</option>
+                        <option value="cng">Certified Naturally Grown</option>
+                        <option value="global_gap">GlobalG.A.P.</option>
+                        <option value="fair_trade">Fair Trade Certified</option>
+                        <option value="rainforest_alliance">Rainforest Alliance</option>
+                        <option value="carbon_neutral">Carbon Neutral Certified</option>
+                        <option value="biodynamic">Demeter Biodynamic</option>
+                        <option value="non_gmo">Non-GMO Project Verified</option>
+                      </Select>
+                    </StandardField>
+                  </SimpleGrid>
+                </Box>
+
+                <Divider />
 
                 <StandardAlert
                   status="info"

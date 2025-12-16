@@ -70,6 +70,34 @@ import CardWithMap from '../../../Dashboard/Parcel/components/CardWithMap.jsx';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
+// 🎯 Utility to format field values as Title Case (e.g., "organic" → "Organic", "fair_trade" → "Fair Trade")
+const formatDisplayValue = (value: string | undefined | null): string => {
+  if (!value) return '--';
+  return value
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+// 🏅 Certification type mapping for proper display names
+const CERTIFICATION_DISPLAY_NAMES: Record<string, string> = {
+  organic: 'USDA Organic',
+  eu_organic: 'EU Organic',
+  regenerative: 'Regenerative Organic (ROC)',
+  cng: 'Certified Naturally Grown',
+  global_gap: 'GlobalG.A.P.',
+  fair_trade: 'Fair Trade Certified',
+  rainforest_alliance: 'Rainforest Alliance',
+  carbon_neutral: 'Carbon Neutral',
+  biodynamic: 'Demeter Biodynamic',
+  non_gmo: 'Non-GMO Project Verified'
+};
+
+const formatCertificationType = (value: string | undefined | null): string => {
+  if (!value) return '--';
+  return CERTIFICATION_DISPLAY_NAMES[value] || formatDisplayValue(value);
+};
+
 interface ParcelModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -328,7 +356,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                         <Text as="span" fontWeight="medium">
                           Soil Type:
                         </Text>{' '}
-                        {parcelData.soil_type}
+                        {formatDisplayValue(parcelData.soil_type)}
                       </Text>
                     </HStack>
                     {parcelData.establishment?.location && (
@@ -377,7 +405,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                           <Text as="span" fontWeight="medium">
                             Type:
                           </Text>{' '}
-                          {parcelData.certification_type}
+                          {formatCertificationType(parcelData.certification_type)}
                         </Text>
                       </HStack>
                     )}
