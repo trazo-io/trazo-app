@@ -82,8 +82,10 @@ const StandardImageGallery = ({
     []
   );
 
-  // Process images for display
-  const processedImages = images.map(getImageData);
+  // Process images for display - filter out empty/invalid URLs
+  const processedImages = images
+    .map(getImageData)
+    .filter((img) => img.url && img.url.trim() !== '');
   const hasImages = processedImages.length > 0;
   const displayImages = processedImages.slice(0, maxDisplayImages);
   const remainingCount = Math.max(0, processedImages.length - maxDisplayImages);
@@ -139,27 +141,34 @@ const StandardImageGallery = ({
     );
   };
 
-  // Render single image view (for 1 image)
+  // Render single image view (for 1 image) - 2025 compact thumbnail design
   const renderSingleImage = () => {
     const imageData = processedImages[0];
 
     return (
-      <Box position="relative">
-        {title && (
-          <Text fontSize="lg" fontWeight="600" mb={4} color="gray.700">
-            {title}
-          </Text>
-        )}
+      <HStack spacing={4} align="center">
         <Box
           position="relative"
-          height={height}
-          borderRadius={borderRadius}
+          w={{ base: '120px', md: '160px' }}
+          h={{ base: '90px', md: '120px' }}
+          borderRadius="lg"
           overflow="hidden"
           cursor={clickable ? 'pointer' : 'default'}
           onClick={() => handleImageClick(0)}
+          boxShadow="md"
+          border="2px solid transparent"
+          flexShrink={0}
           _hover={
-            clickable ? { transform: 'scale(1.02)', transition: 'transform 0.2s' } : undefined
+            clickable
+              ? {
+                  transform: 'scale(1.05)',
+                  transition: 'all 0.2s ease',
+                  borderColor: 'green.400',
+                  boxShadow: 'lg'
+                }
+              : undefined
           }
+          transition="all 0.2s ease"
         >
           <S3Image
             src={imageData.url}
@@ -171,27 +180,29 @@ const StandardImageGallery = ({
             presignedUrl={presignedUrls[imageData.url]}
           />
 
-          {/* Expand overlay on hover */}
+          {/* Expand icon overlay */}
           {enablePreview && clickable && (
             <Box
               position="absolute"
-              top={0}
-              left={0}
-              right={0}
-              bottom={0}
-              bg="blackAlpha.500"
-              opacity={0}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              transition="opacity 0.2s"
-              _hover={{ opacity: 1 }}
+              bottom={1}
+              right={1}
+              bg="blackAlpha.700"
+              borderRadius="md"
+              p={1}
             >
-              <Icon as={FaExpand} boxSize={8} color="white" />
+              <Icon as={FaExpand} boxSize={3} color="white" />
             </Box>
           )}
         </Box>
-      </Box>
+        <VStack align="start" spacing={1}>
+          <Text fontSize="sm" color="gray.600" fontWeight="medium">
+            1 photo available
+          </Text>
+          <Text fontSize="xs" color="gray.400">
+            Click to view full size
+          </Text>
+        </VStack>
+      </HStack>
     );
   };
 
@@ -306,22 +317,6 @@ const StandardImageGallery = ({
                   </Box>
                 )}
 
-              {/* Image number indicator */}
-              <Box
-                position="absolute"
-                top={2}
-                left={2}
-                bg="blackAlpha.700"
-                color="white"
-                px={2}
-                py={1}
-                borderRadius="md"
-                fontSize="xs"
-                fontWeight="medium"
-                backdropFilter="blur(10px)"
-              >
-                {index + 1}
-              </Box>
             </Box>
           ))}
         </SimpleGrid>

@@ -134,29 +134,72 @@ export const FUEL_TYPE_OPTIONS: FieldOption[] = [
   { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
 ];
 
+// Generic application methods (fallback)
 export const APPLICATION_METHOD_OPTIONS: FieldOption[] = [
-  { value: 'foliar_spray', labelKey: 'quickAdd.fields.applicationMethod.foliarSpray' },
-  { value: 'soil_drench', labelKey: 'quickAdd.fields.applicationMethod.soilDrench' },
-  { value: 'drip_irrigation', labelKey: 'quickAdd.fields.applicationMethod.dripIrrigation' },
   { value: 'broadcast', labelKey: 'quickAdd.fields.applicationMethod.broadcast' },
-  { value: 'banded', labelKey: 'quickAdd.fields.applicationMethod.banded' },
-  { value: 'injection', labelKey: 'quickAdd.fields.applicationMethod.injection' }
+  { value: 'ground_spray', labelKey: 'quickAdd.fields.applicationMethod.groundSpray' },
+  { value: 'chemigation', labelKey: 'quickAdd.fields.applicationMethod.chemigation' },
+  { value: 'foliar', labelKey: 'quickAdd.fields.applicationMethod.foliar' },
+  { value: 'soil_incorporation', labelKey: 'quickAdd.fields.applicationMethod.soilIncorporation' }
 ];
 
+// Context-aware application methods per chemical type (from ChemicalTab-ENHANCED.jsx)
+// These match exactly the Manual Event form's EPA/USDA standard methods
+export const APPLICATION_METHOD_OPTIONS_BY_TYPE: Record<string, FieldOption[]> = {
+  // USDA NRCS Standard Methods for Fertilizer (5 methods)
+  fertilizer: [
+    { value: 'broadcast', labelKey: 'quickAdd.fields.applicationMethod.broadcast' },
+    { value: 'banded', labelKey: 'quickAdd.fields.applicationMethod.banded' },
+    { value: 'subsurface', labelKey: 'quickAdd.fields.applicationMethod.subsurface' },
+    { value: 'fertigation', labelKey: 'quickAdd.fields.applicationMethod.fertigation' },
+    { value: 'foliar', labelKey: 'quickAdd.fields.applicationMethod.foliar' }
+  ],
+  // EPA Standard Methods for Pesticide (4 methods)
+  pesticide: [
+    { value: 'ground_spray', labelKey: 'quickAdd.fields.applicationMethod.groundSpray' },
+    { value: 'chemigation', labelKey: 'quickAdd.fields.applicationMethod.chemigation' },
+    { value: 'seed_treatment', labelKey: 'quickAdd.fields.applicationMethod.seedTreatment' },
+    { value: 'soil_incorporation', labelKey: 'quickAdd.fields.applicationMethod.soilIncorporation' }
+  ],
+  // EPA Standard Methods for Herbicide (4 methods)
+  herbicide: [
+    { value: 'ground_spray', labelKey: 'quickAdd.fields.applicationMethod.groundSpray' },
+    { value: 'chemigation', labelKey: 'quickAdd.fields.applicationMethod.chemigation' },
+    { value: 'seed_treatment', labelKey: 'quickAdd.fields.applicationMethod.seedTreatment' },
+    { value: 'soil_incorporation', labelKey: 'quickAdd.fields.applicationMethod.soilIncorporation' }
+  ],
+  // EPA Standard Methods for Fungicide (4 methods)
+  fungicide: [
+    { value: 'ground_spray', labelKey: 'quickAdd.fields.applicationMethod.groundSpray' },
+    { value: 'chemigation', labelKey: 'quickAdd.fields.applicationMethod.chemigation' },
+    { value: 'seed_treatment', labelKey: 'quickAdd.fields.applicationMethod.seedTreatment' },
+    { value: 'soil_incorporation', labelKey: 'quickAdd.fields.applicationMethod.soilIncorporation' }
+  ]
+};
+
+// Complete irrigation method options (combined from Quick Event and Manual Event)
 export const IRRIGATION_METHOD_OPTIONS: FieldOption[] = [
   { value: 'drip', labelKey: 'quickAdd.fields.irrigationMethod.drip' },
   { value: 'sprinkler', labelKey: 'quickAdd.fields.irrigationMethod.sprinkler' },
+  { value: 'center_pivot', labelKey: 'quickAdd.fields.irrigationMethod.centerPivot' },
   { value: 'flood', labelKey: 'quickAdd.fields.irrigationMethod.flood' },
   { value: 'furrow', labelKey: 'quickAdd.fields.irrigationMethod.furrow' },
-  { value: 'center_pivot', labelKey: 'quickAdd.fields.irrigationMethod.centerPivot' },
-  { value: 'micro_sprinkler', labelKey: 'quickAdd.fields.irrigationMethod.microSprinkler' }
+  { value: 'subsurface', labelKey: 'quickAdd.fields.irrigationMethod.subsurface' },
+  { value: 'micro_sprinkler', labelKey: 'quickAdd.fields.irrigationMethod.microSprinkler' },
+  { value: 'hand_watering', labelKey: 'quickAdd.fields.irrigationMethod.handWatering' },
+  { value: 'other', labelKey: 'quickAdd.fields.irrigationMethod.other' }
 ];
 
+// Complete water source options (combined from Quick Event and Manual Event)
 export const WATER_SOURCE_OPTIONS: FieldOption[] = [
   { value: 'well_groundwater', labelKey: 'quickAdd.fields.waterSource.wellGroundwater' },
   { value: 'municipal', labelKey: 'quickAdd.fields.waterSource.municipal' },
   { value: 'rainwater_harvesting', labelKey: 'quickAdd.fields.waterSource.rainwaterHarvesting' },
-  { value: 'irrigation_canal', labelKey: 'quickAdd.fields.waterSource.irrigationCanal' }
+  { value: 'irrigation_canal', labelKey: 'quickAdd.fields.waterSource.irrigationCanal' },
+  { value: 'river_stream', labelKey: 'quickAdd.fields.waterSource.riverStream' },
+  { value: 'pond_reservoir', labelKey: 'quickAdd.fields.waterSource.pondReservoir' },
+  { value: 'recycled_water', labelKey: 'quickAdd.fields.waterSource.recycledWater' },
+  { value: 'other', labelKey: 'quickAdd.fields.waterSource.other' }
 ];
 
 export const SEEDS_SOURCE_OPTIONS: FieldOption[] = [
@@ -164,13 +207,54 @@ export const SEEDS_SOURCE_OPTIONS: FieldOption[] = [
   { value: 'farm_saved', labelKey: 'quickAdd.fields.seedsSource.farmSaved' },
   { value: 'local', labelKey: 'quickAdd.fields.seedsSource.local' },
   { value: 'cooperative', labelKey: 'quickAdd.fields.seedsSource.cooperative' },
-  { value: 'commercial', labelKey: 'quickAdd.fields.seedsSource.commercial' }
+  { value: 'commercial', labelKey: 'quickAdd.fields.seedsSource.commercial' },
+  { value: 'other', labelKey: 'quickAdd.fields.seedsSource.other' }
+];
+
+// Weather conditions options for chemical applications
+// SSOT: Aligned with ChemicalTab-ENHANCED.jsx (Manual Event) - these are the authoritative options
+export const WEATHER_CONDITIONS_OPTIONS: FieldOption[] = [
+  { value: 'calm_dry', labelKey: 'app.weatherConditions.calmDry' },      // ☀️ Calm & Dry - Ideal conditions
+  { value: 'light_wind', labelKey: 'app.weatherConditions.lightWind' },  // 🌬️ Light Wind - Suitable conditions
+  { value: 'humid', labelKey: 'app.weatherConditions.humid' },           // 💨 Humid - Acceptable conditions
+  { value: 'windy', labelKey: 'app.weatherConditions.windy' }            // 🌪️ Windy - Challenging conditions
+];
+
+// Application timing options for chemical applications
+// SSOT: Aligned with ChemicalTab-ENHANCED.jsx (Manual Event) - these are the authoritative options
+export const APPLICATION_TIMING_OPTIONS: FieldOption[] = [
+  { value: 'pre_plant', labelKey: 'app.applicationTiming.prePlant' },           // 🌱 Pre-Planting
+  { value: 'post_emergence', labelKey: 'app.applicationTiming.postEmergence' }, // 🌿 Post-Emergence
+  { value: 'flowering', labelKey: 'app.applicationTiming.flowering' },          // 🌸 Flowering Stage
+  { value: 'fruit_development', labelKey: 'app.applicationTiming.fruitDevelopment' }, // 🍎 Fruit Development
+  { value: 'harvest', labelKey: 'app.applicationTiming.harvest' }               // 🚜 Pre-Harvest
+];
+
+// Organic approved options (Yes/No dropdown matching Manual Event)
+export const ORGANIC_APPROVED_OPTIONS: FieldOption[] = [
+  { value: 'true', labelKey: 'common.yes' },
+  { value: 'false', labelKey: 'common.no' }
+];
+
+// Restricted Use Pesticide options (EPA compliance)
+export const RESTRICTED_USE_PESTICIDE_OPTIONS: FieldOption[] = [
+  { value: 'true', labelKey: 'common.yes' },
+  { value: 'false', labelKey: 'common.no' }
 ];
 
 export const PRODUCTION_EFFICIENCY_OPTIONS: FieldOption[] = [
   { value: 'high', labelKey: 'quickAdd.fields.productionEfficiency.high' },
   { value: 'normal', labelKey: 'quickAdd.fields.productionEfficiency.normal' },
   { value: 'low', labelKey: 'quickAdd.fields.productionEfficiency.low' }
+];
+
+// Activity type options for general documentation events
+export const ACTIVITY_TYPE_OPTIONS: FieldOption[] = [
+  { value: 'inspection', labelKey: 'app.activityType.inspection' },
+  { value: 'certification', labelKey: 'app.activityType.certification' },
+  { value: 'training', labelKey: 'app.activityType.training' },
+  { value: 'maintenance', labelKey: 'app.activityType.maintenance' },
+  { value: 'other', labelKey: 'app.activityType.other' }
 ];
 
 export const CHEMICAL_SUBTYPE_OPTIONS = {
@@ -578,6 +662,86 @@ export const chemicalFields: Record<string, SharedFieldDefinition> = {
     sectionKey: 'chemical.fuel',
     quickEventVisible: true,
     quickEventOrder: 36
+  },
+
+  // Essential fields for EPA compliance and Manual Event parity
+  application_details: {
+    name: 'application_details',
+    type: 'textarea',
+    labelKey: 'app.applicationDetails',
+    helpKey: 'app.applicationDetailsHelp',
+    placeholderKey: 'app.applicationDetailsPlaceholder',
+    validation: {
+      maxLength: 500
+    },
+    sectionKey: 'chemical.application',
+    quickEventVisible: true,
+    quickEventOrder: 23
+  },
+
+  restricted_use_pesticide: {
+    name: 'restricted_use_pesticide',
+    type: 'select',
+    labelKey: 'app.restrictedUsePesticide',
+    helpKey: 'app.restrictedUsePesticideHelp',
+    options: RESTRICTED_USE_PESTICIDE_OPTIONS,
+    sectionKey: 'chemical.compliance',
+    quickEventVisible: true,
+    quickEventOrder: 26
+  },
+
+  organic_approved: {
+    name: 'organic_approved',
+    type: 'select',
+    labelKey: 'app.organicApproved',
+    helpKey: 'app.organicApprovedHelp',
+    options: ORGANIC_APPROVED_OPTIONS,
+    sectionKey: 'chemical.compliance',
+    quickEventVisible: true,
+    quickEventOrder: 27
+  },
+
+  // EPA compliance fields
+  applicator_name: {
+    name: 'applicator_name',
+    type: 'text',
+    labelKey: 'app.applicatorName',
+    helpKey: 'app.applicatorNameHelp',
+    placeholderKey: 'app.applicatorNamePlaceholder',
+    validation: {
+      maxLength: 100
+    },
+    sectionKey: 'chemical.compliance',
+    quickEventVisible: true,
+    quickEventOrder: 28
+  },
+
+  rei_hours: {
+    name: 'rei_hours',
+    type: 'number',
+    labelKey: 'app.reiHours',
+    helpKey: 'app.reiHoursHelp',
+    validation: {
+      min: 0,
+      step: 1
+    },
+    sectionKey: 'chemical.safety',
+    quickEventVisible: true,
+    quickEventOrder: 29
+  },
+
+  phi_days: {
+    name: 'phi_days',
+    type: 'number',
+    labelKey: 'app.phiDays',
+    helpKey: 'app.phiDaysHelp',
+    validation: {
+      min: 0,
+      step: 1
+    },
+    sectionKey: 'chemical.safety',
+    quickEventVisible: true,
+    quickEventOrder: 30
   }
 };
 
@@ -648,6 +812,8 @@ export const eventTypeFieldGroups = {
       'volume_applied',
       'area_treated',
       'application_method',
+      'application_details',
+      'organic_approved',
       'application_fuel_type',
       'application_fuel_consumed'
     ],
@@ -658,7 +824,13 @@ export const eventTypeFieldGroups = {
       'volume_applied',
       'area_treated',
       'application_method',
+      'application_details',
       'target_pest_disease',
+      'restricted_use_pesticide',
+      'organic_approved',
+      'applicator_name',
+      'rei_hours',
+      'phi_days',
       'application_fuel_type',
       'application_fuel_consumed'
     ],
@@ -669,6 +841,12 @@ export const eventTypeFieldGroups = {
       'volume_applied',
       'area_treated',
       'application_method',
+      'application_details',
+      'restricted_use_pesticide',
+      'organic_approved',
+      'applicator_name',
+      'rei_hours',
+      'phi_days',
       'application_fuel_type',
       'application_fuel_consumed'
     ],
@@ -679,7 +857,13 @@ export const eventTypeFieldGroups = {
       'volume_applied',
       'area_treated',
       'application_method',
+      'application_details',
       'target_pest_disease',
+      'restricted_use_pesticide',
+      'organic_approved',
+      'applicator_name',
+      'rei_hours',
+      'phi_days',
       'application_fuel_type',
       'application_fuel_consumed'
     ]

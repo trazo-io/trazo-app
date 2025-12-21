@@ -51,7 +51,7 @@ export default function ConsumerProfile() {
 
   if (isLoading) {
     return (
-      <StandardPage title="Profile" description="Loading your profile...">
+      <StandardPage title="Profile" description="Loading your profile..." showBackButton onBack={() => navigate(-1)}>
         <VStack spacing={6} align="stretch">
           {/* Loading indicator */}
           <VStack spacing={2} align="center" py={2}>
@@ -132,6 +132,8 @@ export default function ConsumerProfile() {
     <StandardPage
       title="Profile"
       description="Your transparency journey account"
+      showBackButton
+      onBack={() => navigate(-1)}
     >
       <VStack spacing={6} align="stretch">
         {/* Profile Header Card */}

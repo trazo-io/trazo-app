@@ -963,7 +963,7 @@ const DynamicEventFields: React.FC<{
             />
           </StandardField>
 
-          <StandardField label="Cost" helpText="For ROI tracking">
+          <StandardField label="Cost" helpText="For expense tracking">
             <StandardInput
               value={formData.energyCost || ''}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>

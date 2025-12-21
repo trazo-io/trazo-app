@@ -21,7 +21,9 @@ export const historyApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result, error, parcelId) => (result ? [{ type: 'History', parcelId }] : [])
+      // Fixed: Destructure parcelId from query arg, use 'id' key, and always include plain 'History' tag
+      // This ensures the query is invalidated when startProduction runs with invalidatesTags: ['History']
+      providesTags: (result, error, { parcelId }) => [{ type: 'History', id: parcelId }, 'History']
     }),
     finishCurrentHistory: build.mutation({
       query: ({ companyId, establishmentId, parcelId, historyData }) => {
@@ -44,7 +46,8 @@ export const historyApi = baseApi.injectEndpoints({
           formData: true
         };
       },
-      invalidatesTags: (result, error, parcelId) => (result ? [{ type: 'History', parcelId }] : [])
+      invalidatesTags: (result, error, { parcelId }) =>
+        result ? [{ type: 'History', id: parcelId }, 'History'] : ['History']
     }),
     getParcelHistories: build.query({
       query: ({ companyId, establishmentId, parcelId }) => {
@@ -54,7 +57,7 @@ export const historyApi = baseApi.injectEndpoints({
           credentials: 'include'
         };
       },
-      providesTags: (result, error, parcelId) => (result ? [{ type: 'History', parcelId }] : [])
+      providesTags: (result, error, { parcelId }) => [{ type: 'History', id: parcelId }, 'History']
     }),
     getUserProductionScans: build.query({
       query: () => ({
@@ -162,6 +165,18 @@ export const historyApi = baseApi.injectEndpoints({
       invalidatesTags: (result, error, { historyId }) =>
         result ? [{ type: 'History', historyId }, 'History'] : []
     }),
+    deleteProduction: build.mutation({
+      query: (historyId) => ({
+        url: PRODUCTION_URL(historyId),
+        method: 'DELETE',
+        credentials: 'include'
+      }),
+      invalidatesTags: (result, error, historyId) => [
+        { type: 'History', historyId },
+        'History',
+        'Productions'
+      ]
+    }),
     getPublicHistory: build.query({
       query: (historyId) => ({
         url: PUBLIC_HISTORY_URL(historyId),
@@ -246,6 +261,7 @@ export const {
   useDeleteEventMutation,
   useCreateProductionMutation,
   useUpdateProductionMutation,
+  useDeleteProductionMutation,
   useFinishCurrentHistoryMutation,
   useGetPublicHistoryQuery,
   useCommentHistoryMutation,

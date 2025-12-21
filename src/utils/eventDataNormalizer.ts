@@ -659,6 +659,15 @@ function normalizeProductionEventData(
       }
     }
 
+    // 🔧 FIX: fuel_type must be preserved for ALL production types, not just EM
+    // This enables "Energy Consumed" label for electric equipment across all production events
+    if (rawData.fuel_type) {
+      (productionData as any).fuel_type = getFuelTypeDisplayName(rawData.fuel_type);
+    }
+    if (rawData.fuel_unit) {
+      (productionData as any).fuel_unit = rawData.fuel_unit;
+    }
+
     // Sprint 3 Epic 3.2: Consumer Trust Fields for Production events
     if (rawData.seeds_source) {
       (productionData as any).seeds_source = rawData.seeds_source;

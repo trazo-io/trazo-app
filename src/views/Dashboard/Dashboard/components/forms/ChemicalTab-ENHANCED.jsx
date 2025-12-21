@@ -170,17 +170,19 @@ const formSchemaMainInfo = object({
       return !isNaN(num) && num >= 0;
     }, 'Application fuel amount cannot be negative'),
   application_fuel_unit: string().optional(),
-  custom_fields: array(object({
-    id: string().optional(),
-    label: string(),
-    value: string(),
-    field_type: string(),
-    visibility: string(),
-    link_url: string().optional(),
-    verification: string().optional(),
-    created_at: string().optional(),
-    photo_id: string().optional()
-  })).optional()
+  custom_fields: array(
+    object({
+      id: string().optional(),
+      label: string(),
+      value: string(),
+      field_type: string(),
+      visibility: string(),
+      link_url: string().optional(),
+      verification: string().optional(),
+      created_at: string().optional(),
+      photo_id: string().optional()
+    })
+  ).optional()
 });
 
 const ChemicalTab = ({
@@ -236,11 +238,18 @@ const ChemicalTab = ({
   // COMPREHENSIVE CHEMICAL EVENT TYPE MAPPING
   const mapBackendTypeToFrontendCode = (backendType) => {
     if (!backendType) {
-      console.log('[ChemicalTab.mapBackendTypeToFrontendCode] No backendType provided, returning empty string');
+      console.log(
+        '[ChemicalTab.mapBackendTypeToFrontendCode] No backendType provided, returning empty string'
+      );
       return '';
     }
 
-    console.log('[ChemicalTab.mapBackendTypeToFrontendCode] Input backendType:', backendType, 'Type:', typeof backendType);
+    console.log(
+      '[ChemicalTab.mapBackendTypeToFrontendCode] Input backendType:',
+      backendType,
+      'Type:',
+      typeof backendType
+    );
 
     // CHEMICAL EVENT TYPE MAP: Backend verbose property paths → Frontend short codes
     const typeMap = {
@@ -255,7 +264,10 @@ const ChemicalTab = ({
 
     // If it's already a short code, return it as is
     if (validCodes.includes(backendType)) {
-      console.log('[ChemicalTab.mapBackendTypeToFrontendCode] Already a valid short code:', backendType);
+      console.log(
+        '[ChemicalTab.mapBackendTypeToFrontendCode] Already a valid short code:',
+        backendType
+      );
       return backendType;
     }
 
@@ -263,12 +275,24 @@ const ChemicalTab = ({
     const mappedCode = typeMap[backendType];
 
     if (mappedCode) {
-      console.log('[ChemicalTab.mapBackendTypeToFrontendCode] Successfully mapped:', backendType, '→', mappedCode);
+      console.log(
+        '[ChemicalTab.mapBackendTypeToFrontendCode] Successfully mapped:',
+        backendType,
+        '→',
+        mappedCode
+      );
       return mappedCode;
     } else {
-      console.warn('[ChemicalTab.mapBackendTypeToFrontendCode] Unknown backend type:', backendType, '- no mapping found');
+      console.warn(
+        '[ChemicalTab.mapBackendTypeToFrontendCode] Unknown backend type:',
+        backendType,
+        '- no mapping found'
+      );
       console.warn('[ChemicalTab.mapBackendTypeToFrontendCode] Valid short codes:', validCodes);
-      console.warn('[ChemicalTab.mapBackendTypeToFrontendCode] Valid backend types:', Object.keys(typeMap));
+      console.warn(
+        '[ChemicalTab.mapBackendTypeToFrontendCode] Valid backend types:',
+        Object.keys(typeMap)
+      );
       return ''; // Return empty string for unknown types (form will use default)
     }
   };
@@ -514,9 +538,15 @@ const ChemicalTab = ({
 
     const processedData = {
       ...filteredData,
-      // Map frontend field names to backend field names - ensure required fields are always strings
-      volume: volume_applied ? `${volume_applied} ${data.volume_unit}` : '',
-      area: area_treated ? `${area_treated} ${data.area_unit}` : '',
+      // 🔧 FIELD UNIFICATION FIX: Send separate numeric values and units
+      // Backend UpdateChemicalEventSerializer handles:
+      //   - volume_applied → maps to volume field
+      //   - volume_unit → stores in extra_data
+      //   - area_treated → maps to area field
+      //   - area_unit → stores in extra_data
+      // Do NOT combine into strings like "400 L" - keep them separate!
+      volume_applied: volume_applied || '',
+      area_treated: area_treated || '',
       way_of_application: application_method || '',
       // EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309
       // These are direct model fields on ChemicalEvent, not extra_data
@@ -588,8 +618,7 @@ const ChemicalTab = ({
                 label="Chemical Type"
                 required
                 error={errors.type?.message}
-                helpText="Select the type of chemical for accurate carbon calculations"
-              >
+                helpText="Select the type of chemical for accurate carbon calculations">
                 <Controller
                   name="type"
                   control={methods.control}
@@ -609,8 +638,7 @@ const ChemicalTab = ({
                 <StandardField
                   label="Chemical Subtype"
                   error={errors.chemical_subtype?.message}
-                  helpText="Select the specific subtype for accurate carbon emission calculations. Different subtypes have different manufacturing emission factors."
-                >
+                  helpText="Select the specific subtype for accurate carbon emission calculations. Different subtypes have different manufacturing emission factors.">
                   <Controller
                     name="chemical_subtype"
                     control={methods.control}
@@ -681,8 +709,7 @@ const ChemicalTab = ({
                 label="Commercial Name / Product"
                 required
                 error={errors.commercial_name?.message}
-                helpText="Brand name or product name for transparency documentation"
-              >
+                helpText="Brand name or product name for transparency documentation">
                 <Controller
                   name="commercial_name"
                   control={methods.control}
@@ -698,8 +725,7 @@ const ChemicalTab = ({
               <StandardField
                 label="Active Ingredient (Optional)"
                 error={errors.active_ingredient?.message}
-                helpText="Main active ingredient for consumer transparency"
-              >
+                helpText="Main active ingredient for consumer transparency">
                 <Controller
                   name="active_ingredient"
                   control={methods.control}
@@ -728,8 +754,7 @@ const ChemicalTab = ({
                   required
                   error={errors.volume_applied?.message}
                   helpText="Total volume applied for carbon calculation"
-                  flex={2}
-                >
+                  flex={2}>
                   <Controller
                     name="volume_applied"
                     control={methods.control}
@@ -768,8 +793,7 @@ const ChemicalTab = ({
                   required
                   error={errors.area_treated?.message}
                   helpText="Area coverage for accurate carbon calculation"
-                  flex={2}
-                >
+                  flex={2}>
                   <Controller
                     name="area_treated"
                     control={methods.control}
@@ -818,8 +842,7 @@ const ChemicalTab = ({
                     <Badge
                       size="sm"
                       colorScheme={concentrationValidation?.isValid ? 'green' : 'red'}
-                      variant={concentrationValidation ? 'solid' : 'outline'}
-                    >
+                      variant={concentrationValidation ? 'solid' : 'outline'}>
                       {chemicalType === 'FE'
                         ? 'NPK'
                         : ['PE', 'HE', 'FU'].includes(chemicalType)
@@ -838,8 +861,7 @@ const ChemicalTab = ({
                           : 'percentage (e.g., "2.5%")'
                       } for accurate carbon calculations`
                     : 'Select chemical type first for format guidance'
-                }
-              >
+                }>
                 <Controller
                   name="concentration"
                   control={methods.control}
@@ -898,8 +920,7 @@ const ChemicalTab = ({
                 label="Application Method"
                 required
                 error={errors.application_method?.message}
-                helpText="USDA/EPA standard method - use Application Details for specifics"
-              >
+                helpText="USDA/EPA standard method - use Application Details for specifics">
                 <Controller
                   name="application_method"
                   control={methods.control}
@@ -998,8 +1019,7 @@ const ChemicalTab = ({
               {/* Sprint 2 Epic 2.2: Application Details for USDA/EPA method specificity */}
               <StandardField
                 label="Application Details"
-                helpText="Specific details about application method (e.g., equipment used, incorporated vs surface, pre vs post-emergent)"
-              >
+                helpText="Specific details about application method (e.g., equipment used, incorporated vs surface, pre vs post-emergent)">
                 <Controller
                   name="application_details"
                   control={methods.control}
@@ -1027,8 +1047,7 @@ const ChemicalTab = ({
               <StandardField
                 label="Weather Conditions"
                 error={errors.weather_conditions?.message}
-                helpText="Weather conditions during application for transparency"
-              >
+                helpText="Weather conditions during application for transparency">
                 <Controller
                   name="weather_conditions"
                   control={methods.control}
@@ -1047,8 +1066,7 @@ const ChemicalTab = ({
               <StandardField
                 label="Application Timing"
                 error={errors.application_timing?.message}
-                helpText="When the application was made for consumer understanding"
-              >
+                helpText="When the application was made for consumer understanding">
                 <Controller
                   name="application_timing"
                   control={methods.control}
@@ -1068,8 +1086,7 @@ const ChemicalTab = ({
               <StandardField
                 label="Target Pest/Disease/Need"
                 error={errors.target_pest_disease?.message}
-                helpText="What problem this application addresses for transparency"
-              >
+                helpText="What problem this application addresses for transparency">
                 <Controller
                   name="target_pest_disease"
                   control={methods.control}
@@ -1086,8 +1103,7 @@ const ChemicalTab = ({
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <StandardField
                   label="Organic Approved"
-                  helpText="Is this chemical approved for organic farming?"
-                >
+                  helpText="Is this chemical approved for organic farming?">
                   <Controller
                     name="organic_approved"
                     control={methods.control}
@@ -1114,8 +1130,7 @@ const ChemicalTab = ({
                 <StandardField
                   label="Buffer Zone (meters)"
                   error={errors.buffer_zone_meters?.message}
-                  helpText="Required buffer distance from sensitive areas"
-                >
+                  helpText="Required buffer distance from sensitive areas">
                   <Controller
                     name="buffer_zone_meters"
                     control={methods.control}
@@ -1138,8 +1153,7 @@ const ChemicalTab = ({
                 borderRadius="md"
                 borderLeft="4px"
                 borderLeftColor="teal.400"
-                mt={2}
-              >
+                mt={2}>
                 <HStack spacing={2} mb={1}>
                   <Icon as={FaLeaf} color="teal.500" fontSize="sm" />
                   <Text fontSize="sm" fontWeight="semibold" color="teal.700">
@@ -1171,8 +1185,7 @@ const ChemicalTab = ({
                 {/* Phase 3: Application Fuel Type Selector */}
                 <StandardField
                   label="Application Equipment Fuel Type"
-                  helpText="Fuel type used for spraying or spreading equipment"
-                >
+                  helpText="Fuel type used for spraying or spreading equipment">
                   <Controller
                     name="application_fuel_type"
                     control={methods.control}
@@ -1189,9 +1202,16 @@ const ChemicalTab = ({
                 </StandardField>
 
                 <StandardField
-                  label={watch('application_fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'}
-                  helpText={watch('application_fuel_type') === 'electric' ? 'Energy consumption for carbon emission calculation' : 'Fuel consumed during application'}
-                >
+                  label={
+                    watch('application_fuel_type') === 'electric'
+                      ? 'Energy Amount (kWh)'
+                      : 'Fuel Consumed'
+                  }
+                  helpText={
+                    watch('application_fuel_type') === 'electric'
+                      ? 'Energy consumption for carbon emission calculation'
+                      : 'Fuel consumed during application'
+                  }>
                   <HStack spacing={2}>
                     <Controller
                       name="application_fuel_consumed"
@@ -1203,7 +1223,11 @@ const ChemicalTab = ({
                           type="number"
                           step="0.1"
                           min="0"
-                          placeholder={watch('application_fuel_type') === 'electric' ? 'e.g., 5 kWh' : 'e.g., 2.5'}
+                          placeholder={
+                            watch('application_fuel_type') === 'electric'
+                              ? 'e.g., 5 kWh'
+                              : 'e.g., 2.5'
+                          }
                         />
                       )}
                     />
@@ -1228,7 +1252,11 @@ const ChemicalTab = ({
                 <Box p={3} bg="blue.50" borderRadius="md" border="1px solid" borderColor="blue.200">
                   <Text fontSize="sm" color="blue.700">
                     <Icon as={FaBolt} mr={2} color="blue.600" />
-                    <Text as="span" fontWeight="semibold">Electric Equipment:</Text> Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions.
+                    <Text as="span" fontWeight="semibold">
+                      Electric Equipment:
+                    </Text>{' '}
+                    Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg
+                    CO₂/kWh. Solar/wind powered equipment has zero emissions.
                   </Text>
                 </Box>
               )}
@@ -1239,8 +1267,7 @@ const ChemicalTab = ({
                 borderRadius="md"
                 borderLeft="4px"
                 borderLeftColor="blue.400"
-                mt={2}
-              >
+                mt={2}>
                 <HStack spacing={2} mb={1}>
                   <Icon as={FaFlask} color="blue.500" fontSize="sm" />
                   <Text fontSize="sm" fontWeight="semibold" color="blue.700">
@@ -1248,9 +1275,9 @@ const ChemicalTab = ({
                   </Text>
                 </HStack>
                 <Text fontSize="xs" color="blue.600">
-                  Application equipment fuel (sprayers, spreaders, etc.) contributes significantly to chemical operation carbon
-                  footprint. Documenting actual fuel usage provides consumers with complete transparency into your chemical
-                  application practices.
+                  Application equipment fuel (sprayers, spreaders, etc.) contributes significantly
+                  to chemical operation carbon footprint. Documenting actual fuel usage provides
+                  consumers with complete transparency into your chemical application practices.
                 </Text>
               </Box>
             </VStack>
@@ -1277,8 +1304,7 @@ const ChemicalTab = ({
                   <StandardField
                     label="Applicator Name"
                     error={errors.applicator_name?.message}
-                    helpText="Person who applied the chemical"
-                  >
+                    helpText="Person who applied the chemical">
                     <Controller
                       name="applicator_name"
                       control={methods.control}
@@ -1291,8 +1317,7 @@ const ChemicalTab = ({
                   <StandardField
                     label="EPA Registration Number"
                     error={errors.epa_registration_number?.message}
-                    helpText="Product EPA registration number"
-                  >
+                    helpText="Product EPA registration number">
                     <Controller
                       name="epa_registration_number"
                       control={methods.control}
@@ -1306,15 +1331,13 @@ const ChemicalTab = ({
                 {/* Restricted Use Pesticide - Clean toggle design */}
                 <StandardField
                   label="Restricted Use Pesticide (RUP)"
-                  helpText="Does this product require certified applicator for purchase/use?"
-                >
+                  helpText="Does this product require certified applicator for purchase/use?">
                   <HStack
                     justify="space-between"
                     align="center"
                     p={3}
                     bg="gray.50"
-                    borderRadius="md"
-                  >
+                    borderRadius="md">
                     <Text fontSize="sm" color="gray.700">
                       This product is classified as Restricted Use
                     </Text>
@@ -1346,8 +1369,7 @@ const ChemicalTab = ({
                     label="Applicator Certification Number"
                     required={isRestrictedUse}
                     error={errors.applicator_certification?.message}
-                    helpText="Required for restricted use pesticides - enter your state pesticide applicator license number"
-                  >
+                    helpText="Required for restricted use pesticides - enter your state pesticide applicator license number">
                     <Controller
                       name="applicator_certification"
                       control={methods.control}
@@ -1366,8 +1388,7 @@ const ChemicalTab = ({
                   <StandardField
                     label="REI (Restricted Entry Interval)"
                     error={errors.rei_hours?.message}
-                    helpText="Hours before workers can re-enter treated area"
-                  >
+                    helpText="Hours before workers can re-enter treated area">
                     <Controller
                       name="rei_hours"
                       control={methods.control}
@@ -1389,8 +1410,7 @@ const ChemicalTab = ({
                   <StandardField
                     label="PHI (Pre-Harvest Interval)"
                     error={errors.phi_days?.message}
-                    helpText="Days before harvest after application"
-                  >
+                    helpText="Days before harvest after application">
                     <Controller
                       name="phi_days"
                       control={methods.control}
@@ -1425,8 +1445,7 @@ const ChemicalTab = ({
             <StandardField
               label="Observations & Notes"
               error={errors.observation?.message}
-              helpText="Share details about this chemical application that help consumers understand your farming practices"
-            >
+              helpText="Share details about this chemical application that help consumers understand your farming practices">
               <Controller
                 name="observation"
                 control={methods.control}
@@ -1457,8 +1476,7 @@ const ChemicalTab = ({
                   variant="outline"
                   onClick={onPrev}
                   leftIcon={<FaChevronLeft />}
-                  size="lg"
-                >
+                  size="lg">
                   {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
                 </StandardButton>
                 <StandardButton
@@ -1470,8 +1488,7 @@ const ChemicalTab = ({
                     console.log('[ChemicalTab] 🖱️ Continue button clicked!');
                     console.log('[ChemicalTab] 📊 Current form state:', methods.formState);
                     console.log('[ChemicalTab] ❗ Form errors before submit:', errors);
-                  }}
-                >
+                  }}>
                   {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                 </StandardButton>
               </HStack>

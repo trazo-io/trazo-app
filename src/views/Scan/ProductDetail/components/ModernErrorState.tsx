@@ -1,44 +1,68 @@
-import React from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Box,
   VStack,
   HStack,
   Text,
-  Button,
   useColorModeValue,
   Icon,
   Container,
   Circle,
-  Divider
+  Divider,
+  Stack,
+  useToast,
+  IconButton
 } from '@chakra-ui/react';
 import {
   FaExclamationTriangle,
   FaQrcode,
   FaRedo,
-  FaHome,
   FaShieldAlt,
-  FaLeaf
+  FaLeaf,
+  FaQuestionCircle,
+  FaCopy,
+  FaExternalLinkAlt
 } from 'react-icons/fa';
+import {
+  StandardCard,
+  StandardButton,
+  CollapsibleSection
+} from 'components/Design/StandardComponents';
+
+// Support email - single source of truth
+const SUPPORT_EMAIL = 'support@trazo.io';
 
 interface ModernErrorStateProps {
   type: 'qr_verification' | 'network' | 'not_found' | 'general';
   title?: string;
   message?: string;
+  errorId?: string;
   onRetry?: () => void;
-  onGoHome?: () => void;
+  /** Optional: Show "Learn About Trazo" button linking to website */
+  showLearnMore?: boolean;
 }
 
 export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
   type,
   title,
   message,
+  errorId,
   onRetry,
-  onGoHome
+  showLearnMore = true
 }) => {
+  const toast = useToast();
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+
   // Trazo design system colors
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
+
+  // Focus management for accessibility
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   const getErrorConfig = () => {
     const configs = {
@@ -49,8 +73,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
           message ||
           'This QR code could not be verified. Please try scanning again or contact support if the problem persists.',
         iconColor: 'red.500',
-        bgColor: 'red.50',
-        borderColor: 'red.200',
+        iconBg: 'red.100',
         suggestions: [
           'Ensure good lighting when scanning',
           'Hold camera steady and at proper distance',
@@ -59,13 +82,12 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
       },
       network: {
         icon: FaExclamationTriangle,
-        title: title || 'Connection Problem',
+        title: title || 'Unable to Load Product',
         message:
           message ||
-          'Unable to load product information. Please check your internet connection and try again.',
+          'Please check your connection and try again, or scan a different product.',
         iconColor: 'orange.500',
-        bgColor: 'orange.50',
-        borderColor: 'orange.200',
+        iconBg: 'orange.100',
         suggestions: [
           'Check your internet connection',
           'Try switching between WiFi and mobile data',
@@ -79,8 +101,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
           message ||
           'This product information is not available. It may have been removed or the QR code is invalid.',
         iconColor: 'gray.500',
-        bgColor: 'gray.50',
-        borderColor: 'gray.200',
+        iconBg: 'gray.100',
         suggestions: [
           'Verify you scanned the correct QR code',
           'Check if the product is still available',
@@ -94,8 +115,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
           message ||
           'We encountered an unexpected error. Please try again or contact support if the problem continues.',
         iconColor: 'red.500',
-        bgColor: 'red.50',
-        borderColor: 'red.200',
+        iconBg: 'red.100',
         suggestions: [
           'Try refreshing the page',
           'Clear your browser cache',
@@ -108,28 +128,68 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
 
   const config = getErrorConfig();
 
+  // Smart retry handler with rate limiting
+  const handleRetry = useCallback(async () => {
+    if (retryCount >= maxRetries || !onRetry || isRetrying) return;
+
+    setIsRetrying(true);
+    setRetryCount((prev) => prev + 1);
+
+    try {
+      onRetry();
+    } finally {
+      // Prevent spam clicking
+      setTimeout(() => setIsRetrying(false), 2000);
+    }
+  }, [onRetry, retryCount, isRetrying]);
+
+  // Copy email to clipboard
+  const handleCopyEmail = useCallback(() => {
+    navigator.clipboard.writeText(SUPPORT_EMAIL);
+    toast({
+      title: 'Email copied!',
+      status: 'success',
+      duration: 2000,
+      isClosable: true
+    });
+  }, [toast]);
+
+  // Copy error ID to clipboard
+  const handleCopyErrorId = useCallback(() => {
+    if (errorId) {
+      navigator.clipboard.writeText(errorId);
+      toast({
+        title: 'Error ID copied!',
+        description: 'Share this with support for faster help.',
+        status: 'success',
+        duration: 2000,
+        isClosable: true
+      });
+    }
+  }, [errorId, toast]);
+
   return (
-    <Container maxW="2xl" py={{ base: 8, md: 12 }} px={{ base: 4, md: 6 }}>
-      <VStack spacing={8} textAlign="center" pt="125px">
-        {/* Error Icon and Message */}
-        <Box
-          bg={config.bgColor}
-          border="2px solid"
-          borderColor={config.borderColor}
-          borderRadius="xl"
-          p={8}
-          w="full"
-          maxW="lg"
-        >
+    <Container maxW="2xl" py={{ base: 6, md: 8 }} px={{ base: 4, md: 6 }}>
+      <VStack spacing={6} textAlign="center" pt="100px" role="alert" aria-live="polite">
+        {/* Main Error Card - Using StandardCard */}
+        <StandardCard variant="elevated" padding={{ base: 6, md: 8 }}>
           <VStack spacing={6}>
             {/* Error Icon */}
-            <Circle size="80px" bg={`${config.iconColor.split('.')[0]}.100`}>
+            <Circle size="80px" bg={config.iconBg}>
               <Icon as={config.icon} boxSize={8} color={config.iconColor} />
             </Circle>
 
             {/* Error Title and Message */}
             <VStack spacing={3}>
-              <Text fontSize="xl" fontWeight="bold" color={textColor}>
+              <Text
+                as="h1"
+                fontSize="xl"
+                fontWeight="bold"
+                color="gray.800"
+                ref={headingRef}
+                tabIndex={-1}
+                outline="none"
+              >
                 {config.title}
               </Text>
               <Text fontSize="md" color={mutedColor} lineHeight="1.6" maxW="md">
@@ -137,65 +197,96 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
               </Text>
             </VStack>
 
-            {/* Action Buttons */}
-            <VStack spacing={3} w="full">
+            {/* Action Buttons - Responsive layout */}
+            <Stack
+              direction={{ base: 'column', md: 'row' }}
+              spacing={3}
+              w="full"
+              justify="center"
+            >
               {onRetry && (
-                <Button
-                  colorScheme="green"
+                <StandardButton
+                  variant="primary"
                   size="lg"
-                  w="full"
-                  maxW="sm"
-                  onClick={onRetry}
+                  width="full"
+                  onClick={handleRetry}
+                  isLoading={isRetrying}
+                  loadingText="Retrying..."
+                  isDisabled={retryCount >= maxRetries}
                   leftIcon={<FaRedo />}
                 >
-                  Try Again
-                </Button>
+                  {retryCount > 0 ? `Try Again (${maxRetries - retryCount} left)` : 'Try Again'}
+                </StandardButton>
               )}
-              {onGoHome && (
-                <Button
+              {showLearnMore && (
+                <StandardButton
                   variant="outline"
-                  colorScheme="gray"
                   size="lg"
-                  w="full"
-                  maxW="sm"
-                  onClick={onGoHome}
-                  leftIcon={<FaHome />}
+                  width="full"
+                  onClick={() => window.open('https://trazo.io', '_blank')}
+                  leftIcon={<FaLeaf />}
+                  rightIcon={<FaExternalLinkAlt size={12} />}
                 >
-                  Go to Dashboard
-                </Button>
+                  Learn About Trazo
+                </StandardButton>
               )}
-            </VStack>
-          </VStack>
-        </Box>
+            </Stack>
 
-        {/* Helpful Suggestions */}
+            {/* Error ID for support - Transparency element */}
+            {errorId && (
+              <VStack
+                spacing={1}
+                align="center"
+                w="full"
+                pt={4}
+                borderTop="1px"
+                borderColor="gray.200"
+              >
+                <Text fontSize="xs" color="gray.500">
+                  Error ID for support:
+                </Text>
+                <HStack spacing={2}>
+                  <Text fontSize="xs" color="gray.600" fontFamily="mono">
+                    {errorId}
+                  </Text>
+                  <IconButton
+                    size="xs"
+                    icon={<FaCopy />}
+                    aria-label="Copy error ID"
+                    variant="ghost"
+                    colorScheme="gray"
+                    onClick={handleCopyErrorId}
+                  />
+                </HStack>
+              </VStack>
+            )}
+          </VStack>
+        </StandardCard>
+
+        {/* Trust Recovery Card - Reassure users during error */}
         <Box
-          bg={bgColor}
+          bg="green.50"
           border="1px solid"
-          borderColor={useColorModeValue('gray.200', 'gray.600')}
-          borderRadius="lg"
-          p={6}
+          borderColor="green.200"
+          borderRadius="xl"
+          p={4}
           w="full"
           maxW="lg"
         >
-          <VStack spacing={4} align="start">
-            <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-              💡 Troubleshooting Tips
-            </Text>
-            <VStack spacing={2} align="start">
-              {config.suggestions.map((suggestion, index) => (
-                <HStack key={index} align="start" spacing={3}>
-                  <Box w="6px" h="6px" borderRadius="full" bg="green.500" mt="6px" flexShrink={0} />
-                  <Text fontSize="sm" color={mutedColor}>
-                    {suggestion}
-                  </Text>
-                </HStack>
-              ))}
+          <HStack spacing={3} justify="center">
+            <Icon as={FaShieldAlt} color="green.600" boxSize={5} />
+            <VStack align="start" spacing={0}>
+              <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                Your scan is private and secure
+              </Text>
+              <Text fontSize="xs" color="green.600">
+                This error doesn't affect your data or privacy
+              </Text>
             </VStack>
-          </VStack>
+          </HStack>
         </Box>
 
-        {/* Support Information */}
+        {/* Support Information - Correct email */}
         <Box
           bg="blue.50"
           border="1px solid"
@@ -207,17 +298,27 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
           w="full"
           maxW="lg"
         >
-          <VStack spacing={3}>
+          <VStack spacing={2}>
             <Text fontSize="sm" color="blue.700" fontWeight="medium">
-              Still having trouble? Our support team is here to help.
+              Need help? Our support team is here to assist.
             </Text>
-            <Text fontSize="xs" color="blue.600">
-              Contact: support@trazo.app | Available 24/7 for transparency issues
-            </Text>
+            <HStack spacing={2}>
+              <Text fontSize="sm" color="blue.600" fontWeight="medium">
+                {SUPPORT_EMAIL}
+              </Text>
+              <IconButton
+                size="xs"
+                icon={<FaCopy />}
+                aria-label="Copy support email"
+                variant="ghost"
+                colorScheme="blue"
+                onClick={handleCopyEmail}
+              />
+            </HStack>
           </VStack>
         </Box>
 
-        {/* Trazo Branding */}
+        {/* Trazo Branding Footer */}
         <VStack spacing={2}>
           <HStack spacing={4} fontSize="xs" color={mutedColor} opacity={0.8}>
             <HStack spacing={1}>

@@ -116,7 +116,7 @@ const productionTypeOptions = [
     icon: FaLeaf,
     color: 'green',
     value: 'OR',
-    carbonBenefits: 'Enhanced carbon credit eligibility and soil health'
+    carbonBenefits: 'Enhanced consumer transparency and soil health tracking'
   },
   {
     id: 'GA',
@@ -134,12 +134,13 @@ const productionTypeOptions = [
     icon: FaSeedling,
     color: 'purple',
     value: 'SU',
-    carbonBenefits: 'Premium carbon credit potential and ecosystem benefits'
+    carbonBenefits: 'Premium transparency verification and ecosystem tracking'
   }
 ];
 
-// Irrigation method options for carbon impact
+// NOTE: Irrigation method removed for MVP - already captured at establishment level
 const irrigationMethodOptions = [
+  // Kept for backwards compatibility but no longer shown in UI
   { value: 'drip', label: 'Drip Irrigation', efficiency: 'High', carbonImpact: 'Low' },
   { value: 'sprinkler', label: 'Sprinkler System', efficiency: 'Medium', carbonImpact: 'Medium' },
   { value: 'flood', label: 'Flood Irrigation', efficiency: 'Low', carbonImpact: 'High' },
@@ -213,7 +214,6 @@ const productionSchema = object({
   // Production Planning
   expectedHarvest: string().optional(),
   estimatedYield: number().optional(),
-  irrigationMethod: string().optional(),
   productionMethod: string().optional(),
   qualityTargets: string().optional(),
   // Enhanced blockchain fields
@@ -241,7 +241,6 @@ interface ProductionFormData {
   // Production Planning
   expectedHarvest?: string;
   estimatedYield?: number;
-  irrigationMethod?: string;
   productionMethod?: string;
   qualityTargets?: string;
   // Enhanced blockchain fields
@@ -292,8 +291,7 @@ export const NewProduction: React.FC = () => {
       waterEfficiencyGoal: 20,
       soilHealthTarget: 10,
       carbonOffsetPlanning: false,
-      productionMethod: 'conventional',
-      irrigationMethod: 'drip'
+      productionMethod: 'conventional'
     }
   });
 
@@ -621,7 +619,7 @@ export const NewProduction: React.FC = () => {
                           Pursue Organic Certification
                         </Text>
                         <Text fontSize="sm" color="blue.600">
-                          Meet USDA organic standards for premium carbon credits
+                          Meet USDA organic standards for premium transparency
                         </Text>
                       </VStack>
                       <Switch
@@ -796,19 +794,7 @@ export const NewProduction: React.FC = () => {
                     </StandardSelect>
                   </StandardField>
 
-                  <StandardField label="Irrigation Method" helpText="Water management approach">
-                    <StandardSelect
-                      value={watch('irrigationMethod')}
-                      onChange={(e) => setValue('irrigationMethod', e.target.value)}
-                      placeholder="Select irrigation"
-                    >
-                      {irrigationMethodOptions.map((irrigation) => (
-                        <option key={irrigation.value} value={irrigation.value}>
-                          {irrigation.label}
-                        </option>
-                      ))}
-                    </StandardSelect>
-                  </StandardField>
+                  {/* NOTE: Irrigation Method removed - already captured at establishment level */}
                 </SimpleGrid>
 
                 {/* Optional Plant Details */}

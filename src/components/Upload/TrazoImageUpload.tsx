@@ -31,16 +31,14 @@ import {
   useDisclosure,
   Circle,
   useBreakpointValue,
-  Spinner,
   Alert,
   AlertIcon,
   AlertDescription
 } from '@chakra-ui/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import {
   FaCamera,
-  FaCloudUploadAlt,
   FaTimes,
   FaCheck,
   FaMobileAlt,
@@ -634,28 +632,20 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                       opacity={item.status === 'uploading' ? 0.7 : 1}
                     />
 
-                    {/* Status indicators */}
+                    {/* Status indicators - SIMPLIFIED: Just progress bar at bottom */}
                     {item.status === 'uploading' && (
-                      <Box
+                      <Progress
+                        value={item.progress}
+                        size="sm"
+                        colorScheme="green"
                         position="absolute"
-                        top="50%"
-                        left="50%"
-                        transform="translate(-50%, -50%)"
-                      >
-                        <VStack spacing={2}>
-                          <Spinner size="lg" color={accentColor} thickness="4px" />
-                          <Text
-                            fontSize="xs"
-                            color="white"
-                            bg="blackAlpha.700"
-                            px={2}
-                            py={1}
-                            borderRadius="md"
-                          >
-                            Uploading...
-                          </Text>
-                        </VStack>
-                      </Box>
+                        bottom={0}
+                        left={0}
+                        right={0}
+                        borderBottomRadius="xl"
+                        bg="blackAlpha.300"
+                        aria-label={`Uploading ${item.file.name}`}
+                      />
                     )}
 
                     {item.status === 'error' && (
@@ -759,12 +749,35 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         </Alert>
       )}
 
-      {/* 🔄 UPLOAD STATUS - CLEAR FEEDBACK */}
+      {/* 🔄 UPLOAD STATUS - Minimalist Trazo Pattern */}
       {isUploading && (
-        <Alert status="info" borderRadius="xl">
-          <Spinner size="sm" mr={2} />
-          <AlertDescription>Uploading photos... This may take a moment.</AlertDescription>
-        </Alert>
+        <Box
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <HStack justify="space-between" align="center" mb={2}>
+            <Text fontSize="sm" color={mutedColor}>
+              Uploading {uploadingFiles.filter(f => f.status === 'uploading').length} of {uploadingFiles.length}...
+            </Text>
+            <Text fontSize="sm" color="green.600" fontWeight="semibold">
+              {Math.round(uploadingFiles.reduce((acc, f) => acc + f.progress, 0) / uploadingFiles.length)}%
+            </Text>
+          </HStack>
+          <Progress
+            value={uploadingFiles.reduce((acc, f) => acc + f.progress, 0) / uploadingFiles.length}
+            size="xs"
+            borderRadius="full"
+            bg="gray.100"
+            aria-label="Upload progress"
+            sx={{
+              '& > div': {
+                background: 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)',
+                transition: 'width 0.1s ease'
+              }
+            }}
+          />
+        </Box>
       )}
 
       {/* Status text */}

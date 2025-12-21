@@ -763,7 +763,7 @@ const EducationTopicDetail: React.FC = () => {
                     <ListItem>Identifying optimization opportunities</ListItem>
                     <ListItem>Benchmarking against industry standards</ListItem>
                     <ListItem>Track improvement over time</ListItem>
-                    <ListItem>Carbon credit opportunity assessment</ListItem>
+                    <ListItem>Transparency improvement tracking</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -2145,9 +2145,9 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'subscription-features',
-        title: 'Subscription Features & ROI Optimization',
+        title: 'Subscription Features & Benefits',
         description:
-          'Understanding feature tiers, upgrade benefits, and calculating your return on investment',
+          'Understanding feature tiers, upgrade benefits, and maximizing transparency value',
         icon: FaCrown,
         category: 'Business Growth',
         content: (
@@ -2155,11 +2155,11 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Maximize Your Trazo Investment</AlertTitle>
+                <AlertTitle>Maximize Your Trazo Value</AlertTitle>
                 <AlertDescription>
                   Understanding Trazo's subscription tiers helps you choose the right features for
-                  your farm size and goals. Most farms see 300-500% ROI through premium pricing and
-                  improved market access.
+                  your farm size and goals. Premium transparency features improve market access and
+                  consumer trust.
                 </AlertDescription>
               </Box>
             </Alert>
@@ -2291,7 +2291,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaCalculator} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                ROI Calculation Framework
+                Value & Benefits Framework
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -2378,11 +2378,12 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Typical ROI Timeline</AlertTitle>
+                <AlertTitle>Typical Benefits Timeline</AlertTitle>
                 <AlertDescription>
-                  Most farms see subscription ROI within 2-3 months through premium pricing.
-                  Professional plan users typically achieve 400-600% annual ROI, while enterprise
-                  users see 300-500% ROI plus significant operational efficiency gains.
+                  Most farms see transparency benefits within 2-3 months through improved consumer
+                  trust. Professional plan users typically achieve significant market access
+                  improvements, while enterprise users see operational efficiency gains and premium
+                  positioning.
                 </AlertDescription>
               </Box>
             </Alert>

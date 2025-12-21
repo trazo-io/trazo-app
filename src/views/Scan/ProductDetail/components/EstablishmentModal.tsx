@@ -83,11 +83,11 @@ interface EstablishmentModalProps {
     facebook?: string;
     instagram?: string;
     certifications?: string;
-    // New operational agricultural fields
+    // Operational agricultural fields - updated for transparency-first approach
     water_sources?: string[];
-    climate_zone?: string;
-    soil_types?: string[];
-    conservation_practices?: string[];
+    // climate_zone removed (not consumer-relevant)
+    soil_health_practices?: string[]; // replaces soil_types
+    // conservation_practices merged into sustainability_practices
     irrigation_methods?: string[];
     about?: string;
     main_activities?: string;
@@ -264,6 +264,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                 <Heading size="md" color={textColor} mb={4}>
                   Farm Overview
                 </Heading>
+                {/* Updated: Removed employee_count (not consumer-relevant) */}
                 <StatGroup>
                   {establishmentData.total_acreage && (
                     <Stat>
@@ -278,14 +279,6 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                       <StatLabel color="gray.500">Parcels</StatLabel>
                       <StatNumber color={accentColor}>
                         {establishmentData.parcels.length}
-                      </StatNumber>
-                    </Stat>
-                  )}
-                  {establishmentData.employee_count && (
-                    <Stat>
-                      <StatLabel color="gray.500">Employees</StatLabel>
-                      <StatNumber color={accentColor}>
-                        {establishmentData.employee_count}
                       </StatNumber>
                     </Stat>
                   )}
@@ -541,11 +534,9 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
               </Card>
             )}
 
-            {/* Operational Details */}
+            {/* Operational Details - Updated: removed climate_zone, soil_types → soil_health_practices */}
             {(establishmentData.water_sources?.length ||
-              establishmentData.climate_zone ||
-              establishmentData.soil_types?.length ||
-              establishmentData.conservation_practices?.length ||
+              establishmentData.soil_health_practices?.length ||
               establishmentData.irrigation_methods?.length) && (
               <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
                 <CardBody p={6}>
@@ -556,17 +547,6 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                     </HStack>
                   </Heading>
                   <VStack spacing={4} align="stretch">
-                    {establishmentData.climate_zone && (
-                      <Box>
-                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
-                          Climate Zone
-                        </Text>
-                        <Badge colorScheme="blue" p={2} borderRadius="md">
-                          {formatLabel(establishmentData.climate_zone)}
-                        </Badge>
-                      </Box>
-                    )}
-
                     {establishmentData.water_sources?.length > 0 && (
                       <Box>
                         <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
@@ -582,29 +562,14 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
                       </Box>
                     )}
 
-                    {establishmentData.soil_types?.length > 0 && (
+                    {establishmentData.soil_health_practices?.length > 0 && (
                       <Box>
                         <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
-                          Soil Types
+                          Soil Health Practices
                         </Text>
                         <Wrap spacing={2}>
-                          {establishmentData.soil_types.map((soil, index) => (
+                          {establishmentData.soil_health_practices.map((practice, index) => (
                             <Badge key={index} colorScheme="orange" p={2} borderRadius="md">
-                              {soil}
-                            </Badge>
-                          ))}
-                        </Wrap>
-                      </Box>
-                    )}
-
-                    {establishmentData.conservation_practices?.length > 0 && (
-                      <Box>
-                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
-                          Conservation Practices
-                        </Text>
-                        <Wrap spacing={2}>
-                          {establishmentData.conservation_practices.map((practice, index) => (
-                            <Badge key={index} colorScheme="green" p={2} borderRadius="md">
                               {practice}
                             </Badge>
                           ))}

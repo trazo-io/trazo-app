@@ -78,45 +78,51 @@ export const StandardPage = ({
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const isMobile = useBreakpointValue({ base: true, md: false });
 
+  // Determine if we need the full hero or just a minimal header
+  const hasHeroContent = title || description;
+  const needsMinimalHeader = showBackButton && !hasHeroContent;
+
   return (
     <Box bg={bgColor} minH="100vh">
-      {/* Clean Header Section */}
-      <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="120px" pb="80px" px={4}>
-        <Container maxW="6xl" mx="auto">
-          <VStack spacing={4} textAlign="center">
-            {title && (
-              <>
-                {/* <Badge
-                  colorScheme="green"
-                  variant="subtle"
-                  fontSize="sm"
-                  px={4}
-                  py={2}
-                  borderRadius="full"
-                  textTransform="none">
-                  <HStack spacing={2}>
-                    <Icon as={FaLeaf} boxSize={4} />
-                    <Text fontWeight="medium">Trazo Dashboard</Text>
-                  </HStack>
-                </Badge> */}
+      {/* Minimal Header - Just back button, aligned with content */}
+      {needsMinimalHeader && (
+        <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="100px" pb="24px" px={{ base: 3, md: 6 }}>
+          <Button
+            variant="outline"
+            leftIcon={<FaChevronLeft />}
+            onClick={onBack}
+            size="sm"
+            bg="white"
+            _hover={{ bg: 'gray.50' }}
+          >
+            Back
+          </Button>
+        </Box>
+      )}
 
-                {isMobile ? (
-                  // Mobile: Back button above title for full width
-                  <VStack spacing={4} w="full" align="center">
-                    {showBackButton && (
-                      <Flex w="full" justify="flex-start">
-                        <Button
-                          variant="outline"
-                          leftIcon={<FaChevronLeft />}
-                          onClick={onBack}
-                          size="sm"
-                        >
-                          Back
-                        </Button>
-                      </Flex>
-                    )}
+      {/* Full Hero Header Section - With title */}
+      {hasHeroContent && (
+        <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="120px" pb="80px" px={4}>
+          <Container maxW="6xl" mx="auto">
+            <VStack spacing={4} textAlign="center">
+              {isMobile ? (
+                // Mobile: Back button above title for full width
+                <VStack spacing={4} w="full" align="center">
+                  {showBackButton && (
+                    <Flex w="full" justify="flex-start">
+                      <Button
+                        variant="outline"
+                        leftIcon={<FaChevronLeft />}
+                        onClick={onBack}
+                        size="sm"
+                      >
+                        Back
+                      </Button>
+                    </Flex>
+                  )}
 
-                    <VStack spacing={2} w="full">
+                  <VStack spacing={2} w="full">
+                    {title && (
                       <Heading
                         as="h1"
                         size="2xl"
@@ -128,43 +134,45 @@ export const StandardPage = ({
                       >
                         {title}
                       </Heading>
-                      {description && (
-                        <Text
-                          fontSize="lg"
-                          color="gray.600"
-                          fontWeight="normal"
-                          maxW="90%"
-                          lineHeight="1.7"
-                          textAlign="center"
-                        >
-                          {description}
-                        </Text>
-                      )}
-                    </VStack>
-
-                    {rightAction && <Box>{rightAction}</Box>}
-                  </VStack>
-                ) : (
-                  // Desktop: Original horizontal layout
-                  <Flex
-                    direction="row"
-                    align="center"
-                    gap={4}
-                    w="full"
-                    justify={showBackButton ? 'space-between' : 'center'}
-                  >
-                    {showBackButton && (
-                      <Button
-                        variant="outline"
-                        leftIcon={<FaChevronLeft />}
-                        onClick={onBack}
-                        size="sm"
-                      >
-                        Back
-                      </Button>
                     )}
+                    {description && (
+                      <Text
+                        fontSize="lg"
+                        color="gray.600"
+                        fontWeight="normal"
+                        maxW="90%"
+                        lineHeight="1.7"
+                        textAlign="center"
+                      >
+                        {description}
+                      </Text>
+                    )}
+                  </VStack>
 
-                    <VStack spacing={2} flex={1}>
+                  {rightAction && <Box>{rightAction}</Box>}
+                </VStack>
+              ) : (
+                // Desktop: Original horizontal layout
+                <Flex
+                  direction="row"
+                  align="center"
+                  gap={4}
+                  w="full"
+                  justify={showBackButton ? 'space-between' : 'center'}
+                >
+                  {showBackButton && (
+                    <Button
+                      variant="outline"
+                      leftIcon={<FaChevronLeft />}
+                      onClick={onBack}
+                      size="sm"
+                    >
+                      Back
+                    </Button>
+                  )}
+
+                  <VStack spacing={2} flex={1}>
+                    {title && (
                       <Heading
                         as="h1"
                         size="2xl"
@@ -175,34 +183,39 @@ export const StandardPage = ({
                       >
                         {title}
                       </Heading>
-                      {description && (
-                        <Text
-                          fontSize="lg"
-                          color="gray.600"
-                          fontWeight="normal"
-                          maxW="70%"
-                          lineHeight="1.7"
-                          textAlign="center"
-                        >
-                          {description}
-                        </Text>
-                      )}
-                    </VStack>
+                    )}
+                    {description && (
+                      <Text
+                        fontSize="lg"
+                        color="gray.600"
+                        fontWeight="normal"
+                        maxW="70%"
+                        lineHeight="1.7"
+                        textAlign="center"
+                      >
+                        {description}
+                      </Text>
+                    )}
+                  </VStack>
 
-                    {rightAction && <Box>{rightAction}</Box>}
-                  </Flex>
-                )}
-              </>
-            )}
-          </VStack>
-        </Container>
-      </Box>
+                  {rightAction && <Box>{rightAction}</Box>}
+                </Flex>
+              )}
+            </VStack>
+          </Container>
+        </Box>
+      )}
+
+      {/* No header at all when no back button and no content */}
+      {!showBackButton && !hasHeroContent && (
+        <Box pt="80px" />
+      )}
 
       {/* Main Content with Overlapping Card Design - Match producer app spacing */}
       <Box
         w="100%"
         px={{ base: 3, md: 6 }}
-        mt="-40px"
+        mt={needsMinimalHeader ? '16px' : hasHeroContent ? '-40px' : '0'}
         position="relative"
         zIndex={10}
       >
@@ -254,7 +267,7 @@ export const StandardCard = ({
     <Card {...cardProps[variant]} mb={6}>
       {(title || headerAction) && (
         <CardHeader pb={title && subtitle ? 2 : 4}>
-          <Flex justify="space-between" align="center">
+          <Flex justify="space-between" align="center" w="100%">
             <VStack align="start" spacing={1}>
               {title && (
                 <Heading as="h3" size="md" color="gray.700">

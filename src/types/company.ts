@@ -36,9 +36,12 @@ export interface Establishment {
   state?: string;
   country?: string;
   zone?: string;
+  zipCode?: string;
   image?: string;
   parcels?: Parcel[];
-  // Add other properties as needed
+  // GPS coordinates for map centering when creating parcels
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Parcel {

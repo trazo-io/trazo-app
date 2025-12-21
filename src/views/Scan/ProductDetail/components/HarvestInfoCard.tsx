@@ -9,7 +9,7 @@ import {
   useColorModeValue,
   Flex
 } from '@chakra-ui/react';
-import { FaBoxes, FaClipboardCheck, FaTractor, FaLeaf, FaBarcode } from 'react-icons/fa';
+import { FaBoxes, FaClipboardCheck, FaTractor, FaLeaf, FaBarcode, FaUserTie, FaSeedling } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -20,6 +20,8 @@ interface HarvestDetails {
   lot_number?: string;
   quality_grade?: string;
   harvest_method?: string;
+  farmer_notes?: string;
+  production_method?: string;
 }
 
 interface HarvestInfoCardProps {
@@ -43,9 +45,16 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
   const hasLot = harvestDetails.lot_number;
   const hasQuality = harvestDetails.quality_grade;
   const hasMethod = harvestDetails.harvest_method;
+  const hasFarmerNotes = harvestDetails.farmer_notes;
+  const hasProductionMethod = harvestDetails.production_method;
+
+  // Check if production method is special (not conventional)
+  const isSpecialMethod =
+    hasProductionMethod &&
+    !harvestDetails.production_method?.toLowerCase().includes('conventional');
 
   // Don't render if no meaningful data
-  if (!hasAmount && !hasLot && !hasQuality && !hasMethod) {
+  if (!hasAmount && !hasLot && !hasQuality && !hasMethod && !hasFarmerNotes && !hasProductionMethod) {
     return null;
   }
 
@@ -74,6 +83,24 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               </Text>
             </VStack>
           </HStack>
+
+          {/* Production Method Badge - Prominent for organic/sustainable/regenerative */}
+          {isSpecialMethod && (
+            <Box
+              bg={useColorModeValue('green.50', 'green.900')}
+              p={3}
+              borderRadius="lg"
+              borderWidth="2px"
+              borderColor="green.400"
+            >
+              <HStack spacing={3} justify="center">
+                <Icon as={FaSeedling} color="green.500" boxSize={5} />
+                <Text fontWeight="bold" fontSize="md" color={useColorModeValue('green.700', 'green.200')}>
+                  {harvestDetails.production_method}
+                </Text>
+              </HStack>
+            </Box>
+          )}
 
           {/* Harvest Info Grid */}
           <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
@@ -149,6 +176,44 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               </Box>
             )}
           </SimpleGrid>
+
+          {/* Farmer Notes - Direct message from farmer to consumers */}
+          {hasFarmerNotes && (
+            <Box
+              bg={useColorModeValue('blue.50', 'blue.900')}
+              p={4}
+              borderRadius="lg"
+              borderLeft="4px solid"
+              borderLeftColor="blue.400"
+            >
+              <HStack spacing={3} align="flex-start">
+                <Flex
+                  w={8}
+                  h={8}
+                  borderRadius="full"
+                  bg={useColorModeValue('blue.100', 'blue.800')}
+                  align="center"
+                  justify="center"
+                  flexShrink={0}
+                >
+                  <Icon as={FaUserTie} color="blue.500" boxSize={4} />
+                </Flex>
+                <VStack align="start" spacing={1}>
+                  <Text
+                    fontSize="xs"
+                    fontWeight="bold"
+                    color={useColorModeValue('blue.600', 'blue.300')}
+                    textTransform="uppercase"
+                  >
+                    {intl.formatMessage({ id: 'app.farmerNotes' })}
+                  </Text>
+                  <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.200')} lineHeight="1.5">
+                    {harvestDetails.farmer_notes}
+                  </Text>
+                </VStack>
+              </HStack>
+            </Box>
+          )}
 
           {/* Transparency Note */}
           <Box

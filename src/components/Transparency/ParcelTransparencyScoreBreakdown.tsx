@@ -309,7 +309,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
       title="Transparency Score Breakdown"
       subtitle="See how your score is calculated and how to improve"
       icon={FaChartLine}
-      variant="flat"
+      variant="elevated"
     >
       <VStack spacing={6} align="stretch">
         {/* Overall Score Circle */}

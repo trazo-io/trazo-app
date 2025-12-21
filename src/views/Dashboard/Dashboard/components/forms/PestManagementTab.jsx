@@ -1,5 +1,5 @@
 // Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   VStack,
   HStack,

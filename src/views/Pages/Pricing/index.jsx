@@ -9,11 +9,6 @@ import {
   Spinner,
   useToast,
   Badge,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon,
   VStack,
   Heading,
   Tooltip
@@ -34,7 +29,9 @@ import {
   FaIndustry,
   FaGift,
   FaHandshake,
-  FaEnvelope
+  FaEnvelope,
+  FaQuestionCircle,
+  FaChevronDown
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { loadStripe } from '@stripe/stripe-js';
@@ -43,6 +40,7 @@ import { useSubscribeBlockchainMutation, useGetAddonsQuery } from 'store/api/bil
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
+import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
 // Import Trazo Design System
@@ -58,7 +56,11 @@ import {
 const stripePromise = loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLIC_KEY);
 
 function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
-  const textColor = useColorModeValue('gray.700', 'white');
+  // Theme colors for dark mode support
+  const cardBgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.100', 'gray.700');
+  const textColorStrong = useColorModeValue('gray.700', 'white');
+  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
   const intl = useIntl();
 
   // Early check to prevent rendering during Stripe success flow
@@ -380,12 +382,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
   };
 
   const getRecommendedPlan = (plans) => {
-    // For new companies, recommend Standard plan
-    if (newCompanyFlow) {
-      return plans.find((plan) => plan.name.toLowerCase().includes('standard')) || plans[1];
-    }
-    // For existing companies, recommend Corporate
-    return plans.find((plan) => plan.name.toLowerCase().includes('corporate')) || plans[2];
+    // CONSISTENT recommendation - Standard is "Most Popular"
+    // Best practice: Same recommendation regardless of user journey state
+    // This builds trust and follows top SaaS patterns (Stripe, Notion, Slack)
+    return plans.find((plan) => plan.name.toLowerCase().includes('standard')) || plans[1];
   };
 
   const getPlanIcon = (planName) => {
@@ -537,10 +537,19 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       showBackButton={!newCompanyFlow && !isNewCompany}
       onBack={() => navigate(-1)}
     >
-      {/* Welcome Badge for New Companies */}
+      {/* Welcome Badge for New Companies - Modern 2025 Style */}
       {(newCompanyFlow || isNewCompany) && (
-        <Box textAlign="center" mb={8}>
-          <Badge colorScheme="green" fontSize="md" px={4} py={2} borderRadius="full">
+        <Box textAlign="center" mb={10}>
+          <Badge
+            colorScheme="green"
+            variant="solid"
+            fontSize="sm"
+            px={6}
+            py={2}
+            borderRadius="full"
+            fontWeight="semibold"
+            textTransform="none"
+          >
             {t('app.step2SelectPlan')}
           </Badge>
         </Box>
@@ -642,20 +651,22 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                 return (
                   <motion.div
                     key={plan.id}
-                    whileHover={{ y: -4, scale: 1.01 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    style={{ width: '100%', maxWidth: '320px' }}
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    style={{ width: '100%', maxWidth: '300px' }}
                   >
                     <StandardCard
                       variant={isCurrent ? 'elevated' : isRecommended ? 'elevated' : 'outline'}
-                      borderColor={isCurrent ? 'blue.400' : isRecommended ? `${planColor}.200` : 'gray.200'}
-                      borderWidth={isCurrent ? '3px' : isRecommended ? '2px' : '1px'}
-                      bg={isCurrent ? 'blue.50' : isRecommended ? `${planColor}.50` : 'white'}
+                      borderColor={isCurrent ? 'blue.400' : isRecommended ? `${planColor}.400` : 'gray.100'}
+                      borderWidth={isCurrent ? '2px' : isRecommended ? '2px' : '1px'}
+                      bg={isCurrent ? 'blue.50' : 'white'}
                       position="relative"
                       overflow="hidden"
                       h="full"
                       display="flex"
                       flexDirection="column"
+                      boxShadow={isRecommended ? 'xl' : 'sm'}
+                      _hover={{ boxShadow: 'xl' }}
                     >
                       {/* Current Plan Badge */}
                       {isCurrent && (
@@ -679,15 +690,18 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                       {isRecommended && !isCurrent && (
                         <Badge
                           position="absolute"
-                          top={4}
-                          right={4}
+                          top={-3}
+                          left="50%"
+                          transform="translateX(-50%)"
                           colorScheme={planColor}
                           variant="solid"
                           fontSize="xs"
-                          px={3}
-                          py={1}
+                          px={4}
+                          py={1.5}
                           borderRadius="full"
-                          fontWeight="bold"
+                          fontWeight="semibold"
+                          textTransform="uppercase"
+                          letterSpacing="wide"
                           zIndex={2}
                         >
                           {t('app.recommendedBadge')}
@@ -770,9 +784,9 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                         </VStack>
                       </Box>
 
-                      <CardBody py={4} flex="1">
-                        <VStack spacing={3} align="stretch" h="full">
-                          <Box textAlign="center" mb={2}>
+                      <CardBody py={5} flex="1">
+                        <VStack spacing={4} align="stretch" h="full">
+                          <Box textAlign="center" mb={3}>
                             <Text
                               fontSize="xs"
                               fontWeight="bold"
@@ -994,12 +1008,12 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                       <Icon as={FaShieldAlt} boxSize={6} color="green.600" />
                     </Box>
 
-                    <VStack align="start" spacing={1} flex={1}>
-                      <Heading as="h4" size="sm" color="gray.800">
-                        {t('app.blockchainVerificationSection')}
-                      </Heading>
-                      <Text color="gray.600" fontSize="xs">
+                    <VStack align="start" spacing={0} flex={1}>
+                      <Text fontWeight="bold" color="gray.700" fontSize="sm">
                         {t('app.immutableCarbonRecords')}
+                      </Text>
+                      <Text color="gray.500" fontSize="xs">
+                        {t('app.addImmutableCarbonData')}
                       </Text>
                     </VStack>
                   </HStack>
@@ -1104,26 +1118,13 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                       </HStack>
                     </VStack>
                   ) : (
-                    <VStack spacing={2} w="full">
+                    <VStack spacing={1} w="full">
                       <Text fontSize="xs" color="blue.600" textAlign="center" fontWeight="medium">
                         {t('app.selectPlanFirstBlockchain')}
                       </Text>
                       <Text fontSize="xs" color="gray.500" textAlign="center" maxW="sm">
                         {t('app.afterSubscribingBlockchain')}
                       </Text>
-                      <StandardButton
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          document
-                            .querySelector('.plans-section')
-                            ?.scrollIntoView({ behavior: 'smooth' })
-                        }
-                        leftIcon={<Icon as={FaRocket} />}
-                        colorScheme="blue"
-                      >
-                        {t('app.viewPlansButton')}
-                      </StandardButton>
                     </VStack>
                   )}
                 </VStack>
@@ -1133,101 +1134,131 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
         </Box>
       </StandardSection>
 
-      {/* Benefits Section */}
-      <StandardSection
-        title={intl.formatMessage({ id: 'app.whyChooseTrazo' })}
-        description={intl.formatMessage({ id: 'app.designedForFarmers' })}
-      >
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-          <StandardCard variant="flat">
-            <CardBody textAlign="center">
-              <VStack spacing={4}>
-                <Icon as={FaLeaf} boxSize={12} color="green.500" />
-                <Heading as="h4" size="md" color="gray.700">
-                  {intl.formatMessage({ id: 'app.agriculturalFocus' })}
-                </Heading>
-                <Text color="gray.600" fontSize="sm">
-                  {intl.formatMessage({ id: 'app.agriculturalFocusDescription' })}
-                </Text>
-              </VStack>
-            </CardBody>
-          </StandardCard>
+      {/* Benefits Section - Modern 2025 Style */}
+      <Box mt={4}>
+        <StandardSection
+          title={intl.formatMessage({ id: 'app.whyChooseTrazo' })}
+          description={intl.formatMessage({ id: 'app.designedForFarmers' })}
+        >
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} maxW="1200px" mx="auto">
+            {[
+              { icon: FaLeaf, color: 'green', titleId: 'app.agriculturalFocus', descId: 'app.agriculturalFocusDescription' },
+              { icon: FaQrcode, color: 'blue', titleId: 'app.totalTraceability', descId: 'app.totalTraceabilityDescription' },
+              { icon: FaHandshake, color: 'purple', titleId: 'app.consumerTrust', descId: 'app.consumerTrustDescription' }
+            ].map((benefit, index) => (
+              <motion.div
+                key={index}
+                whileHover={{ y: -4, scale: 1.01 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+              >
+                <Card
+                  bg={cardBgColor}
+                  borderRadius="xl"
+                  boxShadow="sm"
+                  border="1px solid"
+                  borderColor={borderColor}
+                  h="full"
+                  _hover={{ boxShadow: 'md' }}
+                  transition="all 0.2s"
+                >
+                  <CardBody p={6} textAlign="center">
+                    <VStack spacing={4}>
+                      <Box
+                        p={4}
+                        bg={`${benefit.color}.50`}
+                        borderRadius="full"
+                        w="64px"
+                        h="64px"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        <Icon as={benefit.icon} boxSize={7} color={`${benefit.color}.500`} />
+                      </Box>
+                      <Heading size="sm" color={textColorStrong}>
+                        {intl.formatMessage({ id: benefit.titleId })}
+                      </Heading>
+                      <Text color={mutedTextColor} fontSize="sm" lineHeight="1.6">
+                        {intl.formatMessage({ id: benefit.descId })}
+                      </Text>
+                    </VStack>
+                  </CardBody>
+                </Card>
+              </motion.div>
+            ))}
+          </SimpleGrid>
+        </StandardSection>
+      </Box>
 
-          <StandardCard variant="flat">
-            <CardBody textAlign="center">
-              <VStack spacing={4}>
-                <Icon as={FaQrcode} boxSize={12} color="blue.500" />
-                <Heading as="h4" size="md" color="gray.700">
-                  {intl.formatMessage({ id: 'app.totalTraceability' })}
-                </Heading>
-                <Text color="gray.600" fontSize="sm">
-                  {intl.formatMessage({ id: 'app.totalTraceabilityDescription' })}
-                </Text>
-              </VStack>
-            </CardBody>
-          </StandardCard>
-
-          <StandardCard variant="flat">
-            <CardBody textAlign="center">
-              <VStack spacing={4}>
-                <Icon as={FaHandshake} boxSize={12} color="purple.500" />
-                <Heading as="h4" size="md" color="gray.700">
-                  {intl.formatMessage({ id: 'app.consumerTrust' })}
-                </Heading>
-                <Text color="gray.600" fontSize="sm">
-                  {intl.formatMessage({ id: 'app.consumerTrustDescription' })}
-                </Text>
-              </VStack>
-            </CardBody>
-          </StandardCard>
-        </SimpleGrid>
-      </StandardSection>
-
-      {/* FAQ Section */}
+      {/* FAQ Section - Trazo Standard Pattern */}
       <StandardSection
         title={intl.formatMessage({ id: 'app.faq' })}
         description={intl.formatMessage({ id: 'app.faqDescription' })}
       >
-        <Accordion allowToggle>
-          <AccordionItem>
-            <AccordionButton>
-              <Box flex="1" textAlign="left" fontWeight="medium">
-                {intl.formatMessage({ id: 'app.faqCanChangePlan' })}
-              </Box>
-              <AccordionIcon />
-            </AccordionButton>
-            <AccordionPanel pb={4} color="gray.600">
-              {intl.formatMessage({ id: 'app.faqCanChangePlanAnswer' })}
-            </AccordionPanel>
-          </AccordionItem>
-
-          <AccordionItem>
-            <AccordionButton>
-              <Box flex="1" textAlign="left" fontWeight="medium">
-                {intl.formatMessage({ id: 'app.faqHowTrialWorks' })}
-              </Box>
-              <AccordionIcon />
-            </AccordionButton>
-            <AccordionPanel pb={4} color="gray.600">
-              {intl.formatMessage({ id: 'app.faqHowTrialWorksAnswer' })}
-            </AccordionPanel>
-          </AccordionItem>
-
-          <AccordionItem>
-            <AccordionButton>
-              <Box flex="1" textAlign="left" fontWeight="medium">
-                {intl.formatMessage({ id: 'app.faqBlockchainIncluded' })}
-              </Box>
-              <AccordionIcon />
-            </AccordionButton>
-            <AccordionPanel pb={4} color="gray.600">
-              {intl.formatMessage({ id: 'app.faqBlockchainIncludedAnswer' })}
-            </AccordionPanel>
-          </AccordionItem>
-        </Accordion>
+        <Box maxW="800px" mx="auto">
+          <VStack spacing={4} align="stretch">
+            <FAQCard
+              question={intl.formatMessage({ id: 'app.faqCanChangePlan' })}
+              answer={intl.formatMessage({ id: 'app.faqCanChangePlanAnswer' })}
+            />
+            <FAQCard
+              question={intl.formatMessage({ id: 'app.faqHowTrialWorks' })}
+              answer={intl.formatMessage({ id: 'app.faqHowTrialWorksAnswer' })}
+            />
+            <FAQCard
+              question={intl.formatMessage({ id: 'app.faqBlockchainIncluded' })}
+              answer={intl.formatMessage({ id: 'app.faqBlockchainIncludedAnswer' })}
+            />
+          </VStack>
+        </Box>
       </StandardSection>
     </StandardPage>
   );
 }
+
+// FAQ Card Component - Trazo Standard Pattern (from EducationFAQ.tsx)
+const FAQCard = ({ question, answer }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const cardBgColor = useColorModeValue('white', 'gray.800');
+  const textColor = useColorModeValue('gray.700', 'white');
+  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
+
+  return (
+    <Card bg={cardBgColor} borderRadius="xl" boxShadow="sm">
+      <CardBody p={6}>
+        <VStack align="stretch" spacing={4}>
+          {/* Question */}
+          <HStack
+            justify="space-between"
+            align="center"
+            cursor="pointer"
+            onClick={() => setIsExpanded(!isExpanded)}
+            _hover={{ opacity: 0.8 }}
+          >
+            <Heading size="sm" color={textColor} flex={1} pr={4}>
+              {question}
+            </Heading>
+            <Icon
+              as={FaChevronDown}
+              color="green.500"
+              transform={isExpanded ? 'rotate(180deg)' : 'none'}
+              transition="transform 0.2s"
+              flexShrink={0}
+            />
+          </HStack>
+
+          {/* Answer - only show when expanded */}
+          {isExpanded && (
+            <Box pl={4} borderLeft="3px solid" borderColor="green.200">
+              <Text fontSize="sm" color={mutedTextColor} lineHeight="1.6">
+                {answer}
+              </Text>
+            </Box>
+          )}
+        </VStack>
+      </CardBody>
+    </Card>
+  );
+};
 
 export default Pricing;

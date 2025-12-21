@@ -323,17 +323,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
             </Box>
           )}
 
-          {/* Carbon Credits Eligibility */}
-          {eligible_for_credits && (
-            <Box p={2} bg="yellow.50" borderRadius="md" border="1px solid" borderColor="yellow.200">
-              <HStack spacing={2}>
-                <Icon as={FaCheck} color="yellow.600" boxSize={3} />
-                <Text fontSize="xs" color="yellow.700" fontWeight="medium">
-                  Eligible for carbon credit marketplace
-                </Text>
-              </HStack>
-            </Box>
-          )}
+          {/* Carbon credits eligibility removed - transparency-first approach */}
         </VStack>
 
         {/* Action buttons */}

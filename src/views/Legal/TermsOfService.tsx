@@ -416,8 +416,8 @@ const TermsOfService: React.FC = () => {
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="orange.500" />
-                    Are not suitable for carbon credit trading without additional third-party
-                    certification
+                    Are intended for transparency purposes and not for trading or financial
+                    certifications
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="orange.500" />

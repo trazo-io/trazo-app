@@ -61,13 +61,14 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, number, boolean, date } from 'zod';
+import { object, string } from 'zod';
 import {
   useGetCropTemplatesQuery,
   useGetCropTemplateDetailQuery,
   useCalculateEventCarbonImpactMutation
 } from 'store/api/carbonApi';
 import { useStartProductionMutation, useGetCropTypesDropdownQuery } from 'store/api/companyApi';
+import { useGetHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { setParcel } from 'store/features/productSlice';
 import { StandardPage, StandardCard, StandardButton } from 'components/Design';
@@ -91,8 +92,6 @@ const productionSchema = object({
   expected_harvest: string().optional(),
   description: string().optional(),
   production_method: string().optional(),
-  irrigation_method: string().optional(),
-  estimated_yield: number().optional(),
   type: string().min(1, 'Production type is required'),
   crop_type_id: string().min(1, 'Crop type is required')
 });
@@ -103,8 +102,6 @@ interface ProductionFormData {
   expected_harvest?: string;
   description?: string;
   production_method?: string;
-  irrigation_method?: string;
-  estimated_yield?: number;
   type: string;
   crop_type_id: string;
 }
@@ -113,15 +110,20 @@ interface QuickStartProductionProps {
   parcelId?: string;
   parcelName?: string;
   cropType?: string;
+  isEdit?: boolean;
+  productionId?: string;
 }
 
 const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   parcelId: propParcelId,
   parcelName,
-  cropType: propCropType
+  cropType: propCropType,
+  isEdit = false,
+  productionId: propProductionId
 }) => {
-  const { parcelId: paramParcelId, establishmentId } = useParams();
+  const { parcelId: paramParcelId, establishmentId, productionId: paramProductionId } = useParams();
   const parcelId = propParcelId || paramParcelId;
+  const productionId = propProductionId || paramProductionId;
 
   const navigate = useNavigate();
   const toast = useToast();
@@ -184,6 +186,17 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     { skip: !selectedTemplateId }
   );
   const [startProduction] = useStartProductionMutation();
+  const [updateProduction, { isLoading: isUpdating }] = useUpdateProductionMutation();
+
+  // Fetch production data for edit mode
+  const {
+    data: productionData,
+    isLoading: isLoadingProduction,
+    isError: isProductionError
+  } = useGetHistoryQuery(productionId || '', {
+    skip: !isEdit || !productionId
+  });
+
   const {
     data: cropTypesData,
     error: cropTypesError,
@@ -208,6 +221,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors }
   } = useForm<ProductionFormData>({
     resolver: zodResolver(productionSchema),
@@ -216,10 +230,99 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       start_date: new Date().toISOString().split('T')[0],
       type: 'OR',
       production_method: 'conventional',
-      irrigation_method: 'drip',
       crop_type_id: ''
     }
   });
+
+  // Populate form with existing production data when in edit mode
+  useEffect(() => {
+    if (isEdit && productionData && cropTypesData) {
+      console.log('QuickStartProduction - Populating form with production data:', productionData);
+      console.log('QuickStartProduction - Available crop types:', cropTypesData);
+
+      // Find matching crop type - check multiple possible data structures
+      // productionData.crop_type could be: number ID, string ID, object with id/name, or the product object
+      let matchingCropType = null;
+
+      // 1. Try matching by crop_type ID (if it's a number or string ID)
+      const cropTypeId = productionData.crop_type;
+      if (cropTypeId) {
+        matchingCropType = cropTypesData.find(
+          (ct) =>
+            ct.id === cropTypeId ||
+            ct.id.toString() === cropTypeId.toString()
+        );
+      }
+
+      // 2. Try matching by crop_type object (if it has an id property)
+      if (!matchingCropType && typeof cropTypeId === 'object' && cropTypeId?.id) {
+        matchingCropType = cropTypesData.find(
+          (ct) => ct.id === cropTypeId.id || ct.id.toString() === cropTypeId.id.toString()
+        );
+      }
+
+      // 3. Try matching by product name or crop_type name
+      if (!matchingCropType) {
+        const productName = productionData.product?.name || productionData.crop_type?.name || '';
+        if (productName) {
+          matchingCropType = cropTypesData.find(
+            (ct) => ct.name.toLowerCase() === productName.toLowerCase()
+          );
+        }
+      }
+
+      // 4. Try fuzzy matching by production name (e.g., "Avocados 2025" -> "Avocado")
+      if (!matchingCropType && productionData.name) {
+        const prodNameLower = productionData.name.toLowerCase();
+        matchingCropType = cropTypesData.find(
+          (ct) =>
+            prodNameLower.includes(ct.name.toLowerCase()) ||
+            ct.name.toLowerCase().includes(prodNameLower.split(' ')[0])
+        );
+      }
+
+      console.log('QuickStartProduction - Matched crop type:', matchingCropType);
+
+      // Get production method from extra_data if available
+      const extraData = productionData.extra_data || {};
+      const productionMethod = extraData.production_method || 'conventional';
+
+      // Format dates properly
+      const formatDate = (dateStr: string | undefined) => {
+        if (!dateStr) return '';
+        try {
+          return new Date(dateStr).toISOString().split('T')[0];
+        } catch {
+          return '';
+        }
+      };
+
+      const cropTypeIdValue = matchingCropType?.id.toString() || '';
+
+      // Handle expected harvest - backend may use end_date, finish_date, or expected_harvest
+      const expectedHarvestDate =
+        productionData.expected_harvest ||
+        productionData.end_date ||
+        productionData.finish_date ||
+        extraData?.end_date ||
+        '';
+
+      reset({
+        name: productionData.name || `Production ${new Date().getFullYear()}`,
+        start_date: formatDate(productionData.start_date) || new Date().toISOString().split('T')[0],
+        expected_harvest: formatDate(expectedHarvestDate),
+        description: productionData.description || '',
+        production_method: productionMethod,
+        type: productionData.type || 'OR',
+        crop_type_id: cropTypeIdValue
+      });
+
+      // Update selectedCropTypeId to trigger template loading
+      if (cropTypeIdValue) {
+        setSelectedCropTypeId(cropTypeIdValue);
+      }
+    }
+  }, [isEdit, productionData, cropTypesData, reset]);
 
   // Auto-select template based on crop type
   useEffect(() => {
@@ -310,6 +413,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         setCustomEvents(
           templateDetail.events.map((event, index) => ({
             ...event,
+            // Spread backend_event_fields to make fields like pest_species available directly
+            ...(event.backend_event_fields || {}),
             id: `template-${index}`,
             scheduled_date: calculateEventDate(event.timing),
             enabled: true
@@ -427,7 +532,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       if (!data.crop_type_id) {
         toast({
           title: 'Missing Crop Type',
-          description: 'Please select a crop type before creating the production.',
+          description: `Please select a crop type before ${isEdit ? 'updating' : 'creating'} the production.`,
           status: 'error',
           duration: 5000,
           isClosable: true
@@ -435,40 +540,65 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         return;
       }
 
-      const productionPayload = {
-        name: data.name,
-        parcel_id: parseInt(parcelId!),
-        crop_type: parseInt(data.crop_type_id), // Send the numeric ID, not the slug
-        start_date: data.start_date,
-        expected_harvest: data.expected_harvest,
-        description: data.description,
-        production_method: data.production_method,
-        irrigation_method: data.irrigation_method,
-        estimated_yield: data.estimated_yield,
-        type: data.type,
-        template_id: selectedTemplate?.template_id,
-        template_events: customEvents.filter((event) => event.enabled)
-      };
+      if (isEdit && productionId) {
+        // Update existing production
+        const updatePayload = {
+          historyId: productionId,
+          name: data.name,
+          start_date: data.start_date,
+          expected_harvest: data.expected_harvest,
+          description: data.description || '',
+          production_method: data.production_method,
+          type: data.type,
+          crop_type: parseInt(data.crop_type_id)
+        };
 
-      const result = await startProduction(productionPayload).unwrap();
+        console.log('QuickStartProduction - Updating production with payload:', updatePayload);
 
-      toast({
-        title: 'Production Started Successfully! 🎉',
-        description: `${data.name} has been created with ${
-          customEvents.filter((e) => e.enabled).length
-        } pre-configured events.`,
-        status: 'success',
-        duration: 6000,
-        isClosable: true
-      });
+        await updateProduction(updatePayload).unwrap();
+
+        toast({
+          title: 'Production Updated Successfully! ✅',
+          description: `${data.name} has been updated.`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true
+        });
+      } else {
+        // Create new production
+        const productionPayload = {
+          name: data.name,
+          parcel_id: parseInt(parcelId!),
+          crop_type: parseInt(data.crop_type_id), // Send the numeric ID, not the slug
+          start_date: data.start_date,
+          expected_harvest: data.expected_harvest,
+          description: data.description,
+          production_method: data.production_method,
+          type: data.type,
+          template_id: selectedTemplate?.template_id,
+          template_events: customEvents.filter((event) => event.enabled)
+        };
+
+        await startProduction(productionPayload).unwrap();
+
+        toast({
+          title: 'Production Started Successfully! 🎉',
+          description: `${data.name} has been created with ${
+            customEvents.filter((e) => e.enabled).length
+          } pre-configured events.`,
+          status: 'success',
+          duration: 6000,
+          isClosable: true
+        });
+      }
 
       // Navigate to production dashboard
       navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
     } catch (error: any) {
-      console.error('Error creating production:', error);
+      console.error(`Error ${isEdit ? 'updating' : 'creating'} production:`, error);
       toast({
-        title: 'Error Creating Production',
-        description: error?.data?.error || 'Failed to create production. Please try again.',
+        title: `Error ${isEdit ? 'Updating' : 'Creating'} Production`,
+        description: error?.data?.error || `Failed to ${isEdit ? 'update' : 'create'} production. Please try again.`,
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -844,12 +974,31 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     }
   };
 
-  if (isLoadingTemplates) {
+  // Show loading state for edit mode or template loading
+  if (isLoadingTemplates || (isEdit && isLoadingProduction)) {
     return (
-      <StandardPage title="Quick Start Production" showBackButton>
+      <StandardPage title={isEdit ? 'Edit Production' : 'Quick Start Production'} showBackButton>
         <VStack py={8}>
           <Spinner size="xl" color="green.500" />
-          <Text>Loading smart templates...</Text>
+          <Text>{isEdit ? 'Loading production data...' : 'Loading smart templates...'}</Text>
+        </VStack>
+      </StandardPage>
+    );
+  }
+
+  // Show error state for edit mode
+  if (isEdit && isProductionError) {
+    return (
+      <StandardPage title="Edit Production" showBackButton>
+        <VStack py={8} spacing={4}>
+          <Text color="red.500" fontWeight="bold">Error loading production data</Text>
+          <Text color="gray.600">Production ID: {productionId}</Text>
+          <Button
+            colorScheme="green"
+            onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+          >
+            Go Back
+          </Button>
         </VStack>
       </StandardPage>
     );
@@ -857,10 +1006,12 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
   return (
     <StandardPage
-      title="🚀 Quick Start Production"
-      description={`Start a new production cycle${
-        parcelName ? ` for ${parcelName}` : ''
-      } with smart templates`}
+      title={isEdit ? 'Edit Production' : 'Quick Start Production'}
+      description={
+        isEdit
+          ? `Update production details${productionData?.name ? ` for ${productionData.name}` : ''}`
+          : `Start a new production cycle${parcelName ? ` for ${parcelName}` : ''} with smart templates`
+      }
       showBackButton
       onBack={() =>
         navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
@@ -868,7 +1019,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     >
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={8} align="stretch">
-          {/* Template Selection Section */}
+          {/* Template Selection Section - Only show in create mode */}
+          {!isEdit && (
           <StandardCard
             title="Smart Setup Templates"
             subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes"
@@ -905,11 +1057,10 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                       </Text>
                       <HStack spacing={2} mt={1}>
                         <Badge colorScheme="blue" variant="subtle" fontSize="xs">
-                          ROI: {selectedTemplate.roi_analysis?.premium_pricing || '25-40%'}
+                          USDA Verified
                         </Badge>
                         <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                          Efficiency:{' '}
-                          {selectedTemplate.roi_analysis?.efficiency_savings || '15-25%'}
+                          Transparency Ready
                         </Badge>
                       </HStack>
                     </VStack>
@@ -959,7 +1110,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                               USDA Verified
                             </Badge>
                             <Badge colorScheme="orange" variant="subtle" fontSize="xs">
-                              ROI Analysis
+                              QR Ready
                             </Badge>
                           </>
                         ) : (
@@ -975,26 +1126,35 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
               )}
             </VStack>
           </StandardCard>
+          )}
 
           {/* Production Details Form */}
           <StandardCard title="Production Details" subtitle="Configure your production cycle">
             <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
               {/* Crop Type Selection - First field */}
               <GridItem colSpan={{ base: 1, md: 2 }}>
-                <FormControl isRequired isInvalid={!!errors.crop_type_id}>
-                  <FormLabel>Crop Type</FormLabel>
-                  {/* Debug Info */}
-                  {isLoadingCropTypes && (
+                <FormControl isRequired={!isEdit} isInvalid={!!errors.crop_type_id}>
+                  <FormLabel>
+                    Crop Type
+                    {isEdit && (
+                      <Badge ml={2} colorScheme="gray" variant="subtle">
+                        Read-only
+                      </Badge>
+                    )}
+                  </FormLabel>
+                  {/* Debug Info - only in create mode */}
+                  {!isEdit && isLoadingCropTypes && (
                     <Text fontSize="sm" color="blue.500" mb={2}>
                       Loading crop types...
                     </Text>
                   )}
-                  {cropTypesError && (
+                  {!isEdit && cropTypesError && (
                     <Text fontSize="sm" color="red.500" mb={2}>
                       Error loading crop types: {JSON.stringify(cropTypesError)}
                     </Text>
                   )}
-                  {!isLoadingCropTypes &&
+                  {!isEdit &&
+                    !isLoadingCropTypes &&
                     !cropTypesError &&
                     (!cropTypesData || cropTypesData.length === 0) && (
                       <Text fontSize="sm" color="orange.500" mb={2}>
@@ -1009,9 +1169,14 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         {...field}
                         size="lg"
                         placeholder="Select your crop type..."
+                        isDisabled={isEdit}
+                        bg={isEdit ? 'gray.100' : 'white'}
+                        cursor={isEdit ? 'not-allowed' : 'pointer'}
                         onChange={(e) => {
-                          field.onChange(e);
-                          setSelectedCropTypeId(e.target.value);
+                          if (!isEdit) {
+                            field.onChange(e);
+                            setSelectedCropTypeId(e.target.value);
+                          }
                         }}
                       >
                         {cropTypesData?.map((cropType) => (
@@ -1022,6 +1187,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                       </Select>
                     )}
                   />
+                  {isEdit && (
+                    <Text fontSize="sm" color="gray.500" mt={1}>
+                      Crop type cannot be changed after production is created. To change crop type, create a new production.
+                    </Text>
+                  )}
                   {errors.crop_type_id && (
                     <Text color="red.500" fontSize="sm" mt={1}>
                       {errors.crop_type_id.message}
@@ -1045,12 +1215,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                                 </Text>{' '}
                                 {selectedCropType.emissions_per_hectare} kg CO2e/ha
                               </Text>
-                              <Text>
-                                <Text as="span" fontWeight="medium">
-                                  Carbon Credit Potential:
-                                </Text>{' '}
-                                {selectedCropType.carbon_credit_potential} kg CO2e/ha
-                              </Text>
+                              {/* Carbon Credit Potential removed - transparency-first approach */}
                             </HStack>
                           </VStack>
                         ) : null;
@@ -1173,24 +1338,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                 </FormControl>
               </GridItem>
 
-              <GridItem>
-                <FormControl>
-                  <FormLabel>Irrigation Method</FormLabel>
-                  <Controller
-                    name="irrigation_method"
-                    control={control}
-                    render={({ field }) => (
-                      <Select {...field} size="lg">
-                        <option value="drip">Drip Irrigation</option>
-                        <option value="sprinkler">Sprinkler</option>
-                        <option value="flood">Flood Irrigation</option>
-                        <option value="micro">Micro Sprinkler</option>
-                        <option value="rain">Rain Fed</option>
-                      </Select>
-                    )}
-                  />
-                </FormControl>
-              </GridItem>
+              {/* NOTE: Irrigation Method removed - already captured at establishment level */}
 
               <GridItem colSpan={{ base: 1, md: 2 }}>
                 <FormControl>
@@ -1212,8 +1360,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             </Grid>
           </StandardCard>
 
-          {/* Pre-configured Events */}
-          {customEvents.length > 0 && (
+          {/* Pre-configured Events - Only show in create mode */}
+          {!isEdit && customEvents.length > 0 && (
             <StandardCard
               title="Pre-configured Events"
               subtitle="Review and customize the events from your selected template"
@@ -1318,11 +1466,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             </StandardButton>
             <StandardButton
               type="submit"
-              isLoading={isCreating}
-              loadingText="Creating Production..."
-              leftIcon={<FaRocket />}
+              isLoading={isCreating || isUpdating}
+              loadingText={isEdit ? 'Updating Production...' : 'Creating Production...'}
+              leftIcon={isEdit ? <FaCheckCircle /> : <FaRocket />}
             >
-              Start Production
+              {isEdit ? 'Update Production' : 'Start Production'}
             </StandardButton>
           </HStack>
         </VStack>
@@ -1421,11 +1569,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                               <HStack>
                                 <Icon as={FaChartLine} color="green.500" boxSize={3} />
                                 <Text fontSize="xs" fontWeight="medium">
-                                  Carbon Credits
+                                  Transparency
                                 </Text>
                               </HStack>
                               <Text fontSize="sm" fontWeight="bold">
-                                USDA Calculated
+                                QR Ready
                               </Text>
                             </VStack>
                           </Grid>

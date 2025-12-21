@@ -229,10 +229,10 @@ export default function SettingsView() {
 
   return (
     <StandardPage
-      title={intl.formatMessage({ id: 'app.companySettings' }) || 'Configuración de la Compañía'}
+      title={intl.formatMessage({ id: 'app.companySettings' }) || 'Company Settings'}
       description={
         intl.formatMessage({ id: 'app.companySettingsDescription' }) ||
-        'Gestiona la configuración y miembros de tu compañía'
+        'This screen is only visible to company admins'
       }
       showBackButton
       onBack={() => navigate(-1)}

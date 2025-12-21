@@ -127,10 +127,10 @@ const onboardingSteps: OnboardingStep[] = [
     description: 'Discover features to grow your sustainable business',
     icon: FiShoppingCart,
     benefits: [
-      'Carbon credit marketplace access',
+      'Consumer transparency dashboard',
       'Bulk export and certification tools',
       'Team collaboration and permissions',
-      'Advanced analytics and forecasting'
+      'Advanced analytics and QR insights'
     ],
     actionText: 'Explore Features',
     actionPath: '/admin/dashboard'

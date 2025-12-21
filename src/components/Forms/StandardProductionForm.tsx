@@ -53,7 +53,6 @@ import {
   FaChevronLeft,
   FaTractor,
   FaLeaf,
-  FaWater,
   FaCut,
   FaWarehouse,
   FaSearch,
@@ -78,7 +77,6 @@ const productionSchema = object({
   enableBlockchain: boolean().default(true),
   expectedHarvest: string().optional(),
   estimatedYield: number().optional(),
-  irrigationMethod: string().optional(),
   productionMethod: string().optional()
 });
 
@@ -95,7 +93,6 @@ interface ProductionFormData {
   enableBlockchain?: boolean;
   expectedHarvest?: string;
   estimatedYield?: number;
-  irrigationMethod?: string;
   productionMethod?: string;
 }
 
@@ -118,7 +115,7 @@ const productionTypeOptions = [
     icon: FaLeaf,
     color: 'green',
     value: 'OR',
-    blockchainBenefits: 'Enhanced carbon credit eligibility'
+    blockchainBenefits: 'Enhanced consumer transparency'
   },
   {
     id: 'GA',
@@ -136,18 +133,11 @@ const productionTypeOptions = [
     icon: FaSeedling,
     color: 'purple',
     value: 'SU',
-    blockchainBenefits: 'Premium carbon credit potential'
+    blockchainBenefits: 'Premium transparency verification'
   }
 ];
 
-// Irrigation method options for enhanced tracking
-const irrigationMethodOptions = [
-  { value: 'drip', label: 'Drip Irrigation', efficiency: 'High', carbonImpact: 'Low' },
-  { value: 'sprinkler', label: 'Sprinkler System', efficiency: 'Medium', carbonImpact: 'Medium' },
-  { value: 'flood', label: 'Flood Irrigation', efficiency: 'Low', carbonImpact: 'High' },
-  { value: 'micro_spray', label: 'Micro Spray', efficiency: 'High', carbonImpact: 'Low' },
-  { value: 'rainwater', label: 'Rainwater Only', efficiency: 'Variable', carbonImpact: 'Very Low' }
-];
+// NOTE: Irrigation method removed for MVP - already captured at establishment level
 
 // Production method options for blockchain verification
 const productionMethodOptions = [
@@ -342,7 +332,6 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
       soilPh: 7.0,
       enableBlockchain: true,
       productionMethod: 'conventional',
-      irrigationMethod: 'drip',
       ...initialData
     }
   });
@@ -496,7 +485,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
         return step1Complete;
       case 2:
         // Enhanced Tracking: blockchain and sustainability settings
-        const trackingFieldErrors = ['productionMethod', 'irrigationMethod'].some(
+        const trackingFieldErrors = ['productionMethod'].some(
           (field) => currentErrors[field as keyof typeof currentErrors]
         );
         const step2Complete = !trackingFieldErrors;
@@ -940,7 +929,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                           Enable Blockchain Carbon Tracking
                         </Text>
                         <Text fontSize="sm" color="blue.600">
-                          Create immutable records for carbon credits and supply chain transparency
+                          Create immutable records for supply chain transparency and verification
                         </Text>
                       </VStack>
                       <Switch
@@ -964,9 +953,9 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                             <Icon as={FaCheckCircle} color="green.500" />
                             <Text fontSize="sm">
                               <Text as="span" fontWeight="semibold">
-                                Carbon Credit Eligibility:
+                                Consumer Transparency:
                               </Text>{' '}
-                              Enabled
+                              Full traceability via QR
                             </Text>
                           </HStack>
                           <HStack>
@@ -1041,69 +1030,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   </SimpleGrid>
                 </StandardField>
 
-                {/* Irrigation Method Selection */}
-                <StandardField
-                  label="Irrigation Method"
-                  required
-                  helpText="Water management impacts carbon footprint and sustainability score"
-                >
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                    {irrigationMethodOptions.map((irrigation) => (
-                      <Box
-                        key={irrigation.value}
-                        p={4}
-                        borderRadius="lg"
-                        border="2px solid"
-                        borderColor={
-                          watch('irrigationMethod') === irrigation.value ? 'blue.500' : 'gray.200'
-                        }
-                        bg={watch('irrigationMethod') === irrigation.value ? 'blue.50' : 'white'}
-                        cursor="pointer"
-                        transition="all 0.2s"
-                        _hover={{ borderColor: 'blue.400', transform: 'translateY(-1px)' }}
-                        onClick={() => setValue('irrigationMethod', irrigation.value)}
-                      >
-                        <VStack spacing={2} align="start">
-                          <Text
-                            fontWeight="semibold"
-                            color={
-                              watch('irrigationMethod') === irrigation.value
-                                ? 'blue.700'
-                                : 'gray.700'
-                            }
-                          >
-                            {irrigation.label}
-                          </Text>
-                          <HStack spacing={3}>
-                            <Badge
-                              colorScheme={
-                                irrigation.efficiency === 'High'
-                                  ? 'green'
-                                  : irrigation.efficiency === 'Medium'
-                                  ? 'yellow'
-                                  : 'gray'
-                              }
-                            >
-                              {irrigation.efficiency} Efficiency
-                            </Badge>
-                            <Badge
-                              colorScheme={
-                                irrigation.carbonImpact === 'Very Low' ||
-                                irrigation.carbonImpact === 'Low'
-                                  ? 'green'
-                                  : irrigation.carbonImpact === 'Medium'
-                                  ? 'yellow'
-                                  : 'red'
-                              }
-                            >
-                              {irrigation.carbonImpact} Carbon
-                            </Badge>
-                          </HStack>
-                        </VStack>
-                      </Box>
-                    ))}
-                  </SimpleGrid>
-                </StandardField>
+                {/* NOTE: Irrigation Method removed for MVP - already captured at establishment level */}
 
                 {/* Expected Harvest Date */}
                 <StandardField
@@ -1151,38 +1078,18 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                     </Text>
                   </HStack>
 
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    <VStack align="start" spacing={2}>
-                      <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                        Production Method Impact:
-                      </Text>
-                      <Text fontSize="sm" color="green.600">
-                        {watch('productionMethod') === 'organic' ||
-                        watch('productionMethod') === 'biodynamic' ||
-                        watch('productionMethod') === 'regenerative'
-                          ? '🌟 Enhanced carbon sequestration potential'
-                          : '✅ Standard carbon tracking enabled'}
-                      </Text>
-                    </VStack>
-
-                    <VStack align="start" spacing={2}>
-                      <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                        Water Efficiency:
-                      </Text>
-                      <Text fontSize="sm" color="green.600">
-                        {(() => {
-                          const selectedIrrigation = irrigationMethodOptions.find(
-                            (i) => i.value === watch('irrigationMethod')
-                          );
-                          return selectedIrrigation
-                            ? `${
-                                selectedIrrigation.efficiency
-                              } efficiency, ${selectedIrrigation.carbonImpact.toLowerCase()} carbon impact`
-                            : 'Select irrigation method for assessment';
-                        })()}
-                      </Text>
-                    </VStack>
-                  </SimpleGrid>
+                  <VStack align="start" spacing={2}>
+                    <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                      Production Method Impact:
+                    </Text>
+                    <Text fontSize="sm" color="green.600">
+                      {watch('productionMethod') === 'organic' ||
+                      watch('productionMethod') === 'biodynamic' ||
+                      watch('productionMethod') === 'regenerative'
+                        ? '🌟 Enhanced carbon sequestration potential'
+                        : '✅ Standard carbon tracking enabled'}
+                    </Text>
+                  </VStack>
 
                   {watch('enableBlockchain') && (
                     <Box mt={4} p={3} bg="white" borderRadius="lg">

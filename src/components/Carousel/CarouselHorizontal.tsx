@@ -9,7 +9,8 @@ import {
   useBreakpointValue,
   Box,
   HStack,
-  Center
+  Center,
+  VStack
 } from '@chakra-ui/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMemo, useState, useEffect, useRef } from 'react';
@@ -22,7 +23,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import CarouselCard from './CarouselCard';
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaSeedling } from 'react-icons/fa';
 // Assets
 import avatar2 from 'assets/img/avatars/avatar2.png';
 import avatar4 from 'assets/img/avatars/avatar4.png';
@@ -311,18 +312,19 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
             )}
           </>
         ) : (
-          <Flex width={'100%'} height={'70px'} justifyContent="center">
-            <Text
-              display={'flex'}
-              fontSize={'md'}
-              fontWeight={'300'}
-              justifyContent={'center'}
-              alignItems={'center'}
-              textAlign={'center'}
-            >
-              {intl.formatMessage({ id: 'app.noParcelsYet' })}
-            </Text>
-          </Flex>
+          <VStack spacing={6} py={12} align="center" px={6}>
+            <VStack spacing={4} textAlign="center">
+              <Icon as={FaSeedling} color="green.400" boxSize={12} />
+              <VStack spacing={2}>
+                <Text fontSize="lg" fontWeight="bold" color={textColor}>
+                  {intl.formatMessage({ id: 'app.noParcelsYet' })}
+                </Text>
+                <Text fontSize="sm" color="gray.500" maxW="350px" lineHeight="1.5">
+                  {intl.formatMessage({ id: 'app.noParcelsYetDescription' })}
+                </Text>
+              </VStack>
+            </VStack>
+          </VStack>
         )}
       </CardBody>
     </Card>

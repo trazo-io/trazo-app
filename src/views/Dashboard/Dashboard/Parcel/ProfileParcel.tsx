@@ -1,110 +1,61 @@
-// Chakra imports
+import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Container,
-  Flex,
-  HStack,
-  Icon,
-  Link,
-  SimpleGrid,
-  Tag,
-  TagLabel,
-  Text,
   VStack,
-  useColorModeValue,
-  useBreakpointValue,
-  Heading,
-  Divider,
-  Circle,
+  HStack,
+  Text,
+  Avatar,
+  SimpleGrid,
+  Icon,
   Badge,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  useToast,
-  IconButton,
-  Button
+  Link,
+  Spinner,
+  Wrap,
+  WrapItem
 } from '@chakra-ui/react';
 import {
   FaMapMarkedAlt,
   FaTractor,
   FaEdit,
-  FaTrash,
   FaShare,
-  FaEye,
   FaSeedling,
   FaCertificate,
   FaPhone,
   FaEnvelope,
-  FaUsers,
+  FaUser,
   FaMapMarkerAlt,
-  FaGlobe,
   FaBuilding,
-  FaRegCommentDots,
-  FaRegListAlt,
-  FaCalendar,
   FaLeaf,
   FaTint,
-  FaChevronLeft
+  FaRulerCombined,
+  FaHashtag,
+  FaGlobeAmericas,
+  FaMountain,
+  FaEye,
+  FaCheckCircle,
+  FaChartLine,
+  FaUsers
 } from 'react-icons/fa';
-import { MdLocationOn, MdBusiness, MdEco, MdVerified } from 'react-icons/md';
-import { IoEllipsisVerticalSharp } from 'react-icons/io5';
-import React, { useEffect, useState } from 'react';
+import { MdEco, MdVerified, MdLocationOn } from 'react-icons/md';
 import { useNavigate, useParams } from 'react-router-dom';
-
-import HTMLRenderer from 'components/Utils/HTMLRenderer';
-import { StandardImageGallery } from 'components/ImageGallery';
-import { StandardPage } from 'components/Design/StandardComponents';
-import { useGetParcelQuery } from 'store/api/productApi';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
+
+import {
+  StandardCard,
+  StandardButton,
+  StandardPage
+} from 'components/Design/StandardComponents';
+import { StandardImageGallery } from 'components/ImageGallery';
+import { useGetParcelQuery } from 'store/api/productApi';
 import { formatAreaWithBothUnits } from '../../../../utils/areaUnits';
-import Card from 'components/Card/Card';
-import CardBody from 'components/Card/CardBody';
-import CardHeader from 'components/Card/CardHeader';
 import { ParcelTransparencyScoreBreakdown } from 'components/Transparency/ParcelTransparencyScoreBreakdown';
 
-// Import new ProfileSections shared components for modern UI
-import {
-  ProfileHeader,
-  ProfileSection,
-  ProfileDataGrid,
-  ProfileImageGallery,
-  TransparencyScoreCard
-} from 'components/ProfileSections';
-
-// 🎯 Utility to format field values as Title Case (e.g., "citrus" → "Citrus", "sandy_loam" → "Sandy Loam")
-const formatDisplayValue = (value: string | undefined | null): string => {
-  if (!value) return '--';
-  return value
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-};
-
-// 🏅 Certification type mapping for proper display names
-const CERTIFICATION_DISPLAY_NAMES: Record<string, string> = {
-  organic: 'USDA Organic',
-  eu_organic: 'EU Organic',
-  regenerative: 'Regenerative Organic (ROC)',
-  cng: 'Certified Naturally Grown',
-  global_gap: 'GlobalG.A.P.',
-  fair_trade: 'Fair Trade Certified',
-  rainforest_alliance: 'Rainforest Alliance',
-  carbon_neutral: 'Carbon Neutral',
-  biodynamic: 'Demeter Biodynamic',
-  non_gmo: 'Non-GMO Project Verified'
-};
-
-const formatCertificationType = (value: string | undefined | null): string => {
-  if (!value) return '--';
-  return CERTIFICATION_DISPLAY_NAMES[value] || formatDisplayValue(value);
-};
-
-// Type definitions for Redux state
+// Type definitions
 interface Company {
   id: string;
   name: string;
+  establishments?: Establishment[];
 }
 
 interface Establishment {
@@ -129,7 +80,7 @@ interface AgriculturalDetails {
   crop_rotation_pattern?: string;
   pest_management_strategy?: string;
   fertilization_program?: string;
-  [key: string]: any;
+  [key: string]: string | undefined;
 }
 
 interface ParcelData {
@@ -138,7 +89,6 @@ interface ParcelData {
   area?: number;
   primary_crop?: string;
   crop_type?: string;
-  soil_type?: string;
   certified?: boolean;
   certification_type?: string;
   images?: Array<{ url: string; caption?: string }>;
@@ -170,36 +120,135 @@ interface RootState {
   };
 }
 
+// Utility functions
+const formatDisplayValue = (value: string | undefined | null): string => {
+  if (!value) return '';
+  return value
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const CERTIFICATION_DISPLAY_NAMES: Record<string, string> = {
+  organic: 'USDA Organic',
+  eu_organic: 'EU Organic',
+  regenerative: 'Regenerative Organic (ROC)',
+  cng: 'Certified Naturally Grown',
+  global_gap: 'GlobalG.A.P.',
+  fair_trade: 'Fair Trade Certified',
+  rainforest_alliance: 'Rainforest Alliance',
+  carbon_neutral: 'Carbon Neutral',
+  biodynamic: 'Demeter Biodynamic',
+  non_gmo: 'Non-GMO Project Verified'
+};
+
+const formatCertificationType = (value: string | undefined | null): string => {
+  if (!value) return '';
+  return CERTIFICATION_DISPLAY_NAMES[value] || formatDisplayValue(value);
+};
+
+// InfoRow component - matches CompanyInfoTab pattern
+interface InfoRowProps {
+  icon: React.ElementType;
+  label: string;
+  value?: string | number | null;
+  type?: 'text' | 'link' | 'email' | 'phone';
+}
+
+const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) => {
+  if (!value) return null;
+
+  const renderValue = () => {
+    switch (type) {
+      case 'link':
+        return (
+          <Link href={value as string} isExternal color="green.600" fontWeight="medium">
+            {value}
+          </Link>
+        );
+      case 'email':
+        return (
+          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium">
+            {value}
+          </Link>
+        );
+      case 'phone':
+        return (
+          <Link href={`tel:${value}`} color="green.600" fontWeight="medium">
+            {value}
+          </Link>
+        );
+      default:
+        return <Text fontWeight="medium" color="gray.800">{value}</Text>;
+    }
+  };
+
+  return (
+    <HStack spacing={3} align="flex-start">
+      <Icon as={icon} color="green.500" boxSize={4} mt={1} flexShrink={0} />
+      <Box>
+        <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
+          {label}
+        </Text>
+        {renderValue()}
+      </Box>
+    </HStack>
+  );
+};
+
+// Stat card for quick stats section
+interface StatCardProps {
+  icon: React.ElementType;
+  value: string | number;
+  label: string;
+  subLabel?: string;
+  colorScheme: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ icon, value, label, subLabel, colorScheme }) => (
+  <VStack
+    spacing={2}
+    p={4}
+    bg={`${colorScheme}.50`}
+    borderRadius="xl"
+    border="1px solid"
+    borderColor={`${colorScheme}.200`}
+    align="center"
+  >
+    <Icon as={icon} boxSize={6} color={`${colorScheme}.500`} />
+    <Text fontSize="xl" fontWeight="bold" color="gray.800" textAlign="center">
+      {value}
+    </Text>
+    <Text fontSize="sm" color="gray.600" textAlign="center">
+      {label}
+    </Text>
+    {subLabel && (
+      <Text fontSize="xs" color="gray.500" textAlign="center">
+        {subLabel}
+      </Text>
+    )}
+  </VStack>
+);
+
 function ProfileParcel(): React.ReactElement {
   const intl = useIntl();
-  const titleColor = useColorModeValue('green.500', 'green.400');
-  const textColor = useColorModeValue('gray.700', 'white');
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
   const navigate = useNavigate();
-  const toast = useToast();
   const { establishmentId, parcelId } = useParams<{ establishmentId: string; parcelId: string }>();
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
 
-  // Mobile-first responsive design
-  const containerPadding = useBreakpointValue({ base: 4, md: 8 });
-  const cardSpacing = useBreakpointValue({ base: 4, md: 6 });
-  const headerFontSize = useBreakpointValue({ base: 'xl', md: '2xl' });
-
-  const establishments = useSelector(
-    (state: RootState) => state.company.currentCompany?.establishments || []
-  );
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
+  const establishments = currentCompany?.establishments || [];
   const currentParcel = useSelector((state: RootState) => state.product.currentParcel);
 
   const {
     data: parcelData,
-    error,
-    isLoading: isParcelLoading,
-    isFetching,
-    refetch
+    isLoading: isParcelLoading
   } = useGetParcelQuery(
-    { companyId: currentCompany?.id || '', establishmentId: establishmentId || '', parcelId: parcelId || '' },
+    {
+      companyId: currentCompany?.id || '',
+      establishmentId: establishmentId || '',
+      parcelId: parcelId || ''
+    },
     {
       skip:
         parcelId === undefined ||
@@ -210,9 +259,8 @@ function ProfileParcel(): React.ReactElement {
   );
 
   useEffect(() => {
-    let foundEstablishment: Establishment | undefined;
     if (establishments && establishments.length > 0 && establishmentId) {
-      foundEstablishment = establishments.find(
+      const foundEstablishment = establishments.find(
         (est: Establishment) => est.id.toString() === establishmentId
       );
       if (foundEstablishment) {
@@ -221,24 +269,13 @@ function ProfileParcel(): React.ReactElement {
     }
   }, [establishmentId, establishments]);
 
-  // Move useBreakpointValue to top level to avoid hooks rule violation
-  const isMobile = useBreakpointValue({ base: true, md: false });
-
   const handleShare = async (): Promise<void> => {
     try {
       if (navigator.share && parcelData?.name) {
         await navigator.share({
           title: `${parcelData.name} - Parcel Profile`,
-          text: `Check out this sustainable parcel! #Trazo #SustainableAgriculture`,
+          text: 'Check out this sustainable parcel! #Trazo #SustainableAgriculture',
           url: window.location.href
-        });
-        toast({
-          title: 'Shared Successfully',
-          description: 'Parcel profile shared successfully.',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-          position: 'top-right'
         });
       }
     } catch (err) {
@@ -246,1040 +283,617 @@ function ProfileParcel(): React.ReactElement {
     }
   };
 
-  // Simple loading state - matching ProfileEstablishment pattern
   if (isParcelLoading) {
     return (
-      <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
-        <Container maxW="6xl" mx="auto" py={20}>
-          <Card bg={bgColor} p={6}>
-            <Text textAlign="center" color={textColor}>
-              Loading parcel data...
-            </Text>
-          </Card>
-        </Container>
-      </Flex>
+      <StandardPage
+        showBackButton
+        onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
+      >
+        <Box py={8} textAlign="center">
+          <Spinner size="lg" color="green.500" />
+        </Box>
+      </StandardPage>
     );
   }
 
+  // Format location string
+  const formatLocation = () => {
+    const parts = [
+      parcelData?.address,
+      establishment?.city,
+      establishment?.state,
+      establishment?.country
+    ].filter(Boolean);
+    return parts.join(', ');
+  };
+
+  // Check if agricultural details exist
+  const hasAgriculturalDetails = parcelData?.agricultural_details &&
+    Object.values(parcelData.agricultural_details).some(v => v !== undefined && v !== null && v !== '');
+
+  // Check for soil data
+  const hasSoilData = parcelData?.agricultural_details && (
+    parcelData.agricultural_details.soil_ph ||
+    parcelData.agricultural_details.soil_organic_matter ||
+    parcelData.agricultural_details.soil_nitrogen ||
+    parcelData.agricultural_details.soil_phosphorus
+  );
+
+  // Check for water management data
+  const hasWaterData = parcelData?.agricultural_details && (
+    parcelData.agricultural_details.irrigation_efficiency ||
+    parcelData.agricultural_details.water_source_type ||
+    parcelData.agricultural_details.water_quality_ph ||
+    parcelData.agricultural_details.water_allocation_acre_feet
+  );
+
+  // Check for conservation practices
+  const hasConservationData = parcelData?.agricultural_details && (
+    parcelData.agricultural_details.cover_crop_management ||
+    parcelData.agricultural_details.crop_rotation_pattern ||
+    parcelData.agricultural_details.pest_management_strategy ||
+    parcelData.agricultural_details.fertilization_program
+  );
+
   return (
-    <Flex
-      direction="column"
-      alignSelf="center"
-      justifySelf="center"
-      overflow="hidden"
-      w="100%"
-      position="relative"
+    <StandardPage
+      showBackButton
+      onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
     >
-      {/* Clean Modern Header - Standardized with Establishment */}
-      <Box
-        bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
-        pt={{ base: '140px', md: '100px' }}
-        pb={{ base: '80px', md: '100px' }}
-        px={{ base: 3, sm: 4, md: 4 }}
-        position="relative"
-      >
-        <Container maxW="6xl" mx="auto">
-          <VStack spacing={6} textAlign="center">
-            {/* Back Button - Responsive positioning like StandardPage */}
-            {isMobile ? (
-              // Mobile: Back button above title with full width
-              <VStack spacing={4} w="full" align="center">
-                <Flex w="full" justify="flex-start">
-                  <Button
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
-                    size="sm"
-                  >
-                    Back
-                  </Button>
-                </Flex>
-              </VStack>
-            ) : (
-              // Desktop: Back button integrated with header
-              <Flex w="full" justify="flex-start" mb={-4}>
-                <Button
-                  variant="outline"
-                  leftIcon={<FaChevronLeft />}
-                  onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
-                  size="sm"
-                >
-                  Back
-                </Button>
-              </Flex>
-            )}
-
-            {/* Main Title - Standardized */}
-            <VStack spacing={{ base: 4, sm: 3 }}>
-              <Heading
-                as="h1"
-                size={{ base: 'lg', sm: 'xl', md: '2xl', lg: '2xl' }}
-                color="green.600"
-                fontWeight="bold"
-                textAlign="center"
-                letterSpacing="-0.02em"
-                px={{ base: 2, sm: 0 }}
-                lineHeight={{ base: '1.1', sm: '1.2', md: '1.2' }}
-                maxW={{ base: '90%', sm: '85%', md: '100%' }}
-                noOfLines={{ base: 2, md: 3 }}
+      <VStack spacing={8} w="100%">
+        {/* Identity Section */}
+        <StandardCard
+          title={intl.formatMessage({ id: 'app.parcel' })}
+          variant="elevated"
+          headerAction={
+            <HStack spacing={2}>
+              <StandardButton
+                variant="outline"
+                size="sm"
+                leftIcon={<Icon as={FaShare} />}
+                onClick={handleShare}
               >
-                {parcelData?.name || 'Loading...'}
-              </Heading>
-              <Text
-                fontSize={{ base: 'lg', sm: 'xl', md: 'lg' }}
-                color="gray.600"
-                fontWeight="normal"
-                maxW={{ base: '95%', sm: '85%', lg: '60%' }}
-                lineHeight={{ base: '1.6', md: '1.7' }}
-                textAlign="center"
-                px={{ base: 2, sm: 0 }}
+                {intl.formatMessage({ id: 'app.share' })}
+              </StandardButton>
+              <StandardButton
+                variant="outline"
+                size="sm"
+                leftIcon={<Icon as={FaEdit} />}
+                onClick={() =>
+                  navigate(
+                    `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
+                  )
+                }
               >
-                {establishment?.name || 'Sustainable Agriculture'}
-              </Text>
-            </VStack>
-
-            {/* Quick Stats - Standardized with Establishment */}
-            <SimpleGrid
-              columns={{ base: 2, md: 4 }}
-              spacing={{ base: 4, sm: 6, md: 6 }}
-              w="full"
-              maxW="2xl"
-              px={{ base: 2, sm: 0 }}
-            >
-              <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle
-                  size={{ base: '60px', sm: '50px' }}
-                  bg="green.100"
-                  color="green.600"
-                  cursor="default"
-                >
-                  <Icon as={FaTractor} boxSize={{ base: 7, sm: 6 }} />
-                </Circle>
-                <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {parcelData?.area ? parcelData.area.toFixed(2) : '--'}
-                  </Text>
-                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Hectares
-                  </Text>
-                  {parcelData?.area && (
-                    <Text fontSize="xs" color="gray.500">
-                      ({(parcelData.area * 2.47105).toFixed(1)} acres)
-                    </Text>
-                  )}
-                </VStack>
-              </VStack>
-
-              <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle
-                  size={{ base: '60px', sm: '50px' }}
-                  bg="blue.100"
-                  color="blue.600"
-                  cursor="default"
-                >
-                  <Icon as={FaSeedling} boxSize={{ base: 7, sm: 6 }} />
-                </Circle>
-                <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {formatDisplayValue(parcelData?.primary_crop || parcelData?.crop_type)}
-                  </Text>
-                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Primary Crop
-                  </Text>
-                </VStack>
-              </VStack>
-
-              <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle
-                  size={{ base: '60px', sm: '50px' }}
-                  bg="purple.100"
-                  color="purple.600"
-                  cursor="default"
-                >
-                  <Icon as={MdEco} boxSize={{ base: 7, sm: 6 }} />
-                </Circle>
-                <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {formatDisplayValue(parcelData?.soil_type)}
-                  </Text>
-                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Soil Type
-                  </Text>
-                </VStack>
-              </VStack>
-
-              <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle
-                  size={{ base: '60px', sm: '50px' }}
-                  bg="orange.100"
-                  color="orange.600"
-                  cursor="default"
-                >
-                  <Icon as={FaCertificate} boxSize={{ base: 7, sm: 6 }} />
-                </Circle>
-                <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {parcelData?.certified && parcelData?.certification_type
-                      ? formatCertificationType(parcelData.certification_type)
-                      : parcelData?.certified
-                        ? 'Yes'
-                        : 'No'}
-                  </Text>
-                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Certified
-                  </Text>
-                </VStack>
-              </VStack>
-            </SimpleGrid>
-          </VStack>
-        </Container>
-      </Box>
-
-      {/* Main Content Container - Matching TransparencyDashboard layout */}
-      <Box
-        maxW="full"
-        mx="auto"
-        px={6}
-        mt="-60px"
-        mb={{ base: '60px', md: '80px' }}
-        position="relative"
-        zIndex={10}
-      >
-        <Card
-          w="100%"
-          p={{ base: 4, sm: 5, md: 6, lg: 8 }}
-          boxShadow={{
-            base: '0 8px 16px -4px rgba(0, 0, 0, 0.12)',
-            md: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-          }}
-          borderRadius={{ base: 'xl', md: '2xl' }}
-          bg={bgColor}
-          mx={{ base: 1, sm: 'auto' }}
-          position="relative"
+                {intl.formatMessage({ id: 'app.edit' })}
+              </StandardButton>
+            </HStack>
+          }
         >
-          {/* Header with Actions - Standardized */}
-          <CardHeader mb={{ base: '16px', md: '24px' }} position="relative">
-            {/* Actions Menu - Top Right Corner */}
-            <Box position="absolute" top={0} right={0} zIndex={10}>
-              <Menu placement="left-start">
-                <MenuButton
-                  as={IconButton}
-                  icon={<Icon as={IoEllipsisVerticalSharp} />}
-                  variant="ghost"
-                  colorScheme="gray"
-                  size={{ base: 'md', md: 'md' }}
-                  minH={{ base: '44px', md: '40px' }}
-                  minW={{ base: '44px', md: '40px' }}
-                  aria-label="Open parcel menu"
-                  _hover={{ bg: 'gray.50' }}
-                  _active={{ bg: 'gray.100' }}
-                />
-                <MenuList fontSize={{ base: 'md', md: 'sm' }} minW={{ base: '200px', md: '180px' }}>
-                  <MenuItem
-                    onClick={() =>
-                      navigate(
-                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
-                      )
-                    }
-                    icon={<FaEdit />}
-                    minH={{ base: '44px', md: '40px' }}
-                  >
-                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
-                      {intl.formatMessage({ id: 'app.edit' }) || 'Edit'}
-                    </Text>
-                  </MenuItem>
-                  <MenuItem
-                    icon={<FaShare />}
-                    onClick={handleShare}
-                    minH={{ base: '44px', md: '40px' }}
-                  >
-                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
-                      Share
-                    </Text>
-                  </MenuItem>
-                  <MenuItem icon={<FaTrash />} color="red.500" minH={{ base: '44px', md: '40px' }}>
-                    <Text fontSize={{ base: 'md', md: 'sm' }} fontWeight="500">
-                      {intl.formatMessage({ id: 'app.delete' }) || 'Delete'}
-                    </Text>
-                  </MenuItem>
-                </MenuList>
-              </Menu>
-            </Box>
+          <HStack spacing={6} align="flex-start" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+            <Avatar
+              size="2xl"
+              src={parcelData?.images?.[0]?.url}
+              name={parcelData?.name}
+              bg="green.500"
+              color="white"
+              icon={<Icon as={FaMapMarkedAlt} boxSize={10} />}
+            />
+            <VStack align="start" spacing={3} flex={1}>
+              <Box>
+                <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                  {parcelData?.name}
+                </Text>
+                {parcelData?.unique_code && (
+                  <Text fontSize="md" color="gray.500">
+                    Code: {parcelData.unique_code}
+                  </Text>
+                )}
+              </Box>
+              {parcelData?.description && (
+                <Text color="gray.600" fontSize="sm" lineHeight="1.6">
+                  {parcelData.description}
+                </Text>
+              )}
+              <Wrap spacing={2}>
+                <WrapItem>
+                  <Badge colorScheme="green" variant="subtle" px={2} py={1} borderRadius="full">
+                    Active
+                  </Badge>
+                </WrapItem>
+                {parcelData?.certified && (
+                  <WrapItem>
+                    <Badge colorScheme="blue" variant="subtle" px={2} py={1} borderRadius="full">
+                      <HStack spacing={1}>
+                        <Icon as={FaCertificate} boxSize={3} />
+                        <Text>Certified</Text>
+                      </HStack>
+                    </Badge>
+                  </WrapItem>
+                )}
+                {parcelData?.carbon_calculation_enabled && (
+                  <WrapItem>
+                    <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full">
+                      <HStack spacing={1}>
+                        <Icon as={FaLeaf} boxSize={3} />
+                        <Text>Carbon Tracking</Text>
+                      </HStack>
+                    </Badge>
+                  </WrapItem>
+                )}
+                {parcelData?.usda_compliance_eligible && (
+                  <WrapItem>
+                    <Badge colorScheme="orange" variant="subtle" px={2} py={1} borderRadius="full">
+                      <HStack spacing={1}>
+                        <Icon as={MdVerified} boxSize={3} />
+                        <Text>USDA Eligible</Text>
+                      </HStack>
+                    </Badge>
+                  </WrapItem>
+                )}
+                {parcelData?.transparency_ready && (
+                  <WrapItem>
+                    <Badge colorScheme="cyan" variant="subtle" px={2} py={1} borderRadius="full">
+                      <HStack spacing={1}>
+                        <Icon as={FaEye} boxSize={3} />
+                        <Text>Consumer Ready</Text>
+                      </HStack>
+                    </Badge>
+                  </WrapItem>
+                )}
+                {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
+                  <WrapItem>
+                    <Badge colorScheme="teal" variant="subtle" px={2} py={1} borderRadius="full">
+                      Transparency: {parcelData.transparency_score}%
+                    </Badge>
+                  </WrapItem>
+                )}
+              </Wrap>
+            </VStack>
+          </HStack>
+        </StandardCard>
 
-            <VStack spacing={{ base: 4, md: 3 }} align="stretch">
-              {/* Status Badges - Standardized */}
-              <Flex
-                wrap="wrap"
-                gap={{ base: 3, sm: 4 }}
-                justify={{ base: 'center', md: 'flex-start' }}
-                align="center"
-              >
-                {/* Active Badge - Standardized */}
-                <Badge
-                  variant="subtle"
-                  colorScheme="green"
-                  fontSize="sm"
-                  px={4}
-                  py={2}
+        {/* Photo Gallery Section */}
+        {parcelData?.images && parcelData.images.length > 0 && (
+          <StandardCard title="Photo Gallery" variant="elevated">
+            <StandardImageGallery
+              images={parcelData.images}
+              title=""
+              variant="default"
+              enablePreview={true}
+              showImageCount={true}
+              height={{ base: '200px', sm: '250px', md: '280px' }}
+              showEmptyState={false}
+              maxDisplayImages={4}
+            />
+          </StandardCard>
+        )}
+
+        {/* Quick Stats Section */}
+        <StandardCard title="Quick Stats" variant="elevated">
+          <SimpleGrid columns={{ base: 2, md: 3 }} spacing={4}>
+            <StatCard
+              icon={FaTractor}
+              value={parcelData?.area ? parcelData.area.toFixed(2) : '--'}
+              label="Hectares"
+              subLabel={parcelData?.area ? `(${(parcelData.area * 2.47105).toFixed(1)} acres)` : undefined}
+              colorScheme="green"
+            />
+            <StatCard
+              icon={FaSeedling}
+              value={formatDisplayValue(parcelData?.primary_crop || parcelData?.crop_type) || '--'}
+              label="Primary Crop"
+              colorScheme="blue"
+            />
+            <StatCard
+              icon={FaCertificate}
+              value={
+                parcelData?.certified && parcelData?.certification_type
+                  ? formatCertificationType(parcelData.certification_type)
+                  : parcelData?.certified
+                    ? 'Yes'
+                    : 'No'
+              }
+              label="Certification"
+              colorScheme="orange"
+            />
+          </SimpleGrid>
+        </StandardCard>
+
+        {/* Transparency Score Breakdown */}
+        {(parcelData?.transparency_score || parcelData?.transparency_description ||
+          parcelData?.sustainability_practices || parcelData?.consumer_story) && (
+          <ParcelTransparencyScoreBreakdown
+            parcelData={{
+              transparency_score: parcelData?.transparency_score,
+              transparency_description: parcelData?.transparency_description,
+              sustainability_practices: parcelData?.sustainability_practices,
+              consumer_story: parcelData?.consumer_story,
+              images: parcelData?.images,
+              certified: parcelData?.certified,
+              certification_type: parcelData?.certification_type
+            }}
+            variant="full"
+            showEditButton={true}
+            onEditClick={() =>
+              navigate(
+                `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
+              )
+            }
+          />
+        )}
+
+        {/* Consumer Transparency Section */}
+        {(parcelData?.transparency_description ||
+          parcelData?.sustainability_practices ||
+          parcelData?.consumer_story) && (
+          <StandardCard title="Consumer Transparency" variant="elevated">
+            <VStack spacing={4} align="stretch">
+              {parcelData?.transparency_description && (
+                <Box p={4} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
+                  <HStack spacing={2} mb={2}>
+                    <Icon as={FaLeaf} color="green.600" />
+                    <Text fontWeight="bold" color="green.700" fontSize="sm">
+                      WHAT MAKES THIS PARCEL SPECIAL
+                    </Text>
+                  </HStack>
+                  <Text color="gray.700" lineHeight="tall">
+                    {parcelData.transparency_description}
+                  </Text>
+                </Box>
+              )}
+
+              {parcelData?.sustainability_practices && (
+                <Box p={4} bg="blue.50" borderRadius="lg" border="1px" borderColor="blue.200">
+                  <HStack spacing={2} mb={2}>
+                    <Icon as={FaSeedling} color="blue.600" />
+                    <Text fontWeight="bold" color="blue.700" fontSize="sm">
+                      KEY SUSTAINABILITY PRACTICES
+                    </Text>
+                  </HStack>
+                  <Text color="gray.700" lineHeight="tall">
+                    {parcelData.sustainability_practices}
+                  </Text>
+                </Box>
+              )}
+
+              {parcelData?.consumer_story && (
+                <Box p={4} bg="purple.50" borderRadius="lg" border="1px" borderColor="purple.200">
+                  <HStack spacing={2} mb={2}>
+                    <Icon as={FaUsers} color="purple.600" />
+                    <Text fontWeight="bold" color="purple.700" fontSize="sm">
+                      WHY CONSUMERS SHOULD CARE
+                    </Text>
+                  </HStack>
+                  <Text color="gray.700" lineHeight="tall">
+                    {parcelData.consumer_story}
+                  </Text>
+                </Box>
+              )}
+            </VStack>
+          </StandardCard>
+        )}
+
+        {/* Basic Information Section */}
+        <StandardCard title="Basic Information" variant="elevated">
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            <InfoRow
+              icon={FaMapMarkedAlt}
+              label="Parcel Name"
+              value={parcelData?.name}
+            />
+            <InfoRow
+              icon={FaRulerCombined}
+              label="Area"
+              value={parcelData?.area ? formatAreaWithBothUnits(parcelData.area, 'METRIC') : undefined}
+            />
+            <InfoRow
+              icon={FaHashtag}
+              label="Unique Code"
+              value={parcelData?.unique_code}
+            />
+            <InfoRow
+              icon={FaSeedling}
+              label="Primary Crop"
+              value={formatDisplayValue(parcelData?.primary_crop || parcelData?.crop_type)}
+            />
+          </SimpleGrid>
+        </StandardCard>
+
+        {/* Location Section */}
+        <StandardCard title="Location Details" variant="elevated">
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            <InfoRow
+              icon={FaMapMarkerAlt}
+              label="Address"
+              value={formatLocation()}
+            />
+            <InfoRow
+              icon={FaGlobeAmericas}
+              label="Coordinates"
+              value={
+                parcelData?.latitude && parcelData?.longitude
+                  ? `${parseFloat(parcelData.latitude.toString()).toFixed(6)}, ${parseFloat(parcelData.longitude.toString()).toFixed(6)}`
+                  : undefined
+              }
+            />
+            <InfoRow
+              icon={FaMountain}
+              label="Elevation"
+              value={parcelData?.elevation ? `${parcelData.elevation} ft` : undefined}
+            />
+            {establishment?.zone && (
+              <InfoRow
+                icon={MdLocationOn}
+                label="Zone"
+                value={establishment.zone}
+              />
+            )}
+          </SimpleGrid>
+        </StandardCard>
+
+        {/* Contact Information Section */}
+        {(parcelData?.contact_person || parcelData?.contact_email || parcelData?.contact_phone) && (
+          <StandardCard title="Contact Information" variant="elevated">
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+              <InfoRow
+                icon={FaUser}
+                label="Contact Person"
+                value={parcelData?.contact_person}
+              />
+              <InfoRow
+                icon={FaEnvelope}
+                label="Email"
+                value={parcelData?.contact_email}
+                type="email"
+              />
+              <InfoRow
+                icon={FaPhone}
+                label="Phone"
+                value={parcelData?.contact_phone}
+                type="phone"
+              />
+            </SimpleGrid>
+          </StandardCard>
+        )}
+
+        {/* Certification Section */}
+        {(parcelData?.certified || parcelData?.certification_type) && (
+          <StandardCard title="Certification" variant="elevated">
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+              <HStack spacing={3} align="flex-start">
+                <Icon as={FaCertificate} color="green.500" boxSize={4} mt={1} flexShrink={0} />
+                <Box>
+                  <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
+                    Status
+                  </Text>
+                  <Badge
+                    colorScheme={parcelData?.certified ? 'green' : 'gray'}
+                    variant="subtle"
+                    px={2}
+                    py={1}
+                    borderRadius="full"
+                  >
+                    {parcelData?.certified ? 'Certified' : 'Not Certified'}
+                  </Badge>
+                </Box>
+              </HStack>
+              {parcelData?.certification_type && (
+                <InfoRow
+                  icon={FaCheckCircle}
+                  label="Certification Type"
+                  value={formatCertificationType(parcelData.certification_type)}
+                />
+              )}
+            </SimpleGrid>
+          </StandardCard>
+        )}
+
+        {/* Soil Health Section */}
+        {hasSoilData && (
+          <StandardCard title="Soil Health" variant="elevated">
+            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
+              {parcelData?.agricultural_details?.soil_ph && (
+                <VStack
+                  spacing={1}
+                  p={4}
+                  bg="orange.50"
                   borderRadius="lg"
-                  fontWeight="600"
-                  textTransform="none"
+                  border="1px"
+                  borderColor="orange.200"
+                >
+                  <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                    {parseFloat(parcelData.agricultural_details.soil_ph).toFixed(1)}
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">pH Level</Text>
+                </VStack>
+              )}
+              {parcelData?.agricultural_details?.soil_organic_matter && (
+                <VStack
+                  spacing={1}
+                  p={4}
                   bg="green.50"
-                  color="green.700"
-                  border="1px solid"
+                  borderRadius="lg"
+                  border="1px"
                   borderColor="green.200"
                 >
-                  <HStack spacing={2}>
-                    <Circle size="8px" bg="green.500" />
-                    <Text>Active</Text>
-                  </HStack>
-                </Badge>
-
-                {parcelData?.certified && (
-                  <Badge
-                    variant="subtle"
-                    colorScheme="blue"
-                    fontSize="sm"
-                    px={4}
-                    py={2}
-                    borderRadius="lg"
-                    fontWeight="600"
-                    textTransform="none"
-                    bg="blue.50"
-                    color="blue.700"
-                    border="1px solid"
-                    borderColor="blue.200"
-                  >
-                    <HStack spacing={2}>
-                      <Icon as={FaCertificate} boxSize={3} color="blue.500" />
-                      <Text>Certified</Text>
-                    </HStack>
-                  </Badge>
-                )}
-
-                {parcelData?.carbon_calculation_enabled && (
-                  <Badge
-                    variant="subtle"
-                    colorScheme="purple"
-                    fontSize="sm"
-                    px={4}
-                    py={2}
-                    borderRadius="lg"
-                    fontWeight="500"
-                    textTransform="none"
-                    bg="purple.50"
-                    color="purple.700"
-                    border="1px solid"
-                    borderColor="purple.200"
-                  >
-                    <HStack spacing={2}>
-                      <Icon as={FaLeaf} boxSize={3} color="purple.500" />
-                      <Text>Carbon Tracking</Text>
-                    </HStack>
-                  </Badge>
-                )}
-
-                {parcelData?.usda_compliance_eligible && (
-                  <Badge
-                    variant="subtle"
-                    colorScheme="orange"
-                    fontSize="sm"
-                    px={4}
-                    py={2}
-                    borderRadius="lg"
-                    fontWeight="500"
-                    textTransform="none"
-                    bg="orange.50"
-                    color="orange.700"
-                    border="1px solid"
-                    borderColor="orange.200"
-                  >
-                    <HStack spacing={2}>
-                      <Icon as={MdVerified} boxSize={3} color="orange.500" />
-                      <Text>USDA Eligible</Text>
-                    </HStack>
-                  </Badge>
-                )}
-
-                {parcelData?.transparency_ready && (
-                  <Badge
-                    variant="subtle"
-                    colorScheme="cyan"
-                    fontSize="sm"
-                    px={4}
-                    py={2}
-                    borderRadius="lg"
-                    fontWeight="600"
-                    textTransform="none"
-                    bg="cyan.50"
-                    color="cyan.700"
-                    border="1px solid"
-                    borderColor="cyan.200"
-                  >
-                    <HStack spacing={2}>
-                      <Icon as={FaEye} boxSize={3} color="cyan.500" />
-                      <Text>Consumer Ready</Text>
-                    </HStack>
-                  </Badge>
-                )}
-
-                {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
-                  <Badge
-                    variant="subtle"
-                    colorScheme="teal"
-                    fontSize="sm"
-                    px={4}
-                    py={2}
-                    borderRadius="lg"
-                    fontWeight="600"
-                    textTransform="none"
-                    bg="teal.50"
-                    color="teal.700"
-                    border="1px solid"
-                    borderColor="teal.200"
-                  >
-                    <HStack spacing={2}>
-                      <Circle size="8px" bg="teal.500" />
-                      <Text>Transparency: {parcelData.transparency_score}%</Text>
-                    </HStack>
-                  </Badge>
-                )}
-              </Flex>
-
-              {/* Header Row */}
-              <Flex
-                align="center"
-                justify="space-between"
-                flexWrap={{ base: 'wrap', md: 'nowrap' }}
-                gap={{ base: 3, md: 4 }}
-              >
-                <Heading
-                  color={textColor}
-                  fontSize={{ base: 'md', sm: 'lg', md: 'xl' }}
-                  fontWeight="bold"
-                  textAlign={{ base: 'center', md: 'left' }}
-                  flex="1"
+                  <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                    {parseFloat(parcelData.agricultural_details.soil_organic_matter).toFixed(1)}%
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">Organic Matter</Text>
+                </VStack>
+              )}
+              {parcelData?.agricultural_details?.soil_nitrogen && (
+                <VStack
+                  spacing={1}
+                  p={4}
+                  bg="blue.50"
+                  borderRadius="lg"
+                  border="1px"
+                  borderColor="blue.200"
                 >
-                  Parcel Information
-                </Heading>
-              </Flex>
-            </VStack>
-          </CardHeader>
-
-          <CardBody>
-            <SimpleGrid
-              columns={{ base: 1, lg: 2 }}
-              spacing={{ base: 6, md: 8 }}
-              mb={{ base: 6, md: 10 }}
-            >
-              {/* Left Column */}
-              <Box>
-                {/* Image Gallery */}
-                <Box mb={{ base: 4, md: 6 }}>
-                  <StandardImageGallery
-                    images={parcelData?.images || []}
-                    title="Parcel Photos"
-                    variant="default"
-                    enablePreview={true}
-                    showImageCount={true}
-                    height={{ base: '200px', sm: '250px', md: '280px', lg: '300px' }}
-                    showEmptyState={true}
-                    maxDisplayImages={3}
-                  />
-                </Box>
-
-                {/* Basic Information - Refactored with ProfileSection */}
-                <ProfileSection
-                  title="Basic Information"
-                  icon={FaBuilding}
-                  mb={{ base: 4, md: 6 }}
+                  <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                    {parseFloat(parcelData.agricultural_details.soil_nitrogen).toFixed(0)}
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">Nitrogen (ppm)</Text>
+                </VStack>
+              )}
+              {parcelData?.agricultural_details?.soil_phosphorus && (
+                <VStack
+                  spacing={1}
+                  p={4}
+                  bg="purple.50"
+                  borderRadius="lg"
+                  border="1px"
+                  borderColor="purple.200"
                 >
-                  <ProfileDataGrid
-                    data={[
-                      { label: 'Name', value: parcelData?.name, type: 'text', conditional: !!parcelData?.name },
-                      {
-                        label: 'Area',
-                        value: parcelData?.area ? formatAreaWithBothUnits(parcelData.area, 'METRIC') : undefined,
-                        type: 'text',
-                        conditional: !!parcelData?.area
-                      },
-                      { label: 'Unique Code', value: parcelData?.unique_code, type: 'text', conditional: !!parcelData?.unique_code },
-                      { label: 'Primary Crop', value: formatDisplayValue(parcelData?.primary_crop || parcelData?.crop_type), type: 'text' as const, conditional: !!(parcelData?.primary_crop || parcelData?.crop_type) },
-                      { label: 'Soil Type', value: formatDisplayValue(parcelData?.soil_type), type: 'text' as const, conditional: !!parcelData?.soil_type }
-                    ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
-                    columns={{ base: 1, md: 2 }}
-                  />
-                </ProfileSection>
-
-                {/* 🎯 TRANSPARENCY SCORE BREAKDOWN - Shows farmers how to improve */}
-                <Box mb={{ base: 4, md: 6 }}>
-                  <ParcelTransparencyScoreBreakdown
-                    parcelData={{
-                      transparency_score: parcelData?.transparency_score,
-                      transparency_description: parcelData?.transparency_description,
-                      sustainability_practices: parcelData?.sustainability_practices,
-                      consumer_story: parcelData?.consumer_story,
-                      images: parcelData?.images,
-                      certified: parcelData?.certified,
-                      certification_type: parcelData?.certification_type
-                    }}
-                    variant="full"
-                    showEditButton={true}
-                    onEditClick={() =>
-                      navigate(
-                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
-                      )
-                    }
-                  />
-                </Box>
-
-                {/* 🎯 TRANSPARENCY STORY SECTION - Consumer-Facing Narrative */}
-                {(parcelData?.transparency_description ||
-                  parcelData?.sustainability_practices ||
-                  parcelData?.consumer_story) && (
-                  <ProfileSection
-                    title="Consumer Transparency"
-                    icon={FaEye}
-                    mb={{ base: 4, md: 6 }}
-                  >
-                    <VStack spacing={4} align="stretch">
-                      {/* Main Transparency Description */}
-                      {parcelData?.transparency_description && (
-                        <Box
-                          p={4}
-                          bg="green.50"
-                          borderRadius="lg"
-                          border="1px"
-                          borderColor="green.200"
-                        >
-                          <VStack spacing={2} align="stretch">
-                            <HStack>
-                              <Icon as={FaLeaf} color="green.600" />
-                              <Text fontWeight="bold" color="green.700" fontSize="sm">
-                                WHAT MAKES THIS PARCEL SPECIAL
-                              </Text>
-                            </HStack>
-                            <Text color="gray.700" lineHeight="tall">
-                              {parcelData.transparency_description}
-                            </Text>
-                          </VStack>
-                        </Box>
-                      )}
-
-                      {/* Sustainability Practices */}
-                      {parcelData?.sustainability_practices && (
-                        <Box
-                          p={4}
-                          bg="blue.50"
-                          borderRadius="lg"
-                          border="1px"
-                          borderColor="blue.200"
-                        >
-                          <VStack spacing={2} align="stretch">
-                            <HStack>
-                              <Icon as={FaSeedling} color="blue.600" />
-                              <Text fontWeight="bold" color="blue.700" fontSize="sm">
-                                KEY SUSTAINABILITY PRACTICES
-                              </Text>
-                            </HStack>
-                            <Text color="gray.700" lineHeight="tall">
-                              {parcelData.sustainability_practices}
-                            </Text>
-                          </VStack>
-                        </Box>
-                      )}
-
-                      {/* Consumer Story */}
-                      {parcelData?.consumer_story && (
-                        <Box
-                          p={4}
-                          bg="purple.50"
-                          borderRadius="lg"
-                          border="1px"
-                          borderColor="purple.200"
-                        >
-                          <VStack spacing={2} align="stretch">
-                            <HStack>
-                              <Icon as={FaUsers} color="purple.600" />
-                              <Text fontWeight="bold" color="purple.700" fontSize="sm">
-                                WHY CONSUMERS SHOULD CARE
-                              </Text>
-                            </HStack>
-                            <Text color="gray.700" lineHeight="tall">
-                              {parcelData.consumer_story}
-                            </Text>
-                          </VStack>
-                        </Box>
-                      )}
-                    </VStack>
-                  </ProfileSection>
-                )}
-
-                {/* Agricultural Data Section */}
-                {parcelData?.agricultural_details &&
-                  Object.keys(parcelData.agricultural_details).length > 0 && (
-                    <ProfileSection
-                      title="Agricultural Practices"
-                      icon={FaSeedling}
-                      mb={{ base: 4, md: 6 }}
-                    >
-                      <VStack spacing={6} align="stretch">
-                        {/* Soil Health Section */}
-                        {(parcelData.agricultural_details.soil_ph ||
-                          parcelData.agricultural_details.soil_organic_matter ||
-                          parcelData.agricultural_details.soil_nitrogen ||
-                          parcelData.agricultural_details.soil_phosphorus) && (
-                          <Box>
-                            <HStack spacing={2} mb={3}>
-                              <Circle size="20px" bg="orange.100">
-                                <Icon as={FaLeaf} color="orange.500" boxSize={3} />
-                              </Circle>
-                              <Text fontWeight="bold" color="orange.600" fontSize="sm">
-                                SOIL HEALTH
-                              </Text>
-                            </HStack>
-                            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3}>
-                              {parcelData.agricultural_details.soil_ph && (
-                                <VStack
-                                  spacing={1}
-                                  p={3}
-                                  bg="orange.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="orange.200"
-                                >
-                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                    {parseFloat(parcelData.agricultural_details.soil_ph).toFixed(1)}
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.600">
-                                    pH Level
-                                  </Text>
-                                </VStack>
-                              )}
-                              {parcelData.agricultural_details.soil_organic_matter && (
-                                <VStack
-                                  spacing={1}
-                                  p={3}
-                                  bg="green.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="green.200"
-                                >
-                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                    {parseFloat(
-                                      parcelData.agricultural_details.soil_organic_matter
-                                    ).toFixed(1)}
-                                    %
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.600">
-                                    Organic Matter
-                                  </Text>
-                                </VStack>
-                              )}
-                              {parcelData.agricultural_details.soil_nitrogen && (
-                                <VStack
-                                  spacing={1}
-                                  p={3}
-                                  bg="blue.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="blue.200"
-                                >
-                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                    {parseFloat(
-                                      parcelData.agricultural_details.soil_nitrogen
-                                    ).toFixed(0)}
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.600">
-                                    Nitrogen (ppm)
-                                  </Text>
-                                </VStack>
-                              )}
-                              {parcelData.agricultural_details.soil_phosphorus && (
-                                <VStack
-                                  spacing={1}
-                                  p={3}
-                                  bg="purple.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="purple.200"
-                                >
-                                  <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                    {parseFloat(
-                                      parcelData.agricultural_details.soil_phosphorus
-                                    ).toFixed(0)}
-                                  </Text>
-                                  <Text fontSize="xs" color="gray.600">
-                                    Phosphorus (ppm)
-                                  </Text>
-                                </VStack>
-                              )}
-                            </SimpleGrid>
-                          </Box>
-                        )}
-
-                        {/* Water Management Section */}
-                        {(parcelData.agricultural_details.irrigation_efficiency ||
-                          parcelData.agricultural_details.water_source_type ||
-                          parcelData.agricultural_details.water_quality_ph ||
-                          parcelData.agricultural_details.water_allocation_acre_feet) && (
-                          <Box>
-                            <HStack spacing={2} mb={3}>
-                              <Circle size="20px" bg="blue.100">
-                                <Icon as={FaTint} color="blue.500" boxSize={3} />
-                              </Circle>
-                              <Text fontWeight="bold" color="blue.600" fontSize="sm">
-                                WATER MANAGEMENT
-                              </Text>
-                            </HStack>
-                            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                              {parcelData.agricultural_details.irrigation_efficiency && (
-                                <HStack
-                                  spacing={3}
-                                  p={3}
-                                  bg="blue.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="blue.200"
-                                >
-                                  <VStack spacing={0}>
-                                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                      {parseFloat(
-                                        parcelData.agricultural_details.irrigation_efficiency
-                                      ).toFixed(0)}
-                                      %
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.600">
-                                      Irrigation Efficiency
-                                    </Text>
-                                  </VStack>
-                                </HStack>
-                              )}
-                              {parcelData.agricultural_details.water_source_type && (
-                                <HStack
-                                  spacing={3}
-                                  p={3}
-                                  bg="blue.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="blue.200"
-                                >
-                                  <VStack spacing={0} align="start">
-                                    <Text fontSize="sm" fontWeight="bold" color="gray.800">
-                                      {parcelData.agricultural_details.water_source_type
-                                        .replace(/([A-Z])/g, ' $1')
-                                        .trim()}
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.600">
-                                      Water Source
-                                    </Text>
-                                  </VStack>
-                                </HStack>
-                              )}
-                              {parcelData.agricultural_details.water_quality_ph && (
-                                <HStack
-                                  spacing={3}
-                                  p={3}
-                                  bg="blue.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="blue.200"
-                                >
-                                  <VStack spacing={0}>
-                                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                      {parseFloat(
-                                        parcelData.agricultural_details.water_quality_ph
-                                      ).toFixed(1)}
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.600">
-                                      Water pH
-                                    </Text>
-                                  </VStack>
-                                </HStack>
-                              )}
-                              {parcelData.agricultural_details.water_allocation_acre_feet && (
-                                <HStack
-                                  spacing={3}
-                                  p={3}
-                                  bg="blue.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="blue.200"
-                                >
-                                  <VStack spacing={0}>
-                                    <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                                      {parseFloat(
-                                        parcelData.agricultural_details.water_allocation_acre_feet
-                                      ).toFixed(1)}
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.600">
-                                      Acre-Feet Allocated
-                                    </Text>
-                                  </VStack>
-                                </HStack>
-                              )}
-                            </SimpleGrid>
-                          </Box>
-                        )}
-
-                        {/* Conservation Practices Section */}
-                        {(parcelData.agricultural_details.cover_crop_management ||
-                          parcelData.agricultural_details.crop_rotation_pattern ||
-                          parcelData.agricultural_details.pest_management_strategy ||
-                          parcelData.agricultural_details.fertilization_program) && (
-                          <Box>
-                            <HStack spacing={2} mb={3}>
-                              <Circle size="20px" bg="green.100">
-                                <Icon as={MdEco} color="green.500" boxSize={3} />
-                              </Circle>
-                              <Text fontWeight="bold" color="green.600" fontSize="sm">
-                                CONSERVATION PRACTICES
-                              </Text>
-                            </HStack>
-                            <VStack spacing={2} align="stretch">
-                              {parcelData.agricultural_details.cover_crop_management && (
-                                <HStack
-                                  spacing={3}
-                                  p={3}
-                                  bg="green.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="green.200"
-                                >
-                                  <Icon as={FaSeedling} color="green.600" />
-                                  <VStack spacing={0} align="start">
-                                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                                      Cover Crops
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.600">
-                                      {parcelData.agricultural_details.cover_crop_management}
-                                    </Text>
-                                  </VStack>
-                                </HStack>
-                              )}
-                              {parcelData.agricultural_details.crop_rotation_pattern && (
-                                <HStack
-                                  spacing={3}
-                                  p={3}
-                                  bg="green.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="green.200"
-                                >
-                                  <Icon as={FaLeaf} color="green.500" />
-                                  <VStack spacing={0} align="start">
-                                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                                      Crop Rotation
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.600">
-                                      {parcelData.agricultural_details.crop_rotation_pattern}
-                                    </Text>
-                                  </VStack>
-                                </HStack>
-                              )}
-                              {parcelData.agricultural_details.pest_management_strategy && (
-                                <HStack
-                                  spacing={3}
-                                  p={3}
-                                  bg="yellow.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="yellow.200"
-                                >
-                                  <Icon as={FaUsers} color="yellow.600" />
-                                  <VStack spacing={0} align="start">
-                                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                                      Pest Management
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.600">
-                                      {parcelData.agricultural_details.pest_management_strategy}
-                                    </Text>
-                                  </VStack>
-                                </HStack>
-                              )}
-                              {parcelData.agricultural_details.fertilization_program && (
-                                <HStack
-                                  spacing={3}
-                                  p={3}
-                                  bg="purple.50"
-                                  borderRadius="md"
-                                  border="1px"
-                                  borderColor="purple.200"
-                                >
-                                  <Icon as={MdEco} color="purple.500" />
-                                  <VStack spacing={0} align="start">
-                                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                                      Fertilization Program
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.600">
-                                      {parcelData.agricultural_details.fertilization_program}
-                                    </Text>
-                                  </VStack>
-                                </HStack>
-                              )}
-                            </VStack>
-                          </Box>
-                        )}
-                      </VStack>
-                    </ProfileSection>
-                  )}
-
-                {/* Contact Information */}
-                {(parcelData?.contact_person ||
-                  parcelData?.contact_email ||
-                  parcelData?.contact_phone) && (
-                  <ProfileSection
-                    title="Contact Information"
-                    icon={FaPhone}
-                    mb={{ base: 4, md: 6 }}
-                  >
-                    <ProfileDataGrid
-                      data={[
-                        {
-                          label: 'Contact Person',
-                          value: parcelData?.contact_person,
-                          type: 'text',
-                          conditional: !!parcelData?.contact_person
-                        },
-                        {
-                          label: 'Email',
-                          value: parcelData?.contact_email,
-                          type: 'link',
-                          href: parcelData?.contact_email ? `mailto:${parcelData.contact_email}` : undefined,
-                          conditional: !!parcelData?.contact_email
-                        },
-                        {
-                          label: 'Phone',
-                          value: parcelData?.contact_phone,
-                          type: 'link',
-                          href: parcelData?.contact_phone ? `tel:${parcelData.contact_phone}` : undefined,
-                          conditional: !!parcelData?.contact_phone
-                        }
-                      ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
-                      columns={{ base: 1, md: 1 }}
-                    />
-                  </ProfileSection>
-                )}
-              </Box>
-
-              {/* Right Column */}
-              <Box>
-                {/* Enhanced Location Information */}
-                <ProfileSection
-                  title="Location Details"
-                  icon={MdLocationOn}
-                  mb={{ base: 4, md: 6 }}
-                >
-                  <ProfileDataGrid
-                    data={[
-                      {
-                        label: 'Address',
-                        value: parcelData?.address,
-                        type: 'text',
-                        conditional: !!parcelData?.address
-                      },
-                      {
-                        label: 'City',
-                        value: establishment?.city,
-                        type: 'text',
-                        conditional: !!establishment?.city
-                      },
-                      {
-                        label: 'State',
-                        value: establishment?.state,
-                        type: 'text',
-                        conditional: !!establishment?.state
-                      },
-                      {
-                        label: 'Country',
-                        value: establishment?.country,
-                        type: 'text',
-                        conditional: !!establishment?.country
-                      },
-                      {
-                        label: 'Zone',
-                        value: establishment?.zone,
-                        type: 'text',
-                        conditional: !!establishment?.zone
-                      },
-                      {
-                        label: 'Coordinates',
-                        value:
-                          parcelData?.latitude && parcelData?.longitude
-                            ? `${parseFloat(parcelData.latitude.toString()).toFixed(6)}, ${parseFloat(parcelData.longitude.toString()).toFixed(6)}`
-                            : undefined,
-                        type: 'text',
-                        conditional: !!(parcelData?.latitude && parcelData?.longitude)
-                      },
-                      {
-                        label: 'Elevation',
-                        value: parcelData?.elevation ? `${parcelData.elevation} ft` : undefined,
-                        type: 'text',
-                        conditional: !!parcelData?.elevation
-                      }
-                    ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
-                    columns={{ base: 1, md: 2 }}
-                  />
-                </ProfileSection>
-
-                {/* Certification Information */}
-                {(parcelData?.certified || parcelData?.certification_type) && (
-                  <ProfileSection
-                    title="Certification"
-                    icon={FaCertificate}
-                    mb={{ base: 4, md: 6 }}
-                  >
-                    <ProfileDataGrid
-                      data={[
-                        {
-                          label: 'Status',
-                          value: parcelData?.certified ? 'Certified' : 'Not Certified',
-                          type: 'badge',
-                          colorScheme: parcelData?.certified ? 'green' : 'gray',
-                          conditional: parcelData?.certified !== undefined
-                        },
-                        {
-                          label: 'Type',
-                          value: formatCertificationType(parcelData?.certification_type),
-                          type: 'text' as const,
-                          conditional: !!parcelData?.certification_type
-                        }
-                      ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
-                      columns={{ base: 1, md: 1 }}
-                    />
-                  </ProfileSection>
-                )}
-
-                {/* Company Information */}
-                <ProfileSection
-                  title="Company & Establishment"
-                  icon={FaBuilding}
-                  mb={{ base: 4, md: 6 }}
-                >
-                  <ProfileDataGrid
-                    data={[
-                      {
-                        label: 'Company',
-                        value: currentCompany?.name,
-                        type: 'text',
-                        conditional: !!currentCompany?.name
-                      },
-                      {
-                        label: 'Establishment',
-                        value: establishment?.name,
-                        type: 'text',
-                        conditional: !!establishment?.name
-                      }
-                    ].filter((item) => item.conditional !== false && item.value !== undefined && item.value !== null)}
-                    columns={{ base: 1, md: 1 }}
-                  />
-                </ProfileSection>
-              </Box>
+                  <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                    {parseFloat(parcelData.agricultural_details.soil_phosphorus).toFixed(0)}
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">Phosphorus (ppm)</Text>
+                </VStack>
+              )}
             </SimpleGrid>
-          </CardBody>
-        </Card>
-      </Box>
-    </Flex>
+          </StandardCard>
+        )}
+
+        {/* Water Management Section */}
+        {hasWaterData && (
+          <StandardCard title="Water Management" variant="elevated">
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+              {parcelData?.agricultural_details?.irrigation_efficiency && (
+                <InfoRow
+                  icon={FaTint}
+                  label="Irrigation Efficiency"
+                  value={`${parseFloat(parcelData.agricultural_details.irrigation_efficiency).toFixed(0)}%`}
+                />
+              )}
+              {parcelData?.agricultural_details?.water_source_type && (
+                <InfoRow
+                  icon={FaTint}
+                  label="Water Source"
+                  value={formatDisplayValue(parcelData.agricultural_details.water_source_type)}
+                />
+              )}
+              {parcelData?.agricultural_details?.water_quality_ph && (
+                <InfoRow
+                  icon={FaTint}
+                  label="Water pH"
+                  value={parseFloat(parcelData.agricultural_details.water_quality_ph).toFixed(1)}
+                />
+              )}
+              {parcelData?.agricultural_details?.water_allocation_acre_feet && (
+                <InfoRow
+                  icon={FaTint}
+                  label="Water Allocation"
+                  value={`${parseFloat(parcelData.agricultural_details.water_allocation_acre_feet).toFixed(1)} acre-feet`}
+                />
+              )}
+            </SimpleGrid>
+          </StandardCard>
+        )}
+
+        {/* Conservation Practices Section */}
+        {hasConservationData && (
+          <StandardCard title="Conservation Practices" variant="elevated">
+            <VStack spacing={4} align="stretch">
+              {parcelData?.agricultural_details?.cover_crop_management && (
+                <HStack
+                  spacing={3}
+                  p={4}
+                  bg="green.50"
+                  borderRadius="lg"
+                  border="1px"
+                  borderColor="green.200"
+                  align="flex-start"
+                >
+                  <Icon as={FaSeedling} color="green.600" mt={1} />
+                  <Box>
+                    <Text fontWeight="semibold" color="gray.800">Cover Crops</Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {parcelData.agricultural_details.cover_crop_management}
+                    </Text>
+                  </Box>
+                </HStack>
+              )}
+              {parcelData?.agricultural_details?.crop_rotation_pattern && (
+                <HStack
+                  spacing={3}
+                  p={4}
+                  bg="green.50"
+                  borderRadius="lg"
+                  border="1px"
+                  borderColor="green.200"
+                  align="flex-start"
+                >
+                  <Icon as={FaLeaf} color="green.500" mt={1} />
+                  <Box>
+                    <Text fontWeight="semibold" color="gray.800">Crop Rotation</Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {parcelData.agricultural_details.crop_rotation_pattern}
+                    </Text>
+                  </Box>
+                </HStack>
+              )}
+              {parcelData?.agricultural_details?.pest_management_strategy && (
+                <HStack
+                  spacing={3}
+                  p={4}
+                  bg="yellow.50"
+                  borderRadius="lg"
+                  border="1px"
+                  borderColor="yellow.200"
+                  align="flex-start"
+                >
+                  <Icon as={FaChartLine} color="yellow.600" mt={1} />
+                  <Box>
+                    <Text fontWeight="semibold" color="gray.800">Pest Management</Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {parcelData.agricultural_details.pest_management_strategy}
+                    </Text>
+                  </Box>
+                </HStack>
+              )}
+              {parcelData?.agricultural_details?.fertilization_program && (
+                <HStack
+                  spacing={3}
+                  p={4}
+                  bg="purple.50"
+                  borderRadius="lg"
+                  border="1px"
+                  borderColor="purple.200"
+                  align="flex-start"
+                >
+                  <Icon as={MdEco} color="purple.500" mt={1} />
+                  <Box>
+                    <Text fontWeight="semibold" color="gray.800">Fertilization Program</Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {parcelData.agricultural_details.fertilization_program}
+                    </Text>
+                  </Box>
+                </HStack>
+              )}
+            </VStack>
+          </StandardCard>
+        )}
+
+        {/* Company & Establishment Section */}
+        <StandardCard title="Company & Establishment" variant="elevated">
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+            <InfoRow
+              icon={FaBuilding}
+              label="Company"
+              value={currentCompany?.name}
+            />
+            <InfoRow
+              icon={FaBuilding}
+              label="Establishment"
+              value={establishment?.name}
+            />
+          </SimpleGrid>
+        </StandardCard>
+      </VStack>
+    </StandardPage>
   );
 }
 

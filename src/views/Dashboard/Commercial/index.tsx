@@ -610,23 +610,17 @@ export default function CommercialView() {
   ];
 
   return (
-    <Box w="100%" minH="100vh">
-      {/* Header Section */}
-      <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="120px" pb="80px" px={4}>
-        <Box maxW="full" mx="auto">
-          <VStack spacing={4} textAlign="center">
-            <Text fontSize="3xl" color="green.600" fontWeight="bold" letterSpacing="-0.02em">
-              {intl.formatMessage({ id: 'app.commercialDashboard' }) || 'Commercial Dashboard'}
-            </Text>
-            <Text fontSize="lg" color="gray.600" fontWeight="normal" maxW="70%" lineHeight="1.7">
-              Monitorea y gestiona tus escaneos y resultados con análisis en tiempo real
-            </Text>
-          </VStack>
-        </Box>
-      </Box>
-
-      {/* Main Content */}
-      <Box maxW="full" mx="auto" px={6} mt="-40px" position="relative" zIndex={10}>
+    <>
+      <StandardPage
+        title={intl.formatMessage({ id: 'app.commercialDashboard' }) || 'Commercial Dashboard'}
+        description={
+          intl.formatMessage({ id: 'app.commercialDashboardDescription' }) ||
+          'Monitor and manage your scans and results with real-time analytics'
+        }
+        showBackButton
+        onBack={() => navigate(-1)}
+      >
+        <VStack spacing={6} align="stretch">
         {/* Filters Section */}
         <StandardCard title="Filtros de Análisis" variant="outline">
           <VStack spacing={6}>
@@ -928,13 +922,14 @@ export default function CommercialView() {
               </Box>
             </StandardCard>
           </Grid>
-        </VStack>
 
-        {/* Reviews Section - Full Width */}
-        <Box w="100%">
-          <Reviews />
-        </Box>
-      </Box>
+          {/* Reviews Section - Full Width */}
+          <Box w="100%">
+            <Reviews />
+          </Box>
+        </VStack>
+      </VStack>
+    </StandardPage>
 
       {/* Expandable Chart Modal */}
       <ExpandableChartModal
@@ -963,6 +958,6 @@ export default function CommercialView() {
         periodOptions={periodOptions}
         onPeriodChange={onPeriodFilterChange}
       />
-    </Box>
+    </>
   );
 }

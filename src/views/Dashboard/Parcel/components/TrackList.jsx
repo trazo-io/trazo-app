@@ -11,13 +11,20 @@ import {
   Text,
   useColorModeValue,
   useDisclosure,
+  useToast,
   VStack,
   HStack,
   Box,
   Badge,
   Divider,
   Tooltip,
-  ButtonGroup
+  ButtonGroup,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay
 } from '@chakra-ui/react';
 import {
   FaRegCheckCircle,
@@ -31,15 +38,16 @@ import {
   FaChartLine,
   FaChevronDown,
   FaLeaf,
-  FaCamera
+  FaCamera,
+  FaTrash
 } from 'react-icons/fa';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 import EnhancedTimelineRow from 'components/Tables/EnhancedTimelineRow';
 import { setCurrentHistory } from 'store/features/historySlice';
-import { useGetCurrentHistoryQuery } from 'store/api/historyApi';
+import { useGetCurrentHistoryQuery, useDeleteProductionMutation } from 'store/api/historyApi';
 import { useIntl } from 'react-intl';
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
 import { EventDetailsModal } from 'components/Modals/EventDetailsModal';
@@ -86,6 +94,16 @@ const TrackList = ({ amount }) => {
   } = useDisclosure();
   const [selectedEvent, setSelectedEvent] = useState(null);
 
+  // Delete Production state
+  const {
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+    onClose: onDeleteClose
+  } = useDisclosure();
+  const cancelRef = useRef();
+  const toast = useToast();
+  const [deleteProduction, { isLoading: isDeleting }] = useDeleteProductionMutation();
+
   const { data, error, isLoading, isFetching, refetch } = useGetCurrentHistoryQuery(
     {
       companyId: currentCompany?.id,
@@ -123,6 +141,34 @@ const TrackList = ({ amount }) => {
   const handleEventDeleted = () => {
     refetch();
     onEventDetailsClose();
+  };
+
+  const handleDeleteProduction = async () => {
+    if (!currentHistory?.id) return;
+
+    try {
+      await deleteProduction(currentHistory.id).unwrap();
+      toast({
+        title: intl.formatMessage({ id: 'app.productionDeleted' }),
+        description: intl.formatMessage({ id: 'app.productionDeletedSuccess' }),
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+      onDeleteClose();
+      // Clear the current history from state
+      dispatch(setCurrentHistory(null));
+      // Refetch to update the UI
+      refetch();
+    } catch (error) {
+      toast({
+        title: intl.formatMessage({ id: 'app.error' }),
+        description: error?.data?.message || intl.formatMessage({ id: 'app.productionDeleteError' }),
+        status: 'error',
+        duration: 5000,
+        isClosable: true
+      });
+    }
   };
 
   return (
@@ -183,7 +229,12 @@ const TrackList = ({ amount }) => {
                     </Text>
                   </Flex>
                 </MenuItem>
-                <MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    onClose1();
+                    onDeleteOpen();
+                  }}
+                >
                   <Flex color="red.500" cursor="pointer" align="center" p="4px">
                     <Text fontSize="sm" fontWeight="500">
                       {intl.formatMessage({ id: 'app.delete' }).toUpperCase()}
@@ -534,6 +585,82 @@ const TrackList = ({ amount }) => {
         onEventUpdated={handleEventUpdated}
         onEventDeleted={handleEventDeleted}
       />
+
+      {/* Delete Production Confirmation Dialog - Trazo Design Pattern */}
+      <AlertDialog
+        isOpen={isDeleteOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onDeleteClose}
+        isCentered
+      >
+        <AlertDialogOverlay bg="blackAlpha.300" backdropFilter="blur(10px)">
+          <AlertDialogContent borderRadius="xl" p={2} mx={4}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold" pb={4}>
+              <HStack spacing={3}>
+                <Box p={2} borderRadius="lg" bg="red.50">
+                  <Icon as={FaTrash} boxSize={5} color="red.500" />
+                </Box>
+                <Text>{intl.formatMessage({ id: 'app.deleteProduction' })}</Text>
+              </HStack>
+            </AlertDialogHeader>
+
+            <AlertDialogBody pb={6}>
+              <VStack align="start" spacing={3}>
+                <Text color="gray.600">
+                  {intl.formatMessage({ id: 'app.deleteProductionConfirm' })}
+                </Text>
+                {currentHistory?.events?.length > 0 && (
+                  <Box p={3} bg="red.50" borderRadius="lg" w="full">
+                    <Text fontSize="sm" color="red.700" fontWeight="medium">
+                      {intl.formatMessage(
+                        { id: 'app.deleteProductionWarning' },
+                        { eventCount: currentHistory.events.length }
+                      )}
+                    </Text>
+                  </Box>
+                )}
+              </VStack>
+            </AlertDialogBody>
+
+            <AlertDialogFooter pt={4}>
+              <HStack spacing={3} w="full" justify="flex-end">
+                <Button
+                  ref={cancelRef}
+                  onClick={onDeleteClose}
+                  variant="ghost"
+                  size="lg"
+                  color="gray.600"
+                  borderRadius="lg"
+                  _hover={{ bg: 'gray.100' }}
+                >
+                  {intl.formatMessage({ id: 'app.cancel' })}
+                </Button>
+                <Button
+                  leftIcon={<Icon as={FaTrash} />}
+                  onClick={handleDeleteProduction}
+                  size="lg"
+                  borderRadius="lg"
+                  fontWeight="semibold"
+                  isLoading={isDeleting}
+                  loadingText="Deleting..."
+                  bg="transparent"
+                  color="red.500"
+                  border="1px solid"
+                  borderColor="red.500"
+                  _hover={{
+                    bg: 'red.50',
+                    color: 'red.600',
+                    borderColor: 'red.600'
+                  }}
+                  transition="all 0.2s"
+                >
+                  {intl.formatMessage({ id: 'app.delete' })}
+                </Button>
+              </HStack>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Card>
   );
 };

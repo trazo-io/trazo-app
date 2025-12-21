@@ -145,9 +145,9 @@ const EducationHub: React.FC = () => {
     },
     {
       id: 'subscription-features',
-      title: 'Subscription Features & ROI Optimization',
+      title: 'Subscription Features & Benefits',
       description:
-        'Understanding feature tiers, upgrade benefits, and calculating your return on investment',
+        'Understanding feature tiers, upgrade benefits, and maximizing transparency value',
       icon: FaCrown,
       category: 'Business Growth'
     },
@@ -177,6 +177,8 @@ const EducationHub: React.FC = () => {
     <StandardPage
       title="Educational Resources"
       description="Comprehensive documentation of Trazo's features and capabilities - understand every aspect of the agricultural transparency platform"
+      showBackButton
+      onBack={() => navigate(-1)}
     >
       <VStack spacing={6} w="full" maxW="6xl" mx="auto">
         {/* Search */}

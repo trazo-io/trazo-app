@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -16,7 +16,10 @@ import {
   Box,
   Divider,
   useToast,
-  Skeleton
+  Skeleton,
+  Tooltip,
+  IconButton,
+  Link
 } from '@chakra-ui/react';
 import {
   FaSeedling,
@@ -36,7 +39,9 @@ import {
   FaChartLine,
   FaRobot,
   FaLightbulb,
-  FaCheckCircle
+  FaCheckCircle,
+  FaQuestionCircle,
+  FaBook
 } from 'react-icons/fa';
 import {
   StandardButton,
@@ -47,6 +52,7 @@ import {
   SectionHeader
 } from 'components/Design';
 import { VoiceEventCapture } from 'components/Events/VoiceEventCapture';
+import { EducationalTooltip } from 'components/Education/EducationalTooltip';
 import {
   TypeAwareFields,
   useTypeAwareFields
@@ -97,7 +103,76 @@ interface EventTemplate {
   displayPriority?: number;
   templateCategory?: string;
   translationKey?: string;
+  // Backend event fields for form pre-population
+  backend_event_fields?: Record<string, any>;
+  typical_amounts?: Record<string, any>;
+  // Backend event type (0-7) for correct event creation
+  backend_event_type?: number;
 }
+
+// ============================================================================
+// STATIC MAPS - Extracted outside component to prevent recreation on every render
+// ============================================================================
+
+// Icon map for event types - O(1) lookup, no memory allocation per render
+const EVENT_ICON_MAP: Record<string, any> = {
+  fertilization: FaSeedling,
+  irrigation: FaTint,
+  pest_control: FaSprayCan,
+  pruning: FaCut,
+  planting: FaSeedling,
+  harvest: FaLeaf,
+  soil_management: FaFlask,
+  equipment: FaTractor,
+  weather_protection: FaCamera,
+  certification: FaChartLine,
+  monitoring: FaTools,
+  other: FaBug
+} as const;
+
+// Color map for carbon categories
+const CARBON_CATEGORY_COLOR_MAP: Record<string, string> = {
+  high: 'red',
+  medium: 'orange',
+  low: 'green',
+  negative: 'teal',
+  neutral: 'gray'
+} as const;
+
+// Color map for event types (fallback)
+const EVENT_TYPE_COLOR_MAP: Record<string, string> = {
+  fertilization: 'green',
+  irrigation: 'blue',
+  pest_control: 'orange',
+  pruning: 'purple',
+  planting: 'green',
+  harvest: 'yellow',
+  soil_management: 'brown',
+  equipment: 'gray',
+  weather_protection: 'cyan',
+  certification: 'teal',
+  monitoring: 'pink',
+  other: 'gray'
+} as const;
+
+// Helper to convert snake_case to camelCase for backend field normalization
+const snakeToCamel = (str: string): string =>
+  str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+
+// Normalize backend fields from snake_case to camelCase
+const normalizeBackendFields = (fields: Record<string, any>): Record<string, any> => {
+  const normalized: Record<string, any> = {};
+  Object.entries(fields).forEach(([key, value]) => {
+    // Keep original snake_case key for backend compatibility
+    normalized[key] = value;
+    // Also add camelCase version for frontend form compatibility
+    const camelKey = snakeToCamel(key);
+    if (camelKey !== key) {
+      normalized[camelKey] = value;
+    }
+  });
+  return normalized;
+};
 
 interface QuickAddEventProps {
   isOpen: boolean;
@@ -125,6 +200,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const [templateSuggestions, setTemplateSuggestions] = useState<EventTemplate[]>([]);
   const [showTemplateSuggestions, setShowTemplateSuggestions] = useState(false);
   const [typeAwareFieldValues, setTypeAwareFieldValues] = useState<Record<string, unknown>>({});
+  const modalBodyRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
   const navigate = useNavigate();
   const intl = useIntl();
@@ -147,6 +223,22 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     if (id.includes('fungicide') || type.includes('fungicide') || type.includes('fungi')) return 'fungicide';
 
     return 'general_documentation';
+  };
+
+  // Map template ID to educational tooltip term
+  const getEducationalTooltipTerm = (templateId: string): string => {
+    const termMap: Record<string, string> = {
+      fertilization: 'fertilization_event',
+      irrigation: 'irrigation_event',
+      pest_control: 'pest_control_event',
+      pruning: 'pruning_event',
+      planting: 'planting_event',
+      harvest: 'harvest_event',
+      herbicide: 'herbicide_event',
+      fungicide: 'fungicide_event',
+      general_documentation: 'quick_add'
+    };
+    return termMap[templateId] || 'quick_add';
   };
 
   // Get current type-aware template ID based on selected template
@@ -430,9 +522,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     return 'low';
   };
 
-  // 🆕 Phase 2: Track template usage when selected
+  // Track template usage when selected
   const handleTemplateSelect = (template: EventTemplate) => {
-    console.log('Template selected:', template.id, 'Current selected:', selectedTemplate?.id);
     setSelectedTemplate(template);
 
     // Track template usage analytics
@@ -517,151 +608,38 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     onClose();
   };
 
-  // Helper function to map event types to icons
-  const getEventIcon = (eventType: string) => {
-    const iconMap: Record<string, any> = {
-      fertilization: FaSeedling,
-      irrigation: FaTint,
-      pest_control: FaSprayCan,
-      pruning: FaCut,
-      planting: FaSeedling,
-      harvest: FaLeaf,
-      soil_management: FaFlask,
-      equipment: FaTractor,
-      weather_protection: FaCamera,
-      certification: FaChartLine,
-      monitoring: FaTools,
-      other: FaBug
-    };
-    return iconMap[eventType] || FaBug;
-  };
+  // Helper function to map event types to icons - uses static map for O(1) lookup
+  const getEventIcon = useCallback(
+    (eventType: string) => EVENT_ICON_MAP[eventType] || FaBug,
+    []
+  );
 
-  // Helper function to map event types to colors
-  const getEventColor = (eventType: string, carbonCategory?: string) => {
-    // Use carbon category for color if available
-    if (carbonCategory) {
-      const colorMap: Record<string, string> = {
-        high: 'red',
-        medium: 'orange',
-        low: 'green',
-        negative: 'teal',
-        neutral: 'gray'
-      };
-      return colorMap[carbonCategory] || 'blue';
-    }
-
-    // Fallback to event type colors
-    const colorMap: Record<string, string> = {
-      fertilization: 'green',
-      irrigation: 'blue',
-      pest_control: 'orange',
-      pruning: 'purple',
-      planting: 'green',
-      harvest: 'yellow',
-      soil_management: 'brown',
-      equipment: 'gray',
-      weather_protection: 'cyan',
-      certification: 'teal',
-      monitoring: 'pink',
-      other: 'gray'
-    };
-    return colorMap[eventType] || 'blue';
-  };
+  // Helper function to map event types to colors - uses static maps for O(1) lookup
+  const getEventColor = useCallback(
+    (eventType: string, carbonCategory?: string) => {
+      if (carbonCategory) {
+        return CARBON_CATEGORY_COLOR_MAP[carbonCategory] || 'blue';
+      }
+      return EVENT_TYPE_COLOR_MAP[eventType] || 'blue';
+    },
+    []
+  );
 
   // Smart event templates based on crop type - USDA-BASED CALCULATIONS
   const getEventTemplates = (crop: string): EventTemplate[] => {
-    // General templates - now with proper USDA integration
-    const baseTemplates = [
-      {
-        id: 'fertilization',
-        name: intl.formatMessage({ id: 'quickAdd.template.fertilization.name' }),
-        icon: FaSeedling,
-        color: 'green',
-        description: intl.formatMessage({ id: 'quickAdd.template.fertilization.description' }),
-        carbonImpact: 0, // Will be calculated via USDA API
-        costEstimate: 180,
-        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.fertilization.tip' }),
-        typical_duration: '2-3 hours',
-        carbonCategory: 'high' as const,
-        sustainabilityScore: 7,
-        qrVisibility: 'high' as const,
-        type: 'fertilization',
-        excludeFromCarbonCalculation: false
-      },
-      {
-        id: 'irrigation',
-        name: intl.formatMessage({ id: 'quickAdd.template.irrigation.name' }),
-        icon: FaTint,
-        color: 'blue',
-        description: intl.formatMessage({ id: 'quickAdd.template.irrigation.description' }),
-        carbonImpact: 0, // Will be calculated via USDA API
-        costEstimate: 120,
-        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.irrigation.tip' }),
-        typical_duration: intl.formatMessage({ id: 'quickAdd.template.irrigation.duration' }),
-        carbonCategory: 'medium' as const,
-        sustainabilityScore: 8,
-        qrVisibility: 'medium' as const,
-        type: 'irrigation',
-        excludeFromCarbonCalculation: false
-      },
-      {
-        id: 'pest_control',
-        name: intl.formatMessage({ id: 'quickAdd.template.pestControl.name' }),
-        icon: FaSprayCan,
-        color: 'orange',
-        description: intl.formatMessage({ id: 'quickAdd.template.pestControl.description' }),
-        carbonImpact: 0, // Will be calculated via USDA API
-        costEstimate: 150,
-        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.pestControl.tip' }),
-        typical_duration: '3-4 hours',
-        carbonCategory: 'high' as const,
-        sustainabilityScore: 6,
-        qrVisibility: 'high' as const,
-        type: 'pest_control',
-        excludeFromCarbonCalculation: false
-      },
-      {
-        id: 'pruning',
-        name: intl.formatMessage({ id: 'quickAdd.template.pruning.name' }),
-        icon: FaCut,
-        color: 'purple',
-        description: intl.formatMessage({ id: 'quickAdd.template.pruning.description' }),
-        carbonImpact: 0, // Will be calculated via USDA API
-        costEstimate: 200,
-        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.pruning.tip' }),
-        typical_duration: '4-6 hours',
-        carbonCategory: 'low' as const,
-        sustainabilityScore: 9,
-        qrVisibility: 'low' as const,
-        type: 'pruning',
-        excludeFromCarbonCalculation: false
-      },
-      // Add Other Farm Activities that exclude carbon calculations (Sprint 2: renamed from General Events)
-      {
-        id: 'general_documentation',
-        name: intl.formatMessage({ id: 'quickAdd.template.generalDocumentation.name' }),
-        icon: FaCamera,
-        color: 'gray',
-        description: intl.formatMessage({ id: 'quickAdd.template.generalDocumentation.description' }),
-        carbonImpact: 0,
-        costEstimate: 0,
-        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.generalDocumentation.tip' }),
-        typical_duration: intl.formatMessage({ id: 'quickAdd.template.generalDocumentation.duration' }),
-        carbonCategory: 'low' as const,
-        sustainabilityScore: 8,
-        qrVisibility: 'medium' as const,
-        type: 'general',
-        excludeFromCarbonCalculation: true
-      }
-    ];
-
-    // Add crop-specific templates from database
-    // Templates are already ordered by display_priority from the backend
-    // NOTE: Database templates use their stored names directly (no translation keys needed)
-    // The translation_key field is reserved for future i18n of database content
+    // ALL templates come from the database - this is the single source of truth
+    // The seed command (create_comprehensive_production_templates_v2) creates all templates
+    // with correct backend_event_type and backend_event_fields
     const dbTemplates: EventTemplate[] = [];
+
+    // DEBUG: Log raw API response
+    console.log('=== DEBUG: Raw API templates ===');
+    console.log('dbEventTemplatesData:', dbEventTemplatesData);
+
     if (dbEventTemplatesData?.templates) {
       dbEventTemplatesData.templates.forEach((template) => {
+        // DEBUG: Log each template's backend_event_type
+        console.log(`Template ${template.id} (${template.name}): backend_event_type = ${template.backend_event_type}`);
         // Use template data directly from database - names are already in the correct language
         dbTemplates.push({
           id: `db-${template.id}`,
@@ -681,41 +659,36 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
           // New fields for better organization
           displayPriority: template.display_priority || 3,
           templateCategory: template.template_category || 'core',
-          translationKey: template.translation_key || ''
+          translationKey: template.translation_key || '',
+          // CRITICAL: Include backend_event_fields for form pre-population
+          backend_event_fields: template.backend_event_fields || {},
+          typical_amounts: template.typical_amounts || {},
+          // CRITICAL: Include backend_event_type for correct event type mapping
+          // This prevents fallback logic from misidentifying event types
+          backend_event_type: template.backend_event_type
         });
       });
     }
 
-    // Combine general templates with crop-specific ones
-    const allTemplates = [...baseTemplates, ...dbTemplates];
-
-    // Customize based on crop type - USDA-OPTIMIZED
-    if (crop.toLowerCase().includes('citrus')) {
-      allTemplates.push({
-        id: 'bloom_nutrition',
-        name: intl.formatMessage({ id: 'quickAdd.template.bloomNutrition.name' }),
-        icon: FaLeaf,
-        color: 'pink',
-        description: intl.formatMessage({ id: 'quickAdd.template.bloomNutrition.description' }),
-        carbonImpact: 0, // Will be calculated via USDA API
-        costEstimate: 160,
-        efficiency_tip: intl.formatMessage({ id: 'quickAdd.template.bloomNutrition.tip' }),
-        typical_duration: '2-3 hours',
-        carbonCategory: 'medium' as const,
-        sustainabilityScore: 8,
-        qrVisibility: 'medium' as const,
-        type: 'bloom_nutrition',
-        excludeFromCarbonCalculation: false
-      });
-    }
-
-    return allTemplates;
+    // ALL templates come from database - no hardcoded templates
+    // The seed command (create_comprehensive_production_templates_v2) creates all templates
+    // including crop-specific ones like "Bloom Nutrition" for citrus
+    // Each template has correct backend_event_type and backend_event_fields
+    return dbTemplates;
   };
 
-  const eventTemplates = getEventTemplates(cropType);
+  // Memoize event templates to prevent 682-line array rebuild on every render
+  const eventTemplates = useMemo(
+    () => getEventTemplates(cropType),
+    [cropType, dbEventTemplatesData, intl]
+  );
 
   const handleShowDetails = () => {
     setShowDetailedForm(true);
+    // Scroll modal body to top when showing detailed form
+    setTimeout(() => {
+      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 0);
   };
 
   const handleBackToTemplates = () => {
@@ -725,11 +698,14 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const handleTemplateCreate = async () => {
     if (!selectedTemplate) return;
 
+    // DEBUG: Log template data to trace event_type issue
+    console.log('=== DEBUG: handleTemplateCreate ===');
+    console.log('Selected template:', selectedTemplate);
+    console.log('Template backend_event_type:', selectedTemplate.backend_event_type);
+    console.log('getTemplateEventType result:', getTemplateEventType(selectedTemplate));
+
     setIsCreating(true);
     try {
-      // Convert template to backend event format
-      const eventTypeFields = getTemplateEventFields(selectedTemplate);
-
       const backendEventData = {
         companyId: currentCompany.id,
         establishmentId: parseInt(establishmentId || '0'),
@@ -741,13 +717,17 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
           ? `${selectedTemplate.name} - Documentation activity for transparency`
           : `${selectedTemplate.name} - USDA-verified farming activity`,
         album: { images: [] },
-        observation: `Template-created event. Transparency Score: ${selectedTemplate.sustainabilityScore}/10. QR Visibility: ${selectedTemplate.qrVisibility}. Tip: ${selectedTemplate.efficiency_tip}`,
+        observation: selectedTemplate.efficiency_tip || '',
         template_used: selectedTemplate.id,
         template_name: selectedTemplate.name,
         exclude_from_carbon_calculation: selectedTemplate.excludeFromCarbonCalculation || false,
         sustainability_score: selectedTemplate.sustainabilityScore,
-        ...eventTypeFields
+        ...getTemplateEventFields(selectedTemplate)
       };
+
+      console.log('=== DEBUG: backendEventData being sent ===');
+      console.log('event_type:', backendEventData.event_type);
+      console.log('Full payload:', JSON.stringify(backendEventData, null, 2));
 
       await createEvent(backendEventData).unwrap();
 
@@ -781,7 +761,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   // Helper functions for voice data conversion
   const getEventTypeFromVoiceData = (eventData: any): number => {
     // Handle both the old format (event_type: 'irrigation') and new format (event_type: 'production')
-    // Backend constants: WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
+    // Backend constants from history/constants.py:
+    // WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
     const eventType = eventData.event_type;
 
     console.log('Voice event type mapping:', eventType, eventData);
@@ -906,195 +887,35 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   };
 
   // Helper functions for template data conversion
+  // Database templates are the single source of truth - no fallback logic needed
   const getTemplateEventType = (template: EventTemplate): number => {
-    // Handle database templates (prefixed with 'db-')
-    if (template.id.startsWith('db-')) {
-      // For database templates, we need to get the backend event type
-      // This should be stored in the database template data
-      const dbTemplate = dbEventTemplatesData?.templates.find((t) => `db-${t.id}` === template.id);
-      if (dbTemplate?.backend_event_type !== undefined) {
-        return dbTemplate.backend_event_type;
-      }
+    // Database templates MUST have backend_event_type - this is enforced by the seed command
+    // Backend constants from history/constants.py:
+    // WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
+    if (template.backend_event_type === undefined) {
+      console.error(`Template ${template.id} is missing backend_event_type - this is a data integrity issue`);
+      throw new Error(`Template ${template.id} is missing required backend_event_type`);
     }
-
-    // Handle AI suggestions (prefixed with 'ai-')
-    if (template.id.startsWith('ai-')) {
-      // Map AI categories to backend event types
-      // Backend constants: WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
-      const aiCategory = template.type?.toLowerCase();
-      if (
-        aiCategory?.includes('fertilizer') ||
-        aiCategory?.includes('pesticide') ||
-        aiCategory?.includes('herbicide') ||
-        aiCategory?.includes('fungicide') ||
-        aiCategory?.includes('chemical')
-      ) {
-        return 2; // Chemical (CHEMICAL_EVENT_TYPE = 2)
-      } else if (
-        aiCategory?.includes('irrigation') ||
-        aiCategory?.includes('harvest') ||
-        aiCategory?.includes('pruning') ||
-        aiCategory?.includes('planting') ||
-        aiCategory?.includes('production')
-      ) {
-        return 1; // Production (PRODUCTION_EVENT_TYPE = 1)
-      } else if (aiCategory?.includes('equipment') || aiCategory?.includes('machinery')) {
-        return 4; // Equipment (EQUIPMENT_EVENT_TYPE = 4)
-      } else if (aiCategory?.includes('weather') || aiCategory?.includes('climate')) {
-        return 0; // Weather (WEATHER_EVENT_TYPE = 0)
-      }
-      return 3; // General (GENERAL_EVENT_TYPE = 3)
-    }
-
-    // Map template types to backend event types
-    // Backend constants: WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
-    if (
-      template.id.includes('fertilizer') ||
-      template.id.includes('pesticide') ||
-      template.id.includes('herbicide') ||
-      template.id.includes('fungicide')
-    ) {
-      return 2; // Chemical (CHEMICAL_EVENT_TYPE = 2)
-    } else if (
-      template.id.includes('irrigation') ||
-      template.id.includes('harvest') ||
-      template.id.includes('pruning') ||
-      template.id.includes('planting')
-    ) {
-      return 1; // Production (PRODUCTION_EVENT_TYPE = 1)
-    } else if (template.id.includes('equipment') || template.id.includes('tractor')) {
-      return 4; // Equipment (EQUIPMENT_EVENT_TYPE = 4)
-    } else if (template.id.includes('weather') || template.id.includes('frost')) {
-      return 0; // Weather (WEATHER_EVENT_TYPE = 0)
-    }
-    return 3; // General (GENERAL_EVENT_TYPE = 3)
+    return template.backend_event_type;
   };
 
-  const getTemplateEventFields = (template: EventTemplate): any => {
-    // Handle database templates (prefixed with 'db-')
-    if (template.id.startsWith('db-')) {
-      const dbTemplate = dbEventTemplatesData?.templates.find((t) => `db-${t.id}` === template.id);
-      if (dbTemplate?.backend_event_fields) {
-        return {
-          ...dbTemplate.backend_event_fields,
-          // Add typical amounts if available
-          ...(dbTemplate.typical_amounts || {})
-        };
-      }
+  const getTemplateEventFields = (template: EventTemplate): Record<string, unknown> => {
+    // Database templates MUST have backend_event_fields - this is enforced by the seed command
+    if (!template.backend_event_fields || Object.keys(template.backend_event_fields).length === 0) {
+      console.error(`Template ${template.id} is missing backend_event_fields - this is a data integrity issue`);
+      return {};
     }
 
-    // Handle AI suggestions (prefixed with 'ai-')
-    if (template.id.startsWith('ai-')) {
-      const eventType = getTemplateEventType(template);
-      const aiCategory = template.type?.toLowerCase();
+    // Normalize snake_case to camelCase for frontend compatibility
+    const normalizedFields = normalizeBackendFields(template.backend_event_fields);
+    const normalizedAmounts = template.typical_amounts
+      ? normalizeBackendFields(template.typical_amounts)
+      : {};
 
-      // Map AI suggestions to appropriate backend fields based on event type
-      // Backend constants: WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4
-      if (eventType === 2) {
-        // Chemical (CHEMICAL_EVENT_TYPE = 2)
-        return {
-          type: 'FE', // Default to fertilizer
-          commercial_name: template.name.includes('Fertilizer')
-            ? 'AI-Suggested Fertilizer'
-            : 'AI-Suggested Chemical',
-          volume: '50 lbs/acre', // Default amount
-          way_of_application: 'broadcast',
-          time_period: 'morning'
-        };
-      } else if (eventType === 1) {
-        // Production (PRODUCTION_EVENT_TYPE = 1)
-        const productionType = aiCategory?.includes('irrigation')
-          ? 'IR'
-          : aiCategory?.includes('harvest')
-          ? 'HA'
-          : aiCategory?.includes('pruning')
-          ? 'PR'
-          : aiCategory?.includes('planting')
-          ? 'PL'
-          : 'IR'; // Default to irrigation
-
-        const productionTypeNames: Record<string, string> = {
-          IR: 'Irrigation Operation',
-          HA: 'Harvest Operation',
-          PL: 'Planting Operation',
-          PR: 'Pruning Operation'
-        };
-
-        return {
-          type: productionType,
-          production_name: productionTypeNames[productionType] || template.name.replace('🤖 ', ''),
-          name: productionTypeNames[productionType] || template.name.replace('🤖 ', ''),
-          observation: `AI-suggested ${template.name}: ${template.description}`
-        };
-      } else if (eventType === 4) {
-        // Equipment
-        return {
-          type: 'FC', // Default to fuel consumption
-          equipment_name: 'AI-Suggested Equipment',
-          fuel_amount: 10, // Default fuel amount
-          fuel_type: 'diesel'
-        };
-      } else if (eventType === 0) {
-        // Weather
-        return {
-          type: 'WE', // Weather event
-          observation: `AI-suggested weather event: ${template.description}`
-        };
-      } else {
-        // General (event type 3)
-        return {
-          name: template.name, // Required field for general events
-          observation: `AI-suggested general event: ${template.description}`
-        };
-      }
-    }
-
-    // Existing template field mapping
-    if (template.id.includes('fertilizer')) {
-      return {
-        type: 'FE',
-        commercial_name: 'NPK Fertilizer',
-        volume: '200 lbs/acre',
-        way_of_application: 'broadcast',
-        time_period: 'morning'
-      };
-    } else if (template.id.includes('irrigation')) {
-      return {
-        type: 'IR',
-        production_name: 'Irrigation Operation',
-        name: 'Irrigation Operation',
-        observation: 'Standard irrigation cycle'
-      };
-    } else if (template.id.includes('harvest')) {
-      return {
-        type: 'HA',
-        production_name: 'Harvest Operation',
-        name: 'Harvest Operation',
-        observation: 'Harvest operation'
-      };
-    } else if (template.id.includes('pruning')) {
-      return {
-        type: 'PR',
-        production_name: 'Pruning Operation',
-        name: 'Pruning Operation',
-        observation: 'Pruning operation'
-      };
-    } else if (template.id.includes('planting') || template.id.includes('seeding')) {
-      return {
-        type: 'PL',
-        production_name: 'Planting Operation',
-        name: 'Planting Operation',
-        observation: 'Planting/seeding operation'
-      };
-    } else if (template.id.includes('soil')) {
-      return {
-        type: 'SO',
-        production_name: 'Soil Operation',
-        name: 'Soil Operation',
-        observation: 'Soil management operation'
-      };
-    }
-    return {};
+    return {
+      ...normalizedFields,
+      ...normalizedAmounts
+    };
   };
 
   const handleVoiceEventDetected = async (eventData: any) => {
@@ -1264,11 +1085,18 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const handleDetailedCreate = async () => {
     if (!selectedTemplate) return;
 
+    // DEBUG: Log template data for detailed create
+    console.log('=== DEBUG: handleDetailedCreate ===');
+    console.log('Selected template:', selectedTemplate);
+    console.log('Template backend_event_type:', selectedTemplate.backend_event_type);
+
     setIsCreating(true);
     try {
       // For voice events, use the enhanced event type mapping
       let eventType = getTemplateEventType(selectedTemplate);
       let eventTypeFields = getTemplateEventFields(selectedTemplate);
+
+      console.log('eventType from getTemplateEventType:', eventType);
 
       // Check if this is a voice template with custom mapping
       if (selectedTemplate.id.startsWith('voice-') && (selectedTemplate as any)._voiceEventType) {
@@ -1347,33 +1175,50 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         overflow="hidden"
       >
         <ModalHeader borderBottom="1px solid" borderColor="gray.100" pb={4}>
-          <HStack spacing={3}>
-            <Box
-              p={2}
-              bg="green.50"
-              borderRadius="lg"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
+          <HStack spacing={3} justify="space-between" w="full" pr={8}>
+            <HStack spacing={3}>
+              <Box
+                p={2}
+                bg="green.50"
+                borderRadius="lg"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Icon as={FaSeedling} color="green.500" boxSize={5} />
+              </Box>
+              <VStack align="start" spacing={0}>
+                <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                  {intl.formatMessage({ id: 'quickAdd.title' })}
+                </Text>
+                <Text fontSize="xs" color="gray.500">
+                  {intl.formatMessage({ id: 'quickAdd.subtitle' })}
+                </Text>
+              </VStack>
+              <Badge colorScheme="green" variant="subtle" fontSize="xs" px={2} py={1} borderRadius="md">
+                {cropType}
+              </Badge>
+            </HStack>
+            <Tooltip
+              label={intl.formatMessage({ id: 'quickAdd.helpTooltip' })}
+              placement="left"
+              hasArrow
             >
-              <Icon as={FaSeedling} color="green.500" boxSize={5} />
-            </Box>
-            <VStack align="start" spacing={0}>
-              <Text fontSize="lg" fontWeight="bold" color="gray.800">
-                {intl.formatMessage({ id: 'quickAdd.title' })}
-              </Text>
-              <Text fontSize="xs" color="gray.500">
-                {intl.formatMessage({ id: 'quickAdd.subtitle' })}
-              </Text>
-            </VStack>
-            <Badge colorScheme="green" variant="subtle" fontSize="xs" px={2} py={1} borderRadius="md">
-              {cropType}
-            </Badge>
+              <IconButton
+                aria-label={intl.formatMessage({ id: 'quickAdd.learnMore' })}
+                icon={<FaQuestionCircle />}
+                variant="ghost"
+                colorScheme="green"
+                size="sm"
+                onClick={() => navigate('/education?topic=quick-add')}
+              />
+            </Tooltip>
           </HStack>
         </ModalHeader>
         <ModalCloseButton />
 
         <ModalBody
+          ref={modalBodyRef}
           flex="1"
           overflowY="auto"
           overflowX="hidden"
@@ -1386,26 +1231,46 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
               {/* Selected Template Summary */}
               {selectedTemplate && (
                 <Box p={4} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
-                  <HStack justify="space-between">
-                    <HStack spacing={3}>
-                      <Box p={2} bg="green.100" borderRadius="lg">
-                        <Icon as={selectedTemplate.icon} color="green.600" boxSize={5} />
-                      </Box>
-                      <VStack align="start" spacing={0}>
-                        <Text fontWeight="semibold" color="gray.800" fontSize="sm">
-                          {selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '')}
-                        </Text>
-                        <Text fontSize="xs" color="gray.500">
-                          {selectedTemplate.excludeFromCarbonCalculation
-                            ? intl.formatMessage({ id: 'quickAdd.documentationActivity' })
-                            : intl.formatMessage({ id: 'quickAdd.usdaVerifiedActivity' })}
-                        </Text>
-                      </VStack>
+                  <VStack spacing={3} align="stretch">
+                    <HStack justify="space-between">
+                      <HStack spacing={3}>
+                        <Box p={2} bg="green.100" borderRadius="lg">
+                          <Icon as={selectedTemplate.icon} color="green.600" boxSize={5} />
+                        </Box>
+                        <VStack align="start" spacing={0}>
+                          <EducationalTooltip term={getEducationalTooltipTerm(typeAwareTemplateId)}>
+                            <Text fontWeight="semibold" color="gray.800" fontSize="sm">
+                              {selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '')}
+                            </Text>
+                          </EducationalTooltip>
+                          <Text fontSize="xs" color="gray.500">
+                            {selectedTemplate.excludeFromCarbonCalculation
+                              ? intl.formatMessage({ id: 'quickAdd.documentationActivity' })
+                              : intl.formatMessage({ id: 'quickAdd.usdaVerifiedActivity' })}
+                          </Text>
+                        </VStack>
+                      </HStack>
+                      <Badge colorScheme="green" variant="solid" fontSize="xs" px={3} py={1} borderRadius="full">
+                        {selectedTemplate.sustainabilityScore}/10
+                      </Badge>
                     </HStack>
-                    <Badge colorScheme="green" variant="solid" fontSize="xs" px={3} py={1} borderRadius="full">
-                      {selectedTemplate.sustainabilityScore}/10
-                    </Badge>
-                  </HStack>
+                    {/* Learn More Link */}
+                    <HStack justify="flex-end">
+                      <Link
+                        color="green.600"
+                        fontSize="xs"
+                        fontWeight="medium"
+                        onClick={() => navigate('/education?topic=quick-add')}
+                        _hover={{ textDecoration: 'underline', color: 'green.700' }}
+                        cursor="pointer"
+                      >
+                        <HStack spacing={1}>
+                          <Icon as={FaBook} boxSize={3} />
+                          <Text>{intl.formatMessage({ id: 'quickAdd.learnMoreAboutEventTypes' })}</Text>
+                        </HStack>
+                      </Link>
+                    </HStack>
+                  </VStack>
                 </Box>
               )}
 

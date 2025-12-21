@@ -5,6 +5,9 @@
  * This configuration mirrors the exact fields from the Manual Add Event flow
  * to ensure consistent carbon calculations and data collection.
  *
+ * SSOT INTEGRATION: Field options are imported from eventFieldDefinitions.ts
+ * to ensure consistency between Quick Event and Manual Event forms.
+ *
  * Each field configuration includes:
  * - name: Backend field name (snake_case for API compatibility)
  * - type: Input type (select, number, text, textarea)
@@ -16,6 +19,30 @@
  * - options: Array of options for select fields (with translation keys)
  * - showIf: Conditional display based on other field values
  */
+
+// Import shared field options from Single Source of Truth (SSOT)
+import {
+  // Unit options
+  AREA_UNIT_OPTIONS,
+  VOLUME_UNIT_OPTIONS,
+  FUEL_UNIT_OPTIONS,
+  YIELD_UNIT_OPTIONS,
+  DISTANCE_UNIT_OPTIONS,
+  // Select options
+  FUEL_TYPE_OPTIONS,
+  WATER_SOURCE_OPTIONS,
+  IRRIGATION_METHOD_OPTIONS,
+  SEEDS_SOURCE_OPTIONS,
+  PRODUCTION_EFFICIENCY_OPTIONS,
+  APPLICATION_METHOD_OPTIONS_BY_TYPE,
+  ORGANIC_APPROVED_OPTIONS,
+  RESTRICTED_USE_PESTICIDE_OPTIONS,
+  CHEMICAL_SUBTYPE_OPTIONS,
+  ACTIVITY_TYPE_OPTIONS,
+  // Environmental context options (aligned with ChemicalTab-ENHANCED.jsx)
+  WEATHER_CONDITIONS_OPTIONS,
+  APPLICATION_TIMING_OPTIONS
+} from './eventFieldDefinitions';
 
 export interface FieldOption {
   value: string;
@@ -60,6 +87,7 @@ export interface QuickEventTypeConfig {
 
 // Irrigation Event (Production Type: IR)
 // Aligned with ProductionTab.jsx lines 950-1027
+// SSOT: Uses imported options from eventFieldDefinitions.ts
 export const irrigationFields: QuickEventTypeConfig = {
   templateId: 'irrigation',
   eventType: 'IR',
@@ -76,24 +104,14 @@ export const irrigationFields: QuickEventTypeConfig = {
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS // SSOT import
     },
     {
       name: 'area_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      options: AREA_UNIT_OPTIONS // SSOT import
     },
     // Equipment Operating Hours
     {
@@ -112,13 +130,7 @@ export const irrigationFields: QuickEventTypeConfig = {
       labelKey: 'quickAdd.fields.fuelType',
       helpKey: 'quickAdd.fields.fuelTypeHelp',
       default: 'diesel',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      options: FUEL_TYPE_OPTIONS // SSOT import
     },
     // Fuel Consumed with Unit dropdown
     {
@@ -126,28 +138,19 @@ export const irrigationFields: QuickEventTypeConfig = {
       type: 'number',
       labelKey: 'quickAdd.fields.fuelConsumed',
       helpKey: 'quickAdd.fields.fuelConsumedHelp',
+      default: 2, // Smart default: typical irrigation pump fuel consumption (L)
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS // SSOT import
     },
     {
       name: 'fuel_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.fuelUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS // SSOT import
     },
     // Water Source (Consumer Trust field)
     {
@@ -156,16 +159,7 @@ export const irrigationFields: QuickEventTypeConfig = {
       labelKey: 'quickAdd.fields.waterSource',
       helpKey: 'quickAdd.fields.waterSourceHelp',
       default: 'well_groundwater',
-      options: [
-        { value: 'well_groundwater', labelKey: 'quickAdd.fields.waterSource.wellGroundwater' },
-        { value: 'municipal', labelKey: 'quickAdd.fields.waterSource.municipal' },
-        { value: 'rainwater_harvesting', labelKey: 'quickAdd.fields.waterSource.rainwaterHarvesting' },
-        { value: 'irrigation_canal', labelKey: 'quickAdd.fields.waterSource.irrigationCanal' },
-        { value: 'river_stream', labelKey: 'quickAdd.fields.waterSource.riverStream' },
-        { value: 'pond_reservoir', labelKey: 'quickAdd.fields.waterSource.pondReservoir' },
-        { value: 'recycled_water', labelKey: 'quickAdd.fields.waterSource.recycledWater' },
-        { value: 'other', labelKey: 'quickAdd.fields.waterSource.other' }
-      ]
+      options: WATER_SOURCE_OPTIONS // SSOT import
     },
     // Irrigation Method (USDA NASS 2023)
     {
@@ -175,15 +169,7 @@ export const irrigationFields: QuickEventTypeConfig = {
       helpKey: 'quickAdd.fields.irrigationMethodHelp',
       default: 'drip',
       required: true,
-      options: [
-        { value: 'drip', labelKey: 'quickAdd.fields.irrigationMethod.drip' },
-        { value: 'sprinkler', labelKey: 'quickAdd.fields.irrigationMethod.sprinkler' },
-        { value: 'center_pivot', labelKey: 'quickAdd.fields.irrigationMethod.centerPivot' },
-        { value: 'flood', labelKey: 'quickAdd.fields.irrigationMethod.flood' },
-        { value: 'subsurface', labelKey: 'quickAdd.fields.irrigationMethod.subsurface' },
-        { value: 'hand_watering', labelKey: 'quickAdd.fields.irrigationMethod.handWatering' },
-        { value: 'other', labelKey: 'quickAdd.fields.irrigationMethod.other' }
-      ]
+      options: IRRIGATION_METHOD_OPTIONS // SSOT import
     },
     // Irrigation Depth with Unit (USDA: 27,154 gal/acre per inch)
     {
@@ -216,310 +202,217 @@ export const irrigationFields: QuickEventTypeConfig = {
 };
 
 // Harvesting Event (Production Type: HA)
-// Aligned with ProductionTab.jsx lines 642-914
+// Aligned with ProductionTab.jsx - Uses SSOT imports
 export const harvestFields: QuickEventTypeConfig = {
   templateId: 'harvest',
   eventType: 'HA',
   quickFields: [
-    // Area Covered with Unit dropdown
+    // Area Covered with Unit dropdown - SSOT import
     {
       name: 'area_covered',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaCovered',
-      helpKey: 'quickAdd.fields.areaCoveredHelp',
+      labelKey: 'app.areaCovered',
+      helpKey: 'app.areaCoveredHelp',
       default: 1,
       required: true,
       min: 0,
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS
     },
     {
       name: 'area_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.areaUnit',
+      labelKey: 'app.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      options: AREA_UNIT_OPTIONS
     },
-    // Yield Quantity with Unit dropdown
+    // Yield Quantity with Unit dropdown - SSOT import
     {
       name: 'yield_quantity',
       type: 'number',
-      labelKey: 'quickAdd.fields.yieldQuantity',
-      helpKey: 'quickAdd.fields.yieldQuantityHelp',
+      labelKey: 'app.yieldQuantity',
+      helpKey: 'app.yieldQuantityHelp',
       required: true,
-      default: 100, // Smart default: typical harvest quantity in kg
+      default: 100,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'yield_unit',
-      unitOptions: [
-        { value: 'kg', labelKey: 'quickAdd.fields.yieldUnit.kg' },
-        { value: 'tons', labelKey: 'quickAdd.fields.yieldUnit.tons' },
-        { value: 'lbs', labelKey: 'quickAdd.fields.yieldUnit.lbs' },
-        { value: 'boxes', labelKey: 'quickAdd.fields.yieldUnit.boxes' },
-        { value: 'plants', labelKey: 'quickAdd.fields.yieldUnit.plants' },
-        { value: 'seeds', labelKey: 'quickAdd.fields.yieldUnit.seeds' }
-      ]
+      unitOptions: YIELD_UNIT_OPTIONS
     },
     {
       name: 'yield_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.yieldUnit',
+      labelKey: 'app.yieldUnit',
       default: 'kg',
-      options: [
-        { value: 'kg', labelKey: 'quickAdd.fields.yieldUnit.kg' },
-        { value: 'tons', labelKey: 'quickAdd.fields.yieldUnit.tons' },
-        { value: 'lbs', labelKey: 'quickAdd.fields.yieldUnit.lbs' },
-        { value: 'boxes', labelKey: 'quickAdd.fields.yieldUnit.boxes' },
-        { value: 'plants', labelKey: 'quickAdd.fields.yieldUnit.plants' },
-        { value: 'seeds', labelKey: 'quickAdd.fields.yieldUnit.seeds' }
-      ]
+      options: YIELD_UNIT_OPTIONS
     },
-    // Fuel Type (EPA-verified emission factors)
+    // Fuel Type - SSOT import (EPA-verified emission factors)
     {
       name: 'fuel_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelType',
-      helpKey: 'quickAdd.fields.fuelTypeHelp',
+      labelKey: 'app.fuelType',
+      helpKey: 'app.fuelTypeHelp',
       default: 'diesel',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      options: FUEL_TYPE_OPTIONS
     },
-    // Fuel Consumed with Unit dropdown
+    // Fuel Consumed with Unit dropdown - SSOT import
     {
       name: 'fuel_consumed',
       type: 'number',
-      labelKey: 'quickAdd.fields.fuelConsumed',
-      helpKey: 'quickAdd.fields.fuelConsumedHelp',
+      labelKey: 'app.fuelConsumed',
+      helpKey: 'app.fuelConsumedHelp',
+      default: 5,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS
     },
     {
       name: 'fuel_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelUnit',
+      labelKey: 'app.fuelUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS
     },
     // Equipment Operating Hours
     {
       name: 'equipment_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.equipmentHours',
-      helpKey: 'quickAdd.fields.equipmentHoursHelp',
-      default: 4, // Smart default: typical harvest equipment operation time
+      labelKey: 'app.equipmentHours',
+      helpKey: 'app.equipmentHoursHelp',
+      default: 4,
       min: 0,
       step: 0.1
     },
-    // Transportation Distance with Unit dropdown
+    // Transportation Distance with Unit dropdown - SSOT import
     {
       name: 'transportation_distance',
       type: 'number',
-      labelKey: 'quickAdd.fields.transportationDistance',
-      helpKey: 'quickAdd.fields.transportationDistanceHelp',
+      labelKey: 'app.transportationDistance',
+      helpKey: 'app.transportationDistanceHelp',
+      default: 5,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'transportation_unit',
-      unitOptions: [
-        { value: 'km', labelKey: 'quickAdd.fields.units.km' },
-        { value: 'miles', labelKey: 'quickAdd.fields.units.miles' },
-        { value: 'm', labelKey: 'quickAdd.fields.units.m' }
-      ]
+      unitOptions: DISTANCE_UNIT_OPTIONS
     },
     {
       name: 'transportation_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.transportationUnit',
+      labelKey: 'app.transportationUnit',
       default: 'km',
-      options: [
-        { value: 'km', labelKey: 'quickAdd.fields.units.km' },
-        { value: 'miles', labelKey: 'quickAdd.fields.units.miles' },
-        { value: 'm', labelKey: 'quickAdd.fields.units.m' }
-      ]
+      options: DISTANCE_UNIT_OPTIONS
     },
-    // Production Efficiency
+    // Production Efficiency - SSOT import
     {
       name: 'production_efficiency',
       type: 'select',
-      labelKey: 'quickAdd.fields.productionEfficiency',
-      helpKey: 'quickAdd.fields.productionEfficiencyHelp',
+      labelKey: 'app.productionEfficiency',
+      helpKey: 'app.productionEfficiencyHelp',
       default: 'normal',
-      options: [
-        { value: 'high', labelKey: 'quickAdd.fields.productionEfficiency.high' },
-        { value: 'normal', labelKey: 'quickAdd.fields.productionEfficiency.normal' },
-        { value: 'low', labelKey: 'quickAdd.fields.productionEfficiency.low' }
-      ]
+      options: PRODUCTION_EFFICIENCY_OPTIONS
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
 };
 
 // Planting Event (Production Type: PL)
-// Aligned with ProductionTab.jsx
+// Aligned with ProductionTab.jsx - Uses SSOT imports
 export const plantingFields: QuickEventTypeConfig = {
   templateId: 'planting',
   eventType: 'PL',
   quickFields: [
-    // Area Covered with Unit dropdown
+    // Area Covered with Unit dropdown - SSOT import
     {
       name: 'area_covered',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaCovered',
-      helpKey: 'quickAdd.fields.areaCoveredHelp',
+      labelKey: 'app.areaCovered',
+      helpKey: 'app.areaCoveredHelp',
       default: 1,
       required: true,
       min: 0,
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS
     },
     {
       name: 'area_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.areaUnit',
+      labelKey: 'app.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      options: AREA_UNIT_OPTIONS
     },
-    // Seeds Source (Consumer Trust field)
+    // Seeds Source - SSOT import (Consumer Trust field)
     {
       name: 'seeds_source',
       type: 'select',
-      labelKey: 'quickAdd.fields.seedsSource',
-      helpKey: 'quickAdd.fields.seedsSourceHelp',
+      labelKey: 'app.seedsSource',
+      helpKey: 'app.seedsSourceHelp',
       default: 'commercial',
       required: true,
-      options: [
-        { value: 'certified_organic', labelKey: 'quickAdd.fields.seedsSource.certifiedOrganic' },
-        { value: 'farm_saved', labelKey: 'quickAdd.fields.seedsSource.farmSaved' },
-        { value: 'local', labelKey: 'quickAdd.fields.seedsSource.local' },
-        { value: 'cooperative', labelKey: 'quickAdd.fields.seedsSource.cooperative' },
-        { value: 'commercial', labelKey: 'quickAdd.fields.seedsSource.commercial' },
-        { value: 'other', labelKey: 'quickAdd.fields.seedsSource.other' }
-      ]
+      options: SEEDS_SOURCE_OPTIONS
     },
-    // Yield Quantity with Unit dropdown (Quantity Planted)
+    // Yield Quantity with Unit dropdown (Quantity Planted) - SSOT import
     {
       name: 'yield_quantity',
       type: 'number',
-      labelKey: 'quickAdd.fields.quantityPlanted',
-      helpKey: 'quickAdd.fields.quantityPlantedHelp',
+      labelKey: 'app.quantityPlanted',
+      helpKey: 'app.quantityPlantedHelp',
       min: 0,
       step: 1,
       hasUnitDropdown: true,
       unitFieldName: 'yield_unit',
-      unitOptions: [
-        { value: 'plants', labelKey: 'quickAdd.fields.yieldUnit.plants' },
-        { value: 'seeds', labelKey: 'quickAdd.fields.yieldUnit.seeds' },
-        { value: 'kg', labelKey: 'quickAdd.fields.yieldUnit.kg' },
-        { value: 'lbs', labelKey: 'quickAdd.fields.yieldUnit.lbs' }
-      ]
+      unitOptions: YIELD_UNIT_OPTIONS
     },
     {
       name: 'yield_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.yieldUnit',
+      labelKey: 'app.yieldUnit',
       default: 'plants',
-      options: [
-        { value: 'plants', labelKey: 'quickAdd.fields.yieldUnit.plants' },
-        { value: 'seeds', labelKey: 'quickAdd.fields.yieldUnit.seeds' },
-        { value: 'kg', labelKey: 'quickAdd.fields.yieldUnit.kg' },
-        { value: 'lbs', labelKey: 'quickAdd.fields.yieldUnit.lbs' }
-      ]
+      options: YIELD_UNIT_OPTIONS
     },
-    // Fuel Type (EPA-verified emission factors)
+    // Fuel Type - SSOT import (EPA-verified emission factors)
     {
       name: 'fuel_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelType',
-      helpKey: 'quickAdd.fields.fuelTypeHelp',
+      labelKey: 'app.fuelType',
+      helpKey: 'app.fuelTypeHelp',
       default: 'diesel',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      options: FUEL_TYPE_OPTIONS
     },
-    // Fuel Consumed with Unit dropdown
+    // Fuel Consumed with Unit dropdown - SSOT import
     {
       name: 'fuel_consumed',
       type: 'number',
-      labelKey: 'quickAdd.fields.fuelConsumed',
-      helpKey: 'quickAdd.fields.fuelConsumedHelp',
+      labelKey: 'app.fuelConsumed',
+      helpKey: 'app.fuelConsumedHelp',
       default: 2,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS
     },
     {
       name: 'fuel_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelUnit',
+      labelKey: 'app.fuelUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS
     },
     // Equipment Operating Hours
     {
       name: 'equipment_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.equipmentHours',
-      helpKey: 'quickAdd.fields.equipmentHoursHelp',
-      default: 3, // Smart default: typical planting equipment operation time
+      labelKey: 'app.equipmentHours',
+      helpKey: 'app.equipmentHoursHelp',
+      default: 3,
       min: 0,
       step: 0.1
     }
@@ -528,234 +421,166 @@ export const plantingFields: QuickEventTypeConfig = {
 };
 
 // Pruning Event (Production Type: PR)
-// Aligned with ProductionTab.jsx
+// Aligned with ProductionTab.jsx - Uses SSOT imports
 export const pruningFields: QuickEventTypeConfig = {
   templateId: 'pruning',
   eventType: 'PR',
   quickFields: [
-    // Area Covered with Unit dropdown
+    // Area Covered with Unit dropdown - SSOT import
     {
       name: 'area_covered',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaCovered',
-      helpKey: 'quickAdd.fields.areaCoveredHelp',
+      labelKey: 'app.areaCovered',
+      helpKey: 'app.areaCoveredHelp',
       default: 0.5,
       required: true,
       min: 0,
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS
     },
     {
       name: 'area_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.areaUnit',
+      labelKey: 'app.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      options: AREA_UNIT_OPTIONS
     },
     // Equipment Operating Hours
     {
       name: 'equipment_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.equipmentHours',
-      helpKey: 'quickAdd.fields.equipmentHoursHelp',
+      labelKey: 'app.equipmentHours',
+      helpKey: 'app.equipmentHoursHelp',
       default: 4,
       min: 0,
       step: 0.1
     },
-    // Fuel Type (EPA-verified emission factors) - only for non-manual equipment
+    // Fuel Type - SSOT import (EPA-verified emission factors)
     {
       name: 'fuel_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelType',
-      helpKey: 'quickAdd.fields.fuelTypeHelp',
+      labelKey: 'app.fuelType',
+      helpKey: 'app.fuelTypeHelp',
       default: 'gasoline',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      options: FUEL_TYPE_OPTIONS
     },
-    // Fuel Consumed with Unit dropdown
+    // Fuel Consumed with Unit dropdown - SSOT import
     {
       name: 'fuel_consumed',
       type: 'number',
-      labelKey: 'quickAdd.fields.fuelConsumed',
-      helpKey: 'quickAdd.fields.fuelConsumedHelp',
+      labelKey: 'app.fuelConsumed',
+      helpKey: 'app.fuelConsumedHelp',
+      default: 0.5,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS
     },
     {
       name: 'fuel_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelUnit',
+      labelKey: 'app.fuelUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
 };
 
 // Transplanting Event (Production Type: TR)
-// Aligned with ProductionTab.jsx - Similar to Planting but for plant relocation
+// Aligned with ProductionTab.jsx - Uses SSOT imports
 export const transplantingFields: QuickEventTypeConfig = {
   templateId: 'transplanting',
   eventType: 'TR',
   quickFields: [
-    // Area Covered with Unit dropdown
+    // Area Covered with Unit dropdown - SSOT import
     {
       name: 'area_covered',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaCovered',
-      helpKey: 'quickAdd.fields.areaCoveredHelp',
+      labelKey: 'app.areaCovered',
+      helpKey: 'app.areaCoveredHelp',
       default: 1,
       required: true,
       min: 0,
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS
     },
     {
       name: 'area_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.areaUnit',
+      labelKey: 'app.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      options: AREA_UNIT_OPTIONS
     },
-    // Seeds Source (Consumer Trust field - same as Planting)
+    // Seeds Source - SSOT import (Consumer Trust field)
     {
       name: 'seeds_source',
       type: 'select',
-      labelKey: 'quickAdd.fields.seedsSource',
-      helpKey: 'quickAdd.fields.seedsSourceHelp',
+      labelKey: 'app.seedsSource',
+      helpKey: 'app.seedsSourceHelp',
       default: 'commercial',
-      options: [
-        { value: 'certified_organic', labelKey: 'quickAdd.fields.seedsSource.certifiedOrganic' },
-        { value: 'farm_saved', labelKey: 'quickAdd.fields.seedsSource.farmSaved' },
-        { value: 'local', labelKey: 'quickAdd.fields.seedsSource.local' },
-        { value: 'cooperative', labelKey: 'quickAdd.fields.seedsSource.cooperative' },
-        { value: 'commercial', labelKey: 'quickAdd.fields.seedsSource.commercial' },
-        { value: 'other', labelKey: 'quickAdd.fields.seedsSource.other' }
-      ]
+      options: SEEDS_SOURCE_OPTIONS
     },
-    // Yield Quantity with Unit dropdown (Quantity Transplanted)
+    // Yield Quantity with Unit dropdown (Quantity Transplanted) - SSOT import
     {
       name: 'yield_quantity',
       type: 'number',
-      labelKey: 'quickAdd.fields.quantityTransplanted',
-      helpKey: 'quickAdd.fields.quantityTransplantedHelp',
+      labelKey: 'app.quantityTransplanted',
+      helpKey: 'app.quantityTransplantedHelp',
       min: 0,
       step: 1,
       hasUnitDropdown: true,
       unitFieldName: 'yield_unit',
-      unitOptions: [
-        { value: 'plants', labelKey: 'quickAdd.fields.yieldUnit.plants' },
-        { value: 'seedlings', labelKey: 'quickAdd.fields.yieldUnit.seedlings' },
-        { value: 'kg', labelKey: 'quickAdd.fields.yieldUnit.kg' },
-        { value: 'lbs', labelKey: 'quickAdd.fields.yieldUnit.lbs' }
-      ]
+      unitOptions: YIELD_UNIT_OPTIONS
     },
     {
       name: 'yield_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.yieldUnit',
+      labelKey: 'app.yieldUnit',
       default: 'plants',
-      options: [
-        { value: 'plants', labelKey: 'quickAdd.fields.yieldUnit.plants' },
-        { value: 'seedlings', labelKey: 'quickAdd.fields.yieldUnit.seedlings' },
-        { value: 'kg', labelKey: 'quickAdd.fields.yieldUnit.kg' },
-        { value: 'lbs', labelKey: 'quickAdd.fields.yieldUnit.lbs' }
-      ]
+      options: YIELD_UNIT_OPTIONS
     },
-    // Fuel Type (EPA-verified emission factors)
+    // Fuel Type - SSOT import (EPA-verified emission factors)
     {
       name: 'fuel_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelType',
-      helpKey: 'quickAdd.fields.fuelTypeHelp',
+      labelKey: 'app.fuelType',
+      helpKey: 'app.fuelTypeHelp',
       default: 'diesel',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      options: FUEL_TYPE_OPTIONS
     },
-    // Fuel Consumed with Unit dropdown
+    // Fuel Consumed with Unit dropdown - SSOT import
     {
       name: 'fuel_consumed',
       type: 'number',
-      labelKey: 'quickAdd.fields.fuelConsumed',
-      helpKey: 'quickAdd.fields.fuelConsumedHelp',
+      labelKey: 'app.fuelConsumed',
+      helpKey: 'app.fuelConsumedHelp',
       default: 2.4,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS
     },
     {
       name: 'fuel_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelUnit',
+      labelKey: 'app.fuelUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS
     },
     // Equipment Operating Hours
     {
       name: 'equipment_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.equipmentHours',
-      helpKey: 'quickAdd.fields.equipmentHoursHelp',
-      default: 4, // Smart default: typical transplanting equipment operation time
+      labelKey: 'app.equipmentHours',
+      helpKey: 'app.equipmentHoursHelp',
+      default: 4,
       min: 0,
       step: 0.1
     }
@@ -764,199 +589,147 @@ export const transplantingFields: QuickEventTypeConfig = {
 };
 
 // Cultivation Event (Production Type: CU)
-// Aligned with ProductionTab.jsx - Soil cultivation & weed control
+// Aligned with ProductionTab.jsx - Uses SSOT imports
 export const cultivationFields: QuickEventTypeConfig = {
   templateId: 'cultivation',
   eventType: 'CU',
   quickFields: [
-    // Area Covered with Unit dropdown
+    // Area Covered with Unit dropdown - SSOT import
     {
       name: 'area_covered',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaCovered',
-      helpKey: 'quickAdd.fields.areaCoveredHelp',
+      labelKey: 'app.areaCovered',
+      helpKey: 'app.areaCoveredHelp',
       default: 1,
       required: true,
       min: 0,
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS
     },
     {
       name: 'area_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.areaUnit',
+      labelKey: 'app.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      options: AREA_UNIT_OPTIONS
     },
     // Equipment Operating Hours
     {
       name: 'equipment_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.equipmentHours',
-      helpKey: 'quickAdd.fields.equipmentHoursHelp',
+      labelKey: 'app.equipmentHours',
+      helpKey: 'app.equipmentHoursHelp',
       default: 3,
       min: 0,
       step: 0.1
     },
-    // Fuel Type (EPA-verified emission factors)
+    // Fuel Type - SSOT import (EPA-verified emission factors)
     {
       name: 'fuel_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelType',
-      helpKey: 'quickAdd.fields.fuelTypeHelp',
+      labelKey: 'app.fuelType',
+      helpKey: 'app.fuelTypeHelp',
       default: 'diesel',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      options: FUEL_TYPE_OPTIONS
     },
-    // Fuel Consumed with Unit dropdown
+    // Fuel Consumed with Unit dropdown - SSOT import
     {
       name: 'fuel_consumed',
       type: 'number',
-      labelKey: 'quickAdd.fields.fuelConsumed',
-      helpKey: 'quickAdd.fields.fuelConsumedHelp',
+      labelKey: 'app.fuelConsumed',
+      helpKey: 'app.fuelConsumedHelp',
       default: 3,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS
     },
     {
       name: 'fuel_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelUnit',
+      labelKey: 'app.fuelUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
 };
 
 // Thinning Event (Production Type: TH)
-// Aligned with ProductionTab.jsx - Plant spacing optimization
+// Aligned with ProductionTab.jsx - Uses SSOT imports
 export const thinningFields: QuickEventTypeConfig = {
   templateId: 'thinning',
   eventType: 'TH',
   quickFields: [
-    // Area Covered with Unit dropdown
+    // Area Covered with Unit dropdown - SSOT import
     {
       name: 'area_covered',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaCovered',
-      helpKey: 'quickAdd.fields.areaCoveredHelp',
+      labelKey: 'app.areaCovered',
+      helpKey: 'app.areaCoveredHelp',
       default: 0.5,
       required: true,
       min: 0,
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS
     },
     {
       name: 'area_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.areaUnit',
+      labelKey: 'app.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      options: AREA_UNIT_OPTIONS
     },
     // Equipment Operating Hours
     {
       name: 'equipment_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.equipmentHours',
-      helpKey: 'quickAdd.fields.equipmentHoursHelp',
+      labelKey: 'app.equipmentHours',
+      helpKey: 'app.equipmentHoursHelp',
       default: 4,
       min: 0,
       step: 0.1
     },
-    // Fuel Type (EPA-verified emission factors)
+    // Fuel Type - SSOT import (EPA-verified emission factors)
     {
       name: 'fuel_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelType',
-      helpKey: 'quickAdd.fields.fuelTypeHelp',
+      labelKey: 'app.fuelType',
+      helpKey: 'app.fuelTypeHelp',
       default: 'gasoline',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      options: FUEL_TYPE_OPTIONS
     },
-    // Fuel Consumed with Unit dropdown
+    // Fuel Consumed with Unit dropdown - SSOT import
     {
       name: 'fuel_consumed',
       type: 'number',
-      labelKey: 'quickAdd.fields.fuelConsumed',
-      helpKey: 'quickAdd.fields.fuelConsumedHelp',
+      labelKey: 'app.fuelConsumed',
+      helpKey: 'app.fuelConsumedHelp',
+      default: 0.5,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS
     },
     {
       name: 'fuel_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelUnit',
+      labelKey: 'app.fuelUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
 };
 
 // Equipment Maintenance Event (Production Type: EM)
-// Aligned with ProductionTab.jsx - Equipment usage & maintenance
-// Sprint 2 Epic 2.1: Equipment merged into Production as "Equipment Maintenance" subtype
+// Aligned with ProductionTab.jsx - Uses SSOT imports
 export const equipmentMaintenanceFields: QuickEventTypeConfig = {
   templateId: 'equipment_maintenance',
   eventType: 'EM',
@@ -965,132 +738,102 @@ export const equipmentMaintenanceFields: QuickEventTypeConfig = {
     {
       name: 'equipment_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.equipmentType',
-      helpKey: 'quickAdd.fields.equipmentTypeHelp',
+      labelKey: 'app.equipmentType',
+      helpKey: 'app.equipmentTypeHelp',
       default: 'tractor',
       required: true,
       options: [
-        { value: 'tractor', labelKey: 'quickAdd.fields.equipmentType.tractor' },
-        { value: 'harvester', labelKey: 'quickAdd.fields.equipmentType.harvester' },
-        { value: 'sprayer', labelKey: 'quickAdd.fields.equipmentType.sprayer' },
-        { value: 'irrigation_pump', labelKey: 'quickAdd.fields.equipmentType.irrigationPump' },
-        { value: 'tillage', labelKey: 'quickAdd.fields.equipmentType.tillage' },
-        { value: 'other', labelKey: 'quickAdd.fields.equipmentType.other' }
+        { value: 'tractor', labelKey: 'app.equipmentType.tractor' },
+        { value: 'harvester', labelKey: 'app.equipmentType.harvester' },
+        { value: 'sprayer', labelKey: 'app.equipmentType.sprayer' },
+        { value: 'irrigation_pump', labelKey: 'app.equipmentType.irrigationPump' },
+        { value: 'tillage', labelKey: 'app.equipmentType.tillage' },
+        { value: 'other', labelKey: 'app.equipmentType.other' }
       ]
     },
     // Equipment Operation Type
     {
       name: 'equipment_operation_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.equipmentOperationType',
-      helpKey: 'quickAdd.fields.equipmentOperationTypeHelp',
+      labelKey: 'app.equipmentOperationType',
+      helpKey: 'app.equipmentOperationTypeHelp',
       default: 'routine_maintenance',
       required: true,
       options: [
-        { value: 'routine_maintenance', labelKey: 'quickAdd.fields.equipmentOperationType.routineMaintenance' },
-        { value: 'repair', labelKey: 'quickAdd.fields.equipmentOperationType.repair' },
-        { value: 'calibration', labelKey: 'quickAdd.fields.equipmentOperationType.calibration' },
-        { value: 'cleaning', labelKey: 'quickAdd.fields.equipmentOperationType.cleaning' },
-        { value: 'inspection', labelKey: 'quickAdd.fields.equipmentOperationType.inspection' }
+        { value: 'routine_maintenance', labelKey: 'app.equipmentOperationType.routineMaintenance' },
+        { value: 'repair', labelKey: 'app.equipmentOperationType.repair' },
+        { value: 'calibration', labelKey: 'app.equipmentOperationType.calibration' },
+        { value: 'cleaning', labelKey: 'app.equipmentOperationType.cleaning' },
+        { value: 'inspection', labelKey: 'app.equipmentOperationType.inspection' }
       ]
     },
     // Equipment Operating Hours
     {
       name: 'equipment_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.equipmentHours',
-      helpKey: 'quickAdd.fields.equipmentHoursHelp',
+      labelKey: 'app.equipmentHours',
+      helpKey: 'app.equipmentHoursHelp',
       default: 2,
       min: 0,
       step: 0.1
     },
-    // Fuel Type (EPA-verified emission factors)
+    // Fuel Type - SSOT import (EPA-verified emission factors)
     {
       name: 'fuel_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelType',
-      helpKey: 'quickAdd.fields.fuelTypeHelp',
+      labelKey: 'app.fuelType',
+      helpKey: 'app.fuelTypeHelp',
       default: 'diesel',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      options: FUEL_TYPE_OPTIONS
     },
-    // Fuel Consumed with Unit dropdown
+    // Fuel Consumed with Unit dropdown - SSOT import
     {
       name: 'fuel_consumed',
       type: 'number',
-      labelKey: 'quickAdd.fields.fuelConsumed',
-      helpKey: 'quickAdd.fields.fuelConsumedHelp',
+      labelKey: 'app.fuelConsumed',
+      helpKey: 'app.fuelConsumedHelp',
       required: true,
-      default: 5, // Smart default: typical maintenance fuel consumption (L)
+      default: 5,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS
     },
     {
       name: 'fuel_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.fuelUnit',
+      labelKey: 'app.fuelUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS
     },
-    // Operation Efficiency
+    // Operation Efficiency - SSOT import
     {
       name: 'operation_efficiency',
       type: 'select',
-      labelKey: 'quickAdd.fields.operationEfficiency',
-      helpKey: 'quickAdd.fields.operationEfficiencyHelp',
+      labelKey: 'app.operationEfficiency',
+      helpKey: 'app.operationEfficiencyHelp',
       default: 'normal',
-      options: [
-        { value: 'high', labelKey: 'quickAdd.fields.operationEfficiency.high' },
-        { value: 'normal', labelKey: 'quickAdd.fields.operationEfficiency.normal' },
-        { value: 'low', labelKey: 'quickAdd.fields.operationEfficiency.low' }
-      ]
+      options: PRODUCTION_EFFICIENCY_OPTIONS
     },
-    // Area Covered (Optional for Equipment Maintenance)
+    // Area Covered (Optional for Equipment Maintenance) - SSOT import
     {
       name: 'area_covered',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaCovered',
-      helpKey: 'quickAdd.fields.areaCoveredHelpOptional',
+      labelKey: 'app.areaCovered',
+      helpKey: 'app.areaCoveredHelpOptional',
       min: 0,
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS
     },
     {
       name: 'area_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.areaUnit',
+      labelKey: 'app.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' },
-        { value: 'km2', labelKey: 'quickAdd.fields.units.km2' }
-      ]
+      options: AREA_UNIT_OPTIONS
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -1101,198 +844,173 @@ export const equipmentMaintenanceFields: QuickEventTypeConfig = {
 // ============================================================================
 
 // Fertilization Event (Chemical Type: FE)
-// Aligned with ChemicalTab-ENHANCED.jsx
+// Aligned with ChemicalTab-ENHANCED.jsx - Uses SSOT imports
 export const fertilizationFields: QuickEventTypeConfig = {
   templateId: 'fertilization',
   eventType: 'FE',
   quickFields: [
-    // Chemical Subtype (critical for emission factor selection - 21x variance!)
+    // Chemical Subtype - SSOT import (critical for emission factor selection - 21x variance!)
     {
       name: 'chemical_subtype',
       type: 'select',
-      labelKey: 'quickAdd.fields.chemicalSubtype',
-      helpKey: 'quickAdd.fields.chemicalSubtypeHelp',
+      labelKey: 'app.chemicalSubtype',
+      helpKey: 'app.chemicalSubtypeHelp',
       default: 'synthetic_fertilizer',
       required: true,
-      options: [
-        { value: 'synthetic_fertilizer', labelKey: 'quickAdd.fields.chemicalSubtype.syntheticFertilizer' },
-        { value: 'organic_fertilizer', labelKey: 'quickAdd.fields.chemicalSubtype.organicFertilizer' },
-        { value: 'slow_release_fertilizer', labelKey: 'quickAdd.fields.chemicalSubtype.slowReleaseFertilizer' }
-      ]
+      options: CHEMICAL_SUBTYPE_OPTIONS.fertilizer
     },
-    // Commercial Name
+    // Commercial Name / Product - Matches Manual Event label
     {
       name: 'commercial_name',
       type: 'text',
-      labelKey: 'quickAdd.fields.commercialName',
-      helpKey: 'quickAdd.fields.commercialNameHelp',
-      placeholderKey: 'quickAdd.fields.commercialNamePlaceholder',
+      labelKey: 'app.commercialName',
+      helpKey: 'app.commercialNameHelp',
+      placeholderKey: 'app.commercialNamePlaceholder',
       required: true
     },
-    // Active Ingredient
+    // Active Ingredient (Optional) - Matches Manual Event label
     {
       name: 'active_ingredient',
       type: 'text',
-      labelKey: 'quickAdd.fields.activeIngredient',
-      helpKey: 'quickAdd.fields.activeIngredientHelp',
-      placeholderKey: 'quickAdd.fields.activeIngredientPlaceholder'
+      labelKey: 'app.activeIngredient',
+      helpKey: 'app.activeIngredientHelp',
+      placeholderKey: 'app.activeIngredientPlaceholder'
     },
     // Concentration (NPK Ratio for fertilizers) - with validation
     {
       name: 'concentration',
       type: 'text',
-      labelKey: 'quickAdd.fields.concentration',
-      helpKey: 'quickAdd.fields.concentrationHelpFertilizer',
-      placeholderKey: 'quickAdd.fields.concentrationPlaceholderNPK',
+      labelKey: 'app.fertilizerConcentration', // Context-aware label - matches Manual Event
+      helpKey: 'app.concentrationHelpFertilizer',
+      placeholderKey: 'app.concentrationPlaceholderNPK',
       required: true,
       validationType: 'concentration',
-      default: '10-10-10' // Smart default: balanced NPK for general-purpose fertilization
+      default: '10-10-10'
     },
-    // Volume Applied with Unit dropdown
+    // Volume Applied with Unit dropdown - SSOT import
     {
       name: 'volume_applied',
       type: 'number',
-      labelKey: 'quickAdd.fields.volumeApplied',
-      helpKey: 'quickAdd.fields.volumeAppliedHelp',
+      labelKey: 'app.volumeApplied',
+      helpKey: 'app.volumeAppliedHelp',
       default: 100,
       required: true,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'volume_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'lb', labelKey: 'quickAdd.fields.units.lb' }
-      ]
+      unitOptions: VOLUME_UNIT_OPTIONS
     },
     {
       name: 'volume_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.volumeUnit',
+      labelKey: 'app.volumeUnit',
       default: 'kg',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'lb', labelKey: 'quickAdd.fields.units.lb' }
-      ]
+      options: VOLUME_UNIT_OPTIONS
     },
-    // Area Treated with Unit dropdown
+    // Area Treated with Unit dropdown - SSOT import
     {
       name: 'area_treated',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaTreated',
-      helpKey: 'quickAdd.fields.areaTreatedHelp',
+      labelKey: 'app.areaTreated',
+      helpKey: 'app.areaTreatedHelp',
       default: 1,
       required: true,
       min: 0,
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS
     },
     {
       name: 'area_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.areaUnit',
+      labelKey: 'app.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' }
-      ]
+      options: AREA_UNIT_OPTIONS
     },
-    // Application Method (USDA NRCS Standard Methods for Fertilizer)
+    // Application Method - SSOT import (USDA NRCS Standard Methods for Fertilizer)
     {
       name: 'application_method',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationMethod',
-      helpKey: 'quickAdd.fields.applicationMethodHelp',
+      labelKey: 'app.applicationMethod',
+      helpKey: 'app.applicationMethodHelp',
       default: 'broadcast',
       required: true,
-      options: [
-        { value: 'broadcast', labelKey: 'quickAdd.fields.applicationMethod.broadcast' },
-        { value: 'banded', labelKey: 'quickAdd.fields.applicationMethod.banded' },
-        { value: 'subsurface', labelKey: 'quickAdd.fields.applicationMethod.subsurface' },
-        { value: 'fertigation', labelKey: 'quickAdd.fields.applicationMethod.fertigation' },
-        { value: 'foliar', labelKey: 'quickAdd.fields.applicationMethod.foliar' }
-      ]
+      options: APPLICATION_METHOD_OPTIONS_BY_TYPE.fertilizer
+    },
+    // Application Details - Text field for method specifics (Manual Event parity)
+    {
+      name: 'application_details',
+      type: 'textarea',
+      labelKey: 'app.applicationDetails',
+      helpKey: 'app.applicationDetailsHelp',
+      placeholderKey: 'app.applicationDetailsPlaceholder'
     },
     // Weather Conditions
     {
       name: 'weather_conditions',
       type: 'select',
-      labelKey: 'quickAdd.fields.weatherConditions',
-      helpKey: 'quickAdd.fields.weatherConditionsHelp',
+      labelKey: 'app.weatherConditions',
+      helpKey: 'app.weatherConditionsHelp',
       options: [
-        { value: 'calm_dry', labelKey: 'quickAdd.fields.weatherConditions.calmDry' },
-        { value: 'light_wind', labelKey: 'quickAdd.fields.weatherConditions.lightWind' },
-        { value: 'humid', labelKey: 'quickAdd.fields.weatherConditions.humid' },
-        { value: 'windy', labelKey: 'quickAdd.fields.weatherConditions.windy' }
+        { value: 'calm_dry', labelKey: 'app.weatherConditions.calmDry' },
+        { value: 'light_wind', labelKey: 'app.weatherConditions.lightWind' },
+        { value: 'humid', labelKey: 'app.weatherConditions.humid' },
+        { value: 'windy', labelKey: 'app.weatherConditions.windy' }
       ]
     },
     // Application Timing
     {
       name: 'application_timing',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationTiming',
-      helpKey: 'quickAdd.fields.applicationTimingHelp',
+      labelKey: 'app.applicationTiming',
+      helpKey: 'app.applicationTimingHelp',
       options: [
-        { value: 'pre_plant', labelKey: 'quickAdd.fields.applicationTiming.prePlant' },
-        { value: 'post_emergence', labelKey: 'quickAdd.fields.applicationTiming.postEmergence' },
-        { value: 'flowering', labelKey: 'quickAdd.fields.applicationTiming.flowering' },
-        { value: 'fruit_development', labelKey: 'quickAdd.fields.applicationTiming.fruitDevelopment' },
-        { value: 'harvest', labelKey: 'quickAdd.fields.applicationTiming.harvest' }
+        { value: 'pre_plant', labelKey: 'app.applicationTiming.prePlant' },
+        { value: 'post_emergence', labelKey: 'app.applicationTiming.postEmergence' },
+        { value: 'flowering', labelKey: 'app.applicationTiming.flowering' },
+        { value: 'fruit_development', labelKey: 'app.applicationTiming.fruitDevelopment' },
+        { value: 'harvest', labelKey: 'app.applicationTiming.harvest' }
       ]
     },
-    // Application Fuel Type (for application equipment)
+    // Organic Approved - SSOT import
+    {
+      name: 'organic_approved',
+      type: 'select',
+      labelKey: 'app.organicApproved',
+      helpKey: 'app.organicApprovedHelp',
+      default: 'false',
+      options: ORGANIC_APPROVED_OPTIONS
+    },
+    // Application Fuel Type - SSOT import
     {
       name: 'application_fuel_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationFuelType',
-      helpKey: 'quickAdd.fields.applicationFuelTypeHelp',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      labelKey: 'app.applicationEquipmentFuelType',
+      helpKey: 'app.applicationFuelTypeHelp',
+      default: 'diesel',
+      options: FUEL_TYPE_OPTIONS
     },
-    // Application Fuel Consumed with Unit dropdown
+    // Application Fuel Consumed with Unit dropdown - SSOT import
     {
       name: 'application_fuel_consumed',
       type: 'number',
-      labelKey: 'quickAdd.fields.applicationFuelConsumed',
-      helpKey: 'quickAdd.fields.applicationFuelConsumedHelp',
+      labelKey: 'app.fuelConsumed',
+      helpKey: 'app.applicationFuelConsumedHelp',
+      default: 2,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'application_fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS
     },
     {
       name: 'application_fuel_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationFuelUnit',
+      labelKey: 'app.applicationFuelUnit',
       default: 'gal',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -1300,11 +1018,12 @@ export const fertilizationFields: QuickEventTypeConfig = {
 
 // Pest Control Event (Chemical Type: PE)
 // Aligned with ChemicalTab-ENHANCED.jsx
+// SSOT: Uses imported options from eventFieldDefinitions.ts
 export const pestControlFields: QuickEventTypeConfig = {
   templateId: 'pest_control',
   eventType: 'PE',
   quickFields: [
-    // Chemical Subtype
+    // Chemical Subtype - SSOT import
     {
       name: 'chemical_subtype',
       type: 'select',
@@ -1312,26 +1031,22 @@ export const pestControlFields: QuickEventTypeConfig = {
       helpKey: 'quickAdd.fields.chemicalSubtypeHelp',
       default: 'synthetic_pesticide',
       required: true,
-      options: [
-        { value: 'synthetic_pesticide', labelKey: 'quickAdd.fields.chemicalSubtype.syntheticPesticide' },
-        { value: 'organic_pesticide', labelKey: 'quickAdd.fields.chemicalSubtype.organicPesticide' },
-        { value: 'biological_pesticide', labelKey: 'quickAdd.fields.chemicalSubtype.biologicalPesticide' }
-      ]
+      options: CHEMICAL_SUBTYPE_OPTIONS.pesticide // SSOT import
     },
-    // Commercial Name
+    // Commercial Name / Product (label matches Manual Event)
     {
       name: 'commercial_name',
       type: 'text',
-      labelKey: 'quickAdd.fields.commercialName',
+      labelKey: 'app.commercialName', // Standardized label key
       helpKey: 'quickAdd.fields.commercialNameHelp',
       placeholderKey: 'quickAdd.fields.commercialNamePlaceholder',
       required: true
     },
-    // Active Ingredient
+    // Active Ingredient (Optional) - label matches Manual Event
     {
       name: 'active_ingredient',
       type: 'text',
-      labelKey: 'quickAdd.fields.activeIngredient',
+      labelKey: 'app.activeIngredient', // Standardized label key
       helpKey: 'quickAdd.fields.activeIngredientHelp',
       placeholderKey: 'quickAdd.fields.activeIngredientPlaceholder'
     },
@@ -1339,18 +1054,18 @@ export const pestControlFields: QuickEventTypeConfig = {
     {
       name: 'concentration',
       type: 'text',
-      labelKey: 'quickAdd.fields.concentration',
+      labelKey: 'app.pesticideConcentration', // Context-aware label - matches Manual Event
       helpKey: 'quickAdd.fields.concentrationHelpPesticide',
       placeholderKey: 'quickAdd.fields.concentrationPlaceholderPercent',
       required: true,
       validationType: 'concentration',
       default: '50%' // Smart default: typical pesticide active ingredient concentration
     },
-    // Volume Applied with Unit dropdown
+    // Volume Applied with Unit dropdown - SSOT import
     {
       name: 'volume_applied',
       type: 'number',
-      labelKey: 'quickAdd.fields.volumeApplied',
+      labelKey: 'app.volumeApplied', // Standardized label key
       helpKey: 'quickAdd.fields.volumeAppliedHelp',
       default: 50,
       required: true,
@@ -1358,30 +1073,20 @@ export const pestControlFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'volume_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'lb', labelKey: 'quickAdd.fields.units.lb' }
-      ]
+      unitOptions: VOLUME_UNIT_OPTIONS // SSOT import
     },
     {
       name: 'volume_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.volumeUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'lb', labelKey: 'quickAdd.fields.units.lb' }
-      ]
+      options: VOLUME_UNIT_OPTIONS // SSOT import
     },
-    // Area Treated with Unit dropdown
+    // Area Treated with Unit dropdown - SSOT import
     {
       name: 'area_treated',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaTreated',
+      labelKey: 'app.areaTreated', // Standardized label key
       helpKey: 'quickAdd.fields.areaTreatedHelp',
       default: 1,
       required: true,
@@ -1389,86 +1094,76 @@ export const pestControlFields: QuickEventTypeConfig = {
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS // SSOT import
     },
     {
       name: 'area_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' }
-      ]
+      options: AREA_UNIT_OPTIONS // SSOT import
     },
-    // Application Method (EPA Standard Methods for Pesticide)
+    // Application Method (EPA Standard Methods for Pesticide) - SSOT import
     {
       name: 'application_method',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationMethod',
+      labelKey: 'app.applicationMethod', // Standardized label key
       helpKey: 'quickAdd.fields.applicationMethodHelp',
       default: 'ground_spray',
       required: true,
-      options: [
-        { value: 'ground_spray', labelKey: 'quickAdd.fields.applicationMethod.groundSpray' },
-        { value: 'chemigation', labelKey: 'quickAdd.fields.applicationMethod.chemigation' },
-        { value: 'seed_treatment', labelKey: 'quickAdd.fields.applicationMethod.seedTreatment' },
-        { value: 'soil_incorporation', labelKey: 'quickAdd.fields.applicationMethod.soilIncorporation' }
-      ]
+      options: APPLICATION_METHOD_OPTIONS_BY_TYPE.pesticide // SSOT import - context-aware
     },
-    // Target Pest/Disease
+    // Application Details (NEW - from Manual Event for method specifics)
     {
-      name: 'target_pest_disease',
-      type: 'text',
-      labelKey: 'quickAdd.fields.targetPestDisease',
-      helpKey: 'quickAdd.fields.targetPestDiseaseHelp',
-      placeholderKey: 'quickAdd.fields.targetPestDiseasePlaceholder'
+      name: 'application_details',
+      type: 'textarea',
+      labelKey: 'app.applicationDetails',
+      helpKey: 'app.applicationDetailsHelp',
+      placeholderKey: 'app.applicationDetailsPlaceholder'
     },
-    // Weather Conditions
+    // Weather Conditions (NEW - from ChemicalTab-ENHANCED.jsx for transparency) - SSOT import
     {
       name: 'weather_conditions',
       type: 'select',
-      labelKey: 'quickAdd.fields.weatherConditions',
-      helpKey: 'quickAdd.fields.weatherConditionsHelp',
-      options: [
-        { value: 'calm_dry', labelKey: 'quickAdd.fields.weatherConditions.calmDry' },
-        { value: 'light_wind', labelKey: 'quickAdd.fields.weatherConditions.lightWind' },
-        { value: 'humid', labelKey: 'quickAdd.fields.weatherConditions.humid' },
-        { value: 'windy', labelKey: 'quickAdd.fields.weatherConditions.windy' }
-      ]
+      labelKey: 'app.weatherConditions',
+      helpKey: 'app.weatherConditionsHelp',
+      default: 'calm_dry',
+      options: WEATHER_CONDITIONS_OPTIONS // SSOT import - aligned with Manual Event
     },
-    // Application Timing
+    // Application Timing (NEW - from ChemicalTab-ENHANCED.jsx for transparency) - SSOT import
     {
       name: 'application_timing',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationTiming',
-      helpKey: 'quickAdd.fields.applicationTimingHelp',
-      options: [
-        { value: 'pre_plant', labelKey: 'quickAdd.fields.applicationTiming.prePlant' },
-        { value: 'post_emergence', labelKey: 'quickAdd.fields.applicationTiming.postEmergence' },
-        { value: 'flowering', labelKey: 'quickAdd.fields.applicationTiming.flowering' },
-        { value: 'fruit_development', labelKey: 'quickAdd.fields.applicationTiming.fruitDevelopment' },
-        { value: 'harvest', labelKey: 'quickAdd.fields.applicationTiming.harvest' }
-      ]
+      labelKey: 'app.applicationTiming',
+      helpKey: 'app.applicationTimingHelp',
+      default: 'post_emergence',
+      options: APPLICATION_TIMING_OPTIONS // SSOT import - aligned with Manual Event
     },
-    // Organic Approved (Consumer Trust)
+    // Target Pest/Disease/Need (label matches Manual Event)
+    {
+      name: 'target_pest_disease',
+      type: 'text',
+      labelKey: 'app.targetPestDisease', // Standardized label key
+      helpKey: 'quickAdd.fields.targetPestDiseaseHelp',
+      placeholderKey: 'quickAdd.fields.targetPestDiseasePlaceholder'
+    },
+    // Restricted Use Pesticide (NEW - EPA compliance from Manual Event)
+    {
+      name: 'restricted_use_pesticide',
+      type: 'select',
+      labelKey: 'app.restrictedUsePesticide',
+      helpKey: 'app.restrictedUsePesticideHelp',
+      default: 'false',
+      options: RESTRICTED_USE_PESTICIDE_OPTIONS // SSOT import
+    },
+    // Organic Approved (label matches Manual Event) - SSOT import
     {
       name: 'organic_approved',
       type: 'select',
-      labelKey: 'quickAdd.fields.organicApproved',
+      labelKey: 'app.organicApproved', // Standardized label key
       helpKey: 'quickAdd.fields.organicApprovedHelp',
-      options: [
-        { value: 'omri_listed', labelKey: 'quickAdd.fields.organicApproved.omriListed' },
-        { value: 'usda_nop_approved', labelKey: 'quickAdd.fields.organicApproved.usdaNopApproved' },
-        { value: 'organic_equivalent', labelKey: 'quickAdd.fields.organicApproved.organicEquivalent' },
-        { value: 'not_organic', labelKey: 'quickAdd.fields.organicApproved.notOrganic' },
-        { value: 'transitional', labelKey: 'quickAdd.fields.organicApproved.transitional' }
-      ]
+      default: 'false',
+      options: ORGANIC_APPROVED_OPTIONS // SSOT import
     },
     // Buffer Zone
     {
@@ -1484,9 +1179,18 @@ export const pestControlFields: QuickEventTypeConfig = {
     {
       name: 'applicator_name',
       type: 'text',
-      labelKey: 'quickAdd.fields.applicatorName',
+      labelKey: 'app.applicatorName', // Standardized label key
       helpKey: 'quickAdd.fields.applicatorNameHelp',
       placeholderKey: 'quickAdd.fields.applicatorNamePlaceholder'
+    },
+    // Applicator Certification (NEW - from ChemicalTab-ENHANCED.jsx for EPA WPS compliance)
+    // Required when restricted_use_pesticide is true - matches conditional behavior in Manual Event
+    {
+      name: 'applicator_certification',
+      type: 'text',
+      labelKey: 'app.applicatorCertification',
+      helpKey: 'quickAdd.fields.applicatorCertificationHelp',
+      placeholderKey: 'quickAdd.fields.applicatorCertificationPlaceholder'
     },
     {
       name: 'epa_registration_number',
@@ -1498,7 +1202,7 @@ export const pestControlFields: QuickEventTypeConfig = {
     {
       name: 'rei_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.reiHours',
+      labelKey: 'app.reiHours', // Standardized label key
       helpKey: 'quickAdd.fields.reiHoursHelp',
       min: 0,
       step: 1,
@@ -1507,53 +1211,39 @@ export const pestControlFields: QuickEventTypeConfig = {
     {
       name: 'phi_days',
       type: 'number',
-      labelKey: 'quickAdd.fields.phiDays',
+      labelKey: 'app.phiDays', // Standardized label key
       helpKey: 'quickAdd.fields.phiDaysHelp',
       min: 0,
       step: 1,
       unitKey: 'quickAdd.fields.units.days'
     },
-    // Application Fuel
+    // Application Fuel - SSOT imports
     {
       name: 'application_fuel_type',
       type: 'select',
       labelKey: 'quickAdd.fields.applicationFuelType',
       helpKey: 'quickAdd.fields.applicationFuelTypeHelp',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      default: 'diesel', // Smart default: diesel is most common for agricultural application equipment
+      options: FUEL_TYPE_OPTIONS // SSOT import
     },
     {
       name: 'application_fuel_consumed',
       type: 'number',
       labelKey: 'quickAdd.fields.applicationFuelConsumed',
       helpKey: 'quickAdd.fields.applicationFuelConsumedHelp',
+      default: 2, // Smart default: typical fuel consumption for application equipment (gal)
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'application_fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS // SSOT import
     },
     {
       name: 'application_fuel_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.applicationFuelUnit',
       default: 'gal',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS // SSOT import
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -1561,11 +1251,12 @@ export const pestControlFields: QuickEventTypeConfig = {
 
 // Herbicide Event (Chemical Type: HE)
 // Aligned with ChemicalTab-ENHANCED.jsx
+// SSOT: Uses imported options from eventFieldDefinitions.ts
 export const herbicideFields: QuickEventTypeConfig = {
   templateId: 'herbicide',
   eventType: 'HE',
   quickFields: [
-    // Chemical Subtype
+    // Chemical Subtype - SSOT import
     {
       name: 'chemical_subtype',
       type: 'select',
@@ -1573,25 +1264,22 @@ export const herbicideFields: QuickEventTypeConfig = {
       helpKey: 'quickAdd.fields.chemicalSubtypeHelp',
       default: 'synthetic_herbicide',
       required: true,
-      options: [
-        { value: 'synthetic_herbicide', labelKey: 'quickAdd.fields.chemicalSubtype.syntheticHerbicide' },
-        { value: 'organic_herbicide', labelKey: 'quickAdd.fields.chemicalSubtype.organicHerbicide' }
-      ]
+      options: CHEMICAL_SUBTYPE_OPTIONS.herbicide // SSOT import
     },
-    // Commercial Name
+    // Commercial Name / Product (label matches Manual Event)
     {
       name: 'commercial_name',
       type: 'text',
-      labelKey: 'quickAdd.fields.commercialName',
+      labelKey: 'app.commercialName', // Standardized label key
       helpKey: 'quickAdd.fields.commercialNameHelp',
       placeholderKey: 'quickAdd.fields.commercialNamePlaceholder',
       required: true
     },
-    // Active Ingredient
+    // Active Ingredient (Optional) - label matches Manual Event
     {
       name: 'active_ingredient',
       type: 'text',
-      labelKey: 'quickAdd.fields.activeIngredient',
+      labelKey: 'app.activeIngredient', // Standardized label key
       helpKey: 'quickAdd.fields.activeIngredientHelp',
       placeholderKey: 'quickAdd.fields.activeIngredientPlaceholder'
     },
@@ -1599,18 +1287,18 @@ export const herbicideFields: QuickEventTypeConfig = {
     {
       name: 'concentration',
       type: 'text',
-      labelKey: 'quickAdd.fields.concentration',
+      labelKey: 'app.herbicideConcentration', // Context-aware label - matches Manual Event
       helpKey: 'quickAdd.fields.concentrationHelpHerbicide',
       placeholderKey: 'quickAdd.fields.concentrationPlaceholderPercent',
       required: true,
       validationType: 'concentration',
       default: '50%' // Smart default: typical herbicide active ingredient concentration
     },
-    // Volume Applied with Unit dropdown
+    // Volume Applied with Unit dropdown - SSOT import
     {
       name: 'volume_applied',
       type: 'number',
-      labelKey: 'quickAdd.fields.volumeApplied',
+      labelKey: 'app.volumeApplied', // Standardized label key
       helpKey: 'quickAdd.fields.volumeAppliedHelp',
       default: 50,
       required: true,
@@ -1618,30 +1306,20 @@ export const herbicideFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'volume_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'lb', labelKey: 'quickAdd.fields.units.lb' }
-      ]
+      unitOptions: VOLUME_UNIT_OPTIONS // SSOT import
     },
     {
       name: 'volume_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.volumeUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'lb', labelKey: 'quickAdd.fields.units.lb' }
-      ]
+      options: VOLUME_UNIT_OPTIONS // SSOT import
     },
-    // Area Treated with Unit dropdown
+    // Area Treated with Unit dropdown - SSOT import
     {
       name: 'area_treated',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaTreated',
+      labelKey: 'app.areaTreated', // Standardized label key
       helpKey: 'quickAdd.fields.areaTreatedHelp',
       default: 1,
       required: true,
@@ -1649,86 +1327,76 @@ export const herbicideFields: QuickEventTypeConfig = {
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS // SSOT import
     },
     {
       name: 'area_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' }
-      ]
+      options: AREA_UNIT_OPTIONS // SSOT import
     },
-    // Application Method (EPA Standard Methods for Herbicide)
+    // Application Method (EPA Standard Methods for Herbicide) - SSOT import
     {
       name: 'application_method',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationMethod',
+      labelKey: 'app.applicationMethod', // Standardized label key
       helpKey: 'quickAdd.fields.applicationMethodHelp',
       default: 'ground_spray',
       required: true,
-      options: [
-        { value: 'ground_spray', labelKey: 'quickAdd.fields.applicationMethod.groundSpray' },
-        { value: 'chemigation', labelKey: 'quickAdd.fields.applicationMethod.chemigation' },
-        { value: 'seed_treatment', labelKey: 'quickAdd.fields.applicationMethod.seedTreatment' },
-        { value: 'soil_incorporation', labelKey: 'quickAdd.fields.applicationMethod.soilIncorporation' }
-      ]
+      options: APPLICATION_METHOD_OPTIONS_BY_TYPE.herbicide // SSOT import - context-aware
     },
-    // Target Pest/Disease (for weed identification)
+    // Application Details (NEW - from Manual Event for method specifics)
     {
-      name: 'target_pest_disease',
-      type: 'text',
-      labelKey: 'quickAdd.fields.targetPestDisease',
-      helpKey: 'quickAdd.fields.targetPestDiseaseHelpWeed',
-      placeholderKey: 'quickAdd.fields.targetPestDiseasePlaceholderWeed'
+      name: 'application_details',
+      type: 'textarea',
+      labelKey: 'app.applicationDetails',
+      helpKey: 'app.applicationDetailsHelp',
+      placeholderKey: 'app.applicationDetailsPlaceholder'
     },
-    // Weather Conditions
+    // Weather Conditions (NEW - from ChemicalTab-ENHANCED.jsx for transparency) - SSOT import
     {
       name: 'weather_conditions',
       type: 'select',
-      labelKey: 'quickAdd.fields.weatherConditions',
-      helpKey: 'quickAdd.fields.weatherConditionsHelp',
-      options: [
-        { value: 'calm_dry', labelKey: 'quickAdd.fields.weatherConditions.calmDry' },
-        { value: 'light_wind', labelKey: 'quickAdd.fields.weatherConditions.lightWind' },
-        { value: 'humid', labelKey: 'quickAdd.fields.weatherConditions.humid' },
-        { value: 'windy', labelKey: 'quickAdd.fields.weatherConditions.windy' }
-      ]
+      labelKey: 'app.weatherConditions',
+      helpKey: 'app.weatherConditionsHelp',
+      default: 'calm_dry',
+      options: WEATHER_CONDITIONS_OPTIONS // SSOT import - aligned with Manual Event
     },
-    // Application Timing
+    // Application Timing (NEW - from ChemicalTab-ENHANCED.jsx for transparency) - SSOT import
     {
       name: 'application_timing',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationTiming',
-      helpKey: 'quickAdd.fields.applicationTimingHelp',
-      options: [
-        { value: 'pre_plant', labelKey: 'quickAdd.fields.applicationTiming.prePlant' },
-        { value: 'post_emergence', labelKey: 'quickAdd.fields.applicationTiming.postEmergence' },
-        { value: 'flowering', labelKey: 'quickAdd.fields.applicationTiming.flowering' },
-        { value: 'fruit_development', labelKey: 'quickAdd.fields.applicationTiming.fruitDevelopment' },
-        { value: 'harvest', labelKey: 'quickAdd.fields.applicationTiming.harvest' }
-      ]
+      labelKey: 'app.applicationTiming',
+      helpKey: 'app.applicationTimingHelp',
+      default: 'post_emergence',
+      options: APPLICATION_TIMING_OPTIONS // SSOT import - aligned with Manual Event
     },
-    // Organic Approved (Consumer Trust)
+    // Target Pest/Disease/Need (for weed identification)
+    {
+      name: 'target_pest_disease',
+      type: 'text',
+      labelKey: 'app.targetPestDisease', // Standardized label key
+      helpKey: 'quickAdd.fields.targetPestDiseaseHelpWeed',
+      placeholderKey: 'quickAdd.fields.targetPestDiseasePlaceholderWeed'
+    },
+    // Restricted Use Pesticide (NEW - EPA compliance from Manual Event)
+    {
+      name: 'restricted_use_pesticide',
+      type: 'select',
+      labelKey: 'app.restrictedUsePesticide',
+      helpKey: 'app.restrictedUsePesticideHelp',
+      default: 'false',
+      options: RESTRICTED_USE_PESTICIDE_OPTIONS // SSOT import
+    },
+    // Organic Approved (label matches Manual Event) - SSOT import
     {
       name: 'organic_approved',
       type: 'select',
-      labelKey: 'quickAdd.fields.organicApproved',
+      labelKey: 'app.organicApproved', // Standardized label key
       helpKey: 'quickAdd.fields.organicApprovedHelp',
-      options: [
-        { value: 'omri_listed', labelKey: 'quickAdd.fields.organicApproved.omriListed' },
-        { value: 'usda_nop_approved', labelKey: 'quickAdd.fields.organicApproved.usdaNopApproved' },
-        { value: 'organic_equivalent', labelKey: 'quickAdd.fields.organicApproved.organicEquivalent' },
-        { value: 'not_organic', labelKey: 'quickAdd.fields.organicApproved.notOrganic' },
-        { value: 'transitional', labelKey: 'quickAdd.fields.organicApproved.transitional' }
-      ]
+      default: 'false',
+      options: ORGANIC_APPROVED_OPTIONS // SSOT import
     },
     // Buffer Zone
     {
@@ -1744,9 +1412,18 @@ export const herbicideFields: QuickEventTypeConfig = {
     {
       name: 'applicator_name',
       type: 'text',
-      labelKey: 'quickAdd.fields.applicatorName',
+      labelKey: 'app.applicatorName', // Standardized label key
       helpKey: 'quickAdd.fields.applicatorNameHelp',
       placeholderKey: 'quickAdd.fields.applicatorNamePlaceholder'
+    },
+    // Applicator Certification (NEW - from ChemicalTab-ENHANCED.jsx for EPA WPS compliance)
+    // Required when restricted_use_pesticide is true - matches conditional behavior in Manual Event
+    {
+      name: 'applicator_certification',
+      type: 'text',
+      labelKey: 'app.applicatorCertification',
+      helpKey: 'quickAdd.fields.applicatorCertificationHelp',
+      placeholderKey: 'quickAdd.fields.applicatorCertificationPlaceholder'
     },
     {
       name: 'epa_registration_number',
@@ -1758,7 +1435,7 @@ export const herbicideFields: QuickEventTypeConfig = {
     {
       name: 'rei_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.reiHours',
+      labelKey: 'app.reiHours', // Standardized label key
       helpKey: 'quickAdd.fields.reiHoursHelp',
       min: 0,
       step: 1,
@@ -1767,315 +1444,271 @@ export const herbicideFields: QuickEventTypeConfig = {
     {
       name: 'phi_days',
       type: 'number',
-      labelKey: 'quickAdd.fields.phiDays',
+      labelKey: 'app.phiDays', // Standardized label key
       helpKey: 'quickAdd.fields.phiDaysHelp',
       min: 0,
       step: 1,
       unitKey: 'quickAdd.fields.units.days'
     },
-    // Application Fuel
+    // Application Fuel - SSOT imports
     {
       name: 'application_fuel_type',
       type: 'select',
       labelKey: 'quickAdd.fields.applicationFuelType',
       helpKey: 'quickAdd.fields.applicationFuelTypeHelp',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      default: 'diesel', // Smart default: diesel is most common for agricultural application equipment
+      options: FUEL_TYPE_OPTIONS // SSOT import
     },
     {
       name: 'application_fuel_consumed',
       type: 'number',
       labelKey: 'quickAdd.fields.applicationFuelConsumed',
       helpKey: 'quickAdd.fields.applicationFuelConsumedHelp',
+      default: 2, // Smart default: typical fuel consumption for application equipment (gal)
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'application_fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS // SSOT import
     },
     {
       name: 'application_fuel_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.applicationFuelUnit',
       default: 'gal',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS // SSOT import
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
 };
 
 // Fungicide Event (Chemical Type: FU)
-// Aligned with ChemicalTab-ENHANCED.jsx
+// Aligned with ChemicalTab-ENHANCED.jsx - Uses SSOT imports
 export const fungicideFields: QuickEventTypeConfig = {
   templateId: 'fungicide',
   eventType: 'FU',
   quickFields: [
-    // Chemical Subtype
+    // Chemical Subtype - SSOT import
     {
       name: 'chemical_subtype',
       type: 'select',
-      labelKey: 'quickAdd.fields.chemicalSubtype',
-      helpKey: 'quickAdd.fields.chemicalSubtypeHelp',
+      labelKey: 'app.chemicalSubtype',
+      helpKey: 'app.chemicalSubtypeHelp',
       default: 'synthetic_fungicide',
       required: true,
-      options: [
-        { value: 'synthetic_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.syntheticFungicide' },
-        { value: 'copper_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.copperFungicide' },
-        { value: 'sulfur_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.sulfurFungicide' },
-        { value: 'biological_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.biologicalFungicide' }
-      ]
+      options: CHEMICAL_SUBTYPE_OPTIONS.fungicide
     },
-    // Commercial Name
+    // Commercial Name / Product - Matches Manual Event label
     {
       name: 'commercial_name',
       type: 'text',
-      labelKey: 'quickAdd.fields.commercialName',
-      helpKey: 'quickAdd.fields.commercialNameHelp',
-      placeholderKey: 'quickAdd.fields.commercialNamePlaceholder',
+      labelKey: 'app.commercialName',
+      helpKey: 'app.commercialNameHelp',
+      placeholderKey: 'app.commercialNamePlaceholder',
       required: true
     },
-    // Active Ingredient
+    // Active Ingredient (Optional) - Matches Manual Event label
     {
       name: 'active_ingredient',
       type: 'text',
-      labelKey: 'quickAdd.fields.activeIngredient',
-      helpKey: 'quickAdd.fields.activeIngredientHelp',
-      placeholderKey: 'quickAdd.fields.activeIngredientPlaceholder'
+      labelKey: 'app.activeIngredient',
+      helpKey: 'app.activeIngredientHelp',
+      placeholderKey: 'app.activeIngredientPlaceholder'
     },
     // Concentration (percentage for fungicides) - with validation
     {
       name: 'concentration',
       type: 'text',
-      labelKey: 'quickAdd.fields.concentration',
-      helpKey: 'quickAdd.fields.concentrationHelpFungicide',
-      placeholderKey: 'quickAdd.fields.concentrationPlaceholderPercent',
+      labelKey: 'app.fungicideConcentration', // Context-aware label - matches Manual Event
+      helpKey: 'app.concentrationHelpFungicide',
+      placeholderKey: 'app.concentrationPlaceholderPercent',
       required: true,
       validationType: 'concentration',
-      default: '50%' // Smart default: typical fungicide active ingredient concentration
+      default: '50%'
     },
-    // Volume Applied with Unit dropdown
+    // Volume Applied with Unit dropdown - SSOT import
     {
       name: 'volume_applied',
       type: 'number',
-      labelKey: 'quickAdd.fields.volumeApplied',
-      helpKey: 'quickAdd.fields.volumeAppliedHelp',
+      labelKey: 'app.volumeApplied',
+      helpKey: 'app.volumeAppliedHelp',
       default: 30,
       required: true,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'volume_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'lb', labelKey: 'quickAdd.fields.units.lb' }
-      ]
+      unitOptions: VOLUME_UNIT_OPTIONS
     },
     {
       name: 'volume_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.volumeUnit',
+      labelKey: 'app.volumeUnit',
       default: 'L',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'lb', labelKey: 'quickAdd.fields.units.lb' }
-      ]
+      options: VOLUME_UNIT_OPTIONS
     },
-    // Area Treated with Unit dropdown
+    // Area Treated with Unit dropdown - SSOT import
     {
       name: 'area_treated',
       type: 'number',
-      labelKey: 'quickAdd.fields.areaTreated',
-      helpKey: 'quickAdd.fields.areaTreatedHelp',
+      labelKey: 'app.areaTreated',
+      helpKey: 'app.areaTreatedHelp',
       default: 1,
       required: true,
       min: 0,
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' }
-      ]
+      unitOptions: AREA_UNIT_OPTIONS
     },
     {
       name: 'area_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.areaUnit',
+      labelKey: 'app.areaUnit',
       default: 'ha',
-      options: [
-        { value: 'ha', labelKey: 'quickAdd.fields.units.ha' },
-        { value: 'acres', labelKey: 'quickAdd.fields.units.acres' },
-        { value: 'm2', labelKey: 'quickAdd.fields.units.m2' }
-      ]
+      options: AREA_UNIT_OPTIONS
     },
-    // Application Method (EPA Standard Methods for Fungicide)
+    // Application Method - SSOT import (context-aware for fungicide)
     {
       name: 'application_method',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationMethod',
-      helpKey: 'quickAdd.fields.applicationMethodHelp',
+      labelKey: 'app.applicationMethod',
+      helpKey: 'app.applicationMethodHelp',
       default: 'ground_spray',
       required: true,
-      options: [
-        { value: 'ground_spray', labelKey: 'quickAdd.fields.applicationMethod.groundSpray' },
-        { value: 'chemigation', labelKey: 'quickAdd.fields.applicationMethod.chemigation' },
-        { value: 'seed_treatment', labelKey: 'quickAdd.fields.applicationMethod.seedTreatment' },
-        { value: 'soil_incorporation', labelKey: 'quickAdd.fields.applicationMethod.soilIncorporation' }
-      ]
+      options: APPLICATION_METHOD_OPTIONS_BY_TYPE.fungicide
     },
-    // Target Pest/Disease
+    // Application Details - Text field for method specifics (Manual Event parity)
     {
-      name: 'target_pest_disease',
-      type: 'text',
-      labelKey: 'quickAdd.fields.targetPestDisease',
-      helpKey: 'quickAdd.fields.targetPestDiseaseHelpFungus',
-      placeholderKey: 'quickAdd.fields.targetPestDiseasePlaceholderFungus'
+      name: 'application_details',
+      type: 'textarea',
+      labelKey: 'app.applicationDetails',
+      helpKey: 'app.applicationDetailsHelp',
+      placeholderKey: 'app.applicationDetailsPlaceholder'
     },
-    // Weather Conditions
+    // Weather Conditions (NEW - from ChemicalTab-ENHANCED.jsx for transparency) - SSOT import
     {
       name: 'weather_conditions',
       type: 'select',
-      labelKey: 'quickAdd.fields.weatherConditions',
-      helpKey: 'quickAdd.fields.weatherConditionsHelp',
-      options: [
-        { value: 'calm_dry', labelKey: 'quickAdd.fields.weatherConditions.calmDry' },
-        { value: 'light_wind', labelKey: 'quickAdd.fields.weatherConditions.lightWind' },
-        { value: 'humid', labelKey: 'quickAdd.fields.weatherConditions.humid' },
-        { value: 'windy', labelKey: 'quickAdd.fields.weatherConditions.windy' }
-      ]
+      labelKey: 'app.weatherConditions',
+      helpKey: 'app.weatherConditionsHelp',
+      default: 'calm_dry',
+      options: WEATHER_CONDITIONS_OPTIONS // SSOT import - aligned with Manual Event
     },
-    // Application Timing
+    // Application Timing (NEW - from ChemicalTab-ENHANCED.jsx for transparency) - SSOT import
     {
       name: 'application_timing',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationTiming',
-      helpKey: 'quickAdd.fields.applicationTimingHelp',
-      options: [
-        { value: 'pre_plant', labelKey: 'quickAdd.fields.applicationTiming.prePlant' },
-        { value: 'post_emergence', labelKey: 'quickAdd.fields.applicationTiming.postEmergence' },
-        { value: 'flowering', labelKey: 'quickAdd.fields.applicationTiming.flowering' },
-        { value: 'fruit_development', labelKey: 'quickAdd.fields.applicationTiming.fruitDevelopment' },
-        { value: 'harvest', labelKey: 'quickAdd.fields.applicationTiming.harvest' }
-      ]
+      labelKey: 'app.applicationTiming',
+      helpKey: 'app.applicationTimingHelp',
+      default: 'flowering', // Fungicides often applied during flowering
+      options: APPLICATION_TIMING_OPTIONS // SSOT import - aligned with Manual Event
     },
-    // Organic Approved (Consumer Trust)
+    // Target Pest/Disease/Need - Matches Manual Event label
+    {
+      name: 'target_pest_disease',
+      type: 'text',
+      labelKey: 'app.targetPestDiseaseNeed',
+      helpKey: 'app.targetPestDiseaseHelpFungus',
+      placeholderKey: 'app.targetPestDiseasePlaceholderFungus'
+    },
+    // Restricted Use Pesticide - EPA compliance (SSOT import)
+    {
+      name: 'restricted_use_pesticide',
+      type: 'select',
+      labelKey: 'app.restrictedUsePesticide',
+      helpKey: 'app.restrictedUsePesticideHelp',
+      default: 'false',
+      options: RESTRICTED_USE_PESTICIDE_OPTIONS
+    },
+    // Organic Approved - SSOT import
     {
       name: 'organic_approved',
       type: 'select',
-      labelKey: 'quickAdd.fields.organicApproved',
-      helpKey: 'quickAdd.fields.organicApprovedHelp',
-      options: [
-        { value: 'omri_listed', labelKey: 'quickAdd.fields.organicApproved.omriListed' },
-        { value: 'usda_nop_approved', labelKey: 'quickAdd.fields.organicApproved.usdaNopApproved' },
-        { value: 'organic_equivalent', labelKey: 'quickAdd.fields.organicApproved.organicEquivalent' },
-        { value: 'not_organic', labelKey: 'quickAdd.fields.organicApproved.notOrganic' },
-        { value: 'transitional', labelKey: 'quickAdd.fields.organicApproved.transitional' }
-      ]
+      labelKey: 'app.organicApproved',
+      helpKey: 'app.organicApprovedHelp',
+      default: 'false',
+      options: ORGANIC_APPROVED_OPTIONS
     },
     // Buffer Zone
     {
       name: 'buffer_zone_meters',
       type: 'number',
-      labelKey: 'quickAdd.fields.bufferZone',
-      helpKey: 'quickAdd.fields.bufferZoneHelp',
+      labelKey: 'app.bufferZone',
+      helpKey: 'app.bufferZoneHelp',
       min: 0,
       step: 1,
-      unitKey: 'quickAdd.fields.units.meters'
+      unitKey: 'app.units.meters'
     },
     // EPA WPS Compliance Fields
     {
       name: 'applicator_name',
       type: 'text',
-      labelKey: 'quickAdd.fields.applicatorName',
-      helpKey: 'quickAdd.fields.applicatorNameHelp',
-      placeholderKey: 'quickAdd.fields.applicatorNamePlaceholder'
+      labelKey: 'app.applicatorName',
+      helpKey: 'app.applicatorNameHelp',
+      placeholderKey: 'app.applicatorNamePlaceholder'
+    },
+    // Applicator Certification (from ChemicalTab-ENHANCED.jsx for EPA WPS compliance)
+    // Required when restricted_use_pesticide is true - matches conditional behavior in Manual Event
+    {
+      name: 'applicator_certification',
+      type: 'text',
+      labelKey: 'app.applicatorCertification',
+      helpKey: 'quickAdd.fields.applicatorCertificationHelp',
+      placeholderKey: 'quickAdd.fields.applicatorCertificationPlaceholder'
     },
     {
       name: 'epa_registration_number',
       type: 'text',
-      labelKey: 'quickAdd.fields.epaRegistrationNumber',
-      helpKey: 'quickAdd.fields.epaRegistrationNumberHelp',
-      placeholderKey: 'quickAdd.fields.epaRegistrationNumberPlaceholder'
+      labelKey: 'app.epaRegistrationNumber',
+      helpKey: 'app.epaRegistrationNumberHelp',
+      placeholderKey: 'app.epaRegistrationNumberPlaceholder'
     },
     {
       name: 'rei_hours',
       type: 'number',
-      labelKey: 'quickAdd.fields.reiHours',
-      helpKey: 'quickAdd.fields.reiHoursHelp',
+      labelKey: 'app.reiHours',
+      helpKey: 'app.reiHoursHelp',
       min: 0,
       step: 1,
-      unitKey: 'quickAdd.fields.units.hours'
+      unitKey: 'app.units.hours'
     },
     {
       name: 'phi_days',
       type: 'number',
-      labelKey: 'quickAdd.fields.phiDays',
-      helpKey: 'quickAdd.fields.phiDaysHelp',
+      labelKey: 'app.phiDays',
+      helpKey: 'app.phiDaysHelp',
       min: 0,
       step: 1,
-      unitKey: 'quickAdd.fields.units.days'
+      unitKey: 'app.units.days'
     },
-    // Application Fuel
+    // Application Fuel - SSOT imports
     {
       name: 'application_fuel_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationFuelType',
-      helpKey: 'quickAdd.fields.applicationFuelTypeHelp',
-      options: [
-        { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
-        { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
-        { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-        { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-        { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
-      ]
+      labelKey: 'app.applicationEquipmentFuelType',
+      helpKey: 'app.applicationFuelTypeHelp',
+      default: 'diesel',
+      options: FUEL_TYPE_OPTIONS
     },
     {
       name: 'application_fuel_consumed',
       type: 'number',
-      labelKey: 'quickAdd.fields.applicationFuelConsumed',
-      helpKey: 'quickAdd.fields.applicationFuelConsumedHelp',
+      labelKey: 'app.fuelConsumed',
+      helpKey: 'app.applicationFuelConsumedHelp',
+      default: 2,
       min: 0,
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'application_fuel_unit',
-      unitOptions: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      unitOptions: FUEL_UNIT_OPTIONS
     },
     {
       name: 'application_fuel_unit',
       type: 'select',
-      labelKey: 'quickAdd.fields.applicationFuelUnit',
+      labelKey: 'app.applicationFuelUnit',
       default: 'gal',
-      options: [
-        { value: 'L', labelKey: 'quickAdd.fields.units.L' },
-        { value: 'gal', labelKey: 'quickAdd.fields.units.gal' },
-        { value: 'kg', labelKey: 'quickAdd.fields.units.kg' },
-        { value: 'kWh', labelKey: 'quickAdd.fields.units.kWh' }
-      ]
+      options: FUEL_UNIT_OPTIONS
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -2086,31 +1719,28 @@ export const fungicideFields: QuickEventTypeConfig = {
 // ============================================================================
 
 // General Documentation Event (No Carbon Impact)
+// SSOT: Uses imported options from eventFieldDefinitions.ts
 export const generalDocumentationFields: QuickEventTypeConfig = {
   templateId: 'general_documentation',
   eventType: 'GE', // General event type
   excludeFromCarbonCalculation: true,
   quickFields: [
+    // Activity Type - SSOT import
     {
       name: 'activity_type',
       type: 'select',
-      labelKey: 'quickAdd.fields.activityType',
-      helpKey: 'quickAdd.fields.activityTypeHelp',
+      labelKey: 'app.activityType', // Standardized label key
+      helpKey: 'app.activityTypeHelp',
       default: 'inspection',
-      options: [
-        { value: 'inspection', labelKey: 'quickAdd.fields.activityType.inspection' },
-        { value: 'certification', labelKey: 'quickAdd.fields.activityType.certification' },
-        { value: 'training', labelKey: 'quickAdd.fields.activityType.training' },
-        { value: 'maintenance', labelKey: 'quickAdd.fields.activityType.maintenance' },
-        { value: 'other', labelKey: 'quickAdd.fields.activityType.other' }
-      ]
+      options: ACTIVITY_TYPE_OPTIONS // SSOT import
     },
+    // Notes / Observations
     {
       name: 'notes',
       type: 'textarea',
-      labelKey: 'quickAdd.fields.notes',
-      helpKey: 'quickAdd.fields.notesHelp',
-      placeholderKey: 'quickAdd.fields.notesPlaceholder'
+      labelKey: 'app.notes', // Standardized label key
+      helpKey: 'app.notesHelp',
+      placeholderKey: 'app.notesPlaceholder'
     }
   ]
 };

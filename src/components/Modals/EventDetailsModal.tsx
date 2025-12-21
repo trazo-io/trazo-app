@@ -60,7 +60,9 @@ import {
   FaExternalLinkAlt,
   FaChartLine,
   FaDollarSign,
-  FaClock
+  FaClock,
+  FaShieldAlt,
+  FaWrench
 } from 'react-icons/fa';
 import { MdVerified, MdInfo, MdOpenInNew } from 'react-icons/md';
 import { useDeleteEventMutation } from 'store/api/historyApi';
@@ -111,6 +113,21 @@ interface Event {
   target_pest_disease?: string;
   pre_harvest_interval?: number;
   active_ingredient?: string;
+  // Production event fields (first-class fields from backend)
+  area_covered?: number;
+  area_unit?: string;
+  yield_quantity?: number;
+  yield_unit?: string;
+  fuel_consumed?: number;
+  fuel_unit?: string;
+  equipment_hours?: number;
+  transportation_distance?: number;
+  transportation_unit?: string;
+  production_type?: string;
+  production_efficiency?: string;
+  // Sprint 3 Epic 3.2: Consumer Trust Fields
+  seeds_source?: string;
+  water_source?: string;
   extra_data?: {
     // Weather Event specific fields
     lower_temperature?: number;
@@ -521,6 +538,22 @@ const extractEventData = (event: Event) => {
     unit,
     hasQuantifiableData: duration !== null || amount !== null
   };
+};
+
+/**
+ * Get the appropriate label for fuel/energy consumption based on fuel type
+ * Electric equipment uses "Energy Consumed" while fuel-based equipment uses "Fuel Consumed"
+ *
+ * NOTE: Icons (⚡/⛽) are provided by the rendering component, not in the label text,
+ * to avoid duplicate icons in the display.
+ */
+const getFuelConsumptionLabel = (fuelType?: string): string => {
+  if (!fuelType) {
+    return 'Fuel Consumed';
+  }
+
+  const normalizedFuelType = fuelType.toLowerCase();
+  return normalizedFuelType === 'electric' ? 'Energy Consumed' : 'Fuel Consumed';
 };
 
 const getQRVisibility = (event: Event): 'high' | 'medium' | 'low' => {
@@ -1089,10 +1122,11 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
       const unitLabels = {
         L: 'liters',
         gal: 'gallons',
-        kg: 'kilograms'
+        kg: 'kilograms',
+        kWh: 'kWh'
       };
       fields.push({
-        label: 'Fuel Consumed',
+        label: getFuelConsumptionLabel(event.extra_data?.fuel_type),
         value: `${event.fuel_consumed} ${unitLabels[fuelUnit] || fuelUnit}`,
         priority: 'immediate'
       });
@@ -1159,6 +1193,47 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
       });
     }
 
+    // ============================================================
+    // Sprint 3 Epic 3.2: Consumer Trust Fields for Production Events
+    // These fields enhance consumer confidence in agricultural practices
+    // ============================================================
+
+    // Seeds/Seedlings Source - For Planting and Transplanting events
+    if (event.seeds_source) {
+      const seedSourceLabels: Record<string, string> = {
+        certified_organic: '🌱 Certified Organic Seeds',
+        farm_saved: '♻️ Farm-Saved Seeds',
+        local: '🏡 Local Nursery/Supplier',
+        cooperative: '🤝 Farmer Cooperative',
+        commercial: '🏭 Commercial Supplier',
+        other: '📝 Other Source'
+      };
+      fields.push({
+        label: 'Seeds/Seedlings Source',
+        value: seedSourceLabels[event.seeds_source] || event.seeds_source,
+        priority: 'secondary'
+      });
+    }
+
+    // Water Source - For Irrigation events
+    if (event.water_source) {
+      const waterSourceLabels: Record<string, string> = {
+        well_groundwater: '💧 Well/Groundwater',
+        municipal: '🏢 Municipal Water Supply',
+        rainwater_harvesting: '🌧️ Rainwater Harvesting',
+        irrigation_canal: '🚿 Irrigation Canal/District',
+        river_stream: '🏞️ River/Stream',
+        pond_reservoir: '🌊 Pond/Reservoir',
+        recycled_water: '♻️ Recycled/Reclaimed Water',
+        other: '📝 Other Source'
+      };
+      fields.push({
+        label: 'Water Source',
+        value: waterSourceLabels[event.water_source] || event.water_source,
+        priority: 'secondary'
+      });
+    }
+
     // Legacy extraData fields for backward compatibility
     if (extraData.quality_grade) {
       fields.push({
@@ -1208,18 +1283,13 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
     if (extraData.fuel_consumed && extraData.fuel_unit) {
       fields.push({
-        label: 'Fuel Consumed',
+        label: getFuelConsumptionLabel(extraData.fuel_type),
         value: `${extraData.fuel_consumed} ${extraData.fuel_unit}`,
         priority: 'immediate'
       });
     }
-    if (extraData.fuel_type) {
-      fields.push({
-        label: 'Fuel Type',
-        value: extraData.fuel_type,
-        priority: 'immediate'
-      });
-    }
+    // Note: Fuel Type is now indicated by emoji prefix in label (⚡ Electric / ⛽ Diesel)
+    // Separate field removed to avoid redundancy
     if (extraData.hours_operated !== undefined) {
       fields.push({
         label: 'Operating Hours',

@@ -121,6 +121,8 @@ export default function CarbonJourney() {
     <StandardPage
       title="My Shopping History"
       description="See all the products you've scanned and reviewed"
+      showBackButton
+      onBack={() => navigate(-1)}
     >
       <VStack spacing={8} align="stretch">
         {/* Journey Overview Stats */}

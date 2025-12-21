@@ -165,18 +165,18 @@ export default function EducationDashboard() {
           ]
         },
         {
-          id: 'carbon-markets',
-          title: 'Carbon Credit Markets',
-          description: 'Understanding agricultural carbon credits and trading systems',
+          id: 'transparency-verification',
+          title: 'Transparency Verification',
+          description: 'Understanding agricultural transparency and verification systems',
           duration: '28 min',
           icon: FaChartLine,
           completed: false,
           progress: 0,
           keyTopics: [
-            'Carbon Credits',
-            'Offset Programs',
+            'Transparency Metrics',
+            'Consumer Trust',
             'Verification Standards',
-            'Market Dynamics'
+            'QR Engagement'
           ]
         },
         {

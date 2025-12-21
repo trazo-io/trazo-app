@@ -328,7 +328,9 @@ const ProductionTab = ({
     'equipment_operation_type',
     'operation_efficiency',
     'equipment_hours',
-    'observation'
+    'observation',
+    // Sprint 3 Epic 3.2: Consumer Trust Fields for preview
+    'seeds_source'
   ]);
   const previousValuesRef = useRef({});
   const isInitialMountRef = useRef(true);
@@ -358,7 +360,9 @@ const ProductionTab = ({
           'transportation_unit',
           'observation',
           // Phase 2.3: Added custom fields for farmer-created data
-          'custom_fields'
+          'custom_fields',
+          // Sprint 3 Epic 3.2: Consumer Trust Fields for preview
+          'seeds_source'
         ];
         const currentRelevantValues = {};
         relevantFields.forEach((field) => {

@@ -8,6 +8,7 @@ import {
   useUpdateParcelMutation,
   useGetParcelQuery
 } from 'store/api/productApi';
+import { useGetEstablishmentQuery } from 'store/api/companyApi';
 import { setEstablishmentParcel } from 'store/features/companySlice';
 import { useToast } from '@chakra-ui/react';
 
@@ -24,6 +25,8 @@ interface RootState {
     currentEstablishment: {
       id: string;
       name: string;
+      latitude?: number;
+      longitude?: number;
     };
   };
 }
@@ -42,6 +45,17 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   const [createParcel, { isLoading: isCreating }] = useCreateParcelMutation();
   const [updateParcel, { isLoading: isUpdating }] = useUpdateParcelMutation();
 
+  // Fetch establishment data to get coordinates for map centering
+  const { data: establishmentData } = useGetEstablishmentQuery(
+    {
+      companyId: currentCompany?.id,
+      establishmentId
+    },
+    {
+      skip: !establishmentId || !currentCompany?.id
+    }
+  );
+
   // Fetch parcel data for edit mode
   const {
     data: parcelData,
@@ -57,6 +71,14 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       skip: !isEdit || !parcelId || !establishmentId || !currentCompany?.id
     }
   );
+
+  // Get establishment coordinates - prefer fresh API data over Redux state
+  const establishmentCoordinates =
+    establishmentData?.latitude && establishmentData?.longitude
+      ? { lat: establishmentData.latitude, lng: establishmentData.longitude }
+      : currentEstablishment?.latitude && currentEstablishment?.longitude
+        ? { lat: currentEstablishment.latitude, lng: currentEstablishment.longitude }
+        : undefined;
 
   // 🎯 Transparency-focused initial data mapping
   const getInitialData = () => {
@@ -97,7 +119,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       contact_person: parcelData.contact_person || '',
       contact_email: parcelData.contact_email || '',
       address: parcelData.address || '',
-      soil_type: parcelData.soil_type || '',
       unique_code: parcelData.unique_code || ''
     };
   };
@@ -144,7 +165,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         address: data.address || '',
         certified: data.certified || false,
         crop_focus: data.crop_focus || '', // Use crop_focus for backend transparency mapping
-        soil_type: data.soil_type || '',
         unique_code: data.unique_code || '',
         certification_type: data.certification_type || '',
         contact_person: data.contact_person || '',
@@ -252,7 +272,8 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         onCancel={handleCancel}
         isLoading={true}
         isEdit={true}
-        establishmentName={currentEstablishment?.name || ''}
+        establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
+        establishmentCoordinates={establishmentCoordinates}
       />
     );
   }
@@ -278,7 +299,8 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       initialData={getInitialData()}
       isLoading={isCreating || isUpdating}
       isEdit={isEdit}
-      establishmentName={currentEstablishment?.name || ''}
+      establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
+      establishmentCoordinates={establishmentCoordinates}
     />
   );
 }

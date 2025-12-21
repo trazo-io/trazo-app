@@ -84,11 +84,14 @@ function AddEstablishment({ isEdit = false }: Props) {
             ? data.certifications.join(', ')
             : data.certifications || '',
           sustainability_practices: JSON.stringify(data.sustainabilityPractices || []),
-          // Add missing operational fields for EDIT
+          // Operational fields - updated for transparency-first approach
+          // climate_zone removed from UI but kept for backward compatibility
           climate_zone: data.climateZone || '',
           water_sources: JSON.stringify(data.waterSources || []),
-          soil_types: JSON.stringify(data.soilTypes || []),
-          conservation_practices: JSON.stringify(data.conservationPractices || []),
+          // NEW: soil_health_practices replaces soil_types (more consumer-friendly)
+          soil_health_practices: JSON.stringify(data.soilHealthPractices || []),
+          // conservation_practices merged into sustainability_practices
+          conservation_practices: JSON.stringify([]),
           irrigation_methods: JSON.stringify(data.irrigationMethods || []),
           contact_person: data.contact_person || '',
           contact_phone: data.contact_phone || data.phone || '',
@@ -153,11 +156,14 @@ function AddEstablishment({ isEdit = false }: Props) {
             ? data.certifications.join(', ')
             : data.certifications || '',
           sustainability_practices: JSON.stringify(data.sustainabilityPractices || []),
-          // Add missing operational fields for CREATE
+          // Operational fields - updated for transparency-first approach
+          // climate_zone removed from UI but kept for backward compatibility
           climate_zone: data.climateZone || '',
           water_sources: JSON.stringify(data.waterSources || []),
-          soil_types: JSON.stringify(data.soilTypes || []),
-          conservation_practices: JSON.stringify(data.conservationPractices || []),
+          // NEW: soil_health_practices replaces soil_types (more consumer-friendly)
+          soil_health_practices: JSON.stringify(data.soilHealthPractices || []),
+          // conservation_practices merged into sustainability_practices
+          conservation_practices: JSON.stringify([]),
           irrigation_methods: JSON.stringify(data.irrigationMethods || []),
           contact_person: data.contact_person || '',
           contact_phone: data.contact_phone || data.phone || '',
@@ -293,18 +299,36 @@ function AddEstablishment({ isEdit = false }: Props) {
           ? establishmentData.certifications
           : []
         : [],
+      // sustainabilityPractices now includes merged conservation_practices for backward compatibility
       sustainabilityPractices: (() => {
+        let practices: string[] = [];
+
+        // Get sustainability practices
         if (Array.isArray(establishmentData.sustainability_practices)) {
-          return establishmentData.sustainability_practices;
-        }
-        if (typeof establishmentData.sustainability_practices === 'string') {
+          practices = [...establishmentData.sustainability_practices];
+        } else if (typeof establishmentData.sustainability_practices === 'string') {
           try {
-            return JSON.parse(establishmentData.sustainability_practices);
+            practices = JSON.parse(establishmentData.sustainability_practices);
           } catch {
-            return [];
+            practices = [];
           }
         }
-        return [];
+
+        // Merge in old conservation_practices for backward compatibility
+        let conservationPractices: string[] = [];
+        if (Array.isArray(establishmentData.conservation_practices)) {
+          conservationPractices = establishmentData.conservation_practices;
+        } else if (typeof establishmentData.conservation_practices === 'string') {
+          try {
+            conservationPractices = JSON.parse(establishmentData.conservation_practices);
+          } catch {
+            conservationPractices = [];
+          }
+        }
+
+        // Merge without duplicates
+        const merged = [...new Set([...practices, ...conservationPractices])];
+        return merged;
       })(),
       // Add missing operational fields for EDIT data loading
       climateZone: establishmentData.climate_zone || '',
@@ -321,7 +345,19 @@ function AddEstablishment({ isEdit = false }: Props) {
         }
         return [];
       })(),
-      soilTypes: (() => {
+      // NEW: soilHealthPractices - try new field first, fall back to old soil_types for backward compatibility
+      soilHealthPractices: (() => {
+        // Try new field first
+        if (Array.isArray(establishmentData.soil_health_practices)) {
+          return establishmentData.soil_health_practices;
+        }
+        if (typeof establishmentData.soil_health_practices === 'string') {
+          try {
+            const parsed = JSON.parse(establishmentData.soil_health_practices);
+            if (parsed.length > 0) return parsed;
+          } catch {}
+        }
+        // Fall back to old soil_types field for backward compatibility
         if (Array.isArray(establishmentData.soil_types)) {
           return establishmentData.soil_types;
         }
@@ -334,19 +370,9 @@ function AddEstablishment({ isEdit = false }: Props) {
         }
         return [];
       })(),
-      conservationPractices: (() => {
-        if (Array.isArray(establishmentData.conservation_practices)) {
-          return establishmentData.conservation_practices;
-        }
-        if (typeof establishmentData.conservation_practices === 'string') {
-          try {
-            return JSON.parse(establishmentData.conservation_practices);
-          } catch {
-            return [];
-          }
-        }
-        return [];
-      })(),
+      // conservationPractices merged into sustainabilityPractices - keep empty for form
+      // Old conservation data is handled by merging into sustainabilityPractices above
+      conservationPractices: [],
       irrigationMethods: (() => {
         if (Array.isArray(establishmentData.irrigation_methods)) {
           return establishmentData.irrigation_methods;

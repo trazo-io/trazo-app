@@ -769,7 +769,6 @@ function ProductDetail() {
         type="qr_verification"
         message={qrVerificationError}
         onRetry={() => window.location.reload()}
-        onGoHome={() => navigate('/')}
       />
     );
   }
@@ -822,7 +821,6 @@ function ProductDetail() {
             : 'Please check your connection and try again, or scan a different product.'
         }
         onRetry={() => window.location.reload()}
-        onGoHome={() => navigate('/')}
       />
     );
   }
@@ -835,7 +833,6 @@ function ProductDetail() {
         title="No Product Data Available"
         message="Please scan a valid QR code to view product information."
         onRetry={() => window.location.reload()}
-        onGoHome={() => navigate('/')}
       />
     );
   }
@@ -1532,7 +1529,18 @@ function ProductDetail() {
                 contact_email: (completeData as any)?.farmer?.company?.contact_email,
                 // Company overview stats for consumer transparency
                 total_establishments: (completeData as any)?.farmer?.company?.total_establishments,
-                total_parcels: (completeData as any)?.farmer?.company?.total_parcels
+                total_parcels: (completeData as any)?.farmer?.company?.total_parcels,
+                // Sustainability data from company onboarding (transparency-first)
+                // Maps from farm_context.company_sustainability in the transparency API response
+                sustainability_goals:
+                  (completeData as any)?.farm_context?.company_sustainability?.goals ||
+                  (completeData as any)?.farmer?.company?.sustainability_goals,
+                crop_focus:
+                  (completeData as any)?.farm_context?.company_sustainability?.crop_focus ||
+                  (completeData as any)?.farmer?.company?.crop_focus,
+                sustainability_commitment:
+                  (completeData as any)?.farm_context?.company_sustainability?.commitment ||
+                  (completeData as any)?.farmer?.company?.sustainability_commitment
               }}
               establishmentData={{
                 // Use complete farmer/establishment data from enhanced API response

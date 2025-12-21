@@ -12,7 +12,8 @@ import {
   Divider,
   Flex,
   Button,
-  useDisclosure
+  useDisclosure,
+  Link
 } from '@chakra-ui/react';
 import {
   FaBuilding,
@@ -23,7 +24,10 @@ import {
   FaGlobe,
   FaStar,
   FaInfoCircle,
-  FaTractor
+  FaTractor,
+  FaLeaf,
+  FaFacebook,
+  FaInstagram
 } from 'react-icons/fa';
 import { BsStarFill, BsStarHalf, BsStar } from 'react-icons/bs';
 import { CompanyModal } from './CompanyModal';
@@ -61,6 +65,10 @@ interface CompanyEstablishmentInfoProps {
       name: string;
       tier: string;
     };
+    // Sustainability data from company onboarding (transparency-first)
+    sustainability_goals?: string[];
+    crop_focus?: string;
+    sustainability_commitment?: string;
   };
   establishmentData?: {
     name?: string;
@@ -106,11 +114,13 @@ interface CompanyEstablishmentInfoProps {
       name: string;
       area: number;
     }>;
-    // Operational fields
-    climate_zone?: string;
+    // Operational fields - updated for transparency-first approach
+    // climate_zone removed from UI (not consumer-relevant)
     water_sources?: string[] | string;
-    soil_types?: string[] | string;
-    conservation_practices?: string[] | string;
+    // soil_health_practices replaces soil_types (more consumer-friendly)
+    soil_health_practices?: string[] | string;
+    soil_types?: string[] | string; // kept for backward compatibility
+    // conservation_practices merged into sustainability_practices
     irrigation_methods?: string[] | string;
   };
   parcelData?: {
@@ -260,6 +270,32 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                 </Text>
               )}
 
+              {/* Sustainability Goals - From company onboarding (transparency-first) */}
+              {companyData.sustainability_goals && companyData.sustainability_goals.length > 0 && (
+                <VStack align="start" spacing={2}>
+                  <HStack spacing={2}>
+                    <Icon as={FaLeaf} color="green.500" boxSize={4} />
+                    <Text fontSize="sm" fontWeight="semibold" color={textColor}>
+                      Sustainability Commitment
+                    </Text>
+                  </HStack>
+                  <HStack spacing={2} flexWrap="wrap">
+                    {companyData.sustainability_goals.map((goal, index) => (
+                      <Badge
+                        key={index}
+                        colorScheme="green"
+                        borderRadius="full"
+                        px={3}
+                        py={1}
+                        fontSize="xs"
+                      >
+                        {goal}
+                      </Badge>
+                    ))}
+                  </HStack>
+                </VStack>
+              )}
+
               <Divider />
 
               <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
@@ -273,12 +309,14 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                 )}
 
                 {companyData.website && (
-                  <HStack spacing={2}>
-                    <Icon as={FaGlobe} color="blue.500" boxSize={4} />
-                    <Text fontSize="sm" color="blue.500" cursor="pointer">
-                      Visit Website
-                    </Text>
-                  </HStack>
+                  <Link href={companyData.website} isExternal _hover={{ textDecoration: 'none' }}>
+                    <HStack spacing={2}>
+                      <Icon as={FaGlobe} color="blue.500" boxSize={4} />
+                      <Text fontSize="sm" color="blue.500" _hover={{ color: 'blue.600' }}>
+                        Visit Website
+                      </Text>
+                    </HStack>
+                  </Link>
                 )}
 
                 {companyData.phone && (
@@ -287,6 +325,32 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                     <Text fontSize="sm" color={textColor}>
                       {companyData.phone}
                     </Text>
+                  </HStack>
+                )}
+
+                {/* Social Media Links - Trust Builders */}
+                {(companyData.facebook || companyData.instagram) && (
+                  <HStack spacing={3}>
+                    {companyData.facebook && (
+                      <Link href={companyData.facebook} isExternal>
+                        <HStack spacing={1}>
+                          <Icon as={FaFacebook} color="blue.600" boxSize={5} _hover={{ color: 'blue.700' }} />
+                          <Text fontSize="xs" color="blue.600" display={{ base: 'none', md: 'block' }}>
+                            Facebook
+                          </Text>
+                        </HStack>
+                      </Link>
+                    )}
+                    {companyData.instagram && (
+                      <Link href={companyData.instagram} isExternal>
+                        <HStack spacing={1}>
+                          <Icon as={FaInstagram} color="pink.500" boxSize={5} _hover={{ color: 'pink.600' }} />
+                          <Text fontSize="xs" color="pink.500" display={{ base: 'none', md: 'block' }}>
+                            Instagram
+                          </Text>
+                        </HStack>
+                      </Link>
+                    )}
                   </HStack>
                 )}
               </Stack>
@@ -403,12 +467,10 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                 </>
               )}
 
-              {/* Operational Details Summary */}
-              {(establishmentData.climate_zone ||
-                (establishmentData.water_sources && establishmentData.water_sources.length > 0) ||
+              {/* Operational Details Summary - Updated: removed climate_zone, soil_types → soil_health_practices */}
+              {((establishmentData.water_sources && establishmentData.water_sources.length > 0) ||
+                (establishmentData.soil_health_practices && establishmentData.soil_health_practices.length > 0) ||
                 (establishmentData.soil_types && establishmentData.soil_types.length > 0) ||
-                (establishmentData.conservation_practices &&
-                  establishmentData.conservation_practices.length > 0) ||
                 (establishmentData.irrigation_methods &&
                   establishmentData.irrigation_methods.length > 0)) && (
                 <>
@@ -421,17 +483,6 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                       </Text>
                     </HStack>
                     <Stack direction={{ base: 'column', md: 'row' }} spacing={4} flexWrap="wrap">
-                      {establishmentData.climate_zone && (
-                        <VStack align="start" spacing={1}>
-                          <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                            CLIMATE
-                          </Text>
-                          <Badge colorScheme="blue" variant="subtle" px={2}>
-                            {formatLabel(establishmentData.climate_zone)}
-                          </Badge>
-                        </VStack>
-                      )}
-
                       {(() => {
                         // Parse water sources
                         const waterSources = Array.isArray(establishmentData.water_sources)
@@ -463,28 +514,79 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                       })()}
 
                       {(() => {
-                        // Parse soil types
-                        const soilTypes = Array.isArray(establishmentData.soil_types)
-                          ? establishmentData.soil_types
-                          : typeof establishmentData.soil_types === 'string'
+                        // Parse soil health practices - try new field first, fall back to old soil_types
+                        let soilHealthPractices: string[] = [];
+
+                        // Try new soil_health_practices field first
+                        if (establishmentData.soil_health_practices) {
+                          soilHealthPractices = Array.isArray(establishmentData.soil_health_practices)
+                            ? establishmentData.soil_health_practices
+                            : typeof establishmentData.soil_health_practices === 'string'
+                            ? (() => {
+                                try {
+                                  const parsed = JSON.parse(establishmentData.soil_health_practices as string);
+                                  return parsed.length > 0 ? parsed : [];
+                                } catch {
+                                  return [];
+                                }
+                              })()
+                            : [];
+                        }
+
+                        // Fall back to old soil_types field for backward compatibility
+                        if (soilHealthPractices.length === 0 && establishmentData.soil_types) {
+                          soilHealthPractices = Array.isArray(establishmentData.soil_types)
+                            ? establishmentData.soil_types
+                            : typeof establishmentData.soil_types === 'string'
+                            ? (() => {
+                                try {
+                                  return JSON.parse(establishmentData.soil_types as string);
+                                } catch {
+                                  return [];
+                                }
+                              })()
+                            : [];
+                        }
+
+                        if (soilHealthPractices.length > 0) {
+                          return (
+                            <VStack align="start" spacing={1}>
+                              <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                                SOIL HEALTH ({soilHealthPractices.length})
+                              </Text>
+                              <Text fontSize="xs" color={textColor} noOfLines={1}>
+                                {soilHealthPractices.slice(0, 2).join(', ')}
+                                {soilHealthPractices.length > 2 && '...'}
+                              </Text>
+                            </VStack>
+                          );
+                        }
+                        return null;
+                      })()}
+
+                      {(() => {
+                        // Parse irrigation methods
+                        const irrigationMethods = Array.isArray(establishmentData.irrigation_methods)
+                          ? establishmentData.irrigation_methods
+                          : typeof establishmentData.irrigation_methods === 'string'
                           ? (() => {
                               try {
-                                return JSON.parse(establishmentData.soil_types);
+                                return JSON.parse(establishmentData.irrigation_methods);
                               } catch {
                                 return [];
                               }
                             })()
                           : [];
 
-                        if (soilTypes.length > 0) {
+                        if (irrigationMethods.length > 0) {
                           return (
                             <VStack align="start" spacing={1}>
                               <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                                SOILS ({soilTypes.length})
+                                IRRIGATION ({irrigationMethods.length})
                               </Text>
                               <Text fontSize="xs" color={textColor} noOfLines={1}>
-                                {soilTypes.slice(0, 2).join(', ')}
-                                {soilTypes.length > 2 && '...'}
+                                {irrigationMethods.slice(0, 2).join(', ')}
+                                {irrigationMethods.length > 2 && '...'}
                               </Text>
                             </VStack>
                           );
@@ -583,7 +685,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
             images: establishmentData.images,
             parcels: establishmentData.parcels,
             // Operational fields - handle both array and string formats
-            climate_zone: establishmentData.climate_zone,
+            // climate_zone removed (not consumer-relevant)
             water_sources: (() => {
               if (Array.isArray(establishmentData.water_sources)) {
                 return establishmentData.water_sources;
@@ -597,7 +699,21 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
               }
               return [];
             })(),
-            soil_types: (() => {
+            // soil_health_practices - try new field first, fall back to old soil_types
+            soil_health_practices: (() => {
+              // Try new field first
+              if (establishmentData.soil_health_practices) {
+                if (Array.isArray(establishmentData.soil_health_practices)) {
+                  return establishmentData.soil_health_practices;
+                }
+                if (typeof establishmentData.soil_health_practices === 'string') {
+                  try {
+                    const parsed = JSON.parse(establishmentData.soil_health_practices);
+                    if (parsed.length > 0) return parsed;
+                  } catch {}
+                }
+              }
+              // Fall back to old soil_types field
               if (Array.isArray(establishmentData.soil_types)) {
                 return establishmentData.soil_types;
               }
@@ -610,19 +726,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
               }
               return [];
             })(),
-            conservation_practices: (() => {
-              if (Array.isArray(establishmentData.conservation_practices)) {
-                return establishmentData.conservation_practices;
-              }
-              if (typeof establishmentData.conservation_practices === 'string') {
-                try {
-                  return JSON.parse(establishmentData.conservation_practices);
-                } catch {
-                  return [];
-                }
-              }
-              return [];
-            })(),
+            // conservation_practices merged into sustainability_practices - pass empty
             irrigation_methods: (() => {
               if (Array.isArray(establishmentData.irrigation_methods)) {
                 return establishmentData.irrigation_methods;

@@ -262,16 +262,34 @@ function normalizeEventData(event: any): any {
 }
 
 /**
+ * Get the appropriate label for fuel/energy consumption based on fuel type
+ * Electric equipment uses "Energy Consumed" (icon provided by component)
+ * Fuel-based equipment uses "Fuel Consumed" (icon provided by component)
+ *
+ * NOTE: Emoji icons are now provided by the component's getCategoryIcon() function
+ * to avoid duplicate icons in the display.
+ */
+function getFuelConsumptionLabel(fuelType?: string): string {
+  if (!fuelType) {
+    return 'Fuel Consumed';
+  }
+
+  const normalizedFuelType = fuelType.toLowerCase();
+  return normalizedFuelType === 'electric' ? 'Energy Consumed' : 'Fuel Consumed';
+}
+
+/**
  * Convert technical field values to consumer-friendly labels
  */
 export function getReadableFieldValue(field: string, value: string): string {
   const fieldMappings: Record<string, Record<string, string>> = {
     fuel_type: {
-      diesel: 'Diesel',
-      gasoline: 'Gasoline',
-      biodiesel: 'Biodiesel',
-      electric: 'Electric',
-      natural_gas: 'Natural Gas'
+      // 🔧 Added emojis for consistency with other categorical fields (seeds_source, water_source, equipment_type)
+      diesel: '⛽ Diesel',
+      gasoline: '⛽ Gasoline',
+      biodiesel: '🌿 Biodiesel',
+      electric: '⚡ Electric',
+      natural_gas: '🔥 Natural Gas'
     },
     equipment_type: {
       // Generic equipment types
@@ -291,106 +309,109 @@ export function getReadableFieldValue(field: string, value: string): string {
       tractor_large: '🚜 Large Tractor (150+ HP)'
     },
     operation_efficiency: {
-      high: 'High',
-      normal: 'Normal',
-      low: 'Low'
+      // 🔧 Added emojis for consumer-friendly display
+      high: '✅ High Efficiency',
+      normal: '➖ Normal Efficiency',
+      low: '⚠️ Low Efficiency'
     },
     weather_conditions: {
-      calm_dry: 'Calm & Dry - Ideal conditions',
-      light_wind: 'Light Wind - Suitable conditions',
-      humid: 'Humid - Acceptable conditions',
-      windy: 'Windy - Challenging conditions',
+      // 🔧 Added weather emojis for consumer-friendly display
+      calm_dry: '☀️ Calm & Dry - Ideal conditions',
+      light_wind: '🌤️ Light Wind - Suitable conditions',
+      humid: '💧 Humid - Acceptable conditions',
+      windy: '💨 Windy - Challenging conditions',
       // Legacy mappings for backward compatibility
-      calm_wet: 'Calm, wet conditions',
-      windy_dry: 'Windy, dry conditions',
-      windy_wet: 'Windy, wet conditions',
-      rainy: 'Rainy conditions',
-      sunny: 'Sunny conditions',
-      cloudy: 'Cloudy conditions'
+      calm_wet: '🌧️ Calm, wet conditions',
+      windy_dry: '💨 Windy, dry conditions',
+      windy_wet: '🌬️ Windy, wet conditions',
+      rainy: '🌧️ Rainy conditions',
+      sunny: '☀️ Sunny conditions',
+      cloudy: '☁️ Cloudy conditions'
     },
     application_timing: {
-      pre_plant: 'Pre-Planting',
-      post_emergence: 'Post-Emergence',
-      flowering: 'Flowering Stage',
-      fruit_development: 'Fruit Development',
-      harvest: 'Pre-Harvest',
+      // 🔧 Added emojis for consumer-friendly display
+      pre_plant: '🌱 Pre-Planting',
+      post_emergence: '🌿 Post-Emergence',
+      flowering: '🌸 Flowering Stage',
+      fruit_development: '🍎 Fruit Development',
+      harvest: '🌾 Pre-Harvest',
       // Legacy mappings for backward compatibility
-      at_plant: 'At planting',
-      post_plant: 'After planting',
-      pre_harvest: 'Before harvest',
-      post_harvest: 'After harvest',
-      early_season: 'Early season',
-      mid_season: 'Mid season',
-      late_season: 'Late season',
-      dormant: 'Dormant period',
-      active_growth: 'Active growth period'
+      at_plant: '🌱 At planting',
+      post_plant: '🌿 After planting',
+      pre_harvest: '🌾 Before harvest',
+      post_harvest: '📦 After harvest',
+      early_season: '🌱 Early season',
+      mid_season: '🌿 Mid season',
+      late_season: '🍂 Late season',
+      dormant: '❄️ Dormant period',
+      active_growth: '🌱 Active growth period'
     },
     way_of_application: {
-      spray: 'Spray application',
-      drip: 'Drip irrigation',
-      broadcast: 'Broadcast application',
-      injection: 'Soil injection',
-      foliar: 'Foliar spray',
-      granular: 'Granular application',
-      liquid: 'Liquid application',
-      powder: 'Powder application'
+      spray: '💦 Spray application',
+      drip: '💧 Drip irrigation',
+      broadcast: '📡 Broadcast application',
+      injection: '💉 Soil injection',
+      foliar: '🍃 Foliar spray',
+      granular: '⚫ Granular application',
+      liquid: '💧 Liquid application',
+      powder: '🔵 Powder application'
     },
     application_method: {
       // Fertilizer methods
-      broadcast_surface: 'Broadcast Surface - Uniform spreading',
-      broadcast_incorporated: 'Broadcast Incorporated - Mixed into soil',
-      band_placement: 'Band Placement - Precise placement',
-      side_dress: 'Side Dress - Growing season application',
-      fertigation: 'Fertigation - Through irrigation',
-      foliar_feed: 'Foliar Feed - Leaf application',
-      soil_injection: 'Soil Injection - Liquid fertilizer',
-      granular_spreader: 'Granular Spreader - Mechanical application',
+      broadcast_surface: '📡 Broadcast Surface - Uniform spreading',
+      broadcast_incorporated: '🔄 Broadcast Incorporated - Mixed into soil',
+      band_placement: '📏 Band Placement - Precise placement',
+      side_dress: '🌱 Side Dress - Growing season application',
+      fertigation: '💧 Fertigation - Through irrigation',
+      foliar_feed: '🍃 Foliar Feed - Leaf application',
+      soil_injection: '💉 Soil Injection - Liquid fertilizer',
+      granular_spreader: '⚙️ Granular Spreader - Mechanical application',
       // Pesticide methods
-      broadcast_spray: 'Broadcast Spray - Full field coverage',
-      band_spray: 'Band Spray - Row treatment',
-      soil_incorporation: 'Soil Incorporation - Mixed into soil',
-      granular_preemergent: 'Granular Pre-Emergent - Soil surface',
+      broadcast_spray: '💦 Broadcast Spray - Full field coverage',
+      band_spray: '🎯 Band Spray - Row treatment',
+      soil_incorporation: '🔄 Soil Incorporation - Mixed into soil',
+      granular_preemergent: '⚫ Granular Pre-Emergent - Soil surface',
       // Fungicide methods
-      foliar_spray: 'Foliar Spray - Leaf surface treatment',
-      soil_drench: 'Soil Drench - Root zone treatment',
-      seed_treatment: 'Seed Treatment - Preventive coating',
-      trunk_injection: 'Trunk Injection - Tree treatment',
-      dusting: 'Dusting - Powder application',
+      foliar_spray: '🍃 Foliar Spray - Leaf surface treatment',
+      soil_drench: '🌊 Soil Drench - Root zone treatment',
+      seed_treatment: '🌰 Seed Treatment - Preventive coating',
+      trunk_injection: '🌳 Trunk Injection - Tree treatment',
+      dusting: '🔵 Dusting - Powder application',
       // Herbicide methods
-      pre_plant_incorporated: 'Pre-Plant Incorporated - Soil preparation',
-      pre_emergence: 'Pre-Emergence - Before sprouting',
-      post_emergence_directed: 'Post-Emergence Directed - Targeted application',
-      post_emergence_over_top: 'Post-Emergence Over-Top - Full coverage',
-      spot_treatment: 'Spot Treatment - Localized application',
+      pre_plant_incorporated: '🔄 Pre-Plant Incorporated - Soil preparation',
+      pre_emergence: '🌱 Pre-Emergence - Before sprouting',
+      post_emergence_directed: '🎯 Post-Emergence Directed - Targeted application',
+      post_emergence_over_top: '📡 Post-Emergence Over-Top - Full coverage',
+      spot_treatment: '📍 Spot Treatment - Localized application',
       // Legacy/generic mappings
-      spray: 'Spray Application',
-      broadcast: 'Broadcast Application',
-      drip: 'Drip/Irrigation',
-      foliar: 'Foliar Application',
-      injection: 'Soil Injection',
-      granular: 'Granular Application'
+      spray: '💦 Spray Application',
+      broadcast: '📡 Broadcast Application',
+      drip: '💧 Drip/Irrigation',
+      foliar: '🍃 Foliar Application',
+      injection: '💉 Soil Injection',
+      granular: '⚫ Granular Application'
     },
     // SOIL MANAGEMENT FIELD MAPPINGS (Type 5)
     soil_texture: {
-      // Primary soil textures
-      sandy: 'Sandy',
-      sandy_loam: 'Sandy Loam',
-      loam: 'Loam',
-      clay_loam: 'Clay Loam',
-      clay: 'Clay',
-      silt: 'Silt',
-      silt_loam: 'Silt Loam',
-      silty_clay: 'Silty Clay',
-      silty_clay_loam: 'Silty Clay Loam',
-      sandy_clay: 'Sandy Clay',
-      sandy_clay_loam: 'Sandy Clay Loam',
+      // Primary soil textures - using contextual emojis
+      sandy: '🏖️ Sandy',
+      sandy_loam: '🏖️ Sandy Loam',
+      loam: '🌱 Loam',
+      clay_loam: '🧱 Clay Loam',
+      clay: '🧱 Clay',
+      silt: '💨 Silt',
+      silt_loam: '💨 Silt Loam',
+      silty_clay: '💨 Silty Clay',
+      silty_clay_loam: '💨 Silty Clay Loam',
+      sandy_clay: '🏖️ Sandy Clay',
+      sandy_clay_loam: '🏖️ Sandy Clay Loam',
       // Additional soil type variations
-      coarse_sandy: 'Coarse Sandy',
-      fine_sandy: 'Fine Sandy',
-      very_fine_sandy_loam: 'Very Fine Sandy Loam',
-      organic: 'Organic Soil',
-      peat: 'Peat Soil',
-      muck: 'Muck Soil'
+      coarse_sandy: '🏖️ Coarse Sandy',
+      fine_sandy: '🏖️ Fine Sandy',
+      very_fine_sandy_loam: '🏖️ Very Fine Sandy Loam',
+      organic: '🌿 Organic Soil',
+      peat: '🌿 Peat Soil',
+      muck: '🌿 Muck Soil'
     },
     equipment_used: {
       // Soil management specific equipment
@@ -420,22 +441,22 @@ export function getReadableFieldValue(field: string, value: string): string {
       broadcast_spreader: '🚜 Broadcast Spreader'
     },
     soil_management_activity: {
-      // Common soil management practices
-      tillage: 'Tillage Operation',
-      cultivation: 'Cultivation',
-      soil_testing: 'Soil Testing',
-      soil_amendment: 'Soil Amendment Application',
-      drainage_installation: 'Drainage Installation',
-      terracing: 'Terracing/Erosion Control',
-      compaction_relief: 'Compaction Relief',
-      organic_matter_addition: 'Organic Matter Addition',
-      ph_adjustment: 'pH Adjustment',
-      nutrient_management: 'Nutrient Management',
-      cover_crop_termination: 'Cover Crop Termination',
-      residue_management: 'Crop Residue Management',
-      soil_conservation: 'Soil Conservation Practice',
-      moisture_management: 'Soil Moisture Management',
-      structure_improvement: 'Soil Structure Improvement'
+      // Common soil management practices - with contextual emojis
+      tillage: '🚜 Tillage Operation',
+      cultivation: '🌱 Cultivation',
+      soil_testing: '🔬 Soil Testing',
+      soil_amendment: '🧪 Soil Amendment Application',
+      drainage_installation: '💧 Drainage Installation',
+      terracing: '🏔️ Terracing/Erosion Control',
+      compaction_relief: '⚒️ Compaction Relief',
+      organic_matter_addition: '🌿 Organic Matter Addition',
+      ph_adjustment: '⚖️ pH Adjustment',
+      nutrient_management: '🧬 Nutrient Management',
+      cover_crop_termination: '🌾 Cover Crop Termination',
+      residue_management: '♻️ Crop Residue Management',
+      soil_conservation: '🛡️ Soil Conservation Practice',
+      moisture_management: '💦 Soil Moisture Management',
+      structure_improvement: '🔧 Soil Structure Improvement'
     },
     // ============================================================
     // Sprint 3 Epic 3.2: Consumer Trust Field Mappings
@@ -455,17 +476,31 @@ export function getReadableFieldValue(field: string, value: string): string {
     },
     seeds_source: {
       // Production event seed source for transparency
-      local: '🏡 Local Supplier',
+      // Form values from ProductionTab.jsx
+      certified_organic: '🌱 Certified Organic Seeds',
+      farm_saved: '♻️ Farm-Saved Seeds',
+      local: '🏡 Local Nursery/Supplier',
+      cooperative: '🤝 Farmer Cooperative',
+      commercial: '🏭 Commercial Supplier',
+      other: '📝 Other Source',
+      // Legacy backend values
       imported: '✈️ Imported',
-      farm_saved: '🌱 Farm Saved Seeds',
-      certified: '✅ Certified Organic Seeds',
-      certified_organic: '🌱 Certified Organic Seeds' // Add mapping for form value
+      certified: '✅ Certified Organic Seeds'
     },
     water_source: {
       // Production event water source for transparency
+      // Form values from ProductionTab.jsx
+      well_groundwater: '💧 Well/Groundwater',
+      municipal: '🏢 Municipal Water Supply',
+      rainwater_harvesting: '🌧️ Rainwater Harvesting',
+      irrigation_canal: '🚿 Irrigation Canal/District',
+      river_stream: '🏞️ River/Stream',
+      pond_reservoir: '🌊 Pond/Reservoir',
+      recycled_water: '♻️ Recycled/Reclaimed Water',
+      other: '📝 Other Source',
+      // Legacy backend values
       well: '💧 Well Water',
       rainwater: '🌧️ Rainwater Harvesting',
-      municipal: '🏢 Municipal Supply',
       river: '🏞️ River/Stream',
       recycled: '♻️ Recycled Water'
     },
@@ -1288,7 +1323,10 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
 
   if (event.yield_quantity && String(event.yield_quantity).trim() !== 'null') {
     const yieldUnit = event.yield_unit || event.quantity_unit || 'kg';
-    const yieldValue = String(event.yield_quantity).includes(yieldUnit)
+    // 🔧 FIX: Check if value is already formatted (has number + unit pattern)
+    const yieldStr = String(event.yield_quantity);
+    const isAlreadyFormatted = /\d+(\.\d+)?\s+\w+/.test(yieldStr);
+    const yieldValue = isAlreadyFormatted || yieldStr.includes(yieldUnit)
       ? event.yield_quantity
       : `${event.yield_quantity} ${yieldUnit}`;
 
@@ -1302,13 +1340,19 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
 
   // Equipment and fuel information (SECONDARY display)
   if (event.fuel_consumed && String(event.fuel_consumed).trim() !== 'null') {
-    const fuelUnit = event.fuel_unit || 'L';
-    const fuelValue = String(event.fuel_consumed).includes(fuelUnit)
+    const fuelUnit = event.fuel_unit || extraData.fuel_unit || 'L';
+    // 🔧 FIX: Check if value is already formatted (has number + unit pattern)
+    const fuelStr = String(event.fuel_consumed);
+    const fuelIsFormatted = /\d+(\.\d+)?\s+\w+/.test(fuelStr);
+    const fuelValue = fuelIsFormatted || fuelStr.includes(fuelUnit)
       ? event.fuel_consumed
       : `${event.fuel_consumed} ${fuelUnit}`;
 
+    // 🔧 FIX: Check fuel_type at top level AND in extra_data for electric equipment label
+    const fuelType = event.fuel_type || extraData.fuel_type;
+
     secondary.push({
-      label: 'Fuel Consumed',
+      label: getFuelConsumptionLabel(fuelType),
       value: fuelValue,
       priority: 'secondary',
       category: 'operational'
@@ -1316,8 +1360,10 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
   }
 
   if (event.equipment_hours && String(event.equipment_hours).trim() !== 'null') {
-    // Equipment hours should have "hours" suffix if not already present
-    const hoursValue = String(event.equipment_hours).toLowerCase().includes('hour')
+    // 🔧 FIX: Check if value is already formatted (has number + unit pattern)
+    const hoursStr = String(event.equipment_hours);
+    const hoursIsFormatted = /\d+(\.\d+)?\s+\w+/.test(hoursStr);
+    const hoursValue = hoursIsFormatted || hoursStr.toLowerCase().includes('hour')
       ? event.equipment_hours
       : `${event.equipment_hours} hours`;
 
@@ -1501,6 +1547,33 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
       value: extraData.method,
       priority: 'secondary',
       category: 'operational'
+    });
+  }
+
+  // ============================================================
+  // Sprint 3 Epic 3.2: Consumer Trust Fields for Production Events
+  // These fields enhance consumer confidence in agricultural practices
+  // ============================================================
+
+  // Seeds Source - SECONDARY priority for transparency about inputs (Planting/Transplanting)
+  if (event.seeds_source) {
+    secondary.push({
+      label: 'Seeds/Seedlings Source',
+      value: getReadableFieldValue('seeds_source', event.seeds_source),
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Source of seeds or seedlings used (builds consumer trust in agricultural inputs)'
+    });
+  }
+
+  // Water Source - SECONDARY priority for transparency about water usage (Irrigation)
+  if (event.water_source) {
+    secondary.push({
+      label: 'Water Source',
+      value: getReadableFieldValue('water_source', event.water_source),
+      priority: 'secondary',
+      category: 'environmental',
+      tooltip: 'Source of water for irrigation (environmental transparency)'
     });
   }
 
@@ -1783,6 +1856,8 @@ export function getEquipmentEventFields(event: any): EventFieldDisplay {
   const secondary: FieldDisplayItem[] = [];
   const details: FieldDisplayItem[] = [];
 
+  const extraData = event.extra_data || {};
+
   // Use normalized operation_type field (mapped from backend 'type')
   if (event.operation_type) {
     const operationTypeMap: Record<string, string> = {
@@ -1833,9 +1908,11 @@ export function getEquipmentEventFields(event: any): EventFieldDisplay {
     event.fuel_consumed !== '' &&
     event.fuel_consumed !== null
   ) {
-    const unit = event.fuel_unit || 'L';
+    const unit = event.fuel_unit || extraData.fuel_unit || 'L';
+    // 🔧 FIX: Check fuel_type at top level AND in extra_data for electric equipment label
+    const fuelType = event.fuel_type || extraData.fuel_type;
     secondary.push({
-      label: 'Fuel Consumed',
+      label: getFuelConsumptionLabel(fuelType),
       value: `${event.fuel_consumed} ${unit}`,
       priority: 'secondary',
       category: 'measurement'
@@ -1906,8 +1983,7 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
   const secondary: FieldDisplayItem[] = [];
   const details: FieldDisplayItem[] = [];
 
-  // const extraData = event.extra_data || {};
-  // const description = event.description?.toLowerCase() || '';
+  const extraData = event.extra_data || {};
 
   // IMMEDIATE DISPLAY - Key soil management details that farmers fill in forms
 
@@ -1966,9 +2042,11 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
 
   // Fuel Consumed (from database field) - Move to immediate for better visibility
   if (event.fuel_consumed) {
-    const unit = event.fuel_unit || 'L';
+    const unit = event.fuel_unit || extraData.fuel_unit || 'L';
+    // 🔧 FIX: Check fuel_type at top level AND in extra_data for electric equipment label
+    const fuelType = event.fuel_type || extraData.fuel_type;
     immediate.push({
-      label: 'Fuel Consumed',
+      label: getFuelConsumptionLabel(fuelType),
       value: `${event.fuel_consumed} ${unit}`,
       priority: 'immediate',
       category: 'measurement'
@@ -3039,9 +3117,10 @@ function mergeCustomFieldsIntoDisplay(
   fieldDisplay: EventFieldDisplay,
   event: any
 ): EventFieldDisplay {
-  // 🚨 CRITICAL FIX: Access custom fields from extra_data.custom_fields (matches EventDetailsModal)
-  // This ensures ConsumerEventCard shows the same custom fields as EventPreviewModal
-  const customFields = event?.extra_data?.custom_fields;
+  // 🚨 CRITICAL FIX: Access custom fields from BOTH locations for preview-display consistency
+  // - eventDataNormalizer saves to event.custom_fields (for preview)
+  // - Backend data may have event.extra_data.custom_fields (for ProductDetail)
+  const customFields = event?.custom_fields || event?.extra_data?.custom_fields;
 
   if (!customFields || !Array.isArray(customFields) || customFields.length === 0) {
     return fieldDisplay;
@@ -3063,9 +3142,9 @@ function mergeCustomFieldsIntoDisplay(
   console.log('✅ [fieldDisplayUtils] Merging custom fields into display:', {
     totalCustomFields: customFields.length,
     visibleCustomFields: visibleFields.length,
-    fields: visibleFields.map((f: any) => ({ label: f.label, value: f.value })),
+    fields: visibleFields.map((f: any) => ({ label: f.label, value: f.value, visibility: f.visibility })),
     eventId: event.id,
-    extraDataPath: 'event.extra_data.custom_fields'
+    source: event?.custom_fields ? 'event.custom_fields' : 'event.extra_data.custom_fields'
   });
 
   // Convert custom fields to FieldDisplayItem format

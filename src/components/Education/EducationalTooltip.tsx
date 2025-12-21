@@ -109,6 +109,87 @@ const educationalContent: Record<
     icon: FaLeaf,
     color: 'green',
     example: 'High impact = actively helping the environment, not just avoiding harm'
+  },
+  // Quick Add Event Types
+  quick_add: {
+    definition: 'Quick Add Event',
+    explanation:
+      'The fastest way to log farming activities in under 60 seconds. Choose from 8 event types, smart defaults pre-fill common values, and voice capture lets you document hands-free.',
+    icon: FaLeaf,
+    color: 'green',
+    example: 'Log 5-7 events weekly to achieve 85%+ transparency score'
+  },
+  fertilization_event: {
+    definition: 'Fertilization Event',
+    explanation:
+      'Document NPK applications, organic amendments, and soil nutrients. Includes concentration validation to ensure accurate carbon calculations and consumer transparency.',
+    icon: FaFlask,
+    color: 'green',
+    example: 'NPK 10-10-10 applied at 100 kg/hectare = detailed transparency record'
+  },
+  irrigation_event: {
+    definition: 'Irrigation Event',
+    explanation:
+      'Record water management practices including volume, method (drip, sprinkler, flood), and duration. Shows consumers your water stewardship and resource efficiency.',
+    icon: FaGlobeAmericas,
+    color: 'blue',
+    example: 'Drip irrigation uses 25-50% less water than flood methods'
+  },
+  pest_control_event: {
+    definition: 'Pest Control Event',
+    explanation:
+      'Document pest management including IPM practices, pesticide applications, and beneficial insect releases. Consumers value transparency about crop protection methods.',
+    icon: FaShieldAlt,
+    color: 'orange',
+    example: 'IPM practices can reduce pesticide use by 40%'
+  },
+  herbicide_event: {
+    definition: 'Herbicide Event',
+    explanation:
+      'Record weed management activities including pre-emergent and post-emergent applications. Document organic alternatives and cover crop termination.',
+    icon: FaFlask,
+    color: 'purple',
+    example: 'Organic herbicides have lower environmental impact scores'
+  },
+  fungicide_event: {
+    definition: 'Fungicide Event',
+    explanation:
+      'Document disease prevention and treatment including copper, sulfur, and synthetic fungicides. Shows consumers your plant health management practices.',
+    icon: FaFlask,
+    color: 'teal',
+    example: 'Preventive applications typically use less product than curative'
+  },
+  pruning_event: {
+    definition: 'Pruning Event',
+    explanation:
+      'Record plant maintenance including seasonal pruning, thinning, and training. Includes fuel consumption for powered equipment to track environmental impact.',
+    icon: FaLeaf,
+    color: 'green',
+    example: 'Proper pruning improves yield quality and reduces disease'
+  },
+  harvest_event: {
+    definition: 'Harvest Event',
+    explanation:
+      'Document crop collection including yield quantity, equipment used, and transportation. Consumers see your quality selection and handling practices.',
+    icon: FaCertificate,
+    color: 'orange',
+    example: 'Recording yield data enables transparency benchmarking'
+  },
+  planting_event: {
+    definition: 'Planting Event',
+    explanation:
+      'Record crop establishment including seed variety, planting density, and soil preparation. Shows consumers the start of your growing journey.',
+    icon: FaLeaf,
+    color: 'green',
+    example: 'Certified seed varieties can improve transparency scores'
+  },
+  transparency_score: {
+    definition: 'Transparency Score',
+    explanation:
+      'Your 0-100% score based on documented farming events. More events logged = higher score = more consumer trust. Unlike carbon scores, transparency rewards complete documentation.',
+    icon: FaBalanceScale,
+    color: 'green',
+    example: '85%+ transparency unlocks 15-30% premium pricing opportunities'
   }
 };
 

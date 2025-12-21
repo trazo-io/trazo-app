@@ -34,6 +34,8 @@ export interface PreviewEventData {
   area_unit?: string;
   yield_unit?: string;
   fuel_unit?: string;
+  // Consumer Trust & Transparency fields
+  seeds_source?: string;
   // Raw numeric values for calculations
   area_covered_raw?: number;
   yield_quantity_raw?: number;
@@ -54,6 +56,70 @@ export interface PreviewEventData {
   application_timing?: string;
   commercial_name?: string;
   equipment?: string;
+  // Canonical field format fields (numeric value + separate unit)
+  volume_applied?: number | string;
+  area_treated?: number | string;
+  fuel_type?: string;
+  application_fuel_type?: string;
+  application_fuel_consumed?: number | string;
+  application_fuel_unit?: string;
+  // Equipment operation fields
+  operation_type?: string;
+  operation_type_code?: string;
+  operation_name?: string;
+  equipment_type?: string;
+  hours_operated?: number | string;
+  area_worked?: number | string;
+  operation_efficiency?: number | string;
+  operation_notes?: string;
+  // Soil management fields
+  soil_management_type?: string;
+  soil_management_name?: string;
+  area_managed?: number | string;
+  working_depth?: string;
+  depth_unit?: string;
+  soil_ph?: number | string;
+  organic_matter?: number | string;
+  soil_texture?: string;
+  soil_moisture?: string;
+  production_efficiency?: number | string;
+  temperature_range?: string;
+  equipment_used?: string;
+  tillage_type?: string;
+  tillage_intensity?: string;
+  tillage_direction?: string;
+  residue_management?: string;
+  soil_management_notes?: string;
+  // Business event fields
+  business_event_type?: string;
+  business_event_name?: string;
+  business_activity_type?: string;
+  business_type?: string;
+  certification_type?: string;
+  carbon_credits_earned?: number | string;
+  carbon_credits_unit?: string;
+  verification_status?: string;
+  sustainability_practice?: string;
+  trust_impact?: string;
+  transparency_benefit?: string;
+  business_observation?: string;
+  // Pest management fields
+  pest_management_type?: string;
+  pest_management_name?: string;
+  field_area_hectares?: number | string;
+  travel_distance_km?: number | string;
+  time_spent_hours?: number | string;
+  crop_growth_stage?: string;
+  economic_threshold_met?: boolean | string;
+  action_recommended?: string;
+  pest_species?: string;
+  pest_pressure_level?: string;
+  beneficial_species?: string;
+  release_quantity?: number | string;
+  trap_count?: number | string;
+  damage_percentage?: number | string;
+  action_threshold_met?: boolean | string;
+  imp_strategy?: string;
   // General event fields
   activity_type?: string;
   activity_name?: string;
@@ -413,6 +479,14 @@ export function transformFormDataToEvent(
       if (formData.fuel_type) {
         event.fuel_type = getFuelTypeDisplayName(formData.fuel_type);
       }
+
+      // 🌱 Consumer Trust & Transparency fields
+      if (formData.seeds_source) {
+        event.seeds_source = formData.seeds_source;
+        console.log('🌱 [eventPreviewUtils] seeds_source mapped:', formData.seeds_source);
+      } else {
+        console.log('🌱 [eventPreviewUtils] seeds_source NOT in formData:', Object.keys(formData));
+      }
       break;
 
     case 2: // Chemical
@@ -427,11 +501,24 @@ export function transformFormDataToEvent(
       if (formData.chemical_subtype) {
         event.chemical_subtype = formData.chemical_subtype;
       }
-      if (formData.volume) event.volume = String(formData.volume);
-      if (formData.volume_applied) event.volume = String(formData.volume_applied);
+      // 🔧 FIELD UNIFICATION FIX: Set both volume_applied AND volume for preview-display consistency
+      // Display layer (fieldDisplayUtils) expects volume_applied + volume_unit as separate fields
+      if (formData.volume_applied) {
+        event.volume_applied = formData.volume_applied;
+        // Also set combined volume for backward compatibility with display components
+        event.volume = `${formData.volume_applied} ${formData.volume_unit || 'L'}`;
+      } else if (formData.volume) {
+        event.volume = String(formData.volume);
+      }
       if (formData.volume_unit) event.volume_unit = formData.volume_unit;
-      if (formData.area) event.area = String(formData.area);
-      if (formData.area_treated) event.area = String(formData.area_treated);
+      // 🔧 FIELD UNIFICATION FIX: Set both area_treated AND area for preview-display consistency
+      if (formData.area_treated) {
+        event.area_treated = formData.area_treated;
+        // Also set combined area for backward compatibility with display components
+        event.area = `${formData.area_treated} ${formData.area_unit || 'ha'}`;
+      } else if (formData.area) {
+        event.area = String(formData.area);
+      }
       if (formData.area_unit) event.area_unit = formData.area_unit;
       if (formData.concentration) event.concentration = String(formData.concentration);
       if (formData.npk_ratio) event.npk_ratio = String(formData.npk_ratio);
@@ -451,14 +538,18 @@ export function transformFormDataToEvent(
       if (formData.application_fuel_type) {
         event.application_fuel_type = getFuelTypeDisplayName(formData.application_fuel_type);
       }
-      if (formData.application_fuel_consumed !== undefined && formData.application_fuel_consumed !== '') {
+      if (
+        formData.application_fuel_consumed !== undefined &&
+        formData.application_fuel_consumed !== ''
+      ) {
         const appFuelValue = parseFloat(formData.application_fuel_consumed);
         const appFuelUnit = formData.application_fuel_unit || 'L';
         if (!isNaN(appFuelValue) && appFuelValue >= 0) {
           event.application_fuel_consumed = `${appFuelValue} ${appFuelUnit}`;
         }
       }
-      if (formData.application_fuel_unit) event.application_fuel_unit = formData.application_fuel_unit;
+      if (formData.application_fuel_unit)
+        event.application_fuel_unit = formData.application_fuel_unit;
       break;
 
     case 3: // General
@@ -595,7 +686,7 @@ export function transformFormDataToEvent(
         const areaUnit = formData.area_unit || 'ha';
         if (!isNaN(areaValue) && areaValue >= 0) {
           event.area_managed = `${areaValue} ${areaUnit}`; // ✅ ENHANCED: Formatted with unit like Production events
-          event.area = areaValue; // Legacy compatibility for calculations
+          event.area = String(areaValue); // Legacy compatibility for calculations
         }
       }
 
@@ -915,6 +1006,21 @@ export function transformFormDataToEvent(
   // Add mock verification data for preview
   event.verification_confidence = 85;
   event.data_integrity_score = 90;
+
+  // 🔧 PHASE 2.3: Custom fields must pass through to preview
+  // Custom fields are stored in extra_data.custom_fields to match fieldDisplayUtils expectations
+  if (formData.custom_fields && Array.isArray(formData.custom_fields) && formData.custom_fields.length > 0) {
+    // Initialize extra_data if not exists
+    if (!event.extra_data) {
+      event.extra_data = {};
+    }
+    // Pass custom_fields through to extra_data for display
+    event.extra_data.custom_fields = formData.custom_fields;
+    console.log('📋 [eventPreviewUtils] Custom fields passed to preview:', {
+      count: formData.custom_fields.length,
+      fields: formData.custom_fields.map((f: any) => ({ label: f.label, value: f.value, visibility: f.visibility }))
+    });
+  }
 
   return event;
 }

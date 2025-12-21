@@ -56,7 +56,6 @@ const transparencyParcelSchema = object({
   name: string().min(1, 'Parcel name is required').max(100, 'Name too long'),
   area: number().min(0.01, 'Area must be greater than 0'),
   crop_focus: string().optional(),
-  soil_type: string().optional(),
 
   // Step 2: Location (polygon validated separately)
 
@@ -158,7 +157,6 @@ interface TransparencyParcelFormData {
   contact_person?: string;
   contact_email?: string;
   address?: string;
-  soil_type?: string;
   unique_code?: string;
 }
 
@@ -169,6 +167,8 @@ interface StandardParcelFormTransparencyProps {
   isLoading?: boolean;
   isEdit?: boolean;
   establishmentName?: string;
+  // GPS coordinates from parent establishment to center map when creating new parcel
+  establishmentCoordinates?: { lat: number; lng: number };
 }
 
 const options = {
@@ -181,7 +181,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   initialData,
   isLoading = false,
   isEdit = false,
-  establishmentName = ''
+  establishmentName = '',
+  establishmentCoordinates
 }) => {
   const methods = useForm<TransparencyParcelFormData>({
     resolver: zodResolver(transparencyParcelSchema),
@@ -189,7 +190,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       name: '',
       area: 0,
       crop_focus: '',
-      soil_type: '',
       transparency_description: '',
       sustainability_practices: '',
       consumer_story: '',
@@ -217,12 +217,19 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const isValidPolygon = () => getPolygonLength() >= 3;
 
   const [mapCenter, setMapCenter] = useState(() => {
+    // Priority 1: Use establishment coordinates (centers map near the farm)
+    if (establishmentCoordinates) {
+      return establishmentCoordinates;
+    }
+    // Priority 2: Use existing parcel map center (edit mode fallback)
     if (initialData?.map_metadata?.center) {
       return initialData.map_metadata.center;
     }
+    // Priority 3: Calculate from existing polygon (edit mode fallback)
     if (initialData?.polygon && initialData.polygon.length > 0) {
       return calculatePolygonCenter(initialData.polygon);
     }
+    // Fallback: Default to Fresno, CA (Central Valley agricultural region)
     return { lat: 36.7378, lng: -119.7871 };
   });
 
@@ -235,6 +242,14 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     }
     return 13;
   });
+
+  // 🗺️ Update map center when establishment coordinates become available (async load fix)
+  useEffect(() => {
+    // Only update if we have establishment coordinates AND no existing polygon (new parcel)
+    if (establishmentCoordinates && (!polygon || polygon.length === 0)) {
+      setMapCenter(establishmentCoordinates);
+    }
+  }, [establishmentCoordinates, polygon]);
 
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const currentImages = watch('images') || [];
@@ -524,57 +539,30 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   </StandardField>
                 </SimpleGrid>
 
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="Primary Crop Focus"
-                    error={errors.crop_focus?.message}
-                    helpText="What crop is primarily grown here?"
+                <StandardField
+                  label="Primary Crop Focus"
+                  error={errors.crop_focus?.message}
+                  helpText="What crop is primarily grown here? This helps consumers understand what this parcel produces."
+                >
+                  <Select
+                    {...methods.register('crop_focus')}
+                    placeholder="Select primary crop"
+                    borderRadius="lg"
+                    borderColor="gray.300"
+                    _hover={{ borderColor: 'green.400' }}
+                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                    size="lg"
                   >
-                    <Select
-                      {...methods.register('crop_focus')}
-                      placeholder="Select primary crop"
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                    >
-                      <option value="avocado">Avocado</option>
-                      <option value="citrus">Citrus</option>
-                      <option value="tomato">Tomato</option>
-                      <option value="lettuce">Lettuce</option>
-                      <option value="strawberry">Strawberry</option>
-                      <option value="grape">Grape</option>
-                      <option value="apple">Apple</option>
-                      <option value="other">Other</option>
-                    </Select>
-                  </StandardField>
-
-                  <StandardField
-                    label="Soil Type"
-                    error={errors.soil_type?.message}
-                    helpText="Soil classification for growing conditions"
-                  >
-                    <Select
-                      {...methods.register('soil_type')}
-                      placeholder="Select soil type"
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                    >
-                      <option value="clay">Clay</option>
-                      <option value="sandy">Sandy</option>
-                      <option value="loam">Loam</option>
-                      <option value="silt">Silt</option>
-                      <option value="peat">Peat</option>
-                      <option value="chalk">Chalk</option>
-                      <option value="sandy_loam">Sandy Loam</option>
-                      <option value="clay_loam">Clay Loam</option>
-                    </Select>
-                  </StandardField>
-                </SimpleGrid>
+                    <option value="avocado">Avocado</option>
+                    <option value="citrus">Citrus</option>
+                    <option value="tomato">Tomato</option>
+                    <option value="lettuce">Lettuce</option>
+                    <option value="strawberry">Strawberry</option>
+                    <option value="grape">Grape</option>
+                    <option value="apple">Apple</option>
+                    <option value="other">Other</option>
+                  </Select>
+                </StandardField>
 
                 <StandardAlert
                   status="info"

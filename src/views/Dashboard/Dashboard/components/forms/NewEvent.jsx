@@ -543,21 +543,31 @@ function NewEvent({ isEdit = false, eventId = null }) {
         commercial_name: existingEvent.commercial_name || existingEvent.name || '',
         active_ingredient: existingEvent.active_ingredient || '',
         concentration: existingEvent.concentration || '',
-        // Safely handle numeric fields that might be undefined
-        volume_applied:
-          existingEvent.volume_applied !== undefined && existingEvent.volume_applied !== null
-            ? existingEvent.volume_applied
-            : '',
+        // FIELD NAME HANDLING:
+        // Backend serializer now returns: volume_applied, area_treated, application_method
+        // Fallback to old names (volume, area, way_of_application) for backward compatibility
+        // with events created before serializer fix was deployed
+        volume_applied: existingEvent.volume_applied ?? existingEvent.volume ?? '',
         volume_unit: existingEvent.volume_unit || 'L',
-        area_treated:
-          existingEvent.area_treated !== undefined && existingEvent.area_treated !== null
-            ? existingEvent.area_treated
-            : '',
+        area_treated: existingEvent.area_treated ?? existingEvent.area ?? '',
         area_unit: existingEvent.area_unit || 'ha',
-        application_method: existingEvent.application_method || '',
+        application_method:
+          existingEvent.application_method ||
+          existingEvent.way_of_application ||
+          existingEvent.application_method_structured ||
+          '',
         weather_conditions: existingEvent.weather_conditions || '',
-        application_timing: existingEvent.application_timing || '',
+        application_timing: existingEvent.application_timing || existingEvent.time_period || '',
         target_pest_disease: existingEvent.target_pest_disease || '',
+        // NPK values - convert to string for form inputs
+        nitrogen_percentage: existingEvent.nitrogen_percentage?.toString() ?? '',
+        phosphorus_percentage: existingEvent.phosphorus_percentage?.toString() ?? '',
+        potassium_percentage: existingEvent.potassium_percentage?.toString() ?? '',
+        // Chemical subtype for carbon calculations
+        chemical_subtype: existingEvent.chemical_subtype || '',
+        // Fuel/equipment fields with backward compatibility
+        application_fuel_type: existingEvent.application_fuel_type || existingEvent.fuel_type || '',
+        application_fuel_consumed: existingEvent.application_fuel_consumed ?? existingEvent.fuel_consumed ?? '',
         description: existingEvent.description || '',
         // 🚨 CRITICAL FIX: Ensure observation field is preserved for Weather Events
         // Weather Events have both description and observation fields
@@ -784,6 +794,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // Preview modal handlers
   const handleOpenPreview = () => {
+    console.log('🔍 [NewEvent] Preview clicked - eventFormData:', {
+      seeds_source: eventFormData.seeds_source,
+      allKeys: Object.keys(eventFormData),
+      fullData: eventFormData
+    });
     setIsPreviewModalOpen(true);
   };
 
@@ -868,22 +883,33 @@ function NewEvent({ isEdit = false, eventId = null }) {
         console.log('🧪 [NewEvent] Applying chemical field mapping for backend compatibility');
         console.log('🔍 [NewEvent] Raw chemical event data:', processedEventFormData);
 
-        // Map frontend field names to backend field names
+        // 🔧 FIELD UNIFICATION FIX: Send separate numeric values and units
+        // Backend UpdateChemicalEventSerializer handles:
+        //   - volume_applied → maps to volume field
+        //   - volume_unit → stores in extra_data
+        //   - area_treated → maps to area field
+        //   - area_unit → stores in extra_data
+        // Do NOT combine into strings like "400 L" - keep them separate!
         if (processedEventFormData.volume_applied) {
-          processedEventFormData.volume =
-            processedEventFormData.volume_applied +
-            ' ' +
-            (processedEventFormData.volume_unit || 'L');
+          // Keep volume_applied as-is (backend maps to volume)
+          // Keep volume_unit as-is (backend stores in extra_data)
           console.log(
-            '🔄 [NewEvent] Mapped volume_applied to volume:',
-            processedEventFormData.volume
+            '🔄 [NewEvent] Sending volume_applied:',
+            processedEventFormData.volume_applied,
+            'volume_unit:',
+            processedEventFormData.volume_unit
           );
         }
 
         if (processedEventFormData.area_treated) {
-          processedEventFormData.area =
-            processedEventFormData.area_treated + ' ' + (processedEventFormData.area_unit || 'ha');
-          console.log('🔄 [NewEvent] Mapped area_treated to area:', processedEventFormData.area);
+          // Keep area_treated as-is (backend maps to area)
+          // Keep area_unit as-is (backend stores in extra_data)
+          console.log(
+            '🔄 [NewEvent] Sending area_treated:',
+            processedEventFormData.area_treated,
+            'area_unit:',
+            processedEventFormData.area_unit
+          );
         }
 
         if (processedEventFormData.application_method) {
@@ -914,11 +940,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
         // Ensure description is always present for backend validation
         if (!processedEventFormData.description) {
+          // Use area_treated (not combined area) for description generation
+          const areaValue = processedEventFormData.area_treated || '';
+          const areaUnit = processedEventFormData.area_unit || 'ha';
           processedEventFormData.description = `${
             processedEventFormData.commercial_name || 'Chemical'
-          } application on ${processedEventFormData.area || ''} ${
-            processedEventFormData.area_unit || 'area'
-          }`;
+          } application on ${areaValue} ${areaUnit}`;
           console.log(
             '🔄 [NewEvent] Generated default description:',
             processedEventFormData.description

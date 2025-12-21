@@ -299,7 +299,13 @@ const companyApi = baseApi.injectEndpoints({
         url: `/carbon/productions-flat/?establishment=${establishmentId}${_t ? `&_t=${_t}` : ''}`,
         method: 'GET',
         credentials: 'include'
-      })
+      }),
+      // Add cache tags so this query is invalidated when startProduction runs
+      providesTags: (result, error, { establishmentId }) => [
+        { type: 'History', id: establishmentId },
+        'History',
+        'Parcel'
+      ]
     }),
     getCarbonEntries: build.query<
       any[],

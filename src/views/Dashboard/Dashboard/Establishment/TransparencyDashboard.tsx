@@ -412,151 +412,55 @@ function TransparencyDashboard() {
         px={6}
         position="relative"
       >
-        <Box maxW="full" mx="auto">
-          <VStack spacing={6} textAlign="center">
-            {/* Back Button - EXACT SAME responsive positioning as ProfileEstablishment */}
-            {isMobile ? (
-              // Mobile: Back button above title with full width
-              <VStack spacing={4} w="full" align="center">
-                <Flex w="full" justify="flex-start">
-                  <Button
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={() => navigate('/admin/dashboard')}
-                    size="sm"
-                  >
-                    Back
-                  </Button>
-                </Flex>
-              </VStack>
-            ) : (
-              // Desktop: Back button integrated with header
-              <Flex w="full" justify="flex-start" mb={-4}>
-                <Button
-                  variant="outline"
-                  leftIcon={<FaChevronLeft />}
-                  onClick={() => navigate('/admin/dashboard')}
-                  size="sm"
-                >
-                  Back
-                </Button>
-              </Flex>
-            )}
-
-            {/* Main Title - EXACT SAME as ProfileEstablishment */}
-            <VStack spacing={{ base: 4, sm: 3 }}>
-              <Heading
-                as="h1"
-                size={{ base: 'lg', sm: 'xl', md: '2xl', lg: '2xl' }}
-                color={titleColor}
-                fontWeight="bold"
-                textAlign="center"
-                letterSpacing="-0.02em"
-                px={{ base: 2, sm: 0 }}
-                lineHeight={{ base: '1.1', sm: '1.2', md: '1.2' }}
-                maxW={{ base: '90%', sm: '85%', md: '100%' }}
-                noOfLines={{ base: 2, md: 3 }}
-              >
-                Transparency Dashboard
-              </Heading>
-
-              <Text
-                fontSize={{ base: 'lg', sm: 'xl', md: 'lg' }}
-                color="gray.600"
-                fontWeight="normal"
-                maxW={{ base: '95%', sm: '85%', lg: '60%' }}
-                lineHeight={{ base: '1.6', md: '1.7' }}
-                textAlign="center"
-                px={{ base: 2, sm: 0 }}
-              >
-                Monitor and improve transparency for {establishment?.name || 'Loading...'}
-              </Text>
-            </VStack>
-
-            {/* Quick Stats - EXACT SAME as ProfileEstablishment with Circle components */}
-            <SimpleGrid
-              columns={{ base: 2, md: 4 }}
-              spacing={{ base: 4, sm: 6, md: 6 }}
+        <Box maxW="6xl" mx="auto">
+          <VStack spacing={4} textAlign="center">
+            {/* Back Button + Title Row - Matching StandardPage layout */}
+            <Flex
+              direction={{ base: 'column', md: 'row' }}
+              align="center"
+              gap={4}
               w="full"
-              maxW="2xl"
-              px={{ base: 2, sm: 0 }}
+              justify="space-between"
             >
-              <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle
-                  size={{ base: '60px', sm: '50px' }}
-                  bg="green.100"
+              <Button
+                variant="outline"
+                leftIcon={<FaChevronLeft />}
+                onClick={() => navigate(-1)}
+                size="sm"
+                bg="white"
+                borderColor="green.500"
+                color="green.500"
+                _hover={{ bg: 'green.50', borderColor: 'green.600' }}
+              >
+                Back
+              </Button>
+
+              <VStack spacing={2} flex={1}>
+                <Heading
+                  as="h1"
+                  size="2xl"
                   color="green.600"
-                  cursor="default"
+                  fontWeight="bold"
+                  textAlign="center"
+                  letterSpacing="-0.02em"
                 >
-                  <Icon as={FaLeaf} boxSize={{ base: 7, sm: 6 }} />
-                </Circle>
-                <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {Math.round(actualTransparencyScore * 100)}%
-                  </Text>
-                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Transparency
-                  </Text>
-                </VStack>
+                  Transparency Dashboard
+                </Heading>
+
+                <Text
+                  fontSize="lg"
+                  color="gray.600"
+                  fontWeight="normal"
+                  maxW="600px"
+                  textAlign="center"
+                >
+                  Monitor and improve transparency for {establishment?.name || 'Loading...'}
+                </Text>
               </VStack>
 
-              <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle
-                  size={{ base: '60px', sm: '50px' }}
-                  bg="blue.100"
-                  color="blue.600"
-                  cursor="default"
-                >
-                  <Icon as={FaCertificate} boxSize={{ base: 7, sm: 6 }} />
-                </Circle>
-                <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {totalVerifiedProductions}
-                  </Text>
-                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Verified
-                  </Text>
-                </VStack>
-              </VStack>
-
-              <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle
-                  size={{ base: '60px', sm: '50px' }}
-                  bg="purple.100"
-                  color="purple.600"
-                  cursor="default"
-                >
-                  <Icon as={FaPhotoVideo} boxSize={{ base: 7, sm: 6 }} />
-                </Circle>
-                <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {totalPhotos}
-                  </Text>
-                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Photos
-                  </Text>
-                </VStack>
-              </VStack>
-
-              <VStack spacing={{ base: 3, sm: 2 }}>
-                <Circle
-                  size={{ base: '60px', sm: '50px' }}
-                  bg="orange.100"
-                  color="orange.600"
-                  cursor="default"
-                >
-                  <Icon as={FaDatabase} boxSize={{ base: 7, sm: 6 }} />
-                </Circle>
-                <VStack spacing={{ base: 1, sm: 1 }}>
-                  <Text fontSize={{ base: '2xl', sm: 'xl' }} fontWeight="bold" color="gray.800">
-                    {totalProductions}
-                  </Text>
-                  <Text fontSize={{ base: 'md', sm: 'sm' }} color="gray.600" fontWeight="medium">
-                    Productions
-                  </Text>
-                </VStack>
-              </VStack>
-            </SimpleGrid>
+              {/* Empty box for balance on desktop */}
+              <Box w={{ base: 0, md: '70px' }} display={{ base: 'none', md: 'block' }} />
+            </Flex>
           </VStack>
         </Box>
       </Box>
@@ -582,30 +486,72 @@ function TransparencyDashboard() {
           bg={bgColor}
           position="relative"
         >
-          {/* Header - EXACT SAME as ProfileEstablishment */}
-          <CardHeader mb={{ base: '16px', md: '24px' }} position="relative">
-            <VStack spacing={{ base: 4, md: 3 }} align="stretch">
-              <Flex
-                align="center"
-                justify="space-between"
-                flexWrap={{ base: 'wrap', md: 'nowrap' }}
-                gap={{ base: 3, md: 4 }}
-              >
-                <Heading
-                  color={textColor}
-                  fontSize={headingSize}
-                  fontWeight="bold"
-                  textAlign={{ base: 'center', md: 'left' }}
-                  flex="1"
-                >
-                  Transparency Analytics & Action Center
-                </Heading>
-              </Flex>
-            </VStack>
-          </CardHeader>
-
           <CardBody>
             <VStack spacing={{ base: 6, md: 8 }} align="stretch">
+              {/* Transparency Quick Stats - Matching Environmental Impact pattern */}
+              <Box>
+                <Heading size="md" color={titleColor} mb={4} fontSize={{ base: 'lg', md: 'xl' }}>
+                  Transparency Overview
+                </Heading>
+                <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
+                  <Card bg="green.50" border="1px solid" borderColor="green.100" borderRadius="xl">
+                    <CardBody p={4} textAlign="center">
+                      <VStack spacing={2}>
+                        <Icon as={FaLeaf} color="green.500" boxSize={6} />
+                        <Text fontSize="xl" fontWeight="bold" color="green.700">
+                          {Math.round(actualTransparencyScore * 100)}%
+                        </Text>
+                        <Text fontSize="sm" color="green.600">
+                          Transparency
+                        </Text>
+                      </VStack>
+                    </CardBody>
+                  </Card>
+
+                  <Card bg="blue.50" border="1px solid" borderColor="blue.100" borderRadius="xl">
+                    <CardBody p={4} textAlign="center">
+                      <VStack spacing={2}>
+                        <Icon as={FaCertificate} color="blue.500" boxSize={6} />
+                        <Text fontSize="xl" fontWeight="bold" color="blue.700">
+                          {totalVerifiedProductions}
+                        </Text>
+                        <Text fontSize="sm" color="blue.600">
+                          Verified
+                        </Text>
+                      </VStack>
+                    </CardBody>
+                  </Card>
+
+                  <Card bg="purple.50" border="1px solid" borderColor="purple.100" borderRadius="xl">
+                    <CardBody p={4} textAlign="center">
+                      <VStack spacing={2}>
+                        <Icon as={FaPhotoVideo} color="purple.500" boxSize={6} />
+                        <Text fontSize="xl" fontWeight="bold" color="purple.700">
+                          {totalPhotos}
+                        </Text>
+                        <Text fontSize="sm" color="purple.600">
+                          Photos
+                        </Text>
+                      </VStack>
+                    </CardBody>
+                  </Card>
+
+                  <Card bg="orange.50" border="1px solid" borderColor="orange.100" borderRadius="xl">
+                    <CardBody p={4} textAlign="center">
+                      <VStack spacing={2}>
+                        <Icon as={FaDatabase} color="orange.500" boxSize={6} />
+                        <Text fontSize="xl" fontWeight="bold" color="orange.700">
+                          {totalProductions}
+                        </Text>
+                        <Text fontSize="sm" color="orange.600">
+                          Productions
+                        </Text>
+                      </VStack>
+                    </CardBody>
+                  </Card>
+                </SimpleGrid>
+              </Box>
+
               {/* Verification Status Overview */}
               <Box>
                 <Heading size="md" color={titleColor} mb={4} fontSize={{ base: 'lg', md: 'xl' }}>

@@ -62,7 +62,7 @@ interface SmartSuggestion {
   priority: 'high' | 'medium' | 'low';
   estimatedCost: number;
   timeToImplement: string;
-  expectedROI: string;
+  transparencyBenefit: string;
 }
 
 interface USDASmartSuggestionsProps {
@@ -138,7 +138,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
           priority: 'high',
           estimatedCost: 200,
           timeToImplement: '2-4 hours',
-          expectedROI: '6-8 months'
+          transparencyBenefit: '6-8 months'
         });
       }
 
@@ -154,7 +154,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
           priority: 'medium',
           estimatedCost: 100,
           timeToImplement: '1-2 hours',
-          expectedROI: '3-6 months'
+          transparencyBenefit: '3-6 months'
         });
       }
     }
@@ -172,7 +172,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
         priority: 'high',
         estimatedCost: 150,
         timeToImplement: '1-3 hours',
-        expectedROI: '2-4 months'
+        transparencyBenefit: '2-4 months'
       });
     }
 
@@ -190,7 +190,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
           priority: 'high',
           estimatedCost: 50,
           timeToImplement: '30 minutes',
-          expectedROI: '1-2 months'
+          transparencyBenefit: '1-2 months'
         });
       }
 
@@ -206,7 +206,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
           priority: 'medium',
           estimatedCost: 120,
           timeToImplement: '2-4 hours',
-          expectedROI: '12-24 months'
+          transparencyBenefit: '12-24 months'
         });
       }
     }
@@ -224,7 +224,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
         priority: 'low',
         estimatedCost: 80,
         timeToImplement: '1-2 hours',
-        expectedROI: '6-12 months'
+        transparencyBenefit: '6-12 months'
       });
     }
 
@@ -263,7 +263,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
         priority: 'high',
         estimatedCost: 150,
         timeToImplement: '2-3 hours',
-        expectedROI: '12-18 months'
+        transparencyBenefit: '12-18 months'
       });
     }
 
@@ -280,7 +280,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
         priority: 'high',
         estimatedCost: 200,
         timeToImplement: '1 day',
-        expectedROI: '6-12 months'
+        transparencyBenefit: '6-12 months'
       });
     }
 
@@ -297,16 +297,16 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
         priority: 'medium',
         estimatedCost: 300,
         timeToImplement: '4-6 hours',
-        expectedROI: '8-15 months'
+        transparencyBenefit: '8-15 months'
       });
     }
 
     // High credibility score bonus suggestions
     if (usdaData.usda_credibility.score >= 90) {
       suggestions.push({
-        id: 'carbon-credit-prep',
-        title: 'Carbon Credit Documentation',
-        description: 'High USDA credibility score qualifies for premium carbon credit programs',
+        id: 'transparency-documentation',
+        title: 'Transparency Documentation',
+        description: 'High USDA credibility score enables premium transparency verification for consumers',
         carbonImpact: 0,
         confidenceLevel: 'high',
         usdaBased: true,
@@ -314,7 +314,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
         priority: 'low',
         estimatedCost: 50,
         timeToImplement: '1 hour',
-        expectedROI: '3-6 months'
+        transparencyBenefit: 'Immediate'
       });
     }
 
@@ -596,10 +596,10 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
 
                   <Box textAlign="center">
                     <Text fontSize="xs" color="gray.500">
-                      ROI
+                      Benefit
                     </Text>
                     <Text fontSize="sm" fontWeight="bold" color="green.600">
-                      {suggestion.expectedROI}
+                      {suggestion.transparencyBenefit}
                     </Text>
                   </Box>
                 </SimpleGrid>

@@ -250,7 +250,7 @@ const App = () => {
                     index
                     element={
                       <NoSubscriptionRedirect>
-                        <Suspense fallback={<div>Loading dashboard...</div>}>
+                        <Suspense>
                           <DashboardView />
                         </Suspense>
                       </NoSubscriptionRedirect>
@@ -263,7 +263,7 @@ const App = () => {
                     exact
                     element={
                       <NoSubscriptionRedirect>
-                        <Suspense fallback={<div>Loading dashboard...</div>}>
+                        <Suspense>
                           <DashboardView />
                         </Suspense>
                       </NoSubscriptionRedirect>
@@ -332,7 +332,7 @@ const App = () => {
                   <Route
                     path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/change"
                     exact
-                    element={<UpdateProduction isEdit={true} />}
+                    element={<QuickStartProduction isEdit={true} />}
                   />
                   <Route
                     path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/finish"

@@ -50,8 +50,11 @@ const StripeSuccessRedirect: React.FC = () => {
   const sessionId = searchParams.get('session_id');
   const companyId = searchParams.get('company_id');
   const isNewCompany = searchParams.get('new_company') === 'true';
+  // Support both 'redirect' and 'return_url' parameters for backward compatibility
+  // Add-on flow uses 'return_url', while new subscriptions use 'redirect'
   const redirectPath =
     searchParams.get('redirect') ||
+    searchParams.get('return_url') ||
     (isNewCompany ? '/admin/dashboard/establishment/add' : '/admin/dashboard');
 
   // Set immediate flags to prevent any redirects during processing
@@ -101,7 +104,7 @@ const StripeSuccessRedirect: React.FC = () => {
 
         // Show success toast
         toast({
-          title: isNewCompany ? '🎉 ¡Suscripción completada!' : '✅ Suscripción actualizada',
+          title: isNewCompany ? '¡Suscripción completada!' : 'Suscripción actualizada',
           description: isNewCompany
             ? 'Ahora vamos a crear tu primer establecimiento para comenzar a rastrear tu huella de carbono.'
             : 'Tu suscripción ha sido procesada exitosamente.',

@@ -632,14 +632,7 @@ const extractEventFields = (event: Event) => {
       break;
 
     case 7: // Business Event
-      if (event.carbon_credits_earned) {
-        fields.push({
-          label: 'Carbon Credits',
-          value: `${event.carbon_credits_earned} ${event.carbon_credits_unit || 'tons'}`,
-          icon: FaLeaf,
-          color: 'green.500'
-        });
-      }
+      // Carbon credits display removed - transparency-first approach
       if (event.certification_type) {
         fields.push({
           label: 'Certification',
@@ -753,11 +746,7 @@ const getEnhancedDescription = (event: Event) => {
       return 'Integrated pest management activities';
 
     case 7: // Business
-      if (event.carbon_credits_earned) {
-        return `Earned ${event.carbon_credits_earned} ${
-          event.carbon_credits_unit || 'tons'
-        } carbon credits`;
-      }
+      // Carbon credits tooltip removed - transparency-first approach
       if (event.certification_type) {
         return `${event.certification_type} certification activities`;
       }

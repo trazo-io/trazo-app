@@ -50,7 +50,7 @@ export default function ImpactDashboard() {
   // Handle error state
   if (error) {
     return (
-      <StandardPage title="Discover" description="">
+      <StandardPage title="Discover" description="" showBackButton onBack={() => navigate(-1)}>
         <Alert status="error" borderRadius="xl">
           <AlertIcon />
           <Text flex={1}>Unable to load your transparency data.</Text>
@@ -71,6 +71,8 @@ export default function ImpactDashboard() {
     <StandardPage
       title="Discover"
       description="Your transparency journey at a glance"
+      showBackButton
+      onBack={() => navigate(-1)}
     >
       <VStack spacing={8} align="stretch">
         {/* Hero Section with Stats */}

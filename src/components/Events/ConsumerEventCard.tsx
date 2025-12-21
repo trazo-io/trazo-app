@@ -118,6 +118,8 @@ interface ConsumerEventData {
   area_covered?: string | number;
   yield_quantity?: string;
   fuel_consumed?: string | number;
+  fuel_type?: string; // Electric, Diesel, Gasoline, etc. - needed for dynamic label
+  fuel_unit?: string; // kWh, L, gal - needed for display
   equipment_hours?: string;
 
   // Legacy compatibility fields
@@ -330,6 +332,15 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
       default:
         return FaInfoCircle;
     }
+  };
+
+  // Helper function to get emoji icon for fuel consumption fields
+  const getFuelIcon = (fieldLabel: string, fuelType?: string): string | null => {
+    if (!fieldLabel.toLowerCase().includes('fuel consumed') && !fieldLabel.toLowerCase().includes('energy consumed')) {
+      return null;
+    }
+    const normalizedFuelType = fuelType?.toLowerCase() || '';
+    return normalizedFuelType === 'electric' ? '⚡' : '⛽';
   };
 
   // Debug blockchain data for verified events
@@ -737,30 +748,39 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       </Text>
                     </HStack>
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} pl={6}>
-                      {fieldDisplay.immediate.map((field, idx) => (
-                        <Box
-                          key={idx}
-                          p={3}
-                          bg={useColorModeValue('green.50', 'green.900')}
-                          borderRadius="lg"
-                          border="1px solid"
-                          borderColor={useColorModeValue('green.200', 'green.700')}
-                        >
-                          <HStack spacing={2} mb={1}>
-                            <Icon
-                              as={getCategoryIcon(field.category)}
-                              color="green.600"
-                              boxSize={3}
-                            />
-                            <Text fontSize="xs" fontWeight="bold" color="green.700">
-                              {field.label}
+                      {fieldDisplay.immediate.map((field, idx) => {
+                        const fuelIcon = getFuelIcon(field.label, event.fuel_type);
+                        return (
+                          <Box
+                            key={idx}
+                            p={3}
+                            bg={useColorModeValue('green.50', 'green.900')}
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor={useColorModeValue('green.200', 'green.700')}
+                          >
+                            <HStack spacing={2} mb={1}>
+                              {fuelIcon ? (
+                                <Text fontSize="sm" color="green.600">
+                                  {fuelIcon}
+                                </Text>
+                              ) : (
+                                <Icon
+                                  as={getCategoryIcon(field.category)}
+                                  color="green.600"
+                                  boxSize={3}
+                                />
+                              )}
+                              <Text fontSize="xs" fontWeight="bold" color="green.700">
+                                {field.label}
+                              </Text>
+                            </HStack>
+                            <Text fontSize="sm" color="green.800" fontWeight="medium">
+                              {field.value}
                             </Text>
-                          </HStack>
-                          <Text fontSize="sm" color="green.800" fontWeight="medium">
-                            {field.value}
-                          </Text>
-                        </Box>
-                      ))}
+                          </Box>
+                        );
+                      })}
                     </SimpleGrid>
                   </Box>
                 )}
@@ -775,23 +795,32 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       </Text>
                     </HStack>
                     <VStack align="stretch" spacing={2} pl={6}>
-                      {fieldDisplay.secondary.map((field, idx) => (
-                        <HStack key={idx} justify="space-between" flexWrap="wrap">
-                          <HStack spacing={2} minW="120px">
-                            <Icon
-                              as={getCategoryIcon(field.category)}
-                              color="blue.600"
-                              boxSize={3}
-                            />
-                            <Text fontSize="sm" fontWeight="medium" color="blue.700">
-                              {field.label}:
+                      {fieldDisplay.secondary.map((field, idx) => {
+                        const fuelIcon = getFuelIcon(field.label, event.fuel_type);
+                        return (
+                          <HStack key={idx} justify="space-between" flexWrap="wrap">
+                            <HStack spacing={2} minW="120px">
+                              {fuelIcon ? (
+                                <Text fontSize="sm" color="blue.600">
+                                  {fuelIcon}
+                                </Text>
+                              ) : (
+                                <Icon
+                                  as={getCategoryIcon(field.category)}
+                                  color="blue.600"
+                                  boxSize={3}
+                                />
+                              )}
+                              <Text fontSize="sm" fontWeight="medium" color="blue.700">
+                                {field.label}:
+                              </Text>
+                            </HStack>
+                            <Text fontSize="sm" color={mutedColor} flex="1" textAlign="right">
+                              {field.value}
                             </Text>
                           </HStack>
-                          <Text fontSize="sm" color={mutedColor} flex="1" textAlign="right">
-                            {field.value}
-                          </Text>
-                        </HStack>
-                      ))}
+                        );
+                      })}
                     </VStack>
                   </Box>
                 )}
@@ -883,23 +912,32 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       </Text>
                     </HStack>
                     <VStack align="stretch" spacing={1} pl={6}>
-                      {fieldDisplay.details.map((field, idx) => (
-                        <HStack key={idx} justify="space-between" flexWrap="wrap">
-                          <HStack spacing={2} minW="120px">
-                            <Icon
-                              as={getCategoryIcon(field.category)}
-                              color="gray.500"
-                              boxSize={3}
-                            />
-                            <Text fontSize="xs" color="gray.600">
-                              {field.label}:
+                      {fieldDisplay.details.map((field, idx) => {
+                        const fuelIcon = getFuelIcon(field.label, event.fuel_type);
+                        return (
+                          <HStack key={idx} justify="space-between" flexWrap="wrap">
+                            <HStack spacing={2} minW="120px">
+                              {fuelIcon ? (
+                                <Text fontSize="xs" color="gray.500">
+                                  {fuelIcon}
+                                </Text>
+                              ) : (
+                                <Icon
+                                  as={getCategoryIcon(field.category)}
+                                  color="gray.500"
+                                  boxSize={3}
+                                />
+                              )}
+                              <Text fontSize="xs" color="gray.600">
+                                {field.label}:
+                              </Text>
+                            </HStack>
+                            <Text fontSize="xs" color={mutedColor} flex="1" textAlign="right">
+                              {field.value}
                             </Text>
                           </HStack>
-                          <Text fontSize="xs" color={mutedColor} flex="1" textAlign="right">
-                            {field.value}
-                          </Text>
-                        </HStack>
-                      ))}
+                        );
+                      })}
                     </VStack>
                   </Box>
                 )}

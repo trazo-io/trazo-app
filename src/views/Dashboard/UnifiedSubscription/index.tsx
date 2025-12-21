@@ -48,6 +48,7 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+import { StandardPage } from 'components/Design/StandardComponents';
 import {
   FaBuilding,
   FaMapMarkedAlt,
@@ -582,7 +583,12 @@ function UnifiedSubscriptionDashboard() {
 
   if (!hasSubscription) {
     return (
-      <Box pt={{ base: '120px', md: '60px', xl: '60px' }}>
+      <StandardPage
+        title={intl.formatMessage({ id: 'app.subscription' }) || 'Subscription'}
+        description={intl.formatMessage({ id: 'app.noActiveSubscription' }) || 'No active subscription'}
+        showBackButton
+        onBack={() => navigate(-1)}
+      >
         <Card>
           <CardBody textAlign="center" py={10}>
             <Icon as={FaInfoCircle} boxSize={12} color="blue.500" mb={4} />
@@ -593,7 +599,7 @@ function UnifiedSubscriptionDashboard() {
               {intl.formatMessage({ id: 'app.noSubscriptionDescription' })}
             </Text>
             <Button
-              colorScheme="blue"
+              colorScheme="green"
               size="lg"
               onClick={() => navigate('/admin/dashboard/pricing')}
             >
@@ -601,45 +607,33 @@ function UnifiedSubscriptionDashboard() {
             </Button>
           </CardBody>
         </Card>
-      </Box>
+      </StandardPage>
     );
   }
 
   return (
-    <Box minH="100vh" py={{ base: 4, md: 8 }} px={{ base: 2, md: 6 }}>
-      <VStack spacing={6} align="stretch">
-        {/* Header */}
-        <Flex
-          direction={{ sm: 'column', md: 'row' }}
-          justify="space-between"
-          align="center"
-          gap="24px"
-          paddingTop={12}
-          w="100%"
+    <StandardPage
+      title={intl.formatMessage({ id: 'app.subscription' }) || 'Subscription'}
+      description={intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' }) || 'Manage your subscription and track your usage metrics'}
+      showBackButton
+      onBack={() => navigate(-1)}
+      headerAction={
+        <Button
+          leftIcon={<FaSync />}
+          colorScheme="green"
+          variant="outline"
+          size="sm"
+          isLoading={isLoading}
+          onClick={() => {
+            refetchDashboard();
+            handleRefreshData();
+          }}
         >
-          <VStack align="start" spacing={1}>
-            <Text color="gray.500" fontSize="md">
-              {intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' })}
-            </Text>
-          </VStack>
-
-          <HStack spacing={3} alignSelf={{ sm: 'flex-start', lg: 'flex-end' }}>
-            <Button
-              leftIcon={<FaSync />}
-              colorScheme="blue"
-              variant="outline"
-              h="35px"
-              fontSize="xs"
-              isLoading={isLoading}
-              onClick={() => {
-                refetchDashboard();
-                handleRefreshData();
-              }}
-            >
-              {intl.formatMessage({ id: 'app.refresh' })}
-            </Button>
-          </HStack>
-        </Flex>
+          {intl.formatMessage({ id: 'app.refresh' })}
+        </Button>
+      }
+    >
+      <VStack spacing={6} align="stretch">
 
         {/* Trial Banner */}
         {isTrial && (
@@ -1382,7 +1376,7 @@ function UnifiedSubscriptionDashboard() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </Box>
+    </StandardPage>
   );
 }
 

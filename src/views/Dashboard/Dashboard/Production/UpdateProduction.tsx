@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useToast, Box, Text } from '@chakra-ui/react';
+import { useToast, Box, Text, Spinner, VStack } from '@chakra-ui/react';
 import { StandardProductionForm } from '../../../../components/Forms/StandardProductionForm';
-import { useGetPublicHistoryQuery } from 'store/api/historyApi';
+import { useGetHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
 import { useStartProductionMutation } from 'store/api/companyApi';
 
 interface UpdateProductionProps {
@@ -27,15 +27,16 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
   const currentParcel = useSelector((state: RootState) => state.company.currentParcel);
   const [productOptions, setProductOptions] = useState<Array<{ value: string; label: string }>>([]);
 
-  // RTK Query hooks - using startProduction for create operations
+  // RTK Query hooks
   const [startProduction, { isLoading: isStarting }] = useStartProductionMutation();
+  const [updateProduction, { isLoading: isUpdating }] = useUpdateProductionMutation();
 
-  // Get production data for edit mode
+  // Get production data for edit mode (using authenticated endpoint)
   const {
     data: productionData,
     isLoading: isLoadingProduction,
     isError: isProductionError
-  } = useGetPublicHistoryQuery(productionId || '', {
+  } = useGetHistoryQuery(productionId || '', {
     skip: !isEdit || !productionId
   });
 
@@ -126,15 +127,33 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
     try {
       console.log('Form submitted with data:', data);
 
-      if (isEdit) {
-        // For edit mode, we would need different API
+      if (isEdit && productionId) {
+        // For edit mode, use updateProduction API
+        const updatePayload = {
+          historyId: productionId,
+          name: data.productName || data.name || productionData?.name,
+          start_date: data.date,
+          description: data.description || '',
+          is_outdoor: data.isOutdoor,
+          age_of_plants: data.ageOfPlants?.toString() || '0',
+          number_of_plants: data.numberOfPlants || 0,
+          soil_ph: data.soilPh || 7.0
+        };
+
+        console.log('Calling updateProduction with payload:', updatePayload);
+
+        await updateProduction(updatePayload).unwrap();
+
         toast({
-          title: 'Edit Mode',
-          description: 'Edit functionality will be implemented with dedicated API endpoint',
-          status: 'info',
+          title: intl.formatMessage({ id: 'app.success' }),
+          description: intl.formatMessage({ id: 'app.productionUpdatedSuccessfully' }),
+          status: 'success',
           duration: 5000,
           isClosable: true
         });
+
+        // Navigate back
+        navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
         return;
       }
 
@@ -147,7 +166,6 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
         expected_harvest: data.expectedHarvest,
         description: '',
         production_method: data.productionMethod || 'conventional',
-        irrigation_method: data.irrigationMethod || 'drip',
         age_of_plants: data.ageOfPlants?.toString() || '0',
         number_of_plants: data.numberOfPlants || 0,
         soil_ph: data.soilPh || 7.0,
@@ -162,9 +180,7 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
 
       toast({
         title: intl.formatMessage({ id: 'app.success' }),
-        description: isEdit
-          ? intl.formatMessage({ id: 'app.productionUpdatedSuccessfully' })
-          : intl.formatMessage({ id: 'app.productionCreatedSuccessfully' }),
+        description: intl.formatMessage({ id: 'app.productionCreatedSuccessfully' }),
         status: 'success',
         duration: 5000,
         isClosable: true
@@ -189,9 +205,25 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
     navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
   };
 
-  // Return null while loading - keeps app-level loading visible
-  if (isEdit && (isLoadingProduction || !productionData)) {
-    return null;
+  // Debug logging for edit mode
+  console.log('UpdateProduction Debug:', {
+    isEdit,
+    productionId,
+    isLoadingProduction,
+    isProductionError,
+    productionData
+  });
+
+  // Show loading state for edit mode
+  if (isEdit && isLoadingProduction) {
+    return (
+      <Box p={8} display="flex" justifyContent="center" alignItems="center" minH="400px">
+        <VStack spacing={4}>
+          <Spinner size="xl" color="green.500" thickness="4px" />
+          <Text color="gray.600">Loading production data...</Text>
+        </VStack>
+      </Box>
+    );
   }
 
   // Show error state for edit mode
@@ -199,6 +231,17 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
     return (
       <Box p={8} textAlign="center">
         <Text color="red.500">Error loading production data. Please try again.</Text>
+        <Text color="gray.500" fontSize="sm" mt={2}>Production ID: {productionId}</Text>
+      </Box>
+    );
+  }
+
+  // Show message if no data found
+  if (isEdit && !productionData) {
+    return (
+      <Box p={8} textAlign="center">
+        <Text color="orange.500">No production data found.</Text>
+        <Text color="gray.500" fontSize="sm" mt={2}>Production ID: {productionId}</Text>
       </Box>
     );
   }
@@ -208,7 +251,7 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
       onSubmit={handleSubmit}
       onCancel={handleCancel}
       initialData={getInitialData()}
-      isLoading={isStarting}
+      isLoading={isStarting || isUpdating}
       isEdit={isEdit}
       parcelName={currentParcel?.name || ''}
       productOptions={productOptions}

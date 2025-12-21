@@ -39,8 +39,6 @@ import { useIntl } from 'react-intl';
 import {
   FaBuilding,
   FaMapMarkedAlt,
-  FaPhone,
-  FaEnvelope,
   FaCertificate,
   FaLeaf,
   FaUsers,
@@ -57,6 +55,61 @@ import {
 } from 'react-icons/fa';
 import { MdCheck, MdLocationOn, MdDescription, MdSettings, MdImage } from 'react-icons/md';
 import { TrazoImageUpload } from '../Upload';
+
+// US States - 2-letter codes required for USDA API and carbon calculations
+// Must match EditCompanyModal.tsx for consistency
+const US_STATES = [
+  { code: 'AL', name: 'Alabama' },
+  { code: 'AK', name: 'Alaska' },
+  { code: 'AZ', name: 'Arizona' },
+  { code: 'AR', name: 'Arkansas' },
+  { code: 'CA', name: 'California' },
+  { code: 'CO', name: 'Colorado' },
+  { code: 'CT', name: 'Connecticut' },
+  { code: 'DE', name: 'Delaware' },
+  { code: 'FL', name: 'Florida' },
+  { code: 'GA', name: 'Georgia' },
+  { code: 'HI', name: 'Hawaii' },
+  { code: 'ID', name: 'Idaho' },
+  { code: 'IL', name: 'Illinois' },
+  { code: 'IN', name: 'Indiana' },
+  { code: 'IA', name: 'Iowa' },
+  { code: 'KS', name: 'Kansas' },
+  { code: 'KY', name: 'Kentucky' },
+  { code: 'LA', name: 'Louisiana' },
+  { code: 'ME', name: 'Maine' },
+  { code: 'MD', name: 'Maryland' },
+  { code: 'MA', name: 'Massachusetts' },
+  { code: 'MI', name: 'Michigan' },
+  { code: 'MN', name: 'Minnesota' },
+  { code: 'MS', name: 'Mississippi' },
+  { code: 'MO', name: 'Missouri' },
+  { code: 'MT', name: 'Montana' },
+  { code: 'NE', name: 'Nebraska' },
+  { code: 'NV', name: 'Nevada' },
+  { code: 'NH', name: 'New Hampshire' },
+  { code: 'NJ', name: 'New Jersey' },
+  { code: 'NM', name: 'New Mexico' },
+  { code: 'NY', name: 'New York' },
+  { code: 'NC', name: 'North Carolina' },
+  { code: 'ND', name: 'North Dakota' },
+  { code: 'OH', name: 'Ohio' },
+  { code: 'OK', name: 'Oklahoma' },
+  { code: 'OR', name: 'Oregon' },
+  { code: 'PA', name: 'Pennsylvania' },
+  { code: 'RI', name: 'Rhode Island' },
+  { code: 'SC', name: 'South Carolina' },
+  { code: 'SD', name: 'South Dakota' },
+  { code: 'TN', name: 'Tennessee' },
+  { code: 'TX', name: 'Texas' },
+  { code: 'UT', name: 'Utah' },
+  { code: 'VT', name: 'Vermont' },
+  { code: 'VA', name: 'Virginia' },
+  { code: 'WA', name: 'Washington' },
+  { code: 'WV', name: 'West Virginia' },
+  { code: 'WI', name: 'Wisconsin' },
+  { code: 'WY', name: 'Wyoming' }
+];
 
 // Form Schema
 const establishmentSchema = object({
@@ -107,7 +160,7 @@ const establishmentSchema = object({
   // New operational agricultural fields
   waterSources: array(string()).optional(),
   climateZone: string().optional(),
-  soilTypes: array(string()).optional(),
+  soilHealthPractices: array(string()).optional(),
   conservationPractices: array(string()).optional(),
   irrigationMethods: array(string()).optional()
 });
@@ -146,7 +199,7 @@ interface EstablishmentFormData {
   // New operational agricultural fields
   waterSources?: string[];
   climateZone?: string;
-  soilTypes?: string[];
+  soilHealthPractices?: string[];
   conservationPractices?: string[];
   irrigationMethods?: string[];
 }
@@ -174,8 +227,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
   const [newPractice, setNewPractice] = useState('');
   // New operational field states
   const [newWaterSource, setNewWaterSource] = useState('');
-  const [newSoilType, setNewSoilType] = useState('');
-  const [newConservationPractice, setNewConservationPractice] = useState('');
+  const [newSoilHealthPractice, setNewSoilHealthPractice] = useState('');
   const [newIrrigationMethod, setNewIrrigationMethod] = useState('');
   const intl = useIntl();
   const toast = useToast();
@@ -186,7 +238,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
 
   // Define steps for stepper - certifications moved to operations step
   const steps = [
-    { title: 'Basic Info', description: 'Business details & contact', icon: FaBuilding },
+    { title: 'Basic Info', description: 'Farm name & type', icon: FaBuilding },
     { title: 'Location', description: 'Address & coordinates', icon: FaMapMarkedAlt },
     { title: 'Operations', description: 'Farming, practices & certifications', icon: FaTractor },
     { title: 'Media', description: 'Images', icon: MdImage }
@@ -203,7 +255,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
       totalAcreage: 0,
       // New operational field defaults
       waterSources: [],
-      soilTypes: [],
+      soilHealthPractices: [],
       conservationPractices: [],
       irrigationMethods: [],
       ...initialData
@@ -312,25 +364,10 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
 
     switch (step) {
       case 0:
-        // Basic Info step: name is required and email must be valid if provided
+        // Basic Info step: only name is required
         const hasName = !!formData.name?.trim();
-        const emailError = errors.email;
         const nameError = errors.name;
-
-        // Debug logging
-        console.log('Step 0 validation:', {
-          hasName,
-          nameError,
-          emailError,
-          formData: {
-            name: formData.name,
-            email: formData.email
-          },
-          watchedName: watch('name'),
-          formValues: methods.getValues()
-        });
-
-        return hasName && !nameError && !emailError;
+        return hasName && !nameError;
       case 1:
         return true; // Location step has no required fields
       case 2:
@@ -419,37 +456,22 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
     );
   };
 
-  const addSoilType = () => {
-    if (newSoilType.trim()) {
-      const currentTypes = watch('soilTypes') || [];
-      setValue('soilTypes', [...currentTypes, newSoilType.trim()]);
-      setNewSoilType('');
+  const addSoilHealthPractice = () => {
+    if (newSoilHealthPractice.trim()) {
+      const currentPractices = watch('soilHealthPractices') || [];
+      setValue('soilHealthPractices', [...currentPractices, newSoilHealthPractice.trim()]);
+      setNewSoilHealthPractice('');
     }
   };
 
-  const removeSoilType = (index: number) => {
-    const currentTypes = watch('soilTypes') || [];
+  const removeSoilHealthPractice = (index: number) => {
+    const currentPractices = watch('soilHealthPractices') || [];
     setValue(
-      'soilTypes',
-      currentTypes.filter((_, i) => i !== index)
-    );
-  };
-
-  const addConservationPractice = () => {
-    if (newConservationPractice.trim()) {
-      const currentPractices = watch('conservationPractices') || [];
-      setValue('conservationPractices', [...currentPractices, newConservationPractice.trim()]);
-      setNewConservationPractice('');
-    }
-  };
-
-  const removeConservationPractice = (index: number) => {
-    const currentPractices = watch('conservationPractices') || [];
-    setValue(
-      'conservationPractices',
+      'soilHealthPractices',
       currentPractices.filter((_, i) => i !== index)
     );
   };
+
 
   const addIrrigationMethod = () => {
     if (newIrrigationMethod.trim()) {
@@ -506,7 +528,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
   const getFieldsForStep = (step: number): (keyof EstablishmentFormData)[] => {
     switch (step) {
       case 0:
-        return ['name', 'email', 'phone'];
+        return ['name', 'establishmentType', 'description'];
       case 1:
         return ['address', 'city', 'state', 'country'];
       case 2:
@@ -545,7 +567,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
           {currentStep === 0 && (
             <StandardCard
               title="Establishment Information"
-              subtitle="Basic details, contact information, and social media presence"
+              subtitle="Tell us about your farm"
             >
               <VStack spacing={6} align="stretch">
                 {/* Name & Type */}
@@ -605,60 +627,11 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   </StandardField>
                 </SimpleGrid>
 
-                {/* Contact Information */}
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="Email Address"
-                    error={errors.email?.message}
-                    helpText="Primary contact email"
-                  >
-                    <Controller
-                      name="email"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          type="email"
-                          placeholder="contact@greenvalleyfarm.com"
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                          size="lg"
-                        />
-                      )}
-                    />
-                  </StandardField>
-
-                  <StandardField
-                    label="Phone Number"
-                    error={errors.phone?.message}
-                    helpText="Contact phone number"
-                  >
-                    <Controller
-                      name="phone"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          type="tel"
-                          placeholder="(555) 123-4567"
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                          size="lg"
-                        />
-                      )}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
                 {/* Description */}
                 <StandardField
                   label="Description"
                   error={errors.description?.message}
-                  helpText="Describe your establishment, its history, and mission"
+                  helpText="This is what consumers see when they scan your products - tell your story"
                 >
                   <Controller
                     name="description"
@@ -666,7 +639,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                     render={({ field }) => (
                       <Textarea
                         {...field}
-                        placeholder="Tell us about your establishment, what you produce, your farming philosophy, and what makes your operation unique..."
+                        placeholder="Share your farm's story: your farming philosophy, what makes your operation unique, and what you want consumers to know about how you grow..."
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
@@ -779,51 +752,38 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                     />
                   </StandardField>
 
-                  <StandardField label="State/Province" error={errors.state?.message}>
+                  <StandardField
+                    label="State"
+                    error={errors.state?.message}
+                    helpText="Required for accurate carbon calculations"
+                  >
                     <Controller
                       name="state"
                       control={methods.control}
                       render={({ field }) => (
-                        <Input
-                          {...field}
-                          placeholder="California"
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                          size="lg"
-                        />
-                      )}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Country & Zip */}
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField label="Country" error={errors.country?.message}>
-                    <Controller
-                      name="country"
-                      control={methods.control}
-                      render={({ field }) => (
                         <Select
                           {...field}
-                          placeholder="Select country..."
+                          placeholder="Select state..."
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
                           _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
                           size="lg"
                         >
-                          <option value="US">United States</option>
-                          <option value="CA">Canada</option>
-                          <option value="MX">Mexico</option>
-                          <option value="OTHER">Other</option>
+                          {US_STATES.map((state) => (
+                            <option key={state.code} value={state.code}>
+                              {state.name}
+                            </option>
+                          ))}
                         </Select>
                       )}
                     />
                   </StandardField>
+                </SimpleGrid>
 
-                  <StandardField label="ZIP/Postal Code" error={errors.zipCode?.message}>
+                {/* ZIP Code */}
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                  <StandardField label="ZIP Code" error={errors.zipCode?.message}>
                     <Controller
                       name="zipCode"
                       control={methods.control}
@@ -1114,31 +1074,8 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   </StandardField>
                 </SimpleGrid>
 
-                {/* Employee Count & Year Established */}
+                {/* Year Established */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="Employee Count"
-                    error={errors.employeeCount?.message}
-                    helpText="Number of employees"
-                  >
-                    <Controller
-                      name="employeeCount"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <NumberInput
-                          value={field.value || 0}
-                          onChange={(_, num) => field.onChange(num || 0)}
-                        >
-                          <NumberInputField borderRadius="lg" />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
-                      )}
-                    />
-                  </StandardField>
-
                   <StandardField
                     label="Year Established"
                     error={errors.yearEstablished?.message}
@@ -1227,10 +1164,10 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Sustainability Practices */}
+                {/* Sustainability & Conservation Practices */}
                 <StandardField
-                  label="Sustainability Practices"
-                  helpText="Environmental and sustainability practices you follow"
+                  label="Sustainability & Conservation Practices"
+                  helpText="Environmental practices you follow - this builds consumer trust and differentiates your farm"
                 >
                   <Controller
                     name="sustainabilityPractices"
@@ -1243,7 +1180,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               setNewPractice(e.target.value);
                             }}
-                            placeholder="e.g., Cover cropping, Water conservation, Solar power"
+                            placeholder="e.g., Cover cropping, Water conservation, Buffer strips, Solar power, Contour farming"
                             onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
@@ -1361,50 +1298,19 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Operational Details */}
+                {/* Sustainability & Resources */}
                 <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={6} mb={2}>
-                  Operational Details
+                  Sustainability & Resources
                 </Text>
                 <Text fontSize="sm" color="gray.600" mb={4}>
-                  Provide details about your agricultural operations, resources, and methods.
+                  Share how you manage water and soil - consumers value farms with sustainable practices.
                 </Text>
 
-                {/* Climate Zone */}
-                <StandardField
-                  label="Climate Zone"
-                  error={errors.climateZone?.message}
-                  helpText="Climate zone or growing region classification"
-                >
-                  <Controller
-                    name="climateZone"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <Select
-                        {...field}
-                        placeholder="Select climate zone..."
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                        size="lg"
-                      >
-                        <option value="temperate_oceanic">Temperate Oceanic</option>
-                        <option value="mediterranean">Mediterranean</option>
-                        <option value="humid_subtropical">Humid Subtropical</option>
-                        <option value="semi_arid">Semi-Arid</option>
-                        <option value="arid">Arid</option>
-                        <option value="continental">Continental</option>
-                        <option value="tropical">Tropical</option>
-                        <option value="montane">Montane</option>
-                      </Select>
-                    )}
-                  />
-                </StandardField>
 
-                {/* Water Sources */}
+                {/* Water Sources - Critical sustainability indicator per agricultural expert */}
                 <StandardField
                   label="Water Sources"
-                  helpText="Primary water sources for your operations"
+                  helpText="Water sustainability is a key consumer concern - show your responsible water practices"
                 >
                   <Controller
                     name="waterSources"
@@ -1417,7 +1323,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               setNewWaterSource(e.target.value);
                             }}
-                            placeholder="e.g., Well water, Surface water, Irrigation district"
+                            placeholder="e.g., Rainwater collection, Well water, Recycled water"
                             onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
@@ -1449,27 +1355,27 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Soil Types */}
+                {/* Soil Health Practices - Expert recommended replacement for technical Soil Types */}
                 <StandardField
-                  label="Soil Types"
-                  helpText="Primary soil types present on your establishment"
+                  label="Soil Health Practices"
+                  helpText="Practices you use to maintain and improve soil health - builds consumer trust"
                 >
                   <Controller
-                    name="soilTypes"
+                    name="soilHealthPractices"
                     control={methods.control}
                     render={({ field }) => (
                       <VStack align="stretch" spacing={3}>
                         <HStack>
                           <Input
-                            value={newSoilType}
+                            value={newSoilHealthPractice}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              setNewSoilType(e.target.value);
+                              setNewSoilHealthPractice(e.target.value);
                             }}
-                            placeholder="e.g., Clay loam, Sandy soil, Silt"
+                            placeholder="e.g., Cover cropping, Compost application, No-till farming"
                             onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
-                                addSoilType();
+                                addSoilHealthPractice();
                               }
                             }}
                             borderRadius="lg"
@@ -1478,68 +1384,16 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                             _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
                             size="lg"
                           />
-                          <StandardButton onClick={addSoilType} leftIcon={<FaPlus />} size="sm">
-                            Add
-                          </StandardButton>
-                        </HStack>
-                        {field.value?.length ? (
-                          <HStack spacing={2} flexWrap="wrap">
-                            {field.value.map((soil, index) => (
-                              <Tag key={index} size="md" variant="solid" colorScheme="orange">
-                                <TagLabel>{soil}</TagLabel>
-                                <TagCloseButton onClick={() => removeSoilType(index)} />
-                              </Tag>
-                            ))}
-                          </HStack>
-                        ) : null}
-                      </VStack>
-                    )}
-                  />
-                </StandardField>
-
-                {/* Conservation Practices */}
-                <StandardField
-                  label="Conservation Practices"
-                  helpText="Conservation and environmental practices implemented"
-                >
-                  <Controller
-                    name="conservationPractices"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <VStack align="stretch" spacing={3}>
-                        <HStack>
-                          <Input
-                            value={newConservationPractice}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              setNewConservationPractice(e.target.value);
-                            }}
-                            placeholder="e.g., Cover crops, Buffer strips, Contour farming"
-                            onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                addConservationPractice();
-                              }
-                            }}
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                            size="lg"
-                          />
-                          <StandardButton
-                            onClick={addConservationPractice}
-                            leftIcon={<FaPlus />}
-                            size="sm"
-                          >
+                          <StandardButton onClick={addSoilHealthPractice} leftIcon={<FaPlus />} size="sm">
                             Add
                           </StandardButton>
                         </HStack>
                         {field.value?.length ? (
                           <HStack spacing={2} flexWrap="wrap">
                             {field.value.map((practice, index) => (
-                              <Tag key={index} size="md" variant="solid" colorScheme="green">
+                              <Tag key={index} size="md" variant="solid" colorScheme="orange">
                                 <TagLabel>{practice}</TagLabel>
-                                <TagCloseButton onClick={() => removeConservationPractice(index)} />
+                                <TagCloseButton onClick={() => removeSoilHealthPractice(index)} />
                               </Tag>
                             ))}
                           </HStack>
@@ -1549,10 +1403,11 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Irrigation Methods */}
+
+                {/* Irrigation Methods - Consumer-understood sustainability indicator */}
                 <StandardField
                   label="Irrigation Methods"
-                  helpText="Irrigation techniques and methods used"
+                  helpText="Efficient irrigation shows environmental stewardship - consumers value water-conscious farming"
                 >
                   <Controller
                     name="irrigationMethods"
@@ -1565,7 +1420,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               setNewIrrigationMethod(e.target.value);
                             }}
-                            placeholder="e.g., Drip irrigation, Sprinkler, Flood irrigation"
+                            placeholder="e.g., Drip irrigation (water-efficient), Smart sensors, Rain-fed"
                             onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
@@ -1601,84 +1456,11 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Additional Information Fields */}
-                <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={6} mb={2}>
-                  Additional Information
-                </Text>
-
+                {/* Personal Message to Consumers */}
                 <StandardField
-                  label="About the Establishment"
-                  error={errors.about?.message}
-                  helpText="General information about your establishment"
-                >
-                  <Controller
-                    name="about"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <Textarea
-                        {...field}
-                        placeholder="Share more about your establishment's history, mission, and what makes it special..."
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                        minH="120px"
-                        resize="vertical"
-                      />
-                    )}
-                  />
-                </StandardField>
-
-                <StandardField
-                  label="Main Activities"
-                  error={errors.main_activities?.message}
-                  helpText="Primary activities and operations"
-                >
-                  <Controller
-                    name="main_activities"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <Textarea
-                        {...field}
-                        placeholder="Describe your main farming activities, products, and services..."
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                        minH="120px"
-                        resize="vertical"
-                      />
-                    )}
-                  />
-                </StandardField>
-
-                <StandardField
-                  label="Location Highlights"
-                  error={errors.location_highlights?.message}
-                  helpText="Notable features of your location"
-                >
-                  <Controller
-                    name="location_highlights"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <Textarea
-                        {...field}
-                        placeholder="Describe unique features of your location, climate advantages, or geographical benefits..."
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                        minH="120px"
-                        resize="vertical"
-                      />
-                    )}
-                  />
-                </StandardField>
-
-                <StandardField
-                  label="Custom Message"
+                  label="Personal Message to Consumers"
                   error={errors.custom_message?.message}
-                  helpText="Special message for customers or visitors"
+                  helpText="Optional: A personal note displayed to consumers who scan your products"
                 >
                   <Controller
                     name="custom_message"
@@ -1686,12 +1468,12 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                     render={({ field }) => (
                       <Textarea
                         {...field}
-                        placeholder="A personal message you'd like to share with customers or visitors..."
+                        placeholder="Thank you for choosing our farm! We're proud to share our sustainable practices with you..."
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
                         _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                        minH="120px"
+                        minH="100px"
                         resize="vertical"
                       />
                     )}

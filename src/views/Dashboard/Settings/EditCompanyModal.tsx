@@ -31,7 +31,8 @@ import {
   FaLeaf,
   FaChevronLeft,
   FaChevronRight,
-  FaCheck
+  FaCheck,
+  FaFlag
 } from 'react-icons/fa';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -52,8 +53,7 @@ const editCompanySchema = object({
   contact_phone: string().optional(),
   address: string().optional(),
   city: string().optional(),
-  state: string().optional(),
-  country: string().optional(),
+  state: string().optional(), // 2-letter US state code for USDA API
   zip_code: string().optional(),
   website: string().url('URL inválida').optional().or(string().length(0)),
   description: string().optional(),
@@ -76,8 +76,7 @@ type EditCompanyFormData = {
   contact_phone?: string;
   address?: string;
   city?: string;
-  state?: string;
-  country?: string;
+  state?: string; // 2-letter US state code
   zip_code?: string;
   website?: string;
   description?: string;
@@ -145,6 +144,61 @@ const SUSTAINABILITY_COMMITMENTS = [
   { value: 'exploring', label: 'En Exploración' }
 ];
 
+// US States - 2-letter codes required for USDA API and carbon calculations
+// Must match AddCompany.jsx for consistency
+const US_STATES = [
+  { code: 'AL', name: 'Alabama' },
+  { code: 'AK', name: 'Alaska' },
+  { code: 'AZ', name: 'Arizona' },
+  { code: 'AR', name: 'Arkansas' },
+  { code: 'CA', name: 'California' },
+  { code: 'CO', name: 'Colorado' },
+  { code: 'CT', name: 'Connecticut' },
+  { code: 'DE', name: 'Delaware' },
+  { code: 'FL', name: 'Florida' },
+  { code: 'GA', name: 'Georgia' },
+  { code: 'HI', name: 'Hawaii' },
+  { code: 'ID', name: 'Idaho' },
+  { code: 'IL', name: 'Illinois' },
+  { code: 'IN', name: 'Indiana' },
+  { code: 'IA', name: 'Iowa' },
+  { code: 'KS', name: 'Kansas' },
+  { code: 'KY', name: 'Kentucky' },
+  { code: 'LA', name: 'Louisiana' },
+  { code: 'ME', name: 'Maine' },
+  { code: 'MD', name: 'Maryland' },
+  { code: 'MA', name: 'Massachusetts' },
+  { code: 'MI', name: 'Michigan' },
+  { code: 'MN', name: 'Minnesota' },
+  { code: 'MS', name: 'Mississippi' },
+  { code: 'MO', name: 'Missouri' },
+  { code: 'MT', name: 'Montana' },
+  { code: 'NE', name: 'Nebraska' },
+  { code: 'NV', name: 'Nevada' },
+  { code: 'NH', name: 'New Hampshire' },
+  { code: 'NJ', name: 'New Jersey' },
+  { code: 'NM', name: 'New Mexico' },
+  { code: 'NY', name: 'New York' },
+  { code: 'NC', name: 'North Carolina' },
+  { code: 'ND', name: 'North Dakota' },
+  { code: 'OH', name: 'Ohio' },
+  { code: 'OK', name: 'Oklahoma' },
+  { code: 'OR', name: 'Oregon' },
+  { code: 'PA', name: 'Pennsylvania' },
+  { code: 'RI', name: 'Rhode Island' },
+  { code: 'SC', name: 'South Carolina' },
+  { code: 'SD', name: 'South Dakota' },
+  { code: 'TN', name: 'Tennessee' },
+  { code: 'TX', name: 'Texas' },
+  { code: 'UT', name: 'Utah' },
+  { code: 'VT', name: 'Vermont' },
+  { code: 'VA', name: 'Virginia' },
+  { code: 'WA', name: 'Washington' },
+  { code: 'WV', name: 'West Virginia' },
+  { code: 'WI', name: 'Wisconsin' },
+  { code: 'WY', name: 'Wyoming' }
+];
+
 const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
   isOpen,
   onClose,
@@ -164,8 +218,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
       contact_phone: '',
       address: '',
       city: '',
-      state: '',
-      country: '',
+      state: '', // 2-letter US state code
       zip_code: '',
       website: '',
       description: '',
@@ -194,8 +247,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         contact_phone: company.contact_phone || company.phone || '',
         address: company.address || '',
         city: company.city || '',
-        state: company.state || '',
-        country: company.country || '',
+        state: company.state || '', // 2-letter US state code
         zip_code: company.zip_code || '',
         website: company.website || '',
         description: company.description || '',
@@ -222,6 +274,8 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         value === '' ? null : value
       ])
     );
+    // Always set country to US since we're US-only
+    (cleanedData as any).country = 'US';
     await onSubmit(cleanedData as EditCompanyFormData);
   };
 
@@ -385,6 +439,28 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
   // Step 2: Location
   const LocationStep = () => (
     <VStack spacing={5} align="stretch">
+      <Box
+        p={4}
+        bg="blue.50"
+        borderRadius="lg"
+        border="1px solid"
+        borderColor="blue.200"
+        mb={2}
+      >
+        <HStack spacing={3} align="flex-start">
+          <Icon as={FaFlag} color="blue.500" boxSize={5} mt={0.5} />
+          <Box>
+            <Text fontWeight="semibold" color="blue.800" fontSize="sm">
+              Estados Unidos
+            </Text>
+            <Text fontSize="xs" color="blue.700" mt={1}>
+              Tu estado es necesario para cálculos precisos de carbono usando
+              datos regionales de la USDA.
+            </Text>
+          </Box>
+        </HStack>
+      </Box>
+
       <StandardField label="Dirección" error={errors.address?.message}>
         <StandardInput
           placeholder="123 Farm Road"
@@ -400,29 +476,28 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
           />
         </StandardField>
 
-        <StandardField label="Estado/Provincia" error={errors.state?.message}>
-          <StandardInput
-            placeholder="California"
-            {...register('state')}
-          />
+        <StandardField
+          label="Estado"
+          error={errors.state?.message}
+          helpText="Requerido para cálculos de carbono"
+        >
+          <StandardSelect {...register('state')}>
+            <option value="">Seleccionar estado...</option>
+            {US_STATES.map((state) => (
+              <option key={state.code} value={state.code}>
+                {state.name}
+              </option>
+            ))}
+          </StandardSelect>
         </StandardField>
       </SimpleGrid>
 
-      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-        <StandardField label="País" error={errors.country?.message}>
-          <StandardInput
-            placeholder="Estados Unidos"
-            {...register('country')}
-          />
-        </StandardField>
-
-        <StandardField label="Código Postal" error={errors.zip_code?.message}>
-          <StandardInput
-            placeholder="12345"
-            {...register('zip_code')}
-          />
-        </StandardField>
-      </SimpleGrid>
+      <StandardField label="Código Postal" error={errors.zip_code?.message}>
+        <StandardInput
+          placeholder="12345"
+          {...register('zip_code')}
+        />
+      </StandardField>
     </VStack>
   );
 

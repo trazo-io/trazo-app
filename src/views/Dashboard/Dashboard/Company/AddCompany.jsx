@@ -2,219 +2,168 @@ import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { useGetCompanyCropOptionsQuery } from 'store/api/carbonApi';
-import {
-  Box,
-  VStack,
-  HStack,
-  Text,
-  Button,
-  Icon,
-  Badge,
-  useColorModeValue,
-  Divider,
-  Alert,
-  AlertIcon,
-  SimpleGrid,
-  Flex,
-  Container,
-  Switch,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
-  useToast
-} from '@chakra-ui/react';
+// NOTE: Crop selection removed - belongs at Establishment/Parcel level, not Company level
+import { Box, VStack, HStack, Text, Icon, SimpleGrid, useToast } from '@chakra-ui/react';
 import {
   FaRocket,
-  FaWrench,
-  FaClock,
   FaCheckCircle,
   FaBuilding,
   FaMapMarkerAlt,
   FaLeaf,
-  FaChartLine,
-  FaUsers,
-  FaArrowRight,
   FaPhone,
   FaEnvelope,
   FaChevronRight,
   FaChevronLeft,
-  FaSeedling,
-  FaWater,
-  FaRecycle,
-  FaBolt,
-  FaBug,
-  FaGlobe,
-  FaIdCard,
-  FaStore,
-  FaAppleAlt
+  FaSeedling, // Used for sustainability goals
+  FaWater, // Used for sustainability goals
+  FaRecycle, // Used for sustainability goals
+  FaBolt, // Used for sustainability goals
+  FaBug, // Used for sustainability goals
+  FaStore
 } from 'react-icons/fa';
-import { GiCorn, GiTreeBranch, GiAvocado } from 'react-icons/gi';
 import {
   StandardPage,
   StandardCard,
   StandardField,
   StandardInput,
-  StandardTextarea,
   StandardSelect,
   StandardButton,
   StandardAlert,
-  StandardStepper,
-  StandardSelectionGrid
+  StandardStepper
 } from '../../../../components/Design';
-import { FormProvider, useForm, Controller } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, boolean, number, array } from 'zod';
+import { object, string, array } from 'zod';
 // @ts-ignore: JS module in TS file
 import { useCreateCompanyMutation } from 'store/api/companyApi';
 import { setCompany } from 'store/features/companySlice';
 // @ts-ignore: JS module in TS file
 import { setUserCompany } from 'store/features/userSlice';
-import Card from 'components/Card/Card';
-import CardBody from 'components/Card/CardBody';
-// @ts-ignore: JSX component in TS file
-import NewCompany from '../components/forms/NewCompany';
+// Unused imports removed: Card, CardBody, NewCompany (legacy crop selection components)
 
-// Company validation schema
+// US States - 2-letter codes required for USDA API and RegionalEmissionFactor carbon calculations
+const US_STATES = [
+  { code: 'AL', name: 'Alabama' },
+  { code: 'AK', name: 'Alaska' },
+  { code: 'AZ', name: 'Arizona' },
+  { code: 'AR', name: 'Arkansas' },
+  { code: 'CA', name: 'California' },
+  { code: 'CO', name: 'Colorado' },
+  { code: 'CT', name: 'Connecticut' },
+  { code: 'DE', name: 'Delaware' },
+  { code: 'FL', name: 'Florida' },
+  { code: 'GA', name: 'Georgia' },
+  { code: 'HI', name: 'Hawaii' },
+  { code: 'ID', name: 'Idaho' },
+  { code: 'IL', name: 'Illinois' },
+  { code: 'IN', name: 'Indiana' },
+  { code: 'IA', name: 'Iowa' },
+  { code: 'KS', name: 'Kansas' },
+  { code: 'KY', name: 'Kentucky' },
+  { code: 'LA', name: 'Louisiana' },
+  { code: 'ME', name: 'Maine' },
+  { code: 'MD', name: 'Maryland' },
+  { code: 'MA', name: 'Massachusetts' },
+  { code: 'MI', name: 'Michigan' },
+  { code: 'MN', name: 'Minnesota' },
+  { code: 'MS', name: 'Mississippi' },
+  { code: 'MO', name: 'Missouri' },
+  { code: 'MT', name: 'Montana' },
+  { code: 'NE', name: 'Nebraska' },
+  { code: 'NV', name: 'Nevada' },
+  { code: 'NH', name: 'New Hampshire' },
+  { code: 'NJ', name: 'New Jersey' },
+  { code: 'NM', name: 'New Mexico' },
+  { code: 'NY', name: 'New York' },
+  { code: 'NC', name: 'North Carolina' },
+  { code: 'ND', name: 'North Dakota' },
+  { code: 'OH', name: 'Ohio' },
+  { code: 'OK', name: 'Oklahoma' },
+  { code: 'OR', name: 'Oregon' },
+  { code: 'PA', name: 'Pennsylvania' },
+  { code: 'RI', name: 'Rhode Island' },
+  { code: 'SC', name: 'South Carolina' },
+  { code: 'SD', name: 'South Dakota' },
+  { code: 'TN', name: 'Tennessee' },
+  { code: 'TX', name: 'Texas' },
+  { code: 'UT', name: 'Utah' },
+  { code: 'VT', name: 'Vermont' },
+  { code: 'VA', name: 'Virginia' },
+  { code: 'WA', name: 'Washington' },
+  { code: 'WV', name: 'West Virginia' },
+  { code: 'WI', name: 'Wisconsin' },
+  { code: 'WY', name: 'Wyoming' }
+];
+
+// Company validation schema - Streamlined for transparency-first onboarding
+// Fields removed: website, industry, employeeCount, description, facebook, instagram, certifications, isActive, fiscalId
+// These fields either exist at Establishment level, are not essential for transparency, or are in Settings
+// See CLAUDE.md "Strategic Architecture Transformation" for rationale
 const companySchema = object({
+  // Essential Company Identity
   name: string().min(1, 'Company name is required'),
   tradename: string().optional(),
   email: string().email('Invalid email address'),
-  phone: string().optional(),
+  phone: string().min(1, 'Phone number is required'), // Required for USDA compliance
+  legalStructure: string().optional(), // Business entity type
+  // Location fields (Step 1) - State required for carbon calculations (USDA API needs 2-letter codes)
   address: string().optional(),
   city: string().optional(),
-  state: string().optional(),
-  country: string().optional(),
+  state: string().min(1, 'State is required for carbon calculations'), // REQUIRED - USDA API needs this
   zipCode: string().optional(),
-  website: string().url('Invalid website URL').optional().or(string().length(0)),
-  description: string().optional(),
-  fiscalId: string().optional(),
-  facebook: string().url('Invalid Facebook URL').optional().or(string().length(0)),
-  instagram: string().url('Invalid Instagram URL').optional().or(string().length(0)),
-  certifications: string().optional(),
-  employeeCount: number().min(1).optional(),
-  isActive: boolean().optional(),
-  industry: string().optional(),
-  primaryCrop: string().min(1, 'Please select your primary crop'),
+  // Sustainability (Step 2)
   sustainabilityGoals: array(string()).optional()
 });
 
 // CompanyFormData interface (for reference):
-// name, tradename, email, phone, address, country, state, city, zipCode,
-// website, description, employeeCount, isActive, industry, fiscalId,
-// facebook, instagram, certifications, primaryCrop, sustainabilityGoals
+// Essential: name, tradename, email, phone, legalStructure
+// Location: address, state (2-letter US code), city, zipCode
+// Sustainability: sustainabilityGoals
+// NOTE: country defaults to 'US' (US-only focus), fiscalId moved to Settings
+// website, industry, employeeCount, description, facebook, instagram, certifications, isActive
+// removed from onboarding - exist at Establishment level or not essential for transparency
 
-// Crop Templates with carbon benchmarks and proper React icons
-const CROP_TEMPLATES = [
-  {
-    id: 'citrus',
-    title: 'Citrus Fruits',
-    description: 'Oranges, lemons, limes, grapefruits',
-    icon: FaAppleAlt, // Using apple icon as closest to citrus
-    region: 'California',
-    carbonBenchmark: '2.1 kg CO₂/kg',
-    seasonality: 'Year-round harvest',
-    industry: 'Fruit Production',
-    sustainabilityTips: [
-      'Drip irrigation reduces water usage by 30%',
-      'Integrated pest management cuts pesticide use',
-      'Cover crops improve soil carbon sequestration'
-    ],
-    recommendedGoals: ['water_conservation', 'carbon_reduction', 'soil_health']
-  },
-  {
-    id: 'almonds',
-    title: 'Almonds',
-    description: 'Tree nuts with high water requirements',
-    icon: GiTreeBranch, // Tree branch icon for tree nuts
-    region: 'California',
-    carbonBenchmark: '3.2 kg CO₂/kg',
-    seasonality: 'August-October harvest',
-    industry: 'Fruit Production',
-    sustainabilityTips: [
-      'Precision irrigation saves 20% water',
-      'Bee-friendly practices support pollination',
-      'Hull and shell recycling reduces waste'
-    ],
-    recommendedGoals: ['water_conservation', 'biodiversity', 'waste_reduction']
-  },
-  {
-    id: 'soybeans',
-    title: 'Soybeans',
-    description: 'Nitrogen-fixing legume crop',
-    icon: FaSeedling, // Seedling icon for soybeans
-    region: 'Midwest',
-    carbonBenchmark: '0.8 kg CO₂/kg',
-    seasonality: 'September-November harvest',
-    industry: 'Grain & Cereal Production',
-    sustainabilityTips: [
-      'No-till farming preserves soil carbon',
-      'Natural nitrogen fixation reduces fertilizer',
-      'Crop rotation improves soil health'
-    ],
-    recommendedGoals: ['soil_health', 'carbon_reduction', 'biodiversity']
-  },
-  {
-    id: 'corn',
-    title: 'Corn',
-    description: 'Field corn and sweet corn varieties',
-    icon: GiCorn, // Corn icon from game-icons
-    region: 'Midwest',
-    carbonBenchmark: '1.1 kg CO₂/kg',
-    seasonality: 'September-November harvest',
-    industry: 'Grain & Cereal Production',
-    sustainabilityTips: [
-      'Variable rate fertilizer application',
-      'Cover crops prevent soil erosion',
-      'Precision planting optimizes yields'
-    ],
-    recommendedGoals: ['soil_health', 'carbon_reduction', 'renewable_energy']
-  }
-];
-
-// Sustainability Goals
+// Transparency Goals - What consumers care about seeing
 const SUSTAINABILITY_GOALS = [
   {
-    id: 'carbon_reduction',
-    title: 'Reduce Carbon Footprint',
-    description: 'Lower greenhouse gas emissions',
+    id: 'full_transparency',
+    title: 'Full Farming Transparency',
+    description: 'Document all agricultural practices',
     icon: FaLeaf,
     color: 'green'
   },
   {
     id: 'water_conservation',
     title: 'Water Conservation',
-    description: 'Optimize water usage efficiency',
+    description: 'Show water-efficient practices',
     icon: FaWater,
     color: 'blue'
   },
   {
     id: 'soil_health',
-    title: 'Soil Health Improvement',
-    description: 'Enhance soil quality and fertility',
+    title: 'Soil Health Practices',
+    description: 'Document soil improvement methods',
     icon: FaSeedling,
     color: 'orange'
   },
   {
     id: 'biodiversity',
-    title: 'Biodiversity Enhancement',
-    description: 'Support ecosystem diversity',
+    title: 'Biodiversity Support',
+    description: 'Share ecosystem-friendly practices',
     icon: FaBug,
     color: 'purple'
   },
   {
     id: 'waste_reduction',
     title: 'Waste Reduction',
-    description: 'Minimize agricultural waste',
+    description: 'Track waste minimization efforts',
     icon: FaRecycle,
     color: 'teal'
   },
   {
     id: 'renewable_energy',
-    title: 'Renewable Energy',
-    description: 'Adopt clean energy solutions',
+    title: 'Clean Energy Use',
+    description: 'Document renewable energy adoption',
     icon: FaBolt,
     color: 'yellow'
   }
@@ -230,63 +179,6 @@ function AddCompany({ isEdit = false }) {
 
   console.log('🏢 AddCompany: Component rendered', { isEdit, currentUser: currentUser?.id });
 
-  // Get crop options from API
-  const {
-    data: cropOptionsResponse,
-    isLoading: cropOptionsLoading,
-    error: cropOptionsError
-  } = useGetCompanyCropOptionsQuery();
-  console.log('🌾 AddCompany: API crop options', {
-    hasData: !!cropOptionsResponse?.crops,
-    loading: cropOptionsLoading,
-    error: cropOptionsError,
-    cropsCount: cropOptionsResponse?.crops?.length
-  });
-
-  // Icon mapping for API crops
-  const getIconForCrop = (cropId) => {
-    const iconMap = {
-      citrus: FaAppleAlt,
-      almonds: GiTreeBranch,
-      avocados: GiAvocado,
-      corn: GiCorn,
-      soybeans: FaSeedling
-    };
-    return iconMap[cropId] || FaSeedling;
-  };
-
-  // Transform API data to match expected format
-  const apiCropTemplates =
-    cropOptionsResponse?.crops?.map((crop) => ({
-      id: crop.id,
-      title: crop.name,
-      description: crop.description,
-      icon: getIconForCrop(crop.id),
-      region: crop.region,
-      carbonBenchmark: crop.carbon_benchmark,
-      seasonality: crop.season_length,
-      industry:
-        crop.id === 'corn' || crop.id === 'soybeans'
-          ? 'Grain & Cereal Production'
-          : 'Fruit Production',
-      sustainabilityTips: [
-        'USDA-verified carbon tracking',
-        'Blockchain verification ready',
-        'QR code transparency enabled'
-      ],
-      recommendedGoals: ['carbon_reduction', 'water_conservation', 'soil_health']
-    })) || CROP_TEMPLATES; // Fallback to hardcoded if API fails
-
-  // Use API data if available, otherwise use hardcoded fallback
-  const cropTemplates = apiCropTemplates;
-
-  console.log('🌾 AddCompany: Final crop templates to render', {
-    usingApiData: !!cropOptionsResponse?.crops,
-    templateCount: cropTemplates.length,
-    cropIds: cropTemplates.map((c) => c.id),
-    firstCrop: cropTemplates[0]
-  });
-
   // @ts-ignore: Mutation hook
   const [
     createCompany,
@@ -301,9 +193,8 @@ function AddCompany({ isEdit = false }) {
     mutationError
   });
 
-  // Define steps for stepper
+  // Define steps for stepper (Crop selection removed - belongs at Establishment/Parcel level)
   const steps = [
-    { title: 'Crop Focus', description: 'Select your primary crop', icon: FaSeedling },
     { title: 'Company Info', description: 'Basic company details', icon: FaBuilding },
     { title: 'Location', description: 'Address & contact', icon: FaMapMarkerAlt },
     { title: 'Sustainability', description: 'Goals & practices', icon: FaLeaf }
@@ -312,10 +203,9 @@ function AddCompany({ isEdit = false }) {
   const methods = useForm({
     resolver: zodResolver(companySchema),
     defaultValues: {
-      isActive: true,
-      employeeCount: 1,
       sustainabilityGoals: [],
-      country: 'US' // Default to US for agricultural focus
+      state: '', // US 2-letter state code - required for USDA API
+      legalStructure: '' // Business entity type
     }
   });
 
@@ -328,197 +218,56 @@ function AddCompany({ isEdit = false }) {
     formState: { errors, isValid }
   } = methods;
 
-  const selectedCrop = watch('primaryCrop');
-  const selectedCropTemplate = cropTemplates.find((crop) => crop.id === selectedCrop);
   const sustainabilityGoals = watch('sustainabilityGoals') || [];
-  const currentDescription = watch('description');
-
-  // Add useEffect to debug description changes
-  useEffect(() => {
-    console.log('🔍 Description field changed:', {
-      currentDescription,
-      selectedCrop,
-      selectedCropTemplate: selectedCropTemplate?.title
-    });
-  }, [currentDescription, selectedCrop, selectedCropTemplate]);
 
   const handleFormSubmit = async (data) => {
     console.log('🏢 AddCompany: handleSubmit called with data:', data);
-    console.log('🏢 AddCompany: currentUser for owner:', currentUser);
 
     if (!currentUser || !currentUser.id) {
       console.error('🏢 AddCompany: No authenticated user found!');
-      console.error('🏢 AddCompany: currentUser state:', currentUser);
       return;
     }
 
-    // Debug: Check current form values using watch
-    const currentFormValues = {
-      name: watch('name'),
-      tradename: watch('tradename'),
-      email: watch('email'),
-      phone: watch('phone'),
-      address: watch('address'),
-      city: watch('city'),
-      state: watch('state'),
-      country: watch('country'),
-      zipCode: watch('zipCode'),
-      website: watch('website'),
-      description: watch('description'),
-      fiscalId: watch('fiscalId'),
-      facebook: watch('facebook'),
-      instagram: watch('instagram'),
-      certifications: watch('certifications'),
-      employeeCount: watch('employeeCount'),
-      isActive: watch('isActive'),
-      industry: watch('industry'),
-      primaryCrop: watch('primaryCrop'),
-      sustainabilityGoals: watch('sustainabilityGoals')
-    };
-
-    console.log('🏢 AddCompany: Current form values (watch):', currentFormValues);
-
-    // Log all form fields collected
-    console.log('🏢 AddCompany: Form fields collected (data param):', {
-      name: data.name,
-      tradename: data.tradename,
-      email: data.email,
-      phone: data.phone,
-      address: data.address,
-      city: data.city,
-      state: data.state,
-      country: data.country,
-      zipCode: data.zipCode,
-      website: data.website,
-      description: data.description,
-      fiscalId: data.fiscalId,
-      facebook: data.facebook,
-      instagram: data.instagram,
-      certifications: data.certifications,
-      employeeCount: data.employeeCount,
-      isActive: data.isActive,
-      industry: data.industry,
-      primaryCrop: data.primaryCrop,
-      sustainabilityGoals: data.sustainabilityGoals
-    });
-
     // Transform form data to match backend API field names
+    // Streamlined for transparency-first onboarding - only essential fields
     const submitData = {
+      // Essential Company Identity
       name: data.name,
-      tradename: data.tradename || '', // Ensure empty string instead of undefined
-      contact_email: data.email, // email -> contact_email
-      contact_phone: data.phone || '', // phone -> contact_phone
+      tradename: data.tradename || '',
+      contact_email: data.email,
+      contact_phone: data.phone,
+      legal_structure: data.legalStructure || '',
+      // Location fields - State is REQUIRED (2-letter US code for USDA API)
       address: data.address || '',
       city: data.city || '',
-      state: data.state || '',
-      country: data.country || 'US', // Include country field
-      website: data.website || '',
-      description: data.description || '', // Make sure description is properly captured
-      fiscal_id: data.fiscalId || '', // fiscalId -> fiscal_id
-      facebook: data.facebook || '', // Include facebook field
-      instagram: data.instagram || '', // Include instagram field
-      certifications: data.certifications || '', // Include certifications field
+      state: data.state, // Required 2-letter US state code
+      country: 'US', // US-only focus for now
+      zip_code: data.zipCode || '',
+      // Owner and status
       owner: currentUser.id,
-      // Additional fields that could be useful for backend
-      zip_code: data.zipCode || '', // Include ZIP code
-      employee_count: data.employeeCount || 1, // Include employee count
-      industry: data.industry || '', // Include industry
-      is_active: data.isActive !== undefined ? data.isActive : true, // Include active status
-      // ✅ NEW: Include Step 4 sustainability data as JSON string
+      is_active: true, // Always start active
+      // Sustainability data
       sustainability_metadata: JSON.stringify({
-        primaryCrop: data.primaryCrop,
-        sustainabilityGoals: data.sustainabilityGoals || [],
-        carbonBenchmark: selectedCropTemplate?.carbonBenchmark,
-        region: selectedCropTemplate?.region,
-        seasonality: selectedCropTemplate?.seasonality
+        sustainability_goals: data.sustainabilityGoals || []
       })
     };
 
-    console.log('🏢 AddCompany: Transformed submit data:', submitData);
-    console.log('🏢 AddCompany: Fields that might not be supported by backend:', {
-      zip_code: submitData.zip_code,
-      employee_count: submitData.employee_count,
-      industry: submitData.industry,
-      is_active: submitData.is_active,
-      sustainability_metadata: submitData.sustainability_metadata,
-      primaryCrop: data.primaryCrop,
-      sustainabilityGoals: data.sustainabilityGoals
-    });
-
-    // Debug Step 4 sustainability data specifically
-    console.log('🏢 AddCompany: Step 4 Sustainability Data:', {
-      primaryCrop: data.primaryCrop,
-      sustainabilityGoals: data.sustainabilityGoals,
-      selectedCropTemplate: selectedCropTemplate?.title,
-      carbonBenchmark: selectedCropTemplate?.carbonBenchmark,
-      recommendedGoals: selectedCropTemplate?.recommendedGoals,
-      sustainabilityMetadata: submitData.sustainability_metadata
-    });
+    console.log('🏢 AddCompany: Submitting company data:', submitData);
 
     try {
-      console.log('🏢 AddCompany: Calling createCompany mutation...');
       const result = await createCompany(submitData).unwrap();
-      console.log('🏢 AddCompany: createCompany succeeded:', result);
-
-      // ✅ NEW: Compare sent vs received data
-      console.log('🔍 AddCompany: Data comparison analysis:');
-      console.log('📤 Sent to backend:', submitData);
-      console.log('📥 Received from backend:', result);
-
-      // Check which fields are missing in response
-      const sentFields = Object.keys(submitData);
-      const receivedFields = Object.keys(result);
-      const missingInResponse = sentFields.filter((field) => !receivedFields.includes(field));
-      const extraInResponse = receivedFields.filter((field) => !sentFields.includes(field));
-
-      console.log('❌ Fields sent but not in response:', missingInResponse);
-      console.log('➕ Extra fields in response:', extraInResponse);
-      console.log('🔍 Specific field analysis:', {
-        fiscal_id: { sent: submitData.fiscal_id, received: result.fiscal_id },
-        zip_code: { sent: submitData.zip_code, received: result.zip_code },
-        employee_count: { sent: submitData.employee_count, received: result.employee_count },
-        industry: { sent: submitData.industry, received: result.industry },
-        is_active: { sent: submitData.is_active, received: result.is_active },
-        sustainability_metadata: {
-          sent: submitData.sustainability_metadata,
-          received: result.sustainability_metadata,
-          parsed: submitData.sustainability_metadata
-            ? JSON.parse(submitData.sustainability_metadata)
-            : null
-        }
-      });
+      console.log('🏢 AddCompany: Company created successfully:', result);
     } catch (error) {
-      console.error('🏢 AddCompany: createCompany failed:', error);
-      console.error('🏢 AddCompany: Error details:', {
-        message: error.message,
-        status: error.status,
-        data: error.data
-      });
+      console.error('🏢 AddCompany: Failed to create company:', error);
     }
   };
 
-  // Handle successful company creation with useEffect like the original form
+  // Handle successful company creation - redirect to pricing
   useEffect(() => {
-    console.log('🏢 AddCompany: useEffect triggered', {
-      isSuccessCompany,
-      hasDataCompany: !!dataCompany,
-      dataCompany
-    });
-
     if (isSuccessCompany && dataCompany) {
-      console.log('🏢 AddCompany: Processing successful company creation');
-      console.log('🏢 AddCompany: Company data:', dataCompany);
-
       dispatch(setCompany(dataCompany));
       const { id, name } = dataCompany;
       dispatch(setUserCompany({ id, name }));
-
-      console.log('🏢 AddCompany: Dispatched Redux actions, navigating to pricing...');
-      console.log(
-        '🏢 AddCompany: Navigation URL:',
-        `/admin/dashboard/pricing?new_company=true&company_id=${id}`
-      );
-
       // Redirect to pricing page for new companies
       navigate(`/admin/dashboard/pricing?new_company=true&company_id=${id}`);
     }
@@ -529,22 +278,21 @@ function AddCompany({ isEdit = false }) {
     navigate('/admin/dashboard');
   };
 
-  // Step validation
+  // Step validation - Essential fields only for transparency-first onboarding
   const isStepComplete = (step) => {
     const name = watch('name');
     const email = watch('email');
-    const primaryCrop = watch('primaryCrop');
+    const phone = watch('phone');
+    const state = watch('state');
     const hasErrors = Object.keys(errors).length > 0;
 
     switch (step) {
-      case 0:
-        return !!primaryCrop;
-      case 1:
-        return !!name && !!email && !hasErrors;
-      case 2:
-        return true; // Location is optional
-      case 3:
-        return true; // Sustainability goals are optional
+      case 0: // Company Info - name, email, phone required
+        return !!name && !!email && !!phone && !hasErrors;
+      case 1: // Location - state required for carbon calculations (USDA API)
+        return !!state;
+      case 2: // Sustainability - optional
+        return true;
       default:
         return false;
     }
@@ -573,44 +321,7 @@ function AddCompany({ isEdit = false }) {
     }
   };
 
-  const handleCropSelect = (cropId) => {
-    console.log('🌱 handleCropSelect: Called with cropId:', cropId);
-    setValue('primaryCrop', cropId);
-    const cropTemplate = cropTemplates.find((crop) => crop.id === cropId);
-    console.log('🌱 handleCropSelect: Found crop template:', cropTemplate);
-
-    if (cropTemplate) {
-      // Auto-set industry based on crop
-      setValue('industry', cropTemplate.industry);
-      console.log('🌱 handleCropSelect: Set industry to:', cropTemplate.industry);
-
-      // Pre-fill description with crop-specific info
-      const autoDescription = `Agricultural company specializing in ${cropTemplate.title.toLowerCase()} production in the ${
-        cropTemplate.region
-      } region. We focus on sustainable farming practices and carbon footprint reduction.`;
-
-      setValue('description', autoDescription);
-      console.log('🌱 handleCropSelect: Set description to:', autoDescription);
-
-      // Auto-select recommended sustainability goals
-      setValue('sustainabilityGoals', cropTemplate.recommendedGoals);
-      console.log(
-        '🌱 handleCropSelect: Set sustainability goals to:',
-        cropTemplate.recommendedGoals
-      );
-
-      // Force form to re-render and validate to show the changes
-      trigger(['description', 'industry', 'sustainabilityGoals']).then(() => {
-        console.log('🌱 handleCropSelect: Form triggered successfully');
-        console.log('🌱 handleCropSelect: Current form values after trigger:', {
-          primaryCrop: watch('primaryCrop'),
-          industry: watch('industry'),
-          description: watch('description'),
-          sustainabilityGoals: watch('sustainabilityGoals')
-        });
-      });
-    }
-  };
+  // handleCropSelect removed - crop selection now happens at Establishment/Parcel level
 
   const handleSustainabilityToggle = (goalId) => {
     const currentGoals = sustainabilityGoals || [];
@@ -640,8 +351,7 @@ function AddCompany({ isEdit = false }) {
       transition="all 0.2s"
       cursor="pointer"
       position="relative"
-      w="full"
-    >
+      w="full">
       {isSelected && (
         <Box
           position="absolute"
@@ -650,8 +360,7 @@ function AddCompany({ isEdit = false }) {
           bg={`${goal.color}.500`}
           color="white"
           borderRadius="full"
-          p={1}
-        >
+          p={1}>
           <Icon as={FaCheckCircle} boxSize={3} />
         </Box>
       )}
@@ -661,8 +370,7 @@ function AddCompany({ isEdit = false }) {
           bg={isSelected ? `${goal.color}.500` : `${goal.color}.100`}
           color={isSelected ? 'white' : `${goal.color}.600`}
           p={3}
-          borderRadius="full"
-        >
+          borderRadius="full">
           <Icon as={goal.icon} boxSize={6} />
         </Box>
 
@@ -671,15 +379,13 @@ function AddCompany({ isEdit = false }) {
             fontWeight="bold"
             fontSize="sm"
             color={isSelected ? `${goal.color}.700` : 'gray.700'}
-            textAlign="center"
-          >
+            textAlign="center">
             {goal.title}
           </Text>
           <Text
             fontSize="xs"
             color={isSelected ? `${goal.color}.600` : 'gray.500'}
-            textAlign="center"
-          >
+            textAlign="center">
             {goal.description}
           </Text>
         </VStack>
@@ -690,10 +396,9 @@ function AddCompany({ isEdit = false }) {
   return (
     <StandardPage
       title="Set Up Your Agricultural Company"
-      description="Create your company profile with crop-specific insights and sustainability tracking"
+      description="Create your company profile and start building consumer trust through transparency"
       showBackButton
-      onBack={handleCancel}
-    >
+      onBack={handleCancel}>
       {/* Modern Progress Stepper */}
       <StandardStepper
         steps={steps}
@@ -705,131 +410,19 @@ function AddCompany({ isEdit = false }) {
 
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleFormSubmit)}>
-          {/* Step 0: Crop Selection */}
+          {/* Step 0: Company Identity - Essential fields only for transparency-first onboarding */}
           {currentStep === 0 && (
             <StandardCard
-              title="What's Your Primary Crop?"
-              subtitle="Choose your main agricultural focus to get personalized insights and benchmarks"
-            >
+              title="Company Identity"
+              subtitle="Essential details to set up your agricultural company">
               <VStack spacing={6} align="stretch">
-                <StandardSelectionGrid
-                  options={cropTemplates.map((crop) => ({
-                    id: crop.id,
-                    title: crop.title,
-                    description: `${crop.description} • ${crop.region}`,
-                    icon: crop.icon,
-                    value: crop.id
-                  }))}
-                  selectedValue={selectedCrop || ''}
-                  onSelect={handleCropSelect}
-                  columns={{ base: 'repeat(1, 1fr)', md: 'repeat(2, 1fr)' }}
-                />
-
-                {selectedCropTemplate && (
-                  <VStack spacing={4}>
-                    <StandardAlert
-                      status="success"
-                      title={`${selectedCropTemplate.title} Selected`}
-                      description={`Carbon benchmark: ${selectedCropTemplate.carbonBenchmark} • ${selectedCropTemplate.seasonality}`}
-                    />
-
-                    <Box
-                      bg="green.50"
-                      p={4}
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor="green.200"
-                      w="full"
-                    >
-                      <Text fontWeight="bold" color="green.700" mb={3}>
-                        🌱 Smart Setup Benefits:
-                      </Text>
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                        <HStack spacing={2}>
-                          <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
-                          <Text fontSize="sm" color="green.600">
-                            Industry auto-filled: {selectedCropTemplate.industry}
-                          </Text>
-                        </HStack>
-                        <HStack spacing={2}>
-                          <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
-                          <Text fontSize="sm" color="green.600">
-                            {selectedCropTemplate.recommendedGoals.length} sustainability goals
-                            pre-selected
-                          </Text>
-                        </HStack>
-                        <HStack spacing={2}>
-                          <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
-                          <Text fontSize="sm" color="green.600">
-                            Carbon benchmarks included
-                          </Text>
-                        </HStack>
-                        <HStack spacing={2}>
-                          <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
-                          <Text fontSize="sm" color="green.600">
-                            Company description generated
-                          </Text>
-                        </HStack>
-                      </SimpleGrid>
-                    </Box>
-                  </VStack>
-                )}
-
-                {/* Navigation */}
-                <HStack spacing={3} justify="flex-end" pt={4}>
-                  <StandardButton variant="outline" onClick={handleCancel}>
-                    Cancel
-                  </StandardButton>
-                  <StandardButton
-                    onClick={nextStep}
-                    rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}
-                  >
-                    Continue to Company Info
-                  </StandardButton>
-                </HStack>
-              </VStack>
-            </StandardCard>
-          )}
-
-          {/* Step 1: Company Information */}
-          {currentStep === 1 && (
-            <StandardCard
-              title="Company Information"
-              subtitle={
-                selectedCropTemplate
-                  ? `${selectedCropTemplate.title} farming company details`
-                  : 'Basic details about your agricultural company'
-              }
-            >
-              <VStack spacing={6} align="stretch">
-                {selectedCropTemplate && (
-                  <Flex justify="space-between" align="center" bg="gray.50" p={3} borderRadius="lg">
-                    <HStack spacing={2}>
-                      <Icon as={selectedCropTemplate.icon} fontSize="lg" color="green.500" />
-                      <VStack align="start" spacing={0}>
-                        <Text fontWeight="bold" fontSize="sm">
-                          {selectedCropTemplate.title} Focus
-                        </Text>
-                        <Text fontSize="xs" color="gray.600">
-                          Industry auto-filled as "{selectedCropTemplate.industry}"
-                        </Text>
-                      </VStack>
-                    </HStack>
-                    <Badge colorScheme="green" variant="subtle">
-                      Smart Setup
-                    </Badge>
-                  </Flex>
-                )}
-
                 {/* Company Name & Trade Name */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
                     label="Company Name"
                     required
                     error={errors.name?.message}
-                    helpText="Enter your company's legal name"
-                  >
+                    helpText="Your company's legal registered name">
                     <StandardInput
                       {...methods.register('name')}
                       placeholder="e.g., Green Valley Farms LLC"
@@ -840,8 +433,7 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Trade Name"
                     error={errors.tradename?.message}
-                    helpText="Business name if different from legal name"
-                  >
+                    helpText="Business name if different from legal name (optional)">
                     <StandardInput
                       {...methods.register('tradename')}
                       placeholder="e.g., Green Valley Organics"
@@ -850,14 +442,13 @@ function AddCompany({ isEdit = false }) {
                   </StandardField>
                 </SimpleGrid>
 
-                {/* Email & Phone */}
+                {/* Email & Phone - Both required for USDA compliance */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
                     label="Email Address"
                     required
                     error={errors.email?.message}
-                    helpText="Primary contact email for the company"
-                  >
+                    helpText="Primary contact email for your company">
                     <StandardInput
                       {...methods.register('email')}
                       type="email"
@@ -868,9 +459,9 @@ function AddCompany({ isEdit = false }) {
 
                   <StandardField
                     label="Phone Number"
+                    required
                     error={errors.phone?.message}
-                    helpText="Company contact phone number"
-                  >
+                    helpText="Required for regulatory compliance">
                     <StandardInput
                       {...methods.register('phone')}
                       type="tel"
@@ -880,201 +471,58 @@ function AddCompany({ isEdit = false }) {
                   </StandardField>
                 </SimpleGrid>
 
-                {/* Website & Fiscal ID */}
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="Website"
-                    error={errors.website?.message}
-                    helpText="Company website URL"
-                  >
-                    <StandardInput
-                      {...methods.register('website')}
-                      type="url"
-                      placeholder="https://www.greenvalleyfarms.com"
-                      leftElement={<Icon as={FaGlobe} color="gray.400" />}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Industry & Employee Count */}
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="Industry Type"
-                    error={errors.industry?.message}
-                    helpText="Primary agricultural focus"
-                  >
-                    <StandardSelect
-                      {...methods.register('industry')}
-                      value={watch('industry') || ''}
-                    >
-                      <option value="">Select industry...</option>
-                      <option value="Fruit Production">Fruit Production</option>
-                      <option value="Vegetable Production">Vegetable Production</option>
-                      <option value="Grain & Cereal Production">Grain & Cereal Production</option>
-                      <option value="Livestock">Livestock</option>
-                      <option value="Dairy Farming">Dairy Farming</option>
-                      <option value="Organic Farming">Organic Farming</option>
-                      <option value="Mixed Agriculture">Mixed Agriculture</option>
-                    </StandardSelect>
-                  </StandardField>
-
-                  <StandardField
-                    label="Employee Count"
-                    error={errors.employeeCount?.message}
-                    helpText="Approximate number of employees"
-                  >
-                    <NumberInput
-                      value={watch('employeeCount') || 1}
-                      onChange={(_, num) => setValue('employeeCount', num || 1)}
-                      min={1}
-                    >
-                      <NumberInputField borderRadius="lg" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Company Description */}
+                {/* Legal Structure - Important for USDA/FSA registration */}
                 <StandardField
-                  label="Company Description"
-                  error={errors.description?.message}
-                  helpText={
-                    selectedCropTemplate &&
-                    currentDescription?.includes('Agricultural company specializing')
-                      ? '✨ Auto-generated based on your crop selection. Feel free to customize it!'
-                      : 'Describe your agricultural operations, products, and mission'
-                  }
-                >
-                  <Controller
-                    name="description"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardTextarea
-                        {...field}
-                        placeholder="Tell us about your agricultural company, what you produce, your farming practices, and your sustainability goals..."
-                        rows={4}
-                        bg={
-                          selectedCropTemplate &&
-                          currentDescription?.includes('Agricultural company specializing')
-                            ? 'green.50'
-                            : 'white'
-                        }
-                        borderColor={
-                          selectedCropTemplate &&
-                          currentDescription?.includes('Agricultural company specializing')
-                            ? 'green.200'
-                            : 'gray.200'
-                        }
-                      />
-                    )}
-                  />
-                  {selectedCropTemplate &&
-                    currentDescription?.includes('Agricultural company specializing') && (
-                      <Text fontSize="xs" color="green.600" mt={1}>
-                        💡 This description was automatically generated. You can edit it to better
-                        reflect your company.
-                      </Text>
-                    )}
+                  label="Legal Structure"
+                  error={errors.legalStructure?.message}
+                  helpText="Your business entity type (optional but recommended for B2B)">
+                  <StandardSelect
+                    {...methods.register('legalStructure')}
+                    value={watch('legalStructure') || ''}>
+                    <option value="">Select legal structure...</option>
+                    <option value="sole_proprietorship">Sole Proprietorship</option>
+                    <option value="partnership">Partnership</option>
+                    <option value="llc">Limited Liability Company (LLC)</option>
+                    <option value="corporation">Corporation</option>
+                    <option value="cooperative">Cooperative</option>
+                    <option value="family_farm">Family Farm</option>
+                  </StandardSelect>
                 </StandardField>
 
-                {/* Social Media & Certifications */}
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField
-                    label="Facebook Page"
-                    error={errors.facebook?.message}
-                    helpText="Facebook business page URL (optional)"
-                  >
-                    <StandardInput
-                      {...methods.register('facebook')}
-                      type="url"
-                      placeholder="https://facebook.com/yourcompany"
-                      leftElement={<Icon as={FaGlobe} color="gray.400" />}
-                    />
-                  </StandardField>
-
-                  <StandardField
-                    label="Instagram Profile"
-                    error={errors.instagram?.message}
-                    helpText="Instagram business profile URL (optional)"
-                  >
-                    <StandardInput
-                      {...methods.register('instagram')}
-                      type="url"
-                      placeholder="https://instagram.com/yourcompany"
-                      leftElement={<Icon as={FaGlobe} color="gray.400" />}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Certifications */}
-                <StandardField
-                  label="Certifications"
-                  error={errors.certifications?.message}
-                  helpText="List any agricultural certifications (e.g., Organic, Fair Trade, USDA, etc.)"
-                >
-                  <StandardTextarea
-                    {...methods.register('certifications')}
-                    placeholder="e.g., USDA Organic, Fair Trade Certified, Rainforest Alliance, etc."
-                    rows={2}
-                  />
-                </StandardField>
-
-                {/* Active Status */}
-                <StandardField
-                  label="Company Status"
-                  helpText="Activate the company to start using Trazo services"
-                >
-                  <HStack>
-                    <Switch {...methods.register('isActive')} colorScheme="green" size="md" />
-                    <Text fontSize="sm" color="gray.600">
-                      {watch('isActive') ? 'Active' : 'Inactive'}
-                    </Text>
-                  </HStack>
-                </StandardField>
+                {/* Info Alert */}
+                <StandardAlert
+                  status="info"
+                  title="Quick Setup"
+                  description="You can add more details like certifications, description, and social media later in your company settings."
+                />
 
                 {/* Navigation */}
-                <HStack spacing={3} justify="space-between" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
-                    Back to Crop Selection
+                <HStack spacing={3} justify="flex-end" pt={4}>
+                  <StandardButton variant="outline" onClick={handleCancel}>
+                    Cancel
                   </StandardButton>
-
-                  <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={handleCancel}>
-                      Cancel
-                    </StandardButton>
-                    <StandardButton
-                      onClick={nextStep}
-                      rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(1)}
-                    >
-                      Continue to Location
-                    </StandardButton>
-                  </HStack>
+                  <StandardButton
+                    onClick={nextStep}
+                    rightIcon={<FaChevronRight />}
+                    disabled={!isStepComplete(0)}>
+                    Continue to Location
+                  </StandardButton>
                 </HStack>
               </VStack>
             </StandardCard>
           )}
 
-          {/* Step 2: Location Information */}
-          {currentStep === 2 && (
+          {/* Step 1: Location Information - US States dropdown for USDA API compatibility */}
+          {currentStep === 1 && (
             <StandardCard
               title="Location Details"
-              subtitle="Where is your agricultural operation based?"
-            >
+              subtitle="Where is your agricultural operation based? (US farms only)">
               <VStack spacing={6} align="stretch">
                 {/* Address */}
                 <StandardField
                   label="Street Address"
                   error={errors.address?.message}
-                  helpText="Physical address of your main operation"
-                >
+                  helpText="Physical address of your main operation">
                   <StandardInput
                     {...methods.register('address')}
                     placeholder="123 Farm Road"
@@ -1088,63 +536,39 @@ function AddCompany({ isEdit = false }) {
                     <StandardInput {...methods.register('city')} placeholder="Farmington" />
                   </StandardField>
 
-                  <StandardField label="State/Province" error={errors.state?.message}>
-                    <StandardInput
-                      {...methods.register('state')}
-                      placeholder={
-                        selectedCropTemplate?.region === 'California'
-                          ? 'California'
-                          : selectedCropTemplate?.region === 'Midwest'
-                          ? 'Iowa'
-                          : 'State/Province'
-                      }
-                    />
-                  </StandardField>
-                </SimpleGrid>
-
-                {/* Country & Zip */}
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField label="Country" error={errors.country?.message}>
-                    <StandardSelect {...methods.register('country')}>
-                      <option value="US">United States</option>
-                      <option value="CA">Canada</option>
-                      <option value="MX">Mexico</option>
-                      <option value="OTHER">Other</option>
+                  <StandardField
+                    label="State"
+                    required
+                    error={errors.state?.message}
+                    helpText="Required for regional carbon calculations">
+                    <StandardSelect {...methods.register('state')} value={watch('state') || ''}>
+                      <option value="">Select your state...</option>
+                      {US_STATES.map((state) => (
+                        <option key={state.code} value={state.code}>
+                          {state.name}
+                        </option>
+                      ))}
                     </StandardSelect>
                   </StandardField>
-
-                  <StandardField label="ZIP/Postal Code" error={errors.zipCode?.message}>
-                    <StandardInput {...methods.register('zipCode')} placeholder="12345" />
-                  </StandardField>
                 </SimpleGrid>
 
-                {/* Business Verification (Optional) */}
-                <Box>
-                  <Text fontWeight="bold" fontSize="md" mb={3} color="gray.700">
-                    Business Verification (Optional)
-                  </Text>
-                  <StandardField
-                    label="Tax ID / RUT"
-                    error={errors.fiscalId?.message}
-                    helpText="Tax identification number - useful for B2B relationships and compliance reporting"
-                  >
-                    <StandardInput
-                      {...methods.register('fiscalId')}
-                      placeholder="12-3456789-0"
-                      leftElement={<Icon as={FaIdCard} color="gray.400" />}
-                    />
-                  </StandardField>
-                  <Text fontSize="xs" color="gray.500" mt={1}>
-                    💡 This helps verify your business for larger buyers and regulatory compliance.
-                    You can add this later if needed.
-                  </Text>
-                </Box>
+                {/* ZIP Code - single field since US only */}
+                <StandardField
+                  label="ZIP Code"
+                  error={errors.zipCode?.message}
+                  helpText="5-digit US postal code">
+                  <StandardInput
+                    {...methods.register('zipCode')}
+                    placeholder="12345"
+                    maxLength={5}
+                  />
+                </StandardField>
 
                 {/* Location Info Alert */}
                 <StandardAlert
                   status="info"
-                  title="Location Benefits"
-                  description="Providing location information helps us offer region-specific sustainability insights and regulatory compliance assistance."
+                  title="Why State Matters"
+                  description="Your state determines regional emission factors for accurate carbon calculations. This helps provide precise sustainability insights for your area."
                 />
 
                 {/* Navigation */}
@@ -1152,8 +576,7 @@ function AddCompany({ isEdit = false }) {
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Company Info
                   </StandardButton>
 
@@ -1161,7 +584,10 @@ function AddCompany({ isEdit = false }) {
                     <StandardButton variant="outline" onClick={handleCancel}>
                       Cancel
                     </StandardButton>
-                    <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
+                    <StandardButton
+                      onClick={nextStep}
+                      rightIcon={<FaChevronRight />}
+                      disabled={!isStepComplete(1)}>
                       Continue to Sustainability
                     </StandardButton>
                   </HStack>
@@ -1170,42 +596,13 @@ function AddCompany({ isEdit = false }) {
             </StandardCard>
           )}
 
-          {/* Step 3: Sustainability Goals */}
-          {currentStep === 3 && (
+          {/* Step 2: Sustainability Goals (was Step 3) */}
+          {currentStep === 2 && (
             <StandardCard
               title="Sustainability Goals"
-              subtitle="Review and customize your sustainability objectives"
-            >
+              subtitle="Select your sustainability and transparency objectives">
               <VStack spacing={6} align="stretch">
-                {selectedCropTemplate && (
-                  <Box
-                    bg="blue.50"
-                    p={4}
-                    borderRadius="lg"
-                    border="1px solid"
-                    borderColor="blue.200"
-                  >
-                    <Text fontWeight="bold" color="blue.700" mb={2}>
-                      🎯 Pre-selected for {selectedCropTemplate.title}:
-                    </Text>
-                    <Text fontSize="sm" color="blue.600" mb={3}>
-                      Based on your crop selection, we've recommended the most impactful
-                      sustainability goals for your operation.
-                    </Text>
-                    <HStack spacing={2} flexWrap="wrap">
-                      {selectedCropTemplate.recommendedGoals.map((goalId) => {
-                        const goal = SUSTAINABILITY_GOALS.find((g) => g.id === goalId);
-                        return goal ? (
-                          <Badge key={goalId} colorScheme="blue" variant="subtle">
-                            {goal.title}
-                          </Badge>
-                        ) : null;
-                      })}
-                    </HStack>
-                  </Box>
-                )}
-
-                {/* Custom Sustainability Goals Grid */}
+                {/* Sustainability Goals Grid */}
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
                   {SUSTAINABILITY_GOALS.map((goal) => (
                     <SustainabilityGoalCard
@@ -1230,8 +627,7 @@ function AddCompany({ isEdit = false }) {
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Location
                   </StandardButton>
 
@@ -1243,8 +639,7 @@ function AddCompany({ isEdit = false }) {
                       type="submit"
                       isLoading={isLoading}
                       loadingText="Creating Company..."
-                      leftIcon={<FaRocket />}
-                    >
+                      leftIcon={<FaRocket />}>
                       Create Company
                     </StandardButton>
                   </HStack>
