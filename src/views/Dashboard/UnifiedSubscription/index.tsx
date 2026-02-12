@@ -43,7 +43,11 @@ import {
   Collapse,
   IconButton,
   Spinner,
-  Container
+  Container,
+  Tooltip,
+  List,
+  ListItem,
+  ListIcon
 } from '@chakra-ui/react';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -71,7 +75,8 @@ import {
   FaChevronUp,
   FaExternalLinkAlt,
   FaCrown,
-  FaShieldAlt
+  FaShieldAlt,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
@@ -186,7 +191,8 @@ function UnifiedSubscriptionDashboard() {
     refetchOnMountOrArgChange: true
   });
 
-  const { data: blockchainStatus, refetch: refetchBlockchainStatus } = useGetBlockchainSubscriptionStatusQuery({});
+  const { data: blockchainStatus, refetch: refetchBlockchainStatus } =
+    useGetBlockchainSubscriptionStatusQuery({});
   const [syncBlockchainStatus] = useLazyGetBlockchainSubscriptionStatusQuery();
 
   // Mutations
@@ -299,7 +305,16 @@ function UnifiedSubscriptionDashboard() {
       };
       syncStatus();
     }
-  }, [fromBlockchainSubscription, blockchainSessionId, syncBlockchainStatus, refetchBlockchainStatus, navigate, toast, intl, location.pathname]);
+  }, [
+    fromBlockchainSubscription,
+    blockchainSessionId,
+    syncBlockchainStatus,
+    refetchBlockchainStatus,
+    navigate,
+    toast,
+    intl,
+    location.pathname
+  ]);
 
   // Usage Metrics Calculation
   const countTotalParcels = (): number => {
@@ -336,6 +351,53 @@ function UnifiedSubscriptionDashboard() {
   // Helper to format limit display (handles -1 = unlimited)
   const formatLimit = (limit: number) => {
     return limit === -1 ? -1 : Math.max(0, limit);
+  };
+
+  // Helper to get per-establishment parcel distribution with status
+  const getEstablishmentParcelDistribution = () => {
+    if (!activeCompany?.establishments || !Array.isArray(activeCompany.establishments)) {
+      return [];
+    }
+
+    const maxParcelsPerEst = features?.max_parcels_per_establishment ?? 0;
+    const isUnlimitedPerEst = maxParcelsPerEst === -1;
+
+    return activeCompany.establishments.map((establishment) => {
+      const parcelCount = establishment.parcels?.length || 0;
+      const isAtLimit = !isUnlimitedPerEst && parcelCount >= maxParcelsPerEst;
+      const hasCapacity = isUnlimitedPerEst || parcelCount < maxParcelsPerEst;
+      const remainingSlots = isUnlimitedPerEst ? -1 : Math.max(0, maxParcelsPerEst - parcelCount);
+
+      return {
+        id: establishment.id,
+        name: establishment.name || `Establishment ${establishment.id}`,
+        parcelCount,
+        maxParcels: maxParcelsPerEst,
+        isAtLimit,
+        hasCapacity,
+        remainingSlots,
+        isUnlimited: isUnlimitedPerEst
+      };
+    });
+  };
+
+  // Check if any establishment has available capacity
+  const getAvailableCapacityInfo = () => {
+    const distribution = getEstablishmentParcelDistribution();
+    const establishmentsWithCapacity = distribution.filter((est) => est.hasCapacity);
+    const establishmentsAtLimit = distribution.filter((est) => est.isAtLimit);
+    const totalRemaining = distribution.reduce(
+      (sum, est) => sum + (est.isUnlimited ? 0 : est.remainingSlots),
+      0
+    );
+
+    return {
+      distribution,
+      establishmentsWithCapacity,
+      establishmentsAtLimit,
+      totalRemaining,
+      hasAnyCapacity: establishmentsWithCapacity.length > 0
+    };
   };
 
   const usageMetrics = [
@@ -585,7 +647,9 @@ function UnifiedSubscriptionDashboard() {
     return (
       <StandardPage
         title={intl.formatMessage({ id: 'app.subscription' }) || 'Subscription'}
-        description={intl.formatMessage({ id: 'app.noActiveSubscription' }) || 'No active subscription'}
+        description={
+          intl.formatMessage({ id: 'app.noActiveSubscription' }) || 'No active subscription'
+        }
         showBackButton
         onBack={() => navigate(-1)}
       >
@@ -614,7 +678,10 @@ function UnifiedSubscriptionDashboard() {
   return (
     <StandardPage
       title={intl.formatMessage({ id: 'app.subscription' }) || 'Subscription'}
-      description={intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' }) || 'Manage your subscription and track your usage metrics'}
+      description={
+        intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' }) ||
+        'Manage your subscription and track your usage metrics'
+      }
       showBackButton
       onBack={() => navigate(-1)}
       headerAction={
@@ -634,7 +701,6 @@ function UnifiedSubscriptionDashboard() {
       }
     >
       <VStack spacing={6} align="stretch">
-
         {/* Trial Banner */}
         {isTrial && (
           <Card
@@ -846,6 +912,222 @@ function UnifiedSubscriptionDashboard() {
                             ? 0
                             : Math.round((metric.used / Math.max(metric.limit, 1)) * 100);
 
+                          // Enhanced Parcels card with hierarchical breakdown
+                          if (metric.name === 'app.parcels') {
+                            const capacityInfo = getAvailableCapacityInfo();
+                            const maxParcelsPerEst = features?.max_parcels_per_establishment ?? 0;
+                            const maxEstablishments = features?.max_establishments ?? 0;
+                            const isUnlimitedPerEst = maxParcelsPerEst === -1;
+                            const isUnlimitedEst = maxEstablishments === -1;
+                            const hasEstablishmentsAtLimit = capacityInfo.establishmentsAtLimit.length > 0;
+
+                            return (
+                              <Card
+                                key={metric.name}
+                                borderColor={hasEstablishmentsAtLimit ? 'orange.200' : borderColor}
+                                bg={cardBg}
+                                _hover={{ boxShadow: 'md' }}
+                                gridColumn={{ base: 'span 1', lg: 'span 2' }}
+                              >
+                                <CardBody>
+                                  <Flex align="center" mb={3}>
+                                    <Icon
+                                      as={metric.icon}
+                                      mr={3}
+                                      boxSize={5}
+                                      color={`${metric.colorScheme}.500`}
+                                    />
+                                    <Text fontWeight="medium">
+                                      {intl.formatMessage({ id: metric.name })}
+                                    </Text>
+                                    {hasEstablishmentsAtLimit && (
+                                      <Tooltip
+                                        label={intl.formatMessage(
+                                          { id: 'app.someEstablishmentsAtLimit' },
+                                          {
+                                            count: capacityInfo.establishmentsAtLimit.length
+                                          }
+                                        )}
+                                        placement="top"
+                                      >
+                                        <Badge ml={2} colorScheme="orange" fontSize="xs">
+                                          <Icon as={FaExclamationTriangle} mr={1} />
+                                          {capacityInfo.establishmentsAtLimit.length}{' '}
+                                          {intl.formatMessage({ id: 'app.atLimit' })}
+                                        </Badge>
+                                      </Tooltip>
+                                    )}
+                                  </Flex>
+
+                                  {/* Total Capacity */}
+                                  <Stat mb={3}>
+                                    <StatNumber fontSize="xl">
+                                      {metric.used}
+                                      <Text as="span" fontSize="md" color="gray.500">
+                                        /
+                                        {isUnlimited
+                                          ? intl.formatMessage({ id: 'app.unlimited' })
+                                          : metric.limit}{' '}
+                                        {intl.formatMessage({ id: 'app.totalCapacity' })}
+                                      </Text>
+                                    </StatNumber>
+                                    <StatHelpText mb={0}>
+                                      {isUnlimited
+                                        ? intl.formatMessage({ id: 'app.unlimited' })
+                                        : `${percentage}% ${intl.formatMessage({ id: 'app.used' })}`}
+                                    </StatHelpText>
+                                  </Stat>
+                                  <Progress
+                                    value={isUnlimited ? 0 : percentage}
+                                    size="sm"
+                                    colorScheme={metric.colorScheme}
+                                    borderRadius="full"
+                                    mb={4}
+                                  />
+
+                                  {/* Limit Structure Explanation */}
+                                  <Box
+                                    bg="gray.50"
+                                    p={3}
+                                    borderRadius="lg"
+                                    mb={4}
+                                    borderWidth="1px"
+                                    borderColor="gray.200"
+                                  >
+                                    <Text fontSize="sm" fontWeight="semibold" color="gray.700" mb={2}>
+                                      {intl.formatMessage({ id: 'app.limitStructure' })}
+                                    </Text>
+                                    <VStack align="start" spacing={1}>
+                                      <HStack>
+                                        <Icon as={FaMapMarkedAlt} color="green.500" boxSize={3} />
+                                        <Text fontSize="sm" color="gray.600">
+                                          {isUnlimitedPerEst
+                                            ? intl.formatMessage({ id: 'app.unlimitedParcelsPerEst' })
+                                            : intl.formatMessage(
+                                                { id: 'app.maxParcelsPerEstablishment' },
+                                                { count: maxParcelsPerEst }
+                                              )}
+                                        </Text>
+                                      </HStack>
+                                      <HStack>
+                                        <Icon as={FaBuilding} color="blue.500" boxSize={3} />
+                                        <Text fontSize="sm" color="gray.600">
+                                          {isUnlimitedEst
+                                            ? intl.formatMessage({ id: 'app.unlimitedEstablishments' })
+                                            : intl.formatMessage(
+                                                { id: 'app.maxEstablishments' },
+                                                { count: maxEstablishments }
+                                              )}
+                                        </Text>
+                                      </HStack>
+                                      {!isUnlimited && (
+                                        <HStack>
+                                          <Text fontSize="sm" color="gray.500">
+                                            = {metric.limit}{' '}
+                                            {intl.formatMessage({ id: 'app.totalParcelsCapacity' })}
+                                          </Text>
+                                        </HStack>
+                                      )}
+                                    </VStack>
+                                  </Box>
+
+                                  {/* Per-Establishment Distribution */}
+                                  {capacityInfo.distribution.length > 0 && (
+                                    <Box>
+                                      <Text
+                                        fontSize="sm"
+                                        fontWeight="semibold"
+                                        color="gray.700"
+                                        mb={2}
+                                      >
+                                        {intl.formatMessage({ id: 'app.currentDistribution' })}
+                                      </Text>
+                                      <VStack align="stretch" spacing={2}>
+                                        {capacityInfo.distribution.map((est) => {
+                                          const estPercentage = est.isUnlimited
+                                            ? 0
+                                            : Math.round(
+                                                (est.parcelCount / Math.max(est.maxParcels, 1)) * 100
+                                              );
+                                          return (
+                                            <Box
+                                              key={est.id}
+                                              p={2}
+                                              borderRadius="lg"
+                                              borderWidth="1px"
+                                              borderColor={est.isAtLimit ? 'orange.200' : 'gray.200'}
+                                              bg={est.isAtLimit ? 'orange.50' : 'white'}
+                                            >
+                                              <Flex justify="space-between" align="center" mb={1}>
+                                                <HStack>
+                                                  <Icon
+                                                    as={est.isAtLimit ? FaExclamationTriangle : FaCheckCircle}
+                                                    color={est.isAtLimit ? 'orange.500' : 'green.500'}
+                                                    boxSize={3}
+                                                  />
+                                                  <Text fontSize="sm" fontWeight="medium">
+                                                    {est.name}
+                                                  </Text>
+                                                </HStack>
+                                                <HStack spacing={2}>
+                                                  <Text fontSize="sm" color="gray.600">
+                                                    {est.parcelCount}/
+                                                    {est.isUnlimited
+                                                      ? intl.formatMessage({ id: 'app.unlimited' })
+                                                      : est.maxParcels}
+                                                  </Text>
+                                                  {est.isAtLimit ? (
+                                                    <Badge colorScheme="orange" fontSize="xs">
+                                                      {intl.formatMessage({ id: 'app.atLimit' })}
+                                                    </Badge>
+                                                  ) : (
+                                                    <Badge colorScheme="green" fontSize="xs">
+                                                      {est.remainingSlots}{' '}
+                                                      {intl.formatMessage({ id: 'app.slotsAvailable' })}
+                                                    </Badge>
+                                                  )}
+                                                </HStack>
+                                              </Flex>
+                                              <Progress
+                                                value={est.isUnlimited ? 0 : estPercentage}
+                                                size="xs"
+                                                colorScheme={est.isAtLimit ? 'orange' : 'green'}
+                                                borderRadius="full"
+                                              />
+                                            </Box>
+                                          );
+                                        })}
+                                      </VStack>
+                                    </Box>
+                                  )}
+
+                                  {/* Helpful tip when some establishments are at limit */}
+                                  {hasEstablishmentsAtLimit && capacityInfo.hasAnyCapacity && (
+                                    <Alert status="info" mt={4} borderRadius="lg" fontSize="sm">
+                                      <AlertIcon boxSize={4} />
+                                      <Box>
+                                        <AlertTitle fontSize="sm">
+                                          {intl.formatMessage({ id: 'app.parcelCapacityTip' })}
+                                        </AlertTitle>
+                                        <AlertDescription fontSize="xs">
+                                          {intl.formatMessage(
+                                            { id: 'app.parcelCapacityTipDescription' },
+                                            {
+                                              remaining: capacityInfo.totalRemaining,
+                                              establishments:
+                                                capacityInfo.establishmentsWithCapacity.length
+                                            }
+                                          )}
+                                        </AlertDescription>
+                                      </Box>
+                                    </Alert>
+                                  )}
+                                </CardBody>
+                              </Card>
+                            );
+                          }
+
+                          // Standard metric card for other metrics
                           return (
                             <Card
                               key={metric.name}
@@ -1011,7 +1293,9 @@ function UnifiedSubscriptionDashboard() {
                                 </Text>
                                 <Text fontSize="sm" color="gray.600">
                                   {blockchainStatus?.blockchainSubscribed
-                                    ? intl.formatMessage({ id: 'app.blockchainVerifiedDescription' })
+                                    ? intl.formatMessage({
+                                        id: 'app.blockchainVerifiedDescription'
+                                      })
                                     : intl.formatMessage({ id: 'app.blockchainAddCta' })}
                                 </Text>
                               </Box>

@@ -91,7 +91,12 @@ interface EnhancedTimelineEvent {
   chemical_subtype?: string; // Added 2025-01-21: organic vs synthetic differentiation
   carbon_data?: CarbonCalculation;
   // MVP Photo Verification: Tiered verification levels
-  verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+  verification_level?:
+    | 'self_reported'
+    | 'photo_documented'
+    | 'photo_verified'
+    | 'data_verified'
+    | 'certified';
   photo_verified_count?: number;
 }
 
@@ -171,10 +176,14 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                   {config.name}
                 </Badge>
                 {/* MVP Photo Verification: Display tiered verification badge */}
-                {event.verification_level && (
+                {event.verification_level &&
                   (() => {
-                    const config = getVerificationBadgeConfig(event.verification_level as VerificationLevel);
-                    const colorScheme = getVerificationColor(event.verification_level as VerificationLevel);
+                    const config = getVerificationBadgeConfig(
+                      event.verification_level as VerificationLevel
+                    );
+                    const colorScheme = getVerificationColor(
+                      event.verification_level as VerificationLevel
+                    );
                     return (
                       <Tooltip label={config.tooltip} placement="top">
                         <Badge
@@ -190,8 +199,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                         </Badge>
                       </Tooltip>
                     );
-                  })()
-                )}
+                  })()}
                 {event.certified && (
                   <Badge colorScheme="green" size="sm">
                     <HStack spacing={1}>

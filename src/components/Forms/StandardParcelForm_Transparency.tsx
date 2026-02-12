@@ -870,8 +870,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     </Badge>
                   </HStack>
                   <Text fontSize="sm" color="gray.500" mb={4}>
-                    If your parcel holds an agricultural certification, add it here to boost consumer
-                    trust and your transparency score.
+                    If your parcel holds an agricultural certification, add it here to boost
+                    consumer trust and your transparency score.
                   </Text>
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>

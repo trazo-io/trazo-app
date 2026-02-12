@@ -475,8 +475,8 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                   <Text fontSize="xs" color="purple.600">
                     Soil disturbance from tillage releases stored carbon. Based on peer-reviewed
                     research: shallow tillage (less than 10cm) releases ~50 kg CO2e/ha, medium depth
-                    (10-25cm) releases ~150 kg CO2e/ha, and deep tillage (over 25cm) releases ~300 kg
-                    CO2e/ha.
+                    (10-25cm) releases ~150 kg CO2e/ha, and deep tillage (over 25cm) releases ~300
+                    kg CO2e/ha.
                   </Text>
                 </Box>
                 <Box>

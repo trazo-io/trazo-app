@@ -77,8 +77,8 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
     establishmentData?.latitude && establishmentData?.longitude
       ? { lat: establishmentData.latitude, lng: establishmentData.longitude }
       : currentEstablishment?.latitude && currentEstablishment?.longitude
-        ? { lat: currentEstablishment.latitude, lng: currentEstablishment.longitude }
-        : undefined;
+      ? { lat: currentEstablishment.latitude, lng: currentEstablishment.longitude }
+      : undefined;
 
   // 🎯 Transparency-focused initial data mapping
   const getInitialData = () => {
@@ -213,7 +213,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           parcelId,
           parcelData: finalData
         }).unwrap();
-
 
         // ✅ Redirect to parcel profile after update
         navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);

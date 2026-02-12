@@ -379,7 +379,8 @@ const extractEventFields = (event: Event) => {
         console.log('⏱️ DEBUG Duration unit detection:', { weatherType, isHailstorm });
 
         const durationStr = weatherDuration.toString().toLowerCase();
-        const hasUnit = durationStr.includes('hour') || durationStr.includes('hr') || durationStr.includes('min');
+        const hasUnit =
+          durationStr.includes('hour') || durationStr.includes('hr') || durationStr.includes('min');
         const durationUnit = isHailstorm ? ' minutes' : ' hours';
 
         fields.push({
@@ -888,9 +889,17 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
                       {/* Verification Badge - COMPACT PRIMARY (Optimized Space) */}
                       {event.verification_level && (
-                        <Tooltip label={getVerificationBadgeConfig(event.verification_level).tooltip} hasArrow placement="top">
+                        <Tooltip
+                          label={getVerificationBadgeConfig(event.verification_level).tooltip}
+                          hasArrow
+                          placement="top"
+                        >
                           <Badge
-                            colorScheme={getVerificationBadgeConfig(event.verification_level).color.split('.')[0]}
+                            colorScheme={
+                              getVerificationBadgeConfig(event.verification_level).color.split(
+                                '.'
+                              )[0]
+                            }
                             variant="solid"
                             fontSize="xs"
                             px={2}
@@ -903,7 +912,10 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             boxShadow="0 1px 2px rgba(0,0,0,0.08)"
                             cursor="help"
                           >
-                            <Icon as={getVerificationBadgeConfig(event.verification_level).icon} boxSize={3} />
+                            <Icon
+                              as={getVerificationBadgeConfig(event.verification_level).icon}
+                              boxSize={3}
+                            />
                             <Text display={{ base: 'none', md: 'inline' }}>
                               {getVerificationBadgeConfig(event.verification_level).label}
                             </Text>
@@ -913,7 +925,11 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
                       {/* USDA Badge - ULTRA-COMPACT SECONDARY (Optimized Space) */}
                       {carbonData?.usda_factors_based && (
-                        <Tooltip label="Carbon calculation uses USDA-verified emission factors" hasArrow placement="top">
+                        <Tooltip
+                          label="Carbon calculation uses USDA-verified emission factors"
+                          hasArrow
+                          placement="top"
+                        >
                           <Badge
                             colorScheme="blue"
                             variant="subtle"

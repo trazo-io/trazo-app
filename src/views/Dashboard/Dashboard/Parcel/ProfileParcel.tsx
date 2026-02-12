@@ -41,11 +41,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
-import {
-  StandardCard,
-  StandardButton,
-  StandardPage
-} from 'components/Design/StandardComponents';
+import { StandardCard, StandardButton, StandardPage } from 'components/Design/StandardComponents';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { formatAreaWithBothUnits } from '../../../../utils/areaUnits';
@@ -179,7 +175,11 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
           </Link>
         );
       default:
-        return <Text fontWeight="medium" color="gray.800">{value}</Text>;
+        return (
+          <Text fontWeight="medium" color="gray.800">
+            {value}
+          </Text>
+        );
     }
   };
 
@@ -240,10 +240,7 @@ function ProfileParcel(): React.ReactElement {
   const establishments = currentCompany?.establishments || [];
   const currentParcel = useSelector((state: RootState) => state.product.currentParcel);
 
-  const {
-    data: parcelData,
-    isLoading: isParcelLoading
-  } = useGetParcelQuery(
+  const { data: parcelData, isLoading: isParcelLoading } = useGetParcelQuery(
     {
       companyId: currentCompany?.id || '',
       establishmentId: establishmentId || '',
@@ -308,32 +305,35 @@ function ProfileParcel(): React.ReactElement {
   };
 
   // Check if agricultural details exist
-  const hasAgriculturalDetails = parcelData?.agricultural_details &&
-    Object.values(parcelData.agricultural_details).some(v => v !== undefined && v !== null && v !== '');
+  const hasAgriculturalDetails =
+    parcelData?.agricultural_details &&
+    Object.values(parcelData.agricultural_details).some(
+      (v) => v !== undefined && v !== null && v !== ''
+    );
 
   // Check for soil data
-  const hasSoilData = parcelData?.agricultural_details && (
-    parcelData.agricultural_details.soil_ph ||
-    parcelData.agricultural_details.soil_organic_matter ||
-    parcelData.agricultural_details.soil_nitrogen ||
-    parcelData.agricultural_details.soil_phosphorus
-  );
+  const hasSoilData =
+    parcelData?.agricultural_details &&
+    (parcelData.agricultural_details.soil_ph ||
+      parcelData.agricultural_details.soil_organic_matter ||
+      parcelData.agricultural_details.soil_nitrogen ||
+      parcelData.agricultural_details.soil_phosphorus);
 
   // Check for water management data
-  const hasWaterData = parcelData?.agricultural_details && (
-    parcelData.agricultural_details.irrigation_efficiency ||
-    parcelData.agricultural_details.water_source_type ||
-    parcelData.agricultural_details.water_quality_ph ||
-    parcelData.agricultural_details.water_allocation_acre_feet
-  );
+  const hasWaterData =
+    parcelData?.agricultural_details &&
+    (parcelData.agricultural_details.irrigation_efficiency ||
+      parcelData.agricultural_details.water_source_type ||
+      parcelData.agricultural_details.water_quality_ph ||
+      parcelData.agricultural_details.water_allocation_acre_feet);
 
   // Check for conservation practices
-  const hasConservationData = parcelData?.agricultural_details && (
-    parcelData.agricultural_details.cover_crop_management ||
-    parcelData.agricultural_details.crop_rotation_pattern ||
-    parcelData.agricultural_details.pest_management_strategy ||
-    parcelData.agricultural_details.fertilization_program
-  );
+  const hasConservationData =
+    parcelData?.agricultural_details &&
+    (parcelData.agricultural_details.cover_crop_management ||
+      parcelData.agricultural_details.crop_rotation_pattern ||
+      parcelData.agricultural_details.pest_management_strategy ||
+      parcelData.agricultural_details.fertilization_program);
 
   return (
     <StandardPage
@@ -476,7 +476,9 @@ function ProfileParcel(): React.ReactElement {
               icon={FaTractor}
               value={parcelData?.area ? parcelData.area.toFixed(2) : '--'}
               label="Hectares"
-              subLabel={parcelData?.area ? `(${(parcelData.area * 2.47105).toFixed(1)} acres)` : undefined}
+              subLabel={
+                parcelData?.area ? `(${(parcelData.area * 2.47105).toFixed(1)} acres)` : undefined
+              }
               colorScheme="green"
             />
             <StatCard
@@ -491,8 +493,8 @@ function ProfileParcel(): React.ReactElement {
                 parcelData?.certified && parcelData?.certification_type
                   ? formatCertificationType(parcelData.certification_type)
                   : parcelData?.certified
-                    ? 'Yes'
-                    : 'No'
+                  ? 'Yes'
+                  : 'No'
               }
               label="Certification"
               colorScheme="orange"
@@ -501,8 +503,10 @@ function ProfileParcel(): React.ReactElement {
         </StandardCard>
 
         {/* Transparency Score Breakdown */}
-        {(parcelData?.transparency_score || parcelData?.transparency_description ||
-          parcelData?.sustainability_practices || parcelData?.consumer_story) && (
+        {(parcelData?.transparency_score ||
+          parcelData?.transparency_description ||
+          parcelData?.sustainability_practices ||
+          parcelData?.consumer_story) && (
           <ParcelTransparencyScoreBreakdown
             parcelData={{
               transparency_score: parcelData?.transparency_score,
@@ -577,21 +581,15 @@ function ProfileParcel(): React.ReactElement {
         {/* Basic Information Section */}
         <StandardCard title="Basic Information" variant="elevated">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <InfoRow
-              icon={FaMapMarkedAlt}
-              label="Parcel Name"
-              value={parcelData?.name}
-            />
+            <InfoRow icon={FaMapMarkedAlt} label="Parcel Name" value={parcelData?.name} />
             <InfoRow
               icon={FaRulerCombined}
               label="Area"
-              value={parcelData?.area ? formatAreaWithBothUnits(parcelData.area, 'METRIC') : undefined}
+              value={
+                parcelData?.area ? formatAreaWithBothUnits(parcelData.area, 'METRIC') : undefined
+              }
             />
-            <InfoRow
-              icon={FaHashtag}
-              label="Unique Code"
-              value={parcelData?.unique_code}
-            />
+            <InfoRow icon={FaHashtag} label="Unique Code" value={parcelData?.unique_code} />
             <InfoRow
               icon={FaSeedling}
               label="Primary Crop"
@@ -603,17 +601,15 @@ function ProfileParcel(): React.ReactElement {
         {/* Location Section */}
         <StandardCard title="Location Details" variant="elevated">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <InfoRow
-              icon={FaMapMarkerAlt}
-              label="Address"
-              value={formatLocation()}
-            />
+            <InfoRow icon={FaMapMarkerAlt} label="Address" value={formatLocation()} />
             <InfoRow
               icon={FaGlobeAmericas}
               label="Coordinates"
               value={
                 parcelData?.latitude && parcelData?.longitude
-                  ? `${parseFloat(parcelData.latitude.toString()).toFixed(6)}, ${parseFloat(parcelData.longitude.toString()).toFixed(6)}`
+                  ? `${parseFloat(parcelData.latitude.toString()).toFixed(6)}, ${parseFloat(
+                      parcelData.longitude.toString()
+                    ).toFixed(6)}`
                   : undefined
               }
             />
@@ -623,11 +619,7 @@ function ProfileParcel(): React.ReactElement {
               value={parcelData?.elevation ? `${parcelData.elevation} ft` : undefined}
             />
             {establishment?.zone && (
-              <InfoRow
-                icon={MdLocationOn}
-                label="Zone"
-                value={establishment.zone}
-              />
+              <InfoRow icon={MdLocationOn} label="Zone" value={establishment.zone} />
             )}
           </SimpleGrid>
         </StandardCard>
@@ -636,11 +628,7 @@ function ProfileParcel(): React.ReactElement {
         {(parcelData?.contact_person || parcelData?.contact_email || parcelData?.contact_phone) && (
           <StandardCard title="Contact Information" variant="elevated">
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              <InfoRow
-                icon={FaUser}
-                label="Contact Person"
-                value={parcelData?.contact_person}
-              />
+              <InfoRow icon={FaUser} label="Contact Person" value={parcelData?.contact_person} />
               <InfoRow
                 icon={FaEnvelope}
                 label="Email"
@@ -664,7 +652,12 @@ function ProfileParcel(): React.ReactElement {
               <HStack spacing={3} align="flex-start">
                 <Icon as={FaCertificate} color="green.500" boxSize={4} mt={1} flexShrink={0} />
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                    fontWeight="semibold"
+                  >
                     Status
                   </Text>
                   <Badge
@@ -705,7 +698,9 @@ function ProfileParcel(): React.ReactElement {
                   <Text fontSize="2xl" fontWeight="bold" color="gray.800">
                     {parseFloat(parcelData.agricultural_details.soil_ph).toFixed(1)}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">pH Level</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    pH Level
+                  </Text>
                 </VStack>
               )}
               {parcelData?.agricultural_details?.soil_organic_matter && (
@@ -720,7 +715,9 @@ function ProfileParcel(): React.ReactElement {
                   <Text fontSize="2xl" fontWeight="bold" color="gray.800">
                     {parseFloat(parcelData.agricultural_details.soil_organic_matter).toFixed(1)}%
                   </Text>
-                  <Text fontSize="sm" color="gray.600">Organic Matter</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    Organic Matter
+                  </Text>
                 </VStack>
               )}
               {parcelData?.agricultural_details?.soil_nitrogen && (
@@ -735,7 +732,9 @@ function ProfileParcel(): React.ReactElement {
                   <Text fontSize="2xl" fontWeight="bold" color="gray.800">
                     {parseFloat(parcelData.agricultural_details.soil_nitrogen).toFixed(0)}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">Nitrogen (ppm)</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    Nitrogen (ppm)
+                  </Text>
                 </VStack>
               )}
               {parcelData?.agricultural_details?.soil_phosphorus && (
@@ -750,7 +749,9 @@ function ProfileParcel(): React.ReactElement {
                   <Text fontSize="2xl" fontWeight="bold" color="gray.800">
                     {parseFloat(parcelData.agricultural_details.soil_phosphorus).toFixed(0)}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">Phosphorus (ppm)</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    Phosphorus (ppm)
+                  </Text>
                 </VStack>
               )}
             </SimpleGrid>
@@ -765,7 +766,9 @@ function ProfileParcel(): React.ReactElement {
                 <InfoRow
                   icon={FaTint}
                   label="Irrigation Efficiency"
-                  value={`${parseFloat(parcelData.agricultural_details.irrigation_efficiency).toFixed(0)}%`}
+                  value={`${parseFloat(
+                    parcelData.agricultural_details.irrigation_efficiency
+                  ).toFixed(0)}%`}
                 />
               )}
               {parcelData?.agricultural_details?.water_source_type && (
@@ -786,7 +789,9 @@ function ProfileParcel(): React.ReactElement {
                 <InfoRow
                   icon={FaTint}
                   label="Water Allocation"
-                  value={`${parseFloat(parcelData.agricultural_details.water_allocation_acre_feet).toFixed(1)} acre-feet`}
+                  value={`${parseFloat(
+                    parcelData.agricultural_details.water_allocation_acre_feet
+                  ).toFixed(1)} acre-feet`}
                 />
               )}
             </SimpleGrid>
@@ -809,7 +814,9 @@ function ProfileParcel(): React.ReactElement {
                 >
                   <Icon as={FaSeedling} color="green.600" mt={1} />
                   <Box>
-                    <Text fontWeight="semibold" color="gray.800">Cover Crops</Text>
+                    <Text fontWeight="semibold" color="gray.800">
+                      Cover Crops
+                    </Text>
                     <Text fontSize="sm" color="gray.600">
                       {parcelData.agricultural_details.cover_crop_management}
                     </Text>
@@ -828,7 +835,9 @@ function ProfileParcel(): React.ReactElement {
                 >
                   <Icon as={FaLeaf} color="green.500" mt={1} />
                   <Box>
-                    <Text fontWeight="semibold" color="gray.800">Crop Rotation</Text>
+                    <Text fontWeight="semibold" color="gray.800">
+                      Crop Rotation
+                    </Text>
                     <Text fontSize="sm" color="gray.600">
                       {parcelData.agricultural_details.crop_rotation_pattern}
                     </Text>
@@ -847,7 +856,9 @@ function ProfileParcel(): React.ReactElement {
                 >
                   <Icon as={FaChartLine} color="yellow.600" mt={1} />
                   <Box>
-                    <Text fontWeight="semibold" color="gray.800">Pest Management</Text>
+                    <Text fontWeight="semibold" color="gray.800">
+                      Pest Management
+                    </Text>
                     <Text fontSize="sm" color="gray.600">
                       {parcelData.agricultural_details.pest_management_strategy}
                     </Text>
@@ -866,7 +877,9 @@ function ProfileParcel(): React.ReactElement {
                 >
                   <Icon as={MdEco} color="purple.500" mt={1} />
                   <Box>
-                    <Text fontWeight="semibold" color="gray.800">Fertilization Program</Text>
+                    <Text fontWeight="semibold" color="gray.800">
+                      Fertilization Program
+                    </Text>
                     <Text fontSize="sm" color="gray.600">
                       {parcelData.agricultural_details.fertilization_program}
                     </Text>
@@ -880,16 +893,8 @@ function ProfileParcel(): React.ReactElement {
         {/* Company & Establishment Section */}
         <StandardCard title="Company & Establishment" variant="elevated">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <InfoRow
-              icon={FaBuilding}
-              label="Company"
-              value={currentCompany?.name}
-            />
-            <InfoRow
-              icon={FaBuilding}
-              label="Establishment"
-              value={establishment?.name}
-            />
+            <InfoRow icon={FaBuilding} label="Company" value={currentCompany?.name} />
+            <InfoRow icon={FaBuilding} label="Establishment" value={establishment?.name} />
           </SimpleGrid>
         </StandardCard>
       </VStack>

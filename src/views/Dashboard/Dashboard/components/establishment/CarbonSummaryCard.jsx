@@ -216,7 +216,8 @@ const TransparencySummaryCard = ({ establishmentId }) => {
         ? Object.keys(comprehensiveData.transparency_metrics)
         : null,
       // Added: Check comprehensive_data.verification_status path
-      comprehensiveDataVerificationStatus: comprehensiveData?.comprehensive_data?.verification_status
+      comprehensiveDataVerificationStatus:
+        comprehensiveData?.comprehensive_data?.verification_status
     });
 
     // Check comprehensive dashboard verification data (nested structure)

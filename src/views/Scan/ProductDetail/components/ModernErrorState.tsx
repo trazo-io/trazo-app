@@ -84,8 +84,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
         icon: FaExclamationTriangle,
         title: title || 'Unable to Load Product',
         message:
-          message ||
-          'Please check your connection and try again, or scan a different product.',
+          message || 'Please check your connection and try again, or scan a different product.',
         iconColor: 'orange.500',
         iconBg: 'orange.100',
         suggestions: [
@@ -198,12 +197,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
             </VStack>
 
             {/* Action Buttons - Responsive layout */}
-            <Stack
-              direction={{ base: 'column', md: 'row' }}
-              spacing={3}
-              w="full"
-              justify="center"
-            >
+            <Stack direction={{ base: 'column', md: 'row' }} spacing={3} w="full" justify="center">
               {onRetry && (
                 <StandardButton
                   variant="primary"

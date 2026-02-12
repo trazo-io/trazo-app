@@ -55,7 +55,9 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
   const subtypeRec = isSubtypeSpecific ? (photoRecs as SubtypePhotoRecommendation) : null;
 
   // Get guidance text (for non-subtype events)
-  const guidanceText = !isSubtypeSpecific ? getPhotoGuidanceText(activeEventType, photoCount) : null;
+  const guidanceText = !isSubtypeSpecific
+    ? getPhotoGuidanceText(activeEventType, photoCount)
+    : null;
 
   // Trazo green color scheme (professional agricultural branding)
   const bgColor = useColorModeValue('green.50', 'green.900');
@@ -73,7 +75,9 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
       p={4}
       boxShadow="sm"
       role="region"
-      aria-label={`Photo guidance for ${subtypeRec?.subtypeName || (photoRecs as PhotoRecommendation).eventType}`}
+      aria-label={`Photo guidance for ${
+        subtypeRec?.subtypeName || (photoRecs as PhotoRecommendation).eventType
+      }`}
     >
       <VStack spacing={3} align="stretch">
         {/* Title with Icon - No emoji, clean professional design */}
@@ -82,8 +86,7 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
           <Text fontSize="sm" fontWeight="semibold" color={textPrimary}>
             {subtypeRec
               ? `${subtypeRec.subtypeName} - Photo Guidance`
-              : `Photo Guidance for ${(photoRecs as PhotoRecommendation).eventType}`
-            }
+              : `Photo Guidance for ${(photoRecs as PhotoRecommendation).eventType}`}
           </Text>
         </HStack>
 
@@ -117,20 +120,23 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
         )}
 
         {/* Photography Tips - Show subtype tips if available, else general tips */}
-        {(subtypeRec?.tips || (photoRecs as PhotoRecommendation).tips?.length > 0) && photoCount < 2 && (
-          <Box>
-            <Text fontSize="xs" fontWeight="semibold" color={textPrimary} mb={1}>
-              Tips:
-            </Text>
-            <VStack spacing={1} align="start" pl={3}>
-              {(subtypeRec?.tips || (photoRecs as PhotoRecommendation).tips)?.slice(0, 2).map((tip, idx) => (
-                <Text key={idx} fontSize="xs" color={textSecondary}>
-                  • {tip}
-                </Text>
-              ))}
-            </VStack>
-          </Box>
-        )}
+        {(subtypeRec?.tips || (photoRecs as PhotoRecommendation).tips?.length > 0) &&
+          photoCount < 2 && (
+            <Box>
+              <Text fontSize="xs" fontWeight="semibold" color={textPrimary} mb={1}>
+                Tips:
+              </Text>
+              <VStack spacing={1} align="start" pl={3}>
+                {(subtypeRec?.tips || (photoRecs as PhotoRecommendation).tips)
+                  ?.slice(0, 2)
+                  .map((tip, idx) => (
+                    <Text key={idx} fontSize="xs" color={textSecondary}>
+                      • {tip}
+                    </Text>
+                  ))}
+              </VStack>
+            </Box>
+          )}
       </VStack>
     </Box>
   );

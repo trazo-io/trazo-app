@@ -55,6 +55,23 @@ interface CarbonCalculation {
     application_method?: string;
     manufacturing_emissions_kg_co2e?: number;
     application_emissions_kg_co2e?: number;
+    // Fuel consumption details for chemical applications
+    application_fuel_liters?: number;
+    application_fuel_gallons?: number;
+    application_fuel_type?: string;
+    epa_diesel_factor_kg_co2_per_gallon?: number;
+    // Chemical calculation breakdown (2025-12-24)
+    chemical_subtype_used?: string;
+    active_ingredient_percentage?: number;
+    active_ingredient_kg?: number;
+    emission_factor_kg_co2_per_kg?: number;
+    concentration_source?: 'user_provided' | 'default';
+    pesticide_subtype?: string;
+    herbicide_subtype?: string;
+    fungicide_subtype?: string;
+    // Fertilizer calculation breakdown (2025-12-24)
+    fertilizer_subtype?: 'organic' | 'synthetic' | 'slow_release';
+    note?: string;  // Explanation of fertilizer type impact
     npk_content?: {
       N?: number;
       P?: number;
@@ -84,6 +101,14 @@ interface CarbonCalculation {
     fuel_emissions?: number;
     emission_factor?: number;
     total_impact?: number;
+
+    // Pest management event fields (Sprint 3 Epic 3.1)
+    pest_activity?: string;
+    pest_management_type?: string;
+    area_covered?: number;
+    area_unit?: string;
+    fuel_type?: string;
+    production_efficiency?: string;
   };
   cost_analysis?: {
     estimated_cost: number;
@@ -425,7 +450,9 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                               </Text>
                             </HStack>
                             <HStack justify="space-between" fontSize="xs">
-                              <Text color="blue.500" fontStyle="italic">→ Converted:</Text>
+                              <Text color="blue.500" fontStyle="italic">
+                                → Converted:
+                              </Text>
                               <Text color="blue.700" fontStyle="italic">
                                 {calculation.breakdown.area_covered_hectares?.toFixed(1) || 'N/A'}{' '}
                                 hectares
@@ -519,10 +546,112 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                           </Box>
                         )}
 
+                        {/* Input Summary - Pest Management Events (Sprint 3 Epic 3.1) */}
+                        {calculation.breakdown?.pest_activity && (
+                          <Box
+                            p={2}
+                            bg="blue.50"
+                            borderRadius="md"
+                            borderWidth="1px"
+                            borderColor="blue.200"
+                          >
+                            <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
+                              Your Pest Management Activity:
+                            </Text>
+                            <HStack justify="space-between" fontSize="xs">
+                              <Text color="blue.600">Activity:</Text>
+                              <Text color="blue.800" textTransform="capitalize">
+                                {calculation.breakdown.pest_activity?.replace(/_/g, ' ')}
+                              </Text>
+                            </HStack>
+                            {calculation.breakdown.pest_management_type && (
+                              <HStack justify="space-between" fontSize="xs">
+                                <Text color="blue.600">Management Type:</Text>
+                                <Text color="blue.800" textTransform="capitalize">
+                                  {calculation.breakdown.pest_management_type?.replace(/_/g, ' ')}
+                                </Text>
+                              </HStack>
+                            )}
+                            {calculation.breakdown.area_covered &&
+                              calculation.breakdown.area_covered > 0 && (
+                                <HStack justify="space-between" fontSize="xs">
+                                  <Text color="blue.600">Area Covered:</Text>
+                                  <Text color="blue.800">
+                                    {calculation.breakdown.area_covered}{' '}
+                                    {calculation.breakdown.area_unit || 'ha'}
+                                  </Text>
+                                </HStack>
+                              )}
+                            {calculation.breakdown.fuel_consumed &&
+                              calculation.breakdown.fuel_consumed > 0 && (
+                                <HStack justify="space-between" fontSize="xs">
+                                  <Text color="blue.600">
+                                    {calculation.breakdown.fuel_type === 'electric'
+                                      ? 'Energy Used:'
+                                      : 'Fuel Consumed:'}
+                                  </Text>
+                                  <Text color="blue.800">
+                                    {calculation.breakdown.fuel_consumed}{' '}
+                                    {calculation.breakdown.fuel_unit || 'L'}
+                                  </Text>
+                                </HStack>
+                              )}
+                            {calculation.breakdown.fuel_type && (
+                              <HStack justify="space-between" fontSize="xs">
+                                <Text color="blue.600">Fuel Type:</Text>
+                                <Text color="blue.800" textTransform="capitalize">
+                                  {calculation.breakdown.fuel_type === 'electric'
+                                    ? '⚡ Electric'
+                                    : calculation.breakdown.fuel_type === 'diesel'
+                                    ? '⛽ Diesel'
+                                    : calculation.breakdown.fuel_type === 'gasoline'
+                                    ? '⛽ Gasoline'
+                                    : calculation.breakdown.fuel_type}
+                                </Text>
+                              </HStack>
+                            )}
+                            {calculation.breakdown.equipment_hours &&
+                              calculation.breakdown.equipment_hours > 0 && (
+                                <HStack justify="space-between" fontSize="xs">
+                                  <Text color="blue.600">Equipment Hours:</Text>
+                                  <Text color="blue.800">
+                                    {calculation.breakdown.equipment_hours} hours
+                                  </Text>
+                                </HStack>
+                              )}
+                            {calculation.breakdown.production_efficiency && (
+                              <HStack justify="space-between" fontSize="xs">
+                                <Text color="blue.600">Efficiency:</Text>
+                                <Text
+                                  color={
+                                    calculation.breakdown.production_efficiency === 'high'
+                                      ? 'green.600'
+                                      : calculation.breakdown.production_efficiency === 'low'
+                                      ? 'orange.600'
+                                      : 'blue.800'
+                                  }
+                                  fontWeight={
+                                    calculation.breakdown.production_efficiency === 'high'
+                                      ? 'semibold'
+                                      : 'normal'
+                                  }
+                                >
+                                  {calculation.breakdown.production_efficiency === 'high'
+                                    ? '⚡ High Efficiency'
+                                    : calculation.breakdown.production_efficiency === 'low'
+                                    ? '⚠️ Low Efficiency'
+                                    : '✓ Normal Efficiency'}
+                                </Text>
+                              </HStack>
+                            )}
+                          </Box>
+                        )}
+
                         {/* Input Summary - Chemical Application Events */}
                         {calculation.breakdown &&
                           !calculation.breakdown.production_activity &&
                           !calculation.breakdown.soil_activity &&
+                          !calculation.breakdown.pest_activity &&
                           !calculation.breakdown.water_volume_gallons && (
                             <Box
                               p={2}
@@ -587,50 +716,83 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   {calculation.breakdown.application_method || 'Standard'}
                                 </Text>
                               </HStack>
+                              {/* Display fuel consumption if provided */}
+                              {calculation.breakdown.application_fuel_gallons &&
+                                calculation.breakdown.application_fuel_gallons > 0 && (
+                                  <>
+                                    <HStack justify="space-between" fontSize="xs" mt={1}>
+                                      <Text color="blue.600">Application Fuel:</Text>
+                                      <Text color="blue.800">
+                                        {calculation.breakdown.application_fuel_gallons.toFixed(1)}{' '}
+                                        gallons
+                                        {calculation.breakdown.application_fuel_liters && (
+                                          <Text as="span" color="blue.500" fontStyle="italic">
+                                            {' '}
+                                            (
+                                            {calculation.breakdown.application_fuel_liters.toFixed(
+                                              1
+                                            )}{' '}
+                                            L)
+                                          </Text>
+                                        )}
+                                      </Text>
+                                    </HStack>
+                                    <HStack justify="space-between" fontSize="xs">
+                                      <Text color="blue.600">Fuel Type:</Text>
+                                      <Text color="blue.800" textTransform="capitalize">
+                                        {calculation.breakdown.application_fuel_type || 'diesel'}
+                                      </Text>
+                                    </HStack>
+                                  </>
+                                )}
                             </Box>
                           )}
 
-                        {/* Nutrient Breakdown */}
-                        {calculation.breakdown?.npk_content && (
-                          <Box
-                            p={2}
-                            bg="green.50"
-                            borderRadius="md"
-                            borderWidth="1px"
-                            borderColor="green.200"
-                          >
-                            <Text fontSize="xs" fontWeight="semibold" color="green.700" mb={1}>
-                              Nutrient Content:
-                            </Text>
-                            {calculation.breakdown.npk_content.N && (
-                              <HStack justify="space-between" fontSize="xs">
-                                <Text color="green.600">Nitrogen (N):</Text>
-                                <Text color="green.800">
-                                  {calculation.breakdown.nitrogen_kg?.toFixed(1) || 'N/A'} kg
-                                  applied
-                                </Text>
-                              </HStack>
-                            )}
-                            {calculation.breakdown.npk_content.P && (
-                              <HStack justify="space-between" fontSize="xs">
-                                <Text color="green.600">Phosphorus (P):</Text>
-                                <Text color="green.800">
-                                  {calculation.breakdown.phosphorus_kg?.toFixed(1) || 'N/A'} kg
-                                  applied
-                                </Text>
-                              </HStack>
-                            )}
-                            {calculation.breakdown.npk_content.K && (
-                              <HStack justify="space-between" fontSize="xs">
-                                <Text color="green.600">Potassium (K):</Text>
-                                <Text color="green.800">
-                                  {calculation.breakdown.potassium_kg?.toFixed(1) || 'N/A'} kg
-                                  applied
-                                </Text>
-                              </HStack>
-                            )}
-                          </Box>
-                        )}
+                        {/* Nutrient Breakdown - ONLY show for fertilizers with actual NPK content */}
+                        {/* SPRINT 6 FIX (2025-12-23): Don't show empty NPK box for pesticides/herbicides/fungicides */}
+                        {calculation.breakdown?.npk_content &&
+                          (calculation.breakdown.npk_content.N > 0 ||
+                            calculation.breakdown.npk_content.P > 0 ||
+                            calculation.breakdown.npk_content.K > 0) && (
+                            <Box
+                              p={2}
+                              bg="green.50"
+                              borderRadius="md"
+                              borderWidth="1px"
+                              borderColor="green.200"
+                            >
+                              <Text fontSize="xs" fontWeight="semibold" color="green.700" mb={1}>
+                                Nutrient Content:
+                              </Text>
+                              {calculation.breakdown.npk_content.N > 0 && (
+                                <HStack justify="space-between" fontSize="xs">
+                                  <Text color="green.600">Nitrogen (N):</Text>
+                                  <Text color="green.800">
+                                    {calculation.breakdown.nitrogen_kg?.toFixed(1) || 'N/A'} kg
+                                    applied
+                                  </Text>
+                                </HStack>
+                              )}
+                              {calculation.breakdown.npk_content.P > 0 && (
+                                <HStack justify="space-between" fontSize="xs">
+                                  <Text color="green.600">Phosphorus (P):</Text>
+                                  <Text color="green.800">
+                                    {calculation.breakdown.phosphorus_kg?.toFixed(1) || 'N/A'} kg
+                                    applied
+                                  </Text>
+                                </HStack>
+                              )}
+                              {calculation.breakdown.npk_content.K > 0 && (
+                                <HStack justify="space-between" fontSize="xs">
+                                  <Text color="green.600">Potassium (K):</Text>
+                                  <Text color="green.800">
+                                    {calculation.breakdown.potassium_kg?.toFixed(1) || 'N/A'} kg
+                                    applied
+                                  </Text>
+                                </HStack>
+                              )}
+                            </Box>
+                          )}
 
                         {/* Emissions Sources */}
                         <Box
@@ -769,11 +931,187 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                             </VStack>
                           )}
 
+                          {/* Pest Management Event Emissions (Sprint 3 Epic 3.1) */}
+                          {calculation.breakdown?.pest_activity && (
+                            <VStack spacing={1} align="stretch">
+                              {calculation.breakdown.fuel_consumed &&
+                                calculation.breakdown.fuel_consumed > 0 && (
+                                  <>
+                                    <HStack justify="space-between" fontSize="xs">
+                                      <Text color="orange.600">
+                                        {calculation.breakdown.fuel_type === 'electric'
+                                          ? 'Electricity Emissions:'
+                                          : 'Fuel Combustion:'}
+                                      </Text>
+                                      <Text color="orange.800">
+                                        {calculation.breakdown.fuel_emissions?.toFixed(1) ||
+                                          formattedCO2e}{' '}
+                                        kg CO₂e
+                                      </Text>
+                                    </HStack>
+                                    <Text fontSize="xs" color="orange.600" pl={2}>
+                                      • {calculation.breakdown.fuel_consumed}{' '}
+                                      {calculation.breakdown.fuel_unit || 'L'} ×{' '}
+                                      {calculation.breakdown.fuel_type === 'electric'
+                                        ? 'EPA eGRID factor'
+                                        : 'EPA diesel factor'}
+                                    </Text>
+                                    {calculation.breakdown.fuel_type && (
+                                      <Text fontSize="xs" color="orange.600" pl={2}>
+                                        • Fuel type:{' '}
+                                        {calculation.breakdown.fuel_type === 'electric'
+                                          ? 'Electric (0.39 kg CO₂e/kWh)'
+                                          : calculation.breakdown.fuel_type === 'diesel'
+                                          ? 'Diesel (2.68 kg CO₂e/L)'
+                                          : calculation.breakdown.fuel_type === 'gasoline'
+                                          ? 'Gasoline (2.31 kg CO₂e/L)'
+                                          : calculation.breakdown.fuel_type}
+                                      </Text>
+                                    )}
+                                  </>
+                                )}
+                              {calculation.breakdown.area_covered &&
+                                calculation.breakdown.area_covered > 0 && (
+                                  <Text fontSize="xs" color="orange.600" pl={2}>
+                                    • Area covered: {calculation.breakdown.area_covered}{' '}
+                                    {calculation.breakdown.area_unit || 'ha'}
+                                  </Text>
+                                )}
+                              {calculation.breakdown.equipment_hours &&
+                                calculation.breakdown.equipment_hours > 0 && (
+                                  <Text fontSize="xs" color="orange.600" pl={2}>
+                                    • Equipment hours: {calculation.breakdown.equipment_hours}h
+                                  </Text>
+                                )}
+                              <Text fontSize="xs" color="orange.600" pl={2}>
+                                • Source: EPA GHG Emission Factors Hub
+                              </Text>
+                              {calculation.breakdown.production_efficiency === 'high' && (
+                                <Text fontSize="xs" color="green.600" pl={2} fontWeight="semibold">
+                                  ⚡ High efficiency operation reduces emissions
+                                </Text>
+                              )}
+                            </VStack>
+                          )}
+
                           {/* Chemical Application Emissions */}
                           {!calculation.breakdown?.production_activity &&
                             !calculation.breakdown?.soil_activity &&
+                            !calculation.breakdown?.pest_activity &&
                             !calculation.breakdown?.water_volume_gallons && (
-                              <>
+                              <VStack spacing={1} align="stretch">
+                                {/* Active Ingredient & Emission Factor Details (2025-12-24) */}
+                                {calculation.breakdown?.active_ingredient_percentage != null && (
+                                  <>
+                                    {/* Chemical Subtype with organic/biological indicator */}
+                                    {(() => {
+                                      const subtype =
+                                        calculation.breakdown.chemical_subtype_used ||
+                                        calculation.breakdown.pesticide_subtype ||
+                                        calculation.breakdown.herbicide_subtype ||
+                                        calculation.breakdown.fungicide_subtype ||
+                                        'synthetic';
+                                      const isOrganic = subtype?.toLowerCase().includes('organic');
+                                      const isBiological = subtype?.toLowerCase().includes('biological');
+                                      const isEcoFriendly = isOrganic || isBiological;
+
+                                      return (
+                                        <>
+                                          <HStack justify="space-between" fontSize="xs">
+                                            <Text color="orange.600">Chemical Type:</Text>
+                                            <Text
+                                              color={isEcoFriendly ? 'green.600' : 'orange.800'}
+                                              fontWeight={isEcoFriendly ? 'semibold' : 'normal'}
+                                              textTransform="capitalize"
+                                            >
+                                              {subtype.replace('_', ' ')}
+                                              {isOrganic && ' 🌱'}
+                                              {isBiological && ' 🦠'}
+                                            </Text>
+                                          </HStack>
+                                          {calculation.breakdown.note && isEcoFriendly && (
+                                            <Text fontSize="xs" color="green.600" fontStyle="italic" pl={2}>
+                                              💡 {calculation.breakdown.note}
+                                            </Text>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
+                                    <HStack justify="space-between" fontSize="xs">
+                                      <Text color="orange.600">Active Ingredient:</Text>
+                                      <Text color="orange.800">
+                                        {calculation.breakdown.active_ingredient_percentage}%
+                                        {calculation.breakdown.concentration_source === 'default' && (
+                                          <Text as="span" color="orange.500" fontStyle="italic">
+                                            {' '}
+                                            (default)
+                                          </Text>
+                                        )}
+                                      </Text>
+                                    </HStack>
+                                    {calculation.breakdown.active_ingredient_kg != null && (
+                                      <HStack justify="space-between" fontSize="xs">
+                                        <Text color="orange.600">Active Ingredient Amount:</Text>
+                                        <Text color="orange.800">
+                                          {calculation.breakdown.active_ingredient_kg.toFixed(3)} kg
+                                        </Text>
+                                      </HStack>
+                                    )}
+                                    {calculation.breakdown.emission_factor_kg_co2_per_kg != null && (
+                                      <HStack justify="space-between" fontSize="xs">
+                                        <Text color="orange.600">Emission Factor:</Text>
+                                        <Text color="orange.800">
+                                          {calculation.breakdown.emission_factor_kg_co2_per_kg.toFixed(
+                                            2
+                                          )}{' '}
+                                          kg CO₂e/kg
+                                        </Text>
+                                      </HStack>
+                                    )}
+                                  </>
+                                )}
+
+                                {/* Fertilizer Type Details (2025-12-24) */}
+                                {calculation.breakdown?.fertilizer_subtype && (
+                                  <>
+                                    <HStack justify="space-between" fontSize="xs">
+                                      <Text color="orange.600">Fertilizer Type:</Text>
+                                      <Text
+                                        color={
+                                          calculation.breakdown.fertilizer_subtype === 'organic'
+                                            ? 'green.600'
+                                            : 'orange.800'
+                                        }
+                                        fontWeight={
+                                          calculation.breakdown.fertilizer_subtype === 'organic'
+                                            ? 'semibold'
+                                            : 'normal'
+                                        }
+                                        textTransform="capitalize"
+                                      >
+                                        {calculation.breakdown.fertilizer_subtype === 'slow_release'
+                                          ? 'Slow Release'
+                                          : calculation.breakdown.fertilizer_subtype}
+                                        {calculation.breakdown.fertilizer_subtype === 'organic' && ' 🌱'}
+                                      </Text>
+                                    </HStack>
+                                    {calculation.breakdown.emission_factor_kg_co2_per_kg != null && (
+                                      <HStack justify="space-between" fontSize="xs">
+                                        <Text color="orange.600">Emission Factor:</Text>
+                                        <Text color="orange.800">
+                                          {calculation.breakdown.emission_factor_kg_co2_per_kg.toFixed(2)} kg
+                                          CO₂e/kg
+                                        </Text>
+                                      </HStack>
+                                    )}
+                                    {calculation.breakdown.note && (
+                                      <Text fontSize="xs" color="green.600" fontStyle="italic" pl={2}>
+                                        💡 {calculation.breakdown.note}
+                                      </Text>
+                                    )}
+                                  </>
+                                )}
+
                                 {calculation.breakdown?.manufacturing_emissions_kg_co2e && (
                                   <HStack justify="space-between" fontSize="xs">
                                     <Text color="orange.600">Manufacturing:</Text>
@@ -786,17 +1124,34 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   </HStack>
                                 )}
                                 {calculation.breakdown?.application_emissions_kg_co2e && (
-                                  <HStack justify="space-between" fontSize="xs">
-                                    <Text color="orange.600">Application Equipment:</Text>
-                                    <Text color="orange.800">
-                                      {calculation.breakdown.application_emissions_kg_co2e.toFixed(
-                                        1
-                                      )}{' '}
-                                      kg CO₂e
-                                    </Text>
-                                  </HStack>
+                                  <>
+                                    <HStack justify="space-between" fontSize="xs">
+                                      <Text color="orange.600">Application Equipment:</Text>
+                                      <Text color="orange.800">
+                                        {calculation.breakdown.application_emissions_kg_co2e.toFixed(
+                                          1
+                                        )}{' '}
+                                        kg CO₂e
+                                      </Text>
+                                    </HStack>
+                                    {/* Show calculation formula when fuel data is available */}
+                                    {calculation.breakdown.application_fuel_gallons &&
+                                      calculation.breakdown.application_fuel_gallons > 0 && (
+                                        <Text fontSize="xs" color="orange.600" pl={2}>
+                                          •{' '}
+                                          {calculation.breakdown.application_fuel_gallons.toFixed(
+                                            1
+                                          )}{' '}
+                                          gal ×{' '}
+                                          {calculation.breakdown.epa_diesel_factor_kg_co2_per_gallon?.toFixed(
+                                            2
+                                          ) || '10.21'}{' '}
+                                          kg CO₂e/gal (EPA factor)
+                                        </Text>
+                                      )}
+                                  </>
                                 )}
-                              </>
+                              </VStack>
                             )}
                         </Box>
 

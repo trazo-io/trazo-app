@@ -11,7 +11,7 @@ import {
   TagLabel,
   useBreakpointValue,
   Divider,
-  Tooltip,
+  Tooltip
 } from '@chakra-ui/react';
 import { FaInfoCircle } from 'react-icons/fa';
 
@@ -45,30 +45,25 @@ const ProfileDataGrid: React.FC<ProfileDataGridProps> = ({
   columnsTablet = 2,
   spacing = 4,
   showDividers = false,
-  compact = false,
+  compact = false
 }) => {
   const gridColumns = useBreakpointValue({
     base: columnsMobile,
     md: columnsTablet,
-    lg: columns,
+    lg: columns
   });
 
   const renderValue = (item: DataItem) => {
     const baseProps = {
       color: item.color || 'gray.700',
       fontWeight: item.bold ? 'semibold' : 'normal',
-      fontSize: compact ? 'sm' : 'base',
+      fontSize: compact ? 'sm' : 'base'
     };
 
     switch (item.type) {
       case 'badge':
         return (
-          <Badge
-            colorScheme={item.badgeColorScheme || 'gray'}
-            variant="solid"
-            px={3}
-            py={1}
-          >
+          <Badge colorScheme={item.badgeColorScheme || 'gray'} variant="solid" px={3} py={1}>
             {String(item.value)}
           </Badge>
         );
@@ -122,9 +117,8 @@ const ProfileDataGrid: React.FC<ProfileDataGridProps> = ({
         );
 
       case 'date':
-        const dateValue = item.value instanceof Date
-          ? item.value.toLocaleDateString()
-          : String(item.value);
+        const dateValue =
+          item.value instanceof Date ? item.value.toLocaleDateString() : String(item.value);
         return <Text {...baseProps}>{dateValue}</Text>;
 
       case 'number':
@@ -159,9 +153,7 @@ const ProfileDataGrid: React.FC<ProfileDataGridProps> = ({
             align="flex-start"
             spacing={compact ? 1 : 2}
             pb={showDividers && idx !== data.length - 1 ? spacing : 0}
-            borderBottom={
-              showDividers && idx !== data.length - 1 ? '1px' : 'none'
-            }
+            borderBottom={showDividers && idx !== data.length - 1 ? '1px' : 'none'}
             borderColor="gray.200"
           >
             {/* Label */}

@@ -9,7 +9,15 @@ import {
   useColorModeValue,
   Flex
 } from '@chakra-ui/react';
-import { FaBoxes, FaClipboardCheck, FaTractor, FaLeaf, FaBarcode, FaUserTie, FaSeedling } from 'react-icons/fa';
+import {
+  FaBoxes,
+  FaClipboardCheck,
+  FaTractor,
+  FaLeaf,
+  FaBarcode,
+  FaUserTie,
+  FaSeedling
+} from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -54,7 +62,14 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
     !harvestDetails.production_method?.toLowerCase().includes('conventional');
 
   // Don't render if no meaningful data
-  if (!hasAmount && !hasLot && !hasQuality && !hasMethod && !hasFarmerNotes && !hasProductionMethod) {
+  if (
+    !hasAmount &&
+    !hasLot &&
+    !hasQuality &&
+    !hasMethod &&
+    !hasFarmerNotes &&
+    !hasProductionMethod
+  ) {
     return null;
   }
 
@@ -64,14 +79,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
         <VStack spacing={4} align="stretch">
           {/* Header */}
           <HStack spacing={3}>
-            <Flex
-              w={10}
-              h={10}
-              borderRadius="lg"
-              bg={accentBg}
-              align="center"
-              justify="center"
-            >
+            <Flex w={10} h={10} borderRadius="lg" bg={accentBg} align="center" justify="center">
               <Icon as={FaBoxes} color="green.500" boxSize={5} />
             </Flex>
             <VStack align="start" spacing={0}>
@@ -95,7 +103,11 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
             >
               <HStack spacing={3} justify="center">
                 <Icon as={FaSeedling} color="green.500" boxSize={5} />
-                <Text fontWeight="bold" fontSize="md" color={useColorModeValue('green.700', 'green.200')}>
+                <Text
+                  fontWeight="bold"
+                  fontSize="md"
+                  color={useColorModeValue('green.700', 'green.200')}
+                >
                   {harvestDetails.production_method}
                 </Text>
               </HStack>
@@ -207,7 +219,11 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
                   >
                     {intl.formatMessage({ id: 'app.farmerNotes' })}
                   </Text>
-                  <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.200')} lineHeight="1.5">
+                  <Text
+                    fontSize="sm"
+                    color={useColorModeValue('gray.700', 'gray.200')}
+                    lineHeight="1.5"
+                  >
                     {harvestDetails.farmer_notes}
                   </Text>
                 </VStack>

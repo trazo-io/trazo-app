@@ -16,7 +16,7 @@ const ProfileImageGallery: React.FC<ProfileImageGalleryProps> = ({
   title = 'Media',
   emptyMessage = 'No images available',
   maxHeight = '400px',
-  onImageClick,
+  onImageClick
 }) => {
   if (!images || images.length === 0) {
     return (
@@ -43,17 +43,11 @@ const ProfileImageGallery: React.FC<ProfileImageGalleryProps> = ({
           {title}
         </Text>
       )}
-      <Box
-        borderRadius="lg"
-        overflow="hidden"
-        border="1px"
-        borderColor="gray.200"
-        maxH={maxHeight}
-      >
+      <Box borderRadius="lg" overflow="hidden" border="1px" borderColor="gray.200" maxH={maxHeight}>
         <StandardImageGallery
           images={images.map((img) => ({
             url: img.url,
-            alt: img.caption || 'Gallery image',
+            alt: img.caption || 'Gallery image'
           }))}
         />
       </Box>

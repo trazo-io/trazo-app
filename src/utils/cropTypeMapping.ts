@@ -103,14 +103,7 @@ export const CROP_TYPE_MAPPINGS: CropTypeMapping[] = [
   {
     slug: 'cotton',
     primaryName: 'Cotton',
-    aliases: [
-      'cotton',
-      'algodón',
-      'algodon',
-      'upland cotton',
-      'pima cotton',
-      'cotton plant'
-    ],
+    aliases: ['cotton', 'algodón', 'algodon', 'upland cotton', 'pima cotton', 'cotton plant'],
     category: 'fiber_crops',
     keywords: ['cotton', 'algodon', 'fiber']
   },
@@ -197,14 +190,7 @@ export const CROP_TYPE_MAPPINGS: CropTypeMapping[] = [
   {
     slug: 'carrots',
     primaryName: 'Carrots',
-    aliases: [
-      'carrot',
-      'carrots',
-      'zanahoria',
-      'zanahorias',
-      'baby carrots',
-      'daucus carota'
-    ],
+    aliases: ['carrot', 'carrots', 'zanahoria', 'zanahorias', 'baby carrots', 'daucus carota'],
     category: 'vegetables',
     keywords: ['carrot', 'zanahoria', 'root']
   },
@@ -263,15 +249,7 @@ export const CROP_TYPE_MAPPINGS: CropTypeMapping[] = [
   {
     slug: 'strawberries',
     primaryName: 'Strawberries',
-    aliases: [
-      'strawberry',
-      'strawberries',
-      'fresa',
-      'fresas',
-      'frutilla',
-      'frutillas',
-      'fragaria'
-    ],
+    aliases: ['strawberry', 'strawberries', 'fresa', 'fresas', 'frutilla', 'frutillas', 'fragaria'],
     category: 'berries',
     keywords: ['strawberry', 'fresa', 'frutilla', 'berry']
   },
@@ -398,9 +376,7 @@ export function findCropTypeId(
   const normalizedInput = normalizeCropName(cropName);
 
   // 1. Try exact name match (case-insensitive)
-  const exactMatch = cropTypes.find(
-    (ct) => normalizeCropName(ct.name) === normalizedInput
-  );
+  const exactMatch = cropTypes.find((ct) => normalizeCropName(ct.name) === normalizedInput);
   if (exactMatch) {
     return exactMatch.id;
   }

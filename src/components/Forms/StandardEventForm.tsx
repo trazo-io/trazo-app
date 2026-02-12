@@ -1173,13 +1173,21 @@ const DynamicEventFields: React.FC<{
 
         {subtype === 'fuel_consumption' && (
           <>
-            <StandardField label={formData.fuelType === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Amount (Gallons)'}>
+            <StandardField
+              label={
+                formData.fuelType === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Amount (Gallons)'
+              }
+            >
               <NumberInput
                 value={formData.fuelAmount || ''}
                 onChange={(value) => setFormData((prev) => ({ ...prev, fuelAmount: value }))}
                 min={0}
               >
-                <NumberInputField placeholder={formData.fuelType === 'electric' ? 'e.g., 50 kWh' : 'e.g., 25 gallons'} />
+                <NumberInputField
+                  placeholder={
+                    formData.fuelType === 'electric' ? 'e.g., 50 kWh' : 'e.g., 25 gallons'
+                  }
+                />
                 <NumberInputStepper>
                   <NumberIncrementStepper />
                   <NumberDecrementStepper />
@@ -1187,7 +1195,10 @@ const DynamicEventFields: React.FC<{
               </NumberInput>
             </StandardField>
 
-            <StandardField label="Fuel/Energy Type" helpText="Select the type of fuel or energy source used">
+            <StandardField
+              label="Fuel/Energy Type"
+              helpText="Select the type of fuel or energy source used"
+            >
               <StandardSelect
                 value={formData.fuelType || ''}
                 onChange={(e: ChangeEvent<HTMLSelectElement>) =>
@@ -1206,7 +1217,11 @@ const DynamicEventFields: React.FC<{
               <Box p={3} bg="blue.50" borderRadius="lg" gridColumn={{ base: '1 / -1' }}>
                 <Text fontSize="sm" color="blue.700">
                   <Icon as={FaCheck} mr={1} />
-                  <Text as="span" fontWeight="semibold">Electric Equipment:</Text> Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions.
+                  <Text as="span" fontWeight="semibold">
+                    Electric Equipment:
+                  </Text>{' '}
+                  Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg
+                  CO₂/kWh. Solar/wind powered equipment has zero emissions.
                 </Text>
               </Box>
             )}

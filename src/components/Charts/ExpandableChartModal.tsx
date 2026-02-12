@@ -65,17 +65,8 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="4xl" isCentered>
       <ModalOverlay bg="blackAlpha.500" />
-      <ModalContent
-        bg={bgColor}
-        borderRadius="2xl"
-        boxShadow="xl"
-        mx={4}
-      >
-        <ModalHeader
-          borderBottomWidth="1px"
-          borderColor={borderColor}
-          pb={4}
-        >
+      <ModalContent bg={bgColor} borderRadius="2xl" boxShadow="xl" mx={4}>
+        <ModalHeader borderBottomWidth="1px" borderColor={borderColor} pb={4}>
           <Flex justify="space-between" align="center" w="100%" pr={8}>
             <Text fontSize="lg" fontWeight="semibold" color={textColor}>
               {title}

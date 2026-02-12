@@ -36,7 +36,12 @@ export interface StandardizedEventBase {
   usda_verified?: boolean;
 
   // MVP Photo Verification: Tiered verification levels
-  verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+  verification_level?:
+    | 'self_reported'
+    | 'photo_documented'
+    | 'photo_verified'
+    | 'data_verified'
+    | 'certified';
   photo_verified_count?: number;
 
   // Carbon calculation

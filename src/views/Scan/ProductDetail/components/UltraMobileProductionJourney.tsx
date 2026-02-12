@@ -222,7 +222,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     // 🚨 CRITICAL: Check event_type field FIRST - it's the source of truth from backend
     // If event_type_field is explicitly set (0, 1, 2, etc.), use it directly without checking description
     const eventTypeField = (event as any)?.event_type;
-    if (eventTypeField !== undefined && eventTypeField !== null && typeof eventTypeField === 'number') {
+    if (
+      eventTypeField !== undefined &&
+      eventTypeField !== null &&
+      typeof eventTypeField === 'number'
+    ) {
       // Use event_type_field as the primary classifier
       switch (eventTypeField) {
         case 0: // Weather
@@ -334,10 +338,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       description.includes('bee') ||
       description.includes('irrigation') ||
       description.includes('pruning') ||
-      description.includes('transplant') ||  // ✅ FIXED: Added keyword detection
-      description.includes('cultivation') ||  // ✅ FIXED: Added keyword detection
-      description.includes('thinning') ||  // ✅ FIXED: Added keyword detection
-      description.includes('equipment maintenance')  // ✅ FIXED: Added keyword detection for EM
+      description.includes('transplant') || // ✅ FIXED: Added keyword detection
+      description.includes('cultivation') || // ✅ FIXED: Added keyword detection
+      description.includes('thinning') || // ✅ FIXED: Added keyword detection
+      description.includes('equipment maintenance') // ✅ FIXED: Added keyword detection for EM
     ) {
       return {
         icon: MdAgriculture,
@@ -478,7 +482,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
   console.log('🔍 CATEGORY GENERATION DEBUG:', {
     totalEvents: events.length,
-    uniqueCategories: [...new Set(eventCategories.map(ec => ec.category))],
+    uniqueCategories: [...new Set(eventCategories.map((ec) => ec.category))],
     eventCategories: eventCategories
   });
 
@@ -495,10 +499,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   console.log('🚨 UNIQUE CATEGORIES FOUND:', Object.keys(categoriesFound));
 
   // Find which event is Weather (if any)
-  const weatherEvents = eventCategories.filter(ec => ec.category === 'Weather');
+  const weatherEvents = eventCategories.filter((ec) => ec.category === 'Weather');
   if (weatherEvents.length > 0) {
     console.log('⚠️ WEATHER EVENTS DETECTED:');
-    weatherEvents.forEach(we => {
+    weatherEvents.forEach((we) => {
       console.log({
         eventId: we.eventId,
         type: we.eventType,
@@ -508,8 +512,17 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
       // Check which weather keyword matched
       const desc = (we.eventDescription || '').toLowerCase();
-      const weatherKeywords = ['weather', 'drought', 'frost', 'climate', 'hail', 'wind', 'humidity', 'temperature'];
-      const matchedKeywords = weatherKeywords.filter(kw => desc.includes(kw));
+      const weatherKeywords = [
+        'weather',
+        'drought',
+        'frost',
+        'climate',
+        'hail',
+        'wind',
+        'humidity',
+        'temperature'
+      ];
+      const matchedKeywords = weatherKeywords.filter((kw) => desc.includes(kw));
       console.log('   → Matched weather keywords:', matchedKeywords);
     });
   }
@@ -851,7 +864,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 event.extra_data?.data_integrity_score || event.data_integrity_score || 0,
               blockchain_network: event.blockchain_network || 'polygon_amoy',
               // USDA verification from carbon_calculation in extra_data
-              usda_verified: event.extra_data?.carbon_calculation?.usda_compliance || event.usda_verified || false,
+              usda_verified:
+                event.extra_data?.carbon_calculation?.usda_compliance ||
+                event.usda_verified ||
+                false,
               // Carbon impact
               carbon_impact: event.extra_data?.carbon_calculation?.co2e || event.carbon_data?.co2e,
               // Keep certification separate from blockchain verification

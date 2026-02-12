@@ -756,7 +756,8 @@ export function getConsumerEventDescription(
       CU: {
         title: 'Cultivation',
         icon: '🚜',
-        description: 'Mechanical cultivation for weed control and soil aeration to optimize crop growth'
+        description:
+          'Mechanical cultivation for weed control and soil aeration to optimize crop growth'
       },
       // CRITICAL FIX (2025-12-11): Added TH (Thinning) - Sprint 2 production subtype
       TH: {
@@ -774,7 +775,8 @@ export function getConsumerEventDescription(
       EQ: {
         title: 'Equipment Operations (Legacy)',
         icon: '🔧',
-        description: 'Farm equipment used and maintained for optimal performance (Legacy: use EM for new events)'
+        description:
+          'Farm equipment used and maintained for optimal performance (Legacy: use EM for new events)'
       },
       equipment: {
         title: 'Equipment Operations',
@@ -932,12 +934,12 @@ export function getConsumerEventDescription(
       const seedInfo = yieldIsFormatted
         ? event.yield_quantity // Already formatted like "500 seeds"
         : yieldRaw
-          ? `${
-              Number(yieldRaw) >= 1000
-                ? `${(Number(yieldRaw) / 1000).toFixed(1)} million`
-                : Number(yieldRaw).toLocaleString()
-            } ${event.yield_unit || 'seeds'}`
-          : 'seeds';
+        ? `${
+            Number(yieldRaw) >= 1000
+              ? `${(Number(yieldRaw) / 1000).toFixed(1)} million`
+              : Number(yieldRaw).toLocaleString()
+          } ${event.yield_unit || 'seeds'}`
+        : 'seeds';
 
       // 🔧 FIX: Use raw values when available to avoid unit duplication
       const areaRaw = (event as any).area_covered_raw || event.area_covered;
@@ -946,8 +948,8 @@ export function getConsumerEventDescription(
       const areaInfo = areaIsFormatted
         ? `across ${event.area_covered}` // Already formatted like "2.5 hectares"
         : areaRaw
-          ? `across ${areaRaw} ${event.area_unit || 'hectares'}`
-          : '';
+        ? `across ${areaRaw} ${event.area_unit || 'hectares'}`
+        : '';
 
       consumerImpact = `${seedInfo} planted ${areaInfo} ensures optimal plant spacing for healthy growth and maximum yield quality.`;
       sustainabilityBenefit = `Precision planting with documented seed rates optimizes resource use while providing transparency into farming practices.`;
@@ -959,16 +961,16 @@ export function getConsumerEventDescription(
       const yieldInfo = yieldIsFormatted
         ? event.yield_quantity // Already formatted like "500 tons"
         : event.yield_quantity
-          ? `${event.yield_quantity} ${event.yield_unit || 'tons'}`
-          : 'crops';
+        ? `${event.yield_quantity} ${event.yield_unit || 'tons'}`
+        : 'crops';
 
       const areaIsFormatted =
         typeof event.area_covered === 'string' && /\d+\s+\w+/.test(event.area_covered);
       const areaInfo = areaIsFormatted
         ? ` from ${event.area_covered}` // Already formatted
         : event.area_covered
-          ? ` from ${event.area_covered} ${event.area_unit || 'hectares'}`
-          : '';
+        ? ` from ${event.area_covered} ${event.area_unit || 'hectares'}`
+        : '';
 
       consumerImpact = `${yieldInfo} harvested${areaInfo} at peak ripeness ensures maximum nutritional value and freshness.`;
       sustainabilityBenefit = `Documented harvest timing and yield tracking demonstrates responsible farming and quality control practices.`;
@@ -980,16 +982,16 @@ export function getConsumerEventDescription(
       const areaInfo = areaIsFormatted
         ? event.area_covered // Already formatted
         : event.area_covered
-          ? `${event.area_covered} ${event.area_unit || 'hectares'}`
-          : 'crops';
+        ? `${event.area_covered} ${event.area_unit || 'hectares'}`
+        : 'crops';
 
       const fuelIsFormatted =
         typeof event.fuel_consumed === 'string' && /\d+\s+\w+/.test(event.fuel_consumed);
       const fuelInfo = fuelIsFormatted
         ? ` using ${event.fuel_consumed} of fuel` // Already formatted
         : event.fuel_consumed
-          ? ` using ${event.fuel_consumed} ${event.fuel_unit || 'L'} of fuel`
-          : '';
+        ? ` using ${event.fuel_consumed} ${event.fuel_unit || 'L'} of fuel`
+        : '';
 
       consumerImpact = `Targeted irrigation across ${areaInfo} provides optimal water levels for healthy plant growth${
         fuelInfo ? ' with documented resource usage' : ''
@@ -1003,16 +1005,16 @@ export function getConsumerEventDescription(
       const areaInfo = areaIsFormatted
         ? `across ${event.area_covered}` // Already formatted
         : event.area_covered
-          ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
-          : '';
+        ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
+        : '';
 
       const hoursIsFormatted =
         typeof event.equipment_hours === 'string' && /\d+\s+\w+/.test(event.equipment_hours);
       const hoursInfo = hoursIsFormatted
         ? ` over ${event.equipment_hours}` // Already formatted
         : event.equipment_hours
-          ? ` over ${event.equipment_hours} hours`
-          : '';
+        ? ` over ${event.equipment_hours} hours`
+        : '';
 
       consumerImpact = `Strategic pruning ${areaInfo}${hoursInfo} improves plant health, air circulation, and fruit quality for better produce.`;
       sustainabilityBenefit = `Documented pruning practices reduce disease pressure and optimize plant productivity through transparency.`;
@@ -1024,18 +1026,20 @@ export function getConsumerEventDescription(
       const areaInfo = areaIsFormatted
         ? `across ${event.area_covered}` // Already formatted
         : event.area_covered
-          ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
-          : '';
+        ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
+        : '';
 
       const fuelIsFormatted =
         typeof event.fuel_consumed === 'string' && /\d+\s+\w+/.test(event.fuel_consumed);
       const fuelInfo = fuelIsFormatted
         ? ` using ${event.fuel_consumed} of fuel` // Already formatted
         : event.fuel_consumed
-          ? ` using ${event.fuel_consumed} ${event.fuel_unit || 'L'} of fuel`
-          : '';
+        ? ` using ${event.fuel_consumed} ${event.fuel_unit || 'L'} of fuel`
+        : '';
 
-      consumerImpact = `Mechanical cultivation ${areaInfo} controls weeds naturally and improves soil aeration for healthier plant roots${fuelInfo ? ' with documented resource usage' : ''}.`;
+      consumerImpact = `Mechanical cultivation ${areaInfo} controls weeds naturally and improves soil aeration for healthier plant roots${
+        fuelInfo ? ' with documented resource usage' : ''
+      }.`;
       sustainabilityBenefit = `Documented cultivation practices demonstrate sustainable weed management and soil health maintenance.`;
     } else if (eventType.includes('thinning') || eventType === 'TH') {
       // CRITICAL FIX (2025-12-11): Added thinning consumer impact
@@ -1045,16 +1049,16 @@ export function getConsumerEventDescription(
       const areaInfo = areaIsFormatted
         ? `across ${event.area_covered}` // Already formatted
         : event.area_covered
-          ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
-          : '';
+        ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
+        : '';
 
       const hoursIsFormatted =
         typeof event.equipment_hours === 'string' && /\d+\s+\w+/.test(event.equipment_hours);
       const hoursInfo = hoursIsFormatted
         ? ` over ${event.equipment_hours}` // Already formatted
         : event.equipment_hours
-          ? ` over ${event.equipment_hours} hours`
-          : '';
+        ? ` over ${event.equipment_hours} hours`
+        : '';
 
       consumerImpact = `Fruit thinning ${areaInfo}${hoursInfo} improves individual fruit size, quality, and sugar content by reducing competition for nutrients.`;
       sustainabilityBenefit = `Documented thinning practices optimize resource allocation and demonstrate commitment to premium quality produce.`;
@@ -1408,10 +1412,23 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'Precision nutrient management reduces waste and environmental impact while ensuring healthy crops.';
     } else if (chemicalType === 'pesticide application') {
-      // Special case for organic neem products
-      if (productName.toLowerCase().includes('neem')) {
+      // Sprint 6 Fix (2025-12-23): Check chemical_subtype FIRST before product name detection
+      // This ensures user's explicit selection takes precedence over product name inference
+      const chemicalSubtype = (event?.chemical_subtype || '').toLowerCase();
+      const isSyntheticBySubtype =
+        chemicalSubtype.includes('synthetic') || chemicalSubtype.includes('conventional');
+      const isOrganicBySubtype =
+        chemicalSubtype.includes('organic') ||
+        chemicalSubtype.includes('natural') ||
+        chemicalSubtype.includes('biological');
+
+      // Use subtype if specified, otherwise fall back to product name detection
+      const isOrganic =
+        isOrganicBySubtype || (!isSyntheticBySubtype && productName.toLowerCase().includes('neem'));
+
+      if (isOrganic) {
         consumerImpact =
-          'Organic neem oil provides natural pest protection without synthetic chemicals, supporting healthier food production.';
+          'Organic pest control provides natural protection without synthetic chemicals, supporting healthier food production.';
         sustainabilityBenefit =
           'Natural pest control reduces reliance on synthetic pesticides, promoting biodiversity and soil health.';
       } else {

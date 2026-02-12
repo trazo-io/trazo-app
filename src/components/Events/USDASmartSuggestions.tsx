@@ -306,7 +306,8 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
       suggestions.push({
         id: 'transparency-documentation',
         title: 'Transparency Documentation',
-        description: 'High USDA credibility score enables premium transparency verification for consumers',
+        description:
+          'High USDA credibility score enables premium transparency verification for consumers',
         carbonImpact: 0,
         confidenceLevel: 'high',
         usdaBased: true,

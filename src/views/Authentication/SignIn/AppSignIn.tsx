@@ -305,16 +305,14 @@ const AppSignIn: React.FC = () => {
                 'Real-Time Evidence & Monitoring',
                 'Direct Customer Connection',
                 'Premium Positioning Built In'
-              ].map(
-                (feature, index) => (
-                  <HStack key={index} spacing={3}>
-                    <Box w={2} h={2} bg="white" borderRadius="50%" />
-                    <Text fontSize="sm" fontWeight="500" opacity={0.9}>
-                      {feature}
-                    </Text>
-                  </HStack>
-                )
-              )}
+              ].map((feature, index) => (
+                <HStack key={index} spacing={3}>
+                  <Box w={2} h={2} bg="white" borderRadius="50%" />
+                  <Text fontSize="sm" fontWeight="500" opacity={0.9}>
+                    {feature}
+                  </Text>
+                </HStack>
+              ))}
             </VStack>
           </VStack>
         </Box>

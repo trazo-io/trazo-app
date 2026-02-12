@@ -503,9 +503,11 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     if (!currentPlanName) return false;
     // Handle both exact matches and partial matches (e.g., "Basic" matches "basic-monthly")
     const planLower = planName.toLowerCase();
-    return currentPlanName === planLower ||
-           currentPlanName.includes(planLower) ||
-           planLower.includes(currentPlanName.split('-')[0]);
+    return (
+      currentPlanName === planLower ||
+      currentPlanName.includes(planLower) ||
+      planLower.includes(currentPlanName.split('-')[0])
+    );
   };
 
   // Check if selecting a plan would be a downgrade (lower tier than current)
@@ -513,8 +515,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
   const isDowngrade = (targetPlanName) => {
     if (!currentPlanName) return false; // No current plan = not a downgrade
     const planOrder = ['basic', 'standard', 'corporate', 'enterprise'];
-    const currentIndex = planOrder.findIndex(p => currentPlanName.includes(p));
-    const targetIndex = planOrder.findIndex(p => targetPlanName.toLowerCase().includes(p));
+    const currentIndex = planOrder.findIndex((p) => currentPlanName.includes(p));
+    const targetIndex = planOrder.findIndex((p) => targetPlanName.toLowerCase().includes(p));
     // If target plan is lower tier than current, it's a downgrade
     return currentIndex !== -1 && targetIndex !== -1 && targetIndex < currentIndex;
   };
@@ -522,9 +524,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
   return (
     <StandardPage
       title={
-        newCompanyFlow || isNewCompany
-          ? t('app.companyCreatedSuccessTitle')
-          : t('app.selectPlan')
+        newCompanyFlow || isNewCompany ? t('app.companyCreatedSuccessTitle') : t('app.selectPlan')
       }
       description={
         newCompanyFlow || isNewCompany
@@ -582,7 +582,14 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
             <Text fontSize="sm" color="gray.600" textAlign="center">
               {t('app.chooseBillingCycle')}
             </Text>
-            <HStack spacing={1} bg="gray.100" p={1} borderRadius="lg" role="group" aria-label={t('app.chooseBillingCycle')}>
+            <HStack
+              spacing={1}
+              bg="gray.100"
+              p={1}
+              borderRadius="lg"
+              role="group"
+              aria-label={t('app.chooseBillingCycle')}
+            >
               <StandardButton
                 variant={activeInterval === 'monthly' ? 'primary' : 'ghost'}
                 size="sm"
@@ -657,7 +664,9 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                   >
                     <StandardCard
                       variant={isCurrent ? 'elevated' : isRecommended ? 'elevated' : 'outline'}
-                      borderColor={isCurrent ? 'blue.400' : isRecommended ? `${planColor}.400` : 'gray.100'}
+                      borderColor={
+                        isCurrent ? 'blue.400' : isRecommended ? `${planColor}.400` : 'gray.100'
+                      }
                       borderWidth={isCurrent ? '2px' : isRecommended ? '2px' : '1px'}
                       bg={isCurrent ? 'blue.50' : 'white'}
                       position="relative"
@@ -758,7 +767,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               </Text>
                               <VStack spacing={0} align="start">
                                 <Text color="gray.500" fontSize="sm" fontWeight="medium">
-                                  /{activeInterval === 'monthly' ? t('app.perMonthShort') : t('app.perYearShort')}
+                                  /
+                                  {activeInterval === 'monthly'
+                                    ? t('app.perMonthShort')
+                                    : t('app.perYearShort')}
                                 </Text>
                                 {activeInterval === 'yearly' && (
                                   <Text fontSize="xs" color="green.600" fontWeight="medium">
@@ -807,8 +819,14 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                                 {plan.features.max_establishments === -1
                                   ? t('app.unlimitedEstablishmentsFeature')
                                   : plan.features.max_establishments === 1
-                                  ? intl.formatMessage({ id: 'app.establishmentCount' }, { count: 1 })
-                                  : intl.formatMessage({ id: 'app.establishmentsCount' }, { count: plan.features.max_establishments })}
+                                  ? intl.formatMessage(
+                                      { id: 'app.establishmentCount' },
+                                      { count: 1 }
+                                    )
+                                  : intl.formatMessage(
+                                      { id: 'app.establishmentsCount' },
+                                      { count: plan.features.max_establishments }
+                                    )}
                               </Text>
                             </HStack>
                           )}
@@ -822,13 +840,22 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                                   ? plan.features.max_parcels_per_establishment === -1
                                     ? t('app.unlimitedParcelsPerEstablishment')
                                     : plan.features.max_parcels_per_establishment === 1
-                                    ? intl.formatMessage({ id: 'app.parcelPerEstablishment' }, { count: 1 })
-                                    : intl.formatMessage({ id: 'app.parcelsPerEstablishment' }, { count: plan.features.max_parcels_per_establishment })
+                                    ? intl.formatMessage(
+                                        { id: 'app.parcelPerEstablishment' },
+                                        { count: 1 }
+                                      )
+                                    : intl.formatMessage(
+                                        { id: 'app.parcelsPerEstablishment' },
+                                        { count: plan.features.max_parcels_per_establishment }
+                                      )
                                   : plan.features.max_parcels === -1
                                   ? t('app.unlimitedParcelsFeature')
                                   : plan.features.max_parcels === 1
                                   ? intl.formatMessage({ id: 'app.parcelCount' }, { count: 1 })
-                                  : intl.formatMessage({ id: 'app.parcelsCount' }, { count: plan.features.max_parcels })}
+                                  : intl.formatMessage(
+                                      { id: 'app.parcelsCount' },
+                                      { count: plan.features.max_parcels }
+                                    )}
                               </Text>
                             </HStack>
                           )}
@@ -840,8 +867,14 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                                 {plan.features.max_productions_per_year === -1
                                   ? t('app.unlimitedProductionsPerYear')
                                   : plan.features.max_productions_per_year === 1
-                                  ? intl.formatMessage({ id: 'app.productionPerYear' }, { count: 1 })
-                                  : intl.formatMessage({ id: 'app.productionsPerYear' }, { count: plan.features.max_productions_per_year })}
+                                  ? intl.formatMessage(
+                                      { id: 'app.productionPerYear' },
+                                      { count: 1 }
+                                    )
+                                  : intl.formatMessage(
+                                      { id: 'app.productionsPerYear' },
+                                      { count: plan.features.max_productions_per_year }
+                                    )}
                               </Text>
                             </HStack>
                           )}
@@ -852,7 +885,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
                                 {plan.features.monthly_scan_limit === -1
                                   ? t('app.unlimitedQrScans')
-                                  : intl.formatMessage({ id: 'app.qrScansPerMonth' }, { count: plan.features.monthly_scan_limit.toLocaleString() })}
+                                  : intl.formatMessage(
+                                      { id: 'app.qrScansPerMonth' },
+                                      { count: plan.features.monthly_scan_limit.toLocaleString() }
+                                    )}
                               </Text>
                             </HStack>
                           )}
@@ -863,7 +899,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
                                 {plan.features.storage_limit_gb === -1
                                   ? t('app.unlimitedStorageFeature')
-                                  : intl.formatMessage({ id: 'app.storageGbFeature' }, { size: plan.features.storage_limit_gb })}
+                                  : intl.formatMessage(
+                                      { id: 'app.storageGbFeature' },
+                                      { size: plan.features.storage_limit_gb }
+                                    )}
                               </Text>
                             </HStack>
                           )}
@@ -872,7 +911,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                             <HStack spacing={2} align="center">
                               <Icon as={FaHeadset} color={`${planColor}.500`} boxSize={4} />
                               <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                {intl.formatMessage({ id: 'app.supportInHours' }, { hours: plan.features.support_response_time })}
+                                {intl.formatMessage(
+                                  { id: 'app.supportInHours' },
+                                  { hours: plan.features.support_response_time }
+                                )}
                               </Text>
                             </HStack>
                           )}
@@ -957,19 +999,25 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               fontWeight="bold"
                               colorScheme={isCurrent ? 'blue' : planColor}
                               isDisabled={isCurrent}
-                              aria-label={isCurrent
-                                ? `${t('app.currentPlanButton')}: ${plan.name}`
-                                : `${t('app.selectPlanButton')}: ${plan.name}`}
-                              _hover={isCurrent ? {} : {
-                                transform: 'translateY(-1px)',
-                                boxShadow: 'md'
-                              }}
+                              aria-label={
+                                isCurrent
+                                  ? `${t('app.currentPlanButton')}: ${plan.name}`
+                                  : `${t('app.selectPlanButton')}: ${plan.name}`
+                              }
+                              _hover={
+                                isCurrent
+                                  ? {}
+                                  : {
+                                      transform: 'translateY(-1px)',
+                                      boxShadow: 'md'
+                                    }
+                              }
                             >
                               {isCurrent
                                 ? t('app.currentPlanButton')
                                 : newCompanyFlow || isNewCompany
-                                  ? t('app.startFreeTrialButton')
-                                  : t('app.selectPlanButton')}
+                                ? t('app.startFreeTrialButton')
+                                : t('app.selectPlanButton')}
                             </StandardButton>
                           )}
 
@@ -977,7 +1025,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                             <HStack spacing={1} justify="center">
                               <Icon as={FaGift} color="green.500" boxSize={3} />
                               <Text fontSize="xs" color="gray.500" textAlign="center">
-                                {intl.formatMessage({ id: 'app.freeTrialIncluded' }, { days: plan.features.trial_with_card_days })}
+                                {intl.formatMessage(
+                                  { id: 'app.freeTrialIncluded' },
+                                  { days: plan.features.trial_with_card_days }
+                                )}
                               </Text>
                             </HStack>
                           )}
@@ -1142,9 +1193,24 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
         >
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} maxW="1200px" mx="auto">
             {[
-              { icon: FaLeaf, color: 'green', titleId: 'app.agriculturalFocus', descId: 'app.agriculturalFocusDescription' },
-              { icon: FaQrcode, color: 'blue', titleId: 'app.totalTraceability', descId: 'app.totalTraceabilityDescription' },
-              { icon: FaHandshake, color: 'purple', titleId: 'app.consumerTrust', descId: 'app.consumerTrustDescription' }
+              {
+                icon: FaLeaf,
+                color: 'green',
+                titleId: 'app.agriculturalFocus',
+                descId: 'app.agriculturalFocusDescription'
+              },
+              {
+                icon: FaQrcode,
+                color: 'blue',
+                titleId: 'app.totalTraceability',
+                descId: 'app.totalTraceabilityDescription'
+              },
+              {
+                icon: FaHandshake,
+                color: 'purple',
+                titleId: 'app.consumerTrust',
+                descId: 'app.consumerTrustDescription'
+              }
             ].map((benefit, index) => (
               <motion.div
                 key={index}

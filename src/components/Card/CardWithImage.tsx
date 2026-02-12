@@ -155,11 +155,7 @@ const CardWithImage = ({
         </Flex>
         <Box position="relative" width="55%" height="100%" overflow="hidden" borderRadius="15px">
           {!image ? (
-            <EmptyImageState
-              variant="medium"
-              height="100%"
-              borderRadius="15px"
-            />
+            <EmptyImageState variant="medium" height="100%" borderRadius="15px" />
           ) : (
             <>
               {!imageLoaded && <Shimmer />}

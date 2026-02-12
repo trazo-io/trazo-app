@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  VStack,
-  HStack,
-  Box,
-  Text,
-  Icon,
-  Badge,
-  useToast,
-  Input,
-  Select
-} from '@chakra-ui/react';
+import { VStack, HStack, Box, Text, Icon, Badge, useToast, Input, Select } from '@chakra-ui/react';
 import {
   StandardPage,
   StandardField,
@@ -370,7 +360,10 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                         <HStack spacing={4} align="flex-start">
                           <Box flex={2}>
                             <StandardField
-                              label={intl.formatMessage({ id: 'app.productionAmount' }) || 'Production Amount'}
+                              label={
+                                intl.formatMessage({ id: 'app.productionAmount' }) ||
+                                'Production Amount'
+                              }
                               error={errors.production_amount?.message}
                               helpText="Total volume or quantity harvested"
                               required
@@ -384,7 +377,10 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                                 borderRadius="lg"
                                 borderColor="gray.300"
                                 _hover={{ borderColor: 'green.400' }}
-                                _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                                _focus={{
+                                  borderColor: 'green.500',
+                                  boxShadow: '0 0 0 1px #38A169'
+                                }}
                                 size="lg"
                               />
                             </StandardField>
@@ -404,7 +400,10 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                                     borderRadius="lg"
                                     borderColor="gray.300"
                                     _hover={{ borderColor: 'green.400' }}
-                                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                                    _focus={{
+                                      borderColor: 'green.500',
+                                      boxShadow: '0 0 0 1px #38A169'
+                                    }}
                                     size="lg"
                                   >
                                     {UNIT_OPTIONS.map((option) => (
@@ -488,7 +487,10 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                                     borderRadius="lg"
                                     borderColor="gray.300"
                                     _hover={{ borderColor: 'green.400' }}
-                                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                                    _focus={{
+                                      borderColor: 'green.500',
+                                      boxShadow: '0 0 0 1px #38A169'
+                                    }}
                                     size="lg"
                                   >
                                     {QUALITY_GRADE_OPTIONS.map((option) => (
@@ -515,7 +517,10 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                                     borderRadius="lg"
                                     borderColor="gray.300"
                                     _hover={{ borderColor: 'green.400' }}
-                                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                                    _focus={{
+                                      borderColor: 'green.500',
+                                      boxShadow: '0 0 0 1px #38A169'
+                                    }}
                                     size="lg"
                                   >
                                     {HARVEST_METHOD_OPTIONS.map((option) => (
@@ -584,7 +589,9 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                 </Text>
                 <VStack spacing={6} align="stretch">
                   <StandardField
-                    label={intl.formatMessage({ id: 'app.productionImages' }) || 'Production Images'}
+                    label={
+                      intl.formatMessage({ id: 'app.productionImages' }) || 'Production Images'
+                    }
                     helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
                   >
                     <TrazoImageUpload

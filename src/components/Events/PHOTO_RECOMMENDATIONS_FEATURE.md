@@ -8,11 +8,13 @@
 ## Problem This Solves
 
 Without photo guidance, farmers might wonder:
+
 - ❌ "What kind of photos should I upload?"
 - ❌ "Will this photo help my verification?"
 - ❌ "How do I get to the next verification tier?"
 
 With photo recommendations:
+
 - ✅ Clear examples of what photos work best
 - ✅ Guidance on achieving each verification tier
 - ✅ Practical photography tips
@@ -25,11 +27,13 @@ With photo recommendations:
 ### Files Modified
 
 **1. `/src/utils/verificationTierHelpers.ts`** (Added ~200 lines)
+
 - `PhotoRecommendation` interface
 - `getPhotoRecommendations()` - Event-type-specific recommendations
 - `getPhotoGuidanceText()` - Consumer-friendly guidance text
 
 **2. `/src/components/Events/EventPreviewModal.tsx`** (Added ~70 lines)
+
 - Imports photo recommendation functions
 - Displays blue info box with recommendations
 - Shows examples when no photos yet
@@ -39,21 +43,23 @@ With photo recommendations:
 ### New Helper Functions
 
 #### `getPhotoRecommendations(eventType)`
+
 Returns detailed recommendations for each event type:
 
 ```typescript
 interface PhotoRecommendation {
-  eventType: string;           // "Chemical Application"
-  examples: string[];          // 5+ photo examples
+  eventType: string; // "Chemical Application"
+  examples: string[]; // 5+ photo examples
   toAchieveTier: {
-    photo_documented: string;  // What 1 photo should show
-    photo_verified: string;    // What 2+ photos should show
+    photo_documented: string; // What 1 photo should show
+    photo_verified: string; // What 2+ photos should show
   };
-  tips: string[];              // 4+ practical tips
+  tips: string[]; // 4+ practical tips
 }
 ```
 
 #### `getPhotoGuidanceText(eventType, photoCount)`
+
 Returns contextual guidance based on current photo count:
 
 ```
@@ -76,6 +82,7 @@ Returns contextual guidance based on current photo count:
 **Header**: 📸 What Photos to Upload for [Event Type]
 
 **Dynamic Guidance** (changes based on photos uploaded):
+
 - 0 photos: Shows examples of good photos to upload
 - 1 photo: Confirms the photo helps + suggests adding another
 - 2+ photos: Praises the documentation
@@ -91,7 +98,9 @@ Always visible - 4 practical tips for taking better verification photos
 ## Event-Type-Specific Recommendations
 
 ### 0️⃣ Weather Event
+
 **Examples to Upload**:
+
 - Frost damage on crops or plants
 - Hail impact on plants or equipment
 - Drought conditions (brown/stressed plants)
@@ -105,6 +114,7 @@ Always visible - 4 practical tips for taking better verification photos
 "2+ photos from different angles showing the weather event and its impact on the farm"
 
 **Tips**:
+
 - Include date/timestamp in photo if possible
 - Show plants or crops affected by the weather
 - Include scale reference (hand, ruler) for damage assessment
@@ -113,7 +123,9 @@ Always visible - 4 practical tips for taking better verification photos
 ---
 
 ### 1️⃣ Production Activity
+
 **Examples to Upload**:
+
 - Planting activity (seeding equipment, planted rows)
 - Growth stage documentation (crop at different heights)
 - Harvesting in progress (equipment collecting crops)
@@ -127,6 +139,7 @@ Always visible - 4 practical tips for taking better verification photos
 "2+ photos showing different stages or angles of the same production activity"
 
 **Tips**:
+
 - Show equipment in operation, not just parked
 - Include field context (rows, crop height, size reference)
 - Time-stamp photos during the activity
@@ -135,7 +148,9 @@ Always visible - 4 practical tips for taking better verification photos
 ---
 
 ### 2️⃣ Chemical Application
+
 **Examples to Upload**:
+
 - Chemical bottle/container label clearly visible
 - Chemical being mixed or prepared
 - Application equipment spraying in field
@@ -149,6 +164,7 @@ Always visible - 4 practical tips for taking better verification photos
 "2+ photos: (1) chemical bottle with label visible, (2) application equipment in use or field after application"
 
 **Tips**:
+
 - Chemical label must be clearly readable (brand, active ingredient)
 - Show container size for dosage verification
 - Photo of application equipment being used strengthens verification
@@ -157,7 +173,9 @@ Always visible - 4 practical tips for taking better verification photos
 ---
 
 ### 3️⃣ General Activity
+
 **Examples to Upload**:
+
 - Activity being performed (people, tools, equipment visible)
 - Activity location/context in farm setting
 - Results of activity (before/after if applicable)
@@ -171,6 +189,7 @@ Always visible - 4 practical tips for taking better verification photos
 "2+ photos showing the activity from different angles or at different stages of completion"
 
 **Tips**:
+
 - Activity should be clearly identifiable in photos
 - Include farm context (location, surroundings)
 - People or equipment in photo adds credibility
@@ -179,7 +198,9 @@ Always visible - 4 practical tips for taking better verification photos
 ---
 
 ### 4️⃣ Equipment Operation
+
 **Examples to Upload**:
+
 - Equipment in operation (tractor, harvester, pump running)
 - Equipment odometer/hour meter reading
 - Equipment maintenance or repair work
@@ -193,6 +214,7 @@ Always visible - 4 practical tips for taking better verification photos
 "2+ photos: (1) equipment in operation, (2) odometer/hour meter or maintenance detail"
 
 **Tips**:
+
 - Clear view of equipment type (brand, model visible)
 - Operating photo: equipment actively doing work
 - Hour meter: photo of dashboard/display showing hours
@@ -201,7 +223,9 @@ Always visible - 4 practical tips for taking better verification photos
 ---
 
 ### 5️⃣ Soil Management
+
 **Examples to Upload**:
+
 - Soil sample or soil testing being performed
 - Soil condition (color, texture, structure visible)
 - Soil testing equipment or kit
@@ -215,6 +239,7 @@ Always visible - 4 practical tips for taking better verification photos
 "2+ photos showing: (1) soil sample/testing activity, (2) testing results or soil condition detail"
 
 **Tips**:
+
 - Soil sample: include scale reference (hand, ruler)
 - Testing: show equipment being used or results displayed
 - Depth: indicate depth if relevant to testing
@@ -223,7 +248,9 @@ Always visible - 4 practical tips for taking better verification photos
 ---
 
 ### 6️⃣ Pest Management
+
 **Examples to Upload**:
+
 - Pest evidence (damage to crops, pest insects visible)
 - Traps or monitoring equipment in field
 - Pest identification (close-up of insect or disease)
@@ -237,6 +264,7 @@ Always visible - 4 practical tips for taking better verification photos
 "2+ photos showing: (1) pest or pest damage, (2) monitoring/treatment equipment or beneficial insects"
 
 **Tips**:
+
 - Pest damage: wide shot showing extent + close-up of damage
 - Traps: show trap in field location with identifying context
 - Insects: macro/close-up photo of actual pest
@@ -245,7 +273,9 @@ Always visible - 4 practical tips for taking better verification photos
 ---
 
 ### 7️⃣ Business Activity
+
 **Examples to Upload**:
+
 - Certification document or certificate
 - Inspection report or inspector on farm
 - Compliance documentation being reviewed
@@ -259,6 +289,7 @@ Always visible - 4 practical tips for taking better verification photos
 "2+ photos showing: (1) certification document clearly visible, (2) verification official or agency stamp"
 
 **Tips**:
+
 - Document: certificate number and date clearly readable
 - Inspection: show inspector on farm or inspection documents
 - Agency stamp: official seal or verification mark visible
@@ -273,8 +304,10 @@ Always visible - 4 practical tips for taking better verification photos
 1. **Fill Form**: Enters fertilizer details
 2. **Click Preview**: Opens EventPreviewModal
 3. **Sees**:
+
    - Verification preview: Gray "Self Reported" badge
    - Photo Recommendations box appears:
+
      ```
      📸 What Photos to Upload for Chemical Application
 
@@ -301,8 +334,10 @@ Always visible - 4 practical tips for taking better verification photos
 1. **Farmer clicks camera**: Takes photo of chemical bottle
 2. **Updates preview**: EventPreviewModal updates live
 3. **Sees**:
+
    - Verification preview: Teal "Photo Documented (1)" badge ✅ (improved!)
    - Photo Recommendations box now shows:
+
      ```
      📸 What Photos to Upload for Chemical Application
 
@@ -319,8 +354,10 @@ Always visible - 4 practical tips for taking better verification photos
 1. **Farmer adds photo of equipment spraying**
 2. **Preview updates**: EventPreviewModal updates
 3. **Sees**:
+
    - Verification preview: Blue "Photo Verified (2)" badge ✅ (much better!)
    - Photo Recommendations box shows:
+
      ```
      📸 What Photos to Upload for Chemical Application
 
@@ -372,17 +409,20 @@ Always visible - 4 practical tips for taking better verification photos
 ## Technical Notes
 
 ### Performance
+
 - Minimal overhead: recommendations are static data
 - No API calls needed
 - Renders only when preview modal is open
 - ~200 lines of code, <2KB gzipped
 
 ### Internationalization
+
 - All text strings can be i18n'd
 - Ready for translation to Spanish, French, German, Portuguese, etc.
 - No hardcoded UI strings
 
 ### Accessibility
+
 - Icon + text describes each section
 - Color not only indicator (includes text descriptions)
 - Readable font sizes and contrast
@@ -393,6 +433,7 @@ Always visible - 4 practical tips for taking better verification photos
 ## Future Enhancements
 
 Possible additions:
+
 - [ ] Photo examples with actual farmer photos (with permission)
 - [ ] Video examples showing recommended photography techniques
 - [ ] Real-time photo validation feedback ("Good angle!" / "Need closer look")

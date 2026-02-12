@@ -941,8 +941,8 @@ const EducationTopicDetail: React.FC = () => {
                     <Text fontWeight="bold">IPCC 2006/2019 Guidelines</Text>
                   </HStack>
                   <Text fontSize="sm" pl={6}>
-                    Intergovernmental Panel on Climate Change - N₂O emission factors for agricultural
-                    soils (EF1 = 1% of applied N, GWP = 265).
+                    Intergovernmental Panel on Climate Change - N₂O emission factors for
+                    agricultural soils (EF1 = 1% of applied N, GWP = 265).
                   </Text>
                   <Link
                     href="https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/4_Volume4/V4_11_Ch11_N2O&CO2.pdf"
@@ -1078,7 +1078,7 @@ const EducationTopicDetail: React.FC = () => {
                 <Text fontSize="sm" color="gray.600">
                   Source: EPA eGRID2023 Summary Tables (767.2 lbs/MWh) + 5.12% T&D losses
                 </Text>
-  
+
                 <Text fontSize="sm">
                   <strong>Confidence Level:</strong> 95% - Based on the national electricity grid
                   mix; actual emissions vary by region.
@@ -1110,7 +1110,11 @@ const EducationTopicDetail: React.FC = () => {
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Box overflowX="auto" w="full">
-                  <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={3} minW={{ base: "280px", md: "auto" }}>
+                  <Grid
+                    templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
+                    gap={3}
+                    minW={{ base: '280px', md: 'auto' }}
+                  >
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontWeight="bold" color="gray.700">
                         Nitrogen (N)
@@ -1153,8 +1157,8 @@ const EducationTopicDetail: React.FC = () => {
                 <Alert status="success" size="sm" borderRadius="md">
                   <AlertIcon />
                   <Text fontSize="sm">
-                    <strong>Organic fertilizers</strong> (compost, manure) have much lower emissions:
-                    only 0.5 kg CO₂/kg due to minimal manufacturing process.
+                    <strong>Organic fertilizers</strong> (compost, manure) have much lower
+                    emissions: only 0.5 kg CO₂/kg due to minimal manufacturing process.
                   </Text>
                 </Alert>
               </VStack>
@@ -1170,7 +1174,11 @@ const EducationTopicDetail: React.FC = () => {
               <VStack spacing={3} align="start">
                 <Text fontWeight="bold">Pesticides & Herbicides</Text>
                 <Box overflowX="auto" w="full">
-                  <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3} minW={{ base: "280px", md: "auto" }}>
+                  <Grid
+                    templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
+                    gap={3}
+                    minW={{ base: '280px', md: 'auto' }}
+                  >
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
                         Synthetic Pesticide
@@ -1221,7 +1229,11 @@ const EducationTopicDetail: React.FC = () => {
                   Fungicides
                 </Text>
                 <Box overflowX="auto" w="full">
-                  <Grid templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }} gap={3} minW={{ base: "280px", md: "auto" }}>
+                  <Grid
+                    templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
+                    gap={3}
+                    minW={{ base: '280px', md: 'auto' }}
+                  >
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
                         Synthetic
@@ -1334,10 +1346,10 @@ const EducationTopicDetail: React.FC = () => {
                 <AlertTitle>Direct Operational Focus</AlertTitle>
                 <AlertDescription>
                   Trazo calculates <strong>Direct Operational Emissions</strong> - the emissions you
-                  directly control through farming decisions. We focus on fuel combustion, fertilizer
-                  application, and equipment operation. This approach empowers you with actionable
-                  data while maintaining scientific accuracy through EPA and USDA verified emission
-                  factors.
+                  directly control through farming decisions. We focus on fuel combustion,
+                  fertilizer application, and equipment operation. This approach empowers you with
+                  actionable data while maintaining scientific accuracy through EPA and USDA
+                  verified emission factors.
                 </AlertDescription>
               </Box>
             </Alert>
@@ -1581,8 +1593,8 @@ const EducationTopicDetail: React.FC = () => {
                   <UnorderedList spacing={1} fontSize="sm">
                     <ListItem>Log multiple events at end of day</ListItem>
                     <ListItem>Upload photos from camera later</ListItem>
-                  <ListItem>Use farm notes to remember details</ListItem>
-                  <ListItem>Still contributes to transparency</ListItem>
+                    <ListItem>Use farm notes to remember details</ListItem>
+                    <ListItem>Still contributes to transparency</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -1678,13 +1690,13 @@ const EducationTopicDetail: React.FC = () => {
                   <Heading size="sm" color="green.600" mb={2}>
                     🌱 Planting Season
                   </Heading>
-                <UnorderedList spacing={1} fontSize="sm">
-                  <ListItem>Soil preparation events</ListItem>
-                  <ListItem>Seed/seedling documentation</ListItem>
-                  <ListItem>Initial irrigation setup</ListItem>
-                  <ListItem>Baseline soil testing</ListItem>
-                </UnorderedList>
-              </Box>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>Soil preparation events</ListItem>
+                    <ListItem>Seed/seedling documentation</ListItem>
+                    <ListItem>Initial irrigation setup</ListItem>
+                    <ListItem>Baseline soil testing</ListItem>
+                  </UnorderedList>
+                </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="yellow.600" mb={2}>
                     🌾 Growing Season
@@ -1781,29 +1793,29 @@ const EducationTopicDetail: React.FC = () => {
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}
               >
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  ✅ Must-Have Events (60 points)
-                </Heading>
-                <UnorderedList spacing={1} fontSize="sm">
-                  <ListItem>3+ Production events (planting, harvest, processing)</ListItem>
-                  <ListItem>2+ Chemical events (fertilizer, organic amendments)</ListItem>
-                  <ListItem>2+ Equipment events (tractor work, irrigation)</ListItem>
-                  <ListItem>1+ Soil management event (composting, testing)</ListItem>
-                  <ListItem>1+ Weather event (rainfall, drought response)</ListItem>
-                </UnorderedList>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🏆 Excellence Boosters (30+ points)
-                </Heading>
-                <UnorderedList spacing={1} fontSize="sm">
-                  <ListItem>Photo evidence for 80%+ of events</ListItem>
-                  <ListItem>Blockchain verification enabled</ListItem>
-                  <ListItem>Real-time event logging (not batch)</ListItem>
-                  <ListItem>Detailed event descriptions</ListItem>
-                  <ListItem>Business events (certifications, sales)</ListItem>
-                  <ListItem>Pest management documentation</ListItem>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    ✅ Must-Have Events (60 points)
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>3+ Production events (planting, harvest, processing)</ListItem>
+                    <ListItem>2+ Chemical events (fertilizer, organic amendments)</ListItem>
+                    <ListItem>2+ Equipment events (tractor work, irrigation)</ListItem>
+                    <ListItem>1+ Soil management event (composting, testing)</ListItem>
+                    <ListItem>1+ Weather event (rainfall, drought response)</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🏆 Excellence Boosters (30+ points)
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>Photo evidence for 80%+ of events</ListItem>
+                    <ListItem>Blockchain verification enabled</ListItem>
+                    <ListItem>Real-time event logging (not batch)</ListItem>
+                    <ListItem>Detailed event descriptions</ListItem>
+                    <ListItem>Business events (certifications, sales)</ListItem>
+                    <ListItem>Pest management documentation</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -1850,39 +1862,39 @@ const EducationTopicDetail: React.FC = () => {
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}
               >
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🥑 Tree Fruits (Avocados, Citrus)
-                </Heading>
-                <UnorderedList spacing={1} fontSize="xs">
-                  <ListItem>Pruning and tree maintenance events</ListItem>
-                  <ListItem>Irrigation system documentation</ListItem>
-                  <ListItem>Seasonal pest management</ListItem>
-                  <ListItem>Harvest timing and methods</ListItem>
-                </UnorderedList>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🌾 Annual Crops (Vegetables, Grains)
-                </Heading>
-                <UnorderedList spacing={1} fontSize="xs">
-                  <ListItem>Soil preparation and planting</ListItem>
-                  <ListItem>Growth stage monitoring</ListItem>
-                  <ListItem>Regular fertilizer applications</ListItem>
-                  <ListItem>Harvest and post-harvest handling</ListItem>
-                </UnorderedList>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🫐 Berries & Specialty Crops
-                </Heading>
-                <UnorderedList spacing={1} fontSize="xs">
-                  <ListItem>Specialized growing techniques</ListItem>
-                  <ListItem>Quality control measures</ListItem>
-                  <ListItem>Careful harvest documentation</ListItem>
-                  <ListItem>Cold chain and storage events</ListItem>
-                </UnorderedList>
-              </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🥑 Tree Fruits (Avocados, Citrus)
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="xs">
+                    <ListItem>Pruning and tree maintenance events</ListItem>
+                    <ListItem>Irrigation system documentation</ListItem>
+                    <ListItem>Seasonal pest management</ListItem>
+                    <ListItem>Harvest timing and methods</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🌾 Annual Crops (Vegetables, Grains)
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="xs">
+                    <ListItem>Soil preparation and planting</ListItem>
+                    <ListItem>Growth stage monitoring</ListItem>
+                    <ListItem>Regular fertilizer applications</ListItem>
+                    <ListItem>Harvest and post-harvest handling</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🫐 Berries & Specialty Crops
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="xs">
+                    <ListItem>Specialized growing techniques</ListItem>
+                    <ListItem>Quality control measures</ListItem>
+                    <ListItem>Careful harvest documentation</ListItem>
+                    <ListItem>Cold chain and storage events</ListItem>
+                  </UnorderedList>
+                </Box>
               </Grid>
             </Box>
 
@@ -1927,44 +1939,44 @@ const EducationTopicDetail: React.FC = () => {
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}
               >
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  📦 Product Packaging
-                </Heading>
-                <VStack spacing={2} align="start">
-                  <Text fontSize="sm">
-                    <strong>Primary Placement:</strong> Front panel, above brand logo
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Call to Action:</strong> "Scan to see how this was grown"
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Size Guidelines:</strong> Minimum 1 inch square for easy scanning
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Testing:</strong> Scan from 3 feet to ensure readability
-                  </Text>
-                </VStack>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🛒 Point of Sale
-                </Heading>
-                <VStack spacing={2} align="start">
-                  <Text fontSize="sm">
-                    <strong>Farmers Markets:</strong> Table signs with transparency scores
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Retail Stores:</strong> Shelf talkers highlighting verification
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Online Sales:</strong> Product page QR codes for digital purchases
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Farm Store:</strong> Large displays showcasing farm transparency
-                  </Text>
-                </VStack>
-              </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    📦 Product Packaging
+                  </Heading>
+                  <VStack spacing={2} align="start">
+                    <Text fontSize="sm">
+                      <strong>Primary Placement:</strong> Front panel, above brand logo
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Call to Action:</strong> "Scan to see how this was grown"
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Size Guidelines:</strong> Minimum 1 inch square for easy scanning
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Testing:</strong> Scan from 3 feet to ensure readability
+                    </Text>
+                  </VStack>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🛒 Point of Sale
+                  </Heading>
+                  <VStack spacing={2} align="start">
+                    <Text fontSize="sm">
+                      <strong>Farmers Markets:</strong> Table signs with transparency scores
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Retail Stores:</strong> Shelf talkers highlighting verification
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Online Sales:</strong> Product page QR codes for digital purchases
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Farm Store:</strong> Large displays showcasing farm transparency
+                    </Text>
+                  </VStack>
+                </Box>
               </Grid>
             </Box>
 
@@ -2062,39 +2074,39 @@ const EducationTopicDetail: React.FC = () => {
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}
               >
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  ⚡ Speed Optimization
-                </Heading>
-                <UnorderedList spacing={1} fontSize="sm">
-                  <ListItem>Under 1.5s load time on mobile</ListItem>
-                  <ListItem>Progressive loading design</ListItem>
-                  <ListItem>Transparency score appears first</ListItem>
-                  <ListItem>Photos optimized for mobile data</ListItem>
-                </UnorderedList>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  📱 Mobile Experience
-                </Heading>
-                <UnorderedList spacing={1} fontSize="sm">
-                  <ListItem>Touch-friendly interface design</ListItem>
-                  <ListItem>Easy scrolling through farm timeline</ListItem>
-                  <ListItem>Clear trust indicators and badges</ListItem>
-                  <ListItem>Social sharing buttons prominent</ListItem>
-                </UnorderedList>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  💬 Consumer Communication
-                </Heading>
-                <UnorderedList spacing={1} fontSize="sm">
-                  <ListItem>Clear, jargon-free language</ListItem>
-                  <ListItem>Visual timeline of farming practices</ListItem>
-                  <ListItem>Environmental benefits explained simply</ListItem>
-                  <ListItem>Direct farmer contact information</ListItem>
-                </UnorderedList>
-              </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    ⚡ Speed Optimization
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>Under 1.5s load time on mobile</ListItem>
+                    <ListItem>Progressive loading design</ListItem>
+                    <ListItem>Transparency score appears first</ListItem>
+                    <ListItem>Photos optimized for mobile data</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    📱 Mobile Experience
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>Touch-friendly interface design</ListItem>
+                    <ListItem>Easy scrolling through farm timeline</ListItem>
+                    <ListItem>Clear trust indicators and badges</ListItem>
+                    <ListItem>Social sharing buttons prominent</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    💬 Consumer Communication
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>Clear, jargon-free language</ListItem>
+                    <ListItem>Visual timeline of farming practices</ListItem>
+                    <ListItem>Environmental benefits explained simply</ListItem>
+                    <ListItem>Direct farmer contact information</ListItem>
+                  </UnorderedList>
+                </Box>
               </Grid>
             </Box>
 
@@ -2176,81 +2188,81 @@ const EducationTopicDetail: React.FC = () => {
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}
               >
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🌱 Starter Plan
-                </Heading>
-                <VStack spacing={2} align="start">
-                  <Text fontSize="sm">
-                    <strong>Best For:</strong> Small farms, first-time users
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Productions:</strong> Up to 5 active productions
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Events:</strong> Basic event logging
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>QR Codes:</strong> Standard QR generation
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Storage:</strong> Limited photo storage
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Support:</strong> Email support
-                  </Text>
-                </VStack>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🚀 Professional Plan
-                </Heading>
-                <VStack spacing={2} align="start">
-                  <Text fontSize="sm">
-                    <strong>Best For:</strong> Growing farms, market sellers
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Productions:</strong> Unlimited productions
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Events:</strong> Advanced event features
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Blockchain:</strong> Verification included
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Analytics:</strong> Scan and engagement data
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Integrations:</strong> API access for farm software
-                  </Text>
-                </VStack>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  👑 Enterprise Plan
-                </Heading>
-                <VStack spacing={2} align="start">
-                  <Text fontSize="sm">
-                    <strong>Best For:</strong> Large operations, distributors
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Volume:</strong> High-volume productions
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>IoT:</strong> Sensor integration included
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>White Label:</strong> Custom branding options
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Priority Support:</strong> Phone and dedicated support
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Custom Features:</strong> Tailored development
-                  </Text>
-                </VStack>
-              </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🌱 Starter Plan
+                  </Heading>
+                  <VStack spacing={2} align="start">
+                    <Text fontSize="sm">
+                      <strong>Best For:</strong> Small farms, first-time users
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Productions:</strong> Up to 5 active productions
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Events:</strong> Basic event logging
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>QR Codes:</strong> Standard QR generation
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Storage:</strong> Limited photo storage
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Support:</strong> Email support
+                    </Text>
+                  </VStack>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🚀 Professional Plan
+                  </Heading>
+                  <VStack spacing={2} align="start">
+                    <Text fontSize="sm">
+                      <strong>Best For:</strong> Growing farms, market sellers
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Productions:</strong> Unlimited productions
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Events:</strong> Advanced event features
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Blockchain:</strong> Verification included
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Analytics:</strong> Scan and engagement data
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Integrations:</strong> API access for farm software
+                    </Text>
+                  </VStack>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    👑 Enterprise Plan
+                  </Heading>
+                  <VStack spacing={2} align="start">
+                    <Text fontSize="sm">
+                      <strong>Best For:</strong> Large operations, distributors
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Volume:</strong> High-volume productions
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>IoT:</strong> Sensor integration included
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>White Label:</strong> Custom branding options
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Priority Support:</strong> Phone and dedicated support
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Custom Features:</strong> Tailored development
+                    </Text>
+                  </VStack>
+                </Box>
               </Grid>
             </Box>
 
@@ -2300,46 +2312,47 @@ const EducationTopicDetail: React.FC = () => {
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}
               >
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  💰 Revenue Benefits
-                </Heading>
-                <VStack spacing={2} align="start">
-                  <Text fontSize="sm">
-                    <strong>Premium Pricing:</strong> 20-30% higher prices for transparent products
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Market Access:</strong> Entry to premium retailers and farmers markets
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Direct Sales:</strong> Build consumer loyalty and repeat purchases
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Certification Support:</strong> Streamline organic/sustainable
-                    certifications
-                  </Text>
-                </VStack>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  ⚡ Efficiency Gains
-                </Heading>
-                <VStack spacing={2} align="start">
-                  <Text fontSize="sm">
-                    <strong>Documentation Time:</strong> 50% faster with mobile app and voice
-                    features
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Marketing Costs:</strong> QR codes reduce traditional marketing needs
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Compliance:</strong> Automated reporting saves administrative time
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Quality Control:</strong> Photo documentation prevents disputes
-                  </Text>
-                </VStack>
-              </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    💰 Revenue Benefits
+                  </Heading>
+                  <VStack spacing={2} align="start">
+                    <Text fontSize="sm">
+                      <strong>Premium Pricing:</strong> 20-30% higher prices for transparent
+                      products
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Market Access:</strong> Entry to premium retailers and farmers markets
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Direct Sales:</strong> Build consumer loyalty and repeat purchases
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Certification Support:</strong> Streamline organic/sustainable
+                      certifications
+                    </Text>
+                  </VStack>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    ⚡ Efficiency Gains
+                  </Heading>
+                  <VStack spacing={2} align="start">
+                    <Text fontSize="sm">
+                      <strong>Documentation Time:</strong> 50% faster with mobile app and voice
+                      features
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Marketing Costs:</strong> QR codes reduce traditional marketing needs
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Compliance:</strong> Automated reporting saves administrative time
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>Quality Control:</strong> Photo documentation prevents disputes
+                    </Text>
+                  </VStack>
+                </Box>
               </Grid>
             </Box>
 
@@ -2463,50 +2476,51 @@ const EducationTopicDetail: React.FC = () => {
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}
               >
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🎤 Voice Documentation
-                </Heading>
-                <VStack spacing={2} align="start">
-                  <HStack>
-                    <Icon as={FaMicrophone} color="green.600" />
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🎤 Voice Documentation
+                  </Heading>
+                  <VStack spacing={2} align="start">
+                    <HStack>
+                      <Icon as={FaMicrophone} color="green.600" />
+                      <Text fontSize="sm">
+                        "Log fertilizer application, north field, 50 pounds organic compost"
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Icon as={FaMicrophone} color="green.600" />
+                      <Text fontSize="sm">
+                        "Record harvest activity, avocados, 500 pounds collected"
+                      </Text>
+                    </HStack>
+                    <HStack>
+                      <Icon as={FaMicrophone} color="green.600" />
+                      <Text fontSize="sm">
+                        "Note weather event, heavy rainfall, 2.5 inches overnight"
+                      </Text>
+                    </HStack>
+                  </VStack>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🤖 AI Processing
+                  </Heading>
+                  <VStack spacing={2} align="start">
                     <Text fontSize="sm">
-                      "Log fertilizer application, north field, 50 pounds organic compost"
+                      <strong>Auto-Transcription:</strong> Voice notes converted to structured data
                     </Text>
-                  </HStack>
-                  <HStack>
-                    <Icon as={FaMicrophone} color="green.600" />
                     <Text fontSize="sm">
-                      "Record harvest activity, avocados, 500 pounds collected"
+                      <strong>Smart Classification:</strong> AI categorizes events automatically
                     </Text>
-                  </HStack>
-                  <HStack>
-                    <Icon as={FaMicrophone} color="green.600" />
                     <Text fontSize="sm">
-                      "Note weather event, heavy rainfall, 2.5 inches overnight"
+                      <strong>Photo Analysis:</strong> AI identifies crops, equipment, and
+                      activities
                     </Text>
-                  </HStack>
-                </VStack>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🤖 AI Processing
-                </Heading>
-                <VStack spacing={2} align="start">
-                  <Text fontSize="sm">
-                    <strong>Auto-Transcription:</strong> Voice notes converted to structured data
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Smart Classification:</strong> AI categorizes events automatically
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Photo Analysis:</strong> AI identifies crops, equipment, and activities
-                  </Text>
-                  <Text fontSize="sm">
-                    <strong>Completion Suggestions:</strong> AI recommends missing documentation
-                  </Text>
-                </VStack>
-              </Box>
+                    <Text fontSize="sm">
+                      <strong>Completion Suggestions:</strong> AI recommends missing documentation
+                    </Text>
+                  </VStack>
+                </Box>
               </Grid>
             </Box>
 
@@ -2558,39 +2572,39 @@ const EducationTopicDetail: React.FC = () => {
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}
               >
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  ⚡ Trigger-Based Events
-                </Heading>
-                <UnorderedList spacing={1} fontSize="sm">
-                  <ListItem>Equipment start → Log equipment event</ListItem>
-                  <ListItem>Irrigation system → Record water usage</ListItem>
-                  <ListItem>Weather threshold → Create weather event</ListItem>
-                  <ListItem>Sensor alert → Document environmental condition</ListItem>
-                </UnorderedList>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  📅 Scheduled Automation
-                </Heading>
-                <UnorderedList spacing={1} fontSize="sm">
-                  <ListItem>Weekly soil monitoring reports</ListItem>
-                  <ListItem>Monthly production summaries</ListItem>
-                  <ListItem>Seasonal compliance documentation</ListItem>
-                  <ListItem>Automated QR code generation</ListItem>
-                </UnorderedList>
-              </Box>
-              <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                <Heading size="sm" color="gray.700" mb={2}>
-                  🔄 Smart Suggestions
-                </Heading>
-                <UnorderedList spacing={1} fontSize="sm">
-                  <ListItem>Missing event notifications</ListItem>
-                  <ListItem>Optimal documentation timing</ListItem>
-                  <ListItem>Photo evidence reminders</ListItem>
-                  <ListItem>Transparency score optimization tips</ListItem>
-                </UnorderedList>
-              </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    ⚡ Trigger-Based Events
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>Equipment start → Log equipment event</ListItem>
+                    <ListItem>Irrigation system → Record water usage</ListItem>
+                    <ListItem>Weather threshold → Create weather event</ListItem>
+                    <ListItem>Sensor alert → Document environmental condition</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    📅 Scheduled Automation
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>Weekly soil monitoring reports</ListItem>
+                    <ListItem>Monthly production summaries</ListItem>
+                    <ListItem>Seasonal compliance documentation</ListItem>
+                    <ListItem>Automated QR code generation</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    🔄 Smart Suggestions
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>Missing event notifications</ListItem>
+                    <ListItem>Optimal documentation timing</ListItem>
+                    <ListItem>Photo evidence reminders</ListItem>
+                    <ListItem>Transparency score optimization tips</ListItem>
+                  </UnorderedList>
+                </Box>
               </Grid>
             </Box>
 

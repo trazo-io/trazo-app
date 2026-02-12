@@ -461,7 +461,12 @@ export interface CompleteSummary {
     date: string;
     certified: boolean;
     // MVP Photo Verification: Tiered verification levels
-    verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+    verification_level?:
+      | 'self_reported'
+      | 'photo_documented'
+      | 'photo_verified'
+      | 'data_verified'
+      | 'certified';
     photo_verified_count?: number;
     index: number;
     volume?: number;
@@ -1660,82 +1665,6 @@ export const carbonApi = baseApi.injectEndpoints({
       keepUnusedDataFor: 600
     }),
 
-    getNutritionalCarbonAnalysis: builder.query<
-      {
-        success: boolean;
-        crop_type: string;
-        nutritional_analysis: {
-          nutritional_data: Record<string, number>;
-          carbon_efficiency: Record<string, any>;
-          food_description: string;
-          data_source: string;
-        };
-        api_source: string;
-        timestamp: string;
-      },
-      { crop_type?: string }
-    >({
-      query: ({ crop_type = 'corn' }) => {
-        const params = new URLSearchParams();
-        params.append('crop_type', crop_type);
-
-        return {
-          url: `carbon/usda/nutritional-analysis/?${params.toString()}`,
-          method: 'GET',
-          credentials: 'include'
-        };
-      },
-      providesTags: ['USDA']
-    }),
-
-    getCompleteUSDAAnalysis: builder.query<
-      {
-        success: boolean;
-        analysis: Record<string, any>;
-        input_parameters: {
-          crop_type: string;
-          state: string;
-          farm_practices: Record<string, any>;
-        };
-        timestamp: string;
-      },
-      {
-        crop_type?: string;
-        state?: string;
-        area_hectares?: number;
-        yield_per_hectare?: number;
-        nitrogen_kg?: number;
-        phosphorus_kg?: number;
-        diesel_liters?: number;
-      }
-    >({
-      query: ({
-        crop_type = 'corn',
-        state = 'IA',
-        area_hectares = 100,
-        yield_per_hectare = 9000,
-        nitrogen_kg = 150,
-        phosphorus_kg = 50,
-        diesel_liters = 80
-      }) => {
-        const params = new URLSearchParams();
-        params.append('crop_type', crop_type);
-        params.append('state', state);
-        params.append('area_hectares', area_hectares.toString());
-        params.append('yield_per_hectare', yield_per_hectare.toString());
-        params.append('nitrogen_kg', nitrogen_kg.toString());
-        params.append('phosphorus_kg', phosphorus_kg.toString());
-        params.append('diesel_liters', diesel_liters.toString());
-
-        return {
-          url: `carbon/usda/complete-analysis/?${params.toString()}`,
-          method: 'GET',
-          credentials: 'include'
-        };
-      },
-      providesTags: ['USDA']
-    }),
-
     validateUSDACompliance: builder.mutation<
       {
         status: string;
@@ -2311,8 +2240,6 @@ export const {
   useGetEventTemplatesByCropTypeQuery,
   // USDA Government Data Integration hooks
   useGetUSDAEmissionFactorsQuery,
-  useGetNutritionalCarbonAnalysisQuery,
-  useGetCompleteUSDAAnalysisQuery,
   useValidateUSDAComplianceMutation,
   useGetUSDABenchmarkComparisonQuery,
   // Voice Processing hooks

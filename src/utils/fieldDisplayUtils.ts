@@ -366,6 +366,10 @@ export function getReadableFieldValue(field: string, value: string): string {
       foliar_feed: '🍃 Foliar Feed - Leaf application',
       soil_injection: '💉 Soil Injection - Liquid fertilizer',
       granular_spreader: '⚙️ Granular Spreader - Mechanical application',
+      // EPA Standard Methods (Sprint 6 - 2025-12-23)
+      ground_spray: '🌊 Ground Spray - Spray application to crops/soil',
+      chemigation: '💧 Chemigation - Through irrigation system',
+      aerial_spray: '✈️ Aerial Spray - Aircraft application',
       // Pesticide methods
       broadcast_spray: '💦 Broadcast Spray - Full field coverage',
       band_spray: '🎯 Band Spray - Row treatment',
@@ -892,8 +896,12 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
   // 🚨 CRITICAL: Exclude Hailstorm (HL) events - they have their own handler above
   // "Hailstorm" contains "storm" which would cause duplicate fields
   if (
-    (description.includes('storm') || description.includes('wind') || weatherType === 'TS' || weatherType === 'HW') &&
-    weatherType !== 'HL' && !description.includes('hail')
+    (description.includes('storm') ||
+      description.includes('wind') ||
+      weatherType === 'TS' ||
+      weatherType === 'HW') &&
+    weatherType !== 'HL' &&
+    !description.includes('hail')
   ) {
     console.log('🔍 TROPICAL STORM DEBUG - Event data:', {
       eventId: event.id,
@@ -1128,9 +1136,17 @@ export function getChemicalEventFields(event: any): EventFieldDisplay {
 
   // Technical details - DETAILS section
   if (event.concentration) {
-    const formattedConcentration = String(event.concentration).includes('%')
-      ? event.concentration
-      : `${event.concentration}%`;
+    const concentrationStr = String(event.concentration);
+    // Check if this is an NPK ratio format (e.g., "5-1-1" or "10-10-10")
+    // NPK ratios should NOT have a % suffix on the whole ratio
+    const isNPKRatio = /^\d+-\d+-\d+$/.test(concentrationStr);
+
+    const formattedConcentration = isNPKRatio
+      ? concentrationStr // NPK ratio - no % suffix
+      : concentrationStr.includes('%')
+      ? concentrationStr
+      : `${concentrationStr}%`; // Single concentration value - add % if missing
+
     details.push({
       label: 'Concentration',
       value: formattedConcentration,
@@ -1215,6 +1231,49 @@ export function getChemicalEventFields(event: any): EventFieldDisplay {
     });
   }
 
+  // Sprint 6 (2025-12-23): Restricted Use Pesticide - SECONDARY priority for safety warning
+  // Handle multiple value formats: boolean true, string 'true', string 'yes', or any truthy value
+  const restrictedUseValue = event.restricted_use_pesticide;
+  const isRestrictedUse =
+    restrictedUseValue === true ||
+    restrictedUseValue === 'true' ||
+    restrictedUseValue === 'yes' ||
+    restrictedUseValue === 'Yes' ||
+    restrictedUseValue === '1' ||
+    (typeof restrictedUseValue === 'string' && restrictedUseValue.toLowerCase() === 'true');
+
+  if (isRestrictedUse) {
+    secondary.push({
+      label: 'Restricted Use Pesticide',
+      value: '⚠️ Restricted Use - Certified applicator required',
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'This product is classified as Restricted Use and requires EPA-certified applicator'
+    });
+  }
+
+  // Sprint 6 (2025-12-23): Applicator Name - DETAILS for accountability/transparency
+  if (event.applicator_name) {
+    details.push({
+      label: 'Certified Applicator',
+      value: event.applicator_name,
+      priority: 'details',
+      category: 'verification',
+      tooltip: 'Name of the certified applicator who performed this application'
+    });
+  }
+
+  // Sprint 6 (2025-12-23): Application Details - DETAILS for transparency
+  if (event.application_details) {
+    details.push({
+      label: 'Application Notes',
+      value: event.application_details,
+      priority: 'details',
+      category: 'application',
+      tooltip: 'Additional details about the application method and coverage'
+    });
+  }
+
   // Signal Word - DETAILS for hazard classification
   if (event.signal_word) {
     const signalWordMap: Record<string, string> = {
@@ -1279,13 +1338,57 @@ export function getChemicalEventFields(event: any): EventFieldDisplay {
   }
 
   // Buffer Zone Distance - SECONDARY priority for environmental protection transparency
-  if (event.buffer_zone_meters !== undefined && event.buffer_zone_meters !== null && event.buffer_zone_meters !== '') {
+  if (
+    event.buffer_zone_meters !== undefined &&
+    event.buffer_zone_meters !== null &&
+    event.buffer_zone_meters !== ''
+  ) {
     secondary.push({
       label: 'Buffer Zone from Sensitive Areas',
       value: `${event.buffer_zone_meters} meters`,
       priority: 'secondary',
       category: 'environmental',
-      tooltip: 'Distance from sensitive areas like water sources, schools, homes (environmental protection)'
+      tooltip:
+        'Distance from sensitive areas like water sources, schools, homes (environmental protection)'
+    });
+  }
+
+  // ============================================================
+  // Sprint 3 Epic 3.3: Application Fuel Consumption Fields
+  // These fields show the fuel used to apply the chemical (for carbon transparency)
+  // ============================================================
+
+  // Application Fuel Type - DETAILS priority (technical carbon data)
+  if (event.application_fuel_type) {
+    details.push({
+      label: 'Application Equipment Fuel Type',
+      value: getReadableFieldValue('fuel_type', event.application_fuel_type),
+      priority: 'details',
+      category: 'operational',
+      tooltip: 'Type of fuel used by application equipment (for carbon footprint calculation)'
+    });
+  }
+
+  // Application Fuel Consumed - DETAILS priority (technical carbon data)
+  if (
+    event.application_fuel_consumed !== undefined &&
+    event.application_fuel_consumed !== null &&
+    event.application_fuel_consumed !== ''
+  ) {
+    const fuelUnit = event.application_fuel_unit || event.fuel_unit || 'L';
+    const fuelStr = String(event.application_fuel_consumed);
+    const fuelIsFormatted = /\d+(\.\d+)?\s+\w+/.test(fuelStr);
+    const fuelValue =
+      fuelIsFormatted || fuelStr.includes(fuelUnit)
+        ? event.application_fuel_consumed
+        : `${event.application_fuel_consumed} ${fuelUnit}`;
+
+    details.push({
+      label: getFuelConsumptionLabel(event.application_fuel_type),
+      value: fuelValue,
+      priority: 'details',
+      category: 'operational',
+      tooltip: 'Fuel consumed by application equipment (contributes to total carbon footprint)'
     });
   }
 
@@ -1326,9 +1429,10 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     // 🔧 FIX: Check if value is already formatted (has number + unit pattern)
     const yieldStr = String(event.yield_quantity);
     const isAlreadyFormatted = /\d+(\.\d+)?\s+\w+/.test(yieldStr);
-    const yieldValue = isAlreadyFormatted || yieldStr.includes(yieldUnit)
-      ? event.yield_quantity
-      : `${event.yield_quantity} ${yieldUnit}`;
+    const yieldValue =
+      isAlreadyFormatted || yieldStr.includes(yieldUnit)
+        ? event.yield_quantity
+        : `${event.yield_quantity} ${yieldUnit}`;
 
     immediate.push({
       label: 'Quantity',
@@ -1344,9 +1448,10 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     // 🔧 FIX: Check if value is already formatted (has number + unit pattern)
     const fuelStr = String(event.fuel_consumed);
     const fuelIsFormatted = /\d+(\.\d+)?\s+\w+/.test(fuelStr);
-    const fuelValue = fuelIsFormatted || fuelStr.includes(fuelUnit)
-      ? event.fuel_consumed
-      : `${event.fuel_consumed} ${fuelUnit}`;
+    const fuelValue =
+      fuelIsFormatted || fuelStr.includes(fuelUnit)
+        ? event.fuel_consumed
+        : `${event.fuel_consumed} ${fuelUnit}`;
 
     // 🔧 FIX: Check fuel_type at top level AND in extra_data for electric equipment label
     const fuelType = event.fuel_type || extraData.fuel_type;
@@ -1363,9 +1468,10 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     // 🔧 FIX: Check if value is already formatted (has number + unit pattern)
     const hoursStr = String(event.equipment_hours);
     const hoursIsFormatted = /\d+(\.\d+)?\s+\w+/.test(hoursStr);
-    const hoursValue = hoursIsFormatted || hoursStr.toLowerCase().includes('hour')
-      ? event.equipment_hours
-      : `${event.equipment_hours} hours`;
+    const hoursValue =
+      hoursIsFormatted || hoursStr.toLowerCase().includes('hour')
+        ? event.equipment_hours
+        : `${event.equipment_hours} hours`;
 
     secondary.push({
       label: 'Equipment Hours',
@@ -1378,10 +1484,11 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
   // Transportation (HA - Harvesting events only, SECONDARY display)
   if (event.transportation_distance && String(event.transportation_distance).trim() !== 'null') {
     const transportUnit = event.transportation_unit || event.distance_unit || 'km';
-    const transportValue = String(event.transportation_distance).toLowerCase().includes('km') ||
-                          String(event.transportation_distance).toLowerCase().includes('mi')
-      ? event.transportation_distance
-      : `${event.transportation_distance} ${transportUnit}`;
+    const transportValue =
+      String(event.transportation_distance).toLowerCase().includes('km') ||
+      String(event.transportation_distance).toLowerCase().includes('mi')
+        ? event.transportation_distance
+        : `${event.transportation_distance} ${transportUnit}`;
 
     secondary.push({
       label: 'Transportation Distance',
@@ -1496,6 +1603,21 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
       immediate.push({
         label: 'Irrigation Depth',
         value: `${event.irrigation_depth} ${unit}${waterEstimate}`,
+        priority: 'immediate',
+        category: 'measurement'
+      });
+    }
+
+    // Sprint 4: Aggregate Irrigation - Total Water Volume (replaces per-event water estimate)
+    if (event.water_volume_total) {
+      const waterUnit = event.water_volume_unit || 'gallons';
+      const waterValue =
+        typeof event.water_volume_total === 'string'
+          ? event.water_volume_total
+          : `${event.water_volume_total.toLocaleString()} ${waterUnit}`;
+      immediate.push({
+        label: 'Total Water Volume',
+        value: waterValue,
         priority: 'immediate',
         category: 'measurement'
       });
@@ -1952,11 +2074,12 @@ export function getEquipmentEventFields(event: any): EventFieldDisplay {
     });
   }
 
+  // Operation Efficiency - SECONDARY for consistency with other event types
   if (event.operation_efficiency) {
-    details.push({
+    secondary.push({
       label: 'Operation Efficiency',
       value: getReadableFieldValue('operation_efficiency', event.operation_efficiency),
-      priority: 'details',
+      priority: 'secondary',
       category: 'operational'
     });
   }
@@ -2031,7 +2154,7 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
 
   // Area Covered (from database field)
   if (event.area_covered) {
-    const unit = event.area_unit || 'hectares';
+    const unit = event.area_unit || 'ha'; // Consistent with other event types
     immediate.push({
       label: 'Area Covered',
       value: `${event.area_covered} ${unit}`,
@@ -2040,26 +2163,26 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
     });
   }
 
-  // Fuel Consumed (from database field) - Move to immediate for better visibility
+  // Fuel Consumed (from database field) - SECONDARY for consistency with other event types
   if (event.fuel_consumed) {
     const unit = event.fuel_unit || extraData.fuel_unit || 'L';
     // 🔧 FIX: Check fuel_type at top level AND in extra_data for electric equipment label
     const fuelType = event.fuel_type || extraData.fuel_type;
-    immediate.push({
+    secondary.push({
       label: getFuelConsumptionLabel(fuelType),
       value: `${event.fuel_consumed} ${unit}`,
-      priority: 'immediate',
-      category: 'measurement'
+      priority: 'secondary',
+      category: 'operational'
     });
   }
 
-  // Equipment Hours (from database field) - Move to immediate for better visibility
+  // Equipment Hours (from database field) - SECONDARY for consistency with other event types
   if (event.equipment_hours) {
-    immediate.push({
+    secondary.push({
       label: 'Equipment Hours',
       value: `${event.equipment_hours} hours`,
-      priority: 'immediate',
-      category: 'measurement'
+      priority: 'secondary',
+      category: 'operational'
     });
   }
 
@@ -2218,26 +2341,35 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
   }
 
   // Tillage-specific Details (if applicable) - Consumer-friendly mapping
-  if (event.tillage_type) {
+  // CRITICAL FIX: Check both event-level and extra_data for tillage fields
+  // Tillage fields are stored in extra_data when event subtype is 'TI'
+  const tillageType = event.tillage_type || extraData.tillage_type;
+  const tillageIntensity = event.tillage_intensity || extraData.tillage_intensity;
+  const tillageDirection = event.tillage_direction || extraData.tillage_direction;
+  const residueManagement = event.residue_management || extraData.residue_management;
+
+  if (tillageType) {
     const tillageTypeMap: Record<string, string> = {
-      conventional_plow: 'Conventional Plow - Deep inversion',
-      chisel_plow: 'Chisel Plow - Reduced tillage',
-      disk_harrow: 'Disk Harrow - Surface cultivation',
-      no_till: 'No-Till - Direct seeding',
-      strip_till: 'Strip Till - Zonal tillage',
-      minimum_till: 'Minimum Till - Conservation tillage',
+      conventional_plow: '🚜 Conventional Plow - Deep inversion',
+      chisel_plow: '⚡ Chisel Plow - Reduced tillage',
+      disk_harrow: '💿 Disk Harrow - Surface cultivation',
+      no_till: '🌱 No-Till - Direct seeding',
+      strip_till: '📏 Strip Till - Zonal tillage',
+      minimum_till: '🔄 Minimum Till - Conservation tillage',
+      subsoiling: '🔧 Subsoiling - Deep loosening',
+      cultivator: '🌾 Cultivator - Shallow cultivation',
       ridge_till: 'Ridge Till - Row-based system'
     };
 
     secondary.push({
       label: 'Tillage Type',
-      value: tillageTypeMap[event.tillage_type] || event.tillage_type,
+      value: tillageTypeMap[tillageType] || tillageType,
       priority: 'secondary',
       category: 'operational'
     });
   }
 
-  if (event.tillage_intensity) {
+  if (tillageIntensity) {
     const tillageIntensityMap: Record<string, string> = {
       high: 'High - Heavy disturbance',
       medium: 'Medium - Moderate disturbance',
@@ -2247,40 +2379,40 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
 
     secondary.push({
       label: 'Tillage Intensity',
-      value: tillageIntensityMap[event.tillage_intensity] || event.tillage_intensity,
+      value: tillageIntensityMap[tillageIntensity] || tillageIntensity,
       priority: 'secondary',
       category: 'operational'
     });
   }
 
-  if (event.tillage_direction) {
+  if (tillageDirection) {
     const tillageDirectionMap: Record<string, string> = {
-      across_slope: 'Across Slope - Erosion control',
-      up_down_slope: 'Up/Down Slope - Standard',
-      contour: 'Contour - Following natural lines',
-      random: 'Random - Variable direction'
+      across_slope: '🏔️ Across Slope - Erosion control',
+      up_down_slope: '⬇️ Up/Down Slope - Standard',
+      contour: '🌀 Contour - Following natural lines',
+      random: '🔀 Random - Variable direction'
     };
 
     details.push({
       label: 'Tillage Direction',
-      value: tillageDirectionMap[event.tillage_direction] || event.tillage_direction,
+      value: tillageDirectionMap[tillageDirection] || tillageDirection,
       priority: 'details',
       category: 'operational'
     });
   }
 
-  if (event.residue_management) {
+  if (residueManagement) {
     const residueManagementMap: Record<string, string> = {
-      incorporated: 'Incorporated - Mixed into soil',
-      surface_left: 'Surface Left - Protective cover',
-      removed: 'Removed - Harvested/burned',
-      mulched: 'Mulched - Chopped in place',
-      partial_removal: 'Partial Removal - Mixed approach'
+      incorporated: '♻️ Incorporated - Mixed into soil',
+      surface_left: '🌾 Surface Left - Protective cover',
+      removed: '🚛 Removed - Harvested/burned',
+      mulched: '🍂 Mulched - Chopped in place',
+      partial_removal: '📏 Partial Removal - Mixed approach'
     };
 
     details.push({
       label: 'Residue Management',
-      value: residueManagementMap[event.residue_management] || event.residue_management,
+      value: residueManagementMap[residueManagement] || residueManagement,
       priority: 'details',
       category: 'operational'
     });
@@ -2336,16 +2468,6 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
     });
   }
 
-  // Event Name (standardized field name)
-  if (event.pest_management_name) {
-    immediate.push({
-      label: 'Event Name',
-      value: event.pest_management_name,
-      priority: 'immediate',
-      category: 'operational'
-    });
-  }
-
   // Universal pest context fields (IMMEDIATE display) - All event types
   if (event.pest_species) {
     immediate.push({
@@ -2395,10 +2517,13 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
       });
     }
 
-    if (event.field_area_hectares) {
+    // Fix: Check both area_covered (standardized) and field_area_hectares (legacy)
+    const areaScouted = event.area_covered || event.field_area_hectares;
+    if (areaScouted) {
+      const areaUnit = event.area_unit || 'ha';
       secondary.push({
         label: 'Area Scouted',
-        value: `${event.field_area_hectares} hectares`,
+        value: `${areaScouted} ${areaUnit}`,
         priority: 'secondary',
         category: 'measurement'
       });
@@ -2618,10 +2743,12 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
   // Additional important fields that might be missing
 
   // Action Threshold Met (secondary display) - important operational decision indicator
+  // Fix: Handle both boolean and string values from form data
   if (event.action_threshold_met !== undefined) {
+    const thresholdMet = event.action_threshold_met === true || event.action_threshold_met === 'true';
     secondary.push({
       label: 'Action Threshold Met',
-      value: event.action_threshold_met ? 'Yes - Action Required' : 'No - Continue Monitoring',
+      value: thresholdMet ? 'Yes - Action Required' : 'No - Continue Monitoring',
       priority: 'secondary',
       category: 'measurement'
     });
@@ -2659,12 +2786,17 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
       value: getReadableFieldValue('beneficial_insects_used', event.beneficial_insects_used),
       priority: 'secondary',
       category: 'environmental',
-      tooltip: 'Use of beneficial insects as part of sustainable IPM strategy (builds consumer trust)'
+      tooltip:
+        'Use of beneficial insects as part of sustainable IPM strategy (builds consumer trust)'
     });
   }
 
   // Chemical-Free Period - SECONDARY priority for organic/sustainable transparency
-  if (event.chemical_free_period_days !== undefined && event.chemical_free_period_days !== null && event.chemical_free_period_days !== '') {
+  if (
+    event.chemical_free_period_days !== undefined &&
+    event.chemical_free_period_days !== null &&
+    event.chemical_free_period_days !== ''
+  ) {
     const days = parseInt(String(event.chemical_free_period_days), 10);
     let displayValue = `${days} days since last chemical application`;
     if (days > 365) {
@@ -2678,6 +2810,90 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
       priority: 'secondary',
       category: 'verification',
       tooltip: 'Days since last synthetic chemical application (consumer food safety transparency)'
+    });
+  }
+
+  // ============================================================
+  // Sprint 3 Epic 3.1: Fuel & Equipment Fields (context-aware placement)
+  // For Scouting (SC): Move to DETAILS (observation-only, fuel data irrelevant to consumers)
+  // For other types (IP, TM, BR, PI): Keep in SECONDARY (actual equipment work)
+  // ============================================================
+
+  // Scouting is observation-only - operational data belongs in Technical Details
+  const isScoutingType = pestType === 'SC';
+  const operationalTarget = isScoutingType ? details : secondary;
+
+  // Fuel Consumed - SECONDARY for operational types, DETAILS for scouting
+  if (
+    event.fuel_consumed &&
+    String(event.fuel_consumed).trim() !== 'null' &&
+    String(event.fuel_consumed).trim() !== ''
+  ) {
+    const fuelUnit = event.fuel_unit || extraData.fuel_unit || 'L';
+    const fuelType = event.fuel_type || extraData.fuel_type;
+
+    operationalTarget.push({
+      label: getFuelConsumptionLabel(fuelType),
+      value: `${event.fuel_consumed} ${fuelUnit}`,
+      priority: isScoutingType ? 'details' : 'secondary',
+      category: 'operational',
+      tooltip:
+        fuelType === 'electric'
+          ? 'Electrical energy used for pest management equipment (kWh)'
+          : 'Fuel used for pest management equipment and transportation'
+    });
+  }
+
+  // Equipment Hours - SECONDARY for operational types, DETAILS for scouting
+  // Skip for SC type if time_spent_hours is shown as "Scouting Duration" to avoid duplication
+  const hasTypeSpecificDuration = pestType === 'SC' && event.time_spent_hours;
+  if (
+    event.equipment_hours &&
+    String(event.equipment_hours).trim() !== 'null' &&
+    String(event.equipment_hours).trim() !== '' &&
+    !hasTypeSpecificDuration
+  ) {
+    operationalTarget.push({
+      label: 'Equipment Hours',
+      value: `${event.equipment_hours} hours`,
+      priority: isScoutingType ? 'details' : 'secondary',
+      category: 'measurement',
+      tooltip: 'Total hours equipment was operated for this pest management activity'
+    });
+  }
+
+  // Fuel Type - Always DETAILS (technical information)
+  if (
+    event.fuel_type &&
+    String(event.fuel_type).trim() !== 'null' &&
+    String(event.fuel_type).trim() !== ''
+  ) {
+    details.push({
+      label: 'Fuel Type',
+      value: getReadableFieldValue('fuel_type', event.fuel_type),
+      priority: 'details',
+      category: 'operational'
+    });
+  }
+
+  // Production Efficiency - SECONDARY for operational types, DETAILS for scouting
+  if (
+    event.production_efficiency &&
+    String(event.production_efficiency).trim() !== 'null' &&
+    String(event.production_efficiency).trim() !== ''
+  ) {
+    const efficiencyMap: Record<string, string> = {
+      high: '⚡ High Efficiency',
+      normal: '✓ Normal Efficiency',
+      low: '⚠️ Low Efficiency'
+    };
+
+    operationalTarget.push({
+      label: 'Operation Efficiency',
+      value: efficiencyMap[event.production_efficiency] || event.production_efficiency,
+      priority: isScoutingType ? 'details' : 'secondary',
+      category: 'operational',
+      tooltip: 'Equipment operation efficiency rating for carbon calculation accuracy'
     });
   }
 
@@ -2999,7 +3215,9 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
     description.includes('hail') ||
     description.includes('storm')
   ) {
-    console.log('⚠️ Detected as weather event by description keyword (fallback), calling getWeatherEventFields');
+    console.log(
+      '⚠️ Detected as weather event by description keyword (fallback), calling getWeatherEventFields'
+    );
     const baseFields = getWeatherEventFields(normalizedEvent);
     return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
@@ -3010,7 +3228,9 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
     description.includes('spray') ||
     description.includes('pesticide')
   ) {
-    console.log('⚠️ Detected as chemical event by description keyword (fallback), calling getChemicalEventFields');
+    console.log(
+      '⚠️ Detected as chemical event by description keyword (fallback), calling getChemicalEventFields'
+    );
     const baseFields = getChemicalEventFields(normalizedEvent);
     return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
@@ -3021,7 +3241,9 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
     description.includes('planting') ||
     description.includes('irrigation')
   ) {
-    console.log('⚠️ Detected as production event by description keyword (fallback), calling getProductionEventFields');
+    console.log(
+      '⚠️ Detected as production event by description keyword (fallback), calling getProductionEventFields'
+    );
     const baseFields = getProductionEventFields(normalizedEvent);
     return mergeCustomFieldsIntoDisplay(baseFields, normalizedEvent);
   }
@@ -3142,44 +3364,47 @@ function mergeCustomFieldsIntoDisplay(
   console.log('✅ [fieldDisplayUtils] Merging custom fields into display:', {
     totalCustomFields: customFields.length,
     visibleCustomFields: visibleFields.length,
-    fields: visibleFields.map((f: any) => ({ label: f.label, value: f.value, visibility: f.visibility })),
+    fields: visibleFields.map((f: any) => ({
+      label: f.label,
+      value: f.value,
+      visibility: f.visibility
+    })),
     eventId: event.id,
     source: event?.custom_fields ? 'event.custom_fields' : 'event.extra_data.custom_fields'
   });
 
   // Convert custom fields to FieldDisplayItem format
   // Display ALL custom fields as-is - farmer is responsible for avoiding duplicates during event creation
-  const customFieldItems: FieldDisplayItem[] = visibleFields
-    .map((field: any) => {
-      let displayValue = String(field.value);
+  const customFieldItems: FieldDisplayItem[] = visibleFields.map((field: any) => {
+    let displayValue = String(field.value);
 
-      // Apply type-specific formatting (matches customFieldsUtils.ts logic)
-      switch (field.field_type) {
-        case 'number':
-          const num = parseFloat(displayValue);
-          displayValue = !isNaN(num) ? num.toLocaleString() : displayValue;
-          break;
-        case 'link':
-          if (field.link_url) {
-            displayValue = `${displayValue} 🔗`;
-          }
-          break;
-        case 'photo_ref':
-          displayValue = `${displayValue} 📷`;
-          break;
-      }
+    // Apply type-specific formatting (matches customFieldsUtils.ts logic)
+    switch (field.field_type) {
+      case 'number':
+        const num = parseFloat(displayValue);
+        displayValue = !isNaN(num) ? num.toLocaleString() : displayValue;
+        break;
+      case 'link':
+        if (field.link_url) {
+          displayValue = `${displayValue} 🔗`;
+        }
+        break;
+      case 'photo_ref':
+        displayValue = `${displayValue} 📷`;
+        break;
+    }
 
-      // Add verification indicator if third-party verified
-      if (field.verification === 'third_party') {
-        displayValue = `${displayValue} ✓`;
-      }
+    // Add verification indicator if third-party verified
+    if (field.verification === 'third_party') {
+      displayValue = `${displayValue} ✓`;
+    }
 
-      return {
-        label: field.label,
-        value: displayValue,
-        priority: 'secondary' // Custom fields appear in secondary section
-      };
-    });
+    return {
+      label: field.label,
+      value: displayValue,
+      priority: 'secondary' // Custom fields appear in secondary section
+    };
+  });
 
   // Merge custom fields into secondary array (appears after standard fields)
   return {

@@ -248,9 +248,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       const cropTypeId = productionData.crop_type;
       if (cropTypeId) {
         matchingCropType = cropTypesData.find(
-          (ct) =>
-            ct.id === cropTypeId ||
-            ct.id.toString() === cropTypeId.toString()
+          (ct) => ct.id === cropTypeId || ct.id.toString() === cropTypeId.toString()
         );
       }
 
@@ -532,7 +530,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       if (!data.crop_type_id) {
         toast({
           title: 'Missing Crop Type',
-          description: `Please select a crop type before ${isEdit ? 'updating' : 'creating'} the production.`,
+          description: `Please select a crop type before ${
+            isEdit ? 'updating' : 'creating'
+          } the production.`,
           status: 'error',
           duration: 5000,
           isClosable: true
@@ -598,7 +598,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       console.error(`Error ${isEdit ? 'updating' : 'creating'} production:`, error);
       toast({
         title: `Error ${isEdit ? 'Updating' : 'Creating'} Production`,
-        description: error?.data?.error || `Failed to ${isEdit ? 'update' : 'create'} production. Please try again.`,
+        description:
+          error?.data?.error ||
+          `Failed to ${isEdit ? 'update' : 'create'} production. Please try again.`,
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -991,11 +993,15 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     return (
       <StandardPage title="Edit Production" showBackButton>
         <VStack py={8} spacing={4}>
-          <Text color="red.500" fontWeight="bold">Error loading production data</Text>
+          <Text color="red.500" fontWeight="bold">
+            Error loading production data
+          </Text>
           <Text color="gray.600">Production ID: {productionId}</Text>
           <Button
             colorScheme="green"
-            onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+            onClick={() =>
+              navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+            }
           >
             Go Back
           </Button>
@@ -1010,7 +1016,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       description={
         isEdit
           ? `Update production details${productionData?.name ? ` for ${productionData.name}` : ''}`
-          : `Start a new production cycle${parcelName ? ` for ${parcelName}` : ''} with smart templates`
+          : `Start a new production cycle${
+              parcelName ? ` for ${parcelName}` : ''
+            } with smart templates`
       }
       showBackButton
       onBack={() =>
@@ -1021,111 +1029,113 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         <VStack spacing={8} align="stretch">
           {/* Template Selection Section - Only show in create mode */}
           {!isEdit && (
-          <StandardCard
-            title="Smart Setup Templates"
-            subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes"
-          >
-            <VStack spacing={6} align="stretch">
-              {/* Current Template Display */}
-              {selectedTemplate ? (
-                <Box
-                  p={4}
-                  bg="green.50"
-                  borderRadius="lg"
-                  borderWidth="2px"
-                  borderColor="green.200"
-                >
-                  <HStack spacing={3}>
-                    <Icon
-                      as={getCropIcon(selectedTemplate.crop_type)}
-                      color="green.500"
-                      boxSize={6}
-                    />
-                    <VStack align="start" spacing={1} flex={1}>
-                      <HStack>
-                        <Text fontSize="lg" fontWeight="bold" color="green.700">
-                          {selectedTemplate.name} Template Selected
-                        </Text>
-                        <Badge colorScheme="green" variant="solid">
-                          Smart Setup
-                        </Badge>
-                      </HStack>
-                      <Text fontSize="sm" color="green.600">
-                        ⏱️ Setup time reduced by 37 minutes • 📅{' '}
-                        {selectedTemplate.events_count || customEvents.length} events configured •
-                        💰 USDA-based carbon calculation will be applied
-                      </Text>
-                      <HStack spacing={2} mt={1}>
-                        <Badge colorScheme="blue" variant="subtle" fontSize="xs">
-                          USDA Verified
-                        </Badge>
-                        <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                          Transparency Ready
-                        </Badge>
-                      </HStack>
-                    </VStack>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      colorScheme="green"
-                      onClick={onTemplateOpen}
-                    >
-                      Change Template
-                    </Button>
-                  </HStack>
-                </Box>
-              ) : (
-                <Box
-                  p={4}
-                  bg="blue.50"
-                  borderRadius="lg"
-                  borderWidth="2px"
-                  borderColor="blue.200"
-                  cursor="pointer"
-                  transition="all 0.2s"
-                  _hover={{ bg: 'blue.100', borderColor: 'blue.300' }}
-                  onClick={selectedCropTypeId ? onTemplateOpen : undefined}
-                  opacity={selectedCropTypeId ? 1 : 0.6}
-                >
-                  <HStack spacing={3}>
-                    <Icon as={FaRocket} color="blue.500" boxSize={6} />
-                    <VStack align="start" spacing={1} flex={1}>
-                      <Text fontSize="lg" fontWeight="bold" color="blue.700">
-                        {selectedCropTypeId ? 'Select a Smart Template' : 'Select Crop Type First'}
-                      </Text>
-                      <Text fontSize="sm" color="blue.600">
-                        {selectedCropTypeId
-                          ? `🚀 ${filteredTemplates.length} template${
-                              filteredTemplates.length !== 1 ? 's' : ''
-                            } available for your crop type`
-                          : '🌱 Choose your crop type above to see available templates'}
-                      </Text>
-                      <HStack spacing={2} mt={1}>
-                        {selectedCropTypeId ? (
-                          <>
-                            <Badge colorScheme="green" variant="subtle" fontSize="xs">
-                              {filteredTemplates.length} Templates
-                            </Badge>
-                            <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                              USDA Verified
-                            </Badge>
-                            <Badge colorScheme="orange" variant="subtle" fontSize="xs">
-                              QR Ready
-                            </Badge>
-                          </>
-                        ) : (
-                          <Badge colorScheme="gray" variant="subtle" fontSize="xs">
-                            Select crop type to continue
+            <StandardCard
+              title="Smart Setup Templates"
+              subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes"
+            >
+              <VStack spacing={6} align="stretch">
+                {/* Current Template Display */}
+                {selectedTemplate ? (
+                  <Box
+                    p={4}
+                    bg="green.50"
+                    borderRadius="lg"
+                    borderWidth="2px"
+                    borderColor="green.200"
+                  >
+                    <HStack spacing={3}>
+                      <Icon
+                        as={getCropIcon(selectedTemplate.crop_type)}
+                        color="green.500"
+                        boxSize={6}
+                      />
+                      <VStack align="start" spacing={1} flex={1}>
+                        <HStack>
+                          <Text fontSize="lg" fontWeight="bold" color="green.700">
+                            {selectedTemplate.name} Template Selected
+                          </Text>
+                          <Badge colorScheme="green" variant="solid">
+                            Smart Setup
                           </Badge>
-                        )}
-                      </HStack>
-                    </VStack>
-                    {selectedCropTypeId && <Icon as={FaArrowRight} color="blue.400" />}
-                  </HStack>
-                </Box>
-              )}
-            </VStack>
-          </StandardCard>
+                        </HStack>
+                        <Text fontSize="sm" color="green.600">
+                          ⏱️ Setup time reduced by 37 minutes • 📅{' '}
+                          {selectedTemplate.events_count || customEvents.length} events configured •
+                          💰 USDA-based carbon calculation will be applied
+                        </Text>
+                        <HStack spacing={2} mt={1}>
+                          <Badge colorScheme="blue" variant="subtle" fontSize="xs">
+                            USDA Verified
+                          </Badge>
+                          <Badge colorScheme="purple" variant="subtle" fontSize="xs">
+                            Transparency Ready
+                          </Badge>
+                        </HStack>
+                      </VStack>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorScheme="green"
+                        onClick={onTemplateOpen}
+                      >
+                        Change Template
+                      </Button>
+                    </HStack>
+                  </Box>
+                ) : (
+                  <Box
+                    p={4}
+                    bg="blue.50"
+                    borderRadius="lg"
+                    borderWidth="2px"
+                    borderColor="blue.200"
+                    cursor="pointer"
+                    transition="all 0.2s"
+                    _hover={{ bg: 'blue.100', borderColor: 'blue.300' }}
+                    onClick={selectedCropTypeId ? onTemplateOpen : undefined}
+                    opacity={selectedCropTypeId ? 1 : 0.6}
+                  >
+                    <HStack spacing={3}>
+                      <Icon as={FaRocket} color="blue.500" boxSize={6} />
+                      <VStack align="start" spacing={1} flex={1}>
+                        <Text fontSize="lg" fontWeight="bold" color="blue.700">
+                          {selectedCropTypeId
+                            ? 'Select a Smart Template'
+                            : 'Select Crop Type First'}
+                        </Text>
+                        <Text fontSize="sm" color="blue.600">
+                          {selectedCropTypeId
+                            ? `🚀 ${filteredTemplates.length} template${
+                                filteredTemplates.length !== 1 ? 's' : ''
+                              } available for your crop type`
+                            : '🌱 Choose your crop type above to see available templates'}
+                        </Text>
+                        <HStack spacing={2} mt={1}>
+                          {selectedCropTypeId ? (
+                            <>
+                              <Badge colorScheme="green" variant="subtle" fontSize="xs">
+                                {filteredTemplates.length} Templates
+                              </Badge>
+                              <Badge colorScheme="purple" variant="subtle" fontSize="xs">
+                                USDA Verified
+                              </Badge>
+                              <Badge colorScheme="orange" variant="subtle" fontSize="xs">
+                                QR Ready
+                              </Badge>
+                            </>
+                          ) : (
+                            <Badge colorScheme="gray" variant="subtle" fontSize="xs">
+                              Select crop type to continue
+                            </Badge>
+                          )}
+                        </HStack>
+                      </VStack>
+                      {selectedCropTypeId && <Icon as={FaArrowRight} color="blue.400" />}
+                    </HStack>
+                  </Box>
+                )}
+              </VStack>
+            </StandardCard>
           )}
 
           {/* Production Details Form */}
@@ -1189,7 +1199,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   />
                   {isEdit && (
                     <Text fontSize="sm" color="gray.500" mt={1}>
-                      Crop type cannot be changed after production is created. To change crop type, create a new production.
+                      Crop type cannot be changed after production is created. To change crop type,
+                      create a new production.
                     </Text>
                   )}
                   {errors.crop_type_id && (

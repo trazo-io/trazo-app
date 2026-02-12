@@ -381,7 +381,11 @@ export default function CommercialView() {
   const [currentView, setCurrentView] = useState(null);
 
   // Modal state for expandable chart
-  const { isOpen: isChartModalOpen, onOpen: onChartModalOpen, onClose: onChartModalClose } = useDisclosure();
+  const {
+    isOpen: isChartModalOpen,
+    onOpen: onChartModalOpen,
+    onClose: onChartModalClose
+  } = useDisclosure();
 
   // Period options for the chart modal filter
   const periodOptions = React.useMemo(
@@ -564,9 +568,18 @@ export default function CommercialView() {
 
     // Month number to name mapping for backend that returns numbers
     const monthNumberToName: Record<number, string> = {
-      1: 'january', 2: 'february', 3: 'march', 4: 'april',
-      5: 'may', 6: 'june', 7: 'july', 8: 'august',
-      9: 'september', 10: 'october', 11: 'november', 12: 'december'
+      1: 'january',
+      2: 'february',
+      3: 'march',
+      4: 'april',
+      5: 'may',
+      6: 'june',
+      7: 'july',
+      8: 'august',
+      9: 'september',
+      10: 'october',
+      11: 'november',
+      12: 'december'
     };
 
     switch (filters.period.id) {
@@ -578,9 +591,12 @@ export default function CommercialView() {
       case 'year':
         return options.map((month) => {
           // Handle both number (1-12) and string ("january") formats
-          const monthName = typeof month === 'number'
-            ? monthNumberToName[month]
-            : (typeof month === 'string' ? month.toLowerCase() : String(month));
+          const monthName =
+            typeof month === 'number'
+              ? monthNumberToName[month]
+              : typeof month === 'string'
+              ? month.toLowerCase()
+              : String(month);
           return intl.formatMessage({ id: `app.months.${monthName}` });
         });
       default:
@@ -621,315 +637,334 @@ export default function CommercialView() {
         onBack={() => navigate(-1)}
       >
         <VStack spacing={6} align="stretch">
-        {/* Filters Section */}
-        <StandardCard title="Filtros de Análisis" variant="outline">
-          <VStack spacing={6}>
-            <Flex
-              direction={{ base: 'column', lg: 'row' }}
-              gap={6}
-              w="100%"
-              align={{ base: 'stretch', lg: 'center' }}
-              justify="space-between"
-            >
-              <HStack spacing={4} flex={1} wrap="wrap">
-                <Menu>
-                  <MenuButton
-                    as={Button}
-                    rightIcon={<IoIosArrowDown />}
-                    size="md"
-                    minW="180px"
-                    variant="outline"
-                    borderColor="green.500"
-                    color="green.500"
-                    fontWeight="medium"
-                    borderRadius="lg"
-                    _hover={{ bg: 'green.50' }}
-                    _active={{ bg: 'green.100' }}
-                  >
-                    {filters.parcel
-                      ? filters.parcel.name
-                      : intl.formatMessage({ id: 'app.allParcels' })}
-                  </MenuButton>
-                  <MenuList minW="180px">
-                    <MenuItem onClick={() => onParcelFilterChange(null)} fontSize="sm" color="gray.600" py={2}>
-                      {intl.formatMessage({ id: 'app.allParcels' })}
-                    </MenuItem>
-                    <MenuDivider />
-                    {establishment &&
-                      establishment.parcels.map((parcel, index) => (
-                        <MenuItem
-                          key={index}
-                          onClick={() => onParcelFilterChange(parcel)}
-                          fontSize="sm"
-                          color="gray.600"
-                          py={2}
-                        >
-                          {parcel.name}
-                        </MenuItem>
-                      ))}
-                  </MenuList>
-                </Menu>
-
-                <Menu>
-                  <MenuButton
-                    as={Button}
-                    rightIcon={<IoIosArrowDown />}
-                    size="md"
-                    minW="180px"
-                    variant="outline"
-                    borderColor="green.500"
-                    color="green.500"
-                    fontWeight="medium"
-                    borderRadius="lg"
-                    _hover={{ bg: 'green.50' }}
-                    _active={{ bg: 'green.100' }}
-                  >
-                    {filters.product
-                      ? filters.product.name
-                      : intl.formatMessage({ id: 'app.allProducts' })}
-                  </MenuButton>
-                  <MenuList minW="180px">
-                    <MenuItem onClick={() => onProductFilterChange(null)} fontSize="sm" color="gray.600" py={2}>
-                      {intl.formatMessage({ id: 'app.allProducts' })}
-                    </MenuItem>
-                    <MenuDivider />
-                    {filters?.parcel
-                      ? establishmentProducts &&
-                        establishmentProducts.map((product, index) => (
+          {/* Filters Section */}
+          <StandardCard title="Filtros de Análisis" variant="outline">
+            <VStack spacing={6}>
+              <Flex
+                direction={{ base: 'column', lg: 'row' }}
+                gap={6}
+                w="100%"
+                align={{ base: 'stretch', lg: 'center' }}
+                justify="space-between"
+              >
+                <HStack spacing={4} flex={1} wrap="wrap">
+                  <Menu>
+                    <MenuButton
+                      as={Button}
+                      rightIcon={<IoIosArrowDown />}
+                      size="md"
+                      minW="180px"
+                      variant="outline"
+                      borderColor="green.500"
+                      color="green.500"
+                      fontWeight="medium"
+                      borderRadius="lg"
+                      _hover={{ bg: 'green.50' }}
+                      _active={{ bg: 'green.100' }}
+                    >
+                      {filters.parcel
+                        ? filters.parcel.name
+                        : intl.formatMessage({ id: 'app.allParcels' })}
+                    </MenuButton>
+                    <MenuList minW="180px">
+                      <MenuItem
+                        onClick={() => onParcelFilterChange(null)}
+                        fontSize="sm"
+                        color="gray.600"
+                        py={2}
+                      >
+                        {intl.formatMessage({ id: 'app.allParcels' })}
+                      </MenuItem>
+                      <MenuDivider />
+                      {establishment &&
+                        establishment.parcels.map((parcel, index) => (
                           <MenuItem
                             key={index}
-                            onClick={() => onProductFilterChange(product)}
+                            onClick={() => onParcelFilterChange(parcel)}
                             fontSize="sm"
                             color="gray.600"
                             py={2}
                           >
-                            {product.name}
-                          </MenuItem>
-                        ))
-                      : dataProducts &&
-                        dataProducts.map((product, index) => (
-                          <MenuItem
-                            key={index}
-                            onClick={() => onProductFilterChange(product)}
-                            fontSize="sm"
-                            color="gray.600"
-                            py={2}
-                          >
-                            {product.name}
+                            {parcel.name}
                           </MenuItem>
                         ))}
-                  </MenuList>
-                </Menu>
+                    </MenuList>
+                  </Menu>
+
+                  <Menu>
+                    <MenuButton
+                      as={Button}
+                      rightIcon={<IoIosArrowDown />}
+                      size="md"
+                      minW="180px"
+                      variant="outline"
+                      borderColor="green.500"
+                      color="green.500"
+                      fontWeight="medium"
+                      borderRadius="lg"
+                      _hover={{ bg: 'green.50' }}
+                      _active={{ bg: 'green.100' }}
+                    >
+                      {filters.product
+                        ? filters.product.name
+                        : intl.formatMessage({ id: 'app.allProducts' })}
+                    </MenuButton>
+                    <MenuList minW="180px">
+                      <MenuItem
+                        onClick={() => onProductFilterChange(null)}
+                        fontSize="sm"
+                        color="gray.600"
+                        py={2}
+                      >
+                        {intl.formatMessage({ id: 'app.allProducts' })}
+                      </MenuItem>
+                      <MenuDivider />
+                      {filters?.parcel
+                        ? establishmentProducts &&
+                          establishmentProducts.map((product, index) => (
+                            <MenuItem
+                              key={index}
+                              onClick={() => onProductFilterChange(product)}
+                              fontSize="sm"
+                              color="gray.600"
+                              py={2}
+                            >
+                              {product.name}
+                            </MenuItem>
+                          ))
+                        : dataProducts &&
+                          dataProducts.map((product, index) => (
+                            <MenuItem
+                              key={index}
+                              onClick={() => onProductFilterChange(product)}
+                              fontSize="sm"
+                              color="gray.600"
+                              py={2}
+                            >
+                              {product.name}
+                            </MenuItem>
+                          ))}
+                    </MenuList>
+                  </Menu>
+
+                  <Menu>
+                    <MenuButton
+                      as={Button}
+                      rightIcon={<IoIosArrowDown />}
+                      size="md"
+                      minW="180px"
+                      variant="outline"
+                      borderColor="green.500"
+                      color="green.500"
+                      fontWeight="medium"
+                      borderRadius="lg"
+                      _hover={{ bg: 'green.50' }}
+                      _active={{ bg: 'green.100' }}
+                      isDisabled={filters.product == null || filters.parcel == null}
+                    >
+                      {filters.production
+                        ? filters.production.period
+                        : intl.formatMessage({ id: 'app.allProductions' })}
+                    </MenuButton>
+                    <MenuList minW="180px">
+                      <MenuItem
+                        onClick={() => onProductionFilterChange(null)}
+                        fontSize="sm"
+                        color="gray.600"
+                        py={2}
+                      >
+                        {intl.formatMessage({ id: 'app.allProductions' })}
+                      </MenuItem>
+                      <MenuDivider />
+                      {dataHistories &&
+                        dataHistories.map((history, index) => (
+                          <MenuItem
+                            key={index}
+                            onClick={() => onProductionFilterChange(history)}
+                            fontSize="sm"
+                            color="gray.600"
+                            py={2}
+                          >
+                            {history.period}
+                          </MenuItem>
+                        ))}
+                    </MenuList>
+                  </Menu>
+                </HStack>
 
                 <Menu>
                   <MenuButton
                     as={Button}
                     rightIcon={<IoIosArrowDown />}
                     size="md"
-                    minW="180px"
-                    variant="outline"
-                    borderColor="green.500"
-                    color="green.500"
+                    minW="150px"
+                    bg="green.500"
+                    color="white"
                     fontWeight="medium"
                     borderRadius="lg"
-                    _hover={{ bg: 'green.50' }}
-                    _active={{ bg: 'green.100' }}
-                    isDisabled={filters.product == null || filters.parcel == null}
+                    _hover={{ bg: 'green.600' }}
+                    _active={{ bg: 'green.700' }}
                   >
-                    {filters.production
-                      ? filters.production.period
-                      : intl.formatMessage({ id: 'app.allProductions' })}
+                    {filters.period.name}
                   </MenuButton>
-                  <MenuList minW="180px">
-                    <MenuItem onClick={() => onProductionFilterChange(null)} fontSize="sm" color="gray.600" py={2}>
-                      {intl.formatMessage({ id: 'app.allProductions' })}
+                  <MenuList minW="150px">
+                    <MenuItem
+                      onClick={() =>
+                        onPeriodFilterChange({
+                          id: 'week',
+                          name: intl.formatMessage({ id: 'app.thisWeek' })
+                        })
+                      }
+                      fontSize="sm"
+                      color="gray.600"
+                      py={2}
+                    >
+                      {intl.formatMessage({ id: 'app.thisWeek' })}
                     </MenuItem>
-                    <MenuDivider />
-                    {dataHistories &&
-                      dataHistories.map((history, index) => (
-                        <MenuItem
-                          key={index}
-                          onClick={() => onProductionFilterChange(history)}
-                          fontSize="sm"
-                          color="gray.600"
-                          py={2}
-                        >
-                          {history.period}
-                        </MenuItem>
-                      ))}
+                    <MenuItem
+                      onClick={() =>
+                        onPeriodFilterChange({
+                          id: 'month',
+                          name: intl.formatMessage({ id: 'app.thisMonth' })
+                        })
+                      }
+                      fontSize="sm"
+                      color="gray.600"
+                      py={2}
+                    >
+                      {intl.formatMessage({ id: 'app.thisMonth' })}
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() =>
+                        onPeriodFilterChange({
+                          id: 'year',
+                          name: intl.formatMessage({ id: 'app.thisYear' })
+                        })
+                      }
+                      fontSize="sm"
+                      color="gray.600"
+                      py={2}
+                    >
+                      {intl.formatMessage({ id: 'app.thisYear' })}
+                    </MenuItem>
                   </MenuList>
                 </Menu>
-              </HStack>
-
-              <Menu>
-                <MenuButton
-                  as={Button}
-                  rightIcon={<IoIosArrowDown />}
-                  size="md"
-                  minW="150px"
-                  bg="green.500"
-                  color="white"
-                  fontWeight="medium"
-                  borderRadius="lg"
-                  _hover={{ bg: 'green.600' }}
-                  _active={{ bg: 'green.700' }}
-                >
-                  {filters.period.name}
-                </MenuButton>
-                <MenuList minW="150px">
-                  <MenuItem
-                    onClick={() =>
-                      onPeriodFilterChange({
-                        id: 'week',
-                        name: intl.formatMessage({ id: 'app.thisWeek' })
-                      })
-                    }
-                    fontSize="sm"
-                    color="gray.600"
-                    py={2}
-                  >
-                    {intl.formatMessage({ id: 'app.thisWeek' })}
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() =>
-                      onPeriodFilterChange({
-                        id: 'month',
-                        name: intl.formatMessage({ id: 'app.thisMonth' })
-                      })
-                    }
-                    fontSize="sm"
-                    color="gray.600"
-                    py={2}
-                  >
-                    {intl.formatMessage({ id: 'app.thisMonth' })}
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() =>
-                      onPeriodFilterChange({
-                        id: 'year',
-                        name: intl.formatMessage({ id: 'app.thisYear' })
-                      })
-                    }
-                    fontSize="sm"
-                    color="gray.600"
-                    py={2}
-                  >
-                    {intl.formatMessage({ id: 'app.thisYear' })}
-                  </MenuItem>
-                </MenuList>
-              </Menu>
-            </Flex>
-          </VStack>
-        </StandardCard>
-        {/* Main Dashboard Content */}
-        <VStack spacing={6} w="100%">
-          {/* Customer Quality Analytics Section - NEW */}
-          <CustomerQualityAnalytics
-            scansData={dataEstablishmentScans}
-            isLoading={!dataEstablishmentScans}
-          />
-
-          {/* Scans Table - Full Width */}
-          <Box w="100%">
-            <ScansList
-              title={intl.formatMessage({ id: 'app.scans' })}
-              labels={scansColumnsNames}
+              </Flex>
+            </VStack>
+          </StandardCard>
+          {/* Main Dashboard Content */}
+          <VStack spacing={6} w="100%">
+            {/* Customer Quality Analytics Section - NEW */}
+            <CustomerQualityAnalytics
               scansData={dataEstablishmentScans}
+              isLoading={!dataEstablishmentScans}
             />
-          </Box>
 
-          {/* Charts Row - Side by Side */}
-          <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6} w="100%">
-            {/* Scans vs Reviews Chart */}
-            <StandardCard
-              title={intl.formatMessage({ id: 'app.numberScansAndReviews' })}
-              variant="elevated"
-              headerAction={
-                <IconButton
-                  aria-label={intl.formatMessage({ id: 'app.expand' })}
-                  icon={<FiMaximize2 />}
-                  variant="ghost"
-                  size="sm"
-                  colorScheme="green"
-                  onClick={onChartModalOpen}
-                />
-              }
-            >
-              <Box w="100%" h="350px">
-                {isFetching ? (
-                  <Flex justify="center" align="center" h="100%">
-                    <CircularProgress isIndeterminate color="green.500" />
-                    <Text ml={4} color={textColor}>
-                      Cargando datos del gráfico...
-                    </Text>
-                  </Flex>
-                ) : !dataEstablishmentScansVsSaleInfo?.scans_vs_reviews ? (
-                  <Flex justify="center" align="center" h="100%">
-                    <Text color={textColor}>No hay datos disponibles</Text>
-                  </Flex>
-                ) : (
-                  <ModernLineBarChart
-                    data={dataEstablishmentScansVsSaleInfo.scans_vs_reviews.options.map(
-                      (category, index) => ({
-                        name: formatCategories([category])[0],
-                        scans:
-                          dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.scans?.[index] ||
-                          0,
-                        reviews:
-                          dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.reviews?.[index] || 0
-                      })
-                    )}
-                    lineDataKey="scans"
-                    barDataKey="reviews"
-                    xDataKey="name"
-                    height={350}
-                    showGrid={true}
-                    lineLabel={intl.formatMessage({ id: 'app.scans' })}
-                    barLabel={intl.formatMessage({ id: 'app.reviews' })}
+            {/* Scans Table - Full Width */}
+            <Box w="100%">
+              <ScansList
+                title={intl.formatMessage({ id: 'app.scans' })}
+                labels={scansColumnsNames}
+                scansData={dataEstablishmentScans}
+              />
+            </Box>
+
+            {/* Charts Row - Side by Side */}
+            <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6} w="100%">
+              {/* Scans vs Reviews Chart */}
+              <StandardCard
+                title={intl.formatMessage({ id: 'app.numberScansAndReviews' })}
+                variant="elevated"
+                headerAction={
+                  <IconButton
+                    aria-label={intl.formatMessage({ id: 'app.expand' })}
+                    icon={<FiMaximize2 />}
+                    variant="ghost"
+                    size="sm"
+                    colorScheme="green"
+                    onClick={onChartModalOpen}
                   />
-                )}
-              </Box>
-            </StandardCard>
+                }
+              >
+                <Box w="100%" h="350px">
+                  {isFetching ? (
+                    <Flex justify="center" align="center" h="100%">
+                      <CircularProgress isIndeterminate color="green.500" />
+                      <Text ml={4} color={textColor}>
+                        Cargando datos del gráfico...
+                      </Text>
+                    </Flex>
+                  ) : !dataEstablishmentScansVsSaleInfo?.scans_vs_reviews ? (
+                    <Flex justify="center" align="center" h="100%">
+                      <Text color={textColor}>No hay datos disponibles</Text>
+                    </Flex>
+                  ) : (
+                    <ModernLineBarChart
+                      data={dataEstablishmentScansVsSaleInfo.scans_vs_reviews.options.map(
+                        (category, index) => ({
+                          name: formatCategories([category])[0],
+                          scans:
+                            dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.scans?.[
+                              index
+                            ] || 0,
+                          reviews:
+                            dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.reviews?.[
+                              index
+                            ] || 0
+                        })
+                      )}
+                      lineDataKey="scans"
+                      barDataKey="reviews"
+                      xDataKey="name"
+                      height={350}
+                      showGrid={true}
+                      lineLabel={intl.formatMessage({ id: 'app.scans' })}
+                      barLabel={intl.formatMessage({ id: 'app.reviews' })}
+                    />
+                  )}
+                </Box>
+              </StandardCard>
 
-            {/* Products Reputation Chart */}
-            <StandardCard
-              title={`${intl.formatMessage({ id: 'app.productsReputation' })} ⭐️`}
-              variant="elevated"
-            >
-              <Box w="100%" h="350px">
-                {isFetchingEstablishmentProductsReputation ? (
-                  <Flex justify="center" align="center" h="100%">
-                    <CircularProgress isIndeterminate color="green.500" />
-                  </Flex>
-                ) : (
-                  <ModernBarChart
-                    data={(
-                      dataEstablishmentProductsReputation?.products_reputation?.options || []
-                    ).map((product, index) => ({
-                      name: product,
-                      value:
-                        dataEstablishmentProductsReputation?.products_reputation?.series?.[index] ||
-                        0
-                    }))}
-                    dataKey="value"
-                    xDataKey="name"
-                    height={350}
-                    showGrid={true}
-                    showValues={true}
-                    gradientColors={true}
-                  />
-                )}
-              </Box>
-            </StandardCard>
-          </Grid>
+              {/* Products Reputation Chart */}
+              <StandardCard
+                title={`${intl.formatMessage({ id: 'app.productsReputation' })} ⭐️`}
+                variant="elevated"
+              >
+                <Box w="100%" h="350px">
+                  {isFetchingEstablishmentProductsReputation ? (
+                    <Flex justify="center" align="center" h="100%">
+                      <CircularProgress isIndeterminate color="green.500" />
+                    </Flex>
+                  ) : (
+                    <ModernBarChart
+                      data={(
+                        dataEstablishmentProductsReputation?.products_reputation?.options || []
+                      ).map((product, index) => ({
+                        name: product,
+                        value:
+                          dataEstablishmentProductsReputation?.products_reputation?.series?.[
+                            index
+                          ] || 0
+                      }))}
+                      dataKey="value"
+                      xDataKey="name"
+                      height={350}
+                      showGrid={true}
+                      showValues={true}
+                      gradientColors={true}
+                    />
+                  )}
+                </Box>
+              </StandardCard>
+            </Grid>
 
-          {/* Reviews Section - Full Width */}
-          <Box w="100%">
-            <Reviews />
-          </Box>
+            {/* Reviews Section - Full Width */}
+            <Box w="100%">
+              <Reviews />
+            </Box>
+          </VStack>
         </VStack>
-      </VStack>
-    </StandardPage>
+      </StandardPage>
 
       {/* Expandable Chart Modal */}
       <ExpandableChartModal
@@ -940,8 +975,7 @@ export default function CommercialView() {
           dataEstablishmentScansVsSaleInfo?.scans_vs_reviews
             ? dataEstablishmentScansVsSaleInfo.scans_vs_reviews.options.map((category, index) => ({
                 name: formatCategories([category])[0],
-                scans:
-                  dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.scans?.[index] || 0,
+                scans: dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.scans?.[index] || 0,
                 reviews:
                   dataEstablishmentScansVsSaleInfo.scans_vs_reviews.series.reviews?.[index] || 0
               }))

@@ -231,7 +231,9 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
     return (
       <Box p={8} textAlign="center">
         <Text color="red.500">Error loading production data. Please try again.</Text>
-        <Text color="gray.500" fontSize="sm" mt={2}>Production ID: {productionId}</Text>
+        <Text color="gray.500" fontSize="sm" mt={2}>
+          Production ID: {productionId}
+        </Text>
       </Box>
     );
   }
@@ -241,7 +243,9 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
     return (
       <Box p={8} textAlign="center">
         <Text color="orange.500">No production data found.</Text>
-        <Text color="gray.500" fontSize="sm" mt={2}>Production ID: {productionId}</Text>
+        <Text color="gray.500" fontSize="sm" mt={2}>
+          Production ID: {productionId}
+        </Text>
       </Box>
     );
   }

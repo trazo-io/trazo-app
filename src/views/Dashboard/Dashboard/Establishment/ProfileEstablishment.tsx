@@ -35,11 +35,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import {
-  StandardCard,
-  StandardButton,
-  StandardPage
-} from 'components/Design/StandardComponents';
+import { StandardCard, StandardButton, StandardPage } from 'components/Design/StandardComponents';
 import { useGetEstablishmentQuery } from 'store/api/companyApi';
 import { StandardImageGallery } from 'components/ImageGallery';
 
@@ -85,7 +81,11 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
           </Link>
         );
       default:
-        return <Text fontWeight="medium" color="gray.800">{value}</Text>;
+        return (
+          <Text fontWeight="medium" color="gray.800">
+            {value}
+          </Text>
+        );
     }
   };
 
@@ -269,10 +269,7 @@ function ProfileEstablishment() {
 
   if (isLoading) {
     return (
-      <StandardPage
-        showBackButton
-        onBack={() => navigate('/admin/dashboard')}
-      >
+      <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
         <Center py={20}>
           <Spinner size="xl" color="green.500" />
         </Center>
@@ -282,10 +279,7 @@ function ProfileEstablishment() {
 
   if (error || !establishmentData) {
     return (
-      <StandardPage
-        showBackButton
-        onBack={() => navigate('/admin/dashboard')}
-      >
+      <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
         <Center py={20}>
           <Text color="red.500">Error al cargar los datos del establecimiento.</Text>
         </Center>
@@ -294,10 +288,7 @@ function ProfileEstablishment() {
   }
 
   return (
-    <StandardPage
-      showBackButton
-      onBack={() => navigate('/admin/dashboard')}
-    >
+    <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
       <VStack spacing={8} w="100%">
         {/* Identity Section */}
         <StandardCard
@@ -357,7 +348,9 @@ function ProfileEstablishment() {
                 )}
                 {(establishmentData.establishment_type || establishmentData.type) && (
                   <Badge colorScheme="blue" variant="subtle" px={2} py={1} borderRadius="full">
-                    {formatDisplayValue(establishmentData.establishment_type || establishmentData.type)}
+                    {formatDisplayValue(
+                      establishmentData.establishment_type || establishmentData.type
+                    )}
                   </Badge>
                 )}
                 {establishmentData.farming_method && (
@@ -393,21 +386,27 @@ function ProfileEstablishment() {
               <Text fontSize="2xl" fontWeight="bold" color="gray.800">
                 {establishmentData.total_acreage || 0}
               </Text>
-              <Text fontSize="sm" color="gray.600">Acres</Text>
+              <Text fontSize="sm" color="gray.600">
+                Acres
+              </Text>
             </VStack>
             <VStack spacing={1} align="center" p={4} bg="purple.50" borderRadius="lg">
               <Icon as={FaCalendar} color="purple.500" boxSize={6} />
               <Text fontSize="2xl" fontWeight="bold" color="gray.800">
                 {establishmentData.year_established || '--'}
               </Text>
-              <Text fontSize="sm" color="gray.600">Fundado</Text>
+              <Text fontSize="sm" color="gray.600">
+                Fundado
+              </Text>
             </VStack>
             <VStack spacing={1} align="center" p={4} bg="orange.50" borderRadius="lg">
               <Icon as={FaSeedling} color="orange.500" boxSize={6} />
               <Text fontSize="2xl" fontWeight="bold" color="gray.800">
                 {getCropsGrown().length}
               </Text>
-              <Text fontSize="sm" color="gray.600">Cultivos</Text>
+              <Text fontSize="sm" color="gray.600">
+                Cultivos
+              </Text>
             </VStack>
           </SimpleGrid>
         </StandardCard>
@@ -444,26 +443,14 @@ function ProfileEstablishment() {
         {/* Location Details */}
         <StandardCard title="Ubicación" variant="elevated">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <InfoRow
-              icon={FaMapMarkerAlt}
-              label="Dirección"
-              value={formatAddress()}
-            />
+            <InfoRow icon={FaMapMarkerAlt} label="Dirección" value={formatAddress()} />
             <InfoRow
               icon={FaMapMarkerAlt}
               label="Código Postal"
               value={establishmentData.zip_code}
             />
-            <InfoRow
-              icon={FaMapMarkerAlt}
-              label="Zona"
-              value={establishmentData.zone}
-            />
-            <InfoRow
-              icon={FaMapMarkerAlt}
-              label="Coordenadas"
-              value={formatCoordinates()}
-            />
+            <InfoRow icon={FaMapMarkerAlt} label="Zona" value={establishmentData.zone} />
+            <InfoRow icon={FaMapMarkerAlt} label="Coordenadas" value={formatCoordinates()} />
           </SimpleGrid>
         </StandardCard>
 
@@ -478,7 +465,9 @@ function ProfileEstablishment() {
             <InfoRow
               icon={FaTractor}
               label="Área Total"
-              value={establishmentData.total_acreage ? `${establishmentData.total_acreage} acres` : null}
+              value={
+                establishmentData.total_acreage ? `${establishmentData.total_acreage} acres` : null
+              }
             />
             <InfoRow
               icon={FaCalendar}
@@ -489,7 +478,9 @@ function ProfileEstablishment() {
         </StandardCard>
 
         {/* Agricultural Information - Updated: Removed climate_zone, updated soil types to soil health practices */}
-        {(getWaterSources().length > 0 || getSoilHealthPractices().length > 0 || getIrrigationMethods().length > 0) && (
+        {(getWaterSources().length > 0 ||
+          getSoilHealthPractices().length > 0 ||
+          getIrrigationMethods().length > 0) && (
           <StandardCard title="Información Agrícola" variant="elevated">
             <VStack spacing={6} align="stretch">
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
@@ -613,12 +604,20 @@ function ProfileEstablishment() {
         )}
 
         {/* About Section */}
-        {(establishmentData.about || establishmentData.main_activities || establishmentData.location_highlights) && (
+        {(establishmentData.about ||
+          establishmentData.main_activities ||
+          establishmentData.location_highlights) && (
           <StandardCard title="Acerca del Establecimiento" variant="elevated">
             <VStack spacing={4} align="stretch">
               {establishmentData.about && (
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={1}>
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                    fontWeight="semibold"
+                    mb={1}
+                  >
                     Descripción
                   </Text>
                   <Text color="gray.700" lineHeight="1.7">
@@ -628,7 +627,13 @@ function ProfileEstablishment() {
               )}
               {establishmentData.main_activities && (
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={1}>
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                    fontWeight="semibold"
+                    mb={1}
+                  >
                     Actividades Principales
                   </Text>
                   <Text color="gray.700" lineHeight="1.7">
@@ -638,7 +643,13 @@ function ProfileEstablishment() {
               )}
               {establishmentData.location_highlights && (
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={1}>
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                    fontWeight="semibold"
+                    mb={1}
+                  >
                     Aspectos Destacados
                   </Text>
                   <Text color="gray.700" lineHeight="1.7">
@@ -654,18 +665,15 @@ function ProfileEstablishment() {
         {establishmentData.company && (
           <StandardCard title="Información de la Compañía" variant="elevated">
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              <InfoRow
-                icon={FaBuilding}
-                label="Compañía"
-                value={establishmentData.company.name}
-              />
-              {establishmentData.company.tradename && establishmentData.company.tradename !== establishmentData.company.name && (
-                <InfoRow
-                  icon={FaBuilding}
-                  label="Nombre Comercial"
-                  value={establishmentData.company.tradename}
-                />
-              )}
+              <InfoRow icon={FaBuilding} label="Compañía" value={establishmentData.company.name} />
+              {establishmentData.company.tradename &&
+                establishmentData.company.tradename !== establishmentData.company.name && (
+                  <InfoRow
+                    icon={FaBuilding}
+                    label="Nombre Comercial"
+                    value={establishmentData.company.tradename}
+                  />
+                )}
               <InfoRow
                 icon={FaBuilding}
                 label="Industria"

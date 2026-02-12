@@ -753,9 +753,10 @@ function ProductDetail() {
 
   // ⚠️ TRANSPARENCY FIX: Only show real reputation data, never default to 4.2
   // If reputation is missing, pass undefined so component can show "No ratings yet"
-  const safeReputation = (completeData as any)?.reputation !== undefined
-    ? Math.max(0, Math.min(5, (completeData as any)?.reputation))
-    : undefined;
+  const safeReputation =
+    (completeData as any)?.reputation !== undefined
+      ? Math.max(0, Math.min(5, (completeData as any)?.reputation))
+      : undefined;
 
   // QR Verification loading state
   if (isVerifyingQR) {
@@ -838,13 +839,7 @@ function ProductDetail() {
   }
 
   return (
-    <Flex
-      direction="column"
-      alignSelf="center"
-      justifySelf="center"
-      overflow="hidden"
-      w="100%"
-    >
+    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
       {/* Transparency Hero Section - Primary Navigation Target */}
       <Box id="transparency-section">
         <CarbonHeroSection
@@ -1257,7 +1252,6 @@ function ProductDetail() {
                         ? completeData.events
                         : [];
 
-
                     if (Array.isArray(events) && events.length > 0) {
                       // Calculate carbon data per event from the total production data
                       const totalEvents = events.length;
@@ -1287,7 +1281,7 @@ function ProductDetail() {
                           typeStr.includes('production') ||
                           typeStr.includes('planting') ||
                           typeStr.includes('harvest') ||
-                          ['pl', 'ha', 'ir', 'pr', 'tr', 'cu', 'th', 'em'].includes(typeStr)  // ✅ FIXED: Added 'cu', 'th', 'em' (Equipment Maintenance)
+                          ['pl', 'ha', 'ir', 'pr', 'tr', 'cu', 'th', 'em'].includes(typeStr) // ✅ FIXED: Added 'cu', 'th', 'em' (Equipment Maintenance)
                         )
                           return 1;
                         if (

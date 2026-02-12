@@ -10,7 +10,7 @@ import {
   Badge,
   Button,
   Flex,
-  useBreakpointValue,
+  useBreakpointValue
 } from '@chakra-ui/react';
 import { FaCheck, FaLightbulb, FaChevronRight } from 'react-icons/fa';
 
@@ -28,29 +28,29 @@ const TRANSPARENCY_LEVELS: TransparencyLevel[] = [
     max: 50,
     label: 'Getting Started',
     color: 'orange',
-    description: 'Begin documenting practices',
+    description: 'Begin documenting practices'
   },
   {
     min: 50,
     max: 70,
     label: 'Building',
     color: 'yellow',
-    description: 'Good documentation progress',
+    description: 'Good documentation progress'
   },
   {
     min: 70,
     max: 90,
     label: 'Strong',
     color: 'blue',
-    description: 'Excellent transparency',
+    description: 'Excellent transparency'
   },
   {
     min: 90,
     max: 100,
     label: 'Exceptional',
     color: 'green',
-    description: 'Outstanding transparency',
-  },
+    description: 'Outstanding transparency'
+  }
 ];
 
 interface TransparencyScoreCardProps {
@@ -74,27 +74,22 @@ const TransparencyScoreCard: React.FC<TransparencyScoreCardProps> = ({
   nextSteps = [],
   onImprove,
   showProgress = true,
-  compact = false,
+  compact = false
 }) => {
-  const currentLevel = TRANSPARENCY_LEVELS.find(
-    (level) => score >= level.min && score <= level.max
-  ) || TRANSPARENCY_LEVELS[0];
+  const currentLevel =
+    TRANSPARENCY_LEVELS.find((level) => score >= level.min && score <= level.max) ||
+    TRANSPARENCY_LEVELS[0];
 
   const nextLevel = TRANSPARENCY_LEVELS[TRANSPARENCY_LEVELS.indexOf(currentLevel) + 1];
   const scoreInRange = nextLevel
     ? Math.min(score - currentLevel.min, nextLevel.min - currentLevel.min)
     : score - currentLevel.min;
-  const rangeSize = nextLevel
-    ? nextLevel.min - currentLevel.min
-    : 100 - currentLevel.min;
+  const rangeSize = nextLevel ? nextLevel.min - currentLevel.min : 100 - currentLevel.min;
   const progressPercent = nextLevel ? (scoreInRange / rangeSize) * 100 : 100;
 
   const isMobile = useBreakpointValue({ base: true, md: false });
 
-  const typeLabel =
-    type === 'parcel'
-      ? 'Parcel Documentation Score'
-      : 'Farm Transparency Score';
+  const typeLabel = type === 'parcel' ? 'Parcel Documentation Score' : 'Farm Transparency Score';
 
   return (
     <Box

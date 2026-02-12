@@ -235,7 +235,12 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
     }
   });
 
-  const { register, handleSubmit, reset, formState: { errors } } = methods;
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors }
+  } = methods;
 
   // Reset form when company changes or modal opens
   useEffect(() => {
@@ -269,10 +274,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
   const handleFormSubmit = async (data: EditCompanyFormData) => {
     // Clean up empty strings to null/undefined
     const cleanedData = Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [
-        key,
-        value === '' ? null : value
-      ])
+      Object.entries(data).map(([key, value]) => [key, value === '' ? null : value])
     );
     // Always set country to US since we're US-only
     (cleanedData as any).country = 'US';
@@ -350,22 +352,12 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
   // Step 1: Basic Information
   const BasicInfoStep = () => (
     <VStack spacing={5} align="stretch">
-      <StandardField
-        label="Nombre de la Compañía"
-        required
-        error={errors.name?.message}
-      >
-        <StandardInput
-          placeholder="Ej: Green Valley Farms"
-          {...register('name')}
-        />
+      <StandardField label="Nombre de la Compañía" required error={errors.name?.message}>
+        <StandardInput placeholder="Ej: Green Valley Farms" {...register('name')} />
       </StandardField>
 
       <StandardField label="Nombre Comercial" error={errors.tradename?.message}>
-        <StandardInput
-          placeholder="Nombre comercial (opcional)"
-          {...register('tradename')}
-        />
+        <StandardInput placeholder="Nombre comercial (opcional)" {...register('tradename')} />
       </StandardField>
 
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -412,10 +404,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
 
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
         <StandardField label="ID Fiscal" error={errors.fiscal_id?.message}>
-          <StandardInput
-            placeholder="RFC / EIN"
-            {...register('fiscal_id')}
-          />
+          <StandardInput placeholder="RFC / EIN" {...register('fiscal_id')} />
         </StandardField>
 
         <StandardField label="Número de Empleados" error={errors.employee_count?.message}>
@@ -439,14 +428,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
   // Step 2: Location
   const LocationStep = () => (
     <VStack spacing={5} align="stretch">
-      <Box
-        p={4}
-        bg="blue.50"
-        borderRadius="lg"
-        border="1px solid"
-        borderColor="blue.200"
-        mb={2}
-      >
+      <Box p={4} bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200" mb={2}>
         <HStack spacing={3} align="flex-start">
           <Icon as={FaFlag} color="blue.500" boxSize={5} mt={0.5} />
           <Box>
@@ -454,26 +436,20 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
               Estados Unidos
             </Text>
             <Text fontSize="xs" color="blue.700" mt={1}>
-              Tu estado es necesario para cálculos precisos de carbono usando
-              datos regionales de la USDA.
+              Tu estado es necesario para cálculos precisos de carbono usando datos regionales de la
+              USDA.
             </Text>
           </Box>
         </HStack>
       </Box>
 
       <StandardField label="Dirección" error={errors.address?.message}>
-        <StandardInput
-          placeholder="123 Farm Road"
-          {...register('address')}
-        />
+        <StandardInput placeholder="123 Farm Road" {...register('address')} />
       </StandardField>
 
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
         <StandardField label="Ciudad" error={errors.city?.message}>
-          <StandardInput
-            placeholder="Farmington"
-            {...register('city')}
-          />
+          <StandardInput placeholder="Farmington" {...register('city')} />
         </StandardField>
 
         <StandardField
@@ -493,10 +469,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
       </SimpleGrid>
 
       <StandardField label="Código Postal" error={errors.zip_code?.message}>
-        <StandardInput
-          placeholder="12345"
-          {...register('zip_code')}
-        />
+        <StandardInput placeholder="12345" {...register('zip_code')} />
       </StandardField>
     </VStack>
   );
@@ -569,13 +542,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         </StandardSelect>
       </StandardField>
 
-      <Box
-        p={4}
-        bg="green.50"
-        borderRadius="lg"
-        border="1px solid"
-        borderColor="green.200"
-      >
+      <Box p={4} bg="green.50" borderRadius="lg" border="1px solid" borderColor="green.200">
         <HStack spacing={3} align="flex-start">
           <Icon as={FaLeaf} color="green.500" boxSize={5} mt={0.5} />
           <Box>
@@ -583,8 +550,8 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
               Compromiso con la Transparencia
             </Text>
             <Text fontSize="xs" color="green.700" mt={1}>
-              Al completar esta información, ayudas a tus consumidores a conocer mejor
-              tus prácticas agrícolas y tu compromiso con la sostenibilidad.
+              Al completar esta información, ayudas a tus consumidores a conocer mejor tus prácticas
+              agrícolas y tu compromiso con la sostenibilidad.
             </Text>
           </Box>
         </HStack>
@@ -642,9 +609,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
   const modalContent = (
     <FormProvider {...methods}>
       <StepIndicator />
-      <Box minH="400px">
-        {renderCurrentStep()}
-      </Box>
+      <Box minH="400px">{renderCurrentStep()}</Box>
     </FormProvider>
   );
 
@@ -665,9 +630,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
               </Text>
             </VStack>
           </DrawerHeader>
-          <DrawerBody py={6}>
-            {modalContent}
-          </DrawerBody>
+          <DrawerBody py={6}>{modalContent}</DrawerBody>
           <DrawerFooter borderTopWidth="1px">
             <NavigationButtons />
           </DrawerFooter>
@@ -691,9 +654,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
           </VStack>
         </ModalHeader>
         <ModalCloseButton />
-        <ModalBody py={6}>
-          {modalContent}
-        </ModalBody>
+        <ModalBody py={6}>{modalContent}</ModalBody>
         <ModalFooter borderTopWidth="1px" pt={4}>
           <NavigationButtons />
         </ModalFooter>

@@ -522,7 +522,12 @@ function TransparencyDashboard() {
                     </CardBody>
                   </Card>
 
-                  <Card bg="purple.50" border="1px solid" borderColor="purple.100" borderRadius="xl">
+                  <Card
+                    bg="purple.50"
+                    border="1px solid"
+                    borderColor="purple.100"
+                    borderRadius="xl"
+                  >
                     <CardBody p={4} textAlign="center">
                       <VStack spacing={2}>
                         <Icon as={FaPhotoVideo} color="purple.500" boxSize={6} />
@@ -536,7 +541,12 @@ function TransparencyDashboard() {
                     </CardBody>
                   </Card>
 
-                  <Card bg="orange.50" border="1px solid" borderColor="orange.100" borderRadius="xl">
+                  <Card
+                    bg="orange.50"
+                    border="1px solid"
+                    borderColor="orange.100"
+                    borderRadius="xl"
+                  >
                     <CardBody p={4} textAlign="center">
                       <VStack spacing={2}>
                         <Icon as={FaDatabase} color="orange.500" boxSize={6} />
@@ -1030,7 +1040,10 @@ function TransparencyDashboard() {
                                             colorScheme="green"
                                             isChecked={production.published}
                                             onChange={() =>
-                                              handleToggleProduction(production.id, production.published)
+                                              handleToggleProduction(
+                                                production.id,
+                                                production.published
+                                              )
                                             }
                                             size="sm"
                                           />

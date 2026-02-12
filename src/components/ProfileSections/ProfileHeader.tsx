@@ -14,7 +14,7 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-  useBreakpointValue,
+  useBreakpointValue
 } from '@chakra-ui/react';
 import { FaEllipsisV, FaChevronLeft, FaEdit } from 'react-icons/fa';
 import { MdMoreVert } from 'react-icons/md';
@@ -49,18 +49,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onEdit,
   onMoreActions = [],
   headerImage,
-  isLoading,
+  isLoading
 }) => {
   const isMobile = useBreakpointValue({ base: true, md: false });
   const statsGridColumns = useBreakpointValue({ base: 2, md: stats.length > 3 ? 4 : stats.length });
 
   return (
-    <Box
-      bg="white"
-      borderBottom="1px"
-      borderColor="gray.200"
-      pb={{ base: 6, md: 8 }}
-    >
+    <Box bg="white" borderBottom="1px" borderColor="gray.200" pb={{ base: 6, md: 8 }}>
       {/* Header Background with Back Button */}
       <Flex
         align="center"
@@ -107,12 +102,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           )}
           {onMoreActions.length > 0 && (
             <Menu>
-              <MenuButton
-                as={IconButton}
-                icon={<MdMoreVert />}
-                variant="ghost"
-                size="sm"
-              />
+              <MenuButton as={IconButton} icon={<MdMoreVert />} variant="ghost" size="sm" />
               <MenuList>
                 {onMoreActions.map((action, idx) => (
                   <MenuItem key={idx} onClick={action.onClick}>
@@ -148,9 +138,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   {crumb.label}
                 </Text>
               ) : (
-                <Text color={crumb.isActive ? 'gray.900' : 'gray.600'}>
-                  {crumb.label}
-                </Text>
+                <Text color={crumb.isActive ? 'gray.900' : 'gray.600'}>{crumb.label}</Text>
               )}
             </React.Fragment>
           ))}
@@ -175,9 +163,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </Text>
                 <Flex align="center" gap={2}>
                   {stat.icon && (
-                    <Box color={stat.color ? `${stat.color}.500` : 'gray.500'}>
-                      {stat.icon}
-                    </Box>
+                    <Box color={stat.color ? `${stat.color}.500` : 'gray.500'}>{stat.icon}</Box>
                   )}
                   <Text fontSize="2xl" fontWeight="bold" color="gray.900">
                     {stat.value}
@@ -191,12 +177,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
       {/* Badges */}
       {badges.length > 0 && (
-        <Flex
-          px={{ base: 4, md: 6 }}
-          pt={4}
-          gap={2}
-          flexWrap="wrap"
-        >
+        <Flex px={{ base: 4, md: 6 }} pt={4} gap={2} flexWrap="wrap">
           {badges.map((badge, idx) => (
             <Badge
               key={idx}

@@ -43,7 +43,10 @@ const CERTIFICATION_DISPLAY_NAMES: Record<string, string> = {
 
 const formatCertificationType = (value: string | undefined | null): string => {
   if (!value) return 'Not certified';
-  return CERTIFICATION_DISPLAY_NAMES[value] || value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ');
+  return (
+    CERTIFICATION_DISPLAY_NAMES[value] ||
+    value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ')
+  );
 };
 
 interface ParcelTransparencyData {
@@ -109,7 +112,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
     else if (descLength >= 10) descPoints = 20;
 
     // Sustainability practices (30 max)
-    const hasPractices = !!(parcelData.sustainability_practices?.trim());
+    const hasPractices = !!parcelData.sustainability_practices?.trim();
     const practicesPoints = hasPractices ? 30 : 0;
 
     // Images (20 max)
@@ -130,16 +133,18 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
         currentPoints: descPoints,
         icon: FaFileAlt,
         color: 'green',
-        requirement: descLength >= 100
-          ? 'Excellent! 100+ characters'
-          : descLength >= 50
+        requirement:
+          descLength >= 100
+            ? 'Excellent! 100+ characters'
+            : descLength >= 50
             ? `Good (${descLength} chars) - add more for full points`
             : descLength >= 10
-              ? `Basic (${descLength} chars) - aim for 100+ chars`
-              : 'Need at least 10 characters',
-        tip: descLength < 100
-          ? 'Write a detailed description (100+ characters) explaining what makes this parcel special for consumers.'
-          : 'Great job! Your description helps consumers understand this parcel.',
+            ? `Basic (${descLength} chars) - aim for 100+ chars`
+            : 'Need at least 10 characters',
+        tip:
+          descLength < 100
+            ? 'Write a detailed description (100+ characters) explaining what makes this parcel special for consumers.'
+            : 'Great job! Your description helps consumers understand this parcel.',
         isComplete: descPoints === 40
       },
       {
@@ -162,14 +167,16 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
         currentPoints: imagePoints,
         icon: FaCamera,
         color: 'purple',
-        requirement: imageCount >= 3
-          ? `Excellent! ${imageCount} images`
-          : imageCount >= 1
+        requirement:
+          imageCount >= 3
+            ? `Excellent! ${imageCount} images`
+            : imageCount >= 1
             ? `${imageCount} image${imageCount > 1 ? 's' : ''} - add ${3 - imageCount} more`
             : 'No images uploaded',
-        tip: imageCount < 3
-          ? 'Upload 3+ high-quality images showing your parcel and farming practices.'
-          : 'Excellent visual documentation!',
+        tip:
+          imageCount < 3
+            ? 'Upload 3+ high-quality images showing your parcel and farming practices.'
+            : 'Excellent visual documentation!',
         isComplete: imagePoints === 20
       },
       {
@@ -183,7 +190,9 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
           ? formatCertificationType(parcelData.certification_type)
           : 'Not certified',
         tip: hasCert
-          ? `Your ${formatCertificationType(parcelData.certification_type)} certification adds credibility.`
+          ? `Your ${formatCertificationType(
+              parcelData.certification_type
+            )} certification adds credibility.`
           : 'Add certification (Organic, GAP, etc.) to boost consumer trust.',
         isComplete: certPoints === 10
       }
@@ -193,7 +202,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
   const categories = calculateScoreBreakdown();
   const totalScore = categories.reduce((sum, cat) => sum + cat.currentPoints, 0);
   const maxScore = 100;
-  const completedCategories = categories.filter(c => c.isComplete).length;
+  const completedCategories = categories.filter((c) => c.isComplete).length;
 
   // Get score color based on value
   const getScoreColor = (score: number) => {
@@ -265,35 +274,18 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
   // Compact variant
   if (variant === 'compact') {
     return (
-      <Box
-        p={4}
-        bg="gray.50"
-        borderRadius="lg"
-        border="1px"
-        borderColor="gray.200"
-      >
+      <Box p={4} bg="gray.50" borderRadius="lg" border="1px" borderColor="gray.200">
         <VStack spacing={3} align="stretch">
           <HStack justify="space-between">
             <Text fontWeight="medium" color={textColor}>
               Transparency Score
             </Text>
-            <Badge
-              colorScheme={scoreColor}
-              variant="solid"
-              px={3}
-              py={1}
-              borderRadius="full"
-            >
+            <Badge colorScheme={scoreColor} variant="solid" px={3} py={1} borderRadius="full">
               {totalScore}%
             </Badge>
           </HStack>
 
-          <Progress
-            value={totalScore}
-            colorScheme={scoreColor}
-            size="sm"
-            borderRadius="full"
-          />
+          <Progress value={totalScore} colorScheme={scoreColor} size="sm" borderRadius="full" />
 
           <Text fontSize="sm" color={mutedColor}>
             {completedCategories}/4 categories complete
@@ -330,16 +322,14 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
                 </Text>
               </VStack>
             </Circle>
-            <Badge
-              colorScheme={scoreColor}
-              variant="subtle"
-              fontSize="sm"
-              px={3}
-              py={1}
-            >
-              {totalScore >= 80 ? 'Excellent' :
-               totalScore >= 60 ? 'Good' :
-               totalScore >= 40 ? 'Fair' : 'Needs Work'}
+            <Badge colorScheme={scoreColor} variant="subtle" fontSize="sm" px={3} py={1}>
+              {totalScore >= 80
+                ? 'Excellent'
+                : totalScore >= 60
+                ? 'Good'
+                : totalScore >= 40
+                ? 'Fair'
+                : 'Needs Work'}
             </Badge>
           </VStack>
 
@@ -351,8 +341,8 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
               {totalScore >= 80
                 ? 'Great transparency! Consumers will trust your products.'
                 : totalScore >= 60
-                  ? 'Good progress! A few improvements will boost trust.'
-                  : 'Complete more sections to build consumer confidence.'}
+                ? 'Good progress! A few improvements will boost trust.'
+                : 'Complete more sections to build consumer confidence.'}
             </Text>
           </VStack>
         </HStack>
@@ -420,12 +410,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
                 />
 
                 {!category.isComplete && (
-                  <HStack
-                    spacing={2}
-                    p={2}
-                    bg={`${category.color}.50`}
-                    borderRadius="md"
-                  >
+                  <HStack spacing={2} p={2} bg={`${category.color}.50`} borderRadius="md">
                     <Icon as={FaLightbulb} color={`${category.color}.500`} boxSize={3} />
                     <Text fontSize="sm" color={`${category.color}.700`}>
                       {category.tip}
@@ -456,13 +441,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
 
         {/* Success Message */}
         {totalScore === 100 && (
-          <Box
-            p={4}
-            bg="green.50"
-            borderRadius="lg"
-            border="1px"
-            borderColor="green.200"
-          >
+          <Box p={4} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
             <HStack spacing={3}>
               <Icon as={FaCheckCircle} color="green.500" boxSize={5} />
               <VStack spacing={0} align="start">

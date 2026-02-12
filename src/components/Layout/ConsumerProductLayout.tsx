@@ -30,7 +30,15 @@ export const ConsumerProductLayout: React.FC<ConsumerProductLayoutProps> = ({ ch
         </Box>
 
         {/* Footer - Following Trazo standards */}
-        <Box as="footer" bg="white" borderTop="1px solid" borderTopColor="gray.200" px={4} pt={6} pb={{ base: '120px', md: 6 }}>
+        <Box
+          as="footer"
+          bg="white"
+          borderTop="1px solid"
+          borderTopColor="gray.200"
+          px={4}
+          pt={6}
+          pb={{ base: '120px', md: 6 }}
+        >
           <Footer />
         </Box>
       </Flex>

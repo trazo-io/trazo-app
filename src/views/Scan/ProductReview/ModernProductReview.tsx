@@ -107,7 +107,13 @@ export default function ModernProductReview() {
         <StandardCard variant="elevated">
           <VStack spacing={{ base: 5, md: 6 }} align="stretch">
             {/* Product Information Header */}
-            <Box p={{ base: 4, md: 6 }} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
+            <Box
+              p={{ base: 4, md: 6 }}
+              bg="green.50"
+              borderRadius="xl"
+              border="1px solid"
+              borderColor="green.200"
+            >
               <HStack spacing={4} align="start">
                 {historyData?.images?.length > 0 && (
                   <Image

@@ -11,17 +11,10 @@ import {
   Flex,
   IconButton
 } from '@chakra-ui/react';
-import {
-  FaStar,
-  FaChevronRight,
-  FaChevronLeft
-} from 'react-icons/fa';
+import { FaStar, FaChevronRight, FaChevronLeft } from 'react-icons/fa';
 import { format } from 'date-fns';
 import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  StandardPage,
-  StandardCard
-} from '../../../components/Design/StandardComponents';
+import { StandardPage, StandardCard } from '../../../components/Design/StandardComponents';
 import { useGetUserReviewsQuery } from 'store/api/historyApi';
 
 const ITEMS_PER_PAGE = 10;
@@ -53,10 +46,7 @@ export default function AllReviews() {
       showBackButton
       onBack={() => navigate('/admin/dashboard/journey')}
     >
-      <StandardCard
-        title={`Your Reviews (${totalCount})`}
-        variant="elevated"
-      >
+      <StandardCard title={`Your Reviews (${totalCount})`} variant="elevated">
         <VStack spacing={3}>
           {isLoading ? (
             <Box textAlign="center" py={8}>
@@ -65,12 +55,14 @@ export default function AllReviews() {
           ) : paginatedData.length > 0 ? (
             <>
               {paginatedData.map((review: any, index: number) => {
-                const productName = typeof review.history.product === 'object'
-                  ? review.history.product?.name || 'Unknown Product'
-                  : review.history.product || 'Unknown Product';
-                const reviewDate = review.date && !isNaN(new Date(review.date).getTime())
-                  ? format(new Date(review.date), 'MMM dd, yyyy')
-                  : 'Recently';
+                const productName =
+                  typeof review.history.product === 'object'
+                    ? review.history.product?.name || 'Unknown Product'
+                    : review.history.product || 'Unknown Product';
+                const reviewDate =
+                  review.date && !isNaN(new Date(review.date).getTime())
+                    ? format(new Date(review.date), 'MMM dd, yyyy')
+                    : 'Recently';
 
                 return (
                   <NavLink
@@ -148,12 +140,7 @@ export default function AllReviews() {
 
                         {/* Review Content */}
                         <VStack align="stretch" spacing={3}>
-                          <Text
-                            fontSize="sm"
-                            color="gray.600"
-                            noOfLines={2}
-                            lineHeight="1.6"
-                          >
+                          <Text fontSize="sm" color="gray.600" noOfLines={2} lineHeight="1.6">
                             {review.written_review || 'No comments'}
                           </Text>
                           <HStack spacing={4} fontSize="xs" color="gray.500">

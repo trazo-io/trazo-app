@@ -784,7 +784,6 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
       };
 
       onSubmit(finalData as any);
-
     } catch (error) {
       console.error('❌ Form submission error:', error);
       toast({

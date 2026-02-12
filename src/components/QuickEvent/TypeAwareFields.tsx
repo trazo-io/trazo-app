@@ -1,13 +1,17 @@
 import React, { useCallback, useMemo } from 'react';
-import { VStack, HStack, InputGroup, InputRightAddon, Text, Box, Badge, Icon } from '@chakra-ui/react';
+import {
+  VStack,
+  HStack,
+  InputGroup,
+  InputRightAddon,
+  Text,
+  Box,
+  Badge,
+  Icon
+} from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-import {
-  StandardField,
-  StandardInput,
-  StandardSelect,
-  StandardTextarea
-} from 'components/Design';
+import { StandardField, StandardInput, StandardSelect, StandardTextarea } from 'components/Design';
 import {
   QuickEventField,
   QuickEventTypeConfig,
@@ -80,9 +84,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
       }
 
       const label = intl.formatMessage({ id: field.labelKey });
-      const helpText = field.helpKey
-        ? intl.formatMessage({ id: field.helpKey })
-        : undefined;
+      const helpText = field.helpKey ? intl.formatMessage({ id: field.helpKey }) : undefined;
       const placeholder = field.placeholderKey
         ? intl.formatMessage({ id: field.placeholderKey })
         : undefined;
@@ -119,7 +121,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
         case 'number':
           // Check if this field has a unit dropdown (like area_covered + area_unit)
           if (field.hasUnitDropdown && field.unitFieldName) {
-            const unitValue = values[field.unitFieldName] as string || '';
+            const unitValue = (values[field.unitFieldName] as string) || '';
             return (
               <StandardField
                 key={field.name}
@@ -245,15 +247,28 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
               : null;
 
             // Get the dynamic label based on chemical type (matching ChemicalTab-ENHANCED.jsx)
-            const concentrationLabel = chemicalType === 'FE'
-              ? intl.formatMessage({ id: 'quickAdd.fields.concentration.npkRatio' }, { defaultMessage: 'NPK Ratio' })
-              : chemicalType === 'PE'
-              ? intl.formatMessage({ id: 'quickAdd.fields.concentration.pesticideConcentration' }, { defaultMessage: 'Pesticide Concentration' })
-              : chemicalType === 'HE'
-              ? intl.formatMessage({ id: 'quickAdd.fields.concentration.herbicideConcentration' }, { defaultMessage: 'Herbicide Concentration' })
-              : chemicalType === 'FU'
-              ? intl.formatMessage({ id: 'quickAdd.fields.concentration.fungicideConcentration' }, { defaultMessage: 'Fungicide Concentration' })
-              : label;
+            const concentrationLabel =
+              chemicalType === 'FE'
+                ? intl.formatMessage(
+                    { id: 'quickAdd.fields.concentration.npkRatio' },
+                    { defaultMessage: 'NPK Ratio' }
+                  )
+                : chemicalType === 'PE'
+                ? intl.formatMessage(
+                    { id: 'quickAdd.fields.concentration.pesticideConcentration' },
+                    { defaultMessage: 'Pesticide Concentration' }
+                  )
+                : chemicalType === 'HE'
+                ? intl.formatMessage(
+                    { id: 'quickAdd.fields.concentration.herbicideConcentration' },
+                    { defaultMessage: 'Herbicide Concentration' }
+                  )
+                : chemicalType === 'FU'
+                ? intl.formatMessage(
+                    { id: 'quickAdd.fields.concentration.fungicideConcentration' },
+                    { defaultMessage: 'Fungicide Concentration' }
+                  )
+                : label;
 
             return (
               <StandardField
@@ -273,7 +288,12 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
                   </HStack>
                 }
                 required={field.required}
-                error={error || (concentrationValidation && !concentrationValidation.isValid ? concentrationValidation.errors[0] : undefined)}
+                error={
+                  error ||
+                  (concentrationValidation && !concentrationValidation.isValid
+                    ? concentrationValidation.errors[0]
+                    : undefined)
+                }
               >
                 <VStack spacing={2} align="stretch">
                   <StandardInput
@@ -340,9 +360,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
     (fields: QuickEventField[]) => {
       // Find all unit field names that are handled by hasUnitDropdown
       const unitFieldNames = new Set(
-        fields
-          .filter((f) => f.hasUnitDropdown && f.unitFieldName)
-          .map((f) => f.unitFieldName!)
+        fields.filter((f) => f.hasUnitDropdown && f.unitFieldName).map((f) => f.unitFieldName!)
       );
 
       const visibleFields = fields.filter(
@@ -396,27 +414,21 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
         }
         // Water volume and area covered can be paired
         else if (
-          (field.name === 'water_volume' ||
-            field.name === 'area_covered') &&
+          (field.name === 'water_volume' || field.name === 'area_covered') &&
           currentRow.length === 0
         ) {
           currentRow.push(field);
         } else if (
-          (field.name === 'water_volume' ||
-            field.name === 'area_covered') &&
+          (field.name === 'water_volume' || field.name === 'area_covered') &&
           currentRow.length === 1 &&
-          (currentRow[0].name === 'water_volume' ||
-            currentRow[0].name === 'area_covered')
+          (currentRow[0].name === 'water_volume' || currentRow[0].name === 'area_covered')
         ) {
           currentRow.push(field);
           rows.push(currentRow);
           currentRow = [];
         }
         // Fuel consumed and fuel type can be paired
-        else if (
-          field.name === 'fuel_consumed' &&
-          currentRow.length === 0
-        ) {
+        else if (field.name === 'fuel_consumed' && currentRow.length === 0) {
           currentRow.push(field);
         } else if (
           field.name === 'fuel_type' &&

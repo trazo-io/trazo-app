@@ -95,11 +95,7 @@ const TrackList = ({ amount }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   // Delete Production state
-  const {
-    isOpen: isDeleteOpen,
-    onOpen: onDeleteOpen,
-    onClose: onDeleteClose
-  } = useDisclosure();
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const cancelRef = useRef();
   const toast = useToast();
   const [deleteProduction, { isLoading: isDeleting }] = useDeleteProductionMutation();
@@ -112,14 +108,20 @@ const TrackList = ({ amount }) => {
     },
     {
       skip: !parcelId || !currentCompany || !establishmentId || currentCompany?.id === undefined,
-      refetchOnMountOrArgChange: false,
+      refetchOnMountOrArgChange: true,
       refetchOnFocus: false
     }
   );
 
+  // Clear Redux state when parcel changes to prevent stale data
+  useEffect(() => {
+    dispatch(setCurrentHistory(null));
+  }, [parcelId, dispatch]);
+
+  // Update Redux state when new data arrives
   useEffect(() => {
     if (data) dispatch(setCurrentHistory(data));
-  }, [data]);
+  }, [data, dispatch]);
 
   const bgButton = useColorModeValue('green.500', 'gray.800');
 
@@ -163,7 +165,8 @@ const TrackList = ({ amount }) => {
     } catch (error) {
       toast({
         title: intl.formatMessage({ id: 'app.error' }),
-        description: error?.data?.message || intl.formatMessage({ id: 'app.productionDeleteError' }),
+        description:
+          error?.data?.message || intl.formatMessage({ id: 'app.productionDeleteError' }),
         status: 'error',
         duration: 5000,
         isClosable: true

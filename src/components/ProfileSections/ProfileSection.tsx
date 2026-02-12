@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Flex,
-  Heading,
-  VStack,
-  Collapse,
-  Icon,
-  Button,
-  Text,
-} from '@chakra-ui/react';
+import { Box, Flex, Heading, VStack, Collapse, Icon, Button, Text } from '@chakra-ui/react';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 interface ProfileSectionProps {
@@ -35,7 +26,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({
   isEmpty = false,
   emptyMessage = 'No data available',
   highlight = false,
-  action,
+  action
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 

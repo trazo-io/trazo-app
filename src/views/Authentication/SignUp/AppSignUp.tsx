@@ -359,8 +359,8 @@ const AppSignUp: React.FC = () => {
                 Build Your Farm's Transparency Story
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Join leading agricultural enterprises using Trazo to document your practices,
-                verify authenticity with blockchain, and connect directly with conscious consumers.
+                Join leading agricultural enterprises using Trazo to document your practices, verify
+                authenticity with blockchain, and connect directly with conscious consumers.
               </Text>
             </VStack>
 
@@ -369,16 +369,18 @@ const AppSignUp: React.FC = () => {
                 Trusted by agricultural businesses worldwide
               </Text>
               <VStack spacing={3}>
-                {['Verified Transparency & Trust', 'Blockchain-Backed Documentation', 'Direct Consumer Connection'].map(
-                  (feature, index) => (
-                    <HStack key={index} spacing={3}>
-                      <Box w={2} h={2} bg="white" borderRadius="50%" />
-                      <Text fontSize="sm" fontWeight="500" opacity={0.9}>
-                        {feature}
-                      </Text>
-                    </HStack>
-                  )
-                )}
+                {[
+                  'Verified Transparency & Trust',
+                  'Blockchain-Backed Documentation',
+                  'Direct Consumer Connection'
+                ].map((feature, index) => (
+                  <HStack key={index} spacing={3}>
+                    <Box w={2} h={2} bg="white" borderRadius="50%" />
+                    <Text fontSize="sm" fontWeight="500" opacity={0.9}>
+                      {feature}
+                    </Text>
+                  </HStack>
+                ))}
               </VStack>
             </VStack>
           </VStack>

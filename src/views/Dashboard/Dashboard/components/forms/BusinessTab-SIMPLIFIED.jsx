@@ -15,7 +15,7 @@ import {
 } from 'components/Design/StandardComponents';
 import { FaChevronLeft, FaChevronRight, FaLeaf, FaSeedling, FaClipboardList } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,53 +34,28 @@ const formSchemaMainInfo = object({
   observation: string().optional(),
   // Sprint 3 Epic 3.2: Consumer Trust Field for transparency
   verified_certifier_name: string().optional(), // Name of the certifying organization
-  custom_fields: array(object({
-    id: string().optional(),
-    label: string(),
-    value: string(),
-    field_type: string(),
-    visibility: string(),
-    link_url: string().optional(),
-    verification: string().optional(),
-    created_at: string().optional(),
-    photo_id: string().optional()
-  })).optional()
+  custom_fields: array(
+    object({
+      id: string().optional(),
+      label: string(),
+      value: string(),
+      field_type: string(),
+      visibility: string(),
+      link_url: string().optional(),
+      verification: string().optional(),
+      created_at: string().optional(),
+      photo_id: string().optional()
+    })
+  ).optional()
 });
 
-const BusinessTab = ({
-  onSubmitHandler,
-  onDataChange,
-  onPrev,
-  initialValues = {},
-  hideActions = false
-}) => {
-  const intl = useIntl();
+const BusinessTab = forwardRef(
+  ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }, ref) => {
+    const intl = useIntl();
 
-  const methods = useForm({
-    resolver: zodResolver(formSchemaMainInfo),
-    defaultValues: {
-      business_type: initialValues.business_type || '',
-      certification_type: initialValues.certification_type || '',
-      carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
-      carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
-      verification_status: initialValues.verification_status || '',
-      sustainability_practice: initialValues.sustainability_practice || '',
-      trust_impact: initialValues.trust_impact || '',
-      transparency_benefit: initialValues.transparency_benefit || '',
-      observation: initialValues.observation || '',
-      // Sprint 3 Epic 3.2: Consumer Trust Field
-      verified_certifier_name: initialValues.verified_certifier_name || '',
-      custom_fields: initialValues.custom_fields || []
-    }
-  });
-
-  // Custom fields state for Phase 2.3
-  const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
-
-  // Update form values when initialValues change
-  useEffect(() => {
-    if (Object.keys(initialValues).length > 0) {
-      methods.reset({
+    const methods = useForm({
+      resolver: zodResolver(formSchemaMainInfo),
+      defaultValues: {
         business_type: initialValues.business_type || '',
         certification_type: initialValues.certification_type || '',
         carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
@@ -93,314 +68,367 @@ const BusinessTab = ({
         // Sprint 3 Epic 3.2: Consumer Trust Field
         verified_certifier_name: initialValues.verified_certifier_name || '',
         custom_fields: initialValues.custom_fields || []
-      });
-    }
-  }, [initialValues, methods]);
+      }
+    });
 
-  // Sync custom fields with form
-  useEffect(() => {
-    methods.setValue('custom_fields', customFields);
-  }, [customFields, methods]);
+    // DEBOUNCE FIX: Expose flushData method to parent via ref
+    // This allows NewEvent.jsx to force-sync form data before step change
+    useImperativeHandle(
+      ref,
+      () => ({
+        flushData: () => {
+          if (onDataChange) {
+            const currentValues = methods.getValues();
+            console.log('[BusinessTab] 🔄 flushData called - syncing form data immediately');
+            onDataChange(currentValues);
+          }
+        }
+      }),
+      [onDataChange, methods]
+    );
 
-  const {
-    handleSubmit,
-    watch,
-    formState: { errors }
-  } = methods;
+    // Custom fields state for Phase 2.3
+    const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
 
-  const businessType = watch('business_type');
+    // Update form values when initialValues change
+    useEffect(() => {
+      if (Object.keys(initialValues).length > 0) {
+        methods.reset({
+          business_type: initialValues.business_type || '',
+          certification_type: initialValues.certification_type || '',
+          carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
+          carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
+          verification_status: initialValues.verification_status || '',
+          sustainability_practice: initialValues.sustainability_practice || '',
+          trust_impact: initialValues.trust_impact || '',
+          transparency_benefit: initialValues.transparency_benefit || '',
+          observation: initialValues.observation || '',
+          // Sprint 3 Epic 3.2: Consumer Trust Field
+          verified_certifier_name: initialValues.verified_certifier_name || '',
+          custom_fields: initialValues.custom_fields || []
+        });
+      }
+    }, [initialValues, methods]);
 
-  // Watch all form fields for real-time updates
-  const allValues = watch();
+    // Sync custom fields with form
+    useEffect(() => {
+      methods.setValue('custom_fields', customFields);
+    }, [customFields, methods]);
 
-  // Call onDataChange whenever form values change (for real-time preview updates)
-  useEffect(() => {
-    if (onDataChange && Object.keys(allValues).length > 0) {
-      onDataChange(allValues);
-    }
-  }, [allValues]); // FIXED: Removed onDataChange to prevent infinite loop
+    const {
+      handleSubmit,
+      watch,
+      formState: { errors }
+    } = methods;
 
-  // Business events do NOT trigger carbon calculations
-  // These are administrative/documentation events, not direct agricultural activities
-  // Carbon calculations are only appropriate for: Equipment, Soil, Pest, Chemical, Production events
+    const businessType = watch('business_type');
 
-  // NOTE: Business events provide transparency value through:
-  // - Certification badges on consumer QR pages
-  // - Trust indicators for transparency scores
-  // - Verification status for consumer confidence
-  // - Documentation of sustainability practices
-  //
-  // They do NOT generate meaningful carbon emissions and should not call carbon APIs
+    // Watch all form fields for real-time updates
+    const allValues = watch();
 
-  const onSubmit = (data) => {
-    // Process numeric data
-    const processedData = {
-      ...data,
-      carbon_credits_earned: data.carbon_credits_earned
-        ? parseFloat(data.carbon_credits_earned)
-        : undefined
+    // Call onDataChange whenever form values change (for real-time preview updates)
+    useEffect(() => {
+      if (onDataChange && Object.keys(allValues).length > 0) {
+        onDataChange(allValues);
+      }
+    }, [allValues]); // FIXED: Removed onDataChange to prevent infinite loop
+
+    // Business events do NOT trigger carbon calculations
+    // These are administrative/documentation events, not direct agricultural activities
+    // Carbon calculations are only appropriate for: Equipment, Soil, Pest, Chemical, Production events
+
+    // NOTE: Business events provide transparency value through:
+    // - Certification badges on consumer QR pages
+    // - Trust indicators for transparency scores
+    // - Verification status for consumer confidence
+    // - Documentation of sustainability practices
+    //
+    // They do NOT generate meaningful carbon emissions and should not call carbon APIs
+
+    const onSubmit = (data) => {
+      // Process numeric data
+      const processedData = {
+        ...data,
+        carbon_credits_earned: data.carbon_credits_earned
+          ? parseFloat(data.carbon_credits_earned)
+          : undefined
+      };
+      onSubmitHandler(processedData);
     };
-    onSubmitHandler(processedData);
-  };
 
-  return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
-        <VStack spacing={6} align="stretch">
-          {/* Transparency Focus Alert */}
-          <StandardAlert status="info" title="Agricultural Transparency Documentation">
-            <HStack spacing={2} mb={2}>
-              <Text fontSize="sm" fontWeight="bold">
-                Building Consumer Trust Through Verification
+    return (
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+          <VStack spacing={6} align="stretch">
+            {/* Transparency Focus Alert */}
+            <StandardAlert status="info" title="Agricultural Transparency Documentation">
+              <HStack spacing={2} mb={2}>
+                <Text fontSize="sm" fontWeight="bold">
+                  Building Consumer Trust Through Verification
+                </Text>
+              </HStack>
+              <Text fontSize="sm">
+                Document certifications, verifications, and sustainability practices that enhance
+                consumer confidence in your agricultural transparency. These trust indicators appear
+                on your product&apos;s transparency page.
               </Text>
-            </HStack>
-            <Text fontSize="sm">
-              Document certifications, verifications, and sustainability practices that enhance
-              consumer confidence in your agricultural transparency. These trust indicators appear
-              on your product&apos;s transparency page.
-            </Text>
-          </StandardAlert>
+            </StandardAlert>
 
-          {/* Section 1: Business Event Information */}
-          <SectionBox variant="default">
-            <SectionHeader
-              icon={FaClipboardList}
-              iconColor="teal.500"
-              title="Trust-Building Business Activity"
-              badge="Consumer Trust"
-              badgeColorScheme="teal"
-            />
-            <VStack spacing={4} align="stretch">
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <StandardField
-                  label="Business Activity Type"
-                  required
-                  error={errors.business_type?.message}
-                  helpText="Select activities that build consumer trust and enhance transparency">
-                  <Controller
-                    name="business_type"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardSelect {...field} placeholder="Select business activity type...">
-                        <option value="certification">
-                          Certification Achievement (Organic, Fair Trade, etc.)
-                        </option>
-                        <option value="verification">Third-Party Verification Completed</option>
-                        <option value="sustainability_audit">
-                          Sustainability Assessment Passed
-                        </option>
-                        <option value="transparency">Transparency Initiative Launched</option>
-                        <option value="carbon_credits">Carbon Credits Earned</option>
-                        <option value="compliance">Regulatory Compliance Achieved</option>
-                      </StandardSelect>
-                    )}
-                  />
-                </StandardField>
-
-                <StandardField
-                  label="Verification Status"
-                  error={errors.verification_status?.message}
-                  helpText="Status of verification for consumer transparency">
-                  <Controller
-                    name="verification_status"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardSelect {...field}>
-                        <option value="pending">Pending Verification</option>
-                        <option value="verified">Verified</option>
-                        <option value="in_progress">Verification In Progress</option>
-                        <option value="failed">Verification Failed</option>
-                        <option value="not_applicable">Not Applicable</option>
-                      </StandardSelect>
-                    )}
-                  />
-                </StandardField>
-              </SimpleGrid>
-
-              {/* Certification Details - Only for certification events */}
-              {businessType === 'certification' && (
+            {/* Section 1: Business Event Information */}
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaClipboardList}
+                iconColor="teal.500"
+                title="Trust-Building Business Activity"
+                badge="Consumer Trust"
+                badgeColorScheme="teal"
+              />
+              <VStack spacing={4} align="stretch">
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <StandardField
-                    label="Certification Type"
+                    label="Business Activity Type"
                     required
-                    error={errors.certification_type?.message}
-                    helpText="Type of certification obtained or renewed">
+                    error={errors.business_type?.message}
+                    helpText="Select activities that build consumer trust and enhance transparency"
+                  >
                     <Controller
-                      name="certification_type"
+                      name="business_type"
                       control={methods.control}
                       render={({ field }) => (
-                        <StandardSelect {...field} placeholder="Select certification type...">
-                          <option value="">Select certification...</option>
-                          <option value="organic_usda">USDA Organic</option>
-                          <option value="carbon_neutral">Carbon Neutral Certification</option>
-                          <option value="rainforest_alliance">Rainforest Alliance</option>
-                          <option value="fair_trade">Fair Trade Certified</option>
-                          <option value="regenerative">Regenerative Organic Certified</option>
-                          <option value="sustainable_agriculture">
-                            Sustainable Agriculture Standard
+                        <StandardSelect {...field} placeholder="Select business activity type...">
+                          <option value="certification">
+                            Certification Achievement (Organic, Fair Trade, etc.)
                           </option>
-                          <option value="water_stewardship">Water Stewardship Certification</option>
-                          {/* Sprint 2 Epic 2.2: Additional certifications */}
-                          <option value="global_gap">GlobalG.A.P. Certification</option>
-                          <option value="non_gmo">Non-GMO Project Verified</option>
-                          <option value="certified_naturally_grown">
-                            Certified Naturally Grown (CNG)
+                          <option value="verification">Third-Party Verification Completed</option>
+                          <option value="sustainability_audit">
+                            Sustainability Assessment Passed
                           </option>
+                          <option value="transparency">Transparency Initiative Launched</option>
+                          <option value="carbon_credits">Carbon Credits Earned</option>
+                          <option value="compliance">Regulatory Compliance Achieved</option>
                         </StandardSelect>
                       )}
                     />
                   </StandardField>
 
-                  {/* Sprint 3 Epic 3.2: Consumer Trust Field */}
                   <StandardField
-                    label="Certifier Organization Name"
-                    error={errors.verified_certifier_name?.message}
-                    helpText="Name of the certifying organization (builds consumer trust)">
+                    label="Verification Status"
+                    error={errors.verification_status?.message}
+                    helpText="Status of verification for consumer transparency"
+                  >
                     <Controller
-                      name="verified_certifier_name"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardInput {...field} placeholder="e.g., Oregon Tilth, CCOF, QCS" />
-                      )}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-              )}
-
-              {/* Carbon Credits - Only for carbon credit events */}
-              {businessType === 'carbon_credits' && (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Carbon Credits Earned"
-                    required
-                    error={errors.carbon_credits_earned?.message}
-                    helpText="Amount of carbon credits generated or traded">
-                    <Controller
-                      name="carbon_credits_earned"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardInput
-                          {...field}
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                        />
-                      )}
-                    />
-                  </StandardField>
-
-                  <StandardField label="Unit">
-                    <Controller
-                      name="carbon_credits_unit"
+                      name="verification_status"
                       control={methods.control}
                       render={({ field }) => (
                         <StandardSelect {...field}>
-                          <option value="tCO2e">tCO2e (tonnes CO2 equivalent)</option>
-                          <option value="kgCO2e">kgCO2e (kilograms CO2 equivalent)</option>
-                          <option value="credits">Carbon Credits (units)</option>
+                          <option value="pending">Pending Verification</option>
+                          <option value="verified">Verified</option>
+                          <option value="in_progress">Verification In Progress</option>
+                          <option value="failed">Verification Failed</option>
+                          <option value="not_applicable">Not Applicable</option>
                         </StandardSelect>
                       )}
                     />
                   </StandardField>
                 </SimpleGrid>
-              )}
-            </VStack>
-          </SectionBox>
 
-          {/* Section 2: Sustainability Practice */}
-          <SectionBox variant="default">
-            <SectionHeader
-              icon={FaLeaf}
-              iconColor="green.500"
-              title="Sustainability Practice"
-              badge="Consumer Story"
-              badgeColorScheme="green"
-            />
-            <StandardField
-              label="Sustainability Practice Implemented"
-              error={errors.sustainability_practice?.message}
-              helpText="Practice that enhances carbon transparency or environmental benefit">
-              <Controller
-                name="sustainability_practice"
-                control={methods.control}
-                render={({ field }) => (
-                  <StandardSelect {...field}>
-                    <option value="">Select practice...</option>
-                    <option value="cover_cropping">Cover Cropping Implementation</option>
-                    <option value="no_till">No-Till Farming Adoption</option>
-                    <option value="integrated_pest">Integrated Pest Management</option>
-                    <option value="water_conservation">Water Conservation Measures</option>
-                    <option value="renewable_energy">Renewable Energy Installation</option>
-                    <option value="composting">On-Farm Composting Program</option>
-                    <option value="biodiversity">Biodiversity Conservation</option>
-                    <option value="soil_health">Soil Health Improvement</option>
-                  </StandardSelect>
+                {/* Certification Details - Only for certification events */}
+                {businessType === 'certification' && (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Certification Type"
+                      required
+                      error={errors.certification_type?.message}
+                      helpText="Type of certification obtained or renewed"
+                    >
+                      <Controller
+                        name="certification_type"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field} placeholder="Select certification type...">
+                            <option value="">Select certification...</option>
+                            <option value="organic_usda">USDA Organic</option>
+                            <option value="carbon_neutral">Carbon Neutral Certification</option>
+                            <option value="rainforest_alliance">Rainforest Alliance</option>
+                            <option value="fair_trade">Fair Trade Certified</option>
+                            <option value="regenerative">Regenerative Organic Certified</option>
+                            <option value="sustainable_agriculture">
+                              Sustainable Agriculture Standard
+                            </option>
+                            <option value="water_stewardship">
+                              Water Stewardship Certification
+                            </option>
+                            {/* Sprint 2 Epic 2.2: Additional certifications */}
+                            <option value="global_gap">GlobalG.A.P. Certification</option>
+                            <option value="non_gmo">Non-GMO Project Verified</option>
+                            <option value="certified_naturally_grown">
+                              Certified Naturally Grown (CNG)
+                            </option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+
+                    {/* Sprint 3 Epic 3.2: Consumer Trust Field */}
+                    <StandardField
+                      label="Certifier Organization Name"
+                      error={errors.verified_certifier_name?.message}
+                      helpText="Name of the certifying organization (builds consumer trust)"
+                    >
+                      <Controller
+                        name="verified_certifier_name"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput {...field} placeholder="e.g., Oregon Tilth, CCOF, QCS" />
+                        )}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
                 )}
-              />
-            </StandardField>
-          </SectionBox>
 
-          {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
-          <SectionBox variant="default">
-            <SectionHeader
-              icon={FaSeedling}
-              iconColor="green.500"
-              title="Farmer's Field Notes & Consumer Transparency"
-              badge="Consumer Transparency"
-              badgeColorScheme="green"
-            />
-            <StandardField
-              label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
-              error={errors.observation?.message}
-              helpText="Share details about this business activity's impact on carbon transparency that help consumers understand your commitment to sustainability">
-              <Controller
-                name="observation"
-                control={methods.control}
-                render={({ field }) => (
-                  <StandardTextarea
-                    {...field}
-                    placeholder="Optional: Describe how this certification or business activity improves transparency, e.g., Certification process improved carbon tracking accuracy, new practice reduced emissions by 15%..."
-                    rows={4}
-                  />
+                {/* Carbon Credits - Only for carbon credit events */}
+                {businessType === 'carbon_credits' && (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Carbon Credits Earned"
+                      required
+                      error={errors.carbon_credits_earned?.message}
+                      helpText="Amount of carbon credits generated or traded"
+                    >
+                      <Controller
+                        name="carbon_credits_earned"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput
+                            {...field}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                          />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField label="Unit">
+                      <Controller
+                        name="carbon_credits_unit"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field}>
+                            <option value="tCO2e">tCO2e (tonnes CO2 equivalent)</option>
+                            <option value="kgCO2e">kgCO2e (kilograms CO2 equivalent)</option>
+                            <option value="credits">Carbon Credits (units)</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
                 )}
+              </VStack>
+            </SectionBox>
+
+            {/* Section 2: Sustainability Practice */}
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaLeaf}
+                iconColor="green.500"
+                title="Sustainability Practice"
+                badge="Consumer Story"
+                badgeColorScheme="green"
               />
-            </StandardField>
-          </SectionBox>
+              <StandardField
+                label="Sustainability Practice Implemented"
+                error={errors.sustainability_practice?.message}
+                helpText="Practice that enhances carbon transparency or environmental benefit"
+              >
+                <Controller
+                  name="sustainability_practice"
+                  control={methods.control}
+                  render={({ field }) => (
+                    <StandardSelect {...field}>
+                      <option value="">Select practice...</option>
+                      <option value="cover_cropping">Cover Cropping Implementation</option>
+                      <option value="no_till">No-Till Farming Adoption</option>
+                      <option value="integrated_pest">Integrated Pest Management</option>
+                      <option value="water_conservation">Water Conservation Measures</option>
+                      <option value="renewable_energy">Renewable Energy Installation</option>
+                      <option value="composting">On-Farm Composting Program</option>
+                      <option value="biodiversity">Biodiversity Conservation</option>
+                      <option value="soil_health">Soil Health Improvement</option>
+                    </StandardSelect>
+                  )}
+                />
+              </StandardField>
+            </SectionBox>
 
-          {/* Phase 2.3: Custom Fields Section */}
-          <CustomFieldsForm
-            customFields={customFields}
-            onCustomFieldsChange={setCustomFields}
-            eventTypeId={7}
-            disabled={false}
-          />
+            {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaSeedling}
+                iconColor="green.500"
+                title="Farmer's Field Notes & Consumer Transparency"
+                badge="Consumer Transparency"
+                badgeColorScheme="green"
+              />
+              <StandardField
+                label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
+                error={errors.observation?.message}
+                helpText="Share details about this business activity's impact on carbon transparency that help consumers understand your commitment to sustainability"
+              >
+                <Controller
+                  name="observation"
+                  control={methods.control}
+                  render={({ field }) => (
+                    <StandardTextarea
+                      {...field}
+                      placeholder="Optional: Describe how this certification or business activity improves transparency, e.g., Certification process improved carbon tracking accuracy, new practice reduced emissions by 15%..."
+                      rows={4}
+                    />
+                  )}
+                />
+              </StandardField>
+            </SectionBox>
 
-          {/* Navigation - Hidden when hideActions is true */}
-          {!hideActions && (
-            <Box pt={4} mt={4} borderTop="1px" borderColor="gray.200">
-              <HStack justify="space-between">
-                <StandardButton
-                  variant="outline"
-                  onClick={onPrev}
-                  leftIcon={<FaChevronLeft />}
-                  size="lg">
-                  {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-                </StandardButton>
-                <StandardButton
-                  variant="primary"
-                  type="submit"
-                  rightIcon={<FaChevronRight />}
-                  size="lg">
-                  {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                </StandardButton>
-              </HStack>
-            </Box>
-          )}
-        </VStack>
-      </form>
-    </FormProvider>
-  );
-};
+            {/* Phase 2.3: Custom Fields Section */}
+            <CustomFieldsForm
+              customFields={customFields}
+              onCustomFieldsChange={setCustomFields}
+              eventTypeId={7}
+              disabled={false}
+            />
+
+            {/* Navigation - Hidden when hideActions is true */}
+            {!hideActions && (
+              <Box pt={4} mt={4} borderTop="1px" borderColor="gray.200">
+                <HStack justify="space-between">
+                  <StandardButton
+                    variant="outline"
+                    onClick={onPrev}
+                    leftIcon={<FaChevronLeft />}
+                    size="lg"
+                  >
+                    {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                  </StandardButton>
+                  <StandardButton
+                    variant="primary"
+                    type="submit"
+                    rightIcon={<FaChevronRight />}
+                    size="lg"
+                  >
+                    {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                  </StandardButton>
+                </HStack>
+              </Box>
+            )}
+          </VStack>
+        </form>
+      </FormProvider>
+    );
+  }
+);
+
+// Add display name for better debugging
+BusinessTab.displayName = 'BusinessTab';
 
 export default BusinessTab;

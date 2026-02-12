@@ -9,6 +9,7 @@
 **Requirement**: Always use theme tokens, never hardcoded hex values
 
 **Verification Badge Colors**:
+
 ```typescript
 // ✅ CORRECT - Using Chakra theme tokens
 <Badge colorScheme="gray" />      // Self Reported
@@ -19,6 +20,7 @@
 ```
 
 **Implementation Files**:
+
 - ✅ `verificationTierHelpers.ts`: Uses color names (gray, teal, blue, green, purple)
 - ✅ `ConsumerEventCard.tsx`: Uses `getVerificationColor()` helper
 - ✅ No hardcoded hex values detected
@@ -39,6 +41,7 @@
 **Requirement**: Use 4/6/8/12/16/24px spacing scale exclusively
 
 **Badge Spacing Implementation**:
+
 ```jsx
 <Badge
   px={3}           // ✅ padding-x: 12px (8 * 1.5 = reasonable)
@@ -50,6 +53,7 @@
 ```
 
 **Chakra Spacing Scale Verification**:
+
 - 1 unit = 4px ✅
 - px={3} = 12px (standard badge padding)
 - py={1} = 4px (tight padding)
@@ -57,6 +61,7 @@
 - ml={1} = 4px (count spacing)
 
 **Typography Hierarchy**:
+
 - Badge label: `fontSize="xs"` (11px) ✅
 - Event title: implicitly larger ✅
 - Description: `fontSize="sm"` (implicitly) ✅
@@ -67,6 +72,7 @@
 ### ✅ Component Design Patterns
 
 **Minimalist Design**:
+
 - ✅ Badge shows: [Icon] [Label] [(Count)]
 - ✅ No excessive decoration or floating elements
 - ✅ Single-line badge for clean appearance
@@ -74,6 +80,7 @@
 - ✅ Tooltip provides explanation without clutter
 
 **Clean Design Principles**:
+
 - ✅ No background fill (uses subtle variant)
 - ✅ Icon and text aligned horizontally
 - ✅ Full border-radius for modern look (borderRadius="full")
@@ -81,6 +88,7 @@
 - ✅ No redundant information
 
 **Modern Design Patterns**:
+
 - ✅ Tiered verification visual progression
 - ✅ Icon-based recognition for quick scanning
 - ✅ Color coding for semantic meaning
@@ -94,26 +102,29 @@
 **Minimum Touch Target Size**: 44px height
 
 **Badge Touch Implementation**:
+
 ```jsx
 <Badge
-  fontSize="xs"           // Small text
-  px={3}                  // Horizontal padding
-  py={1}                  // Vertical padding (4px)
+  fontSize="xs" // Small text
+  px={3} // Horizontal padding
+  py={1} // Vertical padding (4px)
   // Total height: ~20px (icon 3) + padding = ~28px
   // ⚠️ Below 44px - acceptable for badge in list
 >
-  <Icon boxSize={3} />    // Icon: 12px
-  <Text>Label</Text>      // Text: ~12px
+  <Icon boxSize={3} /> // Icon: 12px
+  <Text>Label</Text> // Text: ~12px
 </Badge>
 ```
 
 **Mobile Consideration**:
+
 - Badge itself is <44px, but sits within larger event card
 - Event card container is >44px for touch
 - Tooltip tooltip activates on touch
 - Mobile users can easily identify verification status by color + icon
 
 **Responsive Design**:
+
 - ✅ Uses HStack for flexible layout
 - ✅ Badge wraps with other badges on smaller screens
 - ✅ Icon size (boxSize={3}) scales appropriately
@@ -126,6 +137,7 @@
 ### ✅ WCAG 2.1 Level AA
 
 **Color Contrast Verification**:
+
 ```
 Gray (gray.600)    on gray.50    → Contrast: 7.1:1 ✅
 Teal (teal.600)    on teal.50    → Contrast: 6.8:1 ✅
@@ -137,18 +149,21 @@ Purple (purple.600) on purple.50 → Contrast: 6.3:1 ✅
 All exceed WCAG AA minimum of 4.5:1 for text ✅
 
 **Text Alternatives**:
+
 - ✅ Icon + Text: Verification status clear from both
 - ✅ Tooltip: Explains each tier in detail
 - ✅ Label is semantic: "Self Reported", "Photo Verified", etc.
 - ✅ Screen readers announce: "[Color] badge: Photo Verified (2 photos)"
 
 **Keyboard Navigation**:
+
 - ✅ Badges within Tooltip (keyboard accessible)
 - ✅ Enter/Space to show tooltip
 - ✅ Escape to close tooltip
 - ✅ Tab navigation includes badge area
 
 **Screen Reader Support**:
+
 - ✅ Chakra Badge is semantic
 - ✅ Tooltip provides additional context
 - ✅ Icon has implicit meaning (camera = photo, check = verified)
@@ -157,28 +172,31 @@ All exceed WCAG AA minimum of 4.5:1 for text ✅
 ### ✅ Internationalization
 
 **Translation Keys Implemented**:
+
 ```typescript
 // verificationTierHelpers.ts
 const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
   self_reported: {
-    label: 'Self Reported',         // Can be i18n
-    tooltip: '...',                 // Can be i18n
+    label: 'Self Reported', // Can be i18n
+    tooltip: '...' // Can be i18n
   },
   photo_documented: {
-    label: 'Photo Documented',      // Can be i18n
-    tooltip: '...',                 // Can be i18n
-  },
+    label: 'Photo Documented', // Can be i18n
+    tooltip: '...' // Can be i18n
+  }
   // ... other tiers
-}
+};
 ```
 
 **i18n Ready**:
+
 - ✅ All labels are strings (not hardcoded)
 - ✅ Tooltips can be moved to i18n files
 - ✅ Helper functions use constants for easy translation
 - ✅ No assumptions about language direction
 
 **Supported Languages**:
+
 - English: ✅ Complete
 - Spanish: Ready (needs translation key)
 - French: Ready (needs translation key)
@@ -193,6 +211,7 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 ### `ConsumerEventCard.tsx`
 
 **Design Compliance Check**:
+
 - ✅ Imports verification helpers correctly
 - ✅ Uses theme tokens via helper functions
 - ✅ Badge layout follows Trazo patterns
@@ -203,6 +222,7 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 - ✅ No hardcoded colors
 
 **Accessibility Check**:
+
 - ✅ Chakra Badge component (semantic)
 - ✅ Tooltip for context
 - ✅ Icon + text for dual perception
@@ -213,12 +233,14 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 ### `EventPreviewModal.tsx`
 
 **Design Compliance Check**:
+
 - ✅ Uses same verification calculation as final display
 - ✅ Shows badge in preview using ConsumerEventCard
 - ✅ Consistent with submitted event display
 - ✅ No design discrepancies
 
 **Accessibility Check**:
+
 - ✅ Modal properly labeled
 - ✅ Close button accessible
 - ✅ Content structure logical
@@ -227,12 +249,14 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 ### `verificationTierHelpers.ts`
 
 **Design Compliance Check**:
+
 - ✅ Helper functions return theme-compatible data
 - ✅ Icon references are from standard libraries
 - ✅ Color mappings use Chakra names
 - ✅ No hardcoded hex values anywhere
 
 **Accessibility Check**:
+
 - ✅ Helper functions provide tooltips
 - ✅ Labels are semantic
 - ✅ Icons are meaningful
@@ -244,20 +268,20 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 
 ### Tested Browsers
 
-| Browser | Version | Status | Notes |
-|---------|---------|--------|-------|
-| Chrome | Latest | ✅ PASS | Primary target |
-| Firefox | Latest | ✅ PASS | Full support |
-| Safari | Latest | ✅ PASS | Full support |
-| Edge | Latest | ✅ PASS | Full support |
+| Browser | Version | Status  | Notes          |
+| ------- | ------- | ------- | -------------- |
+| Chrome  | Latest  | ✅ PASS | Primary target |
+| Firefox | Latest  | ✅ PASS | Full support   |
+| Safari  | Latest  | ✅ PASS | Full support   |
+| Edge    | Latest  | ✅ PASS | Full support   |
 
 ### Mobile Browsers
 
-| Platform | Browser | Version | Status | Notes |
-|----------|---------|---------|--------|-------|
-| iOS | Safari | Latest | ✅ PASS | Touch-optimized |
-| Android | Chrome | Latest | ✅ PASS | Full support |
-| Android | Firefox | Latest | ✅ PASS | Full support |
+| Platform | Browser | Version | Status  | Notes           |
+| -------- | ------- | ------- | ------- | --------------- |
+| iOS      | Safari  | Latest  | ✅ PASS | Touch-optimized |
+| Android  | Chrome  | Latest  | ✅ PASS | Full support    |
+| Android  | Firefox | Latest  | ✅ PASS | Full support    |
 
 ### Features Verified
 
@@ -276,12 +300,14 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 ### Bundle Size
 
 **verificationTierHelpers.ts**: ~2.1 KB (minified)
+
 - Minimal helper functions
 - No external dependencies
 - Efficient string maps
 - Import size: <1 KB with tree-shaking
 
 **ConsumerEventCard updates**: <0.5 KB added
+
 - Only additional imports
 - No new DOM elements per event
 - Efficient badge rendering
@@ -291,12 +317,14 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 ### Rendering Performance
 
 **Badge Rendering**:
+
 - Single calculation per event
 - No re-renders triggered
 - Cached via React memoization
 - ~0.2ms per badge
 
 **Tooltip Performance**:
+
 - Lazy-loaded on hover
 - No performance impact at rest
 - Smooth animations (Chakra)
@@ -307,6 +335,7 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 ## Trazo Design Standard Checklist
 
 ### Visual Design
+
 - ✅ Minimalist: Clean badge with icon + text only
 - ✅ Clean: No excessive styling or decoration
 - ✅ Modern: 2025-appropriate design patterns
@@ -316,6 +345,7 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 - ✅ Responsive: Works on all breakpoints
 
 ### Color & Typography
+
 - ✅ Theme tokens: All colors from Chakra theme
 - ✅ Semantic colors: Each tier has meaningful color
 - ✅ Contrast: WCAG AA compliant
@@ -323,12 +353,14 @@ const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
 - ✅ Spacing: Follows 4/6/8px scale
 
 ### Interaction & Animation
+
 - ✅ Tooltip on hover/focus: Provides explanation
 - ✅ Smooth transitions: Color changes animate
 - ✅ Feedback: Visual response to interactions
 - ✅ Accessibility: Keyboard + mouse support
 
 ### Trust & Communication
+
 - ✅ Clear: Verification status immediately obvious
 - ✅ Honest: No misleading badges
 - ✅ Transparent: Tooltip explains each tier

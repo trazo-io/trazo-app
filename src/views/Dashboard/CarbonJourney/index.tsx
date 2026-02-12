@@ -81,9 +81,8 @@ export default function CarbonJourney() {
 
       // Calculate average transparency: if we have events documented, that's transparency
       // This rewards farms for logging MORE events, not fewer
-      const avgTransparency = totalScans > 0
-        ? Math.min(100, Math.round((totalEvents / (totalScans * 10)) * 100))
-        : 0;
+      const avgTransparency =
+        totalScans > 0 ? Math.min(100, Math.round((totalEvents / (totalScans * 10)) * 100)) : 0;
 
       setShopStats({
         totalScans,
@@ -198,16 +197,19 @@ export default function CarbonJourney() {
                     {!scansLoading &&
                       productions?.slice(0, INITIAL_DISPLAY_COUNT)?.map((production, index) => {
                         const transparencyInfo = getTransparencyInfo(production);
-                        const productName = typeof production.product === 'object'
-                          ? production.product?.name || 'Unknown Product'
-                          : production.product || 'Unknown Product';
-                        const farmName = production.establishment_name ||
+                        const productName =
+                          typeof production.product === 'object'
+                            ? production.product?.name || 'Unknown Product'
+                            : production.product || 'Unknown Product';
+                        const farmName =
+                          production.establishment_name ||
                           production.parcel?.establishment?.name ||
                           production.establishment?.name ||
                           'Unknown Farm';
-                        const scanDate = production.date && !isNaN(new Date(production.date).getTime())
-                          ? format(new Date(production.date), 'MMM dd, yyyy')
-                          : production.scanned_at
+                        const scanDate =
+                          production.date && !isNaN(new Date(production.date).getTime())
+                            ? format(new Date(production.date), 'MMM dd, yyyy')
+                            : production.scanned_at
                             ? format(new Date(production.scanned_at), 'MMM dd, yyyy')
                             : 'Recently';
 
@@ -268,11 +270,7 @@ export default function CarbonJourney() {
                                       </Text>
                                     </VStack>
                                   </HStack>
-                                  <Icon
-                                    as={FaChevronRight}
-                                    color="gray.400"
-                                    boxSize={4}
-                                  />
+                                  <Icon as={FaChevronRight} color="gray.400" boxSize={4} />
                                 </Flex>
 
                                 {/* Content */}
@@ -377,12 +375,14 @@ export default function CarbonJourney() {
                   <VStack spacing={3}>
                     {!reviewsLoading &&
                       reviews?.slice(0, INITIAL_DISPLAY_COUNT)?.map((review, index) => {
-                        const productName = typeof review.history.product === 'object'
-                          ? review.history.product?.name || 'Unknown Product'
-                          : review.history.product || 'Unknown Product';
-                        const reviewDate = review.date && !isNaN(new Date(review.date).getTime())
-                          ? format(new Date(review.date), 'MMM dd, yyyy')
-                          : 'Recently';
+                        const productName =
+                          typeof review.history.product === 'object'
+                            ? review.history.product?.name || 'Unknown Product'
+                            : review.history.product || 'Unknown Product';
+                        const reviewDate =
+                          review.date && !isNaN(new Date(review.date).getTime())
+                            ? format(new Date(review.date), 'MMM dd, yyyy')
+                            : 'Recently';
 
                         return (
                           <NavLink
@@ -562,9 +562,7 @@ export default function CarbonJourney() {
                                 Reviews Shared
                               </StatLabel>
                             </ConsumerTooltip>
-                            <StatNumber color="teal.600">
-                              {shopStats.totalReviews}
-                            </StatNumber>
+                            <StatNumber color="teal.600">{shopStats.totalReviews}</StatNumber>
                             <StatHelpText>reviews written</StatHelpText>
                           </Stat>
                         </VStack>

@@ -1009,7 +1009,11 @@ export function transformFormDataToEvent(
 
   // 🔧 PHASE 2.3: Custom fields must pass through to preview
   // Custom fields are stored in extra_data.custom_fields to match fieldDisplayUtils expectations
-  if (formData.custom_fields && Array.isArray(formData.custom_fields) && formData.custom_fields.length > 0) {
+  if (
+    formData.custom_fields &&
+    Array.isArray(formData.custom_fields) &&
+    formData.custom_fields.length > 0
+  ) {
     // Initialize extra_data if not exists
     if (!event.extra_data) {
       event.extra_data = {};
@@ -1018,7 +1022,11 @@ export function transformFormDataToEvent(
     event.extra_data.custom_fields = formData.custom_fields;
     console.log('📋 [eventPreviewUtils] Custom fields passed to preview:', {
       count: formData.custom_fields.length,
-      fields: formData.custom_fields.map((f: any) => ({ label: f.label, value: f.value, visibility: f.visibility }))
+      fields: formData.custom_fields.map((f: any) => ({
+        label: f.label,
+        value: f.value,
+        visibility: f.visibility
+      }))
     });
   }
 

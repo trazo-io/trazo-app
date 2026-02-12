@@ -83,9 +83,21 @@ export default function ImpactDashboard() {
                 icon={MdTrendingUp}
                 iconColor="green.600"
                 iconBg="green.100"
-                value={impactMetrics?.transparency_score_avg ? Math.round(impactMetrics.transparency_score_avg) : impactMetrics?.total_scans || 0}
-                label={impactMetrics?.transparency_score_avg ? "Avg Transparency Score" : "Products Scanned"}
-                subtitle={impactMetrics?.transparency_score_avg ? "Farming practice visibility" : "Start scanning to see scores"}
+                value={
+                  impactMetrics?.transparency_score_avg
+                    ? Math.round(impactMetrics.transparency_score_avg)
+                    : impactMetrics?.total_scans || 0
+                }
+                label={
+                  impactMetrics?.transparency_score_avg
+                    ? 'Avg Transparency Score'
+                    : 'Products Scanned'
+                }
+                subtitle={
+                  impactMetrics?.transparency_score_avg
+                    ? 'Farming practice visibility'
+                    : 'Start scanning to see scores'
+                }
                 size="lg"
                 tooltip={{
                   label: 'Transparency Score',
@@ -174,12 +186,7 @@ export default function ImpactDashboard() {
                       {/* Content */}
                       <Box flex={1} minW={0}>
                         <HStack justify="space-between" align="start" mb={1}>
-                          <Text
-                            fontWeight="semibold"
-                            fontSize="md"
-                            color={textColor}
-                            noOfLines={1}
-                          >
+                          <Text fontWeight="semibold" fontSize="md" color={textColor} noOfLines={1}>
                             {scan.product_name}
                           </Text>
                           <Icon as={FaChevronRight} color="gray.400" boxSize={4} flexShrink={0} />

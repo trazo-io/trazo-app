@@ -86,7 +86,12 @@ export const StandardPage = ({
     <Box bg={bgColor} minH="100vh">
       {/* Minimal Header - Just back button, aligned with content */}
       {needsMinimalHeader && (
-        <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="100px" pb="24px" px={{ base: 3, md: 6 }}>
+        <Box
+          bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
+          pt="100px"
+          pb="24px"
+          px={{ base: 3, md: 6 }}
+        >
           <Button
             variant="outline"
             leftIcon={<FaChevronLeft />}
@@ -207,9 +212,7 @@ export const StandardPage = ({
       )}
 
       {/* No header at all when no back button and no content */}
-      {!showBackButton && !hasHeroContent && (
-        <Box pt="80px" />
-      )}
+      {!showBackButton && !hasHeroContent && <Box pt="80px" />}
 
       {/* Main Content with Overlapping Card Design - Match producer app spacing */}
       <Box

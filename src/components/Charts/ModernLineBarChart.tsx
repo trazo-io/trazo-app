@@ -45,8 +45,8 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       // Filter out Area component entries (empty name or dataKey name)
-      const filteredPayload = payload.filter((entry: any) =>
-        entry.name === lineLabel || entry.name === barLabel
+      const filteredPayload = payload.filter(
+        (entry: any) => entry.name === lineLabel || entry.name === barLabel
       );
 
       return (

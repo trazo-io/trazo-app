@@ -196,7 +196,7 @@ export const irrigationFields: QuickEventTypeConfig = {
         { value: 'inches', labelKey: 'quickAdd.fields.units.inches' },
         { value: 'cm', labelKey: 'quickAdd.fields.units.cm' }
       ]
-    },
+    }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
 };
@@ -1795,15 +1795,12 @@ export function getDefaultFieldValues(templateId: string): Record<string, unknow
   const config = getQuickEventFields(templateId);
   if (!config) return {};
 
-  return config.quickFields.reduce(
-    (acc, field) => {
-      if (field.default !== undefined) {
-        acc[field.name] = field.default;
-      }
-      return acc;
-    },
-    {} as Record<string, unknown>
-  );
+  return config.quickFields.reduce((acc, field) => {
+    if (field.default !== undefined) {
+      acc[field.name] = field.default;
+    }
+    return acc;
+  }, {} as Record<string, unknown>);
 }
 
 /**

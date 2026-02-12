@@ -114,11 +114,7 @@ const CarouselCard = ({
 
           {/* Empty state or actual image */}
           {shouldShowPlaceholder ? (
-            <EmptyImageState
-              variant="small"
-              height="100%"
-              borderRadius="20px"
-            />
+            <EmptyImageState variant="small" height="100%" borderRadius="20px" />
           ) : (
             <S3Image
               width="100%"

@@ -751,17 +751,17 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
 
       {/* 🔄 UPLOAD STATUS - Minimalist Trazo Pattern */}
       {isUploading && (
-        <Box
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
+        <Box role="status" aria-live="polite" aria-atomic="true">
           <HStack justify="space-between" align="center" mb={2}>
             <Text fontSize="sm" color={mutedColor}>
-              Uploading {uploadingFiles.filter(f => f.status === 'uploading').length} of {uploadingFiles.length}...
+              Uploading {uploadingFiles.filter((f) => f.status === 'uploading').length} of{' '}
+              {uploadingFiles.length}...
             </Text>
             <Text fontSize="sm" color="green.600" fontWeight="semibold">
-              {Math.round(uploadingFiles.reduce((acc, f) => acc + f.progress, 0) / uploadingFiles.length)}%
+              {Math.round(
+                uploadingFiles.reduce((acc, f) => acc + f.progress, 0) / uploadingFiles.length
+              )}
+              %
             </Text>
           </HStack>
           <Progress

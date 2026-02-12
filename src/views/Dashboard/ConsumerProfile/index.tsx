@@ -51,20 +51,19 @@ export default function ConsumerProfile() {
 
   if (isLoading) {
     return (
-      <StandardPage title="Profile" description="Loading your profile..." showBackButton onBack={() => navigate(-1)}>
+      <StandardPage
+        title="Profile"
+        description="Loading your profile..."
+        showBackButton
+        onBack={() => navigate(-1)}
+      >
         <VStack spacing={6} align="stretch">
           {/* Loading indicator */}
           <VStack spacing={2} align="center" py={2}>
             <Text fontSize="sm" color={mutedColor} fontWeight="medium">
               Loading your profile...
             </Text>
-            <Progress
-              size="sm"
-              isIndeterminate
-              colorScheme="green"
-              borderRadius="full"
-              w="200px"
-            />
+            <Progress size="sm" isIndeterminate colorScheme="green" borderRadius="full" w="200px" />
           </VStack>
 
           {/* Profile Header Skeleton */}

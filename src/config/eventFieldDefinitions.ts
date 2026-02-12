@@ -214,20 +214,20 @@ export const SEEDS_SOURCE_OPTIONS: FieldOption[] = [
 // Weather conditions options for chemical applications
 // SSOT: Aligned with ChemicalTab-ENHANCED.jsx (Manual Event) - these are the authoritative options
 export const WEATHER_CONDITIONS_OPTIONS: FieldOption[] = [
-  { value: 'calm_dry', labelKey: 'app.weatherConditions.calmDry' },      // ☀️ Calm & Dry - Ideal conditions
-  { value: 'light_wind', labelKey: 'app.weatherConditions.lightWind' },  // 🌬️ Light Wind - Suitable conditions
-  { value: 'humid', labelKey: 'app.weatherConditions.humid' },           // 💨 Humid - Acceptable conditions
-  { value: 'windy', labelKey: 'app.weatherConditions.windy' }            // 🌪️ Windy - Challenging conditions
+  { value: 'calm_dry', labelKey: 'app.weatherConditions.calmDry' }, // ☀️ Calm & Dry - Ideal conditions
+  { value: 'light_wind', labelKey: 'app.weatherConditions.lightWind' }, // 🌬️ Light Wind - Suitable conditions
+  { value: 'humid', labelKey: 'app.weatherConditions.humid' }, // 💨 Humid - Acceptable conditions
+  { value: 'windy', labelKey: 'app.weatherConditions.windy' } // 🌪️ Windy - Challenging conditions
 ];
 
 // Application timing options for chemical applications
 // SSOT: Aligned with ChemicalTab-ENHANCED.jsx (Manual Event) - these are the authoritative options
 export const APPLICATION_TIMING_OPTIONS: FieldOption[] = [
-  { value: 'pre_plant', labelKey: 'app.applicationTiming.prePlant' },           // 🌱 Pre-Planting
+  { value: 'pre_plant', labelKey: 'app.applicationTiming.prePlant' }, // 🌱 Pre-Planting
   { value: 'post_emergence', labelKey: 'app.applicationTiming.postEmergence' }, // 🌿 Post-Emergence
-  { value: 'flowering', labelKey: 'app.applicationTiming.flowering' },          // 🌸 Flowering Stage
+  { value: 'flowering', labelKey: 'app.applicationTiming.flowering' }, // 🌸 Flowering Stage
   { value: 'fruit_development', labelKey: 'app.applicationTiming.fruitDevelopment' }, // 🍎 Fruit Development
-  { value: 'harvest', labelKey: 'app.applicationTiming.harvest' }               // 🚜 Pre-Harvest
+  { value: 'harvest', labelKey: 'app.applicationTiming.harvest' } // 🚜 Pre-Harvest
 ];
 
 // Organic approved options (Yes/No dropdown matching Manual Event)
@@ -259,25 +259,46 @@ export const ACTIVITY_TYPE_OPTIONS: FieldOption[] = [
 
 export const CHEMICAL_SUBTYPE_OPTIONS = {
   fertilizer: [
-    { value: 'synthetic_fertilizer', labelKey: 'quickAdd.fields.chemicalSubtype.syntheticFertilizer' },
+    {
+      value: 'synthetic_fertilizer',
+      labelKey: 'quickAdd.fields.chemicalSubtype.syntheticFertilizer'
+    },
     { value: 'organic_fertilizer', labelKey: 'quickAdd.fields.chemicalSubtype.organicFertilizer' },
-    { value: 'slow_release_fertilizer', labelKey: 'quickAdd.fields.chemicalSubtype.slowReleaseFertilizer' }
+    {
+      value: 'slow_release_fertilizer',
+      labelKey: 'quickAdd.fields.chemicalSubtype.slowReleaseFertilizer'
+    }
   ],
   pesticide: [
-    { value: 'synthetic_pesticide', labelKey: 'quickAdd.fields.chemicalSubtype.syntheticPesticide' },
+    {
+      value: 'synthetic_pesticide',
+      labelKey: 'quickAdd.fields.chemicalSubtype.syntheticPesticide'
+    },
     { value: 'organic_pesticide', labelKey: 'quickAdd.fields.chemicalSubtype.organicPesticide' },
-    { value: 'biological_pesticide', labelKey: 'quickAdd.fields.chemicalSubtype.biologicalPesticide' }
+    {
+      value: 'biological_pesticide',
+      labelKey: 'quickAdd.fields.chemicalSubtype.biologicalPesticide'
+    }
   ],
   herbicide: [
-    { value: 'synthetic_herbicide', labelKey: 'quickAdd.fields.chemicalSubtype.syntheticHerbicide' },
+    {
+      value: 'synthetic_herbicide',
+      labelKey: 'quickAdd.fields.chemicalSubtype.syntheticHerbicide'
+    },
     { value: 'organic_herbicide', labelKey: 'quickAdd.fields.chemicalSubtype.organicHerbicide' },
     { value: 'glyphosate', labelKey: 'quickAdd.fields.chemicalSubtype.glyphosate' }
   ],
   fungicide: [
-    { value: 'synthetic_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.syntheticFungicide' },
+    {
+      value: 'synthetic_fungicide',
+      labelKey: 'quickAdd.fields.chemicalSubtype.syntheticFungicide'
+    },
     { value: 'copper_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.copperFungicide' },
     { value: 'sulfur_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.sulfurFungicide' },
-    { value: 'biological_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.biologicalFungicide' }
+    {
+      value: 'biological_fungicide',
+      labelKey: 'quickAdd.fields.chemicalSubtype.biologicalFungicide'
+    }
   ]
 };
 
@@ -777,12 +798,7 @@ export const eventTypeFieldGroups = {
       'fuel_type',
       'fuel_consumed'
     ],
-    pruning: [
-      'area_covered',
-      'equipment_hours',
-      'fuel_type',
-      'fuel_consumed'
-    ],
+    pruning: ['area_covered', 'equipment_hours', 'fuel_type', 'fuel_consumed'],
     transplanting: [
       'area_covered',
       'yield_quantity',
@@ -790,18 +806,8 @@ export const eventTypeFieldGroups = {
       'fuel_type',
       'fuel_consumed'
     ],
-    cultivation: [
-      'area_covered',
-      'equipment_hours',
-      'fuel_type',
-      'fuel_consumed'
-    ],
-    thinning: [
-      'area_covered',
-      'equipment_hours',
-      'fuel_type',
-      'fuel_consumed'
-    ],
+    cultivation: ['area_covered', 'equipment_hours', 'fuel_type', 'fuel_consumed'],
+    thinning: ['area_covered', 'equipment_hours', 'fuel_type', 'fuel_consumed'],
     equipment_maintenance: ['equipment_hours', 'fuel_type', 'fuel_consumed']
   },
   chemical: {
@@ -1024,23 +1030,16 @@ export function getFieldsForEventType(
 
   if (eventType === 'production' && subtype) {
     const subtypeFields =
-      eventTypeFieldGroups.production[
-        subtype as keyof typeof eventTypeFieldGroups.production
-      ] || [];
-    const fieldDefs = subtypeFields
-      .map((fieldName) => productionFields[fieldName])
-      .filter(Boolean);
+      eventTypeFieldGroups.production[subtype as keyof typeof eventTypeFieldGroups.production] ||
+      [];
+    const fieldDefs = subtypeFields.map((fieldName) => productionFields[fieldName]).filter(Boolean);
     return [...baseFields, ...fieldDefs, universalFields.observation];
   }
 
   if (eventType === 'chemical' && subtype) {
     const subtypeFields =
-      eventTypeFieldGroups.chemical[
-        subtype as keyof typeof eventTypeFieldGroups.chemical
-      ] || [];
-    const fieldDefs = subtypeFields
-      .map((fieldName) => chemicalFields[fieldName])
-      .filter(Boolean);
+      eventTypeFieldGroups.chemical[subtype as keyof typeof eventTypeFieldGroups.chemical] || [];
+    const fieldDefs = subtypeFields.map((fieldName) => chemicalFields[fieldName]).filter(Boolean);
     return [...baseFields, ...fieldDefs, universalFields.observation];
   }
 

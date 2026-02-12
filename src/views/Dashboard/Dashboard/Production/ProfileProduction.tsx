@@ -40,11 +40,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
-import {
-  StandardCard,
-  StandardButton,
-  StandardPage
-} from 'components/Design/StandardComponents';
+import { StandardCard, StandardButton, StandardPage } from 'components/Design/StandardComponents';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
@@ -119,7 +115,11 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text', on
           </Link>
         );
       default:
-        return <Text fontWeight="medium" color="gray.800">{value}</Text>;
+        return (
+          <Text fontWeight="medium" color="gray.800">
+            {value}
+          </Text>
+        );
     }
   };
 
@@ -199,9 +199,7 @@ function ProfileProduction() {
   });
 
   // Complete API for timeline data
-  const {
-    data: completeData
-  } = useGetCompleteSummaryQuery(productionId || '175', {
+  const { data: completeData } = useGetCompleteSummaryQuery(productionId || '175', {
     skip: false,
     refetchOnMountOrArgChange: true
   });
@@ -221,14 +219,33 @@ function ProfileProduction() {
     if (['fe', 'pe', 'fu', 'he'].includes(typeStr)) return 2;
 
     // String-based type matching
-    if (typeStr.includes('weather') || typeStr.includes('frost') || typeStr.includes('drought')) return 0;
-    if (typeStr.includes('production') || typeStr.includes('planting') || typeStr.includes('harvest')) return 1;
-    if (typeStr.includes('chemical') || typeStr.includes('fertilizer') || typeStr.includes('pesticide')) return 2;
+    if (typeStr.includes('weather') || typeStr.includes('frost') || typeStr.includes('drought'))
+      return 0;
+    if (
+      typeStr.includes('production') ||
+      typeStr.includes('planting') ||
+      typeStr.includes('harvest')
+    )
+      return 1;
+    if (
+      typeStr.includes('chemical') ||
+      typeStr.includes('fertilizer') ||
+      typeStr.includes('pesticide')
+    )
+      return 2;
     if (typeStr.includes('general')) return 3;
-    if (typeStr.includes('equipment') || typeStr.includes('fuel') || typeStr.includes('machinery')) return 4;
-    if (typeStr.includes('soil') || typeStr.includes('tillage') || typeStr.includes('compost')) return 5;
-    if (typeStr.includes('pest') || typeStr.includes('beneficial') || typeStr.includes('ipm')) return 6;
-    if (typeStr.includes('business') || typeStr.includes('certification') || typeStr.includes('audit')) return 7;
+    if (typeStr.includes('equipment') || typeStr.includes('fuel') || typeStr.includes('machinery'))
+      return 4;
+    if (typeStr.includes('soil') || typeStr.includes('tillage') || typeStr.includes('compost'))
+      return 5;
+    if (typeStr.includes('pest') || typeStr.includes('beneficial') || typeStr.includes('ipm'))
+      return 6;
+    if (
+      typeStr.includes('business') ||
+      typeStr.includes('certification') ||
+      typeStr.includes('audit')
+    )
+      return 7;
 
     return 3;
   };
@@ -251,11 +268,16 @@ function ProfileProduction() {
       });
 
       const timelineEvents = normalizedEvents.map((event: any, index: number) => {
-        const standardizedEvent = event as StandardizedEvent & { carbon_data?: any; index?: number; albums?: any };
+        const standardizedEvent = event as StandardizedEvent & {
+          carbon_data?: any;
+          index?: number;
+          albums?: any;
+        };
         return {
           ...standardizedEvent,
           index: index,
-          albums: (event as any).albums || (event as any).album ? [(event as any).album] : undefined,
+          albums:
+            (event as any).albums || (event as any).album ? [(event as any).album] : undefined,
           carbon_data: {
             co2e: 0,
             usda_verified: completeData?.isUsdaVerified || (event as any).usda_verified || false,
@@ -263,7 +285,10 @@ function ProfileProduction() {
             total_emissions: 0,
             total_offsets: completeData?.totalOffsets || 0,
             net_footprint: transparencyApiData?.carbon_impact?.net_impact || 0,
-            verification_confidence: ((event as any).verification_confidence ? 'high' : 'low') as 'high' | 'medium' | 'low',
+            verification_confidence: ((event as any).verification_confidence ? 'high' : 'low') as
+              | 'high'
+              | 'medium'
+              | 'low',
             cost_analysis: (event as any).cost_analysis || {}
           }
         };
@@ -293,9 +318,7 @@ function ProfileProduction() {
 
   useEffect(() => {
     if (establishments) {
-      const found = establishments.filter(
-        (est: any) => est.id.toString() === establishmentId
-      )[0];
+      const found = establishments.filter((est: any) => est.id.toString() === establishmentId)[0];
       setEstablishment(found);
     }
   }, [establishmentId, establishments]);
@@ -336,7 +359,9 @@ function ProfileProduction() {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/history/${historyData.id}/download_qr_code/`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/history/${
+          historyData.id
+        }/download_qr_code/`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -397,7 +422,9 @@ function ProfileProduction() {
     return (
       <StandardPage
         showBackButton
-        onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+        onBack={() =>
+          navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+        }
       >
         <Box py={8} textAlign="center">
           <Spinner size="lg" color="green.500" />
@@ -410,7 +437,9 @@ function ProfileProduction() {
     return (
       <StandardPage
         showBackButton
-        onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+        onBack={() =>
+          navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+        }
       >
         <Box py={8} textAlign="center">
           <Text color="red.500">Error loading production data. Please try again.</Text>
@@ -425,7 +454,9 @@ function ProfileProduction() {
   return (
     <StandardPage
       showBackButton
-      onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+      onBack={() =>
+        navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+      }
     >
       <VStack spacing={8} w="100%">
         {/* Identity Section */}
@@ -561,7 +592,13 @@ function ProfileProduction() {
             />
             <StatCard
               icon={FaLeaf}
-              value={transparencyScore > 0 ? `${Math.round(transparencyScore)}%` : transparencyLoading ? '...' : '0%'}
+              value={
+                transparencyScore > 0
+                  ? `${Math.round(transparencyScore)}%`
+                  : transparencyLoading
+                  ? '...'
+                  : '0%'
+              }
               label="Transparency"
               colorScheme="green"
             />
@@ -620,11 +657,7 @@ function ProfileProduction() {
         {/* Production Details Section */}
         <StandardCard title="Production Details" variant="elevated">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <InfoRow
-              icon={FaSeedling}
-              label="Product"
-              value={historyData?.product?.name}
-            />
+            <InfoRow icon={FaSeedling} label="Product" value={historyData?.product?.name} />
             <InfoRow
               icon={FaTractor}
               label="Type"
@@ -676,11 +709,7 @@ function ProfileProduction() {
           <StandardCard title="Agricultural Information" variant="elevated">
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
               {historyData?.age_of_plants && (
-                <InfoRow
-                  icon={FaSeedling}
-                  label="Plant Age"
-                  value={historyData.age_of_plants}
-                />
+                <InfoRow icon={FaSeedling} label="Plant Age" value={historyData.age_of_plants} />
               )}
               {historyData?.number_of_plants && (
                 <InfoRow
@@ -690,18 +719,10 @@ function ProfileProduction() {
                 />
               )}
               {historyData?.soil_ph && (
-                <InfoRow
-                  icon={FaLeaf}
-                  label="Soil pH"
-                  value={historyData.soil_ph}
-                />
+                <InfoRow icon={FaLeaf} label="Soil pH" value={historyData.soil_ph} />
               )}
               {historyData?.crop_type && (
-                <InfoRow
-                  icon={FaSeedling}
-                  label="Crop Type"
-                  value={historyData.crop_type}
-                />
+                <InfoRow icon={FaSeedling} label="Crop Type" value={historyData.crop_type} />
               )}
             </SimpleGrid>
           </StandardCard>
@@ -720,7 +741,9 @@ function ProfileProduction() {
               icon={MdLocationOn}
               label="Parcel"
               value={historyData?.parcel?.name || 'Unknown'}
-              onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+              onClick={() =>
+                navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+              }
             />
             {historyData?.parcel?.establishment?.location && (
               <InfoRow
@@ -736,7 +759,13 @@ function ProfileProduction() {
         <StandardCard title="Reputation & Operator" variant="elevated">
           <VStack spacing={6} align="stretch">
             <Box>
-              <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={2}>
+              <Text
+                fontSize="xs"
+                color="gray.500"
+                textTransform="uppercase"
+                fontWeight="semibold"
+                mb={2}
+              >
                 Reputation Score
               </Text>
               <HStack spacing={2}>
@@ -758,7 +787,13 @@ function ProfileProduction() {
 
             {historyData?.operator && (
               <Box p={4} bg="gray.50" borderRadius="lg">
-                <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={2}>
+                <Text
+                  fontSize="xs"
+                  color="gray.500"
+                  textTransform="uppercase"
+                  fontWeight="semibold"
+                  mb={2}
+                >
                   Operator
                 </Text>
                 <HStack spacing={3}>
@@ -779,7 +814,13 @@ function ProfileProduction() {
             )}
 
             <Box>
-              <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={2}>
+              <Text
+                fontSize="xs"
+                color="gray.500"
+                textTransform="uppercase"
+                fontWeight="semibold"
+                mb={2}
+              >
                 Quality Rating
               </Text>
               <Progress
@@ -900,7 +941,13 @@ function ProfileProduction() {
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
             <VStack align="start" spacing={4}>
               <Box w="full">
-                <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={2}>
+                <Text
+                  fontSize="xs"
+                  color="gray.500"
+                  textTransform="uppercase"
+                  fontWeight="semibold"
+                  mb={2}
+                >
                   Production Status
                 </Text>
                 <Badge
@@ -916,7 +963,13 @@ function ProfileProduction() {
               </Box>
               {historyData?.start_date && historyData?.finish_date && (
                 <Box w="full">
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={1}>
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                    fontWeight="semibold"
+                    mb={1}
+                  >
                     Duration
                   </Text>
                   <Text fontWeight="medium">
@@ -932,7 +985,13 @@ function ProfileProduction() {
             </VStack>
             <VStack align="start" spacing={4}>
               <Box w="full">
-                <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={2}>
+                <Text
+                  fontSize="xs"
+                  color="gray.500"
+                  textTransform="uppercase"
+                  fontWeight="semibold"
+                  mb={2}
+                >
                   Events Recorded
                 </Text>
                 <Text fontWeight="bold" fontSize="xl" color="green.600">
@@ -941,7 +1000,13 @@ function ProfileProduction() {
               </Box>
               {timelineEvents.length > 0 && (
                 <Box w="full">
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" mb={2}>
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                    fontWeight="semibold"
+                    mb={2}
+                  >
                     Timeline Progress
                   </Text>
                   <HStack spacing={2}>

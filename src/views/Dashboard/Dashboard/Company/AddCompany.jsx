@@ -351,7 +351,8 @@ function AddCompany({ isEdit = false }) {
       transition="all 0.2s"
       cursor="pointer"
       position="relative"
-      w="full">
+      w="full"
+    >
       {isSelected && (
         <Box
           position="absolute"
@@ -360,7 +361,8 @@ function AddCompany({ isEdit = false }) {
           bg={`${goal.color}.500`}
           color="white"
           borderRadius="full"
-          p={1}>
+          p={1}
+        >
           <Icon as={FaCheckCircle} boxSize={3} />
         </Box>
       )}
@@ -370,7 +372,8 @@ function AddCompany({ isEdit = false }) {
           bg={isSelected ? `${goal.color}.500` : `${goal.color}.100`}
           color={isSelected ? 'white' : `${goal.color}.600`}
           p={3}
-          borderRadius="full">
+          borderRadius="full"
+        >
           <Icon as={goal.icon} boxSize={6} />
         </Box>
 
@@ -379,13 +382,15 @@ function AddCompany({ isEdit = false }) {
             fontWeight="bold"
             fontSize="sm"
             color={isSelected ? `${goal.color}.700` : 'gray.700'}
-            textAlign="center">
+            textAlign="center"
+          >
             {goal.title}
           </Text>
           <Text
             fontSize="xs"
             color={isSelected ? `${goal.color}.600` : 'gray.500'}
-            textAlign="center">
+            textAlign="center"
+          >
             {goal.description}
           </Text>
         </VStack>
@@ -398,7 +403,8 @@ function AddCompany({ isEdit = false }) {
       title="Set Up Your Agricultural Company"
       description="Create your company profile and start building consumer trust through transparency"
       showBackButton
-      onBack={handleCancel}>
+      onBack={handleCancel}
+    >
       {/* Modern Progress Stepper */}
       <StandardStepper
         steps={steps}
@@ -414,7 +420,8 @@ function AddCompany({ isEdit = false }) {
           {currentStep === 0 && (
             <StandardCard
               title="Company Identity"
-              subtitle="Essential details to set up your agricultural company">
+              subtitle="Essential details to set up your agricultural company"
+            >
               <VStack spacing={6} align="stretch">
                 {/* Company Name & Trade Name */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
@@ -422,7 +429,8 @@ function AddCompany({ isEdit = false }) {
                     label="Company Name"
                     required
                     error={errors.name?.message}
-                    helpText="Your company's legal registered name">
+                    helpText="Your company's legal registered name"
+                  >
                     <StandardInput
                       {...methods.register('name')}
                       placeholder="e.g., Green Valley Farms LLC"
@@ -433,7 +441,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardField
                     label="Trade Name"
                     error={errors.tradename?.message}
-                    helpText="Business name if different from legal name (optional)">
+                    helpText="Business name if different from legal name (optional)"
+                  >
                     <StandardInput
                       {...methods.register('tradename')}
                       placeholder="e.g., Green Valley Organics"
@@ -448,7 +457,8 @@ function AddCompany({ isEdit = false }) {
                     label="Email Address"
                     required
                     error={errors.email?.message}
-                    helpText="Primary contact email for your company">
+                    helpText="Primary contact email for your company"
+                  >
                     <StandardInput
                       {...methods.register('email')}
                       type="email"
@@ -461,7 +471,8 @@ function AddCompany({ isEdit = false }) {
                     label="Phone Number"
                     required
                     error={errors.phone?.message}
-                    helpText="Required for regulatory compliance">
+                    helpText="Required for regulatory compliance"
+                  >
                     <StandardInput
                       {...methods.register('phone')}
                       type="tel"
@@ -475,10 +486,12 @@ function AddCompany({ isEdit = false }) {
                 <StandardField
                   label="Legal Structure"
                   error={errors.legalStructure?.message}
-                  helpText="Your business entity type (optional but recommended for B2B)">
+                  helpText="Your business entity type (optional but recommended for B2B)"
+                >
                   <StandardSelect
                     {...methods.register('legalStructure')}
-                    value={watch('legalStructure') || ''}>
+                    value={watch('legalStructure') || ''}
+                  >
                     <option value="">Select legal structure...</option>
                     <option value="sole_proprietorship">Sole Proprietorship</option>
                     <option value="partnership">Partnership</option>
@@ -504,7 +517,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}>
+                    disabled={!isStepComplete(0)}
+                  >
                     Continue to Location
                   </StandardButton>
                 </HStack>
@@ -516,13 +530,15 @@ function AddCompany({ isEdit = false }) {
           {currentStep === 1 && (
             <StandardCard
               title="Location Details"
-              subtitle="Where is your agricultural operation based? (US farms only)">
+              subtitle="Where is your agricultural operation based? (US farms only)"
+            >
               <VStack spacing={6} align="stretch">
                 {/* Address */}
                 <StandardField
                   label="Street Address"
                   error={errors.address?.message}
-                  helpText="Physical address of your main operation">
+                  helpText="Physical address of your main operation"
+                >
                   <StandardInput
                     {...methods.register('address')}
                     placeholder="123 Farm Road"
@@ -540,7 +556,8 @@ function AddCompany({ isEdit = false }) {
                     label="State"
                     required
                     error={errors.state?.message}
-                    helpText="Required for regional carbon calculations">
+                    helpText="Required for regional carbon calculations"
+                  >
                     <StandardSelect {...methods.register('state')} value={watch('state') || ''}>
                       <option value="">Select your state...</option>
                       {US_STATES.map((state) => (
@@ -556,7 +573,8 @@ function AddCompany({ isEdit = false }) {
                 <StandardField
                   label="ZIP Code"
                   error={errors.zipCode?.message}
-                  helpText="5-digit US postal code">
+                  helpText="5-digit US postal code"
+                >
                   <StandardInput
                     {...methods.register('zipCode')}
                     placeholder="12345"
@@ -576,7 +594,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
+                    onClick={previousStep}
+                  >
                     Back to Company Info
                   </StandardButton>
 
@@ -587,7 +606,8 @@ function AddCompany({ isEdit = false }) {
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(1)}>
+                      disabled={!isStepComplete(1)}
+                    >
                       Continue to Sustainability
                     </StandardButton>
                   </HStack>
@@ -600,7 +620,8 @@ function AddCompany({ isEdit = false }) {
           {currentStep === 2 && (
             <StandardCard
               title="Sustainability Goals"
-              subtitle="Select your sustainability and transparency objectives">
+              subtitle="Select your sustainability and transparency objectives"
+            >
               <VStack spacing={6} align="stretch">
                 {/* Sustainability Goals Grid */}
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
@@ -627,7 +648,8 @@ function AddCompany({ isEdit = false }) {
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
+                    onClick={previousStep}
+                  >
                     Back to Location
                   </StandardButton>
 
@@ -639,7 +661,8 @@ function AddCompany({ isEdit = false }) {
                       type="submit"
                       isLoading={isLoading}
                       loadingText="Creating Company..."
-                      leftIcon={<FaRocket />}>
+                      leftIcon={<FaRocket />}
+                    >
                       Create Company
                     </StandardButton>
                   </HStack>

@@ -35,24 +35,28 @@ ConsumerEventCard renders tiered verification badge ✅
 ## Test Cases (5 Required Scenarios)
 
 ### Test Case 1: Self Reported (0 Photos)
+
 **Scenario**: User creates event with NO photos
+
 ```json
 {
-  "event_type": 1,  // Production event
+  "event_type": 1, // Production event
   "description": "Planted corn",
   "area_covered": "100",
   "area_unit": "acres",
-  "album": null  // No photos
+  "album": null // No photos
 }
 ```
 
 **Expected Flow**:
+
 - EventPreviewModal: verification_level = "self_reported" (50%)
 - ConsumerEventCard: Shows gray "Self Reported" badge
 - Backend: get_verification_level() returns "self_reported"
 - Final Display: Gray badge with info icon
 
 **Verification Points**:
+
 - [ ] Preview shows gray "Self Reported" badge
 - [ ] After submit, ProductDetail shows gray badge
 - [ ] Badge tooltip explains self-reported data
@@ -60,10 +64,12 @@ ConsumerEventCard renders tiered verification badge ✅
 ---
 
 ### Test Case 2: Photo Documented (1 Valid Photo)
+
 **Scenario**: User creates event with 1 agricultural photo
+
 ```json
 {
-  "event_type": 1,  // Production event
+  "event_type": 1, // Production event
   "description": "Planted corn",
   "area_covered": "100",
   "area_unit": "acres",
@@ -80,6 +86,7 @@ ConsumerEventCard renders tiered verification badge ✅
 ```
 
 **Expected Flow**:
+
 - EventPreviewModal: verification_level = "photo_documented" (65%)
   - photoCount = 1 → triggers photo_documented tier
 - ConsumerEventCard: Shows teal "Photo Documented (1)" badge
@@ -87,6 +94,7 @@ ConsumerEventCard renders tiered verification badge ✅
 - Final Display: Teal badge with camera icon + photo count
 
 **Verification Points**:
+
 - [ ] Preview shows teal "Photo Documented" badge
 - [ ] Badge shows "(1)" to indicate 1 photo
 - [ ] After submit, ProductDetail shows same badge
@@ -95,10 +103,12 @@ ConsumerEventCard renders tiered verification badge ✅
 ---
 
 ### Test Case 3: Photo Verified (2+ Valid Photos)
+
 **Scenario**: User creates event with 2+ agricultural photos with GPS/timestamp
+
 ```json
 {
-  "event_type": 1,  // Production event
+  "event_type": 1, // Production event
   "description": "Harvested corn",
   "area_covered": "100",
   "area_unit": "acres",
@@ -107,15 +117,16 @@ ConsumerEventCard renders tiered verification badge ✅
   "date": "2025-12-09T14:30:00Z",
   "album": {
     "images": [
-      {"image": "...photo 1..."},
-      {"image": "...photo 2..."},
-      {"image": "...photo 3..."}
+      { "image": "...photo 1..." },
+      { "image": "...photo 2..." },
+      { "image": "...photo 3..." }
     ]
   }
 }
 ```
 
 **Expected Flow**:
+
 - EventPreviewModal: verification_level = "photo_verified" (80%)
   - photoCount >= 2 + GPS + timestamp → photo_verified
 - ConsumerEventCard: Shows blue "Photo Verified (3)" badge
@@ -124,6 +135,7 @@ ConsumerEventCard renders tiered verification badge ✅
 - Final Display: Blue badge with camera icon + "(3)" photo count
 
 **Verification Points**:
+
 - [ ] Preview shows blue "Photo Verified" badge with count
 - [ ] GPS/timestamp data captured correctly
 - [ ] After submit, ProductDetail shows blue badge
@@ -133,23 +145,24 @@ ConsumerEventCard renders tiered verification badge ✅
 ---
 
 ### Test Case 4: Data Verified (Weather Event Auto-Upgrade)
+
 **Scenario**: Weather event (type 0) auto-upgrades to data_verified
+
 ```json
 {
-  "event_type": 0,  // Weather event
+  "event_type": 0, // Weather event
   "description": "Frost damage",
   "weather_type": "FR",
   "lower_temperature": 28,
   "highest_temperature": 32,
   "album": {
-    "images": [
-      {"image": "...frost photo..."}
-    ]
+    "images": [{ "image": "...frost photo..." }]
   }
 }
 ```
 
 **Expected Flow**:
+
 - EventPreviewModal: verification_level = "data_verified" (85%)
   - Event type 0 (weather) = auto-upgrade category
   - photoCount >= 1 + auto-upgrade type → data_verified
@@ -159,6 +172,7 @@ ConsumerEventCard renders tiered verification badge ✅
 - Final Display: Green badge with check icon
 
 **Verification Points**:
+
 - [ ] Preview shows green "Data Verified" badge (not blue)
 - [ ] Weather event type correctly identified
 - [ ] After submit, ProductDetail shows green badge
@@ -168,10 +182,12 @@ ConsumerEventCard renders tiered verification badge ✅
 ---
 
 ### Test Case 5: Downgraded Verification (AI-Generated Photo)
+
 **Scenario**: Photo flagged as AI-generated or stock image (Vision API)
+
 ```json
 {
-  "event_type": 2,  // Chemical event
+  "event_type": 2, // Chemical event
   "description": "Applied fertilizer",
   "commercial_name": "NPK 10-10-10",
   "area_treated": 100,
@@ -181,7 +197,7 @@ ConsumerEventCard renders tiered verification badge ✅
       {
         "image": "...suspicious image...",
         "extra_data": {
-          "content_validation": "ai_generated",  // ← Vision API flag
+          "content_validation": "ai_generated", // ← Vision API flag
           "flagged_reason": "AI-generated image detected"
         }
       }
@@ -191,9 +207,10 @@ ConsumerEventCard renders tiered verification badge ✅
 ```
 
 **Expected Flow**:
+
 - EventPreviewModal: verification_level = "photo_documented" → "self_reported"
   - Image flagged as ai_generated by Vision API
-  - Backend helper: _check_valid_agricultural_content() returns false
+  - Backend helper: \_check_valid_agricultural_content() returns false
   - Downgrade from photo_documented to self_reported
 - ConsumerEventCard: Shows gray "Self Reported" badge
 - Backend: get_verification_level() detects invalid content
@@ -201,6 +218,7 @@ ConsumerEventCard renders tiered verification badge ✅
 - Final Display: Gray badge with info icon
 
 **Verification Points**:
+
 - [ ] Invalid photo doesn't increase verification tier
 - [ ] Backend correctly flags AI-generated/stock images
 - [ ] Final badge is downgraded to self_reported
@@ -213,18 +231,19 @@ ConsumerEventCard renders tiered verification badge ✅
 
 All event types should properly calculate verification_level:
 
-| Event Type | Type # | Auto-Upgrade to data_verified | Test Required |
-|-----------|--------|-------------------------------|---------------|
-| Weather | 0 | ✅ YES | Yes (Test Case 4) |
-| Production | 1 | ❌ NO | Yes (Test Cases 1-3) |
-| Chemical | 2 | ❌ NO | Yes (Test Case 5) |
-| General | 3 | ❌ NO | Verify |
-| Equipment | 4 | ✅ YES | Verify |
-| Soil Management | 5 | ✅ YES | Verify |
-| Pest Management | 6 | ❌ NO | Verify |
-| Business | 7 | ✅ YES | Verify |
+| Event Type      | Type # | Auto-Upgrade to data_verified | Test Required        |
+| --------------- | ------ | ----------------------------- | -------------------- |
+| Weather         | 0      | ✅ YES                        | Yes (Test Case 4)    |
+| Production      | 1      | ❌ NO                         | Yes (Test Cases 1-3) |
+| Chemical        | 2      | ❌ NO                         | Yes (Test Case 5)    |
+| General         | 3      | ❌ NO                         | Verify               |
+| Equipment       | 4      | ✅ YES                        | Verify               |
+| Soil Management | 5      | ✅ YES                        | Verify               |
+| Pest Management | 6      | ❌ NO                         | Verify               |
+| Business        | 7      | ✅ YES                        | Verify               |
 
 **Auto-Upgrade Types** (auto-escalate to data_verified with any photo):
+
 - Weather (0): Temp/precipitation sensors
 - Equipment (4): Equipment sensors/odometer
 - Soil Management (5): Soil testing results
@@ -240,11 +259,11 @@ For each test case, verify:
 
 ```typescript
 // EventPreviewModal (in form)
-previewEvent.verification_level ===
-// ConsumerEventCard (in preview)
-previewEvent.verification_level ===
-// ProductDetail (after submit)
-timelineEvent.verification_level
+(previewEvent.verification_level ===
+  // ConsumerEventCard (in preview)
+  previewEvent.verification_level) ===
+  // ProductDetail (after submit)
+  timelineEvent.verification_level;
 ```
 
 All three must match exactly.
@@ -252,6 +271,7 @@ All three must match exactly.
 ### Badge Visual Matching
 
 Verify that badges are identical:
+
 - **Color**: Same colorScheme (gray, teal, blue, green, purple)
 - **Icon**: Same icon (info, camera, check, star)
 - **Label**: Exact same text ("Self Reported", "Photo Documented", etc.)
@@ -284,15 +304,18 @@ Test: Production event with 2 photos
 ### Verify Backend Changes
 
 **File**: `/trazo-back/common/views.py` (line 250)
+
 - [ ] `event_type` parameter passed to validation
 - [ ] Chemical/equipment/soil events get context-specific validation
 
 **File**: `/trazo-back/carbon/services/photo_evidence_service.py` (line 511-607)
+
 - [ ] `upload_evidence_photo()` method exists
 - [ ] Vision API validation called
 - [ ] Results stored in extra_data.content_validation
 
 **File**: `/trazo-back/history/serializers.py` (line 274-402)
+
 - [ ] `_check_valid_agricultural_content()` helper method works
 - [ ] Vision API results integrated into verification level
 - [ ] Invalid photos downgrade verification tier
@@ -300,6 +323,7 @@ Test: Production event with 2 photos
 ### Verify API Response Format
 
 When receiving event from API:
+
 ```json
 {
   "id": "event-123",
@@ -314,6 +338,7 @@ When receiving event from API:
 ```
 
 Must include:
+
 - [ ] `verification_level` field present
 - [ ] `photo_verified_count` field present
 - [ ] Values match backend calculation
@@ -326,16 +351,19 @@ Must include:
 ### Verify Type Definitions
 
 **File**: `/src/types/standardizedEvents.ts`
+
 - [ ] `verification_level?: VerificationLevel` in StandardizedEventBase
 - [ ] `photo_verified_count?: number` in StandardizedEventBase
 
 **File**: `/src/store/api/carbonApi.ts`
+
 - [ ] `verification_level` in timeline event type
 - [ ] `photo_verified_count` in timeline event type
 
 ### Verify Helper Functions
 
 **File**: `/src/utils/verificationTierHelpers.ts`
+
 - [ ] `getVerificationBadgeConfig()` returns correct config for each tier
 - [ ] `getVerificationColor()` returns correct colorScheme
 - [ ] `calculatePreviewVerificationLevel()` uses correct logic
@@ -344,12 +372,14 @@ Must include:
 ### Verify Component Usage
 
 **ConsumerEventCard**:
+
 - [ ] Imports verification helpers
 - [ ] Renders tiered badge when `verification_level` exists
 - [ ] Shows photo count when `photo_verified_count > 0`
 - [ ] Badge uses correct color, icon, tooltip
 
 **EventPreviewModal**:
+
 - [ ] Imports `calculatePreviewVerificationLevel`
 - [ ] Calculates verification level from form data
 - [ ] Passes to previewEvent object

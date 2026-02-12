@@ -1,5 +1,14 @@
 // Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
-import { Icon, Text, useColorModeValue, HStack, Box, SimpleGrid, VStack, Flex } from '@chakra-ui/react';
+import {
+  Icon,
+  Text,
+  useColorModeValue,
+  HStack,
+  Box,
+  SimpleGrid,
+  VStack,
+  Flex
+} from '@chakra-ui/react';
 import {
   StandardCard,
   StandardButton,
@@ -21,7 +30,7 @@ import {
 } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 // Custom components
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { number, object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 
@@ -120,96 +129,65 @@ const formSchemaMainInfo = object({
     .transform((val) => (val ? Number(val) : undefined)),
   crop_impact: string().optional(),
   observation: string().optional(),
-  custom_fields: array(object({
-    id: string().optional(),
-    label: string(),
-    value: string(),
-    field_type: string(),
-    visibility: string(),
-    link_url: string().optional(),
-    verification: string().optional(),
-    created_at: string().optional(),
-    photo_id: string().optional()
-  })).optional()
+  custom_fields: array(
+    object({
+      id: string().optional(),
+      label: string(),
+      value: string(),
+      field_type: string(),
+      visibility: string(),
+      link_url: string().optional(),
+      verification: string().optional(),
+      created_at: string().optional(),
+      photo_id: string().optional()
+    })
+  ).optional()
 });
 
-const WeatherTab = ({
-  onSubmitHandler,
-  onDataChange,
-  onValidationChange,
-  onPrev,
-  initialValues = {},
-  hideActions = false
-}) => {
-  const intl = useIntl();
-  const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
-  const textColor = useColorModeValue('gray.700', 'white');
-  const iconColor = useColorModeValue('gray.300', 'gray.700');
+const WeatherTab = forwardRef(
+  (
+    {
+      onSubmitHandler,
+      onDataChange,
+      onValidationChange,
+      onPrev,
+      initialValues = {},
+      hideActions = false
+    },
+    ref
+  ) => {
+    const intl = useIntl();
+    const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
+    const textColor = useColorModeValue('gray.700', 'white');
+    const iconColor = useColorModeValue('gray.300', 'gray.700');
 
-  // Map API format to form format
-  const mapApiTypeToFormType = (apiType) => {
-    if (!apiType) return '';
+    // Map API format to form format
+    const mapApiTypeToFormType = (apiType) => {
+      if (!apiType) return '';
 
-    const typeMapping = {
-      'event.weather.frost': 'FR',
-      'event.weather.drought': 'DR',
-      'event.weather.hailstorm': 'HL',
-      'event.weather.high_temperature': 'HT',
-      'event.weather.tropical_storm': 'TS',
-      'event.weather.high_winds': 'HW',
-      'event.weather.high_humidity': 'HH',
-      'event.weather.low_humidity': 'LH'
+      const typeMapping = {
+        'event.weather.frost': 'FR',
+        'event.weather.drought': 'DR',
+        'event.weather.hailstorm': 'HL',
+        'event.weather.high_temperature': 'HT',
+        'event.weather.tropical_storm': 'TS',
+        'event.weather.high_winds': 'HW',
+        'event.weather.high_humidity': 'HH',
+        'event.weather.low_humidity': 'LH'
+      };
+
+      return typeMapping[apiType] || apiType;
     };
 
-    return typeMapping[apiType] || apiType;
-  };
+    const formType = mapApiTypeToFormType(initialValues.type);
 
-  const formType = mapApiTypeToFormType(initialValues.type);
-
-  // Backend serializer returns weather-specific fields FLAT (not in extra_data)
-  // Read fields directly from initialValues
-  const mainInfoMethods = useForm({
-    resolver: zodResolver(formSchemaMainInfo),
-    mode: 'onBlur', // Validate when user leaves field - shows errors immediately
-    defaultValues: {
-      type: formType || '',
-      lower_temperature: initialValues.lower_temperature?.toString() || '',
-      way_of_protection: initialValues.way_of_protection || '',
-      water_deficit: initialValues.water_deficit?.toString() || '',
-      // Sprint 2 Epic 2.1.3: Removed weight and diameter fields
-      duration: initialValues.duration?.toString() || '',
-      highest_temperature: initialValues.highest_temperature?.toString() || '',
-      start_date: initialValues.start_date || '',
-      end_date: initialValues.end_date || '',
-      // Tropical Storm fields
-      wind_speed: initialValues.wind_speed?.toString() || '',
-      precipitation_amount: initialValues.precipitation_amount?.toString() || '',
-      damage_assessment: initialValues.damage_assessment || '',
-      // High Winds fields
-      protection_measures: initialValues.protection_measures || '',
-      // Humidity fields
-      humidity_level: initialValues.humidity_level?.toString() || '',
-      crop_impact: initialValues.crop_impact || '',
-      observation: initialValues.observation || '',
-      custom_fields: initialValues.custom_fields || []
-    }
-  });
-
-  // Custom fields state for Phase 2.3
-  const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
-
-  // Track if this is the initial mount - only reset form on first load, not on every onDataChange
-  const isInitialMount = React.useRef(true);
-
-  // Update form values only on initial mount (for loading existing event data)
-  // Skip reset when changes come from user editing (via onDataChange)
-  useEffect(() => {
-    if (isInitialMount.current && Object.keys(initialValues).length > 0) {
-      console.log('🔍 WeatherTab: Initial load - setting form values:', initialValues);
-      const mappedType = mapApiTypeToFormType(initialValues.type);
-      console.log('🔍 WeatherTab: mapped type:', mappedType, 'from:', initialValues.type);
-      mainInfoMethods.reset({
-        type: mappedType || '',
+    // Backend serializer returns weather-specific fields FLAT (not in extra_data)
+    // Read fields directly from initialValues
+    const mainInfoMethods = useForm({
+      resolver: zodResolver(formSchemaMainInfo),
+      mode: 'onBlur', // Validate when user leaves field - shows errors immediately
+      defaultValues: {
+        type: formType || '',
         lower_temperature: initialValues.lower_temperature?.toString() || '',
         way_of_protection: initialValues.way_of_protection || '',
         water_deficit: initialValues.water_deficit?.toString() || '',
@@ -229,540 +207,604 @@ const WeatherTab = ({
         crop_impact: initialValues.crop_impact || '',
         observation: initialValues.observation || '',
         custom_fields: initialValues.custom_fields || []
-      });
-      isInitialMount.current = false; // Mark as initialized - skip future resets
-    }
-  }, [JSON.stringify(initialValues)]); // Use JSON.stringify to prevent render loops from object reference changes
-
-  // Sync custom fields with form
-  useEffect(() => {
-    mainInfoMethods.setValue('custom_fields', customFields);
-  }, [customFields, mainInfoMethods]);
-
-  const {
-    reset: mainInfoReset,
-    handleSubmit: mainInfoSubmit,
-    watch,
-    errors: mainInfoErrors,
-    formState: { errors, isSubmitSuccessful, isValid },
-    register
-  } = mainInfoMethods;
-
-  const type = watch('type', '');
-
-  // Report validation errors to parent component
-  useEffect(() => {
-    const hasErrors = Object.keys(errors).length > 0;
-    console.log('🚨 WeatherTab validation:', { hasErrors, errors, onValidationChange: !!onValidationChange });
-    if (onValidationChange) {
-      onValidationChange(hasErrors);
-    }
-    // Cleanup: reset error state when unmounting
-    return () => {
-      if (onValidationChange) {
-        onValidationChange(false);
-      }
-    };
-  }, [errors, onValidationChange]);
-
-  // Debug logging for form state (commented out to prevent render loops)
-  // console.log('🔍 WeatherTab Debug:', { type, formType, initialValues, errors });
-
-  // Real-time field watching for carbon calculation updates with proper dependency management
-  useEffect(() => {
-    let debounceTimeout;
-
-    // Watch specific fields without causing re-render loops
-    const subscription = watch((value, { name }) => {
-      // Only trigger on relevant field changes - include ALL weather fields for proper persistence
-      // Sprint 2 Epic 2.1.3: Removed weight and diameter from watched fields
-      const relevantFields = [
-        'type',
-        'lower_temperature',
-        'way_of_protection',
-        'highest_temperature',
-        'water_deficit',
-        'duration',
-        'start_date',
-        'end_date',
-        'wind_speed',
-        'precipitation_amount',
-        'damage_assessment',
-        'protection_measures',
-        'humidity_level',
-        'crop_impact',
-        'observation',
-        'custom_fields'
-      ];
-
-      if (relevantFields.includes(name) || !name) {
-        // !name means multiple fields changed
-        // Clear previous timeout
-        if (debounceTimeout) {
-          clearTimeout(debounceTimeout);
-        }
-
-        // Weather events do NOT trigger carbon calculations
-        // Weather data is environmental context, not a source of carbon emissions
-        // These are documentation events, similar to Business Events
-
-        // NOTE: Weather events provide transparency value through:
-        // - Environmental context for other agricultural activities
-        // - Climate documentation for consumer understanding
-        // - Weather impact tracking for agricultural transparency
-        //
-        // They do NOT generate carbon emissions and should not call carbon APIs
-
-        // Debounce onDataChange to prevent re-renders while typing
-        debounceTimeout = setTimeout(() => {
-          onDataChange(value);
-        }, 500); // 500ms debounce - waits for user to stop typing
       }
     });
 
-    return () => {
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
+    // DEBOUNCE FIX: Expose flushData method to parent via ref
+    // This allows NewEvent.jsx to force-sync form data before step change
+    useImperativeHandle(
+      ref,
+      () => ({
+        flushData: () => {
+          if (onDataChange) {
+            const currentValues = mainInfoMethods.getValues();
+            console.log('[WeatherTab] 🔄 flushData called - syncing form data immediately');
+            onDataChange(currentValues);
+          }
+        }
+      }),
+      [onDataChange, mainInfoMethods]
+    );
+
+    // Custom fields state for Phase 2.3
+    const [customFields, setCustomFields] = useState(initialValues.custom_fields || []);
+
+    // Track if this is the initial mount - only reset form on first load, not on every onDataChange
+    const isInitialMount = React.useRef(true);
+
+    // Update form values only on initial mount (for loading existing event data)
+    // Skip reset when changes come from user editing (via onDataChange)
+    useEffect(() => {
+      if (isInitialMount.current && Object.keys(initialValues).length > 0) {
+        console.log('🔍 WeatherTab: Initial load - setting form values:', initialValues);
+        const mappedType = mapApiTypeToFormType(initialValues.type);
+        console.log('🔍 WeatherTab: mapped type:', mappedType, 'from:', initialValues.type);
+        mainInfoMethods.reset({
+          type: mappedType || '',
+          lower_temperature: initialValues.lower_temperature?.toString() || '',
+          way_of_protection: initialValues.way_of_protection || '',
+          water_deficit: initialValues.water_deficit?.toString() || '',
+          // Sprint 2 Epic 2.1.3: Removed weight and diameter fields
+          duration: initialValues.duration?.toString() || '',
+          highest_temperature: initialValues.highest_temperature?.toString() || '',
+          start_date: initialValues.start_date || '',
+          end_date: initialValues.end_date || '',
+          // Tropical Storm fields
+          wind_speed: initialValues.wind_speed?.toString() || '',
+          precipitation_amount: initialValues.precipitation_amount?.toString() || '',
+          damage_assessment: initialValues.damage_assessment || '',
+          // High Winds fields
+          protection_measures: initialValues.protection_measures || '',
+          // Humidity fields
+          humidity_level: initialValues.humidity_level?.toString() || '',
+          crop_impact: initialValues.crop_impact || '',
+          observation: initialValues.observation || '',
+          custom_fields: initialValues.custom_fields || []
+        });
+        isInitialMount.current = false; // Mark as initialized - skip future resets
       }
-      subscription.unsubscribe();
+    }, [JSON.stringify(initialValues)]); // Use JSON.stringify to prevent render loops from object reference changes
+
+    // Sync custom fields with form
+    useEffect(() => {
+      mainInfoMethods.setValue('custom_fields', customFields);
+    }, [customFields, mainInfoMethods]);
+
+    const {
+      reset: mainInfoReset,
+      handleSubmit: mainInfoSubmit,
+      watch,
+      errors: mainInfoErrors,
+      formState: { errors, isSubmitSuccessful, isValid },
+      register
+    } = mainInfoMethods;
+
+    const type = watch('type', '');
+
+    // Report validation errors to parent component
+    useEffect(() => {
+      const hasErrors = Object.keys(errors).length > 0;
+      console.log('🚨 WeatherTab validation:', {
+        hasErrors,
+        errors,
+        onValidationChange: !!onValidationChange
+      });
+      if (onValidationChange) {
+        onValidationChange(hasErrors);
+      }
+      // Cleanup: reset error state when unmounting
+      return () => {
+        if (onValidationChange) {
+          onValidationChange(false);
+        }
+      };
+    }, [errors, onValidationChange]);
+
+    // Debug logging for form state (commented out to prevent render loops)
+    // console.log('🔍 WeatherTab Debug:', { type, formType, initialValues, errors });
+
+    // Real-time field watching for carbon calculation updates with proper dependency management
+    useEffect(() => {
+      let debounceTimeout;
+
+      // Watch specific fields without causing re-render loops
+      const subscription = watch((value, { name }) => {
+        // Only trigger on relevant field changes - include ALL weather fields for proper persistence
+        // Sprint 2 Epic 2.1.3: Removed weight and diameter from watched fields
+        const relevantFields = [
+          'type',
+          'lower_temperature',
+          'way_of_protection',
+          'highest_temperature',
+          'water_deficit',
+          'duration',
+          'start_date',
+          'end_date',
+          'wind_speed',
+          'precipitation_amount',
+          'damage_assessment',
+          'protection_measures',
+          'humidity_level',
+          'crop_impact',
+          'observation',
+          'custom_fields'
+        ];
+
+        if (relevantFields.includes(name) || !name) {
+          // !name means multiple fields changed
+          // Clear previous timeout
+          if (debounceTimeout) {
+            clearTimeout(debounceTimeout);
+          }
+
+          // Weather events do NOT trigger carbon calculations
+          // Weather data is environmental context, not a source of carbon emissions
+          // These are documentation events, similar to Business Events
+
+          // NOTE: Weather events provide transparency value through:
+          // - Environmental context for other agricultural activities
+          // - Climate documentation for consumer understanding
+          // - Weather impact tracking for agricultural transparency
+          //
+          // They do NOT generate carbon emissions and should not call carbon APIs
+
+          // Debounce onDataChange to prevent re-renders while typing
+          debounceTimeout = setTimeout(() => {
+            onDataChange(value);
+          }, 500); // 500ms debounce - waits for user to stop typing
+        }
+      });
+
+      return () => {
+        if (debounceTimeout) {
+          clearTimeout(debounceTimeout);
+        }
+        subscription.unsubscribe();
+      };
+    }, []); // Empty dependency array - subscription handles changes internally
+
+    const onSubmit = (data) => {
+      switch (type) {
+        case 'FR':
+          data = {
+            type: data.type,
+            lower_temperature: data.lower_temperature,
+            way_of_protection: data.way_of_protection,
+            observation: data.observation
+          };
+          break;
+        case 'DR':
+          data = {
+            type: data.type,
+            water_deficit: data.water_deficit,
+            observation: data.observation
+          };
+          break;
+        case 'HL':
+          // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail)
+          data = {
+            type: data.type,
+            duration: data.duration,
+            way_of_protection: data.way_of_protection,
+            observation: data.observation
+          };
+          break;
+        case 'HT':
+          data = {
+            type: data.type,
+            highest_temperature: data.highest_temperature,
+            start_date: data.start_date,
+            end_date: data.end_date,
+            observation: data.observation
+          };
+          break;
+        case 'TS':
+          data = {
+            type: data.type,
+            wind_speed: data.wind_speed,
+            precipitation_amount: data.precipitation_amount,
+            duration: data.duration,
+            damage_assessment: data.damage_assessment,
+            observation: data.observation
+          };
+          break;
+        case 'HW':
+          data = {
+            type: data.type,
+            wind_speed: data.wind_speed,
+            duration: data.duration,
+            protection_measures: data.protection_measures,
+            observation: data.observation
+          };
+          break;
+        case 'HH':
+        case 'LH':
+          data = {
+            type: data.type,
+            humidity_level: data.humidity_level,
+            duration: data.duration,
+            crop_impact: data.crop_impact,
+            observation: data.observation
+          };
+          break;
+        default:
+          data = {
+            type: data.type,
+            observation: data.observation
+          };
+          break;
+      }
+
+      onSubmitHandler(data);
     };
-  }, []); // Empty dependency array - subscription handles changes internally
 
-  const onSubmit = (data) => {
-    switch (type) {
-      case 'FR':
-        data = {
-          type: data.type,
-          lower_temperature: data.lower_temperature,
-          way_of_protection: data.way_of_protection,
-          observation: data.observation
-        };
-        break;
-      case 'DR':
-        data = {
-          type: data.type,
-          water_deficit: data.water_deficit,
-          observation: data.observation
-        };
-        break;
-      case 'HL':
-        // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail)
-        data = {
-          type: data.type,
-          duration: data.duration,
-          way_of_protection: data.way_of_protection,
-          observation: data.observation
-        };
-        break;
-      case 'HT':
-        data = {
-          type: data.type,
-          highest_temperature: data.highest_temperature,
-          start_date: data.start_date,
-          end_date: data.end_date,
-          observation: data.observation
-        };
-        break;
-      case 'TS':
-        data = {
-          type: data.type,
-          wind_speed: data.wind_speed,
-          precipitation_amount: data.precipitation_amount,
-          duration: data.duration,
-          damage_assessment: data.damage_assessment,
-          observation: data.observation
-        };
-        break;
-      case 'HW':
-        data = {
-          type: data.type,
-          wind_speed: data.wind_speed,
-          duration: data.duration,
-          protection_measures: data.protection_measures,
-          observation: data.observation
-        };
-        break;
-      case 'HH':
-      case 'LH':
-        data = {
-          type: data.type,
-          humidity_level: data.humidity_level,
-          duration: data.duration,
-          crop_impact: data.crop_impact,
-          observation: data.observation
-        };
-        break;
-      default:
-        data = {
-          type: data.type,
-          observation: data.observation
-        };
-        break;
-    }
-
-    onSubmitHandler(data);
-  };
-
-  return (
-    <FormProvider {...mainInfoMethods}>
-      <form onSubmit={mainInfoSubmit(onSubmit)} style={{ width: '100%' }}>
-        <Flex direction="column" w="100%">
-          {/* Transparency Focus Alert */}
-          <StandardAlert status="info" title="Weather Event & Transparency Documentation">
-            <HStack spacing={2} mb={2}>
-              <Icon as={FaCloud} color="blue.500" />
-              <Text fontSize="sm" fontWeight="bold">
-                Agricultural Climate Transparency
+    return (
+      <FormProvider {...mainInfoMethods}>
+        <form onSubmit={mainInfoSubmit(onSubmit)} style={{ width: '100%' }}>
+          <Flex direction="column" w="100%">
+            {/* Transparency Focus Alert */}
+            <StandardAlert status="info" title="Weather Event & Transparency Documentation">
+              <HStack spacing={2} mb={2}>
+                <Icon as={FaCloud} color="blue.500" />
+                <Text fontSize="sm" fontWeight="bold">
+                  Agricultural Climate Transparency
+                </Text>
+              </HStack>
+              <Text fontSize="sm">
+                Document weather conditions that affect your agricultural operations. This
+                environmental context helps consumers understand the challenges and conditions that
+                impact farming practices.
               </Text>
-            </HStack>
-            <Text fontSize="sm">
-              Document weather conditions that affect your agricultural operations. This
-              environmental context helps consumers understand the challenges and conditions that
-              impact farming practices.
-            </Text>
-          </StandardAlert>
+            </StandardAlert>
 
-          {/* Section 1: Weather Event Information */}
-          <SectionBox variant="default">
-            <SectionHeader
-              icon={FaCloud}
-              iconColor="green.600"
-              title="Weather Event Information"
-              badge="Environmental Documentation"
-              badgeColorScheme="green"
-            />
-
-            <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
-              <StandardField
-                label="Weather Event Type"
-                required
-                error={errors.type?.message}
-                helpText="Document weather conditions that affect your agricultural operations"
-              >
-                <Controller
-                  name="type"
-                  control={mainInfoMethods.control}
-                  render={({ field }) => (
-                    <StandardSelect placeholder="Select weather event type" {...field}>
-                      <option value="FR">Frost</option>
-                      <option value="DR">Drought</option>
-                      <option value="HL">Hailstorms</option>
-                      <option value="HT">High Temperatures</option>
-                      <option value="TS">Tropical Storm</option>
-                      <option value="HW">High Winds</option>
-                      <option value="HH">High Humidity</option>
-                      <option value="LH">Low Humidity</option>
-                    </StandardSelect>
-                  )}
-                />
-              </StandardField>
-            </SimpleGrid>
-          </SectionBox>
-
-          {/* Section 2: Weather Details & Measurements (Dynamic based on type) */}
-          {type && (
-            <SectionBox variant="highlighted">
+            {/* Section 1: Weather Event Information */}
+            <SectionBox variant="default">
               <SectionHeader
-                icon={FaThermometerHalf}
+                icon={FaCloud}
                 iconColor="green.600"
-                title="Weather Details & Measurements"
-                badge="Climate Context"
+                title="Weather Event Information"
+                badge="Environmental Documentation"
                 badgeColorScheme="green"
               />
 
-              {type === 'FR' ? (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Lower Temperature (°C)"
-                    helpText="Minimum temperature recorded during frost event"
-                    error={errors.lower_temperature?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="0.1"
-                      min="-50"
-                      max="50"
-                      placeholder="-2"
-                      {...register('lower_temperature')}
-                    />
-                  </StandardField>
-                  <StandardField
-                    label="Protection Method"
-                    helpText="Measures taken to protect crops"
-                  >
-                    <StandardInput
-                      type="text"
-                      placeholder="e.g., frost blankets, irrigation"
-                      {...register('way_of_protection')}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-              ) : type === 'DR' ? (
-                <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
-                  <StandardField
-                    label="Water Deficit (mm)"
-                    helpText="Accumulated water deficit during drought period"
-                    error={errors.water_deficit?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="1"
-                      min="0"
-                      max="500"
-                      placeholder="50"
-                      {...register('water_deficit')}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-              ) : type === 'HL' ? (
-                // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail, no consumer impact)
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Duration (minutes)"
-                    helpText="How long the hailstorm lasted"
-                    error={errors.duration?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="1"
-                      min="0"
-                      max="1440"
-                      placeholder="15"
-                      {...register('duration')}
-                    />
-                  </StandardField>
-                  <StandardField
-                    label="Protection Method"
-                    helpText="Measures taken to protect crops"
-                  >
-                    <StandardInput
-                      type="text"
-                      placeholder="e.g., hail nets, covered structures"
-                      {...register('way_of_protection')}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-              ) : type === 'HT' ? (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Highest Temperature (°C)"
-                    helpText="Peak temperature during heat event"
-                    error={errors.highest_temperature?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="0.1"
-                      min="-20"
-                      max="60"
-                      placeholder="42"
-                      {...register('highest_temperature')}
-                    />
-                  </StandardField>
-                  <StandardField
-                    label="Start Date"
-                    helpText="When the high temperature period began"
-                  >
-                    <StandardInput type="datetime-local" {...register('start_date')} />
-                  </StandardField>
-                  <StandardField label="End Date" helpText="When the high temperature period ended">
-                    <StandardInput type="datetime-local" {...register('end_date')} />
-                  </StandardField>
-                </SimpleGrid>
-              ) : type === 'TS' ? (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Wind Speed (km/h)"
-                    helpText="Maximum wind speed recorded"
-                    error={errors.wind_speed?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="1"
-                      min="0"
-                      max="400"
-                      placeholder="120"
-                      {...register('wind_speed')}
-                    />
-                  </StandardField>
-                  <StandardField
-                    label="Precipitation Amount (mm)"
-                    helpText="Total rainfall during storm"
-                    error={errors.precipitation_amount?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="1000"
-                      placeholder="150"
-                      {...register('precipitation_amount')}
-                    />
-                  </StandardField>
-                  <StandardField
-                    label="Duration (hours)"
-                    helpText="Storm duration in hours"
-                    error={errors.duration?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      max="168"
-                      placeholder="6"
-                      {...register('duration')}
-                    />
-                  </StandardField>
-                  <StandardField
-                    label="Damage Assessment"
-                    helpText="Description of damage to crops/infrastructure"
-                  >
-                    <StandardInput
-                      type="text"
-                      placeholder="e.g., minor leaf damage, no structural damage"
-                      {...register('damage_assessment')}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-              ) : type === 'HW' ? (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Wind Speed (km/h)"
-                    helpText="Maximum wind speed recorded"
-                    error={errors.wind_speed?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="1"
-                      min="0"
-                      max="400"
-                      placeholder="80"
-                      {...register('wind_speed')}
-                    />
-                  </StandardField>
-                  <StandardField
-                    label="Duration (hours)"
-                    helpText="High wind period duration"
-                    error={errors.duration?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      max="168"
-                      placeholder="3"
-                      {...register('duration')}
-                    />
-                  </StandardField>
-                  <StandardField
-                    label="Protection Measures"
-                    helpText="Actions taken to protect crops"
-                  >
-                    <StandardInput
-                      type="text"
-                      placeholder="e.g., secured equipment, protected young plants"
-                      {...register('protection_measures')}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-              ) : type === 'HH' || type === 'LH' ? (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Humidity Level (%)"
-                    helpText="Humidity percentage recorded (0-100%)"
-                    error={errors.humidity_level?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="1"
-                      min="0"
-                      max="100"
-                      placeholder="85"
-                      {...register('humidity_level')}
-                    />
-                  </StandardField>
-                  <StandardField
-                    label="Duration (hours)"
-                    helpText="How long unusual humidity lasted"
-                    error={errors.duration?.message}
-                  >
-                    <StandardInput
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      max="720"
-                      placeholder="48"
-                      {...register('duration')}
-                    />
-                  </StandardField>
-                  <StandardField label="Crop Impact" helpText="Effects on crop health and growth">
-                    <StandardInput
-                      type="text"
-                      placeholder="e.g., increased disease pressure, slower growth"
-                      {...register('crop_impact')}
-                    />
-                  </StandardField>
-                </SimpleGrid>
-              ) : null}
+              <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
+                <StandardField
+                  label="Weather Event Type"
+                  required
+                  error={errors.type?.message}
+                  helpText="Document weather conditions that affect your agricultural operations"
+                >
+                  <Controller
+                    name="type"
+                    control={mainInfoMethods.control}
+                    render={({ field }) => (
+                      <StandardSelect placeholder="Select weather event type" {...field}>
+                        <option value="FR">Frost</option>
+                        <option value="DR">Drought</option>
+                        <option value="HL">Hailstorms</option>
+                        <option value="HT">High Temperatures</option>
+                        <option value="TS">Tropical Storm</option>
+                        <option value="HW">High Winds</option>
+                        <option value="HH">High Humidity</option>
+                        <option value="LH">Low Humidity</option>
+                      </StandardSelect>
+                    )}
+                  />
+                </StandardField>
+              </SimpleGrid>
             </SectionBox>
-          )}
 
-          {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
-          <SectionBox variant="default">
-            <SectionHeader
-              icon={FaSeedling}
-              iconColor="green.500"
-              title="Farmer's Field Notes & Consumer Transparency"
-              badge="Consumer Transparency"
-              badgeColorScheme="green"
+            {/* Section 2: Weather Details & Measurements (Dynamic based on type) */}
+            {type && (
+              <SectionBox variant="highlighted">
+                <SectionHeader
+                  icon={FaThermometerHalf}
+                  iconColor="green.600"
+                  title="Weather Details & Measurements"
+                  badge="Climate Context"
+                  badgeColorScheme="green"
+                />
+
+                {type === 'FR' ? (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Lower Temperature (°C)"
+                      helpText="Minimum temperature recorded during frost event"
+                      error={errors.lower_temperature?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="0.1"
+                        min="-50"
+                        max="50"
+                        placeholder="-2"
+                        {...register('lower_temperature')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Protection Method"
+                      helpText="Measures taken to protect crops"
+                    >
+                      <StandardInput
+                        type="text"
+                        placeholder="e.g., frost blankets, irrigation"
+                        {...register('way_of_protection')}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                ) : type === 'DR' ? (
+                  <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
+                    <StandardField
+                      label="Water Deficit (mm)"
+                      helpText="Accumulated water deficit during drought period"
+                      error={errors.water_deficit?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="500"
+                        placeholder="50"
+                        {...register('water_deficit')}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                ) : type === 'HL' ? (
+                  // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail, no consumer impact)
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Duration (minutes)"
+                      helpText="How long the hailstorm lasted"
+                      error={errors.duration?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="1440"
+                        placeholder="15"
+                        {...register('duration')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Protection Method"
+                      helpText="Measures taken to protect crops"
+                    >
+                      <StandardInput
+                        type="text"
+                        placeholder="e.g., hail nets, covered structures"
+                        {...register('way_of_protection')}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                ) : type === 'HT' ? (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Highest Temperature (°C)"
+                      helpText="Peak temperature during heat event"
+                      error={errors.highest_temperature?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="0.1"
+                        min="-20"
+                        max="60"
+                        placeholder="42"
+                        {...register('highest_temperature')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Start Date"
+                      helpText="When the high temperature period began"
+                    >
+                      <StandardInput type="datetime-local" {...register('start_date')} />
+                    </StandardField>
+                    <StandardField
+                      label="End Date"
+                      helpText="When the high temperature period ended"
+                    >
+                      <StandardInput type="datetime-local" {...register('end_date')} />
+                    </StandardField>
+                  </SimpleGrid>
+                ) : type === 'TS' ? (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Wind Speed (km/h)"
+                      helpText="Maximum wind speed recorded"
+                      error={errors.wind_speed?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="400"
+                        placeholder="120"
+                        {...register('wind_speed')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Precipitation Amount (mm)"
+                      helpText="Total rainfall during storm"
+                      error={errors.precipitation_amount?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="1000"
+                        placeholder="150"
+                        {...register('precipitation_amount')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Duration (hours)"
+                      helpText="Storm duration in hours"
+                      error={errors.duration?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        max="168"
+                        placeholder="6"
+                        {...register('duration')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Damage Assessment"
+                      helpText="Description of damage to crops/infrastructure"
+                    >
+                      <StandardInput
+                        type="text"
+                        placeholder="e.g., minor leaf damage, no structural damage"
+                        {...register('damage_assessment')}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                ) : type === 'HW' ? (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Wind Speed (km/h)"
+                      helpText="Maximum wind speed recorded"
+                      error={errors.wind_speed?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="400"
+                        placeholder="80"
+                        {...register('wind_speed')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Duration (hours)"
+                      helpText="High wind period duration"
+                      error={errors.duration?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        max="168"
+                        placeholder="3"
+                        {...register('duration')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Protection Measures"
+                      helpText="Actions taken to protect crops"
+                    >
+                      <StandardInput
+                        type="text"
+                        placeholder="e.g., secured equipment, protected young plants"
+                        {...register('protection_measures')}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                ) : type === 'HH' || type === 'LH' ? (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Humidity Level (%)"
+                      helpText="Humidity percentage recorded (0-100%)"
+                      error={errors.humidity_level?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="100"
+                        placeholder="85"
+                        {...register('humidity_level')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Duration (hours)"
+                      helpText="How long unusual humidity lasted"
+                      error={errors.duration?.message}
+                    >
+                      <StandardInput
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        max="720"
+                        placeholder="48"
+                        {...register('duration')}
+                      />
+                    </StandardField>
+                    <StandardField label="Crop Impact" helpText="Effects on crop health and growth">
+                      <StandardInput
+                        type="text"
+                        placeholder="e.g., increased disease pressure, slower growth"
+                        {...register('crop_impact')}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                ) : null}
+              </SectionBox>
+            )}
+
+            {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaSeedling}
+                iconColor="green.500"
+                title="Farmer's Field Notes & Consumer Transparency"
+                badge="Consumer Transparency"
+                badgeColorScheme="green"
+              />
+
+              <StandardField
+                label="Observations & Notes"
+                helpText="Share additional details about weather impact and farming response that help consumers understand your practices"
+              >
+                <StandardTextarea
+                  placeholder="Optional: Describe how this weather event affected your farming operations, what measures you took, and how it impacts the quality or safety of your produce."
+                  rows={4}
+                  {...register('observation')}
+                />
+              </StandardField>
+            </SectionBox>
+
+            {/* Phase 2.3: Custom Fields Section */}
+            <CustomFieldsForm
+              customFields={customFields}
+              onCustomFieldsChange={setCustomFields}
+              eventTypeId={0}
+              disabled={false}
             />
 
-            <StandardField
-              label="Observations & Notes"
-              helpText="Share additional details about weather impact and farming response that help consumers understand your practices"
-            >
-              <StandardTextarea
-                placeholder="Optional: Describe how this weather event affected your farming operations, what measures you took, and how it impacts the quality or safety of your produce."
-                rows={4}
-                {...register('observation')}
-              />
-            </StandardField>
-          </SectionBox>
+            {!hideActions && (
+              <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
+                <HStack justify="space-between">
+                  <StandardButton
+                    variant="outline"
+                    onClick={onPrev}
+                    leftIcon={<FaChevronLeft />}
+                    size="lg"
+                  >
+                    {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
+                  </StandardButton>
+                  <StandardButton
+                    variant="primary"
+                    type="submit"
+                    rightIcon={<FaChevronRight />}
+                    size="lg"
+                    isDisabled={Object.keys(errors).length > 0}
+                  >
+                    {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
+                  </StandardButton>
+                </HStack>
+              </Box>
+            )}
+          </Flex>
+        </form>
+      </FormProvider>
+    );
+  }
+);
 
-          {/* Phase 2.3: Custom Fields Section */}
-          <CustomFieldsForm
-            customFields={customFields}
-            onCustomFieldsChange={setCustomFields}
-            eventTypeId={0}
-            disabled={false}
-          />
-
-          {!hideActions && (
-            <Box pt={6} mt={4} borderTop="1px" borderColor="gray.200">
-              <HStack justify="space-between">
-                <StandardButton
-                  variant="outline"
-                  onClick={onPrev}
-                  leftIcon={<FaChevronLeft />}
-                  size="lg"
-                >
-                  {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
-                </StandardButton>
-                <StandardButton
-                  variant="primary"
-                  type="submit"
-                  rightIcon={<FaChevronRight />}
-                  size="lg"
-                  isDisabled={Object.keys(errors).length > 0}
-                >
-                  {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
-                </StandardButton>
-              </HStack>
-            </Box>
-          )}
-        </Flex>
-      </form>
-    </FormProvider>
-  );
-};
+// Add display name for better debugging
+WeatherTab.displayName = 'WeatherTab';
 
 export default WeatherTab;

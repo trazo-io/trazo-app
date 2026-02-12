@@ -53,14 +53,8 @@ import {
 } from 'components/Design';
 import { VoiceEventCapture } from 'components/Events/VoiceEventCapture';
 import { EducationalTooltip } from 'components/Education/EducationalTooltip';
-import {
-  TypeAwareFields,
-  useTypeAwareFields
-} from 'components/QuickEvent';
-import {
-  getQuickEventFields,
-  getFieldsForBackend
-} from 'config/quickEventFields';
+import { TypeAwareFields, useTypeAwareFields } from 'components/QuickEvent';
+import { getQuickEventFields, getFieldsForBackend } from 'config/quickEventFields';
 // @ts-ignore - JS file import
 import { useCreateEventMutation } from 'store/api/historyApi.js';
 import {
@@ -216,11 +210,20 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     if (id.includes('fertiliz') || type.includes('fertiliz')) return 'fertilization';
     if (id.includes('irrigation') || type.includes('irrigation')) return 'irrigation';
     if (id.includes('pest') || type.includes('pest')) return 'pest_control';
-    if (id.includes('pruning') || type.includes('pruning') || type.includes('prune')) return 'pruning';
-    if (id.includes('plant') || id.includes('seed') || type.includes('plant') || type.includes('seed')) return 'planting';
+    if (id.includes('pruning') || type.includes('pruning') || type.includes('prune'))
+      return 'pruning';
+    if (
+      id.includes('plant') ||
+      id.includes('seed') ||
+      type.includes('plant') ||
+      type.includes('seed')
+    )
+      return 'planting';
     if (id.includes('harvest') || type.includes('harvest')) return 'harvest';
-    if (id.includes('herbicide') || type.includes('herbicide') || type.includes('weed')) return 'herbicide';
-    if (id.includes('fungicide') || type.includes('fungicide') || type.includes('fungi')) return 'fungicide';
+    if (id.includes('herbicide') || type.includes('herbicide') || type.includes('weed'))
+      return 'herbicide';
+    if (id.includes('fungicide') || type.includes('fungicide') || type.includes('fungi'))
+      return 'fungicide';
 
     return 'general_documentation';
   };
@@ -609,21 +612,15 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   };
 
   // Helper function to map event types to icons - uses static map for O(1) lookup
-  const getEventIcon = useCallback(
-    (eventType: string) => EVENT_ICON_MAP[eventType] || FaBug,
-    []
-  );
+  const getEventIcon = useCallback((eventType: string) => EVENT_ICON_MAP[eventType] || FaBug, []);
 
   // Helper function to map event types to colors - uses static maps for O(1) lookup
-  const getEventColor = useCallback(
-    (eventType: string, carbonCategory?: string) => {
-      if (carbonCategory) {
-        return CARBON_CATEGORY_COLOR_MAP[carbonCategory] || 'blue';
-      }
-      return EVENT_TYPE_COLOR_MAP[eventType] || 'blue';
-    },
-    []
-  );
+  const getEventColor = useCallback((eventType: string, carbonCategory?: string) => {
+    if (carbonCategory) {
+      return CARBON_CATEGORY_COLOR_MAP[carbonCategory] || 'blue';
+    }
+    return EVENT_TYPE_COLOR_MAP[eventType] || 'blue';
+  }, []);
 
   // Smart event templates based on crop type - USDA-BASED CALCULATIONS
   const getEventTemplates = (crop: string): EventTemplate[] => {
@@ -639,7 +636,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     if (dbEventTemplatesData?.templates) {
       dbEventTemplatesData.templates.forEach((template) => {
         // DEBUG: Log each template's backend_event_type
-        console.log(`Template ${template.id} (${template.name}): backend_event_type = ${template.backend_event_type}`);
+        console.log(
+          `Template ${template.id} (${template.name}): backend_event_type = ${template.backend_event_type}`
+        );
         // Use template data directly from database - names are already in the correct language
         dbTemplates.push({
           id: `db-${template.id}`,
@@ -893,7 +892,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     // Backend constants from history/constants.py:
     // WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
     if (template.backend_event_type === undefined) {
-      console.error(`Template ${template.id} is missing backend_event_type - this is a data integrity issue`);
+      console.error(
+        `Template ${template.id} is missing backend_event_type - this is a data integrity issue`
+      );
       throw new Error(`Template ${template.id} is missing required backend_event_type`);
     }
     return template.backend_event_type;
@@ -902,7 +903,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const getTemplateEventFields = (template: EventTemplate): Record<string, unknown> => {
     // Database templates MUST have backend_event_fields - this is enforced by the seed command
     if (!template.backend_event_fields || Object.keys(template.backend_event_fields).length === 0) {
-      console.error(`Template ${template.id} is missing backend_event_fields - this is a data integrity issue`);
+      console.error(
+        `Template ${template.id} is missing backend_event_fields - this is a data integrity issue`
+      );
       return {};
     }
 
@@ -1195,7 +1198,14 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                   {intl.formatMessage({ id: 'quickAdd.subtitle' })}
                 </Text>
               </VStack>
-              <Badge colorScheme="green" variant="subtle" fontSize="xs" px={2} py={1} borderRadius="md">
+              <Badge
+                colorScheme="green"
+                variant="subtle"
+                fontSize="xs"
+                px={2}
+                py={1}
+                borderRadius="md"
+              >
                 {cropType}
               </Badge>
             </HStack>
@@ -1230,7 +1240,13 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
             <VStack spacing={6} align="stretch">
               {/* Selected Template Summary */}
               {selectedTemplate && (
-                <Box p={4} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
+                <Box
+                  p={4}
+                  bg="green.50"
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="green.200"
+                >
                   <VStack spacing={3} align="stretch">
                     <HStack justify="space-between">
                       <HStack spacing={3}>
@@ -1250,7 +1266,14 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                           </Text>
                         </VStack>
                       </HStack>
-                      <Badge colorScheme="green" variant="solid" fontSize="xs" px={3} py={1} borderRadius="full">
+                      <Badge
+                        colorScheme="green"
+                        variant="solid"
+                        fontSize="xs"
+                        px={3}
+                        py={1}
+                        borderRadius="full"
+                      >
                         {selectedTemplate.sustainabilityScore}/10
                       </Badge>
                     </HStack>
@@ -1266,7 +1289,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                       >
                         <HStack spacing={1}>
                           <Icon as={FaBook} boxSize={3} />
-                          <Text>{intl.formatMessage({ id: 'quickAdd.learnMoreAboutEventTypes' })}</Text>
+                          <Text>
+                            {intl.formatMessage({ id: 'quickAdd.learnMoreAboutEventTypes' })}
+                          </Text>
                         </HStack>
                       </Link>
                     </HStack>
@@ -1312,12 +1337,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                   <>
                     <Divider borderColor="gray.200" />
                     <Box>
-                      <Text
-                        fontSize="sm"
-                        fontWeight="semibold"
-                        color="gray.600"
-                        mb={4}
-                      >
+                      <Text fontSize="sm" fontWeight="semibold" color="gray.600" mb={4}>
                         {intl.formatMessage({ id: 'quickAdd.typeSpecificFields' })}
                       </Text>
                       <TypeAwareFields
@@ -1354,7 +1374,15 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                     <SectionHeader
                       icon={aiSuggestionsData?.ai_confidence ? FaRobot : FaChartLine}
                       iconColor="green.500"
-                      title={intl.formatMessage({ id: 'quickAdd.aiSuggestionsTitle' }, { season: getCurrentSeason(new Date().getMonth() + 1).charAt(0).toUpperCase() + getCurrentSeason(new Date().getMonth() + 1).slice(1) })}
+                      title={intl.formatMessage(
+                        { id: 'quickAdd.aiSuggestionsTitle' },
+                        {
+                          season:
+                            getCurrentSeason(new Date().getMonth() + 1)
+                              .charAt(0)
+                              .toUpperCase() + getCurrentSeason(new Date().getMonth() + 1).slice(1)
+                        }
+                      )}
                       badge={aiSuggestionsData?.ai_confidence ? 'OpenAI Powered' : 'AI Powered'}
                       badgeColorScheme="green"
                       description={
@@ -1797,7 +1825,10 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                 <HStack justify="space-between" width="100%">
                   <VStack align="start" spacing={0}>
                     <Text fontWeight="semibold" color="gray.800" fontSize="sm">
-                      {intl.formatMessage({ id: 'quickAdd.addingDetails' }, { name: selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '') })}
+                      {intl.formatMessage(
+                        { id: 'quickAdd.addingDetails' },
+                        { name: selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '') }
+                      )}
                     </Text>
                     <Text fontSize="xs" color="gray.500">
                       {intl.formatMessage({ id: 'quickAdd.completeFormDescription' })}
@@ -1836,10 +1867,16 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                 <HStack justify="space-between" width="100%">
                   <VStack align="start" spacing={1}>
                     <Text fontWeight="semibold" color="gray.800" fontSize="sm">
-                      {intl.formatMessage({ id: 'quickAdd.readyToCreate' }, { name: selectedTemplate.name.replace('🤖 ', '') })}
+                      {intl.formatMessage(
+                        { id: 'quickAdd.readyToCreate' },
+                        { name: selectedTemplate.name.replace('🤖 ', '') }
+                      )}
                     </Text>
                     <Text fontSize="xs" color="gray.500">
-                      {intl.formatMessage({ id: 'quickAdd.visibleToConsumers' }, { visibility: selectedTemplate.qrVisibility })}
+                      {intl.formatMessage(
+                        { id: 'quickAdd.visibleToConsumers' },
+                        { visibility: selectedTemplate.qrVisibility }
+                      )}
                     </Text>
                   </VStack>
                   <Badge colorScheme="gray" variant="subtle" fontSize="xs" px={2} py={1}>
@@ -1859,11 +1896,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                   >
                     {intl.formatMessage({ id: 'quickAdd.quickCreateEvent' })}
                   </StandardButton>
-                  <StandardButton
-                    variant="outline"
-                    onClick={handleShowDetails}
-                    size="lg"
-                  >
+                  <StandardButton variant="outline" onClick={handleShowDetails} size="lg">
                     {intl.formatMessage({ id: 'quickAdd.addDetails' })}
                   </StandardButton>
                 </HStack>

@@ -28,10 +28,7 @@ import {
 } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
-import {
-  StandardCard,
-  StandardButton
-} from 'components/Design/StandardComponents';
+import { StandardCard, StandardButton } from 'components/Design/StandardComponents';
 import { useUpdateCompanyMutation } from 'store/api/companyApi';
 import { setCompany } from 'store/features/companySlice';
 import EditCompanyModal from './EditCompanyModal';
@@ -71,7 +68,11 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
           </Link>
         );
       default:
-        return <Text fontWeight="medium" color="gray.800">{value}</Text>;
+        return (
+          <Text fontWeight="medium" color="gray.800">
+            {value}
+          </Text>
+        );
     }
   };
 
@@ -268,7 +269,8 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
               )}
               {currentCompany.subscription_plan && (
                 <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full">
-                  {currentCompany.subscription_plan.name || intl.formatMessage({ id: 'app.subscribed' })}
+                  {currentCompany.subscription_plan.name ||
+                    intl.formatMessage({ id: 'app.subscribed' })}
                 </Badge>
               )}
             </HStack>
@@ -337,7 +339,10 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
       )}
 
       {/* Business Information Section */}
-      <StandardCard title={intl.formatMessage({ id: 'app.businessInformation' })} variant="elevated">
+      <StandardCard
+        title={intl.formatMessage({ id: 'app.businessInformation' })}
+        variant="elevated"
+      >
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
           <InfoRow
             icon={FaIdCard}
@@ -363,7 +368,10 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
       </StandardCard>
 
       {/* Agricultural Information Section */}
-      <StandardCard title={intl.formatMessage({ id: 'app.agriculturalInformation' })} variant="elevated">
+      <StandardCard
+        title={intl.formatMessage({ id: 'app.agriculturalInformation' })}
+        variant="elevated"
+      >
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
           <InfoRow
             icon={FaLeaf}
@@ -388,7 +396,12 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
               <HStack spacing={3} align="flex-start">
                 <Icon as={FaLeaf} color="green.500" boxSize={4} mt={1} flexShrink={0} />
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                    fontWeight="semibold"
+                  >
                     {intl.formatMessage({ id: 'app.certificationsList' })}
                   </Text>
                   <HStack spacing={2} mt={1} flexWrap="wrap">
@@ -415,7 +428,12 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
               <HStack spacing={3} align="flex-start">
                 <Icon as={FaLeaf} color="green.500" boxSize={4} mt={1} flexShrink={0} />
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                    fontWeight="semibold"
+                  >
                     {intl.formatMessage({ id: 'app.sustainabilityGoals' })}
                   </Text>
                   <HStack spacing={2} mt={1} flexWrap="wrap">

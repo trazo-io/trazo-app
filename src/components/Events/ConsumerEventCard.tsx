@@ -41,7 +41,9 @@ import {
   FaSeedling as FaSeed,
   FaBug,
   FaRulerCombined,
-  FaCalendarDay
+  FaCalendarDay,
+  FaCalendarAlt,
+  FaLayerGroup
 } from 'react-icons/fa';
 import { MdVerified, MdEco, MdSecurity, MdOpenInNew } from 'react-icons/md';
 import {
@@ -89,7 +91,12 @@ interface ConsumerEventData {
   usda_verified?: boolean;
   carbon_impact?: number;
   // MVP Photo Verification: Tiered verification levels
-  verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+  verification_level?:
+    | 'self_reported'
+    | 'photo_documented'
+    | 'photo_verified'
+    | 'data_verified'
+    | 'certified';
   photo_verified_count?: number;
 
   // Photo/media data
@@ -146,6 +153,35 @@ interface ConsumerEventData {
   irrigation_depth?: string | number;
   irrigation_depth_unit?: string;
 
+  // Sprint 4 & 5: Aggregate/Summary Event Support
+  // Enables displaying multiple events as a single summary (e.g., "12 irrigations in May-June")
+  is_summary?: boolean;
+  date_start?: string;
+  date_end?: string;
+  event_count?: number;
+  water_volume_total?: number;
+  water_volume_unit?: string;
+
+  // Sprint 5: Chemical Aggregate Event Fields (Fertilizer, Fungicide, Pesticide)
+  n_total_kg?: number;
+  p_total_kg?: number;
+  k_total_kg?: number;
+  active_ingredient_total_kg?: number;
+  volume_total?: number;
+  volume_total_unit?: string;
+  area_total?: number;
+  area_total_unit?: string;
+  fuel_consumption_total?: number;
+  fuel_consumption_unit?: string;
+
+  // Sprint 5: Pest Scouting Aggregate Event Fields
+  field_area_total?: number;
+  travel_distance_total?: number;
+  distance_unit?: string;
+  pest_species_observed?: string;
+  average_pest_pressure?: string;
+  observations_summary?: string;
+
   // Additional structured data
   extra_data?: {
     [key: string]: any;
@@ -181,6 +217,38 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const trustIndicators = getEventTrustIndicators(event);
   const formattedDate = formatEventDate(event.date);
 
+  // Sprint 4: Format date range for aggregate/summary events
+  const formatDateRange = (startDate?: string, endDate?: string): string => {
+    if (!startDate || !endDate) return formattedDate;
+    try {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+      const yearOptions: Intl.DateTimeFormatOptions = { ...options, year: 'numeric' };
+
+      // If same year, only show year once at the end
+      if (start.getFullYear() === end.getFullYear()) {
+        return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString(
+          'en-US',
+          yearOptions
+        )}`;
+      }
+      return `${start.toLocaleDateString('en-US', yearOptions)} - ${end.toLocaleDateString(
+        'en-US',
+        yearOptions
+      )}`;
+    } catch {
+      return formattedDate;
+    }
+  };
+
+  // Sprint 4: Check if this is a summary event
+  const isSummaryEvent = event.is_summary === true;
+  const displayDate =
+    isSummaryEvent && event.date_start && event.date_end
+      ? formatDateRange(event.date_start, event.date_end)
+      : formattedDate;
+
   // Get comprehensive field display data based on field display matrix
   const fieldDisplay = getEventFieldDisplay(event);
 
@@ -199,7 +267,11 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   }
 
   // DEBUG: Log field display data for production events
-  if (event.type?.startsWith('production.') || event.type === 'production' || event.event_type === 1) {
+  if (
+    event.type?.startsWith('production.') ||
+    event.type === 'production' ||
+    event.event_type === 1
+  ) {
     console.log('🔧 [ConsumerEventCard] PRODUCTION EVENT FIELD DISPLAY DEBUG:', {
       eventId: event.id,
       eventType: event.type,
@@ -281,13 +353,17 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
       switch (verificationLevel) {
         case 'certified':
-          return `Blockchain certified (${photoCount} verified image${photoCount !== 1 ? 's' : ''})`;
+          return `Blockchain certified (${photoCount} verified image${
+            photoCount !== 1 ? 's' : ''
+          })`;
         case 'data_verified':
           return 'Auto-verified (Weather/Equipment data)';
         case 'photo_verified':
           return `Photo verified (${photoCount} verified image${photoCount !== 1 ? 's' : ''})`;
         case 'photo_documented':
-          return `Photo documented (${photoCount} verified image${photoCount !== 1 ? 's' : ''} - AI validated)`;
+          return `Photo documented (${photoCount} verified image${
+            photoCount !== 1 ? 's' : ''
+          } - AI validated)`;
         case 'self_reported':
         default:
           return 'Text documentation only (no photos)';
@@ -336,7 +412,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
   // Helper function to get emoji icon for fuel consumption fields
   const getFuelIcon = (fieldLabel: string, fuelType?: string): string | null => {
-    if (!fieldLabel.toLowerCase().includes('fuel consumed') && !fieldLabel.toLowerCase().includes('energy consumed')) {
+    if (
+      !fieldLabel.toLowerCase().includes('fuel consumed') &&
+      !fieldLabel.toLowerCase().includes('energy consumed')
+    ) {
       return null;
     }
     const normalizedFuelType = fuelType?.toLowerCase() || '';
@@ -483,7 +562,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
           <Box p={{ base: 4, md: 4 }}>
             <HStack justify="space-between" align="flex-start" mb={2}>
               <VStack align="start" spacing={1} flex="1">
-                <HStack>
+                <HStack spacing={2} flexWrap="wrap">
                   <Text
                     fontSize={{ base: 'md', md: 'lg' }}
                     fontWeight="bold"
@@ -491,10 +570,51 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   >
                     {eventInfo.title}
                   </Text>
+                  {/* Sprint 4 & 5: Summary badge for aggregate events with type-specific colors */}
+                  {isSummaryEvent && (
+                    <Badge
+                      colorScheme={
+                        event.type === 'FE'
+                          ? 'blue'
+                          : event.type === 'FU'
+                          ? 'purple'
+                          : event.type === 'PE'
+                          ? 'orange'
+                          : event.type === 'SC'
+                          ? 'green'
+                          : 'blue'
+                      }
+                      fontSize="xs"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                      display="flex"
+                      alignItems="center"
+                      gap={1}
+                    >
+                      <Icon as={FaLayerGroup} boxSize={2.5} />
+                      <Text>
+                        {event.event_count || 'Multiple'}{' '}
+                        {event.type === 'FE'
+                          ? 'Fertilizer Apps'
+                          : event.type === 'FU'
+                          ? 'Fungicide Apps'
+                          : event.type === 'PE'
+                          ? 'Pesticide Apps'
+                          : event.type === 'SC'
+                          ? 'Scouting Trips'
+                          : 'Events'}
+                      </Text>
+                    </Badge>
+                  )}
                 </HStack>
-                <Text fontSize={{ base: 'xs', md: 'sm' }} color={mutedColor}>
-                  {formattedDate}
-                </Text>
+                {/* Sprint 4: Show date range for summaries, single date for regular events */}
+                <HStack spacing={1}>
+                  {isSummaryEvent && <Icon as={FaCalendarAlt} boxSize={3} color={mutedColor} />}
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color={mutedColor}>
+                    {displayDate}
+                  </Text>
+                </HStack>
                 {/* Sprint 1 Epic 1.4: USDA GAP Traceability - Show who performed the activity */}
                 {event.performed_by && (
                   <HStack spacing={1}>
@@ -615,10 +735,14 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {/* USDA verification is already shown in the product header via EnhancedTrustIndicators */}
 
                 {/* MVP Photo Verification: Tiered verification badge */}
-                {event.verification_level && (
+                {event.verification_level &&
                   (() => {
-                    const config = getVerificationBadgeConfig(event.verification_level as VerificationLevel);
-                    const colorScheme = getVerificationColor(event.verification_level as VerificationLevel);
+                    const config = getVerificationBadgeConfig(
+                      event.verification_level as VerificationLevel
+                    );
+                    const colorScheme = getVerificationColor(
+                      event.verification_level as VerificationLevel
+                    );
                     return (
                       <Tooltip label={config.tooltip} placement="top">
                         <Badge
@@ -634,16 +758,16 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         >
                           <Icon as={config.icon} boxSize={3} />
                           <Text>{config.label}</Text>
-                          {event.photo_verified_count !== undefined && event.photo_verified_count > 0 && (
-                            <Text fontSize="xs" ml={1}>
-                              ({event.photo_verified_count})
-                            </Text>
-                          )}
+                          {event.photo_verified_count !== undefined &&
+                            event.photo_verified_count > 0 && (
+                              <Text fontSize="xs" ml={1}>
+                                ({event.photo_verified_count})
+                              </Text>
+                            )}
                         </Badge>
                       </Tooltip>
                     );
-                  })()
-                )}
+                  })()}
 
                 {/* High integrity score badge */}
                 {blockchainData.integrityScore >= 95 && (
@@ -736,6 +860,275 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     {eventInfo.sustainabilityBenefit}
                   </Text>
                 </Box>
+
+                {/* Sprint 5: Aggregate Event Summary Details */}
+                {isSummaryEvent && (
+                  <Box
+                    p={4}
+                    bg={useColorModeValue(
+                      event.type === 'FE'
+                        ? 'blue.50'
+                        : event.type === 'FU'
+                        ? 'purple.50'
+                        : event.type === 'PE'
+                        ? 'orange.50'
+                        : event.type === 'SC'
+                        ? 'green.50'
+                        : 'gray.50',
+                      'gray.700'
+                    )}
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor={useColorModeValue(
+                      event.type === 'FE'
+                        ? 'blue.200'
+                        : event.type === 'FU'
+                        ? 'purple.200'
+                        : event.type === 'PE'
+                        ? 'orange.200'
+                        : event.type === 'SC'
+                        ? 'green.200'
+                        : 'gray.200',
+                      'gray.600'
+                    )}
+                  >
+                    <HStack mb={3}>
+                      <Icon
+                        as={FaLayerGroup}
+                        color={
+                          event.type === 'FE'
+                            ? 'blue.500'
+                            : event.type === 'FU'
+                            ? 'purple.500'
+                            : event.type === 'PE'
+                            ? 'orange.500'
+                            : event.type === 'SC'
+                            ? 'green.500'
+                            : 'gray.500'
+                        }
+                        boxSize={4}
+                      />
+                      <Text
+                        fontWeight="bold"
+                        fontSize="sm"
+                        color={
+                          event.type === 'FE'
+                            ? 'blue.600'
+                            : event.type === 'FU'
+                            ? 'purple.600'
+                            : event.type === 'PE'
+                            ? 'orange.600'
+                            : event.type === 'SC'
+                            ? 'green.600'
+                            : 'gray.600'
+                        }
+                      >
+                        Aggregate Summary ({event.event_count || 'Multiple'}{' '}
+                        {event.type === 'FE'
+                          ? 'Applications'
+                          : event.type === 'FU'
+                          ? 'Applications'
+                          : event.type === 'PE'
+                          ? 'Applications'
+                          : event.type === 'SC'
+                          ? 'Scouting Trips'
+                          : 'Events'}
+                        )
+                      </Text>
+                    </HStack>
+
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                      {/* Fertilizer aggregate totals */}
+                      {event.type === 'FE' && (
+                        <>
+                          {(event.n_total_kg || event.extra_data?.n_total_kg) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Nitrogen (N)
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.n_total_kg || event.extra_data?.n_total_kg} kg
+                              </Text>
+                            </Box>
+                          )}
+                          {(event.p_total_kg || event.extra_data?.p_total_kg) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Phosphorus (P₂O₅)
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.p_total_kg || event.extra_data?.p_total_kg} kg
+                              </Text>
+                            </Box>
+                          )}
+                          {(event.k_total_kg || event.extra_data?.k_total_kg) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Potassium (K₂O)
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.k_total_kg || event.extra_data?.k_total_kg} kg
+                              </Text>
+                            </Box>
+                          )}
+                        </>
+                      )}
+
+                      {/* Fungicide/Pesticide aggregate totals */}
+                      {(event.type === 'FU' || event.type === 'PE') && (
+                        <>
+                          {(event.active_ingredient_total_kg ||
+                            event.extra_data?.active_ingredient_total_kg) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Active Ingredient
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.active_ingredient_total_kg ||
+                                  event.extra_data?.active_ingredient_total_kg}{' '}
+                                kg
+                              </Text>
+                            </Box>
+                          )}
+                        </>
+                      )}
+
+                      {/* Common chemical aggregate fields */}
+                      {(event.type === 'FE' || event.type === 'FU' || event.type === 'PE') && (
+                        <>
+                          {(event.volume_total || event.extra_data?.volume_total) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Volume Applied
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.volume_total || event.extra_data?.volume_total}{' '}
+                                {event.volume_total_unit ||
+                                  event.extra_data?.volume_total_unit ||
+                                  'L'}
+                              </Text>
+                            </Box>
+                          )}
+                          {(event.area_total || event.extra_data?.area_total) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Area Treated
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.area_total || event.extra_data?.area_total}{' '}
+                                {event.area_total_unit || event.extra_data?.area_total_unit || 'ha'}
+                              </Text>
+                            </Box>
+                          )}
+                          {(event.fuel_consumption_total ||
+                            event.extra_data?.fuel_consumption_total) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Fuel Consumed
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.fuel_consumption_total ||
+                                  event.extra_data?.fuel_consumption_total}{' '}
+                                {event.fuel_consumption_unit ||
+                                  event.extra_data?.fuel_consumption_unit ||
+                                  'L'}
+                              </Text>
+                            </Box>
+                          )}
+                        </>
+                      )}
+
+                      {/* Pest Scouting aggregate fields */}
+                      {event.type === 'SC' && (
+                        <>
+                          {(event.field_area_total || event.extra_data?.field_area_total) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Area Scouted
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.field_area_total || event.extra_data?.field_area_total}{' '}
+                                {event.area_unit || event.extra_data?.area_unit || 'acres'}
+                              </Text>
+                            </Box>
+                          )}
+                          {(event.travel_distance_total ||
+                            event.extra_data?.travel_distance_total) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Distance Traveled
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.travel_distance_total ||
+                                  event.extra_data?.travel_distance_total}{' '}
+                                {event.distance_unit || event.extra_data?.distance_unit || 'miles'}
+                              </Text>
+                            </Box>
+                          )}
+                          {(event.pest_species_observed ||
+                            event.extra_data?.pest_species_observed) && (
+                            <Box gridColumn={{ md: 'span 2' }}>
+                              <Text fontSize="xs" color="gray.500">
+                                Pest Species Observed
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.pest_species_observed ||
+                                  event.extra_data?.pest_species_observed}
+                              </Text>
+                            </Box>
+                          )}
+                          {(event.average_pest_pressure ||
+                            event.extra_data?.average_pest_pressure) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Average Pest Pressure
+                              </Text>
+                              <Badge
+                                colorScheme={
+                                  (event.average_pest_pressure ||
+                                    event.extra_data?.average_pest_pressure) === 'low'
+                                    ? 'green'
+                                    : (event.average_pest_pressure ||
+                                        event.extra_data?.average_pest_pressure) === 'medium'
+                                    ? 'yellow'
+                                    : 'red'
+                                }
+                                fontSize="xs"
+                              >
+                                {(
+                                  event.average_pest_pressure ||
+                                  event.extra_data?.average_pest_pressure
+                                )?.toUpperCase()}
+                              </Badge>
+                            </Box>
+                          )}
+                          {(event.observations_summary ||
+                            event.extra_data?.observations_summary) && (
+                            <Box gridColumn={{ md: 'span 2' }}>
+                              <Text fontSize="xs" color="gray.500">
+                                Observations Summary
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.observations_summary ||
+                                  event.extra_data?.observations_summary}
+                              </Text>
+                            </Box>
+                          )}
+                          {/* Zero carbon note for scouting */}
+                          <Box gridColumn={{ md: 'span 2' }} mt={2}>
+                            <HStack spacing={2}>
+                              <Icon as={MdEco} color="green.500" boxSize={4} />
+                              <Text fontSize="xs" color="green.600" fontWeight="medium">
+                                🌱 Zero Carbon Impact - Scouting is observational and helps reduce
+                                chemical applications
+                              </Text>
+                            </HStack>
+                          </Box>
+                        </>
+                      )}
+                    </SimpleGrid>
+                  </Box>
+                )}
 
                 {/* 🚨 PREVIEW-DISPLAY EXACT MATCH: Key Details shown when expanded */}
                 {/* Comprehensive Field Display - IMMEDIATE Priority Fields (INSIDE collapse) */}

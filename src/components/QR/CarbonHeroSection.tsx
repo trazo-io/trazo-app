@@ -473,7 +473,9 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                         key={star}
                         as={FaStar}
                         boxSize={4}
-                        color={star <= Math.round(productData.reputation!) ? 'yellow.400' : 'gray.300'}
+                        color={
+                          star <= Math.round(productData.reputation!) ? 'yellow.400' : 'gray.300'
+                        }
                       />
                     ))}
                     <Text fontSize="sm" color={mutedColor} ml={1}>

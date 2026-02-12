@@ -713,7 +713,10 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     }
 
     // High temperature event fields
-    if (extraData.highest_temperature !== undefined || weatherEvent.highest_temperature !== undefined) {
+    if (
+      extraData.highest_temperature !== undefined ||
+      weatherEvent.highest_temperature !== undefined
+    ) {
       const temp = extraData.highest_temperature ?? weatherEvent.highest_temperature;
       fields.push({
         label: 'Highest Temperature',
@@ -792,7 +795,12 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         // The event.type field contains a translation key like "event.weather.hailstorm"
         // We check if it contains 'hailstorm' to determine the unit
         const weatherType = event.type || '';
-        console.log('[EventDetailsModal] Weather type for duration:', weatherType, 'Duration:', duration);
+        console.log(
+          '[EventDetailsModal] Weather type for duration:',
+          weatherType,
+          'Duration:',
+          duration
+        );
         const isHailstorm = weatherType.toLowerCase().includes('hailstorm');
         const durationUnit = isHailstorm ? 'minutes' : 'hours';
         fields.push({
@@ -812,7 +820,10 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
     // 🚨 CRITICAL: Only show Protection Measures if way_of_protection wasn't already shown
     // This prevents duplicate protection fields for Hailstorm events
     const hasProtectionMethod = extraData.way_of_protection || weatherEvent.way_of_protection;
-    if ((extraData.protection_measures || weatherEvent.protection_measures) && !hasProtectionMethod) {
+    if (
+      (extraData.protection_measures || weatherEvent.protection_measures) &&
+      !hasProtectionMethod
+    ) {
       fields.push({
         label: 'Protection Measures',
         value: extraData.protection_measures || weatherEvent.protection_measures,
@@ -829,7 +840,10 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         });
       }
     }
-    if (extraData.precipitation_amount !== undefined || weatherEvent.precipitation_amount !== undefined) {
+    if (
+      extraData.precipitation_amount !== undefined ||
+      weatherEvent.precipitation_amount !== undefined
+    ) {
       const precipitation = extraData.precipitation_amount ?? weatherEvent.precipitation_amount;
       if (precipitation !== 0) {
         fields.push({
@@ -1057,7 +1071,9 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
       Array.isArray(event.extra_data.custom_fields)
     ) {
       const yieldCustomField = event.extra_data.custom_fields.find(
-        (field: any) => field.label?.toLowerCase() === 'yield quantity' || field.label?.toLowerCase() === 'quantity'
+        (field: any) =>
+          field.label?.toLowerCase() === 'yield quantity' ||
+          field.label?.toLowerCase() === 'quantity'
       );
       if (yieldCustomField && yieldCustomField.value) {
         // Extract numeric value from "50 trees" format
@@ -1080,7 +1096,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
       yieldQuantityValue !== undefined &&
       yieldQuantityValue !== null &&
       yieldQuantityValue !== '' &&
-      Number(yieldQuantityValue) > 0  // Handle both string and number types
+      Number(yieldQuantityValue) > 0 // Handle both string and number types
     ) {
       const unitLabels = {
         kg: 'kilograms',
@@ -1100,7 +1116,10 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
 
       // Calculate yield efficiency for harvesting events
       const productionType = event.production_type || event.type;
-      const isHarvesting = productionType === 'HA' || productionType === 'harvesting' || productionType === 'event.production.harvesting';
+      const isHarvesting =
+        productionType === 'HA' ||
+        productionType === 'harvesting' ||
+        productionType === 'event.production.harvesting';
 
       if (isHarvesting && event.area_covered && event.area_covered > 0) {
         const yieldPerHa = (Number(yieldQuantityValue) / event.area_covered).toFixed(2);
@@ -1440,6 +1459,66 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         priority: 'immediate'
       });
     }
+
+    // TILLAGE EVENT FIELDS (TI subtype) - Display tillage operation details
+    // These are stored in extra_data when event.type === 'TI' (Tillage)
+    if (extraData.tillage_type) {
+      const tillageTypeLabels: Record<string, string> = {
+        conventional_plow: '🚜 Conventional Plow - Deep inversion',
+        chisel_plow: '⚡ Chisel Plow - Reduced tillage',
+        disk_harrow: '💿 Disk Harrow - Surface cultivation',
+        no_till: '🌱 No-Till - Direct seeding',
+        strip_till: '📏 Strip Till - Zonal tillage',
+        minimum_till: '🔄 Minimum Till - Conservation',
+        subsoiling: '🔧 Subsoiling - Deep loosening',
+        cultivator: '🌾 Cultivator - Shallow cultivation'
+      };
+      fields.push({
+        label: 'Tillage Type',
+        value: tillageTypeLabels[extraData.tillage_type] || extraData.tillage_type,
+        priority: 'immediate'
+      });
+    }
+    if (extraData.tillage_intensity) {
+      const intensityLabels: Record<string, string> = {
+        high: 'High - Heavy disturbance',
+        medium: 'Medium - Moderate disturbance',
+        low: 'Low - Minimal disturbance',
+        conservation: 'Conservation - Protective tillage'
+      };
+      fields.push({
+        label: 'Tillage Intensity',
+        value: intensityLabels[extraData.tillage_intensity] || extraData.tillage_intensity,
+        priority: 'immediate'
+      });
+    }
+    if (extraData.tillage_direction) {
+      const directionLabels: Record<string, string> = {
+        across_slope: '🏔️ Across Slope - Erosion control',
+        up_down_slope: '⬇️ Up/Down Slope - Standard',
+        contour: '🌀 Contour - Following natural lines',
+        random: '🔀 Random - Variable direction'
+      };
+      fields.push({
+        label: 'Tillage Direction',
+        value: directionLabels[extraData.tillage_direction] || extraData.tillage_direction,
+        priority: 'secondary'
+      });
+    }
+    if (extraData.residue_management) {
+      const residueLabels: Record<string, string> = {
+        incorporated: '♻️ Incorporated - Mixed into soil',
+        surface_left: '🌾 Surface Left - Protective cover',
+        removed: '🚛 Removed - Harvested/burned',
+        mulched: '🍂 Mulched - Chopped in place',
+        partial_removal: '📏 Partial Removal - Mixed approach'
+      };
+      fields.push({
+        label: 'Residue Management',
+        value: residueLabels[extraData.residue_management] || extraData.residue_management,
+        priority: 'secondary'
+      });
+    }
   }
 
   // Pest Management Events (Type 6)
@@ -1600,7 +1679,7 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         fields.push({
           label: customField.label,
           value: String(customField.value),
-          priority: 'secondary'  // Custom fields shown in Additional Details
+          priority: 'secondary' // Custom fields shown in Additional Details
         });
       }
     });

@@ -21,10 +21,7 @@ import {
 } from 'react-icons/fa';
 import { format } from 'date-fns';
 import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  StandardPage,
-  StandardCard
-} from '../../../components/Design/StandardComponents';
+import { StandardPage, StandardCard } from '../../../components/Design/StandardComponents';
 import { useGetUserProductionScansQuery } from 'store/api/historyApi';
 
 const ITEMS_PER_PAGE = 10;
@@ -76,10 +73,7 @@ export default function AllScans() {
       showBackButton
       onBack={() => navigate('/admin/dashboard/journey')}
     >
-      <StandardCard
-        title={`Product Scans (${totalCount})`}
-        variant="elevated"
-      >
+      <StandardCard title={`Product Scans (${totalCount})`} variant="elevated">
         <VStack spacing={3}>
           {isLoading ? (
             <Box textAlign="center" py={8}>
@@ -89,16 +83,19 @@ export default function AllScans() {
             <>
               {paginatedData.map((production: any, index: number) => {
                 const transparencyInfo = getTransparencyInfo(production);
-                const productName = typeof production.product === 'object'
-                  ? production.product?.name || 'Unknown Product'
-                  : production.product || 'Unknown Product';
-                const farmName = production.establishment_name ||
+                const productName =
+                  typeof production.product === 'object'
+                    ? production.product?.name || 'Unknown Product'
+                    : production.product || 'Unknown Product';
+                const farmName =
+                  production.establishment_name ||
                   production.parcel?.establishment?.name ||
                   production.establishment?.name ||
                   'Unknown Farm';
-                const scanDate = production.date && !isNaN(new Date(production.date).getTime())
-                  ? format(new Date(production.date), 'MMM dd, yyyy')
-                  : production.scanned_at
+                const scanDate =
+                  production.date && !isNaN(new Date(production.date).getTime())
+                    ? format(new Date(production.date), 'MMM dd, yyyy')
+                    : production.scanned_at
                     ? format(new Date(production.scanned_at), 'MMM dd, yyyy')
                     : 'Recently';
 
@@ -159,11 +156,7 @@ export default function AllScans() {
                               </Text>
                             </VStack>
                           </HStack>
-                          <Icon
-                            as={FaChevronRight}
-                            color="gray.400"
-                            boxSize={4}
-                          />
+                          <Icon as={FaChevronRight} color="gray.400" boxSize={4} />
                         </Flex>
 
                         {/* Content */}

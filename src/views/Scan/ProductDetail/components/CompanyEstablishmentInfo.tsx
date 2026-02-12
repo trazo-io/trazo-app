@@ -334,8 +334,17 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                     {companyData.facebook && (
                       <Link href={companyData.facebook} isExternal>
                         <HStack spacing={1}>
-                          <Icon as={FaFacebook} color="blue.600" boxSize={5} _hover={{ color: 'blue.700' }} />
-                          <Text fontSize="xs" color="blue.600" display={{ base: 'none', md: 'block' }}>
+                          <Icon
+                            as={FaFacebook}
+                            color="blue.600"
+                            boxSize={5}
+                            _hover={{ color: 'blue.700' }}
+                          />
+                          <Text
+                            fontSize="xs"
+                            color="blue.600"
+                            display={{ base: 'none', md: 'block' }}
+                          >
                             Facebook
                           </Text>
                         </HStack>
@@ -344,8 +353,17 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                     {companyData.instagram && (
                       <Link href={companyData.instagram} isExternal>
                         <HStack spacing={1}>
-                          <Icon as={FaInstagram} color="pink.500" boxSize={5} _hover={{ color: 'pink.600' }} />
-                          <Text fontSize="xs" color="pink.500" display={{ base: 'none', md: 'block' }}>
+                          <Icon
+                            as={FaInstagram}
+                            color="pink.500"
+                            boxSize={5}
+                            _hover={{ color: 'pink.600' }}
+                          />
+                          <Text
+                            fontSize="xs"
+                            color="pink.500"
+                            display={{ base: 'none', md: 'block' }}
+                          >
                             Instagram
                           </Text>
                         </HStack>
@@ -469,7 +487,8 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
 
               {/* Operational Details Summary - Updated: removed climate_zone, soil_types → soil_health_practices */}
               {((establishmentData.water_sources && establishmentData.water_sources.length > 0) ||
-                (establishmentData.soil_health_practices && establishmentData.soil_health_practices.length > 0) ||
+                (establishmentData.soil_health_practices &&
+                  establishmentData.soil_health_practices.length > 0) ||
                 (establishmentData.soil_types && establishmentData.soil_types.length > 0) ||
                 (establishmentData.irrigation_methods &&
                   establishmentData.irrigation_methods.length > 0)) && (
@@ -519,12 +538,16 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
 
                         // Try new soil_health_practices field first
                         if (establishmentData.soil_health_practices) {
-                          soilHealthPractices = Array.isArray(establishmentData.soil_health_practices)
+                          soilHealthPractices = Array.isArray(
+                            establishmentData.soil_health_practices
+                          )
                             ? establishmentData.soil_health_practices
                             : typeof establishmentData.soil_health_practices === 'string'
                             ? (() => {
                                 try {
-                                  const parsed = JSON.parse(establishmentData.soil_health_practices as string);
+                                  const parsed = JSON.parse(
+                                    establishmentData.soil_health_practices as string
+                                  );
                                   return parsed.length > 0 ? parsed : [];
                                 } catch {
                                   return [];
@@ -566,7 +589,9 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
 
                       {(() => {
                         // Parse irrigation methods
-                        const irrigationMethods = Array.isArray(establishmentData.irrigation_methods)
+                        const irrigationMethods = Array.isArray(
+                          establishmentData.irrigation_methods
+                        )
                           ? establishmentData.irrigation_methods
                           : typeof establishmentData.irrigation_methods === 'string'
                           ? (() => {

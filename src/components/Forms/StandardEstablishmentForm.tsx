@@ -472,7 +472,6 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
     );
   };
 
-
   const addIrrigationMethod = () => {
     if (newIrrigationMethod.trim()) {
       const currentMethods = watch('irrigationMethods') || [];
@@ -565,10 +564,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
         <form onSubmit={handleSubmit(onSubmitForm)}>
           {/* Step 0: Basic Information */}
           {currentStep === 0 && (
-            <StandardCard
-              title="Establishment Information"
-              subtitle="Tell us about your farm"
-            >
+            <StandardCard title="Establishment Information" subtitle="Tell us about your farm">
               <VStack spacing={6} align="stretch">
                 {/* Name & Type */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
@@ -650,7 +646,6 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                     )}
                   />
                 </StandardField>
-
 
                 {/* Mobile-First Navigation */}
                 <Box pt={4}>
@@ -846,11 +841,21 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                         control={methods.control}
                         render={({ field }) => (
                           <Input
-                            value={field.value !== undefined && field.value !== null ? String(field.value) : ''}
+                            value={
+                              field.value !== undefined && field.value !== null
+                                ? String(field.value)
+                                : ''
+                            }
                             onChange={(e) => {
                               const val = e.target.value;
                               // Allow empty, minus sign, decimal point, and valid number patterns
-                              if (val === '' || val === '-' || val === '.' || val === '-.' || /^-?\d*\.?\d*$/.test(val)) {
+                              if (
+                                val === '' ||
+                                val === '-' ||
+                                val === '.' ||
+                                val === '-.' ||
+                                /^-?\d*\.?\d*$/.test(val)
+                              ) {
                                 // Store as string during typing, parse on blur
                                 field.onChange(val === '' ? undefined : val);
                               }
@@ -895,11 +900,21 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                         control={methods.control}
                         render={({ field }) => (
                           <Input
-                            value={field.value !== undefined && field.value !== null ? String(field.value) : ''}
+                            value={
+                              field.value !== undefined && field.value !== null
+                                ? String(field.value)
+                                : ''
+                            }
                             onChange={(e) => {
                               const val = e.target.value;
                               // Allow empty, minus sign, decimal point, and valid number patterns
-                              if (val === '' || val === '-' || val === '.' || val === '-.' || /^-?\d*\.?\d*$/.test(val)) {
+                              if (
+                                val === '' ||
+                                val === '-' ||
+                                val === '.' ||
+                                val === '-.' ||
+                                /^-?\d*\.?\d*$/.test(val)
+                              ) {
                                 // Store as string during typing, parse on blur
                                 field.onChange(val === '' ? undefined : val);
                               }
@@ -1303,9 +1318,9 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   Sustainability & Resources
                 </Text>
                 <Text fontSize="sm" color="gray.600" mb={4}>
-                  Share how you manage water and soil - consumers value farms with sustainable practices.
+                  Share how you manage water and soil - consumers value farms with sustainable
+                  practices.
                 </Text>
-
 
                 {/* Water Sources - Critical sustainability indicator per agricultural expert */}
                 <StandardField
@@ -1384,7 +1399,11 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                             _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
                             size="lg"
                           />
-                          <StandardButton onClick={addSoilHealthPractice} leftIcon={<FaPlus />} size="sm">
+                          <StandardButton
+                            onClick={addSoilHealthPractice}
+                            leftIcon={<FaPlus />}
+                            size="sm"
+                          >
                             Add
                           </StandardButton>
                         </HStack>
@@ -1402,7 +1421,6 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                     )}
                   />
                 </StandardField>
-
 
                 {/* Irrigation Methods - Consumer-understood sustainability indicator */}
                 <StandardField

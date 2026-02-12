@@ -11,7 +11,12 @@ import { FaCamera, FaCheck, FaStar, FaInfoCircle } from 'react-icons/fa';
 /**
  * Verification tier configuration for consistent UI display
  */
-export type VerificationLevel = 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+export type VerificationLevel =
+  | 'self_reported'
+  | 'photo_documented'
+  | 'photo_verified'
+  | 'data_verified'
+  | 'certified';
 
 /**
  * Badge configuration for each verification tier
@@ -31,7 +36,9 @@ export interface VerificationBadgeConfig {
  * Get complete badge configuration for a verification level
  * Returns: color, icon, text, tooltip, trust score for consistent display
  */
-export function getVerificationBadgeConfig(level: VerificationLevel | undefined): VerificationBadgeConfig {
+export function getVerificationBadgeConfig(
+  level: VerificationLevel | undefined
+): VerificationBadgeConfig {
   const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
     self_reported: {
       level: 'self_reported',
@@ -40,9 +47,8 @@ export function getVerificationBadgeConfig(level: VerificationLevel | undefined)
       borderColor: 'gray.300',
       icon: FaInfoCircle,
       label: 'Self Reported',
-      tooltip:
-        'Event information provided by the farmer. Carbon data calculated based on input.',
-      trustScore: 50,
+      tooltip: 'Event information provided by the farmer. Carbon data calculated based on input.',
+      trustScore: 50
     },
     photo_documented: {
       level: 'photo_documented',
@@ -53,7 +59,7 @@ export function getVerificationBadgeConfig(level: VerificationLevel | undefined)
       label: 'Photo Documented',
       tooltip:
         'Event has at least 1 photo. Agricultural content validated by AI. Increases trust in the provided information.',
-      trustScore: 65,
+      trustScore: 65
     },
     photo_verified: {
       level: 'photo_verified',
@@ -64,7 +70,7 @@ export function getVerificationBadgeConfig(level: VerificationLevel | undefined)
       label: 'Photo Verified',
       tooltip:
         'Event has 2+ verified photos with GPS and timestamp data. Strong evidence of actual farming activity.',
-      trustScore: 80,
+      trustScore: 80
     },
     data_verified: {
       level: 'data_verified',
@@ -75,7 +81,7 @@ export function getVerificationBadgeConfig(level: VerificationLevel | undefined)
       label: 'Data Verified',
       tooltip:
         'Event auto-verified by system (weather data, equipment sensors). Highest accuracy for this category.',
-      trustScore: 85,
+      trustScore: 85
     },
     certified: {
       level: 'certified',
@@ -84,10 +90,9 @@ export function getVerificationBadgeConfig(level: VerificationLevel | undefined)
       borderColor: 'purple.300',
       icon: FaStar,
       label: 'Certified',
-      tooltip:
-        'Event verified by third-party certification body. Maximum trust and transparency.',
-      trustScore: 100,
-    },
+      tooltip: 'Event verified by third-party certification body. Maximum trust and transparency.',
+      trustScore: 100
+    }
   };
 
   return configs[level || 'self_reported'];
@@ -103,7 +108,7 @@ export function getVerificationColor(level: VerificationLevel | undefined): stri
     photo_documented: 'teal',
     photo_verified: 'blue',
     data_verified: 'green',
-    certified: 'purple',
+    certified: 'purple'
   };
   return colorMap[level || 'self_reported'];
 }
@@ -117,7 +122,7 @@ export function getVerificationIcon(level: VerificationLevel | undefined): any {
     photo_documented: FaCamera,
     photo_verified: FaCamera,
     data_verified: FaCheck,
-    certified: FaStar,
+    certified: FaStar
   };
   return iconMap[level || 'self_reported'];
 }
@@ -131,7 +136,7 @@ export function getVerificationLabel(level: VerificationLevel | undefined): stri
     photo_documented: 'Photo Documented',
     photo_verified: 'Photo Verified',
     data_verified: 'Data Verified',
-    certified: 'Certified',
+    certified: 'Certified'
   };
   return labelMap[level || 'self_reported'];
 }
@@ -146,7 +151,7 @@ export function getTrustScore(level: VerificationLevel | undefined): number {
     photo_documented: 65,
     photo_verified: 80,
     data_verified: 85,
-    certified: 100,
+    certified: 100
   };
   return scoreMap[level || 'self_reported'];
 }
@@ -178,7 +183,7 @@ export function calculatePreviewVerificationLevel(
   hasGpsData: boolean,
   hasTimestamp: boolean,
   eventType?: number,
-  hasValidPhotoContent: boolean = true, // Default: assume valid for preview
+  hasValidPhotoContent: boolean = true // Default: assume valid for preview
 ): VerificationLevel {
   // Weather, equipment, soil, business events can auto-upgrade to data_verified
   const autoUpgradeTypes = [0, 4, 5, 7]; // Weather, Equipment, Soil, Business
@@ -219,13 +224,15 @@ export function formatVerificationDisplay(level: VerificationLevel | undefined):
  * Get color variant string for Chakra UI Badge component
  * Returns 'solid', 'subtle', 'outline' based on verification level
  */
-export function getBadgeVariant(level: VerificationLevel | undefined): 'solid' | 'subtle' | 'outline' {
+export function getBadgeVariant(
+  level: VerificationLevel | undefined
+): 'solid' | 'subtle' | 'outline' {
   const variantMap: Record<VerificationLevel, 'solid' | 'subtle' | 'outline'> = {
     self_reported: 'outline',
     photo_documented: 'subtle',
     photo_verified: 'subtle',
     data_verified: 'solid',
-    certified: 'solid',
+    certified: 'solid'
   };
   return variantMap[level || 'self_reported'];
 }
@@ -239,7 +246,7 @@ export function isValidVerificationLevel(level: any): level is VerificationLevel
     'photo_documented',
     'photo_verified',
     'data_verified',
-    'certified',
+    'certified'
   ];
   return typeof level === 'string' && validLevels.includes(level as VerificationLevel);
 }
@@ -248,7 +255,10 @@ export function isValidVerificationLevel(level: any): level is VerificationLevel
  * Get verification progression message for consumer display
  * Shows how photos move an event through verification tiers
  */
-export function getVerificationProgressionMessage(photoCount: number, level: VerificationLevel | undefined): string {
+export function getVerificationProgressionMessage(
+  photoCount: number,
+  level: VerificationLevel | undefined
+): string {
   if (photoCount === 0) {
     return 'Add photos to verify this event and build consumer trust';
   } else if (photoCount === 1) {
@@ -264,13 +274,15 @@ export function getVerificationProgressionMessage(photoCount: number, level: Ver
  * Map verification_level to gallery strength format for PhotoVerificationGallery
  * Enables consistency between event-level and category-level displays
  */
-export function mapVerificationLevelToGalleryStrength(level: VerificationLevel | undefined): string {
+export function mapVerificationLevelToGalleryStrength(
+  level: VerificationLevel | undefined
+): string {
   const strengthMap: Record<VerificationLevel, string> = {
     self_reported: 'minimal',
     photo_documented: 'basic',
     photo_verified: 'moderate',
     data_verified: 'strong',
-    certified: 'strong',
+    certified: 'strong'
   };
   return strengthMap[level || 'self_reported'];
 }
@@ -284,7 +296,7 @@ export interface PhotoRecommendation {
   examples: string[];
   toAchieveTier: {
     photo_documented: string; // What 1 photo should show
-    photo_verified: string;   // What 2+ photos should show
+    photo_verified: string; // What 2+ photos should show
   };
   tips: string[];
 }
@@ -298,20 +310,20 @@ export function getPhotoRecommendations(eventType: number | undefined): PhotoRec
         'Hail impact on plants or equipment',
         'Drought conditions (brown/stressed plants)',
         'Heavy rain or flooding evidence',
-        'Wind damage to crops or structures',
+        'Wind damage to crops or structures'
       ],
       toAchieveTier: {
         photo_documented:
           'One clear photo showing the weather impact (frost damage, hail damage, drought stress, etc.)',
         photo_verified:
-          '2+ photos from different angles showing the weather event and its impact on the farm',
+          '2+ photos from different angles showing the weather event and its impact on the farm'
       },
       tips: [
         'Include date/timestamp in photo if possible',
         'Show plants or crops affected by the weather',
         'Include scale reference (hand, ruler) for damage assessment',
-        'Multiple angles strengthen verification',
-      ],
+        'Multiple angles strengthen verification'
+      ]
     },
     1: {
       eventType: 'Production Activity',
@@ -320,19 +332,20 @@ export function getPhotoRecommendations(eventType: number | undefined): PhotoRec
         'Growth stage documentation (crop at different heights)',
         'Harvesting in progress (equipment collecting crops)',
         'Equipment operation (tractor in field, irrigation running)',
-        'Field conditions before/after activity',
+        'Field conditions before/after activity'
       ],
       toAchieveTier: {
-        photo_documented: 'One clear photo of the production activity (planting, harvesting, irrigation, etc.)',
+        photo_documented:
+          'One clear photo of the production activity (planting, harvesting, irrigation, etc.)',
         photo_verified:
-          '2+ photos showing different stages or angles of the same production activity',
+          '2+ photos showing different stages or angles of the same production activity'
       },
       tips: [
         'Show equipment in operation, not just parked',
         'Include field context (rows, crop height, size reference)',
         'Time-stamp photos during the activity',
-        'Different angles prove the activity actually occurred',
-      ],
+        'Different angles prove the activity actually occurred'
+      ]
     },
     2: {
       eventType: 'Chemical Application',
@@ -341,19 +354,20 @@ export function getPhotoRecommendations(eventType: number | undefined): PhotoRec
         'Chemical being mixed or prepared',
         'Application equipment spraying in field',
         'Field after application (wet/covered areas)',
-        'Active ingredient name and concentration visible',
+        'Active ingredient name and concentration visible'
       ],
       toAchieveTier: {
-        photo_documented: 'One clear photo showing the chemical container/label or application in progress',
+        photo_documented:
+          'One clear photo showing the chemical container/label or application in progress',
         photo_verified:
-          '2+ photos: (1) chemical bottle with label visible, (2) application equipment in use or field after application',
+          '2+ photos: (1) chemical bottle with label visible, (2) application equipment in use or field after application'
       },
       tips: [
         'Chemical label must be clearly readable (brand, active ingredient)',
         'Show container size for dosage verification',
         'Photo of application equipment being used strengthens verification',
-        'Field condition after application shows completion',
-      ],
+        'Field condition after application shows completion'
+      ]
     },
     3: {
       eventType: 'General Activity',
@@ -362,19 +376,19 @@ export function getPhotoRecommendations(eventType: number | undefined): PhotoRec
         'Activity location/context in farm setting',
         'Results of activity (before/after if applicable)',
         'Equipment or tools being used',
-        'Team/workers involved in activity',
+        'Team/workers involved in activity'
       ],
       toAchieveTier: {
         photo_documented: 'One photo clearly showing the activity being performed or its results',
         photo_verified:
-          '2+ photos showing the activity from different angles or at different stages of completion',
+          '2+ photos showing the activity from different angles or at different stages of completion'
       },
       tips: [
         'Activity should be clearly identifiable in photos',
         'Include farm context (location, surroundings)',
         'People or equipment in photo adds credibility',
-        'Sequential photos show progression of work',
-      ],
+        'Sequential photos show progression of work'
+      ]
     },
     4: {
       eventType: 'Equipment Operation',
@@ -383,18 +397,19 @@ export function getPhotoRecommendations(eventType: number | undefined): PhotoRec
         'Equipment odometer/hour meter reading',
         'Equipment maintenance or repair work',
         'Fuel being added to equipment',
-        'Equipment on the farm (with identifying features)',
+        'Equipment on the farm (with identifying features)'
       ],
       toAchieveTier: {
         photo_documented: 'One photo showing the equipment being operated or maintained',
-        photo_verified: '2+ photos: (1) equipment in operation, (2) odometer/hour meter or maintenance detail',
+        photo_verified:
+          '2+ photos: (1) equipment in operation, (2) odometer/hour meter or maintenance detail'
       },
       tips: [
         'Clear view of equipment type (brand, model visible)',
         'Operating photo: equipment actively doing work',
         'Hour meter: photo of dashboard/display showing hours',
-        'Odometer: clear reading of mileage',
-      ],
+        'Odometer: clear reading of mileage'
+      ]
     },
     5: {
       eventType: 'Soil Management',
@@ -403,19 +418,19 @@ export function getPhotoRecommendations(eventType: number | undefined): PhotoRec
         'Soil condition (color, texture, structure visible)',
         'Soil testing equipment or kit',
         'Soil amendment materials being applied',
-        'Before/after soil condition photos',
+        'Before/after soil condition photos'
       ],
       toAchieveTier: {
         photo_documented: 'One photo showing soil sample, soil testing, or soil condition',
         photo_verified:
-          '2+ photos showing: (1) soil sample/testing activity, (2) testing results or soil condition detail',
+          '2+ photos showing: (1) soil sample/testing activity, (2) testing results or soil condition detail'
       },
       tips: [
         'Soil sample: include scale reference (hand, ruler)',
         'Testing: show equipment being used or results displayed',
         'Depth: indicate depth if relevant to testing',
-        'Before/after: dramatically improves verification credibility',
-      ],
+        'Before/after: dramatically improves verification credibility'
+      ]
     },
     6: {
       eventType: 'Pest Management',
@@ -424,19 +439,19 @@ export function getPhotoRecommendations(eventType: number | undefined): PhotoRec
         'Traps or monitoring equipment in field',
         'Pest identification (close-up of insect or disease)',
         'Scouting activity (person examining crops)',
-        'Treatment equipment or beneficial insects being released',
+        'Treatment equipment or beneficial insects being released'
       ],
       toAchieveTier: {
         photo_documented: 'One photo showing pest evidence, trap, or scouting activity',
         photo_verified:
-          '2+ photos showing: (1) pest or pest damage, (2) monitoring/treatment equipment or beneficial insects',
+          '2+ photos showing: (1) pest or pest damage, (2) monitoring/treatment equipment or beneficial insects'
       },
       tips: [
         'Pest damage: wide shot showing extent + close-up of damage',
         'Traps: show trap in field location with identifying context',
         'Insects: macro/close-up photo of actual pest',
-        'Scouting: person examining plants with farm context',
-      ],
+        'Scouting: person examining plants with farm context'
+      ]
     },
     7: {
       eventType: 'Business Activity',
@@ -445,20 +460,21 @@ export function getPhotoRecommendations(eventType: number | undefined): PhotoRec
         'Inspection report or inspector on farm',
         'Compliance documentation being reviewed',
         'Third-party verification official seal/stamp',
-        'Certification agency representative at farm',
+        'Certification agency representative at farm'
       ],
       toAchieveTier: {
-        photo_documented: 'One photo showing certification document, inspection report, or verification official',
+        photo_documented:
+          'One photo showing certification document, inspection report, or verification official',
         photo_verified:
-          '2+ photos showing: (1) certification document clearly visible, (2) verification official or agency stamp',
+          '2+ photos showing: (1) certification document clearly visible, (2) verification official or agency stamp'
       },
       tips: [
         'Document: certificate number and date clearly readable',
         'Inspection: show inspector on farm or inspection documents',
         'Agency stamp: official seal or verification mark visible',
-        'Recent dates: current certifications strengthen verification',
-      ],
-    },
+        'Recent dates: current certifications strengthen verification'
+      ]
+    }
   };
 
   return recommendations[eventType ?? -1] ?? null;
@@ -472,7 +488,9 @@ export function getPhotoGuidanceText(eventType: number | undefined, photoCount: 
   if (!recs) return '';
 
   if (photoCount === 0) {
-    return `To verify this ${recs.eventType}, upload photos showing: ${recs.examples.slice(0, 2).join(', ')}`;
+    return `To verify this ${recs.eventType}, upload photos showing: ${recs.examples
+      .slice(0, 2)
+      .join(', ')}`;
   } else if (photoCount === 1) {
     return `${recs.toAchieveTier.photo_documented} Add another photo from a different angle for stronger verification.`;
   } else {
@@ -500,7 +518,8 @@ const PRODUCTION_SUBTYPE_RECOMMENDATIONS: Record<string, SubtypePhotoRecommendat
   PL: {
     subtypeCode: 'PL',
     subtypeName: 'Planting',
-    guidanceText: 'Capture seeding equipment in operation and planted rows showing seed placement. Photos should document the establishment of new crops with visible planting patterns.',
+    guidanceText:
+      'Capture seeding equipment in operation and planted rows showing seed placement. Photos should document the establishment of new crops with visible planting patterns.',
     examples: [
       'Seeding equipment actively planting (not parked)',
       'Freshly planted rows showing seed spacing',
@@ -514,7 +533,8 @@ const PRODUCTION_SUBTYPE_RECOMMENDATIONS: Record<string, SubtypePhotoRecommendat
   HA: {
     subtypeCode: 'HA',
     subtypeName: 'Harvesting',
-    guidanceText: 'Document harvesting equipment collecting crops and harvested product. Show the active collection process and crop condition at harvest time.',
+    guidanceText:
+      'Document harvesting equipment collecting crops and harvested product. Show the active collection process and crop condition at harvest time.',
     examples: [
       'Harvester equipment actively collecting crops',
       'Harvested product in bins or containers',
@@ -528,7 +548,8 @@ const PRODUCTION_SUBTYPE_RECOMMENDATIONS: Record<string, SubtypePhotoRecommendat
   IR: {
     subtypeCode: 'IR',
     subtypeName: 'Irrigation',
-    guidanceText: 'Capture irrigation equipment in operation and water being applied to crops. Show active water delivery with visible spray patterns or water flow.',
+    guidanceText:
+      'Capture irrigation equipment in operation and water being applied to crops. Show active water delivery with visible spray patterns or water flow.',
     examples: [
       'Irrigation system actively running (sprinklers, drip lines)',
       'Water being applied to crops with visible moisture',
@@ -542,7 +563,8 @@ const PRODUCTION_SUBTYPE_RECOMMENDATIONS: Record<string, SubtypePhotoRecommendat
   PR: {
     subtypeCode: 'PR',
     subtypeName: 'Pruning/Trimming',
-    guidanceText: 'Document pruning work in progress and plant condition before/after trimming. Show the maintenance activity improving plant structure and health.',
+    guidanceText:
+      'Document pruning work in progress and plant condition before/after trimming. Show the maintenance activity improving plant structure and health.',
     examples: [
       'Worker actively pruning or trimming plants',
       'Before/after comparison showing pruned branches',
@@ -556,7 +578,8 @@ const PRODUCTION_SUBTYPE_RECOMMENDATIONS: Record<string, SubtypePhotoRecommendat
   TR: {
     subtypeCode: 'TR',
     subtypeName: 'Transplanting',
-    guidanceText: 'Capture seedlings being moved and transplanted plants in new locations. Document careful handling and proper plant establishment.',
+    guidanceText:
+      'Capture seedlings being moved and transplanted plants in new locations. Document careful handling and proper plant establishment.',
     examples: [
       'Seedlings being prepared for transplanting',
       'Worker transplanting plants with visible roots',
@@ -572,7 +595,8 @@ const PRODUCTION_SUBTYPE_RECOMMENDATIONS: Record<string, SubtypePhotoRecommendat
   EM: {
     subtypeCode: 'EM',
     subtypeName: 'Equipment Maintenance',
-    guidanceText: 'Document equipment maintenance, repair work, or operation verification. Show maintenance activity with visible equipment components or hour meter readings.',
+    guidanceText:
+      'Document equipment maintenance, repair work, or operation verification. Show maintenance activity with visible equipment components or hour meter readings.',
     examples: [
       'Maintenance or repair work being performed on equipment',
       'Equipment hour meter or odometer reading clearly visible',
@@ -587,7 +611,8 @@ const PRODUCTION_SUBTYPE_RECOMMENDATIONS: Record<string, SubtypePhotoRecommendat
   EQ: {
     subtypeCode: 'EQ',
     subtypeName: 'Equipment Operations (Legacy)',
-    guidanceText: 'Document equipment maintenance, repair work, or operation verification. Show maintenance activity with visible equipment components or hour meter readings.',
+    guidanceText:
+      'Document equipment maintenance, repair work, or operation verification. Show maintenance activity with visible equipment components or hour meter readings.',
     examples: [
       'Maintenance or repair work being performed on equipment',
       'Equipment hour meter or odometer reading clearly visible',
@@ -636,4 +661,3 @@ export function getEnhancedPhotoRecommendations(
   // Fall back to event-level recommendations
   return getPhotoRecommendations(eventType);
 }
-

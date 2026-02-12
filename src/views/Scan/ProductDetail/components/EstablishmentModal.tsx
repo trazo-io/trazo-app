@@ -160,7 +160,12 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} size={modalSize} scrollBehavior="inside">
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
-      <ModalContent bg={bgColor} borderRadius="xl" maxH={{ base: 'calc(100vh - 100px)', md: '90vh' }} mb={{ base: '80px', md: 'auto' }}>
+      <ModalContent
+        bg={bgColor}
+        borderRadius="xl"
+        maxH={{ base: 'calc(100vh - 100px)', md: '90vh' }}
+        mb={{ base: '80px', md: 'auto' }}
+      >
         <ModalHeader p={6} pb={4} borderBottom="1px" borderColor={borderColor}>
           <HStack spacing={4}>
             <Box p={3} borderRadius="lg" bg={useColorModeValue('green.50', 'green.900')}>

@@ -316,7 +316,6 @@ const StandardImageGallery = ({
                     </VStack>
                   </Box>
                 )}
-
             </Box>
           ))}
         </SimpleGrid>

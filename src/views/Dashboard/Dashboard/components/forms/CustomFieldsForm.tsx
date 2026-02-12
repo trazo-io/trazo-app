@@ -34,15 +34,8 @@ import {
   SectionBox,
   SectionHeader
 } from 'components/Design/StandardComponents';
-import {
-  FaPlus,
-  FaTrash,
-  FaFileAlt
-} from 'react-icons/fa';
-import {
-  CustomField,
-  validateCustomFieldClient
-} from 'utils/customFieldsUtils';
+import { FaPlus, FaTrash, FaFileAlt } from 'react-icons/fa';
+import { CustomField, validateCustomFieldClient } from 'utils/customFieldsUtils';
 
 interface CustomFieldsFormProps {
   customFields: CustomField[] | undefined;
@@ -56,8 +49,7 @@ const customFieldValidationSchema = object({
   label: string()
     .min(1, 'Field name is required')
     .max(100, 'Field name cannot exceed 100 characters'),
-  value: string()
-    .max(500, 'Value cannot exceed 500 characters'),
+  value: string().max(500, 'Value cannot exceed 500 characters'),
   is_consumer_visible: string().optional()
 });
 
@@ -87,7 +79,12 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
     }
   });
 
-  const { handleSubmit, reset, control, formState: { errors } } = methods;
+  const {
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors }
+  } = methods;
 
   /**
    * Handle adding a new custom field
@@ -140,11 +137,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
     <SectionBox variant="default">
       <VStack spacing={4} align="stretch">
         {/* Section Header */}
-        <SectionHeader
-          icon={FaFileAlt}
-          iconColor="green.500"
-          title="Additional Information"
-        />
+        <SectionHeader icon={FaFileAlt} iconColor="green.500" title="Additional Information" />
 
         {/* Custom Fields - Stacked Card Layout */}
         {customFields.length > 0 && (
@@ -307,18 +300,10 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
 
                 {/* Action Buttons */}
                 <HStack spacing={3} justify="flex-end" pt={2}>
-                  <StandardButton
-                    variant="outline"
-                    onClick={handleCancelAdd}
-                    size="md"
-                  >
+                  <StandardButton variant="outline" onClick={handleCancelAdd} size="md">
                     Cancel
                   </StandardButton>
-                  <StandardButton
-                    variant="primary"
-                    onClick={handleSubmit(onSubmit)}
-                    size="md"
-                  >
+                  <StandardButton variant="primary" onClick={handleSubmit(onSubmit)} size="md">
                     Add Field
                   </StandardButton>
                 </HStack>

@@ -166,12 +166,7 @@ export const EmptyImageState: React.FC<EmptyImageStateProps> = ({
         aria-label={displayPrimaryText}
       >
         {/* Icon Container */}
-        <Circle
-          size={config.circleSize}
-          bg={circleBgColor}
-          color={iconColor}
-          flexShrink={0}
-        >
+        <Circle size={config.circleSize} bg={circleBgColor} color={iconColor} flexShrink={0}>
           <Icon as={icon} boxSize={config.iconSize} />
         </Circle>
 
