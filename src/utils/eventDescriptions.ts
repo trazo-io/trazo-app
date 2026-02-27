@@ -2569,7 +2569,7 @@ export function getConsumerEventDescription(
       const unit = event.carbon_credits_unit || 'credits';
       const amount = parseFloat(event.carbon_credits_earned);
       const formattedAmount = amount >= 1 ? amount.toFixed(1) : amount.toFixed(2);
-      fullDescription += `. Generated ${formattedAmount} ${unit} through verified sustainable farming practices`;
+      fullDescription += `. Generated ${formattedAmount} ${unit} through documented sustainable farming practices`;
     }
 
     // Add verification status with consumer-friendly messaging

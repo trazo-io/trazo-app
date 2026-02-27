@@ -1,25 +1,39 @@
-import { Box, useStyleConfig } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 
 type MainPanelProps = {
-  variant?: string;
   children: React.ReactNode;
-  w?: any; // Allow width override from layout
-  [key: string]: any; // Allow other props
+  w?: any;
+  [key: string]: any;
 };
 
 function MainPanel(props: MainPanelProps) {
-  const { variant, children, w, ...rest } = props;
-  const styles = useStyleConfig('MainPanel', { variant });
+  const { children, w, ...rest } = props;
 
   return (
     <Box
-      __css={styles}
+      float="right"
+      maxWidth="100%"
+      overflow="auto"
+      position="relative"
+      maxHeight="100%"
+      minH="100vh"
+      transition="all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)"
+      transitionDuration=".2s, .2s, .35s"
+      transitionProperty="top, bottom, width, margin-left"
+      transitionTimingFunction="linear, linear, ease"
+      sx={{
+        '@media screen and (min-width: 1280px)': {
+          marginLeft: 'var(--sidebar-width, 275px)',
+          width: 'calc(100% - var(--sidebar-width, 275px))'
+        },
+        '@media screen and (max-width: 1279px)': {
+          marginLeft: 0,
+          width: '100%'
+        }
+      }}
       data-component="MainPanel"
       className="trazo-main-panel"
       w={w}
-      minH="100vh"
-      transition="all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)"
-      position="relative"
       {...rest}
     >
       {children}

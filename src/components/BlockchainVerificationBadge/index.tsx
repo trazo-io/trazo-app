@@ -243,9 +243,9 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
             borderRadius="full"
           >
             {status === 'fully_verified'
-              ? 'CERTIFIED'
+              ? 'ON-CHAIN'
               : status === 'partially_verified'
-              ? 'VERIFIED'
+              ? 'RECORDED'
               : status === 'demo_mode'
               ? 'DEMO'
               : 'PENDING'}
@@ -263,7 +263,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
                 <HStack spacing={2}>
                   <Icon as={FaCertificate} color={uspGreen} boxSize={4} />
                   <Text fontSize="sm" fontWeight="medium" color={uspGreen}>
-                    Science-Based Calculations
+                    EPA/USDA Emission Factors
                   </Text>
                 </HStack>
                 <Badge colorScheme="green" variant="solid" fontSize="xs">
@@ -282,7 +282,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
               )}
 
               <Text fontSize="xs" color="green.700">
-                Environmental impact calculated using published EPA emission factors
+                Environmental impact calculated using published EPA and USDA emission factors
               </Text>
             </Box>
           )}

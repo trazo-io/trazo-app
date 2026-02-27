@@ -97,7 +97,8 @@ import {
 } from 'store/api/billingApi';
 import { setCompany } from 'store/features/companySlice';
 import { MastercardIcon, VisaIcon, PayPalIcon } from 'components/Icons/Icons';
-import { FaWallet } from 'react-icons/fa';
+import { FaWallet, FaRocket, FaEnvelope, FaGift } from 'react-icons/fa';
+import config from 'config/environment';
 
 // Helper functions
 const formatDate = (date: string | Date | null | undefined): string => {
@@ -172,6 +173,8 @@ function UnifiedSubscriptionDashboard() {
   const [addonQuantity, setAddonQuantity] = useState(1);
   const [showAddons, setShowAddons] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isEarlyAccessOpen, onOpen: onEarlyAccessOpen, onClose: onEarlyAccessClose } = useDisclosure();
+  const [earlyAccessPlanName, setEarlyAccessPlanName] = useState<string | null>(null);
 
   // API Queries
   const { refetch: refetchCompany, isLoading: isRefreshing } = useGetCompanyQuery(
@@ -487,6 +490,11 @@ function UnifiedSubscriptionDashboard() {
   };
 
   const handleOpenAddonModal = (addon: any) => {
+    if (!config.PAYMENTS_ENABLED) {
+      setEarlyAccessPlanName(addon?.name || 'Add-on');
+      onEarlyAccessOpen();
+      return;
+    }
     setSelectedAddon(addon);
     setAddonQuantity(1);
     onOpen();
@@ -601,6 +609,12 @@ function UnifiedSubscriptionDashboard() {
   );
 
   const handleSubscribeBlockchain = useCallback(async () => {
+    if (!config.PAYMENTS_ENABLED) {
+      setEarlyAccessPlanName('Blockchain Verification');
+      onEarlyAccessOpen();
+      return;
+    }
+
     if (!hasSubscription) {
       toast({
         title: intl.formatMessage({ id: 'app.subscriptionRequired' }),
@@ -626,7 +640,7 @@ function UnifiedSubscriptionDashboard() {
         isClosable: true
       });
     }
-  }, [subscribeBlockchain, hasSubscription, toast, intl]);
+  }, [subscribeBlockchain, hasSubscription, toast, intl, onEarlyAccessOpen]);
 
   const isLoading =
     isDashboardLoading ||
@@ -1653,6 +1667,66 @@ function UnifiedSubscriptionDashboard() {
           </CardBody>
         </Card>
       </VStack>
+
+      {/* Early Access Modal */}
+      <Modal isOpen={isEarlyAccessOpen} onClose={onEarlyAccessClose} isCentered size="md">
+        <ModalOverlay />
+        <ModalContent borderRadius="xl" mx={4}>
+          <ModalHeader pb={2}>
+            <HStack spacing={3}>
+              <Icon as={FaRocket} color="green.500" boxSize={5} />
+              <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                {intl.formatMessage({ id: 'app.earlyAccess.title' })}
+              </Text>
+            </HStack>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4} align="stretch">
+              <Text fontSize="sm" color="gray.600" lineHeight="1.7">
+                {intl.formatMessage({ id: 'app.earlyAccess.bodyExisting' })}
+              </Text>
+              <Box bg="green.50" p={4} borderRadius="lg" borderLeft="4px solid" borderLeftColor="green.400">
+                <Text fontSize="sm" color="green.700" fontWeight="medium">
+                  {intl.formatMessage({ id: 'app.earlyAccess.foundingMember' })}
+                </Text>
+              </Box>
+              {earlyAccessPlanName && (
+                <HStack spacing={2} bg="gray.50" p={3} borderRadius="md">
+                  <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
+                  <Text fontSize="sm" color="gray.600">
+                    {intl.formatMessage({ id: 'app.earlyAccess.selectedPlan' })}: <strong>{earlyAccessPlanName}</strong>
+                  </Text>
+                </HStack>
+              )}
+            </VStack>
+          </ModalBody>
+          <ModalFooter pt={2} gap={3}>
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => {
+                onEarlyAccessClose();
+                window.location.href = 'mailto:oscar@trazo.io?subject=Early Access - ' + (earlyAccessPlanName || 'Trazo');
+              }}
+              leftIcon={<Icon as={FaEnvelope} />}
+            >
+              {intl.formatMessage({ id: 'app.earlyAccess.contactUs' })}
+            </Button>
+            <Button
+              colorScheme="green"
+              size="md"
+              onClick={() => {
+                onEarlyAccessClose();
+                navigate('/admin/dashboard');
+              }}
+              leftIcon={<Icon as={FaRocket} />}
+            >
+              {intl.formatMessage({ id: 'app.goToDashboard' })}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Add-on Modal */}
       <Modal isOpen={isOpen} onClose={onClose}>

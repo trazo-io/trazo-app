@@ -57,18 +57,18 @@ const educationalContent: Record<
   usda_verified: {
     definition: 'EPA/USDA Emission Factors',
     explanation:
-      'Carbon calculations for this event use official emission factors published by the EPA and USDA, ensuring scientifically accurate environmental impact measurements.',
+      'Carbon calculations for this event use official emission factors published by the EPA and USDA. This ensures consistent methodology across all farms — not a verification of farming practices themselves.',
     icon: FaFlask,
     color: 'blue',
-    example: 'Government-verified data ensures consistent, reliable carbon calculations'
+    example: 'Government-published data ensures consistent, reliable carbon calculations'
   },
   blockchain_verified: {
-    definition: 'Blockchain Verified',
+    definition: 'Blockchain Recorded',
     explanation:
-      'When a production is finished, a digital fingerprint of all documented events is permanently recorded on the Polygon blockchain. This record cannot be changed or deleted by anyone.',
+      'When a production is finished, a digital fingerprint of all documented events is permanently recorded on the Polygon blockchain. This proves data has not been altered after submission — it does not verify farming practice accuracy.',
     icon: MdSecurity,
     color: 'purple',
-    example: 'Your entire production is cryptographically sealed and publicly verifiable on Polygonscan'
+    example: 'Your production record is cryptographically sealed and immutable on Polygonscan'
   },
   carbon_score: {
     definition: 'Carbon Score (0-100)',

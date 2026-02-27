@@ -31,9 +31,12 @@ interface USDACredibilityData {
   credibility_score: number;
   verification_details: {
     factors_verified: boolean;
-    usda_compliant: boolean;
-    scientifically_validated: boolean;
+    uses_epa_factors: boolean;
+    uses_usda_ars_data: boolean;
     peer_reviewed: boolean;
+    // Legacy fields (mapped from backend)
+    usda_compliant?: boolean;
+    scientifically_validated?: boolean;
   };
   establishment_name?: string;
   establishment_location?: string;
@@ -92,7 +95,7 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
   if (compact) {
     return (
       <>
-        <Tooltip label="Click to see USDA data verification details">
+        <Tooltip label="Click to see emission factor data sources">
           <Badge
             colorScheme="blue"
             variant="subtle"
@@ -105,7 +108,7 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             py={1}
           >
             <Icon as={FiShield} boxSize={3} />
-            <Text fontSize="xs">USDA Data</Text>
+            <Text fontSize="xs">EPA/USDA Data</Text>
           </Badge>
         </Tooltip>
         {renderModal()}
@@ -131,22 +134,22 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             <HStack>
               <Icon as={FiShield} color="blue.500" boxSize={5} />
               <Text fontWeight="semibold" color={textColor}>
-                USDA-Based Carbon Data
+                Government-Sourced Emission Factors
               </Text>
             </HStack>
 
             <Text fontSize="sm" color="gray.500" lineHeight="short">
-              Uses official USDA Agricultural Research Service emission factors for accurate carbon
-              calculations
+              Carbon calculations use published EPA and USDA Agricultural Research Service emission
+              factors
             </Text>
 
             <HStack spacing={2}>
               <Badge colorScheme="blue" variant="subtle">
                 <Icon as={FiCheckCircle} boxSize={3} mr={1} />
-                Verified Factors
+                EPA/USDA-Sourced
               </Badge>
               <Badge colorScheme="green" variant="subtle">
-                Scientifically Validated
+                Government Data
               </Badge>
             </HStack>
           </VStack>
@@ -166,7 +169,7 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
           <ModalHeader>
             <HStack>
               <Icon as={FiShield} color="blue.500" />
-              <Text>USDA Data Verification</Text>
+              <Text>Emission Factor Data Sources</Text>
             </HStack>
           </ModalHeader>
           <ModalCloseButton />
@@ -174,10 +177,10 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             {loading ? (
               <VStack spacing={4}>
                 <Progress size="sm" isIndeterminate colorScheme="blue" w="100%" />
-                <Text color="gray.500">Loading verification details...</Text>
+                <Text color="gray.500">Loading data source details...</Text>
               </VStack>
             ) : error || !credibilityData ? (
-              <Text color="gray.500">Unable to load verification details</Text>
+              <Text color="gray.500">Unable to load data source details</Text>
             ) : (
               <VStack spacing={6} align="stretch">
                 {/* Establishment Info */}
@@ -246,25 +249,43 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
 
                 <Divider />
 
-                {/* Verification Details */}
+                {/* Data Source Details */}
                 <Box>
                   <Text fontWeight="semibold" mb={3}>
-                    Verification Status
+                    Data Sources Used
                   </Text>
                   <VStack align="start" spacing={2}>
-                    {Object.entries(credibilityData.verification_details).map(([key, value]) => (
-                      <HStack key={key}>
-                        <Icon
-                          as={value ? FiCheckCircle : FiInfo}
-                          color={value ? 'green.500' : 'gray.400'}
-                          boxSize={4}
-                        />
-                        <Text fontSize="sm" textTransform="capitalize">
-                          {key.replace(/_/g, ' ')}: {value ? 'Yes' : 'No'}
-                        </Text>
+                    {credibilityData.verification_details.factors_verified && (
+                      <HStack>
+                        <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
+                        <Text fontSize="sm">EPA emission factors applied</Text>
                       </HStack>
-                    ))}
+                    )}
+                    {(credibilityData.verification_details.uses_epa_factors ||
+                      credibilityData.verification_details.usda_compliant) && (
+                      <HStack>
+                        <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
+                        <Text fontSize="sm">Uses EPA 40 CFR Part 98 factors</Text>
+                      </HStack>
+                    )}
+                    {(credibilityData.verification_details.uses_usda_ars_data ||
+                      credibilityData.verification_details.scientifically_validated) && (
+                      <HStack>
+                        <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
+                        <Text fontSize="sm">Uses USDA ARS published data</Text>
+                      </HStack>
+                    )}
+                    {credibilityData.verification_details.peer_reviewed && (
+                      <HStack>
+                        <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
+                        <Text fontSize="sm">Peer-reviewed methodology</Text>
+                      </HStack>
+                    )}
                   </VStack>
+                  <Text fontSize="xs" color="gray.400" mt={3}>
+                    Trazo is not affiliated with, endorsed by, or certified by the USDA or EPA.
+                    Calculations use publicly available government emission factors.
+                  </Text>
                 </Box>
 
                 {/* Regional Optimization */}

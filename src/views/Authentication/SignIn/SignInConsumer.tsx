@@ -130,7 +130,7 @@ export default function SignInConsumer() {
               Know Your Food's Climate Impact
             </Heading>
             <Text mb="24px" ms="4px" color={textColor} fontWeight="bold" fontSize="14px">
-              Scan products to see verified carbon footprints and support climate-positive farming
+              Scan products to see documented farming practices and support climate-positive farming
             </Text>
             <Flex mb="12px" align="center" gap={2}>
               <Box w="4px" h="4px" bg="green.500" borderRadius="full" />

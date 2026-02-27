@@ -171,9 +171,7 @@ interface StandardParcelFormTransparencyProps {
   establishmentCoordinates?: { lat: number; lng: number };
 }
 
-const options = {
-  googleMapApiKey: 'AIzaSyCLHij6DjbLLkhTsTvrRhwuKf8ZGXrx-Q8'
-};
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 export const StandardParcelFormTransparency: React.FC<StandardParcelFormTransparencyProps> = ({
   onSubmit,
@@ -259,7 +257,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const listenersRef = useRef<google.maps.MapsEventListener[]>([]);
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: options.googleMapApiKey
+    googleMapsApiKey
   });
 
   // 🎯 SIMPLIFIED 4-STEP TRANSPARENCY STRUCTURE

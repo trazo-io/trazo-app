@@ -64,9 +64,8 @@ import {
   FaThermometerHalf,
   FaEye
 } from 'react-icons/fa';
-// Import the real map component from Parcel Dashboard
 // @ts-ignore - CardWithMap is a JSX component without TypeScript declarations
-import CardWithMap from '../../../Dashboard/Parcel/components/CardWithMap.jsx';
+import CardWithMap from 'components/Map/CardWithMap';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 

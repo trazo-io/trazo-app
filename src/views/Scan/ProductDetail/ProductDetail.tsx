@@ -28,7 +28,8 @@ import {
   Progress,
   Spinner,
   Skeleton,
-  Link
+  Link,
+  Divider
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -894,7 +895,7 @@ function ProductDetail() {
       </Box>
       {/* Main Content Section */}
       <Container maxW="container.xl" py={8} centerContent>
-        <Box w="100%" maxW="container.lg" mb={8}>
+        <Box w="100%" maxW="container.lg" >
           {/* Main Content Column */}
           <Box>
             <VStack spacing={8} align="stretch">
@@ -1341,6 +1342,8 @@ function ProductDetail() {
                 </Box>
               )}
 
+              <Divider borderColor="gray.200" />
+
               {/* Production Journey - Carbon Impact Section */}
               <Box id="carbon-section">
                 <VStack spacing={4} align="stretch">
@@ -1546,6 +1549,8 @@ function ProductDetail() {
 
         {/* Additional Information Sections */}
         <VStack spacing={8} mt={8} w="100%" maxW="container.lg">
+          <Divider borderColor="gray.200" />
+
           {/* Producer Information Transition Section */}
           <Box
             bg="white"
@@ -1730,10 +1735,7 @@ function ProductDetail() {
             />
           </Box>
 
-          {/* Phase 6.3: ConsumerImpactCalculator Removed - Avoided duplicate information */}
-          {/* Carbon footprint already shown in CarbonHeroSection */}
-          {/* Trust indicators already comprehensive in TransparencyAnalytics */}
-          {/* Sustainable practices already detailed in agricultural section */}
+          <Divider borderColor="gray.200" />
 
           {/* Consumer Feedback Section */}
           <Box id="reviews-section">

@@ -289,7 +289,7 @@ const ConsumerSignIn: React.FC = () => {
                 Know Your Food's Climate Impact
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Scan products to see verified carbon footprints and support climate-positive farming
+                Scan products to see documented farming practices and support climate-positive farming
                 through informed choices
               </Text>
             </VStack>

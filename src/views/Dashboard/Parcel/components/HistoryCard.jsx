@@ -163,18 +163,18 @@ const HistoryCard = ({ amount }) => {
       return sum + (extraData.total_emissions || 0);
     }, 0);
 
-    const verified = data.filter((p) => {
-      const extraData = p.extra_data || {};
-      return extraData.usda_verified || extraData.blockchain_verified;
-    }).length;
+    // Count total documented events across all productions
+    const totalDocumentedEvents = data.reduce((sum, p) => {
+      const eventCount = p.events ? p.events.length : 0;
+      return sum + eventCount;
+    }, 0);
 
     return {
       completed,
       ongoing,
       avgScore: avgScore !== null ? Math.round(avgScore) : null,
       totalEmissions: totalEmissions.toFixed(1),
-      verified,
-      verificationRate: Math.round((verified / data.length) * 100)
+      totalDocumentedEvents
     };
   }, [data]);
 
@@ -217,7 +217,7 @@ const HistoryCard = ({ amount }) => {
                 border="1px solid"
                 borderColor="green.200"
               >
-                {intl.formatMessage({ id: 'parcel.carbonTracked' })}
+                {intl.formatMessage({ id: 'parcel.transparencyTracked' })}
               </Badge>
             </HStack>
 
@@ -337,10 +337,10 @@ const HistoryCard = ({ amount }) => {
 
               <VStack spacing={1} flex="1" minW="60px">
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="purple.500">
-                  {productionStats.verificationRate}%
+                  {productionStats.totalDocumentedEvents}
                 </Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
-                  {intl.formatMessage({ id: 'parcel.verifiedLabel' })}
+                  {isMobile ? intl.formatMessage({ id: 'parcel.eventsLabel' }) : intl.formatMessage({ id: 'parcel.eventsDocumented' })}
                 </Text>
               </VStack>
             </Flex>
@@ -487,9 +487,10 @@ const HistoryCard = ({ amount }) => {
 
                           // CRITICAL: No hardcoded fallbacks - show only real backend data
 
-                          // Verification status - only show if explicitly verified from backend
-                          const usdaVerified = Boolean(extraData.usda_verified);
+                          // Blockchain verification status (actual on-chain proof)
                           const blockchainVerified = Boolean(extraData.blockchain_verified);
+                          // EPA/USDA factors used (methodology indicator, NOT third-party verification)
+                          const usesUSDAFactors = Boolean(extraData.usda_verified || extraData.usda_factors_based);
 
                           // TRANSPARENCY-FIRST: Use transparency score primarily, carbon as secondary
                           const getTransparencyImpactLevel = () => {
@@ -868,10 +869,10 @@ const HistoryCard = ({ amount }) => {
                                     </HStack>
                                   </HStack>
 
-                                  {/* Verification Badges */}
-                                  {(usdaVerified || blockchainVerified) && (
+                                  {/* Trust Indicator Badges */}
+                                  {(usesUSDAFactors || blockchainVerified) && (
                                     <HStack spacing={2} wrap="wrap">
-                                      {usdaVerified && (
+                                      {usesUSDAFactors && (
                                         <Badge
                                           colorScheme="blue"
                                           variant="subtle"

@@ -1,34 +1,28 @@
-/*!
+import { Box, SystemProps } from '@chakra-ui/react';
 
-=========================================================
-* Purity UI Dashboard PRO - v1.0.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/purity-ui-dashboard-pro
-* Copyright 2021 Creative Tim (https://www.creative-tim.com/)
-
-* Design by Creative Tim & Coded by Simmmple
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
-
-import { Box, useStyleConfig } from '@chakra-ui/react';
-
-import { SystemProps } from '@chakra-ui/react';
-import { ThemingProps } from '@chakra-ui/system';
-
-interface CardProps extends ThemingProps<'Card'>, SystemProps {
+interface CardProps extends SystemProps {
   children?: React.ReactNode;
 }
 
 function Card(props: CardProps) {
-  const { variant, children, ...rest } = props;
-  const styles = useStyleConfig('Card', { variant });
+  const { children, ...rest } = props;
   return (
-    <Box __css={styles} data-component="Card" className="trazo-card" {...rest}>
+    <Box
+      p="22px"
+      display="flex"
+      flexDirection="column"
+      width="100%"
+      position="relative"
+      minWidth="0px"
+      wordBreak="break-word"
+      bg="white"
+      backgroundClip="border-box"
+      boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
+      borderRadius="15px"
+      data-component="Card"
+      className="trazo-card"
+      {...rest}
+    >
       {children}
     </Box>
   );

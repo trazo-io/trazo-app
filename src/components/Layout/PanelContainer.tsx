@@ -1,17 +1,21 @@
-import { Box, useStyleConfig } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 
 type PanelContainerProps = {
-  variant?: string;
   children: React.ReactNode;
+  [key: string]: any;
 };
 
 function PanelContainer(props: PanelContainerProps) {
-  const { variant, children, ...rest } = props;
-
-  const styles = useStyleConfig('PanelContainer', { variant });
+  const { children, ...rest } = props;
 
   return (
-    <Box __css={styles} data-component="PanelContainer" className="trazo-panel-container" {...rest}>
+    <Box
+      p="30px 15px"
+      minH="calc(100vh - 123px)"
+      data-component="PanelContainer"
+      className="trazo-panel-container"
+      {...rest}
+    >
       {children}
     </Box>
   );

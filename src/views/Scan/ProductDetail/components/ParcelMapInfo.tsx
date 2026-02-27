@@ -32,9 +32,8 @@ import {
 } from 'react-icons/fa';
 import { MdLocationOn, MdTerrain } from 'react-icons/md';
 import { ParcelModal } from './ParcelModal';
-// Import the real map component from Parcel Dashboard
 // @ts-ignore - CardWithMap is a JSX component without TypeScript declarations
-import CardWithMap from '../../../Dashboard/Parcel/components/CardWithMap.jsx';
+import CardWithMap from 'components/Map/CardWithMap';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';

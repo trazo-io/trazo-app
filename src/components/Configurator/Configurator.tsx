@@ -1,23 +1,5 @@
-/*!
-
-=========================================================
-* Purity UI Dashboard PRO - v1.0.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/purity-ui-dashboard-pro
-* Copyright 2021 Creative Tim (https://www.creative-tim.com/)
-
-* Design by Creative Tim & Coded by Simmmple
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
-
 // Chakra Imports
 import {
-  Button,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
@@ -25,15 +7,12 @@ import {
   DrawerHeader,
   Flex,
   FormControl,
-  FormLabel,
   Select,
-  Text,
-  useColorMode
+  Text
 } from '@chakra-ui/react';
-import { useContext, useEffect, useRef } from 'react';
+import { useContext, useRef } from 'react';
 
 import { HSeparator } from 'components/Separator/Separator';
-import { IoIosArrowDown } from 'react-icons/io';
 import { LocaleContext } from 'i18n/LocaleContext';
 import { locales } from 'i18n/i18n-config';
 import { useIntl } from 'react-intl';
@@ -49,11 +28,6 @@ function Configurator(props: ConfiguratorProps) {
   const intl = useIntl();
   const { secondary, isOpen, onClose, fixed, ...rest } = props;
   const { locale, setLocale } = useContext(LocaleContext);
-  const { colorMode, toggleColorMode } = useColorMode();
-
-  useEffect(() => {
-    console.log('colorMode', colorMode);
-  }, [colorMode]);
 
   const settingsRef = useRef(null);
 
@@ -78,20 +52,8 @@ function Configurator(props: ConfiguratorProps) {
         </DrawerHeader>
         <DrawerBody w="340px" ps="24px" pe="40px">
           <Flex flexDirection="column">
+            {/* TODO: Theme mode toggle - hidden until dark mode is fully implemented */}
             <Flex justifyContent="space-between" alignItems="center" mb="24px">
-              <Text fontSize="md" fontWeight="600" mb="4px">
-                {intl.formatMessage({ id: 'app.themeMode' })}
-              </Text>
-              <Button onClick={toggleColorMode}>
-                {intl.formatMessage({ id: 'app.toggle' })}{' '}
-                {colorMode === 'light'
-                  ? intl.formatMessage({ id: 'app.dark' })
-                  : intl.formatMessage({ id: 'app.light' })}
-              </Button>
-            </Flex>
-
-            <HSeparator />
-            <Flex justifyContent="space-between" alignItems="center" mb="24px" pt="24px">
               <Text fontSize="md" fontWeight="600" mb="4px">
                 {intl.formatMessage({ id: 'app.language' })}
               </Text>

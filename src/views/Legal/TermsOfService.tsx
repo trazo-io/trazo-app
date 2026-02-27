@@ -74,7 +74,7 @@ const TermsOfService: React.FC = () => {
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
-                    Blockchain-verified carbon records on the Polygon network
+                    Blockchain-recorded carbon data on the Polygon network (immutable records)
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />

@@ -1,29 +1,4 @@
-/*!
-
-=========================================================
-* Purity UI Dashboard PRO - v1.0.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/purity-ui-dashboard-pro
-* Copyright 2021 Creative Tim (https://www.creative-tim.com/)
-
-* Design by Creative Tim & Coded by Simmmple
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
-
 // Custom icons
-import {
-  AdobexdLogo,
-  AtlassianLogo,
-  InvisionLogo,
-  JiraLogo,
-  SlackLogo,
-  SpotifyLogo
-} from 'components/Icons/Icons.tsx';
 import { DocumentIcon, RocketIcon, SettingsIcon } from 'components/Icons/Icons';
 import {
   FaArrowDown,
@@ -332,7 +307,7 @@ export const invoices = [
 export const brandCardsData = [
   {
     icon: (
-      <SlackLogo
+      <DocumentIcon
         w="40px"
         h="40px"
         alignSelf="center"
@@ -349,7 +324,7 @@ export const brandCardsData = [
   },
   {
     icon: (
-      <SpotifyLogo
+      <DocumentIcon
         w="40px"
         h="40px"
         alignSelf="center"
@@ -366,7 +341,7 @@ export const brandCardsData = [
   },
   {
     icon: (
-      <AdobexdLogo
+      <DocumentIcon
         w="40px"
         h="40px"
         alignSelf="center"
@@ -382,7 +357,7 @@ export const brandCardsData = [
     date: '06.03.21'
   },
   {
-    icon: <AtlassianLogo w="40px" h="40px" alignSelf="center" justifySelf="center" />,
+    icon: <DocumentIcon w="40px" h="40px" alignSelf="center" justifySelf="center" />,
     title: 'Looking Great',
     avatars: [avatar1, avatar2, avatar3, avatar4, avatar7],
     description:
@@ -391,7 +366,7 @@ export const brandCardsData = [
     date: '02.03.22'
   },
   {
-    icon: <JiraLogo w="40px" h="40px" alignSelf="center" justifySelf="center" />,
+    icon: <DocumentIcon w="40px" h="40px" alignSelf="center" justifySelf="center" />,
     title: 'Developer First',
     avatars: [avatar1, avatar2, avatar3, avatar4, avatar7],
     description: 'For standing out. But the time is now to be okay to be the greatest you.',
@@ -493,7 +468,7 @@ export const tablesTableData = [
   {
     logo: avatar1,
     name: 'Esthera Jackson',
-    email: 'alexa@simmmple.com',
+    email: 'alexa@trazo.io',
     subdomain: 'Manager',
     domain: 'Organization',
     status: 'Online',
@@ -502,7 +477,7 @@ export const tablesTableData = [
   {
     logo: avatar2,
     name: 'Alexa Liras',
-    email: 'laurent@simmmple.com',
+    email: 'laurent@trazo.io',
     subdomain: 'Programmer',
     domain: 'Developer',
     status: 'Offline',
@@ -511,7 +486,7 @@ export const tablesTableData = [
   {
     logo: avatar3,
     name: 'Laurent Michael',
-    email: 'laurent@simmmple.com',
+    email: 'laurent@trazo.io',
     subdomain: 'Executive',
     domain: 'Projects',
     status: 'Online',
@@ -520,7 +495,7 @@ export const tablesTableData = [
   {
     logo: avatar4,
     name: 'Freduardo Hill',
-    email: 'freduardo@simmmple.com',
+    email: 'freduardo@trazo.io',
     subdomain: 'Manager',
     domain: 'Organization',
     status: 'Online',
@@ -529,7 +504,7 @@ export const tablesTableData = [
   {
     logo: avatar5,
     name: 'Daniel Thomas',
-    email: 'daniel@simmmple.com',
+    email: 'daniel@trazo.io',
     subdomain: 'Programmer',
     domain: 'Developer',
     status: 'Offline',
@@ -538,7 +513,7 @@ export const tablesTableData = [
   {
     logo: avatar7,
     name: 'Mark Wilson',
-    email: 'mark@simmmple.com',
+    email: 'mark@trazo.io',
     subdomain: 'Designer',
     domain: 'UI/UX Design',
     status: 'Offline',
@@ -718,42 +693,42 @@ export const timelineProjectsData = [
 
 export const rtlDashboardTableData = [
   {
-    logo: AdobexdLogo,
-    name: 'نسخة Purity UI',
+    logo: DocumentIcon,
+    name: 'نسخة Trazo',
     members: [avatar1, avatar2, avatar3, avatar4, avatar5],
     budget: '$14,000',
     progression: 60
   },
   {
-    logo: AtlassianLogo,
+    logo: DocumentIcon,
     name: 'إضافة مسار التقدم',
     members: [avatar3, avatar2],
     budget: '$3,000',
     progression: 10
   },
   {
-    logo: SlackLogo,
+    logo: DocumentIcon,
     name: 'إصلاح أخطاء النظام الأساسي',
     members: [avatar10, avatar4],
     budget: 'غير مضبوط',
     progression: 100
   },
   {
-    logo: SpotifyLogo,
+    logo: DocumentIcon,
     name: 'إطلاق تطبيق الهاتف المحمول الخاص بنا',
     members: [avatar2, avatar3, avatar7, avatar8],
     budget: '$32,000',
     progression: 100
   },
   {
-    logo: JiraLogo,
+    logo: DocumentIcon,
     name: 'أضف صفحة التسعير الجديدة',
     members: [avatar10, avatar3, avatar7, avatar2, avatar8],
     budget: '$400',
     progression: 25
   },
   {
-    logo: InvisionLogo,
+    logo: DocumentIcon,
     name: 'إعادة تصميم متجر جديد على الإنترنت',
     members: [avatar9, avatar3, avatar2],
     budget: '$7,600',
@@ -793,7 +768,7 @@ export const rtlTimelineData = [
     color: 'purple'
   },
   {
-    logo: AdobexdLogo,
+    logo: DocumentIcon,
     title: 'طلب جديد #9851258',
     date: '18 DEC 4:41 PM'
   }
@@ -801,35 +776,35 @@ export const rtlTimelineData = [
 
 export const tablesProjectData = [
   {
-    logo: AdobexdLogo,
-    name: 'Purity UI Version',
+    logo: DocumentIcon,
+    name: 'Trazo Platform',
     budget: '$14,000',
     status: 'Working',
     progression: 60
   },
   {
-    logo: AtlassianLogo,
+    logo: DocumentIcon,
     name: 'Add Progress Track',
     budget: '$3,000',
     status: 'Canceled',
     progression: 10
   },
   {
-    logo: SlackLogo,
+    logo: DocumentIcon,
     name: 'Fix Platform Errors',
     budget: 'Not set',
     status: 'Done',
     progression: 100
   },
   {
-    logo: SpotifyLogo,
+    logo: DocumentIcon,
     name: 'Launch our Mobile App',
     budget: '$32,000',
     status: 'Done',
     progression: 100
   },
   {
-    logo: JiraLogo,
+    logo: DocumentIcon,
     name: 'Add the New Pricing Page',
     budget: '$400',
     status: 'Working',
@@ -986,7 +961,7 @@ export const tablesReportsData = [
     domain: 'Manager',
     name: 'Esthera Jackson',
     review: 'Positive',
-    email: 'esthera@simmmple.com',
+    email: 'esthera@trazo.io',
     employed: '14/06/21',
     id: 42312
   },
@@ -995,7 +970,7 @@ export const tablesReportsData = [
     domain: 'Programmer',
     name: 'Alexa Liras',
     review: 'Positive',
-    email: 'alexa@simmmple.com',
+    email: 'alexa@trazo.io',
     employed: '14/06/21',
     id: 93201
   },
@@ -1004,7 +979,7 @@ export const tablesReportsData = [
     domain: 'Executive',
     name: 'Laurent Michael',
     review: 'Neutral',
-    email: 'laurent@simmmple.com',
+    email: 'laurent@trazo.io',
     employed: '14/06/21',
     id: 84120
   },
@@ -1013,7 +988,7 @@ export const tablesReportsData = [
     domain: 'Manager',
     name: 'Freduardo Hill',
     review: 'Positive',
-    email: 'freduardo@simmmple.com',
+    email: 'freduardo@trazo.io',
     employed: '14/06/21',
     id: 42314
   },
@@ -1022,7 +997,7 @@ export const tablesReportsData = [
     domain: 'Programmer',
     name: 'Daniel Thomas',
     review: 'Negative',
-    email: 'daniel@simmmple.com',
+    email: 'daniel@trazo.io',
     employed: '14/06/21',
     id: 75642
   },
@@ -1031,7 +1006,7 @@ export const tablesReportsData = [
     domain: 'Designer',
     name: 'Mark Wilson',
     review: 'Positive',
-    email: 'mark@simmmple.com',
+    email: 'mark@trazo.io',
     employed: '14/06/21',
     id: 78583
   }

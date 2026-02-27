@@ -3,8 +3,6 @@ import { Box, Button, Flex, Icon, Portal, Spacer, Text } from '@chakra-ui/react'
 import { GoogleMap, Polygon, useLoadScript } from '@react-google-maps/api';
 import React, { useEffect, useState } from 'react';
 
-// react icons
-import { BsArrowRight } from 'react-icons/bs';
 // Custom components
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody.tsx';
@@ -76,14 +74,15 @@ const calculatePolygonZoom = (points) => {
   return 15;
 };
 
-const options = {
-  googleMapApiKey: 'AIzaSyCLHij6DjbLLkhTsTvrRhwuKf8ZGXrx-Q8'
-};
+// Export utilities for reuse in forms and other components
+export { calculatePolygonCenter, calculatePolygonZoom };
 
-const CardWithBackground = ({ polygon, zoom, center }) => {
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+
+const CardWithMap = ({ polygon, zoom, center }) => {
   const intl = useIntl();
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: options.googleMapApiKey
+    googleMapsApiKey
   });
 
   // Enhanced map centering logic - PRIORITIZE POLYGON CENTER OVER PROVIDED CENTER
@@ -162,4 +161,4 @@ const CardWithBackground = ({ polygon, zoom, center }) => {
   );
 };
 
-export default CardWithBackground;
+export default CardWithMap;

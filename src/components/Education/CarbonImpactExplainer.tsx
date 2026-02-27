@@ -140,7 +140,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
         label: 'Exceptional',
         color: 'green',
         description: 'Leading sustainability practices',
-        advice: 'This product represents gold standard farming!'
+        advice: 'This product demonstrates excellent environmental stewardship!'
       };
     if (score >= 70)
       return {
@@ -406,17 +406,17 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               <VStack spacing={3} align="stretch">
                 {[
                   {
-                    label: 'Farm Operations',
-                    percent: 40,
-                    desc: 'Equipment, energy, soil management'
+                    label: 'Fuel & Equipment',
+                    percent: 35,
+                    desc: 'Diesel combustion, machinery operation'
                   },
                   {
-                    label: 'Transportation',
-                    percent: 25,
-                    desc: 'Distance and shipping efficiency'
+                    label: 'Fertilizer',
+                    percent: 30,
+                    desc: 'NPK manufacturing + field application'
                   },
-                  { label: 'Processing', percent: 20, desc: 'Manufacturing and packaging' },
-                  { label: 'Land Use', percent: 15, desc: 'Carbon storage and biodiversity' }
+                  { label: 'Chemicals', percent: 20, desc: 'Pesticide and herbicide manufacturing' },
+                  { label: 'Irrigation & Energy', percent: 15, desc: 'Pumping, electricity usage' }
                 ].map((item, idx) => (
                   <HStack key={idx} spacing={3}>
                     <Box minW="120px">

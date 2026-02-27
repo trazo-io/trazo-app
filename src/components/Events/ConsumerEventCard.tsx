@@ -322,7 +322,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             photoCount !== 1 ? 's' : ''
           })`;
         case 'data_verified':
-          return 'Auto-verified (Weather/Equipment data)';
+          return 'Cross-referenced (Weather/Equipment data)';
         case 'photo_verified':
           return `Photo verified (${photoCount} verified image${photoCount !== 1 ? 's' : ''})`;
         case 'photo_documented':
@@ -339,15 +339,17 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   // Critical event types that require photo verification (matches backend logic)
   const requiresPhotoVerification = ['FE', 'PE', 'FU', 'HE', 'PL', 'HA'].includes(event.type);
 
-  // Enhanced verification status
+  // Trust level based on actual verification (blockchain) and data quality
   const getVerificationLevel = () => {
     const hasBlockchain = blockchainData.verified && blockchainData.transaction;
-    const hasUSDA = event.usda_verified;
+    const hasUSDAFactors = event.usda_verified || event.usda_factors_based;
     const highConfidence = blockchainData.confidence >= 90;
 
-    if (hasBlockchain && hasUSDA && highConfidence) return 'ultimate';
-    if (hasBlockchain && (hasUSDA || highConfidence)) return 'high';
-    if (hasBlockchain || hasUSDA) return 'medium';
+    // Blockchain is actual verification (immutable on-chain record)
+    // USDA factors is a methodology indicator, not independent verification
+    if (hasBlockchain && highConfidence) return 'ultimate';
+    if (hasBlockchain && hasUSDAFactors) return 'high';
+    if (hasBlockchain) return 'medium';
     return 'basic';
   };
 

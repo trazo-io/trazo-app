@@ -1,20 +1,3 @@
-/*!
-
-=========================================================
-* Purity UI Dashboard PRO - v1.0.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/purity-ui-dashboard-pro
-* Copyright 2021 Creative Tim (https://www.creative-tim.com/)
-
-* Design by Creative Tim & Coded by Simmmple
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
-
 // Chakra imports
 import {
   Box,
@@ -67,7 +50,7 @@ import { TrazoImageUpload } from 'components/Upload';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
-import CardWithMap from '../CardWithMap';
+import CardWithMap from 'components/Map/CardWithMap';
 import ChemicalTab from './ChemicalTab-ENHANCED';
 import FormLayout from 'components/Forms/FormLayout';
 import GeneralTab from './GeneralTab';

@@ -24,7 +24,7 @@ function Overview() {
         backgroundProfile={bgProfile}
         avatarImage={avatar4}
         name={'Esthera Jackson'}
-        email={'esthera@simmmple.com'}
+        email={'esthera@trazo.io'}
       />
       <Grid templateColumns={{ sm: '1fr', xl: 'repeat(3, 1fr)' }} gap="22px">
         <PlatformSettings
@@ -39,7 +39,7 @@ function Overview() {
           }
           name={'Esthera Jackson'}
           mobile={'(44) 123 1234 123'}
-          email={'esthera@simmmple.com'}
+          email={'esthera@trazo.io'}
           location={'United States'}
         />
         <Conversations title={'Conversations'} />

@@ -447,9 +447,7 @@ interface StandardParcelFormProps {
   establishmentName?: string;
 }
 
-const options = {
-  googleMapApiKey: 'AIzaSyCLHij6DjbLLkhTsTvrRhwuKf8ZGXrx-Q8'
-};
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
   onSubmit,
@@ -563,7 +561,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
   const listenersRef = useRef<google.maps.MapsEventListener[]>([]);
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: options.googleMapApiKey
+    googleMapsApiKey
   });
 
   // ✅ Reset form when initialData changes (for edit mode)

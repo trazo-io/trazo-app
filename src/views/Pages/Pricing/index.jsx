@@ -331,6 +331,13 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
 
   // Enhanced blockchain subscription with plan integration
   const handleSubscribeBlockchain = async () => {
+    // Early Access intercept: show modal instead of Stripe checkout
+    if (!config.PAYMENTS_ENABLED) {
+      setEarlyAccessPlanName('Blockchain Verification');
+      onEarlyAccessOpen();
+      return;
+    }
+
     const companyId = getCompanyId();
     if (!companyId) {
       toast({
@@ -882,8 +889,13 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               </>
                             ) : (
                               <>
-                                <HStack align="baseline" justify="center">
-                                  <Text fontSize="3xl" fontWeight="bold" color={`${planColor}.600`}>
+                                <HStack align="baseline" justify="center" flexWrap="nowrap">
+                                  <Text
+                                    fontSize={activeInterval === 'yearly' ? '2xl' : '3xl'}
+                                    fontWeight="bold"
+                                    color={`${planColor}.600`}
+                                    whiteSpace="nowrap"
+                                  >
                                     $
                                     {(() => {
                                       const price =
@@ -893,14 +905,12 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                                       return price.toFixed(2);
                                     })()}
                                   </Text>
-                                  <VStack spacing={0} align="start">
-                                    <Text color="gray.500" fontSize="sm" fontWeight="medium">
-                                      /
-                                      {activeInterval === 'monthly'
-                                        ? t('app.perMonthShort')
-                                        : t('app.perYearShort')}
-                                    </Text>
-                                  </VStack>
+                                  <Text color="gray.500" fontSize="sm" fontWeight="medium" whiteSpace="nowrap">
+                                    /
+                                    {activeInterval === 'monthly'
+                                      ? t('app.perMonthShort')
+                                      : t('app.perYearShort')}
+                                  </Text>
                                 </HStack>
                                 {activeInterval === 'yearly' && (
                                   <Text fontSize="sm" color="gray.500">
@@ -1484,7 +1494,9 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
           <ModalBody>
             <VStack spacing={4} align="stretch">
               <Text fontSize="sm" color="gray.600" lineHeight="1.7">
-                {t('app.earlyAccess.body')}
+                {activeCompany?.subscription
+                  ? t('app.earlyAccess.bodyExisting')
+                  : t('app.earlyAccess.body')}
               </Text>
               <Box bg="green.50" p={4} borderRadius="lg" borderLeft="4px solid" borderLeftColor="green.400">
                 <Text fontSize="sm" color="green.700" fontWeight="medium">
@@ -1513,18 +1525,33 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
             >
               {t('app.earlyAccess.contactUs')}
             </StandardButton>
-            <StandardButton
-              variant="primary"
-              size="md"
-              colorScheme="green"
-              onClick={() => {
-                onEarlyAccessClose();
-                handleStartTrial();
-              }}
-              leftIcon={<Icon as={FaGift} />}
-            >
-              {t('app.earlyAccess.startTrial')}
-            </StandardButton>
+            {activeCompany?.subscription ? (
+              <StandardButton
+                variant="primary"
+                size="md"
+                colorScheme="green"
+                onClick={() => {
+                  onEarlyAccessClose();
+                  navigate('/admin/dashboard');
+                }}
+                leftIcon={<Icon as={FaRocket} />}
+              >
+                {t('app.goToDashboard')}
+              </StandardButton>
+            ) : (
+              <StandardButton
+                variant="primary"
+                size="md"
+                colorScheme="green"
+                onClick={() => {
+                  onEarlyAccessClose();
+                  handleStartTrial();
+                }}
+                leftIcon={<Icon as={FaGift} />}
+              >
+                {t('app.earlyAccess.startTrial')}
+              </StandardButton>
+            )}
           </ModalFooter>
         </ModalContent>
       </Modal>
