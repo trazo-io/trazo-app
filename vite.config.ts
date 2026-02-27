@@ -135,34 +135,11 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        passes: 3, // More passes for mobile (was 2)
-        pure_funcs: ['console.log', 'console.info', 'console.debug'], // Remove more console calls
-        unsafe_arrows: true,
-        unsafe_methods: true,
-        // Mobile-specific optimizations
-        sequences: true, // Join consecutive simple statements with comma
-        properties: true, // Rewrite property access using dot notation
-        dead_code: true, // Remove unreachable code
-        drop_unused: true, // Drop unused variables and functions
-        conditionals: true, // Optimize if-statements and conditional expressions
-        comparisons: true, // Optimize comparisons
-        evaluate: true, // Evaluate constant expressions
-        booleans: true, // Optimize boolean expressions
-        loops: true, // Optimize loops
-        unused: true, // Drop unreferenced functions and variables
-        hoist_funs: true, // Hoist function declarations
-        if_return: true, // Optimize if/return and if/continue
-        join_vars: true, // Join consecutive var statements
-        cascade: true, // Small optimization for sequences
-        warnings: false // Suppress warnings for cleaner mobile builds
-      },
-      mangle: {
-        properties: {
-          regex: /^_/ // Mangle private properties
-        }
+        passes: 2,
+        pure_funcs: ['console.log', 'console.info', 'console.debug']
       },
       format: {
-        comments: false // Remove all comments
+        comments: false
       }
     },
     sourcemap: false, // No sourcemaps in production for smaller size
