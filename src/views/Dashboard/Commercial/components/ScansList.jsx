@@ -143,7 +143,7 @@ const ScansList = ({ title, labels, scansData }) => {
                                 lineHeight="1.6"
                                 fontStyle={scan.comment ? 'normal' : 'italic'}
                               >
-                                {scan.comment || 'Sin comentarios adicionales'}
+                                {scan.comment || intl.formatMessage({ id: 'commercial.noAdditionalComments' })}
                               </Text>
                             </Box>
                           </Td>
@@ -161,8 +161,7 @@ const ScansList = ({ title, labels, scansData }) => {
                           {intl.formatMessage({ id: 'app.noScansAvailable' })}
                         </Text>
                         <Text color="gray.400" fontSize="sm" textAlign="center">
-                          Los escaneos aparecerán aquí cuando los consumidores interactúen con tus
-                          productos
+                          {intl.formatMessage({ id: 'commercial.scansWillAppear' })}
                         </Text>
                       </VStack>
                     </Flex>
@@ -177,7 +176,7 @@ const ScansList = ({ title, labels, scansData }) => {
         {scansData && scansData.length > 0 && (
           <Flex justify="space-between" align="center" pt={2}>
             <Text fontSize="sm" color="gray.600">
-              Mostrando {displayedScans?.length || 0} de {scansData.length} escaneos
+              {intl.formatMessage({ id: 'commercial.showingScans' }, { displayed: displayedScans?.length || 0, total: scansData.length })}
             </Text>
             <Flex gap={2}>
               {/* Only show expand/collapse if more than 10 scans */}
@@ -189,7 +188,7 @@ const ScansList = ({ title, labels, scansData }) => {
                       size="sm"
                       onClick={() => setShowAllScans(true)}
                     >
-                      Ver todos
+                      {intl.formatMessage({ id: 'commercial.showAll' })}
                     </StandardButton>
                   ) : (
                     <StandardButton
@@ -197,7 +196,7 @@ const ScansList = ({ title, labels, scansData }) => {
                       size="sm"
                       onClick={() => setShowAllScans(false)}
                     >
-                      Ver menos
+                      {intl.formatMessage({ id: 'commercial.showLess' })}
                     </StandardButton>
                   )}
                 </>

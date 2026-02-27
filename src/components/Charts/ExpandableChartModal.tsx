@@ -18,6 +18,7 @@ import {
   Button
 } from '@chakra-ui/react';
 import { IoIosArrowDown } from 'react-icons/io';
+import { useIntl } from 'react-intl';
 import ModernLineBarChart from './ModernLineBarChart';
 
 interface PeriodFilter {
@@ -58,6 +59,7 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
   periodOptions,
   onPeriodChange
 }) => {
+  const intl = useIntl();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'white');
@@ -113,7 +115,7 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
               <Flex justify="center" align="center" h="400px">
                 <CircularProgress isIndeterminate color="green.500" size="40px" />
                 <Text ml={4} color={textColor} fontSize="sm">
-                  Loading chart data...
+                  {intl.formatMessage({ id: 'commercial.loadingChartData' })}
                 </Text>
               </Flex>
             ) : !data || data.length === 0 ? (

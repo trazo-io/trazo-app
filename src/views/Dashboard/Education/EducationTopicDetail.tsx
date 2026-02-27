@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useIntl } from 'react-intl';
 import {
   Box,
   VStack,
@@ -66,71 +67,67 @@ interface DocumentationTopic {
 const EducationTopicDetail: React.FC = () => {
   const { topicId } = useParams();
   const navigate = useNavigate();
+  const intl = useIntl();
 
   const documentationTopics: DocumentationTopic[] = useMemo(
     () => [
       {
         id: 'getting-started',
-        title: 'Understanding Trazo: Your Agricultural Transparency Platform',
-        description:
-          'Learn how Trazo transforms farm documentation into consumer trust and premium pricing',
+        title: intl.formatMessage({ id: 'education.topicGettingStartedTitle' }),
+        description: intl.formatMessage({ id: 'education.topicGettingStartedDesc' }),
         icon: FaRocket,
-        category: 'Getting Started',
+        category: intl.formatMessage({ id: 'education.categoryGettingStarted' }),
         content: (
           <VStack spacing={6} align="start">
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Welcome to Trazo!</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.gettingStarted.welcomeTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Trazo is the first agricultural transparency platform that rewards farmers for
-                  detailed documentation. The more you document, the higher your transparency score,
-                  and the more consumers trust your products.
+                  {intl.formatMessage({ id: 'education.detail.gettingStarted.welcomeDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaPlayCircle} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                How Trazo Works
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.gettingStarted.howItWorksTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Document Everything:</strong> Log all 8 types of agricultural events as
-                    they happen
+                    <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.step1Label' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step1' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Build Transparency:</strong> More documented events = higher
-                    transparency score (0-100%)
+                    <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.step2Label' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step2' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Generate QR Codes:</strong> Create scannable codes for each production
-                    batch
+                    <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.step3Label' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step3' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Share with Consumers:</strong> Customers scan QR codes to see your
-                    transparency score
+                    <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.step4Label' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step4' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Build Trust & Premium:</strong> Higher transparency = more consumer
-                    trust = better prices
+                    <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.step5Label' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step5' })}
                   </Text>
                 </HStack>
               </VStack>
@@ -138,45 +135,44 @@ const EducationTopicDetail: React.FC = () => {
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaChartLine} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                Why Transparency Matters
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.gettingStarted.whyTransparencyTitle' })}</Heading>
             </HStack>
             <Text>
-              87% of consumers want to know how their food was grown, but traditional agriculture
-              offers little visibility. Trazo bridges this gap by making your farming practices
-              visible and trustworthy to consumers.
+              {intl.formatMessage({ id: 'education.detail.gettingStarted.whyTransparencyText' })}
             </Text>
 
             <Text>
-              <strong>Key Benefits:</strong>
+              <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.keyBenefits' })}</strong>
             </Text>
             <UnorderedList spacing={2} pl={6}>
               <ListItem>
-                <strong>Premium Pricing:</strong> Transparent farms command 15-30% price premiums
+                <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.benefit1Label' })}</strong>{' '}
+                {intl.formatMessage({ id: 'education.detail.gettingStarted.benefit1' })}
               </ListItem>
               <ListItem>
-                <strong>Consumer Trust:</strong> Build direct relationships with conscious consumers
+                <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.benefit2Label' })}</strong>{' '}
+                {intl.formatMessage({ id: 'education.detail.gettingStarted.benefit2' })}
               </ListItem>
               <ListItem>
-                <strong>Market Differentiation:</strong> Stand out from conventional agriculture
+                <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.benefit3Label' })}</strong>{' '}
+                {intl.formatMessage({ id: 'education.detail.gettingStarted.benefit3' })}
               </ListItem>
               <ListItem>
-                <strong>Blockchain Verification:</strong> Immutable proof of your farming practices
+                <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.benefit4Label' })}</strong>{' '}
+                {intl.formatMessage({ id: 'education.detail.gettingStarted.benefit4' })}
               </ListItem>
               <ListItem>
-                <strong>Effortless Marketing:</strong> QR codes do the storytelling for you
+                <strong>{intl.formatMessage({ id: 'education.detail.gettingStarted.benefit5Label' })}</strong>{' '}
+                {intl.formatMessage({ id: 'education.detail.gettingStarted.benefit5' })}
               </ListItem>
             </UnorderedList>
 
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Trazo's Revolutionary Approach</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.gettingStarted.revolutionaryTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Unlike carbon platforms that penalize farmers for logging events (more data =
-                  higher emissions = worse score), Trazo rewards comprehensive documentation (more
-                  events = higher transparency = better consumer trust).
+                  {intl.formatMessage({ id: 'education.detail.gettingStarted.revolutionaryDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -185,16 +181,14 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'farm-events',
-        title: 'The 8 Core Event Types: Your Transparency Building Blocks',
-        description:
-          'Master each event type to maximize your transparency score and consumer trust',
+        title: intl.formatMessage({ id: 'education.topicFarmEventsTitle' }),
+        description: intl.formatMessage({ id: 'education.topicFarmEventsDesc' }),
         icon: FaTractor,
-        category: 'Farm Documentation',
+        category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' }),
         content: (
           <VStack spacing={6} align="start">
             <Text fontSize="lg">
-              Every agricultural activity you document increases your transparency score. Here are
-              the 8 core event types that build consumer trust:
+              {intl.formatMessage({ id: 'education.detail.farmEvents.intro' })}
             </Text>
 
             <Box overflowX="auto" w="full">
@@ -208,14 +202,14 @@ const EducationTopicDetail: React.FC = () => {
                     <HStack>
                       <Icon as={FaTractor} color="green.600" />
                       <Heading size="sm" color="gray.700">
-                        Production Events
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.productionTitle' })}
                       </Heading>
                     </HStack>
                     <Text fontSize="sm">
-                      Core farming activities like planting, harvesting, irrigation
+                      {intl.formatMessage({ id: 'education.detail.farmEvents.productionDesc' })}
                     </Text>
                     <Text fontSize="xs" color="gray.600">
-                      Examples: Seed planting, watering, harvesting dates
+                      {intl.formatMessage({ id: 'education.detail.farmEvents.productionExamples' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -225,27 +219,12 @@ const EducationTopicDetail: React.FC = () => {
                     <HStack>
                       <Icon as={FaFlask} color="green.600" />
                       <Heading size="sm" color="gray.700">
-                        Chemical Events
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.chemicalTitle' })}
                       </Heading>
                     </HStack>
-                    <Text fontSize="sm">Fertilizer and pesticide applications</Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.farmEvents.chemicalDesc' })}</Text>
                     <Text fontSize="xs" color="gray.600">
-                      Examples: Organic fertilizer, pest control treatments
-                    </Text>
-                  </VStack>
-                </Box>
-
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaCogs} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        Equipment Events
-                      </Heading>
-                    </HStack>
-                    <Text fontSize="sm">Machinery and tool usage</Text>
-                    <Text fontSize="xs" color="gray.600">
-                      Examples: Tractor operations, harvester use
+                      {intl.formatMessage({ id: 'education.detail.farmEvents.chemicalExamples' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -255,12 +234,12 @@ const EducationTopicDetail: React.FC = () => {
                     <HStack>
                       <Icon as={FaSeedling} color="green.600" />
                       <Heading size="sm" color="gray.700">
-                        Soil Management
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.soilTitle' })}
                       </Heading>
                     </HStack>
-                    <Text fontSize="sm">Soil health and preparation activities</Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.farmEvents.soilDesc' })}</Text>
                     <Text fontSize="xs" color="gray.600">
-                      Examples: Composting, cover crops, soil testing
+                      {intl.formatMessage({ id: 'education.detail.farmEvents.soilExamples' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -270,12 +249,12 @@ const EducationTopicDetail: React.FC = () => {
                     <HStack>
                       <Icon as={FaShieldAlt} color="green.600" />
                       <Heading size="sm" color="gray.700">
-                        Pest Management
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.pestTitle' })}
                       </Heading>
                     </HStack>
-                    <Text fontSize="sm">Integrated pest management practices</Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.farmEvents.pestDesc' })}</Text>
                     <Text fontSize="xs" color="gray.600">
-                      Examples: Beneficial insects, organic treatments
+                      {intl.formatMessage({ id: 'education.detail.farmEvents.pestExamples' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -285,12 +264,12 @@ const EducationTopicDetail: React.FC = () => {
                     <HStack>
                       <Icon as={FaLeaf} color="green.600" />
                       <Heading size="sm" color="gray.700">
-                        Weather Events
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.weatherTitle' })}
                       </Heading>
                     </HStack>
-                    <Text fontSize="sm">Weather conditions and climate data</Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.farmEvents.weatherDesc' })}</Text>
                     <Text fontSize="xs" color="gray.600">
-                      Examples: Rainfall, temperature, drought conditions
+                      {intl.formatMessage({ id: 'education.detail.farmEvents.weatherExamples' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -300,12 +279,12 @@ const EducationTopicDetail: React.FC = () => {
                     <HStack>
                       <Icon as={FaChartLine} color="green.600" />
                       <Heading size="sm" color="gray.700">
-                        Business Events
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.businessTitle' })}
                       </Heading>
                     </HStack>
-                    <Text fontSize="sm">Commercial and certification activities</Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.farmEvents.businessDesc' })}</Text>
                     <Text fontSize="xs" color="gray.600">
-                      Examples: Organic certification, market sales
+                      {intl.formatMessage({ id: 'education.detail.farmEvents.businessExamples' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -315,12 +294,12 @@ const EducationTopicDetail: React.FC = () => {
                     <HStack>
                       <Icon as={FaBook} color="green.600" />
                       <Heading size="sm" color="gray.700">
-                        Other Farm Activities
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.generalTitle' })}
                       </Heading>
                     </HStack>
-                    <Text fontSize="sm">Other farm activities and notes</Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.farmEvents.generalDesc' })}</Text>
                     <Text fontSize="xs" color="gray.600">
-                      Examples: Farm visits, maintenance, observations
+                      {intl.formatMessage({ id: 'education.detail.farmEvents.generalExamples' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -330,11 +309,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Pro Tip: Document Everything!</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.farmEvents.proTipTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Each event you log increases your transparency score. Aim for 90%+ transparency by
-                  documenting all major farming activities. This builds maximum consumer trust and
-                  positions you for premium pricing.
+                  {intl.formatMessage({ id: 'education.detail.farmEvents.proTipDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -343,28 +320,22 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'transparency-score',
-        title: 'Transparency Scoring: Your Consumer Trust Metric',
-        description:
-          'Understanding how Trazo calculates transparency scores, category weights, and the 3-tier photo system',
+        title: intl.formatMessage({ id: 'education.topicTransparencyScoreTitle' }),
+        description: intl.formatMessage({ id: 'education.topicTransparencyScoreDesc' }),
         icon: FaChartLine,
-        category: 'Transparency System',
+        category: intl.formatMessage({ id: 'education.categoryTransparencySystem' }),
         content: (
           <VStack spacing={6} align="start">
             <Text fontSize="lg">
-              Your transparency score (0-100%) is the key metric that consumers see when they scan
-              your QR codes. It is calculated from <strong>7 weighted categories</strong> of farming
-              events, each with smart photo requirements that recognize not every event needs a photo.
+              {intl.formatMessage({ id: 'education.detail.transparencyScore.intro' })}
             </Text>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaCalculator} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                Category Weights
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.transparencyScore.categoryWeightsTitle' })}</Heading>
             </HStack>
             <Text fontSize="sm" color="gray.600">
-              Your score is a weighted average across 7 documentation categories. Categories with
-              higher weight have more impact on your final score.
+              {intl.formatMessage({ id: 'education.detail.transparencyScore.categoryWeightsDesc' })}
             </Text>
             <Box overflowX="auto" w="full">
               <Grid
@@ -373,41 +344,38 @@ const EducationTopicDetail: React.FC = () => {
                 minW={{ base: '280px', md: 'auto' }}
               >
                 <Box p={4} borderRadius="lg" border="2px solid" borderColor="green.200" bg="green.50">
-                  <Heading size="sm" color="green.700" mb={1}>Growing Practices &mdash; 30%</Heading>
-                  <Text fontSize="xs" color="gray.600">Planting, harvesting, irrigation, pruning, transplanting, cultivation</Text>
+                  <Heading size="sm" color="green.700" mb={1}>{intl.formatMessage({ id: 'education.detail.transparencyScore.growingPractices' })} &mdash; {intl.formatMessage({ id: 'education.detail.transparencyScore.growingPracticesWeight' })}</Heading>
+                  <Text fontSize="xs" color="gray.600">{intl.formatMessage({ id: 'education.detail.transparencyScore.growingPracticesDesc' })}</Text>
                 </Box>
                 <Box p={4} borderRadius="lg" border="2px solid" borderColor="orange.200" bg="orange.50">
-                  <Heading size="sm" color="orange.700" mb={1}>Treatment Details &mdash; 20%</Heading>
-                  <Text fontSize="xs" color="gray.600">Fertilizer, pesticide, fungicide, and herbicide applications</Text>
+                  <Heading size="sm" color="orange.700" mb={1}>{intl.formatMessage({ id: 'education.detail.transparencyScore.treatmentDetails' })} &mdash; {intl.formatMessage({ id: 'education.detail.transparencyScore.treatmentDetailsWeight' })}</Heading>
+                  <Text fontSize="xs" color="gray.600">{intl.formatMessage({ id: 'education.detail.transparencyScore.treatmentDetailsDesc' })}</Text>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="gray.700" mb={1}>Soil Care &mdash; 18%</Heading>
-                  <Text fontSize="xs" color="gray.600">Soil tests, organic matter, composting, cover crops, pH adjustments</Text>
+                  <Heading size="sm" color="gray.700" mb={1}>{intl.formatMessage({ id: 'education.detail.transparencyScore.soilCare' })} &mdash; {intl.formatMessage({ id: 'education.detail.transparencyScore.soilCareWeight' })}</Heading>
+                  <Text fontSize="xs" color="gray.600">{intl.formatMessage({ id: 'education.detail.transparencyScore.soilCareDesc' })}</Text>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="gray.700" mb={1}>Pest Management &mdash; 12%</Heading>
-                  <Text fontSize="xs" color="gray.600">Scouting, beneficial releases, pest ID, trap monitoring, IPM</Text>
+                  <Heading size="sm" color="gray.700" mb={1}>{intl.formatMessage({ id: 'education.detail.transparencyScore.pestManagement' })} &mdash; {intl.formatMessage({ id: 'education.detail.transparencyScore.pestManagementWeight' })}</Heading>
+                  <Text fontSize="xs" color="gray.600">{intl.formatMessage({ id: 'education.detail.transparencyScore.pestManagementDesc' })}</Text>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="gray.700" mb={1}>Certifications &mdash; 10%</Heading>
-                  <Text fontSize="xs" color="gray.600">Organic certifications, inspections, quality standards</Text>
+                  <Heading size="sm" color="gray.700" mb={1}>{intl.formatMessage({ id: 'education.detail.transparencyScore.certifications' })} &mdash; {intl.formatMessage({ id: 'education.detail.transparencyScore.certificationsWeight' })}</Heading>
+                  <Text fontSize="xs" color="gray.600">{intl.formatMessage({ id: 'education.detail.transparencyScore.certificationsDesc' })}</Text>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="gray.700" mb={1}>Weather &amp; General &mdash; 5% each</Heading>
-                  <Text fontSize="xs" color="gray.600">Weather observations, farm notes, and other activities</Text>
+                  <Heading size="sm" color="gray.700" mb={1}>{intl.formatMessage({ id: 'education.detail.transparencyScore.weatherGeneral' })} &mdash; {intl.formatMessage({ id: 'education.detail.transparencyScore.weatherGeneralWeight' })}</Heading>
+                  <Text fontSize="xs" color="gray.600">{intl.formatMessage({ id: 'education.detail.transparencyScore.weatherGeneralDesc' })}</Text>
                 </Box>
               </Grid>
             </Box>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaCamera} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                3-Tier Photo System
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.transparencyScore.photoSystemTitle' })}</Heading>
             </HStack>
             <Text fontSize="sm" color="gray.600">
-              Not every event needs a photo. Trazo classifies each event type into one of three tiers
-              based on how important visual evidence is for consumer trust.
+              {intl.formatMessage({ id: 'education.detail.transparencyScore.photoSystemDesc' })}
             </Text>
             <Box overflowX="auto" w="full">
               <Grid
@@ -417,43 +385,43 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="2px solid" borderColor="red.200" bg="red.50">
                   <Heading size="sm" color="red.700" mb={2}>
-                    Essential (up to 50% penalty)
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.essentialTitle' })}
                   </Heading>
                   <Text fontSize="xs" color="gray.600" mb={2}>
-                    Missing photos on these events cuts their contribution in half.
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.essentialDesc' })}
                   </Text>
                   <UnorderedList spacing={1} fontSize="xs">
-                    <ListItem>Planting &amp; Harvesting</ListItem>
-                    <ListItem>All chemical applications (fertilizer, pesticide, fungicide, herbicide)</ListItem>
-                    <ListItem>Cover crops</ListItem>
-                    <ListItem>Beneficial insect releases &amp; Pest identification</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.essentialItem1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.essentialItem2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.essentialItem3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.essentialItem4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="2px solid" borderColor="yellow.200" bg="yellow.50">
                   <Heading size="sm" color="yellow.700" mb={2}>
-                    Recommended (up to 25% penalty)
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.recommendedTitle' })}
                   </Heading>
                   <Text fontSize="xs" color="gray.600" mb={2}>
-                    Photos add value, but we understand these are harder to capture.
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.recommendedDesc' })}
                   </Text>
                   <UnorderedList spacing={1} fontSize="xs">
-                    <ListItem>Pruning, transplanting, cultivation</ListItem>
-                    <ListItem>Soil tests, organic matter, composting</ListItem>
-                    <ListItem>Scouting, trap monitoring, IPM</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.recommendedItem1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.recommendedItem2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.recommendedItem3' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="2px solid" borderColor="green.200" bg="green.50">
                   <Heading size="sm" color="green.700" mb={2}>
-                    No Penalty
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.noPenaltyTitle' })}
                   </Heading>
                   <Text fontSize="xs" color="gray.600" mb={2}>
-                    Photos are optional &mdash; these events score fully from documentation alone.
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.noPenaltyDesc' })}
                   </Text>
                   <UnorderedList spacing={1} fontSize="xs">
-                    <ListItem>Irrigation, equipment maintenance, thinning</ListItem>
-                    <ListItem>All weather events</ListItem>
-                    <ListItem>All business/certification events</ListItem>
-                    <ListItem>General notes and observations</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.noPenaltyItem1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.noPenaltyItem2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.noPenaltyItem3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.noPenaltyItem4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -461,9 +429,7 @@ const EducationTopicDetail: React.FC = () => {
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaTrophy} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                Transparency Score Ranges
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.transparencyScore.rangesTitle' })}</Heading>
             </HStack>
             <Box overflowX="auto" w="full">
               <Grid
@@ -473,33 +439,33 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="green.600" mb={2}>
-                    Excellent (90%+)
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.excellentTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>All 7 categories documented</ListItem>
-                    <ListItem>Essential events have photos</ListItem>
-                    <ListItem>Green trust indicators on QR page</ListItem>
-                    <ListItem>Maximum consumer confidence</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.excellentItem1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.excellentItem2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.excellentItem3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.excellentItem4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="yellow.600" mb={2}>
-                    Good (70-89%)
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.goodTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Most categories documented</ListItem>
-                    <ListItem>Some photo gaps in essential events</ListItem>
-                    <ListItem>Strong consumer trust</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.goodItem1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.goodItem2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.goodItem3' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="orange.600" mb={2}>
-                    Needs Improvement (below 60%)
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.needsImprovementTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Several empty categories</ListItem>
-                    <ListItem>Missing photos on essential events</ListItem>
-                    <ListItem>Limited consumer trust</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.needsImprovementItem1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.needsImprovementItem2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.needsImprovementItem3' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -508,11 +474,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Consumer Impact</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.transparencyScore.consumerImpactTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Farms with 90%+ transparency scores see 3x higher consumer engagement and 25%
-                  price premiums. Focus your photo effort on essential events (planting, harvest,
-                  chemical applications) for the biggest score improvement.
+                  {intl.formatMessage({ id: 'education.detail.transparencyScore.consumerImpactDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -521,49 +485,51 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'qr-codes',
-        title: 'QR Codes & Consumer Pages: Your Digital Farm Story',
-        description: 'Create compelling consumer experiences that showcase your transparency',
+        title: intl.formatMessage({ id: 'education.topicQrCodesTitle' }),
+        description: intl.formatMessage({ id: 'education.topicQrCodesDesc' }),
         icon: FaQrcode,
-        category: 'Consumer Engagement',
+        category: intl.formatMessage({ id: 'education.categoryConsumerEngagement' }),
         content: (
           <VStack spacing={6} align="start">
             <HStack spacing={2} mb={3}>
               <Icon as={FaQrcode} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                How Consumer QR Pages Work
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.qrCodes.howItWorksTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Progressive Loading:</strong> Transparency score loads first (under
-                    1.5s), then details
+                    <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.progressiveLoadingLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.qrCodes.progressiveLoading' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Consumer-Friendly Language:</strong> "95% transparency" not "2.4kg CO2e"
+                    <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.consumerLanguageLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.qrCodes.consumerLanguage' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Farming Journey:</strong> Timeline of documented practices
+                    <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.farmingJourneyLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.qrCodes.farmingJourney' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Trust Indicators:</strong> Verification badges and photo evidence
+                    <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.trustIndicatorsLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.qrCodes.trustIndicators' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Carbon Details:</strong> Environmental data available on request
+                    <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.carbonDetailsLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.qrCodes.carbonDetails' })}
                   </Text>
                 </HStack>
               </VStack>
@@ -571,54 +537,53 @@ const EducationTopicDetail: React.FC = () => {
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaCheckCircle} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                QR Code Best Practices
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.qrCodes.bestPracticesTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>📱 Mobile-First Design:</strong> Pages load in under 1.5s on mobile
-                  devices
+                  📱 {intl.formatMessage({ id: 'education.detail.qrCodes.mobileFirst' })}
                 </Text>
                 <Text>
-                  <strong>🎯 Clear Value Proposition:</strong> "Scan to see how this was grown"
+                  🎯 {intl.formatMessage({ id: 'education.detail.qrCodes.valueProp' })}
                 </Text>
                 <Text>
-                  <strong>📍 Strategic Placement:</strong> Product packaging, farmers market signs,
-                  website
+                  📍 {intl.formatMessage({ id: 'education.detail.qrCodes.placement' })}
                 </Text>
                 <Text>
-                  <strong>🔄 Regular Updates:</strong> Fresh content keeps consumers engaged
+                  🔄 {intl.formatMessage({ id: 'education.detail.qrCodes.updates' })}
                 </Text>
                 <Text>
-                  <strong>📊 Track Performance:</strong> Monitor scan rates and consumer engagement
+                  📊 {intl.formatMessage({ id: 'education.detail.qrCodes.tracking' })}
                 </Text>
               </VStack>
             </Box>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaUsers} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                What Consumers See
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.qrCodes.whatConsumersSeeTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Instant Trust:</strong> Large transparency score with verification badges
+                  <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.instantTrustLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.instantTrust' })}
                 </Text>
                 <Text>
-                  <strong>Farm Story:</strong> "See exactly how this avocado was grown"
+                  <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.farmStoryLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.farmStory' })}
                 </Text>
                 <Text>
-                  <strong>Event Timeline:</strong> Chronological farming practices with photos
+                  <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.eventTimelineLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.eventTimeline' })}
                 </Text>
                 <Text>
-                  <strong>Trust Builders:</strong> Blockchain verification, real farmer photos
+                  <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.trustBuildersLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.trustBuilders' })}
                 </Text>
                 <Text>
-                  <strong>Environmental Details:</strong> Carbon footprint in expandable section
+                  <strong>{intl.formatMessage({ id: 'education.detail.qrCodes.envDetailsLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.envDetails' })}
                 </Text>
               </VStack>
             </Box>
@@ -626,11 +591,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Success Metrics</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.qrCodes.successTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Farms using Trazo QR codes see average 78% consumer page completion rates, 340%
-                  higher engagement than traditional carbon labels, and direct consumer
-                  relationships that drive repeat purchases.
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.successDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -639,73 +602,62 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'blockchain',
-        title: 'Blockchain Verification: Immutable Trust Infrastructure',
-        description: 'How Trazo uses Polygon blockchain to create unshakeable consumer confidence',
+        title: intl.formatMessage({ id: 'education.topicBlockchainTitle' }),
+        description: intl.formatMessage({ id: 'education.topicBlockchainDesc' }),
         icon: FaShieldAlt,
-        category: 'Verification System',
+        category: intl.formatMessage({ id: 'education.categoryVerificationSystem' }),
         content: (
           <VStack spacing={6} align="start">
             <Text fontSize="lg">
-              When you finish a production, Trazo creates a permanent, tamper-proof record of
-              everything you documented on the Polygon blockchain. Consumers can independently
-              verify this record, building unshakeable confidence in your farming practices.
+              {intl.formatMessage({ id: 'education.detail.blockchain.intro' })}
             </Text>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaShieldAlt} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                Why Blockchain for Agriculture?
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.blockchain.whyTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Immutable Records:</strong> Once recorded, farming data cannot be
-                  changed or deleted &mdash; not even by Trazo
+                  <strong>{intl.formatMessage({ id: 'education.detail.blockchain.immutableLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.blockchain.immutable' })}
                 </Text>
                 <Text>
-                  <strong>Global Verification:</strong> Anyone can independently verify your
-                  claims through a public blockchain explorer
+                  <strong>{intl.formatMessage({ id: 'education.detail.blockchain.globalLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.blockchain.global' })}
                 </Text>
                 <Text>
-                  <strong>Low Cost:</strong> Polygon network enables affordable verification
-                  (about $0.01 per production)
+                  <strong>{intl.formatMessage({ id: 'education.detail.blockchain.lowCostLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.blockchain.lowCost' })}
                 </Text>
                 <Text>
-                  <strong>Consumer Trust:</strong> Replaces &quot;trust us&quot; with
-                  &quot;verify it yourself&quot;
+                  <strong>{intl.formatMessage({ id: 'education.detail.blockchain.trustLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.blockchain.trust' })}
                 </Text>
                 <Text>
-                  <strong>Easy Access:</strong> Verification badge visible on every QR code page
+                  <strong>{intl.formatMessage({ id: 'education.detail.blockchain.easyLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.blockchain.easy' })}
                 </Text>
               </VStack>
             </Box>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaCheckCircle} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                How It Works
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.blockchain.howItWorksTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Step 1 &mdash; Document as usual:</strong> Log your farming events
-                  throughout the production cycle (planting, irrigation, fertilization, harvest, etc.)
+                  {intl.formatMessage({ id: 'education.detail.blockchain.step1' })}
                 </Text>
                 <Text>
-                  <strong>Step 2 &mdash; Finish your production:</strong> When you click
-                  &quot;Finish Production,&quot; Trazo creates a digital fingerprint of ALL your
-                  documented events. This seals the record.
+                  {intl.formatMessage({ id: 'education.detail.blockchain.step2' })}
                 </Text>
                 <Text>
-                  <strong>Step 3 &mdash; Automatic blockchain submission:</strong> Trazo
-                  automatically submits your production&apos;s fingerprint to the Polygon
-                  blockchain in the next monthly batch.
+                  {intl.formatMessage({ id: 'education.detail.blockchain.step3' })}
                 </Text>
                 <Text>
-                  <strong>Step 4 &mdash; Badge appears:</strong> Your QR code page displays a
-                  &quot;Blockchain Verified&quot; badge with a link to the public transaction.
+                  {intl.formatMessage({ id: 'education.detail.blockchain.step4' })}
                 </Text>
               </VStack>
             </Box>
@@ -713,20 +665,16 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>One Record Per Production</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.blockchain.oneRecordTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Blockchain verification covers your entire production &mdash; all events in one
-                  permanent record. You don&apos;t need to do anything special. Just document your
-                  farming as usual and finish your production when it&apos;s ready.
+                  {intl.formatMessage({ id: 'education.detail.blockchain.oneRecordDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaCheckCircle} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                What Gets Verified
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.blockchain.whatVerifiedTitle' })}</Heading>
             </HStack>
             <Box overflowX="auto" w="full">
               <Grid
@@ -736,24 +684,24 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    All Farming Events
+                    {intl.formatMessage({ id: 'education.detail.blockchain.farmingEventsTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Every event you documented during the production</ListItem>
-                    <ListItem>Activity types, dates, and details</ListItem>
-                    <ListItem>Product quantities and varieties</ListItem>
-                    <ListItem>Chemical and fertilizer applications</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.blockchain.farmingEvents1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.blockchain.farmingEvents2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.blockchain.farmingEvents3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.blockchain.farmingEvents4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    Production Data
+                    {intl.formatMessage({ id: 'education.detail.blockchain.productionDataTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Carbon footprint calculations per activity</ListItem>
-                    <ListItem>Complete production timeline (start to finish)</ListItem>
-                    <ListItem>Data integrity fingerprint</ListItem>
-                    <ListItem>Total environmental impact</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.blockchain.productionData1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.blockchain.productionData2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.blockchain.productionData3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.blockchain.productionData4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -761,49 +709,42 @@ const EducationTopicDetail: React.FC = () => {
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaUsers} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                What Consumers See
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.blockchain.consumerSeeTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Verification Badge:</strong> A &quot;Blockchain Verified&quot; badge
-                  appears on your product&apos;s QR code page
+                  <strong>{intl.formatMessage({ id: 'education.detail.blockchain.badgeLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.blockchain.badge' })}
                 </Text>
                 <Text>
-                  <strong>Explorer Link:</strong> Consumers can click through to Polygonscan
-                  to see the actual blockchain transaction
+                  <strong>{intl.formatMessage({ id: 'education.detail.blockchain.explorerLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.blockchain.explorer' })}
                 </Text>
                 <Text>
-                  <strong>Trust Signal:</strong> The badge proves your data was sealed at a
-                  specific point in time and hasn&apos;t been changed
+                  <strong>{intl.formatMessage({ id: 'education.detail.blockchain.trustSignalLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.blockchain.trustSignal' })}
                 </Text>
               </VStack>
             </Box>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaShieldAlt} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                Getting Started
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.blockchain.gettingStartedTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>1. Purchase the add-on:</strong> Go to your subscription page and add
-                  &quot;Blockchain Verification&quot; to your plan
+                  {intl.formatMessage({ id: 'education.detail.blockchain.getStarted1' })}
                 </Text>
                 <Text>
-                  <strong>2. Document your production:</strong> Log events as you normally do
+                  {intl.formatMessage({ id: 'education.detail.blockchain.getStarted2' })}
                 </Text>
                 <Text>
-                  <strong>3. Finish your production:</strong> Click &quot;Finish Production&quot;
-                  when the growing cycle is complete
+                  {intl.formatMessage({ id: 'education.detail.blockchain.getStarted3' })}
                 </Text>
                 <Text>
-                  <strong>4. Automatic verification:</strong> Your production is submitted to
-                  blockchain in the next monthly batch &mdash; no extra steps needed
+                  {intl.formatMessage({ id: 'education.detail.blockchain.getStarted4' })}
                 </Text>
               </VStack>
             </Box>
@@ -811,11 +752,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>About Polygon</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.blockchain.aboutPolygonTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Trazo uses the energy-efficient Polygon blockchain, consuming 99% less energy than
-                  Bitcoin while providing the same level of verification security. Each production
-                  costs about $0.01 to verify &mdash; included in your subscription.
+                  {intl.formatMessage({ id: 'education.detail.blockchain.aboutPolygonDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -824,57 +763,50 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'carbon-data',
-        title: "Carbon Data's Supporting Role in the Transparency-First Approach",
-        description:
-          'Understanding how environmental data enhances transparency without overwhelming consumers',
+        title: intl.formatMessage({ id: 'education.topicCarbonDataTitle' }),
+        description: intl.formatMessage({ id: 'education.topicCarbonDataDesc' }),
         icon: FaLeaf,
-        category: 'Environmental Impact',
+        category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' }),
         content: (
           <VStack spacing={6} align="start">
             <Alert status="warning" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Important Context: Trazo's Strategic Evolution</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.carbonData.contextTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Trazo evolved from carbon-first to transparency-first after discovering that
-                  carbon-focused systems penalize farmers for comprehensive documentation. Our new
-                  approach rewards transparency while maintaining full carbon accuracy for B2B
-                  customers.
+                  {intl.formatMessage({ id: 'education.detail.carbonData.contextDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaLeaf} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                The Transparency-First Philosophy
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.carbonData.philosophyTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Primary Metric:</strong> Transparency Score (0-100%) - rewards
-                  comprehensive documentation
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.primaryMetricLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.primaryMetric' })}
                 </Text>
                 <Text>
-                  <strong>Secondary Data:</strong> Carbon Footprint - available for interested
-                  consumers and B2B
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.secondaryLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.secondary' })}
                 </Text>
                 <Text>
-                  <strong>Consumer Focus:</strong> "95% transparency - see how this was grown"
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.consumerFocusLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.consumerFocus' })}
                 </Text>
                 <Text>
-                  <strong>Progressive Disclosure:</strong> Environmental details in expandable
-                  sections
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.progressiveLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.progressive' })}
                 </Text>
               </VStack>
             </Box>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaChartLine} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                Carbon Data Still Matters For:
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.carbonData.stillMattersTitle' })}</Heading>
             </HStack>
             <Box overflowX="auto" w="full">
               <Grid
@@ -884,24 +816,24 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🏢 B2B Customers
+                    🏢 {intl.formatMessage({ id: 'education.detail.carbonData.b2bTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Supply chain sustainability reporting</ListItem>
-                    <ListItem>Corporate environmental compliance</ListItem>
-                    <ListItem>LCA methodology requirements</ListItem>
-                    <ListItem>Regulatory carbon reporting</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonData.b2b1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonData.b2b2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonData.b2b3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonData.b2b4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📊 Internal Farm Management
+                    📊 {intl.formatMessage({ id: 'education.detail.carbonData.internalTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Identifying optimization opportunities</ListItem>
-                    <ListItem>Benchmarking against industry standards</ListItem>
-                    <ListItem>Track improvement over time</ListItem>
-                    <ListItem>Transparency improvement tracking</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonData.internal1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonData.internal2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonData.internal3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonData.internal4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -909,53 +841,50 @@ const EducationTopicDetail: React.FC = () => {
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaDatabase} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                USDA Integration & Accuracy
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.carbonData.usdaTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Government-Verified Data:</strong> All emission factors sourced from EPA
-                  and USDA
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.usdaVerifiedLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.usdaVerified' })}
                 </Text>
                 <Text>
-                  <strong>Real Farm Operations:</strong> Calculations based on actual fuel,
-                  fertilizer, and equipment use
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.realFarmLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.realFarm' })}
                 </Text>
                 <Text>
-                  <strong>Scope Definition:</strong> Focus on farmer-controlled emissions (direct
-                  operations only)
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.scopeLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.scope' })}
                 </Text>
                 <Text>
-                  <strong>Continuous Updates:</strong> Emission factors updated with latest
-                  government data
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.updatesLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.updates' })}
                 </Text>
               </VStack>
             </Box>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaUsers} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                Consumer Presentation Strategy
-              </Heading>
+              <Heading size="md" color="gray.700">{intl.formatMessage({ id: 'education.detail.carbonData.presentationTitle' })}</Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Lead with Transparency:</strong> "95% transparency" prominently displayed
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.leadLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.lead' })}
                 </Text>
                 <Text>
-                  <strong>Environmental Context:</strong> "Low environmental impact" vs "2.4 kg
-                  CO2e"
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.envContextLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.envContext' })}
                 </Text>
                 <Text>
-                  <strong>Expandable Details:</strong> Full carbon data available for interested
-                  consumers
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.expandableLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.expandable' })}
                 </Text>
                 <Text>
-                  <strong>Trust Building:</strong> Focus on documented practices over numerical
-                  accuracy
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonData.trustBuildLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.carbonData.trustBuild' })}
                 </Text>
               </VStack>
             </Box>
@@ -963,12 +892,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Best of Both Worlds</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.carbonData.bestOfBothTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Trazo maintains full carbon calculation accuracy for technical users while
-                  presenting consumer-friendly transparency scores that build trust and drive
-                  purchasing decisions. This dual approach serves both farmers and their diverse
-                  customer base.
+                  {intl.formatMessage({ id: 'education.detail.carbonData.bestOfBothDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -977,21 +903,18 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'carbon-methodology',
-        title: 'Carbon Calculation Methodology: How We Calculate Environmental Impact',
-        description:
-          'Detailed explanation of our carbon calculation methods using published EPA emission factors',
+        title: intl.formatMessage({ id: 'education.topicCarbonMethodologyTitle' }),
+        description: intl.formatMessage({ id: 'education.topicCarbonMethodologyDesc' }),
         icon: FaCalculator,
-        category: 'Environmental Impact',
+        category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' }),
         content: (
           <VStack spacing={6} align="start">
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Verified Government Sources</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.carbonMethodology.verifiedSourcesTitle' })}</AlertTitle>
                 <AlertDescription>
-                  All emission factors in Trazo are sourced from official EPA and USDA publications.
-                  This ensures accuracy, credibility, and alignment with government regulatory
-                  standards.
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.verifiedSourcesDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -999,7 +922,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaDatabase} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Our Data Sources
+                {intl.formatMessage({ id: 'education.detail.carbonMethodology.dataSourcesTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
@@ -1007,11 +930,10 @@ const EducationTopicDetail: React.FC = () => {
                 <Box>
                   <HStack mb={1}>
                     <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">EPA Greenhouse Gas Emission Factors Hub</Text>
+                    <Text fontWeight="bold">{intl.formatMessage({ id: 'education.detail.carbonMethodology.epaGhgTitle' })}</Text>
                   </HStack>
                   <Text fontSize="sm" pl={6}>
-                    40 CFR Part 98 - The official U.S. Environmental Protection Agency source for
-                    stationary and mobile combustion emission factors. Updated annually.
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.epaGhgDesc' })}
                   </Text>
                   <Link
                     href="https://www.epa.gov/climateleadership/ghg-emission-factors-hub"
@@ -1030,11 +952,10 @@ const EducationTopicDetail: React.FC = () => {
                 <Box>
                   <HStack mb={1}>
                     <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">EPA eGRID2023 Summary Tables</Text>
+                    <Text fontWeight="bold">{intl.formatMessage({ id: 'education.detail.carbonMethodology.epaEgridTitle' })}</Text>
                   </HStack>
                   <Text fontSize="sm" pl={6}>
-                    U.S. average electricity emission factors (767.2 lbs/MWh for 2023). Accounts for
-                    the mix of energy sources in the electrical grid.
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.epaEgridDesc' })}
                   </Text>
                   <Link
                     href="https://www.epa.gov/egrid/summary-data"
@@ -1053,11 +974,10 @@ const EducationTopicDetail: React.FC = () => {
                 <Box>
                   <HStack mb={1}>
                     <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">EIA Annual Energy Review</Text>
+                    <Text fontWeight="bold">{intl.formatMessage({ id: 'education.detail.carbonMethodology.eiaTitle' })}</Text>
                   </HStack>
                   <Text fontSize="sm" pl={6}>
-                    U.S. Energy Information Administration - electricity generation and emissions
-                    data validation (0.81 lbs/kWh = 0.367 kg/kWh for 2023).
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.eiaDesc' })}
                   </Text>
                   <Link
                     href="https://www.eia.gov/tools/faqs/faq.php?id=74&t=11"
@@ -1076,11 +996,10 @@ const EducationTopicDetail: React.FC = () => {
                 <Box>
                   <HStack mb={1}>
                     <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">IPCC 2006/2019 Guidelines</Text>
+                    <Text fontWeight="bold">{intl.formatMessage({ id: 'education.detail.carbonMethodology.ipccTitle' })}</Text>
                   </HStack>
                   <Text fontSize="sm" pl={6}>
-                    Intergovernmental Panel on Climate Change - N₂O emission factors for
-                    agricultural soils (EF1 = 1% of applied N, GWP = 265).
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.ipccDesc' })}
                   </Text>
                   <Link
                     href="https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/4_Volume4/V4_11_Ch11_N2O&CO2.pdf"
@@ -1099,11 +1018,10 @@ const EducationTopicDetail: React.FC = () => {
                 <Box>
                   <HStack mb={1}>
                     <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">USDA Agricultural Research Service</Text>
+                    <Text fontWeight="bold">{intl.formatMessage({ id: 'education.detail.carbonMethodology.usdaArsTitle' })}</Text>
                   </HStack>
                   <Text fontSize="sm" pl={6}>
-                    Farm energy use data, crop production fuel consumption, and agricultural
-                    machinery efficiency standards.
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.usdaArsDesc' })}
                   </Text>
                   <Link
                     href="https://www.ars.usda.gov"
@@ -1122,11 +1040,10 @@ const EducationTopicDetail: React.FC = () => {
                 <Box>
                   <HStack mb={1}>
                     <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">USDA NRCS Irrigation Pumping Plants Guide</Text>
+                    <Text fontWeight="bold">{intl.formatMessage({ id: 'education.detail.carbonMethodology.usdaNrcsTitle' })}</Text>
                   </HStack>
                   <Text fontSize="sm" pl={6}>
-                    National Engineering Handbook Chapter 8 - Energy consumption factors for
-                    irrigation pumping systems based on depth, volume, and equipment efficiency.
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.usdaNrcsDesc' })}
                   </Text>
                   <Link
                     href="https://www.wcc.nrcs.usda.gov/ftpref/wntsc/waterMgt/irrigation/NEH15/ch8.pdf"
@@ -1145,11 +1062,10 @@ const EducationTopicDetail: React.FC = () => {
                 <Box>
                   <HStack mb={1}>
                     <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">Pesticide Manufacturing LCA Studies</Text>
+                    <Text fontWeight="bold">{intl.formatMessage({ id: 'education.detail.carbonMethodology.pesticideLcaTitle' })}</Text>
                   </HStack>
                   <Text fontSize="sm" pl={6}>
-                    Lal (2004): Herbicides 6.3±2.7, Insecticides 5.1±3.0, Fungicides 3.9±2.2 kg
-                    CO₂e/kg AI. Audsley et al.: Higher estimates (18-27 kg for herbicides).
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.pesticideLcaDesc' })}
                   </Text>
                   <Link
                     href="https://www.sciencedirect.com/science/article/abs/pii/S0160412004000832"
@@ -1171,31 +1087,29 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaGasPump} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Diesel Fuel Emission Factors
+                {intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>EPA Mobile Combustion Factor:</strong> 10.21 kg CO₂ per gallon of diesel
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselFactor' })}
                 </Text>
                 <Text fontSize="sm" color="gray.600">
-                  Source: EPA Greenhouse Gas Emission Factors Hub (40 CFR Part 98) - Mobile
-                  combustion for agricultural equipment
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselSource' })}
                 </Text>
                 <Text fontSize="sm">
-                  <strong>Confidence Level:</strong> 95% - This is the most reliable emission factor
-                  as it comes directly from federal regulatory standards.
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselConfidence' })}
                 </Text>
                 <Box bg="white" p={3} borderRadius="md" w="full">
                   <Text fontSize="sm" fontWeight="bold" mb={2}>
-                    How We Use This:
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselUsageTitle' })}
                   </Text>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Harvesting equipment: 0.7 gallons per hectare</ListItem>
-                    <ListItem>Planting equipment: 1.8 gallons per hectare</ListItem>
-                    <ListItem>Transplanting operations: 2.4 gallons per hectare</ListItem>
-                    <ListItem>General production: 2.5 gallons per hectare</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselUsage1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselUsage2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselUsage3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselUsage4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </VStack>
@@ -1204,36 +1118,34 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaBolt} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Electricity Emission Factors
+                {intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>EPA eGRID U.S. Average:</strong> 0.39 kg CO₂ per kWh (delivered
-                  electricity)
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityFactor' })}
                 </Text>
                 <Text fontSize="sm" color="gray.600">
-                  Source: EPA eGRID2023 Summary Tables (767.2 lbs/MWh) + 5.12% T&D losses
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.electricitySource' })}
                 </Text>
 
                 <Text fontSize="sm">
-                  <strong>Confidence Level:</strong> 95% - Based on the national electricity grid
-                  mix; actual emissions vary by region.
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityConfidence' })}
                 </Text>
                 <Box bg="white" p={3} borderRadius="md" w="full">
                   <Text fontSize="sm" fontWeight="bold" mb={2}>
-                    Agricultural Applications:
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityAppsTitle' })}
                   </Text>
                   <UnorderedList spacing={1} fontSize="sm">
                     <ListItem>
-                      Irrigation pumps (deep well 200+ ft): 3.5 kWh per 1,000 gallons pumped
+                      {intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityApp1' })}
                     </ListItem>
                     <ListItem>
-                      Irrigation pumps (standard 50-100 ft): 0.85 kWh per 1,000 gallons pumped
+                      {intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityApp2' })}
                     </ListItem>
-                    <ListItem>Wind machines (frost protection): 35 kWh per hour</ListItem>
-                    <ListItem>Misting systems: 12 kWh per hour per acre</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityApp3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityApp4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </VStack>
@@ -1242,7 +1154,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaSeedling} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Fertilizer Emission Factors
+                {intl.formatMessage({ id: 'education.detail.carbonMethodology.fertilizerTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
@@ -1255,48 +1167,46 @@ const EducationTopicDetail: React.FC = () => {
                   >
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontWeight="bold" color="gray.700">
-                        Nitrogen (N)
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.nitrogenLabel' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="green.600">
-                        10.5 kg CO₂/kg N
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.nitrogenValue' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Manufacturing (~2.6) + N₂O (~4.2) + indirect (~3.7)
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.nitrogenBreakdown' })}
                       </Text>
                     </Box>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontWeight="bold" color="gray.700">
-                        Phosphorus (P₂O₅)
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.phosphorusLabel' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="green.600">
-                        1.19 kg CO₂/kg
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.phosphorusValue' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Manufacturing emissions
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.phosphorusBreakdown' })}
                       </Text>
                     </Box>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontWeight="bold" color="gray.700">
-                        Potassium (K₂O)
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.potassiumLabel' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="green.600">
-                        0.65 kg CO₂/kg
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.potassiumValue' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Manufacturing emissions
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.potassiumBreakdown' })}
                       </Text>
                     </Box>
                   </Grid>
                 </Box>
                 <Text fontSize="sm" color="gray.600">
-                  Source: EPA 40 CFR Part 98 (manufacturing) + IPCC 2006/2019 Guidelines (N₂O: EF1 =
-                  1% of applied N × 44/28 × GWP 265)
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.fertilizerSource' })}
                 </Text>
                 <Alert status="success" size="sm" borderRadius="md">
                   <AlertIcon />
                   <Text fontSize="sm">
-                    <strong>Organic fertilizers</strong> (compost, manure) have much lower
-                    emissions: only 0.5 kg CO₂/kg due to minimal manufacturing process.
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.organicFertilizer' })}
                   </Text>
                 </Alert>
               </VStack>
@@ -1305,12 +1215,12 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaFlask} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Chemical Application Emission Factors
+                {intl.formatMessage({ id: 'education.detail.carbonMethodology.chemicalTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
-                <Text fontWeight="bold">Pesticides & Herbicides</Text>
+                <Text fontWeight="bold">{intl.formatMessage({ id: 'education.detail.carbonMethodology.pesticidesHerbicides' })}</Text>
                 <Box overflowX="auto" w="full">
                   <Grid
                     templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
@@ -1319,52 +1229,52 @@ const EducationTopicDetail: React.FC = () => {
                   >
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                        Synthetic Pesticide
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.syntheticPesticide' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="orange.600">
-                        8.8 kg CO₂/kg AI
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.syntheticPesticideValue' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Active ingredient manufacturing
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.syntheticPesticideNote' })}
                       </Text>
                     </Box>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                        Organic Pesticide
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.organicPesticide' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="green.600">
-                        3.5 kg CO₂/kg
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.organicPesticideValue' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Neem, pyrethrin extraction
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.organicPesticideNote' })}
                       </Text>
                     </Box>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                        Synthetic Herbicide
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.syntheticHerbicide' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="orange.600">
-                        5.5 kg CO₂/kg AI
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.syntheticHerbicideValue' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Active ingredient manufacturing
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.syntheticHerbicideNote' })}
                       </Text>
                     </Box>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                        Organic Herbicide
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.organicHerbicide' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="green.600">
-                        1.2 kg CO₂/kg
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.organicHerbicideValue' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Acetic acid/vinegar based
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.organicHerbicideNote' })}
                       </Text>
                     </Box>
                   </Grid>
                 </Box>
                 <Text fontWeight="bold" mt={2}>
-                  Fungicides
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.fungicides' })}
                 </Text>
                 <Box overflowX="auto" w="full">
                   <Grid
@@ -1374,39 +1284,38 @@ const EducationTopicDetail: React.FC = () => {
                   >
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                        Synthetic
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.syntheticFungicide' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="gray.700">
-                        4.5 kg CO₂/kg AI
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.syntheticFungicideValue' })}
                       </Text>
                     </Box>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                        Copper-based
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.copperFungicide' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="gray.700">
-                        5.5 kg CO₂/kg AI
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.copperFungicideValue' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Higher due to mining
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.copperFungicideNote' })}
                       </Text>
                     </Box>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                        Sulfur-based
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.sulfurFungicide' })}
                       </Text>
                       <Text fontSize="lg" fontWeight="bold" color="green.600">
-                        1.8 kg CO₂/kg
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.sulfurFungicideValue' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        Byproduct of refining
+                        {intl.formatMessage({ id: 'education.detail.carbonMethodology.sulfurFungicideNote' })}
                       </Text>
                     </Box>
                   </Grid>
                 </Box>
                 <Text fontSize="sm" color="gray.600" mt={2}>
-                  Sources: EPA Industrial Manufacturing Emission Factors, International Copper
-                  Association LCA Studies, ScienceDirect LCA Studies for organic chemicals
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.chemicalSource' })}
                 </Text>
               </VStack>
             </Box>
@@ -1414,58 +1323,55 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaCalculator} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                How We Calculate Total Emissions
+                {intl.formatMessage({ id: 'education.detail.carbonMethodology.calculationTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={4} align="start">
                 <Text>
-                  <strong>Step 1: Event Data Collection</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonMethodology.calcStep1Title' })}</strong>
                 </Text>
                 <Text fontSize="sm" pl={4}>
-                  When you log an event, we capture fuel used, area covered, chemicals applied, and
-                  equipment hours.
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.calcStep1Desc' })}
                 </Text>
 
                 <Text>
-                  <strong>Step 2: Emission Factor Application</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonMethodology.calcStep2Title' })}</strong>
                 </Text>
                 <Text fontSize="sm" pl={4}>
-                  We apply the appropriate EPA/USDA emission factor based on the activity type and
-                  inputs.
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.calcStep2Desc' })}
                 </Text>
 
                 <Text>
-                  <strong>Step 3: Unit Conversion</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonMethodology.calcStep3Title' })}</strong>
                 </Text>
                 <Text fontSize="sm" pl={4}>
-                  All values are converted to kg CO₂e (carbon dioxide equivalent) for consistent
-                  comparison.
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.calcStep3Desc' })}
                 </Text>
 
                 <Text>
-                  <strong>Step 4: Aggregation</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.carbonMethodology.calcStep4Title' })}</strong>
                 </Text>
                 <Text fontSize="sm" pl={4}>
-                  Total production footprint = Manufacturing emissions + Application fuel emissions
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.calcStep4Desc' })}
                 </Text>
 
                 <Box bg="white" p={3} borderRadius="md" w="full" mt={2}>
                   <Text fontSize="sm" fontWeight="bold" mb={2}>
-                    Example Calculation:
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.exampleTitle' })}
                   </Text>
                   <Text fontSize="sm">
-                    Applying 100 liters of synthetic herbicide over 5 hectares:
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.exampleDesc' })}
                   </Text>
                   <UnorderedList spacing={1} fontSize="sm" pl={4}>
                     <ListItem>
-                      Manufacturing: 100L × 1.0 kg/L × 41% AI × 5.5 kg CO₂/kg = 22.55 kg CO₂e
+                      {intl.formatMessage({ id: 'education.detail.carbonMethodology.exampleLine1' })}
                     </ListItem>
                     <ListItem>
-                      Application fuel: 5 ha × 0.8 L diesel/ha ÷ 3.79 × 10.21 kg/gal = 10.8 kg CO₂e
+                      {intl.formatMessage({ id: 'education.detail.carbonMethodology.exampleLine2' })}
                     </ListItem>
                     <ListItem>
-                      <strong>Total: 33.35 kg CO₂e</strong>
+                      <strong>{intl.formatMessage({ id: 'education.detail.carbonMethodology.exampleTotal' })}</strong>
                     </ListItem>
                   </UnorderedList>
                 </Box>
@@ -1475,51 +1381,47 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaLeaf} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Our Calculation Philosophy
+                {intl.formatMessage({ id: 'education.detail.carbonMethodology.philosophyTitle' })}
               </Heading>
             </HStack>
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Direct Operational Focus</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.carbonMethodology.directFocusTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Trazo calculates <strong>Direct Operational Emissions</strong> - the emissions you
-                  directly control through farming decisions. We focus on fuel combustion,
-                  fertilizer application, and equipment operation. This approach empowers you with
-                  actionable data while maintaining scientific accuracy through EPA and USDA
-                  verified emission factors.
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.directFocusDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
 
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <Heading size="sm" color="gray.700" mb={3}>
-                What We Include (Farmer-Controlled)
+                {intl.formatMessage({ id: 'education.detail.carbonMethodology.includesTitle' })}
               </Heading>
               <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={2}>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">Direct fuel combustion</Text>
+                  <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.carbonMethodology.includes1' })}</Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">Fertilizer manufacturing + application</Text>
+                  <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.carbonMethodology.includes2' })}</Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">Equipment operation energy</Text>
+                  <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.carbonMethodology.includes3' })}</Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">Chemical manufacturing + application</Text>
+                  <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.carbonMethodology.includes4' })}</Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">Irrigation pumping electricity</Text>
+                  <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.carbonMethodology.includes5' })}</Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">On-farm processing energy</Text>
+                  <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.carbonMethodology.includes6' })}</Text>
                 </HStack>
               </Grid>
             </Box>
@@ -1527,11 +1429,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Continuous Improvement</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.carbonMethodology.continuousTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Our emission factors are updated regularly as EPA and USDA publish new data. Last
-                  update: January 2025. We continuously refine our methodology based on the latest
-                  agricultural research and regulatory guidance.
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.continuousImprovement' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -1540,21 +1440,18 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'first-production',
-        title: 'Starting Your First Production: From Setup to Success',
-        description:
-          'Complete walkthrough of creating your first production batch and setting up your farm profile',
+        title: intl.formatMessage({ id: 'education.topicFirstProductionTitle' }),
+        description: intl.formatMessage({ id: 'education.topicFirstProductionDesc' }),
         icon: FaPlayCircle,
-        category: 'Getting Started',
+        category: intl.formatMessage({ id: 'education.categoryGettingStarted' }),
         content: (
           <VStack spacing={6} align="start">
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Ready to Start Your Transparency Journey?</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.firstProduction.readyTitle' })}</AlertTitle>
                 <AlertDescription>
-                  This guide walks you through creating your first production batch in Trazo,
-                  setting up your farm profile, and beginning your path to agricultural transparency
-                  success.
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.readyDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -1562,7 +1459,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaCogs} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Step 1: Set Up Your Farm Profile
+                {intl.formatMessage({ id: 'education.detail.firstProduction.step1Title' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
@@ -1570,29 +1467,29 @@ const EducationTopicDetail: React.FC = () => {
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Farm Information:</strong> Complete your farm name, location, and
-                    contact details
+                    <strong>{intl.formatMessage({ id: 'education.detail.firstProduction.farmInfoLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.firstProduction.farmInfo' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Crop Selection:</strong> Choose your primary crops from Trazo's
-                    supported varieties
+                    <strong>{intl.formatMessage({ id: 'education.detail.firstProduction.cropSelectionLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.firstProduction.cropSelection' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Farm Size & Parcels:</strong> Define your growing areas and plot
-                    boundaries
+                    <strong>{intl.formatMessage({ id: 'education.detail.firstProduction.farmSizeLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.firstProduction.farmSize' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaCheckCircle} color="green.600" />
                   <Text>
-                    <strong>Farming Approach:</strong> Select conventional, organic, or transitional
-                    methods
+                    <strong>{intl.formatMessage({ id: 'education.detail.firstProduction.approachLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.firstProduction.approach' })}
                   </Text>
                 </HStack>
               </VStack>
@@ -1601,19 +1498,19 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaSeedling} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Step 2: Create Your First Production Batch
+                {intl.formatMessage({ id: 'education.detail.firstProduction.step2Title' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Production Details:</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.firstProduction.productionDetailsLabel' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
-                  <ListItem>Product name and variety (e.g., "Organic Hass Avocados")</ListItem>
-                  <ListItem>Planting/starting date</ListItem>
-                  <ListItem>Expected harvest timeframe</ListItem>
-                  <ListItem>Production goals and quantity estimates</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.firstProduction.productionDetail1' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.firstProduction.productionDetail2' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.firstProduction.productionDetail3' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.firstProduction.productionDetail4' })}</ListItem>
                 </UnorderedList>
               </VStack>
             </Box>
@@ -1621,7 +1518,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaBook} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Step 3: Log Your First Events
+                {intl.formatMessage({ id: 'education.detail.firstProduction.step3Title' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -1632,18 +1529,18 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📝 Start with Production Events
+                    📝 {intl.formatMessage({ id: 'education.detail.firstProduction.startWithTitle' })}
                   </Heading>
                   <Text fontSize="sm">
-                    Log planting, seed preparation, or transplanting activities
+                    {intl.formatMessage({ id: 'education.detail.firstProduction.startWith' })}
                   </Text>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📸 Add Photo Evidence
+                    📸 {intl.formatMessage({ id: 'education.detail.firstProduction.addPhotoTitle' })}
                   </Heading>
                   <Text fontSize="sm">
-                    Take photos of your farming activities to boost verification
+                    {intl.formatMessage({ id: 'education.detail.firstProduction.addPhoto' })}
                   </Text>
                 </Box>
               </Grid>
@@ -1652,22 +1549,22 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaQrcode} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Step 4: Generate Your First QR Code
+                {intl.formatMessage({ id: 'education.detail.firstProduction.step4Title' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>QR Code Creation:</strong> Once you have 3+ documented events, Trazo
-                  automatically generates QR codes
+                  <strong>{intl.formatMessage({ id: 'education.detail.firstProduction.qrCreationLabel' })}:</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.qrCreation' })}
                 </Text>
                 <Text>
-                  <strong>Consumer Testing:</strong> Scan your own QR code to see the consumer
-                  experience
+                  <strong>{intl.formatMessage({ id: 'education.detail.firstProduction.consumerTestLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.consumerTest' })}
                 </Text>
                 <Text>
-                  <strong>Transparency Score:</strong> Watch your score increase as you add more
-                  documented events
+                  <strong>{intl.formatMessage({ id: 'education.detail.firstProduction.transparencyScoreLabel' })}</strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.transparencyScore' })}
                 </Text>
               </VStack>
             </Box>
@@ -1675,11 +1572,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Quick Start Tip</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.firstProduction.quickStartTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Document everything from day one! Even basic activities like soil preparation and
-                  seed planting contribute to your transparency score. The more you document early,
-                  the higher your consumer trust rating will be at harvest time.
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.quickStartDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -1688,23 +1583,20 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'event-mastery',
-        title: 'Mastering Event Documentation: Best Practices Guide',
-        description:
-          'When and how to log events, photo evidence strategies, and real-time documentation workflows',
+        title: intl.formatMessage({ id: 'education.topicEventMasteryTitle' }),
+        description: intl.formatMessage({ id: 'education.topicEventMasteryDesc' }),
         icon: FaCamera,
-        category: 'Farm Documentation',
+        category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' }),
         content: (
           <VStack spacing={6} align="start">
             <Text fontSize="lg">
-              Master the art of agricultural documentation to maximize your transparency score and
-              build unshakeable consumer trust. This guide covers proven strategies from successful
-              Trazo farmers.
+              {intl.formatMessage({ id: 'education.detail.eventMastery.intro' })}
             </Text>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaCamera} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Real-Time vs Batch Documentation
+                {intl.formatMessage({ id: 'education.detail.eventMastery.realTimeVsBatchTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -1715,24 +1607,24 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="green.600" mb={2}>
-                    ⚡ Real-Time Documentation (Best)
+                    ⚡ {intl.formatMessage({ id: 'education.detail.eventMastery.realTimeTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Log events as they happen in the field</ListItem>
-                    <ListItem>Use mobile app for instant photo capture</ListItem>
-                    <ListItem>Voice recording feature for quick notes</ListItem>
-                    <ListItem>Higher transparency score weight</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.realTime1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.realTime2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.realTime3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.realTime4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="yellow.600" mb={2}>
-                    📝 Batch Documentation (Good)
+                    📝 {intl.formatMessage({ id: 'education.detail.eventMastery.batchTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Log multiple events at end of day</ListItem>
-                    <ListItem>Upload photos from camera later</ListItem>
-                    <ListItem>Use farm notes to remember details</ListItem>
-                    <ListItem>Still contributes to transparency</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.batch1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.batch2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.batch3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.batch4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -1741,36 +1633,36 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaCamera} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Photo Evidence Best Practices
+                {intl.formatMessage({ id: 'education.detail.eventMastery.photoTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>📸 What to Photograph:</strong>
+                  <strong>📸 {intl.formatMessage({ id: 'education.detail.eventMastery.whatToPhoto' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
                   <ListItem>
-                    Equipment in action (tractors, harvesters, irrigation systems)
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.photo1' })}
                   </ListItem>
                   <ListItem>
-                    Product application (fertilizers, organic amendments, pest treatments)
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.photo2' })}
                   </ListItem>
-                  <ListItem>Crop progress (planting, growth stages, harvest)</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.photo3' })}</ListItem>
                   <ListItem>
-                    Quality indicators (soil conditions, plant health, weather conditions)
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.photo4' })}
                   </ListItem>
-                  <ListItem>Verification documents (organic certificates, test results)</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.photo5' })}</ListItem>
                 </UnorderedList>
 
                 <Text>
-                  <strong>📱 Technical Tips:</strong>
+                  <strong>📱 {intl.formatMessage({ id: 'education.detail.eventMastery.technicalTips' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
-                  <ListItem>Use good lighting - avoid shadows on equipment/crops</ListItem>
-                  <ListItem>Include context - show the broader field/operation</ListItem>
-                  <ListItem>Capture before/after shots for treatments</ListItem>
-                  <ListItem>Include measurement tools for scale reference</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.tip1' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.tip2' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.tip3' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.tip4' })}</ListItem>
                 </UnorderedList>
               </VStack>
             </Box>
@@ -1778,7 +1670,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaMicrophone} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Voice Recording & Quick Notes
+                {intl.formatMessage({ id: 'education.detail.eventMastery.voiceTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
@@ -1786,27 +1678,29 @@ const EducationTopicDetail: React.FC = () => {
                 <HStack>
                   <Icon as={FaMicrophone} color="purple.600" />
                   <Text>
-                    <strong>Voice Commands:</strong> "Record fertilizer application, 50 pounds
-                    organic compost, north field"
+                    <strong>{intl.formatMessage({ id: 'education.detail.eventMastery.voiceCommandsLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.voiceCommands' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaMicrophone} color="purple.600" />
                   <Text>
-                    <strong>Quick Notes:</strong> Perfect for recording observations while working
+                    <strong>{intl.formatMessage({ id: 'education.detail.eventMastery.quickNotesLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.quickNotes' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaMicrophone} color="purple.600" />
                   <Text>
-                    <strong>Hands-Free Operation:</strong> Continue working while documentation
-                    happens
+                    <strong>{intl.formatMessage({ id: 'education.detail.eventMastery.handsFreeLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.handsFree' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaMicrophone} color="purple.600" />
                   <Text>
-                    <strong>Auto-Transcription:</strong> Voice notes automatically converted to text
+                    <strong>{intl.formatMessage({ id: 'education.detail.eventMastery.autoTranscriptionLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.autoTranscription' })}
                   </Text>
                 </HStack>
               </VStack>
@@ -1815,7 +1709,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaLeaf} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Seasonal Documentation Strategy
+                {intl.formatMessage({ id: 'education.detail.eventMastery.seasonalTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -1826,35 +1720,35 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="green.600" mb={2}>
-                    🌱 Planting Season
+                    🌱 {intl.formatMessage({ id: 'education.detail.eventMastery.plantingSeasonTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Soil preparation events</ListItem>
-                    <ListItem>Seed/seedling documentation</ListItem>
-                    <ListItem>Initial irrigation setup</ListItem>
-                    <ListItem>Baseline soil testing</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.planting1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.planting2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.planting3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.planting4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="yellow.600" mb={2}>
-                    🌾 Growing Season
+                    🌾 {intl.formatMessage({ id: 'education.detail.eventMastery.growingSeasonTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Regular fertilizer applications</ListItem>
-                    <ListItem>Pest management activities</ListItem>
-                    <ListItem>Irrigation and weather events</ListItem>
-                    <ListItem>Growth progress photos</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.growing1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.growing2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.growing3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.growing4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="orange.600" mb={2}>
-                    🍂 Harvest Season
+                    🍂 {intl.formatMessage({ id: 'education.detail.eventMastery.harvestSeasonTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Harvest timing and methods</ListItem>
-                    <ListItem>Quality assessment results</ListItem>
-                    <ListItem>Post-harvest handling</ListItem>
-                    <ListItem>Final production quantities</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.harvest1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.harvest2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.harvest3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.eventMastery.harvest4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -1863,11 +1757,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Documentation Success Formula</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.eventMastery.successTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Successful farms document 12-15 events per production cycle with 80% photo
-                  evidence. This typically results in 90%+ transparency scores and maximum consumer
-                  trust. Remember: every documented activity tells your farm's story to consumers.
+                  {intl.formatMessage({ id: 'education.detail.eventMastery.successDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -1876,20 +1768,18 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'score-optimization',
-        title: 'Maximizing Your Transparency Score: 90%+ Strategies',
-        description:
-          'Proven techniques to achieve excellent transparency scores and maximize consumer trust',
+        title: intl.formatMessage({ id: 'education.topicScoreOptimizationTitle' }),
+        description: intl.formatMessage({ id: 'education.topicScoreOptimizationDesc' }),
         icon: FaTrophy,
-        category: 'Transparency System',
+        category: intl.formatMessage({ id: 'education.categoryTransparencySystem' }),
         content: (
           <VStack spacing={6} align="start">
             <Alert status="warning" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Goal: 90%+ Transparency Score</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.scoreOptimization.goalTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Farms with 90%+ transparency scores command 25% price premiums and see 3x higher
-                  consumer engagement. This guide shows you exactly how to achieve these scores.
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.goalDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -1897,28 +1787,28 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaCalculator} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Category Weights (What Matters Most)
+                {intl.formatMessage({ id: 'education.detail.scoreOptimization.weightsTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Growing Practices (30%):</strong> Planting, harvesting, irrigation, pruning &mdash; the core of your story
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.growingDesc' })}
                 </Text>
                 <Text>
-                  <strong>Treatment Details (20%):</strong> Fertilizer and chemical applications &mdash; highest consumer sensitivity
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.treatmentDesc' })}
                 </Text>
                 <Text>
-                  <strong>Soil Care (18%):</strong> Soil tests, composting, cover crops &mdash; sustainability signals
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.soilDesc' })}
                 </Text>
                 <Text>
-                  <strong>Pest Management (12%):</strong> Scouting, beneficial releases, IPM practices
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.pestDesc' })}
                 </Text>
                 <Text>
-                  <strong>Certifications (10%):</strong> Third-party trust &mdash; organic, inspections, quality standards
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.certDesc' })}
                 </Text>
                 <Text>
-                  <strong>Weather &amp; General (5% each):</strong> Environmental context and supplementary notes
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.weatherDesc' })}
                 </Text>
               </VStack>
             </Box>
@@ -1926,7 +1816,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaTrophy} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                The 90%+ Scoring Strategy
+                {intl.formatMessage({ id: 'education.detail.scoreOptimization.strategyTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -1937,26 +1827,26 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    Must-Have Events
+                    {intl.formatMessage({ id: 'education.detail.scoreOptimization.mustHaveTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>3+ Production events (planting, harvest, irrigation)</ListItem>
-                    <ListItem>2+ Chemical events (fertilizer, organic amendments)</ListItem>
-                    <ListItem>1+ Soil management event (composting, soil test)</ListItem>
-                    <ListItem>1+ Pest management event (scouting, IPM)</ListItem>
-                    <ListItem>1+ Business event (certification, inspection)</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.mustHave1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.mustHave2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.mustHave3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.mustHave4' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.mustHave5' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    Photo Strategy (Smart, Not Exhaustive)
+                    {intl.formatMessage({ id: 'education.detail.scoreOptimization.photoStrategyTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem><strong>Always photograph:</strong> planting, harvest, chemical labels</ListItem>
-                    <ListItem><strong>When practical:</strong> pruning, soil tests, scouting</ListItem>
-                    <ListItem><strong>Skip guilt-free:</strong> irrigation, weather, general notes</ListItem>
-                    <ListItem>Chemical events need 2 photos (label + application)</ListItem>
-                    <ListItem>All other events need just 1 photo</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.photoStrategy1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.photoStrategy2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.photoStrategy3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.photoStrategy4' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.photoStrategy5' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -1965,30 +1855,25 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaShieldAlt} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Common Scoring Mistakes to Avoid
+                {intl.formatMessage({ id: 'education.detail.scoreOptimization.mistakesTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Missing photos on essential events:</strong> Planting, harvest, and
-                  chemical application photos have the biggest impact &mdash; a 50% penalty per event
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.mistake1' })}
                 </Text>
                 <Text>
-                  <strong>Empty high-weight categories:</strong> Having zero events in Growing
-                  Practices (30%) or Treatment Details (20%) is more costly than gaps in Weather (5%)
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.mistake2' })}
                 </Text>
                 <Text>
-                  <strong>Batch documentation:</strong> Logging events weeks after they happened &mdash;
-                  photos must be within 7 days of the event date
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.mistake3' })}
                 </Text>
                 <Text>
-                  <strong>Photographing everything equally:</strong> Focus your photo effort on
-                  essential events first; irrigation and weather notes don&apos;t need photos at all
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.mistake4' })}
                 </Text>
                 <Text>
-                  <strong>Ignoring certifications:</strong> Business events now carry 10% weight &mdash;
-                  logging a single certification adds meaningful points
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.mistake5' })}
                 </Text>
               </VStack>
             </Box>
@@ -1996,7 +1881,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaSeedling} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Optimization Techniques by Crop Type
+                {intl.formatMessage({ id: 'education.detail.scoreOptimization.cropTypesTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -2007,35 +1892,35 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🥑 Tree Fruits (Avocados, Citrus)
+                    🥑 {intl.formatMessage({ id: 'education.detail.scoreOptimization.treeFruitsTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="xs">
-                    <ListItem>Pruning and tree maintenance events</ListItem>
-                    <ListItem>Irrigation system documentation</ListItem>
-                    <ListItem>Seasonal pest management</ListItem>
-                    <ListItem>Harvest timing and methods</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.treeFruits1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.treeFruits2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.treeFruits3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.treeFruits4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🌾 Annual Crops (Vegetables, Grains)
+                    🌾 {intl.formatMessage({ id: 'education.detail.scoreOptimization.annualCropsTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="xs">
-                    <ListItem>Soil preparation and planting</ListItem>
-                    <ListItem>Growth stage monitoring</ListItem>
-                    <ListItem>Regular fertilizer applications</ListItem>
-                    <ListItem>Harvest and post-harvest handling</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.annualCrops1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.annualCrops2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.annualCrops3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.annualCrops4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🫐 Berries & Specialty Crops
+                    🫐 {intl.formatMessage({ id: 'education.detail.scoreOptimization.berriesTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="xs">
-                    <ListItem>Specialized growing techniques</ListItem>
-                    <ListItem>Quality control measures</ListItem>
-                    <ListItem>Careful harvest documentation</ListItem>
-                    <ListItem>Cold chain and storage events</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.berries1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.berries2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.berries3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.scoreOptimization.berries4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -2044,12 +1929,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Success Benchmark</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.scoreOptimization.benchmarkTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Target: 12-15 documented events per production cycle across all 7 categories.
-                  Photograph your essential events (planting, harvest, chemical applications) and you
-                  will consistently hit 90%+. Remember: the system rewards you for logging more, not
-                  less &mdash; every event raises your score.
+                  {intl.formatMessage({ id: 'education.detail.scoreOptimization.benchmarkDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -2058,23 +1940,20 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'consumer-engagement',
-        title: 'Consumer Engagement & Marketing Success',
-        description:
-          'QR code placement, scan analytics, and building direct customer relationships',
+        title: intl.formatMessage({ id: 'education.topicConsumerEngagementTitle' }),
+        description: intl.formatMessage({ id: 'education.topicConsumerEngagementDesc' }),
         icon: FaUsers,
-        category: 'Consumer Engagement',
+        category: intl.formatMessage({ id: 'education.categoryConsumerEngagement' }),
         content: (
           <VStack spacing={6} align="start">
             <Text fontSize="lg">
-              Transform your transparency data into powerful marketing that builds direct consumer
-              relationships and drives premium pricing. Learn from farms achieving 78% QR scan
-              completion rates and 25% price premiums.
+              {intl.formatMessage({ id: 'education.detail.consumerEngagement.intro' })}
             </Text>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaQrcode} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Strategic QR Code Placement
+                {intl.formatMessage({ id: 'education.detail.consumerEngagement.qrPlacementTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -2085,39 +1964,47 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📦 Product Packaging
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.packagingTitle' })}
                   </Heading>
                   <VStack spacing={2} align="start">
                     <Text fontSize="sm">
-                      <strong>Primary Placement:</strong> Front panel, above brand logo
+                      <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.packaging1Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.packaging1' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Call to Action:</strong> "Scan to see how this was grown"
+                      <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.packaging2Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.packaging2' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Size Guidelines:</strong> Minimum 1 inch square for easy scanning
+                      <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.packaging3Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.packaging3' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Testing:</strong> Scan from 3 feet to ensure readability
+                      <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.packaging4Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.packaging4' })}
                     </Text>
                   </VStack>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🛒 Point of Sale
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.posTitle' })}
                   </Heading>
                   <VStack spacing={2} align="start">
                     <Text fontSize="sm">
-                      <strong>Farmers Markets:</strong> Table signs with transparency scores
+                      <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.pos1Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.pos1' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Retail Stores:</strong> Shelf talkers highlighting verification
+                      <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.pos2Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.pos2' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Online Sales:</strong> Product page QR codes for digital purchases
+                      <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.pos3Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.pos3' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Farm Store:</strong> Large displays showcasing farm transparency
+                      <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.pos4Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.pos4' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -2127,34 +2014,38 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaChartLine} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Understanding Your Scan Analytics
+                {intl.formatMessage({ id: 'education.detail.consumerEngagement.analyticsTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>📊 Key Metrics Trazo Tracks:</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.keyMetrics' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
                   <ListItem>
-                    <strong>Scan Rate:</strong> Percentage of products scanned by consumers
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.scanRateLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.scanRate' })}
                   </ListItem>
                   <ListItem>
-                    <strong>Completion Rate:</strong> Percentage of scanners who view full
-                    transparency info
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.completionRateLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.completionRate' })}
                   </ListItem>
                   <ListItem>
-                    <strong>Engagement Time:</strong> How long consumers spend on your transparency
-                    page
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.engagementTimeLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.engagementTime' })}
                   </ListItem>
                   <ListItem>
-                    <strong>Return Scans:</strong> Repeat customers checking your latest productions
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.returnScansLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.returnScans' })}
                   </ListItem>
                   <ListItem>
-                    <strong>Geographic Data:</strong> Where your products are being scanned
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.geographicLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.geographic' })}
                   </ListItem>
                   <ListItem>
-                    <strong>Peak Times:</strong> When consumers are most likely to scan
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.peakTimesLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.peakTimes' })}
                   </ListItem>
                 </UnorderedList>
               </VStack>
@@ -2163,7 +2054,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaUsers} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Building Direct Consumer Relationships
+                {intl.formatMessage({ id: 'education.detail.consumerEngagement.relationshipsTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
@@ -2171,36 +2062,36 @@ const EducationTopicDetail: React.FC = () => {
                 <HStack>
                   <Icon as={FaUsers} color="yellow.600" />
                   <Text>
-                    <strong>Consumer Education:</strong> QR pages become teaching moments about
-                    sustainable farming
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.eduLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.edu' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaUsers} color="yellow.600" />
                   <Text>
-                    <strong>Trust Building:</strong> Transparency creates emotional connection
-                    beyond just product quality
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.trustLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.trust' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaUsers} color="yellow.600" />
                   <Text>
-                    <strong>Premium Positioning:</strong> 95% transparency score justifies 20-30%
-                    price premiums
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.premiumLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.premium' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaUsers} color="yellow.600" />
                   <Text>
-                    <strong>Repeat Purchases:</strong> Consumers return to farmers they trust and
-                    understand
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.repeatLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.repeat' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaUsers} color="yellow.600" />
                   <Text>
-                    <strong>Word of Mouth:</strong> Transparent farms get 3x more consumer
-                    recommendations
+                    <strong>{intl.formatMessage({ id: 'education.detail.consumerEngagement.womLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.wom' })}
                   </Text>
                 </HStack>
               </VStack>
@@ -2209,7 +2100,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaRocket} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Optimizing Consumer Page Performance
+                {intl.formatMessage({ id: 'education.detail.consumerEngagement.perfTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -2220,35 +2111,35 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    ⚡ Speed Optimization
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.speedTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Under 1.5s load time on mobile</ListItem>
-                    <ListItem>Progressive loading design</ListItem>
-                    <ListItem>Transparency score appears first</ListItem>
-                    <ListItem>Photos optimized for mobile data</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.speed1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.speed2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.speed3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.speed4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📱 Mobile Experience
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.mobileTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Touch-friendly interface design</ListItem>
-                    <ListItem>Easy scrolling through farm timeline</ListItem>
-                    <ListItem>Clear trust indicators and badges</ListItem>
-                    <ListItem>Social sharing buttons prominent</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.mobile1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.mobile2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.mobile3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.mobile4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    💬 Consumer Communication
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.commTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Clear, jargon-free language</ListItem>
-                    <ListItem>Visual timeline of farming practices</ListItem>
-                    <ListItem>Environmental benefits explained simply</ListItem>
-                    <ListItem>Direct farmer contact information</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.comm1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.comm2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.comm3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.consumerEngagement.comm4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -2257,42 +2148,25 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaBullhorn} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Marketing Integration Strategies
+                {intl.formatMessage({ id: 'education.detail.consumerEngagement.marketingTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
-                <Text>
-                  <strong>🌐 Website Integration:</strong> Embed transparency scores on product
-                  pages
-                </Text>
-                <Text>
-                  <strong>📱 Social Media:</strong> Share transparency milestones and
-                  behind-the-scenes content
-                </Text>
-                <Text>
-                  <strong>📧 Email Marketing:</strong> Include QR codes in newsletters and customer
-                  communications
-                </Text>
-                <Text>
-                  <strong>🏪 Retail Partnerships:</strong> Work with stores to highlight your
-                  transparency advantage
-                </Text>
-                <Text>
-                  <strong>🎯 Targeted Campaigns:</strong> Use scan data to understand and reach your
-                  ideal customers
-                </Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.consumerEngagement.marketing1' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.consumerEngagement.marketing2' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.consumerEngagement.marketing3' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.consumerEngagement.marketing4' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.consumerEngagement.marketing5' })}</Text>
               </VStack>
             </Box>
 
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Success Metrics to Track</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.consumerEngagement.metricsTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Target a 15%+ scan rate and 70%+ completion rate for excellent consumer
-                  engagement. Farms achieving these metrics typically see 25% price premiums and
-                  develop loyal customer bases that drive sustainable business growth.
+                  {intl.formatMessage({ id: 'education.detail.consumerEngagement.metricsDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -2301,21 +2175,18 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'subscription-features',
-        title: 'Subscription Features & Benefits',
-        description:
-          'Understanding feature tiers, upgrade benefits, and maximizing transparency value',
+        title: intl.formatMessage({ id: 'education.topicSubscriptionFeaturesTitle' }),
+        description: intl.formatMessage({ id: 'education.topicSubscriptionFeaturesDesc' }),
         icon: FaCrown,
-        category: 'Business Growth',
+        category: intl.formatMessage({ id: 'education.categoryBusinessGrowth' }),
         content: (
           <VStack spacing={6} align="start">
             <Alert status="success" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Maximize Your Trazo Value</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.subscription.maxValueTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Understanding Trazo's subscription tiers helps you choose the right features for
-                  your farm size and goals. Premium transparency features improve market access and
-                  consumer trust.
+                  {intl.formatMessage({ id: 'education.detail.subscription.maxValueDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -2323,7 +2194,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaCrown} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Trazo Subscription Tiers
+                {intl.formatMessage({ id: 'education.detail.subscription.tiersTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -2334,76 +2205,76 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🌱 Starter Plan
+                    {intl.formatMessage({ id: 'education.detail.subscription.starterTitle' })}
                   </Heading>
                   <VStack spacing={2} align="start">
                     <Text fontSize="sm">
-                      <strong>Best For:</strong> Small farms, first-time users
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.bestFor' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.starterBestFor' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Productions:</strong> Up to 5 active productions
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.productions' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.starterProductions' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Events:</strong> Basic event logging
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.events' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.starterEvents' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>QR Codes:</strong> Standard QR generation
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.qrCodes' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.starterQr' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Storage:</strong> Limited photo storage
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.storage' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.starterStorage' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Support:</strong> Email support
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.support' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.starterSupport' })}
                     </Text>
                   </VStack>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🚀 Professional Plan
+                    {intl.formatMessage({ id: 'education.detail.subscription.standardTitle' })}
                   </Heading>
                   <VStack spacing={2} align="start">
                     <Text fontSize="sm">
-                      <strong>Best For:</strong> Growing farms, market sellers
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.bestFor' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.standardBestFor' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Productions:</strong> Unlimited productions
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.productions' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.standardProductions' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Events:</strong> Advanced event features
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.events' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.standardEvents' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Blockchain:</strong> Verification included
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.blockchain' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.standardBlockchain' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Analytics:</strong> Scan and engagement data
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.analytics' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.standardAnalytics' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Integrations:</strong> API access for farm software
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.voice' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.standardVoice' })}
                     </Text>
                   </VStack>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    👑 Enterprise Plan
+                    {intl.formatMessage({ id: 'education.detail.subscription.corporateTitle' })}
                   </Heading>
                   <VStack spacing={2} align="start">
                     <Text fontSize="sm">
-                      <strong>Best For:</strong> Large operations, distributors
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.bestFor' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.corporateBestFor' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Volume:</strong> High-volume productions
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.volume' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.corporateVolume' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>IoT:</strong> Sensor integration included
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.prioritySupport' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.corporateSupport' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>White Label:</strong> Custom branding options
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.unlimitedResources' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.corporateResources' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Priority Support:</strong> Phone and dedicated support
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.compliance' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.corporateCompliance' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Custom Features:</strong> Tailored development
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.api' })}:</strong> {intl.formatMessage({ id: 'education.detail.subscription.corporateApi' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -2413,33 +2284,33 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaUnlock} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Feature Unlocks by Subscription Level
+                {intl.formatMessage({ id: 'education.detail.subscription.featureUnlocksTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>🔓 Professional Plan Unlocks:</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.subscription.standardUnlocksTitle' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
-                  <ListItem>Blockchain verification for all productions</ListItem>
-                  <ListItem>Advanced photo storage and organization</ListItem>
-                  <ListItem>Consumer engagement analytics dashboard</ListItem>
-                  <ListItem>Voice recording and transcription</ListItem>
-                  <ListItem>Custom QR code branding</ListItem>
-                  <ListItem>Export data for compliance reporting</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.standardUnlock1' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.standardUnlock2' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.standardUnlock3' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.standardUnlock4' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.standardUnlock5' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.standardUnlock6' })}</ListItem>
                 </UnorderedList>
 
                 <Text>
-                  <strong>🏆 Enterprise Plan Adds:</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.subscription.corporateUnlocksTitle' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
-                  <ListItem>IoT sensor data integration</ListItem>
-                  <ListItem>Multi-farm management dashboard</ListItem>
-                  <ListItem>Bulk production creation tools</ListItem>
-                  <ListItem>White-label consumer pages</ListItem>
-                  <ListItem>API access for system integration</ListItem>
-                  <ListItem>Custom transparency scoring models</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.corporateUnlock1' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.corporateUnlock2' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.corporateUnlock3' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.corporateUnlock4' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.corporateUnlock5' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.corporateUnlock6' })}</ListItem>
                 </UnorderedList>
               </VStack>
             </Box>
@@ -2447,7 +2318,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaCalculator} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Value & Benefits Framework
+                {intl.formatMessage({ id: 'education.detail.subscription.valueTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -2458,42 +2329,47 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    💰 Revenue Benefits
+                    {intl.formatMessage({ id: 'education.detail.subscription.revenueTitle' })}
                   </Heading>
                   <VStack spacing={2} align="start">
                     <Text fontSize="sm">
-                      <strong>Premium Pricing:</strong> 20-30% higher prices for transparent
-                      products
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.revenue1Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.subscription.revenue1' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Market Access:</strong> Entry to premium retailers and farmers markets
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.revenue2Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.subscription.revenue2' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Direct Sales:</strong> Build consumer loyalty and repeat purchases
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.revenue3Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.subscription.revenue3' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Certification Support:</strong> Streamline organic/sustainable
-                      certifications
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.revenue4Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.subscription.revenue4' })}
                     </Text>
                   </VStack>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    ⚡ Efficiency Gains
+                    {intl.formatMessage({ id: 'education.detail.subscription.efficiencyTitle' })}
                   </Heading>
                   <VStack spacing={2} align="start">
                     <Text fontSize="sm">
-                      <strong>Documentation Time:</strong> 50% faster with mobile app and voice
-                      features
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.efficiency1Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.subscription.efficiency1' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Marketing Costs:</strong> QR codes reduce traditional marketing needs
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.efficiency2Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.subscription.efficiency2' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Compliance:</strong> Automated reporting saves administrative time
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.efficiency3Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.subscription.efficiency3' })}
                     </Text>
                     <Text fontSize="sm">
-                      <strong>Quality Control:</strong> Photo documentation prevents disputes
+                      <strong>{intl.formatMessage({ id: 'education.detail.subscription.efficiency4Label' })}</strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.subscription.efficiency4' })}
                     </Text>
                   </VStack>
                 </Box>
@@ -2503,31 +2379,31 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaLightbulb} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Upgrade Decision Framework
+                {intl.formatMessage({ id: 'education.detail.subscription.upgradeTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Consider Professional Plan When:</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.subscription.considerStandardTitle' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
-                  <ListItem>Managing 5+ productions simultaneously</ListItem>
-                  <ListItem>Selling direct to consumers or farmers markets</ListItem>
-                  <ListItem>Needing blockchain verification for premium positioning</ListItem>
-                  <ListItem>Wanting detailed consumer engagement analytics</ListItem>
-                  <ListItem>Requiring integration with existing farm management software</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerStandard1' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerStandard2' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerStandard3' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerStandard4' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerStandard5' })}</ListItem>
                 </UnorderedList>
 
                 <Text>
-                  <strong>Consider Enterprise Plan When:</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.subscription.considerCorporateTitle' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
-                  <ListItem>Operating multiple farm locations or large acreage</ListItem>
-                  <ListItem>Using IoT sensors for precision agriculture</ListItem>
-                  <ListItem>Serving B2B customers requiring custom reporting</ListItem>
-                  <ListItem>Needing white-label solutions for retail partners</ListItem>
-                  <ListItem>Managing 50+ productions per year</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerCorporate1' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerCorporate2' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerCorporate3' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerCorporate4' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.subscription.considerCorporate5' })}</ListItem>
                 </UnorderedList>
               </VStack>
             </Box>
@@ -2535,12 +2411,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Typical Benefits Timeline</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.subscription.timelineTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Most farms see transparency benefits within 2-3 months through improved consumer
-                  trust. Professional plan users typically achieve significant market access
-                  improvements, while enterprise users see operational efficiency gains and premium
-                  positioning.
+                  {intl.formatMessage({ id: 'education.detail.subscription.timelineDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -2549,23 +2422,20 @@ const EducationTopicDetail: React.FC = () => {
       },
       {
         id: 'advanced-features',
-        title: 'Integration & Advanced Features: Scaling Your Operation',
-        description:
-          'IoT sensors, voice commands, API integration, and automation for efficient farm management',
+        title: intl.formatMessage({ id: 'education.topicAdvancedFeaturesTitle' }),
+        description: intl.formatMessage({ id: 'education.topicAdvancedFeaturesDesc' }),
         icon: FaCogs,
-        category: 'Advanced Features',
+        category: intl.formatMessage({ id: 'education.categoryAdvancedFeatures' }),
         content: (
           <VStack spacing={6} align="start">
             <Text fontSize="lg">
-              Scale your transparency operation with advanced features that automate documentation,
-              integrate with existing systems, and provide enterprise-level capabilities for serious
-              agricultural operations.
+              {intl.formatMessage({ id: 'education.detail.advanced.intro' })}
             </Text>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaWifi} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                IoT Sensor Integration
+                {intl.formatMessage({ id: 'education.detail.advanced.iotTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
@@ -2573,36 +2443,36 @@ const EducationTopicDetail: React.FC = () => {
                 <HStack>
                   <Icon as={FaWifi} color="blue.600" />
                   <Text>
-                    <strong>Soil Monitoring:</strong> Automatic soil moisture, pH, and nutrient
-                    level tracking
+                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotSoilLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.advanced.iotSoil' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaWifi} color="blue.600" />
                   <Text>
-                    <strong>Weather Stations:</strong> Real-time temperature, humidity, rainfall
-                    data
+                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotWeatherLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.advanced.iotWeather' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaWifi} color="blue.600" />
                   <Text>
-                    <strong>Irrigation Systems:</strong> Water usage tracking and automated
-                    documentation
+                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotIrrigationLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.advanced.iotIrrigation' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaWifi} color="blue.600" />
                   <Text>
-                    <strong>Equipment Monitoring:</strong> Tractor hours, fuel consumption, GPS
-                    tracking
+                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotEquipmentLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.advanced.iotEquipment' })}
                   </Text>
                 </HStack>
                 <HStack>
                   <Icon as={FaWifi} color="blue.600" />
                   <Text>
-                    <strong>Environmental Sensors:</strong> Air quality, pest monitoring, plant
-                    health indicators
+                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotEnvLabel' })}</strong>{' '}
+                    {intl.formatMessage({ id: 'education.detail.advanced.iotEnv' })}
                   </Text>
                 </HStack>
               </VStack>
@@ -2611,7 +2481,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaMicrophone} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Voice Command & AI Features
+                {intl.formatMessage({ id: 'education.detail.advanced.voiceAiTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -2622,47 +2492,38 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🎤 Voice Documentation
+                    {intl.formatMessage({ id: 'education.detail.advanced.voiceDocTitle' })}
                   </Heading>
                   <VStack spacing={2} align="start">
                     <HStack>
                       <Icon as={FaMicrophone} color="green.600" />
                       <Text fontSize="sm">
-                        "Log fertilizer application, north field, 50 pounds organic compost"
+                        {intl.formatMessage({ id: 'education.detail.advanced.voiceExample1' })}
                       </Text>
                     </HStack>
                     <HStack>
                       <Icon as={FaMicrophone} color="green.600" />
                       <Text fontSize="sm">
-                        "Record harvest activity, avocados, 500 pounds collected"
+                        {intl.formatMessage({ id: 'education.detail.advanced.voiceExample2' })}
                       </Text>
                     </HStack>
                     <HStack>
                       <Icon as={FaMicrophone} color="green.600" />
                       <Text fontSize="sm">
-                        "Note weather event, heavy rainfall, 2.5 inches overnight"
+                        {intl.formatMessage({ id: 'education.detail.advanced.voiceExample3' })}
                       </Text>
                     </HStack>
                   </VStack>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🤖 AI Processing
+                    {intl.formatMessage({ id: 'education.detail.advanced.aiTitle' })}
                   </Heading>
                   <VStack spacing={2} align="start">
-                    <Text fontSize="sm">
-                      <strong>Auto-Transcription:</strong> Voice notes converted to structured data
-                    </Text>
-                    <Text fontSize="sm">
-                      <strong>Smart Classification:</strong> AI categorizes events automatically
-                    </Text>
-                    <Text fontSize="sm">
-                      <strong>Photo Analysis:</strong> AI identifies crops, equipment, and
-                      activities
-                    </Text>
-                    <Text fontSize="sm">
-                      <strong>Completion Suggestions:</strong> AI recommends missing documentation
-                    </Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.advanced.aiTranscription' })}</Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.advanced.aiClassification' })}</Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.advanced.aiPhoto' })}</Text>
+                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.advanced.aiCompletion' })}</Text>
                   </VStack>
                 </Box>
               </Grid>
@@ -2671,33 +2532,33 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaPlug} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                API Integration & System Connectivity
+                {intl.formatMessage({ id: 'education.detail.advanced.apiTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>🔗 Supported Integrations:</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.advanced.apiIntegrationsLabel' })}</strong>
                 </Text>
                 <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
                   <VStack align="start" spacing={1}>
                     <Text fontSize="sm">
-                      <strong>Farm Management Software:</strong>
+                      <strong>{intl.formatMessage({ id: 'education.detail.advanced.restApiTitle' })}</strong>
                     </Text>
                     <UnorderedList spacing={1} fontSize="xs" pl={4}>
-                      <ListItem>FarmLogs integration for automated event sync</ListItem>
-                      <ListItem>Granular field management data import</ListItem>
-                      <ListItem>Equipment scheduling synchronization</ListItem>
+                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.restApi1' })}</ListItem>
+                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.restApi2' })}</ListItem>
+                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.restApi3' })}</ListItem>
                     </UnorderedList>
                   </VStack>
                   <VStack align="start" spacing={1}>
                     <Text fontSize="sm">
-                      <strong>Business Systems:</strong>
+                      <strong>{intl.formatMessage({ id: 'education.detail.advanced.dataExportTitle' })}</strong>
                     </Text>
                     <UnorderedList spacing={1} fontSize="xs" pl={4}>
-                      <ListItem>QuickBooks for financial event tracking</ListItem>
-                      <ListItem>Inventory management system sync</ListItem>
-                      <ListItem>E-commerce platform integration</ListItem>
+                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.dataExport1' })}</ListItem>
+                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.dataExport2' })}</ListItem>
+                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.dataExport3' })}</ListItem>
                     </UnorderedList>
                   </VStack>
                 </Grid>
@@ -2707,7 +2568,7 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaSyncAlt} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Automation Rules & Workflows
+                {intl.formatMessage({ id: 'education.detail.advanced.automationTitle' })}
               </Heading>
             </HStack>
             <Box overflowX="auto" w="full">
@@ -2718,35 +2579,35 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    ⚡ Trigger-Based Events
+                    {intl.formatMessage({ id: 'education.detail.advanced.triggerTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Equipment start → Log equipment event</ListItem>
-                    <ListItem>Irrigation system → Record water usage</ListItem>
-                    <ListItem>Weather threshold → Create weather event</ListItem>
-                    <ListItem>Sensor alert → Document environmental condition</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.trigger1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.trigger2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.trigger3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.trigger4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📅 Scheduled Automation
+                    {intl.formatMessage({ id: 'education.detail.advanced.scheduledTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Weekly soil monitoring reports</ListItem>
-                    <ListItem>Monthly production summaries</ListItem>
-                    <ListItem>Seasonal compliance documentation</ListItem>
-                    <ListItem>Automated QR code generation</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.scheduled1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.scheduled2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.scheduled3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.scheduled4' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🔄 Smart Suggestions
+                    {intl.formatMessage({ id: 'education.detail.advanced.smartTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Missing event notifications</ListItem>
-                    <ListItem>Optimal documentation timing</ListItem>
-                    <ListItem>Photo evidence reminders</ListItem>
-                    <ListItem>Transparency score optimization tips</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.smart1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.smart2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.smart3' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.smart4' })}</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -2755,39 +2616,21 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaBuilding} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Enterprise Dashboard & Multi-Farm Management
+                {intl.formatMessage({ id: 'education.detail.advanced.enterpriseTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>📊 Centralized Management:</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.advanced.centralizedLabel' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
-                  <ListItem>
-                    <strong>Multi-Location Overview:</strong> Manage multiple farm locations from
-                    single dashboard
-                  </ListItem>
-                  <ListItem>
-                    <strong>Aggregate Analytics:</strong> Combined transparency scores and
-                    performance metrics
-                  </ListItem>
-                  <ListItem>
-                    <strong>Bulk Operations:</strong> Create productions and events across multiple
-                    farms
-                  </ListItem>
-                  <ListItem>
-                    <strong>Team Management:</strong> Role-based access for farm managers and
-                    workers
-                  </ListItem>
-                  <ListItem>
-                    <strong>Compliance Reporting:</strong> Automated reports for certifications and
-                    audits
-                  </ListItem>
-                  <ListItem>
-                    <strong>Custom Branding:</strong> White-label consumer pages with your farm
-                    branding
-                  </ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.multiLocation' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.aggregateAnalytics' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.bulkOps' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.teamMgmt' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.complianceReport' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.customBranding' })}</ListItem>
                 </UnorderedList>
               </VStack>
             </Box>
@@ -2795,35 +2638,21 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaRocket} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Getting Started with Advanced Features
+                {intl.formatMessage({ id: 'education.detail.advanced.gettingStartedTitle' })}
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>🚀 Implementation Pathway:</strong>
+                  <strong>{intl.formatMessage({ id: 'education.detail.advanced.implementationLabel' })}</strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
-                  <ListItem>
-                    <strong>Phase 1:</strong> Master basic event documentation and transparency
-                    scoring
-                  </ListItem>
-                  <ListItem>
-                    <strong>Phase 2:</strong> Upgrade to Professional plan, enable blockchain
-                    verification
-                  </ListItem>
-                  <ListItem>
-                    <strong>Phase 3:</strong> Implement voice documentation for efficiency gains
-                  </ListItem>
-                  <ListItem>
-                    <strong>Phase 4:</strong> Add IoT sensors for automated data collection
-                  </ListItem>
-                  <ListItem>
-                    <strong>Phase 5:</strong> Configure API integrations with existing farm software
-                  </ListItem>
-                  <ListItem>
-                    <strong>Phase 6:</strong> Scale to Enterprise plan for multi-farm operations
-                  </ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase1' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase2' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase3' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase4' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase5' })}</ListItem>
+                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase6' })}</ListItem>
                 </UnorderedList>
               </VStack>
             </Box>
@@ -2831,11 +2660,9 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="warning" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Advanced Features Best Practice</AlertTitle>
+                <AlertTitle>{intl.formatMessage({ id: 'education.detail.advanced.bestPracticeTitle' })}</AlertTitle>
                 <AlertDescription>
-                  Start with solid manual documentation practices before adding automation. Farms
-                  that master basic transparency principles first see better results from advanced
-                  features and avoid over-automation pitfalls.
+                  {intl.formatMessage({ id: 'education.detail.advanced.bestPracticeDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>
@@ -2843,7 +2670,7 @@ const EducationTopicDetail: React.FC = () => {
         )
       }
     ],
-    []
+    [intl]
   );
 
   const topic = documentationTopics.find((t) => t.id === topicId);
@@ -2851,12 +2678,12 @@ const EducationTopicDetail: React.FC = () => {
   if (!topic) {
     return (
       <StandardPage
-        title="Topic Not Found"
+        title={intl.formatMessage({ id: 'education.topicNotFound' })}
         showBackButton
         onBack={() => navigate('/admin/dashboard/education')}
       >
         <VStack spacing={6} py={8}>
-          <Text>The requested topic could not be found.</Text>
+          <Text>{intl.formatMessage({ id: 'education.topicNotFoundDescription' })}</Text>
         </VStack>
       </StandardPage>
     );
@@ -2880,7 +2707,7 @@ const EducationTopicDetail: React.FC = () => {
                   {topic.category}
                 </Text>
                 <Heading size="md" color="gray.700">
-                  Learn about {topic.title.toLowerCase()}
+                  {intl.formatMessage({ id: 'education.learnAbout' }, { topic: topic.title.toLowerCase() })}
                 </Heading>
               </VStack>
             </HStack>

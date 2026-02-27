@@ -29,8 +29,10 @@ import { useGetCarbonFootprintSummaryQuery } from 'store/api/companyApi';
 import { useGetEstablishmentComprehensiveDashboardQuery } from 'store/api/dashboardMetricsApi';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useIntl } from 'react-intl';
 
 const TransparencySummaryCard = ({ establishmentId }) => {
+  const intl = useIntl();
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
   const navigate = useNavigate();
@@ -240,18 +242,18 @@ const TransparencySummaryCard = ({ establishmentId }) => {
     // Complete documentation = strong transparency
     // In progress = still building documentation
     if (verificationData?.blockchain_verified > 0 || data?.blockchain_verified) {
-      return 'Blockchain';
+      return intl.formatMessage({ id: 'dashboard.verificationBlockchain' });
     }
 
     const score = getTransparencyScore();
 
     if (score >= 80) {
-      return 'Completa';
+      return intl.formatMessage({ id: 'dashboard.verificationComplete' });
     }
     if (score >= 50) {
-      return 'Avanzada';
+      return intl.formatMessage({ id: 'dashboard.verificationAdvanced' });
     }
-    return 'En Progreso';
+    return intl.formatMessage({ id: 'dashboard.verificationInProgress' });
   };
 
   // Get carbon data (for environmental impact section)
@@ -265,11 +267,11 @@ const TransparencySummaryCard = ({ establishmentId }) => {
   };
 
   const getTransparencyMessage = (score) => {
-    if (score >= 95) return '¡Transparencia Completa!';
-    if (score >= 85) return 'Excelente Documentación';
-    if (score >= 70) return 'Buena Transparencia';
-    if (score >= 50) return 'Transparencia Básica';
-    return 'Construyendo Transparencia';
+    if (score >= 95) return intl.formatMessage({ id: 'dashboard.transparencyComplete' });
+    if (score >= 85) return intl.formatMessage({ id: 'dashboard.excellentDocumentation' });
+    if (score >= 70) return intl.formatMessage({ id: 'dashboard.goodTransparency' });
+    if (score >= 50) return intl.formatMessage({ id: 'dashboard.basicTransparency' });
+    return intl.formatMessage({ id: 'dashboard.buildingTransparency' });
   };
 
   if (isLoading || isFetching) {
@@ -288,7 +290,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
         <VStack spacing={4}>
           <Icon as={MdEco} color="red.500" boxSize={8} />
           <Text color="red.500" textAlign="center">
-            No se pudo cargar los datos de transparencia
+            {intl.formatMessage({ id: 'dashboard.errorLoadingTransparency' })}
           </Text>
           <Button
             size="sm"
@@ -296,7 +298,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             variant="outline"
             onClick={() => window.location.reload()}
           >
-            Reintentar
+            {intl.formatMessage({ id: 'app.retry' })}
           </Button>
         </VStack>
       </Card>
@@ -320,7 +322,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             </Text>
           </HStack>
           <Text fontSize={{ base: 'sm', md: 'sm' }} color="gray.500" fontWeight="400" ml={7}>
-            Documentación y Transparencia del Establecimiento
+            {intl.formatMessage({ id: 'dashboard.establishmentDocumentation' })}
           </Text>
         </Flex>
       </CardHeader>
@@ -337,13 +339,13 @@ const TransparencySummaryCard = ({ establishmentId }) => {
           >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                Puntaje de Transparencia
+                {intl.formatMessage({ id: 'dashboard.transparencyScore' })}
               </StatLabel>
               <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="green.500" fontWeight="bold">
                 {getTransparencyScore()}%
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="increase" /> Documentación completa
+                <StatArrow type="increase" /> {intl.formatMessage({ id: 'dashboard.completeDocumentation' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -357,13 +359,13 @@ const TransparencySummaryCard = ({ establishmentId }) => {
           >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                Eventos Documentados
+                {intl.formatMessage({ id: 'dashboard.documentedEvents' })}
               </StatLabel>
               <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="blue.500" fontWeight="bold">
                 {getEventCount()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="increase" /> Actividades registradas
+                <StatArrow type="increase" /> {intl.formatMessage({ id: 'dashboard.registeredActivities' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -377,13 +379,13 @@ const TransparencySummaryCard = ({ establishmentId }) => {
           >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                Fotos Documentadas
+                {intl.formatMessage({ id: 'dashboard.documentedPhotos' })}
               </StatLabel>
               <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="orange.500" fontWeight="bold">
                 {getPhotoCount()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="increase" /> Evidencia visual
+                <StatArrow type="increase" /> {intl.formatMessage({ id: 'dashboard.visualEvidence' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -397,13 +399,13 @@ const TransparencySummaryCard = ({ establishmentId }) => {
           >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                Producciones Activas
+                {intl.formatMessage({ id: 'dashboard.activeProductions' })}
               </StatLabel>
               <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="teal.500" fontWeight="bold">
                 {getActiveProductionsCount()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="increase" /> Ciclos en transparencia
+                <StatArrow type="increase" /> {intl.formatMessage({ id: 'dashboard.transparencyCycles' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -417,13 +419,13 @@ const TransparencySummaryCard = ({ establishmentId }) => {
           >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                Transparencia
+                {intl.formatMessage({ id: 'dashboard.transparency' })}
               </StatLabel>
               <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="green.500" fontWeight="bold">
                 {getVerificationStatus()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <Icon as={MdVerified} /> Nivel de documentación
+                <Icon as={MdVerified} /> {intl.formatMessage({ id: 'dashboard.documentationLevel' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -440,7 +442,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             color="green.700"
             fontWeight="600"
           >
-            Progreso de Transparencia
+            {intl.formatMessage({ id: 'dashboard.transparencyProgress' })}
           </Heading>
           <Progress
             value={getTransparencyScore()}
@@ -457,10 +459,10 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             color="gray.600"
             fontWeight="500"
           >
-            {getTransparencyScore()}% de documentación completa
+            {intl.formatMessage({ id: 'dashboard.documentationCompletePercent' }, { score: getTransparencyScore() })}
             {getTransparencyScore() >= 95 && (
               <Text as="span" color="green.500" fontWeight="bold">
-                {' - ¡Transparencia Certificada!'}
+                {intl.formatMessage({ id: 'dashboard.certifiedTransparency' })}
               </Text>
             )}
           </Text>
@@ -476,13 +478,13 @@ const TransparencySummaryCard = ({ establishmentId }) => {
             color="gray.600"
             fontWeight="500"
           >
-            Impacto Ambiental
+            {intl.formatMessage({ id: 'dashboard.environmentalImpactLabel' })}
           </Heading>
           <VStack spacing={2}>
             <HStack justify="space-between" w="full" fontSize="sm">
-              <Text color="gray.600">Huella Neta:</Text>
+              <Text color="gray.600">{intl.formatMessage({ id: 'dashboard.netFootprint' })}</Text>
               <Text fontWeight="medium" color={getCarbonData() >= 0 ? 'orange.600' : 'green.600'}>
-                {getCarbonData().toFixed(2)} kg CO₂e
+                {intl.formatMessage({ id: 'dashboard.kgCO2e' }, { value: getCarbonData().toFixed(2) })}
               </Text>
             </HStack>
           </VStack>

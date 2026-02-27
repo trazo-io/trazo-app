@@ -216,19 +216,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
       console.log('📦 Final data to submit:', finalData);
       onSubmit(finalData);
-
-      toast({
-        title: isEdit ? 'Production Updated' : 'Production Completed',
-        description: `Production has been ${isEdit ? 'updated' : 'finished'} successfully.`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true
-      });
     } catch (error) {
       console.error('❌ Submit error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save production. Please try again.',
+        description: 'Failed to prepare production data. Please try again.',
         status: 'error',
         duration: 5000,
         isClosable: true

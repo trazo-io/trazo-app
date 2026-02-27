@@ -13,6 +13,7 @@ import {
   Button,
   useColorModeValue
 } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import {
   FaCheckCircle,
   FaExclamationCircle,
@@ -27,26 +28,18 @@ import {
 } from 'react-icons/fa';
 import { StandardCard } from '../Design/StandardComponents';
 
-// 🏅 Certification type mapping for proper display names
-const CERTIFICATION_DISPLAY_NAMES: Record<string, string> = {
-  organic: 'USDA Organic',
-  eu_organic: 'EU Organic',
-  regenerative: 'Regenerative Organic (ROC)',
-  cng: 'Certified Naturally Grown',
-  global_gap: 'GlobalG.A.P.',
-  fair_trade: 'Fair Trade Certified',
-  rainforest_alliance: 'Rainforest Alliance',
-  carbon_neutral: 'Carbon Neutral',
-  biodynamic: 'Demeter Biodynamic',
-  non_gmo: 'Non-GMO Project Verified'
-};
-
-const formatCertificationType = (value: string | undefined | null): string => {
-  if (!value) return 'Not certified';
-  return (
-    CERTIFICATION_DISPLAY_NAMES[value] ||
-    value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ')
-  );
+// 🏅 Certification type mapping keys for i18n
+const CERTIFICATION_I18N_KEYS: Record<string, string> = {
+  organic: 'transparency.certOrganic',
+  eu_organic: 'transparency.certEuOrganic',
+  regenerative: 'transparency.certRegenerative',
+  cng: 'transparency.certCng',
+  global_gap: 'transparency.certGlobalGap',
+  fair_trade: 'transparency.certFairTrade',
+  rainforest_alliance: 'transparency.certRainforestAlliance',
+  carbon_neutral: 'transparency.certCarbonNeutral',
+  biodynamic: 'transparency.certBiodynamic',
+  non_gmo: 'transparency.certNonGmo'
 };
 
 interface ParcelTransparencyData {
@@ -96,6 +89,15 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
   onEditClick,
   showEditButton = true
 }) => {
+  const intl = useIntl();
+
+  const formatCertificationType = (value: string | undefined | null): string => {
+    if (!value) return intl.formatMessage({ id: 'transparency.notCertified' });
+    const key = CERTIFICATION_I18N_KEYS[value];
+    if (key) return intl.formatMessage({ id: key });
+    return value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ');
+  };
+
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
@@ -128,72 +130,70 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
     return [
       {
         id: 'description',
-        label: 'Description Quality',
+        label: intl.formatMessage({ id: 'transparency.descriptionQuality' }),
         maxPoints: 40,
         currentPoints: descPoints,
         icon: FaFileAlt,
         color: 'green',
         requirement:
           descLength >= 100
-            ? 'Excellent! 100+ characters'
+            ? intl.formatMessage({ id: 'transparency.descExcellent' })
             : descLength >= 50
-            ? `Good (${descLength} chars) - add more for full points`
+            ? intl.formatMessage({ id: 'transparency.descGood' }, { length: descLength })
             : descLength >= 10
-            ? `Basic (${descLength} chars) - aim for 100+ chars`
-            : 'Need at least 10 characters',
+            ? intl.formatMessage({ id: 'transparency.descBasic' }, { length: descLength })
+            : intl.formatMessage({ id: 'transparency.descNeedMinimum' }),
         tip:
           descLength < 100
-            ? 'Write a detailed description (100+ characters) explaining what makes this parcel special for consumers.'
-            : 'Great job! Your description helps consumers understand this parcel.',
+            ? intl.formatMessage({ id: 'transparency.descTipImprove' })
+            : intl.formatMessage({ id: 'transparency.descTipComplete' }),
         isComplete: descPoints === 40
       },
       {
         id: 'practices',
-        label: 'Sustainability Practices',
+        label: intl.formatMessage({ id: 'transparency.sustainabilityPractices' }),
         maxPoints: 30,
         currentPoints: practicesPoints,
         icon: FaSeedling,
         color: 'blue',
-        requirement: hasPractices ? 'Documented' : 'Not documented',
+        requirement: hasPractices ? intl.formatMessage({ id: 'transparency.practicesDocumented' }) : intl.formatMessage({ id: 'transparency.practicesNotDocumented' }),
         tip: hasPractices
-          ? 'Great! Your sustainability practices are documented.'
-          : 'Add key sustainability practices like water conservation, soil health, or pest management.',
+          ? intl.formatMessage({ id: 'transparency.practicesTipComplete' })
+          : intl.formatMessage({ id: 'transparency.practicesTipImprove' }),
         isComplete: practicesPoints === 30
       },
       {
         id: 'images',
-        label: 'Visual Documentation',
+        label: intl.formatMessage({ id: 'transparency.visualDocumentation' }),
         maxPoints: 20,
         currentPoints: imagePoints,
         icon: FaCamera,
         color: 'purple',
         requirement:
           imageCount >= 3
-            ? `Excellent! ${imageCount} images`
+            ? intl.formatMessage({ id: 'transparency.imagesExcellent' }, { count: imageCount })
             : imageCount >= 1
-            ? `${imageCount} image${imageCount > 1 ? 's' : ''} - add ${3 - imageCount} more`
-            : 'No images uploaded',
+            ? intl.formatMessage({ id: 'transparency.imagesPartial' }, { count: imageCount, remaining: 3 - imageCount })
+            : intl.formatMessage({ id: 'transparency.noImagesUploaded' }),
         tip:
           imageCount < 3
-            ? 'Upload 3+ high-quality images showing your parcel and farming practices.'
-            : 'Excellent visual documentation!',
+            ? intl.formatMessage({ id: 'transparency.imagesTipImprove' })
+            : intl.formatMessage({ id: 'transparency.imagesTipComplete' }),
         isComplete: imagePoints === 20
       },
       {
         id: 'certification',
-        label: 'Certification',
+        label: intl.formatMessage({ id: 'transparency.certification' }),
         maxPoints: 10,
         currentPoints: certPoints,
         icon: FaCertificate,
         color: 'orange',
         requirement: hasCert
           ? formatCertificationType(parcelData.certification_type)
-          : 'Not certified',
+          : intl.formatMessage({ id: 'transparency.notCertified' }),
         tip: hasCert
-          ? `Your ${formatCertificationType(
-              parcelData.certification_type
-            )} certification adds credibility.`
-          : 'Add certification (Organic, GAP, etc.) to boost consumer trust.',
+          ? intl.formatMessage({ id: 'transparency.certTipComplete' }, { certification: formatCertificationType(parcelData.certification_type) })
+          : intl.formatMessage({ id: 'transparency.certTipImprove' }),
         isComplete: certPoints === 10
       }
     ];
@@ -229,7 +229,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
             <HStack>
               <Icon as={FaChartLine} color={`${scoreColor}.500`} />
               <Text fontWeight="bold" color={`${scoreColor}.700`}>
-                Transparency Score Preview
+                {intl.formatMessage({ id: 'transparency.scorePreview' })}
               </Text>
             </HStack>
             <Badge
@@ -278,7 +278,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
         <VStack spacing={3} align="stretch">
           <HStack justify="space-between">
             <Text fontWeight="medium" color={textColor}>
-              Transparency Score
+              {intl.formatMessage({ id: 'transparency.compactScore' })}
             </Text>
             <Badge colorScheme={scoreColor} variant="solid" px={3} py={1} borderRadius="full">
               {totalScore}%
@@ -288,7 +288,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
           <Progress value={totalScore} colorScheme={scoreColor} size="sm" borderRadius="full" />
 
           <Text fontSize="sm" color={mutedColor}>
-            {completedCategories}/4 categories complete
+            {intl.formatMessage({ id: 'transparency.categoriesComplete' }, { completed: completedCategories })}
           </Text>
         </VStack>
       </Box>
@@ -298,8 +298,8 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
   // Full variant (default)
   return (
     <StandardCard
-      title="Transparency Score Breakdown"
-      subtitle="See how your score is calculated and how to improve"
+      title={intl.formatMessage({ id: 'transparency.scoreBreakdownTitle' })}
+      subtitle={intl.formatMessage({ id: 'transparency.scoreBreakdownSubtitle' })}
       icon={FaChartLine}
       variant="elevated"
     >
@@ -318,31 +318,31 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
                   {totalScore}
                 </Text>
                 <Text fontSize="xs" color={`${scoreColor}.500`}>
-                  / 100
+                  {intl.formatMessage({ id: 'transparency.outOf100' })}
                 </Text>
               </VStack>
             </Circle>
             <Badge colorScheme={scoreColor} variant="subtle" fontSize="sm" px={3} py={1}>
               {totalScore >= 80
-                ? 'Excellent'
+                ? intl.formatMessage({ id: 'transparency.ratingExcellent' })
                 : totalScore >= 60
-                ? 'Good'
+                ? intl.formatMessage({ id: 'transparency.ratingGood' })
                 : totalScore >= 40
-                ? 'Fair'
-                : 'Needs Work'}
+                ? intl.formatMessage({ id: 'transparency.ratingFair' })
+                : intl.formatMessage({ id: 'transparency.ratingNeedsWork' })}
             </Badge>
           </VStack>
 
           <VStack align="start" spacing={1}>
             <Text fontWeight="bold" color={textColor}>
-              {completedCategories}/4 Categories Complete
+              {intl.formatMessage({ id: 'transparency.categoriesCompleteCount' }, { completed: completedCategories })}
             </Text>
             <Text fontSize="sm" color={mutedColor}>
               {totalScore >= 80
-                ? 'Great transparency! Consumers will trust your products.'
+                ? intl.formatMessage({ id: 'transparency.feedbackExcellent' })
                 : totalScore >= 60
-                ? 'Good progress! A few improvements will boost trust.'
-                : 'Complete more sections to build consumer confidence.'}
+                ? intl.formatMessage({ id: 'transparency.feedbackGood' })
+                : intl.formatMessage({ id: 'transparency.feedbackImprove' })}
             </Text>
           </VStack>
         </HStack>
@@ -352,7 +352,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
         {/* Category Breakdown */}
         <VStack spacing={4} align="stretch">
           <Text fontWeight="bold" color={textColor} fontSize="md">
-            Score Breakdown
+            {intl.formatMessage({ id: 'transparency.scoreBreakdown' })}
           </Text>
 
           {categories.map((category) => (
@@ -433,7 +433,7 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
                 variant="solid"
                 onClick={onEditClick}
               >
-                Improve Transparency Score
+                {intl.formatMessage({ id: 'transparency.improveScore' })}
               </Button>
             </HStack>
           </>
@@ -446,10 +446,10 @@ export const ParcelTransparencyScoreBreakdown: React.FC<ParcelTransparencyScoreB
               <Icon as={FaCheckCircle} color="green.500" boxSize={5} />
               <VStack spacing={0} align="start">
                 <Text fontWeight="bold" color="green.700">
-                  Perfect Transparency Score!
+                  {intl.formatMessage({ id: 'transparency.perfectScoreTitle' })}
                 </Text>
                 <Text fontSize="sm" color="green.600">
-                  Consumers will have complete confidence in your products.
+                  {intl.formatMessage({ id: 'transparency.perfectScoreDescription' })}
                 </Text>
               </VStack>
             </HStack>

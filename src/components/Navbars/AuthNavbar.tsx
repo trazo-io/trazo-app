@@ -38,7 +38,7 @@ import {
 import { ProfileIcon, RocketIcon } from 'components/Icons/Icons';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { isProducerSubdomain } from 'utils/subdomain';
+import { isProducerSubdomain, isConsumerSubdomain } from 'utils/subdomain';
 
 import IconBox from 'components/Icons/IconBox';
 import { NavLink } from 'react-router-dom';
@@ -50,6 +50,7 @@ import { HamburgerIcon } from '@chakra-ui/icons';
 import { clearCurrentCompany } from 'store/features/companySlice';
 import { clearUser } from 'store/features/userSlice';
 import logoTrazo from 'assets/img/trazo2.png';
+import logoTrazoConsumer from 'assets/img/trazo-consumer-logo.png';
 import { logout as logoutAction } from 'store/features/authSlice';
 import routes from 'routes.tsx';
 import { useIntl } from 'react-intl';
@@ -60,6 +61,7 @@ type AuthNavbarProps = {
   logoText: string;
   secondary: boolean;
   logo: string;
+  forceDefaultLogo?: boolean;
 };
 
 export default function AuthNavbar(props: AuthNavbarProps) {
@@ -69,6 +71,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [subdomain, setSubDomain] = useState(null);
+  const [isConsumer, setIsConsumer] = useState(false);
 
   // Mobile drawer state
   const { isOpen: isMobileOpen, onOpen: onMobileOpen, onClose: onMobileClose } = useDisclosure();
@@ -90,6 +93,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
   useEffect(() => {
     // Use centralized subdomain detection utility
     setSubDomain(isProducerSubdomain());
+    setIsConsumer(isConsumerSubdomain());
   }, []);
 
   const handleLogout = () => {
@@ -113,7 +117,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     onClose: onCloseEcommerce
   } = useDisclosure();
   const textColor = useColorModeValue('gray.700', '#fff');
-  const { logo, logoText, secondary, ...rest } = props;
+  const { logo, logoText, secondary, forceDefaultLogo, ...rest } = props;
 
   let authObject = {};
   routes.forEach((route) => {
@@ -364,7 +368,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
       alignItems="center"
       color={mainText}
     >
-      <Image src={logoTrazo} alt="trazo logo" height="45px" paddingRight="10px" href="" />
+      <Image src={isConsumer && !forceDefaultLogo ? logoTrazoConsumer : logoTrazo} alt="trazo logo" height="45px" paddingRight="10px" href="" />
     </Link>
   );
 

@@ -445,19 +445,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               }
             />
 
-            {/* Multiple verification indicators */}
-            {event.certified && (
-              <Circle
-                size="14px"
-                bg="green.500"
-                position="absolute"
-                top="-1px"
-                right="-1px"
-                border="1px solid white"
-              >
-                <Icon as={FaCertificate} boxSize="8px" color="white" />
-              </Circle>
-            )}
+            {/* Certification indicator removed — certification applies at parcel level, not individual events */}
 
             {/* Blockchain verification indicator */}
             {blockchainData.verified && (

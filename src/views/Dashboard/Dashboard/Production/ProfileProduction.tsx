@@ -8,6 +8,7 @@ import {
   SimpleGrid,
   Icon,
   Badge,
+  Image,
   Link,
   Spinner,
   Wrap,
@@ -46,6 +47,7 @@ import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import { useGetCompleteSummaryQuery } from 'store/api/carbonApi';
+import { TokenManager } from 'utils/secureTokenStorage';
 
 // Data normalization imports
 import { normalizeBackendEventData } from 'utils/eventDataNormalizer';
@@ -361,12 +363,12 @@ function ProfileProduction() {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/history/${
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/histories/${
           historyData.id
         }/download_qr_code/`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+            Authorization: `Bearer ${TokenManager.getAccessToken()}`,
             'Content-Type': 'application/json'
           }
         }
@@ -412,9 +414,10 @@ function ProfileProduction() {
     }
   };
 
-  // View public page
+  // View public page - use public_id (UUID) for consumer-facing URLs
   const handleViewPublicPage = () => {
-    window.open(`http://consumer.localhost:3000/production/${productionId}`, '_blank');
+    const publicId = historyData?.public_id || productionId;
+    window.open(`http://consumer.localhost:3000/production/${publicId}`, '_blank');
   };
 
   // Helper for reputation
@@ -620,6 +623,97 @@ function ProfileProduction() {
             />
           </SimpleGrid>
         </StandardCard>
+
+        {/* QR Code & Consumer Access - Prominent position for packaging workflow */}
+        {historyData?.qr_code && (
+          <StandardCard title="QR Code & Consumer Access" variant="elevated">
+            <VStack spacing={5} align="center">
+              {/* Finished production banner */}
+              {historyData?.finish_date && (
+                <Box
+                  w="full"
+                  p={3}
+                  bg="green.50"
+                  borderRadius="lg"
+                  border="1px solid"
+                  borderColor="green.200"
+                  textAlign="center"
+                >
+                  <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                    Your production is complete! Print this QR code and attach it to your
+                    packaging.
+                  </Text>
+                </Box>
+              )}
+
+              {/* QR Image Preview */}
+              <Box
+                p={4}
+                bg="gray.50"
+                borderRadius="xl"
+                border="1px solid"
+                borderColor="gray.200"
+              >
+                <Image
+                  src={historyData.qr_code}
+                  alt={`QR Code for ${historyData?.product?.name || 'production'}`}
+                  maxW={{ base: '220px', md: '280px' }}
+                  borderRadius="md"
+                  fallback={
+                    <VStack spacing={2} p={8}>
+                      <Icon as={FaQrcode} boxSize={12} color="gray.300" />
+                      <Text fontSize="sm" color="gray.400">
+                        Loading QR...
+                      </Text>
+                    </VStack>
+                  }
+                />
+              </Box>
+
+              {/* Description */}
+              <Text fontSize="sm" color="gray.600" textAlign="center" maxW="400px">
+                {historyData?.finish_date
+                  ? 'Print this QR and attach it to your packaging so consumers can see your production\'s transparency journey.'
+                  : 'Your QR code is ready. Consumers can scan it to view your production\'s transparency details.'}
+              </Text>
+
+              {/* Action buttons */}
+              <HStack spacing={3} flexWrap="wrap" justify="center">
+                <StandardButton
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<Icon as={FaDownload} />}
+                  onClick={downloadQRCode}
+                >
+                  Download QR
+                </StandardButton>
+                <StandardButton
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Icon as={FaEye} />}
+                  onClick={handleViewPublicPage}
+                >
+                  View Public Page
+                </StandardButton>
+              </HStack>
+
+              {/* Print tip */}
+              <Box
+                w="full"
+                p={3}
+                bg="blue.50"
+                borderRadius="md"
+                border="1px solid"
+                borderColor="blue.100"
+              >
+                <Text fontSize="xs" color="blue.700" textAlign="center">
+                  Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download
+                  the high-resolution PNG for print quality.
+                </Text>
+              </Box>
+            </VStack>
+          </StandardCard>
+        )}
 
         {/* Transparency Score Section */}
         <StandardCard title="Transparency Score" variant="elevated">
@@ -837,50 +931,7 @@ function ProfileProduction() {
           </VStack>
         </StandardCard>
 
-        {/* QR Code Section */}
-        {historyData?.qr_code && (
-          <StandardCard title="QR Code & Consumer Access" variant="elevated">
-            <HStack
-              spacing={4}
-              p={4}
-              bg="blue.50"
-              borderRadius="lg"
-              border="1px solid"
-              borderColor="blue.200"
-              justify="space-between"
-              flexWrap="wrap"
-            >
-              <HStack spacing={3}>
-                <Box
-                  boxSize="50px"
-                  bg="white"
-                  borderRadius="md"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  <Icon as={FaQrcode} color="blue.500" boxSize={6} />
-                </Box>
-                <VStack spacing={0} align="start">
-                  <Text fontWeight="medium" color="blue.800">
-                    QR Code Available
-                  </Text>
-                  <Text fontSize="sm" color="blue.600">
-                    Consumers can scan to view production details
-                  </Text>
-                </VStack>
-              </HStack>
-              <StandardButton
-                variant="outline"
-                size="sm"
-                leftIcon={<Icon as={FaDownload} />}
-                onClick={downloadQRCode}
-              >
-                Download
-              </StandardButton>
-            </HStack>
-          </StandardCard>
-        )}
+        {/* QR Code Section - removed, now at position #3 above */}
 
         {/* Producer Information */}
         {historyData?.parcel?.establishment && (

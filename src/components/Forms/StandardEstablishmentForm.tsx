@@ -339,22 +339,9 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
 
       await onSubmit(formDataWithImages);
 
-      // Only show success toast if onSubmit doesn't handle it
-      // (Success and navigation are now handled in AddEstablishment)
-    } catch (error) {
-      // Enhanced error handling with more specific messages
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        'Failed to save establishment. Please try again.';
-
-      toast({
-        title: 'Error Creating Establishment',
-        description: errorMessage,
-        status: 'error',
-        duration: 5000,
-        isClosable: true
-      });
+      // Success and navigation are handled in AddEstablishment
+    } catch {
+      // Error toasts are handled in AddEstablishment's catch block
     }
   };
 

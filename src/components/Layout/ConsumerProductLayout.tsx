@@ -21,7 +21,7 @@ export const ConsumerProductLayout: React.FC<ConsumerProductLayoutProps> = ({ ch
     <Box ref={navRef} w="100%">
       {/* Navigation Header with Trazo Logo */}
       <Portal containerRef={navRef}>
-        <AuthNavbar secondary={false} logoText="trazo" logo="" />
+        <AuthNavbar secondary={false} logoText="trazo" logo="" forceDefaultLogo />
       </Portal>
 
       {/* Privacy Consent Banner for consumer analytics */}

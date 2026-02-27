@@ -12,6 +12,7 @@ import {
   LabelList
 } from 'recharts';
 import { Box, useColorModeValue, Text, HStack } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 
 interface ModernBarChartProps {
   data: any[];
@@ -32,6 +33,7 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
   showValues = true,
   gradientColors = true
 }) => {
+  const intl = useIntl();
   const textColor = useColorModeValue('gray.600', 'white');
   const gridColor = useColorModeValue('#E2E8F0', '#2D3748');
   const tooltipBg = useColorModeValue('white', 'gray.800');
@@ -69,7 +71,7 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
           </Text>
           <HStack spacing={2}>
             <Text fontSize="xs" color="green.500">
-              Reputación:
+              {intl.formatMessage({ id: 'commercial.reputationTooltip' })}
             </Text>
             <Text fontSize="xs" color={textColor}>
               {value.toFixed(1)} {stars}
@@ -143,7 +145,7 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
           tickLine={false}
           axisLine={false}
           label={{
-            value: 'Reputación',
+            value: intl.formatMessage({ id: 'commercial.reputationAxis' }),
             angle: -90,
             position: 'insideLeft',
             style: { fontSize: 12, fill: textColor }

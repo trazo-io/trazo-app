@@ -254,10 +254,10 @@ const TrackList = ({ amount }) => {
           {currentHistory?.product && (
             <HStack justify="space-between" pt={4}>
               <Text fontSize="xs" color="gray.500" fontWeight="medium">
-                Started: {new Date(currentHistory?.start_date).toLocaleDateString('en-US')}
+                {intl.formatMessage({ id: 'parcel.started' })} {new Date(currentHistory?.start_date).toLocaleDateString()}
               </Text>
               <Text fontSize="xs" color="gray.500" fontWeight="medium">
-                Active Production
+                {intl.formatMessage({ id: 'parcel.activeProduction' })}
               </Text>
             </HStack>
           )}
@@ -316,11 +316,10 @@ const TrackList = ({ amount }) => {
                       <Icon as={FaSeedling} color="green.400" boxSize={12} />
                       <VStack spacing={2}>
                         <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                          No current production yet
+                          {intl.formatMessage({ id: 'parcel.noCurrentProductionYet' })}
                         </Text>
                         <Text fontSize="sm" color="gray.500" maxW="350px" lineHeight="1.5">
-                          Start a new production cycle to track agricultural events and build carbon
-                          transparency
+                          {intl.formatMessage({ id: 'parcel.startProductionDescription' })}
                         </Text>
                       </VStack>
                     </VStack>
@@ -332,10 +331,10 @@ const TrackList = ({ amount }) => {
                       <Icon as={FaClock} color="blue.400" boxSize={10} />
                       <VStack spacing={2}>
                         <Text fontSize="md" fontWeight="bold" color={textColor}>
-                          No events recorded yet
+                          {intl.formatMessage({ id: 'parcel.noEventsRecordedYet' })}
                         </Text>
                         <Text fontSize="sm" color="gray.500" maxW="300px" lineHeight="1.5">
-                          Add your first agricultural event to start tracking
+                          {intl.formatMessage({ id: 'parcel.addFirstEventDescription' })}
                         </Text>
                       </VStack>
                     </VStack>
@@ -422,11 +421,11 @@ const TrackList = ({ amount }) => {
                   <HStack>
                     <Icon as={FaLeaf} color="green.500" boxSize={3} />
                     <Text fontSize="xs" fontWeight="bold" color="green.600">
-                      TRANSPARENCY TRACKING
+                      {intl.formatMessage({ id: 'parcel.transparencyTracking' })}
                     </Text>
                   </HStack>
                   <Text fontSize="xs" color="gray.500" mt={1}>
-                    Events visible to consumers via QR
+                    {intl.formatMessage({ id: 'parcel.eventsVisibleToConsumers' })}
                   </Text>
                 </Box>
 
@@ -450,13 +449,13 @@ const TrackList = ({ amount }) => {
                   }}>
                   <VStack align="start" spacing={0} flex={1}>
                     <HStack justify="space-between" width="100%">
-                      <Text fontWeight="semibold">Quick Event</Text>
+                      <Text fontWeight="semibold">{intl.formatMessage({ id: 'parcel.quickEvent' })}</Text>
                       <Badge colorScheme="green" size="xs">
-                        FASTEST
+                        {intl.formatMessage({ id: 'parcel.fastest' })}
                       </Badge>
                     </HStack>
                     <Text fontSize="xs" color="gray.500">
-                      "Applied fertilizer, 200 lbs/acre"
+                      {intl.formatMessage({ id: 'parcel.quickEventExample' })}
                     </Text>
                   </VStack>
                 </MenuItem>
@@ -482,13 +481,13 @@ const TrackList = ({ amount }) => {
                   }}>
                   <VStack align="start" spacing={0} flex={1}>
                     <HStack justify="space-between" width="100%">
-                      <Text fontWeight="semibold">Manual Entry</Text>
+                      <Text fontWeight="semibold">{intl.formatMessage({ id: 'parcel.manualEntry' })}</Text>
                       <Badge colorScheme="gray" size="xs">
-                        DETAILED
+                        {intl.formatMessage({ id: 'parcel.detailed' })}
                       </Badge>
                     </HStack>
                     <Text fontSize="xs" color="gray.500">
-                      Full form with all details
+                      {intl.formatMessage({ id: 'parcel.fullFormWithDetails' })}
                     </Text>
                   </VStack>
                 </MenuItem>
@@ -503,7 +502,7 @@ const TrackList = ({ amount }) => {
                   <HStack>
                     <Icon as={FaCamera} color="blue.400" boxSize={3} />
                     <Text fontSize="xs" color="gray.600">
-                      All events appear on consumer QR scans
+                      {intl.formatMessage({ id: 'parcel.allEventsAppearOnQR' })}
                     </Text>
                   </HStack>
                 </Box>
@@ -615,7 +614,7 @@ const TrackList = ({ amount }) => {
                   borderRadius="lg"
                   fontWeight="semibold"
                   isLoading={isDeleting}
-                  loadingText="Deleting..."
+                  loadingText={intl.formatMessage({ id: 'parcel.deleting' })}
                   bg="transparent"
                   color="red.500"
                   border="1px solid"

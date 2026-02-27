@@ -33,6 +33,7 @@ import { FaGoogle, FaFacebook } from 'react-icons/fa';
 import { HiOfficeBuilding } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
+import AuthFooter from 'components/Footer/AuthFooter';
 import { StandardField, StandardInput, StandardButton } from 'components/Design/StandardComponents';
 import {
   useSignupWithInvitationMutation,
@@ -477,32 +478,7 @@ const SetupPassword: React.FC = () => {
           </Flex>
         </Grid>
 
-        {/* Professional Footer */}
-        <Box
-          as="footer"
-          bg={useColorModeValue('gray.50', 'gray.900')}
-          borderTop="1px solid"
-          borderColor={useColorModeValue('gray.200', 'gray.700')}
-          py={6}
-          px={8}
-        >
-          <Flex
-            maxW="7xl"
-            mx="auto"
-            direction={{ base: 'column', md: 'row' }}
-            align="center"
-            justify="space-between"
-            gap={4}
-          >
-            <Text
-              fontSize="xs"
-              color={useColorModeValue('gray.500', 'gray.400')}
-              textAlign="center"
-            >
-              © 2025 Trazo. Professional Carbon Intelligence Platform.
-            </Text>
-          </Flex>
-        </Box>
+        <AuthFooter />
       </Box>
     );
   }
@@ -1117,7 +1093,7 @@ const SetupPassword: React.FC = () => {
                     >
                       <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
                         I agree to the{' '}
-                        <RouterLink to="/terms" target="_blank">
+                        <a href="https://trazo.io/terms-conditions" target="_blank" rel="noopener noreferrer">
                           <Text
                             as="span"
                             color="green.500"
@@ -1126,9 +1102,9 @@ const SetupPassword: React.FC = () => {
                           >
                             Terms of Service
                           </Text>
-                        </RouterLink>{' '}
+                        </a>{' '}
                         and{' '}
-                        <RouterLink to="/privacy" target="_blank">
+                        <a href="https://trazo.io/privacy-policy" target="_blank" rel="noopener noreferrer">
                           <Text
                             as="span"
                             color="green.500"
@@ -1137,7 +1113,7 @@ const SetupPassword: React.FC = () => {
                           >
                             Privacy Policy
                           </Text>
-                        </RouterLink>
+                        </a>
                       </Text>
                     </Checkbox>
                     {errors.acceptTerms && (
@@ -1221,71 +1197,7 @@ const SetupPassword: React.FC = () => {
         </Flex>
       </Grid>
 
-      {/* Professional Footer (Same as Producer Pages) */}
-      <Box
-        as="footer"
-        bg={useColorModeValue('gray.50', 'gray.900')}
-        borderTop="1px solid"
-        borderColor={useColorModeValue('gray.200', 'gray.700')}
-        py={6}
-        px={8}
-      >
-        <Flex
-          maxW="7xl"
-          mx="auto"
-          direction={{ base: 'column', md: 'row' }}
-          align="center"
-          justify="space-between"
-          gap={4}
-        >
-          <HStack spacing={6} flexWrap="wrap" justify="center">
-            <RouterLink to="/about">
-              <Text
-                fontSize="sm"
-                color={useColorModeValue('gray.600', 'gray.400')}
-                _hover={{ color: 'green.500' }}
-                transition="color 0.2s"
-              >
-                About
-              </Text>
-            </RouterLink>
-            <RouterLink to="/why-us">
-              <Text
-                fontSize="sm"
-                color={useColorModeValue('gray.600', 'gray.400')}
-                _hover={{ color: 'green.500' }}
-                transition="color 0.2s"
-              >
-                Why Trazo?
-              </Text>
-            </RouterLink>
-            <RouterLink to="/blog">
-              <Text
-                fontSize="sm"
-                color={useColorModeValue('gray.600', 'gray.400')}
-                _hover={{ color: 'green.500' }}
-                transition="color 0.2s"
-              >
-                Blog
-              </Text>
-            </RouterLink>
-            <RouterLink to="/contact">
-              <Text
-                fontSize="sm"
-                color={useColorModeValue('gray.600', 'gray.400')}
-                _hover={{ color: 'green.500' }}
-                transition="color 0.2s"
-              >
-                Contact
-              </Text>
-            </RouterLink>
-          </HStack>
-
-          <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
-            © 2025 Trazo. Professional Carbon Intelligence Platform.
-          </Text>
-        </Flex>
-      </Box>
+      <AuthFooter />
     </Box>
   );
 };

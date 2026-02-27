@@ -243,13 +243,12 @@ function AddCompany({ isEdit = false }) {
       state: data.state, // Required 2-letter US state code
       country: 'US', // US-only focus for now
       zip_code: data.zipCode || '',
-      // Owner and status
-      owner: currentUser.id,
-      is_active: true, // Always start active
-      // Sustainability data
-      sustainability_metadata: JSON.stringify({
+      // Status
+      is_active: true,
+      // Sustainability data (plain object — DRF JSONField handles serialization)
+      sustainability_metadata: {
         sustainability_goals: data.sustainabilityGoals || []
-      })
+      }
     };
 
     console.log('🏢 AddCompany: Submitting company data:', submitData);
@@ -259,17 +258,53 @@ function AddCompany({ isEdit = false }) {
       console.log('🏢 AddCompany: Company created successfully:', result);
     } catch (error) {
       console.error('🏢 AddCompany: Failed to create company:', error);
+
+      // Parse DRF field-level validation errors into readable message
+      let description = 'Please check all required fields and try again.';
+      if (error?.data && typeof error.data === 'object') {
+        if (error.data.message) {
+          description = error.data.message;
+        } else {
+          const fieldErrors = Object.entries(error.data)
+            .filter(([, msgs]) => Array.isArray(msgs))
+            .map(([field, msgs]) => {
+              const label = field.replace(/_/g, ' ');
+              return `${label}: ${msgs.join(', ')}`;
+            });
+          if (fieldErrors.length > 0) {
+            description = fieldErrors.join(' | ');
+          }
+        }
+      } else if (error?.message) {
+        description = error.message;
+      }
+
+      toast({
+        title: 'Error Creating Company',
+        description,
+        status: 'error',
+        duration: 6000,
+        isClosable: true
+      });
     }
   };
 
-  // Handle successful company creation - redirect to pricing
+  // Handle successful company creation - redirect to establishment form
   useEffect(() => {
     if (isSuccessCompany && dataCompany) {
       dispatch(setCompany(dataCompany));
       const { id, name } = dataCompany;
-      dispatch(setUserCompany({ id, name }));
-      // Redirect to pricing page for new companies
-      navigate(`/admin/dashboard/pricing?new_company=true&company_id=${id}`);
+      // Creator is always Company Admin — include role so WriteAccessGuard works immediately
+      dispatch(setUserCompany({ id, name, role: 'Company Admin' }));
+      // Trial auto-started on backend — go straight to establishment creation
+      toast({
+        title: intl.formatMessage({ id: "app.companyCreatedSuccessTitle" }),
+        description: intl.formatMessage({ id: "app.trialStartedDescription" }),
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+      navigate(`/admin/dashboard/establishment/add`);
     }
   }, [isSuccessCompany, dataCompany, dispatch, navigate]);
 

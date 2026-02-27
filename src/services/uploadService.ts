@@ -1,5 +1,29 @@
 import { useGetPresignedUrlMutation, useLocalUploadMutation } from '../store/api/fileApi';
 
+export interface StorageQuotaError {
+  code: 'STORAGE_QUOTA_EXCEEDED' | 'NO_SUBSCRIPTION' | 'NO_STORAGE_ALLOWANCE';
+  error: string;
+  used_gb?: number;
+  limit_gb?: number;
+  remaining_gb?: number;
+  upload_size_gb?: number;
+}
+
+export const isStorageQuotaError = (error: unknown): error is { data: StorageQuotaError } => {
+  if (error && typeof error === 'object' && 'data' in error) {
+    const data = (error as Record<string, unknown>).data;
+    return (
+      !!data &&
+      typeof data === 'object' &&
+      'code' in (data as Record<string, unknown>) &&
+      ['STORAGE_QUOTA_EXCEEDED', 'NO_SUBSCRIPTION', 'NO_STORAGE_ALLOWANCE'].includes(
+        (data as Record<string, unknown>).code as string
+      )
+    );
+  }
+  return false;
+};
+
 /**
  * Custom hook for file uploads that works in both development and production
  */
@@ -29,7 +53,8 @@ export const useFileUpload = () => {
       const { presigned_url, file_url } = await getPresignedUrl({
         filename: file.name,
         fileType: file.type,
-        folder: 'establishments'
+        folder: 'establishments',
+        fileSize: file.size
       }).unwrap();
 
       // Upload to S3 with fetch API (since we're not using axios)

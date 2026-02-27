@@ -32,9 +32,11 @@ import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
 // Custom components
 import { StandardCard } from 'components/Design/StandardComponents';
 import React from 'react';
+import { useIntl } from 'react-intl';
 import avatar4 from 'assets/img/avatars/avatar4.png';
 
 const GeneralCard = ({ review }) => {
+  const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white');
 
   const renderStars = (rating) => {
@@ -86,7 +88,7 @@ const GeneralCard = ({ review }) => {
             {review.written_review}
           </Text>
           <Text color="gray.500" fontSize="xs" fontWeight="medium">
-            Producción: {review.production}
+            {intl.formatMessage({ id: 'commercial.production' }, { name: review.production })}
           </Text>
         </VStack>
       </VStack>

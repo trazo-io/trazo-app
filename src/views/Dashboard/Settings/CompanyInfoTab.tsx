@@ -121,11 +121,32 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
       setIsEditModalOpen(false);
     } catch (error: any) {
       console.error('Error updating company:', error);
+
+      // Parse DRF field-level validation errors into readable message
+      let description = intl.formatMessage({ id: 'app.errorUpdatingCompany' });
+      if (error?.data && typeof error.data === 'object') {
+        if (error.data.message) {
+          description = error.data.message;
+        } else {
+          const fieldErrors = Object.entries(error.data)
+            .filter(([, msgs]) => Array.isArray(msgs))
+            .map(([field, msgs]) => {
+              const label = field.replace(/_/g, ' ');
+              return `${label}: ${(msgs as string[]).join(', ')}`;
+            });
+          if (fieldErrors.length > 0) {
+            description = fieldErrors.join(' | ');
+          }
+        }
+      } else if (error?.message) {
+        description = error.message;
+      }
+
       toast({
         title: intl.formatMessage({ id: 'app.errorUpdating' }),
-        description: error?.data?.message || intl.formatMessage({ id: 'app.errorUpdatingCompany' }),
+        description,
         status: 'error',
-        duration: 4000,
+        duration: 6000,
         isClosable: true
       });
     }

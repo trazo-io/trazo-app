@@ -89,7 +89,7 @@ const StripeSuccessRedirect: React.FC = () => {
 
   const processCheckout = useCallback(async () => {
     if (!sessionId || !companyId) {
-      setError('Missing session or company information.');
+      setError(intl.formatMessage({ id: 'subscription.missingSessionInfo' }));
       return;
     }
     setIsProcessing(true);
@@ -104,10 +104,8 @@ const StripeSuccessRedirect: React.FC = () => {
 
         // Show success toast
         toast({
-          title: isNewCompany ? '¡Suscripción completada!' : 'Suscripción actualizada',
-          description: isNewCompany
-            ? 'Ahora vamos a crear tu primer establecimiento para comenzar a rastrear tu huella de carbono.'
-            : 'Tu suscripción ha sido procesada exitosamente.',
+          title: intl.formatMessage({ id: isNewCompany ? 'subscription.completedTitle' : 'subscription.updatedTitle' }),
+          description: intl.formatMessage({ id: isNewCompany ? 'subscription.completedNewDescription' : 'subscription.updatedDescription' }),
           status: 'success',
           duration: isNewCompany ? 8000 : 5000,
           isClosable: true,
@@ -125,10 +123,10 @@ const StripeSuccessRedirect: React.FC = () => {
           navigate(redirectPath, { replace: true });
         }, delay);
       } else {
-        setError('Subscription could not be verified.');
+        setError(intl.formatMessage({ id: 'subscription.verificationFailed' }));
       }
     } catch (err) {
-      setError('There was an error processing your subscription. Please try again.');
+      setError(intl.formatMessage({ id: 'subscription.processingError' }));
     } finally {
       setIsProcessing(false);
     }
@@ -162,13 +160,11 @@ const StripeSuccessRedirect: React.FC = () => {
     >
       <Spinner size="xl" color="green.500" thickness="4px" speed="0.65s" />
       <Text mt={4} fontSize="lg" fontWeight="medium" color={textColor}>
-        {isNewCompany
-          ? 'Procesando tu suscripción y configurando tu empresa...'
-          : 'Processing your subscription...'}
+        {intl.formatMessage({ id: isNewCompany ? 'subscription.processingNewCompany' : 'subscription.processingGeneric' })}
       </Text>
       {isNewCompany && (
         <Text mt={2} fontSize="sm" color="gray.500" textAlign="center" maxW="md">
-          Te redirigiremos automáticamente para crear tu primer establecimiento
+          {intl.formatMessage({ id: 'subscription.redirectToEstablishment' })}
         </Text>
       )}
       {error && (
@@ -179,7 +175,7 @@ const StripeSuccessRedirect: React.FC = () => {
       )}
       {error && (
         <Button mt={4} colorScheme="green" onClick={processCheckout} isLoading={isProcessing}>
-          Retry
+          {intl.formatMessage({ id: 'subscription.retry' })}
         </Button>
       )}
     </Flex>

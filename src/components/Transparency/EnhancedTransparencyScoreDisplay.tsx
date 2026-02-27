@@ -15,6 +15,7 @@ import {
   SimpleGrid,
   Flex
 } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import { motion } from 'framer-motion';
 import { FaShieldAlt, FaCheckCircle, FaEye, FaCertificate, FaLeaf, FaRegGem } from 'react-icons/fa';
 import { BsShieldCheck } from 'react-icons/bs';
@@ -50,6 +51,8 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
   productName = 'Product',
   showDetailedBreakdown = true
 }) => {
+  const intl = useIntl();
+
   // Theme colors following Trazo patterns
   const bg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
@@ -65,50 +68,50 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
   // Transparency grade calculation following Trazo patterns
   const getTransparencyGrade = (score: number) => {
     if (score >= 95)
-      return { grade: 'A+', text: 'Maximum Transparency', color: 'green', bgColor: 'green.500' };
+      return { grade: 'A+', text: intl.formatMessage({ id: 'transparency.gradeMaximum' }), color: 'green', bgColor: 'green.500' };
     if (score >= 90)
-      return { grade: 'A', text: 'Outstanding Transparency', color: 'green', bgColor: 'green.500' };
+      return { grade: 'A', text: intl.formatMessage({ id: 'transparency.gradeOutstanding' }), color: 'green', bgColor: 'green.500' };
     if (score >= 85)
-      return { grade: 'A-', text: 'Excellent Transparency', color: 'green', bgColor: 'green.400' };
+      return { grade: 'A-', text: intl.formatMessage({ id: 'transparency.gradeExcellent' }), color: 'green', bgColor: 'green.400' };
     if (score >= 80)
-      return { grade: 'B+', text: 'Very Good Transparency', color: 'blue', bgColor: 'blue.500' };
+      return { grade: 'B+', text: intl.formatMessage({ id: 'transparency.gradeVeryGood' }), color: 'blue', bgColor: 'blue.500' };
     if (score >= 70)
-      return { grade: 'B', text: 'Good Transparency', color: 'blue', bgColor: 'blue.400' };
+      return { grade: 'B', text: intl.formatMessage({ id: 'transparency.gradeGood' }), color: 'blue', bgColor: 'blue.400' };
     if (score >= 60)
       return {
         grade: 'C+',
-        text: 'Satisfactory Transparency',
+        text: intl.formatMessage({ id: 'transparency.gradeSatisfactory' }),
         color: 'yellow',
         bgColor: 'yellow.500'
       };
-    return { grade: 'C', text: 'Building Transparency', color: 'orange', bgColor: 'orange.500' };
+    return { grade: 'C', text: intl.formatMessage({ id: 'transparency.gradeBuilding' }), color: 'orange', bgColor: 'orange.500' };
   };
 
   // Consumer-friendly transparency message following Trazo messaging patterns
   const getConsumerMessage = (score: number) => {
     if (score >= 95) {
       return {
-        primary: '🏆 Complete Transparency Champion',
-        secondary: `${productName} shares every detail with exceptional verification`,
-        action: 'You can trust this authentic farming journey completely'
+        primary: `🏆 ${intl.formatMessage({ id: 'transparency.messageChampionPrimary' })}`,
+        secondary: intl.formatMessage({ id: 'transparency.messageChampionSecondary' }, { productName }),
+        action: intl.formatMessage({ id: 'transparency.messageChampionAction' })
       };
     } else if (score >= 85) {
       return {
-        primary: '⭐ Transparency Leader',
-        secondary: `${productName} provides comprehensive documentation and verification`,
-        action: 'Excellent transparency you can rely on'
+        primary: `⭐ ${intl.formatMessage({ id: 'transparency.messageLeaderPrimary' })}`,
+        secondary: intl.formatMessage({ id: 'transparency.messageLeaderSecondary' }, { productName }),
+        action: intl.formatMessage({ id: 'transparency.messageLeaderAction' })
       };
     } else if (score >= 70) {
       return {
-        primary: '✅ Good Transparency',
-        secondary: `${productName} shares important farming information openly`,
-        action: 'Solid transparency with verified practices'
+        primary: `✅ ${intl.formatMessage({ id: 'transparency.messageGoodPrimary' })}`,
+        secondary: intl.formatMessage({ id: 'transparency.messageGoodSecondary' }, { productName }),
+        action: intl.formatMessage({ id: 'transparency.messageGoodAction' })
       };
     } else {
       return {
-        primary: '📈 Building Transparency',
-        secondary: `${productName} is working towards more complete documentation`,
-        action: 'Basic transparency with room for improvement'
+        primary: `📈 ${intl.formatMessage({ id: 'transparency.messageBuildingPrimary' })}`,
+        secondary: intl.formatMessage({ id: 'transparency.messageBuildingSecondary' }, { productName }),
+        action: intl.formatMessage({ id: 'transparency.messageBuildingAction' })
       };
     }
   };
@@ -157,7 +160,7 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                       color={textColor}
                       lineHeight="1"
                     >
-                      Transparency
+                      {intl.formatMessage({ id: 'transparency.label' })}
                     </Text>
                   </VStack>
 
@@ -208,7 +211,7 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                   >
                     <Icon as={MdVerified} color="green.500" boxSize={4} />
                     <Text fontSize="sm" fontWeight="medium" color="green.700">
-                      Farm Documented
+                      {intl.formatMessage({ id: 'transparency.farmDocumented' })}
                     </Text>
                   </HStack>
                 )}
@@ -225,7 +228,7 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                   >
                     <Icon as={BsShieldCheck} color="green.500" boxSize={4} />
                     <Text fontSize="sm" fontWeight="medium" color="green.700">
-                      Blockchain Verified
+                      {intl.formatMessage({ id: 'transparency.blockchainVerifiedLabel' })}
                     </Text>
                   </HStack>
                 )}
@@ -242,7 +245,7 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                   >
                     <Icon as={FaEye} color="gray.500" boxSize={4} />
                     <Text fontSize="sm" fontWeight="medium" color="gray.600">
-                      Basic Documentation
+                      {intl.formatMessage({ id: 'transparency.basicDocumentation' })}
                     </Text>
                   </HStack>
                 )}
@@ -270,7 +273,7 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
             <Box w="full" maxW="md">
               <HStack justify="space-between" mb={2}>
                 <Text fontSize="sm" fontWeight="medium" color={textColor}>
-                  Transparency Level
+                  {intl.formatMessage({ id: 'transparency.transparencyLevel' })}
                 </Text>
                 <Text fontSize="sm" color={`${grade.color}.600`} fontWeight="bold">
                   {grade.text}
@@ -302,14 +305,14 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
               <HStack justify="space-between" align="center">
                 <VStack align="start" spacing={1}>
                   <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                    Transparency Breakdown
+                    {intl.formatMessage({ id: 'transparency.breakdown' })}
                   </Text>
                   <Text fontSize="sm" color={mutedColor}>
-                    How we calculate this transparency score
+                    {intl.formatMessage({ id: 'transparency.breakdownDescription' })}
                   </Text>
                 </VStack>
                 <Badge colorScheme="green" variant="outline" px={3} py={1}>
-                  {breakdown.length} Categories
+                  {intl.formatMessage({ id: 'transparency.categoriesCount' }, { count: breakdown.length })}
                 </Badge>
               </HStack>
 
@@ -364,7 +367,7 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                           <Box>
                             <HStack justify="space-between" mb={1}>
                               <Text fontSize="xs" color={mutedColor}>
-                                Score
+                                {intl.formatMessage({ id: 'transparency.score' })}
                               </Text>
                               <Text fontSize="xs" fontWeight="bold" color={`${item.color}.600`}>
                                 {item.score}/{item.maxScore}
@@ -405,17 +408,14 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
           <Icon as={FaShieldAlt} color={`${grade.color}.500`} boxSize={8} />
           <VStack spacing={2}>
             <Text fontSize="lg" fontWeight="bold" color={`${grade.color}.700`}>
-              Why Transparency Matters
+              {intl.formatMessage({ id: 'transparency.whyMattersTitle' })}
             </Text>
             <Text fontSize="sm" color={`${grade.color}.600`} maxW="lg">
-              Transparency scores help you choose products from farms that openly share their
-              practices. Higher scores mean more complete documentation and verification of
-              sustainable farming methods.
+              {intl.formatMessage({ id: 'transparency.whyMattersDescription' })}
             </Text>
           </VStack>
           <Text fontSize="xs" color={mutedColor} fontStyle="italic">
-            💡 Supporting transparent farms encourages honest, sustainable practices across
-            agriculture
+            💡 {intl.formatMessage({ id: 'transparency.whyMattersNote' })}
           </Text>
         </VStack>
       </MotionBox>

@@ -122,18 +122,18 @@
   outline: none !important;
 }
 
-/* Remove sidebar hover effects */
-.sidebar-container a:hover,
-.sidebar-container button:hover,
-.sidebar-container .chakra-button:hover,
+/* Remove sidebar hover effects (exclude help section button) */
+.sidebar-container a:hover:not(.sidebar-help-btn),
+.sidebar-container button:hover:not(.sidebar-help-btn),
+.sidebar-container .chakra-button:hover:not(.sidebar-help-btn),
 .sidebar-container .chakra-accordion__button:hover {
   background-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
-/* Remove hover background from all sidebar elements */
-.sidebar-container *:hover {
+/* Remove hover background from all sidebar elements (exclude help section) */
+.sidebar-container *:not(.sidebar-help-btn):not(.sidebar-help-box):not(.sidebar-help-box *):hover {
   background-color: transparent !important;
 }
 

@@ -48,7 +48,7 @@ import {
   FaRedo
 } from 'react-icons/fa';
 import { IoMdImages } from 'react-icons/io';
-import { useFileUpload } from '../../services/uploadService';
+import { useFileUpload, isStorageQuotaError } from '../../services/uploadService';
 import { S3Image } from '../Media/S3Image';
 
 const MotionBox = motion(Box);
@@ -221,25 +221,34 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         } catch (error) {
           console.error(`Upload failed for ${file.name}:`, error);
 
+          let errorMessage = 'Upload failed. Tap to retry.';
+          let toastTitle = 'Upload failed';
+          let toastDescription = `Failed to upload ${file.name}. Check your connection and try again.`;
+
+          if (isStorageQuotaError(error)) {
+            const quotaError = (error as { data: { error: string; remaining_gb?: number; limit_gb?: number } }).data;
+            errorMessage = 'Storage limit reached.';
+            toastTitle = 'Storage limit reached';
+            toastDescription =
+              quotaError.remaining_gb !== undefined
+                ? `You have ${quotaError.remaining_gb.toFixed(2)} GB remaining out of ${quotaError.limit_gb} GB. Upgrade your plan for more storage.`
+                : quotaError.error || 'Your storage limit has been reached. Please upgrade your plan.';
+          }
+
           // Mark as error by file name
           setUploadingFiles((prev) =>
             prev.map((item) =>
               item.file.name === file.name
-                ? {
-                    ...item,
-                    status: 'error',
-                    errorMessage: 'Upload failed. Tap to retry.'
-                  }
+                ? { ...item, status: 'error', errorMessage }
                 : item
             )
           );
 
-          // 🚨 CLEAR ERROR FEEDBACK
           toast({
-            title: '❌ Upload failed',
-            description: `Failed to upload ${file.name}. Check your connection and try again.`,
+            title: toastTitle,
+            description: toastDescription,
             status: 'error',
-            duration: 4000,
+            duration: 6000,
             isClosable: true
           });
         }
@@ -394,17 +403,32 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         duration: 2000
       });
     } catch (error) {
+      const isQuotaError = isStorageQuotaError(error);
+      const retryErrorMessage = isQuotaError
+        ? 'Storage limit reached.'
+        : 'Still having trouble. Check your connection.';
+
       setUploadingFiles((prev) =>
         prev.map((item) =>
           item.file.name === failedFile.file.name
-            ? {
-                ...item,
-                status: 'error',
-                errorMessage: 'Still having trouble. Check your connection.'
-              }
+            ? { ...item, status: 'error', errorMessage: retryErrorMessage }
             : item
         )
       );
+
+      if (isQuotaError) {
+        const quotaError = (error as { data: { error: string; remaining_gb?: number; limit_gb?: number } }).data;
+        toast({
+          title: 'Storage limit reached',
+          description:
+            quotaError.remaining_gb !== undefined
+              ? `You have ${quotaError.remaining_gb.toFixed(2)} GB remaining out of ${quotaError.limit_gb} GB. Upgrade your plan for more storage.`
+              : quotaError.error || 'Your storage limit has been reached. Please upgrade your plan.',
+          status: 'error',
+          duration: 6000,
+          isClosable: true
+        });
+      }
     }
   };
 

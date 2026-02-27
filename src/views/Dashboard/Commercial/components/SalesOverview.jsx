@@ -5,8 +5,10 @@ import { FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
 // Custom components
 import { StandardCard } from 'components/Design/StandardComponents';
 import React from 'react';
+import { useIntl } from 'react-intl';
 
 const SalesOverview = ({ title, percentage, chart, period = '2024' }) => {
+  const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white');
   const isPositive = percentage > 0;
 
@@ -34,11 +36,13 @@ const SalesOverview = ({ title, percentage, chart, period = '2024' }) => {
                 {percentage}%
               </Text>
               <Text fontSize="sm" color="gray.600">
-                vs año anterior
+                {intl.formatMessage({ id: 'commercial.vsPreviousYear' })}
               </Text>
             </HStack>
             <Text fontSize="xs" color="gray.500">
-              {isPositive ? 'Crecimiento positivo' : 'Disminución'} en {period}
+              {isPositive
+                ? intl.formatMessage({ id: 'commercial.positiveGrowth' }, { period })
+                : intl.formatMessage({ id: 'commercial.decline' }, { period })}
             </Text>
           </VStack>
         </HStack>
@@ -56,9 +60,9 @@ const SalesOverview = ({ title, percentage, chart, period = '2024' }) => {
           {chart || (
             <Flex justify="center" align="center" h="100%" direction="column" color="gray.500">
               <Text fontSize="md" fontWeight="medium">
-                Gráfico no disponible
+                {intl.formatMessage({ id: 'commercial.chartNotAvailable' })}
               </Text>
-              <Text fontSize="sm">Los datos se mostrarán cuando estén disponibles</Text>
+              <Text fontSize="sm">{intl.formatMessage({ id: 'commercial.dataWillShowWhenAvailable' })}</Text>
             </Flex>
           )}
         </Box>

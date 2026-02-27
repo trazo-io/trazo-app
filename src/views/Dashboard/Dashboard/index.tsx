@@ -254,7 +254,7 @@ export default function DashboardView() {
     // Return loading indicator to prevent rendering the rest of the component
     return (
       <Flex justify="center" align="center" h="100vh">
-        Redirecting...
+        {intl.formatMessage({ id: 'app.redirecting' })}
       </Flex>
     );
   }
@@ -426,14 +426,14 @@ export default function DashboardView() {
           <Flex justify="space-between" align="center">
             <Box>
               <Text fontSize="lg" fontWeight="bold" color="green.800" mb={2}>
-                🎉 Welcome to the team!
+                {intl.formatMessage({ id: 'dashboard.welcomeToTeam' })}
               </Text>
               <Text color="green.700" fontSize="sm">
                 {isCompanyJoin
-                  ? "Your email is verified and you've successfully joined the company! You can start tracking carbon impact immediately."
+                  ? intl.formatMessage({ id: 'dashboard.welcomeVerifiedJoined' })
                   : joinSource === 'company_join'
-                  ? 'Your account is ready and you can start tracking carbon impact immediately. Check your email for additional setup information.'
-                  : 'Welcome to your dashboard! You can start exploring right away.'}
+                  ? intl.formatMessage({ id: 'dashboard.welcomeAccountReady' })
+                  : intl.formatMessage({ id: 'dashboard.welcomeExplore' })}
               </Text>
             </Box>
             <Button
@@ -573,7 +573,7 @@ export default function DashboardView() {
                               <Flex direction="column" align="center" justify="center" gap={1}>
                                 <Icon as={FaPlus} color="green.500" fontSize="20px" />
                                 <Text fontSize="xs" fontWeight="medium" color="green.600">
-                                  New
+                                  {intl.formatMessage({ id: 'app.new' })}
                                 </Text>
                               </Flex>
                             </Button>

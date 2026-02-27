@@ -21,6 +21,7 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
 
   return (
     <Box
+      className="sidebar-help-box"
       bg={bgColor}
       borderRadius="xl"
       borderWidth="1px"
@@ -64,6 +65,7 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
         {/* Documentation Button */}
         {isExpanded && (
           <Button
+            className="sidebar-help-btn"
             as={Link}
             to="/admin/dashboard/education"
             size="sm"

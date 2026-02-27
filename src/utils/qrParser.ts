@@ -108,7 +108,11 @@ export async function verifySecureQR(url: string): Promise<{
   error?: string;
 }> {
   try {
-    const response = await fetch('/api/security/verify-qr/', {
+    // Use absolute backend URL - consumer app runs on different domain
+    const apiBaseUrl =
+      import.meta.env.VITE_APP_BACKEND_URL ||
+      (import.meta.env.DEV ? 'http://localhost:8000/api' : 'https://api.trazo.io/api');
+    const response = await fetch(`${apiBaseUrl}/security/verify-qr/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

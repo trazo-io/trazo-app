@@ -20,6 +20,17 @@ const authSlice = createSlice({
       state.data = null;
       state.isAuthenticated = false;
       state.isLoading = false;
+
+      // Clean up all Stripe checkout and subscription bypass flags so they
+      // do not bleed into the next user session after logout.
+      localStorage.removeItem('navigation_to_pricing');
+      localStorage.removeItem('subscription_bypass_temp');
+      localStorage.removeItem('subscription_bypass_until');
+      localStorage.removeItem('stripe_checkout_in_progress');
+      localStorage.removeItem('redirect_from_stripe');
+      localStorage.removeItem('subscription_company_id');
+      localStorage.removeItem('prevent_pricing_page');
+      localStorage.removeItem('skip_pricing_render');
     },
     setData: (state, { payload }) => {
       const newData = state.data ? { ...state.data, ...payload.data } : payload.data;

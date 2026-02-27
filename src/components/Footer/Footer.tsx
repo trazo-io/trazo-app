@@ -1,88 +1,67 @@
-/*!
-
-=========================================================
-* Purity UI Dashboard PRO - v1.0.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/purity-ui-dashboard-pro
-* Copyright 2021 Creative Tim (https://www.creative-tim.com/)
-
-* Design by Creative Tim & Coded by Simmmple
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
-
-import { Flex, Link, List, ListItem, Text } from '@chakra-ui/react';
-
+import { Flex, Link, Text } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
+
+const LANDING_URL = 'https://trazo.io';
 
 export default function Footer() {
   const intl = useIntl();
+
   return (
     <Flex
-      flexDirection={{
-        base: 'column',
-        xl: 'row'
-      }}
-      alignItems={{
-        base: 'center',
-        xl: 'start'
-      }}
+      flexDirection={{ base: 'column', xl: 'row' }}
+      alignItems="center"
       justifyContent="space-between"
       px="30px"
       pb="20px"
       pt="20px"
+      gap={{ base: 3, xl: 0 }}
     >
       <Text
         color="gray.400"
-        textAlign={{
-          base: 'center',
-          xl: 'start'
-        }}
-        mb={{ base: '20px', xl: '0px' }}
+        textAlign={{ base: 'center', xl: 'start' }}
+        fontSize="sm"
       >
-        &copy; {new Date().getFullYear()} Trazo.
+        &copy; {new Date().getFullYear()} Trazo. Agricultural Transparency
+        Platform.
       </Text>
-      <List display="flex">
-        <ListItem
-          me={{
-            base: '20px',
-            md: '44px'
-          }}
+      <Flex gap={{ base: '16px', md: '32px' }} flexWrap="wrap" justifyContent="center">
+        <Link
+          href={`${LANDING_URL}/privacy-policy`}
+          color="gray.400"
+          fontSize="sm"
+          isExternal
+          _hover={{ color: 'green.500' }}
         >
-          <Link color="gray.400" href="">
-            {intl.formatMessage({ id: 'app.about' })}
-          </Link>
-        </ListItem>
-        <ListItem
-          me={{
-            base: '20px',
-            md: '44px'
-          }}
+          {intl.formatMessage({ id: 'app.privacyPolicy' })}
+        </Link>
+        <Link
+          href={`${LANDING_URL}/terms-conditions`}
+          color="gray.400"
+          fontSize="sm"
+          isExternal
+          _hover={{ color: 'green.500' }}
         >
-          <Link color="gray.400" href="">
-            {intl.formatMessage({ id: 'app.whyUs' })}
-          </Link>
-        </ListItem>
-        <ListItem
-          me={{
-            base: '20px',
-            md: '44px'
-          }}
+          {intl.formatMessage({ id: 'app.termsOfService' })}
+        </Link>
+        <Link
+          href={`${LANDING_URL}/about-us`}
+          color="gray.400"
+          fontSize="sm"
+          isExternal
+          _hover={{ color: 'green.500' }}
         >
-          <Link color="gray.400" href="">
-            {intl.formatMessage({ id: 'app.blog' })}
-          </Link>
-        </ListItem>
-        <ListItem>
-          <Link color="gray.400" href="">
-            {intl.formatMessage({ id: 'app.contactUs' })}
-          </Link>
-        </ListItem>
-      </List>
+          {intl.formatMessage({ id: 'app.about' })}
+        </Link>
+        <Link
+          href={`${LANDING_URL}/contact`}
+          color="gray.400"
+          fontSize="sm"
+          isExternal
+          _hover={{ color: 'green.500' }}
+        >
+          {intl.formatMessage({ id: 'app.contactUs' })}
+        </Link>
+      </Flex>
     </Flex>
   );
 }

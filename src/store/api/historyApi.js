@@ -34,7 +34,7 @@ export const historyApi = baseApi.injectEndpoints({
         });
 
         for (const [key, value] of Object.entries(historyData)) {
-          if (key !== 'album') {
+          if (key !== 'album' && value !== null && value !== undefined && value !== '') {
             formData.append(key, value);
           }
         }

@@ -8,10 +8,20 @@ import {
 } from '../../config/backend';
 
 // Interface definitions
+export interface UsageWarning {
+  metric: string;
+  label: string;
+  used: number;
+  limit: number;
+  percentage: number;
+  level: 'warning' | 'critical';
+}
+
 export interface Subscription {
   id: number;
   company: any;
-  plan: any;
+  plan: Plan | null;
+  pending_plan: Plan | null;
   status: string;
   stripe_subscription_id: string;
   stripe_customer_id: string;
@@ -22,6 +32,7 @@ export interface Subscription {
   used_storage_gb: number;
   scan_count: number;
   trial_end: string | null;
+  usage_warnings: UsageWarning[];
 }
 
 export interface Plan {
@@ -82,7 +93,6 @@ export const billingApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       transformResponse: (response: any) => {
-        console.log('Raw billing dashboard response:', response);
         return {
           subscription: Array.isArray(response.subscription)
             ? response.subscription
@@ -118,7 +128,6 @@ export const billingApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       transformResponse: (response: any) => {
-        console.log('Raw subscription response:', response);
         if (Array.isArray(response)) {
           return response;
         } else if (response && typeof response === 'object') {
@@ -309,6 +318,20 @@ export const billingApi = baseApi.injectEndpoints({
       })
     }),
 
+    // Start free trial (Starter plan)
+    startTrial: builder.mutation<any, { companyId: number }>({
+      query: ({ companyId }) => ({
+        url: `${SUBSCRIPTIONS_URL()}start-trial/`,
+        method: 'POST',
+        body: { company_id: companyId },
+        credentials: 'include'
+      }),
+      invalidatesTags: [
+        { type: 'Subscription' as const, id: 'LIST' },
+        { type: 'Company' as const, id: 'LIST' }
+      ]
+    }),
+
     // Blockchain subscription endpoints
     subscribeBlockchain: builder.mutation<{ checkout_url: string; session_id: string }, void>({
       query: () => ({
@@ -372,6 +395,7 @@ export const {
   useRemovePaymentMethodMutation,
   useCreateCheckoutSessionMutation,
   useCreateCustomerPortalSessionMutation,
+  useStartTrialMutation,
   useSubscribeBlockchainMutation,
   useGetBlockchainSubscriptionStatusQuery,
   useLazyGetBlockchainSubscriptionStatusQuery,

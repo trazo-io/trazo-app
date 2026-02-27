@@ -30,6 +30,7 @@ export interface EnvironmentConfig {
   readonly ENABLE_DEVTOOLS: boolean;
   readonly ENABLE_ANALYTICS: boolean;
   readonly ENABLE_PERFORMANCE_MONITORING: boolean;
+  readonly PAYMENTS_ENABLED: boolean;
 
   // File Upload
   readonly MAX_FILE_SIZE: number;
@@ -117,6 +118,7 @@ function createEnvironmentConfig(): EnvironmentConfig {
     ENABLE_DEVTOOLS: isDevelopment || env.VITE_ENABLE_DEVTOOLS === 'true',
     ENABLE_ANALYTICS: isProduction && env.VITE_ENABLE_ANALYTICS !== 'false',
     ENABLE_PERFORMANCE_MONITORING: env.VITE_ENABLE_PERFORMANCE_MONITORING === 'true',
+    PAYMENTS_ENABLED: env.VITE_APP_PAYMENTS_ENABLED === 'true',
 
     // File Upload
     MAX_FILE_SIZE: parseInt(env.VITE_MAX_FILE_SIZE || '10485760', 10), // 10MB

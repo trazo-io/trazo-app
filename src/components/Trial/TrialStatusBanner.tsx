@@ -15,6 +15,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from 'store';
 import { useNavigate } from 'react-router-dom';
+import { useIntl } from 'react-intl';
 import { Company } from 'types/company';
 import { useOnboarding } from 'hooks/useOnboarding';
 
@@ -26,6 +27,7 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
   showOnlyWhenTrialExpiringSoon = false
 }) => {
   const navigate = useNavigate();
+  const intl = useIntl();
   const { openOnboarding, resetOnboarding } = useOnboarding();
 
   // Get company data from Redux
@@ -36,7 +38,7 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
       return auth.companies.find((company: Company) => company.id === selectedId) || null;
     }
 
-    const companyState = state.companySlice as any;
+    const companyState = (state as any).company;
     if (companyState && companyState.currentCompany) {
       return companyState.currentCompany;
     }
@@ -44,38 +46,52 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
     return null;
   });
 
-  // Color mode values
+  // Color mode values — all hooks MUST be called before any conditional returns
   const alertBg = useColorModeValue('orange.50', 'orange.900');
   const alertBorder = useColorModeValue('orange.200', 'orange.700');
   const progressBg = useColorModeValue('orange.100', 'orange.800');
-  const progressColor = useColorModeValue('orange.400', 'orange.500');
 
   if (!company) return null;
 
-  // Check if company has active subscription
+  // Check if company has active (paid) subscription
   const hasActiveSubscription =
     company.has_subscription === true ||
     (company.subscription &&
-      (company.subscription.id || company.subscription.status === 'active')) ||
+      (company.subscription.status === 'active' ||
+        (company.subscription.status === 'active'))) ||
     (company.subscription_plan && company.subscription_plan.id);
 
-  // Don't show banner if user has active subscription
+  // Don't show banner if user has active paid subscription
   if (hasActiveSubscription) return null;
 
-  // Calculate trial status
-  const companyCreatedDate = new Date(company.created_at || company.date_joined);
-  const trialEndDate = new Date(companyCreatedDate.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days
+  // Check if subscription is in trialing status
+  const isTrialingSubscription =
+    company.subscription && company.subscription.status === 'trialing';
+
+  // Calculate trial status from subscription trial_end or fallback to created_at
+  let daysRemaining: number;
   const now = new Date();
 
+  if (isTrialingSubscription && company.subscription.trial_end) {
+    const trialEnd = new Date(company.subscription.trial_end);
+    daysRemaining = Math.max(
+      0,
+      Math.ceil((trialEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+    );
+  } else {
+    const companyCreatedDate = new Date(company.created_at || company.date_joined);
+    const totalTrialDays = 14;
+    const daysElapsed = Math.floor(
+      (now.getTime() - companyCreatedDate.getTime()) / (24 * 60 * 60 * 1000)
+    );
+    daysRemaining = Math.max(0, totalTrialDays - daysElapsed);
+  }
+
   const totalTrialDays = 14;
-  const daysElapsed = Math.floor(
-    (now.getTime() - companyCreatedDate.getTime()) / (24 * 60 * 60 * 1000)
-  );
-  const daysRemaining = Math.max(0, totalTrialDays - daysElapsed);
-  const trialProgress = Math.min(100, (daysElapsed / totalTrialDays) * 100);
+  const trialProgress = Math.min(100, ((totalTrialDays - daysRemaining) / totalTrialDays) * 100);
 
   const isTrialExpired = daysRemaining === 0;
-  const isTrialExpiringSoon = daysRemaining <= 3; // Show when 3 days or less remaining
+  const isTrialExpiringSoon = daysRemaining <= 3;
 
   // If only showing when expiring soon and trial is not expiring soon, don't show
   if (showOnlyWhenTrialExpiringSoon && !isTrialExpiringSoon && !isTrialExpired) {
@@ -99,14 +115,14 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
         <AlertIcon />
         <Box flex="1">
           <AlertTitle fontSize="sm" fontWeight="600">
-            Trial Expired
+            {intl.formatMessage({ id: 'app.trialExpired' })}
           </AlertTitle>
           <AlertDescription fontSize="sm">
-            Your 14-day trial has ended. Upgrade to continue accessing all Trazo features.
+            {intl.formatMessage({ id: 'app.trialExpiredDescription' })}
           </AlertDescription>
         </Box>
         <Button size="sm" colorScheme="red" onClick={handleUpgradeClick}>
-          Upgrade Now
+          {intl.formatMessage({ id: 'app.upgradeNow' })}
         </Button>
       </Alert>
     );
@@ -125,19 +141,20 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
       <Box flex="1">
         <Flex justify="space-between" align="center" mb={2}>
           <AlertTitle fontSize="sm" fontWeight="600">
-            Free Trial Active
+            {intl.formatMessage({ id: 'app.freeTrialActive' })}
           </AlertTitle>
           <Text fontSize="xs" fontWeight="500" color="orange.600">
-            {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining
+            {intl.formatMessage({ id: 'app.trialDaysRemaining' }, { days: daysRemaining })}
           </Text>
         </Flex>
 
         <AlertDescription fontSize="sm" mb={3}>
           {isTrialExpiringSoon
-            ? `Your trial expires in ${daysRemaining} day${
-                daysRemaining !== 1 ? 's' : ''
-              }. Upgrade to keep your carbon tracking data.`
-            : `You're exploring Trazo with full access to all features.`}
+            ? intl.formatMessage(
+                { id: 'app.trialExpiringSoonMessage' },
+                { days: daysRemaining }
+              )
+            : intl.formatMessage({ id: 'app.trialExploringMessage' })}
         </AlertDescription>
 
         <Progress
@@ -151,7 +168,9 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
 
         <HStack spacing={2}>
           <Button size="sm" colorScheme="green" onClick={handleUpgradeClick}>
-            {isTrialExpiringSoon ? 'Upgrade Now' : 'View Pricing'}
+            {isTrialExpiringSoon
+              ? intl.formatMessage({ id: 'app.upgradeNow' })
+              : intl.formatMessage({ id: 'app.viewPricing' })}
           </Button>
           <Button
             size="sm"
@@ -162,10 +181,10 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
               openOnboarding();
             }}
           >
-            Setup Guide
+            {intl.formatMessage({ id: 'app.setupGuide' })}
           </Button>
           <Text fontSize="xs" color="gray.500" alignSelf="center">
-            No credit card required for trial
+            {intl.formatMessage({ id: 'app.noCreditCardForTrial' })}
           </Text>
         </HStack>
       </Box>

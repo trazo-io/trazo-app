@@ -95,8 +95,17 @@ const NoSubscriptionRedirect = ({ children }: { children: React.ReactNode }) => 
           : undefined
     });
 
+    // Do not redirect users whose subscription is in trialing status
+    const isTrialing =
+      currentCompany &&
+      typeof currentCompany === 'object' &&
+      'subscription' in currentCompany &&
+      currentCompany.subscription &&
+      (currentCompany.subscription as any).status === 'trialing';
+
     // Check if company exists but has no subscription
     if (
+      !isTrialing &&
       currentCompany &&
       typeof currentCompany === 'object' &&
       Object.keys(currentCompany).length > 0 &&

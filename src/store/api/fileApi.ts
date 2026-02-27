@@ -5,7 +5,7 @@ export const fileApi = baseApi.injectEndpoints({
     // Generate presigned URL for S3 uploads (used in production)
     getPresignedUrl: build.mutation<
       { presigned_url: string; file_url: string; s3_key: string },
-      { filename: string; fileType: string; folder?: string }
+      { filename: string; fileType: string; folder?: string; fileSize?: number }
     >({
       query: (data) => ({
         url: 'get-presigned-url/',

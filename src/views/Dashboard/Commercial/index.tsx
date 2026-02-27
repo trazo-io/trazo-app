@@ -47,7 +47,7 @@ import { productApi } from 'store/api/productApi';
 import { scansData } from 'variables/general';
 import { useGetEstablishmentProductReputationQuery } from 'store/api/reviewApi';
 import { useGetScansByEstablishmentQuery } from 'store/api/historyApi';
-import { useIntl } from 'react-intl';
+import { useIntl, FormattedMessage } from 'react-intl';
 import { useSelector } from 'react-redux';
 import {
   Stat,
@@ -72,6 +72,7 @@ interface CustomerQualityAnalyticsProps {
 }
 
 const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnalyticsProps) => {
+  const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white');
 
   // Calculate quality metrics from actual filtered scan data
@@ -158,7 +159,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
 
   if (isLoading) {
     return (
-      <StandardCard title="Customer Quality Analytics" variant="elevated">
+      <StandardCard title={intl.formatMessage({ id: 'commercial.customerQualityAnalytics' })} variant="elevated">
         <Flex justify="center" align="center" h="200px">
           <CircularProgress isIndeterminate color="green.500" />
         </Flex>
@@ -168,8 +169,8 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
 
   return (
     <StandardCard
-      title="Customer Quality Analytics"
-      subtitle="Authentic customer engagement insights"
+      title={intl.formatMessage({ id: 'commercial.customerQualityAnalytics' })}
+      subtitle={intl.formatMessage({ id: 'commercial.customerQualitySubtitle' })}
       variant="elevated"
     >
       <SimpleGrid columns={{ base: 2, md: 4 }} spacing={6}>
@@ -178,13 +179,13 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           <StatLabel fontSize="sm" color="gray.600">
             <HStack spacing={2}>
               <Tooltip
-                label="Escaneos realizados por consumidores reales vs sistemas automatizados. Los humanos dedican más tiempo a leer y explorar la información."
+                label={intl.formatMessage({ id: 'commercial.humanScansTooltip' })}
                 placement="top"
                 hasArrow
               >
                 <HStack spacing={2}>
                   <Icon as={FaUser} color="green.500" boxSize={4} />
-                  <Text>Human Scans</Text>
+                  <Text>{intl.formatMessage({ id: 'commercial.humanScans' })}</Text>
                 </HStack>
               </Tooltip>
             </HStack>
@@ -193,17 +194,17 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
             {humanPercentage}%
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500">
-            {metrics.humanScans} of {metrics.totalScans} scans
+            {intl.formatMessage({ id: 'commercial.humanScansCount' }, { human: metrics.humanScans, total: metrics.totalScans })}
             <Badge
               ml={2}
               colorScheme={humanPercentage > 80 ? 'green' : humanPercentage > 60 ? 'yellow' : 'red'}
               size="sm"
             >
               {humanPercentage > 80
-                ? 'Excellent'
+                ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
                 : humanPercentage > 60
-                ? 'Good'
-                : 'Needs Attention'}
+                ? intl.formatMessage({ id: 'commercial.ratingGood' })
+                : intl.formatMessage({ id: 'commercial.ratingNeedsAttention' })}
             </Badge>
           </StatHelpText>
         </Stat>
@@ -213,14 +214,14 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           <StatLabel fontSize="sm" color="gray.600">
             <HStack spacing={2}>
               <Icon as={FaChartLine} color="green.500" boxSize={4} />
-              <Text>High Engagement</Text>
+              <Text>{intl.formatMessage({ id: 'commercial.highEngagement' })}</Text>
             </HStack>
           </StatLabel>
           <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
             {engagementPercentage}%
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500">
-            {metrics.highEngagement} deeply engaged
+            {intl.formatMessage({ id: 'commercial.deeplyEngaged' }, { count: metrics.highEngagement })}
             <Badge
               ml={2}
               colorScheme={
@@ -229,10 +230,10 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
               size="sm"
             >
               {engagementPercentage > 70
-                ? 'Excellent'
+                ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
                 : engagementPercentage > 50
-                ? 'Good'
-                : 'Improving'}
+                ? intl.formatMessage({ id: 'commercial.ratingGood' })
+                : intl.formatMessage({ id: 'commercial.ratingImproving' })}
             </Badge>
           </StatHelpText>
         </Stat>
@@ -242,14 +243,14 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           <StatLabel fontSize="sm" color="gray.600">
             <HStack spacing={2}>
               <Icon as={FaShieldAlt} color="green.500" boxSize={4} />
-              <Text>Unique Sessions</Text>
+              <Text>{intl.formatMessage({ id: 'commercial.uniqueSessions' })}</Text>
             </HStack>
           </StatLabel>
           <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
             {uniquePercentage}%
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500">
-            {metrics.uniqueSessions} unique visitors
+            {intl.formatMessage({ id: 'commercial.uniqueVisitors' }, { count: metrics.uniqueSessions })}
             <Badge
               ml={2}
               colorScheme={
@@ -258,10 +259,10 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
               size="sm"
             >
               {uniquePercentage > 90
-                ? 'Excellent'
+                ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
                 : uniquePercentage > 75
-                ? 'Good'
-                : 'Check Quality'}
+                ? intl.formatMessage({ id: 'commercial.ratingGood' })
+                : intl.formatMessage({ id: 'commercial.ratingCheckQuality' })}
             </Badge>
           </StatHelpText>
         </Stat>
@@ -271,16 +272,16 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           <StatLabel fontSize="sm" color="gray.600">
             <HStack spacing={2}>
               <Icon as={FaShieldAlt} color="green.500" boxSize={4} />
-              <Text>Privacy Compliant</Text>
+              <Text>{intl.formatMessage({ id: 'commercial.privacyCompliant' })}</Text>
             </HStack>
           </StatLabel>
           <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
             {consentPercentage}%
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500">
-            {metrics.consentedScans} consented scans
+            {intl.formatMessage({ id: 'commercial.consentedScans' }, { count: metrics.consentedScans })}
             <Badge ml={2} colorScheme="green" size="sm">
-              GDPR Compliant
+              {intl.formatMessage({ id: 'commercial.gdprCompliant' })}
             </Badge>
           </StatHelpText>
         </Stat>
@@ -294,11 +295,10 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
             <HStack spacing={4} wrap="wrap">
               <VStack align="start" spacing={1}>
                 <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                  Quality Score:{' '}
-                  {Math.round((humanPercentage + engagementPercentage + uniquePercentage) / 3)}%
+                  {intl.formatMessage({ id: 'commercial.qualityScore' }, { score: Math.round((humanPercentage + engagementPercentage + uniquePercentage) / 3) })}
                 </Text>
                 <Text fontSize="xs" color="green.600">
-                  Based on authenticity, engagement, and uniqueness metrics
+                  {intl.formatMessage({ id: 'commercial.qualityScoreDescription' })}
                 </Text>
               </VStack>
 
@@ -306,14 +306,14 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
 
               <VStack align="start" spacing={1}>
                 <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                  Recommendation
+                  {intl.formatMessage({ id: 'commercial.recommendation' })}
                 </Text>
                 <Text fontSize="xs" color="green.600">
                   {humanPercentage > 85
-                    ? 'Excellent customer authenticity! Continue current marketing strategies.'
+                    ? intl.formatMessage({ id: 'commercial.recommendationExcellent' })
                     : humanPercentage > 70
-                    ? 'Good customer quality. Consider enhancing engagement tactics.'
-                    : 'Monitor for automated scanning. Focus on genuine customer outreach.'}
+                    ? intl.formatMessage({ id: 'commercial.recommendationGood' })
+                    : intl.formatMessage({ id: 'commercial.recommendationLow' })}
                 </Text>
               </VStack>
             </HStack>
@@ -323,38 +323,31 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           <Box p={4} bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200">
             <VStack align="start" spacing={3}>
               <Text fontSize="sm" fontWeight="semibold" color="blue.700">
-                💡 Entendiendo la Clasificación de Escaneos
+                💡 {intl.formatMessage({ id: 'commercial.educationTitle' })}
               </Text>
               <VStack align="start" spacing={2} fontSize="xs" color="blue.600">
                 <Text>
-                  <strong>Escaneos Humanos (Todos):</strong> Actualmente clasificamos TODOS los
-                  escaneos como humanos por defecto. Esta es una decisión conservadora que favorece
-                  a los productores.
+                  {intl.formatMessage({ id: 'commercial.educationHumanScans' })}
                 </Text>
                 <Text>
-                  <strong>Sistema de Detección:</strong> Nuestro sistema usa dos métodos para
-                  clasificar escaneos:
+                  {intl.formatMessage({ id: 'commercial.educationDetectionSystem' })}
                 </Text>
                 <VStack align="start" spacing={1} pl={4} fontSize="xs">
                   <Text>
-                    • <strong>Automático:</strong> Si el backend proporciona un puntaje de bot, lo
-                    usamos
+                    • {intl.formatMessage({ id: 'commercial.educationAutomatic' })}
                   </Text>
                   <Text>
-                    • <strong>Por defecto:</strong> Sin puntaje del backend, asumimos que es humano
+                    • {intl.formatMessage({ id: 'commercial.educationDefault' })}
                   </Text>
                   <Text>
-                    • <strong>Realista:</strong> La mayoría de escaneos QR son de consumidores
-                    genuinos
+                    • {intl.formatMessage({ id: 'commercial.educationRealistic' })}
                   </Text>
                   <Text>
-                    • <strong>Conservador:</strong> Preferimos contar como humano en caso de duda
+                    • {intl.formatMessage({ id: 'commercial.educationConservative' })}
                   </Text>
                 </VStack>
                 <Text>
-                  <strong>Compromiso con la Transparencia:</strong> Los consumidores que escanean
-                  sin comentarios son completamente normales. Valoramos cada escaneo como una
-                  muestra legítima del interés del consumidor en su producción.
+                  {intl.formatMessage({ id: 'commercial.educationTransparencyCommitment' })}
                 </Text>
               </VStack>
             </VStack>
@@ -618,9 +611,9 @@ export default function CommercialView() {
   const scansColumnsNames = [
     intl.formatMessage({ id: 'app.date' }),
     intl.formatMessage({ id: 'app.product' }),
-    'Customer Type', // NEW: Customer classification
-    'Engagement', // NEW: Engagement level
-    'Quality', // NEW: Human vs Bot detection
+    intl.formatMessage({ id: 'commercial.customerType' }),
+    intl.formatMessage({ id: 'commercial.engagement' }),
+    intl.formatMessage({ id: 'commercial.quality' }),
     intl.formatMessage({ id: 'app.location' }),
     intl.formatMessage({ id: 'app.comment' })
   ];
@@ -628,17 +621,14 @@ export default function CommercialView() {
   return (
     <>
       <StandardPage
-        title={intl.formatMessage({ id: 'app.commercialDashboard' }) || 'Commercial Dashboard'}
-        description={
-          intl.formatMessage({ id: 'app.commercialDashboardDescription' }) ||
-          'Monitor and manage your scans and results with real-time analytics'
-        }
+        title={intl.formatMessage({ id: 'app.commercialDashboard' })}
+        description={intl.formatMessage({ id: 'app.commercialDashboardDescription' })}
         showBackButton
         onBack={() => navigate(-1)}
       >
         <VStack spacing={6} align="stretch">
           {/* Filters Section */}
-          <StandardCard title="Filtros de Análisis" variant="outline">
+          <StandardCard title={intl.formatMessage({ id: 'commercial.analysisFilters' })} variant="outline">
             <VStack spacing={6}>
               <Flex
                 direction={{ base: 'column', lg: 'row' }}
@@ -891,12 +881,12 @@ export default function CommercialView() {
                     <Flex justify="center" align="center" h="100%">
                       <CircularProgress isIndeterminate color="green.500" />
                       <Text ml={4} color={textColor}>
-                        Cargando datos del gráfico...
+                        {intl.formatMessage({ id: 'commercial.loadingChartData' })}
                       </Text>
                     </Flex>
                   ) : !dataEstablishmentScansVsSaleInfo?.scans_vs_reviews ? (
                     <Flex justify="center" align="center" h="100%">
-                      <Text color={textColor}>No hay datos disponibles</Text>
+                      <Text color={textColor}>{intl.formatMessage({ id: 'commercial.noDataAvailable' })}</Text>
                     </Flex>
                   ) : (
                     <ModernLineBarChart

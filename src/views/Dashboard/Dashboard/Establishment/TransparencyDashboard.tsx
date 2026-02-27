@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useIntl } from 'react-intl';
 
 // Chakra imports
 import {
@@ -57,6 +58,7 @@ import { useUpdateProductionMutation } from 'store/api/historyApi.js';
 function TransparencyDashboard() {
   const navigate = useNavigate();
   const { establishmentId, parcelId, productionId } = useParams();
+  const intl = useIntl();
   const toast = useToast();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,10 +139,10 @@ function TransparencyDashboard() {
       refetchProductions();
 
       toast({
-        title: !currentlyPublished ? 'Production Activated' : 'Production Deactivated',
+        title: !currentlyPublished ? intl.formatMessage({ id: 'transparency.productionActivated' }) : intl.formatMessage({ id: 'transparency.productionDeactivated' }),
         description: !currentlyPublished
-          ? 'Production is now visible to consumers'
-          : 'Production is no longer visible to consumers',
+          ? intl.formatMessage({ id: 'transparency.productionVisibleToConsumers' })
+          : intl.formatMessage({ id: 'transparency.productionNotVisibleToConsumers' }),
         status: 'success',
         duration: 3000,
         isClosable: true
@@ -148,8 +150,8 @@ function TransparencyDashboard() {
     } catch (error) {
       console.error('Error updating production:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to update production visibility',
+        title: intl.formatMessage({ id: 'transparency.error' }),
+        description: intl.formatMessage({ id: 'transparency.failedToUpdateVisibility' }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -188,10 +190,10 @@ function TransparencyDashboard() {
               <Spinner size="xl" color="green.500" thickness="4px" />
               <VStack spacing={2}>
                 <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                  Loading Transparency Dashboard
+                  {intl.formatMessage({ id: 'transparency.loadingTitle' })}
                 </Text>
                 <Text fontSize="sm" color="gray.600">
-                  Analyzing your transparency data...
+                  {intl.formatMessage({ id: 'transparency.loadingDescription' })}
                 </Text>
               </VStack>
             </VStack>
@@ -224,9 +226,9 @@ function TransparencyDashboard() {
               <Alert status="error" borderRadius="lg" maxW="md">
                 <AlertIcon />
                 <VStack align="start" spacing={2}>
-                  <Text fontWeight="bold">Failed to load transparency data</Text>
+                  <Text fontWeight="bold">{intl.formatMessage({ id: 'transparency.failedToLoad' })}</Text>
                   <Button size="sm" colorScheme="green" onClick={() => refetch()}>
-                    Try Again
+                    {intl.formatMessage({ id: 'transparency.tryAgain' })}
                   </Button>
                 </VStack>
               </Alert>
@@ -267,22 +269,22 @@ function TransparencyDashboard() {
 
   // Benchmark thresholds (matching backend compare_with_benchmarks)
   const getNextMilestone = (score: number) => {
-    if (score < 60) return { target: 60, label: 'Industry Minimum' };
-    if (score < 80) return { target: 80, label: 'Good Practice' };
-    if (score < 90) return { target: 90, label: 'Certification Standard' };
-    if (score < 95) return { target: 95, label: 'Excellence' };
+    if (score < 60) return { target: 60, label: intl.formatMessage({ id: 'transparency.milestoneIndustryMinimum' }) };
+    if (score < 80) return { target: 80, label: intl.formatMessage({ id: 'transparency.milestoneGoodPractice' }) };
+    if (score < 90) return { target: 90, label: intl.formatMessage({ id: 'transparency.milestoneCertificationStandard' }) };
+    if (score < 95) return { target: 95, label: intl.formatMessage({ id: 'transparency.milestoneExcellence' }) };
     return null; // Already excellent
   };
 
   // Consumer-friendly category names (matching backend transparency_calculator.py:515-556)
   const CATEGORY_CONSUMER_NAMES: Record<string, string> = {
-    production: 'Growing Practices',
-    chemical: 'Treatment Details',
-    soil: 'Soil Care',
-    pest: 'Pest Management',
-    weather: 'Weather Conditions',
-    business: 'Certifications',
-    general: 'Additional Details'
+    production: intl.formatMessage({ id: 'transparency.categoryGrowingPractices' }),
+    chemical: intl.formatMessage({ id: 'transparency.categoryTreatmentDetails' }),
+    soil: intl.formatMessage({ id: 'transparency.categorySoilCare' }),
+    pest: intl.formatMessage({ id: 'transparency.categoryPestManagement' }),
+    weather: intl.formatMessage({ id: 'transparency.categoryWeatherConditions' }),
+    business: intl.formatMessage({ id: 'transparency.categoryCertifications' }),
+    general: intl.formatMessage({ id: 'transparency.categoryAdditionalDetails' })
   };
 
   // Photo-required categories (matching backend anti-gaming logic)
@@ -301,7 +303,7 @@ function TransparencyDashboard() {
       return (
         <VStack py={6} spacing={3}>
           <Spinner size="md" color="green.500" />
-          <Text fontSize="sm" color="gray.500">Loading transparency details...</Text>
+          <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'transparency.loadingDetails' })}</Text>
         </VStack>
       );
     }
@@ -310,7 +312,7 @@ function TransparencyDashboard() {
       return (
         <Alert status="error" borderRadius="md" size="sm">
           <AlertIcon />
-          <Text fontSize="sm">Failed to load transparency details for this production.</Text>
+          <Text fontSize="sm">{intl.formatMessage({ id: 'transparency.failedToLoadDetails' })}</Text>
         </Alert>
       );
     }
@@ -336,13 +338,13 @@ function TransparencyDashboard() {
         {/* Production summary stats */}
         <HStack spacing={4} flexWrap="wrap">
           <Text fontSize="sm" color="gray.600">
-            {actualEvents}/{expectedEvents} expected events
+            {intl.formatMessage({ id: 'transparency.expectedEvents' }, { actual: actualEvents, expected: expectedEvents })}
           </Text>
           <Text fontSize="sm" color="gray.600">
-            Farming: {farmingApproach}
+            {intl.formatMessage({ id: 'transparency.farmingApproach' }, { approach: farmingApproach })}
           </Text>
           <Text fontSize="sm" fontWeight="medium" color={eventsWithPhotos > 0 ? 'green.600' : 'orange.600'}>
-            {eventsWithPhotos}/{totalTimelineEvents} events have photos
+            {intl.formatMessage({ id: 'transparency.eventsHavePhotos' }, { withPhotos: eventsWithPhotos, total: totalTimelineEvents })}
           </Text>
         </HStack>
 
@@ -351,8 +353,7 @@ function TransparencyDashboard() {
           <Alert status="warning" borderRadius="md" py={2}>
             <AlertIcon />
             <Text fontSize="sm" color="orange.700">
-              No events have photos — {categoriesNeedingPhotos.length} categories have their score halved.
-              Add at least 1 photo per event to improve.
+              {intl.formatMessage({ id: 'transparency.noPhotosAlert' }, { count: categoriesNeedingPhotos.length })}
             </Text>
           </Alert>
         )}
@@ -398,7 +399,7 @@ function TransparencyDashboard() {
                       </Badge>
                     </HStack>
                     <Text fontSize="xs" color="gray.500" fontWeight="medium">
-                      {cat.actual_count} event{cat.actual_count !== 1 ? 's' : ''}
+                      {intl.formatMessage({ id: 'transparency.eventCount' }, { count: cat.actual_count })}
                     </Text>
                   </HStack>
                   <Progress
@@ -414,24 +415,24 @@ function TransparencyDashboard() {
                   />
                   <Text fontSize="xs" color="gray.500">
                     {completeness >= 90
-                      ? 'Fully documented'
+                      ? intl.formatMessage({ id: 'transparency.fullyDocumented' })
                       : isEmpty
-                      ? `Log 1+ events here for up to +${weight}%`
+                      ? intl.formatMessage({ id: 'transparency.logEventsForScore' }, { weight })
                       : (() => {
                           const tierSummary = cat.photo_tier_summary;
                           if (tierSummary) {
                             const essentialMissing = tierSummary.essential.total - tierSummary.essential.verified;
                             const recommendedMissing = tierSummary.recommended.total - tierSummary.recommended.verified;
                             if (essentialMissing > 0) {
-                              return `${essentialMissing} event${essentialMissing !== 1 ? 's' : ''} require photos for full score`;
+                              return intl.formatMessage({ id: 'transparency.eventsRequirePhotos' }, { count: essentialMissing });
                             }
                             if (recommendedMissing > 0) {
-                              return `Photos recommended for ${recommendedMissing} event${recommendedMissing !== 1 ? 's' : ''}`;
+                              return intl.formatMessage({ id: 'transparency.photosRecommended' }, { count: recommendedMissing });
                             }
                           } else if (needsPhotos) {
-                            return `${eventsWithoutPhotos} event${eventsWithoutPhotos !== 1 ? 's need' : ' needs'} photos — add 1+ photo each to unlock full +${weight}%`;
+                            return intl.formatMessage({ id: 'transparency.eventsNeedPhotos' }, { count: eventsWithoutPhotos, weight });
                           }
-                          return `${Math.round(completeness)}% complete`;
+                          return intl.formatMessage({ id: 'transparency.percentComplete' }, { percent: Math.round(completeness) });
                         })()}
                   </Text>
                 </Box>
@@ -455,7 +456,7 @@ function TransparencyDashboard() {
                 }
               }}
             >
-              Add Event
+              {intl.formatMessage({ id: 'transparency.addEvent' })}
             </Button>
             <Button
               size="sm"
@@ -470,7 +471,7 @@ function TransparencyDashboard() {
                 }
               }}
             >
-              Add Photos
+              {intl.formatMessage({ id: 'transparency.addPhotos' })}
             </Button>
           </HStack>
         )}
@@ -575,7 +576,7 @@ function TransparencyDashboard() {
                 color="green.500"
                 _hover={{ bg: 'green.50', borderColor: 'green.600' }}
               >
-                Back
+                {intl.formatMessage({ id: 'transparency.back' })}
               </Button>
 
               <VStack spacing={2} flex={1}>
@@ -587,7 +588,7 @@ function TransparencyDashboard() {
                   textAlign="center"
                   letterSpacing="-0.02em"
                 >
-                  Transparency Dashboard
+                  {intl.formatMessage({ id: 'transparency.dashboardTitle' })}
                 </Heading>
 
                 <Text
@@ -597,7 +598,7 @@ function TransparencyDashboard() {
                   maxW="600px"
                   textAlign="center"
                 >
-                  Monitor and improve transparency for {establishment?.name || 'Loading...'}
+                  {intl.formatMessage({ id: 'transparency.dashboardSubtitle' }, { name: establishment?.name || intl.formatMessage({ id: 'transparency.loading' }) })}
                 </Text>
               </VStack>
 
@@ -634,7 +635,7 @@ function TransparencyDashboard() {
               {/* Transparency Quick Stats - Matching Environmental Impact pattern */}
               <Box>
                 <Heading size="md" color={titleColor} mb={4} fontSize={{ base: 'lg', md: 'xl' }}>
-                  Transparency Overview
+                  {intl.formatMessage({ id: 'transparency.overview' })}
                 </Heading>
                 <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
                   <Card bg="green.50" border="1px solid" borderColor="green.100" borderRadius="xl">
@@ -645,7 +646,7 @@ function TransparencyDashboard() {
                           {Math.round(actualTransparencyScore * 100)}%
                         </Text>
                         <Text fontSize="sm" color="green.600">
-                          Transparency Score
+                          {intl.formatMessage({ id: 'transparency.transparencyScore' })}
                         </Text>
                       </VStack>
                     </CardBody>
@@ -659,7 +660,7 @@ function TransparencyDashboard() {
                           {totalEvents}
                         </Text>
                         <Text fontSize="sm" color="blue.600">
-                          Events Logged
+                          {intl.formatMessage({ id: 'transparency.eventsLogged' })}
                         </Text>
                       </VStack>
                     </CardBody>
@@ -678,7 +679,7 @@ function TransparencyDashboard() {
                           {totalPhotos}
                         </Text>
                         <Text fontSize="sm" color="purple.600">
-                          Photos Added
+                          {intl.formatMessage({ id: 'transparency.photosAdded' })}
                         </Text>
                       </VStack>
                     </CardBody>
@@ -698,18 +699,18 @@ function TransparencyDashboard() {
                             <Text fontSize="lg" fontWeight="bold" color="green.600">
                               {activeProductions}
                             </Text>
-                            <Text fontSize="xs" color="green.500">Active</Text>
+                            <Text fontSize="xs" color="green.500">{intl.formatMessage({ id: 'transparency.statusActive' })}</Text>
                           </VStack>
                           <Text color="gray.300">|</Text>
                           <VStack spacing={0}>
                             <Text fontSize="lg" fontWeight="bold" color="orange.600">
                               {completedProductions}
                             </Text>
-                            <Text fontSize="xs" color="orange.500">Completed</Text>
+                            <Text fontSize="xs" color="orange.500">{intl.formatMessage({ id: 'transparency.statusCompleted' })}</Text>
                           </VStack>
                         </HStack>
                         <Text fontSize="sm" color="orange.600">
-                          Productions
+                          {intl.formatMessage({ id: 'transparency.productions' })}
                         </Text>
                       </VStack>
                     </CardBody>
@@ -730,10 +731,10 @@ function TransparencyDashboard() {
                           <Icon as={FaTrophy} color="green.500" boxSize={6} />
                           <VStack align="start" spacing={1} flex={1}>
                             <Text fontWeight="bold" color="green.700" fontSize="sm">
-                              Outstanding Transparency!
+                              {intl.formatMessage({ id: 'transparency.outstandingTitle' })}
                             </Text>
                             <Text fontSize="xs" color="green.600">
-                              Your documentation exceeds industry excellence standards. Consumers can see exactly how their food was grown.
+                              {intl.formatMessage({ id: 'transparency.outstandingDescription' })}
                             </Text>
                           </VStack>
                         </HStack>
@@ -757,10 +758,10 @@ function TransparencyDashboard() {
 
                 let bottleneckText = '';
                 if (hasPhotoBottleneck) {
-                  bottleneckText = `Add photos to your events — ${criticalCategories.length} critical categories need photo evidence to unlock full completeness.`;
+                  bottleneckText = intl.formatMessage({ id: 'transparency.addPhotosToEvents' }, { count: criticalCategories.length });
                 } else if (emptyCategories.length > 0) {
-                  const names = emptyCategories.map(([, cat]: [string, any]) => cat.consumer_name || '').filter(Boolean).join(', ');
-                  bottleneckText = `Start documenting: ${names} — these categories have no events yet.`;
+                  const names = emptyCategories.map(([key]: [string, any]) => CATEGORY_CONSUMER_NAMES[key] || key).join(', ');
+                  bottleneckText = intl.formatMessage({ id: 'transparency.startDocumenting' }, { names });
                 }
 
                 return (
@@ -771,10 +772,10 @@ function TransparencyDashboard() {
                           <Icon as={FaBullseye} color="blue.500" boxSize={5} />
                           <VStack align="start" spacing={0} flex={1}>
                             <Text fontWeight="bold" color="blue.700" fontSize="sm">
-                              Next Goal: {milestone.label}
+                              {intl.formatMessage({ id: 'transparency.nextGoal' }, { label: milestone.label })}
                             </Text>
                             <Text fontSize="xs" color="blue.600">
-                              {pointsNeeded} more points to reach {milestone.target}%
+                              {intl.formatMessage({ id: 'transparency.pointsToReach' }, { points: pointsNeeded, target: milestone.target })}
                             </Text>
                           </VStack>
                           <Text fontWeight="bold" color="blue.700" fontSize="lg">
@@ -793,7 +794,7 @@ function TransparencyDashboard() {
                         />
                         {bottleneckText && (
                           <Text fontSize="xs" color="blue.600">
-                            Top opportunity: {bottleneckText}
+                            {intl.formatMessage({ id: 'transparency.topOpportunity' }, { text: bottleneckText })}
                           </Text>
                         )}
                       </VStack>
@@ -815,12 +816,10 @@ function TransparencyDashboard() {
                   <AlertIcon color="orange.500" boxSize={5} />
                   <VStack align="start" spacing={1} flex={1}>
                     <Text fontWeight="bold" color="orange.800" fontSize="sm">
-                      No Photos Added — This Reduces Your Score by Up to 50%
+                      {intl.formatMessage({ id: 'transparency.noPhotosTitle' })}
                     </Text>
                     <Text fontSize="xs" color="orange.700" lineHeight="1.5">
-                      Essential events (planting, harvesting, chemical applications, pest identification) require
-                      photo evidence for full scores. Recommended events (pruning, soil tests, scouting) get a
-                      lighter penalty. Adding photos to your existing {totalEvents} events could significantly raise your score.
+                      {intl.formatMessage({ id: 'transparency.noPhotosDescription' }, { count: totalEvents })}
                     </Text>
                   </VStack>
                   <Button
@@ -831,7 +830,7 @@ function TransparencyDashboard() {
                     flexShrink={0}
                     onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/production`)}
                   >
-                    Add Photos
+                    {intl.formatMessage({ id: 'transparency.addPhotos' })}
                   </Button>
                 </Alert>
               )}
@@ -849,11 +848,10 @@ function TransparencyDashboard() {
                       <Icon as={FaShieldAlt} color="green.500" boxSize={6} />
                       <VStack align="start" spacing={0} flex={1}>
                         <Text fontWeight="semibold" color="green.700" fontSize="sm">
-                          Blockchain Verified
+                          {intl.formatMessage({ id: 'transparency.blockchainVerified' })}
                         </Text>
                         <Text fontSize="xs" color="green.600">
-                          {blockchainVerified} production{blockchainVerified !== 1 ? 's' : ''} verified
-                          with immutable on-chain records
+                          {intl.formatMessage({ id: 'transparency.blockchainVerifiedCount' }, { count: blockchainVerified })}
                         </Text>
                       </VStack>
                       <Badge colorScheme="green" variant="solid">
@@ -878,10 +876,10 @@ function TransparencyDashboard() {
                       <Icon as={FaShieldAlt} color="purple.400" boxSize={6} />
                       <VStack align="start" spacing={0} flex={1}>
                         <Text fontWeight="semibold" color="purple.700" fontSize="sm">
-                          Blockchain Verification Available
+                          {intl.formatMessage({ id: 'transparency.blockchainAvailable' })}
                         </Text>
                         <Text fontSize="xs" color="purple.600">
-                          Add immutable proof of your farming practices for maximum consumer trust
+                          {intl.formatMessage({ id: 'transparency.blockchainAvailableDescription' })}
                         </Text>
                       </VStack>
                       <Button
@@ -894,7 +892,7 @@ function TransparencyDashboard() {
                           navigate('/admin/dashboard/subscription');
                         }}
                       >
-                        Learn More
+                        {intl.formatMessage({ id: 'transparency.learnMore' })}
                       </Button>
                     </HStack>
                   </CardBody>
@@ -904,27 +902,27 @@ function TransparencyDashboard() {
               {/* Your Productions - Expandable Cards with Per-Production Breakdown */}
               <Box>
                 <Heading size="md" color={titleColor} mb={2} fontSize={{ base: 'lg', md: 'xl' }}>
-                  Your Productions
+                  {intl.formatMessage({ id: 'transparency.yourProductions' })}
                 </Heading>
                 <Text fontSize="sm" color="gray.600" mb={4}>
-                  Click any production to see exactly why its score is what it is and how to improve it
+                  {intl.formatMessage({ id: 'transparency.productionsHelp' })}
                 </Text>
 
                 {isProductionsLoading ? (
                   <VStack spacing={4} py={8}>
                     <Spinner size="lg" color="green.500" />
-                    <Text fontSize="sm" color="gray.600">Loading productions...</Text>
+                    <Text fontSize="sm" color="gray.600">{intl.formatMessage({ id: 'transparency.loadingProductions' })}</Text>
                   </VStack>
                 ) : productionsError ? (
                   <Alert status="error" borderRadius="md">
                     <AlertIcon />
-                    <Text fontSize="sm" fontWeight="semibold">Failed to load productions</Text>
+                    <Text fontSize="sm" fontWeight="semibold">{intl.formatMessage({ id: 'transparency.failedToLoadProductions' })}</Text>
                   </Alert>
                 ) : productions.length === 0 ? (
                   <VStack spacing={4} py={8}>
                     <Icon as={FaLeaf} boxSize={12} color="gray.400" />
-                    <Text fontSize="md" fontWeight="semibold" color="gray.600">No productions found</Text>
-                    <Text fontSize="sm" color="gray.500">Create your first production to start tracking transparency</Text>
+                    <Text fontSize="md" fontWeight="semibold" color="gray.600">{intl.formatMessage({ id: 'transparency.noProductionsFound' })}</Text>
+                    <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'transparency.noProductionsHelp' })}</Text>
                   </VStack>
                 ) : (
                   <Accordion allowMultiple>
@@ -966,7 +964,7 @@ function TransparencyDashboard() {
                                           variant={isActive ? 'solid' : 'subtle'}
                                           fontSize="xs"
                                         >
-                                          {isActive ? 'Active' : 'Completed'}
+                                          {isActive ? intl.formatMessage({ id: 'transparency.statusActive' }) : intl.formatMessage({ id: 'transparency.statusCompleted' })}
                                         </Badge>
                                         <Text fontWeight="bold" fontSize="sm" color="gray.800">
                                           {production.name}
@@ -985,15 +983,15 @@ function TransparencyDashboard() {
                                     </HStack>
                                     <HStack spacing={4} fontSize="xs" color="gray.500">
                                       <Text>
-                                        Started: {new Date(production.start_date).toLocaleDateString()}
+                                        {intl.formatMessage({ id: 'transparency.started' }, { date: new Date(production.start_date).toLocaleDateString() })}
                                       </Text>
                                       {production.finish_date && (
                                         <Text>
-                                          Ended: {new Date(production.finish_date).toLocaleDateString()}
+                                          {intl.formatMessage({ id: 'transparency.ended' }, { date: new Date(production.finish_date).toLocaleDateString() })}
                                         </Text>
                                       )}
                                       <Text fontWeight="medium" color={`${scoreColor}.600`}>
-                                        {score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score > 0 ? 'Needs Improvement' : 'No Data'}
+                                        {score >= 80 ? intl.formatMessage({ id: 'transparency.levelExcellent' }) : score >= 60 ? intl.formatMessage({ id: 'transparency.levelGood' }) : score > 0 ? intl.formatMessage({ id: 'transparency.levelNeedsImprovement' }) : intl.formatMessage({ id: 'transparency.levelNoData' })}
                                       </Text>
                                     </HStack>
                                   </VStack>
@@ -1015,7 +1013,7 @@ function TransparencyDashboard() {
                                     gap={2}
                                   >
                                     <HStack spacing={2}>
-                                      <Text fontSize="xs" color="gray.500">Consumer Visible:</Text>
+                                      <Text fontSize="xs" color="gray.500">{intl.formatMessage({ id: 'transparency.consumerVisible' })}</Text>
                                       {production.finish_date ? (
                                         <>
                                           <Switch
@@ -1032,18 +1030,18 @@ function TransparencyDashboard() {
                                               leftIcon={<FaExternalLinkAlt />}
                                               onClick={() =>
                                                 window.open(
-                                                  `http://consumer.localhost:3000/production/${production.id}`,
+                                                  `http://consumer.localhost:3000/production/${production.public_id || production.id}`,
                                                   '_blank'
                                                 )
                                               }
                                             >
-                                              View QR
+                                              {intl.formatMessage({ id: 'transparency.viewQR' })}
                                             </Button>
                                           )}
                                         </>
                                       ) : (
                                         <Text fontSize="xs" color="orange.500" fontWeight="medium">
-                                          Complete production first
+                                          {intl.formatMessage({ id: 'transparency.completeProductionFirst' })}
                                         </Text>
                                       )}
                                     </HStack>
@@ -1063,10 +1061,10 @@ function TransparencyDashboard() {
                 Object.keys(transparencyMetrics.transparency_breakdown).length > 0 && (
                 <Box>
                   <Heading size="md" color={titleColor} mb={1} fontSize={{ base: 'lg', md: 'xl' }}>
-                    Documentation Coverage
+                    {intl.formatMessage({ id: 'transparency.documentationCoverage' })}
                   </Heading>
                   <Text fontSize="sm" color="gray.500" mb={4}>
-                    Establishment average across all productions. Expand each production above for specific details.
+                    {intl.formatMessage({ id: 'transparency.documentationCoverageHelp' })}
                   </Text>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                     {Object.entries(transparencyMetrics.transparency_breakdown as Record<string, any>)
@@ -1098,7 +1096,7 @@ function TransparencyDashboard() {
                             <HStack justify="space-between" mb={2}>
                               <HStack spacing={2}>
                                 <Text fontSize="sm" fontWeight="semibold" color="gray.700">
-                                  {cat.consumer_name || key}
+                                  {CATEGORY_CONSUMER_NAMES[key] || key}
                                 </Text>
                                 <Badge
                                   fontSize="2xs"
@@ -1106,7 +1104,7 @@ function TransparencyDashboard() {
                                   variant="outline"
                                   borderRadius="full"
                                 >
-                                  {weight}% weight
+                                  {intl.formatMessage({ id: 'transparency.weightLabel' }, { weight })}
                                 </Badge>
                               </HStack>
                               <Badge
@@ -1121,7 +1119,7 @@ function TransparencyDashboard() {
                                 }
                                 fontSize="xs"
                               >
-                                {cat.actual_count} event{cat.actual_count !== 1 ? 's' : ''}
+                                {intl.formatMessage({ id: 'transparency.eventCount' }, { count: cat.actual_count })}
                               </Badge>
                             </HStack>
                             <Progress
@@ -1141,12 +1139,21 @@ function TransparencyDashboard() {
                             />
                             <Text fontSize="xs" color="gray.500">
                               {cat.completeness_percentage >= 90
-                                ? 'Fully documented'
+                                ? intl.formatMessage({ id: 'transparency.fullyDocumented' })
                                 : isEmpty
-                                ? `Log 1+ events here for up to +${weight}% score`
+                                ? intl.formatMessage({ id: 'transparency.logEventsForScoreEstablishment' }, { weight })
                                 : needsPhotos
-                                ? `Add photos to unlock full +${weight}% contribution`
-                                : cat.transparency_level || 'Documented'}
+                                ? intl.formatMessage({ id: 'transparency.addPhotosForContribution' }, { weight })
+                                : (() => {
+                                    const levelMap: Record<string, string> = {
+                                      'Fully documented': 'transparency.levelFullyDocumented',
+                                      'Well documented': 'transparency.levelWellDocumented',
+                                      'Partially documented': 'transparency.levelPartiallyDocumented',
+                                      'Limited documentation': 'transparency.levelLimitedDocumentation'
+                                    };
+                                    const levelKey = levelMap[cat.transparency_level];
+                                    return levelKey ? intl.formatMessage({ id: levelKey }) : intl.formatMessage({ id: 'transparency.documented' });
+                                  })()}
                             </Text>
                           </Box>
                         );
@@ -1161,7 +1168,7 @@ function TransparencyDashboard() {
                   <HStack justify="space-between" align="center" mb={4} flexWrap="wrap" gap={2}>
                     <Heading size="md" color="orange.600" fontSize={{ base: 'lg', md: 'xl' }}>
                       <Icon as={FaExclamationTriangle} mr={2} />
-                      Transparency Improvement Actions
+                      {intl.formatMessage({ id: 'transparency.improvementActions' })}
                     </Heading>
                     {(() => {
                       const currentScore = Math.round(actualTransparencyScore * 100);
@@ -1174,7 +1181,7 @@ function TransparencyDashboard() {
                       if (totalImprovement > 0) {
                         return (
                           <Badge colorScheme="green" fontSize="sm" px={3} py={1} borderRadius="full">
-                            {currentScore}% → could reach ~{projectedScore}%
+                            {intl.formatMessage({ id: 'transparency.scoreProjection' }, { current: currentScore, projected: projectedScore })}
                           </Badge>
                         );
                       }
@@ -1206,43 +1213,69 @@ function TransparencyDashboard() {
                                 variant="solid"
                               >
                                 {(opportunity.priority || 'medium') === 'high'
-                                  ? 'URGENT'
+                                  ? intl.formatMessage({ id: 'transparency.priorityUrgent' })
                                   : (opportunity.priority || 'medium') === 'medium'
-                                  ? 'IMPORTANT'
-                                  : 'SUGGESTED'}
+                                  ? intl.formatMessage({ id: 'transparency.priorityImportant' })
+                                  : intl.formatMessage({ id: 'transparency.prioritySuggested' })}
                               </Badge>
                               <Text fontSize="xs" color="gray.500" textTransform="uppercase">
                                 {opportunity.type === 'photo_validation'
-                                  ? 'Add Photos'
+                                  ? intl.formatMessage({ id: 'transparency.typeAddPhotos' })
                                   : opportunity.type === 'usda_verification'
-                                  ? 'Verify Products'
+                                  ? intl.formatMessage({ id: 'transparency.typeVerifyProducts' })
                                   : opportunity.type === 'blockchain_verification'
-                                  ? 'Ultimate Trust'
-                                  : 'Improve Transparency'}
+                                  ? intl.formatMessage({ id: 'transparency.typeUltimateTrust' })
+                                  : intl.formatMessage({ id: 'transparency.typeImproveTransparency' })}
                               </Text>
                             </HStack>
 
                             <Text fontWeight="bold" fontSize="sm" color={textColor}>
-                              {opportunity.title ||
-                                (opportunity.type === 'photo_validation'
-                                  ? 'Add Photos to Your Events'
-                                  : opportunity.type === 'usda_verification'
-                                  ? 'Verify Your Products'
-                                  : 'Improve Your Farm Transparency')}
+                              {(() => {
+                                if (opportunity.type === 'production_specific' && opportunity.production_id) {
+                                  // Extract crop type from backend title "Production #ID - CropType"
+                                  const cropMatch = (opportunity.title || '').match(/- (.+)$/);
+                                  const cropType = cropMatch ? cropMatch[1] : '';
+                                  return intl.formatMessage({ id: 'transparency.opportunityProductionTitle' }, { id: opportunity.production_id, cropType });
+                                }
+                                if (opportunity.type === 'create_production') return intl.formatMessage({ id: 'transparency.opportunityStartFirst' });
+                                if (opportunity.type === 'create_new_production') return intl.formatMessage({ id: 'transparency.opportunityNewSeason' });
+                                if (opportunity.type === 'continuous_improvement') return intl.formatMessage({ id: 'transparency.opportunityExcellent' });
+                                if (opportunity.type === 'photo_validation') return intl.formatMessage({ id: 'transparency.defaultTitlePhotos' });
+                                if (opportunity.type === 'usda_verification') return intl.formatMessage({ id: 'transparency.defaultTitleVerify' });
+                                return intl.formatMessage({ id: 'transparency.defaultTitleImprove' });
+                              })()}
                             </Text>
 
                             <Text fontSize="xs" color="gray.600" lineHeight="1.4">
-                              {opportunity.description ||
-                                (opportunity.type === 'photo_validation'
-                                  ? 'Photos show consumers how you grow their food and build trust in your farming practices.'
-                                  : opportunity.type === 'usda_verification'
-                                  ? 'Comprehensive documentation proves your products are transparently tracked and increases consumer confidence.'
-                                  : 'More transparency helps consumers trust your farming methods and choose your products.')}
+                              {(() => {
+                                if (opportunity.type === 'create_production') return intl.formatMessage({ id: 'transparency.opportunityStartFirstDesc' });
+                                if (opportunity.type === 'create_new_production') return intl.formatMessage({ id: 'transparency.opportunityNewSeasonDesc' });
+                                if (opportunity.type === 'continuous_improvement') return intl.formatMessage({ id: 'transparency.opportunityExcellentDesc' });
+                                if (!opportunity.description) {
+                                  if (opportunity.type === 'photo_validation') return intl.formatMessage({ id: 'transparency.defaultDescPhotos' });
+                                  if (opportunity.type === 'usda_verification') return intl.formatMessage({ id: 'transparency.defaultDescVerify' });
+                                  return intl.formatMessage({ id: 'transparency.defaultDescImprove' });
+                                }
+                                // For production_specific, translate "Missing:" prefix
+                                const desc = opportunity.description || '';
+                                if (desc.startsWith('Missing: ')) {
+                                  return intl.formatMessage({ id: 'transparency.opportunityMissingPrefix' }, { details: desc.replace('Missing: ', '') });
+                                }
+                                return desc;
+                              })()}
                             </Text>
 
                             <HStack justify="space-between" mt={2}>
                               <Text fontSize="xs" color="green.600" fontWeight="medium">
-                                💡 {opportunity.potential_improvement || '+15% transparency'}
+                                💡 {(() => {
+                                  const imp = opportunity.potential_improvement || '';
+                                  // Translate "+N% transparency" pattern
+                                  const match = imp.match(/\+(\d+)%\s*transparency/);
+                                  if (match) {
+                                    return `+${match[1]}% ${intl.formatMessage({ id: 'transparency.opportunityImprovementSuffix' })}`;
+                                  }
+                                  return imp || intl.formatMessage({ id: 'transparency.defaultImprovement' });
+                                })()}
                               </Text>
                               <Button
                                 size="xs"
@@ -1251,7 +1284,7 @@ function TransparencyDashboard() {
                                 leftIcon={<FaEdit />}
                                 onClick={() => navigate(generateEditUrl(opportunity))}
                               >
-                                Edit
+                                {intl.formatMessage({ id: 'transparency.edit' })}
                               </Button>
                             </HStack>
                           </VStack>
@@ -1274,7 +1307,7 @@ function TransparencyDashboard() {
                       <HStack flex="1" textAlign="left" spacing={2}>
                         <Icon as={FaLeaf} color="gray.500" boxSize={4} />
                         <Text fontSize="md" color="gray.600" fontWeight="medium">
-                          Environmental Impact Details
+                          {intl.formatMessage({ id: 'transparency.environmentalImpact' })}
                         </Text>
                       </HStack>
                       <AccordionIcon color="gray.500" />
@@ -1288,7 +1321,7 @@ function TransparencyDashboard() {
                               <Text fontSize="xl" fontWeight="bold" color="green.700">
                                 {carbonSummary.per_production?.toFixed(1) || '0.0'} kg
                               </Text>
-                              <Text fontSize="sm" color="green.600">CO₂e per production</Text>
+                              <Text fontSize="sm" color="green.600">{intl.formatMessage({ id: 'transparency.co2ePerProduction' })}</Text>
                             </VStack>
                           </CardBody>
                         </Card>
@@ -1299,7 +1332,7 @@ function TransparencyDashboard() {
                               <Text fontSize="xl" fontWeight="bold" color="blue.700">
                                 {carbonSummary.per_hectare?.toFixed(1) || '0.0'} kg
                               </Text>
-                              <Text fontSize="sm" color="blue.600">CO₂e per hectare</Text>
+                              <Text fontSize="sm" color="blue.600">{intl.formatMessage({ id: 'transparency.co2ePerHectare' })}</Text>
                             </VStack>
                           </CardBody>
                         </Card>
@@ -1310,7 +1343,7 @@ function TransparencyDashboard() {
                               <Text fontSize="xl" fontWeight="bold" color="purple.700">
                                 {carbonSummary.net_carbon?.toFixed(1) || '0.0'} kg
                               </Text>
-                              <Text fontSize="sm" color="purple.600">Net carbon impact</Text>
+                              <Text fontSize="sm" color="purple.600">{intl.formatMessage({ id: 'transparency.netCarbonImpact' })}</Text>
                             </VStack>
                           </CardBody>
                         </Card>
@@ -1324,11 +1357,9 @@ function TransparencyDashboard() {
               <Box p={4} bg="gray.50" borderRadius="xl">
                 <Text fontSize="sm" color="gray.700" lineHeight="1.6" textAlign="center">
                   <Text as="span" fontWeight="bold">
-                    Trazo showcases your existing farming practices
+                    {intl.formatMessage({ id: 'transparency.footerBold' })}
                   </Text>{' '}
-                  to help consumers understand how their food is grown. The transparency score
-                  reflects how well your agricultural practices are documented for consumer
-                  confidence.
+                  {intl.formatMessage({ id: 'transparency.footerText' })}
                 </Text>
               </Box>
             </VStack>

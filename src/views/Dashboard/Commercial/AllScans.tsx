@@ -110,13 +110,13 @@ const AllScansView = () => {
 
   return (
     <StandardPage
-      title="Todos los Escaneos"
-      description="Vista completa de todos los escaneos de QR realizados en tu establecimiento"
+      title={intl.formatMessage({ id: 'commercial.allScansTitle' })}
+      description={intl.formatMessage({ id: 'commercial.allScansDescription' })}
       showBackButton
       onBack={handleBack}
     >
       {/* Filters Section */}
-      <StandardCard title="Filtros de Búsqueda" variant="outline">
+      <StandardCard title={intl.formatMessage({ id: 'commercial.searchFilters' })} variant="outline">
         <VStack spacing={4}>
           <HStack spacing={4} w="100%" wrap="wrap">
             <Box flex={1} minW="300px">
@@ -125,7 +125,7 @@ const AllScansView = () => {
                   <FiSearch color="gray.500" />
                 </InputLeftElement>
                 <Input
-                  placeholder="Buscar por producto, ubicación o usuario..."
+                  placeholder={intl.formatMessage({ id: 'commercial.searchScansPlaceholder' })}
                   value={filters.search}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
                   borderRadius="lg"
@@ -140,7 +140,7 @@ const AllScansView = () => {
 
             <Box minW="200px">
               <Select
-                placeholder="Todos los productos"
+                placeholder={intl.formatMessage({ id: 'commercial.allProducts' })}
                 value={filters.product_id}
                 onChange={(e) => handleFilterChange('product_id', e.target.value)}
                 borderRadius="lg"
@@ -162,7 +162,7 @@ const AllScansView = () => {
           <HStack spacing={4} w="100%" wrap="wrap">
             <Box>
               <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
-                Fecha desde:
+                {intl.formatMessage({ id: 'commercial.dateFrom' })}
               </Text>
               <Input
                 type="date"
@@ -179,7 +179,7 @@ const AllScansView = () => {
 
             <Box>
               <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
-                Fecha hasta:
+                {intl.formatMessage({ id: 'commercial.dateTo' })}
               </Text>
               <Input
                 type="date"
@@ -209,7 +209,7 @@ const AllScansView = () => {
                 }}
                 size="sm"
               >
-                Limpiar Filtros
+                {intl.formatMessage({ id: 'commercial.clearFilters' })}
               </StandardButton>
             </Box>
           </HStack>
@@ -218,8 +218,8 @@ const AllScansView = () => {
 
       {/* Customer Quality Analytics - Enhanced Stats */}
       <StandardCard
-        title="Customer Quality Analytics"
-        subtitle="Comprehensive customer engagement insights"
+        title={intl.formatMessage({ id: 'commercial.customerQualityAnalytics' })}
+        subtitle={intl.formatMessage({ id: 'commercial.comprehensiveInsights' })}
         variant="elevated"
       >
         <SimpleGrid columns={{ base: 2, md: 4 }} spacing={6}>
@@ -228,13 +228,13 @@ const AllScansView = () => {
             <StatLabel fontSize="sm" color="gray.600">
               <HStack spacing={2}>
                 <Tooltip
-                  label="Escaneos realizados por consumidores reales vs sistemas automatizados. Los humanos dedican más tiempo a leer y explorar la información."
+                  label={intl.formatMessage({ id: 'commercial.humanScansTooltip' })}
                   placement="top"
                   hasArrow
                 >
                   <HStack spacing={2}>
                     <Icon as={FaUser} color="green.500" boxSize={4} />
-                    <Text>Human Scans</Text>
+                    <Text>{intl.formatMessage({ id: 'commercial.humanScans' })}</Text>
                   </HStack>
                 </Tooltip>
               </HStack>
@@ -264,9 +264,9 @@ const AllScansView = () => {
                   return true;
                 }).length
               }{' '}
-              of {scansData.length} scans
+              {intl.formatMessage({ id: 'commercial.humanScansCount' }, { human: scansData.filter((scan) => { if (scan.bot_score !== undefined) { return scan.bot_score < 0.5; } return true; }).length, total: scansData.length })}
               <Badge ml={2} colorScheme="green" size="sm">
-                Excellent
+                {intl.formatMessage({ id: 'commercial.ratingExcellent' })}
               </Badge>
             </StatHelpText>
           </Stat>
@@ -276,13 +276,13 @@ const AllScansView = () => {
             <StatLabel fontSize="sm" color="gray.600">
               <HStack spacing={2}>
                 <Tooltip
-                  label="Consumidores que mostraron alto interés: comentaron, navegaron extensamente o pasaron tiempo significativo en la página."
+                  label={intl.formatMessage({ id: 'commercial.highEngagementTooltip' })}
                   placement="top"
                   hasArrow
                 >
                   <HStack spacing={2}>
                     <Icon as={FaChartLine} color="blue.500" boxSize={4} />
-                    <Text>High Engagement</Text>
+                    <Text>{intl.formatMessage({ id: 'commercial.highEngagement' })}</Text>
                   </HStack>
                 </Tooltip>
               </HStack>
@@ -313,14 +313,14 @@ const AllScansView = () => {
                   return hasComment;
                 }).length
               }{' '}
-              engaged customers
+              {intl.formatMessage({ id: 'commercial.engagedCustomers' }, { count: scansData.filter((scan) => { const hasComment = scan.comment && scan.comment.trim().length > 0; if (scan.engagement_score !== undefined) { return scan.engagement_score > 0.6; } return hasComment; }).length })}
             </StatHelpText>
           </Stat>
 
           {/* Unique Sessions */}
           <Stat>
             <StatLabel fontSize="sm" color="gray.600">
-              Unique Sessions
+              {intl.formatMessage({ id: 'commercial.uniqueSessions' })}
             </StatLabel>
             <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
               {scansData.length > 0
@@ -331,14 +331,14 @@ const AllScansView = () => {
               %
             </StatNumber>
             <StatHelpText fontSize="xs" color="gray.500">
-              {scansData.filter((scan) => !scan.is_duplicate).length} unique visits
+              {intl.formatMessage({ id: 'commercial.uniqueVisits' }, { count: scansData.filter((scan) => !scan.is_duplicate).length })}
             </StatHelpText>
           </Stat>
 
           {/* GDPR Compliance */}
           <Stat>
             <StatLabel fontSize="sm" color="gray.600">
-              GDPR Compliance
+              {intl.formatMessage({ id: 'commercial.gdprCompliance' })}
             </StatLabel>
             <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
               {scansData.length > 0
@@ -351,7 +351,7 @@ const AllScansView = () => {
               %
             </StatNumber>
             <StatHelpText fontSize="xs" color="gray.500">
-              {scansData.filter((scan) => scan.consent_given !== false).length} consented scans
+              {intl.formatMessage({ id: 'commercial.consentedScans' }, { count: scansData.filter((scan) => scan.consent_given !== false).length })}
             </StatHelpText>
           </Stat>
         </SimpleGrid>
@@ -368,38 +368,31 @@ const AllScansView = () => {
           >
             <VStack align="start" spacing={3}>
               <Text fontSize="sm" fontWeight="semibold" color="blue.700">
-                💡 Entendiendo la Clasificación de Escaneos
+                💡 {intl.formatMessage({ id: 'commercial.educationTitle' })}
               </Text>
               <VStack align="start" spacing={2} fontSize="xs" color="blue.600">
                 <Text>
-                  <strong>Escaneos Humanos (Todos):</strong> Actualmente clasificamos TODOS los
-                  escaneos como humanos por defecto. Esta es una decisión conservadora que favorece
-                  a los productores.
+                  {intl.formatMessage({ id: 'commercial.educationHumanScans' })}
                 </Text>
                 <Text>
-                  <strong>Sistema de Detección:</strong> Nuestro sistema usa dos métodos para
-                  clasificar escaneos:
+                  {intl.formatMessage({ id: 'commercial.educationDetectionSystem' })}
                 </Text>
                 <VStack align="start" spacing={1} pl={4} fontSize="xs">
                   <Text>
-                    • <strong>Automático:</strong> Si el backend proporciona un puntaje de bot, lo
-                    usamos
+                    • {intl.formatMessage({ id: 'commercial.educationAutomatic' })}
                   </Text>
                   <Text>
-                    • <strong>Por defecto:</strong> Sin puntaje del backend, asumimos que es humano
+                    • {intl.formatMessage({ id: 'commercial.educationDefault' })}
                   </Text>
                   <Text>
-                    • <strong>Realista:</strong> La mayoría de escaneos QR son de consumidores
-                    genuinos
+                    • {intl.formatMessage({ id: 'commercial.educationRealistic' })}
                   </Text>
                   <Text>
-                    • <strong>Conservador:</strong> Preferimos contar como humano en caso de duda
+                    • {intl.formatMessage({ id: 'commercial.educationConservative' })}
                   </Text>
                 </VStack>
                 <Text>
-                  <strong>Compromiso con la Transparencia:</strong> Los consumidores que escanean
-                  sin comentarios son completamente normales. Valoramos cada escaneo como una
-                  muestra legítima del interés del consumidor en su producción.
+                  {intl.formatMessage({ id: 'commercial.educationTransparencyCommitment' })}
                 </Text>
               </VStack>
             </VStack>
@@ -408,7 +401,7 @@ const AllScansView = () => {
       </StandardCard>
 
       {/* Scans Table */}
-      <StandardCard title={`Escaneos (${totalCount})`} variant="elevated">
+      <StandardCard title={intl.formatMessage({ id: 'commercial.scansCount' }, { count: totalCount })} variant="elevated">
         <VStack spacing={4}>
           <Box
             overflowX="auto"
@@ -421,25 +414,25 @@ const AllScansView = () => {
               <Thead bg="gray.50">
                 <Tr>
                   <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4}>
-                    Fecha
+                    {intl.formatMessage({ id: 'commercial.dateColumn' })}
                   </Th>
                   <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4}>
-                    Producto
+                    {intl.formatMessage({ id: 'commercial.productColumn' })}
                   </Th>
                   <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4}>
-                    Customer Type
+                    {intl.formatMessage({ id: 'commercial.customerType' })}
                   </Th>
                   <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4}>
-                    Engagement
+                    {intl.formatMessage({ id: 'commercial.engagement' })}
                   </Th>
                   <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4}>
-                    Quality
+                    {intl.formatMessage({ id: 'commercial.quality' })}
                   </Th>
                   <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4}>
-                    Ubicación
+                    {intl.formatMessage({ id: 'commercial.locationColumn' })}
                   </Th>
                   <Th color="gray.700" fontWeight="semibold" fontSize="sm" py={4}>
-                    Comentario
+                    {intl.formatMessage({ id: 'commercial.commentColumn' })}
                   </Th>
                 </Tr>
               </Thead>
@@ -449,14 +442,14 @@ const AllScansView = () => {
                     <Td colSpan={7} textAlign="center" py={8}>
                       <HStack justify="center" spacing={3}>
                         <Spinner size="md" color="green.500" />
-                        <Text color="gray.500">Cargando escaneos...</Text>
+                        <Text color="gray.500">{intl.formatMessage({ id: 'commercial.loadingScans' })}</Text>
                       </HStack>
                     </Td>
                   </Tr>
                 ) : error ? (
                   <Tr>
                     <Td colSpan={7} textAlign="center" py={8}>
-                      <Text color="red.500">Error al cargar los escaneos</Text>
+                      <Text color="red.500">{intl.formatMessage({ id: 'commercial.errorLoadingScans' })}</Text>
                     </Td>
                   </Tr>
                 ) : scansData.length > 0 ? (
@@ -493,35 +486,35 @@ const AllScansView = () => {
                       if (scan.consent_given === false) {
                         return (
                           <Badge colorScheme="gray" size="sm">
-                            Privacy
+                            {intl.formatMessage({ id: 'commercial.privacy' })}
                           </Badge>
                         );
                       }
                       if (isHumanLike && isHighEngagement) {
                         return (
                           <Badge colorScheme="green" size="sm">
-                            Explorer
+                            {intl.formatMessage({ id: 'commercial.explorer' })}
                           </Badge>
                         );
                       }
                       if (isHumanLike && !isHighEngagement) {
                         return (
                           <Badge colorScheme="blue" size="sm">
-                            Viewer
+                            {intl.formatMessage({ id: 'commercial.viewer' })}
                           </Badge>
                         );
                       }
                       return (
                         <Badge colorScheme="orange" size="sm">
-                          Bot
+                          {intl.formatMessage({ id: 'commercial.bot' })}
                         </Badge>
                       );
                     };
 
                     // Engagement level
                     const engagementLevel = isHighEngagement
-                      ? { label: 'High', color: 'green' }
-                      : { label: 'Low', color: 'gray' };
+                      ? { label: intl.formatMessage({ id: 'commercial.engagementHigh' }), color: 'green' }
+                      : { label: intl.formatMessage({ id: 'commercial.engagementLow' }), color: 'gray' };
 
                     const isExpanded = expandedComments[scan.id.toString()];
 
@@ -547,9 +540,9 @@ const AllScansView = () => {
                             <HStack spacing={2}>
                               {getCustomerTypeBadge()}
                               {scan.is_duplicate && (
-                                <Tooltip label="Duplicate session detected" placement="top">
+                                <Tooltip label={intl.formatMessage({ id: 'commercial.duplicateSession' })} placement="top">
                                   <Badge colorScheme="gray" size="sm" variant="outline">
-                                    Dup
+                                    {intl.formatMessage({ id: 'commercial.dup' })}
                                   </Badge>
                                 </Tooltip>
                               )}
@@ -564,9 +557,7 @@ const AllScansView = () => {
                               </Badge>
                               {scan.consent_given !== false && isHighEngagement && (
                                 <Tooltip
-                                  label={`Engagement: ${Math.round(
-                                    (scan.engagement_score || 0.5) * 100
-                                  )}%`}
+                                  label={intl.formatMessage({ id: 'commercial.engagementTooltip' }, { score: Math.round((scan.engagement_score || 0.5) * 100) })}
                                   placement="top"
                                 >
                                   <Icon as={FaChartLine} color="green.500" boxSize={3} />
@@ -581,8 +572,8 @@ const AllScansView = () => {
                               <Tooltip
                                 label={
                                   isHumanLike
-                                    ? 'Consumidor real detectado'
-                                    : 'Posible bot detectado'
+                                    ? intl.formatMessage({ id: 'commercial.realConsumerDetected' })
+                                    : intl.formatMessage({ id: 'commercial.possibleBotDetected' })
                                 }
                                 placement="top"
                                 hasArrow
@@ -594,7 +585,7 @@ const AllScansView = () => {
                                 >
                                   <HStack spacing={1}>
                                     <Icon as={isHumanLike ? FaUser : FaRobot} boxSize={2} />
-                                    <Text>{isHumanLike ? 'Human' : 'Bot'}</Text>
+                                    <Text>{isHumanLike ? intl.formatMessage({ id: 'commercial.human' }) : intl.formatMessage({ id: 'commercial.bot' })}</Text>
                                   </HStack>
                                 </Badge>
                               </Tooltip>
@@ -603,7 +594,7 @@ const AllScansView = () => {
 
                           <Td>
                             <Text fontSize="sm" color={textColor}>
-                              {scan.location || 'Desconocida'}
+                              {scan.location || intl.formatMessage({ id: 'commercial.unknown' })}
                             </Text>
                           </Td>
                           <Td>
@@ -640,7 +631,7 @@ const AllScansView = () => {
                               }
                               transition="all 0.2s ease"
                             >
-                              {scan.comment ? (isExpanded ? 'Hide' : 'View') : 'View'}
+                              {scan.comment ? (isExpanded ? intl.formatMessage({ id: 'commercial.hideButton' }) : intl.formatMessage({ id: 'commercial.viewButton' })) : intl.formatMessage({ id: 'commercial.viewButton' })}
                             </Button>
                           </Td>
                         </Tr>
@@ -672,10 +663,10 @@ const AllScansView = () => {
                     <Td colSpan={7} textAlign="center" py={12}>
                       <VStack spacing={3}>
                         <Text color="gray.500" fontSize="lg" fontWeight="medium">
-                          No se encontraron escaneos
+                          {intl.formatMessage({ id: 'commercial.noScansFound' })}
                         </Text>
                         <Text color="gray.400" fontSize="sm">
-                          Ajusta los filtros para ver más resultados
+                          {intl.formatMessage({ id: 'commercial.adjustFilters' })}
                         </Text>
                       </VStack>
                     </Td>
@@ -689,12 +680,12 @@ const AllScansView = () => {
           {totalPages > 1 && (
             <Flex justify="space-between" align="center" w="100%" pt={4}>
               <Text fontSize="sm" color="gray.600">
-                Página {currentPage} de {totalPages} ({totalCount} resultados totales)
+                {intl.formatMessage({ id: 'commercial.pageInfo' }, { current: currentPage, total: totalPages, count: totalCount })}
               </Text>
               <HStack spacing={2}>
                 <IconButton
                   icon={<FiChevronLeft />}
-                  aria-label="Página anterior"
+                  aria-label={intl.formatMessage({ id: 'commercial.previousPage' })}
                   size="sm"
                   variant="outline"
                   onClick={() => handlePageChange(currentPage - 1)}
@@ -705,7 +696,7 @@ const AllScansView = () => {
                 </Text>
                 <IconButton
                   icon={<FiChevronRight />}
-                  aria-label="Página siguiente"
+                  aria-label={intl.formatMessage({ id: 'commercial.nextPage' })}
                   size="sm"
                   variant="outline"
                   onClick={() => handlePageChange(currentPage + 1)}

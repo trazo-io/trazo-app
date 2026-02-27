@@ -1,69 +1,48 @@
-import { Flex, Link, List, ListItem, Text } from '@chakra-ui/react';
+import { Flex, Link, Text } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
+
+const LANDING_URL = 'https://trazo.io';
 
 export default function ConsumerFooter() {
   const intl = useIntl();
+
   return (
     <Flex
-      flexDirection={{
-        base: 'column',
-        xl: 'row'
-      }}
-      alignItems={{
-        base: 'center',
-        xl: 'start'
-      }}
+      flexDirection={{ base: 'column', md: 'row' }}
+      alignItems="center"
       justifyContent="space-between"
       px="30px"
       pb="20px"
+      pt="20px"
+      gap={{ base: 3, md: 0 }}
     >
       <Text
         color="gray.400"
-        textAlign={{
-          base: 'center',
-          xl: 'start'
-        }}
-        mb={{ base: '20px', xl: '0px' }}
+        textAlign={{ base: 'center', md: 'start' }}
+        fontSize="sm"
       >
         &copy; {new Date().getFullYear()} Trazo.
       </Text>
-      <List display="flex">
-        <ListItem
-          me={{
-            base: '20px',
-            md: '44px'
-          }}
+      <Flex gap={{ base: '16px', md: '24px' }}>
+        <Link
+          href={`${LANDING_URL}/privacy-policy`}
+          color="gray.400"
+          fontSize="sm"
+          isExternal
+          _hover={{ color: 'green.500' }}
         >
-          <Link color="gray.400" href="">
-            {intl.formatMessage({ id: 'app.about' })}
-          </Link>
-        </ListItem>
-        <ListItem
-          me={{
-            base: '20px',
-            md: '44px'
-          }}
+          {intl.formatMessage({ id: 'app.privacyPolicy' })}
+        </Link>
+        <Link
+          href={`${LANDING_URL}/terms-conditions`}
+          color="gray.400"
+          fontSize="sm"
+          isExternal
+          _hover={{ color: 'green.500' }}
         >
-          <Link color="gray.400" href="">
-            {intl.formatMessage({ id: 'app.whyUs' })}
-          </Link>
-        </ListItem>
-        <ListItem
-          me={{
-            base: '20px',
-            md: '44px'
-          }}
-        >
-          <Link color="gray.400" href="">
-            {intl.formatMessage({ id: 'app.blog' })}
-          </Link>
-        </ListItem>
-        <ListItem>
-          <Link color="gray.400" href="">
-            {intl.formatMessage({ id: 'app.contactUs' })}
-          </Link>
-        </ListItem>
-      </List>
+          {intl.formatMessage({ id: 'app.termsOfService' })}
+        </Link>
+      </Flex>
     </Flex>
   );
 }

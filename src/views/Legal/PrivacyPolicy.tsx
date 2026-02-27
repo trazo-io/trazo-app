@@ -852,7 +852,7 @@ const PrivacyPolicy: React.FC = () => {
                   <Text color={textColor} mb={4}>
                     <strong>Data Protection Officer</strong>
                     <br />
-                    Email: privacy@trazo.com
+                    Email: info@trazo.io
                     <br />
                     Subject: Privacy Rights Request
                   </Text>

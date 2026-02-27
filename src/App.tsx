@@ -34,7 +34,10 @@ import NotAuthenticated from './utils/protections/NotAuthenticated';
 import ParcelView from 'views/Dashboard/Parcel';
 //@ts-ignore
 import Pricing from 'views/Pages/Pricing/index';
-import PrivacyPolicy from 'views/Legal/PrivacyPolicy';
+// Legal pages redirect to landing page (canonical source)
+const LANDING_URL = 'https://trazo.io';
+const RedirectToPrivacy = () => { window.location.replace(`${LANDING_URL}/privacy-policy`); return null; };
+const RedirectToTerms = () => { window.location.replace(`${LANDING_URL}/terms-conditions`); return null; };
 // Lazy load QR scanning components for mobile performance
 const ProductDetail = React.lazy(() => import('views/Scan/ProductDetail/ProductDetail'));
 import ProfileEstablishment from 'views/Dashboard/Dashboard/Establishment/ProfileEstablishment';
@@ -46,7 +49,6 @@ import ProfileUser from 'views/Dashboard/Dashboard/User/ProfileUser';
 import SelectCompanyView from 'views/Dashboard/Dashboard/Company/AddCompany';
 import ModernProductReview from 'views/Scan/ProductReview/ModernProductReview';
 import SettingsView from 'views/Dashboard/Settings';
-import TermsOfService from 'views/Legal/TermsOfService';
 import SignIn from 'views/Authentication/SignIn/SignInIllustration';
 import SignInApp from 'views/Authentication/SignIn/SignInBasic';
 import SignUp from 'views/Authentication/SignUp/SignUpBasic';
@@ -78,7 +80,6 @@ import SubscriptionSuccess from 'views/Dashboard/Dashboard/Subscription/Subscrip
 import StripeSuccessRedirect from 'views/Dashboard/Dashboard/Subscription/StripeSuccessRedirect';
 import UnifiedSubscriptionDashboard from 'views/Dashboard/UnifiedSubscription';
 import NoSubscriptionRedirect from './utils/protections/NoSubscriptionRedirect';
-import NewProduction from 'views/Dashboard/Dashboard/components/forms/NewProduction';
 import ModernCarbonDashboard from 'views/Dashboard/Dashboard/Establishment/ModernCarbonDashboard';
 import PublicEstablishmentProfile from 'views/Scan/PublicEstablishmentProfile/PublicEstablishmentProfile';
 import { usePointsStore } from './store/pointsStore';
@@ -201,13 +202,9 @@ const App = () => {
         {/* OAuth Callback - must be accessible from localhost:3000 */}
         <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
 
-        {/* Legal Pages - Available without authentication */}
-        <Route path="/terms" element={<AuthLayout />}>
-          <Route index element={<TermsOfService />} />
-        </Route>
-        <Route path="/privacy" element={<AuthLayout />}>
-          <Route index element={<PrivacyPolicy />} />
-        </Route>
+        {/* Legal Pages - Redirect to landing page (canonical source) */}
+        <Route path="/terms" element={<RedirectToTerms />} />
+        <Route path="/privacy" element={<RedirectToPrivacy />} />
 
         {/* Invitation Routes - Available without authentication */}
         <Route element={<AuthLayout />}>

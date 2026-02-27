@@ -724,7 +724,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 <HStack spacing={1}>
                   <Icon as={MdVerified} boxSize={3} />
                   <Text>
-                    {filteredEvents.filter((e) => e.certified).length}/{filteredEvents.length}
+                    {filteredEvents.length} Events
                   </Text>
                 </HStack>
               </Badge>

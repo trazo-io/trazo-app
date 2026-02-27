@@ -83,7 +83,7 @@ const Reviews = () => {
         <Box flex={1} minW="300px">
           <VStack spacing={6}>
             <Text fontSize="lg" fontWeight="semibold" color={textColor} alignSelf="start">
-              Resumen de Reputación
+              {intl.formatMessage({ id: 'commercial.reputationSummary' })}
             </Text>
 
             <VStack spacing={4} w="100%">
@@ -152,11 +152,11 @@ const Reviews = () => {
           <VStack spacing={4} align="stretch">
             <Flex justify="space-between" align="center">
               <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                Reseñas Recientes
+                {intl.formatMessage({ id: 'commercial.recentReviews' })}
               </Text>
               {!showAllReviews && reviews && reviews.length > 3 && (
                 <StandardButton variant="outline" size="sm" onClick={() => setShowAllReviews(true)}>
-                  Ver más
+                  {intl.formatMessage({ id: 'commercial.showMore' })}
                 </StandardButton>
               )}
             </Flex>
@@ -174,7 +174,7 @@ const Reviews = () => {
                       size="sm"
                       onClick={() => setShowAllReviews(false)}
                     >
-                      Ver menos
+                      {intl.formatMessage({ id: 'commercial.showLess' })}
                     </StandardButton>
                     <StandardButton variant="primary" size="sm" onClick={handleViewAllReviews}>
                       {intl.formatMessage({ id: 'app.viewAllReviews' })}
@@ -196,7 +196,7 @@ const Reviews = () => {
             ) : (
               <Flex justify="center" align="center" py={8}>
                 <Text color="gray.500" fontSize="md">
-                  No hay reseñas disponibles
+                  {intl.formatMessage({ id: 'commercial.noReviewsAvailable' })}
                 </Text>
               </Flex>
             )}

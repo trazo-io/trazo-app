@@ -33,6 +33,7 @@ import {
   FaCalculator,
   FaLeaf
 } from 'react-icons/fa';
+import { useIntl } from 'react-intl';
 import { StandardPage } from 'components/Design/StandardComponents';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -48,6 +49,7 @@ interface DocumentationTopic {
 const EducationHub: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const intl = useIntl();
 
   // Theme colors
   const cardBg = useColorModeValue('white', 'gray.800');
@@ -61,103 +63,94 @@ const EducationHub: React.FC = () => {
   const documentationTopics: DocumentationTopic[] = [
     {
       id: 'getting-started',
-      title: 'Understanding Trazo: Your Agricultural Transparency Platform',
-      description:
-        'Learn how Trazo transforms farm documentation into consumer trust and premium pricing',
+      title: intl.formatMessage({ id: 'education.topicGettingStartedTitle' }),
+      description: intl.formatMessage({ id: 'education.topicGettingStartedDesc' }),
       icon: FaRocket,
-      category: 'Getting Started'
+      category: intl.formatMessage({ id: 'education.categoryGettingStarted' })
     },
     {
       id: 'farm-events',
-      title: 'The 8 Core Event Types: Your Transparency Building Blocks',
-      description: 'Master each event type to maximize your transparency score and consumer trust',
+      title: intl.formatMessage({ id: 'education.topicFarmEventsTitle' }),
+      description: intl.formatMessage({ id: 'education.topicFarmEventsDesc' }),
       icon: FaTractor,
-      category: 'Farm Documentation'
+      category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' })
     },
     {
       id: 'transparency-score',
-      title: 'Transparency Scoring: Your Consumer Trust Metric',
-      description:
-        'Understanding how Trazo calculates transparency scores and what they mean to consumers',
+      title: intl.formatMessage({ id: 'education.topicTransparencyScoreTitle' }),
+      description: intl.formatMessage({ id: 'education.topicTransparencyScoreDesc' }),
       icon: FaChartLine,
-      category: 'Transparency System'
+      category: intl.formatMessage({ id: 'education.categoryTransparencySystem' })
     },
     {
       id: 'qr-codes',
-      title: 'QR Codes & Consumer Pages: Your Digital Farm Story',
-      description: 'Create compelling consumer experiences that showcase your transparency',
+      title: intl.formatMessage({ id: 'education.topicQrCodesTitle' }),
+      description: intl.formatMessage({ id: 'education.topicQrCodesDesc' }),
       icon: FaQrcode,
-      category: 'Consumer Engagement'
+      category: intl.formatMessage({ id: 'education.categoryConsumerEngagement' })
     },
     {
       id: 'blockchain',
-      title: 'Blockchain Verification: Immutable Trust Infrastructure',
-      description: 'How Trazo uses Polygon blockchain to create unshakeable consumer confidence',
+      title: intl.formatMessage({ id: 'education.topicBlockchainTitle' }),
+      description: intl.formatMessage({ id: 'education.topicBlockchainDesc' }),
       icon: FaShieldAlt,
-      category: 'Verification System'
+      category: intl.formatMessage({ id: 'education.categoryVerificationSystem' })
     },
     {
       id: 'carbon-data',
-      title: "Carbon Data's Supporting Role in the Transparency-First Approach",
-      description:
-        'Understanding how environmental data enhances transparency without overwhelming consumers',
+      title: intl.formatMessage({ id: 'education.topicCarbonDataTitle' }),
+      description: intl.formatMessage({ id: 'education.topicCarbonDataDesc' }),
       icon: FaLeaf,
-      category: 'Environmental Impact'
+      category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' })
     },
     {
       id: 'carbon-methodology',
-      title: 'Carbon Calculation Methodology: How We Calculate Environmental Impact',
-      description:
-        'Detailed explanation of our carbon calculation methods using published EPA emission factors',
+      title: intl.formatMessage({ id: 'education.topicCarbonMethodologyTitle' }),
+      description: intl.formatMessage({ id: 'education.topicCarbonMethodologyDesc' }),
       icon: FaCalculator,
-      category: 'Environmental Impact'
+      category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' })
     },
     {
       id: 'first-production',
-      title: 'Starting Your First Production: From Setup to Success',
-      description:
-        'Complete walkthrough of creating your first production batch and setting up your farm profile',
+      title: intl.formatMessage({ id: 'education.topicFirstProductionTitle' }),
+      description: intl.formatMessage({ id: 'education.topicFirstProductionDesc' }),
       icon: FaPlayCircle,
-      category: 'Getting Started'
+      category: intl.formatMessage({ id: 'education.categoryGettingStarted' })
     },
     {
       id: 'event-mastery',
-      title: 'Mastering Event Documentation: Best Practices Guide',
-      description:
-        'When and how to log events, photo evidence strategies, and real-time documentation workflows',
+      title: intl.formatMessage({ id: 'education.topicEventMasteryTitle' }),
+      description: intl.formatMessage({ id: 'education.topicEventMasteryDesc' }),
       icon: FaCamera,
-      category: 'Farm Documentation'
+      category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' })
     },
     {
       id: 'score-optimization',
-      title: 'Maximizing Your Transparency Score: 90%+ Strategies',
-      description:
-        'Proven techniques to achieve excellent transparency scores and maximize consumer trust',
+      title: intl.formatMessage({ id: 'education.topicScoreOptimizationTitle' }),
+      description: intl.formatMessage({ id: 'education.topicScoreOptimizationDesc' }),
       icon: FaTrophy,
-      category: 'Transparency System'
+      category: intl.formatMessage({ id: 'education.categoryTransparencySystem' })
     },
     {
       id: 'consumer-engagement',
-      title: 'Consumer Engagement & Marketing Success',
-      description: 'QR code placement, scan analytics, and building direct customer relationships',
+      title: intl.formatMessage({ id: 'education.topicConsumerEngagementTitle' }),
+      description: intl.formatMessage({ id: 'education.topicConsumerEngagementDesc' }),
       icon: FaUsers,
-      category: 'Consumer Engagement'
+      category: intl.formatMessage({ id: 'education.categoryConsumerEngagement' })
     },
     {
       id: 'subscription-features',
-      title: 'Subscription Features & Benefits',
-      description:
-        'Understanding feature tiers, upgrade benefits, and maximizing transparency value',
+      title: intl.formatMessage({ id: 'education.topicSubscriptionFeaturesTitle' }),
+      description: intl.formatMessage({ id: 'education.topicSubscriptionFeaturesDesc' }),
       icon: FaCrown,
-      category: 'Business Growth'
+      category: intl.formatMessage({ id: 'education.categoryBusinessGrowth' })
     },
     {
       id: 'advanced-features',
-      title: 'Integration & Advanced Features: Scaling Your Operation',
-      description:
-        'IoT sensors, voice commands, API integration, and automation for efficient farm management',
+      title: intl.formatMessage({ id: 'education.topicAdvancedFeaturesTitle' }),
+      description: intl.formatMessage({ id: 'education.topicAdvancedFeaturesDesc' }),
       icon: FaCogs,
-      category: 'Advanced Features'
+      category: intl.formatMessage({ id: 'education.categoryAdvancedFeatures' })
     }
   ];
 
@@ -175,8 +168,8 @@ const EducationHub: React.FC = () => {
 
   return (
     <StandardPage
-      title="Educational Resources"
-      description="Comprehensive documentation of Trazo's features and capabilities - understand every aspect of the agricultural transparency platform"
+      title={intl.formatMessage({ id: 'education.pageTitle' })}
+      description={intl.formatMessage({ id: 'education.pageDescription' })}
       showBackButton
       onBack={() => navigate(-1)}
     >
@@ -188,7 +181,7 @@ const EducationHub: React.FC = () => {
               <Icon as={FaSearch} color="gray.400" />
             </InputLeftElement>
             <Input
-              placeholder="Search documentation..."
+              placeholder={intl.formatMessage({ id: 'education.searchPlaceholder' })}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               bg={cardBg}
@@ -225,7 +218,7 @@ const EducationHub: React.FC = () => {
                     size="sm"
                     onClick={() => handleTopicClick(topic.id)}
                   >
-                    Read More
+                    {intl.formatMessage({ id: 'education.readMore' })}
                   </Button>
                 </VStack>
               </CardBody>
@@ -237,7 +230,7 @@ const EducationHub: React.FC = () => {
         {filteredTopics.length === 0 && (
           <Box textAlign="center" py={12}>
             <Icon as={FaBook} boxSize={12} color="gray.300" mb={4} />
-            <Text color={textColor}>No documentation found matching "{searchTerm}"</Text>
+            <Text color={textColor}>{intl.formatMessage({ id: 'education.noResultsFound' }, { searchTerm })}</Text>
           </Box>
         )}
       </VStack>

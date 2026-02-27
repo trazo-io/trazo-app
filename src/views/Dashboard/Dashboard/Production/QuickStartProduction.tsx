@@ -597,13 +597,32 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
     } catch (error: any) {
       console.error(`Error ${isEdit ? 'updating' : 'creating'} production:`, error);
+
+      // Parse error — backend uses {"error": "msg"} format, but also handle DRF {"field": ["msgs"]}
+      let description = `Failed to ${isEdit ? 'update' : 'create'} production. Please try again.`;
+      if (error?.data) {
+        if (typeof error.data.error === 'string') {
+          description = error.data.error;
+        } else if (typeof error.data === 'object') {
+          const fieldErrors = Object.entries(error.data)
+            .filter(([, msgs]) => Array.isArray(msgs))
+            .map(([field, msgs]) => {
+              const label = field.replace(/_/g, ' ');
+              return `${label}: ${(msgs as string[]).join(', ')}`;
+            });
+          if (fieldErrors.length > 0) {
+            description = fieldErrors.join(' | ');
+          }
+        }
+      } else if (error?.message) {
+        description = error.message;
+      }
+
       toast({
         title: `Error ${isEdit ? 'Updating' : 'Creating'} Production`,
-        description:
-          error?.data?.error ||
-          `Failed to ${isEdit ? 'update' : 'create'} production. Please try again.`,
+        description,
         status: 'error',
-        duration: 5000,
+        duration: 6000,
         isClosable: true
       });
     } finally {

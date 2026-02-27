@@ -590,7 +590,7 @@ function UnifiedSubscriptionDashboard() {
         .catch((error) => {
           toast({
             title: intl.formatMessage({ id: 'app.error' }),
-            description: intl.formatMessage({ id: 'app.errorSettingPaymentMethod' }),
+            description: intl.formatMessage({ id: 'app.errorSettingDefaultPaymentMethod' }),
             status: 'error',
             duration: 5000,
             isClosable: true
@@ -604,7 +604,7 @@ function UnifiedSubscriptionDashboard() {
     if (!hasSubscription) {
       toast({
         title: intl.formatMessage({ id: 'app.subscriptionRequired' }),
-        description: 'You need an active subscription to add blockchain verification',
+        description: intl.formatMessage({ id: 'subscription.needActiveForBlockchain' }),
         status: 'warning',
         duration: 5000,
         isClosable: true
@@ -646,10 +646,8 @@ function UnifiedSubscriptionDashboard() {
   if (!hasSubscription) {
     return (
       <StandardPage
-        title={intl.formatMessage({ id: 'app.subscription' }) || 'Subscription'}
-        description={
-          intl.formatMessage({ id: 'app.noActiveSubscription' }) || 'No active subscription'
-        }
+        title={intl.formatMessage({ id: 'app.subscription' })}
+        description={intl.formatMessage({ id: 'app.noActiveSubscription' })}
         showBackButton
         onBack={() => navigate(-1)}
       >
@@ -661,6 +659,7 @@ function UnifiedSubscriptionDashboard() {
             </Text>
             <Text mb={6} maxW="lg" mx="auto" color="gray.600">
               {intl.formatMessage({ id: 'app.noSubscriptionDescription' })}
+
             </Text>
             <Button
               colorScheme="green"
@@ -677,11 +676,8 @@ function UnifiedSubscriptionDashboard() {
 
   return (
     <StandardPage
-      title={intl.formatMessage({ id: 'app.subscription' }) || 'Subscription'}
-      description={
-        intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' }) ||
-        'Manage your subscription and track your usage metrics'
-      }
+      title={intl.formatMessage({ id: 'app.subscription' })}
+      description={intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' })}
       showBackButton
       onBack={() => navigate(-1)}
       headerAction={
@@ -822,8 +818,7 @@ function UnifiedSubscriptionDashboard() {
                                   px={2}
                                   py={1}
                                 >
-                                  {subscription?.status?.charAt(0).toUpperCase() +
-                                    subscription?.status?.slice(1)}
+                                  {intl.formatMessage({ id: `subscription.status${(subscription?.status || 'unknown').charAt(0).toUpperCase() + (subscription?.status || 'unknown').slice(1)}` })}
                                 </Badge>
                               </HStack>
                               <Text fontSize="3xl" fontWeight="bold" color="blue.600">
@@ -877,6 +872,18 @@ function UnifiedSubscriptionDashboard() {
                             </Alert>
                           )}
 
+                          {subscription?.pending_plan && (
+                            <Alert status="info" borderRadius="md" mb={4}>
+                              <AlertIcon />
+                              <Text fontSize="sm">
+                                {intl.formatMessage(
+                                  { id: 'app.pendingDowngradeTo' },
+                                  { planName: subscription.pending_plan.name }
+                                )}
+                              </Text>
+                            </Alert>
+                          )}
+
                           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                             <Box>
                               <Text color="gray.500" fontSize="sm">
@@ -899,6 +906,47 @@ function UnifiedSubscriptionDashboard() {
                         </CardBody>
                       </Card>
                     </Box>
+
+                    {/* Usage Warnings */}
+                    {subscription?.usage_warnings && subscription.usage_warnings.length > 0 && (
+                      <VStack spacing={3} mb={4}>
+                        {subscription.usage_warnings.map((warning: any) => (
+                          <Alert
+                            key={warning.metric}
+                            status={warning.level === 'critical' ? 'error' : 'warning'}
+                            borderRadius="md"
+                            variant="left-accent"
+                          >
+                            <AlertIcon />
+                            <Box flex="1">
+                              <AlertTitle fontSize="sm">
+                                {warning.label}: {intl.formatMessage(
+                                  { id: 'app.usagePercentUsed' },
+                                  { percentage: warning.percentage }
+                                )}
+                              </AlertTitle>
+                              <AlertDescription fontSize="xs">
+                                {intl.formatMessage(
+                                  { id: 'app.usageOfLimit' },
+                                  { used: warning.used, limit: warning.limit }
+                                )}{' '}
+                                {warning.level === 'critical'
+                                  ? intl.formatMessage({ id: 'app.usageWarningCritical' })
+                                  : intl.formatMessage({ id: 'app.usageWarningNear' })}
+                              </AlertDescription>
+                            </Box>
+                            <Button
+                              size="xs"
+                              colorScheme={warning.level === 'critical' ? 'red' : 'orange'}
+                              variant="outline"
+                              onClick={() => navigate('/admin/dashboard/pricing')}
+                            >
+                              {intl.formatMessage({ id: 'app.usageWarningUpgrade' })}
+                            </Button>
+                          </Alert>
+                        ))}
+                      </VStack>
+                    )}
 
                     {/* Usage Metrics */}
                     <Box>
@@ -1338,7 +1386,7 @@ function UnifiedSubscriptionDashboard() {
                                         <Box>
                                           <Text fontWeight="medium">{addonItem.addon?.name}</Text>
                                           <Text fontSize="sm" color="gray.600">
-                                            Quantity: {addonItem.quantity}
+                                            {intl.formatMessage({ id: 'subscription.addonQuantity' }, { quantity: addonItem.quantity })}
                                           </Text>
                                         </Box>
                                         <Badge colorScheme="green" fontSize="md">
@@ -1459,13 +1507,12 @@ function UnifiedSubscriptionDashboard() {
                                           method.card_brand.slice(1)}
                                         {method.is_default && (
                                           <Badge ml={2} colorScheme="green" fontSize="xs">
-                                            Default
+                                            {intl.formatMessage({ id: 'subscription.defaultBadge' })}
                                           </Badge>
                                         )}
                                       </Text>
                                       <Text fontSize="sm" color="gray.600">
-                                        •••• {method.last_4} | Expires: {method.exp_month}/
-                                        {method.exp_year}
+                                        {intl.formatMessage({ id: 'subscription.cardExpiry' }, { last4: method.last_4, expMonth: method.exp_month, expYear: method.exp_year })}
                                       </Text>
                                     </Box>
                                   </Flex>
@@ -1476,7 +1523,7 @@ function UnifiedSubscriptionDashboard() {
                                       colorScheme="blue"
                                       onClick={() => handleSetDefaultPaymentMethod(method.id)}
                                     >
-                                      Set Default
+                                      {intl.formatMessage({ id: 'subscription.setDefault' })}
                                     </Button>
                                   )}
                                 </Flex>
@@ -1514,25 +1561,25 @@ function UnifiedSubscriptionDashboard() {
                           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                             <Box>
                               <Text color="gray.500" fontSize="sm">
-                                Company Name
+                                {intl.formatMessage({ id: 'subscription.companyName' })}
                               </Text>
                               <Text fontWeight="medium">{activeCompany?.name}</Text>
                             </Box>
                             <Box>
                               <Text color="gray.500" fontSize="sm">
-                                Email
+                                {intl.formatMessage({ id: 'subscription.email' })}
                               </Text>
                               <Text fontWeight="medium">{activeCompany?.email}</Text>
                             </Box>
                             <Box>
                               <Text color="gray.500" fontSize="sm">
-                                Phone
+                                {intl.formatMessage({ id: 'subscription.phone' })}
                               </Text>
                               <Text fontWeight="medium">{activeCompany?.phone || '-'}</Text>
                             </Box>
                             <Box>
                               <Text color="gray.500" fontSize="sm">
-                                Tax ID
+                                {intl.formatMessage({ id: 'subscription.taxId' })}
                               </Text>
                               <Text fontWeight="medium">{activeCompany?.tax_id || '-'}</Text>
                             </Box>
@@ -1558,7 +1605,7 @@ function UnifiedSubscriptionDashboard() {
                               <Flex justify="space-between" align="center">
                                 <Box>
                                   <Text fontWeight="medium">
-                                    Invoice #{invoice.number || invoice.id}
+                                    {intl.formatMessage({ id: 'subscription.invoiceLabel' }, { number: invoice.number || invoice.id })}
                                   </Text>
                                   <Text fontSize="sm" color="gray.600">
                                     {formatDate(invoice.created || invoice.invoice_date)} ·{' '}
@@ -1581,7 +1628,7 @@ function UnifiedSubscriptionDashboard() {
                                     href={invoice.invoice_pdf}
                                     target="_blank"
                                   >
-                                    Download
+                                    {intl.formatMessage({ id: 'subscription.download' })}
                                   </Button>
                                 </HStack>
                               </Flex>

@@ -217,7 +217,7 @@ const HistoryCard = ({ amount }) => {
                 border="1px solid"
                 borderColor="green.200"
               >
-                Carbon Tracked
+                {intl.formatMessage({ id: 'parcel.carbonTracked' })}
               </Badge>
             </HStack>
 
@@ -230,22 +230,22 @@ const HistoryCard = ({ amount }) => {
               {/* Simple Controls - Hide on very small screens */}
               {data && data.length > 1 && !isMobile && (
                 <HStack spacing={1}>
-                  <Tooltip label="Filter productions" placement="top">
+                  <Tooltip label={intl.formatMessage({ id: 'parcel.filterProductions' })} placement="top">
                     <IconButton
                       size="sm"
                       variant="ghost"
                       icon={<Icon as={FaFilter} />}
-                      aria-label="Filter productions"
+                      aria-label={intl.formatMessage({ id: 'parcel.filterProductions' })}
                       color="gray.500"
                       _hover={{ color: 'gray.700', bg: 'gray.100' }}
                     />
                   </Tooltip>
-                  <Tooltip label="Sort productions" placement="top">
+                  <Tooltip label={intl.formatMessage({ id: 'parcel.sortProductions' })} placement="top">
                     <IconButton
                       size="sm"
                       variant="ghost"
                       icon={<Icon as={FaSort} />}
-                      aria-label="Sort productions"
+                      aria-label={intl.formatMessage({ id: 'parcel.sortProductions' })}
                       color="gray.500"
                       _hover={{ color: 'gray.700', bg: 'gray.100' }}
                     />
@@ -290,7 +290,7 @@ const HistoryCard = ({ amount }) => {
                     )
                   }
                 >
-                  {isMobile ? 'New' : 'New Production'}
+                  {isMobile ? intl.formatMessage({ id: 'app.new' }) : intl.formatMessage({ id: 'parcel.newProduction' })}
                 </Button>
               )}
             </Flex>
@@ -313,7 +313,7 @@ const HistoryCard = ({ amount }) => {
                   {productionStats.completed}
                 </Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
-                  completed
+                  {intl.formatMessage({ id: 'parcel.completed' })}
                 </Text>
               </VStack>
 
@@ -322,7 +322,7 @@ const HistoryCard = ({ amount }) => {
                   {productionStats.ongoing}
                 </Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
-                  ongoing
+                  {intl.formatMessage({ id: 'parcel.ongoing' })}
                 </Text>
               </VStack>
 
@@ -331,7 +331,7 @@ const HistoryCard = ({ amount }) => {
                   {productionStats.avgScore !== null ? productionStats.avgScore : '--'}
                 </Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
-                  {isMobile ? 'score' : 'avg score'}
+                  {isMobile ? intl.formatMessage({ id: 'parcel.scoreLabel' }) : intl.formatMessage({ id: 'parcel.avgScore' })}
                 </Text>
               </VStack>
 
@@ -340,7 +340,7 @@ const HistoryCard = ({ amount }) => {
                   {productionStats.verificationRate}%
                 </Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
-                  verified
+                  {intl.formatMessage({ id: 'parcel.verifiedLabel' })}
                 </Text>
               </VStack>
             </Flex>
@@ -498,7 +498,7 @@ const HistoryCard = ({ amount }) => {
 
                             if (score >= 85)
                               return {
-                                level: 'Excellent',
+                                level: intl.formatMessage({ id: 'parcel.levelExcellent' }),
                                 color: 'green.500',
                                 icon: FaAward,
                                 type: transparencyScore ? 'Transparency' : 'Carbon',
@@ -506,7 +506,7 @@ const HistoryCard = ({ amount }) => {
                               };
                             if (score >= 70)
                               return {
-                                level: 'Good',
+                                level: intl.formatMessage({ id: 'parcel.levelGood' }),
                                 color: 'blue.500',
                                 icon: FaLeaf,
                                 type: transparencyScore ? 'Transparency' : 'Carbon',
@@ -514,14 +514,14 @@ const HistoryCard = ({ amount }) => {
                               };
                             if (score >= 55)
                               return {
-                                level: 'Fair',
+                                level: intl.formatMessage({ id: 'parcel.levelFair' }),
                                 color: 'yellow.500',
                                 icon: FaSeedling,
                                 type: transparencyScore ? 'Transparency' : 'Carbon',
                                 score: score
                               };
                             return {
-                              level: 'Improving',
+                              level: intl.formatMessage({ id: 'parcel.levelImproving' }),
                               color: 'orange.500',
                               icon: FaExclamationTriangle,
                               type: transparencyScore ? 'Transparency' : 'Carbon',
@@ -537,12 +537,12 @@ const HistoryCard = ({ amount }) => {
                               ? {
                                   level:
                                     carbonScore >= 85
-                                      ? 'Excellent'
+                                      ? intl.formatMessage({ id: 'parcel.levelExcellent' })
                                       : carbonScore >= 70
-                                      ? 'Good'
+                                      ? intl.formatMessage({ id: 'parcel.levelGood' })
                                       : carbonScore >= 55
-                                      ? 'Fair'
-                                      : 'Improving',
+                                      ? intl.formatMessage({ id: 'parcel.levelFair' })
+                                      : intl.formatMessage({ id: 'parcel.levelImproving' }),
                                   color:
                                     carbonScore >= 85
                                       ? 'green.500'
@@ -584,7 +584,7 @@ const HistoryCard = ({ amount }) => {
                               return `${start} - ${end}`;
                             }
 
-                            return `${start} - Ongoing`;
+                            return `${start} - ${intl.formatMessage({ id: 'parcel.statusOngoing' })}`;
                           };
 
                           return (
@@ -674,7 +674,7 @@ const HistoryCard = ({ amount }) => {
                                             textTransform="uppercase"
                                             letterSpacing="wide"
                                           >
-                                            {isCompleted ? 'Complete' : 'Ongoing'}
+                                            {isCompleted ? intl.formatMessage({ id: 'parcel.statusComplete' }) : intl.formatMessage({ id: 'parcel.statusOngoing' })}
                                           </Badge>
                                           <Text fontSize="xs" color="gray.500" fontWeight="medium">
                                             {formatDateRange(
@@ -767,7 +767,7 @@ const HistoryCard = ({ amount }) => {
                                           return (
                                             <Avatar
                                               size="sm"
-                                              name="No Team"
+                                              name={intl.formatMessage({ id: 'parcel.noTeam' })}
                                               bg="gray.300"
                                               color="gray.600"
                                             />
@@ -807,7 +807,7 @@ const HistoryCard = ({ amount }) => {
                                   <HStack justify="space-between" align="center" spacing={3}>
                                     <HStack spacing={1}>
                                       <Text fontSize="xs" color="gray.500" fontWeight="medium">
-                                        Product:
+                                        {intl.formatMessage({ id: 'parcel.productLabel' })}
                                       </Text>
                                       <Text fontSize="xs" color="gray.700" fontWeight="600">
                                         {production.product || 'Agricultural Product'}
@@ -815,7 +815,7 @@ const HistoryCard = ({ amount }) => {
                                     </HStack>
                                     <HStack spacing={1}>
                                       <Text fontSize="xs" color="gray.500" fontWeight="medium">
-                                        Team:
+                                        {intl.formatMessage({ id: 'parcel.teamLabel' })}
                                       </Text>
                                       <Text fontSize="xs" color="gray.700" fontWeight="500">
                                         {(() => {
@@ -861,10 +861,8 @@ const HistoryCard = ({ amount }) => {
 
                                           const membersArray = Array.from(uniqueMembers.values());
                                           return membersArray.length > 0
-                                            ? `${membersArray.length} member${
-                                                membersArray.length > 1 ? 's' : ''
-                                              }`
-                                            : 'No team';
+                                            ? intl.formatMessage({ id: 'parcel.memberCount' }, { count: membersArray.length })
+                                            : intl.formatMessage({ id: 'parcel.noTeamAssigned' });
                                         })()}
                                       </Text>
                                     </HStack>
@@ -935,10 +933,10 @@ const HistoryCard = ({ amount }) => {
                                             textTransform="uppercase"
                                             letterSpacing="wide"
                                           >
-                                            Transparency Score
+                                            {intl.formatMessage({ id: 'parcel.transparencyScoreLabel' })}
                                           </Text>
                                           <Text fontSize="xs" color="gray.600">
-                                            Agricultural Practices
+                                            {intl.formatMessage({ id: 'parcel.agriculturalPractices' })}
                                           </Text>
                                         </VStack>
                                       </HStack>
@@ -971,10 +969,10 @@ const HistoryCard = ({ amount }) => {
                                           letterSpacing="wide"
                                         >
                                           {transparencyScore >= 80
-                                            ? 'HIGH'
+                                            ? intl.formatMessage({ id: 'parcel.transparencyHigh' })
                                             : transparencyScore >= 60
-                                            ? 'MEDIUM'
-                                            : 'BASIC'}
+                                            ? intl.formatMessage({ id: 'parcel.transparencyMedium' })
+                                            : intl.formatMessage({ id: 'parcel.transparencyBasic' })}
                                         </Badge>
                                       </VStack>
                                     </HStack>
@@ -1013,10 +1011,10 @@ const HistoryCard = ({ amount }) => {
                                               textTransform="uppercase"
                                               letterSpacing="wide"
                                             >
-                                              Transparency Score
+                                              {intl.formatMessage({ id: 'parcel.transparencyScoreLabel' })}
                                             </Text>
                                             <Text fontSize="xs" color="gray.600">
-                                              Agricultural Practices
+                                              {intl.formatMessage({ id: 'parcel.agriculturalPractices' })}
                                             </Text>
                                           </VStack>
                                         </HStack>
@@ -1070,11 +1068,10 @@ const HistoryCard = ({ amount }) => {
                 <Icon as={FaSeedling} color="green.400" boxSize={12} />
                 <VStack spacing={2}>
                   <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                    No productions started yet
+                    {intl.formatMessage({ id: 'parcel.noProductionsStarted' })}
                   </Text>
                   <Text fontSize="sm" color="gray.500" maxW="350px" lineHeight="1.5">
-                    Start tracking your agricultural production to build carbon transparency and
-                    connect with consumers through QR codes
+                    {intl.formatMessage({ id: 'parcel.noProductionsDescription' })}
                   </Text>
                 </VStack>
               </VStack>

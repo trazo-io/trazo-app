@@ -210,7 +210,7 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
 
             <Text fontSize="xs" color="gray.500">
               Learn more about our{' '}
-              <Link color="green.500" href="/privacy" isExternal textDecoration="underline">
+              <Link color="green.500" href="https://trazo.io/privacy-policy" isExternal textDecoration="underline">
                 privacy policy
               </Link>{' '}
               and{' '}

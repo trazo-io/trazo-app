@@ -1497,6 +1497,8 @@ function ProductDetail() {
                           // CRITICAL FIX: Preserve original album data from backend response
                           album: event.album,
                           albums: event.albums || (event.album ? [event.album] : undefined),
+                          // Preserve verification_level so ConsumerEventCard can show photo gallery
+                          verification_level: (event as any).verification_level,
                           // Add carbon data that UltraMobileProductionJourney expects
                           carbon_data: {
                             co2e: averageCO2ePerEvent,

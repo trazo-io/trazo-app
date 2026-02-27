@@ -8,6 +8,7 @@ import { BsArrowRight } from 'react-icons/bs';
 // Custom components
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody.tsx';
+import { useIntl } from 'react-intl';
 
 // Utility function to calculate polygon center
 const calculatePolygonCenter = (points) => {
@@ -80,6 +81,7 @@ const options = {
 };
 
 const CardWithBackground = ({ polygon, zoom, center }) => {
+  const intl = useIntl();
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: options.googleMapApiKey
   });
@@ -124,8 +126,8 @@ const CardWithBackground = ({ polygon, zoom, center }) => {
     }
   }, [zoom, center, polygon]);
 
-  if (loadError) return 'Error loading maps';
-  if (!isLoaded) return 'Loading Maps';
+  if (loadError) return intl.formatMessage({ id: 'parcel.errorLoadingMaps' });
+  if (!isLoaded) return intl.formatMessage({ id: 'parcel.loadingMaps' });
 
   return (
     <Card maxHeight="290.5px" p="0px">

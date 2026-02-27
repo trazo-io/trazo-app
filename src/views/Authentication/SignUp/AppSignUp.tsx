@@ -34,6 +34,7 @@ import {
   FaRedo
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import AuthFooter from 'components/Footer/AuthFooter';
 import { useSignUpMutation, useResendVerificationEmailMutation } from '../../../store/api/authApi';
 
 // No assets needed for minimalist design
@@ -1089,7 +1090,7 @@ const AppSignUp: React.FC = () => {
                         >
                           <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
                             I agree to the{' '}
-                            <Link to="/terms" target="_blank">
+                            <a href="https://trazo.io/terms-conditions" target="_blank" rel="noopener noreferrer">
                               <Text
                                 as="span"
                                 color="green.500"
@@ -1098,9 +1099,9 @@ const AppSignUp: React.FC = () => {
                               >
                                 Terms of Service
                               </Text>
-                            </Link>{' '}
+                            </a>{' '}
                             and{' '}
-                            <Link to="/privacy" target="_blank">
+                            <a href="https://trazo.io/privacy-policy" target="_blank" rel="noopener noreferrer">
                               <Text
                                 as="span"
                                 color="green.500"
@@ -1109,7 +1110,7 @@ const AppSignUp: React.FC = () => {
                               >
                                 Privacy Policy
                               </Text>
-                            </Link>
+                            </a>
                           </Text>
                         </Checkbox>
                         {errors.acceptTerms && (
@@ -1396,71 +1397,7 @@ const AppSignUp: React.FC = () => {
         </Flex>
       </Grid>
 
-      {/* Professional Footer */}
-      <Box
-        as="footer"
-        bg={useColorModeValue('gray.50', 'gray.900')}
-        borderTop="1px solid"
-        borderColor={useColorModeValue('gray.200', 'gray.700')}
-        py={6}
-        px={8}
-      >
-        <Flex
-          maxW="7xl"
-          mx="auto"
-          direction={{ base: 'column', md: 'row' }}
-          align="center"
-          justify="space-between"
-          gap={4}
-        >
-          <HStack spacing={6} flexWrap="wrap" justify="center">
-            <Link to="/about">
-              <Text
-                fontSize="sm"
-                color={useColorModeValue('gray.600', 'gray.400')}
-                _hover={{ color: 'green.500' }}
-                transition="color 0.2s"
-              >
-                About
-              </Text>
-            </Link>
-            <Link to="/why-us">
-              <Text
-                fontSize="sm"
-                color={useColorModeValue('gray.600', 'gray.400')}
-                _hover={{ color: 'green.500' }}
-                transition="color 0.2s"
-              >
-                Why Trazo?
-              </Text>
-            </Link>
-            <Link to="/blog">
-              <Text
-                fontSize="sm"
-                color={useColorModeValue('gray.600', 'gray.400')}
-                _hover={{ color: 'green.500' }}
-                transition="color 0.2s"
-              >
-                Blog
-              </Text>
-            </Link>
-            <Link to="/contact">
-              <Text
-                fontSize="sm"
-                color={useColorModeValue('gray.600', 'gray.400')}
-                _hover={{ color: 'green.500' }}
-                transition="color 0.2s"
-              >
-                Contact
-              </Text>
-            </Link>
-          </HStack>
-
-          <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
-            © 2025 Trazo. Professional Carbon Intelligence Platform.
-          </Text>
-        </Flex>
-      </Box>
+      <AuthFooter />
     </Box>
   );
 };

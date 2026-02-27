@@ -8,12 +8,19 @@ import {
 // Define types for plan data
 export interface PlanFeatures {
   max_establishments: number;
-  max_parcels: number;
+  max_parcels?: number;
+  max_parcels_per_establishment?: number;
   max_productions_per_year: number;
-  establishment_full_description: boolean;
   monthly_scan_limit: number;
   storage_limit_gb: number;
   support_response_time: number;
+  priority_support?: boolean;
+  dedicated_support?: boolean;
+  voice_recording?: boolean;
+  ai_event_templates?: boolean;
+  is_starter?: boolean;
+  trial_no_card_days?: number;
+  trial_with_card_days?: number;
 }
 
 export interface Plan {

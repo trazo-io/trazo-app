@@ -120,9 +120,9 @@ const SmartUsageCard = ({
 
     if (isHighEngagement && isTopPerformer && isGrowingFast) {
       return {
-        status: 'Exceptional Performance',
-        insight: 'Your transparency is driving massive consumer interest',
-        action: 'View Consumer Impact Analytics',
+        status: intl.formatMessage({ id: 'dashboard.exceptionalPerformance' }),
+        insight: intl.formatMessage({ id: 'dashboard.exceptionalInsight' }),
+        action: intl.formatMessage({ id: 'dashboard.viewConsumerImpact' }),
         actionIcon: FaChartLine,
         actionColor: successColor,
         priority: 'celebration'
@@ -131,11 +131,11 @@ const SmartUsageCard = ({
 
     if (isHighEngagement && carbonReadyPercentage < 80) {
       return {
-        status: 'High Demand Opportunity',
-        insight: 'Consumers want more of your verified products',
-        action: `Complete Carbon Data for ${
-          metrics.total_productions - metrics.verified_productions
-        } More Products`,
+        status: intl.formatMessage({ id: 'dashboard.highDemandOpportunity' }),
+        insight: intl.formatMessage({ id: 'dashboard.highDemandInsight' }),
+        action: intl.formatMessage({ id: 'dashboard.completeCarbonData' }, {
+          count: metrics.total_productions - metrics.verified_productions
+        }),
         actionIcon: FaLeaf,
         actionColor: successColor,
         priority: 'growth'
@@ -144,9 +144,9 @@ const SmartUsageCard = ({
 
     if (metrics.subscription_usage_percentage > 80) {
       return {
-        status: 'Ready to Scale',
-        insight: "You're maximizing your current plan's potential",
-        action: 'Unlock Premium Features',
+        status: intl.formatMessage({ id: 'dashboard.readyToScale' }),
+        insight: intl.formatMessage({ id: 'dashboard.readyToScaleInsight' }),
+        action: intl.formatMessage({ id: 'dashboard.unlockPremium' }),
         actionIcon: FaCrown,
         actionColor: premiumColor,
         priority: 'upgrade'
@@ -155,9 +155,9 @@ const SmartUsageCard = ({
 
     if (metrics.monthly_scans < 500) {
       return {
-        status: 'Share Your Story',
-        insight: 'More consumers need to discover your sustainable products',
-        action: 'View Analytics & Insights',
+        status: intl.formatMessage({ id: 'dashboard.shareYourStory' }),
+        insight: intl.formatMessage({ id: 'dashboard.shareStoryInsight' }),
+        action: intl.formatMessage({ id: 'dashboard.viewAnalyticsInsights' }),
         actionIcon: FaChartLine,
         actionColor: accentColor,
         priority: 'marketing'
@@ -165,9 +165,9 @@ const SmartUsageCard = ({
     }
 
     return {
-      status: 'Building Trust',
-      insight: 'Your transparency efforts are creating consumer confidence',
-      action: 'View Transparency Impact',
+      status: intl.formatMessage({ id: 'dashboard.buildingTrust' }),
+      insight: intl.formatMessage({ id: 'dashboard.buildingTrustInsight' }),
+      action: intl.formatMessage({ id: 'dashboard.viewTransparencyImpact' }),
       actionIcon: FaChartLine,
       actionColor: accentColor,
       priority: 'standard'
@@ -176,9 +176,9 @@ const SmartUsageCard = ({
 
   // Default insight for loading state
   const getDefaultInsight = () => ({
-    status: 'Loading Dashboard',
-    insight: 'Calculating your transparency metrics...',
-    action: 'View Analytics',
+    status: intl.formatMessage({ id: 'dashboard.loadingDashboard' }),
+    insight: intl.formatMessage({ id: 'dashboard.calculatingMetrics' }),
+    action: intl.formatMessage({ id: 'dashboard.viewAnalytics' }),
     actionIcon: FaChartLine,
     actionColor: accentColor,
     priority: 'standard'
@@ -218,10 +218,10 @@ const SmartUsageCard = ({
             <Icon as={FaChartLine} w="20px" h="20px" />
           </Circle>
           <Text fontSize="md" color={textColor} fontWeight="600">
-            Loading Dashboard Metrics
+            {intl.formatMessage({ id: 'dashboard.loadingDashboardMetrics' })}
           </Text>
           <Text fontSize="sm" color={subtitleColor} textAlign="center">
-            Calculating your transparency insights...
+            {intl.formatMessage({ id: 'dashboard.calculatingInsights' })}
           </Text>
         </VStack>
       </Card>
@@ -244,10 +244,10 @@ const SmartUsageCard = ({
             <Icon as={FaChartLine} w="20px" h="20px" />
           </Circle>
           <Text fontSize="md" color={textColor} fontWeight="600">
-            Unable to Load Metrics
+            {intl.formatMessage({ id: 'dashboard.unableLoadMetrics' })}
           </Text>
           <Text fontSize="sm" color={subtitleColor} textAlign="center">
-            Please try refreshing the page
+            {intl.formatMessage({ id: 'dashboard.tryRefreshingPage' })}
           </Text>
         </VStack>
       </Card>
@@ -293,9 +293,10 @@ const SmartUsageCard = ({
                 {smartInsight.status}
               </Text>
               <Tooltip
-                label={`Your farm is in the top ${100 - industryPercentile}% of ${
-                  metrics?.crop_type || 'similar'
-                } farms based on USDA carbon efficiency benchmarks. This compares your actual emissions per kg to industry standards for your crop type. Lower emissions = higher percentile ranking.`}
+                label={intl.formatMessage({ id: 'dashboard.tooltipIndustryPercentile' }, {
+                  percentile: 100 - industryPercentile,
+                  cropType: metrics?.crop_type || 'similar'
+                })}
                 fontSize="xs"
                 bg="gray.800"
                 color="white"
@@ -314,7 +315,7 @@ const SmartUsageCard = ({
                   cursor="pointer"
                 >
                   <Icon as={FaMedal} w={2} h={2} mr={1} />
-                  Top {100 - industryPercentile}%
+                  {intl.formatMessage({ id: 'dashboard.topPercentile' }, { percentile: 100 - industryPercentile })}
                 </Badge>
               </Tooltip>
             </HStack>
@@ -327,10 +328,10 @@ const SmartUsageCard = ({
         {/* Key Performance Metrics Grid - More Compact */}
         <SimpleGrid columns={3} spacing={1.5}>
           {/* Consumer Reach - Most Important Metric */}
-          <Tooltip label="Monthly consumers viewing your transparency data" hasArrow>
+          <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipConsumerReach' })} hasArrow>
             <Stat textAlign="center" bg={statBg} p={1} borderRadius="md">
               <StatLabel fontSize="xs" color={subtitleColor}>
-                Consumer Reach
+                {intl.formatMessage({ id: 'dashboard.consumerReach' })}
               </StatLabel>
               <StatNumber fontSize="md" color={textColor} fontWeight="bold">
                 {marketReach}
@@ -347,10 +348,10 @@ const SmartUsageCard = ({
           </Tooltip>
 
           {/* Trust Score */}
-          <Tooltip label="Consumer trust based on transparency and verification" hasArrow>
+          <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipTrustScore' })} hasArrow>
             <Stat textAlign="center" bg={statBg} p={1} borderRadius="md">
               <StatLabel fontSize="xs" color={subtitleColor}>
-                Trust Score
+                {intl.formatMessage({ id: 'dashboard.trustScore' })}
               </StatLabel>
               <StatNumber fontSize="sm" color={textColor} fontWeight="bold">
                 {trustScore}%
@@ -365,10 +366,10 @@ const SmartUsageCard = ({
           </Tooltip>
 
           {/* Verified Productions */}
-          <Tooltip label="Productions with blockchain + USDA carbon verification" hasArrow>
+          <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipVerifiedProductions' })} hasArrow>
             <Stat textAlign="center" bg={statBg} p={1} borderRadius="md">
               <StatLabel fontSize="xs" color={subtitleColor}>
-                Verified
+                {intl.formatMessage({ id: 'app.verified' })}
               </StatLabel>
               <StatNumber fontSize="sm" color={textColor} fontWeight="bold">
                 {blockchainVerified}/{totalProductions}
@@ -376,7 +377,7 @@ const SmartUsageCard = ({
               <StatHelpText fontSize="2xs" m={0}>
                 <HStack spacing={1} justify="center">
                   <Icon as={MdVerified} color={accentColor} w={2.5} h={2.5} />
-                  <Text color={subtitleColor}>Blockchain</Text>
+                  <Text color={subtitleColor}>{intl.formatMessage({ id: 'dashboard.blockchain' })}</Text>
                 </HStack>
               </StatHelpText>
             </Stat>
@@ -398,20 +399,20 @@ const SmartUsageCard = ({
               </Circle>
               <Box>
                 <Text fontSize="xs" color={textColor} fontWeight="600">
-                  Monthly Impact
+                  {intl.formatMessage({ id: 'dashboard.monthlyImpact' })}
                 </Text>
                 <HStack spacing={4}>
                   <Tooltip
-                    label="Transparency engagement score based on consumer reach, QR scan frequency, and verification status. Higher scores indicate stronger consumer trust and engagement with your farm's transparency."
+                    label={intl.formatMessage({ id: 'dashboard.tooltipTransparencyEngagement' })}
                     hasArrow
                     placement="top"
                   >
                     <Text fontSize="sm" fontWeight="700" color={textColor} cursor="help">
-                      {transparencyEngagement} transparency score
+                      {transparencyEngagement} {intl.formatMessage({ id: 'dashboard.transparencyScoreLabel' })}
                     </Text>
                   </Tooltip>
                   <Text fontSize="xs" color={subtitleColor}>
-                    {monthlyQRScans.toLocaleString()} QR scans
+                    {monthlyQRScans.toLocaleString()} {intl.formatMessage({ id: 'dashboard.qrScans' })}
                   </Text>
                 </HStack>
               </Box>

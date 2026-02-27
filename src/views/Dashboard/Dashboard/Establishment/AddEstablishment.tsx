@@ -69,8 +69,6 @@ function AddEstablishment({ isEdit = false }: Props) {
           main_activities: data.main_activities || '',
           location_highlights: data.location_highlights || '',
           custom_message: data.custom_message || '',
-          facebook: data.facebook || '',
-          instagram: data.instagram || '',
           establishment_type: data.establishmentType || '',
           farming_method: data.farmingMethod || '',
           total_acreage: data.totalAcreage || 0,
@@ -89,8 +87,7 @@ function AddEstablishment({ isEdit = false }: Props) {
           // climate_zone removed from UI but kept for backward compatibility
           climate_zone: data.climateZone || '',
           water_sources: JSON.stringify(data.waterSources || []),
-          // NEW: soil_health_practices replaces soil_types (more consumer-friendly)
-          soil_health_practices: JSON.stringify(data.soilHealthPractices || []),
+          soil_types: JSON.stringify(data.soilHealthPractices || []),
           // conservation_practices merged into sustainability_practices
           conservation_practices: JSON.stringify([]),
           irrigation_methods: JSON.stringify(data.irrigationMethods || []),
@@ -141,8 +138,6 @@ function AddEstablishment({ isEdit = false }: Props) {
           main_activities: data.main_activities || '',
           location_highlights: data.location_highlights || '',
           custom_message: data.custom_message || '',
-          facebook: data.facebook || '',
-          instagram: data.instagram || '',
           establishment_type: data.establishmentType || '',
           farming_method: data.farmingMethod || '',
           total_acreage: data.totalAcreage || 0,
@@ -161,8 +156,7 @@ function AddEstablishment({ isEdit = false }: Props) {
           // climate_zone removed from UI but kept for backward compatibility
           climate_zone: data.climateZone || '',
           water_sources: JSON.stringify(data.waterSources || []),
-          // NEW: soil_health_practices replaces soil_types (more consumer-friendly)
-          soil_health_practices: JSON.stringify(data.soilHealthPractices || []),
+          soil_types: JSON.stringify(data.soilHealthPractices || []),
           // conservation_practices merged into sustainability_practices
           conservation_practices: JSON.stringify([]),
           irrigation_methods: JSON.stringify(data.irrigationMethods || []),
@@ -216,26 +210,35 @@ function AddEstablishment({ isEdit = false }: Props) {
       }
     } catch (error) {
       console.error(`Failed to ${isEdit ? 'update' : 'create'} establishment:`, error);
-      console.error('Error details:', {
-        status: error?.status,
-        data: error?.data,
-        message: error?.message
-      });
 
-      // Show specific error message to user
+      // Parse DRF field-level validation errors into readable message
+      let description = 'Please check all required fields and try again.';
+      if (error?.data && typeof error.data === 'object') {
+        if (error.data.message) {
+          description = error.data.message;
+        } else {
+          // DRF returns {field: [errors]} format
+          const fieldErrors = Object.entries(error.data)
+            .filter(([, msgs]) => Array.isArray(msgs))
+            .map(([field, msgs]) => {
+              const label = field.replace(/_/g, ' ');
+              return `${label}: ${(msgs as string[]).join(', ')}`;
+            });
+          if (fieldErrors.length > 0) {
+            description = fieldErrors.join(' | ');
+          }
+        }
+      } else if (error?.message) {
+        description = error.message;
+      }
+
       toast({
         title: `Error ${isEdit ? 'Updating' : 'Creating'} Establishment`,
-        description:
-          error?.data?.message ||
-          error?.message ||
-          'Please check all required fields and try again.',
+        description,
         status: 'error',
         duration: 6000,
         isClosable: true
       });
-
-      // Re-throw error so form component can handle it properly
-      throw error;
     }
   };
 
@@ -266,8 +269,6 @@ function AddEstablishment({ isEdit = false }: Props) {
       main_activities: establishmentData.main_activities || '',
       location_highlights: establishmentData.location_highlights || '',
       custom_message: establishmentData.custom_message || '',
-      facebook: establishmentData.facebook || '',
-      instagram: establishmentData.instagram || '',
       establishmentType: establishmentData.establishment_type || establishmentData.type || '',
       farmingMethod: establishmentData.farming_method || '',
       totalAcreage: establishmentData.total_acreage || 0,
@@ -346,19 +347,7 @@ function AddEstablishment({ isEdit = false }: Props) {
         }
         return [];
       })(),
-      // NEW: soilHealthPractices - try new field first, fall back to old soil_types for backward compatibility
       soilHealthPractices: (() => {
-        // Try new field first
-        if (Array.isArray(establishmentData.soil_health_practices)) {
-          return establishmentData.soil_health_practices;
-        }
-        if (typeof establishmentData.soil_health_practices === 'string') {
-          try {
-            const parsed = JSON.parse(establishmentData.soil_health_practices);
-            if (parsed.length > 0) return parsed;
-          } catch {}
-        }
-        // Fall back to old soil_types field for backward compatibility
         if (Array.isArray(establishmentData.soil_types)) {
           return establishmentData.soil_types;
         }

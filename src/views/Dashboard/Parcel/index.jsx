@@ -128,7 +128,7 @@ export default function ParcelView() {
               data?.image ? (
                 <Image
                   src={data.image}
-                  alt="parcel image"
+                  alt={intl.formatMessage({ id: 'parcel.parcelImageAlt' })}
                   objectFit={'cover'}
                   minWidth={{ md: '300px', lg: 'auto' }}
                   width="100%"
@@ -156,7 +156,7 @@ export default function ParcelView() {
         maxW="100%">
         <TrackList amount={40} />
         <HistoryCard
-          title={'History'}
+          title={intl.formatMessage({ id: 'parcel.history' })}
           amount={data?.productions_completed}
           captions={historyCardTitles}
         />

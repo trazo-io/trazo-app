@@ -45,8 +45,8 @@ const SubscriptionRequired = () => {
       return auth.companies.find((company: Company) => company.id === selectedId) || null;
     }
 
-    // Fallback to companySlice for invitation flow
-    const companyState = state.companySlice as any;
+    // Fallback to company slice for invitation flow
+    const companyState = (state as any).company;
     if (companyState && companyState.currentCompany) {
       return companyState.currentCompany;
     }

@@ -31,15 +31,16 @@ import { useSelector } from 'react-redux';
 import { useUpdateUserMutation } from 'store/api/userApi';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
-const formSchemaBasic = object({
-  first_name: string().min(1, 'First name is required'),
-  last_name: string().min(1, 'Last name is required'),
-  email: string().email('Invalid email').min(1, 'Email is required'),
-  phone: string()
-});
 
 function ProfileUser() {
   const intl = useIntl();
+
+  const formSchemaBasic = object({
+    first_name: string().min(1, intl.formatMessage({ id: 'profile.firstNameRequired' })),
+    last_name: string().min(1, intl.formatMessage({ id: 'profile.lastNameRequired' })),
+    email: string().email(intl.formatMessage({ id: 'profile.invalidEmail' })).min(1, intl.formatMessage({ id: 'profile.emailRequired' })),
+    phone: string()
+  });
   const navigate = useNavigate();
   const image = useRef<HTMLDivElement>(null);
   const [picture, setPicture] = useState<string | null>(null);
@@ -160,7 +161,7 @@ function ProfileUser() {
                   </AvatarBadge>
                 </Avatar>
                 <Text fontSize="sm" color="gray.600" mt={2}>
-                  Click to update profile picture
+                  {intl.formatMessage({ id: 'profile.clickToUpdatePicture' })}
                 </Text>
               </Box>
 
@@ -220,7 +221,7 @@ function ProfileUser() {
                   variant="primary"
                   type="submit"
                   isLoading={isLoading}
-                  loadingText="Saving..."
+                  loadingText={intl.formatMessage({ id: 'profile.saving' })}
                   size="lg"
                   px={8}
                 >
@@ -234,10 +235,10 @@ function ProfileUser() {
 
       {/* Security Settings Section */}
       <Box mt={6}>
-        <StandardCard title="Security Settings" variant="elevated">
+        <StandardCard title={intl.formatMessage({ id: 'profile.securitySettings' })} variant="elevated">
           <VStack spacing={4} align="stretch">
             <Text fontSize="sm" color="gray.600">
-              Manage your account security and authentication settings
+              {intl.formatMessage({ id: 'profile.securityDescription' })}
             </Text>
 
             {/* Change Password Link */}
@@ -263,10 +264,10 @@ function ProfileUser() {
                   <Icon as={FaLock} color="green.500" boxSize={5} />
                   <VStack align="start" spacing={0}>
                     <Text fontWeight="semibold" color="gray.700">
-                      Change Password
+                      {intl.formatMessage({ id: 'profile.changePassword' })}
                     </Text>
                     <Text fontSize="sm" color="gray.500">
-                      Update your password to keep your account secure
+                      {intl.formatMessage({ id: 'profile.changePasswordDescription' })}
                     </Text>
                   </VStack>
                 </HStack>

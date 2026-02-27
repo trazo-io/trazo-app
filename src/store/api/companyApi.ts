@@ -66,10 +66,11 @@ const companyApi = baseApi.injectEndpoints({
         // Otherwise, use the existing form data approach as a fallback
         const formData = new FormData();
 
-        // Add all regular fields to formData
+        // Add all regular fields to formData, skipping null/undefined values
+        // FormData.append converts null to "null" string which breaks numeric fields
         for (const [key, value] of Object.entries(establishment)) {
-          if (key !== 'album') {
-            formData.append(key, value as string);
+          if (key !== 'album' && value !== null && value !== undefined && value !== '') {
+            formData.append(key, String(value));
           }
         }
 

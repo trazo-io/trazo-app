@@ -26,6 +26,7 @@ import {
 } from '@chakra-ui/react';
 import { FaQuestionCircle, FaSearch, FaArrowLeft, FaTag } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useIntl } from 'react-intl';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
@@ -40,6 +41,7 @@ import {
 const EducationFAQ: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const intl = useIntl();
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,7 +76,7 @@ const EducationFAQ: React.FC = () => {
           <Center py={20}>
             <VStack spacing={4}>
               <Spinner size="xl" color="green.500" thickness="3px" />
-              <Text color={textColor}>Loading FAQ database...</Text>
+              <Text color={textColor}>{intl.formatMessage({ id: 'education.faqLoading' })}</Text>
             </VStack>
           </Center>
         </Container>
@@ -90,10 +92,9 @@ const EducationFAQ: React.FC = () => {
           <Alert status="error" variant="subtle" borderRadius="xl" maxW="2xl" mx="auto">
             <AlertIcon />
             <VStack align="start" spacing={2}>
-              <AlertTitle>Unable to load FAQ</AlertTitle>
+              <AlertTitle>{intl.formatMessage({ id: 'education.faqErrorTitle' })}</AlertTitle>
               <AlertDescription>
-                Please check your connection and try again, or contact support if the issue
-                persists.
+                {intl.formatMessage({ id: 'education.faqErrorDescription' })}
               </AlertDescription>
             </VStack>
           </Alert>
@@ -114,16 +115,16 @@ const EducationFAQ: React.FC = () => {
               onClick={() => navigate('/education')}
               mb={4}
             >
-              Back to Education
+              {intl.formatMessage({ id: 'education.faqBackToEducation' })}
             </Button>
 
             <Box textAlign="center" py={6}>
               <Icon as={FaQuestionCircle} boxSize={12} color="blue.500" mb={4} />
               <Heading size={isMobile ? 'xl' : '2xl'} mb={4} color={textColor}>
-                Frequently Asked Questions
+                {intl.formatMessage({ id: 'education.faqPageTitle' })}
               </Heading>
               <Text fontSize="lg" color={mutedTextColor} maxW="2xl" mx="auto">
-                Find answers to common questions about sustainable farming and Trazo
+                {intl.formatMessage({ id: 'education.faqPageDescription' })}
               </Text>
             </Box>
           </Box>
@@ -137,7 +138,7 @@ const EducationFAQ: React.FC = () => {
                     <Icon as={FaSearch} color="gray.400" />
                   </InputLeftElement>
                   <Input
-                    placeholder="Search questions..."
+                    placeholder={intl.formatMessage({ id: 'education.faqSearchPlaceholder' })}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     size="lg"
@@ -153,7 +154,7 @@ const EducationFAQ: React.FC = () => {
                       colorScheme="blue"
                       onClick={() => setSelectedCategory(null)}
                     >
-                      All Categories
+                      {intl.formatMessage({ id: 'education.faqAllCategories' })}
                     </Button>
                     {categories.map((category) => (
                       <Button
@@ -184,16 +185,14 @@ const EducationFAQ: React.FC = () => {
               <CardBody py={16} textAlign="center">
                 <Icon as={FaQuestionCircle} boxSize={12} color="gray.400" mb={4} />
                 <Heading size="md" color={textColor} mb={2}>
-                  {searchQuery ? 'No Questions Found' : 'FAQ Database Coming Soon'}
+                  {intl.formatMessage({ id: searchQuery ? 'education.faqNoQuestionsFound' : 'education.faqComingSoon' })}
                 </Heading>
                 <Text color={mutedTextColor}>
-                  {searchQuery
-                    ? 'Try adjusting your search terms or browse different categories'
-                    : "We're building a comprehensive FAQ database to help farmers with common questions"}
+                  {intl.formatMessage({ id: searchQuery ? 'education.faqNoQuestionsDescription' : 'education.faqComingSoonDescription' })}
                 </Text>
                 {searchQuery && (
                   <Button mt={4} variant="outline" onClick={() => setSearchQuery('')}>
-                    Clear Search
+                    {intl.formatMessage({ id: 'education.faqClearSearch' })}
                   </Button>
                 )}
               </CardBody>
@@ -212,6 +211,7 @@ interface FAQCardProps {
 
 const FAQCard: React.FC<FAQCardProps> = ({ faq }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const intl = useIntl();
   const cardBgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
   const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
@@ -254,7 +254,7 @@ const FAQCard: React.FC<FAQCardProps> = ({ faq }) => {
             <HStack spacing={2} flexWrap="wrap">
               {faq.is_featured && (
                 <Badge colorScheme="yellow" size="sm">
-                  Featured
+                  {intl.formatMessage({ id: 'education.faqFeatured' })}
                 </Badge>
               )}
               {faq.tags && faq.tags.length > 0 && (
@@ -266,7 +266,7 @@ const FAQCard: React.FC<FAQCardProps> = ({ faq }) => {
                   ))}
                   {faq.tags.length > 3 && (
                     <Badge size="sm" variant="subtle" colorScheme="gray">
-                      +{faq.tags.length - 3} more
+                      {intl.formatMessage({ id: 'education.faqMoreTags' }, { count: faq.tags.length - 3 })}
                     </Badge>
                   )}
                 </>
@@ -275,7 +275,7 @@ const FAQCard: React.FC<FAQCardProps> = ({ faq }) => {
 
             {faq.view_count > 0 && (
               <Text fontSize="xs" color={mutedTextColor}>
-                {faq.view_count} views
+                {intl.formatMessage({ id: 'education.faqViews' }, { count: faq.view_count })}
               </Text>
             )}
           </HStack>
