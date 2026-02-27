@@ -126,19 +126,7 @@ export default defineConfig({
           // Icons - loaded progressively
           icons: ['react-icons'],
           // Utils - shared utilities
-          utils: ['date-fns'],
-          // Dashboard components - lazy loaded
-          dashboard: [
-            'src/components/Dashboard/EnhancedTransparencyDashboard.tsx',
-            'src/components/Dashboard/TransparencyHeroSection.tsx',
-            'src/components/Dashboard/CarbonAnalysisExpandable.tsx',
-            'src/components/Dashboard/TrustIndicators.tsx'
-          ],
-          // Performance utilities
-          performance: [
-            'src/utils/performance.ts',
-            'src/utils/imageOptimization.ts'
-          ]
+          utils: ['date-fns']
         }
       }
     },
