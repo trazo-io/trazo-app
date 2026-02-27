@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation, useMatch, useNavigate, useParams } from 'react-router-dom';
-import { PRODUCER, SUPERUSER, CONSUMER } from '../../config';
+import { PRODUCER, SUPERUSER, CONSUMER, ROLE_DISPLAY_COMPANY_ADMIN } from '../../config';
 import React, { useEffect, useState } from 'react';
 
 import { LOGIN_PAGE_URL } from 'config/routes';
@@ -215,12 +215,12 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
     isAuthenticated &&
     allowedRoles.includes(currentUser?.user_type) &&
     (mustBeCompanyAdmin
-      ? currentUser?.companies[0].role === 'Company Admin' || currentUser?.user_type === SUPERUSER
+      ? currentUser?.companies[0].role === ROLE_DISPLAY_COMPANY_ADMIN || currentUser?.user_type === SUPERUSER
       : true) ? (
     <Outlet />
   ) : isLoading === false && isAuthenticated === false ? (
     <Navigate to={nextUrl} state={{ next: pathname }} />
-  ) : mustBeCompanyAdmin && currentUser?.companies[0].role !== 'Company Admin' ? (
+  ) : mustBeCompanyAdmin && currentUser?.companies[0].role !== ROLE_DISPLAY_COMPANY_ADMIN ? (
     <Navigate to="/admin/dashboard" />
   ) : null;
 };

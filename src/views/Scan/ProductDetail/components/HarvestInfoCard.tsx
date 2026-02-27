@@ -36,6 +36,14 @@ interface HarvestInfoCardProps {
   harvestDetails?: HarvestDetails;
 }
 
+// Humanize snake_case values to Title Case
+const humanize = (value: string): string => {
+  if (!value) return '';
+  return value
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
 export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails }) => {
   const intl = useIntl();
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -162,7 +170,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               >
                 <Icon as={FaClipboardCheck} color="green.500" boxSize={4} mb={1} />
                 <Text fontSize="sm" fontWeight="bold" color="green.600">
-                  {harvestDetails.quality_grade}
+                  {humanize(harvestDetails.quality_grade || '')}
                 </Text>
                 <Text fontSize="xs" color={mutedColor} textTransform="uppercase">
                   {intl.formatMessage({ id: 'app.quality' })}
@@ -180,7 +188,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               >
                 <Icon as={FaTractor} color="green.500" boxSize={4} mb={1} />
                 <Text fontSize="xs" fontWeight="medium" color={textColor}>
-                  {harvestDetails.harvest_method}
+                  {humanize(harvestDetails.harvest_method || '')}
                 </Text>
                 <Text fontSize="xs" color={mutedColor} textTransform="uppercase">
                   {intl.formatMessage({ id: 'app.harvestMethod' })}

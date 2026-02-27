@@ -68,6 +68,13 @@ import { useIntl } from 'react-intl';
 
 // Import crop type mapping service for robust crop matching
 import { findCropTypeId, getCropTypeMapping } from 'utils/cropTypeMapping';
+import {
+  mapVoiceTypeToTemplate,
+  mapVoiceDataToFieldValues,
+  generateVoiceSummary,
+  type ParsedVoiceData,
+  type VoiceFieldMappingResult
+} from 'utils/voiceDataMapper';
 
 // Import real USDA API hooks for enhanced suggestions
 import {
@@ -102,6 +109,12 @@ interface EventTemplate {
   typical_amounts?: Record<string, any>;
   // Backend event type (0-7) for correct event creation
   backend_event_type?: number;
+  // AI suggestion specific fields (set by getAISmartSuggestions)
+  aiPowered?: boolean;
+  confidence?: number;
+  reasoning?: string;
+  bestPractices?: string[];
+  timing_relevance?: string;
 }
 
 // ============================================================================
@@ -194,6 +207,12 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const [templateSuggestions, setTemplateSuggestions] = useState<EventTemplate[]>([]);
   const [showTemplateSuggestions, setShowTemplateSuggestions] = useState(false);
   const [typeAwareFieldValues, setTypeAwareFieldValues] = useState<Record<string, unknown>>({});
+  const [voiceBanner, setVoiceBanner] = useState<{
+    transcript: string;
+    confidence: number;
+    eventType: string;
+    detectedFields: string[];
+  } | null>(null);
   const modalBodyRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
   const navigate = useNavigate();
@@ -205,25 +224,83 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
 
     const id = template.id.toLowerCase();
     const type = template.type?.toLowerCase() || '';
+    // Also check template name for AI suggestions where id is "ai-1-0" and type is the AI category
+    const name = template.name?.toLowerCase() || '';
 
-    // Map based on template ID patterns
-    if (id.includes('fertiliz') || type.includes('fertiliz')) return 'fertilization';
-    if (id.includes('irrigation') || type.includes('irrigation')) return 'irrigation';
-    if (id.includes('pest') || type.includes('pest')) return 'pest_control';
-    if (id.includes('pruning') || type.includes('pruning') || type.includes('prune'))
+    // Map based on template ID, type, and name patterns
+    // IMPORTANT: Specific chemical types (fungicide, herbicide) must be checked BEFORE
+    // generic pest_control, because AI backend sends all chemical pest events as
+    // category 'pest_control' — the specific type is only in the suggestion name.
+    if (id.includes('fertiliz') || type.includes('fertiliz') || name.includes('fertiliz'))
+      return 'fertilization';
+    if (id.includes('irrigation') || type.includes('irrigation') || name.includes('irrigat'))
+      return 'irrigation';
+    if (
+      id.includes('herbicide') ||
+      type.includes('herbicide') ||
+      type.includes('weed') ||
+      name.includes('herbicide') ||
+      name.includes('weed')
+    )
+      return 'herbicide';
+    if (
+      id.includes('fungicide') ||
+      type.includes('fungicide') ||
+      type.includes('fungi') ||
+      name.includes('fungicide') ||
+      name.includes('copper') ||
+      name.includes('sulfur')
+    )
+      return 'fungicide';
+    if (id.includes('pest') || type.includes('pest') || name.includes('pest'))
+      return 'pest_control';
+    if (
+      id.includes('pruning') ||
+      type.includes('pruning') ||
+      type.includes('prune') ||
+      name.includes('pruning') ||
+      name.includes('prune')
+    )
       return 'pruning';
     if (
       id.includes('plant') ||
       id.includes('seed') ||
       type.includes('plant') ||
-      type.includes('seed')
+      type.includes('seed') ||
+      name.includes('planting') ||
+      name.includes('seeding')
     )
       return 'planting';
-    if (id.includes('harvest') || type.includes('harvest')) return 'harvest';
-    if (id.includes('herbicide') || type.includes('herbicide') || type.includes('weed'))
-      return 'herbicide';
-    if (id.includes('fungicide') || type.includes('fungicide') || type.includes('fungi'))
-      return 'fungicide';
+    if (id.includes('harvest') || type.includes('harvest') || name.includes('harvest'))
+      return 'harvest';
+    if (id.includes('transplant') || type.includes('transplant') || name.includes('transplant'))
+      return 'transplanting';
+    if (
+      id.includes('cultivat') ||
+      type.includes('cultivat') ||
+      type.includes('tillage') ||
+      name.includes('cultivat') ||
+      name.includes('tillage')
+    )
+      return 'cultivation';
+    if (id.includes('thin') || type.includes('thin') || name.includes('thinning'))
+      return 'thinning';
+    if (
+      id.includes('equipment') ||
+      id.includes('maintenance') ||
+      type.includes('equipment') ||
+      type.includes('maintenance') ||
+      name.includes('equipment') ||
+      name.includes('maintenance')
+    )
+      return 'equipment_maintenance';
+    if (
+      id.includes('soil') ||
+      type.includes('soil') ||
+      name.includes('soil') ||
+      name.includes('sampling')
+    )
+      return 'cultivation';
 
     return 'general_documentation';
   };
@@ -264,18 +341,151 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     }));
   }, []);
 
+  // Extract pre-fill values from AI suggestion context
+  const getAIPreFillValues = (
+    template: EventTemplate,
+    templateId: string
+  ): Record<string, unknown> => {
+    if (!template.id.startsWith('ai-')) return {};
+    const overrides: Record<string, unknown> = {};
+    const name = template.name.toLowerCase();
+    const desc = (template.description || '').toLowerCase();
+    const reasoning = (template.reasoning || '').toLowerCase();
+    const timing = (template.timing || '').toLowerCase();
+
+    // ── Chemical events: target pest/disease ──
+    if (
+      templateId === 'fungicide' ||
+      templateId === 'pest_control' ||
+      templateId === 'herbicide'
+    ) {
+      // Fungicide / pest control disease keywords
+      if (templateId === 'fungicide' || templateId === 'pest_control') {
+        if (name.includes('pruning') || desc.includes('pruning')) {
+          overrides.target_pest_disease = 'Wound infection prevention, Phytophthora';
+        } else if (name.includes('mildew') || desc.includes('mildew')) {
+          overrides.target_pest_disease = 'Powdery mildew';
+        } else if (name.includes('canker') || desc.includes('canker')) {
+          overrides.target_pest_disease = 'Citrus canker';
+        } else if (name.includes('blight') || desc.includes('blight')) {
+          overrides.target_pest_disease = 'Blight';
+        } else if (name.includes('rot') || desc.includes('rot')) {
+          overrides.target_pest_disease = 'Root rot, Phytophthora';
+        } else if (name.includes('scale') || desc.includes('scale')) {
+          overrides.target_pest_disease = 'Scale insects';
+        } else if (name.includes('aphid') || desc.includes('aphid')) {
+          overrides.target_pest_disease = 'Aphids';
+        } else if (name.includes('mite') || desc.includes('mite')) {
+          overrides.target_pest_disease = 'Spider mites';
+        } else if (name.includes('thrip') || desc.includes('thrip')) {
+          overrides.target_pest_disease = 'Thrips';
+        }
+      }
+
+      // Herbicide weed keywords
+      if (templateId === 'herbicide') {
+        if (name.includes('grass') || desc.includes('grass')) {
+          overrides.target_pest_disease = 'Grassy weeds';
+        } else if (name.includes('broadleaf') || desc.includes('broadleaf')) {
+          overrides.target_pest_disease = 'Broadleaf weeds';
+        } else if (name.includes('sedge') || desc.includes('sedge') || desc.includes('nutsedge')) {
+          overrides.target_pest_disease = 'Sedges';
+        } else if (name.includes('pre-emergent') || desc.includes('pre-emergent')) {
+          overrides.target_pest_disease = 'Pre-emergent weed control';
+        } else {
+          overrides.target_pest_disease = 'General weed control';
+        }
+      }
+    }
+
+    // ── Chemical events: application timing from AI context ──
+    if (
+      templateId === 'fungicide' ||
+      templateId === 'pest_control' ||
+      templateId === 'herbicide' ||
+      templateId === 'fertilization'
+    ) {
+      const timingContext = `${name} ${desc} ${timing} ${reasoning}`;
+      if (timingContext.includes('dormant') || timingContext.includes('winter') || timingContext.includes('pruning')) {
+        overrides.application_timing = 'dormant';
+      } else if (timingContext.includes('bloom') || timingContext.includes('flower') || timingContext.includes('blossom')) {
+        overrides.application_timing = 'flowering';
+      } else if (timingContext.includes('fruit') || timingContext.includes('set')) {
+        overrides.application_timing = 'fruit_development';
+      } else if (timingContext.includes('pre-harvest') || timingContext.includes('preharvest')) {
+        overrides.application_timing = 'harvest';
+      } else if (timingContext.includes('pre-plant') || timingContext.includes('preplant') || timingContext.includes('before planting')) {
+        overrides.application_timing = 'pre_plant';
+      }
+      // If no match, let config default stand
+    }
+
+    // ── Chemical events: weather conditions default ──
+    if (
+      templateId === 'fertilization' ||
+      templateId === 'pest_control' ||
+      templateId === 'herbicide' ||
+      templateId === 'fungicide'
+    ) {
+      overrides.weather_conditions = 'calm_dry';
+    }
+
+    // ── Chemical events: map AI best_practices to application_details ──
+    if (
+      templateId === 'fertilization' ||
+      templateId === 'pest_control' ||
+      templateId === 'herbicide' ||
+      templateId === 'fungicide'
+    ) {
+      if (template.bestPractices && template.bestPractices.length > 0) {
+        overrides.application_details = template.bestPractices.join('. ');
+      } else if (template.reasoning && template.reasoning.trim()) {
+        overrides.application_details = template.reasoning;
+      }
+    }
+
+    // ── Harvest: quality grade default ──
+    if (templateId === 'harvest') {
+      overrides.harvest_quality_grade = 'grade_a';
+    }
+
+    return overrides;
+  };
+
   // Reset type-aware fields when template changes
+  // Merges: config defaults (generic) < backend_event_fields (crop-specific from DB) < AI overrides
+  // NOTE: Voice templates are skipped here — handleVoiceEventDetected sets field values
+  // directly via mapVoiceDataToFieldValues() which already merges defaults + AI-extracted data.
   React.useEffect(() => {
     if (selectedTemplate) {
+      // Voice templates already have field values set by handleVoiceEventDetected
+      if (selectedTemplate.id.startsWith('voice-')) return;
+
       const config = getQuickEventFields(typeAwareTemplateId);
       if (config) {
-        // Initialize with defaults
+        // Start with generic config defaults
         const defaults: Record<string, unknown> = {};
         config.quickFields.forEach((field) => {
           if (field.default !== undefined) {
             defaults[field.name] = field.default;
           }
         });
+
+        // Override with crop-specific values from backend_event_fields (DB template data)
+        if (selectedTemplate.backend_event_fields) {
+          const templateFields = selectedTemplate.backend_event_fields;
+          config.quickFields.forEach((field) => {
+            const backendValue = templateFields[field.name];
+            if (backendValue !== undefined && backendValue !== null) {
+              defaults[field.name] = backendValue;
+            }
+          });
+        }
+
+        // Apply AI suggestion overrides (highest priority for context-aware pre-fills)
+        const aiOverrides = getAIPreFillValues(selectedTemplate, typeAwareTemplateId);
+        Object.assign(defaults, aiOverrides);
+
         setTypeAwareFieldValues(defaults);
       }
     }
@@ -285,7 +495,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const [createEvent, { isLoading: isCreatingEvent }] = useCreateEventMutation();
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
   const currentUser = useSelector((state: any) => state.userState.user);
-  const { establishmentId, parcelId } = useParams();
+  const { establishmentId, parcelId, productionId } = useParams();
 
   // Get crop types and find the crop type ID for the current production
   const { data: cropTypesData } = useGetCropTypesDropdownQuery();
@@ -337,7 +547,6 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
 
     // If no match found through mapping service, log for debugging
     // and return null (base templates will still be shown)
-    console.log(`[QuickAddEvent] No crop type match found for "${cropType}"`);
     return null;
   }, [cropTypesData, cropType]);
 
@@ -353,6 +562,32 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   );
 
   const getCurrentSeason = (month: number): string => {
+    // Detect Southern Hemisphere via establishment latitude or country
+    const establishment = currentCompany?.establishments?.[0];
+    const latitude = establishment?.latitude;
+    const country = (establishment?.country || '').toLowerCase();
+    const southernCountries = [
+      'uruguay',
+      'argentina',
+      'brazil',
+      'chile',
+      'australia',
+      'new zealand',
+      'south africa',
+      'paraguay',
+      'bolivia',
+      'peru'
+    ];
+    const isSouthern =
+      (latitude != null && latitude < 0) || southernCountries.includes(country);
+
+    if (isSouthern) {
+      if (month >= 12 || month <= 2) return 'summer';
+      if (month >= 3 && month <= 5) return 'fall';
+      if (month >= 6 && month <= 8) return 'winter';
+      return 'spring';
+    }
+    // Northern Hemisphere (default)
     if (month >= 12 || month <= 2) return 'winter';
     if (month >= 3 && month <= 5) return 'spring';
     if (month >= 6 && month <= 8) return 'summer';
@@ -449,6 +684,57 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     setShowTemplateSuggestions(templateSuggestions.length > 0);
   };
 
+  // Map AI category to backend event type constant
+  // Backend constants from history/constants.py:
+  // WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
+  const getBackendEventTypeFromCategory = (category: string): number => {
+    switch (category) {
+      case 'fertilization':
+        return 2; // CHEMICAL — fertilizer application
+      case 'irrigation':
+        return 1; // PRODUCTION — irrigation management
+      case 'pest_control':
+        return 2; // CHEMICAL — pesticide application (ChemicalEvent with type='PE')
+      case 'harvest':
+        return 1; // PRODUCTION — harvest activity
+      case 'pruning':
+        return 1; // PRODUCTION — pruning activity
+      case 'cultivation':
+        return 1; // PRODUCTION — cultivation activity
+      case 'equipment':
+        return 1; // PRODUCTION — equipment usage mapped to cultivation
+      case 'soil_management':
+        return 5; // SOIL — soil management
+      default:
+        return 1; // PRODUCTION — safe default
+    }
+  };
+
+  // Get minimal backend_event_fields for AI suggestions based on category
+  // Type codes must match Django model choices for each event type
+  const getBackendEventFieldsFromCategory = (category: string): Record<string, unknown> => {
+    switch (category) {
+      case 'fertilization':
+        return { type: 'FE', area_unit: 'ha', observation: '' }; // ChemicalEvent.FERTILIZER
+      case 'irrigation':
+        return { type: 'IR', area_unit: 'ha', fuel_type: 'diesel', observation: '' }; // ProductionEvent.IRRIGATION
+      case 'pest_control':
+        return { type: 'PE', area_unit: 'ha', observation: '' }; // ChemicalEvent.PESTICIDE - matches pestControlFields config
+      case 'harvest':
+        return { type: 'HA', area_unit: 'ha', fuel_type: 'diesel', observation: '' }; // ProductionEvent.HARVEST
+      case 'pruning':
+        return { type: 'PR', area_unit: 'ha', fuel_type: 'diesel', observation: '' }; // ProductionEvent.PRUNING
+      case 'cultivation':
+        return { type: 'CU', area_unit: 'ha', fuel_type: 'diesel', observation: '' }; // ProductionEvent.CULTIVATION
+      case 'equipment':
+        return { type: 'EM', area_unit: 'ha', fuel_type: 'diesel', observation: '' }; // ProductionEvent.EQUIPMENT_MAINTENANCE
+      case 'soil_management':
+        return { type: 'PA', area_unit: 'ha', fuel_type: 'diesel', observation: '' }; // SoilManagementEvent.PREPARATION
+      default:
+        return { type: 'PR', observation: '' }; // ProductionEvent.PRUNING
+    }
+  };
+
   // 🤖 NEW: Generate AI-powered smart suggestions
   const getAISmartSuggestions = () => {
     if (!aiSuggestionsData?.suggestions) return;
@@ -464,7 +750,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       efficiency_tip: suggestion.efficiency_tips.join('. ') || suggestion.reasoning,
       typical_duration: suggestion.estimated_duration,
       carbonCategory: getCarbonCategoryFromImpact(suggestion.carbon_impact),
-      sustainabilityScore: Math.round(suggestion.confidence / 10),
+      sustainabilityScore: 0,
       qrVisibility:
         suggestion.priority === 'high'
           ? 'high'
@@ -477,7 +763,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       aiPowered: true,
       confidence: suggestion.confidence,
       reasoning: suggestion.reasoning,
-      bestPractices: suggestion.best_practices
+      bestPractices: suggestion.best_practices,
+      backend_event_type: getBackendEventTypeFromCategory(suggestion.category),
+      backend_event_fields: getBackendEventFieldsFromCategory(suggestion.category)
     })) as EventTemplate[];
 
     setTemplateSuggestions(aiSuggestions);
@@ -597,6 +885,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     setEventObservations('');
     setApplicationRate('');
     setDuration('');
+    setVoiceBanner(null);
   };
 
   // Reset when modal opens/closes
@@ -629,16 +918,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     // with correct backend_event_type and backend_event_fields
     const dbTemplates: EventTemplate[] = [];
 
-    // DEBUG: Log raw API response
-    console.log('=== DEBUG: Raw API templates ===');
-    console.log('dbEventTemplatesData:', dbEventTemplatesData);
-
     if (dbEventTemplatesData?.templates) {
       dbEventTemplatesData.templates.forEach((template) => {
-        // DEBUG: Log each template's backend_event_type
-        console.log(
-          `Template ${template.id} (${template.name}): backend_event_type = ${template.backend_event_type}`
-        );
         // Use template data directly from database - names are already in the correct language
         dbTemplates.push({
           id: `db-${template.id}`,
@@ -692,16 +973,11 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
 
   const handleBackToTemplates = () => {
     setShowDetailedForm(false);
+    setVoiceBanner(null);
   };
 
   const handleTemplateCreate = async () => {
     if (!selectedTemplate) return;
-
-    // DEBUG: Log template data to trace event_type issue
-    console.log('=== DEBUG: handleTemplateCreate ===');
-    console.log('Selected template:', selectedTemplate);
-    console.log('Template backend_event_type:', selectedTemplate.backend_event_type);
-    console.log('getTemplateEventType result:', getTemplateEventType(selectedTemplate));
 
     setIsCreating(true);
     try {
@@ -710,29 +986,37 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         establishmentId: parseInt(establishmentId || '0'),
         parcelId: parseInt(parcelId || '0'),
         parcels: [parseInt(parcelId || '0')],
+        history: productionId ? parseInt(productionId) : undefined,
         event_type: getTemplateEventType(selectedTemplate),
         date: new Date().toISOString(),
-        description: selectedTemplate.excludeFromCarbonCalculation
-          ? `${selectedTemplate.name} - Documentation activity for transparency`
-          : `${selectedTemplate.name} - USDA-verified farming activity`,
         album: { images: [] },
-        observation: selectedTemplate.efficiency_tip || '',
         template_used: selectedTemplate.id,
         template_name: selectedTemplate.name,
         exclude_from_carbon_calculation: selectedTemplate.excludeFromCarbonCalculation || false,
         sustainability_score: selectedTemplate.sustainabilityScore,
-        ...getTemplateEventFields(selectedTemplate)
+        // Template fields provide type, area, fuel defaults from DB
+        ...getTemplateEventFields(selectedTemplate),
+        // These MUST come AFTER the spread to override template defaults
+        description: selectedTemplate.excludeFromCarbonCalculation
+          ? `${selectedTemplate.name} - Documentation activity for transparency`
+          : `${selectedTemplate.name} - Documented farming activity`,
+        performed_by: currentUser?.first_name
+          ? `${currentUser.first_name} ${currentUser.last_name || ''}`.trim()
+          : null,
+        // Quick Create has no farmer input, so observation must be empty
+        // Template backend_event_fields includes system observation text that
+        // would appear as fake "Farmer's Field Notes" on consumer page
+        observation: ''
       };
-
-      console.log('=== DEBUG: backendEventData being sent ===');
-      console.log('event_type:', backendEventData.event_type);
-      console.log('Full payload:', JSON.stringify(backendEventData, null, 2));
 
       await createEvent(backendEventData).unwrap();
 
       toast({
-        title: 'Farm Event Created!',
-        description: `${selectedTemplate.name} added to your transparency timeline. Visible to consumers via QR codes.`,
+        title: intl.formatMessage({ id: 'quickAdd.eventCreatedTitle' }),
+        description: intl.formatMessage(
+          { id: 'quickAdd.eventCreatedDescription' },
+          { name: selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '') }
+        ),
         status: 'success',
         duration: 4000,
         isClosable: true
@@ -746,8 +1030,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     } catch (error) {
       console.error('Error creating template event:', error);
       toast({
-        title: 'Error Creating Event',
-        description: 'Failed to create farm event. Please try again.',
+        title: intl.formatMessage({ id: 'quickAdd.errorCreatingTitle' }),
+        description: intl.formatMessage({ id: 'quickAdd.errorCreatingDescription' }),
         status: 'error',
         duration: 4000,
         isClosable: true
@@ -755,134 +1039,6 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     } finally {
       setIsCreating(false);
     }
-  };
-
-  // Helper functions for voice data conversion
-  const getEventTypeFromVoiceData = (eventData: any): number => {
-    // Handle both the old format (event_type: 'irrigation') and new format (event_type: 'production')
-    // Backend constants from history/constants.py:
-    // WEATHER=0, PRODUCTION=1, CHEMICAL=2, GENERAL=3, EQUIPMENT=4, SOIL=5, PEST=6, BUSINESS=7
-    const eventType = eventData.event_type;
-
-    console.log('Voice event type mapping:', eventType, eventData);
-
-    if (eventType === 'production' || eventType === 'irrigation') {
-      return 1; // Production Event (PRODUCTION_EVENT_TYPE = 1)
-    } else if (
-      eventType === 'chemical' ||
-      eventType === 'fertilizer' ||
-      eventType === 'pesticide' ||
-      eventType === 'herbicide' ||
-      eventType === 'fungicide'
-    ) {
-      return 2; // Chemical Event (CHEMICAL_EVENT_TYPE = 2)
-    } else if (eventType === 'equipment') {
-      return 4; // Equipment Event (EQUIPMENT_EVENT_TYPE = 4)
-    } else if (eventType === 'weather') {
-      return 0; // Weather Event (WEATHER_EVENT_TYPE = 0)
-    } else if (eventType === 'general') {
-      // Check if this is actually a production event that was misclassified
-      if (
-        eventData.production_type ||
-        eventData.description?.toLowerCase().includes('irrigat') ||
-        eventData.description?.toLowerCase().includes('harvest') ||
-        eventData.description?.toLowerCase().includes('plant') ||
-        eventData.description?.toLowerCase().includes('prun')
-      ) {
-        console.log('Reclassifying general event as production based on content');
-        return 1; // Production Event (PRODUCTION_EVENT_TYPE = 1)
-      }
-      return 3; // General Event (GENERAL_EVENT_TYPE = 3)
-    }
-
-    return 1; // Default to Production (PRODUCTION_EVENT_TYPE = 1)
-  };
-
-  const convertVoiceDataToEventFields = (eventData: any): any => {
-    const eventType = eventData.event_type;
-
-    console.log('Converting voice data fields:', eventType, eventData);
-
-    // Handle the actual data structure from VoiceEventCapture
-    if (eventType === 'production') {
-      // For production events, use the production_type field
-      const productionType = eventData.production_type || 'IR';
-      const productionTypeNames = {
-        IR: 'Irrigation Event',
-        HA: 'Harvest Event',
-        PL: 'Planting Event',
-        PR: 'Pruning Event'
-      };
-      return {
-        type: productionType, // Use production_type from VoiceEventCapture
-        production_name:
-          productionTypeNames[productionType] || `${eventData.description || 'Production Event'}`,
-        name:
-          productionTypeNames[productionType] || `${eventData.description || 'Production Event'}`,
-        observation:
-          eventData.observation ||
-          `Production activity: ${eventData.description || 'Not specified'}`
-      };
-    } else if (eventType === 'chemical') {
-      // For chemical events, use the chemical_type field
-      return {
-        type: eventData.chemical_type || 'FE', // Use chemical_type from VoiceEventCapture
-        commercial_name: eventData.commercial_name || 'Chemical Product',
-        volume: eventData.volume || '',
-        way_of_application: eventData.way_of_application || 'broadcast',
-        time_period: eventData.time_period || 'morning'
-      };
-    } else if (eventType === 'equipment') {
-      // For equipment events, use the equipment_type field
-      return {
-        type: eventData.equipment_type || 'FC', // Use equipment_type from VoiceEventCapture
-        equipment_name: eventData.equipment_name || 'Farm Equipment',
-        fuel_amount: eventData.fuel_amount || 0,
-        fuel_type: eventData.fuel_type || 'diesel'
-      };
-    } else if (eventType === 'general') {
-      // Handle misclassified general events
-      if (
-        eventData.production_type ||
-        eventData.description?.toLowerCase().includes('irrigat') ||
-        eventData.description?.toLowerCase().includes('harvest') ||
-        eventData.description?.toLowerCase().includes('plant') ||
-        eventData.description?.toLowerCase().includes('prun')
-      ) {
-        console.log('Converting misclassified general event to production fields');
-        return {
-          type: eventData.production_type || 'IR', // Default to irrigation
-          observation:
-            eventData.observation ||
-            `Production activity: ${eventData.description || 'Not specified'}`
-        };
-      }
-      // For actual general events, provide the required name field
-      return {
-        name: eventData.name || `${eventData.description || 'Voice Event'}`.substring(0, 50),
-        observation: eventData.observation || eventData.description || 'Voice-detected activity'
-      };
-    }
-
-    // Fallback for old format or unknown types
-    if (eventData.event_type === 'fertilizer') {
-      return {
-        type: 'FE',
-        commercial_name: eventData.detected_products?.[0] || 'Fertilizer',
-        volume: eventData.detected_amounts?.[0] || '',
-        way_of_application: 'broadcast',
-        time_period: 'morning'
-      };
-    } else if (eventData.event_type === 'irrigation') {
-      return {
-        type: 'IR',
-        observation: `Duration: ${eventData.detected_amounts?.[0] || 'Not specified'}. System: ${
-          eventData.detected_systems?.[0] || 'Standard'
-        }`
-      };
-    }
-
-    return {};
   };
 
   // Helper functions for template data conversion
@@ -921,166 +1077,69 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     };
   };
 
-  const handleVoiceEventDetected = async (eventData: any) => {
-    // Handle voice-detected event
-    console.log('Voice event detected:', eventData);
+  const handleVoiceEventDetected = async (eventData: ParsedVoiceData) => {
+    // Map AI voice type to template using voiceDataMapper
+    const templateMapping = mapVoiceTypeToTemplate(eventData.type);
+    const templateId = templateMapping.templateId;
 
-    // Enhanced validation for required fields based on event type
-    const validateVoiceEventData = (voiceData: any) => {
-      const eventType = getEventTypeFromVoiceData(voiceData);
-      const eventFields = convertVoiceDataToEventFields(voiceData);
+    // Map AI-extracted values to form field values via the standard pipeline
+    const mappingResult = mapVoiceDataToFieldValues(eventData, templateId);
 
-      // Required fields mapping (same as NewEvent.jsx)
-      const requiredFieldsByType: { [key: number]: string[] } = {
-        1: ['type', 'commercial_name', 'volume', 'area', 'concentration', 'way_of_application'], // Chemical
-        2: ['type'], // Production - other fields are optional but encouraged
-        4: ['type', 'equipment_name', 'fuel_amount', 'hours_used'], // Equipment
-        5: ['type'], // Soil Management - specific fields should come from form inputs
-        6: ['type'], // Pest Management - specific fields should come from form inputs
-        7: ['type'], // Business Activity - specific fields should come from form inputs
-        0: ['type'], // Weather
-        3: ['name'] // General
-      };
+    // Generate summary of what was detected vs defaulted
+    const summary = generateVoiceSummary(eventData, mappingResult, templateId);
 
-      const requiredFields = requiredFieldsByType[eventType] || [];
-      const missingFields: string[] = [];
-      const detectedFields: string[] = [];
-
-      // Check required fields and detect what was actually captured from voice
-      requiredFields.forEach((field: string) => {
-        const value = eventFields[field];
-        if (
-          !value ||
-          value.toString().toLowerCase() === 'unknown' ||
-          value.toString().trim() === '' ||
-          value.toString().includes('Voice-detected') ||
-          value.toString().includes('50 liters') ||
-          value.toString().includes('1.5 hectares') ||
-          value.toString().includes('16-16-16') ||
-          value.toString().includes('Farm Equipment') ||
-          (typeof value === 'number' && value === 50)
-        ) {
-          missingFields.push(field);
-        } else {
-          detectedFields.push(field);
-        }
-      });
-
-      return {
-        isValid: missingFields.length === 0,
-        missingFields,
-        detectedFields,
-        eventType,
-        eventFields
-      };
-    };
-
-    const validation = validateVoiceEventData(eventData);
-
-    // Always show the detailed form for voice events to collect missing information
+    // Switch from voice capture to detailed form view
     setShowVoiceCapture(false);
     setShowDetailedForm(true);
 
-    // Create a template based on voice data for the detailed form
-    const voiceTemplate: EventTemplate & { _voiceEventType?: number; _voiceEventFields?: any } = {
-      id: `voice-${Date.now()}`,
-      name: `Voice: ${eventData.type} Event`,
-      icon: getEventIcon(eventData.event_type),
-      color: getEventColor(eventData.event_type),
-      description: `Complete the voice-detected ${eventData.type} event`,
-      carbonImpact: eventData.suggested_carbon_impact || 0,
+    // Create a synthetic voice template that integrates with the existing form pipeline
+    const voiceTemplate: EventTemplate = {
+      id: `voice-${templateId}-${Date.now()}`,
+      name: `Voice: ${templateMapping.displayName}`,
+      icon: getEventIcon(templateId),
+      color: getEventColor(templateId),
+      description: eventData.description || `Voice-detected ${templateMapping.displayName}`,
+      carbonImpact: 0,
       costEstimate: 0,
-      efficiency_tip:
-        validation.missingFields.length > 0
-          ? `Please provide: ${validation.missingFields.join(', ')}`
-          : 'Voice detection complete - verify details',
+      efficiency_tip: summary.detected.length > 0
+        ? `Detected: ${summary.detected.join(', ')}`
+        : 'Please review and complete the fields below',
       typical_duration: '30 minutes',
       carbonCategory: 'medium' as const,
       sustainabilityScore: 8,
       qrVisibility: 'high' as const,
-      type: eventData.event_type,
-      // Add custom properties to help with event type mapping
-      _voiceEventType: validation.eventType,
-      _voiceEventFields: validation.eventFields
+      type: templateId,
+      backend_event_type: templateMapping.backendEventType,
+      backend_event_fields: {
+        type: templateMapping.backendSubtype
+      }
     };
 
     setSelectedTemplate(voiceTemplate);
 
-    // Pre-fill form with voice data (only the fields that were actually detected)
-    setEventDescription(eventData.description || '');
+    // Pre-fill description from voice
+    const cleanDesc = eventData.description || '';
+    setEventDescription(cleanDesc);
 
-    // Extract duration from voice data - look for detected amounts that contain time units
-    let detectedDuration = '';
-    if (eventData.detected_amounts && eventData.detected_amounts.length > 0) {
-      // Look for time-related amounts (hours, minutes, etc.)
-      const timeAmount = eventData.detected_amounts.find(
-        (amount: string) =>
-          amount.toLowerCase().includes('hour') ||
-          amount.toLowerCase().includes('minute') ||
-          amount.toLowerCase().includes('hr')
-      );
-      if (timeAmount) {
-        detectedDuration = timeAmount;
-      }
-    }
+    // Set voice-populated field values (will be picked up by TypeAwareFields)
+    setTypeAwareFieldValues(mappingResult.values);
 
-    // If we have a detected duration, set it, otherwise leave empty for user input
-    if (detectedDuration) {
-      setDuration(detectedDuration);
-    } else {
-      setDuration(''); // Clear duration field so user can input
-    }
+    // Set voice banner for the form UI
+    setVoiceBanner({
+      transcript: eventData.original_transcript || eventData.description,
+      confidence: eventData.confidence,
+      eventType: templateMapping.displayName,
+      detectedFields: summary.detected
+    });
 
-    // Extract application rate if available
-    if (eventData.detected_amounts && eventData.detected_amounts.length > 0) {
-      // Look for non-time amounts for application rate
-      const rateAmount = eventData.detected_amounts.find(
-        (amount: string) =>
-          !amount.toLowerCase().includes('hour') &&
-          !amount.toLowerCase().includes('minute') &&
-          !amount.toLowerCase().includes('hr')
-      );
-      if (rateAmount) {
-        setApplicationRate(rateAmount);
-      }
-    }
+    // Clear observation - user can add their own notes
+    setEventObservations('');
 
-    // Create detailed observation with what was detected vs what's needed
-    const detectedValues = [];
-    if (eventData.detected_amounts && eventData.detected_amounts.length > 0) {
-      detectedValues.push(`amounts: ${eventData.detected_amounts.join(', ')}`);
-    }
-    if (eventData.detected_products && eventData.detected_products.length > 0) {
-      detectedValues.push(`products: ${eventData.detected_products.join(', ')}`);
-    }
-    if (eventData.detected_systems && eventData.detected_systems.length > 0) {
-      detectedValues.push(`systems: ${eventData.detected_systems.join(', ')}`);
-    }
-
-    const observationParts = [
-      `Voice input: "${eventData.description}"`,
-      `Confidence: ${eventData.confidence || 0}%`,
-      detectedValues.length > 0
-        ? `Detected: ${detectedValues.join(', ')}`
-        : 'No specific values detected',
-      validation.missingFields.length > 0
-        ? `Please provide: ${validation.missingFields.join(', ')}`
-        : 'All required fields detected'
-    ].filter(Boolean);
-
-    setEventObservations(observationParts.join(' | '));
-
-    // Show success message about voice detection
     toast({
-      title: 'Voice Event Detected! 🎤',
-      description:
-        validation.missingFields.length > 0
-          ? `Detected ${
-              eventData.type
-            } event. Please complete the required fields: ${validation.missingFields.join(', ')}`
-          : `Voice detection complete! Please verify the details before creating the event.`,
+      title: intl.formatMessage({ id: 'quickAdd.voiceDetected' }, { type: templateMapping.displayName }),
+      description: intl.formatMessage({ id: 'quickAdd.voiceReviewPrompt' }),
       status: 'info',
-      duration: 6000,
+      duration: 4000,
       isClosable: true
     });
   };
@@ -1088,39 +1147,47 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const handleDetailedCreate = async () => {
     if (!selectedTemplate) return;
 
-    // DEBUG: Log template data for detailed create
-    console.log('=== DEBUG: handleDetailedCreate ===');
-    console.log('Selected template:', selectedTemplate);
-    console.log('Template backend_event_type:', selectedTemplate.backend_event_type);
-
     setIsCreating(true);
     try {
-      // For voice events, use the enhanced event type mapping
-      let eventType = getTemplateEventType(selectedTemplate);
-      let eventTypeFields = getTemplateEventFields(selectedTemplate);
-
-      console.log('eventType from getTemplateEventType:', eventType);
-
-      // Check if this is a voice template with custom mapping
-      if (selectedTemplate.id.startsWith('voice-') && (selectedTemplate as any)._voiceEventType) {
-        eventType = (selectedTemplate as any)._voiceEventType;
-        eventTypeFields = (selectedTemplate as any)._voiceEventFields || eventTypeFields;
-
-        console.log('Using voice event type mapping:', eventType, eventTypeFields);
-      }
+      // Voice templates use standard backend_event_type/backend_event_fields,
+      // so they flow through the same pipeline as DB/AI templates
+      const eventType = getTemplateEventType(selectedTemplate);
+      const eventTypeFields = getTemplateEventFields(selectedTemplate);
 
       // Get type-aware fields in backend format (with carbon-critical data)
       const typeAwareBackendFields = hasTypeAwareFields
         ? getFieldsForBackend(typeAwareTemplateId, typeAwareFieldValues)
         : {};
 
-      console.log('Type-aware backend fields:', typeAwareBackendFields);
+      // Determine correct sub-type code:
+      // - typeAwareBackendFields.type comes from form config (e.g., 'FU' for fungicide)
+      // - template.backend_event_fields.type comes from AI/DB (e.g., 'PE' for pest_control)
+      // Config type is more specific when we re-mapped within the SAME model
+      //   (e.g., pest_control → fungicide, both Chemical event_type=2).
+      // Template type is authoritative for CROSS-MODEL mappings
+      //   (e.g., soil_management/event_type=5 → cultivation config sends 'CU' which is Production-only).
+      const configType = typeAwareBackendFields.type;
+      const templateType = selectedTemplate.backend_event_fields?.type;
+
+      // Valid subtypes per backend event model (from Django model choices)
+      const VALID_SUBTYPES: Record<number, string[]> = {
+        1: ['PL', 'HA', 'IR', 'PR', 'TR', 'EM', 'CU', 'TH'], // ProductionEvent
+        2: ['FE', 'PE', 'HE', 'FU'],                            // ChemicalEvent
+        4: ['MN', 'RE', 'CA', 'EI'],                            // EquipmentEvent
+        5: ['ST', 'PA', 'OM', 'CC', 'TI', 'CO'],               // SoilManagementEvent
+      };
+      const validForModel = VALID_SUBTYPES[eventType] || [];
+      // Use config type only if it's valid for the target model; otherwise fall back to template type
+      const resolvedType = (configType && validForModel.includes(configType as string))
+        ? configType
+        : (templateType || configType);
 
       const backendEventData = {
         companyId: currentCompany.id,
         establishmentId: parseInt(establishmentId || '0'),
         parcelId: parseInt(parcelId || '0'),
         parcels: [parseInt(parcelId || '0')],
+        history: productionId ? parseInt(productionId) : undefined,
         event_type: eventType,
         date: eventDate,
         description: eventDescription,
@@ -1129,11 +1196,11 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         // Merge template fields with type-aware fields (type-aware takes precedence)
         ...eventTypeFields,
         ...typeAwareBackendFields,
+        // Resolved sub-type code (config > template)
+        ...(resolvedType ? { type: resolvedType } : {}),
         // User observation MUST come AFTER spreads to override template defaults
         observation: eventObservations || ''
       };
-
-      console.log('Final backend event data:', backendEventData);
 
       await createEvent(backendEventData).unwrap();
 
@@ -1267,14 +1334,16 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                         </VStack>
                       </HStack>
                       <Badge
-                        colorScheme="green"
+                        colorScheme={selectedTemplate.id.startsWith('ai-') ? 'purple' : 'green'}
                         variant="solid"
                         fontSize="xs"
                         px={3}
                         py={1}
                         borderRadius="full"
                       >
-                        {selectedTemplate.sustainabilityScore}/10
+                        {selectedTemplate.id.startsWith('ai-')
+                          ? `${intl.formatMessage({ id: 'quickAdd.aiMatch' })} ${Math.round((selectedTemplate as any).confidence)}%`
+                          : `${selectedTemplate.sustainabilityScore}/10`}
                       </Badge>
                     </HStack>
                     {/* Learn More Link */}
@@ -1295,6 +1364,50 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                         </HStack>
                       </Link>
                     </HStack>
+                  </VStack>
+                </Box>
+              )}
+
+              {/* Voice Detection Banner */}
+              {voiceBanner && selectedTemplate?.id.startsWith('voice-') && (
+                <Box
+                  p={4}
+                  bg={voiceBanner.confidence >= 70 ? 'green.50' : 'yellow.50'}
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor={voiceBanner.confidence >= 70 ? 'green.300' : 'yellow.300'}
+                >
+                  <VStack spacing={2} align="stretch">
+                    <HStack>
+                      <Icon
+                        as={FaMicrophone}
+                        color={voiceBanner.confidence >= 70 ? 'green.500' : 'yellow.500'}
+                        boxSize={4}
+                      />
+                      <Text fontSize="sm" fontWeight="bold" color="gray.700">
+                        {voiceBanner.confidence >= 70
+                          ? intl.formatMessage({ id: 'quickAdd.voiceLooksGood' })
+                          : intl.formatMessage({ id: 'quickAdd.voiceReviewNeeded' })}
+                      </Text>
+                      <Badge colorScheme={voiceBanner.confidence >= 70 ? 'green' : 'yellow'} size="sm">
+                        {voiceBanner.confidence}%
+                      </Badge>
+                    </HStack>
+                    <Text fontSize="xs" color="gray.500" fontStyle="italic">
+                      "{voiceBanner.transcript}"
+                    </Text>
+                    {voiceBanner.detectedFields.length > 0 && (
+                      <HStack flexWrap="wrap" gap={1}>
+                        <Text fontSize="xs" color="gray.500">
+                          {intl.formatMessage({ id: 'quickAdd.voiceFilledFields' })}:
+                        </Text>
+                        {voiceBanner.detectedFields.map((field) => (
+                          <Badge key={field} colorScheme="green" size="sm" variant="subtle">
+                            {field.replace(/_/g, ' ')}
+                          </Badge>
+                        ))}
+                      </HStack>
+                    )}
                   </VStack>
                 </Box>
               )}
@@ -1419,9 +1532,6 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                       <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={3}>
                         {templateSuggestions.map((template) => {
                           const isSelected = selectedTemplate?.id === template.id;
-                          console.log(
-                            `Template ${template.id}: selected=${isSelected}, selectedTemplate=${selectedTemplate?.id}`
-                          );
 
                           return (
                             <Button
@@ -1468,26 +1578,18 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                                   {template.name}
                                 </Text>
                                 <HStack spacing={1}>
-                                  <Badge
-                                    colorScheme={
-                                      template.carbonImpact < 0
-                                        ? 'green'
-                                        : template.carbonImpact > 20
-                                        ? 'red'
-                                        : 'orange'
-                                    }
-                                    size="xs"
-                                  >
-                                    {template.carbonImpact > 0 ? '+' : ''}
-                                    {template.carbonImpact} kg CO₂
-                                  </Badge>
-                                  {template.id.startsWith('ai-') && (
+                                  {template.id.startsWith('ai-') ? (
                                     <Badge
-                                      colorScheme={isSelected ? 'purple' : 'gray'}
+                                      colorScheme={isSelected ? 'purple' : 'blue'}
                                       size="xs"
                                       variant={isSelected ? 'solid' : 'outline'}
                                     >
+                                      {intl.formatMessage({ id: 'quickAdd.aiMatch' })}{' '}
                                       {Math.round((template as any).confidence)}%
+                                    </Badge>
+                                  ) : (
+                                    <Badge colorScheme="green" size="xs">
+                                      {template.sustainabilityScore}/10
                                     </Badge>
                                   )}
                                 </HStack>
@@ -1562,7 +1664,10 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                     <StandardButton
                       variant="primary"
                       leftIcon={<Icon as={FaMicrophone} />}
-                      onClick={() => setShowVoiceCapture(true)}
+                      onClick={() => {
+                        setSelectedTemplate(null);
+                        setShowVoiceCapture(true);
+                      }}
                       size="lg"
                     >
                       {intl.formatMessage({ id: 'quickAdd.startVoiceInput' })}
@@ -1834,8 +1939,16 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                       {intl.formatMessage({ id: 'quickAdd.completeFormDescription' })}
                     </Text>
                   </VStack>
-                  <Badge colorScheme="green" variant="solid" fontSize="xs" px={2} py={1}>
-                    {selectedTemplate.sustainabilityScore}/10
+                  <Badge
+                    colorScheme={selectedTemplate.id.startsWith('ai-') ? 'purple' : 'green'}
+                    variant="solid"
+                    fontSize="xs"
+                    px={2}
+                    py={1}
+                  >
+                    {selectedTemplate.id.startsWith('ai-')
+                      ? `${intl.formatMessage({ id: 'quickAdd.aiMatch' })} ${Math.round((selectedTemplate as any).confidence)}%`
+                      : `${selectedTemplate.sustainabilityScore}/10`}
                   </Badge>
                 </HStack>
 

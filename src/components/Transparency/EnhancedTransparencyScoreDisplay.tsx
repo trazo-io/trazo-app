@@ -199,16 +199,16 @@ export const EnhancedTransparencyScoreDisplay: React.FC<EnhancedTransparencyScor
                 {isUSDAVerified && (
                   <HStack
                     spacing={2}
-                    bg="blue.50"
+                    bg="green.50"
                     px={3}
                     py={2}
                     borderRadius="full"
                     border="1px"
-                    borderColor="blue.200"
+                    borderColor="green.200"
                   >
-                    <Icon as={MdVerified} color="blue.500" boxSize={4} />
-                    <Text fontSize="sm" fontWeight="medium" color="blue.700">
-                      USDA Verified
+                    <Icon as={MdVerified} color="green.500" boxSize={4} />
+                    <Text fontSize="sm" fontWeight="medium" color="green.700">
+                      Farm Documented
                     </Text>
                   </HStack>
                 )}

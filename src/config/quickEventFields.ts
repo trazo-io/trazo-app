@@ -72,6 +72,8 @@ export interface QuickEventField {
   validationType?: 'concentration';
   // For concentration fields: the chemical type field name for context-aware validation
   chemicalTypeFieldName?: string;
+  // If true, field renders in collapsible "EPA Compliance & Carbon Details" section
+  advanced?: boolean;
 }
 
 export interface QuickEventTypeConfig {
@@ -130,7 +132,8 @@ export const irrigationFields: QuickEventTypeConfig = {
       labelKey: 'quickAdd.fields.fuelType',
       helpKey: 'quickAdd.fields.fuelTypeHelp',
       default: 'diesel',
-      options: FUEL_TYPE_OPTIONS // SSOT import
+      options: FUEL_TYPE_OPTIONS, // SSOT import
+      advanced: true
     },
     // Fuel Consumed with Unit dropdown
     {
@@ -143,14 +146,16 @@ export const irrigationFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: FUEL_UNIT_OPTIONS // SSOT import
+      unitOptions: FUEL_UNIT_OPTIONS, // SSOT import
+      advanced: true
     },
     {
       name: 'fuel_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.fuelUnit',
       default: 'L',
-      options: FUEL_UNIT_OPTIONS // SSOT import
+      options: FUEL_UNIT_OPTIONS, // SSOT import
+      advanced: true
     },
     // Water Source (Consumer Trust field)
     {
@@ -256,7 +261,8 @@ export const harvestFields: QuickEventTypeConfig = {
       labelKey: 'app.fuelType',
       helpKey: 'app.fuelTypeHelp',
       default: 'diesel',
-      options: FUEL_TYPE_OPTIONS
+      options: FUEL_TYPE_OPTIONS,
+      advanced: true
     },
     // Fuel Consumed with Unit dropdown - SSOT import
     {
@@ -269,14 +275,16 @@ export const harvestFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: FUEL_UNIT_OPTIONS
+      unitOptions: FUEL_UNIT_OPTIONS,
+      advanced: true
     },
     {
       name: 'fuel_unit',
       type: 'select',
       labelKey: 'app.fuelUnit',
       default: 'L',
-      options: FUEL_UNIT_OPTIONS
+      options: FUEL_UNIT_OPTIONS,
+      advanced: true
     },
     // Equipment Operating Hours
     {
@@ -299,14 +307,16 @@ export const harvestFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'transportation_unit',
-      unitOptions: DISTANCE_UNIT_OPTIONS
+      unitOptions: DISTANCE_UNIT_OPTIONS,
+      advanced: true
     },
     {
       name: 'transportation_unit',
       type: 'select',
       labelKey: 'app.transportationUnit',
       default: 'km',
-      options: DISTANCE_UNIT_OPTIONS
+      options: DISTANCE_UNIT_OPTIONS,
+      advanced: true
     },
     // Production Efficiency - SSOT import
     {
@@ -316,6 +326,59 @@ export const harvestFields: QuickEventTypeConfig = {
       helpKey: 'app.productionEfficiencyHelp',
       default: 'normal',
       options: PRODUCTION_EFFICIENCY_OPTIONS
+    },
+    // Harvest Quality Grade (Consumer Trust field)
+    {
+      name: 'harvest_quality_grade',
+      type: 'select',
+      labelKey: 'app.harvestQualityGrade',
+      helpKey: 'app.harvestQualityGradeHelp',
+      options: [
+        { value: '', labelKey: 'app.harvestQualityGrade.select' },
+        { value: 'export_quality', labelKey: 'app.harvestQualityGrade.exportQuality' },
+        { value: 'grade_a', labelKey: 'app.harvestQualityGrade.gradeA' },
+        { value: 'grade_b', labelKey: 'app.harvestQualityGrade.gradeB' },
+        { value: 'grade_c', labelKey: 'app.harvestQualityGrade.gradeC' },
+        { value: 'domestic', labelKey: 'app.harvestQualityGrade.domestic' },
+        { value: 'processing', labelKey: 'app.harvestQualityGrade.processing' }
+      ]
+    },
+    // Grain Moisture at Harvest
+    {
+      name: 'grain_moisture',
+      type: 'number',
+      labelKey: 'app.grainMoisture',
+      helpKey: 'app.grainMoistureHelp',
+      placeholderKey: 'app.grainMoisturePlaceholder',
+      min: 0,
+      max: 100,
+      step: 0.1,
+      unitKey: 'app.units.percent',
+      advanced: true
+    },
+    // Harvest Method (Consumer Trust field - observable by farmer)
+    {
+      name: 'harvest_method',
+      type: 'select',
+      labelKey: 'app.harvestMethod',
+      helpKey: 'app.harvestMethodHelp',
+      options: [
+        { value: '', labelKey: 'app.harvestMethod.select' },
+        { value: 'hand_picking', labelKey: 'app.harvestMethod.handPicking' },
+        { value: 'selective_hand_picking', labelKey: 'app.harvestMethod.selectiveHandPicking' },
+        { value: 'mechanical', labelKey: 'app.harvestMethod.mechanical' },
+        { value: 'shake_and_catch', labelKey: 'app.harvestMethod.shakeAndCatch' },
+        { value: 'strip_picking', labelKey: 'app.harvestMethod.stripPicking' }
+      ]
+    },
+    // Brix Levels - sugar content measurement (premium fruit quality indicator)
+    {
+      name: 'brix_levels',
+      type: 'text',
+      labelKey: 'app.brixLevels',
+      helpKey: 'app.brixLevelsHelp',
+      placeholderKey: 'app.brixLevelsPlaceholder',
+      advanced: true
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -384,7 +447,8 @@ export const plantingFields: QuickEventTypeConfig = {
       labelKey: 'app.fuelType',
       helpKey: 'app.fuelTypeHelp',
       default: 'diesel',
-      options: FUEL_TYPE_OPTIONS
+      options: FUEL_TYPE_OPTIONS,
+      advanced: true
     },
     // Fuel Consumed with Unit dropdown - SSOT import
     {
@@ -397,14 +461,16 @@ export const plantingFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: FUEL_UNIT_OPTIONS
+      unitOptions: FUEL_UNIT_OPTIONS,
+      advanced: true
     },
     {
       name: 'fuel_unit',
       type: 'select',
       labelKey: 'app.fuelUnit',
       default: 'L',
-      options: FUEL_UNIT_OPTIONS
+      options: FUEL_UNIT_OPTIONS,
+      advanced: true
     },
     // Equipment Operating Hours
     {
@@ -415,6 +481,28 @@ export const plantingFields: QuickEventTypeConfig = {
       default: 3,
       min: 0,
       step: 0.1
+    },
+    // Native Species Planted - biodiversity indicator (Consumer Trust field)
+    {
+      name: 'native_species_planted',
+      type: 'number',
+      labelKey: 'app.nativeSpeciesPlanted',
+      helpKey: 'app.nativeSpeciesPlantedHelp',
+      placeholderKey: 'app.nativeSpeciesPlantedPlaceholder',
+      min: 0,
+      step: 1,
+      advanced: true
+    },
+    // Habitat Area - biodiversity conservation metric
+    {
+      name: 'habitat_area_hectares',
+      type: 'number',
+      labelKey: 'app.habitatAreaHectares',
+      helpKey: 'app.habitatAreaHectaresHelp',
+      placeholderKey: 'app.habitatAreaHectaresPlaceholder',
+      min: 0,
+      step: 0.1,
+      advanced: true
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -552,7 +640,8 @@ export const transplantingFields: QuickEventTypeConfig = {
       labelKey: 'app.fuelType',
       helpKey: 'app.fuelTypeHelp',
       default: 'diesel',
-      options: FUEL_TYPE_OPTIONS
+      options: FUEL_TYPE_OPTIONS,
+      advanced: true
     },
     // Fuel Consumed with Unit dropdown - SSOT import
     {
@@ -565,14 +654,16 @@ export const transplantingFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'fuel_unit',
-      unitOptions: FUEL_UNIT_OPTIONS
+      unitOptions: FUEL_UNIT_OPTIONS,
+      advanced: true
     },
     {
       name: 'fuel_unit',
       type: 'select',
       labelKey: 'app.fuelUnit',
       default: 'L',
-      options: FUEL_UNIT_OPTIONS
+      options: FUEL_UNIT_OPTIONS,
+      advanced: true
     },
     // Equipment Operating Hours
     {
@@ -728,11 +819,11 @@ export const thinningFields: QuickEventTypeConfig = {
   ]
 };
 
-// Equipment Maintenance Event (Production Type: EM)
+// Equipment Maintenance Event (EquipmentEvent Type: MN)
 // Aligned with ProductionTab.jsx - Uses SSOT imports
 export const equipmentMaintenanceFields: QuickEventTypeConfig = {
   templateId: 'equipment_maintenance',
-  eventType: 'EM',
+  eventType: 'MN', // EquipmentEvent.MAINTENANCE - valid backend choice
   quickFields: [
     // Equipment Type
     {
@@ -814,7 +905,8 @@ export const equipmentMaintenanceFields: QuickEventTypeConfig = {
       labelKey: 'app.operationEfficiency',
       helpKey: 'app.operationEfficiencyHelp',
       default: 'normal',
-      options: PRODUCTION_EFFICIENCY_OPTIONS
+      options: PRODUCTION_EFFICIENCY_OPTIONS,
+      advanced: true
     },
     // Area Covered (Optional for Equipment Maintenance) - SSOT import
     {
@@ -826,14 +918,16 @@ export const equipmentMaintenanceFields: QuickEventTypeConfig = {
       step: 0.01,
       hasUnitDropdown: true,
       unitFieldName: 'area_unit',
-      unitOptions: AREA_UNIT_OPTIONS
+      unitOptions: AREA_UNIT_OPTIONS,
+      advanced: true
     },
     {
       name: 'area_unit',
       type: 'select',
       labelKey: 'app.areaUnit',
       default: 'ha',
-      options: AREA_UNIT_OPTIONS
+      options: AREA_UNIT_OPTIONS,
+      advanced: true
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -945,7 +1039,8 @@ export const fertilizationFields: QuickEventTypeConfig = {
       type: 'textarea',
       labelKey: 'app.applicationDetails',
       helpKey: 'app.applicationDetailsHelp',
-      placeholderKey: 'app.applicationDetailsPlaceholder'
+      placeholderKey: 'app.applicationDetailsPlaceholder',
+      advanced: true
     },
     // Weather Conditions
     {
@@ -953,26 +1048,17 @@ export const fertilizationFields: QuickEventTypeConfig = {
       type: 'select',
       labelKey: 'app.weatherConditions',
       helpKey: 'app.weatherConditionsHelp',
-      options: [
-        { value: 'calm_dry', labelKey: 'app.weatherConditions.calmDry' },
-        { value: 'light_wind', labelKey: 'app.weatherConditions.lightWind' },
-        { value: 'humid', labelKey: 'app.weatherConditions.humid' },
-        { value: 'windy', labelKey: 'app.weatherConditions.windy' }
-      ]
+      default: 'calm_dry',
+      options: WEATHER_CONDITIONS_OPTIONS // SSOT import - aligned with Manual Event
     },
-    // Application Timing
+    // Application Timing - SSOT import
     {
       name: 'application_timing',
       type: 'select',
       labelKey: 'app.applicationTiming',
       helpKey: 'app.applicationTimingHelp',
-      options: [
-        { value: 'pre_plant', labelKey: 'app.applicationTiming.prePlant' },
-        { value: 'post_emergence', labelKey: 'app.applicationTiming.postEmergence' },
-        { value: 'flowering', labelKey: 'app.applicationTiming.flowering' },
-        { value: 'fruit_development', labelKey: 'app.applicationTiming.fruitDevelopment' },
-        { value: 'harvest', labelKey: 'app.applicationTiming.harvest' }
-      ]
+      default: 'post_emergence',
+      options: APPLICATION_TIMING_OPTIONS
     },
     // Organic Approved - SSOT import
     {
@@ -980,7 +1066,7 @@ export const fertilizationFields: QuickEventTypeConfig = {
       type: 'select',
       labelKey: 'app.organicApproved',
       helpKey: 'app.organicApprovedHelp',
-      default: 'false',
+      default: 'no',
       options: ORGANIC_APPROVED_OPTIONS
     },
     // Application Fuel Type - SSOT import
@@ -990,7 +1076,8 @@ export const fertilizationFields: QuickEventTypeConfig = {
       labelKey: 'app.applicationEquipmentFuelType',
       helpKey: 'app.applicationFuelTypeHelp',
       default: 'diesel',
-      options: FUEL_TYPE_OPTIONS
+      options: FUEL_TYPE_OPTIONS,
+      advanced: true
     },
     // Application Fuel Consumed with Unit dropdown - SSOT import
     {
@@ -1003,14 +1090,16 @@ export const fertilizationFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'application_fuel_unit',
-      unitOptions: FUEL_UNIT_OPTIONS
+      unitOptions: FUEL_UNIT_OPTIONS,
+      advanced: true
     },
     {
       name: 'application_fuel_unit',
       type: 'select',
       labelKey: 'app.applicationFuelUnit',
       default: 'gal',
-      options: FUEL_UNIT_OPTIONS
+      options: FUEL_UNIT_OPTIONS,
+      advanced: true
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -1119,7 +1208,8 @@ export const pestControlFields: QuickEventTypeConfig = {
       type: 'textarea',
       labelKey: 'app.applicationDetails',
       helpKey: 'app.applicationDetailsHelp',
-      placeholderKey: 'app.applicationDetailsPlaceholder'
+      placeholderKey: 'app.applicationDetailsPlaceholder',
+      advanced: true
     },
     // Weather Conditions (NEW - from ChemicalTab-ENHANCED.jsx for transparency) - SSOT import
     {
@@ -1162,7 +1252,7 @@ export const pestControlFields: QuickEventTypeConfig = {
       type: 'select',
       labelKey: 'app.organicApproved', // Standardized label key
       helpKey: 'quickAdd.fields.organicApprovedHelp',
-      default: 'false',
+      default: 'no',
       options: ORGANIC_APPROVED_OPTIONS // SSOT import
     },
     // Buffer Zone
@@ -1173,7 +1263,8 @@ export const pestControlFields: QuickEventTypeConfig = {
       helpKey: 'quickAdd.fields.bufferZoneHelp',
       min: 0,
       step: 1,
-      unitKey: 'quickAdd.fields.units.meters'
+      unitKey: 'quickAdd.fields.units.meters',
+      advanced: true
     },
     // EPA WPS Compliance Fields
     {
@@ -1181,7 +1272,8 @@ export const pestControlFields: QuickEventTypeConfig = {
       type: 'text',
       labelKey: 'app.applicatorName', // Standardized label key
       helpKey: 'quickAdd.fields.applicatorNameHelp',
-      placeholderKey: 'quickAdd.fields.applicatorNamePlaceholder'
+      placeholderKey: 'quickAdd.fields.applicatorNamePlaceholder',
+      advanced: true
     },
     // Applicator Certification (NEW - from ChemicalTab-ENHANCED.jsx for EPA WPS compliance)
     // Required when restricted_use_pesticide is true - matches conditional behavior in Manual Event
@@ -1190,14 +1282,16 @@ export const pestControlFields: QuickEventTypeConfig = {
       type: 'text',
       labelKey: 'app.applicatorCertification',
       helpKey: 'quickAdd.fields.applicatorCertificationHelp',
-      placeholderKey: 'quickAdd.fields.applicatorCertificationPlaceholder'
+      placeholderKey: 'quickAdd.fields.applicatorCertificationPlaceholder',
+      advanced: true
     },
     {
       name: 'epa_registration_number',
       type: 'text',
       labelKey: 'quickAdd.fields.epaRegistrationNumber',
       helpKey: 'quickAdd.fields.epaRegistrationNumberHelp',
-      placeholderKey: 'quickAdd.fields.epaRegistrationNumberPlaceholder'
+      placeholderKey: 'quickAdd.fields.epaRegistrationNumberPlaceholder',
+      advanced: true
     },
     {
       name: 'rei_hours',
@@ -1206,7 +1300,8 @@ export const pestControlFields: QuickEventTypeConfig = {
       helpKey: 'quickAdd.fields.reiHoursHelp',
       min: 0,
       step: 1,
-      unitKey: 'quickAdd.fields.units.hours'
+      unitKey: 'quickAdd.fields.units.hours',
+      advanced: true
     },
     {
       name: 'phi_days',
@@ -1215,7 +1310,8 @@ export const pestControlFields: QuickEventTypeConfig = {
       helpKey: 'quickAdd.fields.phiDaysHelp',
       min: 0,
       step: 1,
-      unitKey: 'quickAdd.fields.units.days'
+      unitKey: 'quickAdd.fields.units.days',
+      advanced: true
     },
     // Application Fuel - SSOT imports
     {
@@ -1224,7 +1320,8 @@ export const pestControlFields: QuickEventTypeConfig = {
       labelKey: 'quickAdd.fields.applicationFuelType',
       helpKey: 'quickAdd.fields.applicationFuelTypeHelp',
       default: 'diesel', // Smart default: diesel is most common for agricultural application equipment
-      options: FUEL_TYPE_OPTIONS // SSOT import
+      options: FUEL_TYPE_OPTIONS, // SSOT import
+      advanced: true
     },
     {
       name: 'application_fuel_consumed',
@@ -1236,14 +1333,16 @@ export const pestControlFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'application_fuel_unit',
-      unitOptions: FUEL_UNIT_OPTIONS // SSOT import
+      unitOptions: FUEL_UNIT_OPTIONS, // SSOT import
+      advanced: true
     },
     {
       name: 'application_fuel_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.applicationFuelUnit',
       default: 'gal',
-      options: FUEL_UNIT_OPTIONS // SSOT import
+      options: FUEL_UNIT_OPTIONS, // SSOT import
+      advanced: true
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -1352,7 +1451,8 @@ export const herbicideFields: QuickEventTypeConfig = {
       type: 'textarea',
       labelKey: 'app.applicationDetails',
       helpKey: 'app.applicationDetailsHelp',
-      placeholderKey: 'app.applicationDetailsPlaceholder'
+      placeholderKey: 'app.applicationDetailsPlaceholder',
+      advanced: true
     },
     // Weather Conditions (NEW - from ChemicalTab-ENHANCED.jsx for transparency) - SSOT import
     {
@@ -1395,7 +1495,7 @@ export const herbicideFields: QuickEventTypeConfig = {
       type: 'select',
       labelKey: 'app.organicApproved', // Standardized label key
       helpKey: 'quickAdd.fields.organicApprovedHelp',
-      default: 'false',
+      default: 'no',
       options: ORGANIC_APPROVED_OPTIONS // SSOT import
     },
     // Buffer Zone
@@ -1406,7 +1506,8 @@ export const herbicideFields: QuickEventTypeConfig = {
       helpKey: 'quickAdd.fields.bufferZoneHelp',
       min: 0,
       step: 1,
-      unitKey: 'quickAdd.fields.units.meters'
+      unitKey: 'quickAdd.fields.units.meters',
+      advanced: true
     },
     // EPA WPS Compliance Fields
     {
@@ -1414,7 +1515,8 @@ export const herbicideFields: QuickEventTypeConfig = {
       type: 'text',
       labelKey: 'app.applicatorName', // Standardized label key
       helpKey: 'quickAdd.fields.applicatorNameHelp',
-      placeholderKey: 'quickAdd.fields.applicatorNamePlaceholder'
+      placeholderKey: 'quickAdd.fields.applicatorNamePlaceholder',
+      advanced: true
     },
     // Applicator Certification (NEW - from ChemicalTab-ENHANCED.jsx for EPA WPS compliance)
     // Required when restricted_use_pesticide is true - matches conditional behavior in Manual Event
@@ -1423,14 +1525,16 @@ export const herbicideFields: QuickEventTypeConfig = {
       type: 'text',
       labelKey: 'app.applicatorCertification',
       helpKey: 'quickAdd.fields.applicatorCertificationHelp',
-      placeholderKey: 'quickAdd.fields.applicatorCertificationPlaceholder'
+      placeholderKey: 'quickAdd.fields.applicatorCertificationPlaceholder',
+      advanced: true
     },
     {
       name: 'epa_registration_number',
       type: 'text',
       labelKey: 'quickAdd.fields.epaRegistrationNumber',
       helpKey: 'quickAdd.fields.epaRegistrationNumberHelp',
-      placeholderKey: 'quickAdd.fields.epaRegistrationNumberPlaceholder'
+      placeholderKey: 'quickAdd.fields.epaRegistrationNumberPlaceholder',
+      advanced: true
     },
     {
       name: 'rei_hours',
@@ -1439,7 +1543,8 @@ export const herbicideFields: QuickEventTypeConfig = {
       helpKey: 'quickAdd.fields.reiHoursHelp',
       min: 0,
       step: 1,
-      unitKey: 'quickAdd.fields.units.hours'
+      unitKey: 'quickAdd.fields.units.hours',
+      advanced: true
     },
     {
       name: 'phi_days',
@@ -1448,7 +1553,8 @@ export const herbicideFields: QuickEventTypeConfig = {
       helpKey: 'quickAdd.fields.phiDaysHelp',
       min: 0,
       step: 1,
-      unitKey: 'quickAdd.fields.units.days'
+      unitKey: 'quickAdd.fields.units.days',
+      advanced: true
     },
     // Application Fuel - SSOT imports
     {
@@ -1457,7 +1563,8 @@ export const herbicideFields: QuickEventTypeConfig = {
       labelKey: 'quickAdd.fields.applicationFuelType',
       helpKey: 'quickAdd.fields.applicationFuelTypeHelp',
       default: 'diesel', // Smart default: diesel is most common for agricultural application equipment
-      options: FUEL_TYPE_OPTIONS // SSOT import
+      options: FUEL_TYPE_OPTIONS, // SSOT import
+      advanced: true
     },
     {
       name: 'application_fuel_consumed',
@@ -1469,14 +1576,16 @@ export const herbicideFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'application_fuel_unit',
-      unitOptions: FUEL_UNIT_OPTIONS // SSOT import
+      unitOptions: FUEL_UNIT_OPTIONS, // SSOT import
+      advanced: true
     },
     {
       name: 'application_fuel_unit',
       type: 'select',
       labelKey: 'quickAdd.fields.applicationFuelUnit',
       default: 'gal',
-      options: FUEL_UNIT_OPTIONS // SSOT import
+      options: FUEL_UNIT_OPTIONS, // SSOT import
+      advanced: true
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -1584,7 +1693,8 @@ export const fungicideFields: QuickEventTypeConfig = {
       type: 'textarea',
       labelKey: 'app.applicationDetails',
       helpKey: 'app.applicationDetailsHelp',
-      placeholderKey: 'app.applicationDetailsPlaceholder'
+      placeholderKey: 'app.applicationDetailsPlaceholder',
+      advanced: true
     },
     // Weather Conditions (NEW - from ChemicalTab-ENHANCED.jsx for transparency) - SSOT import
     {
@@ -1601,7 +1711,7 @@ export const fungicideFields: QuickEventTypeConfig = {
       type: 'select',
       labelKey: 'app.applicationTiming',
       helpKey: 'app.applicationTimingHelp',
-      default: 'flowering', // Fungicides often applied during flowering
+      default: 'dormant', // Citrus fungicide most commonly applied during dormant season (copper sprays)
       options: APPLICATION_TIMING_OPTIONS // SSOT import - aligned with Manual Event
     },
     // Target Pest/Disease/Need - Matches Manual Event label
@@ -1627,7 +1737,7 @@ export const fungicideFields: QuickEventTypeConfig = {
       type: 'select',
       labelKey: 'app.organicApproved',
       helpKey: 'app.organicApprovedHelp',
-      default: 'false',
+      default: 'no',
       options: ORGANIC_APPROVED_OPTIONS
     },
     // Buffer Zone
@@ -1638,7 +1748,8 @@ export const fungicideFields: QuickEventTypeConfig = {
       helpKey: 'app.bufferZoneHelp',
       min: 0,
       step: 1,
-      unitKey: 'app.units.meters'
+      unitKey: 'app.units.meters',
+      advanced: true
     },
     // EPA WPS Compliance Fields
     {
@@ -1646,7 +1757,8 @@ export const fungicideFields: QuickEventTypeConfig = {
       type: 'text',
       labelKey: 'app.applicatorName',
       helpKey: 'app.applicatorNameHelp',
-      placeholderKey: 'app.applicatorNamePlaceholder'
+      placeholderKey: 'app.applicatorNamePlaceholder',
+      advanced: true
     },
     // Applicator Certification (from ChemicalTab-ENHANCED.jsx for EPA WPS compliance)
     // Required when restricted_use_pesticide is true - matches conditional behavior in Manual Event
@@ -1655,14 +1767,16 @@ export const fungicideFields: QuickEventTypeConfig = {
       type: 'text',
       labelKey: 'app.applicatorCertification',
       helpKey: 'quickAdd.fields.applicatorCertificationHelp',
-      placeholderKey: 'quickAdd.fields.applicatorCertificationPlaceholder'
+      placeholderKey: 'quickAdd.fields.applicatorCertificationPlaceholder',
+      advanced: true
     },
     {
       name: 'epa_registration_number',
       type: 'text',
       labelKey: 'app.epaRegistrationNumber',
       helpKey: 'app.epaRegistrationNumberHelp',
-      placeholderKey: 'app.epaRegistrationNumberPlaceholder'
+      placeholderKey: 'app.epaRegistrationNumberPlaceholder',
+      advanced: true
     },
     {
       name: 'rei_hours',
@@ -1671,7 +1785,8 @@ export const fungicideFields: QuickEventTypeConfig = {
       helpKey: 'app.reiHoursHelp',
       min: 0,
       step: 1,
-      unitKey: 'app.units.hours'
+      unitKey: 'app.units.hours',
+      advanced: true
     },
     {
       name: 'phi_days',
@@ -1680,7 +1795,8 @@ export const fungicideFields: QuickEventTypeConfig = {
       helpKey: 'app.phiDaysHelp',
       min: 0,
       step: 1,
-      unitKey: 'app.units.days'
+      unitKey: 'app.units.days',
+      advanced: true
     },
     // Application Fuel - SSOT imports
     {
@@ -1689,7 +1805,8 @@ export const fungicideFields: QuickEventTypeConfig = {
       labelKey: 'app.applicationEquipmentFuelType',
       helpKey: 'app.applicationFuelTypeHelp',
       default: 'diesel',
-      options: FUEL_TYPE_OPTIONS
+      options: FUEL_TYPE_OPTIONS,
+      advanced: true
     },
     {
       name: 'application_fuel_consumed',
@@ -1701,14 +1818,16 @@ export const fungicideFields: QuickEventTypeConfig = {
       step: 0.1,
       hasUnitDropdown: true,
       unitFieldName: 'application_fuel_unit',
-      unitOptions: FUEL_UNIT_OPTIONS
+      unitOptions: FUEL_UNIT_OPTIONS,
+      advanced: true
     },
     {
       name: 'application_fuel_unit',
       type: 'select',
       labelKey: 'app.applicationFuelUnit',
       default: 'gal',
-      options: FUEL_UNIT_OPTIONS
+      options: FUEL_UNIT_OPTIONS,
+      advanced: true
     }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
@@ -1829,6 +1948,8 @@ const fieldNameMapping: Record<string, string> = {
   transportation_distance: 'transportation_distance',
   transportation_unit: 'transportation_unit',
   production_efficiency: 'production_efficiency',
+  harvest_quality_grade: 'harvest_quality_grade',
+  grain_moisture: 'grain_moisture',
   seeds_source: 'seeds_source',
   // Equipment maintenance specific fields
   equipment_operation_type: 'equipment_operation_type',
@@ -1853,7 +1974,10 @@ const fieldNameMapping: Record<string, string> = {
   weather_conditions: 'weather_conditions',
   application_timing: 'application_timing',
   organic_approved: 'organic_approved',
-  buffer_zone_meters: 'buffer_zone_meters'
+  buffer_zone_meters: 'buffer_zone_meters',
+  // Harvest fields (stored in extra_data by backend serializer)
+  harvest_method: 'harvest_method',
+  brix_levels: 'brix_levels'
   // Note: observation field is handled separately by QuickAddEvent.tsx
 };
 
@@ -1890,6 +2014,26 @@ export function getFieldsForBackend(
       result[backendFieldName] = value;
     }
   });
+
+  // Map Quick Event equipment_operation_type strings to backend 2-char codes
+  if (result.equipment_operation_type) {
+    const operationTypeMap: Record<string, string> = {
+      'routine_maintenance': 'MN',
+      'repair': 'RE',
+      'calibration': 'CA',
+      'cleaning': 'MN',
+      'inspection': 'EI',
+    };
+    result.equipment_operation_type =
+      operationTypeMap[result.equipment_operation_type as string] ||
+      result.equipment_operation_type;
+  }
+
+  // EquipmentEvent model uses 'hours_operated' instead of 'equipment_hours'
+  if (templateId === 'equipment_maintenance' && result.equipment_hours !== undefined) {
+    result.hours_operated = result.equipment_hours;
+    delete result.equipment_hours;
+  }
 
   return result;
 }

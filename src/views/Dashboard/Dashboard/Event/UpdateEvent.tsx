@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 // Component imports
 // @ts-ignore
 import NewEventComponent from '../components/forms/NewEvent';
+import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 
 interface UpdateEventProps {
   isEdit?: boolean;
@@ -14,9 +15,11 @@ function UpdateEvent({ isEdit = false }: UpdateEventProps) {
   const NewEvent = NewEventComponent as React.ComponentType<any>;
 
   return (
-    <Box>
-      <NewEvent isEdit={isEdit} eventId={eventId} />
-    </Box>
+    <WriteAccessGuard>
+      <Box>
+        <NewEvent isEdit={isEdit} eventId={eventId} />
+      </Box>
+    </WriteAccessGuard>
   );
 }
 

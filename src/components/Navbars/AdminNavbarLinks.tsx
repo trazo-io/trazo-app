@@ -49,6 +49,7 @@ import { clearCurrentCompany } from 'store/features/companySlice';
 import { clearUser } from 'store/features/userSlice';
 import { logout as logoutAction } from 'store/features/authSlice';
 import defaultRoutes from '../../routes';
+import { ROLE_DISPLAY_COMPANY_ADMIN } from 'config';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { useLogoutMutation } from 'store/api/authApi';
@@ -100,10 +101,17 @@ export default function HeaderLinks(props: HeaderLinksProps) {
   }, [location.pathname]);
 
   useEffect(() => {
-    const routes = [...defaultRoutes];
-    if (
+    const isAdmin =
       currentUser?.companies?.length > 0 &&
-      currentUser?.companies[0]?.role === 'Company Admin' &&
+      currentUser?.companies[0]?.role === ROLE_DISPLAY_COMPANY_ADMIN;
+
+    // Filter out admin-only routes (Subscription) for non-admin users
+    const routes = isAdmin
+      ? [...defaultRoutes]
+      : defaultRoutes.filter((route) => route.id !== 'subscription');
+
+    if (
+      isAdmin &&
       !routes.some((route) => route.id === 'companySettings') // Check if route already exists
     ) {
       const companySettingRoute = {

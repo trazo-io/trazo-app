@@ -22,7 +22,6 @@ import {
 import {
   FaGoogle,
   FaFacebook,
-  FaApple,
   FaEnvelope,
   FaLock,
   FaEye,
@@ -35,7 +34,6 @@ import { login as loginAction } from '../../../store/features/authSlice';
 import {
   handleGoogleSignIn,
   handleFacebookSignIn,
-  handleAppleSignIn,
   handleSocialAuthError,
   checkSocialAuthConfig
 } from '../../../utils/socialAuth';
@@ -94,9 +92,27 @@ const AppSignIn: React.FC = () => {
   const handleSocialLoginSuccess = async (authData: any) => {
     try {
       setError(null);
-      const response = await socialAuth(authData).unwrap();
+
+      // Check for pending invitation in sessionStorage
+      const pendingInvitation = sessionStorage.getItem('pendingInvitation');
+      const authPayload = pendingInvitation
+        ? { ...authData, invitation_code: pendingInvitation }
+        : authData;
+
+      const response = await socialAuth(authPayload).unwrap();
+
+      // Clear pending invitation on successful auth
+      if (pendingInvitation) {
+        sessionStorage.removeItem('pendingInvitation');
+      }
 
       dispatch(loginAction(response));
+
+      // If invitation was accepted, redirect to the specified URL
+      if (response.invitation_accepted && response.redirect_to) {
+        navigate(response.redirect_to, { replace: true });
+        return;
+      }
 
       // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
       // This prevents race condition where company data isn't loaded yet
@@ -149,24 +165,6 @@ const AppSignIn: React.FC = () => {
         await handleFacebookSignIn(
           handleSocialLoginSuccess,
           (error) => handleSocialLoginError(error, 'Facebook'),
-          4 // Producer user type
-        );
-        break;
-
-      case 'Apple':
-        if (!config.apple) {
-          toast({
-            title: 'Configuration Error',
-            description: 'Apple sign-in is not configured. Please contact support.',
-            status: 'error',
-            duration: 5000,
-            isClosable: true
-          });
-          return;
-        }
-        await handleAppleSignIn(
-          handleSocialLoginSuccess,
-          (error) => handleSocialLoginError(error, 'Apple'),
           4 // Producer user type
         );
         break;
@@ -584,8 +582,7 @@ const AppSignIn: React.FC = () => {
                 <HStack spacing={3} w="full">
                   {[
                     { icon: FaGoogle, color: '#EA4335', name: 'Google' },
-                    { icon: FaFacebook, color: '#1877F2', name: 'Facebook' },
-                    { icon: FaApple, color: useColorModeValue('black', 'white'), name: 'Apple' }
+                    { icon: FaFacebook, color: '#1877F2', name: 'Facebook' }
                   ].map((social) => (
                     <Button
                       key={social.name}

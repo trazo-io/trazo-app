@@ -15,15 +15,26 @@ import {
 } from 'components/Design/StandardComponents';
 import { FaChevronLeft, FaChevronRight, FaLeaf, FaSeedling, FaClipboardList } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
+// Business type display names for auto-generated event names
+const BUSINESS_TYPE_NAMES = {
+  certification: 'Certification Achievement',
+  verification: 'Third-Party Verification',
+  sustainability_audit: 'Sustainability Assessment',
+  transparency: 'Transparency Initiative',
+  carbon_credits: 'Carbon Credits Earned',
+  compliance: 'Regulatory Compliance'
+};
+
 // TRANSPARENCY-FOCUSED BUSINESS SCHEMA - Activities that build consumer trust
 const formSchemaMainInfo = object({
   business_type: string().min(1, 'Business activity type is required'),
+  name: string().optional(),
   certification_type: string().optional(),
   carbon_credits_earned: string().optional(),
   carbon_credits_unit: string().optional(),
@@ -34,6 +45,7 @@ const formSchemaMainInfo = object({
   observation: string().optional(),
   // Sprint 3 Epic 3.2: Consumer Trust Field for transparency
   verified_certifier_name: string().optional(), // Name of the certifying organization
+  certificate_number: string().optional(), // Certificate reference number
   custom_fields: array(
     object({
       id: string().optional(),
@@ -58,6 +70,7 @@ const BusinessTab = forwardRef(
       defaultValues: {
         business_type: initialValues.business_type || '',
         certification_type: initialValues.certification_type || '',
+        name: initialValues.name || '',
         carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
         carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
         verification_status: initialValues.verification_status || '',
@@ -67,22 +80,31 @@ const BusinessTab = forwardRef(
         observation: initialValues.observation || '',
         // Sprint 3 Epic 3.2: Consumer Trust Field
         verified_certifier_name: initialValues.verified_certifier_name || '',
+        certificate_number: initialValues.certificate_number || '',
         custom_fields: initialValues.custom_fields || []
       }
     });
 
-    // DEBOUNCE FIX: Expose flushData method to parent via ref
-    // This allows NewEvent.jsx to force-sync form data before step change
+    // Ref to always hold the latest submit handler, avoiding stale closures in useImperativeHandle
+    const submitHandlerRef = useRef(null);
+
+    // Expose flushData and submitForm methods to parent via ref
     useImperativeHandle(
       ref,
       () => ({
         flushData: () => {
           if (onDataChange) {
             const currentValues = methods.getValues();
-            console.log('[BusinessTab] 🔄 flushData called - syncing form data immediately');
             onDataChange(currentValues);
           }
-        }
+        },
+        submitForm: () =>
+          new Promise((resolve, reject) => {
+            methods.handleSubmit(
+              (data) => { submitHandlerRef.current(data); resolve(); },
+              (errors) => { reject(errors); }
+            )();
+          })
       }),
       [onDataChange, methods]
     );
@@ -95,6 +117,7 @@ const BusinessTab = forwardRef(
       if (Object.keys(initialValues).length > 0) {
         methods.reset({
           business_type: initialValues.business_type || '',
+          name: initialValues.name || '',
           certification_type: initialValues.certification_type || '',
           carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
           carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
@@ -105,6 +128,7 @@ const BusinessTab = forwardRef(
           observation: initialValues.observation || '',
           // Sprint 3 Epic 3.2: Consumer Trust Field
           verified_certifier_name: initialValues.verified_certifier_name || '',
+          certificate_number: initialValues.certificate_number || '',
           custom_fields: initialValues.custom_fields || []
         });
       }
@@ -115,6 +139,9 @@ const BusinessTab = forwardRef(
       methods.setValue('custom_fields', customFields);
     }, [customFields, methods]);
 
+    // INFINITE LOOP FIX: Track last sent values to prevent duplicate onDataChange calls
+    const lastSentValuesRef = useRef(null);
+
     const {
       handleSubmit,
       watch,
@@ -123,15 +150,52 @@ const BusinessTab = forwardRef(
 
     const businessType = watch('business_type');
 
-    // Watch all form fields for real-time updates
-    const allValues = watch();
-
-    // Call onDataChange whenever form values change (for real-time preview updates)
+    // Auto-generate event name from business type (matches Production/Soil/Pest/Weather pattern)
     useEffect(() => {
-      if (onDataChange && Object.keys(allValues).length > 0) {
-        onDataChange(allValues);
+      if (businessType && BUSINESS_TYPE_NAMES[businessType]) {
+        const currentName = methods.getValues('name');
+        const autoNames = Object.values(BUSINESS_TYPE_NAMES);
+        if (!currentName || !currentName.trim() || autoNames.includes(currentName)) {
+          methods.setValue('name', BUSINESS_TYPE_NAMES[businessType], { shouldDirty: false });
+        }
       }
-    }, [allValues]); // FIXED: Removed onDataChange to prevent infinite loop
+    }, [businessType, methods]);
+
+    // Watch specific fields for real-time updates (NOT watch() which returns new ref every render)
+    const watchedFields = watch([
+      'business_type',
+      'name',
+      'certification_type',
+      'carbon_credits_earned',
+      'carbon_credits_unit',
+      'verification_status',
+      'sustainability_practice',
+      'trust_impact',
+      'transparency_benefit',
+      'observation',
+      'verified_certifier_name',
+      'certificate_number'
+    ]);
+
+    // Call onDataChange whenever watched form values change (debounced)
+    useEffect(() => {
+      const timeoutId = setTimeout(() => {
+        if (onDataChange && typeof onDataChange === 'function') {
+          const currentValues = methods.getValues();
+
+          // INFINITE LOOP FIX: Check if values have actually changed
+          const currentValuesString = JSON.stringify(currentValues);
+          if (lastSentValuesRef.current === currentValuesString) {
+            return;
+          }
+
+          onDataChange(currentValues);
+          lastSentValuesRef.current = currentValuesString;
+        }
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }, [watchedFields]); // Watch specific fields, not all values
 
     // Business events do NOT trigger carbon calculations
     // These are administrative/documentation events, not direct agricultural activities
@@ -155,6 +219,9 @@ const BusinessTab = forwardRef(
       };
       onSubmitHandler(processedData);
     };
+
+    // Keep ref in sync with latest handler on every render (avoids stale closures)
+    submitHandlerRef.current = onSubmit;
 
     return (
       <FormProvider {...methods}>
@@ -211,6 +278,18 @@ const BusinessTab = forwardRef(
                     />
                   </StandardField>
 
+                  {/* Event Name - Optional, auto-generated from business type if empty */}
+                  <StandardField
+                    label="Event Name"
+                    helpText="Auto-generated from activity type. Customize for specific events."
+                  >
+                    <StandardInput
+                      type="text"
+                      placeholder={`e.g., ${BUSINESS_TYPE_NAMES[businessType] || 'Business Event'} - Q1 2025`}
+                      {...methods.register('name')}
+                    />
+                  </StandardField>
+
                   <StandardField
                     label="Verification Status"
                     error={errors.verification_status?.message}
@@ -232,14 +311,14 @@ const BusinessTab = forwardRef(
                   </StandardField>
                 </SimpleGrid>
 
-                {/* Certification Details - Only for certification events */}
-                {businessType === 'certification' && (
+                {/* Certification/Verification Details - For certification and verification events */}
+                {(businessType === 'certification' || businessType === 'verification') && (
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField
-                      label="Certification Type"
-                      required
+                      label={businessType === 'certification' ? 'Certification Type' : 'Standard / Audit Type'}
+                      required={businessType === 'certification'}
                       error={errors.certification_type?.message}
-                      helpText="Type of certification obtained or renewed"
+                      helpText={businessType === 'certification' ? 'Type of certification obtained or renewed' : 'Standard or audit framework used for verification'}
                     >
                       <Controller
                         name="certification_type"
@@ -264,6 +343,7 @@ const BusinessTab = forwardRef(
                             <option value="certified_naturally_grown">
                               Certified Naturally Grown (CNG)
                             </option>
+                            <option value="food_safety">Food Safety (Primus GFS, SQF, BRC)</option>
                           </StandardSelect>
                         )}
                       />
@@ -271,15 +351,32 @@ const BusinessTab = forwardRef(
 
                     {/* Sprint 3 Epic 3.2: Consumer Trust Field */}
                     <StandardField
-                      label="Certifier Organization Name"
+                      label={businessType === 'certification' ? 'Certifier Organization Name' : 'Auditing Organization'}
                       error={errors.verified_certifier_name?.message}
-                      helpText="Name of the certifying organization (builds consumer trust)"
+                      helpText={businessType === 'certification' ? 'Name of the certifying organization (builds consumer trust)' : 'Name of the auditing or verification body'}
                     >
                       <Controller
                         name="verified_certifier_name"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardInput {...field} placeholder="e.g., Oregon Tilth, CCOF, QCS" />
+                          <StandardInput {...field} placeholder={businessType === 'certification' ? 'e.g., Oregon Tilth, CCOF, QCS' : 'e.g., Primus Auditing Ops, SCS Global'} />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={businessType === 'certification' ? 'Certificate Number' : 'Report / Reference Number'}
+                      error={errors.certificate_number?.message}
+                      helpText={businessType === 'certification' ? 'Reference number for the certification document' : 'Audit report or verification reference number'}
+                    >
+                      <Controller
+                        name="certificate_number"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput
+                            {...field}
+                            placeholder={businessType === 'certification' ? 'Enter certificate reference number (e.g., GGN-123456)' : 'Enter report/reference number'}
+                          />
                         )}
                       />
                     </StandardField>

@@ -53,7 +53,8 @@ export const baseApi = createApi({
     'PresignedUrl',
     'DashboardComprehensive',
     'CarbonScopeBreakdown',
-    'CarbonAnalytics'
+    'CarbonAnalytics',
+    'VoiceConfig'
   ]
 });
 

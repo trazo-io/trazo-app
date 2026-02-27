@@ -11,16 +11,10 @@ import { baseApi } from './baseApi';
 
 // IMMEDIATE LOAD (2 seconds) - Most critical consumer info
 export interface TransparencyQuickView {
-  farm_name: string;
-  product_name: string;
   transparency_score: {
     percentage: number;
     message: string;
     status: 'excellent' | 'certification' | 'good' | 'minimum' | 'below_minimum';
-  };
-  carbon_score: {
-    kg_per_kg: number;
-    unit: string;
   };
 }
 
@@ -39,23 +33,6 @@ export interface TransparencyStandardView {
         status: 'excellent' | 'good' | 'partial' | 'limited';
       };
     };
-  };
-  carbon_details: {
-    total_emissions: number;
-    breakdown: Record<string, number>;
-    calculation_date?: string;
-  };
-  farm_details: {
-    name: string;
-    location?: string;
-    total_area?: number;
-    country?: string;
-  };
-  product_details: {
-    name: string;
-    production_name: string;
-    start_date?: string;
-    end_date?: string;
   };
 }
 
@@ -128,7 +105,7 @@ export interface TransparencyResponse {
   quick_view: TransparencyQuickView;
   standard_view: TransparencyStandardView;
   detailed_view: TransparencyDetailedView;
-  timeline_events?: TimelineEvent[]; // Added timeline events for photo display
+  timeline?: TimelineEvent[]; // Production events for journey display
   images?: string[]; // Production images from farmer's finish production form
   carbon_impact: {
     // Added carbon_impact to match API response
@@ -141,7 +118,6 @@ export interface TransparencyResponse {
   };
   api_version: string;
   response_timestamp: string;
-  trazo_transparency_certified: boolean;
 }
 
 // Lightweight mobile summary for ultra-fast loading
@@ -179,6 +155,22 @@ export interface TransparencyExplanation {
   };
 }
 
+// Blockchain integrity verification response
+export interface BlockchainIntegrityResponse {
+  status: 'verified' | 'submitted' | 'tampered' | 'pending';
+  data_integrity: 'intact' | 'tampered' | 'no_hash' | 'check_failed';
+  data_integrity_detail: string;
+  tx_hash?: string;
+  verified?: boolean;
+  block_number?: number;
+  submitted_at?: string;
+  finalization_hash?: string;
+  finalization_event_count?: number;
+  network?: string;
+  explorer_url?: string;
+  message?: string;
+}
+
 // NEW Transparency-First QR API
 const transparencyQrApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -209,6 +201,14 @@ const transparencyQrApi = baseApi.injectEndpoints({
       providesTags: [{ type: 'TransparencyExplanation', id: 'explanation' }]
     }),
 
+    // Blockchain integrity verification
+    verifyBlockchainIntegrity: build.query<BlockchainIntegrityResponse, string>({
+      query: (productionId) => ({
+        url: `/transparency/${productionId}/verify-blockchain/`,
+        method: 'GET'
+      })
+    }),
+
     // Legacy scan tracking (enhanced for transparency)
     recordTransparencyScan: build.mutation<any, { production_id: string; comment?: string }>({
       query: (scanData) => ({
@@ -232,6 +232,7 @@ export const {
   useGetTransparencySummaryQuery,
   useGetTransparencyDetailsQuery,
   useGetTransparencyExplanationQuery,
+  useVerifyBlockchainIntegrityQuery,
   useRecordTransparencyScanMutation
 } = transparencyQrApi;
 

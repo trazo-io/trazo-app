@@ -304,12 +304,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   const calculateCarbonWithDebounce = useCallback(
     async (formData, eventType) => {
-      console.log('🧮 calculateCarbonWithDebounce called:', {
-        eventType,
-        formDataKeys: Object.keys(formData || {})
-      });
       if (!formData || Object.keys(formData).length === 0) {
-        console.log('🧮 No form data, clearing calculation');
         setCarbonCalculation(null);
         setShouldShowCarbonTips(false);
         return;
@@ -343,19 +338,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
             ...formData,
             date: formData.date || new Date().toISOString().slice(0, 16),
             event_type: event_type,
+            // Ensure production type is always sent (default PL matches ProductionTab default)
+            ...(event_type === 'production' && !formData.type && { type: 'PL' }),
             // Add parcel context for better calculations
             parcel_id: parseInt(parcelId || '0'),
             establishment_id: parseInt(establishmentId || '0')
           };
-
-          // DEBUG (2025-12-24): Log concentration specifically to diagnose fungicide calculation issue
-          console.log('🔍 [NewEvent] CARBON CALC - event_data being sent to API:', {
-            event_type,
-            concentration: event_data.concentration,
-            type: event_data.type,
-            chemical_subtype: event_data.chemical_subtype,
-            allKeys: Object.keys(event_data)
-          });
 
           const result = await calculateCarbonImpact({
             event_type,
@@ -365,17 +353,16 @@ function NewEvent({ isEdit = false, eventId = null }) {
           setCarbonCalculation(result);
           setShouldShowCarbonTips(true);
         } catch (error) {
-          console.error('Carbon calculation failed:', error);
           // Set fallback calculation based on event type
           const fallbackScores = {
-            0: { co2e: 0.1, efficiency_score: 75 }, // Weather - minimal impact
+            0: { co2e: 0, efficiency_score: 100 }, // Weather - no emissions, pure transparency
             1: { co2e: 2.5, efficiency_score: 60 }, // Production - moderate impact
             2: { co2e: 1.8, efficiency_score: 50 }, // Chemical - higher impact
-            3: { co2e: 0.5, efficiency_score: 70 }, // General - low impact
+            3: { co2e: 0, efficiency_score: 100 }, // General - no emissions (excludeFromCarbonCalculation)
             4: { co2e: 1.0, efficiency_score: 60 }, // Equipment - moderate impact
             5: { co2e: 0.3, efficiency_score: 80 }, // Soil Management - high impact
             6: { co2e: 0.8, efficiency_score: 50 }, // Pest Management - moderate impact
-            7: { co2e: 0.2, efficiency_score: 90 } // Business - very high impact
+            7: { co2e: 0, efficiency_score: 100 } // Business - no emissions (administrative/documentation)
           };
 
           const fallback = fallbackScores[eventType] || fallbackScores[3];
@@ -413,7 +400,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // COMPREHENSIVE EVENT TYPE MAPPING - ALL 8 EVENT TYPES, ALL 30+ SUBTYPES
   const mapBackendTypeToFrontendCode = (backendType) => {
     if (!backendType) {
-      console.log('[mapBackendTypeToFrontendCode] No backendType provided, returning empty string');
       return '';
     }
 
@@ -512,7 +498,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
     // If it's already a short code, return it as is
     if (validCodes.includes(backendType)) {
-      console.log('[mapBackendTypeToFrontendCode] Already a valid short code:', backendType);
       return backendType;
     }
 
@@ -520,21 +505,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
     const mappedCode = typeMap[backendType];
 
     if (mappedCode) {
-      console.log(
-        '[mapBackendTypeToFrontendCode] Successfully mapped:',
-        backendType,
-        '→',
-        mappedCode
-      );
       return mappedCode;
     } else {
-      console.warn(
-        '[mapBackendTypeToFrontendCode] Unknown backend type:',
-        backendType,
-        '- no mapping found'
-      );
-      console.warn('[mapBackendTypeToFrontendCode] Valid short codes:', validCodes);
-      console.warn('[mapBackendTypeToFrontendCode] Valid backend types:', Object.keys(typeMap));
       return ''; // Return empty string for unknown types (form will use default)
     }
   };
@@ -544,35 +516,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   useEffect(() => {
     if (isEdit && existingEvent && !hasLoadedExistingData.current) {
-      console.log('[NewEvent] Loading existing event data:', existingEvent);
-      console.log(
-        '[NewEvent] RAW existingEvent.type:',
-        existingEvent.type,
-        typeof existingEvent.type
-      );
-      console.log(
-        '[NewEvent] RAW existingEvent.volume_applied:',
-        existingEvent.volume_applied,
-        typeof existingEvent.volume_applied
-      );
-      console.log(
-        '[NewEvent] RAW existingEvent.area_treated:',
-        existingEvent.area_treated,
-        typeof existingEvent.area_treated
-      );
-      console.log(
-        '[NewEvent] RAW existingEvent.application_method:',
-        existingEvent.application_method,
-        typeof existingEvent.application_method
-      );
-
       const eventDate = existingEvent.date
         ? new Date(existingEvent.date).toISOString().slice(0, 16)
         : new Date().toISOString().slice(0, 16);
 
       // Map backend type to frontend code
       const mappedType = mapBackendTypeToFrontendCode(existingEvent.type);
-      console.log('[NewEvent] Mapped type from', existingEvent.type, 'to', mappedType);
 
       // Update form data state with comprehensive data mapping
       // IMPORTANT: Use spread operator to preserve ALL fields from existingEvent,
@@ -580,20 +529,35 @@ function NewEvent({ isEdit = false, eventId = null }) {
       const initialData = {
         ...existingEvent, // Include all fields from backend (weather, production, etc.)
         date: eventDate,
-        // Override type field with frontend code mapping for Chemical events
-        type: mappedType || existingEvent.type, // Preserve original type if no mapping found
+        // Override type field with frontend code mapping
+        // GENERAL EVENT FIX: General events store activity category in activity_type,
+        // but the serializer returns a verbose type string (e.g. "event.general.tractor...")
+        // that doesn't match GeneralTab's OTHER_FARM_ACTIVITY_TYPES select options.
+        // Use activity_type with 'other' fallback for General events (type 3).
+        type:
+          eventTypeFromUrl === '3'
+            ? existingEvent.activity_type || 'other'
+            : mappedType || existingEvent.type,
+        // Name field: use existing name or extra_data name only.
+        // Do NOT fallback to description — description can be very long (observation text)
+        // and name has a 150-char DB limit. Pest Management derives name separately in its tab.
+        name:
+          existingEvent.name ||
+          existingEvent.extra_data?.name ||
+          '',
         // Chemical event specific overrides
         commercial_name: existingEvent.commercial_name || existingEvent.name || '',
-        active_ingredient: existingEvent.active_ingredient || '',
+        active_ingredient:
+          existingEvent.active_ingredient || existingEvent.extra_data?.active_ingredient || '',
         concentration: existingEvent.concentration || '',
         // FIELD NAME HANDLING:
         // Backend serializer now returns: volume_applied, area_treated, application_method
         // Fallback to old names (volume, area, way_of_application) for backward compatibility
         // with events created before serializer fix was deployed
         volume_applied: existingEvent.volume_applied ?? existingEvent.volume ?? '',
-        volume_unit: existingEvent.volume_unit || 'L',
+        volume_unit: existingEvent.volume_unit || existingEvent.extra_data?.volume_unit || 'L',
         area_treated: existingEvent.area_treated ?? existingEvent.area ?? '',
-        area_unit: existingEvent.area_unit || 'ha',
+        area_unit: existingEvent.area_unit || existingEvent.extra_data?.area_unit || 'ha',
         application_method:
           existingEvent.application_method ||
           existingEvent.way_of_application ||
@@ -640,33 +604,132 @@ function NewEvent({ isEdit = false, eventId = null }) {
         }),
         ...(existingEvent.extra_data?.residue_management && {
           residue_management: existingEvent.extra_data.residue_management
+        }),
+
+        // SUMMARY MODE FIX: Extract summary fields from extra_data for editing
+        // These are stored in extra_data (not model fields)
+        ...(existingEvent.extra_data?.is_summary != null && {
+          is_summary: existingEvent.extra_data.is_summary
+        }),
+        ...(existingEvent.extra_data?.date_start && {
+          date_start: existingEvent.extra_data.date_start
+        }),
+        ...(existingEvent.extra_data?.date_end && {
+          date_end: existingEvent.extra_data.date_end
+        }),
+        ...(existingEvent.extra_data?.event_count != null && {
+          event_count: existingEvent.extra_data.event_count
+        }),
+        // AGGREGATE CARBON FIELDS FIX: Extract aggregate chemical fields from extra_data
+        // These are stored in extra_data by ChemicalTab onSubmit for summary/aggregate events
+        ...(existingEvent.extra_data?.active_ingredient_total_kg != null && {
+          active_ingredient_total_kg: existingEvent.extra_data.active_ingredient_total_kg
+        }),
+        ...(existingEvent.extra_data?.volume_applied_total != null && {
+          volume_applied_total: existingEvent.extra_data.volume_applied_total
+        }),
+        ...(existingEvent.extra_data?.area_treated_total != null && {
+          area_treated_total: existingEvent.extra_data.area_treated_total
+        }),
+        ...(existingEvent.extra_data?.fuel_consumption_total != null && {
+          fuel_consumption_total: existingEvent.extra_data.fuel_consumption_total
+        }),
+        ...(existingEvent.extra_data?.nitrogen_total_kg != null && {
+          nitrogen_total_kg: existingEvent.extra_data.nitrogen_total_kg
+        }),
+        ...(existingEvent.extra_data?.phosphorus_total_kg != null && {
+          phosphorus_total_kg: existingEvent.extra_data.phosphorus_total_kg
+        }),
+        ...(existingEvent.extra_data?.potassium_total_kg != null && {
+          potassium_total_kg: existingEvent.extra_data.potassium_total_kg
+        }),
+        // Fuel fields: summary mode stores as fuel_type/fuel_unit,
+        // non-summary mode stores as application_fuel_type/application_fuel_unit
+        ...((existingEvent.extra_data?.fuel_type || existingEvent.extra_data?.application_fuel_type) && {
+          application_fuel_type: existingEvent.extra_data.fuel_type || existingEvent.extra_data.application_fuel_type
+        }),
+        ...((existingEvent.extra_data?.fuel_unit || existingEvent.extra_data?.application_fuel_unit) && {
+          application_fuel_unit: existingEvent.extra_data.fuel_unit || existingEvent.extra_data.application_fuel_unit
+        }),
+        ...(existingEvent.extra_data?.application_fuel_consumed != null && {
+          application_fuel_consumed: existingEvent.extra_data.application_fuel_consumed
+        }),
+        ...(existingEvent.extra_data?.water_volume_total != null && {
+          water_volume_total: existingEvent.extra_data.water_volume_total
+        }),
+        ...(existingEvent.extra_data?.water_volume_unit && {
+          water_volume_unit: existingEvent.extra_data.water_volume_unit
+        }),
+
+        // PEST MANAGEMENT AGGREGATE FIELDS: Extract pest scouting summary fields from extra_data
+        ...(existingEvent.extra_data?.area_covered_total != null && {
+          area_covered_total: existingEvent.extra_data.area_covered_total
+        }),
+        ...(existingEvent.extra_data?.fuel_consumed_total != null && {
+          fuel_consumed_total: existingEvent.extra_data.fuel_consumed_total
+        }),
+        ...(existingEvent.extra_data?.pest_species_observed && {
+          pest_species_observed: existingEvent.extra_data.pest_species_observed
+        }),
+        ...(existingEvent.extra_data?.average_pest_pressure && {
+          average_pest_pressure: existingEvent.extra_data.average_pest_pressure
+        }),
+        ...(existingEvent.extra_data?.observations_summary && {
+          observations_summary: existingEvent.extra_data.observations_summary
+        }),
+        ...(existingEvent.extra_data?.crop_growth_stage && {
+          crop_growth_stage: existingEvent.extra_data.crop_growth_stage
+        }),
+        ...(existingEvent.extra_data?.economic_threshold_met && {
+          economic_threshold_met: existingEvent.extra_data.economic_threshold_met
+        }),
+        ...(existingEvent.extra_data?.action_recommended && {
+          action_recommended: existingEvent.extra_data.action_recommended
+        }),
+        ...(existingEvent.extra_data?.equipment_hours != null && {
+          equipment_hours: existingEvent.extra_data.equipment_hours
+        }),
+        ...(existingEvent.extra_data?.production_efficiency && {
+          production_efficiency: existingEvent.extra_data.production_efficiency
+        }),
+        // EM events: map production_efficiency (model field) → operation_efficiency (form field)
+        // The ProductionTab form uses operation_efficiency for EM equipment events,
+        // but the API returns production_efficiency as the model column name
+        ...(existingEvent.production_efficiency && {
+          operation_efficiency: existingEvent.production_efficiency
+        }),
+
+        // IRRIGATION BACKWARD COMPAT: Model fields may be in extra_data for old events
+        water_source: existingEvent.water_source || existingEvent.extra_data?.water_source || '',
+        irrigation_method:
+          existingEvent.irrigation_method || existingEvent.extra_data?.irrigation_method || '',
+        irrigation_depth:
+          existingEvent.irrigation_depth || existingEvent.extra_data?.irrigation_depth || '',
+        irrigation_depth_unit:
+          existingEvent.irrigation_depth_unit ||
+          existingEvent.extra_data?.irrigation_depth_unit ||
+          'inches',
+
+        // GENERAL EVENT FIELD MAPPING: Backend model uses different field names
+        // duration → duration_hours, people_involved → participants
+        duration_hours:
+          existingEvent.duration_hours || existingEvent.duration?.toString() || '',
+        participants:
+          existingEvent.participants || existingEvent.people_involved?.toString() || '',
+
+        // SOIL MANAGEMENT: amendment_unit stored in extra_data (no model column)
+        ...(existingEvent.extra_data?.amendment_unit && {
+          amendment_unit: existingEvent.extra_data.amendment_unit
+        }),
+
+        // BUSINESS EVENT: trust_impact and transparency_benefit stored in extra_data (no model columns)
+        ...(existingEvent.extra_data?.trust_impact && {
+          trust_impact: existingEvent.extra_data.trust_impact
+        }),
+        ...(existingEvent.extra_data?.transparency_benefit && {
+          transparency_benefit: existingEvent.extra_data.transparency_benefit
         })
       };
-
-      // TILLAGE DEBUG: Log extra_data extraction
-      if (existingEvent.extra_data) {
-        console.log('[NewEvent] 🌱 TILLAGE FIX - Extracting from extra_data:', existingEvent.extra_data);
-      }
-
-      console.log('[NewEvent] Processed initialData:', initialData);
-      console.log('[NewEvent] initialData.type:', initialData.type, typeof initialData.type);
-      console.log(
-        '[NewEvent] initialData.volume_applied:',
-        initialData.volume_applied,
-        typeof initialData.volume_applied
-      );
-      console.log(
-        '[NewEvent] initialData.area_treated:',
-        initialData.area_treated,
-        typeof initialData.area_treated
-      );
-      console.log(
-        '[NewEvent] 🚨 WEATHER EVENT FIX - observation field:',
-        initialData.observation,
-        '| description:',
-        initialData.description
-      );
-      console.log('[NewEvent] Setting eventFormData with initialData');
 
       // Set form data directly - no two-phase update needed
       setEventFormData(initialData);
@@ -690,10 +753,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
         setDeletedImageIds([]); // Reset deleted IDs when loading existing event
         // 🚨 ALSO sync to eventFormData for step navigation consistency
         setEventFormData((prev) => ({ ...prev, acceptedFiles: mappedImages }));
-        console.log(
-          '[NewEvent] 🖼️ Loaded existing album images (marked as isExisting with IDs):',
-          mappedImages
-        );
       }
 
       // Reset forms with existing data
@@ -712,10 +771,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
           : eventTypeFromUrl
           ? parseInt(eventTypeFromUrl)
           : 0;
-      console.log('[NewEvent] Setting activeEventType:', eventTypeFromData, {
-        fromBackend: existingEvent.event_type,
-        fromUrl: eventTypeFromUrl
-      });
       setActiveEventType(eventTypeFromData);
 
       // Store in Redux
@@ -732,7 +787,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
       // Mark as loaded to prevent re-initialization
       hasLoadedExistingData.current = true;
-      console.log('[NewEvent] Existing event data loaded successfully');
     }
   }, [isEdit, existingEvent, basicMethods, dispatch]);
 
@@ -758,27 +812,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   };
 
   const onSubmitMainInfo = (data) => {
-    // SPRINT 6 DEBUG: Trace where values are coming from
-    console.log('🔴 [onSubmitMainInfo] SPRINT 6 DEBUG - incoming data:', {
-      'data.active_ingredient': data.active_ingredient,
-      'data.application_details': data.application_details,
-      'data.extra_data': data.extra_data,
-      'data.extra_data?.active_ingredient': data.extra_data?.active_ingredient,
-      'data.extra_data?.application_details': data.extra_data?.application_details
-    });
-    console.log('🔴 [onSubmitMainInfo] SPRINT 6 DEBUG - existing eventFormData:', {
-      'eventFormData.active_ingredient': eventFormData.active_ingredient,
-      'eventFormData.application_details': eventFormData.application_details,
-      'eventFormData.extra_data': eventFormData.extra_data
-    });
-
     const updatedData = { ...eventFormData, ...data };
-
-    console.log('🔴 [onSubmitMainInfo] SPRINT 6 DEBUG - merged updatedData:', {
-      'updatedData.active_ingredient': updatedData.active_ingredient,
-      'updatedData.application_details': updatedData.application_details,
-      'updatedData.extra_data': updatedData.extra_data
-    });
 
     setEventFormData(updatedData);
 
@@ -802,10 +836,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Handle real-time data changes from event tabs (for carbon preview updates)
   const onDataChange = useCallback(
     (data) => {
-      console.log('🔥 onDataChange triggered:', {
-        activeEventType,
-        dataKeys: Object.keys(data || {})
-      });
       // Use functional update to avoid stale closure
       setEventFormData((prevData) => {
         const updatedData = { ...prevData, ...data };
@@ -824,7 +854,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // Weather data is environmental context, not a source of carbon emissions
         // Only trigger carbon calculation for event types that actually produce emissions
         if (activeEventType !== 0) {
-          console.log('🔥 Triggering carbon calculation for type:', activeEventType);
           // Recalculate carbon with new data (debounced)
           calculateCarbonWithDebounce(updatedData, activeEventType);
         }
@@ -842,12 +871,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
     if (activeStep === 1 && eventFormData && Object.keys(eventFormData).length > 0) {
       // WeatherTab manages its own form restoration via initialValues prop
       // No need to reset mainInfoMethods here as it can cause conflicts
-      console.log('🔄 Restoring form data for step 2 via initialValues:', eventFormData);
     }
 
     // Also restore basic form data when going back to step 0
     if (activeStep === 0 && eventFormData && eventFormData.date) {
-      console.log('🔄 Restoring basic form data for step 1:', { date: eventFormData.date });
       const currentBasicValues = basicMethods.getValues();
       if (
         !currentBasicValues.date ||
@@ -859,19 +886,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
     // Restore photo data when going back to step 2 (where photos are uploaded)
     if (activeStep === 1 && eventFormData && eventFormData.acceptedFiles) {
-      console.log('🔄 Restoring photo data for step 2:', {
-        acceptedFilesFromEventFormData: eventFormData.acceptedFiles.map((f) => ({
-          url: f.url?.substring(0, 50) + '...',
-          isExisting: f.isExisting,
-          imageId: f.imageId
-        })),
-        currentAcceptedFiles: acceptedFiles.map((f) => ({
-          url: f.url?.substring(0, 50) + '...',
-          isExisting: f.isExisting,
-          imageId: f.imageId
-        })),
-        currentDeletedImageIds: deletedImageIds
-      });
       // Always restore photos when going back to step 2 to ensure consistency
       if (eventFormData.acceptedFiles.length > 0) {
         setAcceptedFiles(eventFormData.acceptedFiles);
@@ -883,26 +897,45 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const handleEventTypeChange = (eventTypeId) => {
     setActiveEventType(eventTypeId);
 
-    // If we have form data, recalculate carbon for new event type
-    if (Object.keys(eventFormData).length > 0) {
-      calculateCarbonWithDebounce(eventFormData, eventTypeId);
-    }
+    // CRITICAL FIX: Clear type-specific form data when switching event types
+    // This prevents fields from one event type bleeding into another's preview
+    // (e.g., Harvesting's yield_quantity showing in Irrigation preview)
+    // Only preserve truly shared fields (date, performed_by)
+    setEventFormData((prevData) => {
+      const sharedFields = {};
+      const fieldsToKeep = ['date', 'performed_by'];
+      fieldsToKeep.forEach((field) => {
+        if (prevData[field] !== undefined) {
+          sharedFields[field] = prevData[field];
+        }
+      });
+      return sharedFields;
+    });
+
+    // Reset carbon calculation for new event type
+    setCarbonCalculation(null);
+
+    // Also reset Redux form store to prevent stale data
+    dispatch(clearForm());
   };
 
   // Preview modal handlers
   const handleOpenPreview = () => {
-    console.log('🔍 [NewEvent] Preview clicked - eventFormData:', {
-      seeds_source: eventFormData.seeds_source,
-      allKeys: Object.keys(eventFormData),
-      fullData: eventFormData
-    });
+    // Sync fresh form values before opening preview to avoid stale data
+    const freshValues = mainInfoMethods.getValues();
+    if (freshValues && Object.keys(freshValues).length > 0) {
+      setEventFormData((prev) => ({ ...prev, ...freshValues }));
+    }
     setIsPreviewModalOpen(true);
   };
 
-  // Create complete form data including photos for preview
+  // Create complete form data including photos and carbon data for preview
   const getCompleteFormDataForPreview = () => {
+    // Merge fresh main info form values to ensure preview has latest data
+    const freshValues = mainInfoMethods.getValues();
     return {
       ...eventFormData,
+      ...freshValues,
       acceptedFiles: acceptedFiles
     };
   };
@@ -927,22 +960,30 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // Validate required fields are present - don't add mocked values, instead ensure forms have proper inputs
         // FIXED: Corrected event type mapping to match backend constants
         // Backend constants: WEATHER_EVENT_TYPE = 0, PRODUCTION_EVENT_TYPE = 1, CHEMICAL_EVENT_TYPE = 2
+        // Check if this is a summary mode event
+        const isSummaryMode =
+          enhancedData.is_summary === true ||
+          enhancedData.is_summary === 'true' ||
+          enhancedData.is_summary === 'on';
+
         const requiredFieldsByType = {
           0: ['type'], // Weather
           1: ['type'], // Production - other fields are optional but encouraged
-          2: [
-            'type',
-            'commercial_name',
-            'volume_applied',
-            'area_treated',
-            'concentration',
-            'application_method'
-          ], // Chemical
+          2: isSummaryMode
+            ? ['type', 'commercial_name', 'application_method'] // Summary mode: AI total used instead of volume/area/concentration
+            : [
+                'type',
+                'commercial_name',
+                'volume_applied',
+                'area_treated',
+                'concentration',
+                'application_method'
+              ], // Chemical
           3: ['name'], // General
           4: ['type'], // Equipment - fuel data should come from form inputs
           5: ['type'], // Soil Management - specific fields should come from form inputs
           6: ['type'], // Pest Management - specific fields should come from form inputs
-          7: ['type'] // Business
+          7: ['business_type'] // Business - uses business_type field, not legacy 'type'
         };
 
         const requiredFields = requiredFieldsByType[backendEventType] || [];
@@ -954,12 +995,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
         });
 
         if (missingFields.length > 0) {
-          console.warn(
-            `Missing required fields for event type ${backendEventType}:`,
-            missingFields
-          );
-          // Don't auto-fill - let the form validation catch this
-          throw new Error(`Please fill in all required fields: ${missingFields.join(', ')}`);
+          const fieldLabels = {
+            type: 'Event Type',
+            commercial_name: 'Commercial Name',
+            volume_applied: 'Volume Applied',
+            area_treated: 'Area Treated',
+            concentration: 'Concentration',
+            application_method: 'Application Method',
+            name: 'Event Name',
+            business_type: 'Business Type'
+          };
+          const friendlyNames = missingFields.map((f) => fieldLabels[f] || f);
+          throw new Error(`Please fill in all required fields: ${friendlyNames.join(', ')}`);
         }
 
         // No auto-generation of descriptions - users must provide their own
@@ -969,23 +1016,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
         return enhancedData;
       };
 
-      console.log(
-        '🔍 [NewEvent] activeEventType:',
-        activeEventType,
-        'typeof:',
-        typeof activeEventType
-      );
-      console.log('🔍 [NewEvent] eventFormData before mapping:', eventFormData);
-
       // CHEMICAL EVENT FIX: Map frontend field names to backend field names for chemical events
       // IMPORTANT: This MUST happen BEFORE validateAndEnhanceEventData to pass validation
       let processedEventFormData = { ...eventFormData };
 
       if (activeEventType === 2) {
         // Chemical events (activeEventType 2)
-        console.log('🧪 [NewEvent] Applying chemical field mapping for backend compatibility');
-        console.log('🔍 [NewEvent] Raw chemical event data:', processedEventFormData);
-
         // 🔧 FIELD UNIFICATION FIX: Send separate numeric values and units
         // Backend UpdateChemicalEventSerializer handles:
         //   - volume_applied → maps to volume field
@@ -995,139 +1031,33 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // Do NOT combine into strings like "400 L" - keep them separate!
         if (processedEventFormData.volume_applied) {
           processedEventFormData.volume = processedEventFormData.volume_applied;
-          console.log(
-            '🔄 [NewEvent] Mapped volume_applied to volume:',
-            processedEventFormData.volume,
-            'volume_unit:',
-            processedEventFormData.volume_unit
-          );
         }
 
         if (processedEventFormData.area_treated) {
           processedEventFormData.area = processedEventFormData.area_treated;
-          console.log(
-            '🔄 [NewEvent] Mapped area_treated to area:',
-            processedEventFormData.area,
-            'area_unit:',
-            processedEventFormData.area_unit
-          );
         }
 
         if (processedEventFormData.application_method) {
           processedEventFormData.way_of_application = processedEventFormData.application_method;
-          console.log(
-            '🔄 [NewEvent] Mapped application_method to way_of_application:',
-            processedEventFormData.way_of_application
-          );
-        } else {
-          console.warn(
-            '⚠️ [NewEvent] application_method not found in form data. Available keys:',
-            Object.keys(processedEventFormData)
-          );
-          console.warn(
-            '⚠️ [NewEvent] application_method value:',
-            processedEventFormData.application_method
-          );
         }
 
         // Map observation to description for backend compatibility
         if (processedEventFormData.observation && !processedEventFormData.description) {
           processedEventFormData.description = processedEventFormData.observation;
-          console.log(
-            '🔄 [NewEvent] Mapped observation to description:',
-            processedEventFormData.description
-          );
         }
 
-        // No auto-generation of descriptions - users must provide their own observation
-        // Description remains empty if not explicitly provided
-
-        // SPRINT 6 FIX (2025-12-24): Move fields that should be in extra_data
-        // These fields don't have model columns - they need to be stored in extra_data
-        // Only include fields that have actual values - don't overwrite existing extra_data with empty strings
-        const fieldsForExtraData = {};
-
-        // SPRINT 6 DEBUG: Log what we have BEFORE processing
-        console.log('🔴 [NewEvent] SPRINT 6 DEBUG - BEFORE fieldsForExtraData:', {
-          'top_level.active_ingredient': processedEventFormData.active_ingredient,
-          'top_level.application_details': processedEventFormData.application_details,
-          'extra_data.active_ingredient': processedEventFormData.extra_data?.active_ingredient,
-          'extra_data.application_details': processedEventFormData.extra_data?.application_details,
-          full_extra_data: processedEventFormData.extra_data
-        });
-
-        // SPRINT 6 FIX PART 2: ALWAYS include these fields in extra_data (even if empty)
-        // ChemicalTab stores these in extra_data since they have no model columns
-        // We need to check BOTH top-level and extra_data since ChemicalTab sets top-level to undefined
-        // Use nullish coalescing (??) to preserve empty strings (truthy check would filter them out)
-        const getFieldValue = (fieldName) => {
-          // Priority: top-level value > extra_data value > undefined
-          const topLevel = processedEventFormData[fieldName];
-          const extraData = processedEventFormData.extra_data?.[fieldName];
-          // Return the first defined value (including empty strings)
-          if (topLevel !== undefined && topLevel !== null) return topLevel;
-          if (extraData !== undefined && extraData !== null) return extraData;
-          return undefined;
-        };
-
-        // Always include if defined (even empty strings are valid)
-        const activeIngredient = getFieldValue('active_ingredient');
-        const applicationDetails = getFieldValue('application_details');
-        const weatherConditions = getFieldValue('weather_conditions');
-        const applicationTiming = getFieldValue('application_timing');
-        const targetPestDisease = getFieldValue('target_pest_disease');
-
-        if (activeIngredient !== undefined) fieldsForExtraData.active_ingredient = activeIngredient;
-        if (applicationDetails !== undefined)
-          fieldsForExtraData.application_details = applicationDetails;
-        if (weatherConditions !== undefined)
-          fieldsForExtraData.weather_conditions = weatherConditions;
-        if (applicationTiming !== undefined)
-          fieldsForExtraData.application_timing = applicationTiming;
-        if (targetPestDisease !== undefined)
-          fieldsForExtraData.target_pest_disease = targetPestDisease;
-
-        console.log('🔴 [NewEvent] SPRINT 6 FIX - Field extraction:', {
-          activeIngredient,
-          applicationDetails,
-          weatherConditions,
-          applicationTiming,
-          targetPestDisease
-        });
-
-        // Merge into extra_data (preserve existing extra_data fields like volume_unit, area_unit)
-        // Existing extra_data values take precedence if fieldsForExtraData is empty for that field
-        processedEventFormData.extra_data = {
-          ...(processedEventFormData.extra_data || {}),
-          ...fieldsForExtraData
-        };
-
-        // Remove from top level so they don't get sent twice
-        // Set to undefined so cleanEventData will filter them out
-        processedEventFormData.active_ingredient = undefined;
-        processedEventFormData.application_details = undefined;
-        processedEventFormData.weather_conditions = undefined;
-        processedEventFormData.application_timing = undefined;
-        processedEventFormData.target_pest_disease = undefined;
-
-        console.log('🔴 [NewEvent] SPRINT 6 FIX - Moved fields to extra_data:', fieldsForExtraData);
-        console.log(
-          '🔴 [NewEvent] SPRINT 6 FIX - Updated extra_data:',
-          processedEventFormData.extra_data
-        );
-
-        console.log(
-          '✅ [NewEvent] Enhanced chemical event data after mapping:',
-          processedEventFormData
-        );
+        // ChemicalTab's onSubmit already handles:
+        // - Moving active_ingredient, application_details, weather_conditions,
+        //   application_timing, target_pest_disease into extra_data
+        // - Setting those fields to undefined at top level
+        // - Constructing all aggregate/summary fields (fuel_consumption_total, NPK totals, etc.)
+        // No extra_data patching needed here — submitForm() triggers the tab's onSubmit.
       }
 
       // TILLAGE FIX (2025-12-25): Move tillage-specific fields to extra_data
       // SoilManagementEvent model doesn't have tillage_type, tillage_intensity, etc. as columns
       // These fields are only used for Tillage subtype (type='TI') and must be stored in extra_data
       if (activeEventType === 5 && processedEventFormData.type === 'TI') {
-        console.log('🌱 [NewEvent] TILLAGE FIX - Processing tillage fields for extra_data');
-
         const tillageFieldsForExtraData = {};
 
         // Extract tillage-specific fields
@@ -1136,24 +1066,29 @@ function NewEvent({ isEdit = false, eventId = null }) {
         const tillageDirection = processedEventFormData.tillage_direction;
         const residueManagement = processedEventFormData.residue_management;
 
-        console.log('🌱 [NewEvent] TILLAGE FIELDS FOUND:', {
-          tillage_type: tillageType,
-          tillage_intensity: tillageIntensity,
-          tillage_direction: tillageDirection,
-          residue_management: residueManagement
-        });
-
         // Add to extra_data if defined
         if (tillageType !== undefined && tillageType !== null && tillageType !== '') {
           tillageFieldsForExtraData.tillage_type = tillageType;
         }
-        if (tillageIntensity !== undefined && tillageIntensity !== null && tillageIntensity !== '') {
+        if (
+          tillageIntensity !== undefined &&
+          tillageIntensity !== null &&
+          tillageIntensity !== ''
+        ) {
           tillageFieldsForExtraData.tillage_intensity = tillageIntensity;
         }
-        if (tillageDirection !== undefined && tillageDirection !== null && tillageDirection !== '') {
+        if (
+          tillageDirection !== undefined &&
+          tillageDirection !== null &&
+          tillageDirection !== ''
+        ) {
           tillageFieldsForExtraData.tillage_direction = tillageDirection;
         }
-        if (residueManagement !== undefined && residueManagement !== null && residueManagement !== '') {
+        if (
+          residueManagement !== undefined &&
+          residueManagement !== null &&
+          residueManagement !== ''
+        ) {
           tillageFieldsForExtraData.residue_management = residueManagement;
         }
 
@@ -1168,9 +1103,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
         processedEventFormData.tillage_intensity = undefined;
         processedEventFormData.tillage_direction = undefined;
         processedEventFormData.residue_management = undefined;
-
-        console.log('🌱 [NewEvent] TILLAGE FIX - Moved fields to extra_data:', tillageFieldsForExtraData);
-        console.log('🌱 [NewEvent] TILLAGE FIX - Updated extra_data:', processedEventFormData.extra_data);
       }
 
       const enhancedEventFormData = validateAndEnhanceEventData(processedEventFormData);
@@ -1203,14 +1135,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
           return true;
         };
 
-        // Debug: Log when user fields are being cleared
-        Object.keys(data).forEach((key) => {
-          const value = data[key];
-          if (value === '' && !systemFields.includes(key)) {
-            console.log(`🔄 [cleanEventData] Clearing user field "${key}" to empty string`);
-          }
-        });
-
         // UNIVERSAL FIELD MAPPING - BEST PRACTICE IMPLEMENTATION
         // Map event type to human-readable name for logging
         const eventTypeNames = {
@@ -1241,10 +1165,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
               // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
               if (key === 'observation') {
                 finalKey = 'description';
-                console.log(
-                  `🔧 [UNIVERSAL] ${eventTypeName} event mapping observation to description:`,
-                  value
-                );
               }
 
               cleaned[finalKey] = value;
@@ -1267,21 +1187,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
               // CRITICAL FIX: Map operating_hours to equipment_hours for backend compatibility
               if (key === 'operating_hours') {
                 finalKey = 'equipment_hours';
-                console.log('🔧 [FIXED] Mapping operating_hours to equipment_hours:', value);
-              }
-
-              // CRITICAL: Include the 'type' field for production events (required by backend)
-              if (key === 'type') {
-                console.log('✅ [FIXED] Including production type field:', value);
               }
 
               // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
               if (key === 'observation') {
                 finalKey = 'description';
-                console.log(
-                  `🔧 [UNIVERSAL] ${eventTypeName} event mapping observation to description:`,
-                  value
-                );
               }
 
               cleaned[finalKey] = value;
@@ -1300,19 +1210,40 @@ function NewEvent({ isEdit = false, eventId = null }) {
               let finalKey = key;
 
               // CRITICAL FIX: Map form field 'depth' to backend field 'working_depth'
-              if (key === 'depth') {
+              // For TI (Tillage) events, SoilManagementTab sends 'tillage_depth' instead of 'depth'
+              if (key === 'depth' || key === 'tillage_depth') {
                 finalKey = 'working_depth';
-                console.log('🔧 [SOIL] Mapping depth to working_depth:', value);
+              }
+              if (key === 'tillage_depth_unit') {
+                finalKey = 'depth_unit';
               }
 
               // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
               if (key === 'observation') {
                 finalKey = 'description';
-                console.log(
-                  `🔧 [SOIL] ${eventTypeName} event mapping observation to description:`,
-                  value
-                );
               }
+
+              cleaned[finalKey] = value;
+            }
+          });
+
+          return cleaned;
+        }
+
+        // GENERAL EVENT MAPPING (activeEventType === 3)
+        // Frontend form uses different field names than the backend model:
+        //   type → activity_type, duration_hours → duration, participants → people_involved
+        if (activeEventType === 3) {
+          Object.keys(data).forEach((key) => {
+            const value = data[key];
+            if (shouldIncludeField(key, value)) {
+              let finalKey = key;
+
+              // Field name remapping: frontend form → backend model
+              if (key === 'type') finalKey = 'activity_type';
+              if (key === 'duration_hours') finalKey = 'duration';
+              if (key === 'participants') finalKey = 'people_involved';
+              if (key === 'observation') finalKey = 'description';
 
               cleaned[finalKey] = value;
             }
@@ -1332,10 +1263,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
               // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
               if (key === 'observation') {
                 finalKey = 'description';
-                console.log(
-                  `🔧 [UNIVERSAL] ${eventTypeName} event mapping observation to description:`,
-                  value
-                );
               }
 
               cleaned[finalKey] = value;
@@ -1370,34 +1297,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
           excludedFields.push('type'); // Remove type field for event types that don't use sub-types
         }
 
-        console.log('🔧 [NewEvent] Type field handling:', {
-          currentEventTypeName,
-          eventTypesUsingTypeField,
-          includesType: eventTypesUsingTypeField.includes(currentEventTypeName),
-          typeFieldIncluded: !excludedFields.includes('type'),
-          excludedFields
-        });
-
-        // SPRINT 6 DEBUG: Log incoming data to cleanEventData
-        console.log('🔴 [cleanEventData] SPRINT 6 - Input data.extra_data:', data.extra_data);
-        console.log(
-          '🔴 [cleanEventData] SPRINT 6 - Input data.active_ingredient:',
-          data.active_ingredient
-        );
-
         Object.keys(data).forEach((key) => {
           const value = data[key];
-
-          // SPRINT 6 DEBUG: Log extra_data processing specifically
-          if (key === 'extra_data') {
-            console.log('🔴 [cleanEventData] SPRINT 6 - Processing extra_data:', {
-              value,
-              isArray: Array.isArray(value),
-              typeOf: typeof value,
-              shouldInclude: shouldIncludeField(key, value),
-              isExcluded: excludedFields.includes(key)
-            });
-          }
 
           // Use shouldIncludeField helper - allows empty strings for user fields
           // Only include valid values and exclude problematic fields
@@ -1407,7 +1308,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
             // CRITICAL FIX: Map operating_hours to equipment_hours for backend compatibility
             if (key === 'operating_hours') {
               finalKey = 'equipment_hours';
-              console.log('🔧 [FIXED] Mapping operating_hours to equipment_hours:', value);
+            }
+
+            // CRITICAL FIX: Map observation to description for Chemical events
+            // CommonEvent model requires 'description' field, but form sends 'observation'
+            if (key === 'observation') {
+              finalKey = 'description';
             }
 
             // CRITICAL FIX: Ensure extra_data is always a valid JSON object, not an array
@@ -1416,13 +1322,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
               // If it's already an object, keep it as is
               // If it's anything else, convert to empty object
               if (Array.isArray(value)) {
-                console.warn('⚠️ [FIXED] Converting extra_data from array to object:', value);
                 cleaned[finalKey] = {}; // Convert array to empty object
               } else if (typeof value === 'object' && value !== null) {
-                console.log('🔴 [cleanEventData] SPRINT 6 - Keeping extra_data as object:', value);
                 cleaned[finalKey] = value; // Keep valid object
               } else {
-                console.log('🔴 [cleanEventData] SPRINT 6 - Converting extra_data to empty object');
                 cleaned[finalKey] = {}; // Convert other types to empty object
               }
             } else {
@@ -1441,39 +1344,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
         .map((f) => f.url)
         .filter(Boolean);
 
-      console.log('[NewEvent] 📸 Images breakdown:', {
-        totalImages: acceptedFiles.length,
-        existingImages: acceptedFiles.filter((f) => f.isExisting).length,
-        newImages: newImagesOnly.length,
-        newImageUrls: newImagesOnly,
-        deletedImageIds: deletedImageIds,
-        isEdit: isEdit,
-        willSendDeleteIds: isEdit ? deletedImageIds : [],
-        allAcceptedFiles: acceptedFiles.map((f) => ({
-          url: f.url?.substring(0, 60) + '...',
-          isExisting: f.isExisting,
-          imageId: f.imageId
-        }))
-      });
-
-      // 🚨 DEBUG: Log specifically for image deletion
-      if (isEdit && deletedImageIds.length > 0) {
-        console.log('[NewEvent] 🗑️ WILL DELETE THESE IMAGES:', deletedImageIds);
-      } else if (isEdit) {
-        console.log('[NewEvent] ⚠️ No images marked for deletion');
-      }
-
-      // SPRINT 6 DEBUG: Log extra_data BEFORE cleanEventData
-      console.log('🔴 [NewEvent] SPRINT 6 - BEFORE cleanEventData:');
-      console.log(
-        '🔴 [NewEvent] enhancedEventFormData.extra_data:',
-        enhancedEventFormData.extra_data
-      );
-      console.log(
-        '🔴 [NewEvent] enhancedEventFormData.active_ingredient:',
-        enhancedEventFormData.active_ingredient
-      );
-
       const finalEventData = cleanEventData({
         ...enhancedEventFormData,
         event_type: backendEventType, // Use corrected event_type mapping
@@ -1483,26 +1353,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // 🚨 CRITICAL: Send IDs of images to delete (for edit mode)
         delete_image_ids: isEdit ? deletedImageIds : []
       });
-
-      // SPRINT 6 DEBUG: Log extra_data AFTER cleanEventData
-      console.log('🔴 [NewEvent] SPRINT 6 - AFTER cleanEventData:');
-      console.log('🔴 [NewEvent] finalEventData.extra_data:', finalEventData.extra_data);
-      console.log(
-        '🔴 [NewEvent] finalEventData.active_ingredient:',
-        finalEventData.active_ingredient
-      );
-
-      console.log('Final event data being sent:', finalEventData);
-      console.log('Final event data keys:', Object.keys(finalEventData));
-      console.log('Final event data values:', Object.values(finalEventData));
-
-      // DEBUGGING: Check extra_data specifically for weather events
-      if (activeEventType === 0 && finalEventData.extra_data) {
-        console.log('🔍 DEBUGGING extra_data for weather event:');
-        console.log('extra_data type:', typeof finalEventData.extra_data);
-        console.log('extra_data value:', finalEventData.extra_data);
-        console.log('extra_data JSON.stringify:', JSON.stringify(finalEventData.extra_data));
-      }
 
       if (isEdit) {
         // Update existing event
@@ -1548,23 +1398,36 @@ function NewEvent({ isEdit = false, eventId = null }) {
         replace: true
       });
     } catch (error) {
-      console.error('Error creating/updating event:', error);
-      // Enhanced error logging for debugging
-      console.error('🚨 [NewEvent] Full error details:');
-      console.error('🚨 Error object:', JSON.stringify(error, null, 2));
-      console.error('🚨 Error data:', JSON.stringify(error?.data, null, 2));
-      console.error('🚨 Error status:', error?.status);
-      console.error('🚨 Error message:', error?.message);
+      // Surface the actual error message so users know what to fix
+      const isValidationError = error?.message?.includes('required fields');
+      const apiErrorMessage =
+        error?.data?.detail || error?.data?.message || error?.data?.error;
 
-      // Note: Request data logged above before API call
+      // Parse DRF field validation errors: {"field": ["error message"]}
+      let fieldErrors = '';
+      if (!apiErrorMessage && error?.data && typeof error.data === 'object') {
+        const fieldEntries = Object.entries(error.data)
+          .filter(([, v]) => Array.isArray(v))
+          .map(([field, msgs]) => `${field}: ${msgs.join(', ')}`);
+        if (fieldEntries.length > 0) {
+          fieldErrors = fieldEntries.join('; ');
+        }
+      }
+
+      const errorDescription = isValidationError
+        ? error.message
+        : apiErrorMessage || fieldErrors ||
+          (isEdit
+            ? intl.formatMessage({ id: 'app.errorUpdatingEvent' }) ||
+              'Failed to update event. Please try again.'
+            : intl.formatMessage({ id: 'app.errorCreatingEvent' }) ||
+              'Failed to create event. Please try again.');
 
       toast({
         title: intl.formatMessage({ id: 'app.error' }) || 'Error',
-        description:
-          intl.formatMessage({ id: 'app.errorCreatingEvent' }) ||
-          'Failed to save event. Please try again.',
+        description: errorDescription,
         status: 'error',
-        duration: 5000,
+        duration: 7000,
         isClosable: true
       });
     }
@@ -1680,18 +1543,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
               top="80px"
               alignSelf="flex-start"
             >
-              {(() => {
-                const showEmpty =
-                  !carbonCalculation && !isCalculatingCarbon && !isCalculating && activeStep === 0;
-                console.log('🎯 Carbon Preview Decision:', {
-                  showEmpty,
-                  carbonCalculation: !!carbonCalculation,
-                  isCalculatingCarbon,
-                  isCalculating,
-                  activeStep
-                });
-                return showEmpty;
-              })() ? (
+              {!carbonCalculation && !isCalculatingCarbon && !isCalculating && activeStep === 0 ? (
                 <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                   <CardBody>
                     <VStack spacing={4} align="center" py={8}>
@@ -2192,9 +2044,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           </StandardButton>
                           <StandardButton
                             variant="primary"
-                            onClick={() => {
-                              // DEBOUNCE FIX: Flush form data immediately before step change
-                              // This prevents data loss when user clicks Continue before debounce fires
+                            onClick={async () => {
+                              // Programmatically submit the tab's form via useImperativeHandle
+                              // This triggers the tab's onSubmit (which constructs extra_data with
+                              // aggregate fields) and then onSubmitMainInfo (which advances to step 2)
                               const tabRefs = {
                                 0: weatherTabRef,
                                 1: productionTabRef,
@@ -2205,10 +2058,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 7: businessTabRef
                               };
                               const currentTabRef = tabRefs[activeEventType];
-                              if (currentTabRef?.current?.flushData) {
-                                currentTabRef.current.flushData();
+                              if (currentTabRef?.current?.submitForm) {
+                                try {
+                                  await currentTabRef.current.submitForm();
+                                  // onSubmitMainInfo handles setActiveStep(2)
+                                } catch (errors) {
+                                  // Validation failed — do NOT advance step
+                                  console.warn('Form validation failed:', errors);
+                                }
+                              } else {
+                                // Fallback for any tab that doesn't have submitForm yet
+                                currentTabRef?.current?.flushData?.();
+                                setActiveStep(2);
                               }
-                              setActiveStep(2);
                             }}
                             rightIcon={<FaChevronRight />}
                             size={{ base: 'md', md: 'lg' }}
@@ -2256,37 +2118,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             // 🚨 CRITICAL FIX: Track deleted images and preserve isExisting flag
                             // This prevents duplicates AND enables proper deletion on edit
 
-                            console.log('[NewEvent] 📸 onImagesChange called:', {
-                              receivedUrls: urls,
-                              currentAcceptedFiles: acceptedFiles.map((f) => ({
-                                url: f.url?.substring(0, 50) + '...',
-                                isExisting: f.isExisting,
-                                imageId: f.imageId
-                              }))
-                            });
-
                             // Find which existing images were removed (for deletion)
                             const removedImages = acceptedFiles.filter((f) => {
-                              const isRemoved = f.isExisting && f.imageId && !urls.includes(f.url);
-                              if (f.isExisting) {
-                                console.log('[NewEvent] Checking image for removal:', {
-                                  imageId: f.imageId,
-                                  url: f.url?.substring(0, 50) + '...',
-                                  isInNewUrls: urls.includes(f.url),
-                                  willBeRemoved: isRemoved
-                                });
-                              }
-                              return isRemoved;
+                              return f.isExisting && f.imageId && !urls.includes(f.url);
                             });
 
                             if (removedImages.length > 0) {
                               const removedIds = removedImages.map((f) => f.imageId);
-                              console.log('[NewEvent] 🗑️ Images marked for deletion:', removedIds);
-                              setDeletedImageIds((prev) => {
-                                const newIds = [...prev, ...removedIds];
-                                console.log('[NewEvent] Updated deletedImageIds:', newIds);
-                                return newIds;
-                              });
+                              setDeletedImageIds((prev) => [...prev, ...removedIds]);
                             }
 
                             // Build new accepted files array
@@ -2302,15 +2141,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               }
                               return { url }; // New image - no flag
                             });
-
-                            console.log(
-                              '[NewEvent] New acceptedFiles:',
-                              newAcceptedFiles.map((f) => ({
-                                url: f.url?.substring(0, 50) + '...',
-                                isExisting: f.isExisting,
-                                imageId: f.imageId
-                              }))
-                            );
 
                             setAcceptedFiles(newAcceptedFiles);
                             // Also update eventFormData to persist photos across steps

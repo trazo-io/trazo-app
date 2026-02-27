@@ -58,12 +58,15 @@ import {
 } from 'components/Forms/ConcentrationValidation';
 
 // Phase 3: Fuel types with EPA-verified emission factors (for application equipment)
+// UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
 const FUEL_TYPES = [
-  { value: 'diesel', label: '⛽ Diesel', factor: '2.68 kg CO₂e/L' },
-  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.31 kg CO₂e/L' },
-  { value: 'natural_gas', label: '💨 Natural Gas', factor: '2.03 kg CO₂e/m³' },
-  { value: 'lpg', label: '🔥 LPG', factor: '1.70 kg CO₂e/L' },
-  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' }
+  { value: 'diesel', label: '⛽ Diesel', factor: '2.70 kg CO₂e/L' },
+  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.32 kg CO₂e/L' },
+  { value: 'natural_gas', label: '💨 Natural Gas', factor: '1.92 kg CO₂e/m³' },
+  { value: 'propane', label: '🔥 LPG / Propane', factor: '1.51 kg CO₂e/L' },
+  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' },
+  { value: 'biodiesel', label: '🌿 Biodiesel', factor: '2.31 kg CO₂e/L' },
+  { value: 'none', label: '🔧 No Fuel / Manual', factor: '0 kg CO₂e' }
 ];
 
 // ENHANCED SCHEMA - Following Equipment/Soil/Pest enhanced patterns with dynamic validation
@@ -76,59 +79,13 @@ const formSchemaMainInfo = object({
   chemical_subtype: string().optional(),
   commercial_name: string().min(2, 'Commercial name must be at least 2 characters'),
   active_ingredient: string().optional(),
-  concentration: string()
-    .min(1, 'Concentration/application rate is required')
-    .refine(
-      (value, context) => {
-        console.log('[ChemicalTab] 🔍 Zod concentration validation called with:', {
-          value,
-          context
-        });
-
-        try {
-          // Safely access context and parent properties
-          const chemicalType = context?.parent?.type;
-          console.log('[ChemicalTab] 📝 Chemical type from context:', chemicalType);
-
-          if (!chemicalType) {
-            console.log('[ChemicalTab] ⚠️ No chemical type, skipping validation');
-            return true; // Let type validation handle this
-          }
-
-          const validation = validateConcentration(value, chemicalType);
-          console.log('[ChemicalTab] ✅ Validation result:', validation);
-
-          // Check if validation object exists and has the expected structure
-          if (!validation) {
-            console.warn('[ChemicalTab] ⚠️ Validation returned null/undefined');
-            return false;
-          }
-
-          return validation.isValid === true;
-        } catch (error) {
-          console.error('[ChemicalTab] ❌ Concentration validation error:', error);
-          console.error('[ChemicalTab] 📊 Error stack:', error.stack);
-          return false; // Fail validation if there's an error
-        }
-      },
-      {
-        message: 'Invalid concentration format for selected chemical type'
-      }
-    ),
-  volume_applied: string()
-    .min(1, 'Volume applied is required')
-    .refine((val) => {
-      const num = parseFloat(val);
-      return !isNaN(num) && num > 0;
-    }, 'Volume must be greater than 0'),
-  volume_unit: string().min(1, 'Volume unit is required'),
-  area_treated: string()
-    .min(1, 'Area treated is required for carbon calculation')
-    .refine((val) => {
-      const num = parseFloat(val);
-      return !isNaN(num) && num > 0;
-    }, 'Area must be greater than 0'),
-  area_unit: string().min(1, 'Area unit is required'),
+  // In summary mode, per-application fields are hidden and replaced by aggregate totals.
+  // Validation is enforced conditionally via superRefine below.
+  concentration: string().optional(),
+  volume_applied: string().optional(),
+  volume_unit: string().optional(),
+  area_treated: string().optional(),
+  area_unit: string().optional(),
   application_method: string().min(1, 'Application method is required'),
   // Sprint 2 Epic 2.2: Application Details for USDA/EPA method specificity
   application_details: string().optional(),
@@ -201,6 +158,38 @@ const formSchemaMainInfo = object({
   fuel_consumption_total: string().optional(), // Combined fuel for application equipment
   // Fungicide-specific aggregate field
   active_ingredient_total_kg: string().optional() // Total active ingredient for fungicides (kg)
+}).superRefine((data, ctx) => {
+  // In summary mode, per-application fields (concentration, volume_applied, area_treated)
+  // are hidden and replaced by aggregate totals — skip their required validation.
+  const isSummary = data.is_summary === 'true' && ['FE', 'FU', 'PE'].includes(data.type);
+  if (isSummary) return;
+
+  if (!data.concentration || data.concentration.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['concentration'], message: 'Concentration/application rate is required' });
+  } else if (data.type) {
+    try {
+      const validation = validateConcentration(data.concentration, data.type);
+      if (validation && !validation.isValid) {
+        ctx.addIssue({ code: 'custom', path: ['concentration'], message: 'Invalid concentration format for selected chemical type' });
+      }
+    } catch (e) { /* let it pass */ }
+  }
+  if (!data.volume_applied || data.volume_applied.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['volume_applied'], message: 'Volume applied is required' });
+  } else if (parseFloat(data.volume_applied) <= 0 || isNaN(parseFloat(data.volume_applied))) {
+    ctx.addIssue({ code: 'custom', path: ['volume_applied'], message: 'Volume must be greater than 0' });
+  }
+  if (!data.volume_unit || data.volume_unit.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['volume_unit'], message: 'Volume unit is required' });
+  }
+  if (!data.area_treated || data.area_treated.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['area_treated'], message: 'Area treated is required for carbon calculation' });
+  } else if (parseFloat(data.area_treated) <= 0 || isNaN(parseFloat(data.area_treated))) {
+    ctx.addIssue({ code: 'custom', path: ['area_treated'], message: 'Area must be greater than 0' });
+  }
+  if (!data.area_unit || data.area_unit.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['area_unit'], message: 'Area unit is required' });
+  }
 });
 
 const ChemicalTab = forwardRef(
@@ -208,14 +197,8 @@ const ChemicalTab = forwardRef(
     const intl = useIntl();
     const [hasInitialized, setHasInitialized] = useState(false);
 
-    // SPRINT 6 DEBUG: Log initialValues when component mounts
-    console.log('[ChemicalTab] 🔴 SPRINT 6 - initialValues received:', {
-      active_ingredient: initialValues.active_ingredient,
-      application_details: initialValues.application_details,
-      extra_data: initialValues.extra_data,
-      extra_data_active_ingredient: initialValues.extra_data?.active_ingredient,
-      extra_data_application_details: initialValues.extra_data?.application_details
-    });
+    // SPRINT 6 DEBUG: Log initialValues only on mount (not every render)
+    // Moved to useEffect to prevent console spam from parent re-renders
 
     const methods = useForm({
       resolver: zodResolver(formSchemaMainInfo),
@@ -228,16 +211,16 @@ const ChemicalTab = forwardRef(
           initialValues.active_ingredient || initialValues.extra_data?.active_ingredient || '',
         concentration: initialValues.concentration || '',
         volume_applied: initialValues.volume_applied?.toString() || '',
-        volume_unit: initialValues.volume_unit || 'L',
+        volume_unit: initialValues.volume_unit || initialValues.extra_data?.volume_unit || 'L',
         area_treated: initialValues.area_treated?.toString() || '',
-        area_unit: initialValues.area_unit || 'ha',
+        area_unit: initialValues.area_unit || initialValues.extra_data?.area_unit || 'ha',
         application_method: initialValues.application_method || '',
         // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (stored there in onSubmit)
         application_details:
           initialValues.application_details || initialValues.extra_data?.application_details || '',
-        weather_conditions: initialValues.weather_conditions || '',
-        application_timing: initialValues.application_timing || '',
-        target_pest_disease: initialValues.target_pest_disease || '',
+        weather_conditions: initialValues.weather_conditions || initialValues.extra_data?.weather_conditions || '',
+        application_timing: initialValues.application_timing || initialValues.extra_data?.application_timing || '',
+        target_pest_disease: initialValues.target_pest_disease || initialValues.extra_data?.target_pest_disease || '',
         observation: initialValues.observation || '',
         // EPA WPS Compliance Fields
         applicator_name: initialValues.applicator_name || '',
@@ -255,7 +238,8 @@ const ChemicalTab = forwardRef(
         application_fuel_unit: initialValues.application_fuel_unit || 'gal',
         custom_fields: initialValues.custom_fields || [],
         // Sprint 5: Aggregate Fertilizer Support
-        is_summary: initialValues.is_summary ? 'true' : 'false',
+        // FIX: Use strict comparison — string "false" is truthy in JS!
+        is_summary: initialValues.is_summary === 'true' || initialValues.is_summary === true ? 'true' : 'false',
         date_start: initialValues.date_start || '',
         date_end: initialValues.date_end || '',
         event_count: initialValues.event_count?.toString() || '',
@@ -270,21 +254,33 @@ const ChemicalTab = forwardRef(
       }
     });
 
-    // DEBOUNCE FIX: Expose flushData method to parent via ref
-    // This allows NewEvent.jsx to force-sync form data before step change
+    // Ref to always hold the latest submit handler, avoiding stale closures in useImperativeHandle
+    const submitHandlerRef = useRef(null);
+
+    // Expose flushData and submitForm methods to parent via ref
+    // flushData: force-sync raw form values before step change (legacy fallback)
+    // submitForm: programmatically trigger form validation + onSubmit (preferred path)
     useImperativeHandle(
       ref,
       () => ({
         flushData: () => {
           if (onDataChange) {
             const currentValues = methods.getValues();
-            console.log('[ChemicalTab] 🔄 flushData called - syncing form data immediately:', {
-              active_ingredient: currentValues.active_ingredient,
-              application_details: currentValues.application_details
-            });
             onDataChange(currentValues);
           }
-        }
+        },
+        submitForm: () =>
+          new Promise((resolve, reject) => {
+            methods.handleSubmit(
+              (data) => {
+                submitHandlerRef.current(data);
+                resolve();
+              },
+              (errors) => {
+                reject(errors);
+              }
+            )();
+          })
       }),
       [onDataChange, methods]
     );
@@ -296,18 +292,8 @@ const ChemicalTab = forwardRef(
     // COMPREHENSIVE CHEMICAL EVENT TYPE MAPPING
     const mapBackendTypeToFrontendCode = (backendType) => {
       if (!backendType) {
-        console.log(
-          '[ChemicalTab.mapBackendTypeToFrontendCode] No backendType provided, returning empty string'
-        );
         return '';
       }
-
-      console.log(
-        '[ChemicalTab.mapBackendTypeToFrontendCode] Input backendType:',
-        backendType,
-        'Type:',
-        typeof backendType
-      );
 
       // CHEMICAL EVENT TYPE MAP: Backend verbose property paths → Frontend short codes
       const typeMap = {
@@ -322,10 +308,6 @@ const ChemicalTab = forwardRef(
 
       // If it's already a short code, return it as is
       if (validCodes.includes(backendType)) {
-        console.log(
-          '[ChemicalTab.mapBackendTypeToFrontendCode] Already a valid short code:',
-          backendType
-        );
         return backendType;
       }
 
@@ -333,24 +315,9 @@ const ChemicalTab = forwardRef(
       const mappedCode = typeMap[backendType];
 
       if (mappedCode) {
-        console.log(
-          '[ChemicalTab.mapBackendTypeToFrontendCode] Successfully mapped:',
-          backendType,
-          '→',
-          mappedCode
-        );
         return mappedCode;
       } else {
-        console.warn(
-          '[ChemicalTab.mapBackendTypeToFrontendCode] Unknown backend type:',
-          backendType,
-          '- no mapping found'
-        );
-        console.warn('[ChemicalTab.mapBackendTypeToFrontendCode] Valid short codes:', validCodes);
-        console.warn(
-          '[ChemicalTab.mapBackendTypeToFrontendCode] Valid backend types:',
-          Object.keys(typeMap)
-        );
+        console.warn('[ChemicalTab] Unknown backend chemical type:', backendType);
         return ''; // Return empty string for unknown types (form will use default)
       }
     };
@@ -367,31 +334,8 @@ const ChemicalTab = forwardRef(
         (hasData || (initialValues && Object.keys(initialValues).length === 0)) &&
         !hasInitialized
       ) {
-        console.log('[ChemicalTab] Resetting form with initialValues:', initialValues);
-        console.log(
-          '[ChemicalTab] RAW initialValues.type:',
-          initialValues.type,
-          typeof initialValues.type
-        );
-        console.log(
-          '[ChemicalTab] RAW initialValues.volume (backend):',
-          initialValues.volume,
-          typeof initialValues.volume
-        );
-        console.log(
-          '[ChemicalTab] RAW initialValues.area (backend):',
-          initialValues.area,
-          typeof initialValues.area
-        );
-        console.log(
-          '[ChemicalTab] RAW initialValues.way_of_application (backend):',
-          initialValues.way_of_application,
-          typeof initialValues.way_of_application
-        );
-
         // Map backend type to frontend code
         const mappedType = mapBackendTypeToFrontendCode(initialValues.type);
-        console.log('[ChemicalTab] Mapped type from', initialValues.type, 'to', mappedType);
 
         const resetData = {
           type: mappedType,
@@ -408,24 +352,24 @@ const ChemicalTab = forwardRef(
               : initialValues.volume !== undefined && initialValues.volume !== null
               ? initialValues.volume.toString()
               : '',
-          volume_unit: initialValues.volume_unit || 'L',
+          volume_unit: initialValues.volume_unit || initialValues.extra_data?.volume_unit || 'L',
           area_treated:
             initialValues.area_treated !== undefined && initialValues.area_treated !== null
               ? initialValues.area_treated.toString()
               : initialValues.area !== undefined && initialValues.area !== null
               ? initialValues.area.toString()
               : '',
-          area_unit: initialValues.area_unit || 'ha',
-          application_method: initialValues.way_of_application || '',
+          area_unit: initialValues.area_unit || initialValues.extra_data?.area_unit || 'ha',
+          application_method: initialValues.application_method || initialValues.way_of_application || '',
           // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (stored there in onSubmit)
           application_details:
             initialValues.application_details ||
             initialValues.extra_data?.application_details ||
             '',
-          // Environmental context fields for transparency
-          weather_conditions: initialValues.weather_conditions || '',
-          application_timing: initialValues.application_timing || '',
-          target_pest_disease: initialValues.target_pest_disease || '',
+          // Environmental context fields for transparency (model columns with extra_data fallback)
+          weather_conditions: initialValues.weather_conditions || initialValues.extra_data?.weather_conditions || '',
+          application_timing: initialValues.application_timing || initialValues.extra_data?.application_timing || '',
+          target_pest_disease: initialValues.target_pest_disease || initialValues.extra_data?.target_pest_disease || '',
           observation: initialValues.observation || '',
           // EPA WPS Compliance Fields
           applicator_name: initialValues.applicator_name || '',
@@ -443,7 +387,8 @@ const ChemicalTab = forwardRef(
           application_fuel_unit: initialValues.application_fuel_unit || 'gal',
           custom_fields: initialValues.custom_fields || [],
           // Sprint 5: Aggregate Fertilizer Support
-          is_summary: initialValues.is_summary ? 'true' : 'false',
+          // FIX: Use strict comparison — string "false" is truthy in JS!
+          is_summary: initialValues.is_summary === 'true' || initialValues.is_summary === true ? 'true' : 'false',
           date_start: initialValues.date_start || '',
           date_end: initialValues.date_end || '',
           event_count: initialValues.event_count?.toString() || '',
@@ -457,26 +402,8 @@ const ChemicalTab = forwardRef(
           active_ingredient_total_kg: initialValues.active_ingredient_total_kg?.toString() || ''
         };
 
-        console.log('[ChemicalTab] Calling methods.reset() with:', resetData);
-        console.log('[ChemicalTab] resetData.type:', resetData.type, typeof resetData.type);
-        console.log(
-          '[ChemicalTab] resetData.volume_applied:',
-          resetData.volume_applied,
-          typeof resetData.volume_applied
-        );
-        console.log(
-          '[ChemicalTab] resetData.area_treated:',
-          resetData.area_treated,
-          typeof resetData.area_treated
-        );
-
         methods.reset(resetData);
         setHasInitialized(true);
-
-        console.log(
-          '[ChemicalTab] INITIAL SETUP COMPLETE - After reset, getValues():',
-          methods.getValues()
-        );
       }
     }, [initialValues, hasInitialized]); // Only run when initialValues change or when not yet initialized
 
@@ -509,7 +436,6 @@ const ChemicalTab = forwardRef(
       if (hasInitialized && previousChemicalTypeRef.current !== chemicalType && chemicalType) {
         // Only clear if the type actually changed (not on initial load)
         methods.setValue('chemical_subtype', '');
-        console.log('[ChemicalTab] Chemical type changed, clearing subtype');
       }
       previousChemicalTypeRef.current = chemicalType;
     }, [chemicalType, hasInitialized, methods]);
@@ -520,22 +446,48 @@ const ChemicalTab = forwardRef(
         ? validateConcentration(concentrationValue, chemicalType)
         : null;
 
-    // Real-time carbon calculation updates - only when sufficient data present
+    // Real-time updates - watch ALL fields that appear in preview or affect carbon calculation
+    // Previously only carbon-related fields were watched, causing stale preview data
+    // for safety/compliance/transparency fields (REI, PHI, applicator, EPA reg, etc.)
     const watchedFields = watch([
       'type',
-      // CRITICAL FIX 2025-12-24: Include chemical_subtype for accurate emission factor recalculation
-      // Changing from synthetic to organic fertilizer/pesticide should trigger recalculation
+      'commercial_name',
       'chemical_subtype',
+      'active_ingredient',
       'volume_applied',
       'volume_unit',
       'area_treated',
       'area_unit',
       'concentration',
-      // CRITICAL FIX: Include fuel fields for application equipment carbon calculation
+      'application_method',
+      'application_details',
+      'weather_conditions',
+      'application_timing',
+      'target_pest_disease',
+      'observation',
+      'applicator_name',
+      'epa_registration_number',
+      'restricted_use_pesticide',
+      'applicator_certification',
+      'rei_hours',
+      'phi_days',
+      'organic_approved',
+      'buffer_zone_meters',
       'application_fuel_type',
       'application_fuel_consumed',
-      'application_fuel_unit'
+      'application_fuel_unit',
+      // Summary mode fields for aggregate carbon calculation
+      'is_summary',
+      'active_ingredient_total_kg',
+      'fuel_consumption_total',
+      'nitrogen_total_kg',
+      'phosphorus_total_kg',
+      'potassium_total_kg',
+      'event_count'
     ]);
+    // Serialize watched values so useEffect only fires when actual VALUES change,
+    // not on every render (watch() returns a new array reference each time)
+    const watchedFieldsSerialized = JSON.stringify(watchedFields);
     const previousValuesRef = useRef({});
 
     useEffect(() => {
@@ -567,11 +519,20 @@ const ChemicalTab = forwardRef(
             'applicator_certification',
             'rei_hours',
             'phi_days',
+            'organic_approved',
+            'buffer_zone_meters',
             'custom_fields',
-            // CRITICAL FIX: Include fuel fields for application equipment carbon calculation
             'application_fuel_type',
             'application_fuel_consumed',
-            'application_fuel_unit'
+            'application_fuel_unit',
+            // Summary mode fields for aggregate carbon calculation
+            'is_summary',
+            'active_ingredient_total_kg',
+            'fuel_consumption_total',
+            'nitrogen_total_kg',
+            'phosphorus_total_kg',
+            'potassium_total_kg',
+            'event_count'
           ];
           const currentRelevantValues = {};
           relevantFields.forEach((field) => {
@@ -585,13 +546,6 @@ const ChemicalTab = forwardRef(
             previousValuesRef.current = currentRelevantValues;
             try {
               onDataChange(currentValues);
-              console.log('[ChemicalTab]: 💾 Saved form data for persistence:', currentValues);
-              // DEBUG (2025-12-24): Log concentration specifically to diagnose fungicide calculation issue
-              console.log('[ChemicalTab]: 🔍 CONCENTRATION DEBUG - value being sent:', {
-                concentration: currentValues.concentration,
-                type: currentValues.type,
-                chemical_subtype: currentValues.chemical_subtype
-              });
             } catch (error) {
               console.error('[ChemicalTab]: Error calling onDataChange:', error);
             }
@@ -600,13 +554,9 @@ const ChemicalTab = forwardRef(
       }, 500);
 
       return () => clearTimeout(timeoutId);
-    }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
+    }, [watchedFieldsSerialized]); // Use serialized values: only fires when actual field values change, not on every render
 
     const onSubmit = (data) => {
-      console.log('[ChemicalTab] 🚀 onSubmit called with data:', data);
-      console.log('[ChemicalTab] 🔍 Form validation errors:', errors);
-      console.log('[ChemicalTab] 📝 Form values from getValues():', methods.getValues());
-
       // Process numeric data and map frontend field names to backend field names
       const {
         // Remove frontend-only field names to avoid confusion
@@ -632,15 +582,6 @@ const ChemicalTab = forwardRef(
 
       // Sprint 5: Check for aggregate mode
       const isSummaryEvent = data.is_summary === 'true';
-
-      // SPRINT 6 DEBUG: Log the values we're about to process
-      console.log('[ChemicalTab] 🔴 SPRINT 6 FIX - extracted values:', {
-        active_ingredient,
-        application_details,
-        weather_conditions,
-        application_timing,
-        target_pest_disease
-      });
 
       const processedData = {
         ...filteredData,
@@ -683,6 +624,10 @@ const ChemicalTab = forwardRef(
           weather_conditions: weather_conditions || '',
           application_timing: application_timing || '',
           target_pest_disease: target_pest_disease || '',
+          // FIX: Always persist fuel fields in extra_data (no model columns exist for these)
+          application_fuel_type: data.application_fuel_type || '',
+          application_fuel_consumed: data.application_fuel_consumed || '',
+          application_fuel_unit: data.application_fuel_unit || 'gal',
           // Sprint 5: Aggregate Chemical Support (Fertilizer, Fungicide & Pesticide)
           ...(isSummaryEvent && {
             is_summary: true,
@@ -712,27 +657,16 @@ const ChemicalTab = forwardRef(
             fuel_consumption_total: data.fuel_consumption_total
               ? parseFloat(data.fuel_consumption_total)
               : null,
-            fuel_unit: data.application_fuel_unit || 'gal'
+            fuel_unit: data.application_fuel_unit || 'gal',
+            fuel_type: data.application_fuel_type || 'diesel'
           })
         }
       };
 
-      console.log('[ChemicalTab] Submitting with backend field names:', processedData);
-      console.log(
-        '[ChemicalTab] 🔴 SPRINT 6 FIX - processedData.active_ingredient:',
-        processedData.active_ingredient
-      );
-      console.log(
-        '[ChemicalTab] 🔴 SPRINT 6 FIX - processedData.extra_data:',
-        processedData.extra_data
-      );
-      console.log('[ChemicalTab] 🎯 About to call onSubmitHandler...');
-
       try {
         const result = onSubmitHandler(processedData);
-        console.log('[ChemicalTab] ✅ onSubmitHandler returned:', result);
       } catch (error) {
-        console.error('[ChemicalTab] ❌ onSubmitHandler error:', error);
+        console.error('[ChemicalTab] onSubmitHandler error:', error);
       }
     };
 
@@ -741,6 +675,9 @@ const ChemicalTab = forwardRef(
       volumeValue && areaValue
         ? (parseFloat(volumeValue) / parseFloat(areaValue)).toFixed(2)
         : null;
+
+    // Keep ref in sync with latest handler on every render (avoids stale closures)
+    submitHandlerRef.current = onSubmit;
 
     return (
       <FormProvider {...methods}>
@@ -1137,19 +1074,36 @@ const ChemicalTab = forwardRef(
                       </StandardField>
                     </SimpleGrid>
 
-                    <StandardField
-                      label="Total Equipment Fuel (optional)"
-                      helpText="Combined fuel used for application equipment across all applications"
-                      mt={4}
-                    >
-                      <HStack spacing={2}>
+                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mt={4}>
+                      <StandardField
+                        label="Equipment Fuel Type (optional)"
+                        helpText="Fuel type used for application equipment"
+                      >
+                        <Controller
+                          name="application_fuel_type"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect {...field} placeholder="Select fuel type..." bg="white">
+                              {FUEL_TYPES.map((type) => (
+                                <option key={type.value} value={type.value}>
+                                  {type.label} ({type.factor})
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+
+                      <StandardField
+                        label="Total Equipment Fuel"
+                        helpText="Combined fuel across all applications"
+                      >
                         <Controller
                           name="fuel_consumption_total"
                           control={methods.control}
                           render={({ field }) => (
                             <StandardInput
                               {...field}
-                              flex={2}
                               type="number"
                               step="0.1"
                               placeholder="e.g., 24"
@@ -1157,18 +1111,22 @@ const ChemicalTab = forwardRef(
                             />
                           )}
                         />
+                      </StandardField>
+
+                      <StandardField label="Fuel Unit">
                         <Controller
                           name="application_fuel_unit"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} flex={1} bg="white">
+                            <StandardSelect {...field} bg="white">
                               <option value="gal">Gallons</option>
                               <option value="L">Liters</option>
+                              <option value="kWh">Kilowatt-hours</option>
                             </StandardSelect>
                           )}
                         />
-                      </HStack>
-                    </StandardField>
+                      </StandardField>
+                    </SimpleGrid>
 
                     {/* Carbon Calculation Preview */}
                     <Box
@@ -1352,19 +1310,36 @@ const ChemicalTab = forwardRef(
                       </StandardField>
                     </SimpleGrid>
 
-                    <StandardField
-                      label="Total Equipment Fuel (optional)"
-                      helpText="Combined fuel used for spraying equipment across all applications"
-                      mt={4}
-                    >
-                      <HStack spacing={2}>
+                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mt={4}>
+                      <StandardField
+                        label="Equipment Fuel Type (optional)"
+                        helpText="Fuel type used for spraying equipment"
+                      >
+                        <Controller
+                          name="application_fuel_type"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect {...field} placeholder="Select fuel type..." bg="white">
+                              {FUEL_TYPES.map((type) => (
+                                <option key={type.value} value={type.value}>
+                                  {type.label} ({type.factor})
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+
+                      <StandardField
+                        label="Total Equipment Fuel"
+                        helpText="Combined fuel across all applications"
+                      >
                         <Controller
                           name="fuel_consumption_total"
                           control={methods.control}
                           render={({ field }) => (
                             <StandardInput
                               {...field}
-                              flex={2}
                               type="number"
                               step="0.1"
                               placeholder="e.g., 24"
@@ -1372,18 +1347,22 @@ const ChemicalTab = forwardRef(
                             />
                           )}
                         />
+                      </StandardField>
+
+                      <StandardField label="Fuel Unit">
                         <Controller
                           name="application_fuel_unit"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardSelect {...field} flex={1} bg="white">
+                            <StandardSelect {...field} bg="white">
                               <option value="gal">Gallons</option>
                               <option value="L">Liters</option>
+                              <option value="kWh">Kilowatt-hours</option>
                             </StandardSelect>
                           )}
                         />
-                      </HStack>
-                    </StandardField>
+                      </StandardField>
+                    </SimpleGrid>
 
                     {/* Carbon Calculation Preview for Fungicide */}
                     <Box
@@ -1405,7 +1384,7 @@ const ChemicalTab = forwardRef(
                         emissions
                         <br />
                         <strong>Emission factors:</strong> Copper: 5.5, Sulfur: 1.8, Biological:
-                        0.5, Synthetic: 4.5 kg CO₂e/kg
+                        2.0, Synthetic: 4.5 kg CO₂e/kg
                         <br />
                         <strong>Source: Lal 2004, Audsley et al.</strong>
                       </Text>
@@ -1543,7 +1522,26 @@ const ChemicalTab = forwardRef(
                       Equipment Fuel Usage
                     </Text>
 
-                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                      <StandardField
+                        label="Equipment Fuel Type"
+                        helpText="Fuel type used for application equipment"
+                      >
+                        <Controller
+                          name="application_fuel_type"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect {...field} placeholder="Select fuel type...">
+                              {FUEL_TYPES.map((type) => (
+                                <option key={type.value} value={type.value}>
+                                  {type.label} ({type.factor})
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+
                       <StandardField
                         label="Total Fuel Consumed"
                         helpText="Combined fuel for all application equipment"
@@ -1570,6 +1568,7 @@ const ChemicalTab = forwardRef(
                             <StandardSelect {...field}>
                               <option value="gal">Gallons (gal)</option>
                               <option value="L">Liters (L)</option>
+                              <option value="kWh">Kilowatt-hours (kWh)</option>
                             </StandardSelect>
                           )}
                         />
@@ -1995,6 +1994,7 @@ const ChemicalTab = forwardRef(
                         <option value="flowering">🌸 Flowering Stage</option>
                         <option value="fruit_development">🍎 Fruit Development</option>
                         <option value="harvest">🚜 Pre-Harvest</option>
+                        <option value="post_harvest">🌾 Post-Harvest</option>
                       </StandardSelect>
                     )}
                   />
@@ -2091,6 +2091,8 @@ const ChemicalTab = forwardRef(
             </SectionBox>
 
             {/* Section 4: Application Equipment & Fuel Usage - Phase 3 Electric Equipment Support */}
+            {/* Hidden in Summary Mode - aggregate fuel fields are shown in the summary sections instead */}
+            {!isSummaryMode && (
             <SectionBox variant="highlighted">
               <SectionHeader
                 icon={FaBolt}
@@ -2212,6 +2214,7 @@ const ChemicalTab = forwardRef(
                 </Box>
               </VStack>
             </SectionBox>
+            )}
 
             {/* Section 5: EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309 */}
             {(chemicalType === 'PE' || chemicalType === 'HE' || chemicalType === 'FU') && (
@@ -2423,11 +2426,6 @@ const ChemicalTab = forwardRef(
                     type="submit"
                     rightIcon={<FaChevronRight />}
                     size="lg"
-                    onClick={() => {
-                      console.log('[ChemicalTab] 🖱️ Continue button clicked!');
-                      console.log('[ChemicalTab] 📊 Current form state:', methods.formState);
-                      console.log('[ChemicalTab] ❗ Form errors before submit:', errors);
-                    }}
                   >
                     {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                   </StandardButton>

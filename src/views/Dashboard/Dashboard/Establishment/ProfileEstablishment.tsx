@@ -34,6 +34,7 @@ import {
 // MdEco removed - climate_zone display removed for transparency-first approach
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useUserRole } from 'hooks/useUserRole';
 import { useIntl } from 'react-intl';
 import { StandardCard, StandardButton, StandardPage } from 'components/Design/StandardComponents';
 import { useGetEstablishmentQuery } from 'store/api/companyApi';
@@ -115,6 +116,7 @@ function ProfileEstablishment() {
   const intl = useIntl();
   const navigate = useNavigate();
   const toast = useToast();
+  const { canWrite } = useUserRole();
   const { establishmentId } = useParams();
 
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
@@ -304,14 +306,16 @@ function ProfileEstablishment() {
               >
                 {intl.formatMessage({ id: 'app.share' })}
               </StandardButton>
-              <StandardButton
-                variant="outline"
-                size="sm"
-                leftIcon={<Icon as={FaEdit} />}
-                onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/change`)}
-              >
-                {intl.formatMessage({ id: 'app.edit' })}
-              </StandardButton>
+              {canWrite && (
+                <StandardButton
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Icon as={FaEdit} />}
+                  onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/change`)}
+                >
+                  {intl.formatMessage({ id: 'app.edit' })}
+                </StandardButton>
+              )}
             </HStack>
           }
         >

@@ -208,7 +208,11 @@ const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any):
     }
   }
 
-  if (token) {
+  // Don't send auth tokens on endpoints that create new sessions (social auth, login)
+  const isPublicAuthEndpoint =
+    args.url?.includes('auth/social') || args.url?.includes('auth/login');
+
+  if (token && !isPublicAuthEndpoint) {
     args.headers = { ...args.headers, Authorization: `Bearer ${token}` };
   }
 

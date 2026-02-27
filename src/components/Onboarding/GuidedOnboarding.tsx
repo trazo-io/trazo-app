@@ -58,7 +58,7 @@ const onboardingSteps: OnboardingStep[] = [
       'Instant baseline carbon estimate in <5 minutes',
       'Industry comparison showing improvement potential',
       'Personalized carbon reduction recommendations',
-      'USDA-verified calculation methodology'
+      'Science-based calculation methodology'
     ],
     actionText: 'Get My Carbon Score',
     actionPath: '/admin/dashboard/establishment/edit'
@@ -71,7 +71,7 @@ const onboardingSteps: OnboardingStep[] = [
     benefits: [
       'Pre-configured event templates save 80% setup time',
       'Automated carbon calculation projections',
-      'USDA-verified emission factors included',
+      'Science-based emission factors included',
       'QR code generation for consumer transparency'
     ],
     actionText: 'Create Smart Production',

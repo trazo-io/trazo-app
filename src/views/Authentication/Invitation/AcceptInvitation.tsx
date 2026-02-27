@@ -455,7 +455,7 @@ const AcceptInvitation: React.FC = () => {
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
                 Join the carbon intelligence revolution and help build a sustainable future with
-                USDA-verified emission tracking
+                science-based emission tracking
               </Text>
             </VStack>
 
@@ -463,7 +463,7 @@ const AcceptInvitation: React.FC = () => {
               {[
                 'Enterprise-grade carbon tracking',
                 'Blockchain-verified transparency',
-                'USDA-certified emission data'
+                'Science-based emission data'
               ].map((feature, index) => (
                 <HStack key={index} spacing={3}>
                   <Box w={2} h={2} bg="white" borderRadius="50%" />

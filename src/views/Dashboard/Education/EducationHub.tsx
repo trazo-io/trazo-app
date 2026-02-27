@@ -108,7 +108,7 @@ const EducationHub: React.FC = () => {
       id: 'carbon-methodology',
       title: 'Carbon Calculation Methodology: How We Calculate Environmental Impact',
       description:
-        'Detailed explanation of our carbon calculation methods using EPA and USDA verified emission factors',
+        'Detailed explanation of our carbon calculation methods using published EPA emission factors',
       icon: FaCalculator,
       category: 'Environmental Impact'
     },

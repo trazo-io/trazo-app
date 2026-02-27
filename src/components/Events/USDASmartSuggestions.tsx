@@ -375,7 +375,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
         <Box>
           <AlertTitle>USDA Smart Suggestions</AlertTitle>
           <AlertDescription>
-            Connect USDA data to get personalized, government-verified farming recommendations.
+            Connect USDA data to get personalized, science-based farming recommendations.
           </AlertDescription>
         </Box>
       </Alert>
@@ -553,7 +553,7 @@ const USDASmartSuggestions: React.FC<USDASmartSuggestionsProps> = ({
                   </VStack>
 
                   {suggestion.usdaBased && (
-                    <Tooltip label="Based on USDA government data">
+                    <Tooltip label="Based on USDA published research data">
                       <Badge colorScheme="blue" variant="solid" size="sm">
                         🏛️ USDA
                       </Badge>

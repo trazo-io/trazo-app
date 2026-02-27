@@ -1,5 +1,5 @@
 // Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
-// Standardized: Removed Checkbox, Switch, Input, Badge - now using StandardComponents
+// Switch and Badge re-added for summary mode toggle (consistent with ProductionTab/ChemicalTab)
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import {
   VStack,
@@ -9,7 +9,9 @@ import {
   Icon,
   SimpleGrid,
   Box,
-  Divider
+  Divider,
+  Switch,
+  Badge
 } from '@chakra-ui/react';
 import {
   StandardButton,
@@ -40,13 +42,15 @@ import {
 import { useIntl } from 'react-intl';
 
 // Sprint 3 Epic 3.1: Fuel types with EPA-verified emission factors (aligned with Production/Soil forms)
-// UPDATED 2025-12-14: Electric factor corrected to EPA eGRID 2023 value (0.39 kg CO₂e/kWh)
+// UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
 const FUEL_TYPES = [
-  { value: 'diesel', label: '⛽ Diesel', factor: '2.68 kg CO₂e/L' },
-  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.31 kg CO₂e/L' },
-  { value: 'natural_gas', label: '💨 Natural Gas', factor: '2.03 kg CO₂e/m³' },
-  { value: 'lpg', label: '🔥 LPG', factor: '1.70 kg CO₂e/L' },
-  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' }
+  { value: 'diesel', label: '⛽ Diesel', factor: '2.70 kg CO₂e/L' },
+  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.32 kg CO₂e/L' },
+  { value: 'natural_gas', label: '💨 Natural Gas', factor: '1.92 kg CO₂e/m³' },
+  { value: 'propane', label: '🔥 LPG / Propane', factor: '1.51 kg CO₂e/L' },
+  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' },
+  { value: 'biodiesel', label: '🌿 Biodiesel', factor: '2.31 kg CO₂e/L' },
+  { value: 'none', label: '🔧 No Fuel / Manual', factor: '0 kg CO₂e' }
 ];
 
 const pestSchema = object({
@@ -120,7 +124,7 @@ const PestManagementTab = forwardRef(
         type: initialValues.type || 'SC',
         name: initialValues.name || '',
         // Sprint 5: Aggregate Pest Scouting Support
-        is_summary: initialValues.is_summary || 'false',
+        is_summary: initialValues.is_summary === 'true' || initialValues.is_summary === true ? 'true' : 'false',
         date_start: initialValues.date_start || '',
         date_end: initialValues.date_end || '',
         event_count: initialValues.event_count?.toString() || '',
@@ -161,18 +165,26 @@ const PestManagementTab = forwardRef(
       }
     });
 
-    // DEBOUNCE FIX: Expose flushData method to parent via ref
-    // This allows NewEvent.jsx to force-sync form data before step change
+    // Ref to always hold the latest submit handler, avoiding stale closures in useImperativeHandle
+    const submitHandlerRef = useRef(null);
+
+    // Expose flushData and submitForm methods to parent via ref
     useImperativeHandle(
       ref,
       () => ({
         flushData: () => {
           if (onDataChange) {
             const currentValues = methods.getValues();
-            console.log('[PestManagementTab] 🔄 flushData called - syncing form data immediately');
             onDataChange(currentValues);
           }
-        }
+        },
+        submitForm: () =>
+          new Promise((resolve, reject) => {
+            methods.handleSubmit(
+              (data) => { submitHandlerRef.current(data); resolve(); },
+              (errors) => { reject(errors); }
+            )();
+          })
       }),
       [onDataChange, methods]
     );
@@ -187,7 +199,7 @@ const PestManagementTab = forwardRef(
           type: initialValues.type || 'SC',
           name: initialValues.name || '',
           // Sprint 5: Aggregate Pest Scouting Support
-          is_summary: initialValues.is_summary || 'false',
+          is_summary: initialValues.is_summary === 'true' || initialValues.is_summary === true ? 'true' : 'false',
           date_start: initialValues.date_start || '',
           date_end: initialValues.date_end || '',
           event_count: initialValues.event_count?.toString() || '',
@@ -244,10 +256,13 @@ const PestManagementTab = forwardRef(
     // Sprint 5: Watch for summary mode toggle (Aggregate Pest Scouting Support)
     const isSummaryMode = watch('is_summary') === 'true';
 
-    // Watch critical fields for real-time carbon calculation updates
-    // Sprint 3 Epic 3.1: Aligned with Production/Soil forms (fuel_type, equipment_hours)
+    // Watch ALL fields for real-time preview updates and carbon calculation
+    // FIX: Previously only carbon fields were watched, causing stale preview data
+    // for pest scouting, IPM, and observation fields
     const watchedFields = watch([
       'type',
+      'name',
+      'is_summary',
       'area_covered',
       'area_unit',
       'fuel_type',
@@ -258,7 +273,20 @@ const PestManagementTab = forwardRef(
       'pest_pressure_level',
       'damage_percentage',
       'release_quantity',
-      'trap_count'
+      'trap_count',
+      'observation',
+      'pest_species',
+      'crop_growth_stage',
+      'economic_threshold_met',
+      'action_recommended',
+      'action_threshold_met',
+      'beneficial_species',
+      'imp_strategy',
+      'beneficial_insects_used',
+      'chemical_free_period_days',
+      'date_start',
+      'date_end',
+      'custom_fields'
     ]);
 
     // Real-time field watching for carbon calculation updates
@@ -274,42 +302,11 @@ const PestManagementTab = forwardRef(
             return;
           }
 
-          // Only trigger if we have meaningful user-provided data
-          // Types that need area context for accurate carbon calculations
-          const needsAreaValidation = ['SC', 'TM', 'BR', 'IP']; // Scouting, Trap Monitoring, Beneficial Release, IPM Implementation
+          // Always sync form data for preview card updates (name, type, is_summary, etc.)
+          // Carbon calculation on the backend handles its own validation for incomplete data
           const hasValidType = currentValues.type && currentValues.type !== '';
 
-          if (needsAreaValidation.includes(currentValues.type)) {
-            // For field activities, require area for meaningful carbon calculation
-            // Standardized: Using fuel_consumed (optional) like other forms - area is primary
-            const hasValidArea =
-              currentValues.area_covered && parseFloat(currentValues.area_covered) > 0;
-            // Note: fuel_consumed is now optional - only required for IPM Implementation (IP)
-            const hasValidFuel =
-              currentValues.type === 'IP'
-                ? currentValues.fuel_consumed && parseFloat(currentValues.fuel_consumed) >= 0
-                : true; // Scouting activities don't require fuel (observational)
-
-            if (hasValidType && hasValidArea && hasValidFuel) {
-              console.log(
-                '[PestManagementTab]: Triggering onDataChange with values',
-                currentValues
-              );
-              try {
-                onDataChange(currentValues);
-                lastSentValuesRef.current = currentValuesString; // Store sent values
-              } catch (error) {
-                console.error('[PestManagementTab]: Error calling onDataChange:', error);
-              }
-            } else {
-              console.log('[PestManagementTab]: Skipping calculation - missing required fields');
-            }
-          } else if (hasValidType) {
-            // For non-field activities (PI, TA), just require type
-            // eslint-disable-next-line no-undef
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[PestManagementTab]: ✅ Triggering carbon calculation (non-field)');
-            }
+          if (hasValidType) {
             try {
               onDataChange(currentValues);
               lastSentValuesRef.current = currentValuesString; // Store sent values
@@ -317,7 +314,7 @@ const PestManagementTab = forwardRef(
               console.error('[PestManagementTab]: Error calling onDataChange:', error);
             }
           } else {
-            console.log('[PestManagementTab]: No valid type, skipping calculation');
+            console.log('[PestManagementTab]: No valid type, skipping onDataChange');
           }
         } else {
           console.log('[PestManagementTab]: onDataChange not available');
@@ -341,6 +338,12 @@ const PestManagementTab = forwardRef(
         extra_data: {
           // Existing extra_data fields (if any)
           ...(data.extra_data || {}),
+          // FIX: PestManagementEvent has no `name` model field - persist in extra_data
+          ...(data.name && { name: data.name }),
+          // Agricultural context fields (no model columns - persist in extra_data)
+          ...(data.crop_growth_stage && { crop_growth_stage: data.crop_growth_stage }),
+          ...(data.economic_threshold_met && { economic_threshold_met: data.economic_threshold_met }),
+          ...(data.action_recommended && { action_recommended: data.action_recommended }),
           // Sprint 5: Aggregate Pest Scouting Support
           ...(isSummaryEvent && {
             is_summary: true,
@@ -363,7 +366,8 @@ const PestManagementTab = forwardRef(
             // Pest observations summary
             pest_species_observed: data.pest_species_observed || null,
             average_pest_pressure: data.average_pest_pressure || null,
-            observations_summary: data.observations_summary || null,
+            // Auto-populate from Farmer's Field Notes (observation field) to avoid redundant input
+            observations_summary: data.observations_summary || data.observation || null,
             // Zero carbon marker for pest scouting
             carbon_impact: 'zero',
             carbon_notes: 'Pest scouting is observational and does not directly produce emissions'
@@ -374,6 +378,9 @@ const PestManagementTab = forwardRef(
       console.log('[PestManagementTab] Submitting with processed data:', processedData);
       onSubmitHandler(processedData);
     };
+
+    // Keep ref in sync with latest handler on every render (avoids stale closures)
+    submitHandlerRef.current = onSubmit;
 
     return (
       <FormProvider {...methods}>
@@ -451,35 +458,57 @@ const PestManagementTab = forwardRef(
             </SectionBox>
 
             {/* Sprint 5: Aggregate Pest Scouting Support - Summary Mode Toggle */}
+            {/* Standardized: blue color scheme for toggle (matches Production/Chemical summary mode pattern) */}
             {pestType === 'SC' && (
               <Box
                 p={4}
-                bg={isSummaryMode ? 'green.50' : 'gray.50'}
+                bg={isSummaryMode ? 'blue.50' : 'gray.50'}
                 borderRadius="md"
                 border="1px solid"
-                borderColor={isSummaryMode ? 'green.200' : 'gray.200'}
+                borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
                 mb={4}>
-                <StandardField
-                  label="Scouting Mode"
-                  helpText={
-                    isSummaryMode
-                      ? 'Log multiple scouting trips as one summary (e.g., "24 weekly scouting trips")'
-                      : 'Select how you want to log scouting activities'
-                  }>
-                  <StandardSelect {...methods.register('is_summary')}>
-                    <option value="false">Single scouting trip</option>
-                    <option value="true">Multiple scouting trips (summary)</option>
-                  </StandardSelect>
-                </StandardField>
+                <HStack justify="space-between" align="center">
+                  <VStack align="start" spacing={0}>
+                    <HStack>
+                      <Text fontWeight="semibold" fontSize="sm">
+                        📊 Scouting Summary Mode
+                      </Text>
+                      {isSummaryMode && (
+                        <Badge colorScheme="blue" size="sm">
+                          Active
+                        </Badge>
+                      )}
+                    </HStack>
+                    <Text fontSize="xs" color="gray.600">
+                      {isSummaryMode
+                        ? 'Log multiple scouting trips as one summary (e.g., "24 weekly scouting trips")'
+                        : 'Enable to log multiple scouting trips at once'}
+                    </Text>
+                  </VStack>
+                  <Controller
+                    name="is_summary"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <Switch
+                        colorScheme="blue"
+                        size="lg"
+                        isChecked={field.value === 'true'}
+                        onChange={(e) =>
+                          field.onChange(e.target.checked ? 'true' : 'false')
+                        }
+                      />
+                    )}
+                  />
+                </HStack>
 
-                {/* Benefits of Summary Mode */}
+                {/* Benefits of Summary Mode - Standardized: blue color scheme (matches Chemical pattern) */}
                 {isSummaryMode && (
-                  <Box mt={3} p={2} bg="green.100" borderRadius="md">
-                    <Text fontSize="xs" color="green.700">
+                  <Box mt={3} p={2} bg="blue.100" borderRadius="md">
+                    <Text fontSize="xs" color="blue.700">
                       <Icon as={FaCheckCircle} mr={1} />
                       <strong>93% time savings:</strong> Log multiple scouting trips with one entry.
                     </Text>
-                    <Text fontSize="xs" color="green.600" mt={1}>
+                    <Text fontSize="xs" color="blue.600" mt={1}>
                       <Icon as={FaLeaf} mr={1} />
                       Zero Carbon Impact - Scouting is observational
                     </Text>
@@ -645,21 +674,10 @@ const PestManagementTab = forwardRef(
                   />
                 </StandardField>
 
-                <StandardField
-                  label="Observations Summary"
-                  helpText="Brief summary of scouting findings for the period">
-                  <Controller
-                    name="observations_summary"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardTextarea
-                        {...field}
-                        placeholder="e.g., Weekly scouting for 24 weeks. Primary pest pressure from aphids in May-June, successfully managed with beneficial releases. No chemical treatments required."
-                        rows={3}
-                      />
-                    )}
-                  />
-                </StandardField>
+                {/* Removed: observations_summary textarea - redundant with "Farmer's Field Notes" section
+                   which is now always visible (matching ChemicalTab pattern where aggregate sections
+                   only contain quantitative fields). The observation field maps to description and
+                   is auto-copied to observations_summary in onSubmit for ConsumerEventCard display. */}
 
                 {/* Zero Carbon Note */}
                 <Box
@@ -858,6 +876,9 @@ const PestManagementTab = forwardRef(
             </SectionBox>
 
             {/* Pest-Specific Details Section */}
+            {/* In summary mode for Scouting, pest species and pressure are already captured
+                in the Pest Observations Summary section above - hide to avoid redundancy */}
+            {!(isSummaryMode && pestType === 'SC') && (
             <SectionBox variant="default">
               <SectionHeader
                 icon={FaEye}
@@ -1021,6 +1042,7 @@ const PestManagementTab = forwardRef(
                 </StandardField>
               )}
             </SectionBox>
+            )}
 
             {/* Sprint 3 Epic 3.2: Consumer Trust & Transparency Fields */}
             <SectionBox variant="highlighted">
@@ -1059,6 +1081,7 @@ const PestManagementTab = forwardRef(
             </SectionBox>
 
             {/* Transparency Notes & Observations */}
+            {/* Standardized: Always visible (matches ChemicalTab pattern - observations section stays visible in summary mode) */}
             <SectionBox variant="default">
               <SectionHeader
                 icon={FaSeedling}

@@ -3,6 +3,7 @@ import { useIntl } from 'react-intl';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { StandardParcelFormTransparency } from '../../../../components/Forms/StandardParcelForm_Transparency';
+import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 import {
   useCreateParcelMutation,
   useUpdateParcelMutation,
@@ -292,15 +293,17 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   }
 
   return (
-    <StandardParcelFormTransparency
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      initialData={getInitialData()}
-      isLoading={isCreating || isUpdating}
-      isEdit={isEdit}
-      establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
-      establishmentCoordinates={establishmentCoordinates}
-    />
+    <WriteAccessGuard>
+      <StandardParcelFormTransparency
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        initialData={getInitialData()}
+        isLoading={isCreating || isUpdating}
+        isEdit={isEdit}
+        establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
+        establishmentCoordinates={establishmentCoordinates}
+      />
+    </WriteAccessGuard>
   );
 }
 

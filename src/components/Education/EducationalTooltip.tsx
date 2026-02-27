@@ -55,20 +55,20 @@ const educationalContent: Record<
     example: 'Includes farming, transportation, processing, and packaging emissions'
   },
   usda_verified: {
-    definition: 'USDA Verified',
+    definition: 'EPA/USDA Emission Factors',
     explanation:
-      'The U.S. Department of Agriculture has independently inspected and confirmed that farming practices meet federal standards for safety, quality, and environmental responsibility.',
-    icon: FaCertificate,
+      'Carbon calculations for this event use official emission factors published by the EPA and USDA, ensuring scientifically accurate environmental impact measurements.',
+    icon: FaFlask,
     color: 'blue',
-    example: 'Like a government seal of approval for sustainable farming'
+    example: 'Government-verified data ensures consistent, reliable carbon calculations'
   },
   blockchain_verified: {
     definition: 'Blockchain Verified',
     explanation:
-      'Data is stored on a tamper-proof digital ledger that creates a permanent, unchangeable record. Like a digital fingerprint that proves authenticity.',
+      'When a production is finished, a digital fingerprint of all documented events is permanently recorded on the Polygon blockchain. This record cannot be changed or deleted by anyone.',
     icon: MdSecurity,
     color: 'purple',
-    example: 'Every farming event is cryptographically secured and publicly verifiable'
+    example: 'Your entire production is cryptographically sealed and publicly verifiable on Polygonscan'
   },
   carbon_score: {
     definition: 'Carbon Score (0-100)',
@@ -95,12 +95,12 @@ const educationalContent: Record<
     example: 'No-till farming can store 1.2 tons of CO₂ per hectare annually'
   },
   emission_factors: {
-    definition: 'USDA Emission Factors',
+    definition: 'EPA Emission Factors',
     explanation:
-      'Official government data that shows how much greenhouse gas different farming activities produce. These are the scientific "recipes" used to calculate carbon footprints accurately.',
+      'Published research data that shows how much greenhouse gas different farming activities produce. These are the scientific "recipes" used to calculate carbon footprints accurately.',
     icon: FaFlask,
     color: 'blue',
-    example: 'USDA provides exact CO₂ amounts for tractors, fertilizers, and other farm inputs'
+    example: 'EPA provides exact CO₂ amounts for tractors, fertilizers, and other farm inputs'
   },
   sustainability_impact: {
     definition: 'Sustainability Impact',

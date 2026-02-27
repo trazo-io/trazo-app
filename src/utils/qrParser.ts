@@ -13,7 +13,7 @@ interface QRParseResult {
 }
 
 interface SecureQRPayload {
-  id: number;
+  id: number; // Legacy integer ID (still in HMAC payload for backward compat)
   exp: number;
   iat: number;
   v: string;
@@ -51,8 +51,10 @@ export function parseQRUrl(url: string): QRParseResult {
         const currentTime = Math.floor(Date.now() / 1000);
         const isExpired = parsedPayload.exp < currentTime;
 
+        // Use UUID from URL path (preferred) over integer from payload
+        // New QR codes have UUID in the path; HMAC payload still carries integer for verification
         return {
-          productionId: parsedPayload.id.toString(),
+          productionId,
           isSecure: true,
           isValid: true,
           isExpired,
@@ -98,6 +100,7 @@ function parseSecurePayload(payloadB64: string): SecureQRPayload {
 
 /**
  * Verify secure QR code with backend
+ * Returns the production's public_id (UUID) for navigation
  */
 export async function verifySecureQR(url: string): Promise<{
   valid: boolean;
@@ -119,9 +122,21 @@ export async function verifySecureQR(url: string): Promise<{
     }
 
     const result = await response.json();
+
+    // Backend returns public_id (UUID) as production.id
+    // Fall back to extracting UUID from URL path if backend returns legacy integer
+    let productionId = result.production?.id?.toString();
+    if (productionId && !productionId.includes('-')) {
+      // If the backend returned an integer, extract UUID from URL path instead
+      const parseResult = parseQRUrl(url);
+      if (parseResult.productionId) {
+        productionId = parseResult.productionId;
+      }
+    }
+
     return {
       valid: result.valid,
-      productionId: result.production?.id?.toString(),
+      productionId,
       error: result.error
     };
   } catch (error) {

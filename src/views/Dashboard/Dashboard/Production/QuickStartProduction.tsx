@@ -62,6 +62,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string } from 'zod';
+import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 import {
   useGetCropTemplatesQuery,
   useGetCropTemplateDetailQuery,
@@ -1011,6 +1012,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   }
 
   return (
+    <WriteAccessGuard>
     <StandardPage
       title={isEdit ? 'Edit Production' : 'Quick Start Production'}
       description={
@@ -1065,7 +1067,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         </Text>
                         <HStack spacing={2} mt={1}>
                           <Badge colorScheme="blue" variant="subtle" fontSize="xs">
-                            USDA Verified
+                            Science-Based
                           </Badge>
                           <Badge colorScheme="purple" variant="subtle" fontSize="xs">
                             Transparency Ready
@@ -1117,7 +1119,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                                 {filteredTemplates.length} Templates
                               </Badge>
                               <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                                USDA Verified
+                                Farm Documented
                               </Badge>
                               <Badge colorScheme="orange" variant="subtle" fontSize="xs">
                                 QR Ready
@@ -1628,6 +1630,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         </ModalContent>
       </Modal>
     </StandardPage>
+    </WriteAccessGuard>
   );
 };
 

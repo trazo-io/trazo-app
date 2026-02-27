@@ -29,6 +29,7 @@ import {
   Link as RouterLink
 } from 'react-router-dom';
 import { FiLock, FiEye, FiEyeOff, FiCheck, FiUser, FiShield } from 'react-icons/fi';
+import { FaGoogle, FaFacebook } from 'react-icons/fa';
 import { HiOfficeBuilding } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
@@ -37,9 +38,17 @@ import {
   useSignupWithInvitationMutation,
   useGetInvitationDetailsQuery
 } from 'store/api/invitationApi';
+import { useSocialAuthMutation } from 'store/api/authApi';
 import { login as loginAction } from 'store/features/authSlice';
 import { setUser } from 'store/features/userSlice';
 import { setCompany } from 'store/features/companySlice';
+import { ROLE_DISPLAY_FARM_MANAGER } from 'config';
+import {
+  handleGoogleSignIn,
+  handleFacebookSignIn,
+  handleSocialAuthError,
+  checkSocialAuthConfig
+} from 'utils/socialAuth';
 
 interface SetupPasswordFormData {
   first_name: string;
@@ -71,6 +80,7 @@ const SetupPassword: React.FC = () => {
   // API hooks
   const [signupWithInvitation, { isLoading: isCreatingAccount }] =
     useSignupWithInvitationMutation();
+  const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
   const {
     data: invitationDetails,
     error: detailsError,
@@ -102,6 +112,59 @@ const SetupPassword: React.FC = () => {
   };
 
   const passwordStrength = getPasswordStrength(password || '');
+
+  // Store invitation code in sessionStorage as fallback for sign-in page flow
+  React.useEffect(() => {
+    if (invitationCode) {
+      sessionStorage.setItem('pendingInvitation', invitationCode);
+    }
+  }, [invitationCode]);
+
+  // Social auth handlers
+  const handleSocialLoginSuccess = async (authData: any) => {
+    try {
+      const response = await socialAuth({
+        ...authData,
+        invitation_code: invitationCode
+      }).unwrap();
+
+      dispatch(loginAction(response));
+      handleSuccessfulSignup(response);
+    } catch (err: any) {
+      const errorMessage = err?.data?.error || 'Social authentication failed';
+      toast({
+        title: 'Authentication failed',
+        description: errorMessage,
+        status: 'error',
+        duration: 4000,
+        isClosable: true
+      });
+      handleSocialAuthError(new Error(errorMessage), authData.provider);
+    }
+  };
+
+  const handleSocialLogin = async (provider: string) => {
+    const config = checkSocialAuthConfig();
+
+    switch (provider) {
+      case 'Google':
+        if (!config.google) return;
+        await handleGoogleSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialAuthError(error, 'Google'),
+          4
+        );
+        break;
+      case 'Facebook':
+        if (!config.facebook) return;
+        await handleFacebookSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialAuthError(error, 'Facebook'),
+          4
+        );
+        break;
+    }
+  };
 
   // Check for invitation errors
   React.useEffect(() => {
@@ -208,7 +271,7 @@ const SetupPassword: React.FC = () => {
               {
                 id: result.company.id,
                 name: result.company.name,
-                role: result.role || 'Company Admin'
+                role: result.role || ROLE_DISPLAY_FARM_MANAGER
               }
             ]
           : []
@@ -651,7 +714,7 @@ const SetupPassword: React.FC = () => {
               {[
                 'Enterprise-grade carbon tracking',
                 'Blockchain-verified transparency',
-                'USDA-certified emission data'
+                'Science-based emission data'
               ].map((feature, index) => (
                 <HStack key={index} spacing={3}>
                   <Box w={2} h={2} bg="white" borderRadius="50%" />
@@ -1109,6 +1172,50 @@ const SetupPassword: React.FC = () => {
                   </Button>
                 </VStack>
               </form>
+
+              {/* Social login section */}
+              <VStack spacing={4} mt={8}>
+                <HStack w="full" spacing={4}>
+                  <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
+                  <Text
+                    fontSize="sm"
+                    color={useColorModeValue('gray.400', 'gray.400')}
+                    flexShrink={0}
+                    fontWeight="500"
+                  >
+                    Or sign up with
+                  </Text>
+                  <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
+                </HStack>
+
+                <HStack spacing={3} w="full">
+                  {[
+                    { icon: FaGoogle, color: '#EA4335', name: 'Google' },
+                    { icon: FaFacebook, color: '#1877F2', name: 'Facebook' }
+                  ].map((social) => (
+                    <Button
+                      key={social.name}
+                      flex={1}
+                      h="40px"
+                      bg={useColorModeValue('gray.50', 'gray.700')}
+                      border="1px solid"
+                      borderColor={useColorModeValue('gray.200', 'gray.600')}
+                      borderRadius="xl"
+                      onClick={() => handleSocialLogin(social.name)}
+                      isDisabled={isSubmitting || isCreatingAccount || isSocialLoading}
+                      _hover={{
+                        bg: useColorModeValue('gray.100', 'gray.600'),
+                        borderColor: useColorModeValue('gray.300', 'gray.500'),
+                        transform: 'translateY(-1px)',
+                        boxShadow: 'sm'
+                      }}
+                      transition="all 0.2s"
+                    >
+                      <Icon as={social.icon} fontSize="18px" color={social.color} />
+                    </Button>
+                  ))}
+                </HStack>
+              </VStack>
             </Box>
           </MotionBox>
         </Flex>

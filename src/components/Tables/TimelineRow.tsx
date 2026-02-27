@@ -44,6 +44,7 @@ import {
   FaCamera
 } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
+import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 
 // Real interfaces matching API data
 interface Member {
@@ -280,8 +281,13 @@ function TimelineRow(props: TimelineRowProps) {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Use embedded carbon data instead of API calls
-  const carbonData = event.carbon_data || null;
-  const dataLoaded = !!event.carbon_data;
+  // Weather (0), general (3), and business (7) events always have 0 emissions
+  const isZeroEmissionType = event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
+  const zeroEmissionLabels: Record<number, string> = { 0: 'weather', 3: 'general', 7: 'business' };
+  const carbonData = isZeroEmissionType
+    ? { co2e: 0, efficiency_score: 100, calculation_method: `${zeroEmissionLabels[event.event_type]}_transparency` }
+    : (event.carbon_data || null);
+  const dataLoaded = !!event.carbon_data || isZeroEmissionType;
 
   // Get event configuration
   const eventConfig = getEventConfig(event.type, event.description);
@@ -429,26 +435,20 @@ function TimelineRow(props: TimelineRowProps) {
                 {/* Carbon Impact */}
                 {carbonData && !carbonData.error ? (
                   <Tooltip
-                    label={`Carbon Impact: ${carbonData.co2e > 0 ? '+' : ''}${
-                      carbonData.co2e
-                    } kg CO₂e${
-                      carbonData.verification_status === 'factors_verified' ||
-                      carbonData.usda_factors_based
-                        ? ' (USDA Factors)'
-                        : ''
+                    label={`Carbon Impact: ${formatCO2e(carbonData.co2e)} kg CO₂e${
+                      carbonData.co2e === 0 ? ' (no direct emissions)' : ''
                     }`}
                   >
                     <HStack spacing={1}>
                       <Badge
-                        colorScheme={carbonData.co2e < 0 ? 'green' : 'orange'}
+                        colorScheme={carbonData.co2e === 0 ? 'gray' : getImpactLevel(carbonData.co2e).color}
                         variant="subtle"
                         fontSize="xs"
                         borderRadius="md"
                         px={2}
                         py={1}
                       >
-                        {carbonData.co2e > 0 ? '+' : ''}
-                        {carbonData.co2e} kg CO₂
+                        {formatCO2e(carbonData.co2e)} kg CO₂e
                       </Badge>
                       {(carbonData.verification_status === 'factors_verified' ||
                         carbonData.usda_factors_based) && (

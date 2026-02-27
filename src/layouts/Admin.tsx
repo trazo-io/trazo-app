@@ -27,6 +27,7 @@ import { CacheProvider } from '@emotion/react';
 import { emotionCache } from '../emotion-cache';
 import { Outlet, Route, useLocation, Location } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
+import { ROLE_DISPLAY_COMPANY_ADMIN } from 'config';
 
 // Layout components
 import AdminNavbar from 'components/Navbars/AdminNavbar';
@@ -87,10 +88,17 @@ export default function Dashboard(props: any) {
   const [routes, setRoutes] = useState<TypeRoute[]>([]);
 
   useEffect(() => {
-    const routes = [...defaultRoutes];
-    if (
+    const isAdmin =
       currentUser?.companies?.length > 0 &&
-      currentUser?.companies[0].role === 'Company Admin' &&
+      currentUser?.companies[0].role === ROLE_DISPLAY_COMPANY_ADMIN;
+
+    // Filter out admin-only routes (Subscription) for non-admin users
+    const routes = isAdmin
+      ? [...defaultRoutes]
+      : defaultRoutes.filter((route) => route.id !== 'subscription');
+
+    if (
+      isAdmin &&
       !routes.some((route) => route.id === 'companySettings') // Check if route already exists
     ) {
       const companySettingRoute = {

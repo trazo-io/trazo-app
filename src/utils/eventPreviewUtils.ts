@@ -106,9 +106,8 @@ export interface PreviewEventData {
   // Pest management fields
   pest_management_type?: string;
   pest_management_name?: string;
-  field_area_hectares?: number | string;
-  travel_distance_km?: number | string;
-  time_spent_hours?: number | string;
+  area_covered?: number | string;
+  area_unit?: string;
   crop_growth_stage?: string;
   economic_threshold_met?: boolean | string;
   action_recommended?: string;
@@ -196,8 +195,8 @@ function generateEventDescription(eventType: number, formData: any): string {
     3: 'General farming activity',
     4: 'Equipment operation and maintenance',
     5: 'Soil management practice',
-    6: 'Business and compliance activity',
-    7: 'Pest management activity'
+    6: 'Pest management activity',
+    7: 'Business and compliance activity'
   };
 
   // Use user's actual description if provided
@@ -301,7 +300,7 @@ export function transformFormDataToEvent(
   const event: PreviewEventData = {
     id: eventId,
     type: EVENT_TYPE_MAP[activeEventType as keyof typeof EVENT_TYPE_MAP] || 'general',
-    description: generateEventDescription(activeEventType, formData),
+    description: formData.observation?.trim() || formData.description?.trim() || '',
     observation: formData.observation || '',
     date: eventDate,
     event_type: activeEventType,
@@ -314,6 +313,10 @@ export function transformFormDataToEvent(
   // Add event-specific fields based on type
   switch (activeEventType) {
     case 0: // Weather
+      // Map event name for title display (consistent with all other event types)
+      if (formData.name) {
+        event.name = formData.name;
+      }
       // Include weather type for proper field detection
       if (formData.type) event.type = formData.type;
       if (formData.type) event.extra_data = { ...event.extra_data, type: formData.type };
@@ -329,9 +332,7 @@ export function transformFormDataToEvent(
       if (formData.water_deficit) {
         event.extra_data = { ...event.extra_data, water_deficit: formData.water_deficit };
       }
-      if (formData.weight) event.extra_data = { ...event.extra_data, weight: formData.weight };
-      if (formData.diameter)
-        event.extra_data = { ...event.extra_data, diameter: formData.diameter };
+      // Ghost field cleanup: Removed weight and diameter (removed from form Sprint 2 Epic 2.1.3)
       if (formData.duration)
         event.extra_data = { ...event.extra_data, duration: formData.duration };
       if (formData.start_date)
@@ -480,12 +481,37 @@ export function transformFormDataToEvent(
         event.fuel_type = getFuelTypeDisplayName(formData.fuel_type);
       }
 
-      // 🌱 Consumer Trust & Transparency fields
+      // Consumer Trust & Transparency fields
       if (formData.seeds_source) {
         event.seeds_source = formData.seeds_source;
-        console.log('🌱 [eventPreviewUtils] seeds_source mapped:', formData.seeds_source);
-      } else {
-        console.log('🌱 [eventPreviewUtils] seeds_source NOT in formData:', Object.keys(formData));
+      }
+
+      // Irrigation-specific fields (IR subtype)
+      if (formData.water_source) {
+        event.water_source = formData.water_source;
+      }
+      if (formData.irrigation_method) {
+        event.irrigation_method = formData.irrigation_method;
+      }
+      if (formData.irrigation_depth) {
+        event.irrigation_depth = formData.irrigation_depth;
+      }
+      if (formData.irrigation_depth_unit) {
+        event.irrigation_depth_unit = formData.irrigation_depth_unit;
+      }
+
+      // Harvest quality fields (HA subtype)
+      if (formData.harvest_quality_grade) {
+        event.harvest_quality_grade = formData.harvest_quality_grade;
+      }
+      if (formData.grain_moisture) {
+        event.grain_moisture = formData.grain_moisture;
+      }
+      if (formData.harvest_method) {
+        event.harvest_method = formData.harvest_method;
+      }
+      if (formData.brix_levels) {
+        event.brix_levels = formData.brix_levels;
       }
       break;
 
@@ -527,7 +553,7 @@ export function transformFormDataToEvent(
         event.application_method = formData.application_method || formData.way_of_application;
       }
       if (formData.target_pest_disease || formData.target_pest_disease_need) {
-        event.target_pest_disease_need =
+        event.target_pest_disease =
           formData.target_pest_disease || formData.target_pest_disease_need;
       }
       if (formData.weather_conditions) event.weather_conditions = formData.weather_conditions;
@@ -550,6 +576,27 @@ export function transformFormDataToEvent(
       }
       if (formData.application_fuel_unit)
         event.application_fuel_unit = formData.application_fuel_unit;
+
+      // EPA WPS Compliance fields
+      if (formData.application_details) event.application_details = formData.application_details;
+      if (formData.applicator_name) event.applicator_name = formData.applicator_name;
+      if (formData.epa_registration_number)
+        event.epa_registration_number = formData.epa_registration_number;
+      if (formData.restricted_use_pesticide)
+        event.restricted_use_pesticide = formData.restricted_use_pesticide;
+      if (formData.applicator_certification)
+        event.applicator_certification = formData.applicator_certification;
+      if (formData.rei_hours) event.rei_hours = formData.rei_hours;
+      if (formData.phi_days) event.phi_days = formData.phi_days;
+
+      // Consumer Trust fields
+      if (formData.organic_approved) event.organic_approved = formData.organic_approved;
+      if (formData.buffer_zone_meters) event.buffer_zone_meters = formData.buffer_zone_meters;
+
+      // Aggregate NPK totals (summary mode)
+      if (formData.nitrogen_total_kg) event.nitrogen_total_kg = formData.nitrogen_total_kg;
+      if (formData.phosphorus_total_kg) event.phosphorus_total_kg = formData.phosphorus_total_kg;
+      if (formData.potassium_total_kg) event.potassium_total_kg = formData.potassium_total_kg;
       break;
 
     case 3: // General
@@ -880,6 +927,14 @@ export function transformFormDataToEvent(
         event.transparency_benefit = formData.transparency_benefit;
       }
 
+      // Consumer Trust Certification fields
+      if (formData.verified_certifier_name) {
+        event.verified_certifier_name = formData.verified_certifier_name;
+      }
+      if (formData.certificate_number) {
+        event.certificate_number = formData.certificate_number;
+      }
+
       // Observations & Notes (details display fields)
       if (formData.observation) {
         event.business_observation = formData.observation;
@@ -903,16 +958,45 @@ export function transformFormDataToEvent(
       }
 
       // Agricultural Context Fields (immediate/secondary display fields)
-      if (formData.field_area_hectares) {
-        event.field_area_hectares = parseFloat(formData.field_area_hectares);
+      if (formData.area_covered) {
+        event.area_covered = formData.area_covered;
+      }
+      if (formData.area_unit) {
+        event.area_unit = formData.area_unit;
+      }
+      // Ghost field cleanup: Removed field_area_hectares, travel_distance_km, time_spent_hours (never in form)
+
+      // Fuel & Equipment fields (aligned with other forms)
+      if (formData.fuel_type) {
+        event.fuel_type = formData.fuel_type;
+      }
+      if (formData.fuel_consumed) {
+        event.fuel_consumed = formData.fuel_consumed;
+      }
+      if (formData.fuel_unit) {
+        event.fuel_unit = formData.fuel_unit;
+      }
+      if (formData.equipment_hours) {
+        event.equipment_hours = formData.equipment_hours;
+      }
+      if (formData.production_efficiency) {
+        event.production_efficiency = formData.production_efficiency;
       }
 
-      if (formData.travel_distance_km) {
-        event.travel_distance_km = parseFloat(formData.travel_distance_km);
+      // Consumer Trust Fields
+      if (formData.beneficial_insects_used) {
+        event.beneficial_insects_used = formData.beneficial_insects_used;
+      }
+      if (formData.chemical_free_period_days) {
+        event.chemical_free_period_days = formData.chemical_free_period_days;
       }
 
-      if (formData.time_spent_hours) {
-        event.time_spent_hours = parseFloat(formData.time_spent_hours);
+      // Aggregate summary fields
+      if (formData.is_summary) {
+        event.is_summary = formData.is_summary;
+      }
+      if (formData.observations_summary) {
+        event.observations_summary = formData.observations_summary;
       }
 
       // Agricultural Decision Fields (secondary display fields)
@@ -1029,6 +1113,10 @@ export function transformFormDataToEvent(
       }))
     });
   }
+
+  // Map is_summary flag — explicitly set to false for Individual events
+  event.is_summary =
+    formData.is_summary === 'true' || formData.is_summary === true ? true : false;
 
   return event;
 }

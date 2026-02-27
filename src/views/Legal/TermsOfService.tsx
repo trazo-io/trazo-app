@@ -70,7 +70,7 @@ const TermsOfService: React.FC = () => {
                 <List spacing={2} mb={4}>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
-                    Real-time carbon footprint calculations using USDA-verified emission factors
+                    Real-time carbon footprint calculations using published EPA emission factors
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />

@@ -67,13 +67,16 @@ const EQUIPMENT_TYPES = [
 ];
 
 // Sprint 2 Epic 2.1: Fuel types with EPA-verified emission factors (merged from EquipmentTab)
-// UPDATED 2025-12-14: Electric factor corrected to EPA eGRID 2023 value (0.39 kg CO₂e/kWh)
+// UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
+// Key 'lpg' standardized to 'propane' to match backend choices.py SSOT
 const FUEL_TYPES = [
-  { value: 'diesel', label: '⛽ Diesel', factor: '2.68 kg CO₂e/L' },
-  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.31 kg CO₂e/L' },
-  { value: 'natural_gas', label: '💨 Natural Gas', factor: '2.03 kg CO₂e/m³' },
-  { value: 'lpg', label: '🔥 LPG', factor: '1.70 kg CO₂e/L' },
-  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' }
+  { value: 'diesel', label: '⛽ Diesel', factor: '2.70 kg CO₂e/L' },
+  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.32 kg CO₂e/L' },
+  { value: 'natural_gas', label: '💨 Natural Gas', factor: '1.92 kg CO₂e/m³' },
+  { value: 'propane', label: '🔥 LPG / Propane', factor: '1.51 kg CO₂e/L' },
+  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' },
+  { value: 'biodiesel', label: '🌿 Biodiesel', factor: '2.31 kg CO₂e/L' },
+  { value: 'none', label: '🔧 No Fuel / Manual', factor: '0 kg CO₂e' }
 ];
 
 // Sprint 2: Production type display names for auto-generated event names
@@ -144,6 +147,18 @@ const formSchemaMainInfo = object({
     }, 'Transportation distance cannot be negative'),
   transportation_unit: string().optional(),
   production_efficiency: string().optional(),
+  // Phase 2: Target market fields for harvest events
+  harvest_quality_grade: string().optional(),
+  grain_moisture: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0 && num <= 100;
+    }, 'Grain moisture must be between 0 and 100%'),
+  // Phase 2: Additional harvest fields for Quick Add parity
+  harvest_method: string().optional(),
+  brix_levels: string().optional(),
   observation: string().optional(),
   // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
   seeds_source: string().optional(), // Where seeds/seedlings came from
@@ -222,6 +237,11 @@ const ProductionTab = forwardRef(
         transportation_distance: initialValues.transportation_distance?.toString() || '',
         transportation_unit: initialValues.transportation_unit || 'km',
         production_efficiency: initialValues.production_efficiency || 'normal',
+        // Phase 2: Target market fields
+        harvest_quality_grade: initialValues.harvest_quality_grade || '',
+        grain_moisture: initialValues.grain_moisture?.toString() || '',
+        harvest_method: initialValues.harvest_method || '',
+        brix_levels: initialValues.brix_levels || '',
         observation: initialValues.observation || '',
         // Sprint 3 Epic 3.2: Consumer Trust Fields
         seeds_source: initialValues.seeds_source || '',
@@ -231,7 +251,11 @@ const ProductionTab = forwardRef(
         irrigation_depth: initialValues.irrigation_depth?.toString() || '',
         irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches',
         // Sprint 4: Aggregate Irrigation Support
-        is_summary: initialValues.is_summary ? 'true' : 'false',
+        // FIX: Use strict comparison — string "false" is truthy in JS!
+        is_summary:
+          initialValues.is_summary === 'true' || initialValues.is_summary === true
+            ? 'true'
+            : 'false',
         date_start: initialValues.date_start || '',
         date_end: initialValues.date_end || '',
         event_count: initialValues.event_count?.toString() || '',
@@ -242,18 +266,26 @@ const ProductionTab = forwardRef(
       }
     });
 
-    // DEBOUNCE FIX: Expose flushData method to parent via ref
-    // This allows NewEvent.jsx to force-sync form data before step change
+    // Ref to always hold the latest submit handler, avoiding stale closures in useImperativeHandle
+    const submitHandlerRef = useRef(null);
+
+    // Expose flushData and submitForm methods to parent via ref
     useImperativeHandle(
       ref,
       () => ({
         flushData: () => {
           if (onDataChange) {
             const currentValues = methods.getValues();
-            console.log('[ProductionTab] 🔄 flushData called - syncing form data immediately');
             onDataChange(currentValues);
           }
-        }
+        },
+        submitForm: () =>
+          new Promise((resolve, reject) => {
+            methods.handleSubmit(
+              (data) => { submitHandlerRef.current(data); resolve(); },
+              (errors) => { reject(errors); }
+            )();
+          })
       }),
       [onDataChange, methods]
     );
@@ -294,17 +326,25 @@ const ProductionTab = forwardRef(
           irrigation_depth: initialValues.irrigation_depth?.toString() || '',
           irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches',
           // Sprint 4: Aggregate Irrigation Support
-          is_summary: initialValues.is_summary ? 'true' : 'false',
+          // FIX: Use strict comparison — string "false" is truthy in JS!
+          is_summary:
+            initialValues.is_summary === 'true' || initialValues.is_summary === true
+              ? 'true'
+              : 'false',
           date_start: initialValues.date_start || '',
           date_end: initialValues.date_end || '',
           event_count: initialValues.event_count?.toString() || '',
           water_volume_total: initialValues.water_volume_total?.toString() || '',
           water_volume_unit: initialValues.water_volume_unit || 'gallons',
+          // Phase 2: Target market fields
+          harvest_quality_grade: initialValues.harvest_quality_grade || '',
+          grain_moisture: initialValues.grain_moisture?.toString() || '',
+          harvest_method: initialValues.harvest_method || '',
+          brix_levels: initialValues.brix_levels || '',
           // Phase 2.3: Custom fields reset
           custom_fields: initialValues.custom_fields || []
         };
 
-        console.log('🔧 ProductionTab: Resetting form with data:', resetData);
         methods.reset(resetData);
       }
     }, [initialValues, methods.reset]); // Use methods.reset instead of entire methods object
@@ -320,10 +360,16 @@ const ProductionTab = forwardRef(
     const isSummaryMode = watch('is_summary') === 'true';
 
     // Sprint 2: Auto-generate event name from production type (removes farmer burden ~20 sec per event)
+    // FIX: Only auto-generate if name is empty or was previously auto-generated.
+    // Prevents overwriting saved custom names (e.g. "Season Irrigation Program") on edit.
     useEffect(() => {
       if (productionType && PRODUCTION_TYPE_NAMES[productionType]) {
-        const autoGeneratedName = PRODUCTION_TYPE_NAMES[productionType];
-        methods.setValue('name', autoGeneratedName, { shouldDirty: false });
+        const currentName = methods.getValues('name');
+        const autoNames = Object.values(PRODUCTION_TYPE_NAMES);
+        if (!currentName || !currentName.trim() || autoNames.includes(currentName)) {
+          const autoGeneratedName = PRODUCTION_TYPE_NAMES[productionType];
+          methods.setValue('name', autoGeneratedName, { shouldDirty: false });
+        }
       }
     }, [productionType, methods]);
 
@@ -382,7 +428,20 @@ const ProductionTab = forwardRef(
       'equipment_hours',
       'observation',
       // Sprint 3 Epic 3.2: Consumer Trust Fields for preview
-      'seeds_source'
+      'seeds_source',
+      'custom_fields',
+      // Summary mode fields for aggregate carbon calculation
+      'is_summary',
+      'water_volume_total',
+      'water_volume_unit',
+      // Irrigation pump factor selection
+      'water_source',
+      // Harvest-specific fields for preview card updates
+      'harvest_method',
+      'brix_levels',
+      'grain_moisture',
+      'quality_grade',
+      'production_efficiency'
     ]);
     const previousValuesRef = useRef({});
     const isInitialMountRef = useRef(true);
@@ -414,7 +473,19 @@ const ProductionTab = forwardRef(
             // Phase 2.3: Added custom fields for farmer-created data
             'custom_fields',
             // Sprint 3 Epic 3.2: Consumer Trust Fields for preview
-            'seeds_source'
+            'seeds_source',
+            // Summary mode fields for aggregate carbon calculation
+            'is_summary',
+            'water_volume_total',
+            'water_volume_unit',
+            // Irrigation pump factor selection (USDA NRCS)
+            'water_source',
+            // Harvest-specific fields for preview card updates
+            'harvest_method',
+            'brix_levels',
+            'grain_moisture',
+            'quality_grade',
+            'production_efficiency'
           ];
           const currentRelevantValues = {};
           relevantFields.forEach((field) => {
@@ -425,20 +496,11 @@ const ProductionTab = forwardRef(
           const currentValuesStr = JSON.stringify(currentRelevantValues);
           const hasChanged = previousValuesStr !== currentValuesStr;
 
-          // Sprint 2 Epic 2.1: Equipment Maintenance (EM) doesn't require area_covered
-          // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
-          const hasMeaningfulData =
-            currentValues.type &&
-            // For EM type, require equipment_type and fuel_consumed instead of area
-            ((currentValues.type === 'EM' &&
-              currentValues.equipment_type &&
-              currentValues.fuel_consumed) ||
-              // For other types, require area_covered
-              (currentValues.type !== 'EM' &&
-                currentValues.area_covered &&
-                parseFloat(currentValues.area_covered) > 0));
-
-          const shouldTrigger = hasMeaningfulData && (hasChanged || isInitialMountRef.current);
+          // FIX: Always trigger onDataChange when type is set and values changed.
+          // This ensures non-carbon fields (name, observation) update the preview card.
+          // Carbon calculation in NewEvent.jsx handles its own validation.
+          const hasValidType = currentValues.type && currentValues.type !== '';
+          const shouldTrigger = hasValidType && (hasChanged || isInitialMountRef.current);
 
           if (shouldTrigger) {
             if (import.meta.env.MODE === 'development') {
@@ -487,6 +549,8 @@ const ProductionTab = forwardRef(
         }
       }
 
+      const isSummaryEvent = data.is_summary === 'true' || data.is_summary === true;
+
       const processedData = {
         ...data,
         area_covered: data.area_covered ? parseFloat(data.area_covered) : undefined,
@@ -496,6 +560,10 @@ const ProductionTab = forwardRef(
         transportation_distance: data.transportation_distance
           ? parseFloat(data.transportation_distance)
           : undefined,
+        grain_moisture: data.grain_moisture ? parseFloat(data.grain_moisture) : undefined,
+        // Phase 2: Additional harvest fields
+        harvest_method: data.harvest_method || undefined,
+        brix_levels: data.brix_levels || undefined,
         // Sprint 2 Epic 2.1: Include equipment-specific data when type is EM
         // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
         ...(data.type === 'EM' && {
@@ -503,10 +571,31 @@ const ProductionTab = forwardRef(
           equipment_operation_type: data.equipment_operation_type,
           fuel_type: data.fuel_type,
           operation_efficiency: data.operation_efficiency
-        })
+        }),
+        // Irrigation model fields at top level (not in extra_data)
+        water_source: data.water_source || undefined,
+        irrigation_method: data.irrigation_method || undefined,
+        irrigation_depth: data.irrigation_depth ? parseFloat(data.irrigation_depth) : undefined,
+        irrigation_depth_unit: data.irrigation_depth_unit || undefined,
+        // Summary mode fields stored in extra_data (not model fields)
+        extra_data: {
+          is_summary: isSummaryEvent,
+          ...(isSummaryEvent && {
+            date_start: data.date_start || null,
+            date_end: data.date_end || null,
+            event_count: data.event_count ? parseInt(data.event_count, 10) : null,
+            water_volume_total: data.water_volume_total
+              ? parseFloat(data.water_volume_total)
+              : null,
+            water_volume_unit: data.water_volume_unit || 'gallons'
+          })
+        }
       };
       onSubmitHandler(processedData);
     };
+
+    // Keep ref in sync with latest handler on every render (avoids stale closures)
+    submitHandlerRef.current = onSubmit;
 
     return (
       <FormProvider {...methods}>
@@ -564,6 +653,18 @@ const ProductionTab = forwardRef(
                         </option>
                       </StandardSelect>
                     )}
+                  />
+                </StandardField>
+
+                {/* Event Name - Optional, auto-generated from production type if empty */}
+                <StandardField
+                  label="Event Name"
+                  helpText="Auto-generated from production type. Customize for multi-pass harvests, etc."
+                >
+                  <StandardInput
+                    type="text"
+                    placeholder={`e.g., ${PRODUCTION_TYPE_NAMES[productionType] || 'Harvesting'} - Pass 1`}
+                    {...methods.register('name')}
                   />
                 </StandardField>
 
@@ -763,6 +864,118 @@ const ProductionTab = forwardRef(
               </SectionBox>
             )}
 
+            {/* Harvest Quality - For premium fruit & grain markets */}
+            {productionType === 'HA' && (
+              <SectionBox variant="default">
+                <SectionHeader
+                  icon={FaBalanceScale}
+                  iconColor="orange.500"
+                  title="Harvest Quality"
+                  badge="Market Grading"
+                  badgeColorScheme="orange"
+                />
+                <VStack spacing={4} align="stretch">
+                  <HStack spacing={4} align="stretch">
+                    <Box flex={1}>
+                      <StandardField
+                        label="Quality Grade"
+                        error={errors.harvest_quality_grade?.message}
+                        helpText="Classification for market destination (export, domestic, processing)"
+                      >
+                        <Controller
+                          name="harvest_quality_grade"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect {...field} placeholder="Select grade (optional)">
+                              <option value="export_quality">Export Quality</option>
+                              <option value="grade_a">Grade A</option>
+                              <option value="grade_b">Grade B</option>
+                              <option value="grade_c">Grade C</option>
+                              <option value="domestic">Domestic Market</option>
+                              <option value="processing">Processing / Juice</option>
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+                    </Box>
+
+                    <Box flex={1}>
+                      <StandardField
+                        label="Grain Moisture %"
+                        error={errors.grain_moisture?.message}
+                        helpText="Moisture content at harvest (relevant for grain crops)"
+                      >
+                        <Controller
+                          name="grain_moisture"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <NumberInput
+                              min={0}
+                              max={100}
+                              precision={1}
+                              step={0.1}
+                              value={field.value || ''}
+                              onChange={(valueString) => field.onChange(valueString)}
+                            >
+                              <NumberInputField placeholder="e.g. 15.5" />
+                              <NumberInputStepper>
+                                <NumberIncrementStepper />
+                                <NumberDecrementStepper />
+                              </NumberInputStepper>
+                            </NumberInput>
+                          )}
+                        />
+                      </StandardField>
+                    </Box>
+                  </HStack>
+
+                  {/* Phase 2: Harvest Method & Brix Levels for Quick Add parity */}
+                  <HStack spacing={4} align="stretch">
+                    <Box flex={1}>
+                      <StandardField
+                        label="Harvest Method"
+                        error={errors.harvest_method?.message}
+                        helpText="How the crop was harvested (consumer trust indicator)"
+                      >
+                        <Controller
+                          name="harvest_method"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect
+                              {...field}
+                              placeholder="Select harvest method (optional)"
+                            >
+                              <option value="hand_picking">Hand Picking</option>
+                              <option value="selective_hand_picking">Selective Hand Picking</option>
+                              <option value="mechanical">Mechanical Harvester</option>
+                              <option value="shake_and_catch">Shake and Catch</option>
+                              <option value="strip_picking">Strip Picking</option>
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+                    </Box>
+
+                    <Box flex={1}>
+                      <StandardField
+                        label="Brix Levels (Sugar Content)"
+                        error={errors.brix_levels?.message}
+                        helpText="Sugar content measurement for premium fruit quality"
+                      >
+                        <Controller
+                          name="brix_levels"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput {...field} placeholder="e.g., 12.8-14.5 or 13.2" />
+                          )}
+                        />
+                      </StandardField>
+                    </Box>
+                  </HStack>
+                </VStack>
+              </SectionBox>
+            )}
+
             {/* Equipment & Fuel Usage */}
             <SectionBox variant="highlighted">
               <SectionHeader
@@ -804,75 +1017,11 @@ const ProductionTab = forwardRef(
                 {/* Fuel Consumption - Only for fuel-consuming operations */}
                 {/* CRITICAL FIX (2025-01-21): Removed EQ (standalone Equipment type 4), kept EM (Production subtype) */}
                 {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Added IR for electric irrigation pumps, PR/TH for powered pruning/thinning */}
+                {/* IRRIGATION PUMP FIX (2026-02-19): Hide Energy Amount for electric IR — energy auto-calculated from water volume × pump factor */}
                 {['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM'].includes(productionType) && (
                   <>
-                    <HStack spacing={4} align="stretch">
-                      <Box flex={2}>
-                        <StandardField
-                          label={
-                            watch('fuel_type') === 'electric'
-                              ? 'Energy Amount (kWh)'
-                              : 'Fuel Consumed'
-                          }
-                          error={errors.fuel_consumed?.message}
-                          helpText={
-                            watch('fuel_type') === 'electric'
-                              ? 'Energy consumption for carbon emission calculation'
-                              : 'Fuel consumption for carbon emission calculation'
-                          }
-                        >
-                          <Controller
-                            name="fuel_consumed"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <NumberInput
-                                min={0}
-                                precision={1}
-                                step={0.1}
-                                value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}
-                              >
-                                <NumberInputField
-                                  placeholder={
-                                    watch('fuel_type') === 'electric' ? 'e.g., 50 kWh' : 'Optional'
-                                  }
-                                />
-                                <NumberInputStepper>
-                                  <NumberIncrementStepper />
-                                  <NumberDecrementStepper />
-                                </NumberInputStepper>
-                              </NumberInput>
-                            )}
-                          />
-                        </StandardField>
-                      </Box>
-
-                      <Box flex={1}>
-                        <StandardField label="Unit">
-                          <Controller
-                            name="fuel_unit"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardSelect {...field}>
-                                {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Show only relevant units based on fuel type */}
-                                {watch('fuel_type') === 'electric' ? (
-                                  <option value="kWh">Kilowatt-hours</option>
-                                ) : (
-                                  <>
-                                    <option value="L">Liters</option>
-                                    <option value="gal">Gallons</option>
-                                    <option value="kg">Kilograms</option>
-                                  </>
-                                )}
-                              </StandardSelect>
-                            )}
-                          />
-                        </StandardField>
-                      </Box>
-                    </HStack>
-
-                    {/* Electric Equipment Info Box */}
-                    {watch('fuel_type') === 'electric' && (
+                    {/* For electric irrigation, energy is auto-calculated from water volume + water source */}
+                    {productionType === 'IR' && watch('fuel_type') !== 'diesel' ? (
                       <Box
                         p={3}
                         bg="blue.50"
@@ -883,12 +1032,103 @@ const ProductionTab = forwardRef(
                         <Text fontSize="sm" color="blue.700">
                           <Icon as={FaBolt} mr={2} color="blue.600" />
                           <Text as="span" fontWeight="semibold">
-                            Electric Equipment:
+                            Electric Pump:
                           </Text>{' '}
-                          Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses
-                          0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions.
+                          Energy consumption is automatically calculated from your water volume and
+                          water source using USDA NRCS pump efficiency factors (0.39 kg CO₂/kWh).
+                          If you use a diesel pump, select "Diesel" as Fuel Type above.
                         </Text>
                       </Box>
+                    ) : (
+                      <>
+                        <HStack spacing={4} align="stretch">
+                          <Box flex={2}>
+                            <StandardField
+                              label={
+                                watch('fuel_type') === 'electric'
+                                  ? 'Energy Amount (kWh)'
+                                  : 'Fuel Consumed'
+                              }
+                              error={errors.fuel_consumed?.message}
+                              helpText={
+                                watch('fuel_type') === 'electric'
+                                  ? 'Energy consumption for carbon emission calculation'
+                                  : 'Fuel consumption for carbon emission calculation'
+                              }
+                            >
+                              <Controller
+                                name="fuel_consumed"
+                                control={methods.control}
+                                render={({ field }) => (
+                                  <NumberInput
+                                    min={0}
+                                    precision={1}
+                                    step={0.1}
+                                    value={field.value || ''}
+                                    onChange={(valueString) => field.onChange(valueString)}
+                                  >
+                                    <NumberInputField
+                                      placeholder={
+                                        watch('fuel_type') === 'electric'
+                                          ? 'e.g., 50 kWh'
+                                          : 'Optional'
+                                      }
+                                    />
+                                    <NumberInputStepper>
+                                      <NumberIncrementStepper />
+                                      <NumberDecrementStepper />
+                                    </NumberInputStepper>
+                                  </NumberInput>
+                                )}
+                              />
+                            </StandardField>
+                          </Box>
+
+                          <Box flex={1}>
+                            <StandardField label="Unit">
+                              <Controller
+                                name="fuel_unit"
+                                control={methods.control}
+                                render={({ field }) => (
+                                  <StandardSelect {...field}>
+                                    {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Show only relevant units based on fuel type */}
+                                    {watch('fuel_type') === 'electric' ? (
+                                      <option value="kWh">Kilowatt-hours</option>
+                                    ) : (
+                                      <>
+                                        <option value="L">Liters</option>
+                                        <option value="gal">Gallons</option>
+                                        <option value="kg">Kilograms</option>
+                                      </>
+                                    )}
+                                  </StandardSelect>
+                                )}
+                              />
+                            </StandardField>
+                          </Box>
+                        </HStack>
+
+                        {/* Electric Equipment Info Box */}
+                        {watch('fuel_type') === 'electric' && (
+                          <Box
+                            p={3}
+                            bg="blue.50"
+                            borderRadius="md"
+                            border="1px solid"
+                            borderColor="blue.200"
+                          >
+                            <Text fontSize="sm" color="blue.700">
+                              <Icon as={FaBolt} mr={2} color="blue.600" />
+                              <Text as="span" fontWeight="semibold">
+                                Electric Equipment:
+                              </Text>{' '}
+                              Enter energy consumption in kilowatt-hours (kWh). Grid electricity
+                              uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero
+                              emissions.
+                            </Text>
+                          </Box>
+                        )}
+                      </>
                     )}
                   </>
                 )}
@@ -1199,7 +1439,8 @@ const ProductionTab = forwardRef(
                           control={methods.control}
                           render={({ field }) => (
                             <StandardSelect {...field} placeholder="Select irrigation method...">
-                              <option value="drip">Drip/Micro-irrigation (most efficient)</option>
+                              <option value="drip">Drip Irrigation (most efficient)</option>
+                              <option value="micro_sprinkler">Micro-sprinkler</option>
                               <option value="sprinkler">Sprinkler System</option>
                               <option value="center_pivot">Center Pivot</option>
                               <option value="flood">Flood/Furrow Irrigation</option>

@@ -16,7 +16,7 @@ import {
   Divider,
   VStack
 } from '@chakra-ui/react';
-import { FaApple, FaFacebook, FaGoogle } from 'react-icons/fa';
+import { FaFacebook, FaGoogle } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
 import React, { useEffect } from 'react';
 import { object, string } from 'zod';
@@ -137,7 +137,6 @@ function SignUp() {
                   <HStack spacing={4} justify="center" w="100%">
                     {[
                       { icon: FaFacebook, color: '#1877F2', hoverColor: '#166FE5' },
-                      { icon: FaApple, color: '#000000', hoverColor: '#333333' },
                       { icon: FaGoogle, color: '#EA4335', hoverColor: '#DB3E2F' }
                     ].map((social, index) => (
                       <Flex

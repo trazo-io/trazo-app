@@ -1,5 +1,5 @@
 // Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
-import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Icon, Text, useColorModeValue, HStack, Box, SimpleGrid, Flex } from '@chakra-ui/react';
 import {
   StandardButton,
@@ -26,12 +26,15 @@ import CustomFieldsForm from './CustomFieldsForm';
 import { useIntl } from 'react-intl';
 
 // Phase 3: Fuel types with EPA-verified emission factors (matching ProductionTab pattern)
+// UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
 const FUEL_TYPES = [
-  { value: 'diesel', label: '⛽ Diesel', factor: '2.68 kg CO₂e/L' },
-  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.31 kg CO₂e/L' },
-  { value: 'natural_gas', label: '💨 Natural Gas', factor: '2.03 kg CO₂e/m³' },
-  { value: 'lpg', label: '🔥 LPG', factor: '1.70 kg CO₂e/L' },
-  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' }
+  { value: 'diesel', label: '⛽ Diesel', factor: '2.70 kg CO₂e/L' },
+  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.32 kg CO₂e/L' },
+  { value: 'natural_gas', label: '💨 Natural Gas', factor: '1.92 kg CO₂e/m³' },
+  { value: 'propane', label: '🔥 LPG / Propane', factor: '1.51 kg CO₂e/L' },
+  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' },
+  { value: 'biodiesel', label: '🌿 Biodiesel', factor: '2.31 kg CO₂e/L' },
+  { value: 'none', label: '🔧 No Fuel / Manual', factor: '0 kg CO₂e' }
 ];
 
 const formSchemaSoilManagement = object({
@@ -110,6 +113,24 @@ const getSoilManagementDefaults = (soilType) => {
       amendment_unit: 'kg',
       amendment_type: ''
     },
+    CC: {
+      area_covered: '2.0',
+      area_unit: 'ha',
+      soil_ph: '6.5',
+      organic_matter_percentage: '3.5',
+      soil_texture: 'loam',
+      depth: '30',
+      depth_unit: 'cm'
+    },
+    OM: {
+      area_covered: '2.0',
+      area_unit: 'ha',
+      soil_ph: '6.5',
+      organic_matter_percentage: '3.5',
+      soil_texture: 'loam',
+      depth: '20',
+      depth_unit: 'cm'
+    },
     TI: {
       area_covered: '2.0',
       area_unit: 'ha',
@@ -117,6 +138,15 @@ const getSoilManagementDefaults = (soilType) => {
       organic_matter_percentage: '3.0',
       soil_texture: 'sandy_loam',
       depth: '25',
+      depth_unit: 'cm'
+    },
+    CO: {
+      area_covered: '2.0',
+      area_unit: 'ha',
+      soil_ph: '6.5',
+      organic_matter_percentage: '4.0',
+      soil_texture: 'loam',
+      depth: '20',
       depth_unit: 'cm'
     }
   };
@@ -130,8 +160,6 @@ const SoilManagementTab = forwardRef(
     const bgPrevButton = useColorModeValue('gray.100', 'gray.100');
     const textColor = useColorModeValue('gray.700', 'white');
     const iconColor = useColorModeValue('gray.300', 'gray.700');
-    const [selectedSoilType, setSelectedSoilType] = useState('');
-
     // Sprint 3 Epic 3.1: Removed progressive disclosure - consolidated sections
 
     const mapApiTypeToFormType = (apiType) => {
@@ -149,6 +177,10 @@ const SoilManagementTab = forwardRef(
     };
 
     const formType = mapApiTypeToFormType(initialValues.type);
+
+    // Initialize selectedSoilType from existing event type to prevent
+    // phantom defaults from being applied when editing existing events
+    const [selectedSoilType, setSelectedSoilType] = useState(formType || '');
 
     const intelligentDefaults = getSoilManagementDefaults(formType || 'ST');
 
@@ -192,18 +224,26 @@ const SoilManagementTab = forwardRef(
       }
     });
 
-    // DEBOUNCE FIX: Expose flushData method to parent via ref
-    // This allows NewEvent.jsx to force-sync form data before step change
+    // Ref to always hold the latest submit handler, avoiding stale closures in useImperativeHandle
+    const submitHandlerRef = useRef(null);
+
+    // Expose flushData and submitForm methods to parent via ref
     useImperativeHandle(
       ref,
       () => ({
         flushData: () => {
           if (onDataChange) {
             const currentValues = methods.getValues();
-            console.log('[SoilManagementTab] 🔄 flushData called - syncing form data immediately');
             onDataChange(currentValues);
           }
-        }
+        },
+        submitForm: () =>
+          new Promise((resolve, reject) => {
+            methods.handleSubmit(
+              (data) => { submitHandlerRef.current(data); resolve(); },
+              (errors) => { reject(errors); }
+            )();
+          })
       }),
       [onDataChange, methods]
     );
@@ -239,13 +279,15 @@ const SoilManagementTab = forwardRef(
     const watchedAmendmentType = watch('amendment_type'); // Determines emission factor (limestone vs dolomite)
 
     // Watch non-calculation fields to ensure they get sent to backend (but don't trigger carbon API)
-    // Sprint 2 Epic 2.1.3: Removed watchedTransportationDistance
+    const watchedName = watch('name'); // For preview card title updates
     const watchedObservation = watch('observation'); // For backend description field
     const watchedDepth = watch('depth'); // For preview display
     const watchedDepthUnit = watch('depth_unit'); // For preview display
     const watchedEquipmentUsed = watch('equipment_used'); // For preview display
+    const watchedFuelType = watch('fuel_type'); // For preview display
+    const watchedCustomFields = watch('custom_fields'); // For preview display
 
-    // Note: observation, depth, depth_unit, and equipment_used are watched to ensure form data updates
+    // Note: These fields are watched to ensure form data updates
     // but are NOT included in the carbon calculation useEffect dependencies
 
     // Sync custom fields with form
@@ -328,10 +370,13 @@ const SoilManagementTab = forwardRef(
     }, [
       // Non-calculation fields to ensure they get captured in form data
       // Sprint 2 Epic 2.1.3: Removed watchedTransportationDistance
+      watchedName, // Ensures event name changes update preview card title
       watchedObservation, // Ensures observation gets mapped to description
       watchedDepth, // Ensures working depth appears in preview
       watchedDepthUnit, // Ensures depth unit appears in preview
       watchedEquipmentUsed, // Ensures equipment_used appears in preview
+      watchedFuelType, // Ensures fuel type appears in preview
+      watchedCustomFields, // Ensures custom fields appear in preview
       onDataChange
     ]); // ENSURES: All form data including non-calculation fields gets sent to backend
 
@@ -485,6 +530,9 @@ const SoilManagementTab = forwardRef(
       onSubmitHandler(processedData);
     };
 
+    // Keep ref in sync with latest handler on every render (avoids stale closures)
+    submitHandlerRef.current = handleEnhancedSubmit;
+
     return (
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleEnhancedSubmit)} style={{ width: '100%' }}>
@@ -518,7 +566,10 @@ const SoilManagementTab = forwardRef(
                   <StandardSelect placeholder="Select soil management type" {...register('type')}>
                     <option value="ST">Soil Testing</option>
                     <option value="PA">Soil Amendment</option>
+                    <option value="CC">Cover Crop Management</option>
+                    <option value="OM">Organic Matter Addition</option>
                     <option value="TI">Tillage</option>
+                    <option value="CO">Composting Operation</option>
                   </StandardSelect>
                 </StandardField>
 
@@ -788,7 +839,7 @@ const SoilManagementTab = forwardRef(
               </SectionBox>
             )}
 
-            {(watch('type') === 'ST' || watch('type') === 'PA') && (
+            {watch('type') && (
               <SectionBox variant="default">
                 <SectionHeader
                   icon={FaThermometerHalf}

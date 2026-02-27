@@ -16,7 +16,7 @@ export interface EventDescriptionData {
  */
 export const eventDescriptions: Record<string, string> = {
   'fertilizer application': 'Applied nutrients to support healthy plant growth and soil fertility',
-  'pesticide application': 'Applied natural pest control to protect plants from harmful insects',
+  'pesticide application': 'Applied targeted pest control to protect plants from harmful insects',
   'fungicide application':
     'Applied disease prevention treatment to protect plants from fungal infections',
   'herbicide application':
@@ -972,8 +972,13 @@ export function getConsumerEventDescription(
         ? ` from ${event.area_covered} ${event.area_unit || 'hectares'}`
         : '';
 
-      consumerImpact = `${yieldInfo} harvested${areaInfo} at peak ripeness ensures maximum nutritional value and freshness.`;
-      sustainabilityBenefit = `Documented harvest timing and yield tracking demonstrates responsible farming and quality control practices.`;
+      // Enhanced with harvest quality grade transparency
+      const qualityInfo = event.harvest_quality_grade
+        ? ` Graded as ${event.harvest_quality_grade.replace(/_/g, ' ')} for export and quality standards.`
+        : '';
+
+      consumerImpact = `${yieldInfo} harvested${areaInfo} at peak ripeness ensures maximum nutritional value and freshness.${qualityInfo}`;
+      sustainabilityBenefit = `Documented harvest timing, yield tracking, and quality grading demonstrates responsible farming and rigorous quality control practices.`;
     } else if (eventType.includes('irrigation') || eventType === 'IR') {
       // Personalize based on irrigation data
       // 🔧 FIX: Check if value is already formatted to avoid unit duplication
@@ -1081,24 +1086,71 @@ export function getConsumerEventDescription(
         return event.commercial_name;
       }
 
-      // Priority 4: Map coded types to friendly names (MAIN FIX)
-      if (event.type) {
+      // Priority 4: Generate descriptive titles from event data
+      // Use production_type (normalized) or type (raw API) for subtype detection
+      const prodType = event.production_type || event.type;
+      if (prodType) {
+        const desc = (event.description || '').toLowerCase();
+
+        // For harvests - differentiate by quality grade or description
+        if (prodType === 'HA') {
+          if (event.harvest_quality_grade) {
+            const gradeLabels: Record<string, string> = {
+              export_quality: 'Harvest - Export Quality',
+              grade_a: 'Harvest - Grade A',
+              grade_b: 'Harvest - Grade B',
+              grade_c: 'Harvest - Grade C',
+              domestic: 'Harvest - Domestic Market',
+              processing: 'Harvest - Processing Grade'
+            };
+            return gradeLabels[event.harvest_quality_grade] || 'Harvest Operation';
+          }
+          if (desc.includes('export')) return 'Harvest - Export Quality';
+          if (desc.includes('processing') || desc.includes('juice')) return 'Harvest - Processing Grade';
+          if (desc.includes('first') || desc.includes('main') || desc.includes('premium'))
+            return 'Main Harvest';
+          if (desc.includes('second')) return 'Second Harvest';
+          if (desc.includes('third') || desc.includes('final')) return 'Final Harvest';
+          return 'Harvest Operation';
+        }
+
+        // For irrigation - differentiate by season/phase
+        if (prodType === 'IR') {
+          if (desc.includes('bloom')) return 'Irrigation - Bloom Phase';
+          if (desc.includes('fruit development') || desc.includes('fruit swell'))
+            return 'Irrigation - Fruit Development';
+          if (desc.includes('summer')) return 'Summer Irrigation';
+          if (desc.includes('winter') || desc.includes('dormant')) return 'Winter Irrigation';
+          if (desc.includes('establishment') || desc.includes('young'))
+            return 'Establishment Irrigation';
+          return 'Irrigation Operation';
+        }
+
+        // For pruning - differentiate by purpose
+        if (prodType === 'PR') {
+          if (desc.includes('structural')) return 'Structural Pruning';
+          if (desc.includes('maintenance')) return 'Maintenance Pruning';
+          if (desc.includes('winter')) return 'Winter Pruning';
+          if (desc.includes('summer')) return 'Summer Pruning';
+          if (desc.includes('formative') || desc.includes('shaping')) return 'Formative Pruning';
+          if (desc.includes('dead') || desc.includes('sanitary')) return 'Sanitary Pruning';
+          return 'Pruning Operation';
+        }
+
+        // Default code-to-title map for other production types
         const codeToTitle: Record<string, string> = {
-          IR: 'Irrigation Operation',
-          HA: 'Harvest Operation',
           PL: 'Planting',
-          PR: 'Pruning Operation',
           TR: 'Transplanting Operation',
-          CU: 'Cultivation', // CRITICAL FIX (2025-12-11): Added CU (Cultivation) - Sprint 2 production subtype
-          TH: 'Thinning', // CRITICAL FIX (2025-12-11): Added TH (Thinning) - Sprint 2 production subtype
-          EM: 'Equipment Maintenance', // CRITICAL FIX (2025-01-21): Added EM (correct Production subtype)
-          EQ: 'Equipment Operations (Legacy)', // Sprint 2: EQ subtype - kept for backward compatibility
+          CU: 'Cultivation',
+          TH: 'Thinning',
+          EM: 'Equipment Maintenance',
+          EQ: 'Equipment Operations (Legacy)',
           SO: 'Soil Operation',
           FE: 'Fertilizer Operation',
           WE: 'Weather Monitoring'
         };
-        if (codeToTitle[event.type]) {
-          return codeToTitle[event.type];
+        if (codeToTitle[prodType]) {
+          return codeToTitle[prodType];
         }
       }
 
@@ -1140,24 +1192,17 @@ export function getConsumerEventDescription(
       eventDescription.toLowerCase().includes('frost') ||
       eventDescription.toLowerCase().includes('temperature'))
   ) {
-    console.log('🌦️ ENTERING WEATHER BRANCH:', {
-      originalDescription: eventDescription,
-      eventType: event.event_type,
-      weather_type: event.weather_type,
-      type: event.type
-    });
-
     // Weather event type mapping
     const weatherTypeMap: Record<
       string,
       { title: string; icon: string; description: string; impact: 'HIGH' | 'MEDIUM' | 'LOW' }
     > = {
       FR: {
-        title: 'Frost Weather Event',
+        title: 'Frost Event',
         icon: '❄️',
         description:
           'Frost conditions monitored and documented to assess impact on crop health and implement protective measures',
-        impact: 'MEDIUM'
+        impact: 'LOW'
       },
       DR: {
         title: 'Drought Monitoring',
@@ -1299,8 +1344,12 @@ export function getConsumerEventDescription(
     let description = weatherInfo.description;
     description += realDetails;
 
+    // Use farmer's event name as title when available (consistent with all other event types),
+    // falling back to the standardized weatherTypeMap title
+    const weatherTitle = (event.name && event.name.trim()) ? event.name : weatherInfo.title;
+
     return {
-      title: weatherInfo.title,
+      title: weatherTitle,
       description: description,
       shortDescription: description, // Use the same concatenated description for both fields
       icon: weatherInfo.icon,
@@ -1351,7 +1400,18 @@ export function getConsumerEventDescription(
     } else if (normalizedType === 'PE') {
       chemicalType = 'pesticide application';
       icon = '🐛';
-      impactLevel = 'MEDIUM';
+      // Check for high-concern pesticides (neonicotinoids, restricted use)
+      const extraData = event.extra_data || {};
+      const lowerProduct = productName.toLowerCase();
+      const isNeonicotinoid =
+        (extraData.chemical_subtype || '').toLowerCase() === 'neonicotinoid' ||
+        lowerProduct.includes('imidacloprid') ||
+        lowerProduct.includes('clothianidin') ||
+        lowerProduct.includes('thiamethoxam') ||
+        lowerProduct.includes('acetamiprid') ||
+        lowerProduct.includes('dinotefuran');
+      const isRestrictedUse = extraData.restricted_use_pesticide === true;
+      impactLevel = isNeonicotinoid || isRestrictedUse ? 'HIGH' : 'MEDIUM';
     } else if (normalizedType === 'FU') {
       chemicalType = 'fungicide application';
       icon = '🛡️';
@@ -1396,7 +1456,7 @@ export function getConsumerEventDescription(
       impactLevel = 'MEDIUM';
     }
 
-    const baseDescription =
+    let baseDescription =
       eventDescriptions[chemicalType] || eventDescriptions['chemical application'];
     const realDetails = getRealTransparencyDetails(event);
 
@@ -1412,7 +1472,7 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'Precision nutrient management reduces waste and environmental impact while ensuring healthy crops.';
     } else if (chemicalType === 'pesticide application') {
-      // Sprint 6 Fix (2025-12-23): Check chemical_subtype FIRST before product name detection
+      // Check chemical_subtype FIRST before product name detection
       // This ensures user's explicit selection takes precedence over product name inference
       const chemicalSubtype = (event?.chemical_subtype || '').toLowerCase();
       const isSyntheticBySubtype =
@@ -1427,11 +1487,13 @@ export function getConsumerEventDescription(
         isOrganicBySubtype || (!isSyntheticBySubtype && productName.toLowerCase().includes('neem'));
 
       if (isOrganic) {
+        baseDescription = 'Applied organic pest control to naturally protect plants from harmful insects';
         consumerImpact =
           'Organic pest control provides natural protection without synthetic chemicals, supporting healthier food production.';
         sustainabilityBenefit =
           'Natural pest control reduces reliance on synthetic pesticides, promoting biodiversity and soil health.';
       } else {
+        baseDescription = 'Applied professional pest control to protect plants from harmful insects';
         consumerImpact =
           'Professional pesticide application protects crops from harmful pests while following strict safety protocols.';
         sustainabilityBenefit =
@@ -1503,7 +1565,7 @@ export function getConsumerEventDescription(
   }
 
   // For soil management events (event_type: 5), create specific descriptions based on soil operation data
-  if (event && event.event_type === 5) {
+  if (event && (event.event_type === 5 || event.type === 'soil_management')) {
     let icon = '🌱';
     let impactLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'MEDIUM';
 
@@ -1695,9 +1757,9 @@ export function getConsumerEventDescription(
         return event.name;
       }
 
-      // Priority 3: Soil management type with descriptive context
+      // Priority 3: Use typeInfo.title (consumer-friendly mapped name from soilTypeMap)
       if (event.soil_management_type && event.soil_management_type.trim()) {
-        return event.soil_management_type;
+        return typeInfo.title;
       }
 
       // Priority 4: Area context
@@ -1826,7 +1888,7 @@ export function getConsumerEventDescription(
     };
 
     // Get pest management type from event data
-    const eventPestType = event.pest_type || event.type || 'SC';
+    const eventPestType = event.pest_management_type || event.pest_type || event.type || 'SC';
     const typeInfo = pestTypeMap[eventPestType] || {
       title: 'Pest Management Activity',
       icon: '🐛',
@@ -1941,7 +2003,7 @@ export function getConsumerEventDescription(
   }
 
   // For general events (event_type: 3), create specific descriptions based on activity type
-  if (event && event.event_type === 3) {
+  if (event && (event.event_type === 3 || event.type === 'general')) {
     let icon = '🔧';
     let impactLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
 
@@ -1950,58 +2012,70 @@ export function getConsumerEventDescription(
       string,
       { title: string; icon: string; description: string; impact: 'HIGH' | 'MEDIUM' | 'LOW' }
     > = {
-      'Farm Maintenance': {
+      maintenance: {
         title: 'Farm Maintenance Activity',
         icon: '🔧',
         description: 'Maintained farm infrastructure and equipment for optimal operations',
         impact: 'LOW'
       },
-      'Equipment Setup': {
-        title: 'Equipment Configuration',
-        icon: '⚙️',
-        description: 'Configured and prepared equipment for farming activities',
-        impact: 'LOW'
-      },
-      'Infrastructure Work': {
-        title: 'Infrastructure Improvement',
-        icon: '🏗️',
-        description: 'Improved farm infrastructure and facility maintenance',
-        impact: 'MEDIUM'
-      },
-      'Planning Activity': {
+      planning: {
         title: 'Farm Planning',
         icon: '📋',
         description: 'Planned and organized farming activities for optimal productivity',
         impact: 'LOW'
       },
-      Documentation: {
-        title: 'Farm Documentation',
-        icon: '📝',
-        description: 'Documented farming practices for transparency and compliance',
-        impact: 'LOW'
-      },
-      Training: {
+      training: {
         title: 'Training Activity',
         icon: '🎓',
         description: 'Conducted training activities to improve farming knowledge and skills',
         impact: 'MEDIUM'
       },
-      'Safety Inspection': {
+      documentation: {
+        title: 'Farm Documentation',
+        icon: '📝',
+        description: 'Documented farming practices for transparency and compliance',
+        impact: 'LOW'
+      },
+      inspection: {
         title: 'Safety Inspection',
         icon: '🛡️',
         description: 'Inspected farm facilities and equipment for safety compliance',
         impact: 'HIGH'
       },
-      'General Maintenance': {
-        title: 'General Maintenance',
+      meeting: {
+        title: 'Team Meeting',
+        icon: '👥',
+        description: 'Coordinated team activities and planning sessions',
+        impact: 'LOW'
+      },
+      community: {
+        title: 'Community Engagement',
+        icon: '🤝',
+        description: 'Engaged with the community through farm tours and outreach',
+        impact: 'LOW'
+      },
+      precision_ag: {
+        title: 'Precision Agriculture',
+        icon: '🛰️',
+        description: 'Conducted precision agriculture activities for data-driven farming',
+        impact: 'LOW'
+      },
+      emergency: {
+        title: 'Emergency/Storm Response',
+        icon: '⚠️',
+        description: 'Responded to emergency conditions with cleanup and damage repair',
+        impact: 'MEDIUM'
+      },
+      other: {
+        title: 'General Farm Activity',
         icon: '🔧',
-        description: 'Performed general maintenance activities to ensure farm operations',
+        description: 'Completed general farming activity as part of farm operations',
         impact: 'LOW'
       }
     };
 
     // Get activity type from event data
-    const eventActivityType = event.activity_type || 'General Maintenance';
+    const eventActivityType = event.activity_type || 'maintenance';
     const typeInfo = activityTypeMap[eventActivityType] || {
       title: 'General Farm Activity',
       icon: '🔧',
@@ -2015,8 +2089,21 @@ export function getConsumerEventDescription(
     // Build transparency details from general event data
     const generalDetails: string[] = [];
 
+    const activityTypeLabels: Record<string, string> = {
+      maintenance: 'Maintenance',
+      planning: 'Planning',
+      training: 'Training',
+      documentation: 'Documentation',
+      inspection: 'Inspection',
+      meeting: 'Team Meeting',
+      community: 'Community Engagement',
+      precision_ag: 'Precision Agriculture',
+      emergency: 'Emergency Response',
+      other: 'Other Activity'
+    };
     if (event.activity_type && event.activity_name) {
-      generalDetails.push(`${event.activity_type}: ${event.activity_name}`);
+      const typeLabel = activityTypeLabels[event.activity_type] || event.activity_type;
+      generalDetails.push(`${typeLabel}: ${event.activity_name}`);
     } else if (event.activity_name) {
       generalDetails.push(`Activity: ${event.activity_name}`);
     }
@@ -2042,56 +2129,67 @@ export function getConsumerEventDescription(
     let sustainabilityBenefit =
       'Part of comprehensive farm management that ensures operational efficiency and environmental responsibility.';
 
-    if (eventActivityType === 'Farm Maintenance') {
-      const durationInfo = event.duration ? ` over ${event.duration}` : '';
+    if (eventActivityType === 'maintenance') {
+      const durationInfo = event.duration ? ` over ${event.duration} hours` : '';
       const peopleInfo = event.people_involved ? ` with ${event.people_involved} team members` : '';
 
       consumerImpact = `Regular farm maintenance${durationInfo}${peopleInfo} ensures equipment operates efficiently and safely for quality food production.`;
       sustainabilityBenefit =
         'Preventive maintenance reduces equipment breakdowns, extends machinery life, and minimizes environmental impact from repairs.';
-    } else if (eventActivityType === 'Equipment Setup') {
-      consumerImpact =
-        'Proper equipment configuration ensures precise farming operations that optimize resource use and crop quality.';
-      sustainabilityBenefit =
-        'Well-configured equipment reduces fuel consumption, minimizes soil compaction, and improves operational efficiency.';
-    } else if (eventActivityType === 'Infrastructure Work') {
-      consumerImpact =
-        'Infrastructure improvements enhance farm efficiency and create better conditions for sustainable food production.';
-      sustainabilityBenefit =
-        'Modern farm infrastructure supports resource conservation, waste reduction, and long-term sustainability goals.';
-    } else if (eventActivityType === 'Planning Activity') {
+    } else if (eventActivityType === 'planning') {
       consumerImpact =
         'Strategic farm planning optimizes resource allocation and ensures efficient crop management throughout the season.';
       sustainabilityBenefit =
         'Comprehensive planning reduces waste, optimizes inputs, and supports sustainable farming decision-making.';
-    } else if (eventActivityType === 'Documentation') {
-      consumerImpact =
-        'Detailed farm documentation provides transparency and traceability that builds consumer trust in food production.';
-      sustainabilityBenefit =
-        'Thorough record-keeping enables continuous improvement and demonstrates commitment to sustainable practices.';
-    } else if (eventActivityType === 'Training') {
+    } else if (eventActivityType === 'training') {
       const peopleInfo = event.people_involved ? ` for ${event.people_involved} team members` : '';
 
       consumerImpact = `Professional training${peopleInfo} ensures best practices are followed for safe, high-quality food production.`;
       sustainabilityBenefit =
         'Ongoing education promotes adoption of sustainable techniques and improves overall farming practices.';
-    } else if (eventActivityType === 'Safety Inspection') {
+    } else if (eventActivityType === 'documentation') {
+      consumerImpact =
+        'Detailed farm documentation provides transparency and traceability that builds consumer trust in food production.';
+      sustainabilityBenefit =
+        'Thorough record-keeping enables continuous improvement and demonstrates commitment to sustainable practices.';
+    } else if (eventActivityType === 'inspection') {
       consumerImpact =
         'Regular safety inspections ensure farm operations meet high standards for worker safety and food quality.';
       sustainabilityBenefit =
         'Safety protocols protect workers and the environment while maintaining sustainable operational standards.';
+    } else if (eventActivityType === 'emergency') {
+      const peopleInfo = event.people_involved ? ` with ${event.people_involved} team members` : '';
+
+      consumerImpact = `Rapid emergency response${peopleInfo} protects crops and farm infrastructure, ensuring continued quality production.`;
+      sustainabilityBenefit =
+        'Prompt damage repair minimizes crop loss and maintains farm resilience against weather events.';
+    } else if (eventActivityType === 'precision_ag') {
+      consumerImpact =
+        'Precision agriculture technology enables data-driven decisions that optimize resource use and improve crop quality.';
+      sustainabilityBenefit =
+        'Data-driven farming reduces input waste, targets treatments precisely, and supports sustainable resource management.';
+    } else if (eventActivityType === 'community') {
+      consumerImpact =
+        'Community engagement builds connections between farmers and consumers, strengthening local food systems.';
+      sustainabilityBenefit =
+        'Agricultural outreach promotes understanding of sustainable farming and supports local community resilience.';
+    } else if (eventActivityType === 'meeting') {
+      consumerImpact =
+        'Team coordination ensures all farm operations are well-planned and executed with attention to quality.';
+      sustainabilityBenefit =
+        'Collaborative planning promotes best practices and continuous improvement in farming operations.';
     }
 
     // Enhanced title resolution for general events
     const getGeneralTitle = (event: any, typeInfo: any): string => {
-      // Priority 1: Activity name from form
-      if (event.activity_name && event.activity_name.trim()) {
-        return event.activity_name;
-      }
-
-      // Priority 2: General event name field
+      // Priority 1: Event name (primary title set by farmer in the form)
       if (event.name && event.name.trim()) {
         return event.name;
+      }
+
+      // Priority 2: Activity name (descriptive subtitle)
+      if (event.activity_name && event.activity_name.trim()) {
+        return event.activity_name;
       }
 
       // Priority 3: Activity type
@@ -2360,18 +2458,7 @@ export function getConsumerEventDescription(
   }
 
   // For business events (event_type: 7), create specific descriptions based on business activity data
-  if (event && event.event_type === 7) {
-    console.log('🏢 BUSINESS EVENT DEBUG - ENTERING BUSINESS BLOCK:', {
-      event_type: event.event_type,
-      type: event.type,
-      business_type: event.business_type,
-      business_activity_type: event.business_activity_type,
-      certification_type: event.certification_type,
-      name: event.name,
-      business_event_name: event.business_event_name,
-      allEventFields: Object.keys(event)
-    });
-
+  if (event && (event.event_type === 7 || event.type === 'business')) {
     let icon = '📋';
     let impactLevel: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
 
@@ -2438,11 +2525,18 @@ export function getConsumerEventDescription(
     // Build detailed description based on business event fields
     let fullDescription = typeInfo.description;
 
+    // Add certificate number for traceability and transparency
+    if (event.certificate_number && String(event.certificate_number).trim()) {
+      fullDescription += ` Certificate number ${event.certificate_number} provides verifiable proof and traceability.`;
+    }
+
     // Add certification details with consumer-friendly explanations
     if (event.certification_type) {
       const certificationTypes: Record<string, string> = {
         organic_usda:
           'USDA Organic certification ensuring chemical-free farming practices and natural soil health',
+        global_gap:
+          'GlobalG.A.P. certification ensuring Good Agricultural Practices for food safety, sustainability, and worker welfare',
         carbon_neutral:
           'Carbon neutral certification demonstrating climate-positive environmental responsibility',
         rainforest_alliance:
@@ -2451,6 +2545,10 @@ export function getConsumerEventDescription(
           'Fair Trade certification ensuring ethical labor practices and fair wages for farmers',
         regenerative:
           'Regenerative Organic certification promoting soil health and ecosystem restoration',
+        cng:
+          'Certified Naturally Grown certification for farms using natural growing practices',
+        non_gmo:
+          'Non-GMO Project Verified certification ensuring products are free from genetic modification',
         sustainable_agriculture:
           'Sustainable agriculture certification for eco-friendly farming practices and resource conservation',
         water_stewardship:
@@ -2512,77 +2610,68 @@ export function getConsumerEventDescription(
       fullDescription += `. ${practiceDesc}`;
     }
 
-    // Consumer impact messaging
-    let consumerImpact = 'Supporting agricultural transparency and sustainability';
+    // Consumer impact messaging - Enhanced with certificate transparency
+    const certificateRef = event.certificate_number
+      ? ` with verifiable certificate ${event.certificate_number}`
+      : '';
+    let consumerImpact = `Supporting agricultural transparency and sustainability${certificateRef}`;
     if (businessType === 'certification') {
-      consumerImpact = 'Certified products ensuring quality and environmental standards';
+      consumerImpact = `Certified products ensuring quality and environmental standards${certificateRef}`;
     } else if (businessType === 'carbon_credits') {
-      consumerImpact = 'Contributing to carbon offset programs and climate action';
+      consumerImpact = `Contributing to carbon offset programs and climate action${certificateRef}`;
     } else if (businessType === 'verification') {
-      consumerImpact = 'Verified practices providing trust and transparency';
+      consumerImpact = `Verified practices providing trust and transparency${certificateRef}`;
     } else if (businessType === 'transparency') {
-      consumerImpact = 'Enhanced visibility into how your food is grown';
+      consumerImpact = `Enhanced visibility into how your food is grown${certificateRef}`;
     }
 
-    // Sustainability benefit
+    // Sustainability benefit - Enhanced with certificate transparency
     let sustainabilityBenefit =
       'Contributing to sustainable agriculture and environmental stewardship';
     if (businessType === 'certification') {
       sustainabilityBenefit =
-        'Third-party validation of sustainable farming practices ensuring environmental protection';
+        'Third-party validation of sustainable farming practices ensuring environmental protection with documented certification proof';
     } else if (businessType === 'carbon_credits') {
       sustainabilityBenefit =
-        'Active participation in carbon reduction programs supporting climate goals';
+        'Active participation in carbon reduction programs supporting climate goals with transparent verification';
     } else if (businessType === 'verification') {
       sustainabilityBenefit =
-        'Independent verification building consumer trust in sustainable practices';
+        'Independent verification building consumer trust in sustainable practices with traceable documentation';
     }
 
     // Enhanced title resolution for business events
     const getBusinessTitle = (event: any, typeInfo: any): string => {
-      console.log('🏢 GET BUSINESS TITLE - ENTERING FUNCTION:', {
-        business_event_name: event.business_event_name,
-        name: event.name,
-        business_type: event.business_type,
-        business_activity_type: event.business_activity_type,
-        certification_type: event.certification_type,
-        typeInfo_title: typeInfo.title
-      });
-
       // Priority 1: Event name from form (highest priority - farmer's custom name)
       if (event.business_event_name && event.business_event_name.trim()) {
-        console.log('🏢 TITLE PRIORITY 1 - Using business_event_name:', event.business_event_name);
         return event.business_event_name;
       }
 
       // Priority 2: Name field from form
       if (event.name && event.name.trim()) {
-        console.log('🏢 TITLE PRIORITY 2 - Using name:', event.name);
         return event.name;
       }
 
       // Priority 3: Build specific title from business_type + certification/credit/practice details
       const businessType = event.business_activity_type || event.business_type;
-      console.log('🏢 TITLE PRIORITY 3 - Checking businessType:', businessType);
 
       // Certification events - use certification type for specific title
-      if (businessType === 'certification' && event.certification_type) {
-        console.log('🏢 TITLE PRIORITY 3 - CERTIFICATION PATH:', {
-          businessType,
-          certification_type: event.certification_type
-        });
+      // Check certification_type directly (don't require businessType === 'certification')
+      // because field mapping normalization may not preserve businessType correctly
+      if (event.certification_type) {
         const certTypes: Record<string, string> = {
           organic_usda: 'USDA Organic Certification',
+          global_gap: 'GlobalG.A.P. Certification',
           carbon_neutral: 'Carbon Neutral Certification',
           rainforest_alliance: 'Rainforest Alliance Certification',
           fair_trade: 'Fair Trade Certification',
           regenerative: 'Regenerative Organic Certification',
+          cng: 'Certified Naturally Grown',
+          non_gmo: 'Non-GMO Project Verified',
           sustainable_agriculture: 'Sustainable Agriculture Certification',
           water_stewardship: 'Water Stewardship Certification'
         };
         const certTitle =
           certTypes[event.certification_type] || `${event.certification_type} Certification`;
-        console.log('🏢 TITLE PRIORITY 3 - RETURNING CERTIFICATION TITLE:', certTitle);
         return certTitle;
       }
 
@@ -2660,13 +2749,11 @@ export function getConsumerEventDescription(
         }
       }
 
-      // Fallback to typeInfo title (generic "Certification Achievement", "Carbon Credits Transaction", etc.)
-      console.log('🏢 TITLE FALLBACK - Using typeInfo.title:', typeInfo.title);
+      // Fallback to typeInfo title
       return typeInfo.title;
     };
 
     const businessTitle = getBusinessTitle(event, typeInfo);
-    console.log('🏢 FINAL BUSINESS TITLE RETURNED:', businessTitle);
 
     return {
       title: businessTitle,
@@ -2874,51 +2961,68 @@ export function formatEventDate(dateString: string): string {
 }
 
 /**
- * Get sustainability impact level for an event based on description AND actual environmental data
+ * Get sustainability impact level for an event.
+ * Impact semantics: HIGH = high environmental concern, MEDIUM = moderate, LOW = low concern (good).
+ * When carbon_impact (CO₂e) is available, uses CO₂e-based thresholds consistent with
+ * CarbonImpactPreview badges. Falls back to type-based heuristics when CO₂e is unavailable.
  */
 export function getSustainabilityImpact(
   description: string,
   event?: any
 ): 'high' | 'medium' | 'low' {
-  const lowerDesc = description.toLowerCase();
+  // CO₂e-based classification: use actual carbon data when available
+  // Thresholds align with CarbonImpactPreview: >60=Very High, >15=Moderate/High, ≤15=Low/Very Low
+  const carbonImpact = typeof event?.carbon_impact === 'number' ? event.carbon_impact : null;
+  if (carbonImpact !== null && carbonImpact > 0) {
+    if (carbonImpact > 60) return 'high';
+    if (carbonImpact > 15) return 'medium';
+    return 'low';
+  }
 
-  // 🌱 TRANSPARENCY-FIRST: Consider actual environmental metrics for production events
+  // Chemical events: delegate to getConsumerEventDescription for nuanced impact
+  if (event && (event.event_type === 2 || event.type === 'chemical' || event.chemical_type)) {
+    const eventInfo = getConsumerEventDescription(description, event);
+    if (eventInfo.impact === 'HIGH') return 'high';
+    if (eventInfo.impact === 'MEDIUM') return 'medium';
+    if (eventInfo.impact === 'LOW') return 'low';
+  }
+
+  // Production events: classify by activity type
   if (event && (event.event_type === 1 || event.type?.includes('production'))) {
-    const fuelConsumption = parseFloat(event.fuel_consumed) || 0;
+    const prodType = event.production_type || '';
+    // Harvesting/planting are significant operations
+    if (prodType === 'HA' || prodType === 'PL' || prodType === 'TR') return 'medium';
+    // Irrigation, pruning, equipment maintenance are routine low-impact activities
+    if (prodType === 'IR' || prodType === 'PR' || prodType === 'EM') return 'low';
+    // For other types, use fuel consumption as indicator
+    const fuelConsumed = parseFloat(event.fuel_consumed) || 0;
     const areaCovered = parseFloat(event.area_covered) || 0;
-    const fuelPerHectare = areaCovered > 0 ? fuelConsumption / areaCovered : fuelConsumption;
-
-    // Calculate efficiency based on fuel consumption per hectare
-    // Lower fuel per hectare = better (higher) sustainability rating
-    if (fuelPerHectare <= 10) {
-      return 'high'; // Very efficient: ≤10L per hectare
-    } else if (fuelPerHectare <= 20) {
-      return 'medium'; // Moderate: 10-20L per hectare
-    } else {
-      return 'low'; // Less efficient: >20L per hectare
-    }
+    const fuelPerHa = areaCovered > 0 ? fuelConsumed / areaCovered : fuelConsumed;
+    if (fuelPerHa > 20) return 'high';
+    if (fuelPerHa > 5) return 'medium';
+    return 'low';
   }
 
-  // For non-production events, use description-based logic
-  // High impact: organic, natural methods
-  if (
-    lowerDesc.includes('organic') ||
-    lowerDesc.includes('neem') ||
-    lowerDesc.includes('natural')
-  ) {
-    return 'high';
+  // Soil management: generally beneficial/low-impact practices
+  if (event && event.type === 'soil_management') {
+    const soilType = event.soil_management_type || '';
+    if (soilType === 'CC' || soilType === 'TI' || soilType === 'ST' || soilType === 'CO') return 'low';
+    return 'low';
   }
 
-  // Medium impact: targeted treatments, disease prevention
-  if (
-    lowerDesc.includes('disease') ||
-    lowerDesc.includes('targeted') ||
-    lowerDesc.includes('integrated')
-  ) {
+  // Pest management: monitoring and biological control are low-impact
+  if (event && event.type === 'pest_management') {
+    const pestType = event.pest_management_type || '';
+    if (pestType === 'BR' || pestType === 'SC' || pestType === 'IP') return 'low';
     return 'medium';
   }
 
-  // Default to low for chemical treatments
+  // Weather and business events: monitoring/administrative
+  if (event && (event.type === 'weather' || event.type === 'business')) {
+    return 'low';
+  }
+
+  // Fallback: description-based
   return 'low';
 }
 
@@ -2979,10 +3083,174 @@ export function getEventTrustIndicators(event: any): string[] {
   return indicators;
 }
 
+/**
+ * Get timeline event title matching consumer card naming conventions.
+ * Used by the parcel dashboard timeline to ensure consistent naming
+ * with consumer-facing cards from getConsumerEventDescription().
+ */
+export function getTimelineEventTitle(event: any, intl?: any): string {
+  // 1. For chemical events with commercial_name: return the commercial name
+  if (event.commercial_name) {
+    const isChemicalEvent =
+      event.event_type === 2 ||
+      event.type?.includes('chemical') ||
+      (event.type && ['FE', 'PE', 'FU', 'HE'].includes(event.type));
+    if (isChemicalEvent) {
+      return event.commercial_name;
+    }
+  }
+
+  // 2. For general events (event_type 3): use event name or activity name
+  if (event.event_type === 3) {
+    return event.name || event.activity_name || 'Farm Activity';
+  }
+
+  // 3. Farmer's custom name takes priority (matches consumer card title resolution)
+  // Consumer cards check event.name/soil_management_name/title BEFORE type-mapped names
+  if (event.event_type === 5) {
+    // Soil: getSoilManagementTitle() checks title → soil_management_name → name → typeInfo
+    const soilName = event.title || event.soil_management_name || event.name;
+    if (soilName && soilName.trim()) return soilName;
+  } else if (event.event_type === 0) {
+    // Weather: checks name → weatherInfo.title
+    if (event.name && event.name.trim()) return event.name;
+  } else if (event.event_type === 6) {
+    // Pest: checks name → commercial_name → typeInfo.title
+    if (event.name && event.name.trim()) return event.name;
+  } else if (event.event_type === 7) {
+    // Business: checks name → various fields → typeInfo.title
+    if (event.name && event.name.trim()) return event.name;
+  } else if (event.event_type === 1) {
+    // Production: checks production_name → name → typeInfo.title
+    const prodName = event.production_name || event.name;
+    if (prodName && prodName.trim()) return prodName;
+  } else if (event.event_type === 4) {
+    // Equipment: checks name → typeInfo.title
+    if (event.name && event.name.trim()) return event.name;
+  }
+
+  // 4. Lookup map matching consumer card titles from getConsumerEventDescription()
+  const titleMap: Record<string, string> = {
+    // Production
+    PL: 'Planting',
+    'event.production.planting': 'Planting',
+    HA: 'Harvest Operation',
+    'event.production.harvesting': 'Harvest Operation',
+    IR: 'Irrigation Event',
+    'event.production.irrigation': 'Irrigation Event',
+    PR: 'Pruning Operation',
+    'event.production.pruning': 'Pruning Operation',
+    TR: 'Transplanting Operation',
+    'event.production.transplanting': 'Transplanting Operation',
+    CU: 'Cultivation',
+    'event.production.cultivation/weed_control': 'Cultivation',
+    TH: 'Thinning',
+    'event.production.thinning': 'Thinning',
+    EM: 'Equipment Maintenance',
+    'event.production.equipment_maintenance': 'Equipment Maintenance',
+
+    // Chemical
+    FE: 'Fertilizer Application',
+    'event.chemical.fertilizer': 'Fertilizer Application',
+    PE: 'Pesticide Application',
+    'event.chemical.pesticide': 'Pesticide Application',
+    FU: 'Fungicide Application',
+    'event.chemical.fungicide': 'Fungicide Application',
+    HE: 'Herbicide Application',
+    'event.chemical.herbicide': 'Herbicide Application',
+
+    // Weather
+    FR: 'Frost Event',
+    'event.weather.frost': 'Frost Event',
+    DR: 'Drought Monitoring',
+    'event.weather.drought': 'Drought Monitoring',
+    HL: 'Hail Damage Assessment',
+    'event.weather.hailstorm': 'Hail Damage Assessment',
+    HT: 'Heat Stress Monitoring',
+    'event.weather.high_temperature': 'Heat Stress Monitoring',
+    TS: 'Storm & Wind Event',
+    'event.weather.tropical_storm': 'Storm & Wind Event',
+    HW: 'High Winds Event',
+    'event.weather.high_winds': 'High Winds Event',
+    HH: 'High Humidity',
+    'event.weather.high_humidity': 'High Humidity',
+    LH: 'Low Humidity',
+    'event.weather.low_humidity': 'Low Humidity',
+
+    // Pest Management
+    SC: 'Pest Scouting',
+    'event.pest.scouting': 'Pest Scouting',
+    BR: 'Beneficial Insect Release',
+    'event.pest.beneficial_release': 'Beneficial Insect Release',
+    TM: 'Trap Monitoring',
+    'event.pest.trap_monitoring': 'Trap Monitoring',
+    PI: 'Pest Identification',
+    'event.pest.pest_identification': 'Pest Identification',
+    TA: 'Threshold Assessment',
+    'event.pest.threshold_assessment': 'Threshold Assessment',
+    IP: 'IPM Implementation',
+    'event.pest.ipm_implementation': 'IPM Implementation',
+
+    // Soil
+    ST: 'Soil Testing',
+    'event.soil.soil_test': 'Soil Testing',
+    PA: 'pH Adjustment',
+    'event.soil.ph_adjustment': 'pH Adjustment',
+    TI: 'Tillage',
+    'event.soil.tillage': 'Tillage',
+    SP: 'Soil Preparation',
+    'event.soil.preparation': 'Soil Preparation',
+    SA: 'Soil Amendment',
+    'event.soil.amendment': 'Soil Amendment',
+    SM: 'Soil Management',
+    'event.soil.management': 'Soil Management',
+
+    // Business
+    CE: 'Certification',
+    'event.business.certification': 'Certification',
+    CM: 'Compliance Review',
+    CO: 'Compliance Review',
+    'event.business.compliance': 'Compliance Review',
+    IN: 'Business Inspection',
+    BI: 'Business Inspection',
+    'event.business.inspection': 'Business Inspection'
+  };
+
+  if (event.type && titleMap[event.type]) {
+    return titleMap[event.type];
+  }
+
+  // 5. Fall back to i18n translation
+  if (intl && event.type) {
+    try {
+      const translated = intl.formatMessage({ id: event.type });
+      if (translated && translated !== event.type) {
+        return translated;
+      }
+    } catch {
+      // Ignore translation errors
+    }
+  }
+
+  // 6. Category defaults
+  const categoryDefaults: Record<number, string> = {
+    0: 'Weather Event',
+    1: 'Farm Activity',
+    2: 'Chemical Application',
+    4: 'Equipment Operation',
+    5: 'Soil Management',
+    6: 'Pest Management',
+    7: 'Business Activity'
+  };
+
+  return event.name || categoryDefaults[event.event_type] || 'Farm Activity';
+}
+
 export default {
   eventDescriptions,
   getRealTransparencyDetails,
   getConsumerEventDescription,
+  getTimelineEventTitle,
   getEventCategory,
   getImpactLevel,
   formatEventDate,

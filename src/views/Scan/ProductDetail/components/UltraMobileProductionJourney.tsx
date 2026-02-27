@@ -8,6 +8,7 @@ import {
   Icon,
   Button,
   Circle,
+  Collapse,
   Heading,
   useColorModeValue,
   Flex,
@@ -47,7 +48,8 @@ import {
   FaArrowDown,
   FaEye,
   FaBalanceScale,
-  FaBug
+  FaBug,
+  FaClipboard
 } from 'react-icons/fa';
 import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
 import { TransparencyIndicator } from 'components/Design';
@@ -58,9 +60,13 @@ import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { ConsumerEventCard } from 'components/Events/ConsumerEventCard';
 import {
+  getSustainabilityImpact,
+  getConsumerEventDescription
+} from 'utils/eventDescriptions';
+import {
   EducationalTooltip,
   CO2eTooltip,
-  USDATooltip,
+  BlockchainTooltip,
   CarbonScoreTooltip
 } from 'components/Education/EducationalTooltip';
 
@@ -131,28 +137,22 @@ interface UltraMobileProductionJourneyProps {
   events: TimelineEvent[];
   productionId?: string;
   transparencyScore?: number;
+  /** Production-level blockchain verification data */
+  productionBlockchain?: {
+    tx_hash?: string;
+    verified?: boolean;
+    block_number?: number;
+    network?: string;
+  };
 }
 
 export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourneyProps> = ({
   events,
   productionId,
-  transparencyScore
+  transparencyScore,
+  productionBlockchain
 }) => {
   const intl = useIntl();
-
-  // DEBUG: Check what events data is passed to component
-  console.log('🔍 ULTRAMOBILE EVENTS INPUT:', {
-    eventsLength: events.length,
-    sampleEvent: events[0],
-    productionEvents: events
-      .filter((e) => e.type === 'production')
-      .map((e) => ({
-        id: e.id,
-        type: e.type,
-        hasAlbum: !!e.album,
-        albumData: e.album
-      }))
-  });
 
   const [showAll, setShowAll] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -284,6 +284,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             bgColor: 'purple.50',
             category: 'Pest Management',
             categoryColor: 'purple'
+          };
+        case 7: // Business
+          return {
+            icon: FaCertificate,
+            color: 'yellow.600',
+            bgColor: 'yellow.50',
+            category: 'Business',
+            categoryColor: 'yellow'
           };
       }
     }
@@ -466,66 +474,89 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
           );
         });
 
-  const displayedEvents = showAll ? filteredEvents : filteredEvents.slice(0, 3);
+  // Group same-subtype events for cleaner consumer display
+  // Events with 3+ of the same type get grouped into a summary card
+  type EventGroup = {
+    kind: 'single';
+    event: TimelineEvent;
+  } | {
+    kind: 'group';
+    type: string;
+    category: string;
+    events: TimelineEvent[];
+    dateRange: string;
+  };
 
-  // 🔍 DEBUG: Log category generation from events
-  const eventCategories = events.map((event) => {
-    const config = getEventConfig(event);
-    return {
-      eventId: event.id,
-      eventType: event.type,
-      eventDescription: event.description,
-      event_type_field: (event as any)?.event_type,
-      category: config.category
-    };
-  });
+  const groupEvents = (evts: TimelineEvent[]): EventGroup[] => {
+    if (evts.length === 0) return [];
 
-  console.log('🔍 CATEGORY GENERATION DEBUG:', {
-    totalEvents: events.length,
-    uniqueCategories: [...new Set(eventCategories.map((ec) => ec.category))],
-    eventCategories: eventCategories
-  });
-
-  // 🔍 DEBUG: Show each event's categorization details with full category display
-  console.log('🔍 DETAILED EVENT CATEGORIZATION:');
-  const categoriesFound: { [key: string]: number } = {};
-  eventCategories.forEach((ec, index) => {
-    const category = ec.category;
-    categoriesFound[category] = (categoriesFound[category] || 0) + 1;
-    const typeStr = ec.eventType ? ec.eventType.toUpperCase() : 'UNKNOWN';
-    console.log(`  Event ${index + 1} (ID ${ec.eventId}): ${typeStr} → CATEGORY: ${category}`);
-  });
-  console.log('🚨 CATEGORIES SUMMARY:', categoriesFound);
-  console.log('🚨 UNIQUE CATEGORIES FOUND:', Object.keys(categoriesFound));
-
-  // Find which event is Weather (if any)
-  const weatherEvents = eventCategories.filter((ec) => ec.category === 'Weather');
-  if (weatherEvents.length > 0) {
-    console.log('⚠️ WEATHER EVENTS DETECTED:');
-    weatherEvents.forEach((we) => {
-      console.log({
-        eventId: we.eventId,
-        type: we.eventType,
-        event_type_field: we.event_type_field,
-        fullDescription: we.eventDescription
-      });
-
-      // Check which weather keyword matched
-      const desc = (we.eventDescription || '').toLowerCase();
-      const weatherKeywords = [
-        'weather',
-        'drought',
-        'frost',
-        'climate',
-        'hail',
-        'wind',
-        'humidity',
-        'temperature'
-      ];
-      const matchedKeywords = weatherKeywords.filter((kw) => desc.includes(kw));
-      console.log('   → Matched weather keywords:', matchedKeywords);
+    // Count events by type (using the subtype code like IR, PL, HA, etc.)
+    const typeCounts: Record<string, TimelineEvent[]> = {};
+    evts.forEach((event) => {
+      const key = event.type || 'general';
+      if (!typeCounts[key]) typeCounts[key] = [];
+      typeCounts[key].push(event);
     });
-  }
+
+    // Types that have 3+ events get grouped
+    const groupableTypes = new Set(
+      Object.entries(typeCounts)
+        .filter(([, items]) => items.length >= 3)
+        .map(([type]) => type)
+    );
+
+    const result: EventGroup[] = [];
+    let i = 0;
+    while (i < evts.length) {
+      const event = evts[i];
+      const eventType = event.type || 'general';
+
+      if (groupableTypes.has(eventType)) {
+        // Collect all consecutive events of this type
+        const groupedEvents: TimelineEvent[] = [];
+        // Collect ALL events of this type (not just consecutive)
+        const allOfType = typeCounts[eventType];
+        const config = getEventConfig(event);
+
+        // Format date range
+        const dates = allOfType.map((e) => new Date(e.date)).sort((a, b) => a.getTime() - b.getTime());
+        const startMonth = dates[0].toLocaleDateString('en-US', { month: 'short' });
+        const endMonth = dates[dates.length - 1].toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const dateRange = startMonth === endMonth ? endMonth : `${startMonth} - ${endMonth}`;
+
+        // Only add group once (skip individual events of this type)
+        if (!result.some((r) => r.kind === 'group' && r.type === eventType)) {
+          result.push({
+            kind: 'group',
+            type: eventType,
+            category: config.category,
+            events: allOfType,
+            dateRange
+          });
+        }
+        i++;
+      } else {
+        result.push({ kind: 'single', event });
+        i++;
+      }
+    }
+
+    return result;
+  };
+
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const toggleGroup = (type: string) => {
+    setExpandedGroup((prev) => (prev === type ? null : type));
+    setExpandedEventId(null);
+  };
+
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const toggleEventExpand = (eventId: string) => {
+    setExpandedEventId((prev) => (prev === eventId ? null : eventId));
+  };
+
+  const displayedEvents = showAll ? filteredEvents : filteredEvents.slice(0, 3);
+  const groupedDisplayEvents = groupEvents(showAll ? filteredEvents : displayedEvents);
 
   const categories = [
     'all',
@@ -535,6 +566,108 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         .filter((cat) => cat && typeof cat === 'string')
     )
   ];
+
+  // Build enhanced event with blockchain verification, photo data, and transparency fields
+  const buildEnhancedEvent = (event: TimelineEvent) => {
+    const normalizedEventId = event.id.toString().includes('_')
+      ? event.id.toString().split('_')[1]
+      : event.id.toString();
+
+    return {
+      ...event,
+      id: normalizedEventId,
+      blockchain_verified:
+        event.extra_data?.blockchain_verified || event.blockchain_verified || false,
+      blockchain_transaction:
+        event.extra_data?.blockchain_transaction || event.blockchain_transaction || '',
+      blockchain_block_number:
+        event.extra_data?.blockchain_block_number || event.blockchain_block_number || 0,
+      verification_confidence:
+        event.extra_data?.verification_confidence || event.verification_confidence || 0,
+      verification_timestamp:
+        event.extra_data?.verification_timestamp || event.verification_timestamp || '',
+      data_integrity_score:
+        event.extra_data?.data_integrity_score || event.data_integrity_score || 0,
+      blockchain_network: event.blockchain_network || 'polygon_amoy',
+      usda_verified:
+        event.extra_data?.carbon_calculation?.usda_compliance || event.usda_verified || false,
+      carbon_impact: event.extra_data?.carbon_calculation?.co2e || undefined,
+      certified: event.certified || false,
+      verification_level: event.verification_level || 'self_reported',
+      photo_verified_count: event.photo_verified_count || 0,
+      area_covered: event.area_covered,
+      yield_quantity: event.yield_quantity,
+      fuel_consumed: event.fuel_consumed,
+      equipment_hours: event.equipment_hours,
+      area_unit: event.area_unit,
+      yield_unit: event.yield_unit,
+      fuel_unit: event.fuel_unit,
+      area_covered_numeric: event.area_covered_numeric,
+      yield_quantity_numeric: event.yield_quantity_numeric,
+      fuel_consumed_numeric: event.fuel_consumed_numeric,
+      equipment_hours_numeric: event.equipment_hours_numeric,
+      operation_type: event.operation_type,
+      production_type: event.production_type,
+      production_name: event.production_name,
+      activity_type: event.activity_type,
+      activity_name: event.activity_name,
+      duration: event.duration,
+      people_involved: event.people_involved,
+      album: (() => {
+        if (
+          event.album &&
+          event.album.images &&
+          Array.isArray(event.album.images) &&
+          event.album.images.length > 0
+        ) {
+          return {
+            id: event.album.id ? event.album.id.toString() : 'album_' + normalizedEventId,
+            images: event.album.images
+              .filter((img: any) => img && (img.image || img.image_url))
+              .map((img: any, index: number) => ({
+                id: img.id ? img.id.toString() : `img_${index}`,
+                image: img.image || img.image_url,
+                caption: img.caption || `Image ${img.id || index + 1}`,
+                created_at: img.created_at || new Date().toISOString()
+              }))
+          };
+        }
+
+        if (event.albums && Array.isArray(event.albums) && event.albums.length > 0) {
+          const firstAlbum = event.albums[0];
+          if (firstAlbum && firstAlbum.images && Array.isArray(firstAlbum.images)) {
+            return {
+              id: 'album_' + normalizedEventId,
+              images: firstAlbum.images
+                .filter((img: any) => img && (img.image || img.image_url))
+                .map((img: any, index: number) => ({
+                  id: img.id ? img.id.toString() : `img_${index}`,
+                  image: img.image || img.image_url,
+                  caption: img.caption || `Image ${img.id || index + 1}`,
+                  created_at: img.created_at || new Date().toISOString()
+                }))
+            };
+          }
+          return {
+            id: 'album_' + normalizedEventId,
+            images: event.albums
+              .filter((albumImage: any) => albumImage && (albumImage.image_url || albumImage.image))
+              .map((albumImage: any, index: number) => ({
+                id: albumImage.id ? albumImage.id.toString() : `album_${index}`,
+                image: albumImage.image_url || albumImage.image,
+                caption:
+                  albumImage.title ||
+                  albumImage.caption ||
+                  `Image ${albumImage.id || index + 1}`,
+                created_at: albumImage.created_at || new Date().toISOString()
+              }))
+          };
+        }
+
+        return undefined;
+      })()
+    };
+  };
 
   const formatDate = (dateString: string) => {
     try {
@@ -630,18 +763,6 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       0
                     );
 
-                    // 🔍 DEBUG: Log carbon calculation in UltraMobileProductionJourney
-                    console.log('🔍 UltraMobileProductionJourney CARBON DEBUG:', {
-                      filteredEventsLength: filteredEvents.length,
-                      totalCO2: totalCO2,
-                      eventCarbonData: filteredEvents.map((e) => ({
-                        id: e.id,
-                        co2e: e.carbon_data?.co2e,
-                        carbon_data: e.carbon_data
-                      })),
-                      formattedCO2: formatCO2e(totalCO2).replace(/[+-]/, '')
-                    });
-
                     return formatCO2e(totalCO2).replace(/[+-]/, '');
                   })()}
                 </Text>
@@ -663,17 +784,19 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 <Text fontSize="lg" fontWeight="bold" color="purple.600">
                   {(() => {
                     const verifiedEvents = filteredEvents.filter(
-                      (e) => e.extra_data?.carbon_calculation?.usda_compliance
+                      (e) =>
+                        e.blockchain_verified ||
+                        e.extra_data?.blockchain_verified
                     );
                     return Math.round((verifiedEvents.length / filteredEvents.length) * 100) || 0;
                   })()}
                   %
                 </Text>
-                <USDATooltip>
+                <BlockchainTooltip>
                   <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500">
-                    USDA
+                    Verified
                   </Text>
-                </USDATooltip>
+                </BlockchainTooltip>
               </VStack>
 
               <VStack
@@ -769,6 +892,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         return { icon: FaSeedling, color: 'teal.500' };
                       case 'pest management':
                         return { icon: FaBug, color: 'red.500' };
+                      case 'business':
+                        return { icon: FaCertificate, color: 'yellow.600' };
                       default:
                         return { icon: MdEco, color: 'gray.500' };
                     }
@@ -833,159 +958,204 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       </CardBody>
 
       <CardBody pt={0} px={{ base: 0, md: 6 }} pb={{ base: 2, md: 6 }}>
-        {/* Consumer-Friendly Event Cards */}
+        {/* Consumer-Friendly Event Cards - with grouping for repeated events */}
         <VStack spacing={{ base: 2, md: 4 }} align="stretch">
-          {displayedEvents.map((event, index) => {
-            // Debug: Log the raw event data for blockchain events
+          {groupedDisplayEvents.map((item, groupIndex) => {
+            if (item.kind === 'group') {
+              const config = getEventConfig(item.events[0]);
+              const isExpanded = expandedGroup === item.type;
+              const totalEvents = item.events.length;
 
-            // 🔧 FIX: Normalize event ID for photo lookups
-            // Consumer API returns "chemical_152", producer API returns "152"
-            // Strip type prefix to ensure consistent photo lookup
-            const normalizedEventId = event.id.toString().includes('_')
-              ? event.id.toString().split('_')[1]
-              : event.id.toString();
-            // Enhanced event with comprehensive blockchain verification data
-            const enhancedEvent = {
-              ...event,
-              // Use normalized ID for consistent photo lookups
-              id: normalizedEventId,
-              // Blockchain verification from extra_data or direct fields
-              blockchain_verified:
-                event.extra_data?.blockchain_verified || event.blockchain_verified || false,
-              blockchain_transaction:
-                event.extra_data?.blockchain_transaction || event.blockchain_transaction || '',
-              blockchain_block_number:
-                event.extra_data?.blockchain_block_number || event.blockchain_block_number || 0,
-              verification_confidence:
-                event.extra_data?.verification_confidence || event.verification_confidence || 0,
-              verification_timestamp:
-                event.extra_data?.verification_timestamp || event.verification_timestamp || '',
-              data_integrity_score:
-                event.extra_data?.data_integrity_score || event.data_integrity_score || 0,
-              blockchain_network: event.blockchain_network || 'polygon_amoy',
-              // USDA verification from carbon_calculation in extra_data
-              usda_verified:
-                event.extra_data?.carbon_calculation?.usda_compliance ||
-                event.usda_verified ||
-                false,
-              // Carbon impact
-              carbon_impact: event.extra_data?.carbon_calculation?.co2e || event.carbon_data?.co2e,
-              // Keep certification separate from blockchain verification
-              certified: event.certified || false,
-              // MVP Photo Verification: Preserve verification level and photo count
-              verification_level: event.verification_level || 'self_reported',
-              photo_verified_count: event.photo_verified_count || 0,
-              // 🔧 TRANSPARENCY FIELDS: Preserve transparency fields from API
-              area_covered: event.area_covered,
-              yield_quantity: event.yield_quantity,
-              fuel_consumed: event.fuel_consumed,
-              equipment_hours: event.equipment_hours,
-              area_unit: event.area_unit,
-              yield_unit: event.yield_unit,
-              fuel_unit: event.fuel_unit,
-              area_covered_numeric: event.area_covered_numeric,
-              yield_quantity_numeric: event.yield_quantity_numeric,
-              fuel_consumed_numeric: event.fuel_consumed_numeric,
-              equipment_hours_numeric: event.equipment_hours_numeric,
-              operation_type: event.operation_type,
-              production_type: event.production_type,
-              production_name: event.production_name,
-              // 🌟 ACTIVITY FIELDS: Preserve activity fields from API
-              activity_type: event.activity_type,
-              activity_name: event.activity_name,
-              duration: event.duration,
-              people_involved: event.people_involved,
-              // Convert albums array to album object format
-              // Backend TimelineService returns 'albums' array, frontend expects 'album' object
-              album: (() => {
-                // DEBUG: Log album data for production events
-                if (event.type === 'production') {
-                  console.log('🔧 PRODUCTION EVENT ALBUM DEBUG:', {
-                    eventId: event.id,
-                    eventType: event.type,
-                    hasAlbum: !!event.album,
-                    albumId: event.album?.id,
-                    hasImages: !!event.album?.images,
-                    imagesLength: event.album?.images?.length,
-                    imagesArray: event.album?.images,
-                    rawEvent: event
-                  });
-                }
+              // Compute summary metrics for the grouped events
+              const subtypeNames = item.events.map((evt) => {
+                const info = getConsumerEventDescription(evt.description, evt);
+                return info.title;
+              });
+              // Deduplicate while preserving order
+              const uniqueSubtypes = [...new Set(subtypeNames)];
 
-                // Handle the actual backend structure: event.album (singular)
-                if (
-                  event.album &&
-                  event.album.images &&
-                  Array.isArray(event.album.images) &&
-                  event.album.images.length > 0
-                ) {
-                  return {
-                    id: event.album.id ? event.album.id.toString() : 'album_' + normalizedEventId,
-                    images: event.album.images
-                      .filter((img) => img && (img.image || img.image_url))
-                      .map((img, index) => ({
-                        id: img.id ? img.id.toString() : `img_${index}`,
-                        image: img.image || img.image_url,
-                        caption: img.caption || `Image ${img.id || index + 1}`,
-                        created_at: img.created_at || new Date().toISOString()
-                      }))
-                  };
-                }
+              const blockchainCount = item.events.filter(
+                (evt) =>
+                  evt.blockchain_verified ||
+                  evt.extra_data?.blockchain_verified
+              ).length;
 
-                // Fallback: Handle legacy albums array structure if it exists
-                if (event.albums && Array.isArray(event.albums) && event.albums.length > 0) {
-                  const firstAlbum = event.albums[0];
+              const impactCounts = { high: 0, medium: 0, low: 0 };
+              item.events.forEach((evt) => {
+                const level = getSustainabilityImpact(evt.description, evt);
+                impactCounts[level]++;
+              });
 
-                  // Case 1: Nested structure { id: 85, images: [{ image: "url" }] }
-                  if (firstAlbum && firstAlbum.images && Array.isArray(firstAlbum.images)) {
-                    return {
-                      id: 'album_' + normalizedEventId,
-                      images: firstAlbum.images
-                        .filter((img) => img && (img.image || img.image_url))
-                        .map((img, index) => ({
-                          id: img.id ? img.id.toString() : `img_${index}`,
-                          image: img.image || img.image_url,
-                          caption: img.caption || `Image ${img.id || index + 1}`,
-                          created_at: img.created_at || new Date().toISOString()
-                        }))
-                    };
-                  }
+              return (
+                <Box key={`group-${item.type}`}>
+                  <Box
+                    bg={bgColor}
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor={isExpanded ? config.color : 'gray.200'}
+                    overflow="hidden"
+                    cursor="pointer"
+                    onClick={() => toggleGroup(item.type)}
+                    _hover={{ borderColor: config.color, shadow: 'md' }}
+                    transition="all 0.2s"
+                    shadow={isExpanded ? 'sm' : 'none'}
+                  >
+                    <Box p={4}>
+                      {/* Row 1: Icon + Title + Date Range + Chevron */}
+                      <HStack spacing={3}>
+                        <Circle size="40px" bg={config.bgColor} flexShrink={0}>
+                          <Icon as={config.icon} color={config.color} boxSize={4} />
+                        </Circle>
+                        <VStack align="start" spacing={0} flex={1}>
+                          <HStack>
+                            <Text fontWeight="bold" fontSize="sm" color={textColor}>
+                              {totalEvents} {item.category} Events
+                            </Text>
+                            <Badge
+                              colorScheme={config.categoryColor}
+                              fontSize="2xs"
+                              borderRadius="full"
+                            >
+                              {item.dateRange}
+                            </Badge>
+                          </HStack>
+                        </VStack>
+                        <Icon
+                          as={isExpanded ? FaChevronUp : FaChevronDown}
+                          color={mutedColor}
+                          boxSize={3}
+                          flexShrink={0}
+                        />
+                      </HStack>
 
-                  // Case 2: Flat structure [{ image_url: "url" }]
-                  return {
-                    id: 'album_' + normalizedEventId,
-                    images: event.albums
-                      .filter(
-                        (albumImage) => albumImage && (albumImage.image_url || albumImage.image)
-                      )
-                      .map((albumImage, index) => ({
-                        id: albumImage.id ? albumImage.id.toString() : `album_${index}`,
-                        image: albumImage.image_url || albumImage.image,
-                        caption:
-                          albumImage.title ||
-                          albumImage.caption ||
-                          `Image ${albumImage.id || index + 1}`,
-                        created_at: albumImage.created_at || new Date().toISOString()
-                      }))
-                  };
-                }
+                      {/* Row 2: Sub-event journey breadcrumb */}
+                      <HStack mt={2} ml="52px" spacing={1} flexWrap="wrap">
+                        {uniqueSubtypes.map((name, idx) => (
+                          <React.Fragment key={name}>
+                            <Text fontSize="xs" color={mutedColor} fontWeight="medium">
+                              {name}
+                            </Text>
+                            {idx < uniqueSubtypes.length - 1 && (
+                              <Text fontSize="xs" color="gray.400">›</Text>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </HStack>
 
-                return undefined;
-              })()
-            };
+                      {/* Row 3: Trust & Impact badges */}
+                      <HStack mt={2} ml="52px" spacing={2} flexWrap="wrap">
+                        {blockchainCount > 0 && (
+                          <Badge
+                            colorScheme="green"
+                            fontSize="2xs"
+                            borderRadius="full"
+                            px={2}
+                            py={0.5}
+                          >
+                            <HStack spacing={1}>
+                              <Icon as={MdVerified} boxSize={2.5} />
+                              <Text>
+                                {blockchainCount === totalEvents
+                                  ? 'ALL VERIFIED'
+                                  : `${blockchainCount}/${totalEvents} VERIFIED`}
+                              </Text>
+                            </HStack>
+                          </Badge>
+                        )}
+                        {impactCounts.high > 0 && (
+                          <Badge
+                            colorScheme="orange"
+                            variant="subtle"
+                            fontSize="2xs"
+                            borderRadius="full"
+                            px={2}
+                            py={0.5}
+                          >
+                            {impactCounts.high} HIGH IMPACT
+                          </Badge>
+                        )}
+                        {impactCounts.medium > 0 && (
+                          <Badge
+                            colorScheme="yellow"
+                            variant="subtle"
+                            fontSize="2xs"
+                            borderRadius="full"
+                            px={2}
+                            py={0.5}
+                          >
+                            {impactCounts.medium} MEDIUM
+                          </Badge>
+                        )}
+                        {impactCounts.low > 0 && impactCounts.high === 0 && impactCounts.medium === 0 && (
+                          <Badge
+                            colorScheme="green"
+                            variant="subtle"
+                            fontSize="2xs"
+                            borderRadius="full"
+                            px={2}
+                            py={0.5}
+                          >
+                            {impactCounts.low} LOW IMPACT
+                          </Badge>
+                        )}
+                      </HStack>
 
+                      {/* Row 4: Expand hint */}
+                      <Text fontSize="xs" color={mutedColor} mt={1.5} ml="52px">
+                        {isExpanded ? 'Click to collapse' : `Click to see all ${totalEvents} events`}
+                      </Text>
+                    </Box>
+                  </Box>
+
+                  <Collapse in={isExpanded} animateOpacity>
+                    <VStack
+                      spacing={2}
+                      mt={2}
+                      ml={{ base: 0, md: 4 }}
+                      pl={{ base: 2, md: 3 }}
+                      borderLeft="3px solid"
+                      borderColor={config.color}
+                      align="stretch"
+                    >
+                      {item.events.map((event, eventIndex) => {
+                        const enhancedEvent = buildEnhancedEvent(event);
+                        return (
+                          <ConsumerEventCard
+                            key={event.id}
+                            event={enhancedEvent}
+                            isFirst={eventIndex === 0}
+                            isLast={eventIndex === item.events.length - 1}
+                            isGrouped
+                            isExpanded={expandedEventId === event.id}
+                            onToggleExpand={() => toggleEventExpand(event.id)}
+                            productionBlockchain={productionBlockchain}
+                          />
+                        );
+                      })}
+                    </VStack>
+                  </Collapse>
+                </Box>
+              );
+            }
+
+            // Single event rendering
+            const event = item.event;
+            const enhancedEvent = buildEnhancedEvent(event);
             return (
               <ConsumerEventCard
                 key={event.id}
                 event={enhancedEvent}
-                isFirst={index === 0}
-                isLast={index === displayedEvents.length - 1}
+                isFirst={groupIndex === 0}
+                isLast={groupIndex === groupedDisplayEvents.length - 1}
+                isExpanded={expandedEventId === event.id}
+                onToggleExpand={() => toggleEventExpand(event.id)}
+                productionBlockchain={productionBlockchain}
               />
             );
           })}
         </VStack>
 
-        {/* Show More Button - Keep original implementation */}
+        {/* Show More Button */}
         {filteredEvents.length > 3 && (
           <Box mt={4} textAlign="center">
             <Button
@@ -995,7 +1165,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               onClick={() => setShowAll(!showAll)}
               rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}
             >
-              {showAll ? 'Show Less' : `Show ${filteredEvents.length - 3} More Events`}
+              {showAll ? 'Show Less' : `Show All ${filteredEvents.length} Events`}
             </Button>
           </Box>
         )}

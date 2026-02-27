@@ -1718,6 +1718,24 @@ export const carbonApi = baseApi.injectEndpoints({
       providesTags: ['USDA']
     }),
 
+    // Voice Configuration & Deepgram Token Endpoints
+    getVoiceConfig: builder.query<{ provider: 'deepgram' | 'web_speech_api' }, void>({
+      query: () => ({
+        url: 'carbon/voice-config/',
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: ['VoiceConfig']
+    }),
+
+    getDeepgramToken: builder.mutation<{ token: string; expires_in: number }, void>({
+      query: () => ({
+        url: 'carbon/deepgram-token/',
+        method: 'POST',
+        credentials: 'include'
+      })
+    }),
+
     // Voice Processing Endpoints
     processVoiceEvent: builder.mutation<
       {
@@ -1760,20 +1778,24 @@ export const carbonApi = baseApi.injectEndpoints({
         type: string;
         description: string;
         date: string;
-        detected_amounts: string[];
+        detected_amounts: Array<{ value: number; unit: string; category: string } | string>;
         detected_products: string[];
         detected_systems?: string[];
         confidence: number;
-        suggested_carbon_impact: number;
-        language_detected?: string;
+        // Structured fields for direct form mapping
+        npk_ratio?: string | null;
+        concentration?: string | null;
+        commercial_name?: string | null;
+        application_method?: string | null;
+        water_source?: string | null;
+        area_covered?: { value: number; unit: string } | string | null;
+        duration?: { value: number; unit: string } | string | null;
+        fuel_amount?: { value: number; unit: string } | null;
+        // Metadata
         processing_time?: number;
-        auto_approved?: boolean;
-        confidence_factors?: {
-          keyword_match: number;
-          amount_detection: number;
-          context_relevance: number;
-          language_clarity: number;
-        };
+        source?: string;
+        model_used?: string;
+        original_transcript?: string;
       },
       {
         transcript: string;
@@ -2242,6 +2264,9 @@ export const {
   useGetUSDAEmissionFactorsQuery,
   useValidateUSDAComplianceMutation,
   useGetUSDABenchmarkComparisonQuery,
+  // Voice Configuration hooks
+  useGetVoiceConfigQuery,
+  useGetDeepgramTokenMutation,
   // Voice Processing hooks
   useProcessVoiceEventMutation,
   useProcessVoiceEventWithAIMutation,

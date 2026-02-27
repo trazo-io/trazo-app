@@ -13,35 +13,23 @@ import {
   VStack,
   useColorModeValue,
   Heading,
-  Circle,
   useToast,
   useBreakpointValue,
   Spinner,
   Alert,
   AlertIcon,
   Progress,
-  Divider,
   Accordion,
   AccordionItem,
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
-  Link,
   Tooltip,
-  Switch,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer
+  Switch
 } from '@chakra-ui/react';
 import {
   FaLeaf,
   FaChartLine,
-  FaEye,
-  FaCertificate,
   FaShieldAlt,
   FaChevronLeft,
   FaExclamationTriangle,
@@ -49,25 +37,20 @@ import {
   FaDatabase,
   FaCloudUploadAlt,
   FaEdit,
-  FaRocket,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaInfoCircle,
   FaArrowRight,
   FaExternalLinkAlt,
-  FaTrophy,
   FaSeedling,
-  FaQrcode,
-  FaGlobeAmericas,
-  FaUsers
+  FaCamera,
+  FaBullseye,
+  FaTrophy
 } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
-import CardHeader from 'components/Card/CardHeader';
 import { useGetEstablishmentComprehensiveDashboardQuery } from 'store/api/dashboardMetricsApi';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
+import transparencyQrApi from 'store/api/transparencyQrApi';
 import { useGetProductionsByEstablishmentQuery } from 'store/api/companyApi';
 import { useUpdateProductionMutation } from 'store/api/historyApi.js';
 
@@ -134,28 +117,13 @@ function TransparencyDashboard() {
   // Production update mutation
   const [updateProduction] = useUpdateProductionMutation();
 
-  // Debug logging for productions data
-  console.log('🔍 DEBUG - TransparencyDashboard Productions:', {
-    establishmentId,
-    establishmentIdNumber: Number(establishmentId),
-    productions,
-    isProductionsLoading,
-    productionsError,
-    productionsCount: productions?.length
-  });
 
   // Force refetch productions data to ensure we get the latest enhanced data
   useEffect(() => {
     if (establishmentId && refetchProductions) {
-      console.log(
-        '🔄 DEBUG - Forcing productions refetch for establishment:',
-        establishmentId,
-        'Type:',
-        typeof establishmentId
-      );
       refetchProductions();
     }
-  }, [establishmentId, refetchProductions]); // ✅ Fixed: Removed productions and isProductionsLoading from dependencies
+  }, [establishmentId, refetchProductions]);
 
   // Toggle production visibility function
   const handleToggleProduction = async (productionId: number, currentlyPublished: boolean) => {
@@ -274,54 +242,249 @@ function TransparencyDashboard() {
   const comprehensiveData = dashboardData?.comprehensive_data;
   const carbonSummary = dashboardData?.carbon_summary;
 
-  // ✅ 2025 BEST PRACTICE: Get transparency score from appropriate data source
-  // For ESTABLISHMENT dashboards: Use dashboard_comprehensive API (establishment-level average)
-  // For PRODUCTION dashboards: Use unified transparency API (production-specific score)
+  // Transparency score: event-based ratio (consistent with consumer QR page)
+  // Documentation Coverage section provides per-category photo guidance separately
   const getTransparencyScore = (): number => {
-    // PRIORITY 1: For ESTABLISHMENT dashboards - Use dashboard_comprehensive data
-    // This shows the AVERAGE transparency across ALL productions in the establishment
-    if (
-      transparencyMetrics?.overall_transparency_score !== undefined &&
-      transparencyMetrics?.overall_transparency_score !== null
-    ) {
+    if (transparencyMetrics?.overall_transparency_score !== undefined && transparencyMetrics?.overall_transparency_score !== null) {
       return transparencyMetrics.overall_transparency_score;
     }
-
-    // PRIORITY 2: Fallback to comprehensive_data.transparency_percentage
-    if (
-      comprehensiveData?.transparency_percentage !== undefined &&
-      comprehensiveData?.transparency_percentage !== null
-    ) {
+    if (comprehensiveData?.transparency_percentage !== undefined && comprehensiveData?.transparency_percentage !== null) {
       return comprehensiveData.transparency_percentage;
     }
-
-    // PRIORITY 3: Only use production-specific API if we have a productionId
-    // (This is for when this component is used in a production-specific context)
     if (productionId && transparencyApiData?.quick_view?.transparency_score?.percentage) {
       return transparencyApiData.quick_view.transparency_score.percentage;
     }
-
-    // NO CALCULATION FALLBACK - Return 0 to trigger loading state
     return 0;
   };
 
-  const actualTransparencyScore = getTransparencyScore() / 100; // Convert to 0-1 range for display
+  const actualTransparencyScore = getTransparencyScore() / 100;
 
-  // Get verification counts - use total_verified_productions for unique count
-  // This reflects Trazo's transparency-first approach: counting UNIQUE verified productions
-  // A production with both blockchain AND USDA verification counts as 1, not 2
-  const verificationStatus = comprehensiveData?.verification_status || {};
-  const blockchainVerified = verificationStatus?.blockchain_verified || 0;
-  const usdaVerified = verificationStatus?.usda_verified || 0;
-  // Use the backend's unique production count to avoid double-counting
-  const totalVerifiedProductions = verificationStatus?.total_verified_productions || 0;
+  // Category weights matching backend TransparencyCalculator._calculate_completeness_score
+  const CATEGORY_WEIGHTS: Record<string, number> = {
+    production: 30, chemical: 20, soil: 18,
+    pest: 12, weather: 5, business: 10, general: 5
+  };
+
+  // Benchmark thresholds (matching backend compare_with_benchmarks)
+  const getNextMilestone = (score: number) => {
+    if (score < 60) return { target: 60, label: 'Industry Minimum' };
+    if (score < 80) return { target: 80, label: 'Good Practice' };
+    if (score < 90) return { target: 90, label: 'Certification Standard' };
+    if (score < 95) return { target: 95, label: 'Excellence' };
+    return null; // Already excellent
+  };
+
+  // Consumer-friendly category names (matching backend transparency_calculator.py:515-556)
+  const CATEGORY_CONSUMER_NAMES: Record<string, string> = {
+    production: 'Growing Practices',
+    chemical: 'Treatment Details',
+    soil: 'Soil Care',
+    pest: 'Pest Management',
+    weather: 'Weather Conditions',
+    business: 'Certifications',
+    general: 'Additional Details'
+  };
+
+  // Photo-required categories (matching backend anti-gaming logic)
+  const PHOTO_REQUIRED_CATEGORIES = ['production', 'chemical', 'soil', 'pest'];
+
+  // Inline sub-component: Per-production transparency detail (lazy-loaded on expand)
+  const ProductionTransparencyDetail = ({ prodId, prodName, isActive }: { prodId: number; prodName: string; isActive: boolean }) => {
+    const [fetchTransparency, { data: prodData, isLoading: prodLoading, error: prodError }] =
+      transparencyQrApi.endpoints.getTransparencyDetails.useLazyQuery();
+
+    useEffect(() => {
+      fetchTransparency(String(prodId));
+    }, [prodId, fetchTransparency]);
+
+    if (prodLoading) {
+      return (
+        <VStack py={6} spacing={3}>
+          <Spinner size="md" color="green.500" />
+          <Text fontSize="sm" color="gray.500">Loading transparency details...</Text>
+        </VStack>
+      );
+    }
+
+    if (prodError || !prodData) {
+      return (
+        <Alert status="error" borderRadius="md" size="sm">
+          <AlertIcon />
+          <Text fontSize="sm">Failed to load transparency details for this production.</Text>
+        </Alert>
+      );
+    }
+
+    const details = prodData?.standard_view?.transparency_details;
+    const categoryBreakdown = details?.category_breakdown || {};
+    const actualEvents = details?.actual_events || 0;
+    const expectedEvents = details?.expected_events || 0;
+    const farmingApproach = details?.farming_approach || 'conventional';
+    const prodParcelId = (prodData as any)?.parcel?.id;
+
+    // Calculate photo stats for this production
+    const timeline = prodData?.timeline || [];
+    const eventsWithPhotos = timeline.filter((e: any) => e.photo_count > 0 || e.album).length;
+    const totalTimelineEvents = timeline.length;
+    const categoriesNeedingPhotos = Object.entries(categoryBreakdown)
+      .filter(([key, cat]: [string, any]) =>
+        PHOTO_REQUIRED_CATEGORIES.includes(key) && cat.actual_count > 0 && (cat.photo_verification_rate || 0) < 80
+      );
+
+    return (
+      <VStack spacing={4} align="stretch" pt={3}>
+        {/* Production summary stats */}
+        <HStack spacing={4} flexWrap="wrap">
+          <Text fontSize="sm" color="gray.600">
+            {actualEvents}/{expectedEvents} expected events
+          </Text>
+          <Text fontSize="sm" color="gray.600">
+            Farming: {farmingApproach}
+          </Text>
+          <Text fontSize="sm" fontWeight="medium" color={eventsWithPhotos > 0 ? 'green.600' : 'orange.600'}>
+            {eventsWithPhotos}/{totalTimelineEvents} events have photos
+          </Text>
+        </HStack>
+
+        {/* Per-production photo alert */}
+        {eventsWithPhotos === 0 && categoriesNeedingPhotos.length > 0 && (
+          <Alert status="warning" borderRadius="md" py={2}>
+            <AlertIcon />
+            <Text fontSize="sm" color="orange.700">
+              No events have photos — {categoriesNeedingPhotos.length} categories have their score halved.
+              Add at least 1 photo per event to improve.
+            </Text>
+          </Alert>
+        )}
+
+        {/* Category breakdown grid */}
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+          {Object.entries(categoryBreakdown)
+            .sort(([a]: [string, any], [b]: [string, any]) =>
+              (CATEGORY_WEIGHTS[b] || 0) - (CATEGORY_WEIGHTS[a] || 0)
+            )
+            .map(([key, cat]: [string, any]) => {
+              const weight = CATEGORY_WEIGHTS[key] || 5;
+              const consumerName = CATEGORY_CONSUMER_NAMES[key] || key;
+              const isEmpty = cat.actual_count === 0;
+              const needsPhotos = PHOTO_REQUIRED_CATEGORIES.includes(key) &&
+                cat.actual_count > 0 && (cat.photo_verification_rate || 0) < 80;
+              const completeness = cat.completeness_percentage || 0;
+              const photoRate = cat.photo_verification_rate || 0;
+              const eventsWithoutPhotos = needsPhotos
+                ? Math.max(0, cat.actual_count - Math.round(cat.actual_count * photoRate / 100))
+                : 0;
+
+              return (
+                <Box
+                  key={key}
+                  p={3}
+                  bg="gray.50"
+                  borderRadius="lg"
+                  border="1px solid"
+                  borderColor={
+                    completeness >= 80 ? 'green.200' :
+                    completeness >= 50 ? 'yellow.200' :
+                    cat.actual_count > 0 ? 'orange.200' : 'gray.200'
+                  }
+                >
+                  <HStack justify="space-between" mb={1}>
+                    <HStack spacing={2}>
+                      <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                        {consumerName}
+                      </Text>
+                      <Badge fontSize="xs" colorScheme="gray" variant="outline" borderRadius="full">
+                        {weight}%
+                      </Badge>
+                    </HStack>
+                    <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                      {cat.actual_count} event{cat.actual_count !== 1 ? 's' : ''}
+                    </Text>
+                  </HStack>
+                  <Progress
+                    value={completeness}
+                    colorScheme={
+                      completeness >= 80 ? 'green' :
+                      completeness >= 50 ? 'yellow' :
+                      cat.actual_count > 0 ? 'orange' : 'gray'
+                    }
+                    borderRadius="full"
+                    size="sm"
+                    mb={1}
+                  />
+                  <Text fontSize="xs" color="gray.500">
+                    {completeness >= 90
+                      ? 'Fully documented'
+                      : isEmpty
+                      ? `Log 1+ events here for up to +${weight}%`
+                      : (() => {
+                          const tierSummary = cat.photo_tier_summary;
+                          if (tierSummary) {
+                            const essentialMissing = tierSummary.essential.total - tierSummary.essential.verified;
+                            const recommendedMissing = tierSummary.recommended.total - tierSummary.recommended.verified;
+                            if (essentialMissing > 0) {
+                              return `${essentialMissing} event${essentialMissing !== 1 ? 's' : ''} require photos for full score`;
+                            }
+                            if (recommendedMissing > 0) {
+                              return `Photos recommended for ${recommendedMissing} event${recommendedMissing !== 1 ? 's' : ''}`;
+                            }
+                          } else if (needsPhotos) {
+                            return `${eventsWithoutPhotos} event${eventsWithoutPhotos !== 1 ? 's need' : ' needs'} photos — add 1+ photo each to unlock full +${weight}%`;
+                          }
+                          return `${Math.round(completeness)}% complete`;
+                        })()}
+                  </Text>
+                </Box>
+              );
+            })}
+        </SimpleGrid>
+
+        {/* Action buttons — only for active productions */}
+        {isActive && (
+          <HStack spacing={3} pt={2}>
+            <Button
+              size="sm"
+              colorScheme="green"
+              variant="outline"
+              leftIcon={<FaEdit />}
+              onClick={() => {
+                if (prodParcelId) {
+                  navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${prodParcelId}/event/add`);
+                } else {
+                  navigate(`/admin/dashboard/establishment/${establishmentId}/production`);
+                }
+              }}
+            >
+              Add Event
+            </Button>
+            <Button
+              size="sm"
+              colorScheme="orange"
+              variant="outline"
+              leftIcon={<FaCamera />}
+              onClick={() => {
+                if (prodParcelId) {
+                  navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${prodParcelId}`);
+                } else {
+                  navigate(`/admin/dashboard/establishment/${establishmentId}/production`);
+                }
+              }}
+            >
+              Add Photos
+            </Button>
+          </HStack>
+        )}
+      </VStack>
+    );
+  };
 
   const totalPhotos = comprehensiveData?.total_photos || 0;
+  const totalEvents = comprehensiveData?.total_events || 0;
+  const blockchainVerified = comprehensiveData?.verification_status?.blockchain_verified || 0;
 
-  // Show active productions (in-progress) for the header stat
-  // Total productions available in table for full context
+  // Production counts by status
   const activeProductions = comprehensiveData?.active_productions || 0;
-  const totalProductions = comprehensiveData?.total_productions || 0;
+  const completedProductions = comprehensiveData?.completed_productions || 0;
 
   // Process event validation opportunities - Fix data source location
   const eventOpportunities =
@@ -329,26 +492,6 @@ function TransparencyDashboard() {
     comprehensiveData?.missing_data_opportunities ||
     [];
 
-  // DEBUG: Log the actual data structure with all levels + transparency API
-  console.log('🔍 DEBUG - Producer Dashboard Transparency Resolution:');
-  console.log(
-    '📊 transparencyApiData?.quick_view?.transparency_score?.percentage:',
-    transparencyApiData?.quick_view?.transparency_score?.percentage
-  );
-  console.log(
-    '📊 transparencyMetrics?.overall_transparency_score:',
-    transparencyMetrics?.overall_transparency_score
-  );
-  console.log(
-    '📊 comprehensiveData?.transparency_percentage:',
-    comprehensiveData?.transparency_percentage
-  );
-  console.log('✅ getTransparencyScore() result:', getTransparencyScore());
-  console.log('🎯 actualTransparencyScore (display):', actualTransparencyScore);
-  console.log('🔍 eventOpportunities:', eventOpportunities);
-  console.log('🔍 dashboardData keys:', Object.keys(dashboardData || {}));
-  console.log('🔍 transparencyApiData keys:', Object.keys(transparencyApiData || {}));
-  console.log('🔍 totalProductions:', totalProductions);
 
   const priorityGroups = eventOpportunities.reduce((acc, opportunity) => {
     const priority = opportunity.priority || 'medium';
@@ -502,7 +645,7 @@ function TransparencyDashboard() {
                           {Math.round(actualTransparencyScore * 100)}%
                         </Text>
                         <Text fontSize="sm" color="green.600">
-                          Transparency
+                          Transparency Score
                         </Text>
                       </VStack>
                     </CardBody>
@@ -511,12 +654,12 @@ function TransparencyDashboard() {
                   <Card bg="blue.50" border="1px solid" borderColor="blue.100" borderRadius="xl">
                     <CardBody p={4} textAlign="center">
                       <VStack spacing={2}>
-                        <Icon as={FaCertificate} color="blue.500" boxSize={6} />
+                        <Icon as={FaCloudUploadAlt} color="blue.500" boxSize={6} />
                         <Text fontSize="xl" fontWeight="bold" color="blue.700">
-                          {totalVerifiedProductions}
+                          {totalEvents}
                         </Text>
                         <Text fontSize="sm" color="blue.600">
-                          Verified
+                          Events Logged
                         </Text>
                       </VStack>
                     </CardBody>
@@ -535,7 +678,7 @@ function TransparencyDashboard() {
                           {totalPhotos}
                         </Text>
                         <Text fontSize="sm" color="purple.600">
-                          Photos
+                          Photos Added
                         </Text>
                       </VStack>
                     </CardBody>
@@ -549,10 +692,22 @@ function TransparencyDashboard() {
                   >
                     <CardBody p={4} textAlign="center">
                       <VStack spacing={2}>
-                        <Icon as={FaDatabase} color="orange.500" boxSize={6} />
-                        <Text fontSize="xl" fontWeight="bold" color="orange.700">
-                          {totalProductions}
-                        </Text>
+                        <Icon as={FaSeedling} color="orange.500" boxSize={6} />
+                        <HStack spacing={3} justify="center">
+                          <VStack spacing={0}>
+                            <Text fontSize="lg" fontWeight="bold" color="green.600">
+                              {activeProductions}
+                            </Text>
+                            <Text fontSize="xs" color="green.500">Active</Text>
+                          </VStack>
+                          <Text color="gray.300">|</Text>
+                          <VStack spacing={0}>
+                            <Text fontSize="lg" fontWeight="bold" color="orange.600">
+                              {completedProductions}
+                            </Text>
+                            <Text fontSize="xs" color="orange.500">Completed</Text>
+                          </VStack>
+                        </HStack>
                         <Text fontSize="sm" color="orange.600">
                           Productions
                         </Text>
@@ -562,125 +717,470 @@ function TransparencyDashboard() {
                 </SimpleGrid>
               </Box>
 
-              {/* Verification Status Overview */}
-              <Box>
-                <Heading size="md" color={titleColor} mb={4} fontSize={{ base: 'lg', md: 'xl' }}>
-                  Verification Status
-                </Heading>
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-                  {/* USDA Verification */}
-                  <Card border="1px solid" borderColor="blue.100" bg="blue.25" borderRadius="xl">
+              {/* Score Insight Banner - Next Milestone */}
+              {(() => {
+                const score = Math.round(actualTransparencyScore * 100);
+                const milestone = getNextMilestone(score);
+
+                if (!milestone) {
+                  return (
+                    <Card bg="green.50" border="1px solid" borderColor="green.200" borderRadius="xl">
+                      <CardBody p={4}>
+                        <HStack spacing={3}>
+                          <Icon as={FaTrophy} color="green.500" boxSize={6} />
+                          <VStack align="start" spacing={1} flex={1}>
+                            <Text fontWeight="bold" color="green.700" fontSize="sm">
+                              Outstanding Transparency!
+                            </Text>
+                            <Text fontSize="xs" color="green.600">
+                              Your documentation exceeds industry excellence standards. Consumers can see exactly how their food was grown.
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </CardBody>
+                    </Card>
+                  );
+                }
+
+                const pointsNeeded = milestone.target - score;
+                const progressPercent = (score / milestone.target) * 100;
+
+                // Identify top bottleneck from category breakdown
+                const breakdown = transparencyMetrics?.transparency_breakdown || {};
+                const criticalCategories = Object.entries(breakdown)
+                  .filter(([key, cat]: [string, any]) =>
+                    cat.requires_photos && cat.actual_count > 0 && cat.photo_verification_rate < 80
+                  );
+                const hasPhotoBottleneck = criticalCategories.length > 0 && totalPhotos === 0;
+                const emptyCategories = Object.entries(breakdown)
+                  .filter(([, cat]: [string, any]) => cat.actual_count === 0);
+
+                let bottleneckText = '';
+                if (hasPhotoBottleneck) {
+                  bottleneckText = `Add photos to your events — ${criticalCategories.length} critical categories need photo evidence to unlock full completeness.`;
+                } else if (emptyCategories.length > 0) {
+                  const names = emptyCategories.map(([, cat]: [string, any]) => cat.consumer_name || '').filter(Boolean).join(', ');
+                  bottleneckText = `Start documenting: ${names} — these categories have no events yet.`;
+                }
+
+                return (
+                  <Card bg="blue.50" border="1px solid" borderColor="blue.200" borderRadius="xl">
                     <CardBody p={4}>
                       <VStack spacing={3} align="stretch">
-                        <HStack justify="space-between">
-                          <HStack spacing={2}>
-                            <Icon as={FaCertificate} color="blue.500" boxSize={5} />
-                            <Text fontWeight="semibold" color={textColor} fontSize="sm">
-                              USDA Verified
+                        <HStack spacing={3}>
+                          <Icon as={FaBullseye} color="blue.500" boxSize={5} />
+                          <VStack align="start" spacing={0} flex={1}>
+                            <Text fontWeight="bold" color="blue.700" fontSize="sm">
+                              Next Goal: {milestone.label}
                             </Text>
-                          </HStack>
-                          <Badge colorScheme="blue" variant="solid">
-                            {comprehensiveData?.verification_status?.usda_verified || 0}
-                          </Badge>
+                            <Text fontSize="xs" color="blue.600">
+                              {pointsNeeded} more points to reach {milestone.target}%
+                            </Text>
+                          </VStack>
+                          <Text fontWeight="bold" color="blue.700" fontSize="lg">
+                            {score}%
+                            <Text as="span" fontWeight="normal" fontSize="sm" color="blue.500">
+                              {' '}/ {milestone.target}%
+                            </Text>
+                          </Text>
                         </HStack>
                         <Progress
-                          value={(comprehensiveData?.verification_status?.usda_verified || 0) * 10}
+                          value={progressPercent}
                           colorScheme="blue"
                           borderRadius="full"
-                          size="md"
+                          size="sm"
+                          bg="blue.100"
                         />
-                        {(comprehensiveData?.verification_status?.usda_verified || 0) === 0 ? (
+                        {bottleneckText && (
                           <Text fontSize="xs" color="blue.600">
-                            Add product verification to build consumer trust
-                          </Text>
-                        ) : (
-                          <Text fontSize="xs" color="blue.600">
-                            Your products are officially verified by USDA
+                            Top opportunity: {bottleneckText}
                           </Text>
                         )}
                       </VStack>
                     </CardBody>
                   </Card>
+                );
+              })()}
 
-                  {/* Blockchain Verification */}
-                  <Card
-                    border="1px solid"
-                    borderColor="purple.100"
-                    bg="purple.25"
-                    borderRadius="xl"
+              {/* Critical Photo Alert - When 0 Photos Across Critical Categories */}
+              {totalPhotos === 0 && totalEvents > 0 && (
+                <Alert
+                  status="warning"
+                  variant="left-accent"
+                  borderRadius="xl"
+                  bg="orange.50"
+                  borderLeftColor="orange.400"
+                  borderLeftWidth="4px"
+                >
+                  <AlertIcon color="orange.500" boxSize={5} />
+                  <VStack align="start" spacing={1} flex={1}>
+                    <Text fontWeight="bold" color="orange.800" fontSize="sm">
+                      No Photos Added — This Reduces Your Score by Up to 50%
+                    </Text>
+                    <Text fontSize="xs" color="orange.700" lineHeight="1.5">
+                      Essential events (planting, harvesting, chemical applications, pest identification) require
+                      photo evidence for full scores. Recommended events (pruning, soil tests, scouting) get a
+                      lighter penalty. Adding photos to your existing {totalEvents} events could significantly raise your score.
+                    </Text>
+                  </VStack>
+                  <Button
+                    size="sm"
+                    colorScheme="orange"
+                    variant="solid"
+                    leftIcon={<FaCamera />}
+                    flexShrink={0}
+                    onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/production`)}
                   >
-                    <CardBody p={4}>
-                      <VStack spacing={3} align="stretch">
-                        <HStack justify="space-between">
-                          <HStack spacing={2}>
-                            <Icon as={FaShieldAlt} color="purple.500" boxSize={5} />
-                            <Text fontWeight="semibold" color={textColor} fontSize="sm">
-                              Blockchain
-                            </Text>
-                          </HStack>
-                          <Badge colorScheme="purple" variant="solid">
-                            {comprehensiveData?.verification_status?.blockchain_verified || 0}
-                          </Badge>
-                        </HStack>
-                        <Progress
-                          value={
-                            (comprehensiveData?.verification_status?.blockchain_verified || 0) * 10
-                          }
-                          colorScheme="purple"
-                          borderRadius="full"
-                          size="md"
-                        />
-                        <Text fontSize="xs" color="purple.600">
-                          Ultimate verification with subscription
+                    Add Photos
+                  </Button>
+                </Alert>
+              )}
+
+              {/* Blockchain Verification - Feature Awareness */}
+              {blockchainVerified > 0 ? (
+                <Card
+                  border="1px solid"
+                  borderColor="green.200"
+                  bg="green.50"
+                  borderRadius="xl"
+                >
+                  <CardBody p={4}>
+                    <HStack spacing={3}>
+                      <Icon as={FaShieldAlt} color="green.500" boxSize={6} />
+                      <VStack align="start" spacing={0} flex={1}>
+                        <Text fontWeight="semibold" color="green.700" fontSize="sm">
+                          Blockchain Verified
+                        </Text>
+                        <Text fontSize="xs" color="green.600">
+                          {blockchainVerified} production{blockchainVerified !== 1 ? 's' : ''} verified
+                          with immutable on-chain records
                         </Text>
                       </VStack>
-                    </CardBody>
-                  </Card>
-
-                  {/* Photo Verification */}
-                  <Card
-                    border="1px solid"
-                    borderColor="orange.100"
-                    bg="orange.25"
-                    borderRadius="xl"
-                  >
-                    <CardBody p={4}>
-                      <VStack spacing={3} align="stretch">
-                        <HStack justify="space-between">
-                          <HStack spacing={2}>
-                            <Icon as={FaPhotoVideo} color="orange.500" boxSize={5} />
-                            <Text fontWeight="semibold" color={textColor} fontSize="sm">
-                              Photo Verified
-                            </Text>
-                          </HStack>
-                          <Badge colorScheme="orange" variant="solid">
-                            {comprehensiveData?.verification_status?.photo_verified || 0}
-                          </Badge>
-                        </HStack>
-                        <Progress
-                          value={(comprehensiveData?.verification_status?.photo_verified || 0) * 2}
-                          colorScheme="orange"
-                          borderRadius="full"
-                          size="md"
-                        />
-                        {(comprehensiveData?.verification_status?.photo_verified || 0) < 10 && (
-                          <Text fontSize="xs" color="orange.600">
-                            Add photos to build consumer trust
-                          </Text>
-                        )}
+                      <Badge colorScheme="green" variant="solid">
+                        {blockchainVerified}
+                      </Badge>
+                    </HStack>
+                  </CardBody>
+                </Card>
+              ) : (
+                <Card
+                  border="1px dashed"
+                  borderColor="purple.200"
+                  bg="purple.50"
+                  borderRadius="xl"
+                  cursor="pointer"
+                  onClick={() => navigate('/admin/dashboard/subscription')}
+                  _hover={{ bg: 'purple.100', borderColor: 'purple.300' }}
+                  transition="all 0.2s"
+                >
+                  <CardBody p={4}>
+                    <HStack spacing={3}>
+                      <Icon as={FaShieldAlt} color="purple.400" boxSize={6} />
+                      <VStack align="start" spacing={0} flex={1}>
+                        <Text fontWeight="semibold" color="purple.700" fontSize="sm">
+                          Blockchain Verification Available
+                        </Text>
+                        <Text fontSize="xs" color="purple.600">
+                          Add immutable proof of your farming practices for maximum consumer trust
+                        </Text>
                       </VStack>
-                    </CardBody>
-                  </Card>
-                </SimpleGrid>
+                      <Button
+                        size="xs"
+                        colorScheme="purple"
+                        variant="outline"
+                        rightIcon={<FaArrowRight />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate('/admin/dashboard/subscription');
+                        }}
+                      >
+                        Learn More
+                      </Button>
+                    </HStack>
+                  </CardBody>
+                </Card>
+              )}
+
+              {/* Your Productions - Expandable Cards with Per-Production Breakdown */}
+              <Box>
+                <Heading size="md" color={titleColor} mb={2} fontSize={{ base: 'lg', md: 'xl' }}>
+                  Your Productions
+                </Heading>
+                <Text fontSize="sm" color="gray.600" mb={4}>
+                  Click any production to see exactly why its score is what it is and how to improve it
+                </Text>
+
+                {isProductionsLoading ? (
+                  <VStack spacing={4} py={8}>
+                    <Spinner size="lg" color="green.500" />
+                    <Text fontSize="sm" color="gray.600">Loading productions...</Text>
+                  </VStack>
+                ) : productionsError ? (
+                  <Alert status="error" borderRadius="md">
+                    <AlertIcon />
+                    <Text fontSize="sm" fontWeight="semibold">Failed to load productions</Text>
+                  </Alert>
+                ) : productions.length === 0 ? (
+                  <VStack spacing={4} py={8}>
+                    <Icon as={FaLeaf} boxSize={12} color="gray.400" />
+                    <Text fontSize="md" fontWeight="semibold" color="gray.600">No productions found</Text>
+                    <Text fontSize="sm" color="gray.500">Create your first production to start tracking transparency</Text>
+                  </VStack>
+                ) : (
+                  <Accordion allowMultiple>
+                    {[...productions]
+                      .sort((a: any, b: any) => {
+                        // Active productions first, then completed
+                        if (!a.finish_date && b.finish_date) return -1;
+                        if (a.finish_date && !b.finish_date) return 1;
+                        return 0;
+                      })
+                      .map((production: any) => {
+                        const isActive = !production.finish_date;
+                        const score = production.transparency_score || 0;
+                        const scoreColor = score >= 80 ? 'green' : score >= 60 ? 'yellow' : 'red';
+
+                        return (
+                          <AccordionItem
+                            key={production.id}
+                            border="2px solid"
+                            borderColor={isActive ? 'green.200' : 'gray.200'}
+                            borderRadius="xl"
+                            mb={3}
+                            overflow="hidden"
+                          >
+                            {({ isExpanded }) => (
+                              <>
+                                <AccordionButton
+                                  py={4}
+                                  px={4}
+                                  bg={isActive ? 'green.50' : 'gray.50'}
+                                  _hover={{ bg: isActive ? 'green.100' : 'gray.100' }}
+                                  borderRadius={isExpanded ? 'none' : 'xl'}
+                                >
+                                  <VStack align="stretch" flex={1} spacing={2}>
+                                    <HStack justify="space-between" w="full">
+                                      <HStack spacing={2}>
+                                        <Badge
+                                          colorScheme={isActive ? 'green' : 'gray'}
+                                          variant={isActive ? 'solid' : 'subtle'}
+                                          fontSize="xs"
+                                        >
+                                          {isActive ? 'Active' : 'Completed'}
+                                        </Badge>
+                                        <Text fontWeight="bold" fontSize="sm" color="gray.800">
+                                          {production.name}
+                                        </Text>
+                                        <Text fontSize="xs" color="gray.500">#{production.id}</Text>
+                                      </HStack>
+                                      <HStack spacing={3}>
+                                        <HStack spacing={1}>
+                                          <Text fontWeight="bold" fontSize="md" color={`${scoreColor}.600`}>
+                                            {score}%
+                                          </Text>
+                                          <Icon as={FaLeaf} boxSize={3} color={`${scoreColor}.500`} />
+                                        </HStack>
+                                        <AccordionIcon />
+                                      </HStack>
+                                    </HStack>
+                                    <HStack spacing={4} fontSize="xs" color="gray.500">
+                                      <Text>
+                                        Started: {new Date(production.start_date).toLocaleDateString()}
+                                      </Text>
+                                      {production.finish_date && (
+                                        <Text>
+                                          Ended: {new Date(production.finish_date).toLocaleDateString()}
+                                        </Text>
+                                      )}
+                                      <Text fontWeight="medium" color={`${scoreColor}.600`}>
+                                        {score >= 80 ? 'Excellent' : score >= 60 ? 'Good' : score > 0 ? 'Needs Improvement' : 'No Data'}
+                                      </Text>
+                                    </HStack>
+                                  </VStack>
+                                </AccordionButton>
+
+                                <AccordionPanel pb={4} px={4} bg="white">
+                                  {isExpanded && (
+                                    <ProductionTransparencyDetail prodId={production.id} prodName={production.name} isActive={isActive} />
+                                  )}
+
+                                  {/* Consumer visibility controls */}
+                                  <HStack
+                                    mt={4}
+                                    pt={3}
+                                    borderTop="1px solid"
+                                    borderTopColor="gray.100"
+                                    justify="space-between"
+                                    flexWrap="wrap"
+                                    gap={2}
+                                  >
+                                    <HStack spacing={2}>
+                                      <Text fontSize="xs" color="gray.500">Consumer Visible:</Text>
+                                      {production.finish_date ? (
+                                        <>
+                                          <Switch
+                                            colorScheme="green"
+                                            isChecked={production.published}
+                                            onChange={() => handleToggleProduction(production.id, production.published)}
+                                            size="sm"
+                                          />
+                                          {production.published && (
+                                            <Button
+                                              size="xs"
+                                              colorScheme="blue"
+                                              variant="ghost"
+                                              leftIcon={<FaExternalLinkAlt />}
+                                              onClick={() =>
+                                                window.open(
+                                                  `http://consumer.localhost:3000/production/${production.id}`,
+                                                  '_blank'
+                                                )
+                                              }
+                                            >
+                                              View QR
+                                            </Button>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <Text fontSize="xs" color="orange.500" fontWeight="medium">
+                                          Complete production first
+                                        </Text>
+                                      )}
+                                    </HStack>
+                                  </HStack>
+                                </AccordionPanel>
+                              </>
+                            )}
+                          </AccordionItem>
+                        );
+                      })}
+                  </Accordion>
+                )}
               </Box>
+
+              {/* Documentation Coverage - Establishment Average */}
+              {transparencyMetrics?.transparency_breakdown &&
+                Object.keys(transparencyMetrics.transparency_breakdown).length > 0 && (
+                <Box>
+                  <Heading size="md" color={titleColor} mb={1} fontSize={{ base: 'lg', md: 'xl' }}>
+                    Documentation Coverage
+                  </Heading>
+                  <Text fontSize="sm" color="gray.500" mb={4}>
+                    Establishment average across all productions. Expand each production above for specific details.
+                  </Text>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                    {Object.entries(transparencyMetrics.transparency_breakdown as Record<string, any>)
+                      .sort(([a]: [string, any], [b]: [string, any]) =>
+                        (CATEGORY_WEIGHTS[b] || 0) - (CATEGORY_WEIGHTS[a] || 0)
+                      )
+                      .map(([key, cat]: [string, any]) => {
+                        const weight = CATEGORY_WEIGHTS[key] || 5;
+                        const needsPhotos = cat.requires_photos && cat.photo_verification_rate < 80 && cat.actual_count > 0;
+                        const isEmpty = cat.actual_count === 0;
+
+                        return (
+                          <Box
+                            key={key}
+                            p={3}
+                            bg="gray.50"
+                            borderRadius="lg"
+                            border="1px solid"
+                            borderColor={
+                              cat.completeness_percentage >= 80
+                                ? 'green.200'
+                                : cat.completeness_percentage >= 50
+                                ? 'yellow.200'
+                                : cat.actual_count > 0
+                                ? 'orange.200'
+                                : 'gray.200'
+                            }
+                          >
+                            <HStack justify="space-between" mb={2}>
+                              <HStack spacing={2}>
+                                <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                                  {cat.consumer_name || key}
+                                </Text>
+                                <Badge
+                                  fontSize="2xs"
+                                  colorScheme="gray"
+                                  variant="outline"
+                                  borderRadius="full"
+                                >
+                                  {weight}% weight
+                                </Badge>
+                              </HStack>
+                              <Badge
+                                colorScheme={
+                                  cat.completeness_percentage >= 80
+                                    ? 'green'
+                                    : cat.completeness_percentage >= 50
+                                    ? 'yellow'
+                                    : cat.actual_count > 0
+                                    ? 'orange'
+                                    : 'gray'
+                                }
+                                fontSize="xs"
+                              >
+                                {cat.actual_count} event{cat.actual_count !== 1 ? 's' : ''}
+                              </Badge>
+                            </HStack>
+                            <Progress
+                              value={cat.completeness_percentage || 0}
+                              colorScheme={
+                                cat.completeness_percentage >= 80
+                                  ? 'green'
+                                  : cat.completeness_percentage >= 50
+                                  ? 'yellow'
+                                  : cat.actual_count > 0
+                                  ? 'orange'
+                                  : 'gray'
+                              }
+                              borderRadius="full"
+                              size="sm"
+                              mb={1}
+                            />
+                            <Text fontSize="xs" color="gray.500">
+                              {cat.completeness_percentage >= 90
+                                ? 'Fully documented'
+                                : isEmpty
+                                ? `Log 1+ events here for up to +${weight}% score`
+                                : needsPhotos
+                                ? `Add photos to unlock full +${weight}% contribution`
+                                : cat.transparency_level || 'Documented'}
+                            </Text>
+                          </Box>
+                        );
+                      })}
+                  </SimpleGrid>
+                </Box>
+              )}
 
               {/* Event Validation Opportunities - Specific Edit Links */}
               {sortedOpportunities.length > 0 && (
                 <Box>
-                  <Heading size="md" color="orange.600" mb={4} fontSize={{ base: 'lg', md: 'xl' }}>
-                    <Icon as={FaExclamationTriangle} mr={2} />
-                    Transparency Improvement Actions
-                  </Heading>
+                  <HStack justify="space-between" align="center" mb={4} flexWrap="wrap" gap={2}>
+                    <Heading size="md" color="orange.600" fontSize={{ base: 'lg', md: 'xl' }}>
+                      <Icon as={FaExclamationTriangle} mr={2} />
+                      Transparency Improvement Actions
+                    </Heading>
+                    {(() => {
+                      const currentScore = Math.round(actualTransparencyScore * 100);
+                      const totalImprovement = sortedOpportunities.reduce((sum: number, opp: any) => {
+                        const match = (opp.potential_improvement || '').match(/\+?(\d+)/);
+                        return sum + (match ? parseInt(match[1], 10) : 0);
+                      }, 0);
+                      const projectedScore = Math.min(currentScore + totalImprovement, 100);
+
+                      if (totalImprovement > 0) {
+                        return (
+                          <Badge colorScheme="green" fontSize="sm" px={3} py={1} borderRadius="full">
+                            {currentScore}% → could reach ~{projectedScore}%
+                          </Badge>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </HStack>
                   <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
                     {sortedOpportunities.map((opportunity, index) => (
                       <Card
@@ -736,7 +1236,7 @@ function TransparencyDashboard() {
                                 (opportunity.type === 'photo_validation'
                                   ? 'Photos show consumers how you grow their food and build trust in your farming practices.'
                                   : opportunity.type === 'usda_verification'
-                                  ? 'USDA verification proves your products are officially recognized and increases consumer confidence.'
+                                  ? 'Comprehensive documentation proves your products are transparently tracked and increases consumer confidence.'
                                   : 'More transparency helps consumers trust your farming methods and choose your products.')}
                             </Text>
 
@@ -762,789 +1262,74 @@ function TransparencyDashboard() {
                 </Box>
               )}
 
-              {/* Carbon Impact Summary */}
+              {/* Environmental Impact Details - Collapsed by default */}
               {carbonSummary && (
-                <Box>
-                  <Heading size="md" color={titleColor} mb={4} fontSize={{ base: 'lg', md: 'xl' }}>
-                    Environmental Impact
-                  </Heading>
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    <Card
-                      bg="green.50"
-                      border="1px solid"
-                      borderColor="green.100"
-                      borderRadius="xl"
+                <Accordion allowToggle>
+                  <AccordionItem border="none">
+                    <AccordionButton
+                      px={0}
+                      py={3}
+                      _hover={{ bg: 'transparent' }}
                     >
-                      <CardBody p={4} textAlign="center">
-                        <VStack spacing={2}>
-                          <Icon as={FaLeaf} color="green.500" boxSize={6} />
-                          <Text fontSize="xl" fontWeight="bold" color="green.700">
-                            {carbonSummary.per_production?.toFixed(1) || '0.0'} kg
-                          </Text>
-                          <Text fontSize="sm" color="green.600">
-                            CO₂e per production
-                          </Text>
-                        </VStack>
-                      </CardBody>
-                    </Card>
-
-                    <Card bg="blue.50" border="1px solid" borderColor="blue.100" borderRadius="xl">
-                      <CardBody p={4} textAlign="center">
-                        <VStack spacing={2}>
-                          <Icon as={FaDatabase} color="blue.500" boxSize={6} />
-                          <Text fontSize="xl" fontWeight="bold" color="blue.700">
-                            {carbonSummary.per_hectare?.toFixed(1) || '0.0'} kg
-                          </Text>
-                          <Text fontSize="sm" color="blue.600">
-                            CO₂e per hectare
-                          </Text>
-                        </VStack>
-                      </CardBody>
-                    </Card>
-
-                    <Card
-                      bg="purple.50"
-                      border="1px solid"
-                      borderColor="purple.100"
-                      borderRadius="xl"
-                    >
-                      <CardBody p={4} textAlign="center">
-                        <VStack spacing={2}>
-                          <Icon as={FaChartLine} color="purple.500" boxSize={6} />
-                          <Text fontSize="xl" fontWeight="bold" color="purple.700">
-                            {carbonSummary.net_carbon?.toFixed(1) || '0.0'} kg
-                          </Text>
-                          <Text fontSize="sm" color="purple.600">
-                            Net carbon impact
-                          </Text>
-                        </VStack>
-                      </CardBody>
-                    </Card>
-                  </SimpleGrid>
-                </Box>
+                      <HStack flex="1" textAlign="left" spacing={2}>
+                        <Icon as={FaLeaf} color="gray.500" boxSize={4} />
+                        <Text fontSize="md" color="gray.600" fontWeight="medium">
+                          Environmental Impact Details
+                        </Text>
+                      </HStack>
+                      <AccordionIcon color="gray.500" />
+                    </AccordionButton>
+                    <AccordionPanel px={0} pb={4}>
+                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                        <Card bg="green.50" border="1px solid" borderColor="green.100" borderRadius="xl">
+                          <CardBody p={4} textAlign="center">
+                            <VStack spacing={2}>
+                              <Icon as={FaLeaf} color="green.500" boxSize={6} />
+                              <Text fontSize="xl" fontWeight="bold" color="green.700">
+                                {carbonSummary.per_production?.toFixed(1) || '0.0'} kg
+                              </Text>
+                              <Text fontSize="sm" color="green.600">CO₂e per production</Text>
+                            </VStack>
+                          </CardBody>
+                        </Card>
+                        <Card bg="blue.50" border="1px solid" borderColor="blue.100" borderRadius="xl">
+                          <CardBody p={4} textAlign="center">
+                            <VStack spacing={2}>
+                              <Icon as={FaDatabase} color="blue.500" boxSize={6} />
+                              <Text fontSize="xl" fontWeight="bold" color="blue.700">
+                                {carbonSummary.per_hectare?.toFixed(1) || '0.0'} kg
+                              </Text>
+                              <Text fontSize="sm" color="blue.600">CO₂e per hectare</Text>
+                            </VStack>
+                          </CardBody>
+                        </Card>
+                        <Card bg="purple.50" border="1px solid" borderColor="purple.100" borderRadius="xl">
+                          <CardBody p={4} textAlign="center">
+                            <VStack spacing={2}>
+                              <Icon as={FaChartLine} color="purple.500" boxSize={6} />
+                              <Text fontSize="xl" fontWeight="bold" color="purple.700">
+                                {carbonSummary.net_carbon?.toFixed(1) || '0.0'} kg
+                              </Text>
+                              <Text fontSize="sm" color="purple.600">Net carbon impact</Text>
+                            </VStack>
+                          </CardBody>
+                        </Card>
+                      </SimpleGrid>
+                    </AccordionPanel>
+                  </AccordionItem>
+                </Accordion>
               )}
 
-              <Divider />
-
-              {/* Transparency Value Center - Focus on what Trazo actually provides */}
-              <Box>
-                <Heading size="lg" color={titleColor} mb={4} fontSize={{ base: 'xl', md: '2xl' }}>
-                  <Icon as={FaTrophy} mr={3} />
-                  Your Transparency Impact
-                </Heading>
-
-                <Text fontSize="md" color={textColor} mb={4} lineHeight="1.6">
-                  Your {Math.round(actualTransparencyScore * 100)}% transparency score helps
-                  consumers understand your farming practices. Transparent farms see{' '}
-                  <Text as="span" fontWeight="bold" color="green.600">
-                    23% higher consumer engagement
+              {/* Transparency Information */}
+              <Box p={4} bg="gray.50" borderRadius="xl">
+                <Text fontSize="sm" color="gray.700" lineHeight="1.6" textAlign="center">
+                  <Text as="span" fontWeight="bold">
+                    Trazo showcases your existing farming practices
                   </Text>{' '}
-                  and
-                  <Text as="span" fontWeight="bold" color="green.600">
-                    {' '}
-                    stronger market trust
-                  </Text>
-                  .
+                  to help consumers understand how their food is grown. The transparency score
+                  reflects how well your agricultural practices are documented for consumer
+                  confidence.
                 </Text>
-
-                <Text fontSize="sm" color="gray.600" mb={6} lineHeight="1.5">
-                  Trazo showcases your existing farming practices to build consumer confidence in
-                  your agricultural methods.
-                </Text>
-
-                {/* Active Productions Section */}
-                <Card
-                  id="active-productions-section"
-                  bg="white"
-                  border="2px solid"
-                  borderColor="green.200"
-                  borderRadius="xl"
-                  mb={6}
-                >
-                  <CardHeader pb={4}>
-                    <HStack spacing={3}>
-                      <Icon as={FaEye} color="green.500" boxSize={6} />
-                      <VStack align="start" spacing={0}>
-                        <Text fontSize="lg" fontWeight="bold" color="green.700">
-                          Active Production QR Pages
-                        </Text>
-                        <Text fontSize="sm" color="gray.600" fontWeight="normal">
-                          Manage which productions are visible to consumers
-                        </Text>
-                      </VStack>
-                    </HStack>
-                  </CardHeader>
-                  <CardBody pt={0}>
-                    {isProductionsLoading ? (
-                      <VStack spacing={4} py={8}>
-                        <Spinner size="lg" color="green.500" />
-                        <Text fontSize="sm" color="gray.600">
-                          Loading productions...
-                        </Text>
-                      </VStack>
-                    ) : productionsError ? (
-                      <Alert status="error" borderRadius="md">
-                        <AlertIcon />
-                        <VStack align="start" spacing={1}>
-                          <Text fontSize="sm" fontWeight="semibold">
-                            Failed to load productions
-                          </Text>
-                          <Text fontSize="xs" color="gray.600">
-                            Please try refreshing the page
-                          </Text>
-                        </VStack>
-                      </Alert>
-                    ) : productions.length === 0 ? (
-                      <VStack spacing={4} py={8}>
-                        <Icon as={FaLeaf} boxSize={12} color="gray.400" />
-                        <VStack spacing={2} textAlign="center">
-                          <Text fontSize="md" fontWeight="semibold" color="gray.600">
-                            No productions found
-                          </Text>
-                          <Text fontSize="sm" color="gray.500">
-                            Create your first production to start tracking transparency
-                          </Text>
-                        </VStack>
-                      </VStack>
-                    ) : (
-                      <TableContainer>
-                        <Table variant="simple" size="sm">
-                          <Thead>
-                            <Tr>
-                              <Th>Production</Th>
-                              <Th>Status</Th>
-                              <Th>Transparency Score</Th>
-                              <Th>Carbon Footprint</Th>
-                              <Th>Start Date</Th>
-                              <Th>Consumer Visible</Th>
-                            </Tr>
-                          </Thead>
-                          <Tbody>
-                            {productions.map((production: any) => (
-                              <Tr
-                                key={production.id}
-                                bg={production.finish_date ? 'gray.50' : 'green.50'}
-                                borderLeft={production.finish_date ? '4px solid' : '4px solid'}
-                                borderLeftColor={production.finish_date ? 'gray.300' : 'green.400'}
-                                _hover={{
-                                  bg: production.finish_date ? 'gray.100' : 'green.100'
-                                }}
-                              >
-                                <Td>
-                                  <VStack align="start" spacing={1}>
-                                    <Text fontWeight="semibold" fontSize="sm">
-                                      {production.name}
-                                    </Text>
-                                    <Text fontSize="xs" color="gray.500">
-                                      ID: {production.id}
-                                    </Text>
-                                  </VStack>
-                                </Td>
-                                <Td>
-                                  <VStack align="start" spacing={1}>
-                                    <Badge
-                                      colorScheme={production.finish_date ? 'gray' : 'green'}
-                                      size="sm"
-                                      variant={production.finish_date ? 'subtle' : 'solid'}
-                                    >
-                                      {production.finish_date ? 'Completed' : 'Active Production'}
-                                    </Badge>
-                                    {production.finish_date ? (
-                                      <Text fontSize="xs" color="gray.500">
-                                        Ended:{' '}
-                                        {new Date(production.finish_date).toLocaleDateString()}
-                                      </Text>
-                                    ) : (
-                                      <Text fontSize="xs" color="green.600" fontWeight="medium">
-                                        In Progress
-                                      </Text>
-                                    )}
-                                  </VStack>
-                                </Td>
-                                <Td>
-                                  <VStack align="start" spacing={1}>
-                                    <HStack spacing={1}>
-                                      <Text
-                                        fontSize="sm"
-                                        fontWeight="semibold"
-                                        color={
-                                          production.transparency_score >= 80
-                                            ? 'green.600'
-                                            : production.transparency_score >= 60
-                                            ? 'yellow.600'
-                                            : 'red.500'
-                                        }
-                                      >
-                                        {production.transparency_score || 0}%
-                                      </Text>
-                                      <Icon
-                                        as={FaLeaf}
-                                        boxSize={3}
-                                        color={
-                                          production.transparency_score >= 80
-                                            ? 'green.500'
-                                            : production.transparency_score >= 60
-                                            ? 'yellow.500'
-                                            : 'red.400'
-                                        }
-                                      />
-                                    </HStack>
-                                    <Text fontSize="xs" color="gray.500">
-                                      {production.transparency_score >= 80
-                                        ? 'Excellent'
-                                        : production.transparency_score >= 60
-                                        ? 'Good'
-                                        : production.transparency_score > 0
-                                        ? 'Needs Improvement'
-                                        : 'No Data'}
-                                    </Text>
-                                  </VStack>
-                                </Td>
-                                <Td>
-                                  <VStack align="start" spacing={1}>
-                                    <HStack spacing={1}>
-                                      <Text fontSize="sm" fontWeight="semibold" color="gray.700">
-                                        {production.carbon_footprint || 0}
-                                      </Text>
-                                      <Text fontSize="xs" color="gray.500">
-                                        kg CO₂e
-                                      </Text>
-                                    </HStack>
-                                    <Text fontSize="xs" color="gray.500">
-                                      {production.carbon_footprint > 0
-                                        ? production.finish_date
-                                          ? 'Final'
-                                          : 'Estimated'
-                                        : 'Calculating...'}
-                                    </Text>
-                                  </VStack>
-                                </Td>
-                                <Td>
-                                  <Text fontSize="sm" color="gray.600">
-                                    {new Date(production.start_date).toLocaleDateString()}
-                                  </Text>
-                                </Td>
-                                <Td>
-                                  {/* Only COMPLETED productions can be made visible to consumers */}
-                                  {production.finish_date ? (
-                                    <HStack spacing={2}>
-                                      <Tooltip
-                                        label={
-                                          production.published
-                                            ? 'Visible to consumers - click to hide'
-                                            : 'Hidden from consumers - click to make visible'
-                                        }
-                                      >
-                                        <Box>
-                                          <Switch
-                                            colorScheme="green"
-                                            isChecked={production.published}
-                                            onChange={() =>
-                                              handleToggleProduction(
-                                                production.id,
-                                                production.published
-                                              )
-                                            }
-                                            size="sm"
-                                          />
-                                        </Box>
-                                      </Tooltip>
-                                      <Tooltip label="View Consumer Page">
-                                        <Button
-                                          size="xs"
-                                          colorScheme="blue"
-                                          variant="ghost"
-                                          leftIcon={<FaExternalLinkAlt />}
-                                          onClick={() =>
-                                            window.open(
-                                              `http://consumer.localhost:3000/production/${production.id}`,
-                                              '_blank'
-                                            )
-                                          }
-                                          isDisabled={!production.published}
-                                        >
-                                          View QR
-                                        </Button>
-                                      </Tooltip>
-                                    </HStack>
-                                  ) : (
-                                    <HStack spacing={2}>
-                                      <Tooltip label="Active productions cannot be visible to consumers until completed">
-                                        <Box>
-                                          <Switch
-                                            colorScheme="gray"
-                                            isChecked={false}
-                                            isDisabled={true}
-                                            size="sm"
-                                          />
-                                        </Box>
-                                      </Tooltip>
-                                      <Text fontSize="xs" color="orange.500" fontWeight="medium">
-                                        Complete first
-                                      </Text>
-                                    </HStack>
-                                  )}
-                                </Td>
-                              </Tr>
-                            ))}
-                          </Tbody>
-                        </Table>
-                      </TableContainer>
-                    )}
-                  </CardBody>
-                </Card>
-
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
-                  {/* Transparency Insights */}
-                  <Card
-                    bg="gradient-to-br from-green.50 to-green.100"
-                    border="2px solid"
-                    borderColor="green.200"
-                    borderRadius="xl"
-                    boxShadow="md"
-                    position="relative"
-                    overflow="hidden"
-                  >
-                    <CardBody p={6}>
-                      <VStack spacing={4} align="stretch">
-                        <HStack justify="space-between" align="start">
-                          <VStack align="start" spacing={2} flex={1}>
-                            <HStack spacing={2}>
-                              <Icon as={FaChartLine} color="green.600" boxSize={5} />
-                              <Text fontSize="md" fontWeight="bold" color="green.800">
-                                Transparency Impact
-                              </Text>
-                            </HStack>
-                            <Text fontSize="sm" color="green.700" lineHeight="1.5">
-                              Your {Math.round(actualTransparencyScore * 100)}% transparency helps
-                              consumers see how their food is grown
-                            </Text>
-                          </VStack>
-                          <Badge colorScheme="green" fontSize="xs" px={2} py={1}>
-                            {Math.round(actualTransparencyScore * 100)}%
-                          </Badge>
-                        </HStack>
-
-                        {/* Real QR Scan Metrics from HistoryScan */}
-                        <SimpleGrid columns={2} spacing={3}>
-                          <Box
-                            bg="white"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="green.200"
-                          >
-                            <VStack spacing={1} align="start">
-                              <HStack spacing={1}>
-                                <Icon as={FaQrcode} color="green.500" boxSize={3} />
-                                <Text fontSize="xs" color="gray.600">
-                                  Monthly Scans
-                                </Text>
-                              </HStack>
-                              <Text fontSize="lg" fontWeight="bold" color="green.600">
-                                {(dashboardData?.transparency_metrics as any)
-                                  ?.transparency_analytics?.monthly_qr_scans || 0}
-                              </Text>
-                            </VStack>
-                          </Box>
-                          <Box
-                            bg="white"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="green.200"
-                          >
-                            <VStack spacing={1} align="start">
-                              <HStack spacing={1}>
-                                <Icon as={FaUsers} color="green.500" boxSize={3} />
-                                <Text fontSize="xs" color="gray.600">
-                                  Unique Visitors
-                                </Text>
-                              </HStack>
-                              <Text fontSize="lg" fontWeight="bold" color="green.600">
-                                {(dashboardData?.transparency_metrics as any)
-                                  ?.transparency_analytics?.unique_visitors || 0}
-                              </Text>
-                            </VStack>
-                          </Box>
-                          <Box
-                            bg="white"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="green.200"
-                          >
-                            <VStack spacing={1} align="start">
-                              <HStack spacing={1}>
-                                <Icon as={FaGlobeAmericas} color="green.500" boxSize={3} />
-                                <Text fontSize="xs" color="gray.600">
-                                  Countries Reached
-                                </Text>
-                              </HStack>
-                              <Text fontSize="lg" fontWeight="bold" color="green.600">
-                                {(dashboardData?.transparency_metrics as any)
-                                  ?.transparency_analytics?.countries_reached || 0}
-                              </Text>
-                            </VStack>
-                          </Box>
-                          <Box
-                            bg="white"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="green.200"
-                          >
-                            <VStack spacing={1} align="start">
-                              <HStack spacing={1}>
-                                <Icon as={FaChartLine} color="green.500" boxSize={3} />
-                                <Text fontSize="xs" color="gray.600">
-                                  Scan Growth
-                                </Text>
-                              </HStack>
-                              <Text
-                                fontSize="lg"
-                                fontWeight="bold"
-                                color={
-                                  ((dashboardData?.transparency_metrics as any)
-                                    ?.transparency_analytics?.scan_growth_percent || 0) >= 0
-                                    ? 'green.600'
-                                    : 'red.500'
-                                }
-                              >
-                                {((dashboardData?.transparency_metrics as any)
-                                  ?.transparency_analytics?.scan_growth_percent || 0) >= 0
-                                  ? '+'
-                                  : ''}
-                                {(dashboardData?.transparency_metrics as any)
-                                  ?.transparency_analytics?.scan_growth_percent || 0}
-                                %
-                              </Text>
-                            </VStack>
-                          </Box>
-                        </SimpleGrid>
-
-                        {/* Recommendation based on real data */}
-                        {(dashboardData?.transparency_metrics as any)?.transparency_analytics
-                          ?.recommendations?.[0] && (
-                          <Box
-                            bg="green.50"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px dashed"
-                            borderColor="green.300"
-                          >
-                            <HStack spacing={2}>
-                              <Icon as={FaInfoCircle} color="green.600" boxSize={4} />
-                              <VStack align="start" spacing={0}>
-                                <Text fontSize="xs" fontWeight="semibold" color="green.700">
-                                  {
-                                    (dashboardData?.transparency_metrics as any)
-                                      ?.transparency_analytics?.recommendations?.[0]?.action
-                                  }
-                                </Text>
-                                <Text fontSize="xs" color="green.600">
-                                  {
-                                    (dashboardData?.transparency_metrics as any)
-                                      ?.transparency_analytics?.recommendations?.[0]?.impact
-                                  }
-                                </Text>
-                              </VStack>
-                            </HStack>
-                          </Box>
-                        )}
-
-                        <Button
-                          size="sm"
-                          colorScheme="green"
-                          variant="solid"
-                          rightIcon={<FaArrowRight />}
-                          onClick={() => navigate(`/admin/dashboard/education`)}
-                          _hover={{ transform: 'translateY(-1px)', boxShadow: 'lg' }}
-                        >
-                          Learn Best Practices
-                        </Button>
-                      </VStack>
-                    </CardBody>
-                  </Card>
-
-                  {/* Production Performance */}
-                  <Card
-                    bg="gradient-to-br from-blue.50 to-blue.100"
-                    border="2px solid"
-                    borderColor="blue.200"
-                    borderRadius="xl"
-                    boxShadow="md"
-                    position="relative"
-                    overflow="hidden"
-                  >
-                    <CardBody p={6}>
-                      <VStack spacing={4} align="stretch">
-                        <HStack justify="space-between" align="start">
-                          <VStack align="start" spacing={2} flex={1}>
-                            <HStack spacing={2}>
-                              <Icon as={FaSeedling} color="blue.600" boxSize={5} />
-                              <Text fontSize="md" fontWeight="bold" color="blue.800">
-                                Production Insights
-                              </Text>
-                            </HStack>
-                            <Text fontSize="sm" color="blue.700" lineHeight="1.5">
-                              {totalProductions} production{totalProductions !== 1 ? 's' : ''}{' '}
-                              documented this season
-                            </Text>
-                          </VStack>
-                          <Badge colorScheme="blue" fontSize="xs" px={2} py={1}>
-                            {totalProductions} Total
-                          </Badge>
-                        </HStack>
-
-                        <VStack spacing={3} align="stretch">
-                          <Box
-                            bg="white"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="blue.200"
-                          >
-                            <HStack justify="space-between">
-                              <Text fontSize="xs" color="gray.600">
-                                Average Carbon Score
-                              </Text>
-                              <Text fontSize="xs" fontWeight="semibold" color="blue.600">
-                                {productions.length > 0
-                                  ? `${(
-                                      productions.reduce(
-                                        (sum: number, p: any) => sum + (p.carbon_footprint || 0),
-                                        0
-                                      ) / productions.length
-                                    ).toFixed(1)} kg CO₂e`
-                                  : 'Calculating...'}
-                              </Text>
-                            </HStack>
-                          </Box>
-                          <Box
-                            bg="white"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="blue.200"
-                          >
-                            <HStack justify="space-between">
-                              <Text fontSize="xs" color="gray.600">
-                                Documentation Rate
-                              </Text>
-                              <Text fontSize="xs" fontWeight="semibold" color="blue.600">
-                                {Math.round(actualTransparencyScore * 100)}% Complete
-                              </Text>
-                            </HStack>
-                          </Box>
-                        </VStack>
-
-                        <Button
-                          size="sm"
-                          colorScheme="blue"
-                          variant="solid"
-                          rightIcon={<FaArrowRight />}
-                          onClick={() => {
-                            const section = document.getElementById('active-productions-section');
-                            if (section) {
-                              section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }
-                          }}
-                          isDisabled={!productions.length}
-                          _hover={{ transform: 'translateY(-1px)', boxShadow: 'lg' }}
-                        >
-                          View All Productions
-                        </Button>
-                      </VStack>
-                    </CardBody>
-                  </Card>
-
-                  {/* Next Steps - Real Actionable Data */}
-                  <Card
-                    bg="gradient-to-br from-purple.50 to-purple.100"
-                    border="2px solid"
-                    borderColor="purple.200"
-                    borderRadius="xl"
-                    boxShadow="md"
-                    position="relative"
-                    overflow="hidden"
-                  >
-                    <CardBody p={6}>
-                      <VStack spacing={4} align="stretch">
-                        <HStack justify="space-between" align="start">
-                          <VStack align="start" spacing={2} flex={1}>
-                            <HStack spacing={2}>
-                              <Icon as={FaRocket} color="purple.600" boxSize={5} />
-                              <Text fontSize="md" fontWeight="bold" color="purple.800">
-                                Next Steps
-                              </Text>
-                            </HStack>
-                            <Text fontSize="sm" color="purple.700" lineHeight="1.5">
-                              {actualTransparencyScore >= 0.7
-                                ? 'Great job! Keep documenting to maintain trust'
-                                : 'Document your farming practices to build consumer trust'}
-                            </Text>
-                          </VStack>
-                          <Badge
-                            colorScheme={
-                              actualTransparencyScore < 0.3
-                                ? 'red'
-                                : actualTransparencyScore < 0.7
-                                ? 'yellow'
-                                : 'green'
-                            }
-                            fontSize="xs"
-                            px={2}
-                            py={1}
-                          >
-                            {actualTransparencyScore < 0.3
-                              ? 'Priority'
-                              : actualTransparencyScore < 0.7
-                              ? 'In Progress'
-                              : 'Excellent'}
-                          </Badge>
-                        </HStack>
-
-                        {/* Real Progress Metrics */}
-                        <SimpleGrid columns={2} spacing={3}>
-                          <Box
-                            bg="white"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="purple.200"
-                          >
-                            <VStack spacing={1} align="start">
-                              <HStack spacing={1}>
-                                <Icon as={FaDatabase} color="purple.500" boxSize={3} />
-                                <Text fontSize="xs" color="gray.600">
-                                  Events Logged
-                                </Text>
-                              </HStack>
-                              <Text fontSize="lg" fontWeight="bold" color="purple.600">
-                                {comprehensiveData?.total_events || 0}
-                              </Text>
-                            </VStack>
-                          </Box>
-                          <Box
-                            bg="white"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor="purple.200"
-                          >
-                            <VStack spacing={1} align="start">
-                              <HStack spacing={1}>
-                                <Icon as={FaPhotoVideo} color="purple.500" boxSize={3} />
-                                <Text fontSize="xs" color="gray.600">
-                                  Photos Added
-                                </Text>
-                              </HStack>
-                              <Text fontSize="lg" fontWeight="bold" color="purple.600">
-                                {totalPhotos}
-                              </Text>
-                            </VStack>
-                          </Box>
-                        </SimpleGrid>
-
-                        {/* Progress Bar to Next Milestone */}
-                        <Box
-                          bg="white"
-                          p={3}
-                          borderRadius="lg"
-                          border="1px solid"
-                          borderColor="purple.200"
-                        >
-                          <VStack spacing={2} align="stretch">
-                            <HStack justify="space-between">
-                              <Text fontSize="xs" color="gray.600">
-                                Progress to{' '}
-                                {actualTransparencyScore < 0.3
-                                  ? '30%'
-                                  : actualTransparencyScore < 0.7
-                                  ? '70%'
-                                  : '100%'}
-                              </Text>
-                              <Text fontSize="xs" fontWeight="semibold" color="purple.600">
-                                {Math.round(actualTransparencyScore * 100)}%
-                              </Text>
-                            </HStack>
-                            <Progress
-                              value={
-                                actualTransparencyScore < 0.3
-                                  ? (actualTransparencyScore / 0.3) * 100
-                                  : actualTransparencyScore < 0.7
-                                  ? ((actualTransparencyScore - 0.3) / 0.4) * 100
-                                  : ((actualTransparencyScore - 0.7) / 0.3) * 100
-                              }
-                              colorScheme="purple"
-                              borderRadius="full"
-                              size="sm"
-                            />
-                          </VStack>
-                        </Box>
-
-                        {/* Top Priority Action from Real Data */}
-                        {eventOpportunities.length > 0 && (
-                          <Box
-                            bg="purple.50"
-                            p={3}
-                            borderRadius="lg"
-                            border="1px dashed"
-                            borderColor="purple.300"
-                          >
-                            <HStack spacing={2}>
-                              <Icon as={FaInfoCircle} color="purple.600" boxSize={4} />
-                              <VStack align="start" spacing={0}>
-                                <Text fontSize="xs" fontWeight="semibold" color="purple.700">
-                                  {eventOpportunities[0]?.title || 'Add more documentation'}
-                                </Text>
-                                <Text fontSize="xs" color="purple.600">
-                                  {eventOpportunities[0]?.items_count
-                                    ? `${eventOpportunities[0].items_count} items need attention`
-                                    : 'Improve your transparency score'}
-                                </Text>
-                              </VStack>
-                            </HStack>
-                          </Box>
-                        )}
-
-                        <Button
-                          size="sm"
-                          colorScheme="purple"
-                          variant="solid"
-                          rightIcon={<FaArrowRight />}
-                          onClick={() => {
-                            if (actualTransparencyScore < 0.7) {
-                              // Scroll to Active Productions section where users can add events
-                              const section = document.getElementById('active-productions-section');
-                              if (section) {
-                                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                              }
-                            } else {
-                              navigate(`/admin/dashboard/subscription`);
-                            }
-                          }}
-                          _hover={{ transform: 'translateY(-1px)', boxShadow: 'lg' }}
-                        >
-                          {actualTransparencyScore < 0.7 ? 'Improve Now' : 'View Premium Features'}
-                        </Button>
-                      </VStack>
-                    </CardBody>
-                  </Card>
-                </SimpleGrid>
-
-                {/* Transparency Information */}
-                <Box mt={6} p={4} bg="gray.50" borderRadius="xl">
-                  <Text fontSize="sm" color="gray.700" lineHeight="1.6" textAlign="center">
-                    <Text as="span" fontWeight="bold">
-                      Trazo showcases your existing farming practices
-                    </Text>{' '}
-                    to help consumers understand how their food is grown. The transparency score
-                    reflects how well your current agricultural information is documented and
-                    verified for consumer confidence.
-                  </Text>
-                </Box>
               </Box>
             </VStack>
           </CardBody>

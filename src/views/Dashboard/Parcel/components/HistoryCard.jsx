@@ -45,9 +45,11 @@ import { useGetParcelHistoriesQuery } from 'store/api/historyApi';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+import { useUserRole } from 'hooks/useUserRole';
 
 const HistoryCard = ({ amount }) => {
   const intl = useIntl();
+  const { canWrite } = useUserRole();
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -252,7 +254,7 @@ const HistoryCard = ({ amount }) => {
               )}
 
               {/* Only show New Production button when there are existing productions AND no current production */}
-              {data && data.length > 0 && !currentHistory?.product && (
+              {canWrite && data && data.length > 0 && !currentHistory?.product && (
                 <Button
                   size="sm"
                   bg="green.500"

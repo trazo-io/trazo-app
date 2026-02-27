@@ -24,7 +24,6 @@ import { keyframes } from '@emotion/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaLeaf,
-  FaShieldAlt,
   FaCertificate,
   FaUsers,
   FaStar,
@@ -104,7 +103,6 @@ interface CarbonHeroSectionProps {
   productData?: ProductBasicData;
   isLoading?: boolean;
   onLearnMore?: () => void;
-  onTrustDetails?: () => void;
 }
 
 export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
@@ -112,8 +110,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   trustData,
   productData,
   isLoading = false,
-  onLearnMore,
-  onTrustDetails
+  onLearnMore
 }) => {
   const [visibleElements, setVisibleElements] = useState(0);
   const [showDetailedComparison, setShowDetailedComparison] = useState(false);
@@ -280,31 +277,6 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     };
   };
 
-  const getTrustScore = () => {
-    if (!trustData) return 0;
-
-    let score = 0;
-    const maxScore = 100;
-
-    // Carbon score contribution (40%)
-    score += (carbonData?.score || 0) * 0.4;
-
-    // Verification contribution (30%)
-    if (trustData.isUSDAVerified) score += 15;
-    if (trustData.isBlockchainVerified) score += 15;
-
-    // Social proof contribution (20%)
-    if (trustData.reviewsCount > 0) {
-      score += Math.min(trustData.averageRating * 4, 15);
-      score += Math.min(trustData.reviewsCount / 10, 5);
-    }
-
-    // Transparency contribution (10%)
-    score += Math.min(trustData.transparencyScore * 0.1, 10);
-
-    return Math.min(Math.round(score), maxScore);
-  };
-
   const getRelatableComparison = (footprint: number) => {
     // In transparency mode, show transparency-related information instead of carbon comparisons
     if (carbonData?.level === 'transparency') {
@@ -418,8 +390,6 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   const impact = getImpactLevel(footprint);
   const comparison = getRelatableComparison(footprint);
   const message = getConsumerMessage(score, footprint);
-  const trustScore = getTrustScore();
-
   return (
     <Box
       minH={heroHeight}
@@ -604,23 +574,6 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                 wrap="wrap"
                 justify="center"
               >
-                {trustData.isUSDAVerified && (
-                  <Badge
-                    colorScheme="green"
-                    variant="subtle"
-                    px={3}
-                    py={2}
-                    borderRadius="full"
-                    fontSize="xs"
-                    animation={`${trustPulse} 2s ease-in-out infinite`}
-                  >
-                    <HStack spacing={1}>
-                      <Icon as={MdVerified} boxSize={3} />
-                      <Text>USDA Verified</Text>
-                    </HStack>
-                  </Badge>
-                )}
-
                 {trustData.isBlockchainVerified && (
                   <Badge
                     colorScheme="blue"
@@ -679,25 +632,6 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               >
                 Learn More
               </Button>
-
-              {trustData && (
-                <Button
-                  variant="outline"
-                  colorScheme="green"
-                  size="md"
-                  leftIcon={<Icon as={FaShieldAlt} />}
-                  onClick={onTrustDetails}
-                  borderRadius="full"
-                  px={6}
-                  _hover={{
-                    transform: 'translateY(-2px)',
-                    boxShadow: 'lg'
-                  }}
-                  transition="all 0.2s"
-                >
-                  Trust Score: {trustScore}%
-                </Button>
-              )}
             </MotionHStack>
           </MotionVStack>
         </AnimatePresence>

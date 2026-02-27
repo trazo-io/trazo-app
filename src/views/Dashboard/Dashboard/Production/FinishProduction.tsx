@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { StandardFinishProductionForm } from '../../../../components/Forms';
 import { useFinishCurrentHistoryMutation } from 'store/api/historyApi.js';
+import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 
 function FinishProduction() {
   const intl = useIntl();
@@ -39,11 +40,13 @@ function FinishProduction() {
   }, [isSuccess, navigate, establishmentId, parcelId]);
 
   return (
-    <StandardFinishProductionForm
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      isLoading={isLoading}
-    />
+    <WriteAccessGuard>
+      <StandardFinishProductionForm
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isLoading={isLoading}
+      />
+    </WriteAccessGuard>
   );
 }
 

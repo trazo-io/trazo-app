@@ -8,3 +8,13 @@ export const STAFF = 2;
 export const CONSUMER = 3;
 export const PRODUCER = 4;
 export const CERTIFIER = 5;
+
+// Company role codes (from WorksIn model)
+export const ROLE_COMPANY_ADMIN = 'CA';
+export const ROLE_FARM_MANAGER = 'FM';
+export const ROLE_VIEWER = 'VW';
+
+// Company role display names (from backend get_role_display)
+export const ROLE_DISPLAY_COMPANY_ADMIN = 'Company Admin';
+export const ROLE_DISPLAY_FARM_MANAGER = 'Farm Manager';
+export const ROLE_DISPLAY_VIEWER = 'Viewer';

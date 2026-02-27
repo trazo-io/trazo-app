@@ -66,10 +66,12 @@ import {
   FaCheckCircle,
   FaCertificate,
   FaStar,
-  FaCircle
+  FaCircle,
+  FaLayerGroup
 } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
 import { getVerificationBadgeConfig, VerificationLevel } from '../../utils/verificationTierHelpers';
+import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 
 // Real interfaces matching API data
 interface Member {
@@ -205,466 +207,282 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
   }
 };
 
-// Enhanced field extraction based on event type
+// Subtype-aware field extraction — shows the 3 most important fields per event type/subtype
 const extractEventFields = (event: Event) => {
   const fields: Array<{ label: string; value: string; icon?: any; color?: string }> = [];
-
-  // DEBUG: Log the entire event object
-  console.log('🐛 DEBUG: Full event object:', event);
-  console.log(
-    '🐛 DEBUG: Event ID:',
-    event.id,
-    'Event Type:',
-    event.event_type,
-    'Description:',
-    event.description
-  );
-
-  // Weather events now extract data from extra_data field
+  const subtype = event.type || '';
 
   switch (event.event_type) {
-    case 0: // Weather Event
-      // First check extra_data for weather fields
-      const extraData = event.extra_data || {};
-      console.log('🌦️ DEBUG Weather Event: extra_data contents:', extraData);
-      console.log('🌦️ DEBUG Weather Event: Direct event fields available:', {
-        highest_temperature: event.highest_temperature,
-        lower_temperature: event.lower_temperature,
-        water_deficit: event.water_deficit,
-        diameter: event.diameter,
-        weight: event.weight,
-        duration: event.duration,
-        way_of_protection: event.way_of_protection
-      });
+    case 0: { // Weather Event — subtype-aware priority
+      const ed = event.extra_data || {};
+      const wType = event.weather_type || subtype;
 
-      // Temperature fields
-      if (event.highest_temperature || extraData.highest_temperature) {
-        fields.push({
-          label: 'High Temp',
-          value: `${event.highest_temperature || extraData.highest_temperature}°C`,
-          icon: FaThermometerHalf,
-          color: 'red.500'
-        });
+      // Frost (FR): low temp → protection → duration
+      if (wType === 'FR' || subtype.includes('frost')) {
+        if (event.lower_temperature || ed.lower_temperature)
+          fields.push({ label: 'Low Temp', value: `${event.lower_temperature || ed.lower_temperature}°C`, icon: FaThermometerHalf, color: 'blue.500' });
+        const prot = event.way_of_protection || ed.way_of_protection;
+        if (prot) fields.push({ label: 'Protection', value: prot, icon: FaCheckCircle, color: 'green.500' });
       }
-      if (event.lower_temperature || extraData.lower_temperature) {
-        fields.push({
-          label: 'Low Temp',
-          value: `${event.lower_temperature || extraData.lower_temperature}°C`,
-          icon: FaThermometerHalf,
-          color: 'blue.500'
-        });
+      // Drought (DR): water deficit → duration
+      else if (wType === 'DR' || subtype.includes('drought')) {
+        const wd = event.water_deficit || ed.water_deficit;
+        if (wd) fields.push({ label: 'Water Deficit', value: `${wd}mm`, icon: FaTint, color: 'blue.600' });
       }
-
-      // Start Date for High Temperature events
-      if (event.start_date || extraData.start_date) {
-        const startDateValue = event.start_date || extraData.start_date;
-        const formattedStartDate = new Date(startDateValue).toLocaleString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        });
-        fields.push({
-          label: 'Start Date',
-          value: formattedStartDate,
-          icon: FaCalendarAlt,
-          color: 'purple.500'
-        });
+      // Hailstorm (HL): diameter → damage → duration
+      else if (wType === 'HL' || subtype.includes('hailstorm')) {
+        const dia = event.diameter || ed.diameter || ed.average_hailstone_diameter;
+        if (dia) fields.push({ label: 'Hail Size', value: `${dia} ${dia.toString().includes('cm') ? '' : 'mm'}`, icon: FaCircle, color: 'gray.600' });
+        const dmg = event.damage_assessment || ed.damage_assessment;
+        if (dmg) fields.push({ label: 'Damage', value: dmg, icon: FaExclamationTriangle, color: 'red.500' });
       }
-
-      // End Date for High Temperature events
-      if (event.end_date || extraData.end_date) {
-        const endDateValue = event.end_date || extraData.end_date;
-        const formattedEndDate = new Date(endDateValue).toLocaleString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        });
-        fields.push({
-          label: 'End Date',
-          value: formattedEndDate,
-          icon: FaCalendarAlt,
-          color: 'purple.600'
-        });
+      // High Temperature (HT): high temp → duration
+      else if (wType === 'HT' || subtype.includes('high_temperature')) {
+        if (event.highest_temperature || ed.highest_temperature)
+          fields.push({ label: 'High Temp', value: `${event.highest_temperature || ed.highest_temperature}°C`, icon: FaThermometerHalf, color: 'red.500' });
+      }
+      // Tropical Storm (TS) / High Winds (HW): wind speed → precipitation → damage
+      else if (wType === 'TS' || wType === 'HW' || subtype.includes('storm') || subtype.includes('wind')) {
+        const ws = event.wind_speed || ed.wind_speed;
+        if (ws) fields.push({ label: 'Wind Speed', value: `${ws} km/h`, icon: FaLeaf, color: 'gray.500' });
+        const precip = event.precipitation_amount || ed.precipitation_amount;
+        if (precip) fields.push({ label: 'Precipitation', value: `${precip}mm`, icon: FaCloudRain, color: 'blue.400' });
+        const dmg = event.damage_assessment || ed.damage_assessment;
+        if (dmg) fields.push({ label: 'Damage', value: dmg, icon: FaExclamationTriangle, color: 'red.500' });
+      }
+      // Humidity (HH/LH): humidity level → crop impact → duration
+      else if (wType === 'HH' || wType === 'LH' || subtype.includes('humidity')) {
+        const hum = event.humidity_level || ed.humidity_level;
+        if (hum) fields.push({ label: 'Humidity', value: `${hum}%`, icon: FaTint, color: 'cyan.500' });
+        const impact = event.crop_impact || ed.crop_impact;
+        if (impact) fields.push({ label: 'Crop Impact', value: impact, icon: FaExclamationTriangle, color: 'orange.500' });
+      }
+      // Generic fallback: push whatever temperature/weather data exists
+      else {
+        if (event.highest_temperature || ed.highest_temperature)
+          fields.push({ label: 'High Temp', value: `${event.highest_temperature || ed.highest_temperature}°C`, icon: FaThermometerHalf, color: 'red.500' });
+        if (event.lower_temperature || ed.lower_temperature)
+          fields.push({ label: 'Low Temp', value: `${event.lower_temperature || ed.lower_temperature}°C`, icon: FaThermometerHalf, color: 'blue.500' });
       }
 
-      // Water-related fields
-      const waterDeficit = event.water_deficit || extraData.water_deficit;
-      console.log('💧 DEBUG Water Deficit search:', {
-        eventWaterDeficit: event.water_deficit,
-        extraDataWaterDeficit: extraData.water_deficit,
-        finalValue: waterDeficit
-      });
-
-      if (waterDeficit) {
-        console.log('✅ Adding Water Deficit field:', waterDeficit);
-        fields.push({
-          label: 'Water Deficit',
-          value: `${waterDeficit}mm`,
-          icon: FaTint,
-          color: 'blue.600'
-        });
-      }
-      if (event.precipitation_amount || extraData.precipitation_amount) {
-        fields.push({
-          label: 'Precipitation',
-          value: `${event.precipitation_amount || extraData.precipitation_amount}mm`,
-          icon: FaCloudRain,
-          color: 'blue.400'
-        });
-      }
-      if (event.wind_speed || extraData.wind_speed) {
-        fields.push({
-          label: 'Wind Speed',
-          value: `${event.wind_speed || extraData.wind_speed} km/h`,
-          icon: FaLeaf,
-          color: 'gray.500'
-        });
+      // Common weather fields: duration (useful across all subtypes)
+      const dur = event.duration || ed.duration || ed.event_duration;
+      if (dur && fields.length < 3) {
+        const isHailstorm = wType === 'HL';
+        const durStr = dur.toString().toLowerCase();
+        const hasUnit = durStr.includes('hour') || durStr.includes('hr') || durStr.includes('min');
+        fields.push({ label: 'Duration', value: `${dur}${hasUnit ? '' : isHailstorm ? ' minutes' : ' hours'}`, icon: FaClock, color: 'purple.500' });
       }
 
-      // Hailstorm specific fields - check multiple possible field names
-      const hailDiameter =
-        event.diameter || extraData.diameter || extraData.average_hailstone_diameter;
-      console.log('🌨️ DEBUG Hail Diameter search:', {
-        eventDiameter: event.diameter,
-        extraDataDiameter: extraData.diameter,
-        extraDataAvgDiameter: extraData.average_hailstone_diameter,
-        finalValue: hailDiameter
-      });
-      if (hailDiameter) {
-        console.log('✅ Adding Hail Diameter field:', hailDiameter);
-        fields.push({
-          label: 'Hail Diameter',
-          value: `${hailDiameter} ${hailDiameter.toString().includes('cm') ? '' : 'mm'}`,
-          icon: FaCircle,
-          color: 'gray.600'
-        });
-      }
-
-      const hailWeight = event.weight || extraData.weight || extraData.average_hailstone_weight;
-      console.log('⚖️ DEBUG Hail Weight search:', {
-        eventWeight: event.weight,
-        extraDataWeight: extraData.weight,
-        extraDataAvgWeight: extraData.average_hailstone_weight,
-        finalValue: hailWeight
-      });
-      if (hailWeight) {
-        console.log('✅ Adding Hail Weight field:', hailWeight);
-        fields.push({
-          label: 'Hail Weight',
-          value: `${hailWeight} ${hailWeight.toString().includes('g') ? '' : 'g'}`,
-          icon: FaWeightHanging,
-          color: 'gray.700'
-        });
-      }
-
-      const weatherDuration = event.duration || extraData.duration || extraData.event_duration;
-      console.log('⏱️ DEBUG Duration search:', {
-        eventDuration: event.duration,
-        extraDataDuration: extraData.duration,
-        extraDataEventDuration: extraData.event_duration,
-        finalValue: weatherDuration
-      });
-      if (weatherDuration) {
-        console.log('✅ Adding Duration field:', weatherDuration);
-        // Determine duration unit based on weather event type
-        // Hailstorm events use minutes (short events), other weather events use hours
-        const weatherType = event.type || '';
-        const isHailstorm = weatherType.toLowerCase().includes('hailstorm');
-        console.log('⏱️ DEBUG Duration unit detection:', { weatherType, isHailstorm });
-
-        const durationStr = weatherDuration.toString().toLowerCase();
-        const hasUnit =
-          durationStr.includes('hour') || durationStr.includes('hr') || durationStr.includes('min');
-        const durationUnit = isHailstorm ? ' minutes' : ' hours';
-
-        fields.push({
-          label: 'Duration',
-          value: `${weatherDuration}${hasUnit ? '' : durationUnit}`,
-          icon: FaClock,
-          color: 'purple.500'
-        });
-      }
-
-      const protectionMethod =
-        event.way_of_protection || extraData.way_of_protection || extraData.protection_method;
-      console.log('🛡️ DEBUG Protection search:', {
-        eventProtection: event.way_of_protection,
-        extraDataProtection: extraData.way_of_protection,
-        extraDataProtectionMethod: extraData.protection_method,
-        finalValue: protectionMethod
-      });
-      if (protectionMethod) {
-        console.log('✅ Adding Protection field:', protectionMethod);
-        fields.push({
-          label: 'Protection',
-          value: protectionMethod,
-          icon: FaCheckCircle,
-          color: 'green.500'
-        });
-      }
-
-      if (event.humidity_level || extraData.humidity_level) {
-        fields.push({
-          label: 'Humidity',
-          value: `${event.humidity_level || extraData.humidity_level}%`,
-          icon: FaTint,
-          color: 'cyan.500'
-        });
-      }
-      if (event.damage_assessment || extraData.damage_assessment) {
-        fields.push({
-          label: 'Damage Level',
-          value: event.damage_assessment || extraData.damage_assessment,
-          icon: FaExclamationTriangle,
-          color: 'red.500'
-        });
-      }
-
-      // If no weather-specific fields are found, show a message
       if (fields.length === 0) {
-        fields.push({
-          label: 'Weather Data',
-          value: 'Technical details not available',
-          icon: FaInfoCircle,
-          color: 'gray.500'
-        });
+        fields.push({ label: 'Weather Data', value: 'Details not available', icon: FaInfoCircle, color: 'gray.500' });
       }
       break;
+    }
 
-    case 1: // Production Event
-      if (event.area_covered && event.area_covered > 0) {
-        fields.push({
-          label: 'Area Covered',
-          value: `${event.area_covered} ${event.area_unit || 'ha'}`,
-          icon: FaRulerCombined,
-          color: 'green.500'
-        });
+    case 1: { // Production Event — subtype-aware priority
+      const prodType = event.production_type || subtype;
+
+      // Harvest (HA): yield first, then quality grade, then area
+      if (prodType === 'HA') {
+        if (event.yield_quantity && event.yield_quantity > 0)
+          fields.push({ label: 'Yield', value: `${event.yield_quantity} ${event.yield_unit || 'units'}`, icon: FaWeightHanging, color: 'green.600' });
+        if (event.harvest_quality_grade)
+          fields.push({ label: 'Quality', value: event.harvest_quality_grade.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaStar, color: 'yellow.500' });
+        if (event.area_covered && event.area_covered > 0)
+          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
       }
-      if (event.yield_quantity && event.yield_quantity > 0) {
-        fields.push({
-          label: 'Quantity',
-          value: `${event.yield_quantity} ${event.yield_unit || 'units'}`,
-          icon: FaWeightHanging,
-          color: 'green.600'
-        });
+      // Irrigation (IR): method first, then area, then water source
+      else if (prodType === 'IR') {
+        if (event.irrigation_method)
+          fields.push({ label: 'Method', value: event.irrigation_method.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaWater, color: 'blue.500' });
+        if (event.area_covered && event.area_covered > 0)
+          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
+        if (event.water_source)
+          fields.push({ label: 'Water Source', value: event.water_source.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaTint, color: 'blue.400' });
       }
-      if (event.fuel_consumed && event.fuel_consumed > 0) {
-        fields.push({
-          label: 'Fuel Used',
-          value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`,
-          icon: FaGasPump,
-          color: 'orange.500'
-        });
+      // Planting (PL): quantity (seeds), area, seeds source
+      else if (prodType === 'PL') {
+        if (event.yield_quantity && event.yield_quantity > 0)
+          fields.push({ label: 'Seeds/Plants', value: `${event.yield_quantity} ${event.yield_unit || 'units'}`, icon: FaSeedling, color: 'green.600' });
+        if (event.area_covered && event.area_covered > 0)
+          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
+        if (event.seeds_source)
+          fields.push({ label: 'Seed Source', value: event.seeds_source.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaLeaf, color: 'green.400' });
       }
-      if (event.equipment_hours && event.equipment_hours > 0) {
-        fields.push({
-          label: 'Equipment Time',
-          value: `${event.equipment_hours} hours`,
-          icon: FaClock,
-          color: 'blue.500'
-        });
+      // Equipment Maintenance (EM): equipment type, fuel, hours
+      else if (prodType === 'EM') {
+        if (event.equipment_type)
+          fields.push({ label: 'Equipment', value: event.equipment_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaTractor, color: 'blue.500' });
+        if (event.fuel_consumed && event.fuel_consumed > 0)
+          fields.push({ label: 'Fuel Used', value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`, icon: FaGasPump, color: 'orange.500' });
+        if (event.equipment_hours && event.equipment_hours > 0)
+          fields.push({ label: 'Hours', value: `${event.equipment_hours} hours`, icon: FaClock, color: 'blue.500' });
+      }
+      // Default production (PR, TR, CU, TH): area, fuel, hours
+      else {
+        if (event.area_covered && event.area_covered > 0)
+          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
+        if (event.fuel_consumed && event.fuel_consumed > 0)
+          fields.push({ label: 'Fuel Used', value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`, icon: FaGasPump, color: 'orange.500' });
+        if (event.equipment_hours && event.equipment_hours > 0)
+          fields.push({ label: 'Hours', value: `${event.equipment_hours} hours`, icon: FaClock, color: 'blue.500' });
       }
       break;
+    }
 
-    case 2: // Chemical Event
-      if (event.commercial_name) {
-        fields.push({
-          label: 'Product',
-          value: event.commercial_name,
-          icon: FaFlask,
-          color: 'orange.500'
-        });
+    case 2: { // Chemical Event — commercial_name is already the card title, don't repeat it
+      const chemType = event.chemical_type || subtype;
+
+      // Area treated — universal priority for all chemical events
+      if (event.area_treated && event.area_treated > 0)
+        fields.push({ label: 'Area Treated', value: `${event.area_treated} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'orange.600' });
+      else if (event.area && event.area !== '0')
+        fields.push({ label: 'Area Treated', value: event.area, icon: FaRulerCombined, color: 'orange.600' });
+
+      // Volume/application rate — universal
+      if (event.volume_applied && event.volume_applied > 0)
+        fields.push({ label: 'Volume', value: `${event.volume_applied} ${event.volume_unit || 'L'}`, icon: FaTint, color: 'blue.500' });
+      else if (event.volume && event.volume !== '0')
+        fields.push({ label: 'Rate', value: event.volume, icon: FaTint, color: 'blue.500' });
+
+      // Subtype-specific third field
+      if (chemType === 'FE' || subtype.includes('fertilizer')) {
+        // Fertilizer: NPK ratio or concentration
+        const npk = event.npk_ratio || event.concentration;
+        if (npk) fields.push({ label: 'NPK', value: npk, icon: FaLeaf, color: 'green.500' });
+      } else if (chemType === 'PE' || chemType === 'FU' || chemType === 'HE' || subtype.includes('pesticide') || subtype.includes('fungicide') || subtype.includes('herbicide')) {
+        // Pest/Fungi/Herb: target pest/disease or application method
+        if (event.target_pest_disease)
+          fields.push({ label: 'Target', value: event.target_pest_disease, icon: FaLeaf, color: 'red.500' });
+        else if (event.way_of_application || event.application_method_structured) {
+          const method = event.application_method_structured || event.way_of_application;
+          fields.push({ label: 'Method', value: method.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaCog, color: 'gray.600' });
+        }
       }
-      if (event.area_treated && event.area_treated > 0) {
-        fields.push({
-          label: 'Area Treated',
-          value: `${event.area_treated} ${event.area_unit || 'ha'}`,
-          icon: FaRulerCombined,
-          color: 'orange.600'
-        });
-      }
-      if (event.volume_applied && event.volume_applied > 0) {
-        fields.push({
-          label: 'Volume Applied',
-          value: `${event.volume_applied} ${event.volume_unit || 'L'}`,
-          icon: FaTint,
-          color: 'blue.500'
-        });
-      }
-      if (event.npk_ratio) {
-        fields.push({
-          label: 'NPK Ratio',
-          value: event.npk_ratio,
-          icon: FaLeaf,
-          color: 'green.500'
-        });
+
+      // Organic status as third field if we have room
+      if (fields.length < 3 && event.organic_approved && event.organic_approved !== 'not_applicable') {
+        const isOrganic = ['yes', 'omri_listed', 'usda_nop_approved', 'organic_equivalent'].includes(event.organic_approved);
+        fields.push({ label: 'Organic', value: isOrganic ? 'Yes' : 'Conventional', icon: FaLeaf, color: isOrganic ? 'green.500' : 'gray.500' });
       }
       break;
+    }
 
-    case 4: // Equipment Event
-      if (event.fuel_consumed) {
-        fields.push({
-          label: 'Fuel Used',
-          value: `${event.fuel_consumed} L`,
-          icon: FaGasPump,
-          color: 'orange.500'
-        });
-      }
-      if (event.hours_operated) {
-        fields.push({
-          label: 'Operating Hours',
-          value: `${event.hours_operated} hours`,
-          icon: FaClock,
-          color: 'blue.500'
-        });
-      }
-      if (event.area_worked) {
-        fields.push({
-          label: 'Area Worked',
-          value: `${event.area_worked} ha`,
-          icon: FaRulerCombined,
-          color: 'green.500'
-        });
-      }
+    case 3: // General Event — OK as-is
+      if (event.duration)
+        fields.push({ label: 'Duration', value: `${event.duration} hours`, icon: FaClock, color: 'gray.500' });
+      if (event.people_involved)
+        fields.push({ label: 'Participants', value: `${event.people_involved} people`, icon: FaUser, color: 'blue.500' });
       break;
 
-    case 3: // Other Farm Activity (Sprint 2: renamed from General Event)
-      if (event.duration) {
-        fields.push({
-          label: 'Duration',
-          value: `${event.duration} hours`,
-          icon: FaClock,
-          color: 'gray.500'
-        });
+    case 4: // Equipment Event — add equipment identity first
+      if (event.equipment_name || event.equipment_type_structured) {
+        const eqName = event.equipment_name || event.equipment_type_structured.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+        fields.push({ label: 'Equipment', value: eqName, icon: FaTractor, color: 'blue.500' });
       }
-      if (event.people_involved) {
-        fields.push({
-          label: 'Participants',
-          value: `${event.people_involved} people`,
-          icon: FaUser,
-          color: 'blue.500'
-        });
-      }
-      if (event.activity_name) {
-        fields.push({
-          label: 'Activity',
-          value: event.activity_name,
-          icon: FaLeaf,
-          color: 'green.500'
-        });
-      }
+      if (event.fuel_consumed)
+        fields.push({ label: 'Fuel Used', value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`, icon: FaGasPump, color: 'orange.500' });
+      if (event.hours_operated)
+        fields.push({ label: 'Hours', value: `${event.hours_operated} hours`, icon: FaClock, color: 'blue.500' });
+      if (fields.length < 3 && event.maintenance_cost)
+        fields.push({ label: 'Cost', value: `$${event.maintenance_cost}`, icon: FaDollarSign, color: 'green.600' });
+      if (fields.length < 3 && event.area_worked)
+        fields.push({ label: 'Area', value: `${event.area_worked} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
       break;
 
-    case 5: // Soil Management
-      // Use actual database field names from soil management events
-      if (event.area_covered) {
-        fields.push({
-          label: 'Area Covered',
-          value: `${event.area_covered} ${event.area_unit || 'ha'}`,
-          icon: FaRulerCombined,
-          color: 'yellow.600'
-        });
-      }
-      if (event.fuel_consumed) {
-        fields.push({
-          label: 'Fuel Used',
-          value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`,
-          icon: FaGasPump,
-          color: 'orange.500'
-        });
-      }
-      if (event.equipment_hours) {
-        fields.push({
-          label: 'Equipment Hours',
-          value: `${event.equipment_hours} hours`,
-          icon: FaClock,
-          color: 'blue.500'
-        });
-      }
-      if (event.soil_ph) {
-        fields.push({
-          label: 'Soil pH',
-          value: event.soil_ph,
-          icon: FaFlask,
-          color: 'purple.500'
-        });
-      }
-      break;
+    case 5: { // Soil Management — soil science fields first, operational fields last
+      const soilType = event.soil_management_type || subtype;
 
-    case 6: // Pest Management
-      if (event.pest_species) {
-        fields.push({
-          label: 'Target Pest',
-          value: event.pest_species,
-          icon: FaLeaf,
-          color: 'red.500'
-        });
-      }
-      if (event.field_area_hectares) {
-        fields.push({
-          label: 'Field Area',
-          value: `${event.field_area_hectares} ha`,
-          icon: FaRulerCombined,
-          color: 'red.600'
-        });
-      }
-      if (event.damage_percentage) {
-        fields.push({
-          label: 'Damage Level',
-          value: `${event.damage_percentage}%`,
-          icon: FaExclamationTriangle,
-          color: 'orange.500'
-        });
-      }
-      if (event.action_recommended) {
-        fields.push({
-          label: 'Action',
-          value: event.action_recommended,
-          icon: FaCheckCircle,
-          color: 'green.500'
-        });
-      }
-      break;
+      // Soil pH — critical for ST, PA events
+      if (event.soil_ph)
+        fields.push({ label: 'Soil pH', value: `${event.soil_ph}`, icon: FaFlask, color: 'purple.500' });
 
-    case 7: // Business Event
-      // Carbon credits display removed - transparency-first approach
-      if (event.certification_type) {
+      // Organic matter — critical for ST, OM events
+      if (event.organic_matter_percentage)
+        fields.push({ label: 'Organic Matter', value: `${event.organic_matter_percentage}%`, icon: FaLeaf, color: 'green.600' });
+
+      // Amendment type/amount — critical for PA, OM, SA events
+      if (event.amendment_type)
+        fields.push({ label: 'Amendment', value: event.amendment_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaSeedling, color: 'green.500' });
+
+      // Working depth — critical for TI events
+      if (event.working_depth)
+        fields.push({ label: 'Depth', value: `${event.working_depth} ${event.depth_unit || 'cm'}`, icon: FaMapMarkerAlt, color: 'yellow.700' });
+
+      // Area covered — universal fallback
+      if (fields.length < 3 && event.area_covered)
+        fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'yellow.600' });
+
+      // Equipment used
+      if (fields.length < 3 && event.equipment_used)
+        fields.push({ label: 'Equipment', value: event.equipment_used, icon: FaTractor, color: 'blue.500' });
+      break;
+    }
+
+    case 6: { // Pest Management — subtype-aware
+      const pestType = event.pest_management_type || event.pest_type || subtype;
+
+      // Beneficial Release (BR): species + quantity are the defining fields
+      if (pestType === 'BR' || pestType === 'beneficial_release') {
+        if (event.beneficial_species)
+          fields.push({ label: 'Species', value: event.beneficial_species, icon: FaLeaf, color: 'green.500' });
+        if (event.release_quantity)
+          fields.push({ label: 'Quantity', value: `${event.release_quantity}`, icon: FaWeightHanging, color: 'green.600' });
+        if (event.field_area_hectares)
+          fields.push({ label: 'Area', value: `${event.field_area_hectares} ha`, icon: FaRulerCombined, color: 'red.600' });
+      }
+      // Trap Monitoring (TM): trap count + pest species + findings
+      else if (pestType === 'TM' || pestType === 'trap_monitoring') {
+        if (event.trap_count)
+          fields.push({ label: 'Traps Checked', value: `${event.trap_count}`, icon: FaCog, color: 'orange.500' });
+        if (event.pest_species)
+          fields.push({ label: 'Target Pest', value: event.pest_species, icon: FaLeaf, color: 'red.500' });
+        if (event.field_area_hectares)
+          fields.push({ label: 'Area', value: `${event.field_area_hectares} ha`, icon: FaRulerCombined, color: 'red.600' });
+      }
+      // Scouting (SC), Identification (PI), Threshold (TA), IPM (IP): pest + damage + area
+      else {
+        if (event.pest_species)
+          fields.push({ label: 'Target Pest', value: event.pest_species, icon: FaLeaf, color: 'red.500' });
+        if (event.damage_percentage)
+          fields.push({ label: 'Damage', value: `${event.damage_percentage}%`, icon: FaExclamationTriangle, color: 'orange.500' });
+        if (event.field_area_hectares)
+          fields.push({ label: 'Area', value: `${event.field_area_hectares} ha`, icon: FaRulerCombined, color: 'red.600' });
+      }
+
+      // Chemical-free period — great trust indicator across all pest subtypes
+      if (fields.length < 3 && event.chemical_free_period_days)
+        fields.push({ label: 'Chemical-Free', value: `${event.chemical_free_period_days} days`, icon: FaCheckCircle, color: 'green.500' });
+      break;
+    }
+
+    case 7: // Business Event — certification + status + practice/certifier
+      if (event.certification_type)
         fields.push({
           label: 'Certification',
-          value: event.certification_type,
-          icon: FaCertificate,
-          color: 'blue.500'
+          value: event.certification_type_display || event.certification_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+          icon: FaCertificate, color: 'blue.500'
         });
-      }
-      if (event.trust_impact) {
-        fields.push({
-          label: 'Trust Impact',
-          value: event.trust_impact,
-          icon: FaStar,
-          color: 'yellow.500'
-        });
-      }
-      if (event.verification_status) {
+      if (event.verification_status)
         fields.push({
           label: 'Status',
-          value: event.verification_status,
-          icon: FaCheckCircle,
-          color: 'cyan.500'
+          value: event.verification_status_display || event.verification_status.replace(/\b\w/g, (c: string) => c.toUpperCase()),
+          icon: FaCheckCircle, color: 'cyan.500'
         });
-      }
+      // Sustainability practice or certifier name — more useful than trust_impact
+      if (event.sustainability_practice)
+        fields.push({
+          label: 'Practice',
+          value: event.sustainability_practice_display || event.sustainability_practice.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+          icon: FaLeaf, color: 'green.500'
+        });
+      else if (event.verified_certifier_name)
+        fields.push({ label: 'Certifier', value: event.verified_certifier_name, icon: FaStar, color: 'yellow.500' });
       break;
   }
 
-  console.log('📊 DEBUG: Final fields array for event', event.id, ':', fields);
-  console.log('📊 DEBUG: Returning fields (max 4):', fields.slice(0, 4));
-
-  return fields.slice(0, 4); // Limit to 4 most important fields
+  return fields.slice(0, 3); // Display max 3 fields in the timeline card grid
 };
 
 // Get operator name from members array
@@ -749,7 +567,8 @@ const getEnhancedDescription = (event: Event) => {
     case 7: // Business
       // Carbon credits tooltip removed - transparency-first approach
       if (event.certification_type) {
-        return `${event.certification_type} certification activities`;
+        const certDisplay = event.certification_type_display || event.certification_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+        return `${certDisplay} activities`;
       }
       return 'Business sustainability activities completed';
 
@@ -773,8 +592,12 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   // Mobile responsiveness
   const isMobile = useBreakpointValue({ base: true, md: false });
 
-  // Use embedded carbon data
-  const carbonData = event.carbon_data || null;
+  // Use embedded carbon data — weather (0), general (3), and business (7) events always have 0 emissions
+  const isZeroEmissionType = event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
+  const zeroEmissionLabels: Record<number, string> = { 0: 'weather', 3: 'general', 7: 'business' };
+  const carbonData = isZeroEmissionType
+    ? { co2e: 0, efficiency_score: 100, calculation_method: `${zeroEmissionLabels[event.event_type]}_transparency` }
+    : (event.carbon_data || null);
 
   // Get enhanced event configuration
   const eventConfig = getEventConfig(event.event_type, event.type, event.description);
@@ -864,15 +687,17 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     </Circle>
                   )}
                   <VStack align="flex-start" spacing={1} flex={1} minW={0}>
-                    <Text
-                      fontSize="lg"
-                      fontWeight="600"
-                      color={textColor}
-                      noOfLines={1}
-                      letterSpacing="-0.02em"
-                    >
-                      {title}
-                    </Text>
+                    <Tooltip label={title} placement="top" hasArrow openDelay={500}>
+                      <Text
+                        fontSize="lg"
+                        fontWeight="600"
+                        color={textColor}
+                        noOfLines={2}
+                        letterSpacing="-0.02em"
+                      >
+                        {title}
+                      </Text>
+                    </Tooltip>
                     <HStack spacing={2} wrap="wrap">
                       {/* Event Category Badge - Subtle */}
                       <Badge
@@ -886,6 +711,36 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       >
                         {eventConfig.category}
                       </Badge>
+
+                      {/* Summary/Aggregate Badge */}
+                      {(event.is_summary === true ||
+                        event.extra_data?.is_summary === true ||
+                        event.extra_data?.is_summary === 'true') && (
+                        <Tooltip
+                          label={`Aggregate of ${
+                            event.event_count || event.extra_data?.event_count || 'multiple'
+                          } events`}
+                          hasArrow
+                          placement="top"
+                        >
+                          <Badge
+                            colorScheme="purple"
+                            variant="subtle"
+                            fontSize="xs"
+                            px={2}
+                            py={1}
+                            fontWeight="600"
+                            borderRadius="6px"
+                            display="flex"
+                            alignItems="center"
+                            gap={1}
+                            cursor="help"
+                          >
+                            <Icon as={FaLayerGroup} boxSize={3} />
+                            {event.event_count || event.extra_data?.event_count || 'Summary'}
+                          </Badge>
+                        </Tooltip>
+                      )}
 
                       {/* Verification Badge - COMPACT PRIMARY (Optimized Space) */}
                       {event.verification_level && (
@@ -926,7 +781,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       {/* USDA Badge - ULTRA-COMPACT SECONDARY (Optimized Space) */}
                       {carbonData?.usda_factors_based && (
                         <Tooltip
-                          label="Carbon calculation uses USDA-verified emission factors"
+                          label="Carbon calculation uses published EPA emission factors"
                           hasArrow
                           placement="top"
                         >
@@ -952,18 +807,39 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
                 {/* Clean Date Display */}
                 <VStack align="flex-end" spacing={0} flexShrink={0} ml={4}>
-                  <Text fontSize="sm" fontWeight="600" color="gray.700">
-                    {new Date(event.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </Text>
-                  <Text fontSize="xs" color="gray.500">
-                    {new Date(event.date).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </Text>
+                  {event.extra_data?.date_start && event.extra_data?.date_end ? (
+                    <>
+                      <Text fontSize="xs" fontWeight="600" color="gray.700">
+                        {new Date(event.extra_data.date_start).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                        {' - '}
+                        {new Date(event.extra_data.date_end).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </Text>
+                      <Text fontSize="xs" color="gray.500">
+                        Date Range
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text fontSize="sm" fontWeight="600" color="gray.700">
+                        {new Date(event.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </Text>
+                      <Text fontSize="xs" color="gray.500">
+                        {new Date(event.date).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </Text>
+                    </>
+                  )}
                 </VStack>
               </Flex>
 
@@ -994,18 +870,14 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
               {/* Clean Metrics Section */}
               <Divider />
 
-              <HStack justify="space-between" align="center" spacing={4}>
+              <HStack justify="space-between" align="center" spacing={3}>
                 {/* Carbon Impact */}
                 {carbonData && !carbonData.error ? (
                   <Tooltip
-                    label={`Environmental Impact: ${carbonData.co2e > 0 ? '+' : ''}${
-                      carbonData.co2e
-                    } kg CO₂e ${
-                      carbonData.co2e < 0
-                        ? '(carbon absorbed from atmosphere)'
-                        : carbonData.co2e > 0
-                        ? '(carbon released to atmosphere)'
-                        : '(carbon neutral activity)'
+                    label={`Environmental Impact: ${formatCO2e(carbonData.co2e)} kg CO₂e ${
+                      carbonData.co2e === 0
+                        ? '(no direct emissions)'
+                        : '(carbon footprint estimate)'
                     }`}
                     placement="top"
                     hasArrow
@@ -1017,31 +889,21 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     py={2}
                   >
                     <HStack spacing={2} flex={1} cursor="help">
-                      <Circle size="24px" bg={carbonData.co2e < 0 ? 'green.100' : 'orange.100'}>
+                      <Circle size="24px" bg={carbonData.co2e === 0 ? 'gray.100' : `${getImpactLevel(carbonData.co2e).color}.100`}>
                         <Icon
                           as={MdEco}
-                          color={carbonData.co2e < 0 ? 'green.600' : 'orange.600'}
+                          color={carbonData.co2e === 0 ? 'gray.500' : `${getImpactLevel(carbonData.co2e).color}.600`}
                           boxSize={3}
                         />
                       </Circle>
-                      <VStack spacing={0} align="flex-start" flex={1} minW={0}>
-                        <Text
-                          fontSize="sm"
-                          fontWeight="600"
-                          color={carbonData.co2e < 0 ? 'green.700' : 'orange.700'}
-                          noOfLines={1}
-                        >
-                          {carbonData.co2e > 0 ? '+' : ''}
-                          {carbonData.co2e} kg CO₂
-                        </Text>
-                        <Text fontSize="xs" color="gray.500">
-                          {carbonData.co2e < 0
-                            ? 'Reduced'
-                            : carbonData.co2e > 0
-                            ? 'Added'
-                            : 'Neutral'}
-                        </Text>
-                      </VStack>
+                      <Text
+                        fontSize="sm"
+                        fontWeight="600"
+                        color={carbonData.co2e === 0 ? 'gray.500' : `${getImpactLevel(carbonData.co2e).color}.700`}
+                        whiteSpace="nowrap"
+                      >
+                        {formatCO2e(carbonData.co2e)} kg CO₂e
+                      </Text>
                     </HStack>
                   </Tooltip>
                 ) : (
@@ -1081,7 +943,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
                 {/* Operator & Photo Status */}
                 <HStack spacing={3} justify="flex-end">
-                  <Text fontSize="xs" color="gray.500" textAlign="right">
+                  <Text fontSize="xs" color="gray.500" textAlign="right" maxW="120px" noOfLines={1}>
                     {operatorName}
                   </Text>
                   {!event.image && (

@@ -46,6 +46,7 @@ import {
 import { MdVerified, MdEco } from 'react-icons/md';
 import { format, parseISO } from 'date-fns';
 import { getReadableFieldValue } from '../../utils/fieldDisplayUtils';
+import { formatCO2e } from '../../utils/carbonDisplayUtils';
 import {
   getVerificationBadgeConfig,
   getVerificationColor,
@@ -322,11 +323,11 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                       Carbon Impact Analysis
                     </Heading>
                     {event.carbon_data.usda_verified && (
-                      <Tooltip label="Calculated using USDA verified emission factors">
+                      <Tooltip label="Calculated using USDA published emission factors">
                         <Badge colorScheme="blue" size="sm">
                           <HStack spacing={1}>
                             <Icon as={FaCertificate} boxSize={3} />
-                            <Text>USDA Verified</Text>
+                            <Text>Science-Based</Text>
                           </HStack>
                         </Badge>
                       </Tooltip>
@@ -343,11 +344,10 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                           fontSize="xl"
                           color={`${getCarbonImpactColor(event.carbon_data.co2e)}.500`}
                         >
-                          {event.carbon_data.co2e > 0 ? '+' : ''}
-                          {event.carbon_data.co2e.toFixed(1)} kg CO₂e
+                          {formatCO2e(event.carbon_data.co2e)} kg CO₂e
                         </StatNumber>
                         <StatHelpText fontSize="xs">
-                          {event.carbon_data.co2e > 0 ? 'Carbon footprint' : 'Carbon reduction'}
+                          {event.carbon_data.co2e === 0 ? 'No direct emissions' : 'Carbon footprint estimate'}
                         </StatHelpText>
                       </Stat>
 

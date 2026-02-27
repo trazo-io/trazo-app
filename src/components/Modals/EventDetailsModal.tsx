@@ -16,11 +16,6 @@ import {
   Divider,
   Box,
   SimpleGrid,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  StatArrow,
   useColorModeValue,
   useToast,
   AlertDialog,
@@ -32,16 +27,16 @@ import {
   useDisclosure,
   Tooltip,
   Progress,
-  Spinner,
-  Alert,
-  AlertIcon,
   Flex,
   Image,
-  Link,
   useBreakpointValue,
   Grid,
   AspectRatio,
-  Center
+  Center,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription
 } from '@chakra-ui/react';
 import {
   FaEdit,
@@ -49,25 +44,24 @@ import {
   FaCalendarAlt,
   FaUser,
   FaLeaf,
-  FaEye,
-  FaEyeSlash,
-  FaMinus,
   FaTint,
   FaFlask,
   FaSeedling,
   FaSun,
   FaCertificate,
-  FaExternalLinkAlt,
-  FaChartLine,
-  FaDollarSign,
-  FaClock,
   FaShieldAlt,
-  FaWrench
+  FaWrench,
+  FaCheckCircle,
+  FaLayerGroup,
+  FaLock
 } from 'react-icons/fa';
-import { MdVerified, MdInfo, MdOpenInNew } from 'react-icons/md';
+import { MdVerified } from 'react-icons/md';
 import { useDeleteEventMutation } from 'store/api/historyApi';
+import { getEventFieldDisplay } from '../../utils/fieldDisplayUtils';
+import { formatCO2e, getImpactLevel, getCarbonScoreColor } from '../../utils/carbonDisplayUtils';
 import { useIntl } from 'react-intl';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useUserRole } from 'hooks/useUserRole';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 
@@ -246,6 +240,7 @@ interface EventDetailsModalProps {
   members: Member[];
   onEventUpdated?: () => void;
   onEventDeleted?: () => void;
+  isProductionFinished?: boolean;
 }
 
 // Helper functions
@@ -362,9 +357,16 @@ const getEventConfig = (type: string, description: string, eventType?: number) =
 
 // Helper function to get human-readable event names
 const getEventDisplayName = (event: Event, intl: any): string => {
-  // If it's a general event (event_type 3), use the name field
-  if (event.event_type === 3 && event.name) {
+  // If the event has a custom name set, use it for ALL event types
+  // Check both top-level name and extra_data (weather uses event_name, pest uses name)
+  if (event.name) {
     return event.name;
+  }
+  if (event.extra_data?.event_name) {
+    return event.extra_data.event_name;
+  }
+  if (event.extra_data?.name) {
+    return event.extra_data.name;
   }
 
   // For chemical events (Type 2), prioritize commercial name from direct field or extra_data
@@ -427,12 +429,37 @@ const getEventDisplayName = (event: Event, intl: any): string => {
     'event.soil.management':
       intl.formatMessage({ id: 'event.soil.management' }) || 'Soil Management',
 
+    // Soil events (additional)
+    'event.soil.organic_matter_addition':
+      intl.formatMessage({ id: 'event.soil.organic_matter_addition' }) || 'Organic Matter Addition',
+    'event.soil.cover_crop': intl.formatMessage({ id: 'event.soil.cover_crop' }) || 'Cover Crop',
+    'event.soil.composting': intl.formatMessage({ id: 'event.soil.composting' }) || 'Composting',
+
     // Pest events
     'event.pest.monitoring':
       intl.formatMessage({ id: 'event.pest.monitoring' }) || 'Pest Monitoring',
     'event.pest.control': intl.formatMessage({ id: 'event.pest.control' }) || 'Pest Control',
     'event.pest.prevention':
       intl.formatMessage({ id: 'event.pest.prevention' }) || 'Pest Prevention',
+    'event.pest.scouting': intl.formatMessage({ id: 'event.pest.scouting' }) || 'Pest Scouting',
+    'event.pest.beneficial_release':
+      intl.formatMessage({ id: 'event.pest.beneficial_release' }) || 'Beneficial Insect Release',
+    'event.pest.trap_monitoring':
+      intl.formatMessage({ id: 'event.pest.trap_monitoring' }) || 'Trap Monitoring',
+    'event.pest.pest_identification':
+      intl.formatMessage({ id: 'event.pest.pest_identification' }) || 'Pest Identification',
+    'event.pest.threshold_assessment':
+      intl.formatMessage({ id: 'event.pest.threshold_assessment' }) || 'Threshold Assessment',
+    'event.pest.ipm_implementation':
+      intl.formatMessage({ id: 'event.pest.ipm_implementation' }) || 'IPM Implementation',
+
+    // Business events
+    'event.business.certification':
+      intl.formatMessage({ id: 'event.business.certification' }) || 'Business Certification',
+    'event.business.compliance':
+      intl.formatMessage({ id: 'event.business.compliance' }) || 'Compliance Review',
+    'event.business.inspection':
+      intl.formatMessage({ id: 'event.business.inspection' }) || 'Business Inspection',
 
     // Certification events
     'event.certification.inspection':
@@ -523,14 +550,29 @@ const getEventDisplayName = (event: Event, intl: any): string => {
 };
 
 const extractEventData = (event: Event) => {
-  const observation = event.observation || '';
+  const eventData = event as any;
+  const extraData = eventData.extra_data || {};
 
+  const observation = event.observation || '';
   const durationMatch = observation.match(/(\d+)\s*hour/i);
   const duration = durationMatch ? parseInt(durationMatch[1]) : null;
 
-  const amountMatch = observation.match(/(\d+)\s*(kg|lbs?|liters?|l)/i);
-  const amount = amountMatch ? parseInt(amountMatch[1]) : null;
-  const unit = amountMatch ? amountMatch[2] : null;
+  let amount: number | null = null;
+  let unit: string | null = null;
+
+  // For chemical events (event_type === 2), use structured volume fields
+  // instead of regex parsing from description text
+  if (event.event_type === 2) {
+    const rawAmount =
+      eventData.volume_applied ?? eventData.volume ?? extraData.volume_applied ?? null;
+    amount = rawAmount !== null && rawAmount !== '' ? parseFloat(rawAmount) : null;
+    unit = eventData.volume_unit || extraData.volume_unit || 'L';
+  } else {
+    // For other event types, fall back to regex parsing from observation
+    const amountMatch = observation.match(/(\d+)\s*(kg|lbs?|liters?|l)/i);
+    amount = amountMatch ? parseInt(amountMatch[1]) : null;
+    unit = amountMatch ? amountMatch[2] : null;
+  }
 
   return {
     duration,
@@ -541,1163 +583,22 @@ const extractEventData = (event: Event) => {
 };
 
 /**
- * Get the appropriate label for fuel/energy consumption based on fuel type
- * Electric equipment uses "Energy Consumed" while fuel-based equipment uses "Fuel Consumed"
- *
- * NOTE: Icons (⚡/⛽) are provided by the rendering component, not in the label text,
- * to avoid duplicate icons in the display.
+ * Render event-specific fields using the shared getEventFieldDisplay() utility.
+ * This ensures the modal shows exactly the same fields as ConsumerEventCard.
  */
-const getFuelConsumptionLabel = (fuelType?: string): string => {
-  if (!fuelType) {
-    return 'Fuel Consumed';
-  }
-
-  const normalizedFuelType = fuelType.toLowerCase();
-  return normalizedFuelType === 'electric' ? 'Energy Consumed' : 'Fuel Consumed';
-};
-
-const getQRVisibility = (event: Event): 'high' | 'medium' | 'low' => {
-  const desc = event.description.toLowerCase();
-  const type = event.type.toLowerCase();
-
-  if (type.includes('chemical') || desc.includes('pesticide') || desc.includes('fertilizer')) {
-    return 'high';
-  }
-
-  if (desc.includes('harvest') || desc.includes('cosecha') || desc.includes('organic')) {
-    return 'high';
-  }
-
-  if (desc.includes('irrigation') || desc.includes('riego')) {
-    return 'medium';
-  }
-
-  return 'low';
-};
-
-// Helper function to convert technical calculation methods to user-friendly descriptions
-const getCalculationMethodDescription = (
-  method: string | undefined | null,
-  carbonData: CarbonCalculationResult
-): string => {
-  // Handle undefined/null method
-  if (!method || typeof method !== 'string') {
-    const isUsdaFactorsBased = carbonData.usda_factors_based ?? carbonData.usda_verified ?? false;
-    return isUsdaFactorsBased
-      ? 'Verified using USDA agricultural standards'
-      : 'Estimated using agricultural emission benchmarks';
-  }
-
-  // Check if using USDA factors (new field) or fallback to old field
-  const isUsdaFactorsBased = carbonData.usda_factors_based ?? carbonData.usda_verified ?? false;
-
-  // Convert technical method names to user-friendly descriptions
-  if (method.includes('production_irrigation') || method.includes('irrigation')) {
-    return isUsdaFactorsBased
-      ? 'Based on USDA irrigation emission standards'
-      : 'Estimated using industry irrigation benchmarks';
-  }
-
-  if (
-    method.includes('chemical') ||
-    method.includes('fertilizer') ||
-    method.includes('pesticide')
-  ) {
-    return isUsdaFactorsBased
-      ? 'Based on USDA chemical application standards'
-      : 'Estimated using agricultural chemical emission factors';
-  }
-
-  if (method.includes('equipment') || method.includes('fuel')) {
-    return isUsdaFactorsBased
-      ? 'Based on USDA equipment emission standards'
-      : 'Estimated using equipment fuel consumption data';
-  }
-
-  if (method.includes('production_activity') || method.includes('crop_specific')) {
-    return isUsdaFactorsBased
-      ? 'Based on USDA crop-specific emission factors'
-      : 'Estimated using crop production benchmarks';
-  }
-
-  if (method.includes('soil_management') || method.includes('soil')) {
-    return isUsdaFactorsBased
-      ? 'Based on USDA soil management standards'
-      : 'Estimated using soil carbon sequestration models';
-  }
-
-  if (method.includes('weather') || method.includes('climate')) {
-    return 'Estimated using climate impact models';
-  }
-
-  if (method.includes('general_event')) {
-    return 'Standard baseline calculation for farm activities';
-  }
-
-  if (method.includes('unavailable') || method.includes('error')) {
-    return 'Carbon data temporarily unavailable';
-  }
-
-  // Fallback for unknown methods
-  return isUsdaFactorsBased
-    ? 'Verified using USDA agricultural standards'
-    : 'Estimated using agricultural emission benchmarks';
-};
-
-// Helper function to get data source confidence level
-const getDataSourceConfidence = (
-  carbonData: CarbonCalculationResult
-): 'high' | 'medium' | 'low' => {
-  if (carbonData.error) return 'low';
-
-  // Check for USDA verification using new field (usda_factors_based) with fallback to old field
-  if (carbonData.usda_factors_based || carbonData.usda_verified) return 'high';
-
-  // Check verification status for certified data
-  if (
-    carbonData.verification_status === 'usda_certified' ||
-    carbonData.verification_status === 'factors_verified'
-  ) {
-    return 'high';
-  }
-
-  // Check if calculation_method exists before calling includes
-  if (
-    carbonData.calculation_method &&
-    (carbonData.calculation_method.includes('standard') ||
-      carbonData.calculation_method.includes('specific'))
-  )
-    return 'medium';
-  return 'low';
-};
-
-// Helper function to render specific event fields based on event type
-const renderSpecificEventFields = (event: Event, cardBg: string, textColor: string) => {
-  const fields: Array<{ label: string; value: string; priority: 'immediate' | 'secondary' }> = [];
-
-  // Extract extra_data for easier access
-  const extraData = event.extra_data || {};
-
-  // Weather Events (Type 0)
-  if (event.event_type === 0) {
-    // Cast event to access weather-specific fields that come at root level from backend
-    const weatherEvent = event as any;
-
-    // Frost event fields
-    if (extraData.lower_temperature !== undefined || weatherEvent.lower_temperature !== undefined) {
-      const temp = extraData.lower_temperature ?? weatherEvent.lower_temperature;
-      fields.push({
-        label: 'Lower Temperature',
-        value: `${temp}°C (${((temp * 9) / 5 + 32).toFixed(1)}°F)`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.way_of_protection || weatherEvent.way_of_protection) {
-      fields.push({
-        label: 'Protection Method',
-        value: extraData.way_of_protection || weatherEvent.way_of_protection,
-        priority: 'immediate'
-      });
-    }
-
-    // Drought event fields - water_deficit comes at root level from backend
-    if (extraData.water_deficit !== undefined || weatherEvent.water_deficit !== undefined) {
-      const waterDeficit = extraData.water_deficit ?? weatherEvent.water_deficit;
-      if (waterDeficit !== 0) {
-        fields.push({
-          label: 'Water Deficit',
-          value: `${waterDeficit}mm`,
-          priority: 'immediate'
-        });
-      }
-    }
-
-    // High temperature event fields
-    if (
-      extraData.highest_temperature !== undefined ||
-      weatherEvent.highest_temperature !== undefined
-    ) {
-      const temp = extraData.highest_temperature ?? weatherEvent.highest_temperature;
-      fields.push({
-        label: 'Highest Temperature',
-        value: `${temp}°C (${((temp * 9) / 5 + 32).toFixed(1)}°F)`,
-        priority: 'immediate'
-      });
-    }
-
-    // Start Date for High Temperature events
-    if (extraData.start_date || weatherEvent.start_date) {
-      const startDateValue = extraData.start_date || weatherEvent.start_date;
-      const formattedStartDate = new Date(startDateValue).toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      });
-      fields.push({
-        label: 'Start Date',
-        value: formattedStartDate,
-        priority: 'immediate'
-      });
-    }
-
-    // End Date for High Temperature events
-    if (extraData.end_date || weatherEvent.end_date) {
-      const endDateValue = extraData.end_date || weatherEvent.end_date;
-      const formattedEndDate = new Date(endDateValue).toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-      });
-      fields.push({
-        label: 'End Date',
-        value: formattedEndDate,
-        priority: 'immediate'
-      });
-    }
-
-    // 🚨 DEPRECATED: Hailstorm weight and diameter fields removed in Sprint 2 Epic 2.1.3
-    // Backend no longer sends these fields for Hailstorm events
-    // Keeping defensive checks in case old events still have this data
-    if (extraData.weight !== undefined || weatherEvent.weight !== undefined) {
-      const weight = extraData.weight ?? weatherEvent.weight;
-      // Only show if weight exists AND is greater than 0
-      if (weight && weight > 0) {
-        fields.push({
-          label: 'Hail Weight',
-          value: `${weight} g`,
-          priority: 'immediate'
-        });
-      }
-    }
-    if (extraData.diameter !== undefined || weatherEvent.diameter !== undefined) {
-      const diameter = extraData.diameter ?? weatherEvent.diameter;
-      // Only show if diameter exists AND is greater than 0
-      if (diameter && diameter > 0) {
-        fields.push({
-          label: 'Hail Diameter',
-          value: `${diameter} mm`,
-          priority: 'immediate'
-        });
-      }
-    }
-
-    // Common weather fields
-    if (extraData.duration !== undefined || weatherEvent.duration !== undefined) {
-      const duration = extraData.duration ?? weatherEvent.duration;
-      if (duration !== 0) {
-        // 🚨 CRITICAL: Hailstorm (HL) uses minutes, other weather events use hours
-        // The event.type field contains a translation key like "event.weather.hailstorm"
-        // We check if it contains 'hailstorm' to determine the unit
-        const weatherType = event.type || '';
-        console.log(
-          '[EventDetailsModal] Weather type for duration:',
-          weatherType,
-          'Duration:',
-          duration
-        );
-        const isHailstorm = weatherType.toLowerCase().includes('hailstorm');
-        const durationUnit = isHailstorm ? 'minutes' : 'hours';
-        fields.push({
-          label: 'Duration',
-          value: `${duration} ${durationUnit}`,
-          priority: 'secondary'
-        });
-      }
-    }
-    if (extraData.damage_assessment || weatherEvent.damage_assessment) {
-      fields.push({
-        label: 'Damage Assessment',
-        value: extraData.damage_assessment || weatherEvent.damage_assessment,
-        priority: 'immediate'
-      });
-    }
-    // 🚨 CRITICAL: Only show Protection Measures if way_of_protection wasn't already shown
-    // This prevents duplicate protection fields for Hailstorm events
-    const hasProtectionMethod = extraData.way_of_protection || weatherEvent.way_of_protection;
-    if (
-      (extraData.protection_measures || weatherEvent.protection_measures) &&
-      !hasProtectionMethod
-    ) {
-      fields.push({
-        label: 'Protection Measures',
-        value: extraData.protection_measures || weatherEvent.protection_measures,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.wind_speed !== undefined || weatherEvent.wind_speed !== undefined) {
-      const windSpeed = extraData.wind_speed ?? weatherEvent.wind_speed;
-      if (windSpeed !== 0) {
-        fields.push({
-          label: 'Wind Speed',
-          value: `${windSpeed} km/h`,
-          priority: 'immediate'
-        });
-      }
-    }
-    if (
-      extraData.precipitation_amount !== undefined ||
-      weatherEvent.precipitation_amount !== undefined
-    ) {
-      const precipitation = extraData.precipitation_amount ?? weatherEvent.precipitation_amount;
-      if (precipitation !== 0) {
-        fields.push({
-          label: 'Rainfall',
-          value: `${precipitation}mm`,
-          priority: 'immediate'
-        });
-      }
-    }
-    if (extraData.humidity_level !== undefined || weatherEvent.humidity_level !== undefined) {
-      const humidity = extraData.humidity_level ?? weatherEvent.humidity_level;
-      if (humidity !== 0) {
-        fields.push({
-          label: 'Humidity Level',
-          value: `${humidity}%`,
-          priority: 'immediate'
-        });
-      }
-    }
-    if (extraData.crop_impact || weatherEvent.crop_impact) {
-      fields.push({
-        label: 'Crop Impact',
-        value: extraData.crop_impact || weatherEvent.crop_impact,
-        priority: 'immediate'
-      });
-    }
-  }
-
-  // Chemical Events (Type 2)
-  if (event.event_type === 2) {
-    const eventData = event as any;
-
-    // Product Name (commercial_name)
-    const commercialName = eventData.commercial_name || extraData.commercial_name;
-    if (commercialName) {
-      fields.push({
-        label: 'Product Name',
-        value: commercialName,
-        priority: 'immediate'
-      });
-    }
-
-    // Active Ingredient
-    const activeIngredient = eventData.active_ingredient || extraData.active_ingredient;
-    if (activeIngredient) {
-      fields.push({
-        label: 'Active Ingredient',
-        value: activeIngredient,
-        priority: 'immediate'
-      });
-    }
-
-    // Concentration/Application Rate
-    const concentration = eventData.concentration || extraData.concentration;
-    if (concentration) {
-      fields.push({
-        label: 'Concentration / Application Rate',
-        value: concentration,
-        priority: 'immediate'
-      });
-    }
-
-    // Volume Applied
-    const volume = eventData.volume;
-    if (volume) {
-      fields.push({
-        label: 'Volume Applied',
-        value: `${volume} L`,
-        priority: 'immediate'
-      });
-    }
-
-    // Area Treated
-    const area = eventData.area;
-    if (area) {
-      fields.push({
-        label: 'Area Treated',
-        value: `${area} ha`,
-        priority: 'immediate'
-      });
-    }
-
-    // Application Method
-    const applicationMethod =
-      eventData.way_of_application || eventData.application_method || extraData.application_method;
-    if (applicationMethod) {
-      fields.push({
-        label: 'Application Method',
-        value: applicationMethod,
-        priority: 'immediate'
-      });
-    }
-
-    // Weather Conditions
-    const weatherConditions = eventData.weather_conditions || extraData.weather_conditions;
-    if (weatherConditions) {
-      fields.push({
-        label: 'Weather Conditions',
-        value: weatherConditions,
-        priority: 'immediate'
-      });
-    }
-
-    // Application Timing
-    const applicationTiming = eventData.application_timing || extraData.application_timing;
-    if (applicationTiming) {
-      fields.push({
-        label: 'Application Timing',
-        value: applicationTiming,
-        priority: 'immediate'
-      });
-    }
-
-    // Target/Purpose
-    const targetPestDisease = eventData.target_pest_disease || extraData.target_pest_disease;
-    if (targetPestDisease) {
-      fields.push({
-        label: 'Target/Purpose',
-        value: targetPestDisease,
-        priority: 'immediate'
-      });
-    }
-
-    // NPK percentages if available (check for actual values, not just undefined)
-    if (
-      (eventData.nitrogen_percentage !== undefined && eventData.nitrogen_percentage !== null) ||
-      (eventData.phosphorus_percentage !== undefined && eventData.phosphorus_percentage !== null) ||
-      (eventData.potassium_percentage !== undefined && eventData.potassium_percentage !== null)
-    ) {
-      const npk = `${eventData.nitrogen_percentage || 0}-${eventData.phosphorus_percentage || 0}-${
-        eventData.potassium_percentage || 0
-      }`;
-      fields.push({
-        label: 'NPK Formula',
-        value: npk,
-        priority: 'immediate'
-      });
-    } else if (concentration && concentration.match(/^\d+-\d+-\d+$/)) {
-      // Use concentration as NPK formula if it matches N-P-K pattern
-      fields.push({
-        label: 'NPK Formula',
-        value: concentration,
-        priority: 'immediate'
-      });
-    }
-
-    // Pre-harvest interval
-    const preHarvestInterval = eventData.pre_harvest_interval || extraData.pre_harvest_interval;
-    if (preHarvestInterval !== undefined) {
-      fields.push({
-        label: 'Pre-Harvest Interval',
-        value: `${preHarvestInterval} days`,
-        priority: 'secondary'
-      });
-    }
-  }
-
-  // Production Events (Type 1) - Enhanced transparency with all collected fields
-  if (event.event_type === 1) {
-    // Production Type - Critical field to understand the operation
-    if (event.production_type || event.type) {
-      const typeLabels = {
-        PL: 'Planting',
-        HA: 'Harvesting',
-        IR: 'Irrigation',
-        PR: 'Pruning/Trimming',
-        TR: 'Transplanting',
-        EM: 'Equipment Maintenance',
-        CU: 'Cultivation',
-        TH: 'Thinning',
-        cultivation: 'Soil Cultivation',
-        fertilization: 'Fertilizer Application',
-        weeding: 'Weed Management',
-        mulching: 'Mulching Application',
-        planting: 'Planting',
-        harvesting: 'Harvesting',
-        irrigation: 'Irrigation',
-        pruning: 'Pruning/Trimming',
-        // API format mappings
-        'event.production.planting': 'Planting',
-        'event.production.harvesting': 'Harvesting',
-        'event.production.irrigation': 'Irrigation',
-        'event.production.pruning': 'Pruning/Trimming',
-        'event.production.cultivation': 'Soil Cultivation',
-        'event.production.fertilization': 'Fertilizer Application',
-        'event.production.weeding': 'Weed Management',
-        'event.production.mulching': 'Mulching Application',
-        'event.production.transplanting': 'Transplanting',
-        'event.production.thinning': 'Thinning',
-        'event.production.equipment_maintenance': 'Equipment Maintenance'
-      };
-      const productionType = event.production_type || event.type;
-      fields.push({
-        label: 'Production Type',
-        value: typeLabels[productionType] || productionType,
-        priority: 'immediate'
-      });
-    }
-
-    // Area Covered - Essential for all production activities
-    if (event.area_covered !== undefined && event.area_covered !== null) {
-      const areaUnit = event.area_unit || 'hectares';
-      const unitLabels = {
-        ha: 'hectares',
-        acres: 'acres',
-        m2: 'square meters',
-        km2: 'square kilometers'
-      };
-      fields.push({
-        label: 'Area Covered',
-        value: `${event.area_covered} ${unitLabels[areaUnit] || areaUnit}`,
-        priority: 'immediate'
-      });
-    }
-
-    // Yield/Output Quantity - For harvesting and planting
-    // CRITICAL FIX: Check both first-class field AND custom_fields for backward compatibility
-    let yieldQuantityValue = event.yield_quantity;
-    let yieldQuantityUnit = event.yield_unit || 'kg';
-
-    // If first-class field is empty, check custom_fields (backward compatibility)
-    if (
-      (!yieldQuantityValue || Number(yieldQuantityValue) === 0) &&
-      event.extra_data?.custom_fields &&
-      Array.isArray(event.extra_data.custom_fields)
-    ) {
-      const yieldCustomField = event.extra_data.custom_fields.find(
-        (field: any) =>
-          field.label?.toLowerCase() === 'yield quantity' ||
-          field.label?.toLowerCase() === 'quantity'
-      );
-      if (yieldCustomField && yieldCustomField.value) {
-        // Extract numeric value from "50 trees" format
-        const parts = yieldCustomField.value.toString().split(' ');
-        const numericValue = parseFloat(parts[0]);
-        if (!isNaN(numericValue)) {
-          yieldQuantityValue = numericValue;
-          // Extract unit from value (e.g., "trees" from "50 trees")
-          if (parts.length > 1) {
-            const unitFromValue = parts[parts.length - 1].toLowerCase();
-            if (unitFromValue === 'trees') yieldQuantityUnit = 'trees';
-            else if (unitFromValue === 'seedlings') yieldQuantityUnit = 'seedlings';
-            // Add more unit mappings as needed
-          }
-        }
-      }
-    }
-
-    if (
-      yieldQuantityValue !== undefined &&
-      yieldQuantityValue !== null &&
-      yieldQuantityValue !== '' &&
-      Number(yieldQuantityValue) > 0 // Handle both string and number types
-    ) {
-      const unitLabels = {
-        kg: 'kilograms',
-        tons: 'tonnes',
-        lbs: 'pounds',
-        boxes: 'boxes',
-        plants: 'plants',
-        seeds: 'seeds',
-        trees: 'trees',
-        seedlings: 'seedlings'
-      };
-      fields.push({
-        label: 'Yield Quantity',
-        value: `${yieldQuantityValue} ${unitLabels[yieldQuantityUnit] || yieldQuantityUnit}`,
-        priority: 'secondary'
-      });
-
-      // Calculate yield efficiency for harvesting events
-      const productionType = event.production_type || event.type;
-      const isHarvesting =
-        productionType === 'HA' ||
-        productionType === 'harvesting' ||
-        productionType === 'event.production.harvesting';
-
-      if (isHarvesting && event.area_covered && event.area_covered > 0) {
-        const yieldPerHa = (Number(yieldQuantityValue) / event.area_covered).toFixed(2);
-        fields.push({
-          label: 'Yield per Hectare',
-          value: `${yieldPerHa} ${unitLabels[yieldQuantityUnit] || yieldQuantityUnit}/ha`,
-          priority: 'immediate'
-        });
-      }
-    }
-
-    // Equipment & Fuel Usage - Critical for carbon calculations
-    if (
-      event.fuel_consumed !== undefined &&
-      event.fuel_consumed !== null &&
-      event.fuel_consumed > 0
-    ) {
-      const fuelUnit = event.fuel_unit || 'L';
-      const unitLabels = {
-        L: 'liters',
-        gal: 'gallons',
-        kg: 'kilograms',
-        kWh: 'kWh'
-      };
-      fields.push({
-        label: getFuelConsumptionLabel(event.extra_data?.fuel_type),
-        value: `${event.fuel_consumed} ${unitLabels[fuelUnit] || fuelUnit}`,
-        priority: 'immediate'
-      });
-    }
-
-    if (
-      event.equipment_hours !== undefined &&
-      event.equipment_hours !== null &&
-      event.equipment_hours > 0
-    ) {
-      fields.push({
-        label: 'Equipment Operating Hours',
-        value: `${event.equipment_hours} hours`,
-        priority: 'immediate'
-      });
-    }
-
-    // Fuel efficiency calculation
-    if (
-      event.fuel_consumed &&
-      event.equipment_hours &&
-      event.fuel_consumed > 0 &&
-      event.equipment_hours > 0
-    ) {
-      const fuelEfficiency = (event.fuel_consumed / event.equipment_hours).toFixed(1);
-      const fuelUnit = event.fuel_unit || 'L';
-      fields.push({
-        label: 'Fuel Efficiency',
-        value: `${fuelEfficiency} ${fuelUnit}/hour`,
-        priority: 'secondary'
-      });
-    }
-
-    // Transportation - For harvesting logistics
-    if (
-      event.transportation_distance !== undefined &&
-      event.transportation_distance !== null &&
-      event.transportation_distance > 0
-    ) {
-      const transportUnit = event.transportation_unit || 'km';
-      const unitLabels = {
-        km: 'kilometers',
-        miles: 'miles',
-        m: 'meters'
-      };
-      fields.push({
-        label: 'Transportation Distance',
-        value: `${event.transportation_distance} ${unitLabels[transportUnit] || transportUnit}`,
-        priority: 'immediate'
-      });
-    }
-
-    // Production Efficiency Rating
-    if (event.production_efficiency) {
-      const efficiencyLabels = {
-        high: 'High Efficiency (optimal conditions)',
-        normal: 'Normal Efficiency (standard operation)',
-        low: 'Low Efficiency (adverse conditions)'
-      };
-      fields.push({
-        label: 'Production Efficiency',
-        value: efficiencyLabels[event.production_efficiency] || event.production_efficiency,
-        priority: 'secondary'
-      });
-    }
-
-    // ============================================================
-    // Sprint 3 Epic 3.2: Consumer Trust Fields for Production Events
-    // These fields enhance consumer confidence in agricultural practices
-    // ============================================================
-
-    // Seeds/Seedlings Source - For Planting and Transplanting events
-    if (event.seeds_source) {
-      const seedSourceLabels: Record<string, string> = {
-        certified_organic: '🌱 Certified Organic Seeds',
-        farm_saved: '♻️ Farm-Saved Seeds',
-        local: '🏡 Local Nursery/Supplier',
-        cooperative: '🤝 Farmer Cooperative',
-        commercial: '🏭 Commercial Supplier',
-        other: '📝 Other Source'
-      };
-      fields.push({
-        label: 'Seeds/Seedlings Source',
-        value: seedSourceLabels[event.seeds_source] || event.seeds_source,
-        priority: 'secondary'
-      });
-    }
-
-    // Water Source - For Irrigation events
-    if (event.water_source) {
-      const waterSourceLabels: Record<string, string> = {
-        well_groundwater: '💧 Well/Groundwater',
-        municipal: '🏢 Municipal Water Supply',
-        rainwater_harvesting: '🌧️ Rainwater Harvesting',
-        irrigation_canal: '🚿 Irrigation Canal/District',
-        river_stream: '🏞️ River/Stream',
-        pond_reservoir: '🌊 Pond/Reservoir',
-        recycled_water: '♻️ Recycled/Reclaimed Water',
-        other: '📝 Other Source'
-      };
-      fields.push({
-        label: 'Water Source',
-        value: waterSourceLabels[event.water_source] || event.water_source,
-        priority: 'secondary'
-      });
-    }
-
-    // Legacy extraData fields for backward compatibility
-    if (extraData.quality_grade) {
-      fields.push({
-        label: 'Quality Grade',
-        value: extraData.quality_grade,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.harvest_method) {
-      fields.push({
-        label: 'Harvest Method',
-        value: extraData.harvest_method,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.irrigation_method) {
-      fields.push({
-        label: 'Irrigation Method',
-        value: extraData.irrigation_method,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.seed_variety) {
-      fields.push({
-        label: 'Seed Variety',
-        value: extraData.seed_variety,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.pruning_type) {
-      fields.push({
-        label: 'Pruning Type',
-        value: extraData.pruning_type,
-        priority: 'secondary'
-      });
-    }
-  }
-
-  // Equipment Events (Type 4)
-  if (event.event_type === 4) {
-    if (extraData.equipment_type) {
-      fields.push({
-        label: 'Equipment',
-        value: extraData.equipment_type,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.fuel_consumed && extraData.fuel_unit) {
-      fields.push({
-        label: getFuelConsumptionLabel(extraData.fuel_type),
-        value: `${extraData.fuel_consumed} ${extraData.fuel_unit}`,
-        priority: 'immediate'
-      });
-    }
-    // Note: Fuel Type is now indicated by emoji prefix in label (⚡ Electric / ⛽ Diesel)
-    // Separate field removed to avoid redundancy
-    if (extraData.hours_operated !== undefined) {
-      fields.push({
-        label: 'Operating Hours',
-        value: `${extraData.hours_operated} hours`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.area_worked !== undefined) {
-      fields.push({
-        label: 'Area Worked',
-        value: `${extraData.area_worked} hectares`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.fuel_consumed && extraData.area_worked) {
-      const fuel_efficiency = (extraData.fuel_consumed / extraData.area_worked).toFixed(2);
-      fields.push({
-        label: 'Fuel Efficiency',
-        value: `${fuel_efficiency} ${extraData.fuel_unit || 'L'}/ha`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.operation_efficiency) {
-      fields.push({
-        label: 'Operation Efficiency',
-        value: extraData.operation_efficiency,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.maintenance_type) {
-      fields.push({
-        label: 'Maintenance Type',
-        value: extraData.maintenance_type,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.next_service) {
-      fields.push({
-        label: 'Next Service',
-        value: extraData.next_service,
-        priority: 'secondary'
-      });
-    }
-  }
-
-  // Soil Management Events (Type 5)
-  if (event.event_type === 5) {
-    if (extraData.ph_value !== undefined) {
-      fields.push({
-        label: 'Soil pH',
-        value: `${extraData.ph_value} ${
-          extraData.ph_value >= 6.0 && extraData.ph_value <= 7.0
-            ? '(optimal)'
-            : extraData.ph_value < 6.0
-            ? '(acidic)'
-            : '(alkaline)'
-        }`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.organic_matter !== undefined) {
-      fields.push({
-        label: 'Organic Matter',
-        value: `${extraData.organic_matter}% ${
-          extraData.organic_matter >= 4
-            ? '(excellent)'
-            : extraData.organic_matter >= 2
-            ? '(good)'
-            : '(needs improvement)'
-        }`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.nitrogen_level !== undefined) {
-      fields.push({
-        label: 'Nitrogen Level',
-        value: `${extraData.nitrogen_level} ppm`,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.phosphorus_level !== undefined) {
-      fields.push({
-        label: 'Phosphorus Level',
-        value: `${extraData.phosphorus_level} ppm`,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.potassium_level !== undefined) {
-      fields.push({
-        label: 'Potassium Level',
-        value: `${extraData.potassium_level} ppm`,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.test_laboratory) {
-      fields.push({
-        label: 'Testing Laboratory',
-        value: extraData.test_laboratory,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.recommendations) {
-      fields.push({
-        label: 'Recommendations',
-        value: extraData.recommendations,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.lime_type) {
-      fields.push({
-        label: 'Lime Type',
-        value: extraData.lime_type,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.application_rate !== undefined) {
-      fields.push({
-        label: 'Application Rate',
-        value: `${extraData.application_rate} tons/ha`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.target_ph !== undefined) {
-      fields.push({
-        label: 'Target pH',
-        value: `${extraData.target_ph}`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.material_type) {
-      fields.push({
-        label: 'Material Type',
-        value: extraData.material_type,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.organic_content !== undefined) {
-      fields.push({
-        label: 'Organic Content Boost',
-        value: `+${extraData.organic_content}%`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.carbon_sequestered !== undefined) {
-      fields.push({
-        label: 'Carbon Sequestered',
-        value: `${extraData.carbon_sequestered} tons`,
-        priority: 'immediate'
-      });
-    }
-
-    // TILLAGE EVENT FIELDS (TI subtype) - Display tillage operation details
-    // These are stored in extra_data when event.type === 'TI' (Tillage)
-    if (extraData.tillage_type) {
-      const tillageTypeLabels: Record<string, string> = {
-        conventional_plow: '🚜 Conventional Plow - Deep inversion',
-        chisel_plow: '⚡ Chisel Plow - Reduced tillage',
-        disk_harrow: '💿 Disk Harrow - Surface cultivation',
-        no_till: '🌱 No-Till - Direct seeding',
-        strip_till: '📏 Strip Till - Zonal tillage',
-        minimum_till: '🔄 Minimum Till - Conservation',
-        subsoiling: '🔧 Subsoiling - Deep loosening',
-        cultivator: '🌾 Cultivator - Shallow cultivation'
-      };
-      fields.push({
-        label: 'Tillage Type',
-        value: tillageTypeLabels[extraData.tillage_type] || extraData.tillage_type,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.tillage_intensity) {
-      const intensityLabels: Record<string, string> = {
-        high: 'High - Heavy disturbance',
-        medium: 'Medium - Moderate disturbance',
-        low: 'Low - Minimal disturbance',
-        conservation: 'Conservation - Protective tillage'
-      };
-      fields.push({
-        label: 'Tillage Intensity',
-        value: intensityLabels[extraData.tillage_intensity] || extraData.tillage_intensity,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.tillage_direction) {
-      const directionLabels: Record<string, string> = {
-        across_slope: '🏔️ Across Slope - Erosion control',
-        up_down_slope: '⬇️ Up/Down Slope - Standard',
-        contour: '🌀 Contour - Following natural lines',
-        random: '🔀 Random - Variable direction'
-      };
-      fields.push({
-        label: 'Tillage Direction',
-        value: directionLabels[extraData.tillage_direction] || extraData.tillage_direction,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.residue_management) {
-      const residueLabels: Record<string, string> = {
-        incorporated: '♻️ Incorporated - Mixed into soil',
-        surface_left: '🌾 Surface Left - Protective cover',
-        removed: '🚛 Removed - Harvested/burned',
-        mulched: '🍂 Mulched - Chopped in place',
-        partial_removal: '📏 Partial Removal - Mixed approach'
-      };
-      fields.push({
-        label: 'Residue Management',
-        value: residueLabels[extraData.residue_management] || extraData.residue_management,
-        priority: 'secondary'
-      });
-    }
-  }
-
-  // Pest Management Events (Type 6)
-  if (event.event_type === 6) {
-    if (extraData.pests_found) {
-      fields.push({
-        label: 'Pests Found',
-        value: extraData.pests_found,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.pest_count !== undefined) {
-      fields.push({
-        label: 'Pest Count',
-        value: `${extraData.pest_count} per plant`,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.threshold_level !== undefined) {
-      fields.push({
-        label: 'Action Threshold',
-        value: `${extraData.threshold_level} per plant`,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.action_taken) {
-      fields.push({
-        label: 'Action Taken',
-        value: extraData.action_taken,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.beneficial_species) {
-      fields.push({
-        label: 'Beneficial Species Released',
-        value: extraData.beneficial_species,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.target_pest) {
-      fields.push({
-        label: 'Target Pest',
-        value: extraData.target_pest,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.release_rate !== undefined) {
-      fields.push({
-        label: 'Release Rate',
-        value: `${extraData.release_rate} per ha`,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.effectiveness) {
-      fields.push({
-        label: 'Effectiveness',
-        value: extraData.effectiveness,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.trap_type) {
-      fields.push({
-        label: 'Trap Type',
-        value: extraData.trap_type,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.control_agent) {
-      fields.push({
-        label: 'Biological Control Agent',
-        value: extraData.control_agent,
-        priority: 'immediate'
-      });
-    }
-  }
-
-  // Business Events (Type 7)
-  if (event.event_type === 7) {
-    if (extraData.certification_type) {
-      fields.push({
-        label: 'Certification Type',
-        value: extraData.certification_type,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.certifying_body) {
-      fields.push({
-        label: 'Certifying Body',
-        value: extraData.certifying_body,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.expiry_date) {
-      fields.push({
-        label: 'Valid Until',
-        value: new Date(extraData.expiry_date).toLocaleDateString(),
-        priority: 'secondary'
-      });
-    }
-    if (extraData.audit_type) {
-      fields.push({
-        label: 'Audit Type',
-        value: extraData.audit_type,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.auditor) {
-      fields.push({
-        label: 'Auditor',
-        value: extraData.auditor,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.result) {
-      fields.push({
-        label: 'Result',
-        value: extraData.result,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.training_topic) {
-      fields.push({
-        label: 'Training Topic',
-        value: extraData.training_topic,
-        priority: 'immediate'
-      });
-    }
-    if (extraData.provider) {
-      fields.push({
-        label: 'Training Provider',
-        value: extraData.provider,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.participants !== undefined) {
-      fields.push({
-        label: 'Participants',
-        value: `${extraData.participants} staff members`,
-        priority: 'secondary'
-      });
-    }
-    if (extraData.skills_gained) {
-      fields.push({
-        label: 'Skills Gained',
-        value: extraData.skills_gained,
-        priority: 'immediate'
-      });
-    }
-  }
-
-  // Display all custom fields from custom_fields array (user-added via CustomFieldsForm)
-  // Each custom field is shown with its original label and value
-  // Farmer is responsible for avoiding duplicates during event creation
-  if (event.extra_data?.custom_fields && Array.isArray(event.extra_data.custom_fields)) {
-    event.extra_data.custom_fields.forEach((customField: any) => {
-      // Display the custom field with its original label and value
-      if (customField.label && customField.value) {
-        fields.push({
-          label: customField.label,
-          value: String(customField.value),
-          priority: 'secondary' // Custom fields shown in Additional Details
-        });
-      }
-    });
-  }
-
-  if (fields.length === 0) return null;
-
-  // Separate immediate and secondary fields for progressive disclosure
-  const immediateFields = fields.filter((field) => field.priority === 'immediate');
-  const secondaryFields = fields.filter((field) => field.priority === 'secondary');
+const renderSharedEventFields = (event: Event, cardBg: string, textColor: string) => {
+  const { immediate, secondary, details } = getEventFieldDisplay(event as any);
+
+  const allFields = [...immediate, ...secondary, ...details];
+  if (allFields.length === 0) return null;
 
   return (
     <VStack spacing={4} align="stretch">
-      {/* Immediate Fields */}
-      {immediateFields.length > 0 && (
+      {/* Immediate Fields - Primary information */}
+      {immediate.length > 0 && (
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
-          {immediateFields.map((field, index) => (
-            <Box key={index} p={4} bg={cardBg} borderRadius="lg">
+          {immediate.map((field, index) => (
+            <Box key={`imm-${index}`} p={4} bg={cardBg} borderRadius="lg">
               <Text fontSize="sm" color="gray.500" mb={1}>
                 {field.label}
               </Text>
@@ -1709,15 +610,36 @@ const renderSpecificEventFields = (event: Event, cardBg: string, textColor: stri
         </SimpleGrid>
       )}
 
-      {/* Secondary Fields - Expandable */}
-      {secondaryFields.length > 0 && (
+      {/* Secondary Fields */}
+      {secondary.length > 0 && (
         <Box>
           <Text fontSize="md" fontWeight="semibold" mb={3} color={textColor}>
             Additional Details
           </Text>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-            {secondaryFields.map((field, index) => (
-              <Box key={index} p={4} bg={cardBg} borderRadius="lg">
+            {secondary.map((field, index) => (
+              <Box key={`sec-${index}`} p={4} bg={cardBg} borderRadius="lg">
+                <Text fontSize="sm" color="gray.500" mb={1}>
+                  {field.label}
+                </Text>
+                <Text fontWeight="medium" color={textColor}>
+                  {field.value}
+                </Text>
+              </Box>
+            ))}
+          </SimpleGrid>
+        </Box>
+      )}
+
+      {/* Details Fields - Technical details */}
+      {details.length > 0 && (
+        <Box>
+          <Text fontSize="md" fontWeight="semibold" mb={3} color={textColor}>
+            Technical Details
+          </Text>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+            {details.map((field, index) => (
+              <Box key={`det-${index}`} p={4} bg={cardBg} borderRadius="lg">
                 <Text fontSize="sm" color="gray.500" mb={1}>
                   {field.label}
                 </Text>
@@ -1739,11 +661,13 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   event,
   members,
   onEventUpdated,
-  onEventDeleted
+  onEventDeleted,
+  isProductionFinished = false
 }) => {
   const intl = useIntl();
   const navigate = useNavigate();
   const toast = useToast();
+  const { canWrite } = useUserRole();
   const { currentCompany } = useSelector((state: RootState) => state.company);
 
   // Get URL parameters
@@ -1775,14 +699,29 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   // Load carbon data when modal opens - now uses embedded data
   useEffect(() => {
     if (isOpen && event) {
-      // Use embedded carbon data if available, otherwise provide fallback
-      if (event.carbon_data) {
+      // Zero-emission event types: Weather (0), General/Other Farm Activity (3), Business (7)
+      // These are observational/administrative events that produce no direct emissions
+      const isZeroEmissionType = event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
+      if (isZeroEmissionType) {
+        const typeLabels: Record<number, string> = { 0: 'weather', 3: 'general', 7: 'business' };
+        setCarbonData({
+          co2e: 0,
+          efficiency_score: 100,
+          usda_factors_based: false,
+          verification_status: 'verified',
+          data_source: `${typeLabels[event.event_type]}_transparency`,
+          calculation_method: `${typeLabels[event.event_type]}_transparency`,
+          event_type: typeLabels[event.event_type] || 'general',
+          timestamp: new Date().toISOString(),
+        });
+        setDataLoaded(true);
+      } else if (event.carbon_data) {
         setCarbonData(event.carbon_data);
         setDataLoaded(true);
       } else {
         // Fallback for events without embedded carbon data
         setCarbonData({
-          co2e: 0.1,
+          co2e: 0,
           efficiency_score: 50.0,
           usda_factors_based: false,
           verification_status: 'estimated',
@@ -1809,7 +748,6 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
   const eventConfig = getEventConfig(event.type, event.description, event.event_type);
   const eventData = extractEventData(event);
-  const qrVisibility = getQRVisibility(event);
   const operator = members.find((member) => member.id === event.created_by);
 
   const handleEdit = () => {
@@ -1883,23 +821,52 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     <Text fontSize="xl" fontWeight="bold" color={textColor}>
                       {getEventDisplayName(event, intl)}
                     </Text>
-                    <Badge
-                      colorScheme={eventConfig.color.split('.')[0]}
-                      variant="subtle"
-                      fontSize="sm"
-                      px={3}
-                      py={1}
-                      borderRadius="full"
-                    >
-                      {eventConfig.category}
-                    </Badge>
+                    <HStack spacing={2}>
+                      <Badge
+                        colorScheme={eventConfig.color.split('.')[0]}
+                        variant="subtle"
+                        fontSize="sm"
+                        px={3}
+                        py={1}
+                        borderRadius="full"
+                      >
+                        {eventConfig.category}
+                      </Badge>
+                      {(event.is_summary === true ||
+                        event.extra_data?.is_summary === true ||
+                        event.extra_data?.is_summary === 'true') && (
+                        <Badge
+                          colorScheme="purple"
+                          variant="subtle"
+                          fontSize="sm"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                        >
+                          <Icon as={FaLayerGroup} boxSize={3} />
+                          {event.event_count || event.extra_data?.event_count || 'Summary'}
+                          {' events'}
+                        </Badge>
+                      )}
+                    </HStack>
                   </VStack>
                 </HStack>
 
                 <HStack spacing={6} color="gray.500" fontSize="sm">
                   <HStack spacing={2}>
                     <Icon as={FaCalendarAlt} boxSize={4} />
-                    <Text>{new Date(event.date).toLocaleDateString()}</Text>
+                    <Text>
+                      {event.extra_data?.date_start && event.extra_data?.date_end
+                        ? `${new Date(
+                            event.extra_data.date_start
+                          ).toLocaleDateString()} - ${new Date(
+                            event.extra_data.date_end
+                          ).toLocaleDateString()}`
+                        : new Date(event.date).toLocaleDateString()}
+                    </Text>
                   </HStack>
                   {operator && (
                     <HStack spacing={2}>
@@ -1947,10 +914,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     </Box>
                   )}
 
-                  {eventData.amount && (
+                  {eventData.amount != null && (
                     <Box p={4} bg={cardBg} borderRadius="lg">
                       <Text fontSize="sm" color="gray.500" mb={1}>
-                        Amount Applied
+                        Volume Applied
                       </Text>
                       <Text fontWeight="medium">
                         {eventData.amount} {eventData.unit}
@@ -2021,243 +988,130 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               )}
 
               {/* Specific Event Fields Section */}
-              {renderSpecificEventFields(event, cardBg, textColor) && (
+              {renderSharedEventFields(event, cardBg, textColor) && (
                 <>
                   <Divider />
                   <Box>
                     <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
                       Detailed Information
                     </Text>
-                    {renderSpecificEventFields(event, cardBg, textColor)}
+                    {renderSharedEventFields(event, cardBg, textColor)}
                   </Box>
                 </>
               )}
 
               <Divider />
 
-              {/* Carbon Impact Section */}
-              <Box>
-                <HStack justify="space-between" align="center" mb={4}>
-                  <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                    Carbon Impact Analysis
-                  </Text>
-                  {carbonData && carbonData.error && <Spinner size="sm" color="red.500" />}
-                </HStack>
-
-                {carbonData && !carbonData.error ? (
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                    {/* Carbon Impact */}
-                    <Stat
-                      bg={cardBg}
-                      p={4}
-                      borderRadius="lg"
-                      border="1px"
-                      borderColor={borderColor}
-                    >
-                      <StatLabel>Carbon Impact</StatLabel>
-                      <StatNumber color={carbonData.co2e < 0 ? 'green.500' : 'orange.500'}>
-                        {carbonData.co2e > 0 ? '+' : ''}
-                        {carbonData.co2e} kg CO₂
-                      </StatNumber>
-                      <StatHelpText>
-                        <StatArrow type={carbonData.co2e > 0 ? 'increase' : 'decrease'} />
-                        {carbonData.co2e > 0 ? 'Emission' : 'Reduction'}
-                      </StatHelpText>
-                      {(carbonData.usda_factors_based || carbonData.usda_verified) && (
-                        <Badge colorScheme="blue" variant="solid" fontSize="xs" mt={2}>
+              {/* Carbon Impact Section - matches CarbonImpactPreview format */}
+              {carbonData && !carbonData.error && (
+                <Box p={4} bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+                  <HStack justify="space-between" align="center" mb={3}>
+                    <HStack spacing={2}>
+                      <Icon as={FaLeaf} color="green.500" boxSize={4} />
+                      <Text fontSize="lg" fontWeight="bold" color={textColor}>
+                        Carbon Impact
+                      </Text>
+                    </HStack>
+                    {(carbonData.usda_factors_based || carbonData.usda_verified) && (
+                      <Tooltip label="Calculated using USDA published emission factors">
+                        <Badge colorScheme="green" fontSize="xs">
                           <HStack spacing={1}>
                             <Icon as={FaCertificate} boxSize={3} />
-                            <Text>USDA Verified</Text>
+                            <Text>Science-Based</Text>
                           </HStack>
                         </Badge>
-                      )}
-                    </Stat>
-
-                    {/* Efficiency Score */}
-                    {carbonData.efficiency_score > 0 && (
-                      <Stat
-                        bg={cardBg}
-                        p={4}
-                        borderRadius="lg"
-                        border="1px"
-                        borderColor={borderColor}
-                      >
-                        <StatLabel>Efficiency Score</StatLabel>
-                        <StatNumber>{carbonData.efficiency_score}/100</StatNumber>
-                        <Progress
-                          value={carbonData.efficiency_score}
-                          colorScheme={
-                            carbonData.efficiency_score >= 70
-                              ? 'green'
-                              : carbonData.efficiency_score >= 50
-                              ? 'yellow'
-                              : 'red'
-                          }
-                          size="sm"
-                          mt={2}
-                          borderRadius="full"
-                        />
-                      </Stat>
+                      </Tooltip>
                     )}
-
-                    {/* Cost Analysis */}
-                    {carbonData.cost_analysis?.estimated_cost && (
-                      <Stat
-                        bg={cardBg}
-                        p={4}
-                        borderRadius="lg"
-                        border="1px"
-                        borderColor={borderColor}
-                      >
-                        <StatLabel>Estimated Cost</StatLabel>
-                        <StatNumber>${carbonData.cost_analysis.estimated_cost}</StatNumber>
-                        <StatHelpText>
-                          ${carbonData.cost_analysis.cost_per_co2e?.toFixed(2)}/kg CO₂
-                        </StatHelpText>
-                      </Stat>
-                    )}
-                  </SimpleGrid>
-                ) : carbonData && carbonData.error ? (
-                  <Box textAlign="center" py={8}>
-                    <Spinner size="lg" color="red.500" />
-                    <Text mt={4} color="red.500">
-                      {carbonData.error}
-                    </Text>
-                  </Box>
-                ) : (
-                  <Alert status="warning" borderRadius="lg">
-                    <AlertIcon />
-                    <Text>Carbon impact data is not available for this event type.</Text>
-                  </Alert>
-                )}
-              </Box>
-
-              <Divider />
-
-              {/* Consumer Visibility Section */}
-              <Box>
-                <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
-                  Consumer Transparency
-                </Text>
-
-                <HStack spacing={4} align="center">
-                  <HStack spacing={2}>
-                    <Icon
-                      as={
-                        qrVisibility === 'high'
-                          ? FaEye
-                          : qrVisibility === 'medium'
-                          ? FaMinus
-                          : FaEyeSlash
-                      }
-                      color={
-                        qrVisibility === 'high'
-                          ? 'green.500'
-                          : qrVisibility === 'medium'
-                          ? 'yellow.500'
-                          : 'gray.400'
-                      }
-                      boxSize={5}
-                    />
-                    <VStack align="start" spacing={0}>
-                      <Text fontWeight="medium" textTransform="capitalize">
-                        {qrVisibility} QR Visibility
-                      </Text>
-                      <Text fontSize="sm" color="gray.500">
-                        {qrVisibility === 'high' && 'Highly relevant to consumers'}
-                        {qrVisibility === 'medium' && 'Moderately relevant to consumers'}
-                        {qrVisibility === 'low' && 'Internal farming activity'}
-                      </Text>
-                    </VStack>
                   </HStack>
 
-                  <Tooltip
-                    label="This indicates how relevant this event is to consumers scanning your product QR codes"
-                    placement="top"
-                    hasArrow
-                  >
-                    <Box cursor="help">
-                      <Icon as={MdInfo} color="gray.400" boxSize={4} />
-                    </Box>
-                  </Tooltip>
-                </HStack>
-              </Box>
-
-              {/* Data Source Information - Updated to use new fields */}
-              {carbonData && (
-                <Box p={4} bg={cardBg} borderRadius="lg">
-                  <HStack justify="space-between" align="start" mb={3}>
-                    <VStack align="start" spacing={1}>
-                      <Text fontSize="sm" fontWeight="medium" color={textColor}>
-                        Carbon Data Source
-                      </Text>
-                      <Text fontSize="xs" color="gray.500">
-                        {getCalculationMethodDescription(carbonData.calculation_method, carbonData)}
-                      </Text>
-                      {carbonData.data_source && (
-                        <Text fontSize="xs" color="gray.400" fontStyle="italic">
-                          Source: {carbonData.data_source}
+                  {/* Weather/zero-emission events: transparency message */}
+                  {(carbonData.co2e === 0 || carbonData.calculation_method?.includes('weather')) ? (
+                    <VStack spacing={3} align="stretch">
+                      <HStack justify="space-between" align="center">
+                        <VStack spacing={0} align="start">
+                          <HStack spacing={2}>
+                            <Text fontSize="2xl" fontWeight="bold" color={textColor}>0</Text>
+                            <Text fontSize="sm" color="gray.500">kg CO₂e</Text>
+                            <Badge colorScheme="gray" size="sm">None</Badge>
+                          </HStack>
+                          <Text fontSize="xs" color="gray.500">No direct emissions</Text>
+                        </VStack>
+                        <VStack spacing={0} align="end">
+                          <HStack spacing={1}>
+                            <Text fontSize="lg" fontWeight="bold" color="green.500">100</Text>
+                            <Text fontSize="sm" color="gray.500">/100</Text>
+                          </HStack>
+                          <Text fontSize="xs" color="gray.500">Efficiency Score</Text>
+                        </VStack>
+                      </HStack>
+                      <Alert status="info" size="sm" borderRadius="md">
+                        <AlertIcon boxSize={3} />
+                        <Box>
+                          <AlertTitle fontSize="xs">Transparency Value</AlertTitle>
+                          <AlertDescription fontSize="xs">
+                            {event.event_type === 7
+                              ? 'Business activities like certifications and audits build consumer trust. They generate no direct emissions but strengthen your transparency score.'
+                              : event.event_type === 3
+                                ? 'General farm activities document agricultural practices. They generate no direct emissions but build your transparency score and enrich the consumer story.'
+                                : 'This event generates no direct emissions but builds your transparency score and enriches the consumer story.'}
+                          </AlertDescription>
+                        </Box>
+                      </Alert>
+                    </VStack>
+                  ) : (
+                  <>
+                  <HStack justify="space-between" align="center">
+                    <VStack spacing={0} align="start">
+                      <HStack spacing={2}>
+                        <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                          {formatCO2e(carbonData.co2e)}
                         </Text>
-                      )}
+                        <Text fontSize="sm" color="gray.500">
+                          kg CO₂e
+                        </Text>
+                        <Badge colorScheme={getImpactLevel(carbonData.co2e).color} size="sm">
+                          {getImpactLevel(carbonData.co2e).level}
+                        </Badge>
+                      </HStack>
+                      <Text fontSize="xs" color="gray.500">
+                        Carbon footprint estimate
+                      </Text>
                     </VStack>
-                    <Badge
-                      colorScheme={
-                        carbonData.verification_status === 'usda_certified' ||
-                        carbonData.verification_status === 'factors_verified' ||
-                        carbonData.usda_factors_based
-                          ? 'green'
-                          : carbonData.error
-                          ? 'red'
-                          : 'blue'
-                      }
-                      variant="subtle"
-                      fontSize="xs"
-                    >
-                      {carbonData.verification_status === 'usda_certified'
-                        ? '✓ USDA Certified'
-                        : carbonData.verification_status === 'factors_verified' ||
-                          carbonData.usda_factors_based
-                        ? '📊 USDA Factors'
-                        : carbonData.error
-                        ? '⚠ Data Unavailable'
-                        : '📈 Estimated'}
-                    </Badge>
+
+                    {carbonData.efficiency_score > 0 && (
+                      <VStack spacing={0} align="end">
+                        <HStack spacing={1}>
+                          <Text
+                            fontSize="lg"
+                            fontWeight="bold"
+                            color={`${getCarbonScoreColor(carbonData.efficiency_score)}.500`}
+                          >
+                            {Math.round(carbonData.efficiency_score)}
+                          </Text>
+                          <Text fontSize="sm" color="gray.500">
+                            /100
+                          </Text>
+                        </HStack>
+                        <Text fontSize="xs" color="gray.500">
+                          Efficiency Score
+                        </Text>
+                      </VStack>
+                    )}
                   </HStack>
 
-                  {/* Data confidence indicator - Updated */}
-                  <HStack spacing={2} align="center">
-                    <Text fontSize="xs" color="gray.400">
-                      Confidence:
-                    </Text>
-                    <HStack spacing={1}>
-                      {[1, 2, 3].map((level) => (
-                        <Box
-                          key={level}
-                          w={2}
-                          h={2}
-                          borderRadius="full"
-                          bg={
-                            level <=
-                            (getDataSourceConfidence(carbonData) === 'high'
-                              ? 3
-                              : getDataSourceConfidence(carbonData) === 'medium'
-                              ? 2
-                              : 1)
-                              ? carbonData.verification_status === 'usda_certified'
-                                ? 'green.400'
-                                : carbonData.usda_factors_based ||
-                                  carbonData.verification_status === 'factors_verified'
-                                ? 'blue.400'
-                                : 'yellow.400'
-                              : 'gray.200'
-                          }
-                        />
-                      ))}
-                    </HStack>
-                    <Text fontSize="xs" color="gray.500" textTransform="capitalize">
-                      {getDataSourceConfidence(carbonData)}
-                    </Text>
-                  </HStack>
+                  {/* Efficiency Progress Bar */}
+                  {carbonData.efficiency_score > 0 && (
+                    <Box mt={3}>
+                      <Progress
+                        value={carbonData.efficiency_score}
+                        colorScheme={getCarbonScoreColor(carbonData.efficiency_score)}
+                        size="sm"
+                        borderRadius="md"
+                      />
+                    </Box>
+                  )}
+                  </>
+                  )}
                 </Box>
               )}
             </VStack>
@@ -2284,44 +1138,53 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 Close
               </Button>
 
-              <HStack spacing={3}>
-                <Button
-                  leftIcon={<FaTrash />}
-                  colorScheme="red"
-                  variant="outline"
-                  onClick={onDeleteOpen}
-                  size="lg"
-                  borderRadius="lg"
-                  fontWeight="semibold"
-                  isLoading={isDeleting}
-                  loadingText="Deleting..."
-                  _hover={{
-                    bg: 'red.50',
-                    color: 'red.600',
-                    borderColor: 'red.600'
-                  }}
-                  transition="all 0.2s"
-                >
-                  Delete
-                </Button>
+              {isProductionFinished ? (
+                <HStack spacing={2} bg="gray.50" px={4} py={2} borderRadius="lg">
+                  <Icon as={FaLock} boxSize={4} color="gray.500" />
+                  <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                    Event locked — production completed
+                  </Text>
+                </HStack>
+              ) : canWrite ? (
+                <HStack spacing={3}>
+                  <Button
+                    leftIcon={<FaTrash />}
+                    colorScheme="red"
+                    variant="outline"
+                    onClick={onDeleteOpen}
+                    size="lg"
+                    borderRadius="lg"
+                    fontWeight="semibold"
+                    isLoading={isDeleting}
+                    loadingText="Deleting..."
+                    _hover={{
+                      bg: 'red.50',
+                      color: 'red.600',
+                      borderColor: 'red.600'
+                    }}
+                    transition="all 0.2s"
+                  >
+                    Delete
+                  </Button>
 
-                <Button
-                  leftIcon={<FaEdit />}
-                  colorScheme="blue"
-                  variant="solid"
-                  onClick={handleEdit}
-                  size="lg"
-                  borderRadius="lg"
-                  fontWeight="semibold"
-                  _hover={{
-                    transform: 'translateY(-1px)',
-                    boxShadow: 'lg'
-                  }}
-                  transition="all 0.2s"
-                >
-                  Edit Event
-                </Button>
-              </HStack>
+                  <Button
+                    leftIcon={<FaEdit />}
+                    colorScheme="blue"
+                    variant="solid"
+                    onClick={handleEdit}
+                    size="lg"
+                    borderRadius="lg"
+                    fontWeight="semibold"
+                    _hover={{
+                      transform: 'translateY(-1px)',
+                      boxShadow: 'lg'
+                    }}
+                    transition="all 0.2s"
+                  >
+                    Edit Event
+                  </Button>
+                </HStack>
+              ) : null}
             </Flex>
           </ModalFooter>
         </ModalContent>

@@ -171,7 +171,7 @@ const authApi = baseApi.injectEndpoints({
       }
     }),
     socialAuth: build.mutation({
-      query: ({ provider, access_token, id_token, user_type, user }) => ({
+      query: ({ provider, access_token, id_token, user_type, user, invitation_code }) => ({
         url: SOCIAL_AUTH_URL,
         method: 'POST',
         body: {
@@ -179,7 +179,8 @@ const authApi = baseApi.injectEndpoints({
           access_token,
           id_token,
           user_type,
-          user // For Apple Sign In name data
+          user, // For Apple Sign In name data
+          invitation_code
         },
         credentials: 'include'
       }),
@@ -194,7 +195,13 @@ const authApi = baseApi.injectEndpoints({
           if (result.data.refresh) {
             TokenManager.setRefreshToken(result.data.refresh);
           }
-          if (result.data.user['companies'].length > 0) {
+
+          // Handle invitation acceptance
+          if (result.data.invitation_accepted && result.data.company) {
+            dispatch(setCompany(result.data.company));
+            // Clear pending invitation from sessionStorage
+            sessionStorage.removeItem('pendingInvitation');
+          } else if (result.data.user['companies'].length > 0) {
             const { data } = await dispatch(
               baseApi.endpoints.getCompany.initiate(result.data.user['companies'][0].id)
             );

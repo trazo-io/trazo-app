@@ -46,11 +46,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IoEllipsisVerticalSharp } from 'react-icons/io5';
 import EnhancedTimelineRow from 'components/Tables/EnhancedTimelineRow';
+import { getTimelineEventTitle } from 'utils/eventDescriptions';
 import { setCurrentHistory } from 'store/features/historySlice';
 import { useGetCurrentHistoryQuery, useDeleteProductionMutation } from 'store/api/historyApi';
 import { useIntl } from 'react-intl';
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
 import { EventDetailsModal } from 'components/Modals/EventDetailsModal';
+import { useUserRole } from 'hooks/useUserRole';
 
 // Custom components
 import Card from 'components/Card/Card';
@@ -60,6 +62,7 @@ import CardHeader from 'components/Card/CardHeader.tsx';
 const TrackList = ({ amount }) => {
   const textColor = useColorModeValue('gray.700', 'white');
   const intl = useIntl();
+  const { canWrite } = useUserRole();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isOpenFinishModal,
@@ -179,10 +182,9 @@ const TrackList = ({ amount }) => {
       key={`track-list-${parcelId}`}
       h={{ base: '650px', md: '700px' }}
       maxH={{ base: '650px', md: '700px' }}
-      minW={{ base: '100%', md: '450px' }}
+      minW={{ base: '100%', md: '400px' }}
       w="100%"
-      className="trazo-card"
-    >
+      className="trazo-card">
       <CardHeader px={{ base: 4, md: 6 }} py={5}>
         <Flex direction="column" w="100%">
           {/* Header with consistent height */}
@@ -203,49 +205,47 @@ const TrackList = ({ amount }) => {
                   textTransform="none"
                   w="fit-content"
                   border="1px solid"
-                  borderColor="green.200"
-                >
+                  borderColor="green.200">
                   {currentHistory?.product}
                 </Badge>
               )}
             </HStack>
-            <Menu isOpen={isOpen1} onClose={onClose1}>
-              <MenuButton
-                onClick={onOpen1}
-                alignSelf="flex-start"
-                disabled={!currentHistory?.product}
-                cursor={!currentHistory?.product ? 'default' : 'pointer'}
-              >
-                <Icon as={IoEllipsisVerticalSharp} color="gray.400" w="20px" h="20px" />
-              </MenuButton>
-              <MenuList>
-                <MenuItem
-                  onClick={() =>
-                    navigate(
-                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${currentHistory?.id}/change`
-                    )
-                  }
-                >
-                  <Flex color={textColor} cursor="pointer" align="center" p="4px">
-                    <Text fontSize="sm" fontWeight="500">
-                      {intl.formatMessage({ id: 'app.edit' }).toUpperCase()}
-                    </Text>
-                  </Flex>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => {
-                    onClose1();
-                    onDeleteOpen();
-                  }}
-                >
-                  <Flex color="red.500" cursor="pointer" align="center" p="4px">
-                    <Text fontSize="sm" fontWeight="500">
-                      {intl.formatMessage({ id: 'app.delete' }).toUpperCase()}
-                    </Text>
-                  </Flex>
-                </MenuItem>
-              </MenuList>
-            </Menu>
+            {canWrite && (
+              <Menu isOpen={isOpen1} onClose={onClose1}>
+                <MenuButton
+                  onClick={onOpen1}
+                  alignSelf="flex-start"
+                  disabled={!currentHistory?.product}
+                  cursor={!currentHistory?.product ? 'default' : 'pointer'}>
+                  <Icon as={IoEllipsisVerticalSharp} color="gray.400" w="20px" h="20px" />
+                </MenuButton>
+                <MenuList>
+                  <MenuItem
+                    onClick={() =>
+                      navigate(
+                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${currentHistory?.id}/change`
+                      )
+                    }>
+                    <Flex color={textColor} cursor="pointer" align="center" p="4px">
+                      <Text fontSize="sm" fontWeight="500">
+                        {intl.formatMessage({ id: 'app.edit' }).toUpperCase()}
+                      </Text>
+                    </Flex>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      onClose1();
+                      onDeleteOpen();
+                    }}>
+                    <Flex color="red.500" cursor="pointer" align="center" p="4px">
+                      <Text fontSize="sm" fontWeight="500">
+                        {intl.formatMessage({ id: 'app.delete' }).toUpperCase()}
+                      </Text>
+                    </Flex>
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            )}
           </Flex>
 
           <Divider />
@@ -283,8 +283,7 @@ const TrackList = ({ amount }) => {
                 bg: 'green.600'
               }
             }
-          }}
-        >
+          }}>
           <Flex direction="column" width={'100%'} pb={4}>
             {isLoading || isFetching ? (
               <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
@@ -298,25 +297,7 @@ const TrackList = ({ amount }) => {
                       minW={{ base: '100%', md: '390px' }}
                       key={`${parcelId}-${event.id}-${index}`}
                       logo={event.certified ? FaRegCheckCircle : FaRegDotCircle}
-                      title={
-                        event.event_type != 3
-                          ? (() => {
-                              // Check for commercial name override for chemical events
-                              if (event.commercial_name) {
-                                const isChemicalEvent =
-                                  event.event_type === 1 ||
-                                  event.type?.includes('chemical') ||
-                                  (event.type && ['FE', 'PE', 'FU', 'HE'].includes(event.type));
-
-                                if (isChemicalEvent) {
-                                  return event.commercial_name;
-                                }
-                              }
-                              // Fallback to generic translation
-                              return intl.formatMessage({ id: `${event.type}` });
-                            })()
-                          : event.name
-                      }
+                      title={getTimelineEventTitle(event, intl)}
                       date={new Date(event.date).toDateString()}
                       color={event.certified ? 'green.300' : 'blue.400'}
                       index={index}
@@ -387,8 +368,7 @@ const TrackList = ({ amount }) => {
               navigate(
                 `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
               )
-            }
-          >
+            }>
             {intl.formatMessage({ id: 'app.startProduction' })}
           </Button>
         ) : (
@@ -398,10 +378,9 @@ const TrackList = ({ amount }) => {
             align="center"
             w="100%"
             flexFlow={'wrap'}
-            direction={{ base: 'column', sm: 'row' }}
-          >
+            direction={{ base: 'column', sm: 'row' }}>
             {/* Primary Add Event Dropdown Button */}
-            <Menu isOpen={isAddEventMenuOpen} onClose={onAddEventMenuClose}>
+            {canWrite && <Menu isOpen={isAddEventMenuOpen} onClose={onAddEventMenuClose}>
               <MenuButton
                 as={Button}
                 leftIcon={<Icon as={FaPlus} />}
@@ -424,8 +403,7 @@ const TrackList = ({ amount }) => {
                   boxShadow: 'md'
                 }}
                 transition="all 0.2s"
-                onClick={onAddEventMenuOpen}
-              >
+                onClick={onAddEventMenuOpen}>
                 {intl.formatMessage({ id: 'app.addEvent' })}
               </MenuButton>
               <MenuList
@@ -434,15 +412,13 @@ const TrackList = ({ amount }) => {
                 borderRadius="12px"
                 boxShadow="xl"
                 py="8px"
-                minW={{ base: '200px', md: '220px' }}
-              >
+                minW={{ base: '200px', md: '220px' }}>
                 {/* Carbon Focus Header - NEW */}
                 <Box
                   px="16px"
                   py="8px"
                   borderBottom="1px solid"
-                  borderColor={useColorModeValue('gray.100', 'gray.700')}
-                >
+                  borderColor={useColorModeValue('gray.100', 'gray.700')}>
                   <HStack>
                     <Icon as={FaLeaf} color="green.500" boxSize={3} />
                     <Text fontSize="xs" fontWeight="bold" color="green.600">
@@ -471,8 +447,7 @@ const TrackList = ({ amount }) => {
                   onClick={() => {
                     onAddEventMenuClose();
                     onQuickAddOpen();
-                  }}
-                >
+                  }}>
                   <VStack align="start" spacing={0} flex={1}>
                     <HStack justify="space-between" width="100%">
                       <Text fontWeight="semibold">Quick Event</Text>
@@ -504,8 +479,7 @@ const TrackList = ({ amount }) => {
                     navigate(
                       `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/event/add`
                     );
-                  }}
-                >
+                  }}>
                   <VStack align="start" spacing={0} flex={1}>
                     <HStack justify="space-between" width="100%">
                       <Text fontWeight="semibold">Manual Entry</Text>
@@ -525,8 +499,7 @@ const TrackList = ({ amount }) => {
                   py="8px"
                   mt="4px"
                   borderTop="1px solid"
-                  borderColor={useColorModeValue('gray.100', 'gray.700')}
-                >
+                  borderColor={useColorModeValue('gray.100', 'gray.700')}>
                   <HStack>
                     <Icon as={FaCamera} color="blue.400" boxSize={3} />
                     <Text fontSize="xs" color="gray.600">
@@ -535,10 +508,10 @@ const TrackList = ({ amount }) => {
                   </HStack>
                 </Box>
               </MenuList>
-            </Menu>
+            </Menu>}
 
             {/* Finish Production Button - Only show if there are events */}
-            {currentHistory?.events && currentHistory?.events.length > 0 && (
+            {canWrite && currentHistory?.events && currentHistory?.events.length > 0 && (
               <Button
                 p={{ base: '0px', md: '16px' }}
                 leftIcon={<Icon as={FaFlag} />}
@@ -559,8 +532,7 @@ const TrackList = ({ amount }) => {
                   navigate(
                     `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${currentHistory?.id}/finish`
                   )
-                }
-              >
+                }>
                 {intl.formatMessage({ id: 'app.finishProduction' })}
               </Button>
             )}
@@ -594,8 +566,7 @@ const TrackList = ({ amount }) => {
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
         onClose={onDeleteClose}
-        isCentered
-      >
+        isCentered>
         <AlertDialogOverlay bg="blackAlpha.300" backdropFilter="blur(10px)">
           <AlertDialogContent borderRadius="xl" p={2} mx={4}>
             <AlertDialogHeader fontSize="lg" fontWeight="bold" pb={4}>
@@ -634,8 +605,7 @@ const TrackList = ({ amount }) => {
                   size="lg"
                   color="gray.600"
                   borderRadius="lg"
-                  _hover={{ bg: 'gray.100' }}
-                >
+                  _hover={{ bg: 'gray.100' }}>
                   {intl.formatMessage({ id: 'app.cancel' })}
                 </Button>
                 <Button
@@ -655,8 +625,7 @@ const TrackList = ({ amount }) => {
                     color: 'red.600',
                     borderColor: 'red.600'
                   }}
-                  transition="all 0.2s"
-                >
+                  transition="all 0.2s">
                   {intl.formatMessage({ id: 'app.delete' })}
                 </Button>
               </HStack>

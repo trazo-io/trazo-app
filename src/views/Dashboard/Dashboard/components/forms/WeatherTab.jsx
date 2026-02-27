@@ -30,7 +30,7 @@ import {
 } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 // Custom components
-import React, { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import React, { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import { number, object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 
@@ -38,8 +38,21 @@ import { FaPlus } from 'react-icons/fa';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 
+// Weather type display names for auto-generated event names
+const WEATHER_TYPE_NAMES = {
+  FR: 'Frost Event',
+  DR: 'Drought',
+  HL: 'Hailstorm',
+  HT: 'High Temperatures',
+  TS: 'Tropical Storm',
+  HW: 'High Winds',
+  HH: 'High Humidity',
+  LH: 'Low Humidity'
+};
+
 const formSchemaMainInfo = object({
-  type: string().min(1, 'Name is required'),
+  type: string().min(1, 'Weather event type is required'),
+  name: string().optional(),
   lower_temperature: string()
     .optional()
     .refine(
@@ -210,18 +223,26 @@ const WeatherTab = forwardRef(
       }
     });
 
-    // DEBOUNCE FIX: Expose flushData method to parent via ref
-    // This allows NewEvent.jsx to force-sync form data before step change
+    // Ref to always hold the latest submit handler, avoiding stale closures in useImperativeHandle
+    const submitHandlerRef = useRef(null);
+
+    // Expose flushData and submitForm methods to parent via ref
     useImperativeHandle(
       ref,
       () => ({
         flushData: () => {
           if (onDataChange) {
             const currentValues = mainInfoMethods.getValues();
-            console.log('[WeatherTab] 🔄 flushData called - syncing form data immediately');
             onDataChange(currentValues);
           }
-        }
+        },
+        submitForm: () =>
+          new Promise((resolve, reject) => {
+            mainInfoMethods.handleSubmit(
+              (data) => { submitHandlerRef.current(data); resolve(); },
+              (errors) => { reject(errors); }
+            )();
+          })
       }),
       [onDataChange, mainInfoMethods]
     );
@@ -241,6 +262,7 @@ const WeatherTab = forwardRef(
         console.log('🔍 WeatherTab: mapped type:', mappedType, 'from:', initialValues.type);
         mainInfoMethods.reset({
           type: mappedType || '',
+          name: initialValues.name || '',
           lower_temperature: initialValues.lower_temperature?.toString() || '',
           way_of_protection: initialValues.way_of_protection || '',
           water_deficit: initialValues.water_deficit?.toString() || '',
@@ -281,6 +303,17 @@ const WeatherTab = forwardRef(
 
     const type = watch('type', '');
 
+    // Auto-generate event name from weather type (matches Production/Soil/Pest pattern)
+    useEffect(() => {
+      if (type && WEATHER_TYPE_NAMES[type]) {
+        const currentName = mainInfoMethods.getValues('name');
+        const autoNames = Object.values(WEATHER_TYPE_NAMES);
+        if (!currentName || !currentName.trim() || autoNames.includes(currentName)) {
+          mainInfoMethods.setValue('name', WEATHER_TYPE_NAMES[type], { shouldDirty: false });
+        }
+      }
+    }, [type, mainInfoMethods]);
+
     // Report validation errors to parent component
     useEffect(() => {
       const hasErrors = Object.keys(errors).length > 0;
@@ -313,6 +346,7 @@ const WeatherTab = forwardRef(
         // Sprint 2 Epic 2.1.3: Removed weight and diameter from watched fields
         const relevantFields = [
           'type',
+          'name',
           'lower_temperature',
           'way_of_protection',
           'highest_temperature',
@@ -364,6 +398,8 @@ const WeatherTab = forwardRef(
     }, []); // Empty dependency array - subscription handles changes internally
 
     const onSubmit = (data) => {
+      // Preserve name across all weather types (added before switch to avoid repetition)
+      const eventName = data.name;
       switch (type) {
         case 'FR':
           data = {
@@ -435,8 +471,15 @@ const WeatherTab = forwardRef(
           break;
       }
 
+      // Merge name back into the structured data
+      if (eventName) {
+        data.name = eventName;
+      }
       onSubmitHandler(data);
     };
+
+    // Keep ref in sync with latest handler on every render (avoids stale closures)
+    submitHandlerRef.current = onSubmit;
 
     return (
       <FormProvider {...mainInfoMethods}>
@@ -489,6 +532,18 @@ const WeatherTab = forwardRef(
                         <option value="LH">Low Humidity</option>
                       </StandardSelect>
                     )}
+                  />
+                </StandardField>
+
+                {/* Event Name - Optional, auto-generated from weather type if empty */}
+                <StandardField
+                  label="Event Name"
+                  helpText="Auto-generated from weather type. Customize for specific events."
+                >
+                  <StandardInput
+                    type="text"
+                    placeholder={`e.g., ${WEATHER_TYPE_NAMES[type] || 'Weather Event'} - North Field`}
+                    {...register('name')}
                   />
                 </StandardField>
               </SimpleGrid>

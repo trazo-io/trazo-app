@@ -12,6 +12,7 @@ interface SocialAuthCredentials {
   access_token?: string;
   user_type: number;
   user?: any; // Apple Sign In user data
+  invitation_code?: string;
 }
 
 interface GoogleAuthResponse {
@@ -63,7 +64,9 @@ export const initializeGoogleAuth = (): Promise<void> => {
 };
 
 /**
- * Handle Google Sign In
+ * Handle Google Sign In.
+ * - Production: uses GIS SDK directly (real domains are valid origins)
+ * - Development: uses manual popup with localhost redirect (app.localhost not accepted by Google)
  */
 export const handleGoogleSignIn = async (
   onSuccess: AuthSuccessCallback,
@@ -75,39 +78,80 @@ export const handleGoogleSignIn = async (
       throw new Error('Google Client ID not configured');
     }
 
-    // Load Google Identity Services
-    if (!window.google) {
-      await loadGoogleSDK();
+    const isDev = import.meta.env.DEV;
+
+    if (!isDev) {
+      // Production: use GIS SDK token client (origin is a valid public domain)
+      if (!window.google) {
+        await loadGoogleSDK();
+      }
+
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'email profile openid',
+        callback: (response: any) => {
+          if (response.access_token) {
+            onSuccess({
+              provider: 'google',
+              access_token: response.access_token,
+              user_type: userType
+            });
+          } else {
+            onError(new Error('No access token received from Google'));
+          }
+        },
+        error_callback: (error: any) => {
+          onError(new Error(error?.message || 'Google sign in failed'));
+        }
+      });
+
+      tokenClient.requestAccessToken();
+      return;
     }
 
-    window.google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: (response) => {
-        if (response.credential) {
-          // Extract ID token from response
-          onSuccess({
-            provider: 'google',
-            id_token: response.credential,
-            user_type: userType
-          });
-        } else {
-          onError(new Error('No credential received from Google'));
-        }
-      },
-      cancel_on_tap_outside: false
-    });
+    // Development: manual popup flow via localhost redirect
+    const redirectUri = 'http://localhost:3000/auth/google/callback';
+    const scope = 'email profile openid';
 
-    // Show the Google Sign In prompt
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        // Fallback to popup
-        window.google.accounts.id.renderButton(document.getElementById('g_id_signin'), {
-          theme: 'outline',
-          size: 'large',
-          width: '100%'
+    const authUrl =
+      `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=token` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&prompt=select_account`;
+
+    const popup = window.open(authUrl, 'google-auth', 'width=500,height=600');
+
+    if (!popup) {
+      throw new Error('popup_blocked');
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type !== 'google-auth-callback') return;
+
+      window.removeEventListener('message', handleMessage);
+      clearInterval(checkClosed);
+
+      if (event.data.access_token) {
+        onSuccess({
+          provider: 'google',
+          access_token: event.data.access_token,
+          user_type: userType
         });
+      } else if (event.data.error) {
+        onError(new Error(event.data.error));
       }
-    });
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkClosed);
+        window.removeEventListener('message', handleMessage);
+      }
+    }, 1000);
   } catch (error) {
     console.error('Google Sign In error:', error);
     onError(error);

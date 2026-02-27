@@ -23,7 +23,6 @@ import {
 import {
   FaGoogle,
   FaFacebook,
-  FaApple,
   FaEnvelope,
   FaLock,
   FaEye,
@@ -35,7 +34,6 @@ import { login as loginAction } from '../../../store/features/authSlice';
 import {
   handleGoogleSignIn,
   handleFacebookSignIn,
-  handleAppleSignIn,
   handleSocialAuthError,
   checkSocialAuthConfig
 } from '../../../utils/socialAuth';
@@ -171,24 +169,6 @@ const ConsumerSignIn: React.FC = () => {
         );
         break;
 
-      case 'Apple':
-        if (!config.apple) {
-          toast({
-            title: 'Configuration Error',
-            description: 'Apple sign-in is not configured. Please contact support.',
-            status: 'error',
-            duration: 5000,
-            isClosable: true
-          });
-          return;
-        }
-        await handleAppleSignIn(
-          handleSocialLoginSuccess,
-          (error) => handleSocialLoginError(error, 'Apple'),
-          5 // Consumer user type
-        );
-        break;
-
       default:
         toast({
           title: 'Error',
@@ -315,7 +295,7 @@ const ConsumerSignIn: React.FC = () => {
             </VStack>
 
             <VStack spacing={3} pt={4}>
-              {['USDA-Verified Data', 'Blockchain Security', 'Real Farm Stories'].map(
+              {['Documented Farm Journeys', 'Blockchain Security', 'Real Farm Stories'].map(
                 (feature, index) => (
                   <HStack key={index} spacing={3}>
                     <Box w={2} h={2} bg="white" borderRadius="50%" />
@@ -602,12 +582,6 @@ const ConsumerSignIn: React.FC = () => {
                       color: '#1877F2',
                       name: 'Facebook',
                       text: 'Continue with Facebook'
-                    },
-                    {
-                      icon: FaApple,
-                      color: useColorModeValue('black', 'white'),
-                      name: 'Apple',
-                      text: 'Continue with Apple'
                     }
                   ].map((social) => (
                     <Button

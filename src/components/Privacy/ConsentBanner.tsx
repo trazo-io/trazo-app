@@ -165,10 +165,10 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
   }
 
   return (
-    <Slide direction="bottom" in={isVisible} style={{ zIndex: 1000 }}>
+    <Slide direction="bottom" in={isVisible} style={{ zIndex: 10000 }}>
       <Box
         position="fixed"
-        bottom={0}
+        bottom={{ base: '80px', xl: 0 }}
         left={0}
         right={0}
         bg={bgColor}

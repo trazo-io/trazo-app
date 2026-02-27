@@ -690,7 +690,7 @@ const CarbonDashboard = () => {
           overflow="hidden"
           position="relative"
         >
-          {/* Government Verification Header */}
+          {/* Science-Based Documentation Header */}
           <Box bg="blue.50" borderBottom="1px solid" borderColor="blue.100" p={4}>
             <HStack spacing={3} justify="center" flexWrap="wrap">
               <Badge
@@ -704,14 +704,14 @@ const CarbonDashboard = () => {
               >
                 <HStack spacing={2}>
                   <Icon as={FaShieldAlt} />
-                  <Text>🏛️ USDA VERIFIED</Text>
+                  <Text>🏛️ SCIENCE-BASED</Text>
                 </HStack>
               </Badge>
 
               {realUSDAData?.success && (
                 <>
                   <Badge colorScheme="green" variant="outline" px={3} py={1} borderRadius="full">
-                    Government Data
+                    Published Research Data
                   </Badge>
                   <Badge colorScheme="purple" variant="subtle" px={3} py={1} borderRadius="full">
                     Credibility: {realUSDAData.usda_credibility.score}/100
@@ -860,12 +860,12 @@ const CarbonDashboard = () => {
                       kg CO₂e
                     </Text>
 
-                    {/* Government Verification Indicator */}
+                    {/* Science-Based Calculation Indicator */}
                     {realUSDAData?.success && (
                       <HStack justify="center" spacing={1}>
                         <Icon as={CheckCircleIcon} color="green.500" boxSize={3} />
                         <Text fontSize="xs" color="green.600" fontWeight="medium">
-                          USDA Verified
+                          Science-Based
                         </Text>
                       </HStack>
                     )}
@@ -886,16 +886,16 @@ const CarbonDashboard = () => {
               </Box>
             </SimpleGrid>
 
-            {/* USDA GOVERNMENT DATA SECTION - ENHANCED WITH SKELETON LOADING */}
+            {/* USDA PUBLISHED RESEARCH DATA SECTION - ENHANCED WITH SKELETON LOADING */}
             <Box bg="gray.50" borderRadius="lg" p={6} mb={6}>
               <HStack justify="space-between" align="center" mb={4}>
                 <VStack align="start" spacing={0}>
                   <HStack spacing={2}>
                     <Text fontSize="md" fontWeight="bold" color="gray.800">
-                      Government Benchmark Data
+                      Regional Benchmark Data
                     </Text>
                     <Tooltip
-                      label="Official government data from USDA NASS used to benchmark your farm's performance against regional averages. This provides credible, third-party validation of your carbon footprint."
+                      label="Published research data from USDA NASS used to benchmark your farm's performance against regional averages. This provides credible, third-party validation of your carbon footprint."
                       hasArrow
                       placement="top"
                       bg="gray.800"
@@ -1153,7 +1153,7 @@ const CarbonDashboard = () => {
                         USDA Score
                       </Text>
                       <Tooltip
-                        label="Government credibility score based on USDA Agricultural Research Service standards. Higher scores indicate your data meets official government verification criteria."
+                        label="Documentation credibility score based on USDA Agricultural Research Service published standards. Higher scores indicate your data meets scientific documentation criteria."
                         hasArrow
                         placement="top"
                         bg="gray.800"
@@ -1261,17 +1261,17 @@ const CarbonDashboard = () => {
                     <Icon as={FaAward} color="blue.500" boxSize={5} />
                     <VStack align="start" spacing={0}>
                       <Text fontSize="sm" fontWeight="bold" color="blue.800">
-                        {realUSDAData?.success ? 'USDA Verified' : 'Verification Ready'}
+                        {realUSDAData?.success ? 'Science-Based' : 'Documentation Ready'}
                       </Text>
                       <Text fontSize="xs" color="blue.600">
-                        Government-backed transparency
+                        Research-based transparency
                       </Text>
                     </VStack>
                   </HStack>
                   <Text fontSize="xs" color="gray.700">
                     {realUSDAData?.success
-                      ? `Your data meets USDA verification standards with ${realUSDAData.usda_credibility.score}/100 credibility score`
-                      : 'Your carbon data meets USDA verification standards for transparency reporting'}
+                      ? `Your data meets USDA published standards with ${realUSDAData.usda_credibility.score}/100 credibility score`
+                      : 'Your carbon data meets USDA published standards for transparency reporting'}
                   </Text>
                   {realUSDAData?.success && (
                     <HStack mt={2} spacing={2}>
@@ -1342,7 +1342,7 @@ const CarbonDashboard = () => {
                         <HStack spacing={2}>
                           {processedData.usda_verified && (
                             <Badge colorScheme="blue" variant="solid" px={3} py={1}>
-                              USDA Verified
+                              Science-Based
                             </Badge>
                           )}
                           {processedData.hasData && (
@@ -1546,10 +1546,10 @@ const CarbonDashboard = () => {
                                     </Text>
                                     <HStack justify="center" spacing={1} mb={1}>
                                       <Text fontSize="sm" color="green.800" fontWeight="bold">
-                                        USDA Verified
+                                        Science-Based
                                       </Text>
                                       <Tooltip
-                                        label="Your carbon data has been verified against USDA Agricultural Research Service standards. This provides government-backed credibility for consumer transparency."
+                                        label="Your carbon data has been calculated using USDA Agricultural Research Service published standards. This provides research-based credibility for consumer transparency."
                                         hasArrow
                                         placement="top"
                                         bg="gray.800"
@@ -1686,17 +1686,17 @@ const CarbonDashboard = () => {
                           </CardBody>
                         </Card>
 
-                        {/* Government Verification Benefits */}
+                        {/* Science-Based Documentation Benefits */}
                         <Card bg="green.50" borderWidth="1px" borderColor="green.200">
                           <CardBody>
                             <HStack spacing={3} mb={3}>
                               <Icon as={FaAward} color="green.500" boxSize={6} />
                               <VStack align="start" spacing={0}>
                                 <Text fontSize="md" fontWeight="bold" color="green.800">
-                                  Government Verification
+                                  Science-Based Documentation
                                 </Text>
                                 <Text fontSize="sm" color="green.600">
-                                  Build trust with official data
+                                  Build trust with published research data
                                 </Text>
                               </VStack>
                             </HStack>
@@ -1723,7 +1723,7 @@ const CarbonDashboard = () => {
                                     • Complete farm activity records
                                   </Text>
                                   <Text fontSize="sm" color="gray.700">
-                                    • Verify with government databases
+                                    • Validate with published research databases
                                   </Text>
                                 </>
                               )}
@@ -1812,7 +1812,7 @@ const CarbonDashboard = () => {
                             </StatNumber>
                             <StatHelpText>
                               <StatArrow type="increase" />
-                              Government verified
+                              Science-based
                             </StatHelpText>
                           </Stat>
                         </CardBody>
@@ -1872,7 +1872,7 @@ const CarbonDashboard = () => {
 
                               <VStack align="start" spacing={2}>
                                 <Text fontSize="xs" fontWeight="medium" color="gray.700">
-                                  Government Data Sources:
+                                  Published Research Data Sources:
                                 </Text>
                                 <Text fontSize="xs" color="gray.600">
                                   • USDA NASS:{' '}
@@ -2062,7 +2062,7 @@ const CarbonDashboard = () => {
                       </Heading>
                       {realUSDAData?.success && (
                         <Badge colorScheme="green" variant="solid" px={3} py={1}>
-                          Government Verified
+                          Science-Based
                         </Badge>
                       )}
                     </HStack>
@@ -2110,11 +2110,11 @@ const CarbonDashboard = () => {
                             <HStack>
                               <Icon as={FaAward} color="blue.500" boxSize={5} />
                               <Text fontSize="md" fontWeight="bold">
-                                USDA Verification Certificate
+                                Science-Based Documentation Certificate
                               </Text>
                             </HStack>
                             <Text fontSize="sm" color="gray.600">
-                              Official government-backed transparency certification for stakeholders
+                              Research-based transparency certification for stakeholders
                             </Text>
                             <Button
                               size="sm"
@@ -2156,7 +2156,7 @@ const CarbonDashboard = () => {
                           </Text>
                           <Text fontSize="sm">
                             These reports help you communicate your environmental efforts to
-                            customers, partners, and stakeholders with government-backed
+                            customers, partners, and stakeholders with research-based
                             credibility.
                           </Text>
                         </VStack>

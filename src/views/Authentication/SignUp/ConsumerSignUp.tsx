@@ -24,7 +24,6 @@ import {
 import {
   FaGoogle,
   FaFacebook,
-  FaApple,
   FaEnvelope,
   FaLock,
   FaUser,
@@ -795,8 +794,7 @@ const ConsumerSignUp: React.FC = () => {
                 <HStack spacing={3} w="full">
                   {[
                     { icon: FaGoogle, color: '#EA4335', name: 'Google' },
-                    { icon: FaFacebook, color: '#1877F2', name: 'Facebook' },
-                    { icon: FaApple, color: useColorModeValue('black', 'white'), name: 'Apple' }
+                    { icon: FaFacebook, color: '#1877F2', name: 'Facebook' }
                   ].map((social) => (
                     <Button
                       key={social.name}

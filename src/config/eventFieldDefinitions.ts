@@ -130,8 +130,10 @@ export const FUEL_TYPE_OPTIONS: FieldOption[] = [
   { value: 'diesel', labelKey: 'quickAdd.fields.fuelType.diesel' },
   { value: 'gasoline', labelKey: 'quickAdd.fields.fuelType.gasoline' },
   { value: 'natural_gas', labelKey: 'quickAdd.fields.fuelType.naturalGas' },
-  { value: 'lpg', labelKey: 'quickAdd.fields.fuelType.lpg' },
-  { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' }
+  { value: 'propane', labelKey: 'quickAdd.fields.fuelType.propane' },
+  { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' },
+  { value: 'biodiesel', labelKey: 'quickAdd.fields.fuelType.biodiesel' },
+  { value: 'none', labelKey: 'quickAdd.fields.fuelType.none' },
 ];
 
 // Generic application methods (fallback)
@@ -184,10 +186,10 @@ export const IRRIGATION_METHOD_OPTIONS: FieldOption[] = [
   { value: 'center_pivot', labelKey: 'quickAdd.fields.irrigationMethod.centerPivot' },
   { value: 'flood', labelKey: 'quickAdd.fields.irrigationMethod.flood' },
   { value: 'furrow', labelKey: 'quickAdd.fields.irrigationMethod.furrow' },
-  { value: 'subsurface', labelKey: 'quickAdd.fields.irrigationMethod.subsurface' },
+  { value: 'sub_irrigation', labelKey: 'quickAdd.fields.irrigationMethod.subsurface' },
   { value: 'micro_sprinkler', labelKey: 'quickAdd.fields.irrigationMethod.microSprinkler' },
   { value: 'hand_watering', labelKey: 'quickAdd.fields.irrigationMethod.handWatering' },
-  { value: 'other', labelKey: 'quickAdd.fields.irrigationMethod.other' }
+  { value: 'rain_fed', labelKey: 'quickAdd.fields.irrigationMethod.rainFed' },
 ];
 
 // Complete water source options (combined from Quick Event and Manual Event)
@@ -223,6 +225,7 @@ export const WEATHER_CONDITIONS_OPTIONS: FieldOption[] = [
 // Application timing options for chemical applications
 // SSOT: Aligned with ChemicalTab-ENHANCED.jsx (Manual Event) - these are the authoritative options
 export const APPLICATION_TIMING_OPTIONS: FieldOption[] = [
+  { value: 'dormant', labelKey: 'app.applicationTiming.dormant' }, // 🌙 Dormant Season
   { value: 'pre_plant', labelKey: 'app.applicationTiming.prePlant' }, // 🌱 Pre-Planting
   { value: 'post_emergence', labelKey: 'app.applicationTiming.postEmergence' }, // 🌿 Post-Emergence
   { value: 'flowering', labelKey: 'app.applicationTiming.flowering' }, // 🌸 Flowering Stage
@@ -230,10 +233,10 @@ export const APPLICATION_TIMING_OPTIONS: FieldOption[] = [
   { value: 'harvest', labelKey: 'app.applicationTiming.harvest' } // 🚜 Pre-Harvest
 ];
 
-// Organic approved options (Yes/No dropdown matching Manual Event)
+// Organic approved options - values must match backend ChemicalEvent.organic_approved choices
 export const ORGANIC_APPROVED_OPTIONS: FieldOption[] = [
-  { value: 'true', labelKey: 'common.yes' },
-  { value: 'false', labelKey: 'common.no' }
+  { value: 'yes', labelKey: 'common.yes' },
+  { value: 'no', labelKey: 'common.no' }
 ];
 
 // Restricted Use Pesticide options (EPA compliance)
@@ -801,6 +804,7 @@ export const eventTypeFieldGroups = {
     pruning: ['area_covered', 'equipment_hours', 'fuel_type', 'fuel_consumed'],
     transplanting: [
       'area_covered',
+      'seeds_source',
       'yield_quantity',
       'equipment_hours',
       'fuel_type',

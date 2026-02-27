@@ -228,11 +228,13 @@ export const GENERAL_FIELD_MAPPING: DataSourceMapping = {
   },
   backend: {
     // Backend field names → Standardized field names
+    // NOTE: Do NOT map 'type' or 'name' here — they collide with common mapping's
+    // 'type: type' and 'name: name', causing getSourceField reverse lookup to return
+    // 'type' (value "general") instead of 'activity_type' (value "Farm Maintenance").
+    // Same issue as documented in BUSINESS_FIELD_MAPPING.
     activity_type: 'activity_type',
-    type: 'activity_type',
     activity_name: 'activity_name',
-    name: 'activity_name',
-    duration: 'duration',
+    duration: 'duration_raw',
     duration_raw: 'duration_raw',
     people_involved: 'people_involved',
     activity_notes: 'activity_notes',
@@ -329,6 +331,7 @@ export const SOIL_MANAGEMENT_FIELD_MAPPING: DataSourceMapping = {
     working_depth: 'working_depth',
     depth_unit: 'depth_unit',
     soil_ph: 'soil_ph',
+    organic_matter_percentage: 'organic_matter',
     organic_matter: 'organic_matter',
     soil_texture: 'soil_texture',
     soil_moisture: 'soil_moisture',
@@ -387,9 +390,11 @@ export const PEST_MANAGEMENT_FIELD_MAPPING: DataSourceMapping = {
   },
   backend: {
     // Backend field names → Standardized field names
+    // NOTE: Do NOT map 'type' here — it collides with common mapping's 'type: type'
+    // and causes getSourceField reverse lookup to return 'type' (value "pest_management")
+    // instead of 'pest_management_type' (value "SC"). The common type field is handled separately.
     pest_management_type: 'pest_management_type',
     pest_type: 'pest_management_type',
-    type: 'pest_management_type',
     pest_management_name: 'pest_management_name',
     name: 'pest_management_name',
     // Sprint 2 Epic 2.2: Flexible units - support both old and new field names
@@ -442,8 +447,10 @@ export const BUSINESS_FIELD_MAPPING: DataSourceMapping = {
   },
   backend: {
     // Backend field names → Standardized field names
+    // NOTE: Do NOT map 'type' here — it collides with common mapping's 'type: type'
+    // and causes getSourceField reverse lookup to return 'type' (value "business")
+    // instead of 'business_event_type' (value "CE"). The common type field is handled separately.
     business_event_type: 'business_event_type',
-    type: 'business_event_type',
     business_event_name: 'business_event_name',
     name: 'business_event_name',
     business_activity_type: 'business_activity_type',

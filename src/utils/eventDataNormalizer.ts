@@ -228,12 +228,12 @@ function createBaseEvent(
     id: rawData.id || 'preview-event',
     type: EVENT_TYPE_MAP[eventType as keyof typeof EVENT_TYPE_MAP] || 'general',
     title: generateTitle(eventType, rawData), // 🚨 CRITICAL FIX: Add title generation
-    // 🚨 CRITICAL FIX: Prioritize user's observation over auto-generated description
-    // This ensures "Farmer's Field Notes" shows the user's actual observation, not placeholder text
+    // Only show farmer's actual notes — no generated fallback text
+    // "Farmer's Field Notes" should only appear when the farmer wrote something
     description:
       rawData.observation?.trim() ||
       rawData.description?.trim() ||
-      generateDescription(eventType, rawData),
+      '',
     date: rawData.date || new Date().toISOString(),
     event_type: eventType
   };
@@ -262,6 +262,14 @@ function createBaseEvent(
     }
   });
 
+  // Ensure Farmer's Field Notes shows on consumer cards when notes are stored
+  // in the description field (common for test events and legacy data).
+  // The form edit path maps description → observation textarea, so the preview
+  // always has observation populated. We match that behavior for the backend path.
+  if (!(baseEvent as any).observation?.trim() && baseEvent.description?.trim()) {
+    (baseEvent as any).observation = baseEvent.description;
+  }
+
   // Handle photo/album data
   baseEvent.album = normalizePhotoData(rawData);
 
@@ -275,10 +283,6 @@ function createBaseEvent(
   // for exact preview-display matching
   if (rawData.custom_fields && Array.isArray(rawData.custom_fields)) {
     (baseEvent as any).custom_fields = rawData.custom_fields;
-    console.log('✅ [eventDataNormalizer] Preserved custom_fields:', {
-      count: rawData.custom_fields.length,
-      fields: rawData.custom_fields.map((f: any) => ({ label: f.label, value: f.value }))
-    });
   }
 
   // Preserve original data if requested
@@ -415,8 +419,8 @@ function generateDescription(eventType: number, rawData: any): string {
     3: 'General farming activity',
     4: 'Equipment operation and maintenance',
     5: 'Soil management practice',
-    6: 'Business and compliance activity',
-    7: 'Pest management activity'
+    6: 'Pest management activity',
+    7: 'Business and compliance activity'
   };
 
   // Use user's description if provided
@@ -476,24 +480,58 @@ function generateTitle(eventType: number, rawData: any): string {
     case 4: // Equipment
       return rawData.name || rawData.equipment_name || 'Equipment Operation';
 
-    case 5: // Soil Management
-      // 🎯 SPECIFIC FIX for soil management title generation
+    case 5: { // Soil Management
       if (rawData.soil_management_name && rawData.soil_management_name.trim()) {
         return rawData.soil_management_name;
       }
       if (rawData.name && rawData.name.trim()) {
         return rawData.name;
       }
-      if (rawData.soil_management_type && rawData.soil_management_type.trim()) {
-        return rawData.soil_management_type;
-      }
+      // Map subtype codes to consumer-friendly titles
+      const soilTitleMap: Record<string, string> = {
+        ST: 'Soil Testing & Analysis', PA: 'pH Adjustment', OM: 'Organic Matter Addition',
+        CC: 'Cover Crop Management', TI: 'Tillage Implementation', CO: 'Composting Operation'
+      };
+      const soilType = rawData.soil_management_type || rawData.type;
+      if (soilType && soilTitleMap[soilType]) return soilTitleMap[soilType];
       return 'Soil Management';
+    }
 
-    case 6: // Pest Management
-      return rawData.name || rawData.pest_management_name || 'Pest Management';
+    case 6: { // Pest Management
+      if (rawData.name && rawData.name.trim()) return rawData.name;
+      if (rawData.extra_data?.name && rawData.extra_data.name.trim()) return rawData.extra_data.name;
+      if (rawData.pest_management_name && rawData.pest_management_name.trim()) return rawData.pest_management_name;
+      const pestTitleMap: Record<string, string> = {
+        SC: 'Pest Scouting', BR: 'Beneficial Insect Release', TM: 'Trap Monitoring',
+        PI: 'Pest Identification', TA: 'Threshold Assessment', IP: 'IPM Implementation'
+      };
+      const pestType = rawData.pest_management_type || rawData.type;
+      if (pestType && pestTitleMap[pestType]) return pestTitleMap[pestType];
+      return 'Pest Management Activity';
+    }
 
-    case 7: // Business
-      return rawData.name || rawData.business_event_name || 'Business Activity';
+    case 7: { // Business
+      if (rawData.name && rawData.name.trim()) return rawData.name;
+      if (rawData.business_event_name && rawData.business_event_name.trim()) return rawData.business_event_name;
+      // Map certification types to consumer-friendly titles
+      const certMap: Record<string, string> = {
+        global_gap: 'GlobalG.A.P. Certification', organic_usda: 'USDA Organic Certification',
+        regenerative: 'Regenerative Organic Certification', cng: 'Certified Naturally Grown',
+        non_gmo: 'Non-GMO Project Verified', carbon_neutral: 'Carbon Neutral Certification',
+        rainforest_alliance: 'Rainforest Alliance', fair_trade: 'Fair Trade Certified',
+        water_stewardship: 'Water Stewardship Certification', sustainable_agriculture: 'Sustainable Agriculture'
+      };
+      if (rawData.certification_type && certMap[rawData.certification_type]) {
+        return certMap[rawData.certification_type];
+      }
+      if (rawData.certification_type_display) return rawData.certification_type_display;
+      const bizTypeMap: Record<string, string> = {
+        CE: 'Certification Event', CM: 'Compliance Activity', IN: 'Inspection Process'
+      };
+      const bizType = rawData.business_event_type || rawData.type;
+      if (bizType && bizTypeMap[bizType]) return bizTypeMap[bizType];
+      return 'Business Activity';
+    }
 
     default:
       return rawData.name || 'Agricultural Activity';
@@ -518,8 +556,8 @@ function normalizeWeatherEventData(
     'way_of_protection',
     'protection_measures',
     'water_deficit',
-    'weight',
-    'diameter',
+    // Ghost field cleanup: Removed weight, diameter, average_hailstone_weight, average_hailstone_diameter
+    // (removed from form Sprint 2 Epic 2.1.3)
     'duration',
     'wind_speed',
     'precipitation_amount',
@@ -527,9 +565,7 @@ function normalizeWeatherEventData(
     'damage_assessment',
     'crop_impact',
     'start_date',
-    'end_date',
-    'average_hailstone_weight',
-    'average_hailstone_diameter'
+    'end_date'
   ];
 
   // Handle extra_data fields for weather events
@@ -574,14 +610,6 @@ function normalizeProductionEventData(
   }
 
   if (dataSource === 'form') {
-    // DEBUG: Trace area_covered and area_unit data flow
-    console.log('🔍 [normalizeProductionEventData] FORM DATA DEBUG:', {
-      area_covered: rawData.area_covered,
-      area: rawData.area,
-      area_unit: rawData.area_unit,
-      rawDataKeys: Object.keys(rawData)
-    });
-
     // 🚨 CRITICAL FIX: Use correct source field names that match ProductionTab form
     // ProductionTab sends: area_covered, yield_quantity, fuel_consumed, equipment_hours
     // NOT: area, quantity_planted, fuel_amount, operating_hours
@@ -596,10 +624,6 @@ function normalizeProductionEventData(
       'hectares'
     );
 
-    // DEBUG: Trace result after formatting
-    console.log('🔍 [normalizeProductionEventData] AFTER FORMATTING:', {
-      area_covered_result: productionData.area_covered
-    });
     formatProductionFieldWithUnit(
       rawData,
       productionData,
@@ -700,6 +724,28 @@ function normalizeProductionEventData(
       (productionData as any).irrigation_depth_unit = rawData.irrigation_depth_unit;
     }
 
+    // Phase 2: Harvest quality and grain moisture for target markets
+    if (rawData.harvest_quality_grade) {
+      (productionData as any).harvest_quality_grade = rawData.harvest_quality_grade;
+    }
+    if (rawData.grain_moisture !== undefined && rawData.grain_moisture !== null && rawData.grain_moisture !== '') {
+      (productionData as any).grain_moisture = rawData.grain_moisture;
+    }
+
+    // Phase 2: Extra form fields that flow into extra_data for consumer display
+    // These merge with any existing extra_data from rawData (preserved by createBaseEvent)
+    const extraFormFields: Record<string, any> = {};
+    if (rawData.harvest_method) extraFormFields.harvest_method = rawData.harvest_method;
+    if (rawData.brix_levels) extraFormFields.brix_levels = rawData.brix_levels;
+    if (rawData.native_species_planted) extraFormFields.native_species_planted = rawData.native_species_planted;
+    if (rawData.habitat_area_hectares) extraFormFields.habitat_area_hectares = rawData.habitat_area_hectares;
+    if (Object.keys(extraFormFields).length > 0) {
+      (productionData as any).extra_data = {
+        ...(rawData.extra_data || {}),
+        ...extraFormFields
+      };
+    }
+
     // Sprint 4: Aggregate Event Support - for logging multiple similar events as one summary
     // Handle is_summary (comes as string 'true'/'false' from form)
     if (rawData.is_summary === 'true' || rawData.is_summary === true) {
@@ -731,24 +777,24 @@ function normalizeProductionEventData(
           (productionData as any).water_volume_unit = waterUnit;
         }
       }
-
-      console.log('🔍 [normalizeProductionEventData] AGGREGATE EVENT:', {
-        is_summary: true,
-        date_start: rawData.date_start,
-        date_end: rawData.date_end,
-        event_count: rawData.event_count,
-        water_volume_total: rawData.water_volume_total,
-        water_volume_unit: rawData.water_volume_unit
-      });
+    } else {
+      // Explicitly mark individual events as non-summary
+      (productionData as any).is_summary = false;
     }
   } else {
     // Backend data already formatted
     if (rawData.area_covered) productionData.area_covered = rawData.area_covered;
+    if (rawData.area_unit) (productionData as any).area_unit = rawData.area_unit;
     if (rawData.yield_quantity) productionData.yield_quantity = rawData.yield_quantity;
+    if (rawData.yield_unit) (productionData as any).yield_unit = rawData.yield_unit;
     if (rawData.fuel_consumed) productionData.fuel_consumed = rawData.fuel_consumed;
+    if (rawData.fuel_unit) (productionData as any).fuel_unit = rawData.fuel_unit;
+    if (rawData.fuel_type) (productionData as any).fuel_type = getFuelTypeDisplayName(rawData.fuel_type);
     if (rawData.equipment_hours) productionData.equipment_hours = rawData.equipment_hours;
     if (rawData.transportation_distance)
       productionData.transportation_distance = rawData.transportation_distance;
+    if (rawData.transportation_unit) (productionData as any).transportation_unit = rawData.transportation_unit;
+    if (rawData.production_efficiency) (productionData as any).production_efficiency = rawData.production_efficiency;
 
     // Sprint 3 Epic 3.2: Consumer Trust Fields for Production events (backend)
     if (rawData.seeds_source) {
@@ -768,23 +814,61 @@ function normalizeProductionEventData(
       (productionData as any).irrigation_depth_unit = rawData.irrigation_depth_unit;
     }
 
+    // Phase 2: Harvest quality and grain moisture for target markets (backend)
+    if (rawData.harvest_quality_grade) {
+      (productionData as any).harvest_quality_grade = rawData.harvest_quality_grade;
+    }
+    if (rawData.grain_moisture !== undefined && rawData.grain_moisture !== null) {
+      (productionData as any).grain_moisture = rawData.grain_moisture;
+    }
+
+    // Phase 2: harvest_method and brix_levels come from extra_data on backend
+    // (already handled by createBaseEvent copying extra_data from rawData)
+
     // Sprint 4: Aggregate Event Support - for backend data
-    if (rawData.is_summary === true) {
+    // Check both top-level and extra_data for is_summary (string or boolean)
+    const isSummaryEvent =
+      rawData.is_summary === 'true' ||
+      rawData.is_summary === true ||
+      rawData.extra_data?.is_summary === true ||
+      rawData.extra_data?.is_summary === 'true';
+
+    if (isSummaryEvent) {
       (productionData as any).is_summary = true;
 
-      if (rawData.date_start) {
-        (productionData as any).date_start = rawData.date_start;
+      // Date range for summary events
+      const dateStart = rawData.date_start || rawData.extra_data?.date_start;
+      const dateEnd = rawData.date_end || rawData.extra_data?.date_end;
+      if (dateStart) {
+        (productionData as any).date_start = dateStart;
       }
-      if (rawData.date_end) {
-        (productionData as any).date_end = rawData.date_end;
+      if (dateEnd) {
+        (productionData as any).date_end = dateEnd;
       }
-      if (rawData.event_count) {
-        (productionData as any).event_count = rawData.event_count;
+
+      // Event count
+      const eventCount = rawData.event_count || rawData.extra_data?.event_count;
+      if (eventCount) {
+        const parsedCount = typeof eventCount === 'string' ? parseInt(eventCount, 10) : eventCount;
+        if (!isNaN(parsedCount) && parsedCount > 0) {
+          (productionData as any).event_count = parsedCount;
+        }
       }
-      if (rawData.water_volume_total) {
-        (productionData as any).water_volume_total = rawData.water_volume_total;
-        (productionData as any).water_volume_unit = rawData.water_volume_unit || 'gallons';
+
+      // Water volume total (irrigation aggregates)
+      const waterVolumeTotal = rawData.water_volume_total || rawData.extra_data?.water_volume_total;
+      if (waterVolumeTotal) {
+        const parsed =
+          typeof waterVolumeTotal === 'string' ? parseFloat(waterVolumeTotal) : waterVolumeTotal;
+        if (!isNaN(parsed) && parsed > 0) {
+          (productionData as any).water_volume_total = parsed;
+          (productionData as any).water_volume_unit =
+            rawData.water_volume_unit || rawData.extra_data?.water_volume_unit || 'gallons';
+        }
       }
+    } else {
+      // Explicitly mark individual events as non-summary
+      (productionData as any).is_summary = false;
     }
 
     // Sprint 2: EM (Equipment Maintenance) subtype fields extraction from backend
@@ -843,9 +927,11 @@ function normalizeChemicalEventData(
     'volume_unit',
     'concentration',
     'npk_ratio',
-    'nitrogen_percentage',
-    'phosphorus_percentage',
-    'potassium_percentage',
+    // Ghost field cleanup: Removed nitrogen_percentage, phosphorus_percentage, potassium_percentage
+    // (never in form schema — form uses nitrogen_total_kg etc. for aggregate totals)
+    'nitrogen_total_kg',
+    'phosphorus_total_kg',
+    'potassium_total_kg',
     'application_timing',
     'application_details', // Sprint 6: Additional application notes for transparency
     'weather_conditions',
@@ -856,10 +942,7 @@ function normalizeChemicalEventData(
     'applicator_certification',
     'rei_hours',
     'phi_days',
-    // Sprint 1 Epic 1.1: Additional EPA WPS Fields
-    'signal_word',
-    'ppe_required',
-    'environmental_hazards',
+    // Ghost field cleanup: Removed signal_word, ppe_required, environmental_hazards (never in form schema)
     // Sprint 3 Epic 3.2: Consumer Trust Fields
     'organic_approved',
     'buffer_zone_meters',
@@ -881,12 +964,6 @@ function normalizeChemicalEventData(
       (chemicalData as any).application_fuel_type = getFuelTypeDisplayName(
         rawData.application_fuel_type
       );
-      console.log(
-        '✅ [normalizeChemicalEventData] Mapped application_fuel_type:',
-        rawData.application_fuel_type,
-        '→',
-        (chemicalData as any).application_fuel_type
-      );
     }
     if (
       rawData.application_fuel_consumed !== undefined &&
@@ -896,95 +973,110 @@ function normalizeChemicalEventData(
       (chemicalData as any).application_fuel_consumed = parseFloat(
         rawData.application_fuel_consumed
       );
-      console.log(
-        '✅ [normalizeChemicalEventData] Mapped application_fuel_consumed:',
-        (chemicalData as any).application_fuel_consumed
-      );
     }
     if (rawData.application_fuel_unit) {
       (chemicalData as any).application_fuel_unit = rawData.application_fuel_unit;
-      console.log(
-        '✅ [normalizeChemicalEventData] Mapped application_fuel_unit:',
-        rawData.application_fuel_unit
-      );
     }
-
-    console.log('🔍 [normalizeChemicalEventData] FORM DATA - Application Fuel Fields:', {
-      application_fuel_type: (chemicalData as any).application_fuel_type,
-      application_fuel_consumed: (chemicalData as any).application_fuel_consumed,
-      application_fuel_unit: (chemicalData as any).application_fuel_unit,
-      rawDataKeys: Object.keys(rawData).filter((k) => k.includes('fuel'))
-    });
   }
 
   // *** CRITICAL FIX: Parse combined backend API fields ***
   // The backend transparency API returns combined string fields like "20 ha" and "10 L"
   // but the frontend expects separate numeric and unit fields
   if (dataSource === 'backend') {
-    console.log('🔧 CHEMICAL NORMALIZATION - Processing backend data:', {
-      eventId: rawData.id,
-      area: rawData.area,
-      volume: rawData.volume,
-      application_timing: rawData.application_timing,
-      way_of_application: rawData.way_of_application
-    });
-
     // Parse area field (e.g., "20 ha" → area_treated: 20, area_unit: "ha")
     if (rawData.area && typeof rawData.area === 'string') {
-      const areaMatch = rawData.area.match(/^([0-9.]+)\s*(.+)$/);
+      // Require unit to start with a letter to avoid splitting pure numbers like "25" → "2" + "5"
+      const areaMatch = rawData.area.match(/^([0-9.]+)\s+([a-zA-Z].*)$/);
       if (areaMatch) {
         chemicalData.area_treated = parseFloat(areaMatch[1]);
-        chemicalData.area_unit = areaMatch[2];
-        console.log(
-          '✅ Parsed area field:',
-          rawData.area,
-          '→',
-          chemicalData.area_treated,
-          chemicalData.area_unit
-        );
+        chemicalData.area_unit = areaMatch[2].trim();
+      } else if (/^[0-9.]+$/.test(rawData.area.trim())) {
+        // Pure number without unit — use area_unit from backend or extra_data
+        chemicalData.area_treated = parseFloat(rawData.area);
+        const unitFromBackend = rawData.area_unit || rawData.extra_data?.area_unit;
+        if (unitFromBackend) {
+          chemicalData.area_unit = unitFromBackend;
+        }
       }
     }
 
     // Parse volume field (e.g., "10 L" → volume_applied: 10, volume_unit: "L")
     if (rawData.volume && typeof rawData.volume === 'string') {
-      const volumeMatch = rawData.volume.match(/^([0-9.]+)\s*(.+)$/);
+      // Require unit to start with a letter to avoid splitting pure numbers like "625" → "62" + "5"
+      const volumeMatch = rawData.volume.match(/^([0-9.]+)\s+([a-zA-Z].*)$/);
       if (volumeMatch) {
         chemicalData.volume_applied = parseFloat(volumeMatch[1]);
-        chemicalData.volume_unit = volumeMatch[2];
-        console.log(
-          '✅ Parsed volume field:',
-          rawData.volume,
-          '→',
-          chemicalData.volume_applied,
-          chemicalData.volume_unit
-        );
+        chemicalData.volume_unit = volumeMatch[2].trim();
+      } else if (/^[0-9.]+$/.test(rawData.volume.trim())) {
+        // Pure number without unit — use volume_unit from backend or extra_data
+        chemicalData.volume_applied = parseFloat(rawData.volume);
+        const unitFromBackend = rawData.volume_unit || rawData.extra_data?.volume_unit;
+        if (unitFromBackend) {
+          chemicalData.volume_unit = unitFromBackend;
+        }
+      }
+    }
+
+    // Pull organic_approved from backend top-level or extra_data
+    if (!chemicalData.organic_approved) {
+      const organicValue = rawData.organic_approved || rawData.extra_data?.organic_approved;
+      const organicCert = rawData.extra_data?.organic_certification;
+      if (organicCert && typeof organicCert === 'string') {
+        // Use the certification string (e.g., "OMRI Listed") for display mapping
+        chemicalData.organic_approved = organicCert.toLowerCase().includes('omri') ? 'omri' :
+          organicCert.toLowerCase().includes('usda') ? 'usda_nop' : organicCert;
+      } else if (organicValue === true) {
+        // Boolean true without specific certification
+        chemicalData.organic_approved = 'yes';
+      } else if (typeof organicValue === 'string' && organicValue) {
+        chemicalData.organic_approved = organicValue;
       }
     }
 
     // Handle direct backend fields that are sometimes missing in mapping
     if (rawData.application_timing && !chemicalData.application_timing) {
       chemicalData.application_timing = rawData.application_timing;
-      console.log('✅ Direct mapped application_timing:', rawData.application_timing);
     }
 
     // Map way_of_application to application_method for backend compatibility
     if (rawData.way_of_application && !chemicalData.application_method) {
       chemicalData.application_method = rawData.way_of_application;
-      console.log(
-        '✅ Mapped way_of_application to application_method:',
-        rawData.way_of_application
-      );
     }
 
-    console.log('🎯 FINAL CHEMICAL NORMALIZED DATA:', {
-      eventId: rawData.id,
-      area_treated: chemicalData.area_treated,
-      area_unit: chemicalData.area_unit,
-      volume_applied: chemicalData.volume_applied,
-      volume_unit: chemicalData.volume_unit,
-      application_timing: chemicalData.application_timing,
-      application_method: chemicalData.application_method
-    });
+    // Extract application fuel fields from extra_data (matching form path behavior)
+    // These fields are stored in extra_data but not at top-level of API response
+    const extraData = rawData.extra_data || {};
+    if (!chemicalData.application_fuel_type) {
+      const fuelType = extraData.application_fuel_type;
+      if (fuelType) {
+        (chemicalData as any).application_fuel_type = getFuelTypeDisplayName(fuelType);
+      }
+    }
+    if (
+      (chemicalData as any).application_fuel_consumed === undefined ||
+      (chemicalData as any).application_fuel_consumed === null
+    ) {
+      const fuelConsumed = extraData.application_fuel_consumed;
+      if (fuelConsumed !== undefined && fuelConsumed !== null && fuelConsumed !== '') {
+        (chemicalData as any).application_fuel_consumed = parseFloat(fuelConsumed);
+      }
+    }
+    if (!(chemicalData as any).application_fuel_unit) {
+      const fuelUnit = extraData.application_fuel_unit;
+      if (fuelUnit) {
+        (chemicalData as any).application_fuel_unit = fuelUnit;
+      }
+    }
+
+    // Extract chemical_subtype from extra_data for Chemical Type display
+    if (!chemicalData.chemical_subtype && extraData.chemical_subtype) {
+      chemicalData.chemical_subtype = extraData.chemical_subtype;
+    }
+
+    // Extract active_ingredient from extra_data when not at top level
+    if (!chemicalData.active_ingredient && extraData.active_ingredient) {
+      chemicalData.active_ingredient = extraData.active_ingredient;
+    }
   }
 
   // Handle special cases - prioritize chemical_type field from backend
@@ -1005,7 +1097,8 @@ function normalizeChemicalEventData(
     supportsSummaryMode &&
     (rawData.is_summary === 'true' ||
       rawData.is_summary === true ||
-      rawData.extra_data?.is_summary === true);
+      rawData.extra_data?.is_summary === true ||
+      rawData.extra_data?.is_summary === 'true');
 
   if (isSummaryEvent) {
     (chemicalData as any).is_summary = true;
@@ -1096,21 +1189,9 @@ function normalizeChemicalEventData(
         (chemicalData as any).fuel_unit = fuelUnit;
       }
     }
-
-    console.log('🔍 [normalizeChemicalEventData] AGGREGATE EVENT:', {
-      is_summary: true,
-      chemical_type: chemicalData.chemical_type,
-      date_start: dateStart,
-      date_end: dateEnd,
-      event_count: eventCount,
-      nitrogen_total_kg: nitrogenTotal,
-      phosphorus_total_kg: phosphorusTotal,
-      potassium_total_kg: potassiumTotal,
-      active_ingredient_total_kg: activeIngredientTotal,
-      volume_applied_total: volumeTotal,
-      area_treated_total: areaTotal,
-      fuel_consumption_total: fuelTotal
-    });
+  } else {
+    // Explicitly mark individual events as non-summary
+    (chemicalData as any).is_summary = false;
   }
 
   return chemicalData;
@@ -1209,13 +1290,6 @@ function normalizeEquipmentEventData(
         if (areaMatch) {
           equipmentData.area_worked = parseFloat(areaMatch[1]);
           equipmentData.area_unit = areaMatch[2];
-          console.log(
-            '✅ Parsed area_worked field:',
-            rawData.area_worked,
-            '→',
-            equipmentData.area_worked,
-            equipmentData.area_unit
-          );
         }
       }
 
@@ -1225,13 +1299,6 @@ function normalizeEquipmentEventData(
         if (fuelMatch) {
           equipmentData.fuel_consumed = parseFloat(fuelMatch[1]);
           equipmentData.fuel_unit = fuelMatch[2];
-          console.log(
-            '✅ Parsed fuel_consumed field:',
-            rawData.fuel_consumed,
-            '→',
-            equipmentData.fuel_consumed,
-            equipmentData.fuel_unit
-          );
         }
       }
 
@@ -1240,19 +1307,11 @@ function normalizeEquipmentEventData(
         const hoursMatch = rawData.hours_operated.match(/^([0-9.]+)/);
         if (hoursMatch) {
           equipmentData.hours_operated = parseFloat(hoursMatch[1]);
-          console.log(
-            '✅ Parsed hours_operated field:',
-            rawData.hours_operated,
-            '→',
-            equipmentData.hours_operated
-          );
         }
       }
     } else {
       // Handle simplified event data from /complete endpoint
       // Extract information from description and equipment fields when available
-      console.log('🔧 SIMPLIFIED EQUIPMENT DATA - Using description parsing');
-      console.log('🚨 DEBUG RAW BACKEND DATA:', JSON.stringify(rawData, null, 2));
 
       // Set basic operation type based on string type
       if (rawData.type === 'equipment') {
@@ -1489,13 +1548,12 @@ function normalizePestManagementEventData(
     'pest_species',
     'damage_percentage',
     'pest_pressure_level',
-    'time_spent_hours',
-    'field_area_hectares',
+    // Ghost field cleanup: Removed time_spent_hours, field_area_hectares, travel_distance_km
+    // (never in form — form uses area_covered and fuel_consumed instead)
     'trap_count',
     'beneficial_species',
     'release_quantity',
     'economic_threshold_met',
-    'travel_distance_km',
     'weather_conditions',
     'crop_growth_stage',
     'action_recommended',
@@ -1522,7 +1580,8 @@ function normalizePestManagementEventData(
   const isSummaryEvent =
     rawData.is_summary === 'true' ||
     rawData.is_summary === true ||
-    rawData.extra_data?.is_summary === true;
+    rawData.extra_data?.is_summary === true ||
+    rawData.extra_data?.is_summary === 'true';
 
   if (isSummaryEvent) {
     (pestData as any).is_summary = true;
@@ -1537,18 +1596,9 @@ function normalizePestManagementEventData(
       (pestData as any).date_end = dateEnd;
     }
 
-    // Event count (number of scouting trips in this summary)
-    const eventCount = rawData.event_count || rawData.extra_data?.event_count;
-    if (eventCount) {
-      const parsedCount = typeof eventCount === 'string' ? parseInt(eventCount, 10) : eventCount;
-      if (!isNaN(parsedCount) && parsedCount > 0) {
-        (pestData as any).event_count = parsedCount;
-      }
-    }
-
-    // Field area total
-    const fieldAreaTotal = rawData.field_area_total || rawData.extra_data?.field_area_total;
-    const areaUnit = rawData.area_unit || rawData.extra_data?.area_unit || 'acres';
+    // Field area total (form sends area_covered_total, normalize to field_area_total)
+    const fieldAreaTotal = rawData.field_area_total || rawData.area_covered_total || rawData.extra_data?.field_area_total || rawData.extra_data?.area_covered_total;
+    const areaUnit = rawData.area_unit || rawData.extra_data?.area_unit || 'ha';
     if (fieldAreaTotal) {
       const parsed =
         typeof fieldAreaTotal === 'string' ? parseFloat(fieldAreaTotal) : fieldAreaTotal;
@@ -1605,20 +1655,9 @@ function normalizePestManagementEventData(
     if (carbonNotes) {
       (pestData as any).carbon_notes = carbonNotes;
     }
-
-    console.log('🔍 [normalizePestManagementEventData] AGGREGATE SCOUTING EVENT:', {
-      is_summary: true,
-      date_start: dateStart,
-      date_end: dateEnd,
-      event_count: eventCount,
-      field_area_total: fieldAreaTotal,
-      area_unit: areaUnit,
-      travel_distance_total: travelDistanceTotal,
-      distance_unit: distanceUnit,
-      pest_species_observed: pestSpeciesObserved,
-      average_pest_pressure: averagePestPressure,
-      carbon_impact: 'zero'
-    });
+  } else {
+    // Explicitly mark individual events as non-summary
+    (pestData as any).is_summary = false;
   }
 
   return pestData;
@@ -1639,7 +1678,9 @@ function normalizeBusinessEventData(
     'business_event_type',
     'business_event_name',
     'business_activity_type',
+    'business_type', // Raw business type code (CE/CM/IN) for title resolution fallback
     'certification_type',
+    'certification_type_display',
     'carbon_credits_earned',
     'carbon_credits_unit',
     'verification_status',
@@ -1648,7 +1689,8 @@ function normalizeBusinessEventData(
     'transparency_benefit',
     'business_observation',
     // Sprint 3 Epic 3.2: Consumer Trust Fields
-    'verified_certifier_name'
+    'verified_certifier_name',
+    'certificate_number'
   ];
 
   mapFields(rawData, businessData, businessFields, fieldMapping);

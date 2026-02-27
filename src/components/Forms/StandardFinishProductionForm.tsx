@@ -1,5 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { VStack, HStack, Box, Text, Icon, Badge, useToast, Input, Select } from '@chakra-ui/react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  VStack,
+  HStack,
+  Box,
+  Text,
+  Icon,
+  Badge,
+  useToast,
+  useDisclosure,
+  Input,
+  Select,
+  AlertDialog,
+  AlertDialogOverlay,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogBody,
+  AlertDialogFooter
+} from '@chakra-ui/react';
 import {
   StandardPage,
   StandardField,
@@ -11,7 +28,7 @@ import {
   SectionHeader
 } from '../Design/StandardComponents';
 import { TrazoImageUpload } from '../Upload';
-import { FaLeaf, FaCamera, FaBoxes, FaClipboardCheck } from 'react-icons/fa';
+import { FaLeaf, FaCamera, FaBoxes, FaClipboardCheck, FaLock, FaExclamationTriangle } from 'react-icons/fa';
 import { MdDescription, MdInventory } from 'react-icons/md';
 import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -103,6 +120,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   const [savedFormData, setSavedFormData] = useState<Partial<FormStateData>>({});
   const intl = useIntl();
   const toast = useToast();
+
+  // Confirmation dialog for finishing production (immutability warning)
+  const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onClose: onConfirmClose } = useDisclosure();
+  const confirmCancelRef = useRef<HTMLButtonElement>(null);
+  const [pendingFormData, setPendingFormData] = useState<FormStateData | null>(null);
 
   // Define steps for the finish production process
   const steps = [
@@ -214,7 +236,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     }
   };
 
-  // Manual submit function for the final button
+  // Manual submit function — validates then opens confirmation dialog
   const handleManualSubmit = () => {
     const currentValues = getValues();
     const allFormData = {
@@ -224,7 +246,14 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
     try {
       finishProductionSchema.parse(allFormData);
-      onSubmitForm(allFormData);
+      // Validation passed — show confirmation dialog before submitting
+      if (isEdit) {
+        // For edits, submit directly (production already finished)
+        onSubmitForm(allFormData);
+      } else {
+        setPendingFormData(allFormData);
+        onConfirmOpen();
+      }
     } catch (validationError) {
       console.error('❌ Data validation failed:', validationError);
       toast({
@@ -235,6 +264,15 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
         isClosable: true
       });
     }
+  };
+
+  // Confirmed finish — actually submit the form
+  const handleConfirmFinish = () => {
+    if (pendingFormData) {
+      onSubmitForm(pendingFormData);
+      setPendingFormData(null);
+    }
+    onConfirmClose();
   };
 
   // Step progression logic
@@ -632,6 +670,77 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
           </VStack>
         </form>
       </FormProvider>
+
+      {/* Immutability Confirmation Dialog */}
+      <AlertDialog
+        isOpen={isConfirmOpen}
+        leastDestructiveRef={confirmCancelRef}
+        onClose={onConfirmClose}
+        isCentered
+      >
+        <AlertDialogOverlay bg="blackAlpha.300" backdropFilter="blur(10px)">
+          <AlertDialogContent borderRadius="xl" p={2} mx={4}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold" pb={4}>
+              <HStack spacing={3}>
+                <Box p={2} borderRadius="lg" bg="orange.50">
+                  <Icon as={FaExclamationTriangle} boxSize={5} color="orange.500" />
+                </Box>
+                <Text>Finish Production</Text>
+              </HStack>
+            </AlertDialogHeader>
+
+            <AlertDialogBody pb={6}>
+              <VStack align="start" spacing={3}>
+                <Text color="gray.600">
+                  Are you sure you want to finish this production? This action is permanent and cannot be undone.
+                </Text>
+                <Box p={3} bg="orange.50" borderRadius="lg" w="full">
+                  <Text fontSize="sm" color="orange.700" fontWeight="medium">
+                    Once you finish this production:
+                  </Text>
+                  <VStack align="start" spacing={1} mt={2} fontSize="sm" color="orange.600">
+                    <HStack spacing={2}>
+                      <Icon as={FaLock} boxSize={3} />
+                      <Text>All events will be permanently locked and cannot be edited or deleted</Text>
+                    </HStack>
+                    <HStack spacing={2}>
+                      <Icon as={FaLock} boxSize={3} />
+                      <Text>Event data will be secured for blockchain verification</Text>
+                    </HStack>
+                    <HStack spacing={2}>
+                      <Icon as={FaLock} boxSize={3} />
+                      <Text>The production will become visible to consumers via QR code</Text>
+                    </HStack>
+                  </VStack>
+                </Box>
+                <Text fontSize="xs" color="gray.500">
+                  Please review all events carefully before proceeding. This ensures the integrity
+                  of your transparency data for consumer trust.
+                </Text>
+              </VStack>
+            </AlertDialogBody>
+
+            <AlertDialogFooter pt={4}>
+              <HStack spacing={3} w="full" justify="flex-end">
+                <StandardButton
+                  ref={confirmCancelRef}
+                  variant="outline"
+                  onClick={onConfirmClose}
+                >
+                  Review Events
+                </StandardButton>
+                <StandardButton
+                  onClick={handleConfirmFinish}
+                  isLoading={isLoading}
+                  loadingText="Finishing..."
+                >
+                  Confirm & Finish Production
+                </StandardButton>
+              </HStack>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </StandardPage>
   );
 };

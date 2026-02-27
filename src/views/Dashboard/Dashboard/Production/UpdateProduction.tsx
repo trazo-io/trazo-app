@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useToast, Box, Text, Spinner, VStack } from '@chakra-ui/react';
 import { StandardProductionForm } from '../../../../components/Forms/StandardProductionForm';
+import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 import { useGetHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
 import { useStartProductionMutation } from 'store/api/companyApi';
 
@@ -251,15 +252,17 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
   }
 
   return (
-    <StandardProductionForm
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      initialData={getInitialData()}
-      isLoading={isStarting || isUpdating}
-      isEdit={isEdit}
-      parcelName={currentParcel?.name || ''}
-      productOptions={productOptions}
-    />
+    <WriteAccessGuard>
+      <StandardProductionForm
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        initialData={getInitialData()}
+        isLoading={isStarting || isUpdating}
+        isEdit={isEdit}
+        parcelName={currentParcel?.name || ''}
+        productOptions={productOptions}
+      />
+    </WriteAccessGuard>
   );
 }
 

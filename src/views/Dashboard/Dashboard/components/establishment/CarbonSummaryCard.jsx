@@ -235,30 +235,21 @@ const TransparencySummaryCard = ({ establishmentId }) => {
 
     console.log('🔐 Verification Data Found:', verificationData);
 
-    if (verificationData?.blockchain_verified > 0) {
-      console.log('🔐 Status: Blockchain Verified');
-      return 'Verificado';
-    }
-    if (verificationData?.usda_verified > 0) {
-      console.log('🔐 Status: USDA Verified');
-      return 'Verificado USDA';
-    }
-
-    // Fallback to carbon data
-    if (data?.blockchain_verified) {
-      return 'Verificado';
+    // Transparency journey progression:
+    // Blockchain = highest level (immutable, tamper-proof record)
+    // Complete documentation = strong transparency
+    // In progress = still building documentation
+    if (verificationData?.blockchain_verified > 0 || data?.blockchain_verified) {
+      return 'Blockchain';
     }
 
-    // Check completeness for verification readiness
     const score = getTransparencyScore();
-    console.log('🔐 Verification Logic:', {
-      score,
-      isReadyForVerification: score >= 80,
-      fallbackStatus: score >= 80 ? 'Listo para Verificar' : 'En Progreso'
-    });
 
     if (score >= 80) {
-      return 'Listo para Verificar';
+      return 'Completa';
+    }
+    if (score >= 50) {
+      return 'Avanzada';
     }
     return 'En Progreso';
   };
@@ -426,13 +417,13 @@ const TransparencySummaryCard = ({ establishmentId }) => {
           >
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                Verificación
+                Transparencia
               </StatLabel>
-              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="purple.500" fontWeight="bold">
+              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="green.500" fontWeight="bold">
                 {getVerificationStatus()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <Icon as={MdVerified} /> Estado de verificación
+                <Icon as={MdVerified} /> Nivel de documentación
               </StatHelpText>
             </Stat>
           </Box>

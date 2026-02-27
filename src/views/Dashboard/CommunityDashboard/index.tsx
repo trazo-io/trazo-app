@@ -70,7 +70,7 @@ export default function CommunityDashboard() {
       carbonData: '-0.3 kg CO₂e/kg',
       impact: 'Carbon Negative',
       type: 'farm_discovery',
-      verificationLevel: 'USDA Verified'
+      verificationLevel: 'Science-Based'
     },
     {
       id: 2,
@@ -257,7 +257,7 @@ export default function CommunityDashboard() {
                     Products with Data
                   </Text>
                   <Badge colorScheme="blue" size="sm">
-                    USDA Verified
+                    Science-Based
                   </Badge>
                 </VStack>
               </VStack>

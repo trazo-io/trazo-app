@@ -3,6 +3,7 @@ import { Box, Flex, Portal } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
 import Footer from '../Footer/Footer';
 import AuthNavbar from 'components/Navbars/AuthNavbar';
+import { ConsentBanner } from '../Privacy/ConsentBanner';
 
 interface ConsumerProductLayoutProps {
   children?: React.ReactNode;
@@ -22,6 +23,9 @@ export const ConsumerProductLayout: React.FC<ConsumerProductLayoutProps> = ({ ch
       <Portal containerRef={navRef}>
         <AuthNavbar secondary={false} logoText="trazo" logo="" />
       </Portal>
+
+      {/* Privacy Consent Banner for consumer analytics */}
+      <ConsentBanner />
 
       <Flex direction="column" minH="100vh" bg="gray.50">
         {/* Main Content - Full width for product detail */}

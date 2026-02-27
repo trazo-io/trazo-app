@@ -345,42 +345,118 @@ const EducationTopicDetail: React.FC = () => {
         id: 'transparency-score',
         title: 'Transparency Scoring: Your Consumer Trust Metric',
         description:
-          'Understanding how Trazo calculates transparency scores and what they mean to consumers',
+          'Understanding how Trazo calculates transparency scores, category weights, and the 3-tier photo system',
         icon: FaChartLine,
         category: 'Transparency System',
         content: (
           <VStack spacing={6} align="start">
             <Text fontSize="lg">
               Your transparency score (0-100%) is the key metric that consumers see when they scan
-              your QR codes. It directly impacts their trust and purchasing decisions.
+              your QR codes. It is calculated from <strong>7 weighted categories</strong> of farming
+              events, each with smart photo requirements that recognize not every event needs a photo.
             </Text>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaCalculator} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                How Scoring Works
+                Category Weights
               </Heading>
             </HStack>
-            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <Text>
-                  <strong>Event Documentation:</strong> Each farming event you log contributes to
-                  your score
-                </Text>
-                <Text>
-                  <strong>Verification Status:</strong> Blockchain-verified events receive higher
-                  weight
-                </Text>
-                <Text>
-                  <strong>Completeness:</strong> Comprehensive event details boost transparency
-                </Text>
-                <Text>
-                  <strong>Photo Evidence:</strong> Images and documentation add credibility
-                </Text>
-                <Text>
-                  <strong>Real-time Data:</strong> IoT sensors and live monitoring increase trust
-                </Text>
-              </VStack>
+            <Text fontSize="sm" color="gray.600">
+              Your score is a weighted average across 7 documentation categories. Categories with
+              higher weight have more impact on your final score.
+            </Text>
+            <Box overflowX="auto" w="full">
+              <Grid
+                templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
+                gap={3}
+                minW={{ base: '280px', md: 'auto' }}
+              >
+                <Box p={4} borderRadius="lg" border="2px solid" borderColor="green.200" bg="green.50">
+                  <Heading size="sm" color="green.700" mb={1}>Growing Practices &mdash; 30%</Heading>
+                  <Text fontSize="xs" color="gray.600">Planting, harvesting, irrigation, pruning, transplanting, cultivation</Text>
+                </Box>
+                <Box p={4} borderRadius="lg" border="2px solid" borderColor="orange.200" bg="orange.50">
+                  <Heading size="sm" color="orange.700" mb={1}>Treatment Details &mdash; 20%</Heading>
+                  <Text fontSize="xs" color="gray.600">Fertilizer, pesticide, fungicide, and herbicide applications</Text>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={1}>Soil Care &mdash; 18%</Heading>
+                  <Text fontSize="xs" color="gray.600">Soil tests, organic matter, composting, cover crops, pH adjustments</Text>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={1}>Pest Management &mdash; 12%</Heading>
+                  <Text fontSize="xs" color="gray.600">Scouting, beneficial releases, pest ID, trap monitoring, IPM</Text>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={1}>Certifications &mdash; 10%</Heading>
+                  <Text fontSize="xs" color="gray.600">Organic certifications, inspections, quality standards</Text>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="gray.700" mb={1}>Weather &amp; General &mdash; 5% each</Heading>
+                  <Text fontSize="xs" color="gray.600">Weather observations, farm notes, and other activities</Text>
+                </Box>
+              </Grid>
+            </Box>
+
+            <HStack spacing={2} mb={3}>
+              <Icon as={FaCamera} color="green.600" boxSize={5} />
+              <Heading size="md" color="gray.700">
+                3-Tier Photo System
+              </Heading>
+            </HStack>
+            <Text fontSize="sm" color="gray.600">
+              Not every event needs a photo. Trazo classifies each event type into one of three tiers
+              based on how important visual evidence is for consumer trust.
+            </Text>
+            <Box overflowX="auto" w="full">
+              <Grid
+                templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
+                gap={4}
+                minW={{ base: '280px', md: 'auto' }}
+              >
+                <Box p={4} borderRadius="lg" border="2px solid" borderColor="red.200" bg="red.50">
+                  <Heading size="sm" color="red.700" mb={2}>
+                    Essential (up to 50% penalty)
+                  </Heading>
+                  <Text fontSize="xs" color="gray.600" mb={2}>
+                    Missing photos on these events cuts their contribution in half.
+                  </Text>
+                  <UnorderedList spacing={1} fontSize="xs">
+                    <ListItem>Planting &amp; Harvesting</ListItem>
+                    <ListItem>All chemical applications (fertilizer, pesticide, fungicide, herbicide)</ListItem>
+                    <ListItem>Cover crops</ListItem>
+                    <ListItem>Beneficial insect releases &amp; Pest identification</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="2px solid" borderColor="yellow.200" bg="yellow.50">
+                  <Heading size="sm" color="yellow.700" mb={2}>
+                    Recommended (up to 25% penalty)
+                  </Heading>
+                  <Text fontSize="xs" color="gray.600" mb={2}>
+                    Photos add value, but we understand these are harder to capture.
+                  </Text>
+                  <UnorderedList spacing={1} fontSize="xs">
+                    <ListItem>Pruning, transplanting, cultivation</ListItem>
+                    <ListItem>Soil tests, organic matter, composting</ListItem>
+                    <ListItem>Scouting, trap monitoring, IPM</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="2px solid" borderColor="green.200" bg="green.50">
+                  <Heading size="sm" color="green.700" mb={2}>
+                    No Penalty
+                  </Heading>
+                  <Text fontSize="xs" color="gray.600" mb={2}>
+                    Photos are optional &mdash; these events score fully from documentation alone.
+                  </Text>
+                  <UnorderedList spacing={1} fontSize="xs">
+                    <ListItem>Irrigation, equipment maintenance, thinning</ListItem>
+                    <ListItem>All weather events</ListItem>
+                    <ListItem>All business/certification events</ListItem>
+                    <ListItem>General notes and observations</ListItem>
+                  </UnorderedList>
+                </Box>
+              </Grid>
             </Box>
 
             <HStack spacing={2} mb={3}>
@@ -397,36 +473,33 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="green.600" mb={2}>
-                    ✅ Excellent Transparency (90%+)
+                    Excellent (90%+)
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>"95% transparency - comprehensive documentation"</ListItem>
-                    <ListItem>Green trust indicators</ListItem>
-                    <ListItem>Complete farming timeline</ListItem>
-                    <ListItem>Blockchain verification status</ListItem>
+                    <ListItem>All 7 categories documented</ListItem>
+                    <ListItem>Essential events have photos</ListItem>
+                    <ListItem>Green trust indicators on QR page</ListItem>
+                    <ListItem>Maximum consumer confidence</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="yellow.600" mb={2}>
-                    ⚡ Good Transparency (70-89%)
+                    Good (70-89%)
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>"78% transparency - well documented"</ListItem>
-                    <ListItem>Yellow progress indicators</ListItem>
-                    <ListItem>Most practices documented</ListItem>
-                    <ListItem>Some verification gaps</ListItem>
+                    <ListItem>Most categories documented</ListItem>
+                    <ListItem>Some photo gaps in essential events</ListItem>
+                    <ListItem>Strong consumer trust</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="orange.600" mb={2}>
-                    ⚠️ Low Transparency (below 60%)
+                    Needs Improvement (below 60%)
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>"45% transparency - limited information"</ListItem>
-                    <ListItem>Yellow warning indicators</ListItem>
-                    <ListItem>"Some farming practices documented"</ListItem>
-                    <ListItem>Basic production info only</ListItem>
-                    <ListItem>No verification status</ListItem>
+                    <ListItem>Several empty categories</ListItem>
+                    <ListItem>Missing photos on essential events</ListItem>
+                    <ListItem>Limited consumer trust</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -438,8 +511,8 @@ const EducationTopicDetail: React.FC = () => {
                 <AlertTitle>Consumer Impact</AlertTitle>
                 <AlertDescription>
                   Farms with 90%+ transparency scores see 3x higher consumer engagement and 25%
-                  price premiums. Transparency builds the trust that drives sustainable farming
-                  success.
+                  price premiums. Focus your photo effort on essential events (planting, harvest,
+                  chemical applications) for the biggest score improvement.
                 </AlertDescription>
               </Box>
             </Alert>
@@ -573,9 +646,9 @@ const EducationTopicDetail: React.FC = () => {
         content: (
           <VStack spacing={6} align="start">
             <Text fontSize="lg">
-              Every farming event you document can be permanently recorded on the Polygon
-              blockchain, creating immutable proof of your agricultural practices that consumers can
-              independently verify.
+              When you finish a production, Trazo creates a permanent, tamper-proof record of
+              everything you documented on the Polygon blockchain. Consumers can independently
+              verify this record, building unshakeable confidence in your farming practices.
             </Text>
 
             <HStack spacing={2} mb={3}>
@@ -587,26 +660,67 @@ const EducationTopicDetail: React.FC = () => {
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>🔒 Immutable Records:</strong> Once recorded, farming data cannot be
-                  changed or deleted
+                  <strong>Immutable Records:</strong> Once recorded, farming data cannot be
+                  changed or deleted &mdash; not even by Trazo
                 </Text>
                 <Text>
-                  <strong>🌍 Global Verification:</strong> Anyone can independently verify your
-                  claims
+                  <strong>Global Verification:</strong> Anyone can independently verify your
+                  claims through a public blockchain explorer
                 </Text>
                 <Text>
-                  <strong>⚡ Low Cost:</strong> Polygon network enables affordable verification at
-                  scale
+                  <strong>Low Cost:</strong> Polygon network enables affordable verification
+                  (about $0.01 per production)
                 </Text>
                 <Text>
-                  <strong>🤝 Consumer Trust:</strong> Blockchain removes "trust us" and enables
-                  "verify yourself"
+                  <strong>Consumer Trust:</strong> Replaces &quot;trust us&quot; with
+                  &quot;verify it yourself&quot;
                 </Text>
                 <Text>
-                  <strong>📱 Easy Access:</strong> Verification status visible on every QR code page
+                  <strong>Easy Access:</strong> Verification badge visible on every QR code page
                 </Text>
               </VStack>
             </Box>
+
+            <HStack spacing={2} mb={3}>
+              <Icon as={FaCheckCircle} color="green.600" boxSize={5} />
+              <Heading size="md" color="gray.700">
+                How It Works
+              </Heading>
+            </HStack>
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="start">
+                <Text>
+                  <strong>Step 1 &mdash; Document as usual:</strong> Log your farming events
+                  throughout the production cycle (planting, irrigation, fertilization, harvest, etc.)
+                </Text>
+                <Text>
+                  <strong>Step 2 &mdash; Finish your production:</strong> When you click
+                  &quot;Finish Production,&quot; Trazo creates a digital fingerprint of ALL your
+                  documented events. This seals the record.
+                </Text>
+                <Text>
+                  <strong>Step 3 &mdash; Automatic blockchain submission:</strong> Trazo
+                  automatically submits your production&apos;s fingerprint to the Polygon
+                  blockchain in the next monthly batch.
+                </Text>
+                <Text>
+                  <strong>Step 4 &mdash; Badge appears:</strong> Your QR code page displays a
+                  &quot;Blockchain Verified&quot; badge with a link to the public transaction.
+                </Text>
+              </VStack>
+            </Box>
+
+            <Alert status="success" borderRadius="lg">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>One Record Per Production</AlertTitle>
+                <AlertDescription>
+                  Blockchain verification covers your entire production &mdash; all events in one
+                  permanent record. You don&apos;t need to do anything special. Just document your
+                  farming as usual and finish your production when it&apos;s ready.
+                </AlertDescription>
+              </Box>
+            </Alert>
 
             <HStack spacing={2} mb={3}>
               <Icon as={FaCheckCircle} color="green.600" boxSize={5} />
@@ -622,24 +736,24 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📋 Event Documentation
+                    All Farming Events
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Farming activity timestamps</ListItem>
-                    <ListItem>Geolocation data</ListItem>
+                    <ListItem>Every event you documented during the production</ListItem>
+                    <ListItem>Activity types, dates, and details</ListItem>
                     <ListItem>Product quantities and varieties</ListItem>
                     <ListItem>Chemical and fertilizer applications</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🔬 Environmental Data
+                    Production Data
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Carbon footprint calculations</ListItem>
-                    <ListItem>USDA emission factor sources</ListItem>
-                    <ListItem>Transparency score calculations</ListItem>
-                    <ListItem>Sustainability metrics</ListItem>
+                    <ListItem>Carbon footprint calculations per activity</ListItem>
+                    <ListItem>Complete production timeline (start to finish)</ListItem>
+                    <ListItem>Data integrity fingerprint</ListItem>
+                    <ListItem>Total environmental impact</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -648,24 +762,48 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaUsers} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Consumer Verification Process
+                What Consumers See
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Step 1:</strong> Consumer scans QR code and sees "Blockchain Verified ✅"
-                  badge
+                  <strong>Verification Badge:</strong> A &quot;Blockchain Verified&quot; badge
+                  appears on your product&apos;s QR code page
                 </Text>
                 <Text>
-                  <strong>Step 2:</strong> Consumer can click verification badge to see blockchain
-                  transaction
+                  <strong>Explorer Link:</strong> Consumers can click through to Polygonscan
+                  to see the actual blockchain transaction
                 </Text>
                 <Text>
-                  <strong>Step 3:</strong> Independent verification through Polygonscan explorer
+                  <strong>Trust Signal:</strong> The badge proves your data was sealed at a
+                  specific point in time and hasn&apos;t been changed
+                </Text>
+              </VStack>
+            </Box>
+
+            <HStack spacing={2} mb={3}>
+              <Icon as={FaShieldAlt} color="green.600" boxSize={5} />
+              <Heading size="md" color="gray.700">
+                Getting Started
+              </Heading>
+            </HStack>
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="start">
+                <Text>
+                  <strong>1. Purchase the add-on:</strong> Go to your subscription page and add
+                  &quot;Blockchain Verification&quot; to your plan
                 </Text>
                 <Text>
-                  <strong>Step 4:</strong> Consumer gains confidence in farming claims
+                  <strong>2. Document your production:</strong> Log events as you normally do
+                </Text>
+                <Text>
+                  <strong>3. Finish your production:</strong> Click &quot;Finish Production&quot;
+                  when the growing cycle is complete
+                </Text>
+                <Text>
+                  <strong>4. Automatic verification:</strong> Your production is submitted to
+                  blockchain in the next monthly batch &mdash; no extra steps needed
                 </Text>
               </VStack>
             </Box>
@@ -673,11 +811,11 @@ const EducationTopicDetail: React.FC = () => {
             <Alert status="info" borderRadius="lg">
               <AlertIcon />
               <Box>
-                <AlertTitle>Technical Note</AlertTitle>
+                <AlertTitle>About Polygon</AlertTitle>
                 <AlertDescription>
-                  Trazo uses energy-efficient Polygon blockchain, consuming 99% less energy than
-                  Bitcoin while providing the same level of verification security. This aligns with
-                  sustainable farming values and environmental responsibility.
+                  Trazo uses the energy-efficient Polygon blockchain, consuming 99% less energy than
+                  Bitcoin while providing the same level of verification security. Each production
+                  costs about $0.01 to verify &mdash; included in your subscription.
                 </AlertDescription>
               </Box>
             </Alert>
@@ -841,7 +979,7 @@ const EducationTopicDetail: React.FC = () => {
         id: 'carbon-methodology',
         title: 'Carbon Calculation Methodology: How We Calculate Environmental Impact',
         description:
-          'Detailed explanation of our carbon calculation methods using EPA and USDA verified emission factors',
+          'Detailed explanation of our carbon calculation methods using published EPA emission factors',
         icon: FaCalculator,
         category: 'Environmental Impact',
         content: (
@@ -1759,24 +1897,28 @@ const EducationTopicDetail: React.FC = () => {
             <HStack spacing={2} mb={3}>
               <Icon as={FaCalculator} color="green.600" boxSize={5} />
               <Heading size="md" color="gray.700">
-                Transparency Score Calculation Weights
+                Category Weights (What Matters Most)
               </Heading>
             </HStack>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>Event Documentation (40%):</strong> Number of documented agricultural
-                  events
+                  <strong>Growing Practices (30%):</strong> Planting, harvesting, irrigation, pruning &mdash; the core of your story
                 </Text>
                 <Text>
-                  <strong>Verification Status (25%):</strong> Blockchain verification and photo
-                  evidence
+                  <strong>Treatment Details (20%):</strong> Fertilizer and chemical applications &mdash; highest consumer sensitivity
                 </Text>
                 <Text>
-                  <strong>Completeness (20%):</strong> Detailed event descriptions and context
+                  <strong>Soil Care (18%):</strong> Soil tests, composting, cover crops &mdash; sustainability signals
                 </Text>
                 <Text>
-                  <strong>Real-time Data (15%):</strong> IoT sensors and immediate documentation
+                  <strong>Pest Management (12%):</strong> Scouting, beneficial releases, IPM practices
+                </Text>
+                <Text>
+                  <strong>Certifications (10%):</strong> Third-party trust &mdash; organic, inspections, quality standards
+                </Text>
+                <Text>
+                  <strong>Weather &amp; General (5% each):</strong> Environmental context and supplementary notes
                 </Text>
               </VStack>
             </Box>
@@ -1795,27 +1937,26 @@ const EducationTopicDetail: React.FC = () => {
               >
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    ✅ Must-Have Events (60 points)
+                    Must-Have Events
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>3+ Production events (planting, harvest, processing)</ListItem>
+                    <ListItem>3+ Production events (planting, harvest, irrigation)</ListItem>
                     <ListItem>2+ Chemical events (fertilizer, organic amendments)</ListItem>
-                    <ListItem>2+ Equipment events (tractor work, irrigation)</ListItem>
-                    <ListItem>1+ Soil management event (composting, testing)</ListItem>
-                    <ListItem>1+ Weather event (rainfall, drought response)</ListItem>
+                    <ListItem>1+ Soil management event (composting, soil test)</ListItem>
+                    <ListItem>1+ Pest management event (scouting, IPM)</ListItem>
+                    <ListItem>1+ Business event (certification, inspection)</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🏆 Excellence Boosters (30+ points)
+                    Photo Strategy (Smart, Not Exhaustive)
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>Photo evidence for 80%+ of events</ListItem>
-                    <ListItem>Blockchain verification enabled</ListItem>
-                    <ListItem>Real-time event logging (not batch)</ListItem>
-                    <ListItem>Detailed event descriptions</ListItem>
-                    <ListItem>Business events (certifications, sales)</ListItem>
-                    <ListItem>Pest management documentation</ListItem>
+                    <ListItem><strong>Always photograph:</strong> planting, harvest, chemical labels</ListItem>
+                    <ListItem><strong>When practical:</strong> pruning, soil tests, scouting</ListItem>
+                    <ListItem><strong>Skip guilt-free:</strong> irrigation, weather, general notes</ListItem>
+                    <ListItem>Chemical events need 2 photos (label + application)</ListItem>
+                    <ListItem>All other events need just 1 photo</ListItem>
                   </UnorderedList>
                 </Box>
               </Grid>
@@ -1830,22 +1971,24 @@ const EducationTopicDetail: React.FC = () => {
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
               <VStack spacing={3} align="start">
                 <Text>
-                  <strong>❌ Batch Documentation:</strong> Logging events weeks after they happened
+                  <strong>Missing photos on essential events:</strong> Planting, harvest, and
+                  chemical application photos have the biggest impact &mdash; a 50% penalty per event
                 </Text>
                 <Text>
-                  <strong>❌ Missing Photos:</strong> Events without visual evidence lose
-                  verification weight
+                  <strong>Empty high-weight categories:</strong> Having zero events in Growing
+                  Practices (30%) or Treatment Details (20%) is more costly than gaps in Weather (5%)
                 </Text>
                 <Text>
-                  <strong>❌ Vague Descriptions:</strong> "Applied fertilizer" vs "Applied 50 lbs
-                  organic compost to north field"
+                  <strong>Batch documentation:</strong> Logging events weeks after they happened &mdash;
+                  photos must be within 7 days of the event date
                 </Text>
                 <Text>
-                  <strong>❌ Skipping Minor Events:</strong> Small activities still contribute to
-                  transparency
+                  <strong>Photographing everything equally:</strong> Focus your photo effort on
+                  essential events first; irrigation and weather notes don&apos;t need photos at all
                 </Text>
                 <Text>
-                  <strong>❌ Inconsistent Logging:</strong> Large gaps in documentation timeline
+                  <strong>Ignoring certifications:</strong> Business events now carry 10% weight &mdash;
+                  logging a single certification adds meaningful points
                 </Text>
               </VStack>
             </Box>
@@ -1903,9 +2046,10 @@ const EducationTopicDetail: React.FC = () => {
               <Box>
                 <AlertTitle>Success Benchmark</AlertTitle>
                 <AlertDescription>
-                  Target: 12-15 documented events per production cycle with 80% photo evidence. This
-                  consistently achieves 90%+ transparency scores. Remember: consumers value
-                  comprehensive documentation over perfect farming - show them everything!
+                  Target: 12-15 documented events per production cycle across all 7 categories.
+                  Photograph your essential events (planting, harvest, chemical applications) and you
+                  will consistently hit 90%+. Remember: the system rewards you for logging more, not
+                  less &mdash; every event raises your score.
                 </AlertDescription>
               </Box>
             </Alert>

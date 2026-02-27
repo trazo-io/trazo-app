@@ -78,7 +78,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
     );
   }
 
-  // No verification data
+  // No verification data - show honest state instead of misleading "in progress"
   if (!verificationData) {
     return (
       <Box
@@ -90,9 +90,9 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
         boxShadow="sm"
       >
         <HStack spacing={spacing}>
-          <Icon as={MdInfo} color="gray.500" />
-          <Text fontSize="sm" color="gray.600">
-            Verification in progress
+          <Icon as={MdInfo} color="gray.400" />
+          <Text fontSize="sm" color="gray.500">
+            Not yet verified on blockchain
           </Text>
         </HStack>
       </Box>
@@ -148,9 +148,9 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
   if (isCompact) {
     return (
       <HStack spacing={2} justify="center">
-        {/* USDA Badge */}
+        {/* Documentation Badge */}
         {usda_verified && (
-          <Tooltip label="USDA verified sustainable practices" placement="top">
+          <Tooltip label="Farming practices documented and tracked" placement="top">
             <Badge
               colorScheme="green"
               variant="solid"
@@ -161,7 +161,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
             >
               <HStack spacing={1}>
                 <Icon as={FaCertificate} boxSize={3} />
-                <Text>USDA</Text>
+                <Text>Documented</Text>
               </HStack>
             </Badge>
           </Tooltip>
@@ -256,14 +256,14 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
 
         {/* Verification details grid */}
         <VStack spacing={3} align="stretch">
-          {/* USDA Verification */}
+          {/* Documentation Verification */}
           {usda_verified && (
             <Box p={3} bg="green.50" borderRadius="md" border="1px solid" borderColor="green.200">
               <HStack justify="space-between" mb={2}>
                 <HStack spacing={2}>
                   <Icon as={FaCertificate} color={uspGreen} boxSize={4} />
                   <Text fontSize="sm" fontWeight="medium" color={uspGreen}>
-                    USDA Standards Compliance
+                    Science-Based Calculations
                   </Text>
                 </HStack>
                 <Badge colorScheme="green" variant="solid" fontSize="xs">
@@ -282,7 +282,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
               )}
 
               <Text fontSize="xs" color="green.700">
-                Carbon calculations verified against USDA emission factors
+                Environmental impact calculated using published EPA emission factors
               </Text>
             </Box>
           )}

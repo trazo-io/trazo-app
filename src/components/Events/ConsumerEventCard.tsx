@@ -62,6 +62,7 @@ import {
   getVerificationColor,
   type VerificationLevel
 } from 'utils/verificationTierHelpers';
+import { getImpactLevel } from 'utils/carbonDisplayUtils';
 import { StandardImageGallery } from 'components/ImageGallery';
 
 // Comprehensive event interface that includes all possible fields across all event types
@@ -192,28 +193,40 @@ interface ConsumerEventCardProps {
   event: ConsumerEventData;
   isFirst?: boolean;
   isLast?: boolean;
+  isGrouped?: boolean;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  /** Production-level blockchain data to use when individual events lack their own */
+  productionBlockchain?: {
+    tx_hash?: string;
+    verified?: boolean;
+    block_number?: number;
+    network?: string;
+  };
 }
 
 export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   event,
   isFirst = false,
-  isLast = false
+  isLast = false,
+  isGrouped = false,
+  isExpanded: controlledExpanded,
+  onToggleExpand,
+  productionBlockchain
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
+  const toggleExpand = onToggleExpand || (() => setInternalExpanded((prev) => !prev));
   const isMobile = useBreakpointValue({ base: true, md: false });
   // Get consumer-friendly description with real event data
   const eventInfo = getConsumerEventDescription(event.description, event);
 
-  // DEBUG: Log weather event processing results
-  if (event.event_type === 0) {
-    console.log('🌦️ WEATHER EVENT INFO RESULT:');
-    console.log('=============================');
-    console.log('📤 EVENT INFO:', eventInfo);
-    console.log(`   Title: ${eventInfo.title}`);
-    console.log(`   Description: ${eventInfo.description}`);
-    console.log(`   Impact: ${eventInfo.impact}`);
-  }
   const sustainabilityLevel = getSustainabilityImpact(event.description, event);
+  // Use shared getImpactLevel for consistent terminology when carbon data is available
+  // FIX: Include carbon_impact === 0 so zero-emission events show "None" instead of "LOW IMPACT"
+  const carbonImpactLevel = typeof event.carbon_impact === 'number'
+    ? getImpactLevel(event.carbon_impact)
+    : null;
   const trustIndicators = getEventTrustIndicators(event);
   const formattedDate = formatEventDate(event.date);
 
@@ -221,8 +234,15 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const formatDateRange = (startDate?: string, endDate?: string): string => {
     if (!startDate || !endDate) return formattedDate;
     try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      // Parse date strings as local time to avoid timezone offset issues
+      // "2025-11-01" parsed via new Date() is UTC midnight, which can show as previous day in local tz
+      const parseLocalDate = (dateStr: string): Date => {
+        if (dateStr.includes('T')) return new Date(dateStr);
+        const [y, m, d] = dateStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      };
+      const start = parseLocalDate(startDate);
+      const end = parseLocalDate(endDate);
       const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
       const yearOptions: Intl.DateTimeFormatOptions = { ...options, year: 'numeric' };
 
@@ -252,74 +272,19 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   // Get comprehensive field display data based on field display matrix
   const fieldDisplay = getEventFieldDisplay(event);
 
-  // 🔧 DEBUG: Check field display for event 178
-  if (event.id === '178') {
-    console.log('🔧 FIELD DISPLAY DEBUG for Event 178:', {
-      eventData: event,
-      fieldDisplayResult: fieldDisplay,
-      hasApplicationTiming: !!event.application_timing,
-      hasAreaTreated: !!event.area_treated,
-      hasAreaUnit: !!event.area_unit,
-      secondaryFields: fieldDisplay.secondary,
-      rawArea: event.area,
-      rawApplicationTiming: event.application_timing
-    });
-  }
-
-  // DEBUG: Log field display data for production events
-  if (
-    event.type?.startsWith('production.') ||
-    event.type === 'production' ||
-    event.event_type === 1
-  ) {
-    console.log('🔧 [ConsumerEventCard] PRODUCTION EVENT FIELD DISPLAY DEBUG:', {
-      eventId: event.id,
-      eventType: event.type,
-      event_type_number: event.event_type,
-      description: event.description,
-      area_covered: event.area_covered,
-      area_unit: (event as any).area_unit,
-      yield_quantity: event.yield_quantity,
-      fuel_consumed: event.fuel_consumed,
-      equipment_hours: event.equipment_hours,
-      seeds_source: (event as any).seeds_source,
-      fieldDisplay,
-      immediateFields: fieldDisplay.immediate,
-      immediateCount: fieldDisplay.immediate.length,
-      secondaryFields: fieldDisplay.secondary,
-      secondaryCount: fieldDisplay.secondary.length,
-      detailsFields: fieldDisplay.details,
-      detailsCount: fieldDisplay.details.length,
-      fullEvent: event
-    });
-  }
-
-  // Enhanced blockchain verification processing
+  // Blockchain verification is always production-level (one tx covers all events).
+  // Individual events don't have their own blockchain transactions.
+  const explorerBase = import.meta.env.VITE_POLYGON_EXPLORER_URL || 'https://polygonscan.com';
   const blockchainData = {
-    verified: event.blockchain_verified || event.extra_data?.blockchain_verified || false,
-    transaction: event.blockchain_transaction || event.extra_data?.blockchain_transaction || '',
-    blockNumber: event.blockchain_block_number || event.extra_data?.blockchain_block_number || 0,
+    verified: productionBlockchain?.verified || false,
+    transaction: productionBlockchain?.tx_hash || '',
+    blockNumber: productionBlockchain?.block_number || 0,
     confidence: event.verification_confidence || event.extra_data?.verification_confidence || 0,
     timestamp: event.verification_timestamp || event.extra_data?.verification_timestamp || '',
     integrityScore: event.data_integrity_score || event.extra_data?.data_integrity_score || 0,
-    explorerUrl:
-      event.blockchain_explorer_url ||
-      `https://amoy.polygonscan.com/tx/${
-        event.blockchain_transaction || event.extra_data?.blockchain_transaction || ''
-      }`,
-    network: event.blockchain_network || 'polygon_amoy'
+    explorerUrl: productionBlockchain?.tx_hash ? `${explorerBase}/tx/${productionBlockchain.tx_hash}` : '',
+    network: productionBlockchain?.network || 'polygon'
   };
-
-  // Enhanced blockchain verification processing - use actual API data
-  // Check if this event contains blockchain verification data from the API
-  if (event.blockchain_verified && event.blockchain_transaction) {
-    blockchainData.verified = event.blockchain_verified;
-    blockchainData.transaction = event.blockchain_transaction;
-    blockchainData.confidence = event.verification_confidence || 0;
-    blockchainData.integrityScore = event.data_integrity_score || 0;
-    blockchainData.timestamp = event.verification_timestamp || '';
-    blockchainData.blockNumber = event.blockchain_block_number || 0;
-  }
 
   // Photo verification processing (MVP Photo Verification: Use Vision API validation)
   const photoVerification = {
@@ -422,18 +387,6 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     return normalizedFuelType === 'electric' ? '⚡' : '⛽';
   };
 
-  // Debug blockchain data for verified events
-  if (blockchainData.verified && blockchainData.transaction) {
-    console.log('🔗 BLOCKCHAIN DEBUG:', {
-      eventId: event.id,
-      eventDescription: event.description,
-      blockchainVerified: event.blockchain_verified,
-      transaction: event.blockchain_transaction,
-      blockchainData,
-      verificationLevel
-    });
-  }
-
   // Color scheme
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -442,17 +395,17 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const highlightBg = useColorModeValue('green.50', 'gray.700');
 
-  // Sustainability colors
+  // Sustainability colors: high CO₂e = concern (orange), low = good (green)
   const sustainabilityColors = {
-    high: 'green',
-    medium: 'blue',
-    low: 'gray'
+    high: 'orange',
+    medium: 'yellow',
+    low: 'green'
   };
 
   return (
     <Box position="relative">
-      {/* Timeline connector - DESKTOP ONLY */}
-      {!isLast && (
+      {/* Timeline connector - DESKTOP ONLY, hidden when inside a group */}
+      {!isLast && !isGrouped && (
         <Box
           position="absolute"
           left={{ base: '20px', md: '24px' }}
@@ -465,9 +418,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
         />
       )}
 
-      <HStack align="flex-start" spacing={{ base: 0, md: 4 }} position="relative" zIndex={1}>
-        {/* Timeline dot - DESKTOP ONLY */}
-        <Flex direction="column" align="center" minW="40px" display={{ base: 'none', md: 'flex' }}>
+      <HStack align="flex-start" spacing={{ base: 0, md: isGrouped ? 0 : 4 }} position="relative" zIndex={1}>
+        {/* Timeline dot - DESKTOP ONLY, hidden when inside a group */}
+        <Flex direction="column" align="center" minW="40px" display={{ base: 'none', md: isGrouped ? 'none' : 'flex' }}>
           <Circle
             size={{ base: '40px', md: '48px' }}
             bg={isFirst ? accentColor : bgColor}
@@ -520,7 +473,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               </Circle>
             )}
 
-            {/* USDA verification indicator */}
+            {/* Science-based calculation indicator */}
             {event.usda_verified && (
               <Circle
                 size="14px"
@@ -531,7 +484,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 border="1px solid white"
               >
                 <Text fontSize="6px" color="white" fontWeight="bold">
-                  USDA
+                  SCI
                 </Text>
               </Circle>
             )}
@@ -626,9 +579,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 )}
               </VStack>
 
-              {/* Sustainability badge */}
+              {/* Sustainability badge - uses shared getImpactLevel when carbon data available */}
               <Badge
-                colorScheme={sustainabilityColors[sustainabilityLevel]}
+                colorScheme={carbonImpactLevel ? carbonImpactLevel.color : sustainabilityColors[sustainabilityLevel]}
                 fontSize="xs"
                 px={2}
                 py={1}
@@ -636,7 +589,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               >
                 <HStack spacing={1}>
                   <Icon as={MdEco} boxSize={3} />
-                  <Text>{sustainabilityLevel.toUpperCase()} IMPACT</Text>
+                  <Text>{carbonImpactLevel ? carbonImpactLevel.level : `${sustainabilityLevel.toUpperCase()} IMPACT`}</Text>
                 </HStack>
               </Badge>
             </HStack>
@@ -651,8 +604,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {eventInfo.shortDescription}
               </Text>
 
-              {/* 🌱 TRANSPARENCY-FIRST: Show farmer's actual field notes from description field */}
-              {event.description && event.description.trim() && (
+              {/* 🌱 TRANSPARENCY-FIRST: Show farmer's actual field notes from observation field only.
+                  description contains system-generated text (template names, etc.) and must NOT
+                  be shown as "Farmer's Field Notes" — that would be dishonest to consumers. */}
+              {event.observation && event.observation.trim() && (
                 <Box
                   bg={useColorModeValue('green.50', 'green.900')}
                   border="1px solid"
@@ -672,7 +627,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     fontStyle="italic"
                     lineHeight="1.4"
                   >
-                    "{event.description}"
+                    "{event.observation}"
                   </Text>
                 </Box>
               )}
@@ -705,14 +660,14 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
               {/* Enhanced verification badges row */}
               <HStack spacing={2} flexWrap="wrap">
-                {/* Blockchain verification badge */}
+                {/* Blockchain secured badge — production-level verification covers this event */}
                 {blockchainData.verified && (
                   <Tooltip
-                    label={`Blockchain verified with ${blockchainData.confidence}% confidence. View transaction on Polygon explorer.`}
+                    label="This event is part of a blockchain-secured production record"
                     placement="top"
                   >
                     <Badge
-                      colorScheme={verificationLevel === 'ultimate' ? 'green' : 'blue'}
+                      colorScheme="blue"
                       variant="solid"
                       fontSize="xs"
                       px={3}
@@ -722,10 +677,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     >
                       <HStack spacing={1}>
                         <Icon as={MdVerified} boxSize={3} />
-                        <Text>BLOCKCHAIN VERIFIED</Text>
-                        {blockchainData.confidence > 0 && (
-                          <Text fontWeight="bold">({blockchainData.confidence}%)</Text>
-                        )}
+                        <Text>BLOCKCHAIN SECURED</Text>
                       </HStack>
                     </Badge>
                   </Tooltip>
@@ -817,7 +769,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               size={{ base: 'md', md: 'sm' }}
               variant="ghost"
               colorScheme="green"
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={toggleExpand}
               rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}
               _hover={{ bg: highlightBg }}
               w={{ base: 'full', md: 'auto' }}
@@ -937,7 +889,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       </Text>
                     </HStack>
 
-                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                    <SimpleGrid columns={2} spacing={3}>
                       {/* Fertilizer aggregate totals */}
                       {event.type === 'FE' && (
                         <>
@@ -1041,14 +993,14 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       {/* Pest Scouting aggregate fields */}
                       {event.type === 'SC' && (
                         <>
-                          {(event.field_area_total || event.extra_data?.field_area_total) && (
+                          {(event.field_area_total || event.area_covered_total || event.extra_data?.field_area_total || event.extra_data?.area_covered_total) && (
                             <Box>
                               <Text fontSize="xs" color="gray.500">
                                 Total Area Scouted
                               </Text>
                               <Text fontSize="sm" fontWeight="medium">
-                                {event.field_area_total || event.extra_data?.field_area_total}{' '}
-                                {event.area_unit || event.extra_data?.area_unit || 'acres'}
+                                {event.field_area_total || event.area_covered_total || event.extra_data?.field_area_total || event.extra_data?.area_covered_total}{' '}
+                                {event.area_unit || event.extra_data?.area_unit || 'ha'}
                               </Text>
                             </Box>
                           )}
@@ -1102,18 +1054,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                               </Badge>
                             </Box>
                           )}
-                          {(event.observations_summary ||
-                            event.extra_data?.observations_summary) && (
-                            <Box gridColumn={{ md: 'span 2' }}>
-                              <Text fontSize="xs" color="gray.500">
-                                Observations Summary
-                              </Text>
-                              <Text fontSize="sm" fontWeight="medium">
-                                {event.observations_summary ||
-                                  event.extra_data?.observations_summary}
-                              </Text>
-                            </Box>
-                          )}
+                          {/* Note: observations_summary removed — same content as "Farmer's Field Notes" (observation field) */}
                           {/* Zero carbon note for scouting */}
                           <Box gridColumn={{ md: 'span 2' }} mt={2}>
                             <HStack spacing={2}>
@@ -1140,7 +1081,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         Key Details
                       </Text>
                     </HStack>
-                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} pl={6}>
+                    <SimpleGrid columns={2} spacing={3} pl={6}>
                       {fieldDisplay.immediate.map((field, idx) => {
                         const fuelIcon = getFuelIcon(field.label, event.fuel_type);
                         return (
@@ -1236,7 +1177,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       </HStack>
 
                       {/* Modern grid layout for fields */}
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mb={4}>
+                      <SimpleGrid columns={2} spacing={3} mb={4}>
                         {(() => {
                           const chemicalFields = getEventFieldDisplay(event);
                           return [
@@ -1335,13 +1276,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   </Box>
                 )}
 
-                {/* Enhanced Blockchain Verification Section */}
+                {/* Blockchain Security Section — production-level record */}
                 {blockchainData.verified && (
                   <Box>
                     <HStack mb={3}>
                       <Icon as={MdSecurity} color="blue.500" boxSize={5} />
                       <Text fontWeight="bold" fontSize="sm" color="blue.500">
-                        Blockchain Verification Details
+                        Blockchain Security
                       </Text>
                     </HStack>
 
@@ -1351,7 +1292,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         <Box>
                           <HStack justify="space-between" mb={2}>
                             <Text fontSize="sm" fontWeight="semibold">
-                              Blockchain Transaction
+                              Production Record
                             </Text>
                             <Link
                               href={blockchainData.explorerUrl}
@@ -1421,7 +1362,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       <HStack spacing={3} fontSize="xs" color={mutedColor}>
                         <HStack>
                           <Icon as={FaInfoCircle} boxSize={3} />
-                          <Text>Network: Polygon Testnet</Text>
+                          <Text>Network: {blockchainData.network === 'polygon' ? 'Polygon' : blockchainData.network === 'polygon_amoy' ? 'Polygon Testnet' : 'Polygon'}</Text>
                         </HStack>
                         <HStack>
                           <Icon as={MdVerified} boxSize={3} />

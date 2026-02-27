@@ -80,7 +80,7 @@ export function getVerificationBadgeConfig(
       icon: FaCheck,
       label: 'Data Verified',
       tooltip:
-        'Event auto-verified by system (weather data, equipment sensors). Highest accuracy for this category.',
+        'Event data cross-referenced with an external source (e.g., weather API, lab report, IoT sensor).',
       trustScore: 85
     },
     certified: {

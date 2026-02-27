@@ -66,6 +66,16 @@ const OTHER_FARM_ACTIVITY_TYPES = [
     description: 'Farm tours, community events, outreach'
   },
   {
+    value: 'precision_ag',
+    label: '🛰️ Precision Agriculture',
+    description: 'Drone surveys, sensor readings, GPS mapping'
+  },
+  {
+    value: 'emergency',
+    label: '⚠️ Emergency/Storm Response',
+    description: 'Storm cleanup, damage repair, emergency actions'
+  },
+  {
     value: 'other',
     label: '📌 Other Activity',
     description: 'Activities not covered by other categories'
@@ -109,18 +119,26 @@ const GeneralTab = forwardRef(
       }
     });
 
-    // DEBOUNCE FIX: Expose flushData method to parent via ref
-    // This allows NewEvent.jsx to force-sync form data before step change
+    // Ref to always hold the latest submit handler, avoiding stale closures in useImperativeHandle
+    const submitHandlerRef = useRef(null);
+
+    // Expose flushData and submitForm methods to parent via ref
     useImperativeHandle(
       ref,
       () => ({
         flushData: () => {
           if (onDataChange) {
             const currentValues = mainInfoMethods.getValues();
-            console.log('[GeneralTab] 🔄 flushData called - syncing form data immediately');
             onDataChange(currentValues);
           }
-        }
+        },
+        submitForm: () =>
+          new Promise((resolve, reject) => {
+            mainInfoMethods.handleSubmit(
+              (data) => { submitHandlerRef.current(data); resolve(); },
+              (errors) => { reject(errors); }
+            )();
+          })
       }),
       [onDataChange, mainInfoMethods]
     );
@@ -154,7 +172,7 @@ const GeneralTab = forwardRef(
     } = mainInfoMethods;
 
     // Real-time field watching for data change updates
-    const watchedFields = watch(['name', 'type', 'duration_hours', 'participants', 'observation']);
+    const watchedFields = watch(['name', 'type', 'duration_hours', 'participants', 'observation', 'custom_fields']);
     const previousValuesRef = useRef({});
 
     useEffect(() => {
@@ -196,6 +214,9 @@ const GeneralTab = forwardRef(
     const onSubmit = (data) => {
       onSubmitHandler(data);
     };
+
+    // Keep ref in sync with latest handler on every render (avoids stale closures)
+    submitHandlerRef.current = onSubmit;
 
     return (
       <FormProvider {...mainInfoMethods}>

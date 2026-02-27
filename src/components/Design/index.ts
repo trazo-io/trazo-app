@@ -31,7 +31,6 @@ export { TransparencyIndicator } from './TransparencyIndicator';
 export { S3Image, type S3ImageProps } from '../Media/S3Image';
 
 // Standardized Form Components
-export { StandardEventForm } from '../Forms/StandardEventForm';
 export { default as StandardChemicalForm } from '../Forms/StandardChemicalForm';
 export { default as StandardEstablishmentForm } from '../Forms/StandardEstablishmentForm';
 export { default as StandardParcelForm } from '../Forms/StandardParcelForm';

@@ -38,6 +38,7 @@ import {
 } from 'react-icons/fa';
 import { MdEco, MdVerified, MdLocationOn } from 'react-icons/md';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useUserRole } from 'hooks/useUserRole';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
@@ -233,6 +234,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon, value, label, subLabel, color
 function ProfileParcel(): React.ReactElement {
   const intl = useIntl();
   const navigate = useNavigate();
+  const { canWrite } = useUserRole();
   const { establishmentId, parcelId } = useParams<{ establishmentId: string; parcelId: string }>();
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
 
@@ -355,18 +357,20 @@ function ProfileParcel(): React.ReactElement {
               >
                 {intl.formatMessage({ id: 'app.share' })}
               </StandardButton>
-              <StandardButton
-                variant="outline"
-                size="sm"
-                leftIcon={<Icon as={FaEdit} />}
-                onClick={() =>
-                  navigate(
-                    `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
-                  )
-                }
-              >
-                {intl.formatMessage({ id: 'app.edit' })}
-              </StandardButton>
+              {canWrite && (
+                <StandardButton
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Icon as={FaEdit} />}
+                  onClick={() =>
+                    navigate(
+                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
+                    )
+                  }
+                >
+                  {intl.formatMessage({ id: 'app.edit' })}
+                </StandardButton>
+              )}
             </HStack>
           }
         >
@@ -518,7 +522,7 @@ function ProfileParcel(): React.ReactElement {
               certification_type: parcelData?.certification_type
             }}
             variant="full"
-            showEditButton={true}
+            showEditButton={canWrite}
             onEditClick={() =>
               navigate(
                 `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`

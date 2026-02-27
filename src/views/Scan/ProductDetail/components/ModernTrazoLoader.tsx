@@ -183,7 +183,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
                 <HStack spacing={2}>
                   <Icon as={MdVerified} color="blue.500" boxSize={4} />
                   <Text fontSize="sm" color="blue.600">
-                    USDA Verified
+                    Science-Based
                   </Text>
                 </HStack>
               )}

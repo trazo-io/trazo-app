@@ -29,6 +29,7 @@ import {
 } from 'components/Icons/Icons.tsx';
 import { FormattedMessage, useIntl } from 'react-intl';
 import { NavLink, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useUserRole } from 'hooks/useUserRole';
 import React, { useEffect, useState, useRef } from 'react';
 import {
   dashboardTableData,
@@ -69,6 +70,7 @@ export default function DashboardView() {
   const intl = useIntl();
   const { establishmentId } = useParams();
   const navigate = useNavigate();
+  const { canWrite } = useUserRole();
   const currentLocation = useLocation();
   const [establishment, setEstablishment] = useState(null);
 
@@ -548,7 +550,7 @@ export default function DashboardView() {
                               </Card>
                             </NavLink>
                           ))}
-                          {canCreateEstablishment && (
+                          {canWrite && canCreateEstablishment && (
                             <Button
                               p="0px"
                               w="100px"
@@ -665,7 +667,7 @@ export default function DashboardView() {
                           </Card>
                         </NavLink>
                       ))}
-                      {canCreateEstablishment && (
+                      {canWrite && canCreateEstablishment && (
                         <Button
                           p="0px"
                           w="77px"

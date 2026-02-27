@@ -85,14 +85,15 @@ import { usePointsStore } from './store/pointsStore';
 import ProducerEducationDashboard from 'views/Dashboard/Education';
 import EducationTopicDetail from 'views/Dashboard/Education/EducationTopicDetail';
 import EducationFAQ from 'views/Dashboard/Education/EducationFAQ';
-import FieldInterface from 'views/Dashboard/Mobile/FieldInterface';
 import AllScansView from 'views/Dashboard/Commercial/AllScans';
 import AllReviewsView from 'views/Dashboard/Commercial/AllReviews';
 import { useGetCsrfTokenQuery } from './store/api/baseApi';
+import GoogleAuthCallback from 'views/Authentication/GoogleAuthCallback';
 import AcceptInvitation from 'views/Authentication/Invitation/AcceptInvitation';
 import SetupPassword from 'views/Authentication/Invitation/SetupPassword';
 import { ErrorBoundary } from 'react-error-boundary';
 import ChangePassword from 'views/Settings/ChangePassword';
+import { AdminGuard } from 'components/Guards/AdminGuard';
 import ConsumerChangePassword from 'views/Consumer/Settings/ConsumerChangePassword';
 import RedirectGuard from './utils/RedirectGuard';
 
@@ -197,6 +198,9 @@ const App = () => {
           <Route index element={<Pricing />} />
         </Route>
 
+        {/* OAuth Callback - must be accessible from localhost:3000 */}
+        <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
+
         {/* Legal Pages - Available without authentication */}
         <Route path="/terms" element={<AuthLayout />}>
           <Route index element={<TermsOfService />} />
@@ -240,9 +244,9 @@ const App = () => {
               <Route path={config.protected.path} element={<AdminLayout />}>
                 {/* Routes accessible without subscription */}
                 <Route path="select-company" element={<SelectCompanyView />} />
-                <Route path="pricing" element={<DashboardPricing />} />
-                <Route path="subscription" element={<UnifiedSubscriptionDashboard />} />
-                <Route path="stripe-success" element={<StripeSuccessRedirect />} />
+                <Route path="pricing" element={<AdminGuard><DashboardPricing /></AdminGuard>} />
+                <Route path="subscription" element={<AdminGuard><UnifiedSubscriptionDashboard /></AdminGuard>} />
+                <Route path="stripe-success" element={<AdminGuard><StripeSuccessRedirect /></AdminGuard>} />
 
                 {/* Routes requiring subscription */}
                 <Route element={<SubscriptionRequired />}>
@@ -325,11 +329,6 @@ const App = () => {
                     element={<ProfileProduction />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/mobile"
-                    exact
-                    element={<FieldInterface productionId={0} cropType="citrus" />}
-                  />
-                  <Route
                     path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/change"
                     exact
                     element={<QuickStartProduction isEdit={true} />}
@@ -364,9 +363,9 @@ const App = () => {
                     exact
                     element={<AllReviewsView />}
                   />
-                  <Route path="settings" exact element={<SettingsView />} />
-                  <Route path="settings/change-password" exact element={<ChangePassword />} />
-                  <Route path="subscription/success" element={<SubscriptionSuccess />} />
+                  <Route path="settings" exact element={<AdminGuard><SettingsView /></AdminGuard>} />
+                  <Route path="settings/change-password" exact element={<AdminGuard><ChangePassword /></AdminGuard>} />
+                  <Route path="subscription/success" element={<AdminGuard><SubscriptionSuccess /></AdminGuard>} />
                   <Route
                     path="establishment/:establishmentId/transparency"
                     exact

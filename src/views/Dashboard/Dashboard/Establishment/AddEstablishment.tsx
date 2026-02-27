@@ -3,6 +3,7 @@ import { Box, Text, useColorModeValue, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { StandardEstablishmentForm } from '../../../../components/Forms/StandardEstablishmentForm';
+import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 import subscriptionToastHelper from '../../../../utils/toast/SubscriptionToastHelper';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -404,14 +405,16 @@ function AddEstablishment({ isEdit = false }: Props) {
   }
 
   return (
-    <StandardEstablishmentForm
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      initialData={getInitialData()}
-      isLoading={isCreating || isUpdating}
-      isEdit={isEdit}
-      companyName={currentCompany?.name || ''}
-    />
+    <WriteAccessGuard>
+      <StandardEstablishmentForm
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        initialData={getInitialData()}
+        isLoading={isCreating || isUpdating}
+        isEdit={isEdit}
+        companyName={currentCompany?.name || ''}
+      />
+    </WriteAccessGuard>
   );
 }
 

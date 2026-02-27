@@ -24,10 +24,17 @@ interface MemberRowProps {
   role: string;
 }
 
+const roleNameMap: Record<string, string> = {
+  'Company Admin': 'Administrador',
+  'Farm Manager': 'Gerente de Finca',
+  'Viewer': 'Visor'
+};
+
 const MemberRow = (props: MemberRowProps) => {
   const intl = useIntl();
   const { name, establishments, role } = props;
   const textColor = useColorModeValue('gray.700', 'white');
+  const displayRole = roleNameMap[role] || role;
 
   const { isOpen: isOpen1, onOpen: onOpen1, onClose: onClose1 } = useDisclosure();
 
@@ -97,7 +104,7 @@ const MemberRow = (props: MemberRowProps) => {
           borderColor="blue.200"
           textTransform="capitalize"
         >
-          {role}
+          {displayRole}
         </Badge>
       </Td>
       <Td py={5} px={6}>

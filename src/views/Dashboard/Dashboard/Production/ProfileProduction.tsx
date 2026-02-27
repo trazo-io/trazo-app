@@ -38,6 +38,7 @@ import { BsStar, BsStarFill } from 'react-icons/bs';
 import { MdTimeline, MdLocationOn } from 'react-icons/md';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useUserRole } from 'hooks/useUserRole';
 import { useIntl } from 'react-intl';
 
 import { StandardCard, StandardButton, StandardPage } from 'components/Design/StandardComponents';
@@ -168,6 +169,7 @@ function ProfileProduction() {
   const intl = useIntl();
   const navigate = useNavigate();
   const toast = useToast();
+  const { canWrite } = useUserRole();
   const { establishmentId, productionId, parcelId } = useParams();
   const [establishment, setEstablishment] = useState<any>(null);
   const {
@@ -481,18 +483,20 @@ function ProfileProduction() {
               >
                 {intl.formatMessage({ id: 'app.share' })}
               </StandardButton>
-              <StandardButton
-                variant="outline"
-                size="sm"
-                leftIcon={<Icon as={FaEdit} />}
-                onClick={() =>
-                  navigate(
-                    `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${productionId}/change`
-                  )
-                }
-              >
-                {intl.formatMessage({ id: 'app.edit' })}
-              </StandardButton>
+              {canWrite && !historyData?.finish_date && (
+                <StandardButton
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Icon as={FaEdit} />}
+                  onClick={() =>
+                    navigate(
+                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${productionId}/change`
+                    )
+                  }
+                >
+                  {intl.formatMessage({ id: 'app.edit' })}
+                </StandardButton>
+              )}
             </HStack>
           }
         >
@@ -890,7 +894,7 @@ function ProfileProduction() {
           title={intl.formatMessage({ id: 'app.events' })}
           variant="elevated"
           headerAction={
-            !historyData?.finish_date && (
+            canWrite && !historyData?.finish_date && (
               <StandardButton
                 variant="primary"
                 size="sm"
@@ -916,7 +920,7 @@ function ProfileProduction() {
               <Text fontSize="sm" color="gray.400" textAlign="center">
                 Events will appear here as the production progresses
               </Text>
-              {!historyData?.finish_date && (
+              {canWrite && !historyData?.finish_date && (
                 <Button
                   leftIcon={<Icon as={FaSeedling} />}
                   colorScheme="green"

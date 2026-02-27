@@ -1,4 +1,3 @@
-export { ModernProductHeader } from './ModernProductHeader';
 export { TransparencyHeroSection } from '../../../../components/QR/TransparencyHeroSection';
 export { ModernEducationalSection } from './ModernEducationalSection';
 export { ModernSidebar } from './ModernSidebar';

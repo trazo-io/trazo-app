@@ -27,7 +27,8 @@ import {
   useDisclosure,
   Progress,
   Spinner,
-  Skeleton
+  Skeleton,
+  Link
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -62,7 +63,8 @@ import {
   FaClipboardCheck,
   FaAward,
   FaClipboardList,
-  FaCalendarAlt
+  FaCalendarAlt,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { BsStarFill, BsStarHalf, BsStar, BsShieldCheck } from 'react-icons/bs';
 import Card from 'components/Card/Card';
@@ -71,7 +73,7 @@ import CardBody from 'components/Card/CardBody';
 // API imports - Using single transparency API (consolidated from dual requests)
 import { TransparencyCelebration } from '../../../components/Notifications/TransparencyCelebration';
 import { useTransparencyCelebration } from '../../../hooks/useTransparencyCelebration';
-import { useGetTransparencyDetailsQuery } from '../../../store/api/transparencyQrApi';
+import { useGetTransparencyDetailsQuery, useVerifyBlockchainIntegrityQuery } from '../../../store/api/transparencyQrApi';
 import { HarvestInfoCard } from './components/HarvestInfoCard';
 
 // Data normalization imports
@@ -97,7 +99,6 @@ import {
   SidebarShimmer
 } from './components/TrazoShimmers';
 import { usePointsStore } from '../../../store/pointsStore';
-import USDACredibilityBadge from '../../../components/Carbon/USDACredibilityBadge';
 import { CarbonScore } from '../../../components/CarbonScore';
 import { StandardImageGallery } from '../../../components/ImageGallery';
 import QuickFeedback from '../../../components/ConsumerFeedback/QuickFeedback';
@@ -150,8 +151,7 @@ const CarbonExplainerLoader = () => (
 );
 import {
   EducationalTooltip,
-  CO2eTooltip,
-  USDATooltip
+  CO2eTooltip
 } from '../../../components/Education/EducationalTooltip';
 
 // Navigation Components
@@ -404,21 +404,21 @@ const EducationModal = ({
 
       case 'trust_indicators':
         return {
-          title: 'Trust Indicators',
+          title: 'Why You Can Trust This Farm',
           content: (
             <VStack align="start" spacing={4}>
               <Text fontSize="lg" color="gray.700">
-                <strong>Trust indicators</strong> help you understand the reliability and
-                verification level of the data you're viewing.
+                <strong>Transparency builds trust.</strong> Every farming event on this page was
+                documented by the farmer, creating a complete record of how your food was grown.
               </Text>
               <Text fontSize="md" color="gray.600">
-                Higher trust scores indicate more verified data points, blockchain verification, and
-                third-party validation of farming practices.
+                More documented events means more transparency. You can see exactly what happened
+                at every step, from planting to harvest.
               </Text>
               <Box bg="green.50" p={4} borderRadius="md">
                 <Text fontSize="sm" fontWeight="medium" color="green.700">
-                  ✓ <strong>Verified:</strong> Look for high trust scores when making purchasing
-                  decisions.
+                  ✓ <strong>Documented journey:</strong> Look for farms with high transparency
+                  scores and detailed event documentation.
                 </Text>
               </Box>
             </VStack>
@@ -427,21 +427,21 @@ const EducationModal = ({
 
       case 'usda-methodology':
         return {
-          title: 'USDA Methodology',
+          title: 'Our Calculation Methodology',
           content: (
             <VStack align="start" spacing={4}>
               <Text fontSize="lg" color="gray.700">
-                We use <strong>USDA-approved methodologies</strong> for calculating carbon
-                footprints and sustainability metrics.
+                We use <strong>science-based methodologies</strong> for calculating environmental
+                impact and sustainability metrics.
               </Text>
               <Text fontSize="md" color="gray.600">
-                Our calculations are based on official USDA emission factors and agricultural best
-                practices, ensuring accuracy and compliance with federal standards.
+                Our calculations use publicly available emission factors from EPA and agricultural
+                research data to estimate the environmental impact of farming activities.
               </Text>
               <Box bg="blue.50" p={4} borderRadius="md">
                 <Text fontSize="sm" fontWeight="medium" color="blue.700">
-                  📊 <strong>Standards:</strong> All calculations follow USDA guidelines for
-                  transparency and accuracy.
+                  📊 <strong>Methodology:</strong> All calculations use peer-reviewed emission
+                  factors from published government data sources.
                 </Text>
               </Box>
             </VStack>
@@ -520,7 +520,6 @@ function ProductDetail() {
 
           if (verification.valid && verification.productionId) {
             setVerifiedProductionId(verification.productionId);
-            console.log('✅ Secure QR code verified:', verification.productionId);
           } else {
             setQrVerificationError(verification.error || 'Invalid QR code');
             console.error('❌ QR verification failed:', verification.error);
@@ -534,7 +533,6 @@ function ProductDetail() {
       } else if (parseResult.isValid) {
         // This is a legacy QR code or direct URL access
         setVerifiedProductionId(parseResult.productionId || urlProductionId);
-        console.log('✅ Legacy QR or direct access:', parseResult.productionId || urlProductionId);
       } else {
         // Invalid URL format
         setQrVerificationError(parseResult.error || 'Invalid URL format');
@@ -573,8 +571,6 @@ function ProductDetail() {
   const checkAuthFromCookies = () => {
     // Check for common auth-related cookies that might indicate authentication
     const cookieString = document.cookie;
-    console.log('🔍 All cookies:', cookieString);
-
     // Look for session-related cookies that might indicate authentication
     const hasSessionCookie =
       cookieString.includes('sessionid') ||
@@ -582,7 +578,6 @@ function ProductDetail() {
       cookieString.includes('auth') ||
       cookieString.includes('user');
 
-    console.log('🔍 Has session-related cookies:', hasSessionCookie);
     return hasSessionCookie;
   };
 
@@ -593,14 +588,6 @@ function ProductDetail() {
 
   // Get full Redux state for debugging
   // const fullReduxState = useSelector((state) => state); // Unused for now
-
-  // Debug: Check if component is loading
-  console.log('🔍 ProductDetail component loaded with productionId:', productionId);
-  console.log('🔍 Redux Authentication state:', isAuthenticated);
-  console.log('🔍 Redux Current user:', currentUser);
-  console.log('🔍 Has auth cookies:', hasAuthCookies);
-  console.log('🔍 FINAL Authentication state:', finalIsAuthenticated);
-  console.log('🔍 FINAL Current user:', finalCurrentUser);
 
   // Theme colors - Mobile Optimized
   // const bgColor = useColorModeValue('gray.50', 'gray.900'); // Unused for now
@@ -618,6 +605,18 @@ function ProductDetail() {
     skip: !productionId,
     refetchOnMountOrArgChange: false,
     refetchOnFocus: false
+  });
+
+  // Blockchain integrity check — runs whenever production is finalized (has finalization_hash)
+  // OR has blockchain data (tx_hash). This closes the gap between finalization and
+  // monthly batch submission: Layer 1 (event hash check) works immediately at finalization.
+  const blockchainVerification = (completeData as any)?.blockchain_verification;
+  const canVerifyIntegrity = !!(blockchainVerification?.tx_hash || blockchainVerification?.is_finalized);
+  const {
+    data: integrityData,
+    isLoading: isIntegrityLoading
+  } = useVerifyBlockchainIntegrityQuery(productionId || '', {
+    skip: !productionId || !canVerifyIntegrity
   });
 
   // Helper function to get proper transparency score from backend TransparencyCalculator
@@ -640,7 +639,34 @@ function ProductDetail() {
   };
 
   // Helper function to calculate blockchain verification score
-  const getBlockchainScore = (): { score: number; isVerified: boolean } => {
+  const getBlockchainScore = (): {
+    score: number;
+    isVerified: boolean;
+    txHash?: string;
+    isTampered?: boolean;
+    isPending?: boolean;
+    isIntegrityChecked?: boolean;
+  } => {
+    const blockchainData = (completeData as any)?.blockchain_verification;
+
+    // If integrity check detected tampering, override everything — even during pending window
+    if (integrityData?.data_integrity === 'tampered') {
+      return { score: 0, isVerified: false, txHash: blockchainData?.tx_hash, isTampered: true, isIntegrityChecked: true };
+    }
+
+    // Production is on-chain and verified
+    if (blockchainData?.tx_hash && blockchainData?.verified) {
+      const isIntegrityChecked = integrityData?.data_integrity === 'intact';
+      return { score: 20, isVerified: true, txHash: blockchainData.tx_hash, isIntegrityChecked };
+    }
+
+    // Production is finalized but not yet on-chain (the gap window)
+    // Layer 1 integrity check still works — show "sealed & pending" state
+    if (blockchainData?.is_finalized && !blockchainData?.tx_hash) {
+      const isIntegrityChecked = integrityData?.data_integrity === 'intact';
+      return { score: 10, isVerified: false, isPending: true, isIntegrityChecked };
+    }
+
     const timeline = completeData?.timeline || [];
     if (timeline.length === 0) {
       return { score: 0, isVerified: false };
@@ -663,7 +689,7 @@ function ProductDetail() {
     // Consider it verified if more than 50% of events are blockchain verified
     const isVerified = verificationPercentage > 50;
 
-    return { score, isVerified };
+    return { score, isVerified, txHash: blockchainData?.tx_hash };
   };
 
   // Helper function to get accurate carbon footprint
@@ -787,21 +813,13 @@ function ProductDetail() {
       >
         <HeroShimmer />
         {/* Main content with shimmer layout */}
-        <Container maxW="container.xl" py={8}>
-          <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={6}>
-            {/* Main content column */}
-            <Box gridColumn={{ base: '1', lg: '1 / 3' }}>
-              <VStack spacing={6}>
-                <JourneyShimmer />
-                <TransparencyShimmer />
-              </VStack>
-            </Box>
-
-            {/* Sidebar */}
-            <Box>
-              <SidebarShimmer />
-            </Box>
-          </SimpleGrid>
+        <Container maxW="container.xl" py={8} centerContent>
+          <Box w="100%" maxW="container.lg">
+            <VStack spacing={6}>
+              <JourneyShimmer />
+              <TransparencyShimmer />
+            </VStack>
+          </Box>
         </Container>
       </Flex>
     );
@@ -872,14 +890,13 @@ function ProductDetail() {
           }}
           isLoading={isCompleteLoading}
           onLearnMore={() => handleEducationOpen('transparency_impact')}
-          onTrustDetails={() => handleEducationOpen('trust_indicators')}
         />
       </Box>
       {/* Main Content Section */}
-      <Container maxW="container.xl" py={8}>
-        <SimpleGrid columns={{ base: 1, lg: 3 }} mb={8}>
+      <Container maxW="container.xl" py={8} centerContent>
+        <Box w="100%" maxW="container.lg" mb={8}>
           {/* Main Content Column */}
-          <Box gridColumn={{ base: '1', lg: '1 / 3' }}>
+          <Box>
             <VStack spacing={8} align="stretch">
               {/* Consumer Welcome & Introduction Section */}
               <Box
@@ -916,8 +933,8 @@ function ProductDetail() {
                         <Text fontSize="sm">Complete records</Text>
                       </HStack>
                       <HStack spacing={2}>
-                        <Icon as={FaUniversity} color="blue.500" boxSize={4} />
-                        <Text fontSize="sm">Verified data</Text>
+                        <Icon as={FaCalendarAlt} color="blue.500" boxSize={4} />
+                        <Text fontSize="sm">Timestamped events</Text>
                       </HStack>
                       <HStack spacing={2}>
                         <Icon as={FaShieldAlt} color="purple.500" boxSize={4} />
@@ -1049,13 +1066,9 @@ function ProductDetail() {
                       </Text>
                     </VStack>
                     <VStack spacing={1}>
-                      {completeData?.isUsdaVerified ? (
-                        <Icon as={BsShieldCheck} boxSize={7} color="purple.600" />
-                      ) : (
-                        <Icon as={FaShieldAlt} boxSize={7} color="green.400" opacity={0.5} />
-                      )}
+                      <Icon as={FaClipboardList} boxSize={7} color="green.600" />
                       <Text fontSize="xs" color="gray.600" textAlign="center">
-                        USDA Verified
+                        Farm Documented
                       </Text>
                     </VStack>
                   </HStack>
@@ -1131,19 +1144,17 @@ function ProductDetail() {
                     {/* Verification Status */}
                     <HStack align="start" spacing={3}>
                       <Icon
-                        as={completeData?.isUsdaVerified ? MdVerified : FaCertificate}
-                        color={completeData?.isUsdaVerified ? 'blue.500' : 'gray.400'}
+                        as={FaCertificate}
+                        color="green.500"
                         size="20px"
                         mt={1}
                       />
                       <Box>
                         <Text fontWeight="semibold" color="gray.800">
-                          {completeData?.isUsdaVerified ? 'Government Verified' : 'Farm Verified'}
+                          Documented Farm Journey
                         </Text>
                         <Text fontSize="sm" color="gray.600">
-                          {completeData?.isUsdaVerified
-                            ? 'Meets USDA transparency standards'
-                            : 'Farmer-documented practices'}
+                          Farmer-documented practices from planting to harvest
                         </Text>
                       </Box>
                     </HStack>
@@ -1169,27 +1180,118 @@ function ProductDetail() {
                       </Box>
                     </HStack>
 
-                    {/* Blockchain Security */}
-                    <HStack align="start" spacing={3}>
-                      <Icon
-                        as={FaShieldAlt}
-                        color={getBlockchainScore().isVerified ? 'purple.500' : 'gray.400'}
-                        size="20px"
-                        mt={1}
-                      />
-                      <Box>
-                        <Text fontWeight="semibold" color="gray.800">
-                          {getBlockchainScore().isVerified
-                            ? 'Blockchain Protected'
-                            : 'Standard Security'}
-                        </Text>
-                        <Text fontSize="sm" color="gray.600">
-                          {getBlockchainScore().isVerified
-                            ? 'Data permanently secured on blockchain'
-                            : 'Standard data protection'}
-                        </Text>
-                      </Box>
-                    </HStack>
+                    {/* Blockchain Security — four states: tampered, verified, pending (sealed), not finalized */}
+                    {(() => {
+                      const blockchain = getBlockchainScore();
+
+                      // STATE 1: Tamper detected (Layer 1 or Layer 2) — red warning
+                      if (blockchain.isTampered) {
+                        return (
+                          <Box
+                            bg="red.50"
+                            p={3}
+                            borderRadius="md"
+                            border="1px solid"
+                            borderColor="red.300"
+                          >
+                            <HStack align="start" spacing={3}>
+                              <Icon
+                                as={FaExclamationTriangle}
+                                color="red.500"
+                                boxSize="20px"
+                                mt={1}
+                              />
+                              <Box>
+                                <Text fontWeight="bold" color="red.700">
+                                  Data Integrity Warning
+                                </Text>
+                                <Text fontSize="sm" color="red.600">
+                                  {integrityData?.data_integrity_detail ||
+                                    'Production data may have been modified after finalization'}
+                                </Text>
+                                {blockchain.txHash && (
+                                  <Link
+                                    href={`${import.meta.env.VITE_POLYGON_EXPLORER_URL || 'https://polygonscan.com'}/tx/${blockchain.txHash}`}
+                                    isExternal
+                                    fontSize="xs"
+                                    color="red.500"
+                                    mt={1}
+                                    display="inline-block"
+                                  >
+                                    Verify on Explorer ↗
+                                  </Link>
+                                )}
+                              </Box>
+                            </HStack>
+                          </Box>
+                        );
+                      }
+
+                      // STATE 2: Fully verified on-chain — purple shield
+                      if (blockchain.isVerified) {
+                        return (
+                          <HStack align="start" spacing={3}>
+                            <Icon as={FaShieldAlt} color="purple.500" boxSize="20px" mt={1} />
+                            <Box>
+                              <Text fontWeight="semibold" color="gray.800">
+                                Blockchain Protected
+                              </Text>
+                              <Text fontSize="sm" color="gray.600">
+                                {blockchain.isIntegrityChecked
+                                  ? 'Data integrity verified on blockchain'
+                                  : 'Data permanently secured on blockchain'}
+                              </Text>
+                              {blockchain.txHash && (
+                                <Link
+                                  href={`${import.meta.env.VITE_POLYGON_EXPLORER_URL || 'https://polygonscan.com'}/tx/${blockchain.txHash}`}
+                                  isExternal
+                                  fontSize="xs"
+                                  color="purple.500"
+                                  mt={1}
+                                  display="inline-block"
+                                >
+                                  View on Explorer ↗
+                                </Link>
+                              )}
+                            </Box>
+                          </HStack>
+                        );
+                      }
+
+                      // STATE 3: Sealed (finalized) but not yet on blockchain — blue lock
+                      if (blockchain.isPending) {
+                        return (
+                          <HStack align="start" spacing={3}>
+                            <Icon as={FaShieldAlt} color="blue.500" boxSize="20px" mt={1} />
+                            <Box>
+                              <Text fontWeight="semibold" color="gray.800">
+                                Data Sealed
+                              </Text>
+                              <Text fontSize="sm" color="gray.600">
+                                {blockchain.isIntegrityChecked
+                                  ? 'All events cryptographically sealed — blockchain submission in progress'
+                                  : 'Production finalized — preparing for blockchain verification'}
+                              </Text>
+                            </Box>
+                          </HStack>
+                        );
+                      }
+
+                      // STATE 4: Not finalized yet — gray
+                      return (
+                        <HStack align="start" spacing={3}>
+                          <Icon as={FaShieldAlt} color="gray.400" boxSize="20px" mt={1} />
+                          <Box>
+                            <Text fontWeight="semibold" color="gray.800">
+                              Not Yet Verified
+                            </Text>
+                            <Text fontSize="sm" color="gray.600">
+                              Production in progress — verification available after completion
+                            </Text>
+                          </Box>
+                        </HStack>
+                      );
+                    })()}
                   </SimpleGrid>
 
                   {/* Farm Information */}
@@ -1245,12 +1347,7 @@ function ProductDetail() {
                   {(() => {
                     // PRIORITY 1: Use complete API timeline (includes transparency fields) if it has events
                     // Get timeline events from consolidated transparency API response
-                    const events =
-                      completeData?.timeline && completeData.timeline.length > 0
-                        ? completeData.timeline
-                        : completeData?.events && completeData.events.length > 0
-                        ? completeData.events
-                        : [];
+                    const events = completeData?.timeline || [];
 
                     if (Array.isArray(events) && events.length > 0) {
                       // Calculate carbon data per event from the total production data
@@ -1295,25 +1392,29 @@ function ProductDetail() {
                         if (
                           typeStr.includes('equipment') ||
                           typeStr.includes('fuel') ||
-                          typeStr.includes('machinery')
+                          typeStr.includes('machinery') ||
+                          ['fc', 'mn', 're', 'ca', 'bd', 'ei'].includes(typeStr)
                         )
                           return 4;
                         if (
                           typeStr.includes('soil') ||
                           typeStr.includes('tillage') ||
-                          typeStr.includes('compost')
+                          typeStr.includes('compost') ||
+                          ['st', 'pa', 'om', 'cc', 'ti', 'co'].includes(typeStr)
                         )
                           return 5;
                         if (
                           typeStr.includes('pest') ||
                           typeStr.includes('beneficial') ||
-                          typeStr.includes('ipm')
+                          typeStr.includes('ipm') ||
+                          ['sc', 'tm', 'br', 'pi', 'ta', 'ip'].includes(typeStr)
                         )
                           return 6;
                         if (
                           typeStr.includes('business') ||
                           typeStr.includes('certification') ||
-                          typeStr.includes('audit')
+                          typeStr.includes('audit') ||
+                          ['ce', 'cm', 'in'].includes(typeStr)
                         )
                           return 7;
 
@@ -1389,18 +1490,6 @@ function ProductDetail() {
                           index?: number;
                           albums?: any;
                         };
-                        // Debug: Check if application_method survived normalization for fixed events
-                        if (isChemicalEventMissingFields && eventType === 2) {
-                          console.log('🔧 AFTER NORMALIZATION - FINAL STANDARDIZED EVENT:', {
-                            eventId: standardizedEvent.id,
-                            cleanEventId: eventId,
-                            application_method: standardizedEvent.application_method,
-                            application_timing: standardizedEvent.application_timing,
-                            area_treated: standardizedEvent.area_treated,
-                            area_unit: standardizedEvent.area_unit
-                          });
-                        }
-
                         // Add additional fields that UltraMobileProductionJourney expects
                         return {
                           ...standardizedEvent,
@@ -1428,6 +1517,7 @@ function ProductDetail() {
                         <UltraMobileProductionJourney
                           events={timelineEvents}
                           transparencyScore={getDisplayTransparencyScore()}
+                          productionBlockchain={(completeData as any)?.blockchain_verification}
                         />
                       );
                     } else {
@@ -1450,10 +1540,10 @@ function ProductDetail() {
               </Box>
             </VStack>
           </Box>
-        </SimpleGrid>
+        </Box>
 
         {/* Additional Information Sections */}
-        <VStack spacing={8} mt={8}>
+        <VStack spacing={8} mt={8} w="100%" maxW="container.lg">
           {/* Producer Information Transition Section */}
           <Box
             bg="white"
@@ -1648,9 +1738,7 @@ function ProductDetail() {
             <VStack spacing={8}>
               <QuickFeedback
                 productionId={productionId || ''}
-                onFeedbackSubmitted={() => {
-                  console.log('✅ Consumer feedback submitted for production:', productionId);
-                }}
+                onFeedbackSubmitted={() => {}}
               />
             </VStack>
           </Box>

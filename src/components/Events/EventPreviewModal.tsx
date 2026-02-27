@@ -51,14 +51,6 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
   // Check if we have enough data for preview
   const hasEnoughData = hasMinimalPreviewData(activeEventType, formData);
 
-  // DEBUG: Trace formData received by EventPreviewModal
-  console.log('🔍 [EventPreviewModal] FORM DATA RECEIVED:', {
-    activeEventType,
-    area_covered: formData?.area_covered,
-    area_unit: formData?.area_unit,
-    formDataKeys: formData ? Object.keys(formData) : []
-  });
-
   // Calculate mock verification level based on form photos
   const photoCount = formData?.album?.images?.length || 0;
   const hasGpsData = !!(formData?.latitude || formData?.longitude || formData?.gps_coordinates);
@@ -89,20 +81,6 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
         event_type: activeEventType,
         verification_level: 'self_reported'
       } as StandardizedEvent);
-
-  // DEBUG: Trace normalized event
-  if (hasEnoughData) {
-    console.log('🔍 [EventPreviewModal] NORMALIZED EVENT:', {
-      area_covered: (previewEvent as any).area_covered,
-      fuel_consumed: (previewEvent as any).fuel_consumed,
-      equipment_hours: (previewEvent as any).equipment_hours,
-      seeds_source: (previewEvent as any).seeds_source,
-      yield_quantity: (previewEvent as any).yield_quantity,
-      type: previewEvent.type,
-      event_type: previewEvent.event_type,
-      fullEvent: previewEvent
-    });
-  }
 
   // Use official event type names to prevent mapping errors
   const eventTypeName =

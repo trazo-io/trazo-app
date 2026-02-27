@@ -7,7 +7,12 @@ import {
   Text,
   Box,
   Badge,
-  Icon
+  Icon,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon
 } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
@@ -464,26 +469,75 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
     return null;
   }
 
-  const fieldRows = groupFieldsIntoRows(config.quickFields);
+  // Split fields into essential and advanced
+  const essentialFields = config.quickFields.filter((f) => !f.advanced);
+  const advancedFields = config.quickFields.filter((f) => f.advanced);
+
+  const essentialRows = groupFieldsIntoRows(essentialFields);
+  const advancedRows = groupFieldsIntoRows(advancedFields);
+
+  // Determine accordion label based on whether EPA fields are present
+  const hasEPAFields = advancedFields.some(
+    (f) =>
+      f.name === 'epa_registration_number' ||
+      f.name === 'applicator_certification' ||
+      f.name === 'rei_hours' ||
+      f.name === 'phi_days'
+  );
+  const advancedSectionLabel = hasEPAFields
+    ? 'EPA Compliance & Carbon Details'
+    : 'Fuel & Additional Details';
+
+  const renderRows = (rows: QuickEventField[][]) =>
+    rows.map((row, rowIndex) => {
+      if (row.length === 1) {
+        return renderField(row[0]);
+      }
+
+      return (
+        <HStack key={rowIndex} spacing={4} align="start">
+          {row.map((field) => (
+            <VStack key={field.name} flex={1} align="stretch">
+              {renderField(field)}
+            </VStack>
+          ))}
+        </HStack>
+      );
+    });
 
   return (
     <VStack spacing={5} align="stretch" w="100%">
-      {fieldRows.map((row, rowIndex) => {
-        if (row.length === 1) {
-          return renderField(row[0]);
-        }
+      {renderRows(essentialRows)}
 
-        // Multiple fields in a row
-        return (
-          <HStack key={rowIndex} spacing={4} align="start">
-            {row.map((field) => (
-              <VStack key={field.name} flex={1} align="stretch">
-                {renderField(field)}
+      {advancedRows.length > 0 && (
+        <Accordion allowToggle>
+          <AccordionItem border="none">
+            <AccordionButton
+              px={3}
+              py={2}
+              borderRadius="md"
+              bg="gray.50"
+              _hover={{ bg: 'gray.100' }}
+              _expanded={{ bg: 'gray.100' }}
+            >
+              <HStack flex="1" spacing={2}>
+                <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                  {advancedSectionLabel}
+                </Text>
+                <Badge colorScheme="gray" variant="subtle" fontSize="xs">
+                  {advancedRows.length}
+                </Badge>
+              </HStack>
+              <AccordionIcon color="gray.500" />
+            </AccordionButton>
+            <AccordionPanel pt={4} pb={2} px={0}>
+              <VStack spacing={5} align="stretch" w="100%">
+                {renderRows(advancedRows)}
               </VStack>
-            ))}
-          </HStack>
-        );
-      })}
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
+      )}
     </VStack>
   );
 };
