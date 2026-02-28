@@ -44,7 +44,7 @@ export default function Footer() {
           {intl.formatMessage({ id: 'app.termsOfService' })}
         </Link>
         <Link
-          href={`${LANDING_URL}/about-us`}
+          href={LANDING_URL}
           color="gray.400"
           fontSize="sm"
           isExternal

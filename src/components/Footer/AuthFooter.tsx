@@ -44,7 +44,7 @@ export default function AuthFooter() {
               Terms
             </Text>
           </a>
-          <a href={`${LANDING_URL}/about-us`} target="_blank" rel="noopener noreferrer">
+          <a href={LANDING_URL} target="_blank" rel="noopener noreferrer">
             <Text
               fontSize="sm"
               color={textColor}
