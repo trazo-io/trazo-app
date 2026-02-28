@@ -13,12 +13,12 @@ bundle = true
 minify = true
 
 [build.environment]
-  VITE_APP_BASE_URL = "https://app-staging.trazo.io"
+  VITE_APP_BASE_URL = "https://app.trazo.io"
   VITE_APP_BASE_DOMAIN = "trazo.io"
-  VITE_APP_BACKEND_URL = "https://api-staging.trazo.io/api"
+  VITE_APP_BACKEND_URL = "https://api.trazo.io/api"
   VITE_APP_CSRF_COOKIE_NAME = "csrftoken"
   VITE_APP_ENV = "production"
-  PUBLIC_URL = "https://app-staging.trazo.io"
+  PUBLIC_URL = "https://app.trazo.io"
   # Ensure proper CSS-in-JS processing
   NODE_ENV = "production"
   # Ensure all dependencies are installed including devDependencies
