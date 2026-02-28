@@ -1,5 +1,6 @@
 // Chakra imports
 import React from 'react';
+import { config } from 'config/environment';
 import {
   Badge,
   Button,
@@ -713,12 +714,7 @@ const HistoryCard = ({ amount }) => {
                                                     event.user.username ||
                                                     'User',
                                                   image: event.user.image
-                                                    ? `${
-                                                        import.meta.env.VITE_APP_BACKEND_URL?.replace(
-                                                          '/api',
-                                                          ''
-                                                        ) || 'http://localhost:8000'
-                                                      }${event.user.image}`
+                                                    ? `${config.API_ROOT_URL}${event.user.image}`
                                                     : ''
                                                 });
                                               }
@@ -749,12 +745,7 @@ const HistoryCard = ({ amount }) => {
                                                     member.username ||
                                                     'User',
                                                   image: member.image
-                                                    ? `${
-                                                        import.meta.env.VITE_APP_BACKEND_URL?.replace(
-                                                          '/api',
-                                                          ''
-                                                        ) || 'http://localhost:8000'
-                                                      }${member.image}`
+                                                    ? `${config.API_ROOT_URL}${member.image}`
                                                     : ''
                                                 }
                                               );

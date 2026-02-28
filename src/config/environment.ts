@@ -12,6 +12,7 @@ export interface EnvironmentConfig {
 
   // API Configuration
   readonly API_BASE_URL: string;
+  readonly API_ROOT_URL: string;
   readonly API_TIMEOUT: number;
   readonly API_RETRY_ATTEMPTS: number;
 
@@ -100,6 +101,7 @@ function createEnvironmentConfig(): EnvironmentConfig {
 
     // API Configuration - Always explicit URLs
     API_BASE_URL: getApiBaseUrl(),
+    API_ROOT_URL: getApiBaseUrl().replace(/\/api$/, ''),
     API_TIMEOUT: parseInt(env.VITE_API_TIMEOUT || '30000', 10),
     API_RETRY_ATTEMPTS: parseInt(env.VITE_API_RETRY_ATTEMPTS || '3', 10),
 

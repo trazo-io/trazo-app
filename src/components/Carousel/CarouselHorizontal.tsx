@@ -1,3 +1,4 @@
+import { config } from 'config/environment';
 // Chakra imports
 import {
   Button,
@@ -279,9 +280,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                           ?.map((member: any) => {
                             if (!member.image) return null;
                             // Prepend backend URL if image is a relative path
-                            const backendUrl =
-                              import.meta.env.VITE_APP_BACKEND_URL?.replace('/api', '') ||
-                              'http://localhost:8000';
+                            const backendUrl = config.API_ROOT_URL;
                             return member.image.startsWith('http')
                               ? member.image
                               : `${backendUrl}${member.image}`;

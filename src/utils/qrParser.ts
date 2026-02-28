@@ -2,6 +2,7 @@
  * QR URL Parser for Trazo
  * Handles both legacy and secure QR code formats
  */
+import { config } from 'config/environment';
 
 interface QRParseResult {
   productionId?: string;
@@ -109,9 +110,7 @@ export async function verifySecureQR(url: string): Promise<{
 }> {
   try {
     // Use absolute backend URL - consumer app runs on different domain
-    const apiBaseUrl =
-      import.meta.env.VITE_APP_BACKEND_URL ||
-      (import.meta.env.DEV ? 'http://localhost:8000/api' : 'https://api.trazo.io/api');
+    const apiBaseUrl = config.API_BASE_URL;
     const response = await fetch(`${apiBaseUrl}/security/verify-qr/`, {
       method: 'POST',
       headers: {
