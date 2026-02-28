@@ -1,6 +1,22 @@
 import React, { Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import { CONSUMER, PRODUCER, SUPERUSER } from './config';
+
+// Retry dynamic imports with page reload on failure (handles stale chunks after deploy)
+function lazyWithRetry(importFn: () => Promise<any>) {
+  return React.lazy(() =>
+    importFn().catch((error) => {
+      const hasReloaded = sessionStorage.getItem('chunk_reload');
+      if (!hasReloaded) {
+        sessionStorage.setItem('chunk_reload', '1');
+        window.location.reload();
+        return new Promise(() => {}); // never resolves, page is reloading
+      }
+      sessionStorage.removeItem('chunk_reload');
+      throw error; // real error, let ErrorBoundary handle it
+    })
+  );
+}
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 // Remove ChakraProvider and CSSReset imports since they're now in index.tsx
 // import { ChakraProvider, CSSReset } from '@chakra-ui/react';
@@ -25,7 +41,7 @@ import CertificationsView from 'views/Dashboard/Certifications';
 import CheckAuth from './utils/protections/CheckAuth';
 import CommercialView from 'views/Dashboard/Commercial';
 // Lazy load dashboard for mobile performance
-const DashboardView = React.lazy(() => import('views/Dashboard/Dashboard'));
+const DashboardView = lazyWithRetry(() => import('views/Dashboard/Dashboard'));
 import DetailEvent from 'views/Dashboard/Dashboard/Event/DetailEvent';
 import FinishProduction from 'views/Dashboard/Dashboard/Production/FinishProduction';
 //@ts-ignore
@@ -39,7 +55,7 @@ const LANDING_URL = 'https://trazo.io';
 const RedirectToPrivacy = () => { window.location.replace(`${LANDING_URL}/privacy-policy`); return null; };
 const RedirectToTerms = () => { window.location.replace(`${LANDING_URL}/terms-conditions`); return null; };
 // Lazy load QR scanning components for mobile performance
-const ProductDetail = React.lazy(() => import('views/Scan/ProductDetail/ProductDetail'));
+const ProductDetail = lazyWithRetry(() => import('views/Scan/ProductDetail/ProductDetail'));
 import ProfileEstablishment from 'views/Dashboard/Dashboard/Establishment/ProfileEstablishment';
 //@ts-ignore
 import ProfileParcel from 'views/Dashboard/Dashboard/Parcel/ProfileParcel';
