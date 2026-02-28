@@ -76,6 +76,7 @@
   "app.updateEvent": "Update event",
   "app.updating": "Updating...",
   "app.commercialDashboard": "Commercial Dashboard",
+  "app.commercialDashboardDescription": "Monitor QR scan analytics, consumer engagement, and product reputation",
   "app.finishProduction": "Finish production",
   "app.productions": "Productions",
   "app.production": "Production",
