@@ -17,6 +17,7 @@ export interface EnvironmentConfig {
 
   // Application URLs
   readonly APP_BASE_URL: string;
+  readonly CONSUMER_BASE_URL: string;
   readonly APP_BASE_DOMAIN: string;
 
   // Authentication
@@ -105,6 +106,9 @@ function createEnvironmentConfig(): EnvironmentConfig {
     // Application URLs
     APP_BASE_URL:
       env.VITE_APP_BASE_URL || (isDevelopment ? 'http://localhost:3000' : 'https://app.trazo.io'),
+    CONSUMER_BASE_URL:
+      env.VITE_CONSUMER_BASE_URL ||
+      (isDevelopment ? 'http://consumer.localhost:3000' : 'https://consumer.trazo.io'),
     APP_BASE_DOMAIN: env.VITE_APP_BASE_DOMAIN || 'trazo.io',
 
     // Authentication

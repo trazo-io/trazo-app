@@ -46,6 +46,7 @@ import {
   FaTrophy
 } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
+import { config } from 'config/environment';
 import { useSelector } from 'react-redux';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -1030,7 +1031,7 @@ function TransparencyDashboard() {
                                               leftIcon={<FaExternalLinkAlt />}
                                               onClick={() =>
                                                 window.open(
-                                                  `http://consumer.localhost:3000/production/${production.public_id || production.id}`,
+                                                  `${config.CONSUMER_BASE_URL}/production/${production.public_id || production.id}`,
                                                   '_blank'
                                                 )
                                               }

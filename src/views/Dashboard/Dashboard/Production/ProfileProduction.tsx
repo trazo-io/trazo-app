@@ -48,6 +48,7 @@ import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import { useGetCompleteSummaryQuery } from 'store/api/carbonApi';
 import { TokenManager } from 'utils/secureTokenStorage';
+import { config } from 'config/environment';
 
 // Data normalization imports
 import { normalizeBackendEventData } from 'utils/eventDataNormalizer';
@@ -417,7 +418,7 @@ function ProfileProduction() {
   // View public page - use public_id (UUID) for consumer-facing URLs
   const handleViewPublicPage = () => {
     const publicId = historyData?.public_id || productionId;
-    window.open(`http://consumer.localhost:3000/production/${publicId}`, '_blank');
+    window.open(`${config.CONSUMER_BASE_URL}/production/${publicId}`, '_blank');
   };
 
   // Helper for reputation
