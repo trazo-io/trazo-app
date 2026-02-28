@@ -364,9 +364,7 @@ function ProfileProduction() {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/histories/${
-          historyData.id
-        }/download_qr_code/`,
+        `${config.API_BASE_URL}/histories/${historyData.id}/download_qr_code/`,
         {
           headers: {
             Authorization: `Bearer ${TokenManager.getAccessToken()}`,
