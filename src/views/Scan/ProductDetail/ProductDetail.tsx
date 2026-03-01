@@ -858,7 +858,7 @@ function ProductDetail() {
   }
 
   return (
-    <Flex direction="column" alignSelf="center" justifySelf="center" overflow="hidden" w="100%">
+    <Flex direction="column" alignSelf="center" justifySelf="center" w="100%">
       {/* Transparency Hero Section - Primary Navigation Target */}
       <Box id="transparency-section">
         <CarbonHeroSection

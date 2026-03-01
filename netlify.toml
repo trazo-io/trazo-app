@@ -14,6 +14,7 @@ minify = true
 
 [build.environment]
   VITE_APP_BASE_URL = "https://app.trazo.io"
+  VITE_CONSUMER_BASE_URL = "https://consumer.trazo.io"
   VITE_APP_BASE_DOMAIN = "trazo.io"
   VITE_APP_BACKEND_URL = "https://api.trazo.io/api"
   VITE_APP_CSRF_COOKIE_NAME = "csrftoken"

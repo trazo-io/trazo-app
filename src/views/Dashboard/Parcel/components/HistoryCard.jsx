@@ -200,9 +200,10 @@ const HistoryCard = ({ amount }) => {
             align={{ base: 'stretch', md: 'center' }}
             pb={4}
             gap={{ base: 3, md: 0 }}
+            flexWrap="wrap"
           >
-            <HStack spacing={3} justify="flex-start">
-              <Text fontSize="lg" color={textColor} fontWeight="600">
+            <HStack spacing={3} justify="flex-start" flexShrink={0}>
+              <Text fontSize="lg" color={textColor} fontWeight="600" whiteSpace="nowrap">
                 {intl.formatMessage({ id: 'app.productions' })}
               </Text>
               <Badge
