@@ -56,7 +56,7 @@ import {
 interface CarbonCalculation {
   co2e: number;
   efficiency_score: number;
-  usda_verified: boolean;
+  usda_factors_used: boolean;
   calculation_method: string;
   verification_confidence: 'high' | 'medium' | 'low';
   breakdown?: {
@@ -322,7 +322,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                     <Heading size="sm" color={textColor}>
                       Carbon Impact Analysis
                     </Heading>
-                    {event.carbon_data.usda_verified && (
+                    {event.carbon_data.usda_factors_used && (
                       <Tooltip label="Calculated using USDA published emission factors">
                         <Badge colorScheme="blue" size="sm">
                           <HStack spacing={1}>

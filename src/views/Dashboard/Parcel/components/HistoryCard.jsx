@@ -491,7 +491,7 @@ const HistoryCard = ({ amount }) => {
                           // Blockchain verification status (actual on-chain proof)
                           const blockchainVerified = Boolean(extraData.blockchain_verified);
                           // EPA/USDA factors used (methodology indicator, NOT third-party verification)
-                          const usesUSDAFactors = Boolean(extraData.usda_verified || extraData.usda_factors_based);
+                          const usesUSDAFactors = Boolean(extraData.usda_factors_used || extraData.usda_factors_based);
 
                           // TRANSPARENCY-FIRST: Use transparency score primarily, carbon as secondary
                           const getTransparencyImpactLevel = () => {

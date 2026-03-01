@@ -360,20 +360,28 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   // Templates are now filtered by the API based on crop type
   const filteredTemplates = templatesData?.templates || [];
 
-  // Auto-select template when crop type changes
+  // Auto-select template when crop type changes and new templates are loaded
   useEffect(() => {
+    if (isLoadingTemplates) {
+      return; // Wait for templates to finish loading before auto-selecting
+    }
     if (selectedCropTypeId && filteredTemplates.length > 0) {
       const firstTemplate = filteredTemplates[0];
       if (firstTemplate.template_id) {
         setSelectedTemplateId(firstTemplate.template_id.toString());
         setSelectedTemplate(firstTemplate);
       }
+    } else if (selectedCropTypeId && filteredTemplates.length === 0) {
+      // Templates loaded but none found for this crop type
+      setSelectedTemplate(null);
+      setSelectedTemplateId(null);
+      setCustomEvents([]);
     } else if (!selectedCropTypeId) {
       setSelectedTemplate(null);
       setSelectedTemplateId(null);
       setCustomEvents([]); // Clear events when no crop type is selected
     }
-  }, [selectedCropTypeId, filteredTemplates]);
+  }, [selectedCropTypeId, filteredTemplates, isLoadingTemplates]);
 
   // Clear and reload templates when crop type selection changes from dropdown
   const watchedCropTypeId = watch('crop_type_id');
@@ -601,7 +609,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       // Parse error — backend uses {"error": "msg"} format, but also handle DRF {"field": ["msgs"]}
       let description = `Failed to ${isEdit ? 'update' : 'create'} production. Please try again.`;
       if (error?.data) {
-        if (typeof error.data.error === 'string') {
+        if (typeof error.data.detail === 'string') {
+          description = error.data.detail;
+        } else if (typeof error.data.error === 'string') {
           description = error.data.error;
         } else if (typeof error.data === 'object') {
           const fieldErrors = Object.entries(error.data)
@@ -981,7 +991,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         application_rate: event.application_rate || 200,
         emission_factor: response.emission_factor || 0,
         confidence_level: response.efficiency_score || 0.8,
-        usda_verified: response.usda_verified || false
+        usda_factors_used: response.usda_factors_used || false
       };
 
       setCarbonPreviews((prev) => ({

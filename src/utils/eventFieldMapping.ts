@@ -494,7 +494,7 @@ export const COMMON_FIELD_MAPPING: DataSourceMapping = {
     verification_confidence: 'verification_confidence',
     verification_timestamp: 'verification_timestamp',
     data_integrity_score: 'data_integrity_score',
-    usda_verified: 'usda_verified',
+    usda_factors_used: 'usda_factors_used',
     carbon_impact: 'carbon_impact'
   },
   backend: {
@@ -519,7 +519,7 @@ export const COMMON_FIELD_MAPPING: DataSourceMapping = {
     verification_confidence: 'verification_confidence',
     verification_timestamp: 'verification_timestamp',
     data_integrity_score: 'data_integrity_score',
-    usda_verified: 'usda_verified',
+    usda_factors_used: 'usda_factors_used',
     carbon_impact: 'carbon_impact'
   }
 };

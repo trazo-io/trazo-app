@@ -285,7 +285,7 @@ function ProfileProduction() {
             (event as any).albums || (event as any).album ? [(event as any).album] : undefined,
           carbon_data: {
             co2e: 0,
-            usda_verified: completeData?.isUsdaVerified || (event as any).usda_verified || false,
+            usda_factors_used: completeData?.isUsdaVerified || false,
             efficiency_score: completeData?.carbonScore || 0,
             total_emissions: 0,
             total_offsets: completeData?.totalOffsets || 0,

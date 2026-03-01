@@ -234,7 +234,7 @@ const CarbonDashboard = () => {
     net_carbon: 0,
     carbon_score: 50, // More realistic baseline (was 85)
     hasData: false,
-    usda_verified: false,
+    usda_factors_used: false,
     transparency_score: 0,
     performance_tier: null,
     data_quality: null
@@ -255,7 +255,7 @@ const CarbonDashboard = () => {
       net_carbon,
       carbon_score,
       hasData: total_emissions > 0,
-      usda_verified: Boolean(apiData.usda_verified),
+      usda_factors_used: Boolean(apiData.usda_factors_used),
       transparency_score,
       performance_tier: apiData.performance_tier || null,
       data_quality: apiData.data_quality || null
@@ -274,7 +274,7 @@ const CarbonDashboard = () => {
       net_carbon,
       carbon_score,
       hasData: total_emissions > 0 || total_offsets > 0,
-      usda_verified: Boolean(summaryData.usda_verified),
+      usda_factors_used: Boolean(summaryData.usda_factors_used),
       transparency_score: Math.max(0, Math.min(100, Number(summaryData.transparency_score) || 0)),
       performance_tier: null,
       data_quality: null
@@ -300,7 +300,7 @@ const CarbonDashboard = () => {
       net_carbon: emissions - offsets,
       carbon_score: 85,
       hasData: emissions > 0 || offsets > 0,
-      usda_verified: false,
+      usda_factors_used: false,
       transparency_score: Math.min(carbonEntries.length * 10, 100) // Basic transparency score, capped at 100
     };
   }
@@ -1340,7 +1340,7 @@ const CarbonDashboard = () => {
                         </VStack>
 
                         <HStack spacing={2}>
-                          {processedData.usda_verified && (
+                          {processedData.usda_factors_used && (
                             <Badge colorScheme="blue" variant="solid" px={3} py={1}>
                               Science-Based
                             </Badge>
@@ -1956,15 +1956,15 @@ const CarbonDashboard = () => {
                                 <VStack align="start" spacing={2} w="100%">
                                   <HStack justify="space-between" w="100%">
                                     <Text fontSize="sm" color="blue.700">
-                                      USDA Verification
+                                      EPA/USDA Factors
                                     </Text>
-                                    {processedData.usda_verified ? (
+                                    {processedData.usda_factors_used ? (
                                       <Badge colorScheme="green" size="sm">
-                                        ✓ Verified
+                                        Applied
                                       </Badge>
                                     ) : (
                                       <Badge colorScheme="gray" size="sm">
-                                        Pending
+                                        Not Applied
                                       </Badge>
                                     )}
                                   </HStack>
@@ -2004,11 +2004,11 @@ const CarbonDashboard = () => {
                                 </Text>
                               </HStack>
                               <VStack align="start" spacing={2} w="100%">
-                                {!processedData.usda_verified && (
+                                {!processedData.usda_factors_used && (
                                   <HStack>
                                     <Icon as={FaShieldAlt} color="purple.500" boxSize={4} />
                                     <Text fontSize="sm" color="purple.700">
-                                      Complete USDA verification to increase consumer trust
+                                      Log more events with EPA/USDA emission factors to increase accuracy
                                     </Text>
                                   </HStack>
                                 )}

@@ -54,7 +54,7 @@ const educationalContent: Record<
     color: 'green',
     example: 'Includes farming, transportation, processing, and packaging emissions'
   },
-  usda_verified: {
+  usda_factors_used: {
     definition: 'EPA/USDA Emission Factors',
     explanation:
       'Carbon calculations for this event use official emission factors published by the EPA and USDA. This ensures consistent methodology across all farms — not a verification of farming practices themselves.',
@@ -281,7 +281,7 @@ export const CO2eTooltip: React.FC<{ children: React.ReactNode }> = ({ children 
 );
 
 export const USDATooltip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <EducationalTooltip term="usda_verified">{children}</EducationalTooltip>
+  <EducationalTooltip term="usda_factors_used">{children}</EducationalTooltip>
 );
 
 export const CarbonScoreTooltip: React.FC<{ children: React.ReactNode }> = ({ children }) => (

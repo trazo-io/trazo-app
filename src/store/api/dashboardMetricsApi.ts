@@ -44,7 +44,7 @@ export interface ComprehensiveData {
   total_verified_events: number;
   total_photos: number;
   verification_status: {
-    usda_verified: number;
+    usda_factors_used: number;
     blockchain_verified: number;
     photo_verified: number;
   };

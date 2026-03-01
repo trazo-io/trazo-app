@@ -252,7 +252,7 @@ function createBaseEvent(
     'verification_confidence',
     'verification_timestamp',
     'data_integrity_score',
-    'usda_verified',
+    'usda_factors_used',
     'carbon_impact'
   ];
 
@@ -405,7 +405,7 @@ function addMockVerificationData(event: StandardizedEventBase): void {
   event.data_integrity_score = event.data_integrity_score || 90;
   event.certified = false; // Preview mode
   event.blockchain_verified = false; // Preview mode
-  event.usda_verified = false; // Preview mode
+  event.usda_factors_used = false; // Preview mode
 }
 
 /**

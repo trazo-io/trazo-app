@@ -245,7 +245,7 @@ export interface IoTSimulationResponse {
 export interface CarbonCalculationResult {
   co2e: number;
   efficiency_score: number;
-  usda_verified: boolean;
+  usda_factors_used: boolean;
   calculation_method: string;
   event_type:
     | 'chemical'
@@ -769,7 +769,7 @@ export interface CompanyCropOption {
   season_length: string;
   market_demand: 'High' | 'Medium' | 'Low';
   transparency_ready: boolean;
-  usda_verified: boolean;
+  usda_factors_used: boolean;
   avg_revenue: string;
   difficulty: 'Easy' | 'Medium' | 'Advanced';
   common_events: string[];
@@ -823,7 +823,7 @@ export interface CropTemplateDetail {
     average_emissions: number;
     percentile_25: number;
     percentile_75: number;
-    usda_verified: boolean;
+    usda_factors_used: boolean;
   };
   carbon_credit_potential: number;
   estimated_revenue: number;

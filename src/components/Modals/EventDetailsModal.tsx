@@ -229,8 +229,7 @@ interface CarbonCalculationResult {
     cost_per_co2e: number;
   };
   error?: string;
-  // Keep old field for backward compatibility during transition
-  usda_verified?: boolean;
+  usda_factors_used?: boolean;
 }
 
 interface EventDetailsModalProps {
@@ -1012,7 +1011,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                         Carbon Impact
                       </Text>
                     </HStack>
-                    {(carbonData.usda_factors_based || carbonData.usda_verified) && (
+                    {(carbonData.usda_factors_based || carbonData.usda_factors_used) && (
                       <Tooltip label="Calculated using USDA published emission factors">
                         <Badge colorScheme="green" fontSize="xs">
                           <HStack spacing={1}>

@@ -85,7 +85,7 @@ interface Album {
 interface CarbonCalculation {
   co2e: number;
   efficiency_score: number;
-  usda_verified: boolean;
+  usda_factors_used: boolean;
   calculation_method?: string;
   verification_confidence?: 'high' | 'medium' | 'low';
   cost_analysis?: {
@@ -120,7 +120,7 @@ interface TimelineEvent {
   verification_confidence?: number;
   verification_timestamp?: string;
   data_integrity_score?: number;
-  usda_verified?: boolean;
+  usda_factors_used?: boolean;
   extra_data?: {
     blockchain_verified?: boolean;
     blockchain_transaction?: string;
@@ -589,8 +589,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       data_integrity_score:
         event.extra_data?.data_integrity_score || event.data_integrity_score || 0,
       blockchain_network: event.blockchain_network || 'polygon_amoy',
-      usda_verified:
-        event.extra_data?.carbon_calculation?.usda_compliance || event.usda_verified || false,
+      usda_factors_used:
+        event.extra_data?.carbon_calculation?.usda_compliance || event.usda_factors_used || false,
       carbon_impact: event.extra_data?.carbon_calculation?.co2e || undefined,
       certified: event.certified || false,
       verification_level: event.verification_level || 'self_reported',

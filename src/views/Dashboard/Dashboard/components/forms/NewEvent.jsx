@@ -353,7 +353,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           setCarbonCalculation({
             co2e: fallback.co2e,
             efficiency_score: fallback.efficiency_score,
-            usda_verified: false,
+            usda_factors_used: false,
             calculation_method: 'estimate',
             event_type: eventTypeMap[eventType] || 'general',
             timestamp: new Date().toISOString(),

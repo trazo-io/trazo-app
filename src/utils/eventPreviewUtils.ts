@@ -20,7 +20,7 @@ export interface PreviewEventData {
   verification_confidence?: number;
   verification_timestamp?: string;
   data_integrity_score?: number;
-  usda_verified?: boolean;
+  usda_factors_used?: boolean;
   volume?: string;
   volume_unit?: string;
   area?: string;
@@ -306,7 +306,7 @@ export function transformFormDataToEvent(
     event_type: activeEventType,
     certified: false, // Preview mode
     blockchain_verified: false, // Preview mode
-    usda_verified: false, // Preview mode
+    usda_factors_used: false, // Preview mode
     carbon_impact: generateMockCarbonImpact(activeEventType, formData)
   };
 

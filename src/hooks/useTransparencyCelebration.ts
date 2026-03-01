@@ -77,7 +77,7 @@ export const useTransparencyCelebration = (
     // Verification achievements
     if (data.isUSDAVerified) {
       achievements.push({
-        id: 'usda_verified',
+        id: 'usda_factors_used',
         name: 'USDA Verificado',
         icon: FaCertificate,
         description: 'Estándares oficiales cumplidos',

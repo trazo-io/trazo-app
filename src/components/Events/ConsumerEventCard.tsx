@@ -89,7 +89,7 @@ interface ConsumerEventData {
   verification_confidence?: number;
   verification_timestamp?: string;
   data_integrity_score?: number;
-  usda_verified?: boolean;
+  usda_factors_used?: boolean;
   carbon_impact?: number;
   // MVP Photo Verification: Tiered verification levels
   verification_level?:
@@ -342,7 +342,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   // Trust level based on actual verification (blockchain) and data quality
   const getVerificationLevel = () => {
     const hasBlockchain = blockchainData.verified && blockchainData.transaction;
-    const hasUSDAFactors = event.usda_verified || event.usda_factors_based;
+    const hasUSDAFactors = event.usda_factors_used || event.usda_factors_based;
     const highConfidence = blockchainData.confidence >= 90;
 
     // Blockchain is actual verification (immutable on-chain record)
@@ -464,7 +464,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             )}
 
             {/* Science-based calculation indicator */}
-            {event.usda_verified && (
+            {event.usda_factors_used && (
               <Circle
                 size="14px"
                 bg="green.600"

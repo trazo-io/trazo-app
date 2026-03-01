@@ -96,8 +96,7 @@ interface CarbonCalculationResult {
     cost_per_co2e: number;
   };
   error?: string;
-  // Keep old field for backward compatibility during transition
-  usda_verified?: boolean;
+  usda_factors_used?: boolean;
 }
 
 // Get event configuration for UI display

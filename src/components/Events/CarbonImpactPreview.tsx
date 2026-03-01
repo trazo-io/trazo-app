@@ -36,7 +36,7 @@ import {
 interface CarbonCalculation {
   co2e?: number;
   efficiency_score?: number;
-  usda_verified?: boolean;
+  usda_factors_used?: boolean;
   calculation_method: string;
   // Error handling properties
   error?: boolean;
@@ -322,7 +322,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                 Carbon Impact Preview
               </Heading>
             </HStack>
-            {calculation.usda_verified && (
+            {calculation.usda_factors_used && (
               <Tooltip label="Calculated using USDA published emission factors">
                 <Badge colorScheme="green" size="sm">
                   <HStack spacing={1}>
@@ -1329,7 +1329,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
       prevProps.isCalculating === nextProps.isCalculating &&
       prevProps.calculation?.co2e === nextProps.calculation?.co2e &&
       prevProps.calculation?.efficiency_score === nextProps.calculation?.efficiency_score &&
-      prevProps.calculation?.usda_verified === nextProps.calculation?.usda_verified &&
+      prevProps.calculation?.usda_factors_used === nextProps.calculation?.usda_factors_used &&
       JSON.stringify(prevProps.calculation?.recommendations) ===
         JSON.stringify(nextProps.calculation?.recommendations) &&
       JSON.stringify(prevProps.calculation?.cost_analysis) ===

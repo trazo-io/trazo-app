@@ -126,7 +126,7 @@ interface CarbonCalculationResult {
     cost_per_co2e: number;
   };
   error?: string;
-  usda_verified?: boolean;
+  usda_factors_used?: boolean;
 }
 
 // Enhanced event configuration for better categorization

@@ -33,7 +33,7 @@ export interface StandardizedEventBase {
   verification_confidence?: number;
   verification_timestamp?: string;
   data_integrity_score?: number;
-  usda_verified?: boolean;
+  usda_factors_used?: boolean;
 
   // MVP Photo Verification: Tiered verification levels
   verification_level?:

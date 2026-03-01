@@ -3057,7 +3057,7 @@ export function getEventTrustIndicators(event: any): string[] {
   }
 
   // USDA verified
-  if (event.usda_verified) {
+  if (event.usda_factors_used) {
     indicators.push('USDA Standards');
   }
 
