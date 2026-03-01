@@ -77,10 +77,12 @@ import { useIntl } from 'react-intl';
 
 // Utility function for formatting carbon values with appropriate precision
 const formatCarbonValue = (value: number): string => {
-  if (value < 0.01) return value.toFixed(4); // Very small values: 0.0018 -> "0.0018"
-  if (value < 0.1) return value.toFixed(3); // Small values: 0.018 -> "0.018"
-  if (value < 10) return value.toFixed(2); // Medium values: 2.45 -> "2.45"
-  return value.toFixed(1); // Large values: 15.3 -> "15.3"
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (abs < 0.01) return sign + abs.toFixed(4);
+  if (abs < 0.1) return sign + abs.toFixed(3);
+  if (abs < 10) return sign + abs.toFixed(2);
+  return sign + abs.toFixed(1);
 };
 
 // Form validation schema
@@ -175,16 +177,16 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   // IMPORTANT: Area from Redux parcel data, fallback to user input or 10 hectares
   const [areaInput, setAreaInput] = useState<number>(10);
   // Carbon previews derived from template pre-calculated values (no API calls needed)
+  // carbon_impact is an absolute estimate per event, not a per-hectare rate
   const carbonPreviews = useMemo(() => {
     const previews: Record<string, { estimated_carbon: number }> = {};
     customEvents.forEach((event) => {
       if (!event.excludeFromCarbonCalculation && event.carbon_impact != null) {
-        const scaledImpact = event.carbon_impact * (areaInput || 1);
-        previews[event.id] = { estimated_carbon: scaledImpact };
+        previews[event.id] = { estimated_carbon: event.carbon_impact };
       }
     });
     return previews;
-  }, [customEvents, areaInput]);
+  }, [customEvents]);
 
   // API hooks - Dynamic template fetching based on crop type
   const { data: templatesData, isLoading: isLoadingTemplates } = useGetCropTemplatesQuery(
