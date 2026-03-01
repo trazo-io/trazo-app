@@ -103,6 +103,10 @@ const TrackList = ({ amount }) => {
   const toast = useToast();
   const [deleteProduction, { isLoading: isDeleting }] = useDeleteProductionMutation();
 
+  // Track polling state separately to avoid TDZ error
+  // (can't reference `data` in the same hook's options)
+  const [eventsPolling, setEventsPolling] = useState(false);
+
   const { data, error, isLoading, isFetching, refetch } = useGetCurrentHistoryQuery(
     {
       companyId: currentCompany?.id,
@@ -113,10 +117,14 @@ const TrackList = ({ amount }) => {
       skip: !parcelId || !currentCompany || !establishmentId || currentCompany?.id === undefined,
       refetchOnMountOrArgChange: true,
       refetchOnFocus: false,
-      // Poll every 3s while background event creation is in progress
-      pollingInterval: data?.events_status === 'pending' ? 3000 : 0
+      pollingInterval: eventsPolling ? 3000 : 0
     }
   );
+
+  // Start/stop polling based on events_status
+  useEffect(() => {
+    setEventsPolling(data?.events_status === 'pending');
+  }, [data?.events_status]);
 
   // Clear Redux state when parcel changes to prevent stale data
   useEffect(() => {
