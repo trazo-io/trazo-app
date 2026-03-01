@@ -67,37 +67,6 @@ export default function ParcelView() {
       w="100%"
       maxW="100%"
       overflow="hidden">
-      {/* Trial Banner */}
-      {subscription && subscription.status === 'trialing' && (
-        <Box
-          p={4}
-          bg="white"
-          borderRadius="lg"
-          mb={4}
-          borderLeftWidth="4px"
-          borderLeftColor="green.500"
-          boxShadow="md">
-          <Flex align="center" justify="space-between">
-            <Box>
-              <Text fontSize="lg" fontWeight="bold" color="green.700">
-                {intl.formatMessage({ id: 'app.trialActive' })}
-              </Text>
-              <Text color="gray.700">
-                {intl.formatMessage(
-                  { id: 'app.trialEndsOn' },
-                  { date: new Date(subscription.trial_end).toLocaleDateString() }
-                )}
-              </Text>
-            </Box>
-            <Button
-              colorScheme="green"
-              size="md"
-              onClick={() => navigate('/admin/dashboard/subscription')}>
-              {intl.formatMessage({ id: 'app.manageTrial' })}
-            </Button>
-          </Flex>
-        </Box>
-      )}
 
       <Box mb={{ base: '16px', md: '24px' }}>
         <Text
