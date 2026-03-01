@@ -114,7 +114,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
         navigate('/consumidor/auth');
       }
     } catch (error: any) {
-      const errorMessage = error?.data?.error || 'Failed to change password. Please try again.';
+      const errorMessage = error?.data?.detail || error?.data?.error || 'Failed to change password. Please try again.';
       toast({
         title: 'Error',
         description: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage,

@@ -112,7 +112,9 @@ const TrackList = ({ amount }) => {
     {
       skip: !parcelId || !currentCompany || !establishmentId || currentCompany?.id === undefined,
       refetchOnMountOrArgChange: true,
-      refetchOnFocus: false
+      refetchOnFocus: false,
+      // Poll every 3s while background event creation is in progress
+      pollingInterval: data?.events_status === 'pending' ? 3000 : 0
     }
   );
 
@@ -169,7 +171,7 @@ const TrackList = ({ amount }) => {
       toast({
         title: intl.formatMessage({ id: 'app.error' }),
         description:
-          error?.data?.message || intl.formatMessage({ id: 'app.productionDeleteError' }),
+          error?.data?.detail || error?.data?.message || intl.formatMessage({ id: 'app.productionDeleteError' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -310,6 +312,15 @@ const TrackList = ({ amount }) => {
                     />
                   );
                 })}
+                {/* Progressive loading indicator: events exist but more are being created */}
+                {currentHistory?.events?.length > 0 && currentHistory?.events_status === 'pending' && (
+                  <HStack spacing={2} justify="center" py={3} px={4}>
+                    <Spinner size="xs" color="green.500" />
+                    <Text fontSize="xs" color="gray.500">
+                      {intl.formatMessage({ id: 'parcel.creatingMoreEvents' })}
+                    </Text>
+                  </HStack>
+                )}
                 {!currentHistory?.events?.length > 0 && !currentHistory?.product && (
                   <VStack spacing={8} py={16} align="center" px={6}>
                     <VStack spacing={4} textAlign="center">
@@ -325,21 +336,61 @@ const TrackList = ({ amount }) => {
                     </VStack>
                   </VStack>
                 )}
-                {!currentHistory?.events?.length > 0 && currentHistory?.product && (
-                  <VStack spacing={8} py={8} align="center" px={6}>
-                    <VStack spacing={4} textAlign="center">
-                      <Icon as={FaClock} color="blue.400" boxSize={10} />
-                      <VStack spacing={2}>
-                        <Text fontSize="md" fontWeight="bold" color={textColor}>
-                          {intl.formatMessage({ id: 'parcel.noEventsRecordedYet' })}
-                        </Text>
-                        <Text fontSize="sm" color="gray.500" maxW="300px" lineHeight="1.5">
-                          {intl.formatMessage({ id: 'parcel.addFirstEventDescription' })}
-                        </Text>
+                {/* Pending: background event creation in progress, no events yet */}
+                {!(currentHistory?.events?.length > 0) &&
+                  currentHistory?.product &&
+                  currentHistory?.events_status === 'pending' && (
+                    <VStack spacing={8} py={8} align="center" px={6}>
+                      <VStack spacing={4} textAlign="center">
+                        <Spinner size="lg" color="green.500" thickness="3px" />
+                        <VStack spacing={2}>
+                          <Text fontSize="md" fontWeight="bold" color={textColor}>
+                            {intl.formatMessage({ id: 'parcel.settingUpEvents' })}
+                          </Text>
+                          <Text fontSize="sm" color="gray.500" maxW="300px" lineHeight="1.5">
+                            {intl.formatMessage({ id: 'parcel.settingUpEventsDescription' })}
+                          </Text>
+                        </VStack>
                       </VStack>
                     </VStack>
-                  </VStack>
-                )}
+                  )}
+                {/* Failed: background event creation failed */}
+                {!(currentHistory?.events?.length > 0) &&
+                  currentHistory?.product &&
+                  currentHistory?.events_status === 'failed' && (
+                    <VStack spacing={8} py={8} align="center" px={6}>
+                      <VStack spacing={4} textAlign="center">
+                        <Icon as={FaClock} color="orange.400" boxSize={10} />
+                        <VStack spacing={2}>
+                          <Text fontSize="md" fontWeight="bold" color={textColor}>
+                            {intl.formatMessage({ id: 'parcel.eventSetupFailed' })}
+                          </Text>
+                          <Text fontSize="sm" color="gray.500" maxW="300px" lineHeight="1.5">
+                            {intl.formatMessage({ id: 'parcel.eventSetupFailedDescription' })}
+                          </Text>
+                        </VStack>
+                      </VStack>
+                    </VStack>
+                  )}
+                {/* Normal empty state: production exists, no events, not pending */}
+                {!(currentHistory?.events?.length > 0) &&
+                  currentHistory?.product &&
+                  currentHistory?.events_status !== 'pending' &&
+                  currentHistory?.events_status !== 'failed' && (
+                    <VStack spacing={8} py={8} align="center" px={6}>
+                      <VStack spacing={4} textAlign="center">
+                        <Icon as={FaClock} color="blue.400" boxSize={10} />
+                        <VStack spacing={2}>
+                          <Text fontSize="md" fontWeight="bold" color={textColor}>
+                            {intl.formatMessage({ id: 'parcel.noEventsRecordedYet' })}
+                          </Text>
+                          <Text fontSize="sm" color="gray.500" maxW="300px" lineHeight="1.5">
+                            {intl.formatMessage({ id: 'parcel.addFirstEventDescription' })}
+                          </Text>
+                        </VStack>
+                      </VStack>
+                    </VStack>
+                  )}
               </>
             )}
           </Flex>

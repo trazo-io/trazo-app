@@ -36,7 +36,9 @@ function FinishProduction() {
 
       let description = 'Failed to finish production. Please try again.';
       if (error?.data) {
-        if (typeof error.data.error === 'string') {
+        if (typeof error.data.detail === 'string') {
+          description = error.data.detail;
+        } else if (typeof error.data.error === 'string') {
           description = error.data.error;
         } else if (typeof error.data === 'object') {
           const fieldErrors = Object.entries(error.data)

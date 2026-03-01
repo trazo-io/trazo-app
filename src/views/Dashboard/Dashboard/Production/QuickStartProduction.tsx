@@ -77,6 +77,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { getEventTypeMapping, getEventDataForType } from 'utils/eventTypeMapping';
+import { useIntl } from 'react-intl';
 
 // Utility function for formatting carbon values with appropriate precision
 const formatCarbonValue = (value: number): string => {
@@ -129,6 +130,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   const navigate = useNavigate();
   const toast = useToast();
   const dispatch = useDispatch();
+  const intl = useIntl();
   const {
     isOpen: isTemplateOpen,
     onOpen: onTemplateOpen,
@@ -591,10 +593,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         await startProduction(productionPayload).unwrap();
 
         toast({
-          title: 'Production Started Successfully! 🎉',
-          description: `${data.name} has been created with ${
-            customEvents.filter((e) => e.enabled).length
-          } pre-configured events.`,
+          title: intl.formatMessage({ id: 'production.createdSuccessfully' }),
+          description: intl.formatMessage({ id: 'production.eventsBeingGenerated' }),
           status: 'success',
           duration: 6000,
           isClosable: true

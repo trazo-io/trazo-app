@@ -393,7 +393,9 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       // Enhanced error handling
       let errorMessage = t('app.blockchainSubscriptionError');
 
-      if (error.data?.error) {
+      if (error.data?.detail) {
+        errorMessage = error.data.detail;
+      } else if (error.data?.error) {
         errorMessage = error.data.error;
       } else if (error.data?.message) {
         errorMessage = error.data.message;
@@ -531,7 +533,9 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       // Enhanced error handling
       let errorMessage = error.message || t('app.subscriptionErrorDescription');
 
-      if (error.data?.error) {
+      if (error.data?.detail) {
+        errorMessage = error.data.detail;
+      } else if (error.data?.error) {
         errorMessage = error.data.error;
       } else if (error.data?.message) {
         errorMessage = error.data.message;
@@ -566,7 +570,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     } catch (error) {
       toast({
         title: t('app.error'),
-        description: error?.data?.error || t('app.trialStartError'),
+        description: error?.data?.detail || error?.data?.error || t('app.trialStartError'),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -598,7 +602,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     } catch (error) {
       toast({
         title: t('app.error'),
-        description: error?.data?.error || t('app.downgradeError'),
+        description: error?.data?.detail || error?.data?.error || t('app.downgradeError'),
         status: 'error',
         duration: 5000,
         isClosable: true

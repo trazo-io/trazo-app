@@ -148,7 +148,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
         navigate(userType === 'producer' ? '/auth/signin' : '/consumidor/auth/signin');
       }, 3000);
     } catch (error: any) {
-      const errorMessage = error?.data?.error || 'Failed to reset password. Please try again.';
+      const errorMessage = error?.data?.detail || error?.data?.error || 'Failed to reset password. Please try again.';
       toast({
         title: 'Error',
         description: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage,

@@ -125,7 +125,9 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
       // Parse DRF field-level validation errors into readable message
       let description = intl.formatMessage({ id: 'app.errorUpdatingCompany' });
       if (error?.data && typeof error.data === 'object') {
-        if (error.data.message) {
+        if (error.data.detail) {
+          description = error.data.detail;
+        } else if (error.data.message) {
           description = error.data.message;
         } else {
           const fieldErrors = Object.entries(error.data)
