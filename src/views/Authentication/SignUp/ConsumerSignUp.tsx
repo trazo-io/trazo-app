@@ -225,17 +225,17 @@ const ConsumerSignUp: React.FC = () => {
           >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Join the Carbon Transparency Movement
+                Know How Your Food Was Grown
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Create a free account to discover carbon footprints, connect with sustainable
+                Create a free account to discover how your food was grown, connect with transparent
                 farmers, and make informed choices about your food
               </Text>
             </VStack>
 
             <VStack spacing={4} pt={4}>
               <VStack spacing={3}>
-                {['Free Forever', 'Verified Carbon Data', 'Impact Tracking'].map(
+                {['Free Forever', 'Verified Farming Data', 'Transparency Tracking'].map(
                   (feature, index) => (
                     <HStack key={index} spacing={3}>
                       <Box w={2} h={2} bg="white" borderRadius="50%" />

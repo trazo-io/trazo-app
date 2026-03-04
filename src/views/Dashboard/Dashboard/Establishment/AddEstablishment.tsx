@@ -117,10 +117,9 @@ function AddEstablishment({ isEdit = false }: Props) {
           establishmentData: establishmentUpdateData
         }).unwrap();
 
-        // Small delay to allow Redux cache invalidation to complete before navigation
-        setTimeout(() => {
-          navigate(`/admin/dashboard/establishment/${result.id}`);
-        }, 100);
+        // Navigate immediately — RTK Query cache invalidation is synchronous,
+        // and the profile page will refetch fresh data on mount
+        navigate(`/admin/dashboard/establishment/${result.id}`);
       } else {
         // Handle create mode
         const establishmentData = {

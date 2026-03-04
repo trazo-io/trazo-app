@@ -67,7 +67,7 @@ export default function AllReviews() {
                 return (
                   <NavLink
                     key={review.id || index}
-                    to={`/production/${review.history.id}/`}
+                    to={`/production/${review.history.public_id}/`}
                     style={{ width: '100%' }}
                   >
                     <Box

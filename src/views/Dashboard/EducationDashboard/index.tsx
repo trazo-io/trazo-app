@@ -9,8 +9,6 @@ import {
   Icon,
   Badge,
   Progress,
-  Button,
-  useColorModeValue,
   useBreakpointValue,
   Circle,
   Flex
@@ -18,10 +16,8 @@ import {
 import {
   FaGraduationCap,
   FaLeaf,
-  FaIndustry,
   FaChartLine,
   FaSeedling,
-  FaCertificate,
   FaLightbulb,
   FaBookOpen,
   FaPlay,
@@ -29,49 +25,52 @@ import {
   FaClock,
   FaUsers,
   FaAward,
-  FaRocket
+  FaRocket,
+  FaShieldAlt,
+  FaQrcode
 } from 'react-icons/fa';
-import { MdVerified, MdEco, MdScience, MdTimeline, MdTrendingUp } from 'react-icons/md';
+import { MdVerified, MdEco, MdTrendingUp } from 'react-icons/md';
 import {
   StandardPage,
   StandardCard,
   StandardSection,
   StandardGrid,
   StandardButton,
-  StandardAlert
+  StandardAlert,
+  StandardMetricCard
 } from '../../../components/Design/StandardComponents';
 
 export default function EducationDashboard() {
   const isMobile = useBreakpointValue({ base: true, md: false });
-  const [completedModules, setCompletedModules] = useState(['carbon-basics']);
+  const [completedModules, setCompletedModules] = useState(['transparency-basics']);
   const [selectedTrack, setSelectedTrack] = useState('beginner');
 
   const learningTracks = {
     beginner: {
-      title: 'Carbon Transparency Basics',
-      description: 'Start your carbon literacy journey',
+      title: 'Transparency Fundamentals',
+      description: 'Understand how food transparency works',
       icon: FaLeaf,
       color: 'green',
       modules: [
         {
-          id: 'carbon-basics',
-          title: 'Carbon Footprint Fundamentals',
-          description: 'Understanding CO₂e, emissions, and carbon scoring in agriculture',
+          id: 'transparency-basics',
+          title: 'What is Food Transparency?',
+          description: 'Understanding transparency scores, trust indicators, and how documented farming practices build consumer confidence',
           duration: '15 min',
           icon: FaLeaf,
           completed: true,
           progress: 100,
           keyTopics: [
-            'CO₂ Equivalents',
-            'Carbon Scoring',
-            'Agricultural Emissions',
-            'Trazo Methodology'
+            'Transparency Scores',
+            'Trust Indicators',
+            'Documented Practices',
+            'Trazo Platform'
           ]
         },
         {
           id: 'reading-scores',
-          title: 'Reading Carbon Scores',
-          description: 'How to interpret and use carbon transparency data',
+          title: 'Reading Transparency Scores',
+          description: 'How to interpret and use transparency data when choosing food',
           duration: '12 min',
           icon: FaChartLine,
           completed: false,
@@ -85,8 +84,8 @@ export default function EducationDashboard() {
         },
         {
           id: 'making-choices',
-          title: 'Making Carbon-Informed Choices',
-          description: 'Using carbon data to drive sustainable purchasing decisions',
+          title: 'Making Informed Food Choices',
+          description: 'Using transparency data to support farmers who document their practices',
           duration: '18 min',
           icon: FaLightbulb,
           completed: false,
@@ -101,67 +100,67 @@ export default function EducationDashboard() {
       ]
     },
     intermediate: {
-      title: 'Agricultural Carbon Science',
-      description: 'Deepen your understanding of farm-level carbon impact',
+      title: 'Farm Practices & Verification',
+      description: 'Learn how farms document and verify their practices',
       icon: FaSeedling,
       color: 'blue',
       modules: [
         {
           id: 'farming-practices',
-          title: 'Sustainable Farming Methods',
-          description: 'How different agricultural practices affect carbon emissions',
+          title: 'How Farms Document Practices',
+          description: 'Understanding the 7 event types farmers use to document their growing journey',
           duration: '25 min',
           icon: FaSeedling,
           completed: false,
           progress: 0,
-          keyTopics: ['Regenerative Agriculture', 'Soil Carbon', 'Cover Crops', 'Organic Methods']
+          keyTopics: ['Regenerative Agriculture', 'Soil Health', 'Cover Crops', 'Organic Methods']
         },
         {
-          id: 'usda-verification',
-          title: 'USDA Verification Systems',
-          description: 'Understanding how agricultural data gets verified and validated',
+          id: 'verification-trust',
+          title: 'Verification & Trust Building',
+          description: 'How blockchain records, EPA/USDA-sourced data, and photo evidence build trust',
           duration: '20 min',
-          icon: FaCertificate,
+          icon: FaShieldAlt,
           completed: false,
           progress: 0,
           keyTopics: [
-            'USDA Standards',
+            'EPA/USDA-Sourced Data',
             'Blockchain Verification',
-            'Data Accuracy',
-            'Audit Processes'
+            'Data Integrity',
+            'Farm Documentation'
           ]
         },
         {
-          id: 'regional-differences',
-          title: 'Regional Carbon Variations',
-          description: 'How climate, soil, and geography affect agricultural carbon footprints',
+          id: 'food-journey',
+          title: "Understanding Your Food's Journey",
+          description: 'How geography, climate, and regional practices affect how your food is grown',
           duration: '22 min',
-          icon: FaIndustry,
+          icon: FaQrcode,
           completed: false,
           progress: 0,
-          keyTopics: ['Climate Zones', 'Soil Types', 'Water Availability', 'Transportation Impact']
+          keyTopics: ['Climate Zones', 'Soil Types', 'Water Availability', 'Regional Practices']
         }
       ]
     },
     advanced: {
-      title: 'Carbon System Mastery',
-      description: 'Master the complete carbon transparency ecosystem',
+      title: 'Transparency Ecosystem',
+      description: 'Master the complete agricultural transparency ecosystem',
       icon: FaAward,
       color: 'purple',
       modules: [
         {
-          id: 'supply-chain',
-          title: 'Supply Chain Carbon Analysis',
-          description: 'Complete lifecycle assessment from farm to consumer',
+          id: 'farm-to-table',
+          title: 'Farm-to-Table Transparency',
+          description: 'Complete documentation chain from planting to your plate',
           duration: '30 min',
-          icon: FaIndustry,
+          icon: FaLeaf,
           completed: false,
           progress: 0,
           keyTopics: [
-            'Lifecycle Assessment',
-            'Processing Impact',
-            'Distribution Networks',
-            'Waste Management'
+            'Farm Documentation',
+            'Processing Transparency',
+            'Distribution Tracking',
+            'Quality Verification'
           ]
         },
         {
@@ -181,8 +180,8 @@ export default function EducationDashboard() {
         },
         {
           id: 'future-agriculture',
-          title: 'Future of Carbon Agriculture',
-          description: 'Emerging technologies and practices in carbon-smart farming',
+          title: 'Future of Agricultural Transparency',
+          description: 'Emerging technologies and practices in transparent farming',
           duration: '25 min',
           icon: FaRocket,
           completed: false,
@@ -214,14 +213,14 @@ export default function EducationDashboard() {
     modulesCompleted: completedCount,
     totalModules: totalModules,
     currentTrack: selectedTrack,
-    carbonLiteracy: Math.round((completedCount / totalModules) * 100),
+    learningProgress: Math.round((completedCount / totalModules) * 100),
     estimatedTime: `${Object.values(learningTracks).reduce(
       (sum, track) =>
         sum + track.modules.reduce((moduleSum, module) => moduleSum + parseInt(module.duration), 0),
       0
     )} minutes`,
-    weeklyGoal: 2, // modules per week
-    streak: 3 // days
+    weeklyGoal: 2,
+    streak: 3
   };
 
   const handleModuleClick = (moduleId: string) => {
@@ -242,12 +241,12 @@ export default function EducationDashboard() {
 
   return (
     <StandardPage
-      title="Carbon Literacy Academy"
-      description="Master agricultural carbon transparency and make informed sustainable choices"
+      title="Transparency Learning Hub"
+      description="Learn how agricultural transparency builds trust and supports informed food choices"
     >
       <VStack spacing={8} align="stretch">
         {/* Learning Progress Overview */}
-        <StandardCard title="Your Carbon Learning Journey" variant="elevated">
+        <StandardCard title="Your Learning Progress" variant="elevated">
           <VStack spacing={6}>
             {/* Progress Stats */}
             <SimpleGrid columns={{ base: 2, md: 4 }} spacing={6} w="full">
@@ -256,10 +255,10 @@ export default function EducationDashboard() {
                   <Icon as={FaGraduationCap} boxSize={6} />
                 </Circle>
                 <Text fontSize="2xl" fontWeight="bold" color="green.600">
-                  {learningStats.carbonLiteracy}%
+                  {learningStats.learningProgress}%
                 </Text>
                 <Text fontSize="sm" color="gray.600" textAlign="center">
-                  Carbon Literacy
+                  Learning Progress
                 </Text>
               </VStack>
 
@@ -311,7 +310,7 @@ export default function EducationDashboard() {
                 </Text>
               </Flex>
               <Progress
-                value={learningStats.carbonLiteracy}
+                value={learningStats.learningProgress}
                 size="lg"
                 colorScheme="green"
                 borderRadius="full"
@@ -319,13 +318,13 @@ export default function EducationDashboard() {
               />
             </Box>
 
-            {learningStats.carbonLiteracy < 100 && (
+            {learningStats.learningProgress < 100 && (
               <StandardAlert
                 status="info"
                 title="Continue Your Learning"
                 description={`You're making great progress! Complete ${
                   learningStats.totalModules - learningStats.modulesCompleted
-                } more modules to become a carbon transparency expert.`}
+                } more modules to become a transparency expert.`}
               />
             )}
           </VStack>
@@ -366,7 +365,7 @@ export default function EducationDashboard() {
                       {track.description}
                     </Text>
                     <Badge colorScheme={track.color} variant="solid">
-                      {track.modules.length} modules
+                      {track.modules.length} Modules
                     </Badge>
                   </VStack>
                   {selectedTrack === trackId && (
@@ -383,12 +382,12 @@ export default function EducationDashboard() {
         {/* Current Track Modules */}
         <StandardSection
           title={`${currentTrack.title} Modules`}
-          description={`Master ${currentTrack.modules.length} essential topics in carbon agriculture`}
+          description={`Master ${currentTrack.modules.length} essential topics in agricultural transparency`}
         >
           <StandardGrid columns={{ base: 1, lg: 2 }} spacing={6}>
             {currentTrack.modules.map((module, index) => {
               const isCompleted = completedModules.includes(module.id);
-              const isNext = !isCompleted && index === 0; // First incomplete module
+              const isNext = !isCompleted && index === 0;
 
               return (
                 <StandardCard key={module.id} variant="elevated" padding={6}>
@@ -488,86 +487,58 @@ export default function EducationDashboard() {
           </StandardGrid>
         </StandardSection>
 
-        {/* Quick Carbon Insights */}
+        {/* Transparency Impact Facts */}
         <StandardSection
-          title="Carbon Intelligence Insights"
-          description="Essential facts about agricultural carbon transparency"
+          title="Transparency Impact Facts"
+          description="Essential facts about agricultural transparency"
         >
           <StandardGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
             <StandardCard variant="flat" padding={6}>
-              <VStack spacing={4}>
-                <Circle size="60px" bg="green.100" color="green.600">
-                  <Icon as={MdEco} boxSize={8} />
-                </Circle>
-                <VStack spacing={2}>
-                  <Heading size="sm" textAlign="center" color="gray.700">
-                    Regenerative Impact
-                  </Heading>
-                  <Text fontSize="lg" fontWeight="bold" color="green.600">
-                    0.5-2 tons CO₂
-                  </Text>
-                  <Text fontSize="sm" color="gray.600" textAlign="center">
-                    Sequestered per hectare annually through regenerative practices
-                  </Text>
-                </VStack>
-              </VStack>
+              <StandardMetricCard
+                icon={MdEco}
+                iconColor="green.600"
+                iconBg="green.100"
+                value="20 US Crops"
+                label="Farm Documentation"
+                subtitle="Pre-configured event workflows for specialty crops"
+                colorScheme="green"
+              />
             </StandardCard>
 
             <StandardCard variant="flat" padding={6}>
-              <VStack spacing={4}>
-                <Circle size="60px" bg="blue.100" color="blue.600">
-                  <Icon as={MdVerified} boxSize={8} />
-                </Circle>
-                <VStack spacing={2}>
-                  <Heading size="sm" textAlign="center" color="gray.700">
-                    USDA Verification
-                  </Heading>
-                  <Text fontSize="lg" fontWeight="bold" color="blue.600">
-                    95%+ Accuracy
-                  </Text>
-                  <Text fontSize="sm" color="gray.600" textAlign="center">
-                    Reliability standard for agricultural carbon data
-                  </Text>
-                </VStack>
-              </VStack>
+              <StandardMetricCard
+                icon={MdVerified}
+                iconColor="blue.600"
+                iconBg="blue.100"
+                value="Government Data"
+                label="EPA/USDA-Sourced"
+                subtitle="All calculations use published government emission factors"
+                colorScheme="blue"
+              />
             </StandardCard>
 
             <StandardCard variant="flat" padding={6}>
-              <VStack spacing={4}>
-                <Circle size="60px" bg="purple.100" color="purple.600">
-                  <Icon as={MdScience} boxSize={8} />
-                </Circle>
-                <VStack spacing={2}>
-                  <Heading size="sm" textAlign="center" color="gray.700">
-                    Transparency Impact
-                  </Heading>
-                  <Text fontSize="lg" fontWeight="bold" color="purple.600">
-                    23% Improvement
-                  </Text>
-                  <Text fontSize="sm" color="gray.600" textAlign="center">
-                    Average improvement in farm practices with transparency
-                  </Text>
-                </VStack>
-              </VStack>
+              <StandardMetricCard
+                icon={FaUsers}
+                iconColor="purple.600"
+                iconBg="purple.100"
+                value="78% Engagement"
+                label="Consumer Trust"
+                subtitle="Consumer completion rate with transparency-first approach"
+                colorScheme="purple"
+              />
             </StandardCard>
 
             <StandardCard variant="flat" padding={6}>
-              <VStack spacing={4}>
-                <Circle size="60px" bg="orange.100" color="orange.600">
-                  <Icon as={FaUsers} boxSize={8} />
-                </Circle>
-                <VStack spacing={2}>
-                  <Heading size="sm" textAlign="center" color="gray.700">
-                    Consumer Impact
-                  </Heading>
-                  <Text fontSize="lg" fontWeight="bold" color="orange.600">
-                    40% Shift
-                  </Text>
-                  <Text fontSize="sm" color="gray.600" textAlign="center">
-                    Consumers change purchasing based on carbon data
-                  </Text>
-                </VStack>
-              </VStack>
+              <StandardMetricCard
+                icon={FaShieldAlt}
+                iconColor="orange.600"
+                iconBg="orange.100"
+                value="Immutable Records"
+                label="Blockchain Verified"
+                subtitle="Cryptographic proof that records haven't been altered"
+                colorScheme="orange"
+              />
             </StandardCard>
           </StandardGrid>
         </StandardSection>

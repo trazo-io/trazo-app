@@ -83,10 +83,14 @@ export default function ModernProductReview() {
       headline: data.headline,
       written_review: data.written_review,
       rating: rating,
-      production: historyData?.id,
-      user: currentUser?.id,
+      production_public_id: historyData?.public_id,
       images: uploadedImageUrls
     };
+
+    // Only include user if logged in
+    if (currentUser?.id) {
+      reviewData.user = currentUser.id;
+    }
 
     // Only include scan if it's a valid numeric ID (from actual QR scan)
     if (scanId && !scanId.startsWith('web-')) {
@@ -98,8 +102,8 @@ export default function ModernProductReview() {
 
   return (
     <StandardPage
-      title="Share Your Carbon Transparency Experience"
-      description="Help other consumers make informed choices by sharing your experience with this sustainably-grown product"
+      title="Share Your Experience"
+      description="Help other consumers make informed choices by sharing your experience with this product"
       showBackButton={true}
       onBack={() => navigate(-1)}
     >
@@ -153,7 +157,7 @@ export default function ModernProductReview() {
                   >
                     <StandardButton
                       variant="outline"
-                      size="sm"
+                      size="md"
                       onClick={() => navigate(`/production/${productionId}`)}
                       leftIcon={<FaHeart />}
                     >
@@ -164,8 +168,8 @@ export default function ModernProductReview() {
                   <VStack spacing={{ base: 5, md: 6 }} align="stretch">
                     {/* Rating Section */}
                     <StandardField
-                      label="How would you rate this sustainable product?"
-                      helpText="Consider carbon footprint, farming practices, and transparency"
+                      label="How would you rate this product?"
+                      helpText="Consider farming practices, transparency, and overall quality"
                     >
                       <HStack spacing={3} justify="center" py={4}>
                         {[1, 2, 3, 4, 5].map((star) => (
@@ -184,11 +188,11 @@ export default function ModernProductReview() {
                       </HStack>
                       {rating > 0 && (
                         <Text textAlign="center" fontSize="sm" color="gray.600" mt={2}>
-                          {rating === 1 && 'Needs significant improvement in sustainability'}
-                          {rating === 2 && 'Some sustainable practices evident'}
-                          {rating === 3 && 'Good sustainable practices'}
-                          {rating === 4 && 'Excellent carbon transparency'}
-                          {rating === 5 && 'Outstanding environmental stewardship'}
+                          {rating === 1 && 'Needs improvement'}
+                          {rating === 2 && 'Some good farming practices'}
+                          {rating === 3 && 'Good transparency and quality'}
+                          {rating === 4 && 'Excellent farming transparency'}
+                          {rating === 5 && 'Outstanding — highly transparent farm'}
                         </Text>
                       )}
                     </StandardField>
@@ -198,11 +202,11 @@ export default function ModernProductReview() {
                       label="Review Headline"
                       required
                       error={errors.headline?.message as string | undefined}
-                      helpText="Highlight what's most important about this product's sustainability"
+                      helpText="Highlight what stood out about this product's farming transparency"
                     >
                       <StandardInput
                         {...register('headline')}
-                        placeholder="e.g., 'Exceptional carbon transparency' or 'Great regenerative practices'"
+                        placeholder="e.g., 'Very transparent farm' or 'Great documented practices'"
                       />
                     </StandardField>
 
@@ -224,11 +228,11 @@ export default function ModernProductReview() {
                       label="Your Review"
                       required
                       error={errors.written_review?.message as string | undefined}
-                      helpText="Share details about the farm's sustainability practices, carbon impact, or transparency that influenced your choice"
+                      helpText="Share what you learned about how this food was grown and what influenced your choice"
                     >
                       <StandardTextarea
                         {...register('written_review')}
-                        placeholder="What did you discover about this product's environmental impact? How did the carbon transparency influence your purchase decision? Would you recommend this farm to other conscious consumers?"
+                        placeholder="What did you discover about how this food was grown? Did the farming transparency influence your purchase decision? Would you recommend this farm to others?"
                         rows={5}
                       />
                     </StandardField>

@@ -21,7 +21,7 @@ export default function Footer() {
         textAlign={{ base: 'center', xl: 'start' }}
         fontSize="sm"
       >
-        &copy; {new Date().getFullYear()} Trazo. Agricultural Transparency
+        &copy; {new Date().getFullYear()} Trazo&trade;. Agricultural Transparency
         Platform.
       </Text>
       <Flex gap={{ base: '16px', md: '32px' }} flexWrap="wrap" justifyContent="center">

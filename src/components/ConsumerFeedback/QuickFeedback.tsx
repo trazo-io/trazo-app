@@ -141,7 +141,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       toast({
         title: 'Analytics Consent Required',
         description:
-          'Please accept analytics to submit feedback and help improve carbon transparency',
+          'Please accept analytics to submit feedback and help improve agricultural transparency',
         status: 'warning',
         duration: 5000,
         isClosable: true
@@ -289,7 +289,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
           <HStack spacing={3}>
             <Icon as={FaComments} color="green.500" boxSize={5} />
             <Text fontSize="lg" fontWeight="600" color={textColor}>
-              Share Your Carbon Transparency Experience
+              Share Your Experience
             </Text>
           </HStack>
           <Text fontSize="sm" color="gray.500">
@@ -302,7 +302,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
               Quick comment (optional)
             </Text>
             <Textarea
-              placeholder="Share what you learned about this product's carbon footprint or sustainability practices..."
+              placeholder="Share what you learned about how this food was grown and its farming practices..."
               value={quickMessage}
               onChange={(e) => {
                 setQuickMessage(e.target.value);

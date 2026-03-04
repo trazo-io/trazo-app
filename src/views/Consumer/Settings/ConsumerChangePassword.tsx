@@ -11,7 +11,7 @@ const ConsumerChangePassword: React.FC = () => {
   return (
     <StandardPage
       title="Account Security"
-      description="Keep your sustainable shopping account secure"
+      description="Keep your Trazo account secure"
       showBackButton
       onBack={() => navigate('/consumidor/settings')}
     >
@@ -31,12 +31,12 @@ const ConsumerChangePassword: React.FC = () => {
           >
             <HStack spacing={2}>
               <Icon as={FaLeaf} boxSize={4} />
-              <Text>Protecting Your Sustainable Journey</Text>
+              <Text>Protecting Your Transparency Journey</Text>
             </HStack>
           </Badge>
           <Text fontSize="sm" color="gray.600" maxW="md">
-            Your security is important to us. A strong password helps protect your sustainable
-            shopping history and carbon tracking data.
+            Your security is important to us. A strong password helps protect your
+            transparency data and farm discoveries.
           </Text>
         </VStack>
 
@@ -48,18 +48,18 @@ const ConsumerChangePassword: React.FC = () => {
           <HStack mb={3}>
             <Icon as={FaLeaf} color="blue.600" />
             <Text fontWeight="semibold" color="blue.700">
-              Why Security Matters for Sustainable Shopping:
+              Why Security Matters:
             </Text>
           </HStack>
           <VStack align="start" spacing={2} pl={6}>
             <Text fontSize="sm" color="blue.700">
-              • Protects your personal carbon footprint data
+              • Protects your transparency journey data
             </Text>
             <Text fontSize="sm" color="blue.700">
-              • Secures your favorite sustainable products and farms
+              • Secures your favorite products and farms
             </Text>
             <Text fontSize="sm" color="blue.700">
-              • Keeps your purchase history and preferences private
+              • Keeps your scan history and preferences private
             </Text>
             <Text fontSize="sm" color="blue.700">
               • Ensures your reviews and feedback remain authentic

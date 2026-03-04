@@ -724,7 +724,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 <HStack spacing={1}>
                   <Icon as={MdVerified} boxSize={3} />
                   <Text>
-                    {filteredEvents.length} Events
+                    {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
                   </Text>
                 </HStack>
               </Badge>
@@ -1017,7 +1017,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         <VStack align="start" spacing={0} flex={1}>
                           <HStack>
                             <Text fontWeight="bold" fontSize="sm" color={textColor}>
-                              {totalEvents} {item.category} Events
+                              {totalEvents} {item.category} {totalEvents === 1 ? 'Event' : 'Events'}
                             </Text>
                             <Badge
                               colorScheme={config.categoryColor}
@@ -1173,7 +1173,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               onClick={() => setShowAll(!showAll)}
               rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}
             >
-              {showAll ? 'Show Less' : `Show All ${filteredEvents.length} Events`}
+              {showAll ? 'Show Less' : `Show All ${filteredEvents.length} ${filteredEvents.length === 1 ? 'Event' : 'Events'}`}
             </Button>
           </Box>
         )}

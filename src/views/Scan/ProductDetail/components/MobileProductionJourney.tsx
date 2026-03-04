@@ -231,7 +231,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
                   Documentation Transparency
                 </Text>
                 <Badge colorScheme="green" fontSize="xs" borderRadius="full">
-                  {filteredEvents.length} Events
+                  {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
                 </Badge>
               </Flex>
 

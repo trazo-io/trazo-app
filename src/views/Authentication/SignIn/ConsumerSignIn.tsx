@@ -335,14 +335,14 @@ const ConsumerSignIn: React.FC = () => {
                   color={useColorModeValue('gray.900', 'white')}
                   letterSpacing="tight"
                 >
-                  Continue Your Carbon Journey
+                  Discover Food Transparency
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
                   textAlign="center"
                 >
-                  Access verified carbon transparency and sustainable choices
+                  Discover how your food was grown with verified farming transparency
                 </Text>
               </VStack>
             </VStack>
@@ -549,7 +549,7 @@ const ConsumerSignIn: React.FC = () => {
                     }}
                     transition="all 0.2s"
                   >
-                    Access Carbon Transparency
+                    Sign In
                   </Button>
                 </VStack>
               </form>

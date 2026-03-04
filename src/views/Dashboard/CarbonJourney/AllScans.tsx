@@ -102,7 +102,7 @@ export default function AllScans() {
                 return (
                   <NavLink
                     key={production.id || index}
-                    to={`/production/${production.id}/`}
+                    to={`/production/${production.public_id}/`}
                     style={{ width: '100%' }}
                   >
                     <Box
@@ -182,7 +182,7 @@ export default function AllScans() {
                                 <Icon as={FaEye} boxSize={2.5} />
                                 <Text>
                                   {transparencyInfo.eventsCount > 0
-                                    ? `${transparencyInfo.eventsCount} events`
+                                    ? `${transparencyInfo.eventsCount} ${transparencyInfo.eventsCount === 1 ? 'event' : 'events'}`
                                     : 'View'}
                                 </Text>
                               </HStack>

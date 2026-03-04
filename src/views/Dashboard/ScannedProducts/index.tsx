@@ -47,7 +47,7 @@ export default function ScannedProductsView() {
   return (
     <Flex flexDirection="column" pt={{ base: '120px', md: '75px' }} width="100%">
       <Text color={textColor} fontWeight="bold" fontSize="2xl" mb="20px" padding="10px">
-        Carbon Transparency Journey
+        Your Scanned Products
       </Text>
       <Card
         w={{ sm: '100%', md: '80%', lg: '100%' }}
@@ -64,7 +64,7 @@ export default function ScannedProductsView() {
           ) : (
             <Stack width="100%" spacing={8}>
               {productions?.map((production, index) => (
-                <NavLink key={index} to={`/production/${production.id}/`}>
+                <NavLink key={index} to={`/production/${production.public_id}/`}>
                   <Box
                     p={8}
                     shadow="md"

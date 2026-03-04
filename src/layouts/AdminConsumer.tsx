@@ -3,8 +3,7 @@ import { Outlet } from 'react-router-dom';
 import React, { useState } from 'react';
 
 import AdminNavbar from 'components/Navbars/AdminNavbar';
-import Configurator from 'components/Configurator/Configurator';
-import FixedPlugin from 'components/FixedPlugin/FixedPlugin';
+
 import ConsumerFooter from 'components/Footer/ConsumerFooter';
 import MainPanel from 'components/Layout/MainPanel';
 import PanelContainer from 'components/Layout/PanelContainer';
@@ -101,17 +100,6 @@ export default function AdminConsumerLayout(props: any) {
         </PanelContent>
 
         <ConsumerFooter />
-        <Portal>
-          <FixedPlugin fixed={fixed} onOpen={onOpen} />
-        </Portal>
-        <Configurator
-          isOpen={isOpen}
-          onClose={onClose}
-          isChecked={fixed}
-          onSwitch={(value) => setFixed(value)}
-          onOpaque={() => setSidebarVariant('opaque')}
-          onTransparent={() => setSidebarVariant('transparent')}
-        />
       </MainPanel>
     </SidebarContext.Provider>
   );

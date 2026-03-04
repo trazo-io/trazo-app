@@ -72,40 +72,29 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
   }, []);
 
   const handleConsent = (consent: boolean) => {
-    console.log('🔒 ConsentBanner handleConsent called:', {
-      consent,
-      timestamp: new Date().toISOString()
-    });
-
     setConsentGiven(consent);
     setIsVisible(false);
 
     // Store consent in localStorage and cookie
     localStorage.setItem(CONSENT_STORAGE_KEY, consent.toString());
-    console.log('📦 Stored in localStorage:', localStorage.getItem(CONSENT_STORAGE_KEY));
 
     // Set cookie with 1 year expiration and proper domain handling
     const expiryDate = new Date();
     expiryDate.setFullYear(expiryDate.getFullYear() + 1);
 
-    // Handle localhost development domain issues
     const hostname = window.location.hostname;
     let cookieString = `trazo-analytics-consent=${consent}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
 
-    // For localhost development, also set a more permissive cookie
     if (hostname.includes('localhost')) {
       cookieString += `; domain=localhost`;
     }
 
     document.cookie = cookieString;
-    console.log('🍪 Set cookie:', cookieString);
-    console.log('🍪 Current cookies:', document.cookie);
 
     // Also set a backup cookie without domain restriction for localhost
     if (hostname.includes('localhost')) {
       const backupCookieString = `trazo-analytics-consent=${consent}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
       document.cookie = backupCookieString;
-      console.log('🍪 Set backup cookie:', backupCookieString);
     }
 
     // Notify parent component
@@ -116,19 +105,6 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
       detail: { consent }
     });
     window.dispatchEvent(customEvent);
-    console.log('📡 Dispatched custom event:', customEvent);
-
-    // Log consent decision (for debugging)
-    console.log('🔒 Privacy consent:', consent ? 'granted' : 'declined');
-
-    // Verify storage after setting
-    setTimeout(() => {
-      console.log('🔍 Verification after consent set:', {
-        localStorage: localStorage.getItem(CONSENT_STORAGE_KEY),
-        cookies: document.cookie.split(';').find((c) => c.includes('trazo-analytics-consent')),
-        hasAnalyticsConsent: hasAnalyticsConsent()
-      });
-    }, 100);
   };
 
   const handleDismiss = () => {
@@ -198,8 +174,8 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
           {/* Content */}
           <VStack spacing={3} align="stretch">
             <Text fontSize="sm" color={textColor} lineHeight="1.5">
-              Help us improve carbon transparency by allowing anonymous analytics. We use
-              privacy-safe methods to understand how consumers interact with sustainability
+              Help us improve agricultural transparency by allowing anonymous analytics. We use
+              privacy-safe methods to understand how consumers interact with farm transparency
               information.
             </Text>
 

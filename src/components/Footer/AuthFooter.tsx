@@ -67,7 +67,7 @@ export default function AuthFooter() {
         </HStack>
 
         <Text fontSize="xs" color={subtleColor}>
-          &copy; {new Date().getFullYear()} Trazo. Agricultural Transparency Platform.
+          &copy; {new Date().getFullYear()} Trazo&trade;. Agricultural Transparency Platform.
         </Text>
       </Flex>
     </Box>

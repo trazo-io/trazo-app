@@ -168,7 +168,7 @@ export default function CarbonJourney() {
           <StandardAlert
             status="success"
             title="Keep Going!"
-            description={`You've checked ${shopStats.totalScans} products and found ${shopStats.sustainableFarmsFound} sustainable farms. Every scan helps you make better choices.`}
+            description={`You've checked ${shopStats.totalScans} ${shopStats.totalScans === 1 ? 'product' : 'products'} and discovered ${shopStats.sustainableFarmsFound} transparent ${shopStats.sustainableFarmsFound === 1 ? 'farm' : 'farms'}. Every scan helps you make better choices.`}
           />
         </StandardCard>
 
@@ -216,7 +216,7 @@ export default function CarbonJourney() {
                         return (
                           <NavLink
                             key={production.id || index}
-                            to={`/production/${production.id}/`}
+                            to={`/production/${production.public_id}/`}
                             style={{ width: '100%' }}
                           >
                             <Box
@@ -296,7 +296,7 @@ export default function CarbonJourney() {
                                         <Icon as={FaEye} boxSize={2.5} />
                                         <Text>
                                           {transparencyInfo.eventsCount > 0
-                                            ? `${transparencyInfo.eventsCount} events`
+                                            ? `${transparencyInfo.eventsCount} ${transparencyInfo.eventsCount === 1 ? 'event' : 'events'}`
                                             : 'View'}
                                         </Text>
                                       </HStack>
@@ -387,7 +387,7 @@ export default function CarbonJourney() {
                         return (
                           <NavLink
                             key={review.id || index}
-                            to={`/production/${review.history.id}/`}
+                            to={`/production/${review.history.public_id}/`}
                             style={{ width: '100%' }}
                           >
                             <Box
@@ -563,7 +563,7 @@ export default function CarbonJourney() {
                               </StatLabel>
                             </ConsumerTooltip>
                             <StatNumber color="teal.600">{shopStats.totalReviews}</StatNumber>
-                            <StatHelpText>reviews written</StatHelpText>
+                            <StatHelpText>{shopStats.totalReviews === 1 ? 'review' : 'reviews'} written</StatHelpText>
                           </Stat>
                         </VStack>
                       </StandardCard>

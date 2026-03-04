@@ -135,7 +135,7 @@ const TransparencyScoreCard: React.FC<TransparencyScoreCardProps> = ({
         {eventCount !== undefined && (
           <HStack spacing={4} w="full">
             <Badge colorScheme={currentLevel.color} variant="solid" px={3} py={1}>
-              {eventCount} Events Documented
+              {eventCount} {eventCount === 1 ? 'Event' : 'Events'} Documented
             </Badge>
           </HStack>
         )}

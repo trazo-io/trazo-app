@@ -198,7 +198,7 @@ export default function SignInConsumer() {
                     }}
                     isLoading={isLoading}
                   >
-                    Access Carbon Transparency
+                    Sign In
                   </Button>
                 </FormControl>
               </form>

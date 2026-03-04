@@ -31,7 +31,7 @@ const TermsOfService: React.FC = () => {
               Terms of Service
             </Heading>
             <Text fontSize="lg" color={textColor}>
-              Last updated: December 28, 2025
+              Last updated: March 2, 2026
             </Text>
           </VStack>
 
@@ -44,8 +44,8 @@ const TermsOfService: React.FC = () => {
                   1. Introduction and Acceptance
                 </Heading>
                 <Text color={textColor} lineHeight="1.7" mb={4}>
-                  Welcome to Trazo, an agricultural carbon transparency platform operated by Trazo
-                  Inc. ("Trazo," "we," "us," or "our"). These Terms of Service ("Terms") govern your
+                  Welcome to Trazo, an agricultural transparency platform operated by Trazo
+                  ("we," "us," or "our"). These Terms of Service ("Terms") govern your
                   access to and use of our platform, including our website, mobile applications, QR
                   code scanning services, and all related software and services (collectively, the
                   "Platform").
@@ -65,12 +65,12 @@ const TermsOfService: React.FC = () => {
                   2. Platform Description
                 </Heading>
                 <Text color={textColor} lineHeight="1.7" mb={4}>
-                  Trazo provides agricultural carbon transparency services that enable:
+                  Trazo provides agricultural transparency services that enable:
                 </Text>
                 <List spacing={2} mb={4}>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
-                    Real-time carbon footprint calculations using published EPA emission factors
+                    Transparency scores and carbon footprint estimates using published EPA/USDA emission factors
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
@@ -226,7 +226,7 @@ const TermsOfService: React.FC = () => {
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
-                    Generate carbon footprint calculations and transparency reports
+                    Generate transparency scores, carbon footprint estimates, and transparency reports
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
@@ -551,11 +551,7 @@ const TermsOfService: React.FC = () => {
                 </Text>
                 <Box mt={4} p={4} bg={useColorModeValue('gray.50', 'gray.700')} borderRadius="lg">
                   <Text color={textColor}>
-                    Email: legal@trazo.com
-                    <br />
-                    Address: [Company Address]
-                    <br />
-                    Phone: [Company Phone]
+                    Email: legal@trazo.io
                   </Text>
                 </Box>
               </Box>

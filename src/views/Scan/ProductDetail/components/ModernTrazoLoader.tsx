@@ -72,8 +72,8 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
 
   // Progressive sustainability messages aligned with Trazo's mission
   const sustainabilityMessages = [
-    'Verifying carbon transparency...',
-    'Loading sustainability data...',
+    'Verifying farm transparency...',
+    'Loading farming practice data...',
     'Analyzing agricultural practices...',
     'Building trust through transparency...',
     'Connecting you to the farm story...'

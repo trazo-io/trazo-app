@@ -21,7 +21,7 @@ export default function ConsumerFooter() {
         textAlign={{ base: 'center', md: 'start' }}
         fontSize="sm"
       >
-        &copy; {new Date().getFullYear()} Trazo.
+        &copy; {new Date().getFullYear()} Trazo&trade;.
       </Text>
       <Flex gap={{ base: '16px', md: '24px' }}>
         <Link

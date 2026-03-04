@@ -491,7 +491,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                     color={textColor}
                     lineHeight="1"
                   >
-                    {carbonData?.level === 'transparency' ? 'Transparency Score' : 'Carbon Score'}
+                    Transparency Score
                   </Text>
                 </VStack>
 
@@ -620,6 +620,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               <Button
                 colorScheme="green"
                 size="md"
+                minH="44px"
                 leftIcon={<Icon as={FaInfoCircle} />}
                 onClick={onLearnMore}
                 borderRadius="full"

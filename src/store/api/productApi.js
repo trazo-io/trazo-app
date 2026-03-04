@@ -205,7 +205,25 @@ export const productApi = baseApi.injectEndpoints({
         { type: 'Parcel', parcelId },
         { type: 'Establishment', id: establishmentId },
         'Company' // Also refresh company data when updating parcels
-      ]
+      ],
+      async onQueryStarted(
+        { companyId, establishmentId, parcelId },
+        { dispatch, queryFulfilled }
+      ) {
+        try {
+          const { data: updatedParcel } = await queryFulfilled;
+          // Update the getParcel cache immediately with the response
+          dispatch(
+            productApi.util.updateQueryData(
+              'getParcel',
+              { companyId, establishmentId, parcelId },
+              () => updatedParcel
+            )
+          );
+        } catch {
+          // Invalidation will handle refetch on error
+        }
+      }
     }),
     getProducts: build.query({
       query: () => ({

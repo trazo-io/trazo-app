@@ -73,21 +73,21 @@ export default function ReviewsListView() {
 
   return (
     <StandardPage
-      title="Sustainability Reviews"
-      description="Track your impact-driven product reviews and carbon transparency feedback"
+      title="Your Reviews"
+      description="Track your product reviews and farming transparency feedback"
     >
       <StandardCard variant="elevated">
         <VStack spacing={6} align="stretch">
           <StandardAlert
             status="info"
             title="Transparency-Focused Reviews"
-            description="Your reviews help build transparency in agricultural carbon footprints and sustainable farming practices."
+            description="Your reviews help build transparency in agricultural practices and support informed food choices."
           />
 
           <VStack spacing={4} align="stretch">
             {!isLoading &&
               reviews?.map((review, index) => (
-                <NavLink key={index} to={`/production/${review.history.id}/`}>
+                <NavLink key={index} to={`/production/${review.history.public_id}/`}>
                   <Box
                     p={6}
                     shadow="sm"

@@ -34,7 +34,7 @@ const ConsumerResetPassword: React.FC = () => {
                   Secure Reset
                 </Text>
                 <Text fontSize="sm" color="gray.500" maxW="sm" lineHeight="1.6">
-                  Sustainable Shopping Platform
+                  Agricultural Transparency Platform
                 </Text>
               </VStack>
             </VStack>
@@ -126,8 +126,8 @@ const ConsumerResetPassword: React.FC = () => {
                   Impact
                 </Text>
                 <Text fontSize="lg" opacity={0.9} maxW="md" lineHeight="1.6">
-                  Secure your sustainable choices and carbon footprint data with a strong password.
-                  Your environmental journey deserves the best protection we can provide.
+                  Secure your transparency data and farm discoveries with a strong password.
+                  Your food transparency journey deserves the best protection we can provide.
                 </Text>
               </VStack>
 

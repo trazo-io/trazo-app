@@ -79,12 +79,12 @@ import VerifyEmailConsumer from 'views/Authentication/SignUp/VerifyEmailConsumer
 import SignInConsumer from 'views/Authentication/SignIn/SignInConsumer';
 import SignUpConsumer from 'views/Authentication/SignUp/SignUpConsumer';
 import AdminConsumerLayout from 'layouts/AdminConsumer';
-import ConsumerDashboardView from 'views/Dashboard/ConsumerDashboard';
+
 import ScannedProductsView from 'views/Dashboard/ScannedProducts';
 import ReviewsListView from 'views/Dashboard/ReviewsList';
 import ImpactDashboard from 'views/Dashboard/ImpactDashboard';
 import ConsumerEducationDashboard from 'views/Dashboard/EducationDashboard';
-import CommunityDashboard from 'views/Dashboard/CommunityDashboard';
+
 import CarbonJourney from 'views/Dashboard/CarbonJourney';
 import AllScansJourney from 'views/Dashboard/CarbonJourney/AllScans';
 import AllReviewsJourney from 'views/Dashboard/CarbonJourney/AllReviews';
@@ -428,7 +428,7 @@ const App = () => {
                   <Route index element={<Navigate to="impact" replace />} />
                   <Route path="impact" element={<ImpactDashboard />} />
                   <Route path="education" element={<ConsumerEducationDashboard />} />
-                  <Route path="community" element={<CommunityDashboard />} />
+
                   <Route path="journey" element={<CarbonJourney />} />
                   <Route path="journey/scans" element={<AllScansJourney />} />
                   <Route path="journey/reviews" element={<AllReviewsJourney />} />

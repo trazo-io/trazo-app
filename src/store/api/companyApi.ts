@@ -117,7 +117,22 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include',
         body: establishmentData
       }),
-      invalidatesTags: ['Establishment', 'Company']
+      invalidatesTags: ['Establishment', 'Company'],
+      async onQueryStarted({ companyId, establishmentId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data: updatedEstablishment } = await queryFulfilled;
+          // Update the getEstablishment cache immediately with the response
+          dispatch(
+            companyApi.util.updateQueryData(
+              'getEstablishment',
+              { companyId, establishmentId },
+              () => updatedEstablishment
+            )
+          );
+        } catch {
+          // Invalidation will handle refetch on error
+        }
+      }
     }),
     getEstablishment: build.query({
       query: ({ companyId, establishmentId }) => ({

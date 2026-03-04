@@ -1049,7 +1049,7 @@ function ProfileProduction() {
                   Events Recorded
                 </Text>
                 <Text fontWeight="bold" fontSize="xl" color="green.600">
-                  {timelineEvents.length || 0} Events
+                  {timelineEvents.length || 0} {(timelineEvents.length || 0) === 1 ? 'Event' : 'Events'}
                 </Text>
               </Box>
               {timelineEvents.length > 0 && (

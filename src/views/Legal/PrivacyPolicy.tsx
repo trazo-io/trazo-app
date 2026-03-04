@@ -39,7 +39,7 @@ const PrivacyPolicy: React.FC = () => {
               Privacy Policy
             </Heading>
             <Text fontSize="lg" color={textColor}>
-              Last updated: December 28, 2025
+              Last updated: March 2, 2026
             </Text>
           </VStack>
 
@@ -52,10 +52,10 @@ const PrivacyPolicy: React.FC = () => {
                   1. Introduction
                 </Heading>
                 <Text color={textColor} lineHeight="1.7" mb={4}>
-                  Trazo Inc. ("Trazo," "we," "us," or "our") respects your privacy and is committed
+                  Trazo ("we," "us," or "our") respects your privacy and is committed
                   to protecting your personal information. This Privacy Policy explains how we
                   collect, use, disclose, and safeguard your information when you use our
-                  agricultural carbon transparency platform.
+                  agricultural transparency platform.
                 </Text>
                 <Text color={textColor} lineHeight="1.7">
                   This policy applies to our website, mobile applications, QR code scanning
@@ -142,8 +142,8 @@ const PrivacyPolicy: React.FC = () => {
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
-                    <strong>Carbon Calculations:</strong> Emission factors, carbon footprint data,
-                    sustainability metrics
+                    <strong>Transparency &amp; Carbon Data:</strong> Transparency scores, emission factors,
+                    carbon footprint estimates
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
@@ -219,7 +219,7 @@ const PrivacyPolicy: React.FC = () => {
                 <List spacing={2} mb={4}>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
-                    Provide carbon footprint calculations using published EPA emission factors
+                    Provide transparency scores and carbon footprint estimates using published EPA/USDA emission factors
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdCheckCircle} color="green.500" />
@@ -377,7 +377,7 @@ const PrivacyPolicy: React.FC = () => {
                 <List spacing={2} mb={4}>
                   <ListItem color={textColor}>
                     <ListIcon as={MdShare} color="blue.500" />
-                    QR code scanning providing carbon footprint summaries
+                    QR code scanning providing transparency scores and farming practice summaries
                   </ListItem>
                   <ListItem color={textColor}>
                     <ListIcon as={MdShare} color="blue.500" />
@@ -802,7 +802,7 @@ const PrivacyPolicy: React.FC = () => {
                 <Text color={textColor} lineHeight="1.7">
                   If we become aware that we have collected information from a child under 18, we
                   will delete it promptly. Parents or guardians who believe their child has provided
-                  information to us should contact us immediately at privacy@trazo.com.
+                  information to us should contact us immediately at privacy@trazo.io.
                 </Text>
               </Box>
 
@@ -850,25 +850,16 @@ const PrivacyPolicy: React.FC = () => {
                 </Text>
                 <Box p={4} bg={useColorModeValue('gray.50', 'gray.700')} borderRadius="lg">
                   <Text color={textColor} mb={4}>
-                    <strong>Data Protection Officer</strong>
+                    <strong>Privacy Inquiries</strong>
                     <br />
-                    Email: info@trazo.io
+                    Email: privacy@trazo.io
                     <br />
                     Subject: Privacy Rights Request
                   </Text>
-                  <Text color={textColor} mb={4}>
+                  <Text color={textColor}>
                     <strong>General Contact</strong>
                     <br />
-                    Email: support@trazo.com
-                    <br />
-                    Address: [Company Address]
-                    <br />
-                    Phone: [Company Phone]
-                  </Text>
-                  <Text color={textColor}>
-                    <strong>EU Representative</strong> (if applicable)
-                    <br />
-                    [EU Representative Contact Information]
+                    Email: support@trazo.io
                   </Text>
                 </Box>
                 <Text color={textColor} lineHeight="1.7" mt={4} fontSize="sm">

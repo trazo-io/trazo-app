@@ -21,8 +21,7 @@ import {
   FaStar,
   FaLeaf,
   FaChevronRight,
-  FaLock,
-  FaHeart
+  FaLock
 } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
@@ -194,7 +193,7 @@ export default function ConsumerProfile() {
                 {reviewCount}
               </Text>
               <Text fontSize="xs" color={mutedColor} textAlign="center">
-                Reviews Written
+                {reviewCount === 1 ? 'Review' : 'Reviews'} Written
               </Text>
             </VStack>
 
@@ -229,34 +228,11 @@ export default function ConsumerProfile() {
             >
               <HStack justify="space-between">
                 <HStack spacing={3}>
-                  <Icon as={FaHeart} color="red.400" boxSize={5} />
-                  <VStack align="start" spacing={0}>
-                    <Text fontWeight="medium">My Favorites</Text>
-                    <Text fontSize="sm" color={mutedColor}>
-                      Saved products and farms
-                    </Text>
-                  </VStack>
-                </HStack>
-                <Icon as={FaChevronRight} color="gray.400" />
-              </HStack>
-            </Box>
-
-            <Box
-              as="button"
-              w="full"
-              p={4}
-              textAlign="left"
-              onClick={() => navigate('/admin/dashboard/journey')}
-              _hover={{ bg: hoverBg }}
-              transition="all 0.2s"
-            >
-              <HStack justify="space-between">
-                <HStack spacing={3}>
                   <Icon as={FaStar} color="yellow.500" boxSize={5} />
                   <VStack align="start" spacing={0}>
                     <Text fontWeight="medium">My Reviews</Text>
                     <Text fontSize="sm" color={mutedColor}>
-                      {reviewCount} reviews written
+                      {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'} written
                     </Text>
                   </VStack>
                 </HStack>

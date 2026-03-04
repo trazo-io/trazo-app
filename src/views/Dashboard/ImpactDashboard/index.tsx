@@ -161,7 +161,7 @@ export default function ImpactDashboard() {
                 recentScans.map((scan) => (
                   <Box
                     as={RouterLink}
-                    to={`/production/${scan.production_id || scan.id}`}
+                    to={`/production/${scan.production_public_id || scan.public_id}`}
                     key={scan.id}
                     w="full"
                     bg="white"
@@ -222,7 +222,7 @@ export default function ImpactDashboard() {
                               py={0.5}
                               borderRadius="full"
                             >
-                              {scan.events_viewed} events
+                              {scan.events_viewed} {scan.events_viewed === 1 ? 'event' : 'events'}
                             </Badge>
                           )}
                           {scan.is_verified && (
@@ -258,12 +258,12 @@ export default function ImpactDashboard() {
                   iconColor="green.600"
                   iconBg="green.100"
                   value={quickStats?.better_choices || 0}
-                  label="Sustainable Items"
+                  label="Transparent Products"
                   size="sm"
                   tooltip={{
-                    label: 'Sustainable Items',
+                    label: 'Transparent Products',
                     explanation:
-                      "Products you've scanned that meet high transparency and sustainability standards, showing comprehensive documentation of farming practices."
+                      "Products you've scanned that have high transparency scores, showing comprehensive documentation of farming practices."
                   }}
                 />
 

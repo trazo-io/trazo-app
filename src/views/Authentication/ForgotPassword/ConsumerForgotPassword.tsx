@@ -34,7 +34,7 @@ const ConsumerForgotPassword: React.FC = () => {
                   Reset Password
                 </Text>
                 <Text fontSize="sm" color="gray.500" maxW="sm" lineHeight="1.6">
-                  Sustainable Shopping Platform
+                  Agricultural Transparency Platform
                 </Text>
               </VStack>
             </VStack>
@@ -126,8 +126,8 @@ const ConsumerForgotPassword: React.FC = () => {
                   Green Journey
                 </Text>
                 <Text fontSize="lg" opacity={0.9} maxW="md" lineHeight="1.6">
-                  Your sustainable shopping data and carbon tracking information are protected.
-                  Safely reset your password and continue making environmentally conscious choices.
+                  Your transparency data and farm discoveries are protected.
+                  Safely reset your password and continue exploring how your food was grown.
                 </Text>
               </VStack>
 
@@ -136,13 +136,13 @@ const ConsumerForgotPassword: React.FC = () => {
                 <HStack spacing={3}>
                   <Box w={2} h={2} bg="blue.200" borderRadius="full" />
                   <Text fontSize="sm" opacity={0.9}>
-                    Protected purchase history
+                    Protected scan history
                   </Text>
                 </HStack>
                 <HStack spacing={3}>
                   <Box w={2} h={2} bg="blue.200" borderRadius="full" />
                   <Text fontSize="sm" opacity={0.9}>
-                    Secure carbon footprint data
+                    Secure transparency data
                   </Text>
                 </HStack>
                 <HStack spacing={3}>

@@ -71,7 +71,7 @@ export const ModernSidebar: React.FC<ModernSidebarProps> = ({
               </HStack>
 
               <Button
-                size="sm"
+                size="md"
                 colorScheme="green"
                 leftIcon={<Icon as={FaMedal} />}
                 onClick={onAuthPrompt}

@@ -108,7 +108,7 @@ export default function SignUpConsumer() {
         pb="0px"
       >
         <Text fontSize={{ base: '24px', md: '34px' }} color="white" mb="14px" fontWeight="bold">
-          Join the Carbon Transparency Movement
+          Know How Your Food Was Grown
         </Text>
         <Text
           fontSize={{ base: '16px', md: '18px' }}
