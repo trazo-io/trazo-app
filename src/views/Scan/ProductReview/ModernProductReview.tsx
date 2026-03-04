@@ -141,7 +141,8 @@ export default function ModernProductReview() {
                     <strong>Farm:</strong> {historyData?.parcel?.establishment?.name}
                   </Text>
                   <Text fontSize="sm" color="gray.600">
-                    <strong>Producer:</strong> {historyData?.company}
+                    <strong>Producer:</strong>{' '}
+                    {historyData?.parcel?.establishment?.company_name}
                   </Text>
                 </VStack>
               </HStack>

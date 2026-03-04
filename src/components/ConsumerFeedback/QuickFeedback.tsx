@@ -8,11 +8,10 @@ import {
   Textarea,
   useColorModeValue,
   Icon,
-  Badge,
-  useToast,
   Divider
 } from '@chakra-ui/react';
-import { FaComments, FaStar } from 'react-icons/fa';
+import { FaCheckCircle, FaComments, FaStar } from 'react-icons/fa';
+import { useIntl } from 'react-intl';
 import { useCreateScanMutation } from '../../store/api/historyApi';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -32,13 +31,14 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
 }) => {
   const [quickMessage, setQuickMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
   const [startTime] = useState<number>(Date.now());
   const [interactionCount, setInteractionCount] = useState<number>(0);
   const [hasConsent, setHasConsent] = useState<boolean>(false);
 
   const [createScan] = useCreateScanMutation();
   const navigate = useNavigate();
-  const toast = useToast();
+  const intl = useIntl();
 
   // Check if user is authenticated
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
@@ -115,13 +115,6 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
     });
 
     if (!quickMessage.trim()) {
-      console.log('❌ No message provided');
-      toast({
-        title: 'Please leave a comment',
-        status: 'warning',
-        duration: 3000,
-        isClosable: true
-      });
       return;
     }
 
@@ -138,14 +131,6 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
     // Check for analytics consent before submitting
     if (!hasConsent || !directConsentCheck) {
       console.log('🚫 Consent check failed - blocking API call');
-      toast({
-        title: 'Analytics Consent Required',
-        description:
-          'Please accept analytics to submit feedback and help improve agricultural transparency',
-        status: 'warning',
-        duration: 5000,
-        isClosable: true
-      });
       return;
     }
 
@@ -190,15 +175,8 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       const result = await createScan(feedbackData).unwrap();
       console.log('✅ API call successful:', result);
 
-      toast({
-        title: 'Thank you for your feedback!',
-        description: 'Your comment helps improve transparency',
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-
-      // Reset form
+      // Show confirmation state with submitted message
+      setSubmittedMessage(quickMessage.trim());
       setQuickMessage('');
 
       if (onFeedbackSubmitted) {
@@ -214,41 +192,7 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
         timestamp: new Date().toISOString()
       });
 
-      // Handle specific error cases
-      if (error?.status === 428) {
-        console.error('🚨 428 Consent Required - even though frontend validated consent!');
-        console.error('🔍 Frontend consent state at error:', {
-          hasConsentState: hasConsent,
-          directCheck: hasAnalyticsConsent(),
-          localStorage: localStorage.getItem('trazo-analytics-consent'),
-          cookies: document.cookie
-        });
-        // Consent required
-        toast({
-          title: 'Analytics Consent Required',
-          description: 'Please allow analytics to submit feedback',
-          status: 'warning',
-          duration: 5000,
-          isClosable: true
-        });
-      } else if (error?.status === 429) {
-        // Rate limited
-        toast({
-          title: 'Too Many Requests',
-          description: 'Please wait a moment before submitting again',
-          status: 'warning',
-          duration: 3000,
-          isClosable: true
-        });
-      } else {
-        toast({
-          title: 'Error submitting feedback',
-          description: 'Please try again later',
-          status: 'error',
-          duration: 3000,
-          isClosable: true
-        });
-      }
+      // Error is logged above, no additional UI action needed
     } finally {
       setIsSubmitting(false);
     }
@@ -274,104 +218,170 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
     navigate(reviewUrl);
   };
 
-  return (
-    <>
+  if (submittedMessage) {
+    return (
       <Box
         bg={cardBg}
         p={6}
         borderRadius="xl"
         border="1px"
-        borderColor={borderColor}
+        borderColor="green.200"
         boxShadow="sm"
       >
-        <VStack spacing={5} align="stretch">
-          {/* Header */}
-          <HStack spacing={3}>
-            <Icon as={FaComments} color="green.500" boxSize={5} />
-            <Text fontSize="lg" fontWeight="600" color={textColor}>
-              Share Your Experience
+        <VStack spacing={4} align="stretch">
+          <HStack spacing={3} justify="center">
+            <Icon as={FaCheckCircle} color="green.500" boxSize={6} />
+            <Text fontSize="lg" fontWeight="600" color="green.600">
+              {intl.formatMessage({ id: 'quickFeedback.thankYou' })}
             </Text>
           </HStack>
-          <Text fontSize="sm" color="gray.500">
-            Quick feedback helps farmers improve their sustainable practices
+
+          <Box
+            bg="gray.50"
+            p={4}
+            borderRadius="lg"
+            borderLeft="3px solid"
+            borderLeftColor="green.400"
+          >
+            <Text fontSize="sm" color="gray.600" fontStyle="italic">
+              &ldquo;{submittedMessage}&rdquo;
+            </Text>
+          </Box>
+
+          <Text fontSize="sm" color="gray.500" textAlign="center">
+            {intl.formatMessage({ id: 'quickFeedback.thankYouSubtitle' })}
           </Text>
 
-          {/* Quick Message */}
-          <VStack spacing={3} align="stretch">
-            <Text fontSize="sm" fontWeight="500" color={textColor}>
-              Quick comment (optional)
-            </Text>
-            <Textarea
-              placeholder="Share what you learned about how this food was grown and its farming practices..."
-              value={quickMessage}
-              onChange={(e) => {
-                setQuickMessage(e.target.value);
-                trackInteraction();
-              }}
-              maxLength={200}
-              resize="none"
-              rows={3}
-              borderRadius="lg"
-              _focus={{
-                borderColor: 'blue.500',
-                boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)'
-              }}
-            />
-            <Text fontSize="xs" color="gray.500" textAlign="right">
-              {quickMessage.length}/200
-            </Text>
-          </VStack>
+          <Divider />
 
-          {/* Action Buttons */}
-          <VStack spacing={3} mt={4}>
-            {!hasConsent && (
-              <Text fontSize="sm" color="orange.500" textAlign="center" fontWeight="500">
-                ⚠️ Please accept analytics to submit feedback
-              </Text>
-            )}
-            <Button
-              colorScheme={hasConsent ? 'green' : 'gray'}
-              size="lg"
-              onClick={handleQuickFeedback}
-              isLoading={isSubmitting}
-              loadingText="Submitting..."
-              w="full"
-              borderRadius="xl"
-              isDisabled={!hasConsent}
-              _hover={
-                hasConsent
-                  ? {
-                      transform: 'translateY(-1px)',
-                      boxShadow: 'lg'
-                    }
-                  : {}
-              }
-              opacity={hasConsent ? 1 : 0.6}
-            >
-              {hasConsent ? 'Submit Feedback' : 'Consent Required for Feedback'}
-            </Button>
+          <Button
+            variant="link"
+            size="sm"
+            color="gray.500"
+            onClick={() => setSubmittedMessage(null)}
+            fontWeight="normal"
+          >
+            {intl.formatMessage({ id: 'quickFeedback.leaveAnother' })}
+          </Button>
 
-            <Divider />
-
-            <Text fontSize="sm" color="gray.500" textAlign="center">
-              Want to share more?
-            </Text>
-
-            <Button
-              variant="outline"
-              colorScheme="green"
-              size="md"
-              onClick={handleFullReview}
-              leftIcon={<Icon as={FaStar} />}
-              borderRadius="lg"
-              w="full"
-            >
-              {isAuthenticated ? 'Write Detailed Review' : 'Sign In for Full Review'}
-            </Button>
-          </VStack>
+          <Button
+            variant="outline"
+            colorScheme="green"
+            size="md"
+            onClick={handleFullReview}
+            leftIcon={<Icon as={FaStar} />}
+            borderRadius="lg"
+            w="full"
+          >
+            {isAuthenticated
+              ? intl.formatMessage({ id: 'quickFeedback.fullReviewAuth' })
+              : intl.formatMessage({ id: 'quickFeedback.fullReview' })}
+          </Button>
         </VStack>
       </Box>
-    </>
+    );
+  }
+
+  return (
+    <Box
+      bg={cardBg}
+      p={6}
+      borderRadius="xl"
+      border="1px"
+      borderColor={borderColor}
+      boxShadow="sm"
+    >
+      <VStack spacing={5} align="stretch">
+        {/* Header */}
+        <HStack spacing={3}>
+          <Icon as={FaComments} color="green.500" boxSize={5} />
+          <Text fontSize="lg" fontWeight="600" color={textColor}>
+            {intl.formatMessage({ id: 'quickFeedback.title' })}
+          </Text>
+        </HStack>
+        <Text fontSize="sm" color="gray.500">
+          {intl.formatMessage({ id: 'quickFeedback.subtitle' })}
+        </Text>
+
+        {/* Quick Message */}
+        <VStack spacing={3} align="stretch">
+          <Text fontSize="sm" fontWeight="500" color={textColor}>
+            {intl.formatMessage({ id: 'quickFeedback.commentLabel' })}
+          </Text>
+          <Textarea
+            placeholder={intl.formatMessage({ id: 'quickFeedback.placeholder' })}
+            value={quickMessage}
+            onChange={(e) => {
+              setQuickMessage(e.target.value);
+              trackInteraction();
+            }}
+            maxLength={200}
+            resize="none"
+            rows={3}
+            borderRadius="lg"
+            _focus={{
+              borderColor: 'blue.500',
+              boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)'
+            }}
+          />
+          <Text fontSize="xs" color="gray.500" textAlign="right">
+            {intl.formatMessage({ id: 'quickFeedback.charCount' }, { count: quickMessage.length })}
+          </Text>
+        </VStack>
+
+        {/* Action Buttons */}
+        <VStack spacing={3} mt={4}>
+          {!hasConsent && (
+            <Text fontSize="sm" color="orange.500" textAlign="center" fontWeight="500">
+              {intl.formatMessage({ id: 'quickFeedback.consentWarning' })}
+            </Text>
+          )}
+          <Button
+            colorScheme={hasConsent ? 'green' : 'gray'}
+            size="lg"
+            onClick={handleQuickFeedback}
+            isLoading={isSubmitting}
+            loadingText={intl.formatMessage({ id: 'quickFeedback.submitting' })}
+            w="full"
+            borderRadius="xl"
+            isDisabled={!hasConsent}
+            _hover={
+              hasConsent
+                ? {
+                    transform: 'translateY(-1px)',
+                    boxShadow: 'lg'
+                  }
+                : {}
+            }
+            opacity={hasConsent ? 1 : 0.6}
+          >
+            {hasConsent
+              ? intl.formatMessage({ id: 'quickFeedback.submitButton' })
+              : intl.formatMessage({ id: 'quickFeedback.consentRequired' })}
+          </Button>
+
+          <Divider />
+
+          <Text fontSize="sm" color="gray.500" textAlign="center">
+            {intl.formatMessage({ id: 'quickFeedback.shareMore' })}
+          </Text>
+
+          <Button
+            variant="outline"
+            colorScheme="green"
+            size="md"
+            onClick={handleFullReview}
+            leftIcon={<Icon as={FaStar} />}
+            borderRadius="lg"
+            w="full"
+          >
+            {isAuthenticated
+              ? intl.formatMessage({ id: 'quickFeedback.fullReviewAuth' })
+              : intl.formatMessage({ id: 'quickFeedback.fullReview' })}
+          </Button>
+        </VStack>
+      </VStack>
+    </Box>
   );
 };
 

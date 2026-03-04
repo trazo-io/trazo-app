@@ -3092,5 +3092,21 @@
   "commercial.possibleBotDetected": "Possible bot detected",
   "commercial.hideButton": "Hide",
   "commercial.viewButton": "View",
-  "commercial.noScansFound": "No scans found"
+  "commercial.noScansFound": "No scans found",
+
+  "quickFeedback.title": "Share Your Experience",
+  "quickFeedback.subtitle": "Quick feedback helps farmers improve their sustainable practices",
+  "quickFeedback.commentLabel": "Quick comment (optional)",
+  "quickFeedback.placeholder": "Share what you learned about how this food was grown and its farming practices...",
+  "quickFeedback.charCount": "{count}/200",
+  "quickFeedback.consentWarning": "Please accept analytics to submit feedback",
+  "quickFeedback.submitButton": "Submit Feedback",
+  "quickFeedback.consentRequired": "Consent Required for Feedback",
+  "quickFeedback.submitting": "Submitting...",
+  "quickFeedback.shareMore": "Want to share more?",
+  "quickFeedback.fullReview": "Sign In for Full Review",
+  "quickFeedback.fullReviewAuth": "Write Detailed Review",
+  "quickFeedback.thankYou": "Thank you for your feedback!",
+  "quickFeedback.thankYouSubtitle": "Your comment helps improve agricultural transparency.",
+  "quickFeedback.leaveAnother": "Leave another comment"
 }

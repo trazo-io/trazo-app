@@ -2957,5 +2957,21 @@
   "commercial.possibleBotDetected": "Posible bot detectado",
   "commercial.hideButton": "Ocultar",
   "commercial.viewButton": "Ver",
-  "commercial.noScansFound": "No se encontraron escaneos"
+  "commercial.noScansFound": "No se encontraron escaneos",
+
+  "quickFeedback.title": "Comparte tu experiencia",
+  "quickFeedback.subtitle": "Los comentarios rápidos ayudan a los agricultores a mejorar sus prácticas sostenibles",
+  "quickFeedback.commentLabel": "Comentario rápido (opcional)",
+  "quickFeedback.placeholder": "Comparte lo que aprendiste sobre cómo se cultivó este alimento y sus prácticas agrícolas...",
+  "quickFeedback.charCount": "{count}/200",
+  "quickFeedback.consentWarning": "Acepta las analíticas para enviar comentarios",
+  "quickFeedback.submitButton": "Enviar comentario",
+  "quickFeedback.consentRequired": "Se requiere consentimiento para comentar",
+  "quickFeedback.submitting": "Enviando...",
+  "quickFeedback.shareMore": "¿Quieres compartir más?",
+  "quickFeedback.fullReview": "Inicia sesión para una reseña completa",
+  "quickFeedback.fullReviewAuth": "Escribir reseña detallada",
+  "quickFeedback.thankYou": "¡Gracias por tu comentario!",
+  "quickFeedback.thankYouSubtitle": "Tu comentario ayuda a mejorar la transparencia agrícola.",
+  "quickFeedback.leaveAnother": "Dejar otro comentario"
 }

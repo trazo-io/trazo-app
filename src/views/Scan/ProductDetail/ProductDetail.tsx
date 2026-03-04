@@ -75,6 +75,8 @@ import CardBody from 'components/Card/CardBody';
 import { TransparencyCelebration } from '../../../components/Notifications/TransparencyCelebration';
 import { useTransparencyCelebration } from '../../../hooks/useTransparencyCelebration';
 import { useGetTransparencyDetailsQuery, useVerifyBlockchainIntegrityQuery } from '../../../store/api/transparencyQrApi';
+import { useCreateScanMutation } from '../../../store/api/historyApi';
+import { hasAnalyticsConsent } from '../../../components/Privacy/ConsentBanner';
 import { HarvestInfoCard } from './components/HarvestInfoCard';
 
 // Data normalization imports
@@ -619,6 +621,47 @@ function ProductDetail() {
   } = useVerifyBlockchainIntegrityQuery(productionId || '', {
     skip: !productionId || !canVerifyIntegrity
   });
+
+  // === PAGE-VIEW SCAN TRACKING ===
+  // Records a scan when the user accepts analytics consent (GDPR-compliant).
+  // Only fires once per page load. No scan is recorded if user declines.
+  const [createScan] = useCreateScanMutation();
+  const [pageViewRecorded, setPageViewRecorded] = useState(false);
+  const pageLoadTime = useState(() => Date.now())[0];
+
+  useEffect(() => {
+    if (!productionId || pageViewRecorded) return;
+
+    const recordPageViewScan = () => {
+      setPageViewRecorded(true);
+      createScan({
+        production_id: productionId,
+        explicit_consent: true,
+        consent_timestamp: new Date().toISOString(),
+        time_on_page: (Date.now() - pageLoadTime) / 1000,
+        screen: `${window.screen.width}x${window.screen.height}`
+      }).catch(() => {
+        // Best-effort — don't block the page if scan tracking fails
+      });
+    };
+
+    // If consent was already granted (returning visitor), record immediately
+    if (hasAnalyticsConsent()) {
+      recordPageViewScan();
+      return;
+    }
+
+    // Listen for consent being granted during this visit
+    const handleConsentChanged = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.consent) {
+        recordPageViewScan();
+      }
+    };
+
+    window.addEventListener('trazo-consent-changed', handleConsentChanged);
+    return () => window.removeEventListener('trazo-consent-changed', handleConsentChanged);
+  }, [productionId, pageViewRecorded, createScan, pageLoadTime]);
 
   // Helper function to get proper transparency score from backend TransparencyCalculator
   const getTransparencyScore = (): number => {
