@@ -22,11 +22,11 @@ function MainPanel(props: MainPanelProps) {
       transitionProperty="top, bottom, width, margin-left"
       transitionTimingFunction="linear, linear, ease"
       sx={{
-        '@media screen and (min-width: 1280px)': {
+        '@media screen and (min-width: 1200px)': {
           marginLeft: 'var(--sidebar-width, 275px)',
           width: 'calc(100% - var(--sidebar-width, 275px))'
         },
-        '@media screen and (max-width: 1279px)': {
+        '@media screen and (max-width: 1199px)': {
           marginLeft: 0,
           width: '100%'
         }

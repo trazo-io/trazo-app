@@ -198,14 +198,14 @@ function ProfileProduction() {
     data: transparencyApiData,
     error: transparencyError,
     isLoading: transparencyLoading
-  } = useGetTransparencyDetailsQuery(productionId || '175', {
-    skip: false,
+  } = useGetTransparencyDetailsQuery(productionId || '', {
+    skip: !productionId,
     refetchOnMountOrArgChange: true
   });
 
   // Complete API for timeline data
-  const { data: completeData } = useGetCompleteSummaryQuery(productionId || '175', {
-    skip: false,
+  const { data: completeData } = useGetCompleteSummaryQuery(productionId || '', {
+    skip: !productionId,
     refetchOnMountOrArgChange: true
   });
 

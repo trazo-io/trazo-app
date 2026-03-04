@@ -451,16 +451,6 @@ const HistoryCard = ({ amount }) => {
                           let transparencyScore = null;
                           let carbonScore = null;
 
-                          // Debug: Log available data to understand backend response
-                          if (production.id === 175) {
-                            console.log('Production 175 data:', {
-                              transparency_score: production.transparency_score,
-                              confidence_score: production.confidence_score,
-                              extra_data: production.extra_data,
-                              all_fields: Object.keys(production)
-                            });
-                          }
-
                           // PRIMARY: Backend transparency_score (calculated with anti-gaming measures)
                           if (
                             production.transparency_score !== undefined &&
@@ -628,7 +618,7 @@ const HistoryCard = ({ amount }) => {
                                 // Only navigate if production is completed
                                 if (isCompleted) {
                                   navigate(
-                                    `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${production.id}`
+                                    `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${production.public_id}`
                                   );
                                 }
                               }}

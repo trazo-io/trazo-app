@@ -1410,46 +1410,7 @@ export const carbonApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
-      transformResponse: (response: any, meta, arg) => {
-        // 🌾 DEBUG: Log harvestDetails for ALL productions
-        console.log('🌾 RTK QUERY transformResponse:', {
-          productionId: arg,
-          hasHarvestDetails: !!response?.harvestDetails,
-          harvestDetails: response?.harvestDetails,
-          responseKeys: response ? Object.keys(response) : []
-        });
-
-        // 🔧 DEBUG: Log RAW API response for event 178 investigation
-        if (arg === '232') {
-          console.log('🔧 RAW API RESPONSE for production 232:', response);
-
-          // Check event 178 specifically in the timeline
-          if (response?.timeline) {
-            const event178 = response.timeline.find(
-              (event: any) =>
-                String(event.id) === '178' ||
-                event.id === 178 ||
-                String(event.id) === 'chemical_178' ||
-                event.id === 'chemical_178'
-            );
-            if (event178) {
-              console.log('🔧 EVENT 178 RAW API DATA (FOUND!):', {
-                id: event178.id,
-                area: event178.area,
-                application_timing: event178.application_timing,
-                way_of_application: event178.way_of_application,
-                application_method: event178.application_method,
-                fullEvent: event178
-              });
-            } else {
-              console.log('🔧 EVENT 178 NOT FOUND in API timeline');
-              console.log(
-                '🔧 Available event IDs:',
-                response.timeline.map((e: any) => e.id)
-              );
-            }
-          }
-        }
+      transformResponse: (response: any) => {
         return response;
       },
       providesTags: ['CarbonSummary']
@@ -1475,7 +1436,6 @@ export const carbonApi = baseApi.injectEndpoints({
 
     getCompanyCropOptions: builder.query<CompanyCropOptionsResponse, void>({
       query: () => {
-        console.log('🌾 API QUERY FUNCTION CALLED - /carbon/company-crop-options/');
         return {
           url: '/carbon/company-crop-options/',
           method: 'GET',
