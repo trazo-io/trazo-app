@@ -4,7 +4,7 @@ import { FiImage } from 'react-icons/fi';
 import { useLazyGetPresignedReadUrlQuery } from 'store/api/mediaApi';
 
 // S3 URL patterns for detection
-const S3_BUCKET_PATTERN = /staging-trazo-media-\d+\.s3\.amazonaws\.com/;
+const S3_BUCKET_PATTERN = /trazo-media[\w-]*\.s3[\w.-]*\.amazonaws\.com/;
 const PRESIGNED_URL_PATTERN = /X-Amz-Signature/;
 
 export interface S3ImageProps extends Omit<ImageProps, 'src' | 'onLoad' | 'onError'> {
