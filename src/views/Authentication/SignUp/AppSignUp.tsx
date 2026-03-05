@@ -391,16 +391,17 @@ const AppSignUp: React.FC = () => {
           align="center"
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
-          px={{ base: 4, md: 8 }}
+          px={{ base: 4, sm: 6, md: 8 }}
           pt={'112px'}
           pb={8}
+          overflow="hidden"
         >
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
-            maxW="480px"
+            maxW={{ base: '100%', md: '480px' }}
             my={{ base: 4, lg: 8 }}
           >
             {/* 🚀 2025 UX Enhancement: Conditional rendering between signup form and verification */}
