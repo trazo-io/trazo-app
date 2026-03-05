@@ -320,10 +320,10 @@ export default function Dashboard(props: any) {
 
         {getRoute() ? (
           <PanelContent
-            paddingInlineStart={{ base: '0px', lg: '15px' }}
-            paddingInlineEnd={{ base: '0px', lg: '15px' }}
+            paddingInlineStart={{ base: '12px', md: '15px' }}
+            paddingInlineEnd={{ base: '12px', md: '15px' }}
           >
-            <PanelContainer padding={{ base: '0px', lg: '30px 15px' }}>
+            <PanelContainer padding={{ base: '12px 0px', lg: '30px 15px' }}>
               <Outlet />
             </PanelContainer>
           </PanelContent>

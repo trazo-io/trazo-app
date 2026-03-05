@@ -187,8 +187,8 @@ export default function AdminNavbar(props: AdminNavbarProps) {
       borderRadius="16px"
       display="flex"
       minH="75px"
-      left={''}
-      right={'30px'}
+      left={{ base: '12px', xl: '30px' }}
+      right={{ base: '12px', xl: '30px' }}
       justifyContent={{ xl: 'center' }}
       lineHeight="25.6px"
       mx="auto"
@@ -205,7 +205,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
       pt="8px"
       top="18px"
       w={{
-        sm: 'calc(100vw - 30px)',
+        base: 'calc(100vw - 24px)',
         xl: `calc(100vw - 75px - ${sidebarWidth}px)`
       }}
     >
