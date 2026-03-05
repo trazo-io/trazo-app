@@ -391,7 +391,7 @@ const AppSignUp: React.FC = () => {
           align="center"
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
-          px={8}
+          px={{ base: 4, md: 8 }}
           pt={'112px'}
           pb={8}
         >
@@ -469,14 +469,16 @@ const AppSignUp: React.FC = () => {
                         transition={{ duration: 0.2 }}
                       >
                         <HStack
-                          spacing={4}
+                          spacing={{ base: 1, sm: 4 }}
                           justify="center"
                           bg={useColorModeValue('gray.50', 'gray.800')}
                           borderRadius="xl"
                           p={1}
+                          w="full"
                         >
                           <Button
                             size="sm"
+                            flex={1}
                             variant={!joinExistingCompany ? 'solid' : 'ghost'}
                             bg={!joinExistingCompany ? 'green.500' : 'transparent'}
                             color={
@@ -494,9 +496,9 @@ const AppSignUp: React.FC = () => {
                               transform: 'translateY(0)'
                             }}
                             borderRadius="lg"
-                            fontSize="sm"
+                            fontSize={{ base: 'xs', sm: 'sm' }}
                             fontWeight="600"
-                            px={6}
+                            px={{ base: 3, sm: 6 }}
                             py={2}
                             onClick={() => setJoinExistingCompany(false)}
                             transition="all 0.2s"
@@ -508,6 +510,7 @@ const AppSignUp: React.FC = () => {
                           </Button>
                           <Button
                             size="sm"
+                            flex={1}
                             variant={joinExistingCompany ? 'solid' : 'ghost'}
                             bg={joinExistingCompany ? 'green.500' : 'transparent'}
                             color={
@@ -525,9 +528,9 @@ const AppSignUp: React.FC = () => {
                               transform: 'translateY(0)'
                             }}
                             borderRadius="lg"
-                            fontSize="sm"
+                            fontSize={{ base: 'xs', sm: 'sm' }}
                             fontWeight="600"
-                            px={6}
+                            px={{ base: 3, sm: 6 }}
                             py={2}
                             onClick={() => setJoinExistingCompany(true)}
                             transition="all 0.2s"
@@ -681,7 +684,7 @@ const AppSignUp: React.FC = () => {
                       )}
 
                       {/* Name fields */}
-                      <Grid templateColumns="1fr 1fr" gap={3} w="full">
+                      <Grid templateColumns="1fr 1fr" gap={3} w="full" sx={{ '& > *': { minWidth: 0 } }}>
                         <Box>
                           <Text
                             fontSize="sm"

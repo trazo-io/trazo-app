@@ -195,19 +195,18 @@ export default function AdminNavbar(props: AdminNavbarProps) {
       mt={secondaryMargin}
       pb="8px"
       px={{
+        base: '12px',
         sm: paddingX,
         md: '30px'
       }}
       ps={{
+        base: '12px',
         sm: paddingS,
         md: '20px'
       }}
       pt="8px"
       top="18px"
-      w={{
-        base: 'calc(100vw - 24px)',
-        xl: `calc(100vw - 75px - ${sidebarWidth}px)`
-      }}
+      w="auto"
     >
       <Flex
         w="100%"

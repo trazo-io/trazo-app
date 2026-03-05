@@ -95,7 +95,7 @@ export default function Pages() {
     // <CacheProvider value={emotionCache}>
     //   <ChakraProvider theme={theme} w="100%">
     //     <CSSReset />
-    <Box ref={navRef} w="100%">
+    <Box ref={navRef} w="100%" overflowX="hidden">
       <Portal containerRef={navRef}>
         <AuthNavbar secondary={false} logoText="trazo" logo="" />
       </Portal>

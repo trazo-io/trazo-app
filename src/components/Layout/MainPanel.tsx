@@ -13,7 +13,8 @@ function MainPanel(props: MainPanelProps) {
     <Box
       float="right"
       maxWidth="100%"
-      overflow="auto"
+      overflowX="hidden"
+      overflowY="auto"
       position="relative"
       maxHeight="100%"
       minH="100vh"
