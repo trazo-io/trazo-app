@@ -194,7 +194,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
   if (step === 'loading' || (autoVerified && isLoading)) {
     return (
       <Flex minH="calc(100vh - 80px)" align="center" justify="center" bg="gray.50" px={4}>
-        <VStack spacing={6} textAlign="center" maxW="400px">
+        <VStack spacing={6} textAlign="center" maxW={{ base: '100%', md: '400px' }}>
           <Spinner
             thickness="4px"
             speed="0.65s"
@@ -219,7 +219,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
   if (step === 'success') {
     return (
       <Flex minH="calc(100vh - 80px)" align="center" justify="center" bg="gray.50" px={4}>
-        <VStack spacing={6} textAlign="center" maxW="400px">
+        <VStack spacing={6} textAlign="center" maxW={{ base: '100%', md: '400px' }}>
           <Box
             w="80px"
             h="80px"
@@ -274,7 +274,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
   // Render manual code entry
   return (
     <Flex minH="calc(100vh - 80px)" align="center" justify="center" bg="gray.50" px={4}>
-      <Box maxW="400px" w="full" bg="white" borderRadius="xl" boxShadow="lg" p={8}>
+      <Box maxW={{ base: '100%', md: '400px' }} w="full" bg="white" borderRadius="xl" boxShadow="lg" p={{ base: 5, md: 8 }}>
         <VStack spacing={6} textAlign="center">
           {/* Header */}
           <Box

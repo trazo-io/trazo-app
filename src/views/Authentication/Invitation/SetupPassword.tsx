@@ -403,15 +403,16 @@ const SetupPassword: React.FC = () => {
             align="center"
             justify="center"
             bg={useColorModeValue('white', 'gray.900')}
-            px={8}
+            px={{ base: 4, sm: 6, md: 8 }}
             py={12}
+            overflow="hidden"
           >
             <MotionBox
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, type: 'spring', bounce: 0.3 }}
               textAlign="center"
-              maxW="420px"
+              maxW={{ base: '100%', md: '420px' }}
             >
               <VStack spacing={8}>
                 <Box
@@ -487,7 +488,7 @@ const SetupPassword: React.FC = () => {
   if (isLoadingDetails) {
     return (
       <Flex minH="calc(100vh - 80px)" align="center" justify="center" bg="gray.50" px={4}>
-        <VStack spacing={8} textAlign="center" maxW="400px">
+        <VStack spacing={8} textAlign="center" maxW={{ base: '100%', md: '400px' }}>
           <Box
             w="80px"
             h="80px"
@@ -708,16 +709,17 @@ const SetupPassword: React.FC = () => {
           align="center"
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
-          px={8}
+          px={{ base: 4, sm: 6, md: 8 }}
           py={12}
           pt={120}
+          overflow="hidden"
         >
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
-            maxW="420px"
+            maxW={{ base: '100%', md: '420px' }}
             my={{ base: 4, lg: 8 }}
           >
             {/* Header */}

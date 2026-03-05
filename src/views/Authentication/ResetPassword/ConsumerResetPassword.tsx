@@ -21,7 +21,7 @@ const ConsumerResetPassword: React.FC = () => {
           bg={bgColor}
           position="relative"
         >
-          <Box w="full" maxW="450px">
+          <Box w="full" maxW={{ base: '100%', md: '450px' }}>
             {/* Header */}
             <VStack spacing={6} mb={8} textAlign="center">
               <HStack spacing={3} justify="center">

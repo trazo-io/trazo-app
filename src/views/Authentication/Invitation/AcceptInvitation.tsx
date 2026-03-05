@@ -482,15 +482,16 @@ const AcceptInvitation: React.FC = () => {
           align="center"
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
-          px={8}
+          px={{ base: 4, sm: 6, md: 8 }}
           py={12}
+          overflow="hidden"
         >
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
-            maxW="420px"
+            maxW={{ base: '100%', md: '420px' }}
             my={{ base: 4, lg: 8 }}
           >
             {/* Header */}
