@@ -23,15 +23,16 @@ export function formatCO2e(amount: number): string {
 }
 
 /**
- * Return an impact-level label and Chakra colorScheme for a given CO₂e value.
+ * Return an activity-level label and Chakra colorScheme for a given CO₂e value.
+ * Uses transparency-first language (activity classification, not impact judgment).
  */
 export function getImpactLevel(co2e: number): { level: string; color: string } {
-  if (co2e === 0) return { level: 'None', color: 'gray' };
-  if (co2e <= 5) return { level: 'Very Low', color: 'green' };
-  if (co2e <= 15) return { level: 'Low', color: 'yellow' };
-  if (co2e <= 30) return { level: 'Moderate', color: 'orange' };
-  if (co2e <= 60) return { level: 'High', color: 'red' };
-  return { level: 'Very High', color: 'red' };
+  if (co2e === 0) return { level: 'carbon.activityLevel.minimal', color: 'gray' };
+  if (co2e <= 5) return { level: 'carbon.activityLevel.lightActivity', color: 'green' };
+  if (co2e <= 15) return { level: 'carbon.activityLevel.standardActivity', color: 'blue' };
+  if (co2e <= 30) return { level: 'carbon.activityLevel.activePractice', color: 'yellow' };
+  if (co2e <= 60) return { level: 'carbon.activityLevel.corePractice', color: 'orange' };
+  return { level: 'carbon.activityLevel.majorActivity', color: 'orange' };
 }
 
 /**

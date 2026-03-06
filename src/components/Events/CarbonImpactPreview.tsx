@@ -348,7 +348,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                     kg CO₂e
                   </Text>
                   <Badge colorScheme={impactLevel.color} size="sm">
-                    {impactLevel.level}
+                    {intl.formatMessage({ id: impactLevel.level })}
                   </Badge>
                 </HStack>
                 <Text fontSize="xs" color="gray.500">

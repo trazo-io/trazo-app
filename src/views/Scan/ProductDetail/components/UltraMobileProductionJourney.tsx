@@ -789,18 +789,21 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               >
                 <Text fontSize="md" fontWeight="bold" color="purple.600" whiteSpace="nowrap">
                   {(() => {
-                    const verifiedEvents = filteredEvents.filter(
+                    const documentedEvents = filteredEvents.filter(
                       (e) =>
-                        e.blockchain_verified ||
-                        e.extra_data?.blockchain_verified
+                        (e.album && e.album.images?.length > 0) ||
+                        (e.albums && e.albums.length > 0) ||
+                        e.extra_data?.photo_count > 0
                     );
-                    return Math.round((verifiedEvents.length / filteredEvents.length) * 100) || 0;
+                    return filteredEvents.length > 0
+                      ? Math.round((documentedEvents.length / filteredEvents.length) * 100)
+                      : 0;
                   })()}
                   %
                 </Text>
                 <BlockchainTooltip>
                   <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" whiteSpace="nowrap">
-                    Verified
+                    {intl.formatMessage({ id: 'transparency.withPhotos' })}
                   </Text>
                 </BlockchainTooltip>
               </VStack>
@@ -1079,19 +1082,19 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                             px={2}
                             py={0.5}
                           >
-                            {impactCounts.high} HIGH IMPACT
+                            {impactCounts.high} {intl.formatMessage({ id: 'transparency.corePractices' })}
                           </Badge>
                         )}
                         {impactCounts.medium > 0 && (
                           <Badge
-                            colorScheme="yellow"
+                            colorScheme="blue"
                             variant="subtle"
                             fontSize="2xs"
                             borderRadius="full"
                             px={2}
                             py={0.5}
                           >
-                            {impactCounts.medium} MEDIUM
+                            {impactCounts.medium} {intl.formatMessage({ id: 'transparency.standard' })}
                           </Badge>
                         )}
                         {impactCounts.low > 0 && impactCounts.high === 0 && impactCounts.medium === 0 && (
@@ -1103,7 +1106,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                             px={2}
                             py={0.5}
                           >
-                            {impactCounts.low} LOW IMPACT
+                            {impactCounts.low} {intl.formatMessage({ id: 'transparency.supplementary' })}
                           </Badge>
                         )}
                       </HStack>

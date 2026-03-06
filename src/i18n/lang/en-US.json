@@ -3108,5 +3108,28 @@
   "quickFeedback.fullReviewAuth": "Write Detailed Review",
   "quickFeedback.thankYou": "Thank you for your feedback!",
   "quickFeedback.thankYouSubtitle": "Your comment helps improve agricultural transparency.",
-  "quickFeedback.leaveAnother": "Leave another comment"
+  "quickFeedback.leaveAnother": "Leave another comment",
+
+  "carbon.activityLevel.minimal": "Minimal",
+  "carbon.activityLevel.lightActivity": "Light Activity",
+  "carbon.activityLevel.standardActivity": "Standard Activity",
+  "carbon.activityLevel.activePractice": "Active Practice",
+  "carbon.activityLevel.corePractice": "Core Practice",
+  "carbon.activityLevel.majorActivity": "Major Activity",
+
+  "carbon.badge.epaUsdaSourced": "EPA/USDA-sourced",
+  "carbon.badge.epaUsda": "EPA/USDA",
+  "carbon.badge.epaUsdaTooltip": "Carbon calculation uses published EPA/USDA emission factors",
+  "carbon.badge.epaUsdaEmissionFactors": "EPA/USDA emission factors",
+
+  "production.environment": "Environment",
+  "production.outdoor": "Outdoor",
+  "production.indoor": "Indoor",
+  "production.general": "General",
+  "production.agriculturalProduction": "Agricultural Production",
+
+  "transparency.withPhotos": "With Photos",
+  "transparency.corePractices": "Core Practices",
+  "transparency.standard": "Standard",
+  "transparency.supplementary": "Supplementary"
 }

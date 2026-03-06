@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Box,
   VStack,
@@ -214,6 +215,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   onToggleExpand,
   productionBlockchain
 }) => {
+  const intl = useIntl();
   const [internalExpanded, setInternalExpanded] = useState(false);
   const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
   const toggleExpand = onToggleExpand || (() => setInternalExpanded((prev) => !prev));
@@ -579,7 +581,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               >
                 <HStack spacing={1}>
                   <Icon as={MdEco} boxSize={3} />
-                  <Text>{carbonImpactLevel ? carbonImpactLevel.level : `${sustainabilityLevel.toUpperCase()} IMPACT`}</Text>
+                  <Text>{carbonImpactLevel ? intl.formatMessage({ id: carbonImpactLevel.level }) : sustainabilityLevel === 'high' ? intl.formatMessage({ id: 'carbon.activityLevel.corePractice' }) : sustainabilityLevel === 'medium' ? intl.formatMessage({ id: 'carbon.activityLevel.standardActivity' }) : intl.formatMessage({ id: 'transparency.supplementary' })}</Text>
                 </HStack>
               </Badge>
             </HStack>

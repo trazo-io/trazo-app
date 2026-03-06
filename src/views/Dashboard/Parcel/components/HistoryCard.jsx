@@ -867,7 +867,7 @@ const HistoryCard = ({ amount }) => {
                                         >
                                           <HStack spacing={1}>
                                             <Icon as={FaAward} boxSize={2.5} />
-                                            <Text>EPA/USDA-sourced</Text>
+                                            <Text>{intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}</Text>
                                           </HStack>
                                         </Badge>
                                       )}

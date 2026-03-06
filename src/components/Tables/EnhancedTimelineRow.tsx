@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Box,
   Button,
@@ -579,6 +580,7 @@ const getEnhancedDescription = (event: Event) => {
 
 function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   const { logo, title, date, color, isLast, url, type, event, members, onEventClick } = props;
+  const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white.300');
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -781,7 +783,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       {/* EPA/USDA-sourced Badge - ULTRA-COMPACT SECONDARY (Optimized Space) */}
                       {carbonData?.usda_factors_based && (
                         <Tooltip
-                          label="Carbon calculation uses published EPA/USDA emission factors"
+                          label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                           hasArrow
                           placement="top"
                         >
@@ -797,7 +799,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             letterSpacing="0.05em"
                             cursor="help"
                           >
-                            EPA/USDA
+                            {intl.formatMessage({ id: 'carbon.badge.epaUsda' })}
                           </Badge>
                         </Tooltip>
                       )}

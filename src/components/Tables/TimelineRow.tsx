@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Box,
   Button,
@@ -265,6 +266,7 @@ const getQRVisibility = (event: Event): 'high' | 'medium' | 'low' => {
 
 function TimelineRow(props: TimelineRowProps) {
   const { logo, title, date, color, isLast, url, type, event, members, onEventClick } = props;
+  const intl = useIntl();
   const menuButtonRef = useRef();
   const textColor = useColorModeValue('gray.700', 'white.300');
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -459,7 +461,7 @@ function TimelineRow(props: TimelineRowProps) {
                           px={2}
                           py={1}
                         >
-                          EPA/USDA
+                          {intl.formatMessage({ id: 'carbon.badge.epaUsda' })}
                         </Badge>
                       )}
                     </HStack>

@@ -284,10 +284,15 @@ function ProfileProduction() {
           albums:
             (event as any).albums || (event as any).album ? [(event as any).album] : undefined,
           carbon_data: {
-            co2e: 0,
+            co2e:
+              (event as any).extra_data?.carbon_calculation?.co2e ??
+              (event as any).carbon_data?.co2e ??
+              (event as any).co2e ??
+              0,
             usda_factors_used: completeData?.isUsdaVerified || false,
             efficiency_score: completeData?.carbonScore || 0,
-            total_emissions: 0,
+            total_emissions:
+              (event as any).extra_data?.carbon_calculation?.total_emissions ?? 0,
             total_offsets: completeData?.totalOffsets || 0,
             net_footprint: transparencyApiData?.carbon_impact?.net_impact || 0,
             verification_confidence: ((event as any).verification_confidence ? 'high' : 'low') as
@@ -539,12 +544,12 @@ function ProfileProduction() {
                     {historyData?.finish_date ? 'Finished' : 'Active'}
                   </Badge>
                 </WrapItem>
-                {historyData?.product?.name && (
+                {historyData?.is_outdoor !== undefined && (
                   <WrapItem>
                     <Badge colorScheme="green" variant="subtle" px={2} py={1} borderRadius="full">
                       <HStack spacing={1}>
                         <Icon as={FaSeedling} boxSize={3} />
-                        <Text>Organic</Text>
+                        <Text>{historyData.is_outdoor ? intl.formatMessage({ id: 'production.outdoor' }) : intl.formatMessage({ id: 'production.indoor' })}</Text>
                       </HStack>
                     </Badge>
                   </WrapItem>
@@ -592,8 +597,8 @@ function ProfileProduction() {
           <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
             <StatCard
               icon={FaSeedling}
-              value={historyData?.product?.name ? 'Organic' : 'General'}
-              label="Production Type"
+              value={historyData?.is_outdoor ? intl.formatMessage({ id: 'production.outdoor' }) : historyData?.is_outdoor === false ? intl.formatMessage({ id: 'production.indoor' }) : intl.formatMessage({ id: 'production.general' })}
+              label={intl.formatMessage({ id: 'production.environment' })}
               colorScheme="green"
             />
             <StatCard
@@ -763,7 +768,9 @@ function ProfileProduction() {
                   ? 'Orchard'
                   : historyData?.type === 'GA'
                   ? 'Garden'
-                  : 'Sustainable Production'
+                  : historyData?.type
+                  ? historyData.type
+                  : intl.formatMessage({ id: 'production.agriculturalProduction' })
               }
             />
             <InfoRow
@@ -780,7 +787,7 @@ function ProfileProduction() {
               <InfoRow
                 icon={FaClipboardList}
                 label="Production Amount"
-                value={`${historyData.production_amount} units`}
+                value={`${historyData.production_amount} ${historyData.production_unit || 'units'}`}
               />
             )}
             {historyData?.earning && (
@@ -792,8 +799,8 @@ function ProfileProduction() {
             )}
             <InfoRow
               icon={FaLeaf}
-              label="Environment"
-              value={historyData?.is_outdoor ? 'Outdoor' : 'Indoor'}
+              label={intl.formatMessage({ id: 'production.environment' })}
+              value={historyData?.is_outdoor ? intl.formatMessage({ id: 'production.outdoor' }) : intl.formatMessage({ id: 'production.indoor' })}
             />
           </SimpleGrid>
         </StandardCard>
@@ -935,7 +942,22 @@ function ProfileProduction() {
         {/* Producer Information */}
         {historyData?.parcel?.establishment && (
           <StandardCard title="Producer Information" variant="elevated">
-            <CompanyEstablishmentInfo establishment={historyData.parcel.establishment} />
+            <CompanyEstablishmentInfo
+              companyData={historyData.parcel.establishment.company_name ? {
+                name: historyData.parcel.establishment.company_name,
+                location: historyData.parcel.establishment.location,
+              } : undefined}
+              establishmentData={{
+                name: historyData.parcel.establishment.name,
+                description: historyData.parcel.establishment.description,
+                location: typeof historyData.parcel.establishment.location === 'string'
+                  ? historyData.parcel.establishment.location
+                  : historyData.parcel.establishment.location?.address,
+              }}
+              parcelData={historyData.parcel ? {
+                name: historyData.parcel.name,
+              } : undefined}
+            />
           </StandardCard>
         )}
 

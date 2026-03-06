@@ -1069,7 +1069,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                           kg CO₂e
                         </Text>
                         <Badge colorScheme={getImpactLevel(carbonData.co2e).color} size="sm">
-                          {getImpactLevel(carbonData.co2e).level}
+                          {intl.formatMessage({ id: getImpactLevel(carbonData.co2e).level })}
                         </Badge>
                       </HStack>
                       <Text fontSize="xs" color="gray.500">

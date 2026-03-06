@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Box,
   VStack,
@@ -59,6 +60,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
   carbonPreview,
   progressPercent
 }) => {
+  const intl = useIntl();
   const [currentTip, setCurrentTip] = useState(0);
   const [visibleSkeletons, setVisibleSkeletons] = useState<string[]>([]);
 
@@ -348,7 +350,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
             </HStack>
             <HStack spacing={1}>
               <Icon as={FaCertificate} />
-              <Text>EPA/USDA-sourced</Text>
+              <Text>{intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}</Text>
             </HStack>
             <HStack spacing={1}>
               <Icon as={FaLeaf} />
