@@ -63,7 +63,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const [processingTime, setProcessingTime] = useState(0);
   const toast = useToast();
 
-  // Feature flag: check which voice provider is available
+  // Determine which voice provider to use (deepgram vs web speech API)
   const { data: voiceConfig } = useGetVoiceConfigQuery();
   const useDeepgram = voiceConfig?.provider === 'deepgram';
 
@@ -354,7 +354,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // Show unsupported message only when Web Speech API is the provider AND browser doesn't support it
   if (!useDeepgram && !browserSupportsSpeechRecognition) {
     return (
-      <Alert status="warning">
+      <Alert status="warning" borderRadius="md">
         <AlertIcon />
         <VStack align="start" spacing={2}>
           <Text fontWeight="bold">Voice input not supported</Text>

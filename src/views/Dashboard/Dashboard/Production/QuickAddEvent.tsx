@@ -1646,42 +1646,66 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
               )}
 
               {/* Voice Input Section */}
-              {!showVoiceCapture ? (
-                <SectionBox variant="default" borderColor="blue.200" bg="blue.50">
-                  <VStack spacing={4}>
-                    <SectionHeader
-                      icon={FaMicrophone}
-                      iconColor="blue.500"
-                      title={intl.formatMessage({ id: 'quickAdd.voiceInputTitle' })}
-                      badge={intl.formatMessage({ id: 'quickAdd.fastestMethod' })}
-                      badgeColorScheme="blue"
-                    />
+              {(() => {
+                const plan = currentCompany?.subscription_plan || currentCompany?.subscription?.plan;
+                const hasVoiceFeature = !!plan?.features?.voice_recording;
 
-                    <Text fontSize="sm" color="gray.600" textAlign="center">
-                      Say: "Applied fertilizer today, 200 pounds per acre"
-                    </Text>
+                if (!hasVoiceFeature) {
+                  return (
+                    <SectionBox variant="default" borderColor="gray.200" bg="gray.50">
+                      <VStack spacing={3}>
+                        <SectionHeader
+                          icon={FaMicrophone}
+                          iconColor="gray.400"
+                          title={intl.formatMessage({ id: 'quickAdd.voiceInputTitle' })}
+                          badge={intl.formatMessage({ id: 'quickAdd.fastestMethod' })}
+                          badgeColorScheme="gray"
+                        />
+                        <Text fontSize="sm" color="gray.600" textAlign="center">
+                          Voice input is available on Basic ($69/mo) and higher plans. Upgrade to capture farm events by simply speaking.
+                        </Text>
+                      </VStack>
+                    </SectionBox>
+                  );
+                }
 
-                    <StandardButton
-                      variant="primary"
-                      leftIcon={<Icon as={FaMicrophone} />}
-                      onClick={() => {
-                        setSelectedTemplate(null);
-                        setShowVoiceCapture(true);
-                      }}
-                      size="lg"
-                    >
-                      {intl.formatMessage({ id: 'quickAdd.startVoiceInput' })}
-                    </StandardButton>
-                  </VStack>
-                </SectionBox>
-              ) : (
-                <VoiceEventCapture
-                  onEventDetected={handleVoiceEventDetected}
-                  isActive={true}
-                  cropType={cropType}
-                  onClose={() => setShowVoiceCapture(false)}
-                />
-              )}
+                return !showVoiceCapture ? (
+                  <SectionBox variant="default" borderColor="blue.200" bg="blue.50">
+                    <VStack spacing={4}>
+                      <SectionHeader
+                        icon={FaMicrophone}
+                        iconColor="blue.500"
+                        title={intl.formatMessage({ id: 'quickAdd.voiceInputTitle' })}
+                        badge={intl.formatMessage({ id: 'quickAdd.fastestMethod' })}
+                        badgeColorScheme="blue"
+                      />
+
+                      <Text fontSize="sm" color="gray.600" textAlign="center">
+                        Say: "Applied fertilizer today, 200 pounds per acre"
+                      </Text>
+
+                      <StandardButton
+                        variant="primary"
+                        leftIcon={<Icon as={FaMicrophone} />}
+                        onClick={() => {
+                          setSelectedTemplate(null);
+                          setShowVoiceCapture(true);
+                        }}
+                        size="lg"
+                      >
+                        {intl.formatMessage({ id: 'quickAdd.startVoiceInput' })}
+                      </StandardButton>
+                    </VStack>
+                  </SectionBox>
+                ) : (
+                  <VoiceEventCapture
+                    onEventDetected={handleVoiceEventDetected}
+                    isActive={true}
+                    cropType={cropType}
+                    onClose={() => setShowVoiceCapture(false)}
+                  />
+                );
+              })()}
 
               <Divider />
 
