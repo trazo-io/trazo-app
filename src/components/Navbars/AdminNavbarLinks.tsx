@@ -147,31 +147,15 @@ export default function HeaderLinks(props: HeaderLinksProps) {
       flexShrink={0}
       minW={0}
     >
-      {/* Search Component - Show on all screen sizes when home */}
+      {/* Search Component - Icon on mobile, full input on desktop */}
       {subdomain === 'producer' && isHome && (
-        <Flex
-          alignItems="center"
-          w="auto"
-          flex="1"
-          maxW={{
-            base: 'none',
-            sm: '180px',
-            md: '220px',
-            lg: '260px',
-            xl: '300px'
-          }}
-          mr={{ base: 1, sm: 2, md: 3 }}
-          flexShrink={1}
-          minW={0}
-        >
-          <TrazoGlobalSearch
-            placeholder={
-              intl.formatMessage({ id: 'app.searchEstablishmentsAndParcels' }) ||
-              'Search establishments, parcels...'
-            }
-            size="md"
-          />
-        </Flex>
+        <TrazoGlobalSearch
+          placeholder={
+            intl.formatMessage({ id: 'app.searchEstablishmentsAndParcels' }) ||
+            'Search establishments, parcels...'
+          }
+          size="md"
+        />
       )}
 
       {/* Action Buttons - Consistent spacing */}

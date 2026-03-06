@@ -189,65 +189,84 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
     }
   };
 
+  // On small screens, show compact icon button instead of full input
+  const isCompactSearch = useBreakpointValue({ base: true, md: false });
+
   return (
     <>
-      {/* Search Input Trigger - Mobile Enhanced */}
-      <Box
-        position="relative"
-        width={{ base: '100%', sm: '100%', md: '100%', lg: '100%', xl: '320px' }}
-        flex="1"
-        maxW={{ base: 'none', sm: 'none', md: 'none', lg: 'none', xl: '320px' }}
-      >
-        <InputGroup>
-          <InputLeftElement
-            pointerEvents="none"
-            h={{ base: '40px', md: '44px' }}
-            w={{ base: '40px', md: '44px' }}
-            children={<SearchIcon color="gray.500" boxSize={{ base: 3.5, md: 4 }} />}
-          />
-          <StandardInput
-            ref={inputRef}
-            placeholder="Search"
-            value=""
-            onFocus={handleInputFocus}
-            onClick={handleInputFocus}
-            readOnly
-            cursor="pointer"
-            bg={bgColor}
-            borderColor={borderColor}
-            _hover={{
-              borderColor: hoverBorderColor,
-              boxShadow: '0 0 0 1px ' + hoverBorderColor
-            }}
-            _focus={{
-              borderColor: focusBorderColor,
-              boxShadow: '0 0 0 2px rgba(72, 187, 120, 0.2)'
-            }}
-            h={{ base: '40px', md: '44px' }}
-            fontSize={{ base: 'sm', md: 'sm' }}
-            borderRadius={{ base: 'lg', md: 'xl' }}
-            pl={{ base: '40px', md: '44px' }}
-            pr={{ base: '12px', md: '80px' }}
-            w="full"
-            transition="all 0.2s ease"
-          />
-          {/* Subtle keyboard shortcut hint - Desktop only */}
-          <Text
-            position="absolute"
-            right="12px"
-            top="50%"
-            transform="translateY(-50%)"
-            pointerEvents="none"
-            display={{ base: 'none', xl: 'block' }}
-            fontSize="xs"
-            color="gray.400"
-            fontFamily="mono"
-            letterSpacing="0.5px"
-          >
-            {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
-          </Text>
-        </InputGroup>
-      </Box>
+      {/* Search Trigger - Icon button on mobile, full input on desktop */}
+      {isCompactSearch ? (
+        <IconButton
+          ref={inputRef as any}
+          aria-label="Search"
+          icon={<SearchIcon boxSize={4} />}
+          variant="ghost"
+          size="sm"
+          color="gray.500"
+          onClick={handleInputFocus}
+          minW="32px"
+          h="36px"
+          borderRadius="lg"
+          _hover={{ bg: 'gray.100', color: 'gray.700' }}
+        />
+      ) : (
+        <Box
+          position="relative"
+          width={{ md: '100%', lg: '100%', xl: '320px' }}
+          flex="1"
+          maxW={{ md: 'none', lg: 'none', xl: '320px' }}
+        >
+          <InputGroup>
+            <InputLeftElement
+              pointerEvents="none"
+              h="44px"
+              w="44px"
+              children={<SearchIcon color="gray.500" boxSize={4} />}
+            />
+            <StandardInput
+              ref={inputRef}
+              placeholder="Search"
+              value=""
+              onFocus={handleInputFocus}
+              onClick={handleInputFocus}
+              readOnly
+              cursor="pointer"
+              bg={bgColor}
+              borderColor={borderColor}
+              _hover={{
+                borderColor: hoverBorderColor,
+                boxShadow: '0 0 0 1px ' + hoverBorderColor
+              }}
+              _focus={{
+                borderColor: focusBorderColor,
+                boxShadow: '0 0 0 2px rgba(72, 187, 120, 0.2)'
+              }}
+              h="44px"
+              fontSize="sm"
+              borderRadius="xl"
+              pl="44px"
+              pr={{ md: '80px' }}
+              w="full"
+              transition="all 0.2s ease"
+            />
+            {/* Subtle keyboard shortcut hint - Desktop only */}
+            <Text
+              position="absolute"
+              right="12px"
+              top="50%"
+              transform="translateY(-50%)"
+              pointerEvents="none"
+              display={{ base: 'none', xl: 'block' }}
+              fontSize="xs"
+              color="gray.400"
+              fontFamily="mono"
+              letterSpacing="0.5px"
+            >
+              {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
+            </Text>
+          </InputGroup>
+        </Box>
+      )}
 
       {/* Search Modal */}
       <Portal>

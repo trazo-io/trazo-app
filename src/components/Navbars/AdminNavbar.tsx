@@ -242,8 +242,8 @@ export default function AdminNavbar(props: AdminNavbarProps) {
           w={{ base: '100%', smd: 'auto' }}
           order={{ base: 2, smd: 1 }}
           justify={{ base: 'flex-start', smd: 'flex-start' }}
-          // Simple approach: Reserve fixed space for buttons
-          pr={{ base: '160px', sm: '180px', md: '200px', lg: '0px' }}
+          // No padding needed - column layout on mobile, flex handles spacing on desktop
+          pr={0}
           overflow="hidden"
         >
           <Breadcrumb
