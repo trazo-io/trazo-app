@@ -665,42 +665,6 @@ function ProfileEstablishment() {
           </StandardCard>
         )}
 
-        {/* Company Details */}
-        {establishmentData.company && (
-          <StandardCard title={intl.formatMessage({ id: 'establishment.companyInformation' })} variant="elevated">
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              <InfoRow icon={FaBuilding} label={intl.formatMessage({ id: 'app.company' })} value={establishmentData.company.name} />
-              {establishmentData.company.tradename &&
-                establishmentData.company.tradename !== establishmentData.company.name && (
-                  <InfoRow
-                    icon={FaBuilding}
-                    label={intl.formatMessage({ id: 'establishment.tradeName' })}
-                    value={establishmentData.company.tradename}
-                  />
-                )}
-              <InfoRow
-                icon={FaBuilding}
-                label={intl.formatMessage({ id: 'app.industry' })}
-                value={establishmentData.company.industry}
-              />
-              <InfoRow
-                icon={FaBuilding}
-                label={intl.formatMessage({ id: 'app.legalStructure' })}
-                value={establishmentData.company.legal_structure}
-              />
-              <InfoRow
-                icon={FaLeaf}
-                label={intl.formatMessage({ id: 'establishment.primaryCommodities' })}
-                value={establishmentData.company.primary_commodities}
-              />
-              <InfoRow
-                icon={FaLeaf}
-                label={intl.formatMessage({ id: 'establishment.sustainabilityCommitment' })}
-                value={establishmentData.company.sustainability_commitment}
-              />
-            </SimpleGrid>
-          </StandardCard>
-        )}
       </VStack>
     </StandardPage>
   );

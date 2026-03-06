@@ -190,8 +190,8 @@ const TrackList = ({ amount }) => {
   return (
     <Card
       key={`track-list-${parcelId}`}
-      h={{ base: '650px', md: '700px' }}
-      maxH={{ base: '650px', md: '700px' }}
+      h={{ base: '700px', md: '700px' }}
+      maxH={{ base: '700px', md: '700px' }}
       minW={{ base: '100%', md: '400px' }}
       w="100%"
       className="trazo-card">
@@ -200,7 +200,7 @@ const TrackList = ({ amount }) => {
           {/* Header with consistent height */}
           <Flex justify="space-between" align="center" pb={4}>
             <HStack spacing={3}>
-              <Text fontSize="lg" color={textColor} fontWeight="600">
+              <Text fontSize={{ base: 'md', md: 'lg' }} color={textColor} fontWeight="600">
                 {intl.formatMessage({ id: 'app.currentProduction' })}
               </Text>
               {currentHistory?.product && (
@@ -405,7 +405,7 @@ const TrackList = ({ amount }) => {
         </Box>
       </CardBody>
       {/* Modern Action Buttons - Single Add Event Dropdown */}
-      <Flex justify="flex-end" gap={3} p={{ base: '16px', md: '20px' }}>
+      <Flex justify={{ base: 'stretch', smd: 'flex-end' }} gap={3} p={{ base: '16px', md: '20px' }}>
         {!currentHistory?.product ? (
           <Button
             bg={bgButton}
@@ -413,8 +413,8 @@ const TrackList = ({ amount }) => {
             fontSize="sm"
             fontWeight="semibold"
             variant="no-hover"
-            minW={{ base: '100%', sm: '140px', md: '160px' }}
-            w={{ base: '100%', sm: 'auto' }}
+            minW={{ base: '100%', smd: '140px', md: '160px' }}
+            w={{ base: '100%', smd: 'auto' }}
             h="44px"
             borderRadius="12px"
             _hover={{
@@ -432,11 +432,10 @@ const TrackList = ({ amount }) => {
         ) : (
           <Flex
             gap={{ base: 2, md: 3 }}
-            justify="flex-end"
-            align="center"
+            justify={{ base: 'stretch', smd: 'flex-end' }}
+            align={{ base: 'stretch', smd: 'center' }}
             w="100%"
-            flexFlow={'wrap'}
-            direction={{ base: 'column', sm: 'row' }}>
+            direction={{ base: 'column', smd: 'row' }}>
             {/* Primary Add Event Dropdown Button */}
             {canWrite && <Menu isOpen={isAddEventMenuOpen} onClose={onAddEventMenuClose}>
               <MenuButton
@@ -448,8 +447,8 @@ const TrackList = ({ amount }) => {
                 fontSize="sm"
                 fontWeight="semibold"
                 variant="no-hover"
-                minW={{ base: '100%', sm: '120px', md: '140px' }}
-                w={{ base: '100%', sm: 'auto' }}
+                minW={{ base: '100%', smd: '120px', md: '140px' }}
+                w={{ base: '100%', smd: 'auto' }}
                 h="44px"
                 borderRadius="12px"
                 _hover={{
@@ -571,14 +570,13 @@ const TrackList = ({ amount }) => {
             {/* Finish Production Button - Only show if there are events */}
             {canWrite && currentHistory?.events && currentHistory?.events.length > 0 && (
               <Button
-                p={{ base: '0px', md: '16px' }}
+                px={{ base: 4, md: '16px' }}
                 leftIcon={<Icon as={FaFlag} />}
                 variant="outline"
                 colorScheme="green"
                 fontSize="sm"
                 fontWeight="semibold"
-                minW={{ base: '100%', sm: '140px', md: '160px' }}
-                w={{ base: '100%', sm: 'auto' }}
+                w={{ base: '100%', smd: 'auto' }}
                 h="44px"
                 borderRadius="12px"
                 _hover={{
@@ -591,7 +589,8 @@ const TrackList = ({ amount }) => {
                     `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${currentHistory?.id}/finish`
                   )
                 }>
-                {intl.formatMessage({ id: 'app.finishProduction' })}
+                <Text as="span" display={{ base: 'none', smd: 'inline' }}>{intl.formatMessage({ id: 'app.finishProduction' })}</Text>
+                <Text as="span" display={{ base: 'inline', smd: 'none' }}>{intl.formatMessage({ id: 'app.finish' })}</Text>
               </Button>
             )}
           </Flex>

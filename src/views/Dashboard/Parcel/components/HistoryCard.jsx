@@ -203,8 +203,8 @@ const HistoryCard = ({ amount }) => {
             gap={{ base: 3, md: 0 }}
             flexWrap="wrap"
           >
-            <HStack spacing={3} justify="flex-start" flexShrink={0}>
-              <Text fontSize="lg" color={textColor} fontWeight="600" whiteSpace="nowrap">
+            <Flex wrap="wrap" gap={2} align="center" flexShrink={0}>
+              <Text fontSize={{ base: 'md', md: 'lg' }} color={textColor} fontWeight="600" whiteSpace="nowrap">
                 {intl.formatMessage({ id: 'app.productions' })}
               </Text>
               <Badge
@@ -219,10 +219,11 @@ const HistoryCard = ({ amount }) => {
                 w="fit-content"
                 border="1px solid"
                 borderColor="green.200"
+                flexShrink={0}
               >
                 {intl.formatMessage({ id: 'parcel.transparencyTracked' })}
               </Badge>
-            </HStack>
+            </Flex>
 
             <Flex
               direction={{ base: 'column', sm: 'row' }}
@@ -304,45 +305,44 @@ const HistoryCard = ({ amount }) => {
           {/* Streamlined Statistics */}
           {productionStats && (
             <Flex
-              direction={{ base: 'row', sm: 'row' }}
+              direction="row"
               spacing={0}
               justify="space-between"
               pt={4}
-              wrap="wrap"
-              gap={{ base: 2, sm: 4 }}
+              gap={{ base: 1, smd: 4 }}
             >
-              <VStack spacing={1} flex="1" minW="60px">
+              <VStack spacing={1} flex="1" minW={0}>
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="green.500">
                   {productionStats.completed}
                 </Text>
-                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
+                <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
                   {intl.formatMessage({ id: 'parcel.completed' })}
                 </Text>
               </VStack>
 
-              <VStack spacing={1} flex="1" minW="60px">
+              <VStack spacing={1} flex="1" minW={0}>
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="blue.500">
                   {productionStats.ongoing}
                 </Text>
-                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
+                <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
                   {intl.formatMessage({ id: 'parcel.ongoing' })}
                 </Text>
               </VStack>
 
-              <VStack spacing={1} flex="1" minW="60px">
+              <VStack spacing={1} flex="1" minW={0}>
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="green.500">
                   {productionStats.avgScore !== null ? productionStats.avgScore : '--'}
                 </Text>
-                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
+                <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
                   {isMobile ? intl.formatMessage({ id: 'parcel.scoreLabel' }) : intl.formatMessage({ id: 'parcel.avgScore' })}
                 </Text>
               </VStack>
 
-              <VStack spacing={1} flex="1" minW="60px">
+              <VStack spacing={1} flex="1" minW={0}>
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="purple.500">
                   {productionStats.totalDocumentedEvents}
                 </Text>
-                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center">
+                <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
                   {isMobile ? intl.formatMessage({ id: 'parcel.eventsLabel' }) : intl.formatMessage({ id: 'parcel.eventsDocumented' })}
                 </Text>
               </VStack>
@@ -632,7 +632,7 @@ const HistoryCard = ({ amount }) => {
                                     justify="space-between"
                                     align="flex-start"
                                     gap={2}
-                                    wrap={{ base: 'wrap', sm: 'nowrap' }}
+                                    wrap={{ base: 'wrap', smd: 'nowrap' }}
                                   >
                                     <HStack spacing={3} flex={1} minW={0}>
                                       <Box
@@ -654,7 +654,7 @@ const HistoryCard = ({ amount }) => {
                                           fontSize="sm"
                                           fontWeight="600"
                                           color={textColor}
-                                          noOfLines={1}
+                                          noOfLines={2}
                                         >
                                           {production.name ||
                                             `${production.product || 'Organic'} Production ${
@@ -794,17 +794,17 @@ const HistoryCard = ({ amount }) => {
                                   </Flex>
 
                                   {/* Product & Team Info Row */}
-                                  <HStack justify="space-between" align="center" spacing={3}>
-                                    <HStack spacing={1}>
-                                      <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                                  <Flex wrap="wrap" justify="space-between" align="center" gap={2}>
+                                    <HStack spacing={1} minW={0} flex={1}>
+                                      <Text fontSize="xs" color="gray.500" fontWeight="medium" whiteSpace="nowrap">
                                         {intl.formatMessage({ id: 'parcel.productLabel' })}
                                       </Text>
-                                      <Text fontSize="xs" color="gray.700" fontWeight="600">
+                                      <Text fontSize="xs" color="gray.700" fontWeight="600" noOfLines={1} minW={0}>
                                         {production.product || 'Agricultural Product'}
                                       </Text>
                                     </HStack>
-                                    <HStack spacing={1}>
-                                      <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                                    <HStack spacing={1} flexShrink={0}>
+                                      <Text fontSize="xs" color="gray.500" fontWeight="medium" whiteSpace="nowrap">
                                         {intl.formatMessage({ id: 'parcel.teamLabel' })}
                                       </Text>
                                       <Text fontSize="xs" color="gray.700" fontWeight="500">
@@ -856,7 +856,7 @@ const HistoryCard = ({ amount }) => {
                                         })()}
                                       </Text>
                                     </HStack>
-                                  </HStack>
+                                  </Flex>
 
                                   {/* Trust Indicator Badges */}
                                   {(usesUSDAFactors || blockchainVerified) && (
@@ -917,22 +917,23 @@ const HistoryCard = ({ amount }) => {
                                         </Box>
                                         <VStack align="start" spacing={0}>
                                           <Text
-                                            fontSize="xs"
+                                            fontSize="2xs"
                                             color="gray.500"
                                             fontWeight="600"
                                             textTransform="uppercase"
-                                            letterSpacing="wide"
+                                            letterSpacing={{ base: 'normal', md: 'wide' }}
+                                            whiteSpace="nowrap"
                                           >
                                             {intl.formatMessage({ id: 'parcel.transparencyScoreLabel' })}
                                           </Text>
-                                          <Text fontSize="xs" color="gray.600">
+                                          <Text fontSize="2xs" color="gray.600">
                                             {intl.formatMessage({ id: 'parcel.agriculturalPractices' })}
                                           </Text>
                                         </VStack>
                                       </HStack>
                                       <VStack align="end" spacing={0}>
                                         <Text
-                                          fontSize="xl"
+                                          fontSize={{ base: 'lg', md: 'xl' }}
                                           fontWeight="700"
                                           color="green.500"
                                           lineHeight="1"

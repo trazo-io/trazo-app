@@ -769,42 +769,51 @@ function UnifiedSubscriptionDashboard() {
         <Card bg={cardBg} borderColor={borderColor}>
           <CardBody p={0}>
             <Tabs variant="enclosed" colorScheme="blue">
-              <TabList px={6} pt={6} borderBottom="1px" borderColor={borderColor}>
+              <TabList px={{ base: 2, md: 6 }} pt={{ base: 3, md: 6 }} borderBottom="1px" borderColor={borderColor}>
                 <Tab
+                  fontSize={{ base: 'xs', md: 'md' }}
+                  whiteSpace="nowrap"
+                  px={{ base: 2, md: 4 }}
                   _selected={{
                     color: 'blue.600',
                     borderColor: 'blue.600',
                     fontWeight: 'semibold'
                   }}
                 >
-                  <Icon as={FaChartBar} mr={2} />
+                  <Icon as={FaChartBar} mr={{ base: 1, md: 2 }} boxSize={{ base: 3, md: 4 }} />
                   {intl.formatMessage({ id: 'app.overview' })}
                 </Tab>
                 <Tab
+                  fontSize={{ base: 'xs', md: 'md' }}
+                  whiteSpace="nowrap"
+                  px={{ base: 2, md: 4 }}
                   _selected={{
                     color: 'blue.600',
                     borderColor: 'blue.600',
                     fontWeight: 'semibold'
                   }}
                 >
-                  <Icon as={FaCreditCard} mr={2} />
+                  <Icon as={FaCreditCard} mr={{ base: 1, md: 2 }} boxSize={{ base: 3, md: 4 }} />
                   {intl.formatMessage({ id: 'app.billing' })}
                 </Tab>
                 <Tab
+                  fontSize={{ base: 'xs', md: 'md' }}
+                  whiteSpace="nowrap"
+                  px={{ base: 2, md: 4 }}
                   _selected={{
                     color: 'blue.600',
                     borderColor: 'blue.600',
                     fontWeight: 'semibold'
                   }}
                 >
-                  <Icon as={FaFileInvoiceDollar} mr={2} />
+                  <Icon as={FaFileInvoiceDollar} mr={{ base: 1, md: 2 }} boxSize={{ base: 3, md: 4 }} />
                   {intl.formatMessage({ id: 'app.invoices' })}
                 </Tab>
               </TabList>
 
               <TabPanels>
                 {/* Overview Tab */}
-                <TabPanel p={6}>
+                <TabPanel p={{ base: 3, md: 6 }}>
                   <VStack spacing={6} align="stretch">
                     {/* Current Plan Card */}
                     <Box>
@@ -813,10 +822,10 @@ function UnifiedSubscriptionDashboard() {
                       </Text>
                       <Card bg={tabBg} borderWidth="1px" borderColor={borderColor}>
                         <CardBody>
-                          <Flex justify="space-between" align="start" mb={4}>
+                          <Flex direction={{ base: 'column', md: 'row' }} justify="space-between" align={{ base: 'stretch', md: 'start' }} mb={4} gap={3}>
                             <Box>
-                              <HStack mb={2}>
-                                <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                              <Flex wrap="wrap" align="center" gap={2} mb={2}>
+                                <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color={textColor} whiteSpace="nowrap">
                                   {plan?.name}
                                 </Text>
                                 <Badge
@@ -834,15 +843,15 @@ function UnifiedSubscriptionDashboard() {
                                 >
                                   {intl.formatMessage({ id: `subscription.status${(subscription?.status || 'unknown').charAt(0).toUpperCase() + (subscription?.status || 'unknown').slice(1)}` })}
                                 </Badge>
-                              </HStack>
-                              <Text fontSize="3xl" fontWeight="bold" color="blue.600">
+                              </Flex>
+                              <Text fontSize={{ base: '2xl', md: '3xl' }} fontWeight="bold" color="blue.600">
                                 ${plan?.price}
-                                <Text as="span" fontSize="lg" color="gray.500" fontWeight="normal">
+                                <Text as="span" fontSize={{ base: 'md', md: 'lg' }} color="gray.500" fontWeight="normal">
                                   /{intl.formatMessage({ id: `app.${plan?.interval}` })}
                                 </Text>
                               </Text>
                             </Box>
-                            <VStack align="end" spacing={2}>
+                            <HStack spacing={2} justify={{ base: 'flex-start', md: 'flex-end' }}>
                               {subscription?.cancel_at_period_end ? (
                                 <Button
                                   size="sm"
@@ -873,7 +882,7 @@ function UnifiedSubscriptionDashboard() {
                                   </Button>
                                 </>
                               )}
-                            </VStack>
+                            </HStack>
                           </Flex>
 
                           {subscription?.cancel_at_period_end && (
@@ -1471,7 +1480,7 @@ function UnifiedSubscriptionDashboard() {
                 </TabPanel>
 
                 {/* Billing Tab */}
-                <TabPanel p={6}>
+                <TabPanel p={{ base: 3, md: 6 }}>
                   <VStack spacing={6} align="stretch">
                     {/* Payment Methods */}
                     <Box>
@@ -1605,7 +1614,7 @@ function UnifiedSubscriptionDashboard() {
                 </TabPanel>
 
                 {/* Invoices Tab */}
-                <TabPanel p={6}>
+                <TabPanel p={{ base: 3, md: 6 }}>
                   <VStack spacing={6} align="stretch">
                     <Text fontSize="lg" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.invoiceHistory' })}

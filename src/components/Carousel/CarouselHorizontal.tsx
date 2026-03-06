@@ -211,8 +211,8 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
           {canCreateParcel && (
             <Button
               p="0px"
-              w="90px"
-              h="90px"
+              w={{ base: '60px', md: '90px' }}
+              h={{ base: '60px', md: '90px' }}
               bg="transparent"
               color="green.500"
               borderRadius="xl"
@@ -229,9 +229,9 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                 navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/add`)
               }
             >
-              <Flex direction="column" align="center" justify="center" gap={1}>
-                <Icon as={FaPlus} color="green.500" fontSize="20px" />
-                <Text fontSize="xs" fontWeight="medium" color="green.600">
+              <Flex direction="column" align="center" justify="center" gap={0.5}>
+                <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
+                <Text fontSize={{ base: '2xs', md: 'xs' }} fontWeight="medium" color="green.600">
                   {intl.formatMessage({ id: 'app.new' }) || 'New'}
                 </Text>
               </Flex>

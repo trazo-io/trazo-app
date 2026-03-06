@@ -102,7 +102,7 @@ export default function DashboardView() {
     lg: '340px',
     xl: 'auto'
   });
-  const cardHeight = useBreakpointValue({ base: '100px', md: '90px', lg: '90px', xl: '90px' });
+  const cardHeight = useBreakpointValue({ base: '80px', md: '90px', lg: '90px', xl: '90px' });
 
   // State for scroll progress tracking
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -553,9 +553,9 @@ export default function DashboardView() {
                           {canWrite && canCreateEstablishment && (
                             <Button
                               p="0px"
-                              w="100px"
+                              w={{ base: '60px', md: '100px' }}
                               h={cardHeight}
-                              minW="100px"
+                              minW={{ base: '60px', md: '100px' }}
                               flexShrink={0}
                               bg="transparent"
                               color="green.500"
@@ -570,9 +570,9 @@ export default function DashboardView() {
                               }}
                               onClick={toggleAddEstablishment}
                             >
-                              <Flex direction="column" align="center" justify="center" gap={1}>
-                                <Icon as={FaPlus} color="green.500" fontSize="20px" />
-                                <Text fontSize="xs" fontWeight="medium" color="green.600">
+                              <Flex direction="column" align="center" justify="center" gap={0.5}>
+                                <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
+                                <Text fontSize={{ base: '2xs', md: 'xs' }} fontWeight="medium" color="green.600">
                                   {intl.formatMessage({ id: 'app.new' })}
                                 </Text>
                               </Flex>
@@ -670,8 +670,8 @@ export default function DashboardView() {
                       {canWrite && canCreateEstablishment && (
                         <Button
                           p="0px"
-                          w="77px"
-                          h="90px"
+                          w={{ base: '60px', md: '77px' }}
+                          h={{ base: '70px', md: '90px' }}
                           bg="transparent"
                           color="green.500"
                           borderRadius="xl"
@@ -685,9 +685,9 @@ export default function DashboardView() {
                           }}
                           onClick={toggleAddEstablishment}
                         >
-                          <Flex direction="column" align="center" justify="center" gap={1}>
-                            <Icon as={FaPlus} color="green.500" fontSize="20px" />
-                            <Text fontSize="xs" fontWeight="medium" color="green.600">
+                          <Flex direction="column" align="center" justify="center" gap={0.5}>
+                            <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
+                            <Text fontSize={{ base: '2xs', md: 'xs' }} fontWeight="medium" color="green.600">
                               {intl.formatMessage({ id: 'app.new' }) || 'New'}
                             </Text>
                           </Flex>

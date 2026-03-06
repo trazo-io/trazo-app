@@ -687,6 +687,13 @@ function Sidebar(props: SidebarProps) {
   // Determine if we're on mobile
   const isMobile = useBreakpointValue({ base: true, xl: false });
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    if (isMobile && props.isOpen && props.onClose) {
+      props.onClose();
+    }
+  }, [location.pathname]);
+
   // SIDEBAR
   if (isMobile) {
     // Mobile view - render as drawer

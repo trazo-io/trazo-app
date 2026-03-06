@@ -249,8 +249,8 @@ const SmartUsageCard = ({
 
   return (
     <Card
-      h="290px"
-      p={6}
+      minH="290px"
+      p={{ base: 4, md: 6 }}
       bg={cardBg}
       borderRadius="15px"
       boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
@@ -421,7 +421,7 @@ const SmartUsageCard = ({
             bg={smartInsight.actionColor}
             color="white"
             size="md"
-            fontSize="sm"
+            fontSize={{ base: 'xs', md: 'sm' }}
             fontWeight="600"
             borderRadius="xl"
             leftIcon={<Icon as={smartInsight.actionIcon} />}
@@ -444,8 +444,7 @@ const SmartUsageCard = ({
                   onViewAnalytics();
               }
             }}
-            w="calc(100% - 8px)"
-            mx="4px"
+            w="100%"
             _hover={{
               transform: 'translateY(-1px)',
               boxShadow: '0px 6px 20px rgba(76, 175, 80, 0.3)'

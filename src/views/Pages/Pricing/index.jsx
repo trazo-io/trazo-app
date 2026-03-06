@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
+  Flex,
   HStack,
   Icon,
   SimpleGrid,
@@ -1317,7 +1318,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                       <Text fontSize="xs" color="green.600" textAlign="center" fontWeight="medium">
                         {t('app.perfectYouHaveActivePlan')}
                       </Text>
-                      <HStack spacing={2} justify="center">
+                      <Flex direction={{ base: 'column', md: 'row' }} gap={2} justify="center" w="full">
                         <StandardButton
                           variant="primary"
                           size="sm"
@@ -1326,6 +1327,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                           loadingText={t('app.processingPayment')}
                           leftIcon={<Icon as={FaShieldAlt} />}
                           colorScheme="green"
+                          w={{ base: 'full', md: 'auto' }}
                         >
                           {t('app.addBlockchainPrice')}
                         </StandardButton>
@@ -1334,10 +1336,11 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                           size="sm"
                           onClick={() => navigate('/admin/dashboard')}
                           leftIcon={<Icon as={FaRocket} />}
+                          w={{ base: 'full', md: 'auto' }}
                         >
                           {t('app.goToDashboard')}
                         </StandardButton>
-                      </HStack>
+                      </Flex>
                     </VStack>
                   ) : (
                     <VStack spacing={1} w="full">

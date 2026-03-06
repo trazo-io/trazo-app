@@ -638,15 +638,15 @@ function TransparencyDashboard() {
                 <Heading size="md" color={titleColor} mb={4} fontSize={{ base: 'lg', md: 'xl' }}>
                   {intl.formatMessage({ id: 'transparency.overview' })}
                 </Heading>
-                <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
+                <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2, md: 4 }}>
                   <Card bg="green.50" border="1px solid" borderColor="green.100" borderRadius="xl">
-                    <CardBody p={4} textAlign="center">
-                      <VStack spacing={2}>
-                        <Icon as={FaLeaf} color="green.500" boxSize={6} />
-                        <Text fontSize="xl" fontWeight="bold" color="green.700">
+                    <CardBody p={{ base: 3, md: 4 }} textAlign="center">
+                      <VStack spacing={{ base: 1, md: 2 }}>
+                        <Icon as={FaLeaf} color="green.500" boxSize={{ base: 5, md: 6 }} />
+                        <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="green.700">
                           {Math.round(actualTransparencyScore * 100)}%
                         </Text>
-                        <Text fontSize="sm" color="green.600">
+                        <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.600" whiteSpace="nowrap">
                           {intl.formatMessage({ id: 'transparency.transparencyScore' })}
                         </Text>
                       </VStack>
@@ -654,13 +654,13 @@ function TransparencyDashboard() {
                   </Card>
 
                   <Card bg="blue.50" border="1px solid" borderColor="blue.100" borderRadius="xl">
-                    <CardBody p={4} textAlign="center">
-                      <VStack spacing={2}>
-                        <Icon as={FaCloudUploadAlt} color="blue.500" boxSize={6} />
-                        <Text fontSize="xl" fontWeight="bold" color="blue.700">
+                    <CardBody p={{ base: 3, md: 4 }} textAlign="center">
+                      <VStack spacing={{ base: 1, md: 2 }}>
+                        <Icon as={FaCloudUploadAlt} color="blue.500" boxSize={{ base: 5, md: 6 }} />
+                        <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="blue.700">
                           {totalEvents}
                         </Text>
-                        <Text fontSize="sm" color="blue.600">
+                        <Text fontSize={{ base: 'xs', md: 'sm' }} color="blue.600" whiteSpace="nowrap">
                           {intl.formatMessage({ id: 'transparency.eventsLogged' })}
                         </Text>
                       </VStack>
@@ -673,13 +673,13 @@ function TransparencyDashboard() {
                     borderColor="purple.100"
                     borderRadius="xl"
                   >
-                    <CardBody p={4} textAlign="center">
-                      <VStack spacing={2}>
-                        <Icon as={FaPhotoVideo} color="purple.500" boxSize={6} />
-                        <Text fontSize="xl" fontWeight="bold" color="purple.700">
+                    <CardBody p={{ base: 3, md: 4 }} textAlign="center">
+                      <VStack spacing={{ base: 1, md: 2 }}>
+                        <Icon as={FaPhotoVideo} color="purple.500" boxSize={{ base: 5, md: 6 }} />
+                        <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="purple.700">
                           {totalPhotos}
                         </Text>
-                        <Text fontSize="sm" color="purple.600">
+                        <Text fontSize={{ base: 'xs', md: 'sm' }} color="purple.600" whiteSpace="nowrap">
                           {intl.formatMessage({ id: 'transparency.photosAdded' })}
                         </Text>
                       </VStack>
@@ -692,25 +692,25 @@ function TransparencyDashboard() {
                     borderColor="orange.100"
                     borderRadius="xl"
                   >
-                    <CardBody p={4} textAlign="center">
-                      <VStack spacing={2}>
-                        <Icon as={FaSeedling} color="orange.500" boxSize={6} />
-                        <HStack spacing={3} justify="center">
+                    <CardBody p={{ base: 3, md: 4 }} textAlign="center">
+                      <VStack spacing={{ base: 1, md: 2 }}>
+                        <Icon as={FaSeedling} color="orange.500" boxSize={{ base: 5, md: 6 }} />
+                        <HStack spacing={{ base: 2, md: 3 }} justify="center">
                           <VStack spacing={0}>
-                            <Text fontSize="lg" fontWeight="bold" color="green.600">
+                            <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="bold" color="green.600">
                               {activeProductions}
                             </Text>
-                            <Text fontSize="xs" color="green.500">{intl.formatMessage({ id: 'transparency.statusActive' })}</Text>
+                            <Text fontSize={{ base: '2xs', md: 'xs' }} color="green.500" whiteSpace="nowrap">{intl.formatMessage({ id: 'transparency.statusActive' })}</Text>
                           </VStack>
                           <Text color="gray.300">|</Text>
                           <VStack spacing={0}>
-                            <Text fontSize="lg" fontWeight="bold" color="orange.600">
+                            <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="bold" color="orange.600">
                               {completedProductions}
                             </Text>
-                            <Text fontSize="xs" color="orange.500">{intl.formatMessage({ id: 'transparency.statusCompleted' })}</Text>
+                            <Text fontSize={{ base: '2xs', md: 'xs' }} color="orange.500" whiteSpace="nowrap">{intl.formatMessage({ id: 'transparency.statusCompleted' })}</Text>
                           </VStack>
                         </HStack>
-                        <Text fontSize="sm" color="orange.600">
+                        <Text fontSize={{ base: 'xs', md: 'sm' }} color="orange.600" whiteSpace="nowrap">
                           {intl.formatMessage({ id: 'transparency.productions' })}
                         </Text>
                       </VStack>

@@ -637,13 +637,14 @@ export default function CommercialView() {
                 align={{ base: 'stretch', lg: 'center' }}
                 justify="space-between"
               >
-                <HStack spacing={4} flex={1} wrap="wrap">
+                <Flex direction={{ base: 'column', md: 'row' }} gap={{ base: 2, md: 4 }} flex={1} wrap="wrap">
                   <Menu>
                     <MenuButton
                       as={Button}
                       rightIcon={<IoIosArrowDown />}
-                      size="md"
-                      minW="180px"
+                      size={{ base: 'sm', md: 'md' }}
+                      minW={{ base: 'auto', md: '180px' }}
+                      w={{ base: 'full', md: 'auto' }}
                       variant="outline"
                       borderColor="green.500"
                       color="green.500"
@@ -685,8 +686,9 @@ export default function CommercialView() {
                     <MenuButton
                       as={Button}
                       rightIcon={<IoIosArrowDown />}
-                      size="md"
-                      minW="180px"
+                      size={{ base: 'sm', md: 'md' }}
+                      minW={{ base: 'auto', md: '180px' }}
+                      w={{ base: 'full', md: 'auto' }}
                       variant="outline"
                       borderColor="green.500"
                       color="green.500"
@@ -741,8 +743,9 @@ export default function CommercialView() {
                     <MenuButton
                       as={Button}
                       rightIcon={<IoIosArrowDown />}
-                      size="md"
-                      minW="180px"
+                      size={{ base: 'sm', md: 'md' }}
+                      minW={{ base: 'auto', md: '180px' }}
+                      w={{ base: 'full', md: 'auto' }}
                       variant="outline"
                       borderColor="green.500"
                       color="green.500"
@@ -780,14 +783,15 @@ export default function CommercialView() {
                         ))}
                     </MenuList>
                   </Menu>
-                </HStack>
+                </Flex>
 
                 <Menu>
                   <MenuButton
                     as={Button}
                     rightIcon={<IoIosArrowDown />}
-                    size="md"
-                    minW="150px"
+                    size={{ base: 'sm', md: 'md' }}
+                    minW={{ base: 'auto', md: '150px' }}
+                    w={{ base: 'full', md: 'auto' }}
                     bg="green.500"
                     color="white"
                     fontWeight="medium"

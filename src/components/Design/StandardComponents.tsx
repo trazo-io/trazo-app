@@ -107,7 +107,7 @@ export const StandardPage = ({
 
       {/* Full Hero Header Section - With title */}
       {hasHeroContent && (
-        <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt="120px" pb="80px" px={4}>
+        <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt={{ base: '100px', md: '120px' }} pb={{ base: '40px', md: '80px' }} px={4}>
           <Container maxW="6xl" mx="auto">
             <VStack spacing={4} textAlign="center">
               {isMobile ? (
@@ -130,7 +130,7 @@ export const StandardPage = ({
                     {title && (
                       <Heading
                         as="h1"
-                        size="2xl"
+                        size="xl"
                         color="green.600"
                         fontWeight="bold"
                         textAlign="center"
@@ -142,7 +142,7 @@ export const StandardPage = ({
                     )}
                     {description && (
                       <Text
-                        fontSize="lg"
+                        fontSize="md"
                         color="gray.600"
                         fontWeight="normal"
                         maxW="90%"

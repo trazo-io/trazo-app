@@ -677,8 +677,8 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
           onClick={() => (onEventClick ? onEventClick(event) : navigate(url))}
           className="trazo-card"
         >
-          <CardBody p={4}>
-            <VStack align="stretch" spacing={4}>
+          <CardBody p={{ base: 3, md: 4 }}>
+            <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
               {/* Clean Header */}
               <Flex justify="space-between" align="flex-start" w="100%">
                 <HStack spacing={3} flex={1} minW={0}>
@@ -691,7 +691,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                   <VStack align="flex-start" spacing={1} flex={1} minW={0}>
                     <Tooltip label={title} placement="top" hasArrow openDelay={500}>
                       <Text
-                        fontSize="lg"
+                        fontSize={{ base: 'md', md: 'lg' }}
                         fontWeight="600"
                         color={textColor}
                         noOfLines={2}
@@ -828,7 +828,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     </>
                   ) : (
                     <>
-                      <Text fontSize="sm" fontWeight="600" color="gray.700">
+                      <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="600" color="gray.700">
                         {new Date(event.date).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric'
@@ -846,13 +846,13 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
               </Flex>
 
               {/* Clean Description */}
-              <Text fontSize="sm" color="gray.600" lineHeight="relaxed" noOfLines={2}>
+              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" lineHeight="relaxed" noOfLines={2}>
                 {enhancedDescription}
               </Text>
 
               {/* Simplified Key Details */}
               {eventFields.length > 0 && (
-                <Grid templateColumns="repeat(auto-fit, minmax(120px, 1fr))" gap={3} w="100%">
+                <Grid templateColumns="repeat(auto-fit, minmax(100px, 1fr))" gap={2} w="100%">
                   {eventFields.slice(0, 3).map((field, index) => (
                     <VStack key={index} align="flex-start" spacing={1} minW={0}>
                       <Text fontSize="xs" color="gray.500" fontWeight="500" noOfLines={1}>
@@ -860,7 +860,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       </Text>
                       <HStack spacing={1}>
                         {field.icon && <Icon as={field.icon} color={field.color} boxSize={3} />}
-                        <Text fontSize="sm" fontWeight="600" color="gray.700" noOfLines={1}>
+                        <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="600" color="gray.700" noOfLines={1}>
                           {field.value}
                         </Text>
                       </HStack>
