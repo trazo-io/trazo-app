@@ -348,7 +348,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
             </HStack>
             <HStack spacing={1}>
               <Icon as={FaCertificate} />
-              <Text>USDA Compliant</Text>
+              <Text>EPA/USDA-sourced</Text>
             </HStack>
             <HStack spacing={1}>
               <Icon as={FaLeaf} />

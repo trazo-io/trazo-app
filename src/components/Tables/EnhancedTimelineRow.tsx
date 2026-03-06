@@ -778,10 +778,10 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                         </Tooltip>
                       )}
 
-                      {/* USDA Badge - ULTRA-COMPACT SECONDARY (Optimized Space) */}
+                      {/* EPA/USDA-sourced Badge - ULTRA-COMPACT SECONDARY (Optimized Space) */}
                       {carbonData?.usda_factors_based && (
                         <Tooltip
-                          label="Carbon calculation uses published EPA emission factors"
+                          label="Carbon calculation uses published EPA/USDA emission factors"
                           hasArrow
                           placement="top"
                         >
@@ -797,7 +797,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             letterSpacing="0.05em"
                             cursor="help"
                           >
-                            USDA
+                            EPA/USDA
                           </Badge>
                         </Tooltip>
                       )}

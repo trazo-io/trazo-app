@@ -165,8 +165,9 @@ const HistoryCard = ({ amount }) => {
     }, 0);
 
     // Count total documented events across all productions
+    // Use events_count from API (annotated), fallback to events array length
     const totalDocumentedEvents = data.reduce((sum, p) => {
-      const eventCount = p.events ? p.events.length : 0;
+      const eventCount = p.events_count || (p.events ? p.events.length : 0);
       return sum + eventCount;
     }, 0);
 
@@ -866,7 +867,7 @@ const HistoryCard = ({ amount }) => {
                                         >
                                           <HStack spacing={1}>
                                             <Icon as={FaAward} boxSize={2.5} />
-                                            <Text>USDA</Text>
+                                            <Text>EPA/USDA-sourced</Text>
                                           </HStack>
                                         </Badge>
                                       )}

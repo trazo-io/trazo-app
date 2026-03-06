@@ -459,7 +459,7 @@ function TimelineRow(props: TimelineRowProps) {
                           px={2}
                           py={1}
                         >
-                          USDA Factors
+                          EPA/USDA
                         </Badge>
                       )}
                     </HStack>
