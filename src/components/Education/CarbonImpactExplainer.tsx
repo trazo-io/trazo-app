@@ -494,7 +494,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                     EPA Emission Factors
                   </Text>
                   <Text fontSize="xs" color="purple.600">
-                    Fuel combustion emissions use EPA verified factors: diesel releases 10.21 kg
+                    Fuel combustion emissions use published EPA factors: diesel releases 10.21 kg
                     CO2e per gallon, gasoline releases 8.78 kg CO2e per gallon. Grid electricity
                     emissions are based on EPA eGRID 2023 regional averages.
                   </Text>

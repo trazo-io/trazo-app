@@ -49,10 +49,10 @@ const educationalContent: Record<
   carbon_footprint: {
     definition: 'Carbon Footprint',
     explanation:
-      'The total amount of greenhouse gases produced during the entire life cycle of a product, from growing to your table. Think of it as the environmental "receipt" for your food.',
+      'The total amount of greenhouse gases produced by direct farming operations — fuel, fertilizer, equipment, and irrigation. Think of it as the environmental "receipt" for growing your food.',
     icon: FaLeaf,
     color: 'green',
-    example: 'Includes farming, transportation, processing, and packaging emissions'
+    example: 'Covers farmer-controlled emissions: fuel combustion, fertilizer application, and equipment operation'
   },
   usda_factors_used: {
     definition: 'EPA/USDA Emission Factors',
@@ -114,7 +114,7 @@ const educationalContent: Record<
   quick_add: {
     definition: 'Quick Add Event',
     explanation:
-      'The fastest way to log farming activities in under 60 seconds. Choose from 8 event types, smart defaults pre-fill common values, and voice capture lets you document hands-free.',
+      'The fastest way to log farming activities in under 60 seconds. Choose from 7 event types, smart defaults pre-fill common values, and voice capture lets you document hands-free.',
     icon: FaLeaf,
     color: 'green',
     example: 'Log 5-7 events weekly to achieve 85%+ transparency score'
@@ -189,7 +189,7 @@ const educationalContent: Record<
       'Your 0-100% score based on documented farming events. More events logged = higher score = more consumer trust. Unlike carbon scores, transparency rewards complete documentation.',
     icon: FaBalanceScale,
     color: 'green',
-    example: '85%+ transparency unlocks 15-30% premium pricing opportunities'
+    example: '85%+ transparency signals strong documentation and builds consumer trust'
   }
 };
 

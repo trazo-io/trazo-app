@@ -250,15 +250,15 @@ function ProfileEstablishment() {
 
       if (navigator.share) {
         await navigator.share({
-          title: `${establishmentData?.name} - Sustainable Agriculture`,
-          text: `Check out this sustainable farm! ${establishmentData?.description || ''}`,
+          title: `${establishmentData?.name} - ${intl.formatMessage({ id: 'establishment.shareTitle' })}`,
+          text: `${intl.formatMessage({ id: 'establishment.shareText' })} ${establishmentData?.description || ''}`,
           url: publicProfileUrl
         });
       } else {
         await navigator.clipboard.writeText(publicProfileUrl);
         toast({
-          title: 'Enlace copiado',
-          description: 'El enlace del perfil público ha sido copiado al portapapeles.',
+          title: intl.formatMessage({ id: 'establishment.linkCopied' }),
+          description: intl.formatMessage({ id: 'establishment.linkCopiedDescription' }),
           status: 'success',
           duration: 3000,
           isClosable: true
@@ -283,7 +283,7 @@ function ProfileEstablishment() {
     return (
       <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
         <Center py={20}>
-          <Text color="red.500">Error al cargar los datos del establecimiento.</Text>
+          <Text color="red.500">{intl.formatMessage({ id: 'establishment.errorLoading' })}</Text>
         </Center>
       </StandardPage>
     );
@@ -347,7 +347,7 @@ function ProfileEstablishment() {
               <HStack spacing={2} flexWrap="wrap">
                 {establishmentData.is_active !== false && (
                   <Badge colorScheme="green" variant="subtle" px={2} py={1} borderRadius="full">
-                    Activo
+                    {intl.formatMessage({ id: 'app.active' })}
                   </Badge>
                 )}
                 {(establishmentData.establishment_type || establishmentData.type) && (
@@ -369,10 +369,10 @@ function ProfileEstablishment() {
 
         {/* Photo Gallery */}
         {establishmentData.images && establishmentData.images.length > 0 && (
-          <StandardCard title="Galería de Fotos" variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.photoGallery' })} variant="elevated">
             <StandardImageGallery
               images={establishmentData.images}
-              title="Fotos del Establecimiento"
+              title={intl.formatMessage({ id: 'establishment.establishmentPhotos' })}
               variant="default"
               enablePreview={true}
               showImageCount={true}
@@ -383,7 +383,7 @@ function ProfileEstablishment() {
         )}
 
         {/* Quick Stats - Updated: Removed employee_count (not consumer-relevant) */}
-        <StandardCard title="Estadísticas Rápidas" variant="elevated">
+        <StandardCard title={intl.formatMessage({ id: 'establishment.quickStats' })} variant="elevated">
           <SimpleGrid columns={{ base: 2, md: 3 }} spacing={6}>
             <VStack spacing={1} align="center" p={4} bg="green.50" borderRadius="lg">
               <Icon as={FaTractor} color="green.500" boxSize={6} />
@@ -391,7 +391,7 @@ function ProfileEstablishment() {
                 {establishmentData.total_acreage || 0}
               </Text>
               <Text fontSize="sm" color="gray.600">
-                Acres
+                {intl.formatMessage({ id: 'app.acres' })}
               </Text>
             </VStack>
             <VStack spacing={1} align="center" p={4} bg="purple.50" borderRadius="lg">
@@ -400,7 +400,7 @@ function ProfileEstablishment() {
                 {establishmentData.year_established || '--'}
               </Text>
               <Text fontSize="sm" color="gray.600">
-                Fundado
+                {intl.formatMessage({ id: 'establishment.founded' })}
               </Text>
             </VStack>
             <VStack spacing={1} align="center" p={4} bg="orange.50" borderRadius="lg">
@@ -409,35 +409,35 @@ function ProfileEstablishment() {
                 {getCropsGrown().length}
               </Text>
               <Text fontSize="sm" color="gray.600">
-                Cultivos
+                {intl.formatMessage({ id: 'establishment.crops' })}
               </Text>
             </VStack>
           </SimpleGrid>
         </StandardCard>
 
         {/* Contact Information */}
-        <StandardCard title="Información de Contacto" variant="elevated">
+        <StandardCard title={intl.formatMessage({ id: 'app.contactInformation' })} variant="elevated">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
             <InfoRow
               icon={FaEnvelope}
-              label="Correo Electrónico"
+              label={intl.formatMessage({ id: 'establishment.emailAddress' })}
               value={establishmentData.email || establishmentData.contact_email}
               type="email"
             />
             <InfoRow
               icon={FaPhone}
-              label="Teléfono"
+              label={intl.formatMessage({ id: 'app.phone' })}
               value={establishmentData.phone || establishmentData.contact_phone}
               type="phone"
             />
             <InfoRow
               icon={FaUsers}
-              label="Persona de Contacto"
+              label={intl.formatMessage({ id: 'establishment.contactPerson' })}
               value={establishmentData.contact_person}
             />
             <InfoRow
               icon={FaGlobe}
-              label="Sitio Web"
+              label={intl.formatMessage({ id: 'app.website' })}
               value={establishmentData.company?.website}
               type="link"
             />
@@ -445,37 +445,37 @@ function ProfileEstablishment() {
         </StandardCard>
 
         {/* Location Details */}
-        <StandardCard title="Ubicación" variant="elevated">
+        <StandardCard title={intl.formatMessage({ id: 'app.location' })} variant="elevated">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <InfoRow icon={FaMapMarkerAlt} label="Dirección" value={formatAddress()} />
+            <InfoRow icon={FaMapMarkerAlt} label={intl.formatMessage({ id: 'app.address' })} value={formatAddress()} />
             <InfoRow
               icon={FaMapMarkerAlt}
-              label="Código Postal"
+              label={intl.formatMessage({ id: 'establishment.zipCode' })}
               value={establishmentData.zip_code}
             />
-            <InfoRow icon={FaMapMarkerAlt} label="Zona" value={establishmentData.zone} />
-            <InfoRow icon={FaMapMarkerAlt} label="Coordenadas" value={formatCoordinates()} />
+            <InfoRow icon={FaMapMarkerAlt} label={intl.formatMessage({ id: 'app.zone' })} value={establishmentData.zone} />
+            <InfoRow icon={FaMapMarkerAlt} label={intl.formatMessage({ id: 'app.coordinates' })} value={formatCoordinates()} />
           </SimpleGrid>
         </StandardCard>
 
         {/* Operations - Updated: Removed employee_count (not consumer-relevant) */}
-        <StandardCard title="Operaciones" variant="elevated">
+        <StandardCard title={intl.formatMessage({ id: 'establishment.operations' })} variant="elevated">
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
             <InfoRow
               icon={FaTractor}
-              label="Método de Cultivo"
+              label={intl.formatMessage({ id: 'establishment.farmingMethod' })}
               value={establishmentData.farming_method}
             />
             <InfoRow
               icon={FaTractor}
-              label="Área Total"
+              label={intl.formatMessage({ id: 'establishment.totalArea' })}
               value={
                 establishmentData.total_acreage ? `${establishmentData.total_acreage} acres` : null
               }
             />
             <InfoRow
               icon={FaCalendar}
-              label="Año de Fundación"
+              label={intl.formatMessage({ id: 'establishment.yearEstablished' })}
               value={establishmentData.year_established}
             />
           </SimpleGrid>
@@ -485,27 +485,27 @@ function ProfileEstablishment() {
         {(getWaterSources().length > 0 ||
           getSoilHealthPractices().length > 0 ||
           getIrrigationMethods().length > 0) && (
-          <StandardCard title="Información Agrícola" variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'app.agriculturalInformation' })} variant="elevated">
             <VStack spacing={6} align="stretch">
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                 {getWaterSources().length > 0 && (
                   <InfoRow
                     icon={FaTint}
-                    label="Fuentes de Agua"
+                    label={intl.formatMessage({ id: 'establishment.waterSources' })}
                     value={getWaterSources().join(', ')}
                   />
                 )}
                 {getSoilHealthPractices().length > 0 && (
                   <InfoRow
                     icon={FaLeaf}
-                    label="Prácticas de Salud del Suelo"
+                    label={intl.formatMessage({ id: 'establishment.soilHealthPractices' })}
                     value={getSoilHealthPractices().join(', ')}
                   />
                 )}
                 {getIrrigationMethods().length > 0 && (
                   <InfoRow
                     icon={FaTint}
-                    label="Métodos de Riego"
+                    label={intl.formatMessage({ id: 'establishment.irrigationMethods' })}
                     value={getIrrigationMethods().join(', ')}
                   />
                 )}
@@ -516,7 +516,7 @@ function ProfileEstablishment() {
 
         {/* Crops Grown */}
         {getCropsGrown().length > 0 && (
-          <StandardCard title="Cultivos" variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.crops' })} variant="elevated">
             <HStack spacing={2} flexWrap="wrap">
               {getCropsGrown().map((crop: string, index: number) => (
                 <Badge
@@ -537,7 +537,7 @@ function ProfileEstablishment() {
 
         {/* Certifications */}
         {getCertifications().length > 0 && (
-          <StandardCard title="Certificaciones" variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.certifications' })} variant="elevated">
             <HStack spacing={2} flexWrap="wrap">
               {getCertifications().map((cert: string, index: number) => (
                 <Badge
@@ -561,7 +561,7 @@ function ProfileEstablishment() {
 
         {/* Sustainability Practices */}
         {getSustainabilityPractices().length > 0 && (
-          <StandardCard title="Prácticas de Sostenibilidad" variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.sustainabilityPractices' })} variant="elevated">
             <HStack spacing={2} flexWrap="wrap">
               {getSustainabilityPractices().map((practice: string, index: number) => (
                 <Badge
@@ -585,7 +585,7 @@ function ProfileEstablishment() {
 
         {/* Social Media */}
         {(establishmentData.company?.facebook || establishmentData.company?.instagram) && (
-          <StandardCard title="Redes Sociales" variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.socialMedia' })} variant="elevated">
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
               {establishmentData.company?.facebook && (
                 <InfoRow
@@ -611,7 +611,7 @@ function ProfileEstablishment() {
         {(establishmentData.about ||
           establishmentData.main_activities ||
           establishmentData.location_highlights) && (
-          <StandardCard title="Acerca del Establecimiento" variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.aboutEstablishment' })} variant="elevated">
             <VStack spacing={4} align="stretch">
               {establishmentData.about && (
                 <Box>
@@ -622,7 +622,7 @@ function ProfileEstablishment() {
                     fontWeight="semibold"
                     mb={1}
                   >
-                    Descripción
+                    {intl.formatMessage({ id: 'app.description' })}
                   </Text>
                   <Text color="gray.700" lineHeight="1.7">
                     {establishmentData.about}
@@ -638,7 +638,7 @@ function ProfileEstablishment() {
                     fontWeight="semibold"
                     mb={1}
                   >
-                    Actividades Principales
+                    {intl.formatMessage({ id: 'establishment.mainActivities' })}
                   </Text>
                   <Text color="gray.700" lineHeight="1.7">
                     {establishmentData.main_activities}
@@ -654,7 +654,7 @@ function ProfileEstablishment() {
                     fontWeight="semibold"
                     mb={1}
                   >
-                    Aspectos Destacados
+                    {intl.formatMessage({ id: 'establishment.locationHighlights' })}
                   </Text>
                   <Text color="gray.700" lineHeight="1.7">
                     {establishmentData.location_highlights}
@@ -667,35 +667,35 @@ function ProfileEstablishment() {
 
         {/* Company Details */}
         {establishmentData.company && (
-          <StandardCard title="Información de la Compañía" variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.companyInformation' })} variant="elevated">
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              <InfoRow icon={FaBuilding} label="Compañía" value={establishmentData.company.name} />
+              <InfoRow icon={FaBuilding} label={intl.formatMessage({ id: 'app.company' })} value={establishmentData.company.name} />
               {establishmentData.company.tradename &&
                 establishmentData.company.tradename !== establishmentData.company.name && (
                   <InfoRow
                     icon={FaBuilding}
-                    label="Nombre Comercial"
+                    label={intl.formatMessage({ id: 'establishment.tradeName' })}
                     value={establishmentData.company.tradename}
                   />
                 )}
               <InfoRow
                 icon={FaBuilding}
-                label="Industria"
+                label={intl.formatMessage({ id: 'app.industry' })}
                 value={establishmentData.company.industry}
               />
               <InfoRow
                 icon={FaBuilding}
-                label="Estructura Legal"
+                label={intl.formatMessage({ id: 'app.legalStructure' })}
                 value={establishmentData.company.legal_structure}
               />
               <InfoRow
                 icon={FaLeaf}
-                label="Productos Principales"
+                label={intl.formatMessage({ id: 'establishment.primaryCommodities' })}
                 value={establishmentData.company.primary_commodities}
               />
               <InfoRow
                 icon={FaLeaf}
-                label="Compromiso de Sostenibilidad"
+                label={intl.formatMessage({ id: 'establishment.sustainabilityCommitment' })}
                 value={establishmentData.company.sustainability_commitment}
               />
             </SimpleGrid>
