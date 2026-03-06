@@ -4,6 +4,7 @@ import 'assets/css/trazo-dashboard-styles.css';
 
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
+import ScrollToTop from 'components/Utils/ScrollToTop';
 import { ChakraProvider } from '@chakra-ui/react';
 import { CacheProvider } from '@emotion/react';
 import I18n from 'i18n/I18n';
@@ -26,6 +27,7 @@ if (process.env.NODE_ENV === 'development') {
 root.render(
   <Provider store={store}>
     <BrowserRouter>
+      <ScrollToTop />
       <I18n>
         <CacheProvider value={emotionCache}>
           <ChakraProvider theme={theme} resetCSS={true}>
