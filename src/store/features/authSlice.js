@@ -11,8 +11,9 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     login: (state, { payload }) => {
-      const newData = state.data ? { ...state.data, ...payload.data } : payload.data;
-      state.data = newData;
+      // payload may be { data: {...} } or { user: {...} } depending on caller
+      const userData = payload.data || payload.user || payload;
+      state.data = state.data ? { ...state.data, ...userData } : userData;
       state.isAuthenticated = true;
       state.isLoading = false;
     },

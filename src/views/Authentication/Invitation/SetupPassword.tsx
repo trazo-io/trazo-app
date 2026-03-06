@@ -256,14 +256,8 @@ const SetupPassword: React.FC = () => {
   // Extract the success handling logic
   const handleSuccessfulSignup = (result: any) => {
     // Log the user in immediately after account creation
-    if (result.access && result.refresh) {
-      console.log('🔒 INVITATION: Setting up authentication after signup success');
-      console.log('🔒 INVITATION: Result data:', result);
-
-      // Set tokens in localStorage first (using same key as login flow)
-      localStorage.setItem('access', result.access);
-      localStorage.setItem('refresh', result.refresh);
-
+    // Tokens are set as httpOnly cookies by the backend — no localStorage needed
+    if (result.user) {
       // Prepare user data with company included
       const userData = {
         ...result.user,

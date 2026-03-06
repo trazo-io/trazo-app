@@ -46,7 +46,6 @@ import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import { useGetCompleteSummaryQuery } from 'store/api/carbonApi';
-import { TokenManager } from 'utils/secureTokenStorage';
 import { config } from 'config/environment';
 
 // Data normalization imports
@@ -366,9 +365,10 @@ function ProfileProduction() {
       const response = await fetch(
         `${config.API_BASE_URL}/histories/${historyData.id}/download_qr_code/`,
         {
+          credentials: 'include',
           headers: {
-            Authorization: `Bearer ${TokenManager.getAccessToken()}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
           }
         }
       );

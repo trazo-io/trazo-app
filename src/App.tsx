@@ -34,8 +34,6 @@ import ConsumerProductLayout from 'components/Layout/ConsumerProductLayout';
 //@ts-ignore
 import Authenticated from './utils/protections/Authenticated';
 //@ts-ignore
-import Capture from 'views/Scan/Capture/Capture';
-//@ts-ignore
 import CertificationsView from 'views/Dashboard/Certifications';
 //@ts-ignore
 import CheckAuth from './utils/protections/CheckAuth';
@@ -92,7 +90,6 @@ import ConsumerProfile from 'views/Dashboard/ConsumerProfile';
 import { routeConfig } from './routes/config';
 import SubscriptionRequired from './utils/protections/SubscriptionRequired';
 import DashboardPricing from 'views/Dashboard/Dashboard/Pricing';
-import SubscriptionSuccess from 'views/Dashboard/Dashboard/Subscription/SubscriptionSuccess';
 import StripeSuccessRedirect from 'views/Dashboard/Dashboard/Subscription/StripeSuccessRedirect';
 import UnifiedSubscriptionDashboard from 'views/Dashboard/UnifiedSubscription';
 import NoSubscriptionRedirect from './utils/protections/NoSubscriptionRedirect';
@@ -378,7 +375,6 @@ const App = () => {
                   />
                   <Route path="settings" exact element={<AdminGuard><SettingsView /></AdminGuard>} />
                   <Route path="settings/change-password" exact element={<AdminGuard><ChangePassword /></AdminGuard>} />
-                  <Route path="subscription/success" element={<AdminGuard><SubscriptionSuccess /></AdminGuard>} />
                   <Route
                     path="establishment/:establishmentId/transparency"
                     exact

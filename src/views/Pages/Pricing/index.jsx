@@ -54,8 +54,8 @@ import {
 import { useIntl } from 'react-intl';
 import { loadStripe } from '@stripe/stripe-js';
 import config from 'config/environment';
-import { useGetPlansQuery, useCreateCheckoutSessionMutation } from 'store/api/subscriptionApi';
-import { useSubscribeBlockchainMutation, useGetAddonsQuery, useChangePlanMutation, useStartTrialMutation } from 'store/api/billingApi';
+import { useGetPlansQuery } from 'store/api/subscriptionApi';
+import { useCreateCheckoutSessionMutation, useSubscribeBlockchainMutation, useGetAddonsQuery, useChangePlanMutation, useStartTrialMutation } from 'store/api/billingApi';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';

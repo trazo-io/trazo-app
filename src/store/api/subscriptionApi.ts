@@ -2,7 +2,6 @@ import baseApi from './baseApi';
 import { RootState } from '../index';
 import {
   PLANS_URL,
-  CREATE_CHECKOUT_SESSION_URL,
   COMPLETE_CHECKOUT_URL
 } from '../../config/backend';
 // Define types for plan data
@@ -76,25 +75,6 @@ export const subscriptionApi = baseApi.injectEndpoints({
         credentials: 'include' // Consistent with your other APIs
       })
     }),
-    createCheckoutSession: builder.mutation<CheckoutSessionResponse, CheckoutSessionRequest>({
-      query: (body) => ({
-        url: CREATE_CHECKOUT_SESSION_URL,
-        method: 'POST',
-        body,
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }),
-      // For add-on purchases, we'll want to refresh company data
-      invalidatesTags: (result, error, request) =>
-        request.addon_type
-          ? [
-              { type: 'Company', id: request.company_id },
-              { type: 'Subscription', id: 'LIST' }
-            ]
-          : []
-    }),
     completeCheckout: builder.mutation<CompleteCheckoutResponse, CompleteCheckoutRequest>({
       query: (body) => ({
         url: COMPLETE_CHECKOUT_URL,
@@ -115,5 +95,5 @@ export const subscriptionApi = baseApi.injectEndpoints({
 });
 
 // Export hooks for usage in components
-export const { useGetPlansQuery, useCreateCheckoutSessionMutation, useCompleteCheckoutMutation } =
+export const { useGetPlansQuery, useCompleteCheckoutMutation } =
   subscriptionApi;

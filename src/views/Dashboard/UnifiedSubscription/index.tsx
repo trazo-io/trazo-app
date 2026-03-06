@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import {
   Box,
   Flex,
@@ -40,6 +40,12 @@ import {
   HStack,
   AlertTitle,
   AlertDescription,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
   Collapse,
   IconButton,
   Spinner,
@@ -174,6 +180,8 @@ function UnifiedSubscriptionDashboard() {
   const [showAddons, setShowAddons] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isEarlyAccessOpen, onOpen: onEarlyAccessOpen, onClose: onEarlyAccessClose } = useDisclosure();
+  const { isOpen: isCancelOpen, onOpen: onCancelOpen, onClose: onCancelClose } = useDisclosure();
+  const cancelRef = useRef<HTMLButtonElement>(null);
   const [earlyAccessPlanName, setEarlyAccessPlanName] = useState<string | null>(null);
 
   // API Queries
@@ -875,7 +883,7 @@ function UnifiedSubscriptionDashboard() {
                                     size="sm"
                                     colorScheme="red"
                                     variant="ghost"
-                                    onClick={handleCancelSubscription}
+                                    onClick={onCancelOpen}
                                     isLoading={isCancellingSubscription}
                                   >
                                     {intl.formatMessage({ id: 'app.cancel' })}
@@ -1790,6 +1798,40 @@ function UnifiedSubscriptionDashboard() {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Cancel Subscription Confirmation */}
+      <AlertDialog
+        isOpen={isCancelOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onCancelClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              {intl.formatMessage({ id: 'app.cancelSubscription' })}
+            </AlertDialogHeader>
+            <AlertDialogBody>
+              {intl.formatMessage({ id: 'app.cancelConfirmationText' })}
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onCancelClose}>
+                {intl.formatMessage({ id: 'app.goBack' })}
+              </Button>
+              <Button
+                colorScheme="red"
+                onClick={() => {
+                  onCancelClose();
+                  handleCancelSubscription();
+                }}
+                ml={3}
+                isLoading={isCancellingSubscription}
+              >
+                {intl.formatMessage({ id: 'app.confirmCancellation' })}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </StandardPage>
   );
 }

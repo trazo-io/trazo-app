@@ -64,7 +64,8 @@ function createEnvironmentConfig(): EnvironmentConfig {
 
     // Environment-specific defaults
     if (isDevelopment) {
-      return 'http://localhost:8000/api';
+      // Use same-origin proxy to avoid cross-origin cookie issues
+      return '/api';
     }
 
     if (isProduction) {
@@ -101,7 +102,7 @@ function createEnvironmentConfig(): EnvironmentConfig {
 
     // API Configuration - Always explicit URLs
     API_BASE_URL: getApiBaseUrl(),
-    API_ROOT_URL: getApiBaseUrl().replace(/\/api$/, ''),
+    API_ROOT_URL: isDevelopment ? 'http://localhost:8000' : getApiBaseUrl().replace(/\/api$/, ''),
     API_TIMEOUT: parseInt(env.VITE_API_TIMEOUT || '30000', 10),
     API_RETRY_ATTEMPTS: parseInt(env.VITE_API_RETRY_ATTEMPTS || '3', 10),
 
@@ -243,8 +244,8 @@ export const devUtils = {
       }
 
       // Warn about CORS requirements
-      if (config.API_BASE_URL.includes('localhost:8000')) {
-        console.info('💡 Make sure Django CORS is configured for localhost:3000');
+      if (config.API_BASE_URL.includes('localhost:8000') || config.API_BASE_URL.startsWith('/api')) {
+        console.info('💡 API requests proxied through Vite dev server');
       }
     }
   }

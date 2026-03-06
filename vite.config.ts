@@ -162,9 +162,15 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true
-    // REMOVED: Proxy configuration - now using explicit backend URLs
-    // This follows React best practices for API communication
+    open: true,
+    // Proxy API requests through Vite so cookies stay on the same origin
+    // This avoids cross-origin cookie issues with .localhost in Chromium
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      }
+    }
   },
   // Enhanced mobile performance settings
   define: {

@@ -17,59 +17,38 @@ import { TokenManager } from '../../utils/secureTokenStorage';
 const authApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     login: build.mutation({
-      query: ({ email, password }) => ({
+      query: ({ email, password, remember_me = false }) => ({
         url: LOGIN_URL,
         method: 'POST',
-        body: { email: email.toLowerCase(), password },
+        body: { email: email.toLowerCase(), password, remember_me },
         credentials: 'include'
       }),
-      async onQueryStarted(userId, { dispatch, queryFulfilled }) {
+      async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const result = await queryFulfilled;
-          console.log('🔒 LOGIN: Login successful, processing result');
 
-          // SECURITY: Store tokens using secure token manager only
-          TokenManager.setAccessToken(result.data.access);
-          console.log('🔒 LOGIN: Access token stored securely. Length:', result.data.access.length);
+          // Clean up any legacy token storage
+          TokenManager.cleanupLegacyStorage();
 
-          // Store refresh token if provided
-          if (result.data.refresh) {
-            TokenManager.setRefreshToken(result.data.refresh);
-            console.log(
-              '🔒 LOGIN: Refresh token stored securely. Length:',
-              result.data.refresh.length
-            );
-          }
+          // Tokens are now set as httpOnly cookies by the backend response.
+          // No need to store them in JS — the browser handles cookie persistence.
 
-          // WAIT a brief moment to ensure token is available for subsequent requests
-          await new Promise((resolve) => setTimeout(resolve, 100));
-
-          // SECOND: Set user data
+          // Set user data in Redux
           dispatch(setUser(result.data.user));
-          console.log('🔒 LOGIN: User data set in Redux');
 
-          // THIRD: Get company data if available (but don't let this fail everything)
+          // Load company data if available
           if (result.data.user['companies'].length > 0) {
             try {
               const { data } = await dispatch(
                 baseApi.endpoints.getCompany.initiate(result.data.user['companies'][0].id)
               );
               dispatch(setCompany(data));
-              console.log('🔒 LOGIN: Company data loaded successfully');
             } catch (companyError) {
-              console.warn(
-                '🔒 LOGIN: Company data fetch failed, but continuing with login:',
-                companyError
-              );
-              // Don't clear tokens if company fetch fails
+              console.warn('Company data fetch failed, continuing with login:', companyError);
             }
           }
-
-          console.log('🔒 LOGIN: Login flow completed successfully');
         } catch (error) {
-          console.error('🔒 LOGIN: Login flow failed:', error);
-          // Clear tokens only if the main login failed
-          TokenManager.clearTokens();
+          console.error('Login flow failed:', error);
         }
       }
     }),
@@ -78,7 +57,8 @@ const authApi = baseApi.injectEndpoints({
         return {
           url: SIGNUP_URL,
           method: 'POST',
-          body: data
+          body: data,
+          credentials: 'include'
         };
       }
     }),
@@ -88,22 +68,17 @@ const authApi = baseApi.injectEndpoints({
         method: 'POST',
         body: {},
         credentials: 'include'
-        // CSRF token will be handled by customFetchBase prepareHeaders
       }),
       invalidatesTags: (result) => (result ? ['User', 'Company', 'Parcel', 'History'] : []),
       onQueryStarted: async (arg, { dispatch, queryFulfilled }) => {
         try {
-          console.log('🔒 LOGOUT: Starting logout process');
           await queryFulfilled;
-          console.log('🔒 LOGOUT: Server logout successful');
-          // SECURITY: Clear all tokens securely
+          // Backend clears httpOnly cookies in the response.
+          // Clean up any legacy client-side storage.
           TokenManager.clearTokens();
-          // Reset the state directly here
           dispatch(baseApi.util.resetApiState());
-          console.log('🔒 LOGOUT: Local cleanup completed');
         } catch (error) {
-          console.error('🔒 LOGOUT: Server logout failed, but clearing local tokens:', error);
-          // SECURITY: Even if logout fails, clear local tokens for security
+          // Even if server logout fails, clean up local state
           TokenManager.clearTokens();
           console.error('Logout error:', error);
         }
@@ -121,22 +96,17 @@ const authApi = baseApi.injectEndpoints({
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json'
-          }
+          },
+          credentials: 'include'
         };
       },
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const result = await queryFulfilled;
-          // If verification response includes user data and tokens, auto-sign in
-          if (result.data.user && result.data.access) {
+          // If verification response includes user data, auto-sign in
+          // Tokens are set as httpOnly cookies by the backend
+          if (result.data.user) {
             dispatch(setUser(result.data.user));
-            // SECURITY: Store access token securely
-            TokenManager.setAccessToken(result.data.access);
-            // Store refresh token if provided
-            if (result.data.refresh) {
-              TokenManager.setRefreshToken(result.data.refresh);
-            }
-            // Get company data if user has companies
             if (result.data.user['companies'] && result.data.user['companies'].length > 0) {
               try {
                 const { data } = await dispatch(
@@ -144,13 +114,11 @@ const authApi = baseApi.injectEndpoints({
                 );
                 dispatch(setCompany(data));
               } catch (error) {
-                // Continue even if company data fetch fails
                 console.warn('Could not fetch company data:', error);
               }
             }
           }
         } catch (error) {
-          // Verification failed, don't handle auto-sign in
           console.error('Verification failed:', error);
         }
       }
@@ -179,7 +147,7 @@ const authApi = baseApi.injectEndpoints({
           access_token,
           id_token,
           user_type,
-          user, // For Apple Sign In name data
+          user,
           invitation_code
         },
         credentials: 'include'
@@ -187,19 +155,12 @@ const authApi = baseApi.injectEndpoints({
       async onQueryStarted(args, { dispatch, queryFulfilled }) {
         try {
           const result = await queryFulfilled;
+          TokenManager.cleanupLegacyStorage();
           dispatch(setUser(result.data.user));
-          // Store tokens if provided
-          if (result.data.access) {
-            TokenManager.setAccessToken(result.data.access);
-          }
-          if (result.data.refresh) {
-            TokenManager.setRefreshToken(result.data.refresh);
-          }
+          // Tokens are set as httpOnly cookies by the backend
 
-          // Handle invitation acceptance
           if (result.data.invitation_accepted && result.data.company) {
             dispatch(setCompany(result.data.company));
-            // Clear pending invitation from sessionStorage
             sessionStorage.removeItem('pendingInvitation');
           } else if (result.data.user['companies'].length > 0) {
             const { data } = await dispatch(
@@ -249,7 +210,6 @@ const authApi = baseApi.injectEndpoints({
         url: 'users/request_password_reset/',
         method: 'POST',
         body: { email }
-        // Don't include credentials for password reset - it's a public endpoint
       })
     }),
     confirmPasswordReset: build.mutation({
@@ -257,7 +217,6 @@ const authApi = baseApi.injectEndpoints({
         url: 'users/confirm_password_reset/',
         method: 'POST',
         body: { token, email, new_password }
-        // Don't include credentials for password reset - it's a public endpoint
       })
     })
   }),

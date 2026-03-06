@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { TokenManager } from '../../utils/secureTokenStorage';
+import { config } from 'config/environment';
 
 // Types for media API
 export interface PresignedUrlResponse {
@@ -37,28 +37,33 @@ export interface UploadUrlRequest {
   folder?: string;
 }
 
+/**
+ * Read a cookie value by name
+ */
+function getCookie(name: string): string | undefined {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    const part = parts.pop();
+    return part ? part.split(';').shift() : undefined;
+  }
+  return undefined;
+}
+
 // Media API for handling S3 operations
 export const mediaApi = createApi({
   reducerPath: 'mediaApi',
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_APP_BACKEND_URL || '/api/',
+    credentials: 'include',
     prepareHeaders: (headers) => {
-      // Get token from TokenManager (same as other working APIs)
-      const token = TokenManager.getAccessToken();
-      console.log(
-        '🔒 MEDIA API: Getting token for S3 request. Token found:',
-        !!token,
-        'Length:',
-        token?.length || 0
-      );
-
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`);
-        console.log('🔒 MEDIA API: Added Authorization header');
-      } else {
-        console.log('🔒 MEDIA API: No token found, request will be unauthenticated');
-      }
       headers.set('content-type', 'application/json');
+      headers.set('X-Requested-With', 'XMLHttpRequest');
+
+      const csrfToken = getCookie(config.CSRF_COOKIE_NAME);
+      if (csrfToken) {
+        headers.set(config.CSRF_HEADER_KEY, csrfToken);
+      }
 
       return headers;
     }
@@ -77,7 +82,7 @@ export const mediaApi = createApi({
       providesTags: ['PresignedUrl']
     }),
 
-    // 2025 Best Practice: Batch presigned URLs for optimal performance
+    // Batch presigned URLs for optimal performance
     getBatchPresignedReadUrls: builder.query<BatchPresignedUrlsResponse, BatchPresignedUrlsRequest>(
       {
         query: (data) => ({
@@ -85,11 +90,9 @@ export const mediaApi = createApi({
           method: 'POST',
           body: data
         }),
-        // Cache for 5 minutes (short cache to allow fresh requests when establishment changes)
         keepUnusedDataFor: 300,
         providesTags: (result, error, arg) => [
           { type: 'PresignedUrl', id: 'BATCH' },
-          // Create unique cache keys based on the URLs being requested
           ...arg.s3_urls.map((url) => ({ type: 'PresignedUrl' as const, id: url }))
         ]
       }

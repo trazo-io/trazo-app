@@ -3,13 +3,12 @@ import { BaseQueryApi } from '@reduxjs/toolkit/dist/query/baseQueryTypes';
 import { Mutex } from 'async-mutex';
 import { fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { validateRedirectUrl, createSafeRedirectUrl } from 'utils/urlValidator';
-import { TokenManager } from 'utils/secureTokenStorage';
 
-// Create a new mutex for handling concurrent requests
+// Mutex prevents concurrent refresh attempts
 const mutex = new Mutex();
 
 /**
- * Utility function to get cookies following browser standards
+ * Read a cookie value by name (for non-httpOnly cookies like CSRF and logged_in)
  */
 function getCookie(name: string): string | undefined {
   const value = `; ${document.cookie}`;
@@ -23,37 +22,26 @@ function getCookie(name: string): string | undefined {
 }
 
 /**
- * Base query configuration with centralized environment management
+ * Base query — uses credentials: 'include' so httpOnly cookies (access, refresh)
+ * are sent automatically by the browser. No Authorization header needed.
  */
 const baseQuery = fetchBaseQuery({
   baseUrl: config.API_BASE_URL,
   timeout: config.API_TIMEOUT,
   credentials: 'include',
   prepareHeaders: (headers) => {
-    // Set required headers for AJAX requests
     headers.set('X-Requested-With', 'XMLHttpRequest');
     headers.set('Accept', 'application/json');
 
-    // Get and set CSRF token
     const csrfToken = getCookie(config.CSRF_COOKIE_NAME);
-
     if (csrfToken) {
       headers.set(config.CSRF_HEADER_KEY, csrfToken);
-    }
-
-    // Add consent header for cross-origin scenarios where cookies might not work
-    const analyticsConsent = localStorage.getItem('trazo-analytics-consent');
-    if (analyticsConsent === 'true') {
-      headers.set('X-Analytics-Consent', 'true');
     }
 
     return headers;
   }
 });
 
-/**
- * Enhanced error handling with proper typing
- */
 interface ApiErrorData {
   detail?: string;
   code?: string;
@@ -61,63 +49,42 @@ interface ApiErrorData {
   [key: string]: any;
 }
 
-/**
- * Type guard for API errors
- */
 function isApiError(error: any): error is FetchBaseQueryError & { data: ApiErrorData } {
   return error && typeof error === 'object' && 'data' in error && error.data;
 }
 
-/**
- * Check if current page is an authentication page
- */
 function isAuthPage(pathname: string): boolean {
   return pathname.startsWith('/auth/') || pathname.startsWith('/invitation/');
 }
 
-/**
- * Check if current page is a protected route
- */
 function isProtectedRoute(pathname: string): boolean {
   return pathname.startsWith('/admin/') || pathname.startsWith('/dashboard/');
 }
 
-/**
- * Handle authentication redirects with secure URL validation
- * SECURITY: Prevents open redirect vulnerabilities
- */
 function handleAuthRedirect(currentPath: string): void {
   if (isAuthPage(currentPath)) {
-    return; // Don't redirect if already on auth page
+    return;
   }
 
-  // Validate the current path to prevent open redirect attacks
   const safePath = validateRedirectUrl(currentPath) || '/admin/dashboard';
   const fullCurrentPath = safePath + window.location.search;
 
-  // Create secure redirect URL with validated next parameter
   const redirectUrl = isProtectedRoute(safePath)
     ? createSafeRedirectUrl('/auth/signin', fullCurrentPath)
     : '/auth/signin';
 
-  // Use validated URL for redirect
   window.location.href = redirectUrl;
 }
 
-/**
- * Handle rate limiting with user-friendly messaging
- */
 function handleRateLimit(errorData: ApiErrorData): void {
   const retryAfter = errorData?.retry_after || 60;
   const message =
     errorData?.detail || `Too many requests. Please try again in ${retryAfter} seconds.`;
 
-  // Log for debugging in development
   if (config.IS_DEVELOPMENT) {
     console.error('Rate limit exceeded:', message);
   }
 
-  // Dispatch custom event for notification system
   window.dispatchEvent(
     new CustomEvent('rate-limit-error', {
       detail: { message, retryAfter }
@@ -126,34 +93,21 @@ function handleRateLimit(errorData: ApiErrorData): void {
 }
 
 /**
- * Attempt to refresh authentication token
+ * Attempt to refresh auth via cookie-based POST endpoint.
+ * The browser sends the httpOnly refresh cookie automatically.
  */
 async function attemptTokenRefresh(api: BaseQueryApi, extraOptions: any): Promise<boolean> {
   try {
-    const refreshToken = TokenManager.getRefreshToken();
-    if (!refreshToken) {
-      return false;
-    }
-
     const refreshResult = await baseQuery(
       {
         url: 'auth/refresh/',
         method: 'POST',
-        body: { refresh: refreshToken },
+        body: {},
         credentials: 'include'
       },
       api,
       extraOptions
     );
-
-    // Store new access token if refresh succeeds
-    if (refreshResult.data?.access) {
-      TokenManager.setAccessToken(refreshResult.data.access);
-      // Also store refresh token if provided
-      if (refreshResult.data?.refresh) {
-        TokenManager.setRefreshToken(refreshResult.data.refresh);
-      }
-    }
 
     return !!refreshResult.data;
   } catch (error) {
@@ -165,120 +119,63 @@ async function attemptTokenRefresh(api: BaseQueryApi, extraOptions: any): Promis
 }
 
 /**
- * Custom fetch base query with enhanced error handling and retry logic
+ * Check if user has an active session (via non-httpOnly logged_in cookie)
+ */
+export function hasActiveSession(): boolean {
+  return getCookie('logged_in') === 'true';
+}
+
+/**
+ * Custom fetch base query with cookie-based auth.
+ * httpOnly cookies are sent automatically — no token management needed in JS.
  */
 const customFetchBase = async (args: any, api: BaseQueryApi, extraOptions: any): Promise<any> => {
-  // Wait for any pending requests to complete
   await mutex.waitForUnlock();
-
-  // SECURITY: Use secure token storage instead of localStorage
-  let token = TokenManager.getAccessToken();
-
-  // Check if we have a token and if it might be expired (simple check)
-  if (token && !args.url?.includes('auth/')) {
-    try {
-      // Decode JWT to check expiration (without verification)
-      const tokenParts = token.split('.');
-      if (tokenParts.length === 3) {
-        const payload = JSON.parse(atob(tokenParts[1]));
-        const expirationTime = payload.exp * 1000; // Convert to milliseconds
-        const currentTime = Date.now();
-        const timeUntilExpiry = expirationTime - currentTime;
-
-        // If token expires in less than 30 seconds, refresh it preemptively
-        if (timeUntilExpiry < 30000) {
-          if (!mutex.isLocked()) {
-            const release = await mutex.acquire();
-            try {
-              const refreshSuccess = await attemptTokenRefresh(api, extraOptions);
-              if (refreshSuccess) {
-                token = TokenManager.getAccessToken();
-              }
-            } finally {
-              release();
-            }
-          } else {
-            await mutex.waitForUnlock();
-            token = TokenManager.getAccessToken();
-          }
-        }
-      }
-    } catch (error) {
-      console.log('🔒 TOKEN: Error checking token expiration:', error);
-    }
-  }
-
-  // Don't send auth tokens on endpoints that create new sessions (social auth, login)
-  const isPublicAuthEndpoint =
-    args.url?.includes('auth/social') || args.url?.includes('auth/login');
-
-  if (token && !isPublicAuthEndpoint) {
-    args.headers = { ...args.headers, Authorization: `Bearer ${token}` };
-  }
 
   let result = await baseQuery(args, api, extraOptions);
 
-  // Handle API errors
   if (isApiError(result.error)) {
     const errorData = result.error.data;
     const currentPath = window.location.pathname;
-    const status = result.error.status;
+    const statusCode = result.error.status;
 
     // Handle rate limiting (429)
-    if (status === 429) {
+    if (statusCode === 429) {
       handleRateLimit(errorData);
       return result;
     }
 
-    // Handle authentication errors (401)
-    if (status === 401) {
-      // Check for specific authentication error messages
-      if (errorData?.detail === 'Authentication credentials were not provided.') {
-        // SECURITY: Clear any invalid tokens
-        TokenManager.clearTokens();
-        handleAuthRedirect(currentPath);
-        return result;
-      }
+    // Handle authentication errors (401) — attempt silent refresh
+    if (statusCode === 401 && !args.url?.includes('auth/')) {
+      if (!mutex.isLocked()) {
+        const release = await mutex.acquire();
 
-      // Handle token validation errors - attempt refresh for any 401
-      if (errorData?.code === 'token_not_valid' || status === 401) {
-        // Use mutex to prevent multiple refresh attempts
-        if (!mutex.isLocked()) {
-          const release = await mutex.acquire();
+        try {
+          const refreshSuccess = await attemptTokenRefresh(api, extraOptions);
 
-          try {
-            const refreshSuccess = await attemptTokenRefresh(api, extraOptions);
-
-            if (refreshSuccess) {
-              // Retry the original request with new token
-              result = await baseQuery(args, api, extraOptions);
-            } else {
-              // SECURITY: Clear invalid tokens before redirect
-              TokenManager.clearTokens();
-              // Refresh failed, redirect to login
-              handleAuthRedirect(currentPath);
-            }
-          } finally {
-            release();
-          }
-        } else {
-          // Another request is already refreshing the token
-          await mutex.waitForUnlock();
-
-          // Check if we now have a valid token after waiting
-          const newToken = TokenManager.getAccessToken();
-          if (newToken) {
+          if (refreshSuccess) {
+            // Retry the original request — new cookies are set by the refresh response
             result = await baseQuery(args, api, extraOptions);
           } else {
             handleAuthRedirect(currentPath);
           }
+        } finally {
+          release();
+        }
+      } else {
+        // Another request is already refreshing
+        await mutex.waitForUnlock();
+        result = await baseQuery(args, api, extraOptions);
+
+        // If still 401 after waiting, redirect
+        if (isApiError(result.error) && result.error.status === 401) {
+          handleAuthRedirect(currentPath);
         }
       }
     }
 
-    // Handle other HTTP errors
-    if (typeof status === 'number' && status >= 500) {
-      // Server errors - could implement retry logic here
+    // Log server errors in development
+    if (typeof statusCode === 'number' && statusCode >= 500) {
       if (config.IS_DEVELOPMENT) {
         console.error('Server error:', result.error);
       }

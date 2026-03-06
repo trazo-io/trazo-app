@@ -57,8 +57,7 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
   const hasActiveSubscription =
     company.has_subscription === true ||
     (company.subscription &&
-      (company.subscription.status === 'active' ||
-        (company.subscription.status === 'active'))) ||
+      company.subscription.status === 'active') ||
     (company.subscription_plan && company.subscription_plan.id);
 
   // Don't show banner if user has active paid subscription

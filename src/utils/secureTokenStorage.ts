@@ -1,285 +1,81 @@
 /**
- * Secure Token Storage Utility
- * Provides secure storage for authentication tokens using httpOnly cookies
- * Compliant with OWASP 2025 security guidelines for JWT storage
+ * Token Manager — Cookie-based authentication
+ *
+ * Authentication tokens are stored as httpOnly cookies by the backend.
+ * JavaScript cannot (and should not) access them directly.
+ * The browser sends them automatically with every request via credentials: 'include'.
+ *
+ * This module provides:
+ * - Session status checking via the non-httpOnly 'logged_in' cookie
+ * - Legacy storage cleanup
  */
 
-interface TokenStorage {
-  setToken(token: string): void;
-  getToken(): string | null;
-  removeToken(): void;
-  hasToken(): boolean;
+function getCookie(name: string): string | undefined {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) {
+    const part = parts.pop();
+    return part ? part.split(';').shift() : undefined;
+  }
+  return undefined;
 }
 
-/**
- * Secure token storage implementation using httpOnly cookies
- * This prevents XSS attacks from accessing authentication tokens
- */
-class SecureTokenStorage implements TokenStorage {
-  private readonly tokenCookieName = 'trazo_access_token';
-  private readonly refreshCookieName = 'trazo_refresh_token';
-
-  /**
-   * Set access token (handled by backend via httpOnly cookie)
-   * This method is kept for compatibility but tokens should be set via backend
-   */
-  setToken(token: string): void {
-    // In secure implementation, tokens are set by backend as httpOnly cookies
-    // This method is primarily for fallback compatibility
-    if (process.env.NODE_ENV === 'development') {
-      console.log(
-        'SECURITY: Storing token in sessionStorage for development. Token length:',
-        token.length
-      );
-    }
-
-    // Store in sessionStorage as a temporary fallback (slightly more secure than localStorage)
-    // Remove this fallback once full httpOnly cookie implementation is complete
-    sessionStorage.setItem('temp_access_token', token);
-
-    // Also check if there are legacy tokens to clean up
-    const legacyToken = localStorage.getItem('access');
-    if (legacyToken && legacyToken !== token) {
-      console.log('SECURITY: Cleaning up legacy localStorage token');
-      localStorage.removeItem('access');
-    }
-  }
-
-  /**
-   * Get access token from httpOnly cookie (handled by browser automatically)
-   * Returns null since httpOnly cookies cannot be accessed by JavaScript
-   */
-  getToken(): string | null {
-    // httpOnly cookies are automatically sent with requests
-    // JavaScript cannot access them, which is the security feature
-
-    // Temporary fallback for development (remove once backend properly implements httpOnly cookies)
-    const fallbackToken = sessionStorage.getItem('temp_access_token');
-    if (fallbackToken) {
-      return fallbackToken;
-    }
-
-    // Check if there's a legacy token we should migrate
-    const legacyToken = localStorage.getItem('access');
-    if (legacyToken) {
-      console.log('SECURITY: Found legacy token in localStorage, migrating to sessionStorage');
-      this.setToken(legacyToken);
-      return legacyToken;
-    }
-
-    console.log('SECURITY: No token found in storage');
-    return null; // Correct behavior - httpOnly cookies not accessible to JS
-  }
-
-  /**
-   * Remove access token (must be done via backend API call)
-   */
-  removeToken(): void {
-    // Remove any fallback storage
-    sessionStorage.removeItem('temp_access_token');
-    localStorage.removeItem('access'); // Clean up any legacy tokens
-
-    // httpOnly cookies must be removed by backend via logout API
-    console.log('SECURITY: httpOnly cookies will be removed by backend logout API');
-  }
-
-  /**
-   * Check if token exists (for httpOnly cookies, we assume token exists if user is authenticated)
-   */
-  hasToken(): boolean {
-    // For httpOnly cookies, we can't directly check token existence
-    // This should be determined by authentication state management
-
-    // Temporary fallback check for development
-    return !!sessionStorage.getItem('temp_access_token');
-  }
-}
-
-/**
- * Legacy token storage for migration purposes
- * DO NOT USE for new implementations - kept for gradual migration
- */
-class LegacyTokenStorage implements TokenStorage {
-  setToken(token: string): void {
-    console.log('🔒 LEGACY: Storing token in localStorage. Length:', token.length);
-    localStorage.setItem('access', token);
-    console.log('🔒 LEGACY: Token stored. Verification:', !!localStorage.getItem('access'));
-  }
-
-  getToken(): string | null {
-    const token = localStorage.getItem('access');
-    console.log(
-      '🔒 LEGACY: Retrieved token from localStorage. Found:',
-      !!token,
-      'Length:',
-      token?.length || 0
-    );
-    return token;
-  }
-
-  removeToken(): void {
-    console.log('🔒 LEGACY: Removing tokens from localStorage');
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh');
-  }
-
-  hasToken(): boolean {
-    const hasToken = !!localStorage.getItem('access');
-    console.log('🔒 LEGACY: Checking if token exists:', hasToken);
-    return hasToken;
-  }
-}
-
-/**
- * Factory function to get appropriate token storage implementation
- */
-function createTokenStorage(): TokenStorage {
-  // Enable secure storage for production, legacy for development
-  // This provides better security while maintaining development workflow
-  if (process.env.NODE_ENV === 'production') {
-    return new SecureTokenStorage();
-  } else {
-    // Use secure storage in development too, but with fallbacks for easier debugging
-    return new SecureTokenStorage();
-  }
-}
-
-/**
- * Global token storage instance
- */
-export const tokenStorage = createTokenStorage();
-
-/**
- * Utility functions for token management
- */
 export const TokenManager = {
   /**
-   * Store authentication token securely
+   * Check if user has an active session.
+   * Uses the non-httpOnly 'logged_in' cookie set by the backend.
    */
-  setAccessToken(token: string): void {
-    tokenStorage.setToken(token);
+  hasActiveSession(): boolean {
+    return getCookie('logged_in') === 'true';
   },
 
   /**
-   * Retrieve authentication token
+   * Clean up legacy token storage from previous implementation.
+   * Call once on app init to remove any tokens from localStorage/sessionStorage.
    */
+  cleanupLegacyStorage(): void {
+    const keysToRemove = [
+      'access',
+      'refresh',
+      'token',
+      'authToken',
+      'temp_access_token'
+    ];
+    keysToRemove.forEach((key) => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    });
+  },
+
+  // Legacy compatibility methods — these are no-ops now since cookies are
+  // managed by the backend. Kept to avoid breaking imports during transition.
+  setAccessToken(_token: string): void {
+    // No-op: access token is set as httpOnly cookie by the backend
+  },
+
   getAccessToken(): string | null {
-    return tokenStorage.getToken();
+    // Cannot read httpOnly cookies from JS — this is by design
+    return null;
   },
 
-  /**
-   * Remove authentication token
-   */
-  clearTokens(): void {
-    tokenStorage.removeToken();
-    // Also clear refresh tokens from all storage locations
-    sessionStorage.removeItem('refresh');
-    localStorage.removeItem('refresh');
+  setRefreshToken(_token: string): void {
+    // No-op: refresh token is set as httpOnly cookie by the backend
   },
 
-  /**
-   * Store refresh token securely
-   */
-  setRefreshToken(token: string): void {
-    sessionStorage.setItem('refresh', token);
-  },
-
-  /**
-   * Retrieve refresh token
-   */
   getRefreshToken(): string | null {
-    return sessionStorage.getItem('refresh') || localStorage.getItem('refresh');
+    // Cannot read httpOnly cookies from JS — this is by design
+    return null;
   },
 
-  /**
-   * Check if user has valid token
-   */
+  clearTokens(): void {
+    // httpOnly cookies are cleared by the backend logout endpoint.
+    // Clean up any legacy storage that might exist.
+    this.cleanupLegacyStorage();
+  },
+
   hasValidToken(): boolean {
-    return tokenStorage.hasToken();
-  },
-
-  /**
-   * Clean up any insecure token storage (migration utility)
-   */
-  cleanupInsecureStorage(): void {
-    // Remove tokens from localStorage if they exist
-    localStorage.removeItem('access');
-    localStorage.removeItem('refresh');
-    localStorage.removeItem('token');
-    localStorage.removeItem('authToken');
-
-    // Remove from sessionStorage as well
-    sessionStorage.removeItem('access');
-    sessionStorage.removeItem('refresh');
-
-    console.log('SECURITY: Cleaned up insecure token storage');
-  },
-
-  /**
-   * Migrate from localStorage to secure storage
-   */
-  migrateToSecureStorage(): void {
-    const legacyToken = localStorage.getItem('access');
-    if (legacyToken) {
-      console.log('SECURITY: Migrating token from localStorage to secure storage');
-      // Don't actually store in new system - let backend handle token refresh
-      this.cleanupInsecureStorage();
-    }
+    return this.hasActiveSession();
   }
 };
 
-/**
- * Security utility to detect and warn about insecure token storage
- */
-export const SecurityAudit = {
-  /**
-   * Check for insecure token storage patterns
-   */
-  auditTokenStorage(): boolean {
-    const insecureKeys = ['access', 'refresh', 'token', 'authToken', 'jwt'];
-    let foundInsecureStorage = false;
-
-    // Check localStorage
-    insecureKeys.forEach((key) => {
-      if (localStorage.getItem(key)) {
-        console.error(`SECURITY RISK: Found token in localStorage with key: ${key}`);
-        foundInsecureStorage = true;
-      }
-    });
-
-    // Check sessionStorage
-    insecureKeys.forEach((key) => {
-      if (sessionStorage.getItem(key)) {
-        console.warn(`SECURITY WARNING: Found token in sessionStorage with key: ${key}`);
-      }
-    });
-
-    return !foundInsecureStorage;
-  },
-
-  /**
-   * Report security status of token storage
-   */
-  getSecurityReport(): { secure: boolean; issues: string[] } {
-    const issues: string[] = [];
-
-    if (localStorage.getItem('access')) {
-      issues.push('Access token found in localStorage (vulnerable to XSS)');
-    }
-
-    if (localStorage.getItem('refresh')) {
-      issues.push('Refresh token found in localStorage (vulnerable to XSS)');
-    }
-
-    if (tokenStorage instanceof LegacyTokenStorage) {
-      issues.push('Using legacy token storage implementation');
-    }
-
-    return {
-      secure: issues.length === 0,
-      issues
-    };
-  }
-};
-
-export default tokenStorage;
+export default TokenManager;

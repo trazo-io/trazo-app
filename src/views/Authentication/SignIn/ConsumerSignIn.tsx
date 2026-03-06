@@ -46,6 +46,7 @@ const MotionBox = motion(Box);
 interface SignInFormData {
   email: string;
   password: string;
+  remember_me: boolean;
 }
 
 const ConsumerSignIn: React.FC = () => {
@@ -511,8 +512,30 @@ const ConsumerSignIn: React.FC = () => {
                     )}
                   </Box>
 
-                  {/* Forgot password */}
-                  <HStack justify="flex-end" w="full">
+                  {/* Remember me + Forgot password */}
+                  <HStack justify="space-between" w="full">
+                    <HStack spacing={2}>
+                      <Box
+                        as="input"
+                        type="checkbox"
+                        id="remember_me"
+                        w="16px"
+                        h="16px"
+                        accentColor="var(--chakra-colors-blue-500)"
+                        cursor="pointer"
+                        {...register('remember_me')}
+                      />
+                      <Text
+                        as="label"
+                        htmlFor="remember_me"
+                        fontSize="sm"
+                        color={useColorModeValue('gray.600', 'gray.400')}
+                        cursor="pointer"
+                        userSelect="none"
+                      >
+                        Remember me
+                      </Text>
+                    </HStack>
                     <Link to="/auth/forgot-password">
                       <Text
                         fontSize="sm"
