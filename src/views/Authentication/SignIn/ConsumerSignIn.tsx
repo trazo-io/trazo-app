@@ -316,7 +316,7 @@ const ConsumerSignIn: React.FC = () => {
           bg={useColorModeValue('white', 'gray.900')}
           px={{ base: 4, sm: 6, md: 8 }}
           py={12}
-          pt="145px"
+          pt={{ base: '150px', md: '145px' }}
           overflow="hidden"
         >
           <MotionBox

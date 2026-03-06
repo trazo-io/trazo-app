@@ -259,7 +259,7 @@ const ConsumerSignUp: React.FC = () => {
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
           px={{ base: 4, sm: 6, md: 8 }}
-          pt={24}
+          pt={{ base: '150px', md: 24 }}
           pb={8}
           overflow="hidden"
         >

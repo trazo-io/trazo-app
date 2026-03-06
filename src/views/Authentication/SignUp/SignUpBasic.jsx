@@ -77,7 +77,7 @@ function SignUp() {
     <Box
       minH="100vh"
       bg={useColorModeValue('gray.50', 'gray.900')}
-      pt="120px"
+      pt={{ base: '150px', md: '120px' }}
       pb={{ base: 8, md: 12 }}
     >
       <Container maxW="md" centerContent>

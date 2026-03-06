@@ -182,7 +182,7 @@ const ProducerForgotPassword: React.FC = () => {
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
           px={{ base: 4, sm: 6, md: 8 }}
-          pt={'112px'}
+          pt={{ base: '150px', md: '112px' }}
           pb={12}
           overflow="hidden"
         >

@@ -711,7 +711,7 @@ const SetupPassword: React.FC = () => {
           bg={useColorModeValue('white', 'gray.900')}
           px={{ base: 4, sm: 6, md: 8 }}
           py={12}
-          pt={120}
+          pt={{ base: '150px', md: '120px' }}
           overflow="hidden"
         >
           <MotionBox

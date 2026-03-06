@@ -6,7 +6,7 @@ export default function VerifyEmailConsumer() {
   const textColor = useColorModeValue('gray.700', 'white');
 
   return (
-    <Flex direction="column" alignItems="center" pt={{ base: '120px', md: '75px' }}>
+    <Flex direction="column" alignItems="center" pt={{ base: '150px', md: '75px' }}>
       <Heading color={textColor} fontSize="32px" mb="24px">
         Verify Your Email
       </Heading>
