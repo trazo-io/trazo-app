@@ -15,7 +15,7 @@ import {
   Button,
   useBreakpointValue
 } from '@chakra-ui/react';
-import { MdVerified, MdInfo, MdOpenInNew, MdSecurity } from 'react-icons/md';
+import { MdInfo, MdOpenInNew, MdSecurity } from 'react-icons/md';
 import { FaShieldAlt, FaEthereum, FaCheck, FaCertificate } from 'react-icons/fa';
 
 interface BlockchainVerificationProps {
@@ -92,7 +92,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
         <HStack spacing={spacing}>
           <Icon as={MdInfo} color="gray.400" />
           <Text fontSize="sm" color="gray.500">
-            Not yet verified on blockchain
+            Not yet recorded on blockchain
           </Text>
         </HStack>
       </Box>
@@ -136,8 +136,8 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
     const hasUSDA = usda_verified && usda_compliance_percentage && usda_compliance_percentage > 70;
     const hasBlockchain = verified && !mock_data && !fallback_data;
 
-    if (hasUSDA && hasBlockchain) return 'fully_verified';
-    if (hasUSDA || hasBlockchain) return 'partially_verified';
+    if (hasUSDA && hasBlockchain) return 'fully_documented';
+    if (hasUSDA || hasBlockchain) return 'partially_documented';
     if (mock_data || fallback_data) return 'demo_mode';
     return 'pending';
   };
@@ -169,7 +169,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
 
         {/* Blockchain Badge */}
         {verified && (
-          <Tooltip label="Blockchain secured and immutable" placement="top">
+          <Tooltip label="Data recorded on blockchain — tamper-proof" placement="top">
             <Badge
               colorScheme={mock_data || fallback_data ? 'yellow' : 'blue'}
               variant="solid"
@@ -179,8 +179,8 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
               fontSize="xs"
             >
               <HStack spacing={1}>
-                <Icon as={MdVerified} boxSize={3} />
-                <Text>{mock_data ? 'Demo' : 'Secured'}</Text>
+                <Icon as={FaShieldAlt} boxSize={3} />
+                <Text>{mock_data ? 'Demo' : 'Recorded'}</Text>
               </HStack>
             </Badge>
           </Tooltip>
@@ -196,7 +196,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
       p={padding}
       borderRadius="lg"
       border="2px solid"
-      borderColor={status === 'fully_verified' ? 'green.300' : borderColor}
+      borderColor={status === 'fully_documented' ? 'green.300' : borderColor}
       boxShadow="md"
       position="relative"
     >
@@ -205,22 +205,22 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
         <HStack justify="space-between" align="center">
           <HStack spacing={2}>
             <Icon
-              as={status === 'fully_verified' ? MdSecurity : MdVerified}
-              color={status === 'fully_verified' ? uspGreen : iconColor}
+              as={status === 'fully_documented' ? MdSecurity : FaShieldAlt}
+              color={status === 'fully_documented' ? uspGreen : iconColor}
               boxSize={6}
             />
             <VStack align="start" spacing={0}>
               <Text fontSize="md" fontWeight="bold" color={textColor}>
-                {status === 'fully_verified'
-                  ? 'Fully Verified'
-                  : status === 'partially_verified'
-                  ? 'Verified'
+                {status === 'fully_documented'
+                  ? 'Fully Documented & Recorded'
+                  : status === 'partially_documented'
+                  ? 'Documented'
                   : status === 'demo_mode'
                   ? 'Demo Mode'
-                  : 'Verification Pending'}
+                  : 'Documentation Pending'}
               </Text>
               <Text fontSize="xs" color="gray.500">
-                Data integrity guaranteed
+                Data tamper-proof on blockchain
               </Text>
             </VStack>
           </HStack>
@@ -228,9 +228,9 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
           {/* Trust level badge */}
           <Badge
             colorScheme={
-              status === 'fully_verified'
+              status === 'fully_documented'
                 ? 'green'
-                : status === 'partially_verified'
+                : status === 'partially_documented'
                 ? 'blue'
                 : status === 'demo_mode'
                 ? 'yellow'
@@ -242,9 +242,9 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
             py={1}
             borderRadius="full"
           >
-            {status === 'fully_verified'
+            {status === 'fully_documented'
               ? 'ON-CHAIN'
-              : status === 'partially_verified'
+              : status === 'partially_documented'
               ? 'RECORDED'
               : status === 'demo_mode'
               ? 'DEMO'

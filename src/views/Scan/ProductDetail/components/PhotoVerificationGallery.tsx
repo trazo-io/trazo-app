@@ -25,7 +25,6 @@ import {
   Circle
 } from '@chakra-ui/react';
 import { FaShieldAlt, FaCheckCircle, FaCamera, FaEye, FaExclamationTriangle } from 'react-icons/fa';
-import { MdVerified } from 'react-icons/md';
 
 interface PhotoVerificationProps {
   transparencyData: any;
@@ -137,7 +136,7 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
                 <Text fontSize="sm" fontWeight="medium">
                   Verification Status
                 </Text>
-                <Icon as={MdVerified} color={verificationInfo.color} boxSize={4} />
+                <Icon as={FaCheckCircle} color={verificationInfo.color} boxSize={4} />
               </HStack>
               <Text fontSize="sm" color="gray.700">
                 {data.photo_verification_rate}% of practices have photo verification

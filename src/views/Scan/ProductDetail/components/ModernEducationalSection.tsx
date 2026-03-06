@@ -10,8 +10,7 @@ import {
   SimpleGrid,
   useColorModeValue
 } from '@chakra-ui/react';
-import { FaBookOpen, FaLeaf, FaSeedling } from 'react-icons/fa';
-import { MdVerified, MdScience } from 'react-icons/md';
+import { FaBookOpen, FaCertificate, FaLeaf, FaSeedling } from 'react-icons/fa';
 import { BsShieldCheck } from 'react-icons/bs';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -83,11 +82,11 @@ export const ModernEducationalSection: React.FC<ModernEducationalSectionProps> =
           >
             <VStack align="start" spacing={2} w="full">
               <HStack>
-                <Icon as={MdVerified} color="blue.500" />
-                <Text fontWeight="semibold">USDA Standards</Text>
+                <Icon as={FaCertificate} color="blue.500" />
+                <Text fontWeight="semibold">EPA/USDA-Sourced Factors</Text>
               </HStack>
               <Text fontSize="sm" color={mutedColor} textAlign="left">
-                Government verification process
+                Government-published emission data
               </Text>
             </VStack>
           </Button>

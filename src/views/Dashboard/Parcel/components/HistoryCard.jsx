@@ -628,8 +628,13 @@ const HistoryCard = ({ amount }) => {
                               <CardBody p={4}>
                                 <VStack align="stretch" spacing={3}>
                                   {/* Header Row - Production Info and Status */}
-                                  <HStack justify="space-between" align="center" spacing={3}>
-                                    <HStack spacing={3} flex={1}>
+                                  <Flex
+                                    justify="space-between"
+                                    align="flex-start"
+                                    gap={2}
+                                    wrap={{ base: 'wrap', sm: 'nowrap' }}
+                                  >
+                                    <HStack spacing={3} flex={1} minW={0}>
                                       <Box
                                         p={2}
                                         bg={isCompleted ? 'green.50' : 'blue.50'}
@@ -644,7 +649,7 @@ const HistoryCard = ({ amount }) => {
                                           boxSize={4}
                                         />
                                       </Box>
-                                      <VStack align="start" spacing={1} flex={1}>
+                                      <VStack align="start" spacing={1} flex={1} minW={0}>
                                         <Text
                                           fontSize="sm"
                                           fontWeight="600"
@@ -656,7 +661,7 @@ const HistoryCard = ({ amount }) => {
                                               production.id
                                             }`}
                                         </Text>
-                                        <HStack spacing={2}>
+                                        <Flex wrap="wrap" gap={2} align="center">
                                           <Badge
                                             colorScheme={isCompleted ? 'green' : 'blue'}
                                             variant="subtle"
@@ -667,16 +672,17 @@ const HistoryCard = ({ amount }) => {
                                             py={1}
                                             textTransform="uppercase"
                                             letterSpacing="wide"
+                                            flexShrink={0}
                                           >
                                             {isCompleted ? intl.formatMessage({ id: 'parcel.statusComplete' }) : intl.formatMessage({ id: 'parcel.statusOngoing' })}
                                           </Badge>
-                                          <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                                          <Text fontSize="xs" color="gray.500" fontWeight="medium" whiteSpace="nowrap">
                                             {formatDateRange(
                                               production.start_date,
                                               production.finish_date
                                             )}
                                           </Text>
-                                        </HStack>
+                                        </Flex>
                                       </VStack>
                                     </HStack>
 
@@ -785,7 +791,7 @@ const HistoryCard = ({ amount }) => {
                                         );
                                       })()}
                                     </Box>
-                                  </HStack>
+                                  </Flex>
 
                                   {/* Product & Team Info Row */}
                                   <HStack justify="space-between" align="center" spacing={3}>

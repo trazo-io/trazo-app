@@ -132,7 +132,7 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({
                       </HStack>
 
                       <Badge colorScheme="green" size="sm" borderRadius="full">
-                        Verified
+                        Documented
                       </Badge>
                     </HStack>
 

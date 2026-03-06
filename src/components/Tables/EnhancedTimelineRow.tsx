@@ -872,7 +872,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
               {/* Clean Metrics Section */}
               <Divider />
 
-              <HStack justify="space-between" align="center" spacing={3}>
+              <Flex wrap="wrap" justify="space-between" align="center" gap={2}>
                 {/* Carbon Impact */}
                 {carbonData && !carbonData.error ? (
                   <Tooltip
@@ -890,7 +890,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     px={3}
                     py={2}
                   >
-                    <HStack spacing={2} flex={1} cursor="help">
+                    <HStack spacing={2} cursor="help" flexShrink={0}>
                       <Circle size="24px" bg={carbonData.co2e === 0 ? 'gray.100' : `${getImpactLevel(carbonData.co2e).color}.100`}>
                         <Icon
                           as={MdEco}
@@ -909,26 +909,27 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     </HStack>
                   </Tooltip>
                 ) : (
-                  <HStack spacing={2} flex={1}>
+                  <HStack spacing={2} flexShrink={0}>
                     <Circle size="24px" bg="gray.100">
                       <Icon as={MdEco} color="gray.400" boxSize={3} />
                     </Circle>
-                    <Text fontSize="sm" color="gray.500">
+                    <Text fontSize="sm" color="gray.500" whiteSpace="nowrap">
                       No CO₂ data
                     </Text>
                   </HStack>
                 )}
 
-                {/* Efficiency Score */}
-                {carbonData?.efficiency_score && carbonData.efficiency_score > 0 && (
-                  <HStack spacing={2} justify="flex-end">
-                    <VStack spacing={0} align="flex-end">
-                      <Text fontSize="xs" color="gray.500">
+                {/* Efficiency Score & Operator */}
+                <HStack spacing={3} flexShrink={0}>
+                  {carbonData?.efficiency_score && carbonData.efficiency_score > 0 && (
+                    <HStack spacing={1}>
+                      <Text fontSize="xs" color="gray.500" whiteSpace="nowrap">
                         Efficiency
                       </Text>
                       <Text
                         fontSize="sm"
                         fontWeight="600"
+                        whiteSpace="nowrap"
                         color={
                           carbonData.efficiency_score >= 70
                             ? 'green.600'
@@ -939,22 +940,20 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       >
                         {carbonData.efficiency_score}/100
                       </Text>
-                    </VStack>
-                  </HStack>
-                )}
+                    </HStack>
+                  )}
 
-                {/* Operator & Photo Status */}
-                <HStack spacing={3} justify="flex-end">
-                  <Text fontSize="xs" color="gray.500" textAlign="right" maxW="120px" noOfLines={1}>
+                  {/* Operator & Photo Status */}
+                  <Text fontSize="xs" color="gray.500" textAlign="right" maxW="100px" noOfLines={1}>
                     {operatorName}
                   </Text>
                   {!event.image && (
-                    <Circle size="20px" bg="orange.100">
+                    <Circle size="20px" bg="orange.100" flexShrink={0}>
                       <Icon as={FaCamera} color="orange.500" boxSize={2.5} />
                     </Circle>
                   )}
                 </HStack>
-              </HStack>
+              </Flex>
             </VStack>
           </CardBody>
         </Card>

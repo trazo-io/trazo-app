@@ -43,7 +43,7 @@ import {
   FaCalendarAlt,
   FaMapMarkerAlt
 } from 'react-icons/fa';
-import { MdVerified, MdEco } from 'react-icons/md';
+import { MdEco } from 'react-icons/md';
 import { format, parseISO } from 'date-fns';
 import { getReadableFieldValue } from '../../utils/fieldDisplayUtils';
 import { formatCO2e } from '../../utils/carbonDisplayUtils';
@@ -204,8 +204,8 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                 {event.certified && (
                   <Badge colorScheme="green" size="sm">
                     <HStack spacing={1}>
-                      <Icon as={MdVerified} boxSize={3} />
-                      <Text>Verified</Text>
+                      <Icon as={FaCheckCircle} boxSize={3} />
+                      <Text>Documented</Text>
                     </HStack>
                   </Badge>
                 )}
@@ -323,11 +323,11 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                       Carbon Impact Analysis
                     </Heading>
                     {event.carbon_data.usda_factors_used && (
-                      <Tooltip label="Calculated using USDA published emission factors">
+                      <Tooltip label="Calculated using published EPA/USDA emission factors">
                         <Badge colorScheme="blue" size="sm">
                           <HStack spacing={1}>
                             <Icon as={FaCertificate} boxSize={3} />
-                            <Text>Science-Based</Text>
+                            <Text>EPA/USDA Factors</Text>
                           </HStack>
                         </Badge>
                       </Tooltip>

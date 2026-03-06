@@ -91,7 +91,7 @@ export const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
           <HStack spacing={3}>
             <Icon as={FaBox} color="blue.500" boxSize={6} />
             <Heading size="md" color={textColor}>
-              Product Detailss
+              Product Details
             </Heading>
           </HStack>
         </CardHeader>

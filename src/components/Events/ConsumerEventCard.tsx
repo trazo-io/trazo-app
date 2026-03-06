@@ -46,7 +46,7 @@ import {
   FaCalendarAlt,
   FaLayerGroup
 } from 'react-icons/fa';
-import { MdVerified, MdEco, MdSecurity, MdOpenInNew } from 'react-icons/md';
+import { MdEco, MdSecurity, MdOpenInNew } from 'react-icons/md';
 import {
   getConsumerEventDescription,
   formatEventDate,
@@ -461,11 +461,11 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 right="-1px"
                 border="1px solid white"
               >
-                <Icon as={MdVerified} boxSize="8px" color="white" />
+                <Icon as={FaShieldAlt} boxSize="8px" color="white" />
               </Circle>
             )}
 
-            {/* Science-based calculation indicator */}
+            {/* EPA/USDA-sourced calculation indicator */}
             {event.usda_factors_used && (
               <Circle
                 size="14px"
@@ -668,8 +668,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       cursor="pointer"
                     >
                       <HStack spacing={1}>
-                        <Icon as={MdVerified} boxSize={3} />
-                        <Text>BLOCKCHAIN SECURED</Text>
+                        <Icon as={FaShieldAlt} boxSize={3} />
+                        <Text>BLOCKCHAIN-RECORDED</Text>
                       </HStack>
                     </Badge>
                   </Tooltip>
@@ -1337,7 +1337,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             <HStack>
                               <Icon as={FaShieldAlt} color="green.500" boxSize={4} />
                               <Text fontSize="sm" fontWeight="medium" color="green.600">
-                                Data Integrity Score
+                                Documentation Completeness
                               </Text>
                             </HStack>
                             <Badge colorScheme="green" variant="solid">
@@ -1345,7 +1345,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             </Badge>
                           </HStack>
                           <Text fontSize="xs" color="green.600" mt={1}>
-                            Measures data quality, completeness, and accuracy
+                            Measures data completeness of documented practices
                           </Text>
                         </Box>
                       )}
@@ -1357,8 +1357,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           <Text>Network: {blockchainData.network === 'polygon' ? 'Polygon' : blockchainData.network === 'polygon_amoy' ? 'Polygon Testnet' : 'Polygon'}</Text>
                         </HStack>
                         <HStack>
-                          <Icon as={MdVerified} boxSize={3} />
-                          <Text>Immutable Record</Text>
+                          <Icon as={FaShieldAlt} boxSize={3} />
+                          <Text>Tamper-Proof Record</Text>
                         </HStack>
                       </HStack>
                     </VStack>

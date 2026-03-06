@@ -57,8 +57,6 @@ import {
   FaTachometerAlt,
   FaEye
 } from 'react-icons/fa';
-import { MdVerified, MdScience, MdEco } from 'react-icons/md';
-
 // Import our new components
 import { TransparencyIndicator } from 'components/Design';
 import { useGetCompleteSummaryQuery } from '../../store/api/carbonApi';
@@ -272,7 +270,7 @@ export const TransparencyHeroSection: React.FC<TransparencyHeroSectionProps> = (
                     <Badge colorScheme="green" size="lg" borderRadius="full" px={4} py={2}>
                       <HStack spacing={2}>
                         <Icon as={FaShieldAlt} boxSize={4} />
-                        <Text>Trazo Transparency Certified</Text>
+                        <Text>High Transparency</Text>
                       </HStack>
                     </Badge>
                   )}

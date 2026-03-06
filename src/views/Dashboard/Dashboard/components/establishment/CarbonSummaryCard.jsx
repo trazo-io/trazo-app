@@ -8,8 +8,6 @@ import {
   StatLabel,
   StatNumber,
   StatHelpText,
-  StatArrow,
-  Badge,
   Button,
   useColorModeValue,
   Spinner,
@@ -23,8 +21,8 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
-import { FaLeaf, FaChartLine, FaClipboardList, FaCheckCircle, FaEye } from 'react-icons/fa';
-import { MdEco, MdVerified } from 'react-icons/md';
+import { FaClipboardList } from 'react-icons/fa';
+import { MdEco } from 'react-icons/md';
 import { useGetCarbonFootprintSummaryQuery } from 'store/api/companyApi';
 import { useGetEstablishmentComprehensiveDashboardQuery } from 'store/api/dashboardMetricsApi';
 import { useSelector } from 'react-redux';
@@ -73,33 +71,6 @@ const TransparencySummaryCard = ({ establishmentId }) => {
   const isFetching = isFetchingComprehensive || isFetchingCarbon;
   const isError = isErrorComprehensive && isErrorCarbon;
 
-  // DEBUG: Log the API responses
-  console.log('🐛 CarbonSummaryCard Debug:', {
-    comprehensiveData,
-    carbonData,
-    isLoadingComprehensive,
-    isLoadingCarbon,
-    isErrorComprehensive,
-    isErrorCarbon,
-    companyId,
-    establishmentId
-  });
-
-  // DEBUG: Log comprehensive data structure
-  if (comprehensiveData) {
-    console.log('🔍 Comprehensive Data Structure:', {
-      dataType: typeof comprehensiveData,
-      isObject: comprehensiveData && typeof comprehensiveData === 'object',
-      rootKeys: Object.keys(comprehensiveData || {}),
-      hasComprehensiveData: !!comprehensiveData.comprehensive_data,
-      comprehensiveDataKeys: comprehensiveData.comprehensive_data
-        ? Object.keys(comprehensiveData.comprehensive_data)
-        : null,
-      nestedData: comprehensiveData.comprehensive_data,
-      fullData: JSON.stringify(comprehensiveData, null, 2)
-    });
-  }
-
   // Skip transparency API call for establishment level
   // This API is for production-level transparency, not establishment-level
   // We'll use carbon data to estimate transparency at establishment level
@@ -110,7 +81,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
     // Use comprehensive dashboard data if available (nested structure)
     const compData = comprehensiveData?.comprehensive_data;
     if (compData?.transparency_percentage !== undefined) {
-      console.log('🎯 Using comprehensive transparency score:', compData.transparency_percentage);
+
       return compData.transparency_percentage;
     }
 
@@ -125,11 +96,6 @@ const TransparencySummaryCard = ({ establishmentId }) => {
     const productionBonus = Math.min(20, (productionCount / 3) * 20); // Productions contribute up to 20%
 
     const calculated = Math.min(100, Math.round(baseScore + photoBonus + productionBonus));
-    console.log('🧮 Calculated transparency score:', calculated, {
-      eventCount,
-      photoCount,
-      productionCount
-    });
     return calculated;
   };
 
@@ -147,22 +113,12 @@ const TransparencySummaryCard = ({ establishmentId }) => {
     // Use comprehensive dashboard data if available (nested structure)
     const compData = comprehensiveData?.comprehensive_data;
     if (compData?.total_photos !== undefined) {
-      console.log('📸 Using comprehensive photo count:', compData.total_photos);
+
       return compData.total_photos;
     }
 
-    // DEBUG: Try alternative field names that might exist
+    // Try alternative field names in comprehensiveData root
     if (comprehensiveData) {
-      console.log(
-        '📸 DEBUG: Looking for photo fields in comprehensiveData keys:',
-        Object.keys(comprehensiveData)
-      );
-      const photoFields = Object.keys(comprehensiveData).filter(
-        (key) => key.toLowerCase().includes('photo') || key.toLowerCase().includes('image')
-      );
-      console.log('📸 DEBUG: Found photo-related fields:', photoFields);
-
-      // Try common variations
       const possiblePhotoFields = [
         'total_photos',
         'photos_count',
@@ -172,16 +128,13 @@ const TransparencySummaryCard = ({ establishmentId }) => {
       ];
       for (const field of possiblePhotoFields) {
         if (comprehensiveData[field] !== undefined) {
-          console.log(`📸 DEBUG: Found photos in field "${field}":`, comprehensiveData[field]);
           return comprehensiveData[field];
         }
       }
     }
 
     // Fallback to carbon data
-    const fallback = carbonData?.photos_count || 0;
-    console.log('📸 Using fallback photo count:', fallback);
-    return fallback;
+    return carbonData?.photos_count || 0;
   };
 
   const getActiveProductionsCount = () => {
@@ -191,37 +144,19 @@ const TransparencySummaryCard = ({ establishmentId }) => {
     // FIX: Prioritize active_productions (only productions without finish_date)
     // The UI label says "Producciones Activas" so we should show active only
     if (compData?.active_productions !== undefined) {
-      console.log('🏭 Using active production count:', compData.active_productions);
       return compData.active_productions;
     }
 
     // Fallback to total_productions if active not available
     if (compData?.total_productions !== undefined) {
-      console.log('🏭 Fallback to total production count:', compData.total_productions);
       return compData.total_productions;
     }
 
     // Fallback to carbon data
-    const fallback = carbonData?.active_productions_count || 0;
-    console.log('🏭 Using fallback production count:', fallback);
-    return fallback;
+    return carbonData?.active_productions_count || 0;
   };
 
   const getVerificationStatus = () => {
-    // DEBUG: Log verification data structure
-    console.log('🔐 Verification Debug:', {
-      comprehensiveData: !!comprehensiveData,
-      verificationBreakdown: comprehensiveData?.verification_breakdown,
-      rootKeys: comprehensiveData ? Object.keys(comprehensiveData) : null,
-      hasTransparencyMetrics: !!comprehensiveData?.transparency_metrics,
-      transparencyKeys: comprehensiveData?.transparency_metrics
-        ? Object.keys(comprehensiveData.transparency_metrics)
-        : null,
-      // Added: Check comprehensive_data.verification_status path
-      comprehensiveDataVerificationStatus:
-        comprehensiveData?.comprehensive_data?.verification_status
-    });
-
     // Check comprehensive dashboard verification data (nested structure)
     let verificationData = comprehensiveData?.verification_breakdown;
 
@@ -230,12 +165,10 @@ const TransparencySummaryCard = ({ establishmentId }) => {
       verificationData = comprehensiveData.transparency_metrics.verification_breakdown;
     }
 
-    // FIX: Also check comprehensive_data.verification_status as fallback
+    // Also check comprehensive_data.verification_status as fallback
     if (!verificationData && comprehensiveData?.comprehensive_data?.verification_status) {
       verificationData = comprehensiveData.comprehensive_data.verification_status;
     }
-
-    console.log('🔐 Verification Data Found:', verificationData);
 
     // Transparency journey progression:
     // Blockchain = highest level (immutable, tamper-proof record)
@@ -345,7 +278,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
                 {getTransparencyScore()}%
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="increase" /> {intl.formatMessage({ id: 'dashboard.completeDocumentation' })}
+{intl.formatMessage({ id: 'dashboard.completeDocumentation' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -365,7 +298,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
                 {getEventCount()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="increase" /> {intl.formatMessage({ id: 'dashboard.registeredActivities' })}
+{intl.formatMessage({ id: 'dashboard.registeredActivities' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -385,7 +318,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
                 {getPhotoCount()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="increase" /> {intl.formatMessage({ id: 'dashboard.visualEvidence' })}
+{intl.formatMessage({ id: 'dashboard.visualEvidence' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -405,7 +338,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
                 {getActiveProductionsCount()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <StatArrow type="increase" /> {intl.formatMessage({ id: 'dashboard.transparencyCycles' })}
+{intl.formatMessage({ id: 'dashboard.transparencyCycles' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -425,7 +358,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
                 {getVerificationStatus()}
               </StatNumber>
               <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
-                <Icon as={MdVerified} /> {intl.formatMessage({ id: 'dashboard.documentationLevel' })}
+                <Icon as={FaClipboardList} /> {intl.formatMessage({ id: 'dashboard.documentationLevel' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -490,49 +423,6 @@ const TransparencySummaryCard = ({ establishmentId }) => {
           </VStack>
         </Box>
 
-        {/* Action Buttons - Enhanced for Transparency-First
-        <Flex justify="center" gap={3} pt={{ base: 1, md: 2 }}>
-          <Button
-            bg="green.500"
-            color="white"
-            h={{ base: '40px', md: '44px' }}
-            fontSize={{ base: 'xs', md: 'sm' }}
-            borderRadius="xl"
-            px={{ base: 4, md: 6 }}
-            onClick={() =>
-              navigate(`/admin/dashboard/establishment/${establishmentId}/productions`)
-            }
-            leftIcon={<Icon as={FaCheckCircle} />}
-            _hover={{
-              bg: 'green.600',
-              transform: 'translateY(-1px)',
-              boxShadow: 'md'
-            }}
-            _active={{
-              bg: 'green.700'
-            }}
-          >
-            Aumentar Transparencia
-          </Button>
-          <Button
-            variant="outline"
-            colorScheme="green"
-            h={{ base: '40px', md: '44px' }}
-            fontSize={{ base: 'xs', md: 'sm' }}
-            borderRadius="xl"
-            px={{ base: 4, md: 6 }}
-            onClick={() =>
-              navigate(`/admin/dashboard/establishment/${establishmentId}/transparency`)
-            }
-            leftIcon={<Icon as={FaEye} />}
-            _hover={{
-              transform: 'translateY(-1px)',
-              boxShadow: 'md'
-            }}
-          >
-            Ver Transparencia Completa
-          </Button>
-        </Flex> */}
       </CardBody>
     </Card>
   );

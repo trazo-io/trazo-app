@@ -41,7 +41,7 @@ import PhotoVerificationGallery from './components/PhotoVerificationGallery';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { setAuthRedirectAction } from '../../../utils/authRedirect';
-import { MdTimeline, MdVerified } from 'react-icons/md';
+import { MdTimeline } from 'react-icons/md';
 import {
   FaLeaf,
   FaCertificate,
@@ -174,18 +174,18 @@ const EducationModal = ({
     switch (topic) {
       case 'carbon_footprint':
         return {
-          title: 'Carbon Footprint Scoring',
+          title: 'Environmental Impact Scoring',
           content: (
             <VStack align="start" spacing={6}>
               <Text fontSize="lg" color="gray.700">
-                <strong>Carbon scoring</strong> measures the total greenhouse gas emissions
-                throughout the entire agricultural production lifecycle, from farm operations to
-                your table.
+                <strong>Environmental impact scoring</strong> measures direct operational emissions
+                from farming activities that farmers control — fuel, fertilizer, equipment, and
+                irrigation.
               </Text>
 
               <Box>
                 <Heading size="sm" mb={3} color="green.600">
-                  How We Calculate Carbon Scores
+                  How We Calculate Impact Scores
                 </Heading>
                 <VStack align="start" spacing={3}>
                   <HStack align="start" spacing={3}>
@@ -193,7 +193,7 @@ const EducationModal = ({
                     <Box>
                       <Text fontWeight="semibold">Farm Operations (40%)</Text>
                       <Text fontSize="sm" color="gray.600">
-                        Energy use, equipment efficiency, soil management, and fertilizer
+                        Fuel use, equipment operation, soil management, and fertilizer
                         application
                       </Text>
                     </Box>
@@ -201,27 +201,27 @@ const EducationModal = ({
                   <HStack align="start" spacing={3}>
                     <Circle size="8px" bg="blue.500" mt={2} />
                     <Box>
-                      <Text fontWeight="semibold">Transportation (25%)</Text>
+                      <Text fontWeight="semibold">Fertilizer Application (30%)</Text>
                       <Text fontSize="sm" color="gray.600">
-                        Distance traveled, shipping method, and logistics efficiency
+                        NPK manufacturing emissions and application fuel usage
                       </Text>
                     </Box>
                   </HStack>
                   <HStack align="start" spacing={3}>
                     <Circle size="8px" bg="purple.500" mt={2} />
                     <Box>
-                      <Text fontWeight="semibold">Processing & Packaging (20%)</Text>
+                      <Text fontWeight="semibold">Irrigation & Energy (15%)</Text>
                       <Text fontSize="sm" color="gray.600">
-                        Manufacturing energy, packaging materials, and waste reduction
+                        Pump electricity, grid consumption for on-farm operations
                       </Text>
                     </Box>
                   </HStack>
                   <HStack align="start" spacing={3}>
                     <Circle size="8px" bg="orange.500" mt={2} />
                     <Box>
-                      <Text fontWeight="semibold">Land Use & Soil Health (15%)</Text>
+                      <Text fontWeight="semibold">Chemical Applications (15%)</Text>
                       <Text fontSize="sm" color="gray.600">
-                        Carbon sequestration, biodiversity preservation, and regenerative practices
+                        Pesticide and herbicide manufacturing emissions plus application fuel
                       </Text>
                     </Box>
                   </HStack>

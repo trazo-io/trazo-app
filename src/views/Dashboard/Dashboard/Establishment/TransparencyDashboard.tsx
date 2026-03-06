@@ -292,12 +292,12 @@ function TransparencyDashboard() {
   const PHOTO_REQUIRED_CATEGORIES = ['production', 'chemical', 'soil', 'pest'];
 
   // Inline sub-component: Per-production transparency detail (lazy-loaded on expand)
-  const ProductionTransparencyDetail = ({ prodId, prodName, isActive }: { prodId: number; prodName: string; isActive: boolean }) => {
+  const ProductionTransparencyDetail = ({ prodId, prodName, isActive }: { prodId: string; prodName: string; isActive: boolean }) => {
     const [fetchTransparency, { data: prodData, isLoading: prodLoading, error: prodError }] =
       transparencyQrApi.endpoints.getTransparencyDetails.useLazyQuery();
 
     useEffect(() => {
-      fetchTransparency(String(prodId));
+      fetchTransparency(prodId);
     }, [prodId, fetchTransparency]);
 
     if (prodLoading) {
@@ -1000,7 +1000,7 @@ function TransparencyDashboard() {
 
                                 <AccordionPanel pb={4} px={4} bg="white">
                                   {isExpanded && (
-                                    <ProductionTransparencyDetail prodId={production.id} prodName={production.name} isActive={isActive} />
+                                    <ProductionTransparencyDetail prodId={production.public_id} prodName={production.name} isActive={isActive} />
                                   )}
 
                                   {/* Consumer visibility controls */}

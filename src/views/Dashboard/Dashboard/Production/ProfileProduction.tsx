@@ -193,13 +193,13 @@ function ProfileProduction() {
     skip: !productionId
   });
 
-  // Transparency API
+  // Transparency API - uses public_id (UUID) as backend expects UUID, not numeric ID
   const {
     data: transparencyApiData,
     error: transparencyError,
     isLoading: transparencyLoading
-  } = useGetTransparencyDetailsQuery(productionId || '', {
-    skip: !productionId,
+  } = useGetTransparencyDetailsQuery(historyData?.public_id || '', {
+    skip: !historyData?.public_id,
     refetchOnMountOrArgChange: true
   });
 

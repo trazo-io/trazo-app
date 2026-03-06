@@ -29,7 +29,6 @@ import {
   FaCertificate,
   FaTractor
 } from 'react-icons/fa';
-import { MdVerified } from 'react-icons/md';
 import { ModernSkeletonCard } from './ModernSkeletonCard';
 
 interface ModernTrazoLoaderProps {
@@ -179,13 +178,13 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
                 {carbonPreview.productName || 'Product'}
               </Text>
               <Badge colorScheme="green" fontSize="sm" px={3} py={1} borderRadius="full">
-                Carbon Score: {carbonPreview.score}/100
+                Transparency Score: {carbonPreview.score}/100
               </Badge>
               {carbonPreview.isVerified && (
                 <HStack spacing={2}>
-                  <Icon as={MdVerified} color="blue.500" boxSize={4} />
+                  <Icon as={FaCertificate} color="blue.500" boxSize={4} />
                   <Text fontSize="sm" color="blue.600">
-                    Science-Based
+                    EPA/USDA-Sourced
                   </Text>
                 </HStack>
               )}
@@ -346,7 +345,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
           <HStack spacing={4} fontSize="xs" color={mutedColor} opacity={0.8}>
             <HStack spacing={1}>
               <Icon as={FaShieldAlt} />
-              <Text>Verified Data</Text>
+              <Text>Documented Data</Text>
             </HStack>
             <HStack spacing={1}>
               <Icon as={FaCertificate} />

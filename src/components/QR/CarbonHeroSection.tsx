@@ -39,7 +39,6 @@ import {
   FaTachometerAlt,
   FaEye
 } from 'react-icons/fa';
-import { MdVerified, MdScience, MdEco } from 'react-icons/md';
 import { BsShieldCheck } from 'react-icons/bs';
 
 const MotionBox = motion(Box);
@@ -586,7 +585,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                   >
                     <HStack spacing={1}>
                       <Icon as={BsShieldCheck} boxSize={3} />
-                      <Text>Blockchain Verified</Text>
+                      <Text>Blockchain-Recorded</Text>
                     </HStack>
                   </Badge>
                 )}

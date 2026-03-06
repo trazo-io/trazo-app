@@ -40,20 +40,14 @@ import {
 } from '@chakra-ui/react';
 
 // react icons
-import { BsQrCodeScan, BsGraphUp, BsShield, BsEye, BsLightning } from 'react-icons/bs';
+import { BsShield, BsLightning } from 'react-icons/bs';
 import {
   FaChartLine,
   FaCrown,
   FaLeaf,
-  FaUsers,
-  FaPlus,
-  FaMedal,
-  FaRocket,
-  FaGlobe,
-  FaDollarSign,
-  FaArrowUp
+  FaMedal
 } from 'react-icons/fa';
-import { MdCheck, MdPending, MdVerified, MdTrendingUp } from 'react-icons/md';
+import { MdTrendingUp } from 'react-icons/md';
 // Custom components
 import Card from 'components/Card/Card';
 import React from 'react';
@@ -196,7 +190,6 @@ const SmartUsageCard = ({
     : '0';
   const monthlyQRScans = metrics ? metrics.monthly_scans : 0;
   const qrScanGrowth = metrics ? metrics.scan_growth_percentage : 0;
-  const carbonScore = metrics ? Math.round(metrics.transparency_score / 20) : 0; // Convert transparency score to 1-5 scale
   const blockchainVerified = metrics ? metrics.blockchain_verified_count : 0; // Use correct field for blockchain verification
   const totalProductions = metrics ? metrics.total_productions : 0;
   const industryPercentile = metrics ? metrics.industry_percentile : 50; // Use real industry percentile from API (USDA benchmark based, 5-95 scale)
@@ -347,7 +340,7 @@ const SmartUsageCard = ({
             </Stat>
           </Tooltip>
 
-          {/* Trust Score */}
+          {/* Transparency Score */}
           <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipTrustScore' })} hasArrow>
             <Stat textAlign="center" bg={statBg} p={1} borderRadius="md">
               <StatLabel fontSize="xs" color={subtitleColor}>
@@ -359,25 +352,27 @@ const SmartUsageCard = ({
               <StatHelpText fontSize="2xs" m={0}>
                 <HStack spacing={1} justify="center">
                   <Icon as={BsShield} color={accentColor} w={2.5} h={2.5} />
-                  <Text color={subtitleColor}>{carbonScore}/5</Text>
+                  <Text color={subtitleColor}>
+                    {trustScore >= 90 ? 'A+' : trustScore >= 80 ? 'A' : trustScore >= 70 ? 'B' : trustScore >= 60 ? 'C' : 'D'}
+                  </Text>
                 </HStack>
               </StatHelpText>
             </Stat>
           </Tooltip>
 
-          {/* Verified Productions */}
+          {/* Blockchain Recorded Productions */}
           <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipVerifiedProductions' })} hasArrow>
             <Stat textAlign="center" bg={statBg} p={1} borderRadius="md">
               <StatLabel fontSize="xs" color={subtitleColor}>
-                {intl.formatMessage({ id: 'app.verified' })}
+                {intl.formatMessage({ id: 'dashboard.blockchain' })}
               </StatLabel>
               <StatNumber fontSize="sm" color={textColor} fontWeight="bold">
                 {blockchainVerified}/{totalProductions}
               </StatNumber>
               <StatHelpText fontSize="2xs" m={0}>
                 <HStack spacing={1} justify="center">
-                  <Icon as={MdVerified} color={accentColor} w={2.5} h={2.5} />
-                  <Text color={subtitleColor}>{intl.formatMessage({ id: 'dashboard.blockchain' })}</Text>
+                  <Icon as={BsShield} color={accentColor} w={2.5} h={2.5} />
+                  <Text color={subtitleColor}>{intl.formatMessage({ id: 'dashboard.recorded' })}</Text>
                 </HStack>
               </StatHelpText>
             </Stat>
