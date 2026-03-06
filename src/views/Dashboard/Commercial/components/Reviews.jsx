@@ -61,28 +61,28 @@ const Reviews = () => {
 
   return (
     <StandardCard title={intl.formatMessage({ id: 'app.reviews' })} variant="elevated">
-      <Flex gap={6} width="100%" direction={{ base: 'column', lg: 'row' }}>
+      <Flex gap={{ base: 4, md: 6 }} width="100%" direction={{ base: 'column', lg: 'row' }}>
         {/* Reviews Statistics */}
-        <Box flex={1} minW="300px">
-          <VStack spacing={6}>
-            <Text fontSize="lg" fontWeight="semibold" color={textColor} alignSelf="start">
+        <Box flex={1} minW={{ base: 'auto', lg: '300px' }}>
+          <VStack spacing={{ base: 3, md: 6 }}>
+            <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="semibold" color={textColor} alignSelf="start">
               {intl.formatMessage({ id: 'commercial.reputationSummary' })}
             </Text>
 
-            <VStack spacing={4} w="100%">
+            <VStack spacing={{ base: 3, md: 4 }} w="100%">
               {/* Positive Reviews */}
               <Box w="100%">
                 <Flex justify="space-between" mb={2}>
-                  <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
                     {intl.formatMessage({ id: 'app.positiveReviews' })}
                   </Text>
-                  <Text fontSize="sm" color="green.600" fontWeight="semibold">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.600" fontWeight="semibold">
                     {reviewsPercentage?.positive || 0}%
                   </Text>
                 </Flex>
                 <Progress
                   colorScheme="green"
-                  size="md"
+                  size={{ base: 'sm', md: 'md' }}
                   value={reviewsPercentage?.positive || 0}
                   borderRadius="full"
                   bg="gray.100"
@@ -92,16 +92,16 @@ const Reviews = () => {
               {/* Neutral Reviews */}
               <Box w="100%">
                 <Flex justify="space-between" mb={2}>
-                  <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
                     {intl.formatMessage({ id: 'app.neutralReviews' })}
                   </Text>
-                  <Text fontSize="sm" color="yellow.600" fontWeight="semibold">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="yellow.600" fontWeight="semibold">
                     {reviewsPercentage?.neutral || 0}%
                   </Text>
                 </Flex>
                 <Progress
                   colorScheme="yellow"
-                  size="md"
+                  size={{ base: 'sm', md: 'md' }}
                   value={reviewsPercentage?.neutral || 0}
                   borderRadius="full"
                   bg="gray.100"
@@ -111,16 +111,16 @@ const Reviews = () => {
               {/* Negative Reviews */}
               <Box w="100%">
                 <Flex justify="space-between" mb={2}>
-                  <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
                     {intl.formatMessage({ id: 'app.negativeReviews' })}
                   </Text>
-                  <Text fontSize="sm" color="red.600" fontWeight="semibold">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="red.600" fontWeight="semibold">
                     {reviewsPercentage?.negative || 0}%
                   </Text>
                 </Flex>
                 <Progress
                   colorScheme="red"
-                  size="md"
+                  size={{ base: 'sm', md: 'md' }}
                   value={reviewsPercentage?.negative || 0}
                   borderRadius="full"
                   bg="gray.100"
@@ -132,9 +132,9 @@ const Reviews = () => {
 
         {/* Recent Reviews */}
         <Box flex={2}>
-          <VStack spacing={4} align="stretch">
+          <VStack spacing={{ base: 3, md: 4 }} align="stretch">
             <Flex justify="space-between" align="center">
-              <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+              <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="semibold" color={textColor}>
                 {intl.formatMessage({ id: 'commercial.recentReviews' })}
               </Text>
               {!showAllReviews && reviews && reviews.length > 3 && (
@@ -145,7 +145,7 @@ const Reviews = () => {
             </Flex>
 
             {displayedReviews && displayedReviews.length > 0 ? (
-              <VStack spacing={4} align="stretch">
+              <VStack spacing={{ base: 3, md: 4 }} align="stretch">
                 {displayedReviews.map((review) => (
                   <GeneralCard key={review.id} review={review} />
                 ))}
@@ -168,7 +168,7 @@ const Reviews = () => {
                 {!showAllReviews && (
                   <StandardButton
                     variant="primary"
-                    size="md"
+                    size={{ base: 'sm', md: 'md' }}
                     onClick={handleViewAllReviews}
                     alignSelf="flex-end"
                   >

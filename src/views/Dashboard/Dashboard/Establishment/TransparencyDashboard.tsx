@@ -16,7 +16,7 @@ import {
   Heading,
   useToast,
   useBreakpointValue,
-  Spinner,
+  CircularProgress,
   Alert,
   AlertIcon,
   Progress,
@@ -165,7 +165,7 @@ function TransparencyDashboard() {
   const textColor = useColorModeValue('gray.700', 'gray.300');
   const bgColor = useColorModeValue('white', 'gray.800');
   const cardPadding = { base: 4, sm: 5, md: 6, lg: 8 };
-  const mobileCardRadius = { base: 'xl', md: '2xl' };
+  const mobileCardRadius = { base: 'none', md: '2xl' };
   const headingSize = { base: 'md', sm: 'lg', md: 'xl' };
 
   // Loading state - exact same as ProfileEstablishment pattern
@@ -181,23 +181,15 @@ function TransparencyDashboard() {
       >
         <Box
           bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
-          pt={{ base: '140px', md: '100px' }}
-          pb={{ base: '80px', md: '100px' }}
-          px={6}
+          pt={{ base: '120px', md: '120px' }}
+          pb={{ base: '64px', md: '80px' }}
+          px={{ base: 3, md: 6 }}
           position="relative"
         >
           <Box maxW="full" mx="auto">
-            <VStack spacing={8} align="center" justify="center" minH="40vh">
-              <Spinner size="xl" color="green.500" thickness="4px" />
-              <VStack spacing={2}>
-                <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                  {intl.formatMessage({ id: 'transparency.loadingTitle' })}
-                </Text>
-                <Text fontSize="sm" color="gray.600">
-                  {intl.formatMessage({ id: 'transparency.loadingDescription' })}
-                </Text>
-              </VStack>
-            </VStack>
+            <Flex justify="center" align="center" minH="40vh">
+              <CircularProgress isIndeterminate color="green.500" />
+            </Flex>
           </Box>
         </Box>
       </Flex>
@@ -217,9 +209,9 @@ function TransparencyDashboard() {
       >
         <Box
           bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
-          pt={{ base: '140px', md: '100px' }}
-          pb={{ base: '80px', md: '100px' }}
-          px={6}
+          pt={{ base: '120px', md: '120px' }}
+          pb={{ base: '64px', md: '80px' }}
+          px={{ base: 3, md: 6 }}
           position="relative"
         >
           <Box maxW="full" mx="auto">
@@ -302,10 +294,9 @@ function TransparencyDashboard() {
 
     if (prodLoading) {
       return (
-        <VStack py={6} spacing={3}>
-          <Spinner size="md" color="green.500" />
-          <Text fontSize="sm" color="gray.500">{intl.formatMessage({ id: 'transparency.loadingDetails' })}</Text>
-        </VStack>
+        <Flex justify="center" align="center" py={8}>
+          <CircularProgress isIndeterminate color="green.500" size="40px" />
+        </Flex>
       );
     }
 
@@ -549,64 +540,87 @@ function TransparencyDashboard() {
       w="100%"
       position="relative"
     >
-      {/* Clean Modern Header - Matching Commercial Dashboard layout */}
+      {/* Clean Modern Header - Matching StandardPage mobile-first layout */}
       <Box
         bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
-        pt={{ base: '140px', md: '100px' }}
-        pb={{ base: '80px', md: '100px' }}
-        px={6}
+        pt={{ base: '120px', md: '120px' }}
+        pb={{ base: '64px', md: '80px' }}
+        px={{ base: 3, md: 6 }}
         position="relative"
       >
         <Box maxW="6xl" mx="auto">
-          <VStack spacing={4} textAlign="center">
-            {/* Back Button + Title Row - Matching StandardPage layout */}
-            <Flex
-              direction={{ base: 'column', md: 'row' }}
-              align="center"
-              gap={4}
-              w="full"
-              justify="space-between"
+          {/* Mobile: Compact left-aligned header */}
+          <VStack
+            spacing={3}
+            w="full"
+            align={{ base: 'flex-start', md: 'center' }}
+            display={{ base: 'flex', md: 'none' }}
+          >
+            <Button
+              variant="outline"
+              leftIcon={<FaChevronLeft />}
+              onClick={() => navigate(-1)}
+              size="sm"
+              mb={1}
             >
-              <Button
-                variant="outline"
-                leftIcon={<FaChevronLeft />}
-                onClick={() => navigate(-1)}
-                size="sm"
-                bg="white"
-                borderColor="green.500"
-                color="green.500"
-                _hover={{ bg: 'green.50', borderColor: 'green.600' }}
-              >
-                {intl.formatMessage({ id: 'transparency.back' })}
-              </Button>
-
-              <VStack spacing={2} flex={1}>
-                <Heading
-                  as="h1"
-                  size="2xl"
-                  color="green.600"
-                  fontWeight="bold"
-                  textAlign="center"
-                  letterSpacing="-0.02em"
-                >
-                  {intl.formatMessage({ id: 'transparency.dashboardTitle' })}
-                </Heading>
-
-                <Text
-                  fontSize="lg"
-                  color="gray.600"
-                  fontWeight="normal"
-                  maxW="600px"
-                  textAlign="center"
-                >
-                  {intl.formatMessage({ id: 'transparency.dashboardSubtitle' }, { name: establishment?.name || intl.formatMessage({ id: 'transparency.loading' }) })}
-                </Text>
-              </VStack>
-
-              {/* Empty box for balance on desktop */}
-              <Box w={{ base: 0, md: '70px' }} display={{ base: 'none', md: 'block' }} />
-            </Flex>
+              {intl.formatMessage({ id: 'transparency.back' })}
+            </Button>
+            <Heading
+              as="h1"
+              size="lg"
+              color="green.600"
+              fontWeight="bold"
+              letterSpacing="-0.02em"
+            >
+              {intl.formatMessage({ id: 'transparency.dashboardTitle' })}
+            </Heading>
+            <Text fontSize="sm" color="gray.600" lineHeight="1.6">
+              {intl.formatMessage({ id: 'transparency.dashboardSubtitle' }, { name: establishment?.name || intl.formatMessage({ id: 'transparency.loading' }) })}
+            </Text>
           </VStack>
+
+          {/* Desktop: Centered layout with back button */}
+          <Flex
+            direction="row"
+            align="center"
+            gap={4}
+            w="full"
+            justify="space-between"
+            display={{ base: 'none', md: 'flex' }}
+          >
+            <Button
+              variant="outline"
+              leftIcon={<FaChevronLeft />}
+              onClick={() => navigate(-1)}
+              size="sm"
+            >
+              {intl.formatMessage({ id: 'transparency.back' })}
+            </Button>
+
+            <VStack spacing={2} flex={1}>
+              <Heading
+                as="h1"
+                size="2xl"
+                color="green.600"
+                fontWeight="bold"
+                textAlign="center"
+                letterSpacing="-0.02em"
+              >
+                {intl.formatMessage({ id: 'transparency.dashboardTitle' })}
+              </Heading>
+              <Text
+                fontSize="lg"
+                color="gray.600"
+                fontWeight="normal"
+                maxW="600px"
+                textAlign="center"
+              >
+                {intl.formatMessage({ id: 'transparency.dashboardSubtitle' }, { name: establishment?.name || intl.formatMessage({ id: 'transparency.loading' }) })}
+              </Text>
+            </VStack>
+
+            <Box w="70px" />
+          </Flex>
         </Box>
       </Box>
 
@@ -614,7 +628,7 @@ function TransparencyDashboard() {
       <Box
         maxW="full"
         mx="auto"
-        px={6}
+        px={{ base: 0, md: 6 }}
         mt="-40px"
         mb={{ base: '60px', md: '80px' }}
         position="relative"
@@ -905,15 +919,14 @@ function TransparencyDashboard() {
                 <Heading size="md" color={titleColor} mb={2} fontSize={{ base: 'lg', md: 'xl' }}>
                   {intl.formatMessage({ id: 'transparency.yourProductions' })}
                 </Heading>
-                <Text fontSize="sm" color="gray.600" mb={4}>
+                <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={4}>
                   {intl.formatMessage({ id: 'transparency.productionsHelp' })}
                 </Text>
 
                 {isProductionsLoading ? (
-                  <VStack spacing={4} py={8}>
-                    <Spinner size="lg" color="green.500" />
-                    <Text fontSize="sm" color="gray.600">{intl.formatMessage({ id: 'transparency.loadingProductions' })}</Text>
-                  </VStack>
+                  <Flex justify="center" align="center" py={8}>
+                    <CircularProgress isIndeterminate color="green.500" size="40px" />
+                  </Flex>
                 ) : productionsError ? (
                   <Alert status="error" borderRadius="md">
                     <AlertIcon />
@@ -958,43 +971,44 @@ function TransparencyDashboard() {
                                   borderRadius={isExpanded ? 'none' : 'xl'}
                                 >
                                   <VStack align="stretch" flex={1} spacing={2}>
-                                    <HStack justify="space-between" w="full">
-                                      <HStack spacing={2}>
+                                    <Flex justify="space-between" w="full" align="center" gap={2} flexWrap="wrap">
+                                      <HStack spacing={2} minW={0} flex={1}>
                                         <Badge
                                           colorScheme={isActive ? 'green' : 'gray'}
                                           variant={isActive ? 'solid' : 'subtle'}
                                           fontSize="xs"
+                                          flexShrink={0}
                                         >
                                           {isActive ? intl.formatMessage({ id: 'transparency.statusActive' }) : intl.formatMessage({ id: 'transparency.statusCompleted' })}
                                         </Badge>
-                                        <Text fontWeight="bold" fontSize="sm" color="gray.800">
+                                        <Text fontWeight="bold" fontSize="sm" color="gray.800" noOfLines={1}>
                                           {production.name}
                                         </Text>
-                                        <Text fontSize="xs" color="gray.500">#{production.id}</Text>
+                                        <Text fontSize="xs" color="gray.500" flexShrink={0}>#{production.id}</Text>
                                       </HStack>
-                                      <HStack spacing={3}>
+                                      <HStack spacing={2} flexShrink={0}>
                                         <HStack spacing={1}>
-                                          <Text fontWeight="bold" fontSize="md" color={`${scoreColor}.600`}>
+                                          <Text fontWeight="bold" fontSize="md" color={`${scoreColor}.600`} whiteSpace="nowrap">
                                             {score}%
                                           </Text>
                                           <Icon as={FaLeaf} boxSize={3} color={`${scoreColor}.500`} />
                                         </HStack>
                                         <AccordionIcon />
                                       </HStack>
-                                    </HStack>
-                                    <HStack spacing={4} fontSize="xs" color="gray.500">
-                                      <Text>
+                                    </Flex>
+                                    <Flex gap={{ base: 2, md: 4 }} fontSize="xs" color="gray.500" flexWrap="wrap">
+                                      <Text whiteSpace="nowrap">
                                         {intl.formatMessage({ id: 'transparency.started' }, { date: new Date(production.start_date).toLocaleDateString() })}
                                       </Text>
                                       {production.finish_date && (
-                                        <Text>
+                                        <Text whiteSpace="nowrap">
                                           {intl.formatMessage({ id: 'transparency.ended' }, { date: new Date(production.finish_date).toLocaleDateString() })}
                                         </Text>
                                       )}
-                                      <Text fontWeight="medium" color={`${scoreColor}.600`}>
+                                      <Text fontWeight="medium" color={`${scoreColor}.600`} whiteSpace="nowrap">
                                         {score >= 80 ? intl.formatMessage({ id: 'transparency.levelExcellent' }) : score >= 60 ? intl.formatMessage({ id: 'transparency.levelGood' }) : score > 0 ? intl.formatMessage({ id: 'transparency.levelNeedsImprovement' }) : intl.formatMessage({ id: 'transparency.levelNoData' })}
                                       </Text>
-                                    </HStack>
+                                    </Flex>
                                   </VStack>
                                 </AccordionButton>
 
@@ -1064,7 +1078,7 @@ function TransparencyDashboard() {
                   <Heading size="md" color={titleColor} mb={1} fontSize={{ base: 'lg', md: 'xl' }}>
                     {intl.formatMessage({ id: 'transparency.documentationCoverage' })}
                   </Heading>
-                  <Text fontSize="sm" color="gray.500" mb={4}>
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" mb={4}>
                     {intl.formatMessage({ id: 'transparency.documentationCoverageHelp' })}
                   </Text>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
@@ -1166,11 +1180,13 @@ function TransparencyDashboard() {
               {/* Event Validation Opportunities - Specific Edit Links */}
               {sortedOpportunities.length > 0 && (
                 <Box>
-                  <HStack justify="space-between" align="center" mb={4} flexWrap="wrap" gap={2}>
-                    <Heading size="md" color="orange.600" fontSize={{ base: 'lg', md: 'xl' }}>
-                      <Icon as={FaExclamationTriangle} mr={2} />
-                      {intl.formatMessage({ id: 'transparency.improvementActions' })}
-                    </Heading>
+                  <VStack align="start" spacing={2} mb={4}>
+                    <HStack spacing={2} align="center">
+                      <Icon as={FaExclamationTriangle} color="orange.500" boxSize={{ base: 4, md: 5 }} />
+                      <Heading size="md" color="orange.600" fontSize={{ base: 'md', md: 'xl' }}>
+                        {intl.formatMessage({ id: 'transparency.improvementActions' })}
+                      </Heading>
+                    </HStack>
                     {(() => {
                       const currentScore = Math.round(actualTransparencyScore * 100);
                       const totalImprovement = sortedOpportunities.reduce((sum: number, opp: any) => {
@@ -1181,14 +1197,14 @@ function TransparencyDashboard() {
 
                       if (totalImprovement > 0) {
                         return (
-                          <Badge colorScheme="green" fontSize="sm" px={3} py={1} borderRadius="full">
+                          <Badge colorScheme="green" fontSize="xs" px={3} py={1} borderRadius="full">
                             {intl.formatMessage({ id: 'transparency.scoreProjection' }, { current: currentScore, projected: projectedScore })}
                           </Badge>
                         );
                       }
                       return null;
                     })()}
-                  </HStack>
+                  </VStack>
                   <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
                     {sortedOpportunities.map((opportunity, index) => (
                       <Card
@@ -1356,7 +1372,7 @@ function TransparencyDashboard() {
 
               {/* Transparency Information */}
               <Box p={4} bg="gray.50" borderRadius="xl">
-                <Text fontSize="sm" color="gray.700" lineHeight="1.6" textAlign="center">
+                <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.700" lineHeight="1.6" textAlign="center">
                   <Text as="span" fontWeight="bold">
                     {intl.formatMessage({ id: 'transparency.footerBold' })}
                   </Text>{' '}

@@ -7,7 +7,7 @@ import {
   Box,
   VStack,
   HStack,
-  Spinner,
+  CircularProgress,
   Flex,
   Icon,
   Text,
@@ -353,7 +353,7 @@ const HistoryCard = ({ amount }) => {
 
       {isLoading || isFetching ? (
         <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
-          <Spinner size="sm" color="green.500" />
+          <CircularProgress isIndeterminate color="green.500" size="40px" />
         </Flex>
       ) : (
         <CardBody p="0px" pb={4}>

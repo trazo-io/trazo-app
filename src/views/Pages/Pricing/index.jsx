@@ -7,7 +7,7 @@ import {
   SimpleGrid,
   Text,
   useColorModeValue,
-  Spinner,
+  CircularProgress,
   useToast,
   Badge,
   VStack,
@@ -755,7 +755,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
           {/* Plans Grid */}
           {loading ? (
             <VStack spacing={4} py={12}>
-              <Spinner size="xl" color="green.500" />
+              <CircularProgress isIndeterminate color="green.500" />
               <Text color="gray.500">{t('app.loadingPlans')}</Text>
               <StandardButton
                 variant="outline"

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useToast, Box, Text, Spinner, VStack } from '@chakra-ui/react';
+import { useToast, Box, Text, CircularProgress } from '@chakra-ui/react';
 import { StandardProductionForm } from '../../../../components/Forms/StandardProductionForm';
 import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 import { useGetHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
@@ -219,10 +219,7 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
   if (isEdit && isLoadingProduction) {
     return (
       <Box p={8} display="flex" justifyContent="center" alignItems="center" minH="400px">
-        <VStack spacing={4}>
-          <Spinner size="xl" color="green.500" thickness="4px" />
-          <Text color="gray.600">Loading production data...</Text>
-        </VStack>
+        <CircularProgress isIndeterminate color="green.500" />
       </Box>
     );
   }

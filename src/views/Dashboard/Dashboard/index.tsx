@@ -405,7 +405,7 @@ export default function DashboardView() {
     <Flex
       flexDirection="column"
       pt={{ base: '120px', md: '75px' }}
-      px={{ base: 3, md: 6 }}
+      px={{ base: 1, md: 6 }}
       pb={{ base: 8, md: 8 }}
       minH="100vh"
     >

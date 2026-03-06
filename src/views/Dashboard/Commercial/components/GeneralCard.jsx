@@ -16,7 +16,6 @@ import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
 import { StandardCard } from 'components/Design/StandardComponents';
 import React from 'react';
 import { useIntl } from 'react-intl';
-import avatar4 from 'assets/img/avatars/avatar4.png';
 
 const GeneralCard = ({ review }) => {
   const intl = useIntl();
@@ -29,8 +28,8 @@ const GeneralCard = ({ review }) => {
         <Icon
           key={index}
           as={rating >= starIndex ? BsStarFill : rating > starIndex - 0.5 ? BsStarHalf : BsStar}
-          w="14px"
-          h="14px"
+          w={{ base: '12px', md: '14px' }}
+          h={{ base: '12px', md: '14px' }}
           color="yellow.400"
         />
       );
@@ -38,39 +37,43 @@ const GeneralCard = ({ review }) => {
   };
 
   return (
-    <StandardCard variant="outline">
-      <VStack spacing={4} align="stretch">
+    <StandardCard variant="outline" padding={{ base: 3, md: 4 }}>
+      <VStack spacing={{ base: 2, md: 4 }} align="stretch">
         {/* User Info and Rating */}
-        <Flex justify="space-between" align="center" w="100%">
-          <HStack spacing={3}>
+        <Flex justify="space-between" align="center" w="100%" gap={2} flexWrap="wrap">
+          <HStack spacing={2} minW={0}>
             <Avatar
-              src={review.user_avatar || avatar4}
-              size="md"
+              src={review.user_avatar || undefined}
+              name={review.user || 'Anonymous'}
+              size="sm"
               borderRadius="xl"
               border="2px solid"
               borderColor="green.100"
+              bg="green.100"
+              color="green.700"
+              flexShrink={0}
             />
-            <VStack align="start" spacing={0}>
-              <Text color={textColor} fontSize="md" fontWeight="semibold">
+            <VStack align="start" spacing={0} minW={0}>
+              <Text color={textColor} fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" noOfLines={1}>
                 {review.user}
               </Text>
-              <Text color="gray.500" fontSize="sm">
+              <Text color="gray.500" fontSize={{ base: '2xs', md: 'xs' }} whiteSpace="nowrap">
                 {review.date}
               </Text>
             </VStack>
           </HStack>
-          <HStack spacing={1}>{renderStars(review.rating)}</HStack>
+          <HStack spacing={0.5} flexShrink={0}>{renderStars(review.rating)}</HStack>
         </Flex>
 
         {/* Review Content */}
-        <VStack align="stretch" spacing={3}>
-          <Text color={textColor} fontSize="md" fontWeight="semibold" lineHeight="1.4">
+        <VStack align="stretch" spacing={{ base: 1, md: 3 }}>
+          <Text color={textColor} fontSize={{ base: 'sm', md: 'md' }} fontWeight="semibold" lineHeight="1.4">
             {review.headline}
           </Text>
-          <Text fontSize="sm" color="gray.600" lineHeight="1.6">
+          <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" lineHeight="1.5">
             {review.written_review}
           </Text>
-          <Text color="gray.500" fontSize="xs" fontWeight="medium">
+          <Text color="gray.500" fontSize={{ base: '2xs', md: 'xs' }} fontWeight="medium">
             {intl.formatMessage({ id: 'commercial.production' }, { name: review.production })}
           </Text>
         </VStack>

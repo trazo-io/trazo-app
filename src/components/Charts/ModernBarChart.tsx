@@ -98,7 +98,7 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} margin={{ top: 30, right: 20, bottom: 40, left: 0 }}>
+      <BarChart data={data} margin={{ top: 20, right: 10, bottom: 20, left: -15 }}>
         <defs>
           {/* Modern gradients for each reputation level */}
           <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
@@ -129,27 +129,22 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
 
         <XAxis
           dataKey={xDataKey}
-          tick={{ fontSize: 11, fill: textColor }}
+          tick={{ fontSize: 9, fill: textColor }}
           tickLine={false}
           axisLine={{ stroke: gridColor, strokeWidth: 1 }}
           interval={0}
-          angle={-45}
+          angle={-35}
           textAnchor="end"
-          height={60}
+          height={45}
         />
 
         <YAxis
           domain={[0, 5]}
           ticks={[0, 1, 2, 3, 4, 5]}
-          tick={{ fontSize: 12, fill: textColor }}
+          tick={{ fontSize: 10, fill: textColor }}
           tickLine={false}
           axisLine={false}
-          label={{
-            value: intl.formatMessage({ id: 'commercial.reputationAxis' }),
-            angle: -90,
-            position: 'insideLeft',
-            style: { fontSize: 12, fill: textColor }
-          }}
+          width={30}
         />
 
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />

@@ -12,7 +12,7 @@ import {
   Alert,
   AlertIcon,
   useToast,
-  Spinner,
+  CircularProgress,
   Grid
 } from '@chakra-ui/react';
 import { BsFillCloudLightningRainFill } from 'react-icons/bs';
@@ -1475,16 +1475,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
       {isEdit && isLoadingEvent && (
         <StandardCard>
           <CardBody py={8} px={6}>
-            <VStack spacing={4} align="center">
-              <Spinner size="xl" color="green.500" />
-              <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                {intl.formatMessage({ id: 'app.loadingEvent' }) || 'Loading event data...'}
-              </Text>
-              <Progress value={60} colorScheme="green" w="200px" borderRadius="full" />
-              <Text fontSize="sm" color="gray.500">
-                Retrieving agricultural data and calculations
-              </Text>
-            </VStack>
+            <Flex justify="center" align="center">
+              <CircularProgress isIndeterminate color="green.500" />
+            </Flex>
           </CardBody>
         </StandardCard>
       )}

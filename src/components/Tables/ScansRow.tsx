@@ -120,29 +120,44 @@ const ScansRow = (props: ScansRowProps) => {
 
   const engagementLevel = getEngagementLevel();
 
+  // Format date compactly for mobile
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const yy = String(d.getFullYear()).slice(-2);
+      return `${mm}/${dd}/${yy}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
-    <Tr pe="0px" paddingInlineStart={'20px'} paddingInlineEnd={'20px'} _hover={{ bg: 'gray.50' }}>
+    <Tr pe="0px" px={{ base: 2, md: 5 }} _hover={{ bg: 'gray.50' }}>
       {/* Date */}
-      <Td pe="0px" paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-        <Text color={textColor} fontSize="sm" fontWeight="bold">
-          {date}
+      <Td pe="0px" px={{ base: 2, md: 5 }}>
+        <Text color={textColor} fontSize={{ base: 'xs', md: 'sm' }} fontWeight="bold" whiteSpace="nowrap">
+          {formatDate(date)}
         </Text>
       </Td>
 
       {/* Product */}
-      <Td pe="0px" paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-        <Text color={textColor} fontSize="sm">
+      <Td pe="0px" px={{ base: 2, md: 5 }} maxW={{ base: '100px', md: 'none' }}>
+        <Text color={textColor} fontSize={{ base: 'xs', md: 'sm' }} noOfLines={1}>
           {product}
         </Text>
       </Td>
 
       {/* Customer Type - NEW */}
-      <Td paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-        <HStack spacing={2}>
+      <Td px={{ base: 2, md: 5 }}>
+        <HStack spacing={1}>
           {getCustomerTypeBadge()}
           {is_duplicate && (
             <Tooltip label={intl.formatMessage({ id: 'commercial.duplicateSession' })} placement="top">
-              <Badge colorScheme="gray" size="sm" variant="outline">
+              <Badge colorScheme="gray" fontSize="2xs" variant="outline">
                 {intl.formatMessage({ id: 'commercial.dup' })}
               </Badge>
             </Tooltip>
@@ -151,9 +166,9 @@ const ScansRow = (props: ScansRowProps) => {
       </Td>
 
       {/* Engagement Level - NEW */}
-      <Td paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-        <HStack spacing={2}>
-          <Badge colorScheme={engagementLevel.color} size="sm" variant="subtle">
+      <Td px={{ base: 2, md: 5 }}>
+        <HStack spacing={1}>
+          <Badge colorScheme={engagementLevel.color} fontSize={{ base: '2xs', md: 'xs' }} variant="subtle">
             {engagementLevel.label}
           </Badge>
           {consent_given && isHighEngagement && (
@@ -165,8 +180,8 @@ const ScansRow = (props: ScansRowProps) => {
       </Td>
 
       {/* Scan Quality - NEW */}
-      <Td paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-        <HStack spacing={2}>
+      <Td px={{ base: 2, md: 5 }}>
+        <HStack spacing={1}>
           <Tooltip
             label={
               isHumanLike
@@ -179,7 +194,7 @@ const ScansRow = (props: ScansRowProps) => {
           >
             <Badge
               colorScheme={isHumanLike ? 'green' : 'orange'}
-              size="sm"
+              fontSize={{ base: '2xs', md: 'xs' }}
               variant={isHumanLike ? 'solid' : 'outline'}
             >
               <HStack spacing={1}>
@@ -192,20 +207,20 @@ const ScansRow = (props: ScansRowProps) => {
       </Td>
 
       {/* Location */}
-      <Td paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
-        <Text color={textColor} fontSize="sm">
-          {location || intl.formatMessage({ id: 'commercial.unknown' })}
+      <Td px={{ base: 2, md: 5 }}>
+        <Text color={textColor} fontSize={{ base: 'xs', md: 'sm' }} whiteSpace="nowrap">
+          {location || '-'}
         </Text>
       </Td>
 
       {/* Comments */}
-      <Td paddingInlineStart={'20px'} paddingInlineEnd={'20px'}>
+      <Td px={{ base: 2, md: 5 }}>
         <Button
           onClick={comment ? onExpand : undefined}
           variant="no-hover"
           bg={comment ? (isExpanded ? 'green.50' : 'white') : 'white'}
-          w="100px"
-          h="35px"
+          w={{ base: '70px', md: '100px' }}
+          h={{ base: '28px', md: '35px' }}
           fontSize="xs"
           color={comment ? (isExpanded ? 'green.700' : 'green.500') : '#CBD5E0'}
           border={comment ? '1px solid' : '1px solid #CBD5E0'}

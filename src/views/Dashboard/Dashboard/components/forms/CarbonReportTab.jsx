@@ -17,7 +17,7 @@ import {
   Tr,
   Text,
   useToast,
-  Spinner,
+  CircularProgress,
   useColorModeValue,
   Modal,
   ModalOverlay,
@@ -102,7 +102,7 @@ const CarbonReportTab = ({ establishmentId }) => {
   if (loadingReports) {
     return (
       <Flex align="center" justify="center" minH="200px">
-        <Spinner size="xl" />
+        <CircularProgress isIndeterminate color="green.500" />
       </Flex>
     );
   }

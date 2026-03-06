@@ -17,7 +17,8 @@ import {
   VStack,
   HStack,
   IconButton,
-  useDisclosure
+  useDisclosure,
+  Collapse
 } from '@chakra-ui/react';
 import { NavLink, useLocation, useMatch, useParams } from 'react-router-dom';
 import React, { useEffect, useRef, useState } from 'react';
@@ -34,7 +35,7 @@ import {
   StandardSelect
 } from 'components/Design/StandardComponents';
 import { IoIosArrowDown } from 'react-icons/io';
-import { FiMaximize2 } from 'react-icons/fi';
+import { FiMaximize2, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import ModernLineBarChart from 'components/Charts/ModernLineBarChart';
 import ExpandableChartModal from 'components/Charts/ExpandableChartModal';
 import ModernBarChart from 'components/Charts/ModernBarChart';
@@ -74,6 +75,7 @@ interface CustomerQualityAnalyticsProps {
 const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnalyticsProps) => {
   const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white');
+  const { isOpen: isEducationOpen, onToggle: onEducationToggle } = useDisclosure();
 
   // Calculate quality metrics from actual filtered scan data
   const calculateQualityMetrics = () => {
@@ -173,32 +175,30 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
       subtitle={intl.formatMessage({ id: 'commercial.customerQualitySubtitle' })}
       variant="elevated"
     >
-      <SimpleGrid columns={{ base: 2, md: 4 }} spacing={6}>
+      <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 3, md: 6 }}>
         {/* Human vs Bot Scans */}
         <Stat>
-          <StatLabel fontSize="sm" color="gray.600">
-            <HStack spacing={2}>
-              <Tooltip
-                label={intl.formatMessage({ id: 'commercial.humanScansTooltip' })}
-                placement="top"
-                hasArrow
-              >
-                <HStack spacing={2}>
-                  <Icon as={FaUser} color="green.500" boxSize={4} />
-                  <Text>{intl.formatMessage({ id: 'commercial.humanScans' })}</Text>
-                </HStack>
-              </Tooltip>
-            </HStack>
+          <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
+            <Tooltip
+              label={intl.formatMessage({ id: 'commercial.humanScansTooltip' })}
+              placement="top"
+              hasArrow
+            >
+              <HStack spacing={1.5}>
+                <Icon as={FaUser} color="green.500" boxSize={{ base: 3, md: 4 }} />
+                <Text>{intl.formatMessage({ id: 'commercial.humanScans' })}</Text>
+              </HStack>
+            </Tooltip>
           </StatLabel>
-          <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
+          <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
             {humanPercentage}%
           </StatNumber>
-          <StatHelpText fontSize="xs" color="gray.500">
+          <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
             {intl.formatMessage({ id: 'commercial.humanScansCount' }, { human: metrics.humanScans, total: metrics.totalScans })}
             <Badge
-              ml={2}
+              ml={1.5}
               colorScheme={humanPercentage > 80 ? 'green' : humanPercentage > 60 ? 'yellow' : 'red'}
-              size="sm"
+              fontSize={{ base: '2xs', md: 'xs' }}
             >
               {humanPercentage > 80
                 ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
@@ -211,23 +211,23 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
 
         {/* High Engagement */}
         <Stat>
-          <StatLabel fontSize="sm" color="gray.600">
-            <HStack spacing={2}>
-              <Icon as={FaChartLine} color="green.500" boxSize={4} />
+          <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
+            <HStack spacing={1.5}>
+              <Icon as={FaChartLine} color="green.500" boxSize={{ base: 3, md: 4 }} />
               <Text>{intl.formatMessage({ id: 'commercial.highEngagement' })}</Text>
             </HStack>
           </StatLabel>
-          <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
+          <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
             {engagementPercentage}%
           </StatNumber>
-          <StatHelpText fontSize="xs" color="gray.500">
+          <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
             {intl.formatMessage({ id: 'commercial.deeplyEngaged' }, { count: metrics.highEngagement })}
             <Badge
-              ml={2}
+              ml={1.5}
               colorScheme={
                 engagementPercentage > 70 ? 'green' : engagementPercentage > 50 ? 'yellow' : 'red'
               }
-              size="sm"
+              fontSize={{ base: '2xs', md: 'xs' }}
             >
               {engagementPercentage > 70
                 ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
@@ -240,23 +240,23 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
 
         {/* Unique Sessions */}
         <Stat>
-          <StatLabel fontSize="sm" color="gray.600">
-            <HStack spacing={2}>
-              <Icon as={FaShieldAlt} color="green.500" boxSize={4} />
+          <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
+            <HStack spacing={1.5}>
+              <Icon as={FaShieldAlt} color="green.500" boxSize={{ base: 3, md: 4 }} />
               <Text>{intl.formatMessage({ id: 'commercial.uniqueSessions' })}</Text>
             </HStack>
           </StatLabel>
-          <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
+          <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
             {uniquePercentage}%
           </StatNumber>
-          <StatHelpText fontSize="xs" color="gray.500">
+          <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
             {intl.formatMessage({ id: 'commercial.uniqueVisitors' }, { count: metrics.uniqueSessions })}
             <Badge
-              ml={2}
+              ml={1.5}
               colorScheme={
                 uniquePercentage > 90 ? 'green' : uniquePercentage > 75 ? 'yellow' : 'red'
               }
-              size="sm"
+              fontSize={{ base: '2xs', md: 'xs' }}
             >
               {uniquePercentage > 90
                 ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
@@ -269,18 +269,18 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
 
         {/* GDPR Compliance */}
         <Stat>
-          <StatLabel fontSize="sm" color="gray.600">
-            <HStack spacing={2}>
-              <Icon as={FaShieldAlt} color="green.500" boxSize={4} />
+          <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
+            <HStack spacing={1.5}>
+              <Icon as={FaShieldAlt} color="green.500" boxSize={{ base: 3, md: 4 }} />
               <Text>{intl.formatMessage({ id: 'commercial.privacyCompliant' })}</Text>
             </HStack>
           </StatLabel>
-          <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
+          <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
             {consentPercentage}%
           </StatNumber>
-          <StatHelpText fontSize="xs" color="gray.500">
+          <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
             {intl.formatMessage({ id: 'commercial.consentedScans' }, { count: metrics.consentedScans })}
-            <Badge ml={2} colorScheme="green" size="sm">
+            <Badge ml={1.5} colorScheme="green" fontSize={{ base: '2xs', md: 'xs' }}>
               {intl.formatMessage({ id: 'commercial.gdprCompliant' })}
             </Badge>
           </StatHelpText>
@@ -289,26 +289,27 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
 
       {/* Quality Insights & Education */}
       {metrics.totalScans > 0 && (
-        <VStack spacing={4} align="stretch">
+        <VStack spacing={{ base: 4, md: 5 }} align="stretch" mt={{ base: 5, md: 6 }}>
           {/* Quality Score Summary */}
-          <Box p={4} bg="green.50" borderRadius="lg" border="1px solid" borderColor="green.200">
-            <HStack spacing={4} wrap="wrap">
-              <VStack align="start" spacing={1}>
-                <Text fontSize="sm" fontWeight="semibold" color="green.700">
+          <Box p={{ base: 3, md: 4 }} bg="green.50" borderRadius="lg" border="1px solid" borderColor="green.200">
+            <Stack direction={{ base: 'column', md: 'row' }} spacing={{ base: 2, md: 4 }}>
+              <VStack align="start" spacing={0.5}>
+                <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
                   {intl.formatMessage({ id: 'commercial.qualityScore' }, { score: Math.round((humanPercentage + engagementPercentage + uniquePercentage) / 3) })}
                 </Text>
-                <Text fontSize="xs" color="green.600">
+                <Text fontSize={{ base: '2xs', md: 'xs' }} color="green.600">
                   {intl.formatMessage({ id: 'commercial.qualityScoreDescription' })}
                 </Text>
               </VStack>
 
-              <Divider orientation="vertical" h="40px" borderColor="green.300" />
+              <Divider orientation="vertical" h="40px" borderColor="green.300" display={{ base: 'none', md: 'block' }} />
+              <Divider orientation="horizontal" borderColor="green.300" display={{ base: 'block', md: 'none' }} />
 
-              <VStack align="start" spacing={1}>
-                <Text fontSize="sm" fontWeight="semibold" color="green.700">
+              <VStack align="start" spacing={0.5}>
+                <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
                   {intl.formatMessage({ id: 'commercial.recommendation' })}
                 </Text>
-                <Text fontSize="xs" color="green.600">
+                <Text fontSize={{ base: '2xs', md: 'xs' }} color="green.600">
                   {humanPercentage > 85
                     ? intl.formatMessage({ id: 'commercial.recommendationExcellent' })
                     : humanPercentage > 70
@@ -316,23 +317,34 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
                     : intl.formatMessage({ id: 'commercial.recommendationLow' })}
                 </Text>
               </VStack>
-            </HStack>
+            </Stack>
           </Box>
 
-          {/* Educational Section for Farmers */}
-          <Box p={4} bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200">
-            <VStack align="start" spacing={3}>
-              <Text fontSize="sm" fontWeight="semibold" color="blue.700">
+          {/* Educational Section for Farmers - Collapsible */}
+          <Box bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200" overflow="hidden">
+            <Flex
+              align="center"
+              justify="space-between"
+              p={{ base: 3, md: 4 }}
+              cursor="pointer"
+              onClick={onEducationToggle}
+              _hover={{ bg: 'blue.100' }}
+              transition="background-color 0.2s"
+            >
+              <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="blue.700">
                 💡 {intl.formatMessage({ id: 'commercial.educationTitle' })}
               </Text>
-              <VStack align="start" spacing={2} fontSize="xs" color="blue.600">
+              <Icon as={isEducationOpen ? FiChevronUp : FiChevronDown} color="blue.500" boxSize={4} />
+            </Flex>
+            <Collapse in={isEducationOpen} animateOpacity>
+              <VStack align="start" spacing={1.5} px={{ base: 3, md: 4 }} pb={{ base: 3, md: 4 }} fontSize={{ base: '2xs', md: 'xs' }} color="blue.600">
                 <Text>
                   {intl.formatMessage({ id: 'commercial.educationHumanScans' })}
                 </Text>
                 <Text>
                   {intl.formatMessage({ id: 'commercial.educationDetectionSystem' })}
                 </Text>
-                <VStack align="start" spacing={1} pl={4} fontSize="xs">
+                <VStack align="start" spacing={0.5} pl={{ base: 3, md: 4 }} fontSize={{ base: '2xs', md: 'xs' }}>
                   <Text>
                     • {intl.formatMessage({ id: 'commercial.educationAutomatic' })}
                   </Text>
@@ -350,7 +362,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
                   {intl.formatMessage({ id: 'commercial.educationTransparencyCommitment' })}
                 </Text>
               </VStack>
-            </VStack>
+            </Collapse>
           </Box>
         </VStack>
       )}
@@ -880,13 +892,10 @@ export default function CommercialView() {
                   />
                 }
               >
-                <Box w="100%" h="350px">
+                <Box w="100%" h={{ base: '300px', md: '350px' }} overflow="hidden">
                   {isFetching ? (
                     <Flex justify="center" align="center" h="100%">
                       <CircularProgress isIndeterminate color="green.500" />
-                      <Text ml={4} color={textColor}>
-                        {intl.formatMessage({ id: 'commercial.loadingChartData' })}
-                      </Text>
                     </Flex>
                   ) : !dataEstablishmentScansVsSaleInfo?.scans_vs_reviews ? (
                     <Flex justify="center" align="center" h="100%">
@@ -910,7 +919,7 @@ export default function CommercialView() {
                       lineDataKey="scans"
                       barDataKey="reviews"
                       xDataKey="name"
-                      height={350}
+                      height={290}
                       showGrid={true}
                       lineLabel={intl.formatMessage({ id: 'app.scans' })}
                       barLabel={intl.formatMessage({ id: 'app.reviews' })}
@@ -924,7 +933,7 @@ export default function CommercialView() {
                 title={`${intl.formatMessage({ id: 'app.productsReputation' })} ⭐️`}
                 variant="elevated"
               >
-                <Box w="100%" h="350px">
+                <Box w="100%" h={{ base: '300px', md: '350px' }} overflow="hidden">
                   {isFetchingEstablishmentProductsReputation ? (
                     <Flex justify="center" align="center" h="100%">
                       <CircularProgress isIndeterminate color="green.500" />
@@ -942,7 +951,7 @@ export default function CommercialView() {
                       }))}
                       dataKey="value"
                       xDataKey="name"
-                      height={350}
+                      height={290}
                       showGrid={true}
                       showValues={true}
                       gradientColors={true}

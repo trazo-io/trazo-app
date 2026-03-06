@@ -1,7 +1,7 @@
 // Chakra imports
 import {
   Button,
-  Spinner,
+  CircularProgress,
   Flex,
   Icon,
   Menu,
@@ -297,7 +297,7 @@ const TrackList = ({ amount }) => {
           <Flex direction="column" width={'100%'} pb={4}>
             {isLoading || isFetching ? (
               <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
-                <Spinner size="sm" color="green.500" />
+                <CircularProgress isIndeterminate color="green.500" size="40px" />
               </Flex>
             ) : (
               <>
@@ -323,7 +323,7 @@ const TrackList = ({ amount }) => {
                 {/* Progressive loading indicator: events exist but more are being created */}
                 {currentHistory?.events?.length > 0 && currentHistory?.events_status === 'pending' && (
                   <HStack spacing={2} justify="center" py={3} px={4}>
-                    <Spinner size="xs" color="green.500" />
+                    <CircularProgress isIndeterminate color="green.500" size="16px" />
                     <Text fontSize="xs" color="gray.500">
                       {intl.formatMessage({ id: 'parcel.creatingMoreEvents' })}
                     </Text>
@@ -350,7 +350,7 @@ const TrackList = ({ amount }) => {
                   currentHistory?.events_status === 'pending' && (
                     <VStack spacing={8} py={8} align="center" px={6}>
                       <VStack spacing={4} textAlign="center">
-                        <Spinner size="lg" color="green.500" thickness="3px" />
+                        <CircularProgress isIndeterminate color="green.500" />
                         <VStack spacing={2}>
                           <Text fontSize="md" fontWeight="bold" color={textColor}>
                             {intl.formatMessage({ id: 'parcel.settingUpEvents' })}

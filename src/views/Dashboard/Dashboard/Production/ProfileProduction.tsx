@@ -10,7 +10,6 @@ import {
   Badge,
   Image,
   Link,
-  Spinner,
   Wrap,
   WrapItem,
   useDisclosure,
@@ -42,7 +41,7 @@ import { useSelector } from 'react-redux';
 import { useUserRole } from 'hooks/useUserRole';
 import { useIntl } from 'react-intl';
 
-import { StandardCard, StandardButton, StandardPage } from 'components/Design/StandardComponents';
+import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 'components/Design/StandardComponents';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetPublicHistoryQuery } from 'store/api/historyApi';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
@@ -54,15 +53,11 @@ import { config } from 'config/environment';
 import { normalizeBackendEventData } from 'utils/eventDataNormalizer';
 import { StandardizedEvent } from 'types/standardizedEvents';
 import {
-  CompanyEstablishmentInfo,
   UltraMobileProductionJourney
 } from 'views/Scan/ProductDetail/components';
 
 // Week 2 Voice & Mobile Components
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
-
-// TransparencyScoreCard from ProfileSections
-import { TransparencyScoreCard } from 'components/ProfileSections';
 
 // Type definitions
 interface RootState {
@@ -90,6 +85,7 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text', on
       return (
         <Text
           fontWeight="medium"
+          fontSize={{ base: 'sm', md: 'md' }}
           color="green.600"
           cursor="pointer"
           _hover={{ textDecoration: 'underline' }}
@@ -102,25 +98,25 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text', on
     switch (type) {
       case 'link':
         return (
-          <Link href={value as string} isExternal color="green.600" fontWeight="medium">
+          <Link href={value as string} isExternal color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
       case 'email':
         return (
-          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium">
+          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
       case 'phone':
         return (
-          <Link href={`tel:${value}`} color="green.600" fontWeight="medium">
+          <Link href={`tel:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
       default:
         return (
-          <Text fontWeight="medium" color="gray.800">
+          <Text fontWeight="medium" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Text>
         );
@@ -128,10 +124,10 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text', on
   };
 
   return (
-    <HStack spacing={3} align="flex-start">
-      <Icon as={icon} color="green.500" boxSize={4} mt={1} flexShrink={0} />
+    <HStack spacing={2} align="flex-start">
+      <Icon as={icon} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
       <Box>
-        <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
+        <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" textTransform="uppercase" fontWeight="semibold">
           {label}
         </Text>
         {renderValue()}
@@ -150,19 +146,19 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ icon, value, label, colorScheme }) => (
   <VStack
-    spacing={2}
-    p={4}
+    spacing={{ base: 1, md: 2 }}
+    p={{ base: 3, md: 4 }}
     bg={`${colorScheme}.50`}
     borderRadius="xl"
     border="1px solid"
     borderColor={`${colorScheme}.200`}
     align="center"
   >
-    <Icon as={icon} boxSize={6} color={`${colorScheme}.500`} />
-    <Text fontSize="xl" fontWeight="bold" color="gray.800" textAlign="center">
+    <Icon as={icon} boxSize={{ base: 5, md: 6 }} color={`${colorScheme}.500`} />
+    <Text fontSize={{ base: 'md', md: 'xl' }} fontWeight="bold" color="gray.800" textAlign="center">
       {value}
     </Text>
-    <Text fontSize="sm" color="gray.600" textAlign="center">
+    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" textAlign="center">
       {label}
     </Text>
   </VStack>
@@ -196,7 +192,6 @@ function ProfileProduction() {
   // Transparency API - uses public_id (UUID) as backend expects UUID, not numeric ID
   const {
     data: transparencyApiData,
-    error: transparencyError,
     isLoading: transparencyLoading
   } = useGetTransparencyDetailsQuery(historyData?.public_id || '', {
     skip: !historyData?.public_id,
@@ -435,9 +430,7 @@ function ProfileProduction() {
           navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
         }
       >
-        <Box py={8} textAlign="center">
-          <Spinner size="lg" color="green.500" />
-        </Box>
+        <StandardPageLoading />
       </StandardPage>
     );
   }
@@ -467,88 +460,96 @@ function ProfileProduction() {
         navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
       }
     >
-      <VStack spacing={8} w="100%">
+      <VStack spacing={{ base: 4, md: 8 }} w="100%">
         {/* Identity Section */}
         <StandardCard
           title={intl.formatMessage({ id: 'app.production' })}
           variant="elevated"
+          padding={{ base: 3, md: 4 }}
           headerAction={
-            <HStack spacing={2}>
-              <StandardButton
-                variant="outline"
-                size="sm"
-                leftIcon={<Icon as={FaEye} />}
-                onClick={handleViewPublicPage}
-              >
-                {intl.formatMessage({ id: 'app.viewPublicPage' })}
-              </StandardButton>
-              <StandardButton
-                variant="outline"
-                size="sm"
-                leftIcon={<Icon as={FaShare} />}
-                onClick={handleShare}
-              >
-                {intl.formatMessage({ id: 'app.share' })}
-              </StandardButton>
-              {canWrite && !historyData?.finish_date && (
+            <Wrap spacing={1}>
+              <WrapItem>
                 <StandardButton
                   variant="outline"
-                  size="sm"
-                  leftIcon={<Icon as={FaEdit} />}
-                  onClick={() =>
-                    navigate(
-                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${productionId}/change`
-                    )
-                  }
+                  size="xs"
+                  leftIcon={<Icon as={FaEye} />}
+                  onClick={handleViewPublicPage}
                 >
-                  {intl.formatMessage({ id: 'app.edit' })}
+                  {intl.formatMessage({ id: 'app.viewPublicPage' })}
                 </StandardButton>
+              </WrapItem>
+              <WrapItem>
+                <StandardButton
+                  variant="outline"
+                  size="xs"
+                  leftIcon={<Icon as={FaShare} />}
+                  onClick={handleShare}
+                >
+                  {intl.formatMessage({ id: 'app.share' })}
+                </StandardButton>
+              </WrapItem>
+              {canWrite && !historyData?.finish_date && (
+                <WrapItem>
+                  <StandardButton
+                    variant="outline"
+                    size="xs"
+                    leftIcon={<Icon as={FaEdit} />}
+                    onClick={() =>
+                      navigate(
+                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${productionId}/change`
+                      )
+                    }
+                  >
+                    {intl.formatMessage({ id: 'app.edit' })}
+                  </StandardButton>
+                </WrapItem>
               )}
-            </HStack>
+            </Wrap>
           }
         >
-          <HStack spacing={6} align="flex-start" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+          <HStack spacing={{ base: 3, md: 6 }} align="flex-start" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
             <Avatar
-              size="2xl"
+              size={{ base: 'xl', md: '2xl' }}
               src={historyData?.images?.[0]?.url}
               name={historyData?.product?.name || historyData?.name}
               bg="green.500"
               color="white"
-              icon={<Icon as={FaSeedling} boxSize={10} />}
+              icon={<Icon as={FaSeedling} boxSize={{ base: 7, md: 10 }} />}
             />
-            <VStack align="start" spacing={3} flex={1}>
+            <VStack align="start" spacing={{ base: 1, md: 3 }} flex={1}>
               <Box>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color="gray.800">
                   {historyData?.product?.name || historyData?.name}
                 </Text>
                 {historyData?.lot_id && (
-                  <Text fontSize="md" color="gray.500">
+                  <Text fontSize={{ base: 'xs', md: 'md' }} color="gray.500">
                     Lot ID: {historyData.lot_id}
                   </Text>
                 )}
               </Box>
               {historyData?.description && (
-                <Text color="gray.600" fontSize="sm" lineHeight="1.6" noOfLines={3}>
+                <Text color="gray.600" fontSize={{ base: 'xs', md: 'sm' }} lineHeight="1.6" noOfLines={3}>
                   {historyData.description}
                 </Text>
               )}
-              <Wrap spacing={2}>
+              <Wrap spacing={1.5}>
                 <WrapItem>
                   <Badge
                     colorScheme={historyData?.finish_date ? 'gray' : 'green'}
                     variant="subtle"
                     px={2}
-                    py={1}
+                    py={0.5}
                     borderRadius="full"
+                    fontSize={{ base: '2xs', md: 'xs' }}
                   >
                     {historyData?.finish_date ? 'Finished' : 'Active'}
                   </Badge>
                 </WrapItem>
                 {historyData?.is_outdoor !== undefined && (
                   <WrapItem>
-                    <Badge colorScheme="green" variant="subtle" px={2} py={1} borderRadius="full">
+                    <Badge colorScheme="green" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize={{ base: '2xs', md: 'xs' }}>
                       <HStack spacing={1}>
-                        <Icon as={FaSeedling} boxSize={3} />
+                        <Icon as={FaSeedling} boxSize={2.5} />
                         <Text>{historyData.is_outdoor ? intl.formatMessage({ id: 'production.outdoor' }) : intl.formatMessage({ id: 'production.indoor' })}</Text>
                       </HStack>
                     </Badge>
@@ -556,9 +557,9 @@ function ProfileProduction() {
                 )}
                 {historyData?.qr_code && (
                   <WrapItem>
-                    <Badge colorScheme="blue" variant="subtle" px={2} py={1} borderRadius="full">
+                    <Badge colorScheme="blue" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize={{ base: '2xs', md: 'xs' }}>
                       <HStack spacing={1}>
-                        <Icon as={FaQrcode} boxSize={3} />
+                        <Icon as={FaQrcode} boxSize={2.5} />
                         <Text>QR Available</Text>
                       </HStack>
                     </Badge>
@@ -566,7 +567,7 @@ function ProfileProduction() {
                 )}
                 {historyData?.published && (
                   <WrapItem>
-                    <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full">
+                    <Badge colorScheme="purple" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize={{ base: '2xs', md: 'xs' }}>
                       Published
                     </Badge>
                   </WrapItem>
@@ -578,7 +579,7 @@ function ProfileProduction() {
 
         {/* Photo Gallery Section */}
         {historyData?.images && historyData.images.length > 0 && (
-          <StandardCard title="Photo Gallery" variant="elevated">
+          <StandardCard title="Photo Gallery" variant="elevated" padding={{ base: 3, md: 4 }}>
             <StandardImageGallery
               images={historyData.images}
               title=""
@@ -593,8 +594,8 @@ function ProfileProduction() {
         )}
 
         {/* Quick Stats Section */}
-        <StandardCard title="Quick Stats" variant="elevated">
-          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
+        <StandardCard title="Quick Stats" variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2, md: 4 }}>
             <StatCard
               icon={FaSeedling}
               value={historyData?.is_outdoor ? intl.formatMessage({ id: 'production.outdoor' }) : historyData?.is_outdoor === false ? intl.formatMessage({ id: 'production.indoor' }) : intl.formatMessage({ id: 'production.general' })}
@@ -626,24 +627,36 @@ function ProfileProduction() {
               colorScheme="orange"
             />
           </SimpleGrid>
+          <HStack justify="flex-end" mt={{ base: 2, md: 3 }}>
+            <StandardButton
+              variant="ghost"
+              size="sm"
+              leftIcon={<Icon as={FaChartLine} />}
+              onClick={() =>
+                navigate(`/admin/dashboard/establishment/${establishmentId}/transparency`)
+              }
+            >
+              {intl.formatMessage({ id: 'production.viewTransparencyDetails' })}
+            </StandardButton>
+          </HStack>
         </StandardCard>
 
         {/* QR Code & Consumer Access - Prominent position for packaging workflow */}
         {historyData?.qr_code && (
-          <StandardCard title="QR Code & Consumer Access" variant="elevated">
-            <VStack spacing={5} align="center">
+          <StandardCard title="QR Code & Consumer Access" variant="elevated" padding={{ base: 3, md: 4 }}>
+            <VStack spacing={{ base: 3, md: 5 }} align="center">
               {/* Finished production banner */}
               {historyData?.finish_date && (
                 <Box
                   w="full"
-                  p={3}
+                  p={{ base: 2, md: 3 }}
                   bg="green.50"
                   borderRadius="lg"
                   border="1px solid"
                   borderColor="green.200"
                   textAlign="center"
                 >
-                  <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
                     Your production is complete! Print this QR code and attach it to your
                     packaging.
                   </Text>
@@ -652,7 +665,7 @@ function ProfileProduction() {
 
               {/* QR Image Preview */}
               <Box
-                p={4}
+                p={{ base: 3, md: 4 }}
                 bg="gray.50"
                 borderRadius="xl"
                 border="1px solid"
@@ -661,7 +674,7 @@ function ProfileProduction() {
                 <Image
                   src={historyData.qr_code}
                   alt={`QR Code for ${historyData?.product?.name || 'production'}`}
-                  maxW={{ base: '220px', md: '280px' }}
+                  maxW={{ base: '180px', md: '280px' }}
                   borderRadius="md"
                   fallback={
                     <VStack spacing={2} p={8}>
@@ -675,17 +688,17 @@ function ProfileProduction() {
               </Box>
 
               {/* Description */}
-              <Text fontSize="sm" color="gray.600" textAlign="center" maxW="400px">
+              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" textAlign="center" maxW="400px">
                 {historyData?.finish_date
                   ? 'Print this QR and attach it to your packaging so consumers can see your production\'s transparency journey.'
                   : 'Your QR code is ready. Consumers can scan it to view your production\'s transparency details.'}
               </Text>
 
               {/* Action buttons */}
-              <HStack spacing={3} flexWrap="wrap" justify="center">
+              <HStack spacing={2} flexWrap="wrap" justify="center">
                 <StandardButton
                   variant="primary"
-                  size="sm"
+                  size={{ base: 'xs', md: 'sm' }}
                   leftIcon={<Icon as={FaDownload} />}
                   onClick={downloadQRCode}
                 >
@@ -693,7 +706,7 @@ function ProfileProduction() {
                 </StandardButton>
                 <StandardButton
                   variant="outline"
-                  size="sm"
+                  size={{ base: 'xs', md: 'sm' }}
                   leftIcon={<Icon as={FaEye} />}
                   onClick={handleViewPublicPage}
                 >
@@ -704,13 +717,13 @@ function ProfileProduction() {
               {/* Print tip */}
               <Box
                 w="full"
-                p={3}
+                p={{ base: 2, md: 3 }}
                 bg="blue.50"
                 borderRadius="md"
                 border="1px solid"
                 borderColor="blue.100"
               >
-                <Text fontSize="xs" color="blue.700" textAlign="center">
+                <Text fontSize={{ base: '2xs', md: 'xs' }} color="blue.700" textAlign="center">
                   Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download
                   the high-resolution PNG for print quality.
                 </Text>
@@ -719,46 +732,9 @@ function ProfileProduction() {
           </StandardCard>
         )}
 
-        {/* Transparency Score Section */}
-        <StandardCard title="Transparency Score" variant="elevated">
-          <TransparencyScoreCard
-            score={transparencyScore}
-            type="production"
-            label="Farm Transparency Score"
-            eventCount={timelineEvents.length}
-            nextStepTitle="Increase Your Score"
-            nextSteps={
-              transparencyScore < 90
-                ? [
-                    transparencyScore < 30
-                      ? 'Document more farming activities like planting, irrigation, and harvesting'
-                      : 'Add photos to your events and document specialized practices',
-                    'Verify more events and add detailed descriptions'
-                  ]
-                : []
-            }
-            showProgress={true}
-            compact={false}
-          />
-          {transparencyError && (
-            <Box
-              p={3}
-              mt={4}
-              bg="yellow.50"
-              borderRadius="md"
-              border="1px solid"
-              borderColor="yellow.200"
-            >
-              <Text fontSize="sm" color="yellow.800">
-                Transparency data temporarily unavailable. Using basic calculation.
-              </Text>
-            </Box>
-          )}
-        </StandardCard>
-
         {/* Production Details Section */}
-        <StandardCard title="Production Details" variant="elevated">
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <StandardCard title="Production Details" variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
             <InfoRow icon={FaSeedling} label="Product" value={historyData?.product?.name} />
             <InfoRow
               icon={FaTractor}
@@ -810,8 +786,8 @@ function ProfileProduction() {
           historyData?.number_of_plants ||
           historyData?.soil_ph ||
           historyData?.crop_type) && (
-          <StandardCard title="Agricultural Information" variant="elevated">
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+          <StandardCard title="Agricultural Information" variant="elevated" padding={{ base: 3, md: 4 }}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
               {historyData?.age_of_plants && (
                 <InfoRow icon={FaSeedling} label="Plant Age" value={historyData.age_of_plants} />
               )}
@@ -833,8 +809,8 @@ function ProfileProduction() {
         )}
 
         {/* Location Section */}
-        <StandardCard title="Location" variant="elevated">
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <StandardCard title="Location" variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
             <InfoRow
               icon={FaBuilding}
               label="Establishment"
@@ -860,56 +836,56 @@ function ProfileProduction() {
         </StandardCard>
 
         {/* Reputation & Operator Section */}
-        <StandardCard title="Reputation & Operator" variant="elevated">
-          <VStack spacing={6} align="stretch">
+        <StandardCard title="Reputation & Operator" variant="elevated" padding={{ base: 3, md: 4 }}>
+          <VStack spacing={{ base: 3, md: 6 }} align="stretch">
             <Box>
               <Text
-                fontSize="xs"
+                fontSize={{ base: '2xs', md: 'xs' }}
                 color="gray.500"
                 textTransform="uppercase"
                 fontWeight="semibold"
-                mb={2}
+                mb={1}
               >
                 Reputation Score
               </Text>
               <HStack spacing={2}>
-                <HStack spacing={1}>
+                <HStack spacing={0.5}>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Icon
                       key={star}
                       as={star <= safeReputation ? BsStarFill : BsStar}
                       color={star <= safeReputation ? 'yellow.400' : 'gray.300'}
-                      boxSize={5}
+                      boxSize={{ base: 4, md: 5 }}
                     />
                   ))}
                 </HStack>
-                <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
                   ({safeReputation.toFixed(1)}/5.0)
                 </Text>
               </HStack>
             </Box>
 
             {historyData?.operator && (
-              <Box p={4} bg="gray.50" borderRadius="lg">
+              <Box p={{ base: 3, md: 4 }} bg="gray.50" borderRadius="lg">
                 <Text
-                  fontSize="xs"
+                  fontSize={{ base: '2xs', md: 'xs' }}
                   color="gray.500"
                   textTransform="uppercase"
                   fontWeight="semibold"
-                  mb={2}
+                  mb={1}
                 >
                   Operator
                 </Text>
-                <HStack spacing={3}>
+                <HStack spacing={2}>
                   <Avatar
-                    size="md"
+                    size="sm"
                     name={historyData.operator.name || historyData.operator.email}
                   />
-                  <VStack spacing={0} align="start">
-                    <Text fontWeight="medium">
+                  <VStack spacing={0} align="start" minW={0}>
+                    <Text fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }} noOfLines={1}>
                       {historyData.operator.name || 'Unnamed Operator'}
                     </Text>
-                    <Text fontSize="sm" color="gray.500">
+                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" noOfLines={1}>
                       {historyData.operator.email}
                     </Text>
                   </VStack>
@@ -919,77 +895,38 @@ function ProfileProduction() {
 
             <Box>
               <Text
-                fontSize="xs"
+                fontSize={{ base: '2xs', md: 'xs' }}
                 color="gray.500"
                 textTransform="uppercase"
                 fontWeight="semibold"
-                mb={2}
+                mb={1}
               >
                 Quality Rating
               </Text>
               <Progress
                 value={(safeReputation / 5) * 100}
                 colorScheme="green"
-                size="md"
+                size={{ base: 'sm', md: 'md' }}
                 borderRadius="full"
               />
             </Box>
           </VStack>
         </StandardCard>
 
-        {/* QR Code Section - removed, now at position #3 above */}
-
-        {/* Producer Information */}
-        {historyData?.parcel?.establishment && (
-          <StandardCard title="Producer Information" variant="elevated">
-            <CompanyEstablishmentInfo
-              companyData={historyData.parcel.establishment.company_name ? {
-                name: historyData.parcel.establishment.company_name,
-                location: historyData.parcel.establishment.location,
-              } : undefined}
-              establishmentData={{
-                name: historyData.parcel.establishment.name,
-                description: historyData.parcel.establishment.description,
-                location: typeof historyData.parcel.establishment.location === 'string'
-                  ? historyData.parcel.establishment.location
-                  : historyData.parcel.establishment.location?.address,
-              }}
-              parcelData={historyData.parcel ? {
-                name: historyData.parcel.name,
-              } : undefined}
-            />
-          </StandardCard>
-        )}
-
         {/* Production Timeline Section */}
-        <StandardCard
-          title={intl.formatMessage({ id: 'app.events' })}
-          variant="elevated"
-          headerAction={
-            canWrite && !historyData?.finish_date && (
-              <StandardButton
-                variant="primary"
-                size="sm"
-                leftIcon={<Icon as={FaSeedling} />}
-                onClick={onQuickAddOpen}
-              >
-                {intl.formatMessage({ id: 'app.addEvent' })}
-              </StandardButton>
-            )
-          }
-        >
+
           {timelineEvents.length > 0 ? (
             <UltraMobileProductionJourney
               events={timelineEvents}
               transparencyScore={Math.round(transparencyScore)}
             />
           ) : (
-            <VStack spacing={4} py={8}>
-              <Icon as={MdTimeline} boxSize={16} color="gray.400" />
-              <Text fontSize="lg" fontWeight="medium" color="gray.600">
+            <VStack spacing={{ base: 2, md: 4 }} py={{ base: 4, md: 8 }}>
+              <Icon as={MdTimeline} boxSize={{ base: 10, md: 16 }} color="gray.400" />
+              <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="medium" color="gray.600">
                 No events recorded yet
               </Text>
-              <Text fontSize="sm" color="gray.400" textAlign="center">
+              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.400" textAlign="center">
                 Events will appear here as the production progresses
               </Text>
               {canWrite && !historyData?.finish_date && (
@@ -1010,28 +947,27 @@ function ProfileProduction() {
               )}
             </VStack>
           )}
-        </StandardCard>
 
         {/* Production Summary Section */}
-        <StandardCard title="Production Summary" variant="elevated">
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-            <VStack align="start" spacing={4}>
+        <StandardCard title="Production Summary" variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
+            <VStack align="start" spacing={{ base: 2, md: 4 }}>
               <Box w="full">
                 <Text
-                  fontSize="xs"
+                  fontSize={{ base: '2xs', md: 'xs' }}
                   color="gray.500"
                   textTransform="uppercase"
                   fontWeight="semibold"
-                  mb={2}
+                  mb={1}
                 >
                   Production Status
                 </Text>
                 <Badge
                   colorScheme={historyData?.finish_date ? 'green' : 'yellow'}
                   variant="subtle"
-                  fontSize="sm"
+                  fontSize={{ base: 'xs', md: 'sm' }}
                   px={3}
-                  py={1}
+                  py={0.5}
                   borderRadius="full"
                 >
                   {historyData?.finish_date ? 'Completed' : 'In Progress'}
@@ -1040,7 +976,7 @@ function ProfileProduction() {
               {historyData?.start_date && historyData?.finish_date && (
                 <Box w="full">
                   <Text
-                    fontSize="xs"
+                    fontSize={{ base: '2xs', md: 'xs' }}
                     color="gray.500"
                     textTransform="uppercase"
                     fontWeight="semibold"
@@ -1048,7 +984,7 @@ function ProfileProduction() {
                   >
                     Duration
                   </Text>
-                  <Text fontWeight="medium">
+                  <Text fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
                     {Math.ceil(
                       (new Date(historyData.finish_date).getTime() -
                         new Date(historyData.start_date).getTime()) /
@@ -1059,29 +995,29 @@ function ProfileProduction() {
                 </Box>
               )}
             </VStack>
-            <VStack align="start" spacing={4}>
+            <VStack align="start" spacing={{ base: 2, md: 4 }}>
               <Box w="full">
                 <Text
-                  fontSize="xs"
+                  fontSize={{ base: '2xs', md: 'xs' }}
                   color="gray.500"
                   textTransform="uppercase"
                   fontWeight="semibold"
-                  mb={2}
+                  mb={1}
                 >
                   Events Recorded
                 </Text>
-                <Text fontWeight="bold" fontSize="xl" color="green.600">
+                <Text fontWeight="bold" fontSize={{ base: 'lg', md: 'xl' }} color="green.600">
                   {timelineEvents.length || 0} {(timelineEvents.length || 0) === 1 ? 'Event' : 'Events'}
                 </Text>
               </Box>
               {timelineEvents.length > 0 && (
                 <Box w="full">
                   <Text
-                    fontSize="xs"
+                    fontSize={{ base: '2xs', md: 'xs' }}
                     color="gray.500"
                     textTransform="uppercase"
                     fontWeight="semibold"
-                    mb={2}
+                    mb={1}
                   >
                     Timeline Progress
                   </Text>
@@ -1089,11 +1025,11 @@ function ProfileProduction() {
                     <Progress
                       value={historyData.finish_date ? 100 : 50}
                       colorScheme="green"
-                      size="md"
+                      size={{ base: 'sm', md: 'md' }}
                       borderRadius="full"
                       flex={1}
                     />
-                    <Text fontSize="sm" color="gray.600" minW="40px">
+                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" minW="40px">
                       {historyData.finish_date ? '100%' : '50%'}
                     </Text>
                   </HStack>

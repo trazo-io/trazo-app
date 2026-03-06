@@ -88,16 +88,16 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
     });
 
     return (
-      <Box display="flex" justifyContent="center" gap={6} mt={4}>
+      <Box display="flex" justifyContent="center" gap={4} mt={2}>
         {filteredPayload.map((entry: any, index: number) => (
-          <Box key={index} display="flex" alignItems="center" gap={2}>
+          <Box key={index} display="flex" alignItems="center" gap={1.5}>
             <Box
-              w={3}
-              h={3}
+              w={2.5}
+              h={2.5}
               borderRadius="full"
               bg={entry.color || (entry.value === lineLabel ? '#4CAF50' : '#2196F3')}
             />
-            <Text fontSize="sm" color={textColor}>
+            <Text fontSize="xs" color={textColor}>
               {entry.value}
             </Text>
           </Box>
@@ -108,7 +108,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <ComposedChart data={data} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+      <ComposedChart data={data} margin={{ top: 10, right: 10, bottom: 10, left: -15 }}>
         <defs>
           {/* Modern gradient for area fill */}
           <linearGradient id={`${gradientId}-green`} x1="0" y1="0" x2="0" y2="1">
@@ -127,17 +127,17 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
 
         <XAxis
           dataKey={xDataKey}
-          tick={{ fontSize: 12, fill: textColor }}
+          tick={{ fontSize: 10, fill: textColor }}
           tickLine={false}
           axisLine={{ stroke: gridColor, strokeWidth: 1 }}
-          dy={10}
+          dy={5}
         />
 
         <YAxis
-          tick={{ fontSize: 12, fill: textColor }}
+          tick={{ fontSize: 10, fill: textColor }}
           tickLine={false}
           axisLine={false}
-          gridLines={false}
+          width={35}
         />
 
         <Tooltip content={<CustomTooltip />} />

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box,
-  Spinner,
+  CircularProgress,
   Text,
   useToast,
   VStack,
@@ -158,7 +158,7 @@ const StripeSuccessRedirect: React.FC = () => {
       flexDirection="column"
       bg={bgColor}
     >
-      <Spinner size="xl" color="green.500" thickness="4px" speed="0.65s" />
+      <CircularProgress isIndeterminate color="green.500" />
       <Text mt={4} fontSize="lg" fontWeight="medium" color={textColor}>
         {intl.formatMessage({ id: isNewCompany ? 'subscription.processingNewCompany' : 'subscription.processingGeneric' })}
       </Text>

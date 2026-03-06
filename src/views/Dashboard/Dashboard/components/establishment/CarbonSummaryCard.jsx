@@ -10,7 +10,7 @@ import {
   StatHelpText,
   Button,
   useColorModeValue,
-  Spinner,
+  CircularProgress,
   Progress,
   HStack,
   VStack,
@@ -210,9 +210,9 @@ const TransparencySummaryCard = ({ establishmentId }) => {
   if (isLoading || isFetching) {
     return (
       <Card bg={bgColor} p={6} borderRadius="15px">
-        <VStack spacing={4}>
-          <Spinner size="sm" color="green.500" />
-        </VStack>
+        <Flex justify="center" align="center" py={4}>
+          <CircularProgress isIndeterminate color="green.500" size="40px" />
+        </Flex>
       </Card>
     );
   }

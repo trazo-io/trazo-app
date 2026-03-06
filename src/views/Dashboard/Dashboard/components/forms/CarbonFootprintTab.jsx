@@ -17,7 +17,7 @@ import {
   Tr,
   Text,
   useToast,
-  Spinner,
+  CircularProgress,
   useColorModeValue,
   Tabs,
   TabList,
@@ -187,7 +187,7 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
   if (loadingSources || loadingOffsets || loadingFootprints || loadingCertifications) {
     return (
       <Flex align="center" justify="center" minH="200px">
-        <Spinner size="xl" />
+        <CircularProgress isIndeterminate color="green.500" />
       </Flex>
     );
   }

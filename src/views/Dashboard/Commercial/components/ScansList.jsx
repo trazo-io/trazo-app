@@ -43,7 +43,7 @@ const ScansList = ({ title, labels, scansData }) => {
   const displayedScans = showAllScans ? scansData : scansData?.slice(0, 10);
 
   return (
-    <StandardCard title={title} variant="elevated">
+    <StandardCard title={title} variant="elevated" padding={{ base: 2, md: 4 }}>
       <VStack spacing={4} align="stretch">
         <Box
           overflowX="auto"
@@ -61,14 +61,15 @@ const ScansList = ({ title, labels, scansData }) => {
                     <Th
                       key={index}
                       color="gray.600"
-                      fontSize="xs"
+                      fontSize={{ base: '2xs', md: 'xs' }}
                       fontWeight="semibold"
                       textTransform="uppercase"
-                      letterSpacing="wider"
-                      py={4}
-                      px={6}
+                      letterSpacing={{ base: 'normal', md: 'wider' }}
+                      py={{ base: 2, md: 3 }}
+                      px={{ base: 2, md: 6 }}
                       borderBottom="2px solid"
                       borderColor="gray.200"
+                      whiteSpace="nowrap"
                     >
                       {label}
                     </Th>

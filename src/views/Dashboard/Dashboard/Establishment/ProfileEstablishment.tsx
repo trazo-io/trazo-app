@@ -10,7 +10,6 @@ import {
   Badge,
   Link,
   useToast,
-  Spinner,
   Center
 } from '@chakra-ui/react';
 import {
@@ -36,7 +35,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useUserRole } from 'hooks/useUserRole';
 import { useIntl } from 'react-intl';
-import { StandardCard, StandardButton, StandardPage } from 'components/Design/StandardComponents';
+import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 'components/Design/StandardComponents';
 import { useGetEstablishmentQuery } from 'store/api/companyApi';
 import { StandardImageGallery } from 'components/ImageGallery';
 
@@ -65,25 +64,25 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
     switch (type) {
       case 'link':
         return (
-          <Link href={value as string} isExternal color="green.600" fontWeight="medium">
+          <Link href={value as string} isExternal color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
       case 'email':
         return (
-          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium">
+          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
       case 'phone':
         return (
-          <Link href={`tel:${value}`} color="green.600" fontWeight="medium">
+          <Link href={`tel:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
       default:
         return (
-          <Text fontWeight="medium" color="gray.800">
+          <Text fontWeight="medium" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Text>
         );
@@ -91,10 +90,10 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
   };
 
   return (
-    <HStack spacing={3} align="flex-start">
-      <Icon as={icon} color="green.500" boxSize={4} mt={1} flexShrink={0} />
+    <HStack spacing={2} align="flex-start">
+      <Icon as={icon} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
       <Box>
-        <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
+        <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" textTransform="uppercase" fontWeight="semibold">
           {label}
         </Text>
         {renderValue()}
@@ -272,9 +271,7 @@ function ProfileEstablishment() {
   if (isLoading) {
     return (
       <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
-        <Center py={20}>
-          <Spinner size="xl" color="green.500" />
-        </Center>
+        <StandardPageLoading />
       </StandardPage>
     );
   }
@@ -291,13 +288,14 @@ function ProfileEstablishment() {
 
   return (
     <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
-      <VStack spacing={8} w="100%">
+      <VStack spacing={{ base: 4, md: 8 }} w="100%">
         {/* Identity Section */}
         <StandardCard
           title={intl.formatMessage({ id: 'app.establishmentInformation' })}
           variant="elevated"
+          padding={{ base: 3, md: 4 }}
           headerAction={
-            <HStack spacing={2}>
+            <HStack spacing={1}>
               <StandardButton
                 variant="ghost"
                 size="sm"
@@ -319,7 +317,53 @@ function ProfileEstablishment() {
             </HStack>
           }
         >
-          <HStack spacing={6} align="flex-start" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+          {/* Mobile: vertical centered layout, Desktop: horizontal */}
+          <VStack spacing={3} align="center" display={{ base: 'flex', md: 'none' }}>
+            <Avatar
+              size="xl"
+              src={establishmentData.images?.[0]?.url || establishmentData.images?.[0]}
+              name={establishmentData.name}
+              bg="green.500"
+              color="white"
+              icon={<Icon as={FaBuilding} boxSize={8} />}
+            />
+            <VStack align="center" spacing={1}>
+              <Text fontSize="lg" fontWeight="bold" color="gray.800" textAlign="center">
+                {establishmentData.name}
+              </Text>
+              {establishmentData.company?.name && (
+                <Text fontSize="sm" color="gray.500">
+                  {establishmentData.company.name}
+                </Text>
+              )}
+              {establishmentData.description && (
+                <Text color="gray.600" fontSize="xs" lineHeight="1.6" textAlign="center">
+                  {establishmentData.description}
+                </Text>
+              )}
+              <HStack spacing={2} flexWrap="wrap" justify="center">
+                {establishmentData.is_active !== false && (
+                  <Badge colorScheme="green" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                    {intl.formatMessage({ id: 'app.active' })}
+                  </Badge>
+                )}
+                {(establishmentData.establishment_type || establishmentData.type) && (
+                  <Badge colorScheme="blue" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                    {formatDisplayValue(
+                      establishmentData.establishment_type || establishmentData.type
+                    )}
+                  </Badge>
+                )}
+                {establishmentData.farming_method && (
+                  <Badge colorScheme="purple" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                    {formatDisplayValue(establishmentData.farming_method)}
+                  </Badge>
+                )}
+              </HStack>
+            </VStack>
+          </VStack>
+          {/* Desktop: horizontal layout */}
+          <HStack spacing={6} align="flex-start" display={{ base: 'none', md: 'flex' }}>
             <Avatar
               size="2xl"
               src={establishmentData.images?.[0]?.url || establishmentData.images?.[0]}
@@ -346,19 +390,19 @@ function ProfileEstablishment() {
               )}
               <HStack spacing={2} flexWrap="wrap">
                 {establishmentData.is_active !== false && (
-                  <Badge colorScheme="green" variant="subtle" px={2} py={1} borderRadius="full">
+                  <Badge colorScheme="green" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="sm">
                     {intl.formatMessage({ id: 'app.active' })}
                   </Badge>
                 )}
                 {(establishmentData.establishment_type || establishmentData.type) && (
-                  <Badge colorScheme="blue" variant="subtle" px={2} py={1} borderRadius="full">
+                  <Badge colorScheme="blue" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="sm">
                     {formatDisplayValue(
                       establishmentData.establishment_type || establishmentData.type
                     )}
                   </Badge>
                 )}
                 {establishmentData.farming_method && (
-                  <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full">
+                  <Badge colorScheme="purple" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="sm">
                     {formatDisplayValue(establishmentData.farming_method)}
                   </Badge>
                 )}
@@ -369,7 +413,7 @@ function ProfileEstablishment() {
 
         {/* Photo Gallery */}
         {establishmentData.images && establishmentData.images.length > 0 && (
-          <StandardCard title={intl.formatMessage({ id: 'establishment.photoGallery' })} variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.photoGallery' })} variant="elevated" padding={{ base: 3, md: 4 }}>
             <StandardImageGallery
               images={establishmentData.images}
               title={intl.formatMessage({ id: 'establishment.establishmentPhotos' })}
@@ -383,32 +427,32 @@ function ProfileEstablishment() {
         )}
 
         {/* Quick Stats - Updated: Removed employee_count (not consumer-relevant) */}
-        <StandardCard title={intl.formatMessage({ id: 'establishment.quickStats' })} variant="elevated">
-          <SimpleGrid columns={{ base: 2, md: 3 }} spacing={6}>
-            <VStack spacing={1} align="center" p={4} bg="green.50" borderRadius="lg">
-              <Icon as={FaTractor} color="green.500" boxSize={6} />
-              <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+        <StandardCard title={intl.formatMessage({ id: 'establishment.quickStats' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 6 }}>
+            <VStack spacing={0.5} align="center" p={{ base: 3, md: 4 }} bg="green.50" borderRadius="lg">
+              <Icon as={FaTractor} color="green.500" boxSize={{ base: 5, md: 6 }} />
+              <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                 {establishmentData.total_acreage || 0}
               </Text>
-              <Text fontSize="sm" color="gray.600">
+              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                 {intl.formatMessage({ id: 'app.acres' })}
               </Text>
             </VStack>
-            <VStack spacing={1} align="center" p={4} bg="purple.50" borderRadius="lg">
-              <Icon as={FaCalendar} color="purple.500" boxSize={6} />
-              <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+            <VStack spacing={0.5} align="center" p={{ base: 3, md: 4 }} bg="purple.50" borderRadius="lg">
+              <Icon as={FaCalendar} color="purple.500" boxSize={{ base: 5, md: 6 }} />
+              <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                 {establishmentData.year_established || '--'}
               </Text>
-              <Text fontSize="sm" color="gray.600">
+              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                 {intl.formatMessage({ id: 'establishment.founded' })}
               </Text>
             </VStack>
-            <VStack spacing={1} align="center" p={4} bg="orange.50" borderRadius="lg">
-              <Icon as={FaSeedling} color="orange.500" boxSize={6} />
-              <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+            <VStack spacing={0.5} align="center" p={{ base: 3, md: 4 }} bg="orange.50" borderRadius="lg">
+              <Icon as={FaSeedling} color="orange.500" boxSize={{ base: 5, md: 6 }} />
+              <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                 {getCropsGrown().length}
               </Text>
-              <Text fontSize="sm" color="gray.600">
+              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                 {intl.formatMessage({ id: 'establishment.crops' })}
               </Text>
             </VStack>
@@ -416,8 +460,8 @@ function ProfileEstablishment() {
         </StandardCard>
 
         {/* Contact Information */}
-        <StandardCard title={intl.formatMessage({ id: 'app.contactInformation' })} variant="elevated">
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <StandardCard title={intl.formatMessage({ id: 'app.contactInformation' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
             <InfoRow
               icon={FaEnvelope}
               label={intl.formatMessage({ id: 'establishment.emailAddress' })}
@@ -445,8 +489,8 @@ function ProfileEstablishment() {
         </StandardCard>
 
         {/* Location Details */}
-        <StandardCard title={intl.formatMessage({ id: 'app.location' })} variant="elevated">
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <StandardCard title={intl.formatMessage({ id: 'app.location' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
             <InfoRow icon={FaMapMarkerAlt} label={intl.formatMessage({ id: 'app.address' })} value={formatAddress()} />
             <InfoRow
               icon={FaMapMarkerAlt}
@@ -459,8 +503,8 @@ function ProfileEstablishment() {
         </StandardCard>
 
         {/* Operations - Updated: Removed employee_count (not consumer-relevant) */}
-        <StandardCard title={intl.formatMessage({ id: 'establishment.operations' })} variant="elevated">
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <StandardCard title={intl.formatMessage({ id: 'establishment.operations' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
             <InfoRow
               icon={FaTractor}
               label={intl.formatMessage({ id: 'establishment.farmingMethod' })}
@@ -485,7 +529,7 @@ function ProfileEstablishment() {
         {(getWaterSources().length > 0 ||
           getSoilHealthPractices().length > 0 ||
           getIrrigationMethods().length > 0) && (
-          <StandardCard title={intl.formatMessage({ id: 'app.agriculturalInformation' })} variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'app.agriculturalInformation' })} variant="elevated" padding={{ base: 3, md: 4 }}>
             <VStack spacing={6} align="stretch">
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                 {getWaterSources().length > 0 && (
@@ -516,17 +560,17 @@ function ProfileEstablishment() {
 
         {/* Crops Grown */}
         {getCropsGrown().length > 0 && (
-          <StandardCard title={intl.formatMessage({ id: 'establishment.crops' })} variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.crops' })} variant="elevated" padding={{ base: 3, md: 4 }}>
             <HStack spacing={2} flexWrap="wrap">
               {getCropsGrown().map((crop: string, index: number) => (
                 <Badge
                   key={index}
                   colorScheme="green"
                   variant="subtle"
-                  px={3}
-                  py={1}
+                  px={{ base: 2, md: 3 }}
+                  py={0.5}
                   borderRadius="full"
-                  fontSize="sm"
+                  fontSize={{ base: 'xs', md: 'sm' }}
                 >
                   {crop}
                 </Badge>
@@ -537,17 +581,17 @@ function ProfileEstablishment() {
 
         {/* Certifications */}
         {getCertifications().length > 0 && (
-          <StandardCard title={intl.formatMessage({ id: 'establishment.certifications' })} variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.certifications' })} variant="elevated" padding={{ base: 3, md: 4 }}>
             <HStack spacing={2} flexWrap="wrap">
               {getCertifications().map((cert: string, index: number) => (
                 <Badge
                   key={index}
                   colorScheme="blue"
                   variant="subtle"
-                  px={3}
-                  py={1}
+                  px={{ base: 2, md: 3 }}
+                  py={0.5}
                   borderRadius="full"
-                  fontSize="sm"
+                  fontSize={{ base: 'xs', md: 'sm' }}
                 >
                   <HStack spacing={1}>
                     <Icon as={FaCertificate} boxSize={3} />
@@ -561,17 +605,17 @@ function ProfileEstablishment() {
 
         {/* Sustainability Practices */}
         {getSustainabilityPractices().length > 0 && (
-          <StandardCard title={intl.formatMessage({ id: 'establishment.sustainabilityPractices' })} variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.sustainabilityPractices' })} variant="elevated" padding={{ base: 3, md: 4 }}>
             <HStack spacing={2} flexWrap="wrap">
               {getSustainabilityPractices().map((practice: string, index: number) => (
                 <Badge
                   key={index}
                   colorScheme="green"
                   variant="subtle"
-                  px={3}
-                  py={1}
+                  px={{ base: 2, md: 3 }}
+                  py={0.5}
                   borderRadius="full"
-                  fontSize="sm"
+                  fontSize={{ base: 'xs', md: 'sm' }}
                 >
                   <HStack spacing={1}>
                     <Icon as={FaLeaf} boxSize={3} />
@@ -585,7 +629,7 @@ function ProfileEstablishment() {
 
         {/* Social Media */}
         {(establishmentData.company?.facebook || establishmentData.company?.instagram) && (
-          <StandardCard title={intl.formatMessage({ id: 'establishment.socialMedia' })} variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.socialMedia' })} variant="elevated" padding={{ base: 3, md: 4 }}>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
               {establishmentData.company?.facebook && (
                 <InfoRow
@@ -611,8 +655,8 @@ function ProfileEstablishment() {
         {(establishmentData.about ||
           establishmentData.main_activities ||
           establishmentData.location_highlights) && (
-          <StandardCard title={intl.formatMessage({ id: 'establishment.aboutEstablishment' })} variant="elevated">
-            <VStack spacing={4} align="stretch">
+          <StandardCard title={intl.formatMessage({ id: 'establishment.aboutEstablishment' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+            <VStack spacing={{ base: 3, md: 4 }} align="stretch">
               {establishmentData.about && (
                 <Box>
                   <Text
@@ -624,7 +668,7 @@ function ProfileEstablishment() {
                   >
                     {intl.formatMessage({ id: 'app.description' })}
                   </Text>
-                  <Text color="gray.700" lineHeight="1.7">
+                  <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
                     {establishmentData.about}
                   </Text>
                 </Box>
@@ -640,7 +684,7 @@ function ProfileEstablishment() {
                   >
                     {intl.formatMessage({ id: 'establishment.mainActivities' })}
                   </Text>
-                  <Text color="gray.700" lineHeight="1.7">
+                  <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
                     {establishmentData.main_activities}
                   </Text>
                 </Box>
@@ -656,7 +700,7 @@ function ProfileEstablishment() {
                   >
                     {intl.formatMessage({ id: 'establishment.locationHighlights' })}
                   </Text>
-                  <Text color="gray.700" lineHeight="1.7">
+                  <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
                     {establishmentData.location_highlights}
                   </Text>
                 </Box>

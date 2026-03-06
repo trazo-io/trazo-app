@@ -9,6 +9,7 @@ export {
   StandardSelect,
   StandardButton,
   StandardAlert,
+  StandardPageLoading,
   StandardSpinner,
   StandardSkeleton,
   StandardGrid,

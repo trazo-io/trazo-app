@@ -3124,6 +3124,7 @@
   "carbon.badge.epaUsdaTooltip": "Carbon calculation uses published EPA/USDA emission factors",
   "carbon.badge.epaUsdaEmissionFactors": "EPA/USDA emission factors",
 
+  "production.viewTransparencyDetails": "View Transparency Details",
   "production.environment": "Environment",
   "production.outdoor": "Outdoor",
   "production.indoor": "Indoor",
@@ -3173,6 +3174,7 @@
   "parcel.transparencyScore": "Transparency: {score}%",
   "parcel.photoGallery": "Photo Gallery",
   "parcel.quickStats": "Quick Stats",
+  "parcel.viewTransparencyDetails": "View Transparency Details",
   "parcel.primaryCrop": "Primary Crop",
   "parcel.certification": "Certification",
   "parcel.yes": "Yes",

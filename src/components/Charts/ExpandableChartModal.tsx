@@ -65,12 +65,12 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
   const textColor = useColorModeValue('gray.800', 'white');
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="4xl" isCentered>
+    <Modal isOpen={isOpen} onClose={onClose} size={{ base: 'full', md: '4xl' }} isCentered>
       <ModalOverlay bg="blackAlpha.500" />
-      <ModalContent bg={bgColor} borderRadius="2xl" boxShadow="xl" mx={4}>
-        <ModalHeader borderBottomWidth="1px" borderColor={borderColor} pb={4}>
-          <Flex justify="space-between" align="center" w="100%" pr={8}>
-            <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+      <ModalContent bg={bgColor} borderRadius={{ base: 'none', md: '2xl' }} boxShadow="xl" mx={{ base: 0, md: 4 }}>
+        <ModalHeader borderBottomWidth="1px" borderColor={borderColor} pb={3} px={{ base: 4, md: 6 }}>
+          <Flex direction={{ base: 'column', md: 'row' }} justify="space-between" align={{ base: 'flex-start', md: 'center' }} w="100%" pr={8} gap={2}>
+            <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="semibold" color={textColor}>
               {title}
             </Text>
             <Menu>
@@ -78,7 +78,7 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
                 as={Button}
                 rightIcon={<IoIosArrowDown />}
                 size="sm"
-                minW="120px"
+                minW={{ base: '100px', md: '120px' }}
                 bg="green.500"
                 color="white"
                 fontWeight="medium"
@@ -109,17 +109,17 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
         </ModalHeader>
         <ModalCloseButton />
 
-        <ModalBody p={6}>
+        <ModalBody p={{ base: 3, md: 6 }}>
           <Box w="100%">
             {isLoading ? (
-              <Flex justify="center" align="center" h="400px">
+              <Flex justify="center" align="center" h={{ base: '300px', md: '400px' }}>
                 <CircularProgress isIndeterminate color="green.500" size="40px" />
                 <Text ml={4} color={textColor} fontSize="sm">
                   {intl.formatMessage({ id: 'commercial.loadingChartData' })}
                 </Text>
               </Flex>
             ) : !data || data.length === 0 ? (
-              <Flex justify="center" align="center" h="400px">
+              <Flex justify="center" align="center" h={{ base: '300px', md: '400px' }}>
                 <Text color="gray.500">{noDataMessage}</Text>
               </Flex>
             ) : (
@@ -128,7 +128,7 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
                 lineDataKey={lineDataKey}
                 barDataKey={barDataKey}
                 xDataKey={xDataKey}
-                height={450}
+                height={350}
                 showGrid={true}
                 lineLabel={lineLabel}
                 barLabel={barLabel}

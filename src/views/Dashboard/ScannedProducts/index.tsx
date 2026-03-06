@@ -6,6 +6,7 @@ import {
   useColorModeValue,
   Stack,
   Badge,
+  CircularProgress,
   Progress,
   Icon,
   Image
@@ -52,7 +53,7 @@ export default function ScannedProductsView() {
       <Card
         w={{ sm: '100%', md: '80%', lg: '100%' }}
         mx="auto"
-        p={{ sm: '16px', md: '32px', lg: '48px' }}
+        p={{ base: '8px', sm: '12px', md: '32px', lg: '48px' }}
         boxShadow="rgba(0, 0, 0, 0.05) 0px 20px 27px 0px"
       >
         <CardHeader p="12px 5px" mb="12px">
@@ -60,16 +61,18 @@ export default function ScannedProductsView() {
         </CardHeader>
         <CardBody px="5px">
           {isLoading ? (
-            <Progress size="xs" isIndeterminate />
+            <Flex justify="center" align="center" py={8}>
+              <CircularProgress isIndeterminate color="green.500" size="40px" />
+            </Flex>
           ) : (
             <Stack width="100%" spacing={8}>
               {productions?.map((production, index) => (
                 <NavLink key={index} to={`/production/${production.public_id}/`}>
                   <Box
-                    p={8}
+                    p={{ base: 4, md: 8 }}
                     shadow="md"
                     borderWidth="1px"
-                    borderRadius="2xl"
+                    borderRadius={{ base: 'xl', md: '2xl' }}
                     cursor="pointer"
                     transition="all 0.3s"
                     _hover={{

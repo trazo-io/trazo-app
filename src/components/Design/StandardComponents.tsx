@@ -18,6 +18,7 @@ import {
   useBreakpointValue,
   Flex,
   Spinner,
+  CircularProgress,
   Alert,
   AlertIcon,
   Divider,
@@ -88,7 +89,7 @@ export const StandardPage = ({
       {needsMinimalHeader && (
         <Box
           bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
-          pt="100px"
+          pt={{ base: '120px', md: '120px' }}
           pb="24px"
           px={{ base: 3, md: 6 }}
         >
@@ -97,8 +98,6 @@ export const StandardPage = ({
             leftIcon={<FaChevronLeft />}
             onClick={onBack}
             size="sm"
-            bg="white"
-            _hover={{ bg: 'gray.50' }}
           >
             Back
           </Button>
@@ -107,52 +106,46 @@ export const StandardPage = ({
 
       {/* Full Hero Header Section - With title */}
       {hasHeroContent && (
-        <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt={{ base: '100px', md: '120px' }} pb={{ base: '40px', md: '80px' }} px={4}>
+        <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt={{ base: '120px', md: '120px' }} pb={{ base: '64px', md: '80px' }} px={{ base: 3, md: 4 }}>
           <Container maxW="6xl" mx="auto">
-            <VStack spacing={4} textAlign="center">
+            <VStack spacing={4} textAlign={{ base: 'left', md: 'center' }}>
               {isMobile ? (
-                // Mobile: Back button above title for full width
-                <VStack spacing={4} w="full" align="center">
+                // Mobile: Compact left-aligned header
+                <VStack spacing={3} w="full" align="flex-start">
                   {showBackButton && (
-                    <Flex w="full" justify="flex-start">
-                      <Button
-                        variant="outline"
-                        leftIcon={<FaChevronLeft />}
-                        onClick={onBack}
-                        size="sm"
-                      >
-                        Back
-                      </Button>
-                    </Flex>
+                    <Button
+                      variant="outline"
+                      leftIcon={<FaChevronLeft />}
+                      onClick={onBack}
+                      size="sm"
+                      mb={1}
+                    >
+                      Back
+                    </Button>
                   )}
 
-                  <VStack spacing={2} w="full">
-                    {title && (
-                      <Heading
-                        as="h1"
-                        size="xl"
-                        color="green.600"
-                        fontWeight="bold"
-                        textAlign="center"
-                        letterSpacing="-0.02em"
-                        w="full"
-                      >
-                        {title}
-                      </Heading>
-                    )}
-                    {description && (
-                      <Text
-                        fontSize="md"
-                        color="gray.600"
-                        fontWeight="normal"
-                        maxW="90%"
-                        lineHeight="1.7"
-                        textAlign="center"
-                      >
-                        {description}
-                      </Text>
-                    )}
-                  </VStack>
+                  {title && (
+                    <Heading
+                      as="h1"
+                      size="lg"
+                      color="green.600"
+                      fontWeight="bold"
+                      letterSpacing="-0.02em"
+                      w="full"
+                    >
+                      {title}
+                    </Heading>
+                  )}
+                  {description && (
+                    <Text
+                      fontSize="sm"
+                      color="gray.600"
+                      fontWeight="normal"
+                      lineHeight="1.6"
+                    >
+                      {description}
+                    </Text>
+                  )}
 
                   {rightAction && <Box>{rightAction}</Box>}
                 </VStack>
@@ -212,12 +205,12 @@ export const StandardPage = ({
       )}
 
       {/* No header at all when no back button and no content */}
-      {!showBackButton && !hasHeroContent && <Box pt="80px" />}
+      {!showBackButton && !hasHeroContent && <Box pt={{ base: '110px', md: '80px' }} />}
 
       {/* Main Content with Overlapping Card Design - Match producer app spacing */}
       <Box
         w="100%"
-        px={{ base: 3, md: 6 }}
+        px={{ base: 2, md: 6 }}
         mt={needsMinimalHeader ? '16px' : hasHeroContent ? '-40px' : '0'}
         position="relative"
         zIndex={10}
@@ -251,16 +244,16 @@ export const StandardCard = ({
   const cardProps = {
     elevated: {
       boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-      borderRadius: '2xl',
+      borderRadius: { base: 'xl', md: '2xl' },
       bg: bgColor
     },
     flat: {
       bg: bgColor,
-      borderRadius: 'xl'
+      borderRadius: { base: 'lg', md: 'xl' }
     },
     outline: {
       bg: bgColor,
-      borderRadius: 'xl',
+      borderRadius: { base: 'lg', md: 'xl' },
       border: '1px solid',
       borderColor: borderColor
     }
@@ -273,12 +266,12 @@ export const StandardCard = ({
           <Flex justify="space-between" align="center" w="100%">
             <VStack align="start" spacing={1}>
               {title && (
-                <Heading as="h3" size="md" color="gray.700">
+                <Heading as="h3" size={{ base: 'sm', md: 'md' }} color="gray.700">
                   {title}
                 </Heading>
               )}
               {subtitle && (
-                <Text color="gray.500" fontSize="sm">
+                <Text color="gray.500" fontSize={{ base: 'xs', md: 'sm' }}>
                   {subtitle}
                 </Text>
               )}
@@ -775,14 +768,18 @@ export const StandardAlert = ({ status, title, description, children }: Standard
 };
 
 // Loading States
+
+// Full-page loading - use when loading replaces the entire page content
+export const StandardPageLoading = () => (
+  <Flex justify="center" align="center" py={20} minH="200px">
+    <CircularProgress isIndeterminate color="green.500" />
+  </Flex>
+);
+
+// Section/inline loading - use within cards, tables, sections
 export const StandardSpinner = () => (
   <Flex justify="center" align="center" py={8}>
-    <VStack spacing={3}>
-      <Spinner size="lg" color="green.500" thickness="3px" />
-      <Text color="gray.600" fontSize="sm">
-        Loading...
-      </Text>
-    </VStack>
+    <CircularProgress isIndeterminate color="green.500" size="40px" />
   </Flex>
 );
 

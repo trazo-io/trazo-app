@@ -731,7 +731,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             </HStack>
 
             {/* Enhanced Carbon Stats Dashboard */}
-            <SimpleGrid columns={4} spacing={1.5} w="full">
+            <SimpleGrid columns={4} spacing={1} w="full">
               <VStack
                 spacing={0.5}
                 bg={useColorModeValue('blue.50', 'blue.900')}
@@ -741,11 +741,12 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 border="1px solid"
                 borderColor={useColorModeValue('blue.200', 'blue.700')}
                 minW="0"
+                overflow="hidden"
               >
-                <Text fontSize="md" fontWeight="bold" color="blue.600">
+                <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="blue.600">
                   {filteredEvents.length}
                 </Text>
-                <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" whiteSpace="nowrap">
+                <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                   Events
                 </Text>
               </VStack>
@@ -759,8 +760,9 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 border="1px solid"
                 borderColor={useColorModeValue('green.200', 'green.700')}
                 minW="0"
+                overflow="hidden"
               >
-                <Text fontSize="md" fontWeight="bold" color="green.600" whiteSpace="nowrap">
+                <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="green.600" noOfLines={1}>
                   {(() => {
                     const totalCO2 = filteredEvents.reduce(
                       (sum, e) => sum + (e.carbon_data?.co2e || 0),
@@ -771,7 +773,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   })()}
                 </Text>
                 <CO2eTooltip>
-                  <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" whiteSpace="nowrap">
+                  <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                     CO₂e
                   </Text>
                 </CO2eTooltip>
@@ -786,8 +788,9 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 border="1px solid"
                 borderColor={useColorModeValue('purple.200', 'purple.700')}
                 minW="0"
+                overflow="hidden"
               >
-                <Text fontSize="md" fontWeight="bold" color="purple.600" whiteSpace="nowrap">
+                <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="purple.600">
                   {(() => {
                     const documentedEvents = filteredEvents.filter(
                       (e) =>
@@ -802,7 +805,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   %
                 </Text>
                 <BlockchainTooltip>
-                  <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" whiteSpace="nowrap">
+                  <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                     {intl.formatMessage({ id: 'transparency.withPhotos' })}
                   </Text>
                 </BlockchainTooltip>
@@ -817,12 +820,13 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 border="1px solid"
                 borderColor={useColorModeValue('orange.200', 'orange.700')}
                 minW="0"
+                overflow="hidden"
               >
-                <Text fontSize="md" fontWeight="bold" color="orange.600">
+                <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="orange.600">
                   {transparencyScore || 0}
                 </Text>
                 <CarbonScoreTooltip>
-                  <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" whiteSpace="nowrap">
+                  <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                     Score
                   </Text>
                 </CarbonScoreTooltip>

@@ -15,6 +15,7 @@ import {
   VStack,
   Circle,
   Spinner,
+  CircularProgress,
   Alert,
   AlertIcon,
   AlertTitle,
@@ -361,7 +362,7 @@ function Capture() {
                   justifyContent="center"
                 >
                   <VStack spacing={4}>
-                    <Spinner size="lg" color="green.500" />
+                    <CircularProgress isIndeterminate color="green.500" />
                     <Text color="gray.600">Initializing Camera...</Text>
                   </VStack>
                 </Box>

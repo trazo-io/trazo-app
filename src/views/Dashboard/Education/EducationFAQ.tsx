@@ -22,7 +22,7 @@ import {
   AlertDescription,
   useToast,
   Center,
-  Spinner
+  CircularProgress
 } from '@chakra-ui/react';
 import { FaQuestionCircle, FaSearch, FaArrowLeft, FaTag } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -72,12 +72,9 @@ const EducationFAQ: React.FC = () => {
   if (isFAQsLoading) {
     return (
       <Box bg={bgColor} minH="100vh">
-        <Container maxW={containerMaxW} py={{ base: 4, md: 8 }}>
+        <Container maxW={containerMaxW} px={{ base: 3, md: 4 }} py={{ base: 4, md: 8 }}>
           <Center py={20}>
-            <VStack spacing={4}>
-              <Spinner size="xl" color="green.500" thickness="3px" />
-              <Text color={textColor}>{intl.formatMessage({ id: 'education.faqLoading' })}</Text>
-            </VStack>
+            <CircularProgress isIndeterminate color="green.500" />
           </Center>
         </Container>
       </Box>
@@ -88,7 +85,7 @@ const EducationFAQ: React.FC = () => {
   if (faqError) {
     return (
       <Box bg={bgColor} minH="100vh">
-        <Container maxW={containerMaxW} py={{ base: 4, md: 8 }}>
+        <Container maxW={containerMaxW} px={{ base: 3, md: 4 }} py={{ base: 4, md: 8 }}>
           <Alert status="error" variant="subtle" borderRadius="xl" maxW="2xl" mx="auto">
             <AlertIcon />
             <VStack align="start" spacing={2}>
@@ -105,7 +102,7 @@ const EducationFAQ: React.FC = () => {
 
   return (
     <Box bg={bgColor} minH="100vh">
-      <Container maxW={containerMaxW} py={{ base: 4, md: 8 }}>
+      <Container maxW={containerMaxW} px={{ base: 3, md: 4 }} py={{ base: 4, md: 8 }}>
         <VStack spacing={8} align="stretch">
           {/* Header */}
           <Box>

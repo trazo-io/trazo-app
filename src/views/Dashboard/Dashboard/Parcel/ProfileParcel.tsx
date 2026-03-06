@@ -9,7 +9,6 @@ import {
   Icon,
   Badge,
   Link,
-  Spinner,
   Wrap,
   WrapItem
 } from '@chakra-ui/react';
@@ -42,11 +41,10 @@ import { useUserRole } from 'hooks/useUserRole';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
-import { StandardCard, StandardButton, StandardPage } from 'components/Design/StandardComponents';
+import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 'components/Design/StandardComponents';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { formatAreaWithBothUnits } from '../../../../utils/areaUnits';
-import { ParcelTransparencyScoreBreakdown } from 'components/Transparency/ParcelTransparencyScoreBreakdown';
 
 // Type definitions
 interface Company {
@@ -159,25 +157,25 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
     switch (type) {
       case 'link':
         return (
-          <Link href={value as string} isExternal color="green.600" fontWeight="medium">
+          <Link href={value as string} isExternal color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
       case 'email':
         return (
-          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium">
+          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
       case 'phone':
         return (
-          <Link href={`tel:${value}`} color="green.600" fontWeight="medium">
+          <Link href={`tel:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
       default:
         return (
-          <Text fontWeight="medium" color="gray.800">
+          <Text fontWeight="medium" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Text>
         );
@@ -185,10 +183,10 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
   };
 
   return (
-    <HStack spacing={3} align="flex-start">
-      <Icon as={icon} color="green.500" boxSize={4} mt={1} flexShrink={0} />
+    <HStack spacing={2} align="flex-start">
+      <Icon as={icon} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
       <Box>
-        <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
+        <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" textTransform="uppercase" fontWeight="semibold">
           {label}
         </Text>
         {renderValue()}
@@ -208,23 +206,23 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ icon, value, label, subLabel, colorScheme }) => (
   <VStack
-    spacing={2}
-    p={4}
+    spacing={{ base: 0.5, md: 2 }}
+    p={{ base: 3, md: 4 }}
     bg={`${colorScheme}.50`}
     borderRadius="xl"
     border="1px solid"
     borderColor={`${colorScheme}.200`}
     align="center"
   >
-    <Icon as={icon} boxSize={6} color={`${colorScheme}.500`} />
-    <Text fontSize="xl" fontWeight="bold" color="gray.800" textAlign="center">
+    <Icon as={icon} boxSize={{ base: 5, md: 6 }} color={`${colorScheme}.500`} />
+    <Text fontSize={{ base: 'md', md: 'xl' }} fontWeight="bold" color="gray.800" textAlign="center">
       {value}
     </Text>
-    <Text fontSize="sm" color="gray.600" textAlign="center">
+    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" textAlign="center">
       {label}
     </Text>
     {subLabel && (
-      <Text fontSize="xs" color="gray.500" textAlign="center">
+      <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" textAlign="center">
         {subLabel}
       </Text>
     )}
@@ -288,9 +286,7 @@ function ProfileParcel(): React.ReactElement {
         showBackButton
         onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
       >
-        <Box py={8} textAlign="center">
-          <Spinner size="lg" color="green.500" />
-        </Box>
+        <StandardPageLoading />
       </StandardPage>
     );
   }
@@ -342,13 +338,14 @@ function ProfileParcel(): React.ReactElement {
       showBackButton
       onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
     >
-      <VStack spacing={8} w="100%">
+      <VStack spacing={{ base: 4, md: 8 }} w="100%">
         {/* Identity Section */}
         <StandardCard
           title={intl.formatMessage({ id: 'app.parcel' })}
           variant="elevated"
+          padding={{ base: 3, md: 4 }}
           headerAction={
-            <HStack spacing={2}>
+            <HStack spacing={1}>
               <StandardButton
                 variant="outline"
                 size="sm"
@@ -374,7 +371,88 @@ function ProfileParcel(): React.ReactElement {
             </HStack>
           }
         >
-          <HStack spacing={6} align="flex-start" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+          {/* Mobile: vertical centered layout */}
+          <VStack spacing={3} align="center" display={{ base: 'flex', md: 'none' }}>
+            <Avatar
+              size="xl"
+              src={parcelData?.images?.[0]?.url}
+              name={parcelData?.name}
+              bg="green.500"
+              color="white"
+              icon={<Icon as={FaMapMarkedAlt} boxSize={8} />}
+            />
+            <VStack align="center" spacing={1}>
+              <Text fontSize="lg" fontWeight="bold" color="gray.800" textAlign="center">
+                {parcelData?.name}
+              </Text>
+              {parcelData?.unique_code && (
+                <Text fontSize="sm" color="gray.500">
+                  {intl.formatMessage({ id: 'parcel.code' })}: {parcelData.unique_code}
+                </Text>
+              )}
+              {parcelData?.description && (
+                <Text color="gray.600" fontSize="xs" lineHeight="1.6" textAlign="center">
+                  {parcelData.description}
+                </Text>
+              )}
+              <Wrap spacing={2} justify="center">
+                <WrapItem>
+                  <Badge colorScheme="green" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                    {intl.formatMessage({ id: 'app.active' })}
+                  </Badge>
+                </WrapItem>
+                {parcelData?.certified && (
+                  <WrapItem>
+                    <Badge colorScheme="blue" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                      <HStack spacing={1}>
+                        <Icon as={FaCertificate} boxSize={3} />
+                        <Text>{intl.formatMessage({ id: 'app.certified' })}</Text>
+                      </HStack>
+                    </Badge>
+                  </WrapItem>
+                )}
+                {parcelData?.carbon_calculation_enabled && (
+                  <WrapItem>
+                    <Badge colorScheme="purple" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                      <HStack spacing={1}>
+                        <Icon as={FaLeaf} boxSize={3} />
+                        <Text>{intl.formatMessage({ id: 'parcel.carbonTracking' })}</Text>
+                      </HStack>
+                    </Badge>
+                  </WrapItem>
+                )}
+                {parcelData?.usda_compliance_eligible && (
+                  <WrapItem>
+                    <Badge colorScheme="orange" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                      <HStack spacing={1}>
+                        <Icon as={FaCheckCircle} boxSize={3} />
+                        <Text>{intl.formatMessage({ id: 'parcel.usdaCompliant' })}</Text>
+                      </HStack>
+                    </Badge>
+                  </WrapItem>
+                )}
+                {parcelData?.transparency_ready && (
+                  <WrapItem>
+                    <Badge colorScheme="cyan" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                      <HStack spacing={1}>
+                        <Icon as={FaEye} boxSize={3} />
+                        <Text>{intl.formatMessage({ id: 'parcel.consumerReady' })}</Text>
+                      </HStack>
+                    </Badge>
+                  </WrapItem>
+                )}
+                {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
+                  <WrapItem>
+                    <Badge colorScheme="teal" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                      {intl.formatMessage({ id: 'parcel.transparencyScore' }, { score: parcelData.transparency_score })}
+                    </Badge>
+                  </WrapItem>
+                )}
+              </Wrap>
+            </VStack>
+          </VStack>
+          {/* Desktop: horizontal layout */}
+          <HStack spacing={6} align="flex-start" display={{ base: 'none', md: 'flex' }}>
             <Avatar
               size="2xl"
               src={parcelData?.images?.[0]?.url}
@@ -459,7 +537,7 @@ function ProfileParcel(): React.ReactElement {
 
         {/* Photo Gallery Section */}
         {parcelData?.images && parcelData.images.length > 0 && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.photoGallery' })} variant="elevated">
+          <StandardCard title={intl.formatMessage({ id: 'parcel.photoGallery' })} variant="elevated" padding={{ base: 3, md: 4 }}>
             <StandardImageGallery
               images={parcelData.images}
               title=""
@@ -474,8 +552,8 @@ function ProfileParcel(): React.ReactElement {
         )}
 
         {/* Quick Stats Section */}
-        <StandardCard title={intl.formatMessage({ id: 'parcel.quickStats' })} variant="elevated">
-          <SimpleGrid columns={{ base: 2, md: 3 }} spacing={4}>
+        <StandardCard title={intl.formatMessage({ id: 'parcel.quickStats' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 4 }}>
             <StatCard
               icon={FaTractor}
               value={parcelData?.area ? parcelData.area.toFixed(2) : '--'}
@@ -504,76 +582,63 @@ function ProfileParcel(): React.ReactElement {
               colorScheme="orange"
             />
           </SimpleGrid>
+          <HStack justify="flex-end" mt={{ base: 2, md: 3 }}>
+            <StandardButton
+              variant="ghost"
+              size="sm"
+              leftIcon={<Icon as={FaChartLine} />}
+              onClick={() =>
+                navigate(`/admin/dashboard/establishment/${establishmentId}/transparency`)
+              }
+            >
+              {intl.formatMessage({ id: 'parcel.viewTransparencyDetails' })}
+            </StandardButton>
+          </HStack>
         </StandardCard>
-
-        {/* Transparency Score Breakdown */}
-        {(parcelData?.transparency_score ||
-          parcelData?.transparency_description ||
-          parcelData?.sustainability_practices ||
-          parcelData?.consumer_story) && (
-          <ParcelTransparencyScoreBreakdown
-            parcelData={{
-              transparency_score: parcelData?.transparency_score,
-              transparency_description: parcelData?.transparency_description,
-              sustainability_practices: parcelData?.sustainability_practices,
-              consumer_story: parcelData?.consumer_story,
-              images: parcelData?.images,
-              certified: parcelData?.certified,
-              certification_type: parcelData?.certification_type
-            }}
-            variant="full"
-            showEditButton={canWrite}
-            onEditClick={() =>
-              navigate(
-                `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
-              )
-            }
-          />
-        )}
 
         {/* Consumer Transparency Section */}
         {(parcelData?.transparency_description ||
           parcelData?.sustainability_practices ||
           parcelData?.consumer_story) && (
-          <StandardCard title={intl.formatMessage({ id: 'app.consumerTransparency' })} variant="elevated">
-            <VStack spacing={4} align="stretch">
+          <StandardCard title={intl.formatMessage({ id: 'app.consumerTransparency' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+            <VStack spacing={{ base: 3, md: 4 }} align="stretch">
               {parcelData?.transparency_description && (
-                <Box p={4} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
-                  <HStack spacing={2} mb={2}>
-                    <Icon as={FaLeaf} color="green.600" />
-                    <Text fontWeight="bold" color="green.700" fontSize="sm" textTransform="uppercase">
+                <Box p={{ base: 3, md: 4 }} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
+                  <HStack spacing={2} mb={{ base: 1, md: 2 }}>
+                    <Icon as={FaLeaf} color="green.600" boxSize={{ base: 3.5, md: 4 }} />
+                    <Text fontWeight="bold" color="green.700" fontSize={{ base: 'xs', md: 'sm' }} textTransform="uppercase">
                       {intl.formatMessage({ id: 'parcel.whatMakesSpecial' })}
                     </Text>
                   </HStack>
-                  <Text color="gray.700" lineHeight="tall">
+                  <Text color="gray.700" lineHeight="tall" fontSize={{ base: 'sm', md: 'md' }}>
                     {parcelData.transparency_description}
                   </Text>
                 </Box>
               )}
 
               {parcelData?.sustainability_practices && (
-                <Box p={4} bg="blue.50" borderRadius="lg" border="1px" borderColor="blue.200">
-                  <HStack spacing={2} mb={2}>
-                    <Icon as={FaSeedling} color="blue.600" />
-                    <Text fontWeight="bold" color="blue.700" fontSize="sm" textTransform="uppercase">
+                <Box p={{ base: 3, md: 4 }} bg="blue.50" borderRadius="lg" border="1px" borderColor="blue.200">
+                  <HStack spacing={2} mb={{ base: 1, md: 2 }}>
+                    <Icon as={FaSeedling} color="blue.600" boxSize={{ base: 3.5, md: 4 }} />
+                    <Text fontWeight="bold" color="blue.700" fontSize={{ base: 'xs', md: 'sm' }} textTransform="uppercase">
                       {intl.formatMessage({ id: 'parcel.keySustainabilityPractices' })}
                     </Text>
                   </HStack>
-                  <Text color="gray.700" lineHeight="tall">
+                  <Text color="gray.700" lineHeight="tall" fontSize={{ base: 'sm', md: 'md' }}>
                     {parcelData.sustainability_practices}
                   </Text>
                 </Box>
               )}
 
               {parcelData?.consumer_story && (
-                <Box p={4} bg="purple.50" borderRadius="lg" border="1px" borderColor="purple.200">
-                  <HStack spacing={2} mb={2}>
-                    <Icon as={FaUsers} color="purple.600" />
-                    <Text fontWeight="bold" color="purple.700" fontSize="sm" textTransform="uppercase">
+                <Box p={{ base: 3, md: 4 }} bg="purple.50" borderRadius="lg" border="1px" borderColor="purple.200">
+                  <HStack spacing={2} mb={{ base: 1, md: 2 }}>
+                    <Icon as={FaUsers} color="purple.600" boxSize={{ base: 3.5, md: 4 }} />
+                    <Text fontWeight="bold" color="purple.700" fontSize={{ base: 'xs', md: 'sm' }} textTransform="uppercase">
                       {intl.formatMessage({ id: 'parcel.whyConsumersShouldCare' })}
                     </Text>
                   </HStack>
-                  <Text color="gray.700" lineHeight="tall">
+                  <Text color="gray.700" lineHeight="tall" fontSize={{ base: 'sm', md: 'md' }}>
                     {parcelData.consumer_story}
                   </Text>
                 </Box>
@@ -583,8 +648,8 @@ function ProfileParcel(): React.ReactElement {
         )}
 
         {/* Basic Information Section */}
-        <StandardCard title={intl.formatMessage({ id: 'parcel.basicInformation' })} variant="elevated">
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <StandardCard title={intl.formatMessage({ id: 'parcel.basicInformation' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
             <InfoRow icon={FaMapMarkedAlt} label={intl.formatMessage({ id: 'app.parcelName' })} value={parcelData?.name} />
             <InfoRow
               icon={FaRulerCombined}
@@ -603,8 +668,8 @@ function ProfileParcel(): React.ReactElement {
         </StandardCard>
 
         {/* Location Section */}
-        <StandardCard title={intl.formatMessage({ id: 'parcel.locationDetails' })} variant="elevated">
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <StandardCard title={intl.formatMessage({ id: 'parcel.locationDetails' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
             <InfoRow icon={FaMapMarkerAlt} label={intl.formatMessage({ id: 'app.address' })} value={formatLocation()} />
             <InfoRow
               icon={FaGlobeAmericas}
@@ -630,8 +695,8 @@ function ProfileParcel(): React.ReactElement {
 
         {/* Contact Information Section */}
         {(parcelData?.contact_person || parcelData?.contact_email || parcelData?.contact_phone) && (
-          <StandardCard title={intl.formatMessage({ id: 'app.contactInformation' })} variant="elevated">
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+          <StandardCard title={intl.formatMessage({ id: 'app.contactInformation' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
               <InfoRow icon={FaUser} label={intl.formatMessage({ id: 'parcel.contactPerson' })} value={parcelData?.contact_person} />
               <InfoRow
                 icon={FaEnvelope}
@@ -651,13 +716,13 @@ function ProfileParcel(): React.ReactElement {
 
         {/* Certification Section */}
         {(parcelData?.certified || parcelData?.certification_type) && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.certification' })} variant="elevated">
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              <HStack spacing={3} align="flex-start">
-                <Icon as={FaCertificate} color="green.500" boxSize={4} mt={1} flexShrink={0} />
+          <StandardCard title={intl.formatMessage({ id: 'parcel.certification' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
+              <HStack spacing={2} align="flex-start">
+                <Icon as={FaCertificate} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
                 <Box>
                   <Text
-                    fontSize="xs"
+                    fontSize={{ base: '2xs', md: 'xs' }}
                     color="gray.500"
                     textTransform="uppercase"
                     fontWeight="semibold"
@@ -688,72 +753,72 @@ function ProfileParcel(): React.ReactElement {
 
         {/* Soil Health Section */}
         {hasSoilData && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.soilHealth' })} variant="elevated">
-            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
+          <StandardCard title={intl.formatMessage({ id: 'parcel.soilHealth' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 3, md: 4 }}>
               {parcelData?.agricultural_details?.soil_ph && (
                 <VStack
-                  spacing={1}
-                  p={4}
+                  spacing={0.5}
+                  p={{ base: 3, md: 4 }}
                   bg="orange.50"
                   borderRadius="lg"
                   border="1px"
                   borderColor="orange.200"
                 >
-                  <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {parseFloat(parcelData.agricultural_details.soil_ph).toFixed(1)}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                     {intl.formatMessage({ id: 'parcel.phLevel' })}
                   </Text>
                 </VStack>
               )}
               {parcelData?.agricultural_details?.soil_organic_matter && (
                 <VStack
-                  spacing={1}
-                  p={4}
+                  spacing={0.5}
+                  p={{ base: 3, md: 4 }}
                   bg="green.50"
                   borderRadius="lg"
                   border="1px"
                   borderColor="green.200"
                 >
-                  <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {parseFloat(parcelData.agricultural_details.soil_organic_matter).toFixed(1)}%
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                     {intl.formatMessage({ id: 'parcel.organicMatter' })}
                   </Text>
                 </VStack>
               )}
               {parcelData?.agricultural_details?.soil_nitrogen && (
                 <VStack
-                  spacing={1}
-                  p={4}
+                  spacing={0.5}
+                  p={{ base: 3, md: 4 }}
                   bg="blue.50"
                   borderRadius="lg"
                   border="1px"
                   borderColor="blue.200"
                 >
-                  <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {parseFloat(parcelData.agricultural_details.soil_nitrogen).toFixed(0)}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                     {intl.formatMessage({ id: 'parcel.nitrogenPpm' })}
                   </Text>
                 </VStack>
               )}
               {parcelData?.agricultural_details?.soil_phosphorus && (
                 <VStack
-                  spacing={1}
-                  p={4}
+                  spacing={0.5}
+                  p={{ base: 3, md: 4 }}
                   bg="purple.50"
                   borderRadius="lg"
                   border="1px"
                   borderColor="purple.200"
                 >
-                  <Text fontSize="2xl" fontWeight="bold" color="gray.800">
+                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
                     {parseFloat(parcelData.agricultural_details.soil_phosphorus).toFixed(0)}
                   </Text>
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                     {intl.formatMessage({ id: 'parcel.phosphorusPpm' })}
                   </Text>
                 </VStack>
@@ -764,8 +829,8 @@ function ProfileParcel(): React.ReactElement {
 
         {/* Water Management Section */}
         {hasWaterData && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.waterManagement' })} variant="elevated">
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+          <StandardCard title={intl.formatMessage({ id: 'parcel.waterManagement' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
               {parcelData?.agricultural_details?.irrigation_efficiency && (
                 <InfoRow
                   icon={FaTint}
@@ -804,24 +869,24 @@ function ProfileParcel(): React.ReactElement {
 
         {/* Conservation Practices Section */}
         {hasConservationData && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.conservationPractices' })} variant="elevated">
-            <VStack spacing={4} align="stretch">
+          <StandardCard title={intl.formatMessage({ id: 'parcel.conservationPractices' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+            <VStack spacing={{ base: 3, md: 4 }} align="stretch">
               {parcelData?.agricultural_details?.cover_crop_management && (
                 <HStack
-                  spacing={3}
-                  p={4}
+                  spacing={2}
+                  p={{ base: 3, md: 4 }}
                   bg="green.50"
                   borderRadius="lg"
                   border="1px"
                   borderColor="green.200"
                   align="flex-start"
                 >
-                  <Icon as={FaSeedling} color="green.600" mt={1} />
+                  <Icon as={FaSeedling} color="green.600" mt={1} boxSize={{ base: 3.5, md: 4 }} />
                   <Box>
-                    <Text fontWeight="semibold" color="gray.800">
+                    <Text fontWeight="semibold" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
                       {intl.formatMessage({ id: 'parcel.coverCrops' })}
                     </Text>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                       {parcelData.agricultural_details.cover_crop_management}
                     </Text>
                   </Box>
@@ -829,20 +894,20 @@ function ProfileParcel(): React.ReactElement {
               )}
               {parcelData?.agricultural_details?.crop_rotation_pattern && (
                 <HStack
-                  spacing={3}
-                  p={4}
+                  spacing={2}
+                  p={{ base: 3, md: 4 }}
                   bg="green.50"
                   borderRadius="lg"
                   border="1px"
                   borderColor="green.200"
                   align="flex-start"
                 >
-                  <Icon as={FaLeaf} color="green.500" mt={1} />
+                  <Icon as={FaLeaf} color="green.500" mt={1} boxSize={{ base: 3.5, md: 4 }} />
                   <Box>
-                    <Text fontWeight="semibold" color="gray.800">
+                    <Text fontWeight="semibold" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
                       {intl.formatMessage({ id: 'parcel.cropRotation' })}
                     </Text>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                       {parcelData.agricultural_details.crop_rotation_pattern}
                     </Text>
                   </Box>
@@ -850,20 +915,20 @@ function ProfileParcel(): React.ReactElement {
               )}
               {parcelData?.agricultural_details?.pest_management_strategy && (
                 <HStack
-                  spacing={3}
-                  p={4}
+                  spacing={2}
+                  p={{ base: 3, md: 4 }}
                   bg="yellow.50"
                   borderRadius="lg"
                   border="1px"
                   borderColor="yellow.200"
                   align="flex-start"
                 >
-                  <Icon as={FaChartLine} color="yellow.600" mt={1} />
+                  <Icon as={FaChartLine} color="yellow.600" mt={1} boxSize={{ base: 3.5, md: 4 }} />
                   <Box>
-                    <Text fontWeight="semibold" color="gray.800">
+                    <Text fontWeight="semibold" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
                       {intl.formatMessage({ id: 'parcel.pestManagement' })}
                     </Text>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                       {parcelData.agricultural_details.pest_management_strategy}
                     </Text>
                   </Box>
@@ -871,20 +936,20 @@ function ProfileParcel(): React.ReactElement {
               )}
               {parcelData?.agricultural_details?.fertilization_program && (
                 <HStack
-                  spacing={3}
-                  p={4}
+                  spacing={2}
+                  p={{ base: 3, md: 4 }}
                   bg="purple.50"
                   borderRadius="lg"
                   border="1px"
                   borderColor="purple.200"
                   align="flex-start"
                 >
-                  <Icon as={MdEco} color="purple.500" mt={1} />
+                  <Icon as={MdEco} color="purple.500" mt={1} boxSize={{ base: 3.5, md: 4 }} />
                   <Box>
-                    <Text fontWeight="semibold" color="gray.800">
+                    <Text fontWeight="semibold" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
                       {intl.formatMessage({ id: 'parcel.fertilizationProgram' })}
                     </Text>
-                    <Text fontSize="sm" color="gray.600">
+                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                       {parcelData.agricultural_details.fertilization_program}
                     </Text>
                   </Box>
@@ -895,8 +960,8 @@ function ProfileParcel(): React.ReactElement {
         )}
 
         {/* Company & Establishment Section */}
-        <StandardCard title={intl.formatMessage({ id: 'parcel.companyAndEstablishment' })} variant="elevated">
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        <StandardCard title={intl.formatMessage({ id: 'parcel.companyAndEstablishment' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
             <InfoRow icon={FaBuilding} label={intl.formatMessage({ id: 'app.company' })} value={currentCompany?.name} />
             <InfoRow icon={FaBuilding} label={intl.formatMessage({ id: 'app.establishment' })} value={establishment?.name} />
           </SimpleGrid>

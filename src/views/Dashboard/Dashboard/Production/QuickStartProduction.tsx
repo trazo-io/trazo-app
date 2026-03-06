@@ -12,7 +12,6 @@ import {
   GridItem,
   Icon,
   Badge,
-  Spinner,
   Alert,
   AlertIcon,
   useToast,
@@ -68,7 +67,7 @@ import { useStartProductionMutation, useGetCropTypesDropdownQuery } from 'store/
 import { useGetHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { setParcel } from 'store/features/productSlice';
-import { StandardPage, StandardCard, StandardButton } from 'components/Design';
+import { StandardPage, StandardCard, StandardButton, StandardPageLoading } from 'components/Design';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
@@ -650,10 +649,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   if (isLoadingTemplates || (isEdit && isLoadingProduction)) {
     return (
       <StandardPage title={isEdit ? 'Edit Production' : 'Quick Start Production'} showBackButton>
-        <VStack py={8}>
-          <Spinner size="xl" color="green.500" />
-          <Text>{isEdit ? 'Loading production data...' : 'Loading smart templates...'}</Text>
-        </VStack>
+        <StandardPageLoading />
       </StandardPage>
     );
   }

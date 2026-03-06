@@ -8,7 +8,7 @@ function Card(props: CardProps) {
   const { children, ...rest } = props;
   return (
     <Box
-      p="22px"
+      p={{ base: '12px', md: '22px' }}
       display="flex"
       flexDirection="column"
       width="100%"

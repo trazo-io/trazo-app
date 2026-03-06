@@ -18,7 +18,6 @@ import {
   useToast,
   Skeleton,
   Tooltip,
-  IconButton,
   Link
 } from '@chakra-ui/react';
 import {
@@ -1235,64 +1234,72 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="2xl" scrollBehavior="inside">
+    <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'full', md: '2xl' }} scrollBehavior="inside">
       <ModalOverlay />
       <ModalContent
-        maxH="90vh"
+        maxH={{ base: '100vh', md: '90vh' }}
+        minH={{ base: '100vh', md: 'auto' }}
+        my={{ base: 0, md: '3.75rem' }}
+        borderRadius={{ base: 0, md: 'xl' }}
         display="flex"
         flexDirection="column"
-        borderRadius="xl"
         overflow="hidden"
       >
-        <ModalHeader borderBottom="1px solid" borderColor="gray.100" pb={4}>
-          <HStack spacing={3} justify="space-between" w="full" pr={8}>
-            <HStack spacing={3}>
-              <Box
-                p={2}
-                bg="green.50"
-                borderRadius="lg"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
-                <Icon as={FaSeedling} color="green.500" boxSize={5} />
-              </Box>
-              <VStack align="start" spacing={0}>
-                <Text fontSize="lg" fontWeight="bold" color="gray.800">
+        <ModalHeader borderBottom="1px solid" borderColor="gray.100" pb={3} pt={4} pr={12}>
+          <HStack spacing={3} align="center">
+            <Box
+              p={2}
+              bg="green.50"
+              borderRadius="lg"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              flexShrink={0}
+            >
+              <Icon as={FaSeedling} color="green.500" boxSize={5} />
+            </Box>
+            <VStack align="start" spacing={0} flex={1} minW={0}>
+              <HStack spacing={2} align="center">
+                <Text fontSize="lg" fontWeight="bold" color="gray.800" lineHeight="short">
                   {intl.formatMessage({ id: 'quickAdd.title' })}
                 </Text>
+                <Tooltip
+                  label={intl.formatMessage({ id: 'quickAdd.helpTooltip' })}
+                  placement="bottom"
+                  hasArrow
+                  openDelay={300}
+                >
+                  <Box as="span" display="inline-flex" tabIndex={-1}>
+                    <Icon
+                      as={FaQuestionCircle}
+                      color="gray.400"
+                      boxSize={4}
+                      cursor="pointer"
+                      _hover={{ color: 'green.500' }}
+                      onClick={() => navigate('/education?topic=quick-add')}
+                    />
+                  </Box>
+                </Tooltip>
+              </HStack>
+              <HStack spacing={2} align="center">
                 <Text fontSize="xs" color="gray.500">
                   {intl.formatMessage({ id: 'quickAdd.subtitle' })}
                 </Text>
-              </VStack>
-              <Badge
-                colorScheme="green"
-                variant="subtle"
-                fontSize="xs"
-                px={2}
-                py={1}
-                borderRadius="md"
-              >
-                {cropType}
-              </Badge>
-            </HStack>
-            <Tooltip
-              label={intl.formatMessage({ id: 'quickAdd.helpTooltip' })}
-              placement="left"
-              hasArrow
-            >
-              <IconButton
-                aria-label={intl.formatMessage({ id: 'quickAdd.learnMore' })}
-                icon={<FaQuestionCircle />}
-                variant="ghost"
-                colorScheme="green"
-                size="sm"
-                onClick={() => navigate('/education?topic=quick-add')}
-              />
-            </Tooltip>
+                <Badge
+                  colorScheme="green"
+                  variant="subtle"
+                  fontSize="2xs"
+                  px={1.5}
+                  py={0.5}
+                  borderRadius="md"
+                >
+                  {cropType}
+                </Badge>
+              </HStack>
+            </VStack>
           </HStack>
         </ModalHeader>
-        <ModalCloseButton />
+        <ModalCloseButton top={4} />
 
         <ModalBody
           ref={modalBodyRef}
@@ -1946,7 +1953,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
             borderTop="1px solid"
             borderColor="gray.100"
             p={4}
+            pb={{ base: 6, md: 4 }}
             boxShadow="0 -4px 12px rgba(0, 0, 0, 0.08)"
+            zIndex={10}
           >
             {showDetailedForm ? (
               // Detailed Form Footer
