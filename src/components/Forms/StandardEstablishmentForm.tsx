@@ -652,16 +652,6 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                     >
                       Continue
                     </StandardButton>
-                    <StandardButton
-                      variant="ghost"
-                      w="100%"
-                      size="md"
-                      fontSize="sm"
-                      onClick={onCancel}
-                      borderRadius="xl"
-                    >
-                      Cancel
-                    </StandardButton>
                   </VStack>
 
                   {/* Desktop Layout */}
@@ -941,44 +931,26 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                 {/* Mobile-First Navigation */}
                 <Box pt={4}>
                   {/* Mobile Layout */}
-                  <VStack spacing={3} w="100%" display={{ base: 'flex', md: 'none' }}>
+                  <HStack spacing={3} justify="space-between" w="100%" display={{ base: 'flex', md: 'none' }}>
+                    <StandardButton
+                      variant="outline"
+                      size="md"
+                      leftIcon={<FaChevronLeft />}
+                      onClick={previousStep}
+                      borderRadius="xl"
+                    >
+                      Back
+                    </StandardButton>
                     <StandardButton
                       onClick={nextStep}
-                      w="100%"
-                      size="lg"
-                      h="52px"
-                      fontSize="md"
-                      fontWeight="semibold"
+                      size="md"
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}
                     >
-                      Next: Operations
+                      Continue
                     </StandardButton>
-                    <HStack spacing={2} w="100%">
-                      <StandardButton
-                        variant="outline"
-                        flex={1}
-                        size="md"
-                        fontSize="sm"
-                        leftIcon={<FaChevronLeft />}
-                        onClick={previousStep}
-                        borderRadius="xl"
-                      >
-                        Back
-                      </StandardButton>
-                      <StandardButton
-                        variant="ghost"
-                        flex={1}
-                        size="md"
-                        fontSize="sm"
-                        onClick={onCancel}
-                        borderRadius="xl"
-                      >
-                        Cancel
-                      </StandardButton>
-                    </HStack>
-                  </VStack>
+                  </HStack>
 
                   {/* Desktop Layout */}
                   <HStack
@@ -1488,44 +1460,26 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                 {/* Mobile-First Navigation */}
                 <Box pt={4}>
                   {/* Mobile Layout */}
-                  <VStack spacing={3} w="100%" display={{ base: 'flex', md: 'none' }}>
+                  <HStack spacing={3} justify="space-between" w="100%" display={{ base: 'flex', md: 'none' }}>
+                    <StandardButton
+                      variant="outline"
+                      size="md"
+                      leftIcon={<FaChevronLeft />}
+                      onClick={previousStep}
+                      borderRadius="xl"
+                    >
+                      Back
+                    </StandardButton>
                     <StandardButton
                       onClick={nextStep}
-                      w="100%"
-                      size="lg"
-                      h="52px"
-                      fontSize="md"
-                      fontWeight="semibold"
+                      size="md"
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}
                     >
-                      Add Photos
+                      Continue
                     </StandardButton>
-                    <HStack spacing={2} w="100%">
-                      <StandardButton
-                        variant="outline"
-                        flex={1}
-                        size="md"
-                        fontSize="sm"
-                        leftIcon={<FaChevronLeft />}
-                        onClick={previousStep}
-                        borderRadius="xl"
-                      >
-                        Back
-                      </StandardButton>
-                      <StandardButton
-                        variant="ghost"
-                        flex={1}
-                        size="md"
-                        fontSize="sm"
-                        onClick={onCancel}
-                        borderRadius="xl"
-                      >
-                        Cancel
-                      </StandardButton>
-                    </HStack>
-                  </VStack>
+                  </HStack>
 
                   {/* Desktop Layout */}
                   <HStack
@@ -1582,54 +1536,33 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Mobile-First Navigation - 2025 Premium UX */}
+                {/* Mobile-First Navigation */}
                 <Box pt={4}>
-                  {/* Mobile Layout (Stacked) */}
-                  <VStack spacing={3} w="100%" display={{ base: 'flex', md: 'none' }}>
-                    {/* Primary Action - Full Width */}
+                  {/* Mobile Layout */}
+                  <HStack spacing={3} justify="space-between" w="100%" display={{ base: 'flex', md: 'none' }}>
+                    <StandardButton
+                      variant="outline"
+                      size="md"
+                      leftIcon={<FaChevronLeft />}
+                      onClick={previousStep}
+                      borderRadius="xl"
+                    >
+                      Back
+                    </StandardButton>
                     <StandardButton
                       type="submit"
-                      w="100%"
-                      size="lg"
-                      h="52px" // Extra height for mobile touch
-                      fontSize="md"
-                      fontWeight="semibold"
+                      size="md"
                       isLoading={isLoading}
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
                       leftIcon={<FaCheckCircle />}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}
                     >
-                      {isEdit ? 'Update Farm' : 'Create Farm'}
+                      {isEdit ? 'Update' : 'Create'}
                     </StandardButton>
+                  </HStack>
 
-                    {/* Secondary Actions Row */}
-                    <HStack spacing={2} w="100%">
-                      <StandardButton
-                        variant="outline"
-                        flex={1}
-                        size="md"
-                        fontSize="sm"
-                        leftIcon={<FaChevronLeft />}
-                        onClick={previousStep}
-                        borderRadius="xl"
-                      >
-                        Back
-                      </StandardButton>
-                      <StandardButton
-                        variant="ghost"
-                        flex={1}
-                        size="md"
-                        fontSize="sm"
-                        onClick={onCancel}
-                        borderRadius="xl"
-                      >
-                        Cancel
-                      </StandardButton>
-                    </HStack>
-                  </VStack>
-
-                  {/* Desktop Layout (Horizontal) */}
+                  {/* Desktop Layout */}
                   <HStack
                     spacing={3}
                     justify="space-between"

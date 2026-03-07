@@ -291,6 +291,7 @@ export const StandardCard = ({
 
 interface Step {
   title: string;
+  shortTitle?: string;
   description?: string;
   icon?: IconType;
 }
@@ -375,10 +376,11 @@ export const StandardStepper = ({
                     color={index <= currentStep ? 'green.500' : 'gray.500'}
                     textAlign="center"
                     lineHeight="1.2"
-                    noOfLines={2}
-                    maxW={manySteps ? '70px' : 'auto'}
+                    noOfLines={1}
+                    maxW={manySteps ? '70px' : { base: '64px', smd: '80px', md: 'auto' }}
+                    isTruncated
                   >
-                    {step.title}
+                    {step.shortTitle || step.title}
                   </Text>
                   {step.description && !manySteps && (
                     <Text

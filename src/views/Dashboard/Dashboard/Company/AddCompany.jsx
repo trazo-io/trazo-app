@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 // NOTE: Crop selection removed - belongs at Establishment/Parcel level, not Company level
-import { Box, VStack, HStack, Text, Icon, SimpleGrid, useToast } from '@chakra-ui/react';
+import { Box, VStack, HStack, Text, Icon, SimpleGrid, useToast, useBreakpointValue } from '@chakra-ui/react';
 import {
   FaRocket,
   FaCheckCircle,
@@ -177,6 +177,8 @@ function AddCompany({ isEdit = false }) {
   const [currentStep, setCurrentStep] = useState(0);
   const toast = useToast();
 
+  const isMobile = useBreakpointValue({ base: true, smd: false });
+
   console.log('🏢 AddCompany: Component rendered', { isEdit, currentUser: currentUser?.id });
 
   // @ts-ignore: Mutation hook
@@ -195,9 +197,9 @@ function AddCompany({ isEdit = false }) {
 
   // Define steps for stepper (Crop selection removed - belongs at Establishment/Parcel level)
   const steps = [
-    { title: 'Company Info', description: 'Basic company details', icon: FaBuilding },
+    { title: 'Company Info', shortTitle: 'Company', description: 'Basic company details', icon: FaBuilding },
     { title: 'Location', description: 'Address & contact', icon: FaMapMarkerAlt },
-    { title: 'Sustainability', description: 'Goals & practices', icon: FaLeaf }
+    { title: 'Sustainability', shortTitle: 'Goals', description: 'Goals & practices', icon: FaLeaf }
   ];
 
   const methods = useForm({
@@ -548,15 +550,17 @@ function AddCompany({ isEdit = false }) {
 
                 {/* Navigation */}
                 <HStack spacing={3} justify="flex-end" pt={4}>
-                  <StandardButton variant="outline" onClick={handleCancel}>
-                    Cancel
-                  </StandardButton>
+                  {!isMobile && (
+                    <StandardButton variant="outline" onClick={handleCancel}>
+                      Cancel
+                    </StandardButton>
+                  )}
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
                     disabled={!isStepComplete(0)}
                   >
-                    Continue to Location
+                    {isMobile ? 'Continue' : 'Continue to Location'}
                   </StandardButton>
                 </HStack>
               </VStack>
@@ -633,19 +637,21 @@ function AddCompany({ isEdit = false }) {
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}
                   >
-                    Back to Company Info
+                    {isMobile ? 'Back' : 'Back to Company Info'}
                   </StandardButton>
 
                   <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={handleCancel}>
-                      Cancel
-                    </StandardButton>
+                    {!isMobile && (
+                      <StandardButton variant="outline" onClick={handleCancel}>
+                        Cancel
+                      </StandardButton>
+                    )}
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
                       disabled={!isStepComplete(1)}
                     >
-                      Continue to Sustainability
+                      {isMobile ? 'Continue' : 'Continue to Sustainability'}
                     </StandardButton>
                   </HStack>
                 </HStack>
@@ -687,20 +693,22 @@ function AddCompany({ isEdit = false }) {
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}
                   >
-                    Back to Location
+                    {isMobile ? 'Back' : 'Back to Location'}
                   </StandardButton>
 
                   <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={handleCancel}>
-                      Cancel
-                    </StandardButton>
+                    {!isMobile && (
+                      <StandardButton variant="outline" onClick={handleCancel}>
+                        Cancel
+                      </StandardButton>
+                    )}
                     <StandardButton
                       type="submit"
                       isLoading={isLoading}
-                      loadingText="Creating Company..."
+                      loadingText={isMobile ? 'Creating...' : 'Creating Company...'}
                       leftIcon={<FaRocket />}
                     >
-                      Create Company
+                      {isMobile ? 'Create' : 'Create Company'}
                     </StandardButton>
                   </HStack>
                 </HStack>

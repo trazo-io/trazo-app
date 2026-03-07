@@ -31,8 +31,16 @@ import {
   FaEyeSlash
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { useDispatch } from 'react-redux';
 import AuthFooter from 'components/Footer/AuthFooter';
-import { useSignUpMutation } from '../../../store/api/authApi';
+import { useSignUpMutation, useSocialAuthMutation } from '../../../store/api/authApi';
+import { login as loginAction } from '../../../store/features/authSlice';
+import {
+  handleGoogleSignIn,
+  handleFacebookSignIn,
+  handleSocialAuthError,
+  checkSocialAuthConfig
+} from '../../../utils/socialAuth';
 
 
 // Motion components
@@ -50,8 +58,10 @@ interface SignUpFormData {
 
 const ConsumerSignUp: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const toast = useToast();
   const [signUp, { isLoading }] = useSignUpMutation();
+  const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -109,14 +119,89 @@ const ConsumerSignUp: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    toast({
-      title: 'Coming Soon',
-      description: `${provider} sign up will be available soon.`,
-      status: 'info',
-      duration: 3000,
-      isClosable: true
-    });
+  const handleSocialLoginSuccess = async (authData: any) => {
+    try {
+      setError(null);
+      const response = await socialAuth(authData).unwrap();
+
+      // Dispatch login action
+      dispatch(loginAction(response));
+
+      // Set a flag to prevent Authenticated component from interfering
+      sessionStorage.setItem('just_authenticated', 'true');
+
+      toast({
+        title: 'Welcome to Trazo!',
+        description: 'Your account has been created successfully.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+
+      // RedirectGuard will handle the navigation
+      // Default redirect to dashboard
+      navigate('/admin/dashboard', { replace: true });
+    } catch (err: any) {
+      const errorMessage = err?.data?.error || 'Social authentication failed';
+      setError(errorMessage);
+      handleSocialAuthError(new Error(errorMessage), authData.provider);
+    }
+  };
+
+  const handleSocialLoginError = (error: Error, provider: string) => {
+    console.error(`${provider} auth error:`, error);
+    handleSocialAuthError(error, provider);
+  };
+
+  const handleSocialLogin = async (provider: string) => {
+    const config = checkSocialAuthConfig();
+
+    switch (provider) {
+      case 'Google':
+        if (!config.google) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Google sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleGoogleSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Google'),
+          5 // Consumer user type
+        );
+        break;
+
+      case 'Facebook':
+        if (!config.facebook) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Facebook sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleFacebookSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Facebook'),
+          5 // Consumer user type
+        );
+        break;
+
+      default:
+        toast({
+          title: 'Error',
+          description: 'Unknown social login provider.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true
+        });
+    }
   };
 
   return (
@@ -761,8 +846,8 @@ const ConsumerSignUp: React.FC = () => {
                     fontSize="sm"
                     fontWeight="600"
                     borderRadius="xl"
-                    isLoading={isLoading}
-                    loadingText="Creating account..."
+                    isLoading={isLoading || isSocialLoading}
+                    loadingText={isSocialLoading ? 'Authenticating...' : 'Creating account...'}
                     _hover={{
                       bg: 'blue.700',
                       transform: 'translateY(-1px)'
@@ -806,7 +891,7 @@ const ConsumerSignUp: React.FC = () => {
                       borderColor={useColorModeValue('gray.200', 'gray.600')}
                       borderRadius="xl"
                       onClick={() => handleSocialLogin(social.name)}
-                      isDisabled={isLoading}
+                      isDisabled={isLoading || isSocialLoading}
                       _hover={{
                         bg: useColorModeValue('gray.100', 'gray.600'),
                         borderColor: useColorModeValue('gray.300', 'gray.500'),

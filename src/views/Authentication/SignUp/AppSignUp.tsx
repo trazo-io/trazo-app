@@ -34,8 +34,16 @@ import {
   FaRedo
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { useDispatch } from 'react-redux';
 import AuthFooter from 'components/Footer/AuthFooter';
-import { useSignUpMutation, useResendVerificationEmailMutation } from '../../../store/api/authApi';
+import { useSignUpMutation, useResendVerificationEmailMutation, useSocialAuthMutation } from '../../../store/api/authApi';
+import { login as loginAction } from '../../../store/features/authSlice';
+import {
+  handleGoogleSignIn,
+  handleFacebookSignIn,
+  handleSocialAuthError,
+  checkSocialAuthConfig
+} from '../../../utils/socialAuth';
 
 // No assets needed for minimalist design
 
@@ -54,8 +62,10 @@ interface SignUpFormData {
 
 const AppSignUp: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const toast = useToast();
   const [signUp, { isLoading }] = useSignUpMutation();
+  const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -240,14 +250,94 @@ const AppSignUp: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    toast({
-      title: 'Coming Soon',
-      description: `${provider} sign up will be available soon.`,
-      status: 'info',
-      duration: 3000,
-      isClosable: true
-    });
+  const handleSocialLoginSuccess = async (authData: any) => {
+    try {
+      setError(null);
+
+      // Check for pending invitation in sessionStorage
+      const pendingInvitation = sessionStorage.getItem('pendingInvitation');
+      const authPayload = pendingInvitation
+        ? { ...authData, invitation_code: pendingInvitation }
+        : authData;
+
+      const response = await socialAuth(authPayload).unwrap();
+
+      // Clear pending invitation on successful auth
+      if (pendingInvitation) {
+        sessionStorage.removeItem('pendingInvitation');
+      }
+
+      dispatch(loginAction(response));
+
+      // If invitation was accepted, redirect to the specified URL
+      if (response.invitation_accepted && response.redirect_to) {
+        navigate(response.redirect_to, { replace: true });
+        return;
+      }
+
+      // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
+      // This prevents race condition where company data isn't loaded yet
+    } catch (err: any) {
+      const errorMessage = err?.data?.error || 'Social authentication failed';
+      setError(errorMessage);
+      handleSocialAuthError(new Error(errorMessage), authData.provider);
+    }
+  };
+
+  const handleSocialLoginError = (error: Error, provider: string) => {
+    console.error(`${provider} auth error:`, error);
+    handleSocialAuthError(error, provider);
+  };
+
+  const handleSocialLogin = async (provider: string) => {
+    const config = checkSocialAuthConfig();
+
+    switch (provider) {
+      case 'Google':
+        if (!config.google) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Google sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleGoogleSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Google'),
+          4 // Producer user type
+        );
+        break;
+
+      case 'Facebook':
+        if (!config.facebook) {
+          toast({
+            title: 'Configuration Error',
+            description: 'Facebook sign-in is not configured. Please contact support.',
+            status: 'error',
+            duration: 5000,
+            isClosable: true
+          });
+          return;
+        }
+        await handleFacebookSignIn(
+          handleSocialLoginSuccess,
+          (error) => handleSocialLoginError(error, 'Facebook'),
+          4 // Producer user type
+        );
+        break;
+
+      default:
+        toast({
+          title: 'Error',
+          description: 'Unknown social login provider.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true
+        });
+    }
   };
 
   return (
@@ -1134,9 +1224,9 @@ const AppSignUp: React.FC = () => {
                         fontSize="sm"
                         fontWeight="600"
                         borderRadius="xl"
-                        isLoading={isLoading}
-                        loadingText="Creating account..."
-                        isDisabled={isValidatingCode}
+                        isLoading={isLoading || isSocialLoading}
+                        loadingText={isSocialLoading ? 'Authenticating...' : 'Creating account...'}
+                        isDisabled={isValidatingCode || isSocialLoading}
                         _hover={{
                           bg: isLoading ? 'green.500' : 'green.600',
                           transform: isLoading ? 'none' : 'translateY(-1px)'
@@ -1193,6 +1283,7 @@ const AppSignUp: React.FC = () => {
                           borderColor={useColorModeValue('gray.300', 'gray.600')}
                           borderRadius="lg"
                           onClick={() => handleSocialLogin(social.name)}
+                          isDisabled={isLoading || isSocialLoading}
                           _hover={{
                             bg: useColorModeValue('gray.50', 'gray.600'),
                             borderColor: useColorModeValue('gray.400', 'gray.500')

@@ -10,6 +10,7 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   useToast,
+  useBreakpointValue,
   Text,
   Icon
 } from '@chakra-ui/react';
@@ -117,6 +118,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
   const intl = useIntl();
   const toast = useToast();
   const navigate = useNavigate();
+  const isMobile = useBreakpointValue({ base: true, smd: false });
 
   // Define steps for stepper
   const steps = [
@@ -465,7 +467,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                     rightIcon={<FaChevronRight />}
                     disabled={!isStepComplete(0)}
                   >
-                    Continue to Location
+                    {isMobile ? 'Continue' : 'Continue to Location'}
                   </StandardButton>
                 </HStack>
               </VStack>
@@ -567,19 +569,21 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}
                   >
-                    Back to Company Info
+                    {isMobile ? 'Back' : 'Back to Company Info'}
                   </StandardButton>
 
                   <HStack spacing={3}>
-                    <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
-                    </StandardButton>
+                    {!isMobile && (
+                      <StandardButton variant="outline" onClick={onCancel}>
+                        Cancel
+                      </StandardButton>
+                    )}
                     <StandardButton
                       type="submit"
                       isLoading={isLoading}
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
                     >
-                      {isEdit ? 'Update Company' : 'Create Company'}
+                      {isEdit ? (isMobile ? 'Update' : 'Update Company') : (isMobile ? 'Create' : 'Create Company')}
                     </StandardButton>
                   </HStack>
                 </HStack>
