@@ -107,8 +107,10 @@ const ConsumerSignIn: React.FC = () => {
       sessionStorage.setItem('just_authenticated', 'true');
 
       toast({
-        title: 'Welcome!',
-        description: 'You have successfully signed in.',
+        title: response.is_new_user ? 'Welcome to Trazo!' : 'Welcome back!',
+        description: response.is_new_user
+          ? 'Your account has been created successfully.'
+          : 'You have successfully signed in.',
         status: 'success',
         duration: 3000,
         isClosable: true
@@ -287,16 +289,16 @@ const ConsumerSignIn: React.FC = () => {
           >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Know Your Food's Climate Impact
+                See exactly how your food was grown
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Scan products to see documented farming practices and support climate-positive farming
-                through informed choices
+                Scan QR codes to discover the full farming journey behind your food
+                and support the farms you trust
               </Text>
             </VStack>
 
             <VStack spacing={3} pt={4}>
-              {['Documented Farm Journeys', 'Blockchain Security', 'Real Farm Stories'].map(
+              {['See the full farming journey', 'Verified practices you can trust', 'Real farm stories and photos'].map(
                 (feature, index) => (
                   <HStack key={index} spacing={3}>
                     <Box w={2} h={2} bg="white" borderRadius="50%" />
@@ -337,14 +339,14 @@ const ConsumerSignIn: React.FC = () => {
                   color={useColorModeValue('gray.900', 'white')}
                   letterSpacing="tight"
                 >
-                  Discover Food Transparency
+                  Your Food's Full Story
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
                   textAlign="center"
                 >
-                  Discover how your food was grown with verified farming transparency
+                  Scan a QR code. See the farming journey. Know what you're buying.
                 </Text>
               </VStack>
             </VStack>

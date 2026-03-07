@@ -131,8 +131,10 @@ const ConsumerSignUp: React.FC = () => {
       sessionStorage.setItem('just_authenticated', 'true');
 
       toast({
-        title: 'Welcome to Trazo!',
-        description: 'Your account has been created successfully.',
+        title: response.is_new_user ? 'Welcome to Trazo!' : 'Welcome back!',
+        description: response.is_new_user
+          ? 'Your account has been created successfully.'
+          : 'You have successfully signed in.',
         status: 'success',
         duration: 3000,
         isClosable: true

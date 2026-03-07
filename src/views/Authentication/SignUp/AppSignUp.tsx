@@ -275,6 +275,16 @@ const AppSignUp: React.FC = () => {
         return;
       }
 
+      toast({
+        title: response.is_new_user ? 'Welcome to Trazo!' : 'Welcome back!',
+        description: response.is_new_user
+          ? 'Your account has been created successfully.'
+          : 'You have successfully signed in.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+
       // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
       // This prevents race condition where company data isn't loaded yet
     } catch (err: any) {
@@ -446,23 +456,23 @@ const AppSignUp: React.FC = () => {
           >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Build Your Farm's Transparency Story
+                Great farms still compete on price.
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Join leading agricultural enterprises using Trazo to document your practices, verify
-                authenticity with blockchain, and connect directly with conscious consumers.
+                Because buyers can't see how the food was grown.
+                Trazo gives you the proof to earn what your products are worth.
               </Text>
             </VStack>
 
             <VStack spacing={4} pt={4}>
               <Text fontSize="sm" opacity={0.9} fontWeight="500">
-                Trusted by agricultural businesses worldwide
+                Built for specialty crop farms. 14-day free trial.
               </Text>
               <VStack spacing={3}>
                 {[
-                  'Verified Transparency & Trust',
-                  'Blockchain-Backed Documentation',
-                  'Direct Consumer Connection'
+                  'Record practices in under 2 minutes',
+                  'QR codes auto-generate after harvest',
+                  '19 US crops pre-configured and ready'
                 ].map((feature, index) => (
                   <HStack key={index} spacing={3}>
                     <Box w={2} h={2} bg="white" borderRadius="50%" />

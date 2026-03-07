@@ -498,7 +498,7 @@ export default function EducationDashboard() {
                 icon={MdEco}
                 iconColor="green.600"
                 iconBg="green.100"
-                value="20 US Crops"
+                value="19 US Crops"
                 label="Farm Documentation"
                 subtitle="Pre-configured event workflows for specialty crops"
                 colorScheme="green"

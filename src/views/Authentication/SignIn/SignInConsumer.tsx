@@ -127,15 +127,15 @@ export default function SignInConsumer() {
             mt={{ md: '150px', lg: '80px' }}
           >
             <Heading color={titleColor} fontSize="32px" mb="10px">
-              Know Your Food's Climate Impact
+              See exactly how your food was grown
             </Heading>
             <Text mb="24px" ms="4px" color={textColor} fontWeight="bold" fontSize="14px">
-              Scan products to see documented farming practices and support climate-positive farming
+              Scan QR codes to discover the full farming journey behind your food
             </Text>
             <Flex mb="12px" align="center" gap={2}>
               <Box w="4px" h="4px" bg="green.500" borderRadius="full" />
               <Text fontSize="xs" color="gray.600">
-                Blockchain-verified transparency
+                Verified farming practices
               </Text>
             </Flex>
             <FormProvider {...methods}>

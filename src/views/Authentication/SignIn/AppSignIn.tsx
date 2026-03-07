@@ -116,6 +116,16 @@ const AppSignIn: React.FC = () => {
         return;
       }
 
+      toast({
+        title: response.is_new_user ? 'Welcome to Trazo!' : 'Welcome back!',
+        description: response.is_new_user
+          ? 'Your account has been created successfully.'
+          : 'You have successfully signed in.',
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+
       // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
       // This prevents race condition where company data isn't loaded yet
     } catch (err: any) {
@@ -288,23 +298,23 @@ const AppSignIn: React.FC = () => {
           >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Farming Worth Proving
+                Honest farming deserves premium prices.
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Your best farming practices deserve customers who understand them.
+                Without proof, premium farms get commodity prices.
                 <br />
-                Trazo connects what you do with people who trust you for it.
+                Log in and keep building your verified story.
               </Text>
             </VStack>
 
             <VStack spacing={3} pt={4}>
               {[
-                '8 Farm Management Categories Documented',
-                'Blockchain Verification for Customer Trust',
-                'Transparent Stories That Sell',
-                'Real-Time Evidence & Monitoring',
-                'Direct Customer Connection',
-                'Premium Positioning Built In'
+                'Buyers see exactly how your food was grown',
+                'Every event logged raises your transparency score',
+                'QR codes turn scans into trust',
+                'Optional blockchain for tamper-proof records',
+                'Consumer reviews build your reputation',
+                'Your farm story, your prices, your data'
               ].map((feature, index) => (
                 <HStack key={index} spacing={3}>
                   <Box w={2} h={2} bg="white" borderRadius="50%" />
@@ -344,14 +354,14 @@ const AppSignIn: React.FC = () => {
                   color={useColorModeValue('gray.900', 'white')}
                   letterSpacing="tight"
                 >
-                  Your Transparency Awaits
+                  Welcome back
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
                   textAlign="center"
                 >
-                  Log in to share what you've built.
+                  Your verified story is waiting.
                 </Text>
               </VStack>
             </VStack>
