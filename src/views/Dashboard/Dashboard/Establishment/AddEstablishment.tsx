@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Box, Text, useColorModeValue, useToast } from '@chakra-ui/react';
+import { Box, CircularProgress, Flex, Text, useColorModeValue, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { StandardEstablishmentForm } from '../../../../components/Forms/StandardEstablishmentForm';
@@ -388,9 +388,9 @@ function AddEstablishment({ isEdit = false }: Props) {
   // Show loading state during data fetch for edit mode
   if (isEdit && isLoadingEstablishment) {
     return (
-      <Box p={8} textAlign="center">
-        <Text>Loading establishment data...</Text>
-      </Box>
+      <Flex justify="center" align="center" p={8} minH="200px">
+        <CircularProgress isIndeterminate color="green.500" size="40px" />
+      </Flex>
     );
   }
 

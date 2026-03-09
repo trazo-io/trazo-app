@@ -10,10 +10,10 @@ import {
   useBreakpointValue,
   Badge,
   HStack,
-  Icon,
-  Skeleton
+  Icon
 } from '@chakra-ui/react';
 import { S3Image, EmptyImageState } from 'components/Design';
+import Shimmer from 'components/Shimmer/Shimmer';
 
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
@@ -103,12 +103,10 @@ const CarouselCard = ({
         {/* Modern 4:3 aspect ratio image section */}
         <Box w="100%" h="180px" position="relative" overflow="hidden" borderTopRadius="20px">
           {!imageLoaded && !shouldShowPlaceholder && (
-            <Skeleton
-              w="100%"
-              h="100%"
-              startColor="gray.100"
-              endColor="gray.200"
-              borderTopRadius="20px"
+            <Shimmer
+              width="100%"
+              height="100%"
+              borderRadius="20px"
             />
           )}
 

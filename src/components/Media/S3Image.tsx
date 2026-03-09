@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Image, Box, Skeleton, Alert, AlertIcon, Icon, ImageProps } from '@chakra-ui/react';
+import { Image, Box, Alert, AlertIcon, Icon, ImageProps } from '@chakra-ui/react';
 import { FiImage } from 'react-icons/fi';
+import Shimmer from 'components/Shimmer/Shimmer';
 import { useLazyGetPresignedReadUrlQuery } from 'store/api/mediaApi';
 
 // S3 URL patterns for detection
@@ -220,11 +221,10 @@ export const S3Image: React.FC<S3ImageProps> = ({
         {...props}
       >
         {placeholder || (
-          <Skeleton
-            boxSize={boxSize}
-            borderRadius={borderRadius}
-            startColor="gray.100"
-            endColor="gray.200"
+          <Shimmer
+            width={typeof boxSize === 'number' ? `${boxSize}px` : boxSize || '100%'}
+            height={typeof boxSize === 'number' ? `${boxSize}px` : boxSize || '100%'}
+            borderRadius={borderRadius || '15px'}
           />
         )}
       </Box>
@@ -274,18 +274,15 @@ export const S3Image: React.FC<S3ImageProps> = ({
       overflow="hidden"
       {...props}
     >
-      {/* Loading skeleton overlay */}
+      {/* Loading shimmer overlay */}
       {!imageLoaded && (
-        <Skeleton
-          position="absolute"
-          top={0}
-          left={0}
-          width="100%"
-          height="100%"
-          borderRadius={borderRadius}
-          startColor="gray.100"
-          endColor="gray.200"
-        />
+        <Box position="absolute" top={0} left={0} width="100%" height="100%">
+          <Shimmer
+            width="100%"
+            height="100%"
+            borderRadius={borderRadius || '15px'}
+          />
+        </Box>
       )}
 
       {/* Actual image */}

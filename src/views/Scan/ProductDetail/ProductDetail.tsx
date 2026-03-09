@@ -910,8 +910,6 @@ function ProductDetail() {
             score: getDisplayTransparencyScore(),
             footprint: getAccurateCarbonFootprint(),
             relatableFootprint: completeData?.relatableFootprint,
-            // Remove competitive rankings - transparency-first approach
-            industryPercentile: undefined,
             grade: undefined,
             level: 'transparency' // Signal this is transparency, not carbon
           }}
@@ -1141,6 +1139,7 @@ function ProductDetail() {
                   totalCO2e={getAccurateCarbonFootprint()}
                   productName={completeData?.product?.name || completeData?.farmer?.name}
                   relatableFootprint={completeData?.relatableFootprint}
+                  establishmentId={(completeData as any)?.farmer?.id}
                 />
               </Suspense>
 

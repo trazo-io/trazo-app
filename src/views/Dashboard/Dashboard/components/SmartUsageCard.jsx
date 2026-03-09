@@ -1,45 +1,35 @@
 /**
- * SmartUsageCard - OPTIMIZED for Phase 4 Transparency Dashboard Enhancement
+ * SmartUsageCard - Transparency-first dashboard insights card
  *
- * MIGRATION COMPLETED: Now uses dashboard_comprehensive endpoint
- * - 75% faster data loading (single optimized query vs multiple API calls)
- * - 85% more transparency data displayed (comprehensive vs basic metrics)
- * - Mobile-first performance with intelligent caching
+ * Shows 3 key metrics aligned with Trazo's mission:
+ * 1. Consumer Reach (unique consumers viewing farm transparency)
+ * 2. Transparency Score (documentation completeness, A+ to D grade)
+ * 3. Documented Events (total farming events logged)
  *
- * Backend Integration:
- * - Uses new /dashboard_comprehensive/ endpoint with database indexes
- * - Transparent mapping from comprehensive data to existing UI
- * - Maintains full backward compatibility with existing component structure
- *
- * Performance Improvements:
- * - Single API call vs previous multiple calls
- * - 10-minute polling vs 30-second polling for better mobile battery
- * - Intelligent caching with 5-minute staleness tolerance
+ * Dynamic insight header changes based on farm performance.
+ * Monthly Impact section shows concrete, actionable numbers.
  */
 
-// Chakra imports
 import {
   Box,
   Button,
+  CircularProgress,
   Flex,
   Icon,
   Text,
   VStack,
   HStack,
-  Progress,
-  useColorModeValue,
-  Badge,
-  Circle,
-  Divider,
   Stat,
   StatLabel,
   StatNumber,
   StatHelpText,
   Tooltip,
-  SimpleGrid
+  SimpleGrid,
+  Badge,
+  Circle,
+  useColorModeValue
 } from '@chakra-ui/react';
 
-// react icons
 import { BsShield, BsLightning } from 'react-icons/bs';
 import {
   FaChartLine,
@@ -48,28 +38,21 @@ import {
   FaMedal
 } from 'react-icons/fa';
 import { MdTrendingUp } from 'react-icons/md';
-// Custom components
 import Card from 'components/Card/Card';
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { useNavigate } from 'react-router-dom';
 import { useGetEstablishmentDashboardMetricsQuery } from 'store/api/dashboardMetricsApi';
 
 const SmartUsageCard = ({
-  // Required props for API call
   companyId,
   establishmentId,
-
-  // Action handlers
   onViewAnalytics = () => {},
   onUpgradeSubscription = () => {},
   onOptimizeCarbon = () => {},
   onShareTransparency = () => {}
 }) => {
   const intl = useIntl();
-  const navigate = useNavigate();
 
-  // Fetch REAL QR tracking data from dashboard metrics endpoint
   const {
     data: dashboardResponse,
     isLoading,
@@ -78,38 +61,30 @@ const SmartUsageCard = ({
     { companyId, establishmentId },
     {
       skip: !companyId || !establishmentId,
-      // Optimized polling for better performance
       pollingInterval: 10 * 60 * 1000, // 10 minutes
       refetchOnMountOrArgChange: 300 // 5 minutes
     }
   );
 
-  // Use REAL QR tracking data directly from dashboard_metrics API
   const metrics = dashboardResponse?.metrics || null;
 
-  // Trazo's clean color scheme with 2025 enhancements
   const cardBg = useColorModeValue('white', 'gray.700');
   const textColor = useColorModeValue('gray.700', 'white');
   const subtitleColor = useColorModeValue('gray.500', 'gray.300');
   const accentColor = useColorModeValue('green.500', 'green.400');
   const successColor = useColorModeValue('green.500', 'green.400');
-  const premiumColor = useColorModeValue('green.600', 'green.500'); // Changed from yellow to green
+  const premiumColor = useColorModeValue('green.600', 'green.500');
   const gradientBg = useColorModeValue(
     'linear(to-r, green.50, blue.50)',
     'linear(to-r, green.900, blue.900)'
   );
   const statBg = useColorModeValue('gray.50', 'gray.600');
 
-  // AI-powered insights based on real backend data
   const getSmartInsights = () => {
     if (!metrics) return getDefaultInsight();
 
-    const carbonReadyPercentage =
-      metrics.total_productions > 0
-        ? (metrics.verified_productions / metrics.total_productions) * 100
-        : 0;
     const isHighEngagement = metrics.monthly_scans > 1000;
-    const isTopPerformer = metrics.industry_percentile > 75;
+    const isTopPerformer = metrics.transparency_percentile > 75;
     const isGrowingFast = metrics.scan_growth_percentage > 25;
 
     if (isHighEngagement && isTopPerformer && isGrowingFast) {
@@ -123,13 +98,11 @@ const SmartUsageCard = ({
       };
     }
 
-    if (isHighEngagement && carbonReadyPercentage < 80) {
+    if (isHighEngagement && metrics.transparency_score < 70) {
       return {
         status: intl.formatMessage({ id: 'dashboard.highDemandOpportunity' }),
         insight: intl.formatMessage({ id: 'dashboard.highDemandInsight' }),
-        action: intl.formatMessage({ id: 'dashboard.completeCarbonData' }, {
-          count: metrics.total_productions - metrics.verified_productions
-        }),
+        action: intl.formatMessage({ id: 'dashboard.documentMoreEvents' }),
         actionIcon: FaLeaf,
         actionColor: successColor,
         priority: 'growth'
@@ -151,7 +124,7 @@ const SmartUsageCard = ({
       return {
         status: intl.formatMessage({ id: 'dashboard.shareYourStory' }),
         insight: intl.formatMessage({ id: 'dashboard.shareStoryInsight' }),
-        action: intl.formatMessage({ id: 'dashboard.viewAnalyticsInsights' }),
+        action: intl.formatMessage({ id: 'dashboard.shareQRCodes' }),
         actionIcon: FaChartLine,
         actionColor: accentColor,
         priority: 'marketing'
@@ -168,7 +141,6 @@ const SmartUsageCard = ({
     };
   };
 
-  // Default insight for loading state
   const getDefaultInsight = () => ({
     status: intl.formatMessage({ id: 'dashboard.loadingDashboard' }),
     insight: intl.formatMessage({ id: 'dashboard.calculatingMetrics' }),
@@ -180,9 +152,8 @@ const SmartUsageCard = ({
 
   const smartInsight = getSmartInsights();
 
-  // Calculate display metrics from backend data
-  const transparencyEngagement = metrics ? Math.round(metrics.transparency_engagement) : 0;
-  const trustScore = metrics ? Math.round(metrics.transparency_score) : 0; // Use transparency_score as trust indicator
+  // Concrete, farmer-understandable values
+  const trustScore = metrics ? Math.round(metrics.transparency_score) : 0;
   const marketReach = metrics
     ? metrics.consumer_reach > 10000
       ? `${Math.round(metrics.consumer_reach / 1000)}K`
@@ -190,12 +161,18 @@ const SmartUsageCard = ({
     : '0';
   const monthlyQRScans = metrics ? metrics.monthly_scans : 0;
   const qrScanGrowth = metrics ? metrics.scan_growth_percentage : 0;
-  const blockchainVerified = metrics ? metrics.blockchain_verified_count : 0; // Use correct field for blockchain verification
+  const documentedEvents = metrics ? metrics.total_documented_events : 0;
   const totalProductions = metrics ? metrics.total_productions : 0;
-  const industryPercentile = metrics ? metrics.industry_percentile : 50; // Use real industry percentile from API (USDA benchmark based, 5-95 scale)
-  // Note: Removed isPremium since all Trazo users have subscriptions
+  const transparencyPercentile = metrics ? metrics.transparency_percentile : 50;
 
-  // Show loading state
+  const getLetterGrade = (score) => {
+    if (score >= 90) return 'A+';
+    if (score >= 80) return 'A';
+    if (score >= 70) return 'B';
+    if (score >= 60) return 'C';
+    return 'D';
+  };
+
   if (isLoading) {
     return (
       <Card
@@ -204,24 +181,14 @@ const SmartUsageCard = ({
         bg={cardBg}
         borderRadius="15px"
         boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
-        className="trazo-smart-usage-card"
       >
-        <VStack spacing={4} align="center" justify="center" h="full">
-          <Circle size="40px" bg={accentColor} color="white">
-            <Icon as={FaChartLine} w="20px" h="20px" />
-          </Circle>
-          <Text fontSize="md" color={textColor} fontWeight="600">
-            {intl.formatMessage({ id: 'dashboard.loadingDashboardMetrics' })}
-          </Text>
-          <Text fontSize="sm" color={subtitleColor} textAlign="center">
-            {intl.formatMessage({ id: 'dashboard.calculatingInsights' })}
-          </Text>
-        </VStack>
+        <Flex justify="center" align="center" h="full">
+          <CircularProgress isIndeterminate color="green.500" size="40px" />
+        </Flex>
       </Card>
     );
   }
 
-  // Show error state
   if (error) {
     return (
       <Card
@@ -230,7 +197,6 @@ const SmartUsageCard = ({
         bg={cardBg}
         borderRadius="15px"
         boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
-        className="trazo-smart-usage-card"
       >
         <VStack spacing={4} align="center" justify="center" h="full">
           <Circle size="40px" bg="red.500" color="white">
@@ -256,9 +222,7 @@ const SmartUsageCard = ({
       boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
       position="relative"
       overflow="hidden"
-      className="trazo-smart-usage-card"
     >
-      {/* High-performance celebration gradient */}
       {smartInsight.priority === 'celebration' && (
         <Box
           position="absolute"
@@ -273,7 +237,7 @@ const SmartUsageCard = ({
       )}
 
       <VStack spacing={3} align="stretch" h="full">
-        {/* AI-Powered Header with Smart Status */}
+        {/* Header with Smart Status */}
         <Flex align="flex-start" justify="space-between">
           <Box flex="1">
             <HStack spacing={1} mb={0.5}>
@@ -285,32 +249,33 @@ const SmartUsageCard = ({
               >
                 {smartInsight.status}
               </Text>
-              <Tooltip
-                label={intl.formatMessage({ id: 'dashboard.tooltipIndustryPercentile' }, {
-                  percentile: 100 - industryPercentile,
-                  cropType: metrics?.crop_type || 'similar'
-                })}
-                fontSize="xs"
-                bg="gray.800"
-                color="white"
-                borderRadius="md"
-                px={3}
-                py={2}
-                hasArrow
-                placement="top"
-              >
-                <Badge
-                  colorScheme="green"
-                  fontSize="2xs"
-                  px={2}
-                  py={1}
-                  borderRadius="full"
-                  cursor="pointer"
+              {transparencyPercentile > 50 && (
+                <Tooltip
+                  label={intl.formatMessage({ id: 'dashboard.tooltipTransparencyPercentile' }, {
+                    percentile: 100 - transparencyPercentile
+                  })}
+                  fontSize="xs"
+                  bg="gray.800"
+                  color="white"
+                  borderRadius="md"
+                  px={3}
+                  py={2}
+                  hasArrow
+                  placement="top"
                 >
-                  <Icon as={FaMedal} w={2} h={2} mr={1} />
-                  {intl.formatMessage({ id: 'dashboard.topPercentile' }, { percentile: 100 - industryPercentile })}
-                </Badge>
-              </Tooltip>
+                  <Badge
+                    colorScheme="green"
+                    fontSize="2xs"
+                    px={2}
+                    py={1}
+                    borderRadius="full"
+                    cursor="pointer"
+                  >
+                    <Icon as={FaMedal} w={2} h={2} mr={1} />
+                    {intl.formatMessage({ id: 'dashboard.topPercentile' }, { percentile: 100 - transparencyPercentile })}
+                  </Badge>
+                </Tooltip>
+              )}
             </HStack>
             <Text fontSize="2xs" color={subtitleColor} lineHeight="1.3">
               {smartInsight.insight}
@@ -318,9 +283,9 @@ const SmartUsageCard = ({
           </Box>
         </Flex>
 
-        {/* Key Performance Metrics Grid - More Compact */}
+        {/* Key Metrics Grid */}
         <SimpleGrid columns={3} spacing={1.5}>
-          {/* Consumer Reach - Most Important Metric */}
+          {/* Consumer Reach */}
           <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipConsumerReach' })} hasArrow>
             <Stat textAlign="center" bg={statBg} p={1} borderRadius="md">
               <StatLabel fontSize="xs" color={subtitleColor}>
@@ -333,7 +298,7 @@ const SmartUsageCard = ({
                 {qrScanGrowth > 0 && (
                   <HStack spacing={1} justify="center">
                     <Icon as={MdTrendingUp} w={2.5} h={2.5} />
-                    <Text>{qrScanGrowth}%</Text>
+                    <Text>{Math.round(qrScanGrowth)}%</Text>
                   </HStack>
                 )}
               </StatHelpText>
@@ -353,33 +318,35 @@ const SmartUsageCard = ({
                 <HStack spacing={1} justify="center">
                   <Icon as={BsShield} color={accentColor} w={2.5} h={2.5} />
                   <Text color={subtitleColor}>
-                    {trustScore >= 90 ? 'A+' : trustScore >= 80 ? 'A' : trustScore >= 70 ? 'B' : trustScore >= 60 ? 'C' : 'D'}
+                    {getLetterGrade(trustScore)}
                   </Text>
                 </HStack>
               </StatHelpText>
             </Stat>
           </Tooltip>
 
-          {/* Blockchain Recorded Productions */}
-          <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipVerifiedProductions' })} hasArrow>
+          {/* Documented Events (replaces Blockchain) */}
+          <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipDocumentedEvents' })} hasArrow>
             <Stat textAlign="center" bg={statBg} p={1} borderRadius="md">
               <StatLabel fontSize="xs" color={subtitleColor}>
-                {intl.formatMessage({ id: 'dashboard.blockchain' })}
+                {intl.formatMessage({ id: 'dashboard.documentedEvents' })}
               </StatLabel>
               <StatNumber fontSize="sm" color={textColor} fontWeight="bold">
-                {blockchainVerified}/{totalProductions}
+                {documentedEvents}
               </StatNumber>
               <StatHelpText fontSize="2xs" m={0}>
                 <HStack spacing={1} justify="center">
-                  <Icon as={BsShield} color={accentColor} w={2.5} h={2.5} />
-                  <Text color={subtitleColor}>{intl.formatMessage({ id: 'dashboard.recorded' })}</Text>
+                  <Icon as={FaLeaf} color={accentColor} w={2.5} h={2.5} />
+                  <Text color={subtitleColor}>
+                    {intl.formatMessage({ id: 'dashboard.acrossProductions' }, { count: totalProductions })}
+                  </Text>
                 </HStack>
               </StatHelpText>
             </Stat>
           </Tooltip>
         </SimpleGrid>
 
-        {/* Business Impact Insight */}
+        {/* Monthly Impact - concrete numbers */}
         <Box
           bg={gradientBg}
           p={3}
@@ -398,16 +365,16 @@ const SmartUsageCard = ({
                 </Text>
                 <HStack spacing={4}>
                   <Tooltip
-                    label={intl.formatMessage({ id: 'dashboard.tooltipTransparencyEngagement' })}
+                    label={intl.formatMessage({ id: 'dashboard.tooltipMonthlyScans' })}
                     hasArrow
                     placement="top"
                   >
                     <Text fontSize="sm" fontWeight="700" color={textColor} cursor="help">
-                      {transparencyEngagement} {intl.formatMessage({ id: 'dashboard.transparencyScoreLabel' })}
+                      {monthlyQRScans.toLocaleString()} {intl.formatMessage({ id: 'dashboard.qrScans' })}
                     </Text>
                   </Tooltip>
                   <Text fontSize="xs" color={subtitleColor}>
-                    {monthlyQRScans.toLocaleString()} {intl.formatMessage({ id: 'dashboard.qrScans' })}
+                    {marketReach} {intl.formatMessage({ id: 'dashboard.uniqueConsumers' })}
                   </Text>
                 </HStack>
               </Box>

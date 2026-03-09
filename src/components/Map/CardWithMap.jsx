@@ -130,7 +130,7 @@ const CardWithMap = ({ polygon, zoom, center }) => {
 
   return (
     <Card maxHeight="290.5px" p="0px">
-      <CardBody p="0px" w="100%" h={{ sm: '200px', lg: '100%' }} borderRadius="15px">
+      <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
         {isLoaded && (
           <GoogleMap
             mapContainerStyle={{

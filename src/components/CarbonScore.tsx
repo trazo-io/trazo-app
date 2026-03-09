@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   CircularProgress,
@@ -9,13 +9,7 @@ import {
   useColorModeValue,
   HStack,
   Icon,
-  Tooltip,
   Badge,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  StatArrow,
   useDisclosure,
   Modal,
   ModalOverlay,
@@ -24,26 +18,16 @@ import {
   ModalBody,
   ModalCloseButton,
   Divider,
-  Grid,
-  GridItem,
   Button,
   SimpleGrid,
   useBreakpointValue,
-  Progress,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
   Circle
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 import {
   FaLeaf,
   FaCarSide,
-  FaClock,
   FaTree,
-  FaInfoCircle,
-  FaTachometerAlt,
   FaCheckCircle,
   FaGlobeAmericas,
   FaLightbulb,
@@ -66,6 +50,7 @@ const pulseAnimation = keyframes`
 interface CarbonScoreProps {
   score: number;
   footprint: number;
+  /** @deprecated Benchmark-based percentile removed — use transparency score instead */
   industryPercentile?: number;
   relatableFootprint?: string;
   isCompact?: boolean;
@@ -75,7 +60,7 @@ interface CarbonScoreProps {
 export const CarbonScore: React.FC<CarbonScoreProps> = ({
   score,
   footprint,
-  industryPercentile,
+  // industryPercentile intentionally ignored — benchmark data is fabricated
   relatableFootprint,
   isCompact = false,
   insights = []
@@ -281,18 +266,6 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
                   )}
                 </Box>
 
-                {/* Industry comparison */}
-                {industryPercentile && industryPercentile > 0 && (
-                  <Alert status="success" borderRadius="md">
-                    <AlertIcon />
-                    <Box>
-                      <AlertTitle fontSize="sm">Industry Leader!</AlertTitle>
-                      <AlertDescription fontSize="sm">
-                        This product is greener than {industryPercentile}% of similar products.
-                      </AlertDescription>
-                    </Box>
-                  </Alert>
-                )}
               </VStack>
             </ModalBody>
           </ModalContent>
@@ -368,17 +341,6 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
               {grade.text}
             </Text>
 
-            {/* Industry percentile */}
-            {industryPercentile && industryPercentile > 0 && (
-              <Box mt={3} p={3} bg="green.50" borderRadius="md" w="full">
-                <HStack justify="center">
-                  <Icon as={FaTachometerAlt} color="green.600" />
-                  <Text fontSize="sm" color="green.700" fontWeight="medium">
-                    Better than {industryPercentile}% of similar products
-                  </Text>
-                </HStack>
-              </Box>
-            )}
 
             {/* Impact level */}
             <HStack
@@ -485,34 +447,6 @@ export const CarbonScore: React.FC<CarbonScoreProps> = ({
                 </SimpleGrid>
               </Box>
 
-              {/* Industry comparison with progress bar */}
-              {industryPercentile && industryPercentile > 0 && (
-                <Box w="full" p={4} bg="green.50" borderRadius="lg">
-                  <VStack spacing={3}>
-                    <HStack w="full" justify="space-between">
-                      <Text fontSize="md" fontWeight="bold" color="green.700">
-                        Industry Comparison
-                      </Text>
-                      <Badge colorScheme="green" variant="solid">
-                        Top {100 - industryPercentile}%
-                      </Badge>
-                    </HStack>
-                    <Progress
-                      value={industryPercentile}
-                      colorScheme="green"
-                      size="lg"
-                      w="full"
-                      borderRadius="full"
-                    />
-                    <Text fontSize="sm" color="green.700" textAlign="center">
-                      This product performs better than {industryPercentile}% of similar products in
-                      the market.
-                      {industryPercentile > 90 &&
-                        ' This is exceptional sustainability performance!'}
-                    </Text>
-                  </VStack>
-                </Box>
-              )}
 
               {/* Tips for improvement */}
               {insights && insights.length > 0 && (

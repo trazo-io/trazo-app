@@ -12,6 +12,9 @@ const GoogleAuthCallback = () => {
     const accessToken = params.get('access_token');
     const error = params.get('error');
 
+    // SECURITY: Send token only to our own origin, never use '*'
+    const targetOrigin = import.meta.env.VITE_APP_BASE_URL || window.location.origin;
+
     if (window.opener) {
       window.opener.postMessage(
         {
@@ -19,7 +22,7 @@ const GoogleAuthCallback = () => {
           access_token: accessToken || null,
           error: error || (!accessToken ? 'No access token received' : null)
         },
-        '*'
+        targetOrigin
       );
       window.close();
     }

@@ -450,7 +450,6 @@ function PublicEstablishmentProfile() {
                     <CarbonScore
                       score={carbonData?.carbonScore || 0}
                       footprint={carbonData?.netFootprint || 0}
-                      industryPercentile={carbonData?.industryPercentile || 0}
                       relatableFootprint={
                         carbonData?.relatableFootprint ||
                         intl.formatMessage({ id: 'app.calculatingFootprint' })

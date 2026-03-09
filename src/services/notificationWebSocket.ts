@@ -45,16 +45,16 @@ export class NotificationWebSocketService {
     }
 
     try {
-      // Include JWT token as query parameter for authentication
-      const wsUrl = `${this.url}?token=${encodeURIComponent(this.token)}`;
-      this.ws = new WebSocket(wsUrl);
+      // SECURITY: Pass JWT via Sec-WebSocket-Protocol header instead of URL query
+      // URL query params are logged in server access logs, proxy logs, and browser history
+      this.ws = new WebSocket(this.url, [`access_token`, this.token]);
 
       this.ws.onopen = this.handleOpen.bind(this);
       this.ws.onmessage = this.handleMessage.bind(this);
       this.ws.onclose = this.handleClose.bind(this);
       this.ws.onerror = this.handleError.bind(this);
 
-      console.log('Attempting to connect to WebSocket:', wsUrl.replace(this.token, '[TOKEN]'));
+      console.log('Attempting to connect to WebSocket notifications');
     } catch (error) {
       console.error('Error creating WebSocket connection:', error);
       this.handleReconnect();

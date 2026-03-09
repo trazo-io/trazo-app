@@ -1,3 +1,4 @@
+import DOMPurify from 'dompurify';
 import React from 'react';
 
 interface HTMLRendererProps {
@@ -5,29 +6,31 @@ interface HTMLRendererProps {
   className?: string;
 }
 
+// SECURITY: Restrict allowed HTML tags to prevent XSS
+const DOMPURIFY_CONFIG = {
+  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li', 'a', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+  ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+  ALLOW_DATA_ATTR: false,
+};
+
 function HTMLRenderer({ htmlString, className }: HTMLRendererProps) {
   // Handle null/undefined/empty values to prevent React error #61
   if (!htmlString || typeof htmlString !== 'string') {
     return null;
   }
 
-  // Sanitize and validate the HTML string
-  const sanitizedString = htmlString.trim();
-  if (!sanitizedString) {
+  const trimmed = htmlString.trim();
+  if (!trimmed) {
     return null;
   }
 
-  // Ensure the __html property is properly formatted for dangerouslySetInnerHTML
-  const createMarkup = () => {
-    try {
-      return { __html: sanitizedString };
-    } catch (error) {
-      console.warn('HTMLRenderer: Error creating markup', error);
-      return { __html: '' };
-    }
-  };
+  // SECURITY: Sanitize HTML with DOMPurify to prevent XSS
+  const sanitizedHtml = DOMPurify.sanitize(trimmed, DOMPURIFY_CONFIG);
+  if (!sanitizedHtml) {
+    return null;
+  }
 
-  return <div className={className} dangerouslySetInnerHTML={createMarkup()} />;
+  return <div className={className} dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />;
 }
 
 export default HTMLRenderer;

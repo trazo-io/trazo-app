@@ -73,7 +73,6 @@ interface CarbonScoreData {
   score: number;
   footprint: number;
   relatableFootprint?: string;
-  industryPercentile?: number;
   grade?: string;
   level?: string;
 }

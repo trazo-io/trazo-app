@@ -69,16 +69,20 @@ export interface CarbonSummary {
 }
 
 export interface EstablishmentDashboardMetrics {
-  // Legacy interface for basic metrics compatibility
+  // Consumer engagement
   consumer_reach: number;
   monthly_scans: number;
   scan_growth_percentage: number;
+  // Transparency (PRIMARY)
   transparency_score: number;
-  trust_score: number;
-  verified_productions: number;
+  total_documented_events: number;
+  // Production counts
   total_productions: number;
-  carbon_intensity: number;
-  carbon_reduction_trend: number;
+  blockchain_verified_count: number;
+  // Transparency-based ranking
+  transparency_percentile: number;
+  // Subscription
+  subscription_usage_percentage: number;
 }
 
 export interface DashboardMetricsResponse {

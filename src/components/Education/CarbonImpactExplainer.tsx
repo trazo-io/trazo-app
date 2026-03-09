@@ -12,7 +12,6 @@ import {
   SimpleGrid,
   Divider,
   useColorModeValue,
-  Tooltip,
   Circle
 } from '@chakra-ui/react';
 import {
@@ -24,11 +23,11 @@ import {
   FaChevronUp,
   FaGlobeAmericas,
   FaRecycle,
-  FaTruck,
   FaIndustry,
   FaChartLine
 } from 'react-icons/fa';
-import { MdEco } from 'react-icons/md';
+import { useIntl } from 'react-intl';
+import USDACredibilityBadge from '../Carbon/USDACredibilityBadge';
 
 interface CarbonImpactExplainerProps {
   carbonScore: number;
@@ -36,6 +35,7 @@ interface CarbonImpactExplainerProps {
   productName?: string;
   isCompact?: boolean;
   relatableFootprint?: string; // Backend-calculated relatable comparison
+  establishmentId?: number; // For EPA/USDA credibility badge
 }
 
 interface CarbonComparison {
@@ -51,9 +51,11 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   totalCO2e,
   productName = 'this product',
   isCompact = false,
-  relatableFootprint
+  relatableFootprint,
+  establishmentId
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const intl = useIntl();
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const cardBg = useColorModeValue('green.50', 'green.900');
@@ -63,7 +65,6 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
 
   // Generate relatable comparisons based on CO2e amount
   const generateComparisons = (co2eKg: number): CarbonComparison[] => {
-    // Convert to different scales for better understanding
     const comparisons: CarbonComparison[] = [];
 
     // Driving comparison (1 kg CO2e ≈ 4 miles driving)
@@ -71,8 +72,8 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
     if (drivingMiles > 0) {
       comparisons.push({
         icon: FaCar,
-        label: 'Driving Distance',
-        description: 'Miles in average car',
+        label: intl.formatMessage({ id: 'app.carbonExplainer.drivingDistance' }),
+        description: intl.formatMessage({ id: 'app.carbonExplainer.milesInCar' }),
         value:
           drivingMiles > 1000 ? `${(drivingMiles / 1000).toFixed(1)}K mi` : `${drivingMiles} mi`,
         color: 'blue'
@@ -86,8 +87,11 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       const days = Math.round(kwhEquivalent / 30); // Average 30 kWh/day per home
       comparisons.push({
         icon: FaHome,
-        label: 'Home Energy',
-        description: days > 1 ? `${days} days electricity` : 'Less than 1 day',
+        label: intl.formatMessage({ id: 'app.carbonExplainer.homeEnergy' }),
+        description:
+          days > 1
+            ? intl.formatMessage({ id: 'app.carbonExplainer.daysElectricity' }, { days })
+            : intl.formatMessage({ id: 'app.carbonExplainer.lessThanOneDay' }),
         value: `${kwhEquivalent} kWh`,
         color: 'orange'
       });
@@ -98,8 +102,11 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
     if (treesNeeded > 0) {
       comparisons.push({
         icon: FaLeaf,
-        label: 'Tree Impact',
-        description: `${treesNeeded} tree${treesNeeded > 1 ? 's' : ''} for 1 year`,
+        label: intl.formatMessage({ id: 'app.carbonExplainer.treeImpact' }),
+        description: intl.formatMessage(
+          { id: 'app.carbonExplainer.treesForYear' },
+          { count: treesNeeded }
+        ),
         value: `${co2eKg.toFixed(1)}kg`,
         color: 'green'
       });
@@ -110,8 +117,11 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       const shortFlights = Math.round(co2eKg / 200); // ~200kg for short flight
       comparisons.push({
         icon: FaPlane,
-        label: 'Flight Impact',
-        description: `${shortFlights} short flight${shortFlights > 1 ? 's' : ''}`,
+        label: intl.formatMessage({ id: 'app.carbonExplainer.flightImpact' }),
+        description: intl.formatMessage(
+          { id: 'app.carbonExplainer.shortFlights' },
+          { count: shortFlights }
+        ),
         value: `${(co2eKg / 1000).toFixed(1)}t`,
         color: 'red'
       });
@@ -125,7 +135,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
     ? [
         {
           icon: FaCar,
-          label: 'Carbon Impact',
+          label: intl.formatMessage({ id: 'app.carbonExplainer.carbonImpact' }),
           description: relatableFootprint,
           value: `${Math.abs(totalCO2e).toFixed(1)}kg`,
           color: 'green'
@@ -133,39 +143,62 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       ]
     : generateComparisons(Math.abs(totalCO2e));
 
-  // Score interpretation
+  // Score interpretation — this receives the TRANSPARENCY score, not a carbon score
+  // Higher score = more documented practices, NOT lower emissions
   const getScoreInterpretation = (score: number) => {
     if (score >= 90)
       return {
-        label: 'Exceptional',
+        label: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumented' }),
         color: 'green',
-        description: 'Leading sustainability practices',
-        advice: 'This product demonstrates excellent environmental stewardship!'
+        description: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumentedDesc' }),
+        advice: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumentedAdvice' })
       };
     if (score >= 70)
       return {
-        label: 'Good',
+        label: intl.formatMessage({ id: 'app.carbonExplainer.scoreWellDocumented' }),
         color: 'blue',
-        description: 'Above average environmental performance',
-        advice: 'Great choice for climate-conscious consumers'
+        description: intl.formatMessage({ id: 'app.carbonExplainer.scoreWellDocumentedDesc' }),
+        advice: intl.formatMessage({ id: 'app.carbonExplainer.scoreWellDocumentedAdvice' })
       };
     if (score >= 50)
       return {
-        label: 'Fair',
+        label: intl.formatMessage({ id: 'app.carbonExplainer.scorePartiallyDocumented' }),
         color: 'yellow',
-        description: 'Meeting basic sustainability standards',
-        advice: 'Solid option with room for improvement'
+        description: intl.formatMessage({
+          id: 'app.carbonExplainer.scorePartiallyDocumentedDesc'
+        }),
+        advice: intl.formatMessage({ id: 'app.carbonExplainer.scorePartiallyDocumentedAdvice' })
       };
     return {
-      label: 'Needs Improvement',
-      color: 'red',
-      description: 'High environmental impact',
-      advice: 'Consider alternatives with higher scores'
+      label: intl.formatMessage({ id: 'app.carbonExplainer.scoreEarlyStage' }),
+      color: 'orange',
+      description: intl.formatMessage({ id: 'app.carbonExplainer.scoreEarlyStageDesc' }),
+      advice: intl.formatMessage({ id: 'app.carbonExplainer.scoreEarlyStageAdvice' })
     };
   };
 
   const scoreInfo = getScoreInterpretation(carbonScore);
   const isNegativeEmissions = totalCO2e < 0;
+
+  // Emission category data with i18n
+  const emissionCategories = [
+    {
+      label: intl.formatMessage({ id: 'app.carbonExplainer.fuelEquipment' }),
+      desc: intl.formatMessage({ id: 'app.carbonExplainer.fuelEquipmentDesc' })
+    },
+    {
+      label: intl.formatMessage({ id: 'app.carbonExplainer.fertilizer' }),
+      desc: intl.formatMessage({ id: 'app.carbonExplainer.fertilizerDesc' })
+    },
+    {
+      label: intl.formatMessage({ id: 'app.carbonExplainer.chemicals' }),
+      desc: intl.formatMessage({ id: 'app.carbonExplainer.chemicalsDesc' })
+    },
+    {
+      label: intl.formatMessage({ id: 'app.carbonExplainer.irrigationEnergy' }),
+      desc: intl.formatMessage({ id: 'app.carbonExplainer.irrigationEnergyDesc' })
+    }
+  ];
 
   if (isCompact) {
     return (
@@ -190,7 +223,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               </Badge>
               {isNegativeEmissions && (
                 <Badge colorScheme="green" variant="solid" fontSize="xs">
-                  Carbon Negative
+                  {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissions' })}
                 </Badge>
               )}
             </HStack>
@@ -198,7 +231,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               {scoreInfo.description}
             </Text>
             <Text fontSize="xs" color="green.600" fontWeight="medium">
-              💡 {scoreInfo.advice}
+              {scoreInfo.advice}
             </Text>
           </VStack>
         </HStack>
@@ -221,21 +254,18 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             <HStack>
               <Icon as={FaGlobeAmericas} color={accentColor} boxSize={5} />
               <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                Carbon Impact Explained
+                {intl.formatMessage({ id: 'app.carbonExplainer.title' })}
               </Text>
             </HStack>
             <Text fontSize="sm" color={mutedColor}>
-              Understanding the environmental footprint of {productName}
+              {intl.formatMessage({ id: 'app.carbonExplainer.subtitle' }, { productName })}
             </Text>
           </VStack>
 
           <VStack align="end" spacing={1}>
             <HStack>
               <Text fontSize="2xl" fontWeight="bold" color={`${scoreInfo.color}.600`}>
-                {Math.round(carbonScore)}
-              </Text>
-              <Text fontSize="sm" color={mutedColor}>
-                /100
+                {Math.round(carbonScore)}%
               </Text>
             </HStack>
             <Badge colorScheme={scoreInfo.color} variant="solid">
@@ -244,7 +274,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           </VStack>
         </HStack>
 
-        {/* Score Progress Bar */}
+        {/* Transparency Documentation Bar */}
         <Box mt={4}>
           <Progress
             value={carbonScore}
@@ -255,10 +285,10 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           />
           <HStack justify="space-between" mt={1}>
             <Text fontSize="xs" color={mutedColor}>
-              Poor (0)
+              {intl.formatMessage({ id: 'app.carbonExplainer.lessDocumented' })}
             </Text>
             <Text fontSize="xs" color={mutedColor}>
-              Exceptional (100)
+              {intl.formatMessage({ id: 'app.carbonExplainer.fullyDocumented' })}
             </Text>
           </HStack>
         </Box>
@@ -271,7 +301,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           <HStack justify="space-between" align="center">
             <VStack align="start" spacing={0}>
               <Text fontSize="sm" color={mutedColor}>
-                Total Carbon Footprint
+                {intl.formatMessage({ id: 'app.carbonExplainer.totalFootprint' })}
               </Text>
               <HStack>
                 <Text fontSize="xl" fontWeight="bold" color={textColor}>
@@ -282,7 +312,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                 </Text>
                 {isNegativeEmissions && (
                   <Badge colorScheme="green" variant="subtle">
-                    Carbon Stored
+                    {intl.formatMessage({ id: 'app.carbonExplainer.carbonStored' })}
                   </Badge>
                 )}
               </HStack>
@@ -317,7 +347,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             borderLeftColor={`${scoreInfo.color}.500`}
           >
             <Text fontSize="sm" color={`${scoreInfo.color}.700`} fontWeight="medium">
-              💡 {scoreInfo.advice}
+              {scoreInfo.advice}
             </Text>
           </Box>
 
@@ -329,7 +359,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             onClick={() => setIsExpanded(!isExpanded)}
             rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}
           >
-            {isExpanded ? 'Show Less' : 'What This Means in Real Life'}
+            {isExpanded
+              ? intl.formatMessage({ id: 'app.carbonExplainer.showLess' })
+              : intl.formatMessage({ id: 'app.carbonExplainer.showMore' })}
           </Button>
         </VStack>
       </Box>
@@ -343,7 +375,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             {comparisons.length > 0 && (
               <Box>
                 <Text fontSize="md" fontWeight="semibold" mb={3} color={textColor}>
-                  🌍 What This Means in Real Life
+                  {intl.formatMessage({ id: 'app.carbonExplainer.realLifeTitle' })}
                 </Text>
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
                   {comparisons.map((comp, idx) => (
@@ -375,7 +407,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               </Box>
             )}
 
-            {/* Carbon Negative Explanation */}
+            {/* Low Direct Emissions Note */}
             {isNegativeEmissions && (
               <Box
                 bg={useColorModeValue('green.50', 'green.900')}
@@ -387,39 +419,31 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                 <HStack mb={2}>
                   <Icon as={FaRecycle} color="green.500" boxSize={5} />
                   <Text fontSize="md" fontWeight="bold" color="green.600">
-                    Carbon Negative Farming 🎉
+                    {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsTitle' })}
                   </Text>
                 </HStack>
                 <Text fontSize="sm" color="green.700">
-                  Amazing! This product actually removes more CO₂ from the atmosphere than it
-                  produces. The farming practices store carbon in soil, making this food
-                  climate-positive.
+                  {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsDesc' })}
+                </Text>
+                <Text fontSize="xs" color="green.600" mt={1}>
+                  {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsNote' })}
                 </Text>
               </Box>
             )}
 
-            {/* Score Breakdown */}
+            {/* Carbon Emission Categories */}
             <Box>
-              <Text fontSize="md" fontWeight="semibold" mb={3} color={textColor}>
-                📊 How We Calculate This Score
+              <Text fontSize="md" fontWeight="semibold" mb={2} color={textColor}>
+                {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsTitle' })}
+              </Text>
+              <Text fontSize="xs" color={mutedColor} mb={3}>
+                {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsDesc' })}
               </Text>
               <VStack spacing={3} align="stretch">
-                {[
-                  {
-                    label: 'Fuel & Equipment',
-                    percent: 35,
-                    desc: 'Diesel combustion, machinery operation'
-                  },
-                  {
-                    label: 'Fertilizer',
-                    percent: 30,
-                    desc: 'NPK manufacturing + field application'
-                  },
-                  { label: 'Chemicals', percent: 20, desc: 'Pesticide and herbicide manufacturing' },
-                  { label: 'Irrigation & Energy', percent: 15, desc: 'Pumping, electricity usage' }
-                ].map((item, idx) => (
+                {emissionCategories.map((item, idx) => (
                   <HStack key={idx} spacing={3}>
-                    <Box minW="120px">
+                    <Icon as={FaLeaf} color="green.400" boxSize={3} />
+                    <Box>
                       <Text fontSize="sm" fontWeight="medium">
                         {item.label}
                       </Text>
@@ -427,23 +451,15 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                         {item.desc}
                       </Text>
                     </Box>
-                    <Box flex="1">
-                      <Progress
-                        value={item.percent}
-                        size="sm"
-                        colorScheme="green"
-                        borderRadius="full"
-                      />
-                    </Box>
-                    <Text fontSize="sm" color={mutedColor} minW="30px">
-                      {item.percent}%
-                    </Text>
                   </HStack>
                 ))}
               </VStack>
             </Box>
 
-            {/* Scientific Methodology Explanation */}
+            {/* EPA/USDA Credibility Badge */}
+            {establishmentId && <USDACredibilityBadge establishmentId={establishmentId} />}
+
+            {/* Calculation Data Sources */}
             <Box
               bg={useColorModeValue('purple.50', 'purple.900')}
               p={4}
@@ -454,49 +470,40 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               <HStack mb={3}>
                 <Icon as={FaIndustry} color="purple.500" boxSize={5} />
                 <Text fontSize="md" fontWeight="bold" color="purple.600">
-                  Scientific Methodologies Used
+                  {intl.formatMessage({ id: 'app.carbonExplainer.dataSourcesTitle' })}
                 </Text>
               </HStack>
               <VStack align="start" spacing={3}>
                 <Box>
                   <Text fontSize="sm" fontWeight="semibold" color="purple.700">
-                    IPCC 2006 Guidelines - Lime Application
+                    {intl.formatMessage({ id: 'app.carbonExplainer.ipccTitle' })}
                   </Text>
                   <Text fontSize="xs" color="purple.600">
-                    When limestone (CaCO3) or dolomite is applied to soil for pH correction, CO2 is
-                    released through chemical dissolution. We use IPCC Tier 1 emission factors:
-                    limestone releases 0.44 kg CO2/kg, dolomite releases 0.477 kg CO2/kg.
+                    {intl.formatMessage({ id: 'app.carbonExplainer.ipccDesc' })}
                   </Text>
                 </Box>
                 <Box>
                   <Text fontSize="sm" fontWeight="semibold" color="purple.700">
-                    Research-Based Tillage Emissions
+                    {intl.formatMessage({ id: 'app.carbonExplainer.tillageTitle' })}
                   </Text>
                   <Text fontSize="xs" color="purple.600">
-                    Soil disturbance from tillage releases stored carbon. Based on peer-reviewed
-                    research: shallow tillage (less than 10cm) releases ~50 kg CO2e/ha, medium depth
-                    (10-25cm) releases ~150 kg CO2e/ha, and deep tillage (over 25cm) releases ~300
-                    kg CO2e/ha.
+                    {intl.formatMessage({ id: 'app.carbonExplainer.tillageDesc' })}
                   </Text>
                 </Box>
                 <Box>
                   <Text fontSize="sm" fontWeight="semibold" color="purple.700">
-                    USDA NASS 2023 - Irrigation Water
+                    {intl.formatMessage({ id: 'app.carbonExplainer.usdaNassTitle' })}
                   </Text>
                   <Text fontSize="xs" color="purple.600">
-                    Water usage is calculated using USDA National Agricultural Statistics Service
-                    2023 data: approximately 27,154 gallons of water per acre per 1-inch of
-                    irrigation depth. This helps estimate energy used for pumping and distribution.
+                    {intl.formatMessage({ id: 'app.carbonExplainer.usdaNassDesc' })}
                   </Text>
                 </Box>
                 <Box>
                   <Text fontSize="sm" fontWeight="semibold" color="purple.700">
-                    EPA Emission Factors
+                    {intl.formatMessage({ id: 'app.carbonExplainer.epaTitle' })}
                   </Text>
                   <Text fontSize="xs" color="purple.600">
-                    Fuel combustion emissions use published EPA factors: diesel releases 10.21 kg
-                    CO2e per gallon, gasoline releases 8.78 kg CO2e per gallon. Grid electricity
-                    emissions are based on EPA eGRID 2023 regional averages.
+                    {intl.formatMessage({ id: 'app.carbonExplainer.epaDesc' })}
                   </Text>
                 </Box>
               </VStack>
@@ -513,27 +520,33 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               <HStack mb={2}>
                 <Icon as={FaChartLine} color="blue.500" boxSize={5} />
                 <Text fontSize="md" fontWeight="bold" color="blue.600">
-                  Why Carbon Scoring Matters
+                  {intl.formatMessage({ id: 'app.carbonExplainer.whyTransparencyTitle' })}
                 </Text>
               </HStack>
               <Text fontSize="sm" color="blue.700" mb={2}>
-                Food production accounts for 25% of global greenhouse gas emissions. By choosing
-                products with higher carbon scores, you're supporting:
+                {intl.formatMessage({ id: 'app.carbonExplainer.whyTransparencyDesc' })}
               </Text>
               <VStack align="start" spacing={1} pl={4}>
                 <Text fontSize="sm" color="blue.700">
-                  • Farmers using sustainable practices
+                  • {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint1' })}
                 </Text>
                 <Text fontSize="sm" color="blue.700">
-                  • Soil that stores carbon long-term
+                  • {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint2' })}
                 </Text>
                 <Text fontSize="sm" color="blue.700">
-                  • Reduced chemical inputs and waste
+                  • {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint3' })}
                 </Text>
                 <Text fontSize="sm" color="blue.700">
-                  • Biodiversity and ecosystem health
+                  • {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint4' })}
                 </Text>
               </VStack>
+            </Box>
+
+            {/* Methodology Scope Disclaimer */}
+            <Box p={3} bg={useColorModeValue('gray.100', 'gray.600')} borderRadius="md">
+              <Text fontSize="xs" color={mutedColor}>
+                {intl.formatMessage({ id: 'app.carbonExplainer.disclaimer' })}
+              </Text>
             </Box>
           </VStack>
         </Box>

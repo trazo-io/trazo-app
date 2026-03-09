@@ -128,6 +128,10 @@ export const handleGoogleSignIn = async (
     }
 
     const handleMessage = (event: MessageEvent) => {
+      // SECURITY: Validate message origin to prevent token theft
+      const expectedOrigin = import.meta.env.VITE_APP_BASE_URL || window.location.origin;
+      if (event.origin !== expectedOrigin) return;
+
       if (event.data?.type !== 'google-auth-callback') return;
 
       window.removeEventListener('message', handleMessage);

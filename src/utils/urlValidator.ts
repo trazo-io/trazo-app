@@ -4,13 +4,13 @@
  * Compliant with OWASP 2025 security guidelines
  */
 
-// Allowed domains for redirects - update for production
+// Allowed domains for redirects
 const ALLOWED_DOMAINS = [
-  'trazo.com',
-  'app.trazo.com',
-  'consumer.trazo.com',
-  'www.trazo.com',
-  // Development domains (remove in production)
+  'trazo.io',
+  'app.trazo.io',
+  'consumer.trazo.io',
+  'www.trazo.io',
+  // Development domains
   'localhost',
   '127.0.0.1',
   'app.localhost',
