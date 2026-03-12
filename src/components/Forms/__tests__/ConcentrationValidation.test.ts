@@ -50,10 +50,10 @@ describe('ConcentrationValidation', () => {
       const result2 = validateConcentration('-10-10-10', 'FE');
       expect(result2.isValid).toBe(false);
 
-      // Test all zeros
+      // Test all zeros - valid for micronutrient fertilizers (zinc, boron, etc.)
       const result3 = validateConcentration('0-0-0', 'FE');
-      expect(result3.isValid).toBe(false);
-      expect(result3.errors[0]).toContain('All NPK values cannot be zero');
+      expect(result3.isValid).toBe(true);
+      expect(result3.suggestions[0]).toContain('NPK is 0-0-0');
     });
   });
 

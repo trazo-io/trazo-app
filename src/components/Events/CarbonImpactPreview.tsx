@@ -538,29 +538,35 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                               </Text>
                             </HStack>
                             <HStack justify="space-between" fontSize="xs">
-                              <Text color="blue.600">Fuel Consumed:</Text>
+                              <Text color="blue.600">
+                                {calculation.breakdown.fuel_type === 'electric'
+                                  ? 'Energy Consumed:'
+                                  : 'Fuel Consumed:'}
+                              </Text>
                               <Text color="blue.800">
-                                {calculation.breakdown.actual_fuel_consumed_gallons
-                                  ? `${(
-                                      calculation.breakdown.actual_fuel_consumed_gallons * 3.78541
-                                    ).toFixed(1)} liters`
-                                  : `${(
-                                      derivedHectares *
-                                      (calculation.breakdown
-                                        .usda_planting_factor_gallons_per_hectare ||
-                                        calculation.breakdown
-                                          .usda_production_factor_gallons_per_hectare ||
-                                        calculation.breakdown
-                                          .usda_harvesting_factor_gallons_per_hectare ||
-                                        calculation.breakdown
-                                          .usda_transplanting_factor_gallons_per_hectare ||
-                                        calculation.breakdown
-                                          .usda_thinning_factor_gallons_per_hectare ||
-                                        calculation.breakdown
-                                          .usda_cultivation_factor_gallons_per_hectare ||
-                                        0) *
-                                      3.78541
-                                    ).toFixed(1)} liters (estimated)`}
+                                {calculation.breakdown.fuel_type === 'electric'
+                                  ? `${calculation.breakdown.actual_fuel_consumed_kWh?.toFixed(1) || '0'} kWh`
+                                  : calculation.breakdown.actual_fuel_consumed_gallons
+                                    ? `${(
+                                        calculation.breakdown.actual_fuel_consumed_gallons * 3.78541
+                                      ).toFixed(1)} liters`
+                                    : `${(
+                                        derivedHectares *
+                                        (calculation.breakdown
+                                          .usda_planting_factor_gallons_per_hectare ||
+                                          calculation.breakdown
+                                            .usda_production_factor_gallons_per_hectare ||
+                                          calculation.breakdown
+                                            .usda_harvesting_factor_gallons_per_hectare ||
+                                          calculation.breakdown
+                                            .usda_transplanting_factor_gallons_per_hectare ||
+                                          calculation.breakdown
+                                            .usda_thinning_factor_gallons_per_hectare ||
+                                          calculation.breakdown
+                                            .usda_cultivation_factor_gallons_per_hectare ||
+                                          0) *
+                                        3.78541
+                                      ).toFixed(1)} liters (estimated)`}
                               </Text>
                             </HStack>
                             <HStack justify="space-between" fontSize="xs">
@@ -939,9 +945,31 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                               calculation.breakdown?.water_volume_gallons) && (
                             <VStack spacing={1} align="stretch">
                               <HStack justify="space-between" fontSize="xs">
-                                <Text color="orange.600">Direct Fuel Combustion:</Text>
+                                <Text color="orange.600">
+                                  {calculation.breakdown?.fuel_type === 'electric'
+                                    ? 'Electric Energy Emissions:'
+                                    : 'Direct Fuel Combustion:'}
+                                </Text>
                                 <Text color="orange.800">{formattedCO2e} kg CO₂e</Text>
                               </HStack>
+                              {calculation.breakdown?.fuel_type === 'electric' ? (
+                                <>
+                                  <Text fontSize="xs" color="orange.600" pl={2}>
+                                    • {calculation.breakdown.actual_fuel_consumed_kWh?.toFixed(1) || '0'} kWh ×{' '}
+                                    {calculation.breakdown.electricity_emission_factor_kg_per_kwh?.toFixed(2) || '0.39'} kg CO₂e/kWh
+                                  </Text>
+                                  <Text fontSize="xs" color="orange.600" pl={2}>
+                                    • EPA Factor: {calculation.breakdown.electricity_emission_factor_kg_per_kwh?.toFixed(2) || '0.39'} kg CO₂e/kWh (EPA eGRID 2023)
+                                  </Text>
+                                  <Text fontSize="xs" color="orange.600" pl={2}>
+                                    • Source:{' '}
+                                    {calculation.breakdown.calculation_basis
+                                      ?.replace(/_/g, ' ')
+                                      .replace(/\b\w/g, (l) => l.toUpperCase())}
+                                  </Text>
+                                </>
+                              ) : (
+                                <>
                               <Text fontSize="xs" color="orange.600" pl={2}>
                                 •{' '}
                                 {calculation.breakdown.actual_fuel_consumed_gallons
@@ -997,6 +1025,8 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   ?.replace(/_/g, ' ')
                                   .replace(/\b\w/g, (l) => l.toUpperCase())}
                               </Text>
+                                </>
+                              )}
                             </VStack>
                           )}
 

@@ -128,11 +128,11 @@ const validateNPKFormat = (input: string): ConcentrationValidationResult => {
   }
 
   // Warnings for unusual values
-  if (total < 5) {
+  if (total < 5 && total > 0) {
     suggestions.push('Very low NPK total - verify this is correct');
   }
   if (nitrogen === 0 && phosphorus === 0 && potassium === 0) {
-    errors.push('All NPK values cannot be zero');
+    suggestions.push('NPK is 0-0-0. This is correct for micronutrient fertilizers (zinc, boron, etc.)');
   }
 
   return {
