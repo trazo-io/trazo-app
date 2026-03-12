@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Badge,
@@ -14,88 +14,39 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
-  Progress,
   Divider,
   useColorModeValue
 } from '@chakra-ui/react';
-import { FiShield, FiInfo, FiCheckCircle, FiMapPin } from 'react-icons/fi';
-import { useGetUSDACredibilityInfoQuery } from '../../store/api/carbonApi';
-
-interface USDACredibilityData {
-  usda_based: boolean;
-  data_source: string;
-  methodology: string;
-  confidence_level: 'high' | 'medium' | 'low';
-  regional_specificity: boolean;
-  compliance_statement: string;
-  credibility_score: number;
-  verification_details: {
-    factors_verified: boolean;
-    uses_epa_factors: boolean;
-    uses_usda_ars_data: boolean;
-    peer_reviewed: boolean;
-    // Legacy fields (mapped from backend)
-    usda_compliant?: boolean;
-    scientifically_validated?: boolean;
-  };
-  establishment_name?: string;
-  establishment_location?: string;
-  regional_optimization?: boolean;
-}
+import { FiShield, FiInfo, FiCheckCircle } from 'react-icons/fi';
+import { useIntl } from 'react-intl';
 
 interface USDACredibilityBadgeProps {
-  establishmentId: number;
   compact?: boolean;
   showDetails?: boolean;
+  establishmentId?: number; // Kept for backward compatibility but not used for API
 }
 
 const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
-  establishmentId,
   compact = false,
   showDetails = true
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const intl = useIntl();
 
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
 
-  const {
-    data: credibilityData,
-    isLoading: loading,
-    error
-  } = useGetUSDACredibilityInfoQuery(establishmentId, {
-    skip: !isOpen // Only fetch when modal is opened
-  });
-
   const handleBadgeClick = () => {
     onOpen();
-  };
-
-  const getConfidenceColor = (level: string) => {
-    switch (level) {
-      case 'high':
-        return 'green';
-      case 'medium':
-        return 'yellow';
-      case 'low':
-        return 'orange';
-      default:
-        return 'gray';
-    }
-  };
-
-  const getCredibilityColor = (score: number) => {
-    if (score >= 90) return 'green';
-    if (score >= 80) return 'blue';
-    if (score >= 70) return 'yellow';
-    return 'orange';
   };
 
   if (compact) {
     return (
       <>
-        <Tooltip label="Click to see emission factor data sources">
+        <Tooltip
+          label={intl.formatMessage({ id: 'app.usdaBadge.tooltipCompact' })}
+        >
           <Badge
             colorScheme="blue"
             variant="subtle"
@@ -108,7 +59,9 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             py={1}
           >
             <Icon as={FiShield} boxSize={3} />
-            <Text fontSize="xs">EPA/USDA Data</Text>
+            <Text fontSize="xs">
+              {intl.formatMessage({ id: 'app.usdaBadge.label' })}
+            </Text>
           </Badge>
         </Tooltip>
         {renderModal()}
@@ -134,22 +87,21 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             <HStack>
               <Icon as={FiShield} color="blue.500" boxSize={5} />
               <Text fontWeight="semibold" color={textColor}>
-                Government-Sourced Emission Factors
+                {intl.formatMessage({ id: 'app.usdaBadge.cardTitle' })}
               </Text>
             </HStack>
 
             <Text fontSize="sm" color="gray.500" lineHeight="short">
-              Carbon calculations use published EPA and USDA Agricultural Research Service emission
-              factors
+              {intl.formatMessage({ id: 'app.usdaBadge.cardDescription' })}
             </Text>
 
             <HStack spacing={2}>
               <Badge colorScheme="blue" variant="subtle">
                 <Icon as={FiCheckCircle} boxSize={3} mr={1} />
-                EPA/USDA-Sourced
+                {intl.formatMessage({ id: 'app.usdaBadge.epaUsdaSourced' })}
               </Badge>
               <Badge colorScheme="green" variant="subtle">
-                Government Data
+                {intl.formatMessage({ id: 'app.usdaBadge.governmentData' })}
               </Badge>
             </HStack>
           </VStack>
@@ -169,159 +121,92 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
           <ModalHeader>
             <HStack>
               <Icon as={FiShield} color="blue.500" />
-              <Text>Emission Factor Data Sources</Text>
+              <Text>
+                {intl.formatMessage({ id: 'app.usdaBadge.modalTitle' })}
+              </Text>
             </HStack>
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
-            {loading ? (
-              <VStack spacing={4}>
-                <Progress size="sm" isIndeterminate colorScheme="blue" w="100%" />
-                <Text color="gray.500">Loading data source details...</Text>
-              </VStack>
-            ) : error || !credibilityData ? (
-              <Text color="gray.500">Unable to load data source details</Text>
-            ) : (
-              <VStack spacing={6} align="stretch">
-                {/* Establishment Info */}
-                {credibilityData.establishment_name && (
-                  <Box>
-                    <Text fontWeight="semibold" mb={2}>
-                      Farm Information
+            <VStack spacing={5} align="stretch">
+              {/* Data Sources Used */}
+              <Box>
+                <Text fontWeight="semibold" mb={3}>
+                  {intl.formatMessage({ id: 'app.usdaBadge.dataSourcesUsed' })}
+                </Text>
+                <VStack align="start" spacing={2}>
+                  <HStack>
+                    <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
+                    <Text fontSize="sm">
+                      {intl.formatMessage({ id: 'app.usdaBadge.epaFactors' })}
                     </Text>
-                    <VStack align="start" spacing={1}>
-                      <Text fontSize="sm">{credibilityData.establishment_name}</Text>
-                      {credibilityData.establishment_location && (
-                        <HStack>
-                          <Icon as={FiMapPin} boxSize={3} color="gray.400" />
-                          <Text fontSize="sm" color="gray.500">
-                            {credibilityData.establishment_location}
-                          </Text>
-                        </HStack>
-                      )}
-                    </VStack>
-                  </Box>
-                )}
-
-                <Divider />
-
-                {/* Credibility Score */}
-                <Box>
-                  <HStack justify="space-between" mb={2}>
-                    <Text fontWeight="semibold">Data Credibility Score</Text>
-                    <Badge
-                      colorScheme={getCredibilityColor(credibilityData.credibility_score)}
-                      fontSize="sm"
-                      px={3}
-                      py={1}
-                    >
-                      {credibilityData.credibility_score}/100
-                    </Badge>
                   </HStack>
-                  <Progress
-                    value={credibilityData.credibility_score}
-                    colorScheme={getCredibilityColor(credibilityData.credibility_score)}
-                    size="lg"
-                    borderRadius="md"
-                  />
-                </Box>
-
-                <Divider />
-
-                {/* Data Source & Methodology */}
-                <Box>
-                  <Text fontWeight="semibold" mb={3}>
-                    Data Source & Methodology
-                  </Text>
-                  <VStack align="start" spacing={2}>
-                    <HStack>
-                      <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
-                      <Text fontSize="sm">{credibilityData.data_source}</Text>
-                    </HStack>
-                    <Text fontSize="sm" color="gray.600" pl={6}>
-                      {credibilityData.methodology}
+                  <HStack>
+                    <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
+                    <Text fontSize="sm">
+                      {intl.formatMessage({ id: 'app.usdaBadge.usdaArs' })}
                     </Text>
-                    <Text fontSize="sm" color="gray.500" pl={6}>
-                      {credibilityData.compliance_statement}
-                    </Text>
-                  </VStack>
-                </Box>
-
-                <Divider />
-
-                {/* Data Source Details */}
-                <Box>
-                  <Text fontWeight="semibold" mb={3}>
-                    Data Sources Used
-                  </Text>
-                  <VStack align="start" spacing={2}>
-                    {credibilityData.verification_details.factors_verified && (
-                      <HStack>
-                        <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
-                        <Text fontSize="sm">EPA emission factors applied</Text>
-                      </HStack>
-                    )}
-                    {(credibilityData.verification_details.uses_epa_factors ||
-                      credibilityData.verification_details.usda_compliant) && (
-                      <HStack>
-                        <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
-                        <Text fontSize="sm">Uses EPA 40 CFR Part 98 factors</Text>
-                      </HStack>
-                    )}
-                    {(credibilityData.verification_details.uses_usda_ars_data ||
-                      credibilityData.verification_details.scientifically_validated) && (
-                      <HStack>
-                        <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
-                        <Text fontSize="sm">Uses USDA ARS published data</Text>
-                      </HStack>
-                    )}
-                    {credibilityData.verification_details.peer_reviewed && (
-                      <HStack>
-                        <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
-                        <Text fontSize="sm">Peer-reviewed methodology</Text>
-                      </HStack>
-                    )}
-                  </VStack>
-                  <Text fontSize="xs" color="gray.400" mt={3}>
-                    Trazo is not affiliated with, endorsed by, or certified by the USDA or EPA.
-                    Calculations use publicly available government emission factors.
-                  </Text>
-                </Box>
-
-                {/* Regional Optimization */}
-                {credibilityData.regional_optimization && (
-                  <>
-                    <Divider />
-                    <Box>
-                      <HStack mb={2}>
-                        <Icon as={FiMapPin} color="blue.500" boxSize={4} />
-                        <Text fontWeight="semibold">Regional Optimization</Text>
-                        <Badge colorScheme="blue" variant="subtle">
-                          Enhanced
-                        </Badge>
-                      </HStack>
-                      <Text fontSize="sm" color="gray.600">
-                        Carbon calculations are optimized for your specific region using localized
-                        USDA emission factors for improved accuracy.
-                      </Text>
-                    </Box>
-                  </>
-                )}
-
-                {/* Confidence Level */}
-                <Box>
-                  <HStack justify="space-between">
-                    <Text fontWeight="semibold">Confidence Level</Text>
-                    <Badge
-                      colorScheme={getConfidenceColor(credibilityData.confidence_level)}
-                      textTransform="capitalize"
-                    >
-                      {credibilityData.confidence_level}
-                    </Badge>
                   </HStack>
-                </Box>
-              </VStack>
-            )}
+                  <HStack>
+                    <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
+                    <Text fontSize="sm">
+                      {intl.formatMessage({ id: 'app.usdaBadge.ipccGuidelines' })}
+                    </Text>
+                  </HStack>
+                  <HStack>
+                    <Icon as={FiCheckCircle} color="green.500" boxSize={4} />
+                    <Text fontSize="sm">
+                      {intl.formatMessage({ id: 'app.usdaBadge.epaEgrid' })}
+                    </Text>
+                  </HStack>
+                </VStack>
+              </Box>
+
+              <Divider />
+
+              {/* What This Means */}
+              <Box>
+                <Text fontWeight="semibold" mb={3}>
+                  {intl.formatMessage({ id: 'app.usdaBadge.whatThisMeans' })}
+                </Text>
+                <VStack align="start" spacing={2}>
+                  <Text fontSize="sm" color="gray.600">
+                    {intl.formatMessage({ id: 'app.usdaBadge.explanation' })}
+                  </Text>
+                </VStack>
+              </Box>
+
+              <Divider />
+
+              {/* Methodology Scope */}
+              <Box>
+                <Text fontWeight="semibold" mb={3}>
+                  {intl.formatMessage({ id: 'app.usdaBadge.methodologyScope' })}
+                </Text>
+                <VStack align="start" spacing={2}>
+                  <HStack align="start">
+                    <Icon as={FiCheckCircle} color="green.500" boxSize={4} mt={0.5} />
+                    <Text fontSize="sm" color="gray.600">
+                      {intl.formatMessage({ id: 'app.usdaBadge.scopeIncludes' })}
+                    </Text>
+                  </HStack>
+                  <Text fontSize="sm" color="gray.500" pl={6}>
+                    {intl.formatMessage({ id: 'app.usdaBadge.scopeExcludes' })}
+                  </Text>
+                </VStack>
+              </Box>
+
+              {/* Disclaimer */}
+              <Box
+                bg={useColorModeValue('gray.50', 'gray.700')}
+                p={3}
+                borderRadius="md"
+              >
+                <Text fontSize="xs" color="gray.500">
+                  {intl.formatMessage({ id: 'app.usdaBadge.disclaimer' })}
+                </Text>
+              </Box>
+            </VStack>
           </ModalBody>
         </ModalContent>
       </Modal>

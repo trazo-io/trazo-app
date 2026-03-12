@@ -318,7 +318,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     if (footprint <= 0) {
       return {
         icon: FaRecycle,
-        text: `Removes ${(absFootprint * 2.31).toFixed(1)} miles worth of CO₂`,
+        text: `Removes ${(absFootprint / 0.35548).toFixed(1)} miles worth of CO₂`,
         color: 'green.500',
         emphasis: 'Actually helps the environment!'
       };
@@ -326,7 +326,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
 
     return {
       icon: FaCarSide,
-      text: `Like driving ${(absFootprint * 2.31).toFixed(1)} miles`,
+      text: `Like driving ${(absFootprint / 0.35548).toFixed(1)} miles`,
       color: getScoreColor(carbonData?.score || 0),
       emphasis:
         footprint < 5

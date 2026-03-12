@@ -9,7 +9,6 @@ import {
   Button,
   Collapse,
   Progress,
-  SimpleGrid,
   Divider,
   useColorModeValue,
   Circle
@@ -17,33 +16,37 @@ import {
 import {
   FaLeaf,
   FaCar,
-  FaHome,
-  FaPlane,
   FaChevronDown,
   FaChevronUp,
   FaGlobeAmericas,
   FaRecycle,
-  FaIndustry,
-  FaChartLine
+  FaChartLine,
+  FaMobileAlt
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import USDACredibilityBadge from '../Carbon/USDACredibilityBadge';
+
+interface BackendComparisons {
+  driving_miles: number;
+  trees_per_year: number;
+  kwh_electricity: number;
+}
+
+interface ConsumerContext {
+  kg_per_kg: number;
+  per_kg_miles: number;
+  per_kg_phone_charges: number;
+  has_per_kg_data: boolean;
+}
 
 interface CarbonImpactExplainerProps {
   carbonScore: number;
   totalCO2e: number;
   productName?: string;
   isCompact?: boolean;
-  relatableFootprint?: string; // Backend-calculated relatable comparison
-  establishmentId?: number; // For EPA/USDA credibility badge
-}
-
-interface CarbonComparison {
-  icon: any;
-  label: string;
-  description: string;
-  value: string;
-  color: string;
+  relatableFootprint?: string;
+  backendComparisons?: BackendComparisons;
+  consumerContext?: ConsumerContext;
 }
 
 export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
@@ -51,8 +54,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   totalCO2e,
   productName = 'this product',
   isCompact = false,
-  relatableFootprint,
-  establishmentId
+  consumerContext
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const intl = useIntl();
@@ -63,88 +65,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const accentColor = useColorModeValue('green.500', 'green.400');
 
-  // Generate relatable comparisons based on CO2e amount
-  const generateComparisons = (co2eKg: number): CarbonComparison[] => {
-    const comparisons: CarbonComparison[] = [];
-
-    // Driving comparison (1 kg CO2e ≈ 4 miles driving)
-    const drivingMiles = Math.round(co2eKg * 4);
-    if (drivingMiles > 0) {
-      comparisons.push({
-        icon: FaCar,
-        label: intl.formatMessage({ id: 'app.carbonExplainer.drivingDistance' }),
-        description: intl.formatMessage({ id: 'app.carbonExplainer.milesInCar' }),
-        value:
-          drivingMiles > 1000 ? `${(drivingMiles / 1000).toFixed(1)}K mi` : `${drivingMiles} mi`,
-        color: 'blue'
-      });
-    }
-
-    // Home energy comparison (1 kg CO2e ≈ 2.56 kWh electricity)
-    // Based on EPA eGRID 2023: 0.39 kg CO2/kWh → 1/0.39 = 2.56 kWh per kg CO2
-    const kwhEquivalent = Math.round(co2eKg * 2.56);
-    if (kwhEquivalent > 0) {
-      const days = Math.round(kwhEquivalent / 30); // Average 30 kWh/day per home
-      comparisons.push({
-        icon: FaHome,
-        label: intl.formatMessage({ id: 'app.carbonExplainer.homeEnergy' }),
-        description:
-          days > 1
-            ? intl.formatMessage({ id: 'app.carbonExplainer.daysElectricity' }, { days })
-            : intl.formatMessage({ id: 'app.carbonExplainer.lessThanOneDay' }),
-        value: `${kwhEquivalent} kWh`,
-        color: 'orange'
-      });
-    }
-
-    // Tree absorption comparison (1 tree absorbs ~22kg CO2/year)
-    const treesNeeded = Math.ceil(co2eKg / 22);
-    if (treesNeeded > 0) {
-      comparisons.push({
-        icon: FaLeaf,
-        label: intl.formatMessage({ id: 'app.carbonExplainer.treeImpact' }),
-        description: intl.formatMessage(
-          { id: 'app.carbonExplainer.treesForYear' },
-          { count: treesNeeded }
-        ),
-        value: `${co2eKg.toFixed(1)}kg`,
-        color: 'green'
-      });
-    }
-
-    // Flight comparison for larger amounts
-    if (co2eKg > 100) {
-      const shortFlights = Math.round(co2eKg / 200); // ~200kg for short flight
-      comparisons.push({
-        icon: FaPlane,
-        label: intl.formatMessage({ id: 'app.carbonExplainer.flightImpact' }),
-        description: intl.formatMessage(
-          { id: 'app.carbonExplainer.shortFlights' },
-          { count: shortFlights }
-        ),
-        value: `${(co2eKg / 1000).toFixed(1)}t`,
-        color: 'red'
-      });
-    }
-
-    return comparisons.slice(0, 3); // Show top 3 most relevant
-  };
-
-  // Use backend relatableFootprint if available, otherwise fall back to frontend calculations
-  const comparisons = relatableFootprint
-    ? [
-        {
-          icon: FaCar,
-          label: intl.formatMessage({ id: 'app.carbonExplainer.carbonImpact' }),
-          description: relatableFootprint,
-          value: `${Math.abs(totalCO2e).toFixed(1)}kg`,
-          color: 'green'
-        }
-      ]
-    : generateComparisons(Math.abs(totalCO2e));
-
-  // Score interpretation — this receives the TRANSPARENCY score, not a carbon score
-  // Higher score = more documented practices, NOT lower emissions
+  // Score interpretation — TRANSPARENCY score (documentation completeness)
   const getScoreInterpretation = (score: number) => {
     if (score >= 90)
       return {
@@ -179,8 +100,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
 
   const scoreInfo = getScoreInterpretation(carbonScore);
   const isNegativeEmissions = totalCO2e < 0;
+  const hasPerKgData = consumerContext?.has_per_kg_data && consumerContext.kg_per_kg > 0;
 
-  // Emission category data with i18n
+  // Emission categories for methodology section
   const emissionCategories = [
     {
       label: intl.formatMessage({ id: 'app.carbonExplainer.fuelEquipment' }),
@@ -217,16 +139,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           </Circle>
 
           <VStack align="start" spacing={1} flex="1">
-            <HStack>
-              <Badge colorScheme={scoreInfo.color} variant="solid" fontSize="xs">
-                {scoreInfo.label}
-              </Badge>
-              {isNegativeEmissions && (
-                <Badge colorScheme="green" variant="solid" fontSize="xs">
-                  {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissions' })}
-                </Badge>
-              )}
-            </HStack>
+            <Badge colorScheme={scoreInfo.color} variant="solid" fontSize="xs">
+              {scoreInfo.label}
+            </Badge>
             <Text fontSize="sm" color={mutedColor}>
               {scoreInfo.description}
             </Text>
@@ -247,7 +162,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       borderColor={useColorModeValue('gray.200', 'gray.600')}
       overflow="hidden"
     >
-      {/* Header */}
+      {/* Header — Transparency Documentation Score */}
       <Box p={4} bg={cardBg}>
         <HStack justify="space-between" align="start">
           <VStack align="start" spacing={2}>
@@ -263,11 +178,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           </VStack>
 
           <VStack align="end" spacing={1}>
-            <HStack>
-              <Text fontSize="2xl" fontWeight="bold" color={`${scoreInfo.color}.600`}>
-                {Math.round(carbonScore)}%
-              </Text>
-            </HStack>
+            <Text fontSize="2xl" fontWeight="bold" color={`${scoreInfo.color}.600`}>
+              {Math.round(carbonScore)}%
+            </Text>
             <Badge colorScheme={scoreInfo.color} variant="solid">
               {scoreInfo.label}
             </Badge>
@@ -294,51 +207,87 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
         </Box>
       </Box>
 
-      {/* Quick Impact Summary */}
+      {/* PRIMARY: Consumer-friendly impact summary */}
       <Box p={4}>
         <VStack spacing={3} align="stretch">
-          {/* Carbon Footprint Display */}
-          <HStack justify="space-between" align="center">
-            <VStack align="start" spacing={0}>
-              <Text fontSize="sm" color={mutedColor}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.totalFootprint' })}
+          {/* Carbon stored / negative emissions highlight */}
+          {isNegativeEmissions ? (
+            <Box
+              bg={useColorModeValue('green.50', 'green.900')}
+              p={4}
+              borderRadius="lg"
+              border="1px solid"
+              borderColor={useColorModeValue('green.200', 'green.700')}
+            >
+              <HStack mb={2}>
+                <Icon as={FaRecycle} color="green.500" boxSize={5} />
+                <Text fontSize="md" fontWeight="bold" color="green.600">
+                  {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsTitle' })}
+                </Text>
+                <Badge colorScheme="green" variant="subtle">
+                  {intl.formatMessage({ id: 'app.carbonExplainer.carbonStored' })}
+                </Badge>
+              </HStack>
+              <Text fontSize="sm" color="green.700">
+                {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsDesc' })}
               </Text>
-              <HStack>
-                <Text fontSize="xl" fontWeight="bold" color={textColor}>
-                  {Math.abs(totalCO2e).toFixed(1)}
+            </Box>
+          ) : hasPerKgData ? (
+            /* Per-kg impact card — the only relatable metric for consumers */
+            <Box
+              bg={useColorModeValue('gray.50', 'gray.700')}
+              p={4}
+              borderRadius="lg"
+              border="1px solid"
+              borderColor={useColorModeValue('gray.200', 'gray.600')}
+            >
+              <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
+                {intl.formatMessage({ id: 'app.carbonExplainer.yourImpact' })}
+              </Text>
+              <Text fontSize="sm" color={mutedColor} mb={1}>
+                {intl.formatMessage(
+                  { id: 'app.carbonExplainer.perKgNarrative' },
+                  { productName }
+                )}
+              </Text>
+              <HStack spacing={2} align="baseline" mb={3}>
+                <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                  {consumerContext!.kg_per_kg}
                 </Text>
                 <Text fontSize="sm" color={mutedColor}>
-                  kg CO₂e
+                  {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsUnit' })}
                 </Text>
-                {isNegativeEmissions && (
-                  <Badge colorScheme="green" variant="subtle">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.carbonStored' })}
-                  </Badge>
-                )}
               </HStack>
-            </VStack>
 
-            {/* Most relevant comparison */}
-            {comparisons[0] && (
-              <VStack align="end" spacing={0}>
-                <HStack>
-                  <Icon
-                    as={comparisons[0].icon}
-                    color={`${comparisons[0].color}.500`}
-                    boxSize={4}
-                  />
-                  <Text fontSize="sm" fontWeight="semibold">
-                    {comparisons[0].value}
-                  </Text>
-                </HStack>
-                <Text fontSize="xs" color={mutedColor} textAlign="right">
-                  {comparisons[0].description}
-                </Text>
+              {/* Relatable comparisons */}
+              <VStack spacing={1} align="stretch">
+                {consumerContext!.per_kg_miles > 0 && (
+                  <HStack spacing={2}>
+                    <Icon as={FaCar} color="gray.500" boxSize={4} />
+                    <Text fontSize="sm" color={mutedColor}>
+                      {intl.formatMessage(
+                        { id: 'app.carbonExplainer.perKgMiles' },
+                        { miles: consumerContext!.per_kg_miles }
+                      )}
+                    </Text>
+                  </HStack>
+                )}
+                {consumerContext!.per_kg_phone_charges > 0 && (
+                  <HStack spacing={2}>
+                    <Icon as={FaMobileAlt} color="gray.500" boxSize={4} />
+                    <Text fontSize="sm" color={mutedColor}>
+                      {intl.formatMessage(
+                        { id: 'app.carbonExplainer.perKgPhoneCharges' },
+                        { count: consumerContext!.per_kg_phone_charges }
+                      )}
+                    </Text>
+                  </HStack>
+                )}
               </VStack>
-            )}
-          </HStack>
+            </Box>
+          ) : null}
 
-          {/* Quick Advice */}
+          {/* Transparency advice */}
           <Box
             bg={useColorModeValue(`${scoreInfo.color}.50`, `${scoreInfo.color}.900`)}
             p={3}
@@ -366,78 +315,18 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
         </VStack>
       </Box>
 
-      {/* Expanded Educational Content */}
+      {/* Expanded: Methodology + Trust */}
       <Collapse in={isExpanded}>
         <Divider />
         <Box p={4} bg={useColorModeValue('gray.50', 'gray.700')}>
           <VStack spacing={6} align="stretch">
-            {/* Real-World Comparisons */}
-            {comparisons.length > 0 && (
-              <Box>
-                <Text fontSize="md" fontWeight="semibold" mb={3} color={textColor}>
-                  {intl.formatMessage({ id: 'app.carbonExplainer.realLifeTitle' })}
-                </Text>
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
-                  {comparisons.map((comp, idx) => (
-                    <Box
-                      key={idx}
-                      p={3}
-                      bg={useColorModeValue(`${comp.color}.50`, `${comp.color}.900`)}
-                      borderRadius="lg"
-                      border="1px solid"
-                      borderColor={useColorModeValue(`${comp.color}.200`, `${comp.color}.700`)}
-                    >
-                      <VStack spacing={2}>
-                        <Circle size="40px" bg={`${comp.color}.500`} color="white">
-                          <Icon as={comp.icon} boxSize={5} />
-                        </Circle>
-                        <Text fontSize="sm" fontWeight="semibold" textAlign="center">
-                          {comp.label}
-                        </Text>
-                        <Text fontSize="lg" fontWeight="bold" color={`${comp.color}.600`}>
-                          {comp.value}
-                        </Text>
-                        <Text fontSize="xs" color={mutedColor} textAlign="center">
-                          {comp.description}
-                        </Text>
-                      </VStack>
-                    </Box>
-                  ))}
-                </SimpleGrid>
-              </Box>
-            )}
-
-            {/* Low Direct Emissions Note */}
-            {isNegativeEmissions && (
-              <Box
-                bg={useColorModeValue('green.50', 'green.900')}
-                p={4}
-                borderRadius="lg"
-                border="1px solid"
-                borderColor={useColorModeValue('green.200', 'green.700')}
-              >
-                <HStack mb={2}>
-                  <Icon as={FaRecycle} color="green.500" boxSize={5} />
-                  <Text fontSize="md" fontWeight="bold" color="green.600">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsTitle' })}
-                  </Text>
-                </HStack>
-                <Text fontSize="sm" color="green.700">
-                  {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsDesc' })}
-                </Text>
-                <Text fontSize="xs" color="green.600" mt={1}>
-                  {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsNote' })}
-                </Text>
-              </Box>
-            )}
-
-            {/* Carbon Emission Categories */}
+            {/* How We Calculate */}
             <Box>
-              <Text fontSize="md" fontWeight="semibold" mb={2} color={textColor}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsTitle' })}
+              <Text fontSize="md" fontWeight="semibold" mb={1} color={textColor}>
+                {intl.formatMessage({ id: 'app.carbonExplainer.howWeCalculateTitle' })}
               </Text>
               <Text fontSize="xs" color={mutedColor} mb={3}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsDesc' })}
+                {intl.formatMessage({ id: 'app.carbonExplainer.howWeCalculateDesc' })}
               </Text>
               <VStack spacing={3} align="stretch">
                 {emissionCategories.map((item, idx) => (
@@ -454,62 +343,15 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                   </HStack>
                 ))}
               </VStack>
+              <Text fontSize="xs" color={mutedColor} mt={3} fontStyle="italic">
+                {intl.formatMessage({ id: 'app.carbonExplainer.epaUsdaNote' })}
+              </Text>
             </Box>
 
-            {/* EPA/USDA Credibility Badge */}
-            {establishmentId && <USDACredibilityBadge establishmentId={establishmentId} />}
+            {/* EPA/USDA Credibility Badge (clickable for detailed modal) */}
+            <USDACredibilityBadge />
 
-            {/* Calculation Data Sources */}
-            <Box
-              bg={useColorModeValue('purple.50', 'purple.900')}
-              p={4}
-              borderRadius="lg"
-              border="1px solid"
-              borderColor={useColorModeValue('purple.200', 'purple.700')}
-            >
-              <HStack mb={3}>
-                <Icon as={FaIndustry} color="purple.500" boxSize={5} />
-                <Text fontSize="md" fontWeight="bold" color="purple.600">
-                  {intl.formatMessage({ id: 'app.carbonExplainer.dataSourcesTitle' })}
-                </Text>
-              </HStack>
-              <VStack align="start" spacing={3}>
-                <Box>
-                  <Text fontSize="sm" fontWeight="semibold" color="purple.700">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.ipccTitle' })}
-                  </Text>
-                  <Text fontSize="xs" color="purple.600">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.ipccDesc' })}
-                  </Text>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" fontWeight="semibold" color="purple.700">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.tillageTitle' })}
-                  </Text>
-                  <Text fontSize="xs" color="purple.600">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.tillageDesc' })}
-                  </Text>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" fontWeight="semibold" color="purple.700">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.usdaNassTitle' })}
-                  </Text>
-                  <Text fontSize="xs" color="purple.600">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.usdaNassDesc' })}
-                  </Text>
-                </Box>
-                <Box>
-                  <Text fontSize="sm" fontWeight="semibold" color="purple.700">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.epaTitle' })}
-                  </Text>
-                  <Text fontSize="xs" color="purple.600">
-                    {intl.formatMessage({ id: 'app.carbonExplainer.epaDesc' })}
-                  </Text>
-                </Box>
-              </VStack>
-            </Box>
-
-            {/* Why This Matters */}
+            {/* Why Transparency Matters */}
             <Box
               bg={useColorModeValue('blue.50', 'blue.900')}
               p={4}
@@ -528,21 +370,21 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               </Text>
               <VStack align="start" spacing={1} pl={4}>
                 <Text fontSize="sm" color="blue.700">
-                  • {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint1' })}
+                  {'\u2022'} {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint1' })}
                 </Text>
                 <Text fontSize="sm" color="blue.700">
-                  • {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint2' })}
+                  {'\u2022'} {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint2' })}
                 </Text>
                 <Text fontSize="sm" color="blue.700">
-                  • {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint3' })}
+                  {'\u2022'} {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint3' })}
                 </Text>
                 <Text fontSize="sm" color="blue.700">
-                  • {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint4' })}
+                  {'\u2022'} {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint4' })}
                 </Text>
               </VStack>
             </Box>
 
-            {/* Methodology Scope Disclaimer */}
+            {/* Methodology Scope Disclaimer (FTC compliance) */}
             <Box p={3} bg={useColorModeValue('gray.100', 'gray.600')} borderRadius="md">
               <Text fontSize="xs" color={mutedColor}>
                 {intl.formatMessage({ id: 'app.carbonExplainer.disclaimer' })}

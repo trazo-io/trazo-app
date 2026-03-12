@@ -433,7 +433,7 @@ const EducationTopicDetail: React.FC = () => {
             </HStack>
             <Box overflowX="auto" w="full">
               <Grid
-                templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
+                templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}
               >
@@ -449,13 +449,23 @@ const EducationTopicDetail: React.FC = () => {
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="yellow.600" mb={2}>
+                  <Heading size="sm" color="blue.600" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.transparencyScore.goodTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
                     <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.goodItem1' })}</ListItem>
                     <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.goodItem2' })}</ListItem>
                     <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.goodItem3' })}</ListItem>
+                  </UnorderedList>
+                </Box>
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <Heading size="sm" color="yellow.600" mb={2}>
+                    {intl.formatMessage({ id: 'education.detail.transparencyScore.averageTitle' })}
+                  </Heading>
+                  <UnorderedList spacing={1} fontSize="sm">
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.averageItem1' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.averageItem2' })}</ListItem>
+                    <ListItem>{intl.formatMessage({ id: 'education.detail.transparencyScore.averageItem3' })}</ListItem>
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
@@ -2414,255 +2424,6 @@ const EducationTopicDetail: React.FC = () => {
                 <AlertTitle>{intl.formatMessage({ id: 'education.detail.subscription.timelineTitle' })}</AlertTitle>
                 <AlertDescription>
                   {intl.formatMessage({ id: 'education.detail.subscription.timelineDesc' })}
-                </AlertDescription>
-              </Box>
-            </Alert>
-          </VStack>
-        )
-      },
-      {
-        id: 'advanced-features',
-        title: intl.formatMessage({ id: 'education.topicAdvancedFeaturesTitle' }),
-        description: intl.formatMessage({ id: 'education.topicAdvancedFeaturesDesc' }),
-        icon: FaCogs,
-        category: intl.formatMessage({ id: 'education.categoryAdvancedFeatures' }),
-        content: (
-          <VStack spacing={6} align="start">
-            <Text fontSize="lg">
-              {intl.formatMessage({ id: 'education.detail.advanced.intro' })}
-            </Text>
-
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaWifi} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.advanced.iotTitle' })}
-              </Heading>
-            </HStack>
-            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <HStack>
-                  <Icon as={FaWifi} color="blue.600" />
-                  <Text>
-                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotSoilLabel' })}</strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.advanced.iotSoil' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaWifi} color="blue.600" />
-                  <Text>
-                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotWeatherLabel' })}</strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.advanced.iotWeather' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaWifi} color="blue.600" />
-                  <Text>
-                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotIrrigationLabel' })}</strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.advanced.iotIrrigation' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaWifi} color="blue.600" />
-                  <Text>
-                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotEquipmentLabel' })}</strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.advanced.iotEquipment' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaWifi} color="blue.600" />
-                  <Text>
-                    <strong>{intl.formatMessage({ id: 'education.detail.advanced.iotEnvLabel' })}</strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.advanced.iotEnv' })}
-                  </Text>
-                </HStack>
-              </VStack>
-            </Box>
-
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaMicrophone} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.advanced.voiceAiTitle' })}
-              </Heading>
-            </HStack>
-            <Box overflowX="auto" w="full">
-              <Grid
-                templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
-                gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="gray.700" mb={2}>
-                    {intl.formatMessage({ id: 'education.detail.advanced.voiceDocTitle' })}
-                  </Heading>
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaMicrophone} color="green.600" />
-                      <Text fontSize="sm">
-                        {intl.formatMessage({ id: 'education.detail.advanced.voiceExample1' })}
-                      </Text>
-                    </HStack>
-                    <HStack>
-                      <Icon as={FaMicrophone} color="green.600" />
-                      <Text fontSize="sm">
-                        {intl.formatMessage({ id: 'education.detail.advanced.voiceExample2' })}
-                      </Text>
-                    </HStack>
-                    <HStack>
-                      <Icon as={FaMicrophone} color="green.600" />
-                      <Text fontSize="sm">
-                        {intl.formatMessage({ id: 'education.detail.advanced.voiceExample3' })}
-                      </Text>
-                    </HStack>
-                  </VStack>
-                </Box>
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="gray.700" mb={2}>
-                    {intl.formatMessage({ id: 'education.detail.advanced.aiTitle' })}
-                  </Heading>
-                  <VStack spacing={2} align="start">
-                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.advanced.aiTranscription' })}</Text>
-                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.advanced.aiClassification' })}</Text>
-                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.advanced.aiPhoto' })}</Text>
-                    <Text fontSize="sm">{intl.formatMessage({ id: 'education.detail.advanced.aiCompletion' })}</Text>
-                  </VStack>
-                </Box>
-              </Grid>
-            </Box>
-
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaPlug} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.advanced.apiTitle' })}
-              </Heading>
-            </HStack>
-            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <Text>
-                  <strong>{intl.formatMessage({ id: 'education.detail.advanced.apiIntegrationsLabel' })}</strong>
-                </Text>
-                <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
-                  <VStack align="start" spacing={1}>
-                    <Text fontSize="sm">
-                      <strong>{intl.formatMessage({ id: 'education.detail.advanced.restApiTitle' })}</strong>
-                    </Text>
-                    <UnorderedList spacing={1} fontSize="xs" pl={4}>
-                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.restApi1' })}</ListItem>
-                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.restApi2' })}</ListItem>
-                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.restApi3' })}</ListItem>
-                    </UnorderedList>
-                  </VStack>
-                  <VStack align="start" spacing={1}>
-                    <Text fontSize="sm">
-                      <strong>{intl.formatMessage({ id: 'education.detail.advanced.dataExportTitle' })}</strong>
-                    </Text>
-                    <UnorderedList spacing={1} fontSize="xs" pl={4}>
-                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.dataExport1' })}</ListItem>
-                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.dataExport2' })}</ListItem>
-                      <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.dataExport3' })}</ListItem>
-                    </UnorderedList>
-                  </VStack>
-                </Grid>
-              </VStack>
-            </Box>
-
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaSyncAlt} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.advanced.automationTitle' })}
-              </Heading>
-            </HStack>
-            <Box overflowX="auto" w="full">
-              <Grid
-                templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
-                gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="gray.700" mb={2}>
-                    {intl.formatMessage({ id: 'education.detail.advanced.triggerTitle' })}
-                  </Heading>
-                  <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.trigger1' })}</ListItem>
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.trigger2' })}</ListItem>
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.trigger3' })}</ListItem>
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.trigger4' })}</ListItem>
-                  </UnorderedList>
-                </Box>
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="gray.700" mb={2}>
-                    {intl.formatMessage({ id: 'education.detail.advanced.scheduledTitle' })}
-                  </Heading>
-                  <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.scheduled1' })}</ListItem>
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.scheduled2' })}</ListItem>
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.scheduled3' })}</ListItem>
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.scheduled4' })}</ListItem>
-                  </UnorderedList>
-                </Box>
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="gray.700" mb={2}>
-                    {intl.formatMessage({ id: 'education.detail.advanced.smartTitle' })}
-                  </Heading>
-                  <UnorderedList spacing={1} fontSize="sm">
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.smart1' })}</ListItem>
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.smart2' })}</ListItem>
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.smart3' })}</ListItem>
-                    <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.smart4' })}</ListItem>
-                  </UnorderedList>
-                </Box>
-              </Grid>
-            </Box>
-
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaBuilding} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.advanced.enterpriseTitle' })}
-              </Heading>
-            </HStack>
-            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <Text>
-                  <strong>{intl.formatMessage({ id: 'education.detail.advanced.centralizedLabel' })}</strong>
-                </Text>
-                <UnorderedList spacing={1} pl={6}>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.multiLocation' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.aggregateAnalytics' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.bulkOps' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.teamMgmt' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.complianceReport' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.customBranding' })}</ListItem>
-                </UnorderedList>
-              </VStack>
-            </Box>
-
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaRocket} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.advanced.gettingStartedTitle' })}
-              </Heading>
-            </HStack>
-            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <Text>
-                  <strong>{intl.formatMessage({ id: 'education.detail.advanced.implementationLabel' })}</strong>
-                </Text>
-                <UnorderedList spacing={1} pl={6}>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase1' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase2' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase3' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase4' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase5' })}</ListItem>
-                  <ListItem>{intl.formatMessage({ id: 'education.detail.advanced.phase6' })}</ListItem>
-                </UnorderedList>
-              </VStack>
-            </Box>
-
-            <Alert status="warning" borderRadius="lg">
-              <AlertIcon />
-              <Box>
-                <AlertTitle>{intl.formatMessage({ id: 'education.detail.advanced.bestPracticeTitle' })}</AlertTitle>
-                <AlertDescription>
-                  {intl.formatMessage({ id: 'education.detail.advanced.bestPracticeDesc' })}
                 </AlertDescription>
               </Box>
             </Alert>

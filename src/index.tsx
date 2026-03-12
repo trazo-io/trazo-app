@@ -1,3 +1,6 @@
+// Sentry must be initialized before any other imports
+import './config/sentry';
+
 // Import minimal essential CSS
 import 'assets/css/trazo-colors.css';
 import 'assets/css/trazo-dashboard-styles.css';

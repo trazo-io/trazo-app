@@ -1,17 +1,20 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   VStack,
   HStack,
   Text,
-  useColorModeValue,
   Icon,
   Container,
   Circle,
   Divider,
   Stack,
   useToast,
-  IconButton
+  IconButton,
+  Link,
+  List,
+  ListItem,
+  ListIcon
 } from '@chakra-ui/react';
 import {
   FaExclamationTriangle,
@@ -19,18 +22,18 @@ import {
   FaRedo,
   FaShieldAlt,
   FaLeaf,
-  FaQuestionCircle,
   FaCopy,
-  FaExternalLinkAlt
+  FaExternalLinkAlt,
+  FaCheckCircle
 } from 'react-icons/fa';
-import {
-  StandardCard,
-  StandardButton,
-  CollapsibleSection
-} from 'components/Design/StandardComponents';
+import { StandardCard, StandardButton } from 'components/Design/StandardComponents';
+import { useIntl } from 'react-intl';
 
 // Support email - single source of truth
 const SUPPORT_EMAIL = 'support@trazo.io';
+
+// Exponential backoff delays (ms)
+const RETRY_DELAYS = [2000, 4000, 8000];
 
 interface ModernErrorStateProps {
   type: 'qr_verification' | 'network' | 'not_found' | 'general';
@@ -42,6 +45,51 @@ interface ModernErrorStateProps {
   showLearnMore?: boolean;
 }
 
+/** Safe clipboard copy with fallback for non-HTTPS contexts */
+const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    // Fallback for HTTP/insecure contexts
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const success = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return success;
+  } catch {
+    return false;
+  }
+};
+
+type ErrorTypeKey = 'qrVerification' | 'network' | 'notFound' | 'general';
+
+const TYPE_TO_KEY: Record<ModernErrorStateProps['type'], ErrorTypeKey> = {
+  qr_verification: 'qrVerification',
+  network: 'network',
+  not_found: 'notFound',
+  general: 'general'
+};
+
+const TYPE_ICONS: Record<ModernErrorStateProps['type'], React.ComponentType> = {
+  qr_verification: FaQrcode,
+  network: FaExclamationTriangle,
+  not_found: FaQrcode,
+  general: FaExclamationTriangle
+};
+
+const TYPE_COLORS: Record<ModernErrorStateProps['type'], { icon: string; bg: string }> = {
+  qr_verification: { icon: 'red.500', bg: 'red.100' },
+  network: { icon: 'orange.500', bg: 'orange.100' },
+  not_found: { icon: 'gray.500', bg: 'gray.100' },
+  general: { icon: 'red.500', bg: 'red.100' }
+};
+
 export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
   type,
   title,
@@ -50,132 +98,96 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
   onRetry,
   showLearnMore = true
 }) => {
+  const intl = useIntl();
   const toast = useToast();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
 
-  // Trazo design system colors
-  const mutedColor = useColorModeValue('gray.600', 'gray.400');
-
   // Focus management for accessibility
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
 
-  const getErrorConfig = () => {
-    const configs = {
-      qr_verification: {
-        icon: FaQrcode,
-        title: title || 'QR Code Verification Failed',
-        message:
-          message ||
-          'This QR code could not be verified. Please try scanning again or contact support if the problem persists.',
-        iconColor: 'red.500',
-        iconBg: 'red.100',
-        suggestions: [
-          'Ensure good lighting when scanning',
-          'Hold camera steady and at proper distance',
-          'Check if QR code is damaged or obscured'
-        ]
-      },
-      network: {
-        icon: FaExclamationTriangle,
-        title: title || 'Unable to Load Product',
-        message:
-          message || 'Please check your connection and try again, or scan a different product.',
-        iconColor: 'orange.500',
-        iconBg: 'orange.100',
-        suggestions: [
-          'Check your internet connection',
-          'Try switching between WiFi and mobile data',
-          'Wait a moment and retry'
-        ]
-      },
-      not_found: {
-        icon: FaQrcode,
-        title: title || 'Product Not Found',
-        message:
-          message ||
-          'This product information is not available. It may have been removed or the QR code is invalid.',
-        iconColor: 'gray.500',
-        iconBg: 'gray.100',
-        suggestions: [
-          'Verify you scanned the correct QR code',
-          'Check if the product is still available',
-          'Contact the farm or supplier for assistance'
-        ]
-      },
-      general: {
-        icon: FaExclamationTriangle,
-        title: title || 'Something went wrong',
-        message:
-          message ||
-          'We encountered an unexpected error. Please try again or contact support if the problem continues.',
-        iconColor: 'red.500',
-        iconBg: 'red.100',
-        suggestions: [
-          'Try refreshing the page',
-          'Clear your browser cache',
-          'Contact support if issue persists'
-        ]
-      }
-    };
-    return configs[type];
-  };
+  const typeKey = TYPE_TO_KEY[type];
+  const iconComponent = TYPE_ICONS[type];
+  const colors = TYPE_COLORS[type];
 
-  const config = getErrorConfig();
+  const config = useMemo(
+    () => ({
+      title:
+        title ||
+        intl.formatMessage({ id: `consumer.error.${typeKey}.title` }),
+      message:
+        message ||
+        intl.formatMessage({ id: `consumer.error.${typeKey}.message` }),
+      suggestions: [
+        intl.formatMessage({ id: `consumer.error.${typeKey}.suggestion1` }),
+        intl.formatMessage({ id: `consumer.error.${typeKey}.suggestion2` }),
+        intl.formatMessage({ id: `consumer.error.${typeKey}.suggestion3` })
+      ]
+    }),
+    [type, title, message, intl]
+  );
 
-  // Smart retry handler with rate limiting
+  // Smart retry handler with exponential backoff
   const handleRetry = useCallback(async () => {
     if (retryCount >= maxRetries || !onRetry || isRetrying) return;
 
     setIsRetrying(true);
+    const currentRetry = retryCount;
     setRetryCount((prev) => prev + 1);
 
     try {
       onRetry();
     } finally {
-      // Prevent spam clicking
-      setTimeout(() => setIsRetrying(false), 2000);
+      const delay = RETRY_DELAYS[currentRetry] || RETRY_DELAYS[RETRY_DELAYS.length - 1];
+      setTimeout(() => setIsRetrying(false), delay);
     }
   }, [onRetry, retryCount, isRetrying]);
 
   // Copy email to clipboard
-  const handleCopyEmail = useCallback(() => {
-    navigator.clipboard.writeText(SUPPORT_EMAIL);
+  const handleCopyEmail = useCallback(async () => {
+    const success = await copyToClipboard(SUPPORT_EMAIL);
     toast({
-      title: 'Email copied!',
-      status: 'success',
+      title: success
+        ? intl.formatMessage({ id: 'consumer.error.emailCopied' })
+        : intl.formatMessage({ id: 'consumer.error.copyFailed' }),
+      status: success ? 'success' : 'warning',
       duration: 2000,
       isClosable: true
     });
-  }, [toast]);
+  }, [toast, intl]);
 
   // Copy error ID to clipboard
-  const handleCopyErrorId = useCallback(() => {
-    if (errorId) {
-      navigator.clipboard.writeText(errorId);
-      toast({
-        title: 'Error ID copied!',
-        description: 'Share this with support for faster help.',
-        status: 'success',
-        duration: 2000,
-        isClosable: true
-      });
-    }
-  }, [errorId, toast]);
+  const handleCopyErrorId = useCallback(async () => {
+    if (!errorId) return;
+    const success = await copyToClipboard(errorId);
+    toast({
+      title: success
+        ? intl.formatMessage({ id: 'consumer.error.errorIdCopied' })
+        : intl.formatMessage({ id: 'consumer.error.copyFailed' }),
+      description: success
+        ? intl.formatMessage({ id: 'consumer.error.errorIdCopiedDesc' })
+        : undefined,
+      status: success ? 'success' : 'warning',
+      duration: 2000,
+      isClosable: true
+    });
+  }, [errorId, toast, intl]);
+
+  const attemptsLeft = maxRetries - retryCount;
 
   return (
     <Container maxW="2xl" py={{ base: 6, md: 8 }} px={{ base: 4, md: 6 }}>
-      <VStack spacing={6} textAlign="center" pt="100px" role="alert" aria-live="polite">
-        {/* Main Error Card - Using StandardCard */}
+      <VStack spacing={6} textAlign="center" pt="145px" role="alert" aria-live="polite">
+        {/* Main Error Card */}
         <StandardCard variant="elevated" padding={{ base: 6, md: 8 }}>
           <VStack spacing={6}>
             {/* Error Icon */}
-            <Circle size="80px" bg={config.iconBg}>
-              <Icon as={config.icon} boxSize={8} color={config.iconColor} />
+            <Circle size="80px" bg={colors.bg}>
+              <Icon as={iconComponent} boxSize={8} color={colors.icon} />
             </Circle>
 
             {/* Error Title and Message */}
@@ -191,12 +203,27 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
               >
                 {config.title}
               </Text>
-              <Text fontSize="md" color={mutedColor} lineHeight="1.6" maxW="md">
+              <Text fontSize="md" color="gray.600" lineHeight="1.6" maxW="md">
                 {config.message}
               </Text>
             </VStack>
 
-            {/* Action Buttons - Responsive layout */}
+            {/* Troubleshooting Suggestions */}
+            <Box w="full" maxW="sm" textAlign="left">
+              <Text fontSize="xs" fontWeight="semibold" color="gray.500" mb={2} textAlign="center">
+                {intl.formatMessage({ id: 'consumer.error.troubleshooting' })}
+              </Text>
+              <List spacing={1}>
+                {config.suggestions.map((suggestion, idx) => (
+                  <ListItem key={idx} fontSize="sm" color="gray.600">
+                    <ListIcon as={FaCheckCircle} color="green.400" boxSize={3} />
+                    {suggestion}
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+
+            {/* Action Buttons */}
             <Stack direction={{ base: 'column', md: 'row' }} spacing={3} w="full" justify="center">
               {onRetry && (
                 <StandardButton
@@ -205,28 +232,37 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
                   width="full"
                   onClick={handleRetry}
                   isLoading={isRetrying}
-                  loadingText="Retrying..."
+                  loadingText={intl.formatMessage({ id: 'consumer.error.retrying' })}
                   isDisabled={retryCount >= maxRetries}
                   leftIcon={<FaRedo />}
                 >
-                  {retryCount > 0 ? `Try Again (${maxRetries - retryCount} left)` : 'Try Again'}
+                  {retryCount > 0
+                    ? intl.formatMessage(
+                        { id: 'consumer.error.tryAgainWithCount' },
+                        { attemptsLeft }
+                      )
+                    : intl.formatMessage({ id: 'consumer.error.tryAgain' })}
                 </StandardButton>
               )}
               {showLearnMore && (
                 <StandardButton
+                  as={Link}
+                  href="https://trazo.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   variant="outline"
                   size="lg"
                   width="full"
-                  onClick={() => window.open('https://trazo.io', '_blank')}
                   leftIcon={<FaLeaf />}
                   rightIcon={<FaExternalLinkAlt size={12} />}
+                  _hover={{ textDecoration: 'none', bg: 'gray.50' }}
                 >
-                  Learn About Trazo
+                  {intl.formatMessage({ id: 'consumer.error.learnAboutTrazo' })}
                 </StandardButton>
               )}
             </Stack>
 
-            {/* Error ID for support - Transparency element */}
+            {/* Error ID for support */}
             {errorId && (
               <VStack
                 spacing={1}
@@ -237,7 +273,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
                 borderColor="gray.200"
               >
                 <Text fontSize="xs" color="gray.500">
-                  Error ID for support:
+                  {intl.formatMessage({ id: 'consumer.error.errorIdLabel' })}
                 </Text>
                 <HStack spacing={2}>
                   <Text fontSize="xs" color="gray.600" fontFamily="mono">
@@ -257,7 +293,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
           </VStack>
         </StandardCard>
 
-        {/* Trust Recovery Card - Reassure users during error */}
+        {/* Trust Recovery Card */}
         <Box
           bg="green.50"
           border="1px solid"
@@ -271,16 +307,16 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
             <Icon as={FaShieldAlt} color="green.600" boxSize={5} />
             <VStack align="start" spacing={0}>
               <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                Your scan is private and secure
+                {intl.formatMessage({ id: 'consumer.error.scanPrivate' })}
               </Text>
               <Text fontSize="xs" color="green.600">
-                This error doesn't affect your data or privacy
+                {intl.formatMessage({ id: 'consumer.error.scanPrivateDesc' })}
               </Text>
             </VStack>
           </HStack>
         </Box>
 
-        {/* Support Information - Correct email */}
+        {/* Support Information */}
         <Box
           bg="blue.50"
           border="1px solid"
@@ -294,7 +330,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
         >
           <VStack spacing={2}>
             <Text fontSize="sm" color="blue.700" fontWeight="medium">
-              Need help? Our support team is here to assist.
+              {intl.formatMessage({ id: 'consumer.error.needHelp' })}
             </Text>
             <HStack spacing={2}>
               <Text fontSize="sm" color="blue.600" fontWeight="medium">
@@ -312,21 +348,11 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
           </VStack>
         </Box>
 
-        {/* Trazo Branding Footer */}
+        {/* Minimal Branding Footer */}
         <VStack spacing={2}>
-          <HStack spacing={4} fontSize="xs" color={mutedColor} opacity={0.8}>
-            <HStack spacing={1}>
-              <Icon as={FaShieldAlt} />
-              <Text>Secure</Text>
-            </HStack>
-            <HStack spacing={1}>
-              <Icon as={FaLeaf} />
-              <Text>Sustainable</Text>
-            </HStack>
-          </HStack>
           <Divider maxW="xs" />
-          <Text fontSize="xs" color={mutedColor} opacity={0.6}>
-            Powered by Trazo Agricultural Transparency
+          <Text fontSize="xs" color="gray.400">
+            {intl.formatMessage({ id: 'consumer.error.poweredBy' })}
           </Text>
         </VStack>
       </VStack>

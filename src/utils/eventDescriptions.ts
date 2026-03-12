@@ -475,7 +475,9 @@ export function getRealTransparencyDetails(event: any): string {
 
   // Area
   if (event.area && String(event.area).trim() && String(event.area).trim() !== 'null') {
-    details.push(`Area: ${event.area} hectares`);
+    const areaUnit = event.area_unit || event.extra_data?.area_unit || 'acres';
+    const areaUnitLabel = areaUnit === 'ha' ? 'hectares' : areaUnit === 'm2' ? 'm²' : areaUnit;
+    details.push(`Area: ${event.area} ${areaUnitLabel}`);
   }
 
   // Concentration
@@ -835,6 +837,69 @@ export function getConsumerEventDescription(
         title: 'Equipment Operations',
         icon: '🔧',
         description: 'Farm equipment used and maintained for optimal performance'
+      },
+      // PO (Pollination)
+      PO: {
+        title: 'Pollination',
+        icon: '🐝',
+        description: 'Managed pollinators placed to support crop growth — a natural, zero-emission process'
+      },
+      'production.PO': {
+        title: 'Pollination',
+        icon: '🐝',
+        description: 'Managed pollinators placed to support crop growth — a natural, zero-emission process'
+      },
+      'event.production.pollination': {
+        title: 'Pollination',
+        icon: '🐝',
+        description: 'Managed pollinators placed to support crop growth — a natural, zero-emission process'
+      },
+      pollination: {
+        title: 'Pollination',
+        icon: '🐝',
+        description: 'Managed pollinators placed to support crop growth — a natural, zero-emission process'
+      },
+      // PH (Post-Harvest Processing)
+      PH: {
+        title: 'Post-Harvest Processing',
+        icon: '📦',
+        description: 'Carefully processed after harvest to ensure quality and freshness'
+      },
+      'production.PH': {
+        title: 'Post-Harvest Processing',
+        icon: '📦',
+        description: 'Carefully processed after harvest to ensure quality and freshness'
+      },
+      'event.production.post_harvest': {
+        title: 'Post-Harvest Processing',
+        icon: '📦',
+        description: 'Carefully processed after harvest to ensure quality and freshness'
+      },
+      post_harvest: {
+        title: 'Post-Harvest Processing',
+        icon: '📦',
+        description: 'Carefully processed after harvest to ensure quality and freshness'
+      },
+      // CM (Canopy Management)
+      CM: {
+        title: 'Canopy Management',
+        icon: '✂️',
+        description: 'Vine or tree canopy shaped for optimal fruit development and quality'
+      },
+      'production.CM': {
+        title: 'Canopy Management',
+        icon: '✂️',
+        description: 'Vine or tree canopy shaped for optimal fruit development and quality'
+      },
+      'event.production.canopy_management': {
+        title: 'Canopy Management',
+        icon: '✂️',
+        description: 'Vine or tree canopy shaped for optimal fruit development and quality'
+      },
+      canopy_management: {
+        title: 'Canopy Management',
+        icon: '✂️',
+        description: 'Vine or tree canopy shaped for optimal fruit development and quality'
       }
     };
 
@@ -873,6 +938,15 @@ export function getConsumerEventDescription(
       productionDetails.push(`${event.equipment_hours} hours equipment operation`);
     }
 
+    // Consumer-relevant: variety and growth stage when present
+    if (event.variety && String(event.variety).trim()) {
+      productionDetails.push(`Variety: ${event.variety}`);
+    }
+
+    if (event.growth_stage && String(event.growth_stage).trim()) {
+      productionDetails.push(`Growth stage: ${event.growth_stage.replace(/_/g, ' ')}`);
+    }
+
     // Enhanced description building based on actual event data
     const buildProductionDescription = (
       event: any,
@@ -886,6 +960,23 @@ export function getConsumerEventDescription(
         description += ` covering ${event.area_covered} ${event.area_unit || 'hectares'}`;
         if (event.equipment_hours) {
           description += ` over ${event.equipment_hours} hours`;
+        }
+        // Phase 3: Add electricity source detail for IR events
+        const electricitySrcValue = event.electricity_source ?? event.extra_data?.electricity_source;
+        if (electricitySrcValue === 'solar' || electricitySrcValue === 'wind') {
+          description += ` using ${electricitySrcValue}-powered pump (near-zero pump emissions)`;
+        } else if (electricitySrcValue) {
+          const srcLabels: Record<string, string> = {
+            grid: 'grid electricity',
+            diesel_generator: 'diesel generator',
+            mixed: 'mixed power sources'
+          };
+          description += ` powered by ${srcLabels[electricitySrcValue] || electricitySrcValue}`;
+        }
+        // Phase 3: Add pump depth for IR events
+        const pumpDepthVal = event.pump_depth_ft ?? event.extra_data?.pump_depth_ft;
+        if (pumpDepthVal) {
+          description += ` (${pumpDepthVal} ft well depth)`;
         }
       } else if (event.type === 'HA' && event.yield_quantity) {
         description += ` yielding ${event.yield_quantity} ${event.yield_unit || 'units'}`;
@@ -1469,8 +1560,15 @@ export function getConsumerEventDescription(
     if (chemicalType === 'fertilizer application') {
       consumerImpact =
         'Targeted fertilizer application provides essential nutrients for healthy plant growth and optimal fruit quality.';
-      sustainabilityBenefit =
-        'Precision nutrient management reduces waste and environmental impact while ensuring healthy crops.';
+      // Phase 3: Fertigation note
+      const isFertigationFlag =
+        event.is_fertigation === true ||
+        event.is_fertigation === 'true' ||
+        event.extra_data?.is_fertigation === true ||
+        event.extra_data?.is_fertigation === 'true';
+      sustainabilityBenefit = isFertigationFlag
+        ? 'Fertigation (fertilizer through irrigation) maximizes nutrient uptake efficiency and reduces runoff. Application fuel excluded from carbon calculation to avoid double-counting with irrigation events.'
+        : 'Precision nutrient management reduces waste and environmental impact while ensuring healthy crops.';
     } else if (chemicalType === 'pesticide application') {
       // Check chemical_subtype FIRST before product name detection
       // This ensures user's explicit selection takes precedence over product name inference
@@ -1549,7 +1647,14 @@ export function getConsumerEventDescription(
       String(event.active_ingredient).trim() !== 'null' &&
       String(event.active_ingredient).trim() !== productName
     ) {
-      enhancedTitle = `${productName} (${event.active_ingredient})`;
+      // Check if the commercial name already contains the active ingredient(s)
+      // e.g. "Chateau WDG (flumioxazin) + Alion (indaziflam)" already has "Flumioxazin + Indaziflam"
+      const aiParts = String(event.active_ingredient).split(/[+,&]/).map(s => s.trim().toLowerCase());
+      const nameLower = productName.toLowerCase();
+      const alreadyContained = aiParts.every(part => part && nameLower.includes(part));
+      if (!alreadyContained) {
+        enhancedTitle = `${productName} (${event.active_ingredient})`;
+      }
     }
 
     return {

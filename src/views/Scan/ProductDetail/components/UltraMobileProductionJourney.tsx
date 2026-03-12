@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Box,
   VStack,
@@ -163,6 +163,18 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  const handleToggleShowAll = useCallback(() => {
+    if (showAll) {
+      setShowAll(false);
+      requestAnimationFrame(() => {
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    } else {
+      setShowAll(true);
+    }
+  }, [showAll]);
 
   // Event detail modal handlers
   const handleEventClick = (event: TimelineEvent) => {
@@ -683,6 +695,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   };
 
   return (
+    <Box ref={sectionRef}>
     <Card
       bg={bgColor}
       shadow="sm"
@@ -1177,7 +1190,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               size="sm"
               variant="ghost"
               colorScheme="green"
-              onClick={() => setShowAll(!showAll)}
+              onClick={handleToggleShowAll}
               rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}
             >
               {showAll ? 'Show Less' : `Show All ${filteredEvents.length} ${filteredEvents.length === 1 ? 'Event' : 'Events'}`}
@@ -1206,6 +1219,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         )}
       </CardBody>
     </Card>
+    </Box>
   );
 };
 

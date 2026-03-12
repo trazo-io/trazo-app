@@ -1139,7 +1139,8 @@ function ProductDetail() {
                   totalCO2e={getAccurateCarbonFootprint()}
                   productName={completeData?.product?.name || completeData?.farmer?.name}
                   relatableFootprint={completeData?.relatableFootprint}
-                  establishmentId={(completeData as any)?.farmer?.id}
+                  backendComparisons={completeData?.carbon_impact?.comparisons}
+                  consumerContext={completeData?.carbon_impact?.consumer_context}
                 />
               </Suspense>
 

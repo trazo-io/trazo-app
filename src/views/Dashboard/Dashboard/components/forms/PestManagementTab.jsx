@@ -95,6 +95,10 @@ const pestSchema = object({
   // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
   beneficial_insects_used: string().optional(), // Whether beneficial insects are being used
   chemical_free_period_days: string().optional(), // Days since last chemical application
+  // Phase 2: Universal CommonEvent fields (variety, block_id, growth_stage)
+  variety: string().optional(),
+  block_id: string().optional(),
+  growth_stage: string().optional(),
   custom_fields: array(
     object({
       id: string().optional(),
@@ -161,6 +165,10 @@ const PestManagementTab = forwardRef(
         // Sprint 3 Epic 3.2: Consumer Trust Fields
         beneficial_insects_used: initialValues.beneficial_insects_used || '',
         chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || '',
+        // Phase 2: Universal CommonEvent fields
+        variety: initialValues.variety || '',
+        block_id: initialValues.block_id || '',
+        growth_stage: initialValues.growth_stage || '',
         custom_fields: initialValues.custom_fields || []
       }
     });
@@ -236,6 +244,10 @@ const PestManagementTab = forwardRef(
           // Sprint 3 Epic 3.2: Consumer Trust Fields
           beneficial_insects_used: initialValues.beneficial_insects_used || '',
           chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || '',
+          // Phase 2: Universal CommonEvent fields
+          variety: initialValues.variety || '',
+          block_id: initialValues.block_id || '',
+          growth_stage: initialValues.growth_stage || '',
           custom_fields: initialValues.custom_fields || []
         });
       }
@@ -1075,6 +1087,47 @@ const PestManagementTab = forwardRef(
                     step="1"
                     {...methods.register('chemical_free_period_days')}
                     placeholder="e.g., 30"
+                  />
+                </StandardField>
+              </SimpleGrid>
+            </SectionBox>
+
+            {/* Phase 2: Universal Field Details - variety, block_id for traceability */}
+            {/* NOTE: growth_stage omitted here — PestManagement already has crop_growth_stage */}
+            {/* in "Agricultural Context & Conditions" with IPM-specific stage choices */}
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaSeedling}
+                iconColor="teal.500"
+                title={intl.formatMessage({ id: 'fieldDetails.title' })}
+                badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
+                badgeColorScheme="teal"
+                description={intl.formatMessage({ id: 'fieldDetails.description' })}
+              />
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.variety' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}
+                >
+                  <Controller
+                    name="variety"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.varietyPlaceholder' })} />
+                    )}
+                  />
+                </StandardField>
+
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
+                >
+                  <Controller
+                    name="block_id"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })} />
+                    )}
                   />
                 </StandardField>
               </SimpleGrid>

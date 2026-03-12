@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Box,
   VStack,
@@ -87,6 +87,19 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  const handleToggleShowAll = useCallback(() => {
+    if (showAll) {
+      // Collapsing — scroll back to section header
+      setShowAll(false);
+      requestAnimationFrame(() => {
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    } else {
+      setShowAll(true);
+    }
+  }, [showAll]);
 
   // Get event configuration based on type
   const getEventConfig = (event: TimelineEvent) => {
@@ -183,7 +196,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
   };
 
   return (
-    <Box>
+    <Box ref={sectionRef}>
       {/* Header with Summary */}
       <VStack spacing={4} align="stretch" mb={6}>
         <Flex
@@ -512,7 +525,7 @@ export const MobileProductionJourney: React.FC<MobileProductionJourneyProps> = (
             variant="outline"
             colorScheme="green"
             leftIcon={<Icon as={showAll ? FaChevronUp : FaChevronDown} />}
-            onClick={() => setShowAll(!showAll)}
+            onClick={handleToggleShowAll}
             size="sm"
             borderRadius="full"
           >

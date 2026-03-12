@@ -33,7 +33,7 @@ export interface CropTypeMapping {
 export const CROP_TYPE_MAPPINGS: CropTypeMapping[] = [
   {
     slug: 'citrus_oranges',
-    primaryName: 'Citrus (Oranges)',
+    primaryName: 'Citrus',
     aliases: [
       'citrus',
       'oranges',
@@ -45,7 +45,21 @@ export const CROP_TYPE_MAPPINGS: CropTypeMapping[] = [
       'cítricos',
       'citrus fruits',
       'orange tree',
-      'orange grove'
+      'orange grove',
+      'tangerine',
+      'tangerines',
+      'grapefruit',
+      'lemon',
+      'lemons',
+      'lime',
+      'limes',
+      'mandarin',
+      'mandarins',
+      'toronja',
+      'limón',
+      'limon',
+      'lima',
+      'mandarina'
     ],
     category: 'tree_fruits',
     keywords: ['citrus', 'orange', 'naranja', 'grove', 'tree']
@@ -106,6 +120,31 @@ export const CROP_TYPE_MAPPINGS: CropTypeMapping[] = [
     aliases: ['cotton', 'algodón', 'algodon', 'upland cotton', 'pima cotton', 'cotton plant'],
     category: 'fiber_crops',
     keywords: ['cotton', 'algodon', 'fiber']
+  },
+  {
+    slug: 'walnuts',
+    primaryName: 'Walnuts',
+    aliases: [
+      'walnut',
+      'walnuts',
+      'english walnut',
+      'english walnuts',
+      'black walnut',
+      'black walnuts',
+      'chandler walnut',
+      'nuez',
+      'nueces',
+      'nogal',
+      'nogales',
+      'juglans regia',
+      'juglans nigra',
+      'california walnut',
+      'persian walnut',
+      'walnut orchard',
+      'walnut tree'
+    ],
+    category: 'tree_nuts',
+    keywords: ['walnut', 'nuez', 'nogal', 'nut', 'tree', 'juglans', 'chandler']
   },
   {
     slug: 'almonds',
@@ -270,6 +309,39 @@ export const CROP_TYPE_MAPPINGS: CropTypeMapping[] = [
     keywords: ['avocado', 'aguacate', 'palta', 'tree']
   },
   {
+    slug: 'stone_fruit',
+    primaryName: 'Stone Fruit',
+    aliases: [
+      'stone fruit',
+      'stone fruits',
+      'peach',
+      'peaches',
+      'nectarine',
+      'nectarines',
+      'plum',
+      'plums',
+      'apricot',
+      'apricots',
+      'cherry',
+      'cherries',
+      'durazno',
+      'duraznos',
+      'ciruela',
+      'ciruelas',
+      'cereza',
+      'cerezas',
+      'damasco',
+      'damascos',
+      'albaricoque',
+      'melocotón',
+      'melocoton',
+      'prunus persica',
+      'prunus domestica'
+    ],
+    category: 'tree_fruits',
+    keywords: ['peach', 'nectarine', 'plum', 'apricot', 'cherry', 'durazno', 'ciruela', 'stone']
+  },
+  {
     slug: 'hay_alfalfa',
     primaryName: 'Hay/Alfalfa',
     aliases: [
@@ -304,6 +376,55 @@ export const CROP_TYPE_MAPPINGS: CropTypeMapping[] = [
     keywords: ['peanut', 'mani', 'cacahuate', 'groundnut']
   },
   {
+    slug: 'mixed_vegetables',
+    primaryName: 'Mixed Vegetables',
+    aliases: [
+      'mixed vegetables',
+      'mixed veggies',
+      'market garden',
+      'vegetable farm',
+      'CSA vegetables',
+      'garden vegetables',
+      'verduras mixtas',
+      'huerta',
+      'kale',
+      'squash',
+      'zucchini',
+      'peppers',
+      'beans',
+      'cucumber',
+      'cucumbers',
+      'beets',
+      'chard',
+      'herbs',
+      'basil',
+      'cilantro',
+      'eggplant',
+      'broccoli',
+      'cauliflower',
+      'cabbage',
+      'peas',
+      'radish',
+      'turnip',
+      'spinach',
+      'arugula',
+      'collards',
+      'mustard greens',
+      'calabaza',
+      'pimiento',
+      'pimientos',
+      'pepino',
+      'pepinos',
+      'berenjena',
+      'col',
+      'repollo',
+      'espinaca',
+      'albahaca'
+    ],
+    category: 'vegetables',
+    keywords: ['mixed', 'garden', 'CSA', 'huerta', 'veggies', 'vegetables', 'verduras']
+  },
+  {
     slug: 'sunflowers',
     primaryName: 'Sunflowers',
     aliases: [
@@ -328,6 +449,7 @@ export const CROP_TYPE_MAPPINGS: CropTypeMapping[] = [
 export const CATEGORY_DEFAULTS: Record<string, string> = {
   tree_fruits: 'citrus_oranges',
   tree_nuts: 'almonds',
+  tree_nut: 'walnuts',
   grains: 'wheat',
   vegetables: 'tomatoes',
   berries: 'strawberries',

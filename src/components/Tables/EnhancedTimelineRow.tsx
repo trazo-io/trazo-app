@@ -68,7 +68,8 @@ import {
   FaCertificate,
   FaStar,
   FaCircle,
-  FaLayerGroup
+  FaLayerGroup,
+  FaBolt
 } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
 import { getVerificationBadgeConfig, VerificationLevel } from '../../utils/verificationTierHelpers';
@@ -293,14 +294,21 @@ const extractEventFields = (event: Event) => {
         if (event.area_covered && event.area_covered > 0)
           fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
       }
-      // Irrigation (IR): method first, then area, then water source
+      // Irrigation (IR): method first, then area, then electricity_source (Phase 3) or water source
       else if (prodType === 'IR') {
         if (event.irrigation_method)
           fields.push({ label: 'Method', value: event.irrigation_method.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaWater, color: 'blue.500' });
         if (event.area_covered && event.area_covered > 0)
           fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
-        if (event.water_source)
+        // Phase 3: Prefer electricity_source over water_source as third field when present
+        const elecSrc = event.electricity_source ?? event.extra_data?.electricity_source;
+        if (elecSrc) {
+          const elecSrcLabels: Record<string, string> = { grid: 'Grid', solar: 'Solar', wind: 'Wind', diesel_generator: 'Diesel Gen.', mixed: 'Mixed' };
+          const isSustainable = elecSrc === 'solar' || elecSrc === 'wind';
+          fields.push({ label: 'Power Source', value: elecSrcLabels[elecSrc] || elecSrc, icon: FaBolt, color: isSustainable ? 'green.500' : 'orange.500' });
+        } else if (event.water_source) {
           fields.push({ label: 'Water Source', value: event.water_source.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaTint, color: 'blue.400' });
+        }
       }
       // Planting (PL): quantity (seeds), area, seeds source
       else if (prodType === 'PL') {
@@ -320,7 +328,47 @@ const extractEventFields = (event: Event) => {
         if (event.equipment_hours && event.equipment_hours > 0)
           fields.push({ label: 'Hours', value: `${event.equipment_hours} hours`, icon: FaClock, color: 'blue.500' });
       }
-      // Default production (PR, TR, CU, TH): area, fuel, hours
+      // Pollination (PO): pollinator type and hive count
+      else if (prodType === 'PO') {
+        const ed = event.extra_data || {};
+        const pollinatorType = event.pollinator_type || ed.pollinator_type;
+        if (pollinatorType)
+          fields.push({ label: 'Pollinator', value: pollinatorType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaLeaf, color: 'yellow.500' });
+        const hiveCount = event.hive_count !== undefined ? event.hive_count : ed.hive_count;
+        if (hiveCount !== undefined && hiveCount !== null)
+          fields.push({ label: 'Hives', value: `${hiveCount} hives`, icon: FaSeedling, color: 'yellow.600' });
+      }
+      // Post-Harvest Processing (PH): processing type and duration
+      else if (prodType === 'PH') {
+        const ed = event.extra_data || {};
+        const processingType = event.processing_type || ed.processing_type;
+        if (processingType)
+          fields.push({ label: 'Processing', value: processingType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaCog, color: 'teal.500' });
+        const processingDuration = event.processing_duration_hours !== undefined ? event.processing_duration_hours : ed.processing_duration_hours;
+        if (processingDuration !== undefined && processingDuration !== null)
+          fields.push({ label: 'Duration', value: `${processingDuration} hours`, icon: FaClock, color: 'teal.600' });
+      }
+      // Canopy Management (CM): canopy operation and pass number
+      else if (prodType === 'CM') {
+        const ed = event.extra_data || {};
+        const canopyOp = event.canopy_operation || ed.canopy_operation;
+        if (canopyOp)
+          fields.push({ label: 'Operation', value: canopyOp.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaLeaf, color: 'green.600' });
+        const passNum = event.pass_number !== undefined ? event.pass_number : ed.pass_number;
+        if (passNum !== undefined && passNum !== null)
+          fields.push({ label: 'Pass', value: `${passNum}`, icon: FaLayerGroup, color: 'green.500' });
+      }
+      // Pruning (PR): area, pruning passes (summary), hours
+      else if (prodType === 'PR') {
+        if (event.area_covered && event.area_covered > 0)
+          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
+        const pruningPasses = event.pruning_passes !== undefined ? event.pruning_passes : (event.extra_data || {}).pruning_passes;
+        if (pruningPasses !== undefined && pruningPasses !== null && fields.length < 3)
+          fields.push({ label: 'Pruning Passes', value: `${pruningPasses} pruning passes`, icon: FaLayerGroup, color: 'green.500' });
+        if (event.equipment_hours && event.equipment_hours > 0 && fields.length < 3)
+          fields.push({ label: 'Hours', value: `${event.equipment_hours} hours`, icon: FaClock, color: 'blue.500' });
+      }
+      // Default production (TR, CU, TH): area, fuel, hours
       else {
         if (event.area_covered && event.area_covered > 0)
           fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
@@ -329,21 +377,28 @@ const extractEventFields = (event: Event) => {
         if (event.equipment_hours && event.equipment_hours > 0)
           fields.push({ label: 'Hours', value: `${event.equipment_hours} hours`, icon: FaClock, color: 'blue.500' });
       }
+
+      // Secondary display: variety when present across all production subtypes
+      if (fields.length < 3 && event.variety)
+        fields.push({ label: 'Variety', value: event.variety, icon: FaSeedling, color: 'green.400' });
+
       break;
     }
 
     case 2: { // Chemical Event — commercial_name is already the card title, don't repeat it
       const chemType = event.chemical_type || subtype;
 
-      // Area treated — universal priority for all chemical events
-      if (event.area_treated && event.area_treated > 0)
-        fields.push({ label: 'Area Treated', value: `${event.area_treated} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'orange.600' });
+      // Area treated — Phase 3: prefer area_numeric over legacy area_treated
+      const areaNum = event.area_numeric ?? event.area_treated;
+      if (areaNum && areaNum > 0)
+        fields.push({ label: 'Area Treated', value: `${areaNum} ${event.area_unit || 'acres'}`, icon: FaRulerCombined, color: 'orange.600' });
       else if (event.area && event.area !== '0')
         fields.push({ label: 'Area Treated', value: event.area, icon: FaRulerCombined, color: 'orange.600' });
 
-      // Volume/application rate — universal
-      if (event.volume_applied && event.volume_applied > 0)
-        fields.push({ label: 'Volume', value: `${event.volume_applied} ${event.volume_unit || 'L'}`, icon: FaTint, color: 'blue.500' });
+      // Volume/application rate — Phase 3: prefer volume_numeric over legacy volume_applied
+      const volNum = event.volume_numeric ?? event.volume_applied;
+      if (volNum && volNum > 0)
+        fields.push({ label: 'Volume', value: `${volNum} ${event.volume_unit || 'gal'}`, icon: FaTint, color: 'blue.500' });
       else if (event.volume && event.volume !== '0')
         fields.push({ label: 'Rate', value: event.volume, icon: FaTint, color: 'blue.500' });
 
@@ -721,7 +776,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                         <Tooltip
                           label={`Aggregate of ${
                             event.event_count || event.extra_data?.event_count || 'multiple'
-                          } events`}
+                          } ${event.type === 'HA' ? 'harvests' : event.type === 'IR' ? 'irrigations' : event.type === 'PR' ? 'pruning passes' : 'events'}`}
                           hasArrow
                           placement="top"
                         >

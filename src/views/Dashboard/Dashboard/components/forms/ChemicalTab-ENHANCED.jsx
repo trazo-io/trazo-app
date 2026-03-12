@@ -83,9 +83,13 @@ const formSchemaMainInfo = object({
   // Validation is enforced conditionally via superRefine below.
   concentration: string().optional(),
   volume_applied: string().optional(),
+  volume_numeric: string().optional(),
   volume_unit: string().optional(),
   area_treated: string().optional(),
+  area_numeric: string().optional(),
   area_unit: string().optional(),
+  // Phase 3: Fertigation toggle — fertilizer injected through irrigation system
+  is_fertigation: string().optional(),
   application_method: string().min(1, 'Application method is required'),
   // Sprint 2 Epic 2.2: Application Details for USDA/EPA method specificity
   application_details: string().optional(),
@@ -157,7 +161,11 @@ const formSchemaMainInfo = object({
   potassium_total_kg: string().optional(), // Total potassium applied (kg)
   fuel_consumption_total: string().optional(), // Combined fuel for application equipment
   // Fungicide-specific aggregate field
-  active_ingredient_total_kg: string().optional() // Total active ingredient for fungicides (kg)
+  active_ingredient_total_kg: string().optional(), // Total active ingredient for fungicides (kg)
+  // Phase 2: Universal CommonEvent fields (variety, block_id, growth_stage)
+  variety: string().optional(),
+  block_id: string().optional(),
+  growth_stage: string().optional()
 }).superRefine((data, ctx) => {
   // In summary mode, per-application fields (concentration, volume_applied, area_treated)
   // are hidden and replaced by aggregate totals — skip their required validation.
@@ -174,18 +182,22 @@ const formSchemaMainInfo = object({
       }
     } catch (e) { /* let it pass */ }
   }
-  if (!data.volume_applied || data.volume_applied.length === 0) {
-    ctx.addIssue({ code: 'custom', path: ['volume_applied'], message: 'Volume applied is required' });
-  } else if (parseFloat(data.volume_applied) <= 0 || isNaN(parseFloat(data.volume_applied))) {
-    ctx.addIssue({ code: 'custom', path: ['volume_applied'], message: 'Volume must be greater than 0' });
+  // Use volume_numeric as the primary numeric field; fall back to volume_applied for backward compat
+  const effectiveVolume = data.volume_numeric || data.volume_applied;
+  if (!effectiveVolume || effectiveVolume.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['volume_numeric'], message: 'Volume applied is required' });
+  } else if (parseFloat(effectiveVolume) <= 0 || isNaN(parseFloat(effectiveVolume))) {
+    ctx.addIssue({ code: 'custom', path: ['volume_numeric'], message: 'Volume must be greater than 0' });
   }
   if (!data.volume_unit || data.volume_unit.length === 0) {
     ctx.addIssue({ code: 'custom', path: ['volume_unit'], message: 'Volume unit is required' });
   }
-  if (!data.area_treated || data.area_treated.length === 0) {
-    ctx.addIssue({ code: 'custom', path: ['area_treated'], message: 'Area treated is required for carbon calculation' });
-  } else if (parseFloat(data.area_treated) <= 0 || isNaN(parseFloat(data.area_treated))) {
-    ctx.addIssue({ code: 'custom', path: ['area_treated'], message: 'Area must be greater than 0' });
+  // Use area_numeric as the primary numeric field; fall back to area_treated for backward compat
+  const effectiveArea = data.area_numeric || data.area_treated;
+  if (!effectiveArea || effectiveArea.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['area_numeric'], message: 'Area treated is required for carbon calculation' });
+  } else if (parseFloat(effectiveArea) <= 0 || isNaN(parseFloat(effectiveArea))) {
+    ctx.addIssue({ code: 'custom', path: ['area_numeric'], message: 'Area must be greater than 0' });
   }
   if (!data.area_unit || data.area_unit.length === 0) {
     ctx.addIssue({ code: 'custom', path: ['area_unit'], message: 'Area unit is required' });
@@ -211,9 +223,12 @@ const ChemicalTab = forwardRef(
           initialValues.active_ingredient || initialValues.extra_data?.active_ingredient || '',
         concentration: initialValues.concentration || '',
         volume_applied: initialValues.volume_applied?.toString() || '',
-        volume_unit: initialValues.volume_unit || initialValues.extra_data?.volume_unit || 'L',
+        volume_numeric: initialValues.volume_numeric?.toString() || initialValues.volume_applied?.toString() || '',
+        volume_unit: initialValues.volume_unit || initialValues.extra_data?.volume_unit || 'gal',
         area_treated: initialValues.area_treated?.toString() || '',
-        area_unit: initialValues.area_unit || initialValues.extra_data?.area_unit || 'ha',
+        area_numeric: initialValues.area_numeric?.toString() || initialValues.area_treated?.toString() || '',
+        area_unit: initialValues.area_unit || initialValues.extra_data?.area_unit || 'acres',
+        is_fertigation: initialValues.is_fertigation === true || initialValues.is_fertigation === 'true' ? 'true' : 'false',
         application_method: initialValues.application_method || '',
         // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (stored there in onSubmit)
         application_details:
@@ -250,7 +265,11 @@ const ChemicalTab = forwardRef(
         potassium_total_kg: initialValues.potassium_total_kg?.toString() || '',
         fuel_consumption_total: initialValues.fuel_consumption_total?.toString() || '',
         // Fungicide-specific aggregate field
-        active_ingredient_total_kg: initialValues.active_ingredient_total_kg?.toString() || ''
+        active_ingredient_total_kg: initialValues.active_ingredient_total_kg?.toString() || '',
+        // Phase 2: Universal CommonEvent fields
+        variety: initialValues.variety || '',
+        block_id: initialValues.block_id || '',
+        growth_stage: initialValues.growth_stage || ''
       }
     });
 
@@ -352,14 +371,31 @@ const ChemicalTab = forwardRef(
               : initialValues.volume !== undefined && initialValues.volume !== null
               ? initialValues.volume.toString()
               : '',
-          volume_unit: initialValues.volume_unit || initialValues.extra_data?.volume_unit || 'L',
+          volume_numeric:
+            initialValues.volume_numeric !== undefined && initialValues.volume_numeric !== null
+              ? initialValues.volume_numeric.toString()
+              : initialValues.volume_applied !== undefined && initialValues.volume_applied !== null
+              ? initialValues.volume_applied.toString()
+              : initialValues.volume !== undefined && initialValues.volume !== null
+              ? initialValues.volume.toString()
+              : '',
+          volume_unit: initialValues.volume_unit || initialValues.extra_data?.volume_unit || 'gal',
           area_treated:
             initialValues.area_treated !== undefined && initialValues.area_treated !== null
               ? initialValues.area_treated.toString()
               : initialValues.area !== undefined && initialValues.area !== null
               ? initialValues.area.toString()
               : '',
-          area_unit: initialValues.area_unit || initialValues.extra_data?.area_unit || 'ha',
+          area_numeric:
+            initialValues.area_numeric !== undefined && initialValues.area_numeric !== null
+              ? initialValues.area_numeric.toString()
+              : initialValues.area_treated !== undefined && initialValues.area_treated !== null
+              ? initialValues.area_treated.toString()
+              : initialValues.area !== undefined && initialValues.area !== null
+              ? initialValues.area.toString()
+              : '',
+          area_unit: initialValues.area_unit || initialValues.extra_data?.area_unit || 'acres',
+          is_fertigation: initialValues.is_fertigation === true || initialValues.is_fertigation === 'true' ? 'true' : 'false',
           application_method: initialValues.application_method || initialValues.way_of_application || '',
           // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (stored there in onSubmit)
           application_details:
@@ -399,7 +435,11 @@ const ChemicalTab = forwardRef(
           potassium_total_kg: initialValues.potassium_total_kg?.toString() || '',
           fuel_consumption_total: initialValues.fuel_consumption_total?.toString() || '',
           // Fungicide-specific aggregate field
-          active_ingredient_total_kg: initialValues.active_ingredient_total_kg?.toString() || ''
+          active_ingredient_total_kg: initialValues.active_ingredient_total_kg?.toString() || '',
+          // Phase 2: Universal CommonEvent fields
+          variety: initialValues.variety || '',
+          block_id: initialValues.block_id || '',
+          growth_stage: initialValues.growth_stage || ''
         };
 
         methods.reset(resetData);
@@ -419,8 +459,8 @@ const ChemicalTab = forwardRef(
     } = methods;
 
     const chemicalType = watch('type');
-    const areaValue = watch('area_treated');
-    const volumeValue = watch('volume_applied');
+    const areaValue = watch('area_numeric') || watch('area_treated');
+    const volumeValue = watch('volume_numeric') || watch('volume_applied');
     const concentrationValue = watch('concentration');
     const isRestrictedUse = watch('restricted_use_pesticide') === 'true';
 
@@ -455,9 +495,12 @@ const ChemicalTab = forwardRef(
       'chemical_subtype',
       'active_ingredient',
       'volume_applied',
+      'volume_numeric',
       'volume_unit',
       'area_treated',
+      'area_numeric',
       'area_unit',
+      'is_fertigation',
       'concentration',
       'application_method',
       'application_details',
@@ -503,9 +546,12 @@ const ChemicalTab = forwardRef(
             'commercial_name',
             'active_ingredient',
             'volume_applied',
+            'volume_numeric',
             'volume_unit',
             'area_treated',
+            'area_numeric',
             'area_unit',
+            'is_fertigation',
             'concentration',
             'application_method',
             'application_details',
@@ -561,7 +607,9 @@ const ChemicalTab = forwardRef(
       const {
         // Remove frontend-only field names to avoid confusion
         volume_applied,
+        volume_numeric,
         area_treated,
+        area_numeric,
         application_method,
         application_details,
         // SPRINT 6 FIX (2025-12-24): Extract active_ingredient to store in extra_data (no model field)
@@ -577,8 +625,14 @@ const ChemicalTab = forwardRef(
         applicator_certification,
         rei_hours,
         phi_days,
+        // Phase 3: Extract is_fertigation to include in extra_data
+        is_fertigation,
         ...filteredData
       } = data;
+
+      // Phase 3: Derive effective volume and area — volume_numeric / area_numeric are primary
+      const effectiveVolume = volume_numeric || volume_applied || '';
+      const effectiveArea = area_numeric || area_treated || '';
 
       // Sprint 5: Check for aggregate mode
       const isSummaryEvent = data.is_summary === 'true';
@@ -593,6 +647,10 @@ const ChemicalTab = forwardRef(
         weather_conditions: undefined,
         application_timing: undefined,
         target_pest_disease: undefined,
+        // Phase 3: volume_numeric / area_numeric are the primary numeric fields.
+        // volume_applied and area_treated are kept for backward compatibility.
+        volume_numeric: effectiveVolume ? parseFloat(effectiveVolume) : null,
+        area_numeric: effectiveArea ? parseFloat(effectiveArea) : null,
         // 🔧 FIELD UNIFICATION FIX: Send separate numeric values and units
         // Backend UpdateChemicalEventSerializer handles:
         //   - volume_applied → maps to volume field
@@ -600,8 +658,8 @@ const ChemicalTab = forwardRef(
         //   - area_treated → maps to area field
         //   - area_unit → stores in extra_data
         // Do NOT combine into strings like "400 L" - keep them separate!
-        volume_applied: volume_applied || '',
-        area_treated: area_treated || '',
+        volume_applied: effectiveVolume || '',
+        area_treated: effectiveArea || '',
         way_of_application: application_method || '',
         // EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309
         // These are direct model fields on ChemicalEvent, not extra_data
@@ -616,6 +674,8 @@ const ChemicalTab = forwardRef(
           // Unit fields for carbon calculation accuracy
           volume_unit: data.volume_unit || '',
           area_unit: data.area_unit || '',
+          // Phase 3: Fertigation flag — application fuel excluded from carbon calc to avoid double-counting
+          is_fertigation: is_fertigation === 'true',
           // Sprint 2 Epic 2.2: Application details for USDA/EPA method specificity
           application_details: application_details || '',
           // SPRINT 6 FIX (2025-12-24): Store active_ingredient in extra_data (no model field exists)
@@ -1652,16 +1712,17 @@ const ChemicalTab = forwardRef(
                 {/* Sprint 5: Hide individual quantity fields when in Summary Mode - aggregate fields replace them */}
                 {!isSummaryMode && (
                   <>
+                    {/* Phase 3: volume_numeric is the primary numeric field; volume_applied kept for backward compat */}
                     <HStack spacing={4} align="top">
                       <StandardField
-                        label="Volume Applied"
+                        label={intl.formatMessage({ id: 'app.volumeApplied', defaultMessage: 'Volume Applied' })}
                         required
-                        error={errors.volume_applied?.message}
-                        helpText="Total volume applied for carbon calculation"
+                        error={errors.volume_numeric?.message}
+                        helpText={intl.formatMessage({ id: 'app.volumeAppliedHelp', defaultMessage: 'Total volume of product applied' })}
                         flex={2}
                       >
                         <Controller
-                          name="volume_applied"
+                          name="volume_numeric"
                           control={methods.control}
                           render={({ field }) => (
                             <StandardInput
@@ -1676,32 +1737,39 @@ const ChemicalTab = forwardRef(
                         />
                       </StandardField>
 
-                      <StandardField label="Unit" flex={1} mt="0px">
+                      <StandardField
+                        label={intl.formatMessage({ id: 'app.volumeUnit', defaultMessage: 'Unit' })}
+                        flex={1}
+                        mt="0px"
+                      >
                         <Controller
                           name="volume_unit"
                           control={methods.control}
                           render={({ field }) => (
                             <StandardSelect {...field} bg="white">
-                              <option value="L">Liters (L)</option>
-                              <option value="gal">Gallons</option>
-                              <option value="kg">Kilograms</option>
-                              <option value="lb">Pounds</option>
+                              <option value="L">{intl.formatMessage({ id: 'app.unit.liters', defaultMessage: 'Liters (L)' })}</option>
+                              <option value="gal">{intl.formatMessage({ id: 'app.unit.gallons', defaultMessage: 'Gallons (gal)' })}</option>
+                              <option value="mL">{intl.formatMessage({ id: 'app.unit.milliliters', defaultMessage: 'Milliliters (mL)' })}</option>
+                              <option value="oz">{intl.formatMessage({ id: 'app.unit.fluidOunces', defaultMessage: 'Fluid Ounces (oz)' })}</option>
+                              <option value="kg">{intl.formatMessage({ id: 'app.unit.kilograms', defaultMessage: 'Kilograms (kg)' })}</option>
+                              <option value="lbs">{intl.formatMessage({ id: 'app.unit.pounds', defaultMessage: 'Pounds (lbs)' })}</option>
                             </StandardSelect>
                           )}
                         />
                       </StandardField>
                     </HStack>
 
+                    {/* Phase 3: area_numeric is the primary numeric field; area_treated kept for backward compat */}
                     <HStack spacing={4} align="top">
                       <StandardField
-                        label="Area Treated"
+                        label={intl.formatMessage({ id: 'app.areaTreated', defaultMessage: 'Area Treated' })}
                         required
-                        error={errors.area_treated?.message}
-                        helpText="Area coverage for accurate carbon calculation"
+                        error={errors.area_numeric?.message}
+                        helpText={intl.formatMessage({ id: 'app.areaTreatedHelp', defaultMessage: 'Area coverage for accurate carbon calculation' })}
                         flex={2}
                       >
                         <Controller
-                          name="area_treated"
+                          name="area_numeric"
                           control={methods.control}
                           render={({ field }) => (
                             <StandardInput
@@ -1716,20 +1784,61 @@ const ChemicalTab = forwardRef(
                         />
                       </StandardField>
 
-                      <StandardField label="Unit" flex={1} mt="0px">
+                      <StandardField
+                        label={intl.formatMessage({ id: 'app.areaUnit', defaultMessage: 'Unit' })}
+                        flex={1}
+                        mt="0px"
+                      >
                         <Controller
                           name="area_unit"
                           control={methods.control}
                           render={({ field }) => (
                             <StandardSelect {...field} bg="white">
-                              <option value="ha">Hectares (ha)</option>
-                              <option value="acres">Acres</option>
-                              <option value="m2">Square meters</option>
+                              <option value="ha">{intl.formatMessage({ id: 'app.unit.hectares', defaultMessage: 'Hectares (ha)' })}</option>
+                              <option value="acres">{intl.formatMessage({ id: 'app.unit.acres', defaultMessage: 'Acres' })}</option>
+                              <option value="m2">{intl.formatMessage({ id: 'app.unit.squareMeters', defaultMessage: 'Square meters (m²)' })}</option>
                             </StandardSelect>
                           )}
                         />
                       </StandardField>
                     </HStack>
+
+                    {/* Phase 3: Fertigation toggle — shown only for Fertilizer (FE) subtype */}
+                    {chemicalType === 'FE' && (
+                      <Box
+                        p={3}
+                        bg="teal.50"
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor="teal.200"
+                      >
+                        <HStack justify="space-between" align="center">
+                          <VStack align="start" spacing={0} flex={1}>
+                            <Text fontSize="sm" fontWeight="semibold" color="teal.800">
+                              {intl.formatMessage({ id: 'app.fertigation', defaultMessage: 'Fertigation' })}
+                            </Text>
+                            <Text fontSize="xs" color="teal.600">
+                              {intl.formatMessage({ id: 'app.fertigationHelp', defaultMessage: 'Fertilizer injected through irrigation system' })}
+                            </Text>
+                            <Text fontSize="xs" color="teal.500" mt={1}>
+                              {intl.formatMessage({ id: 'app.fertigationCarbonNote', defaultMessage: 'When enabled, application fuel is excluded from carbon calculations to avoid double-counting with irrigation events.' })}
+                            </Text>
+                          </VStack>
+                          <Controller
+                            name="is_fertigation"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <Switch
+                                isChecked={field.value === 'true'}
+                                onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
+                                colorScheme="teal"
+                                size="lg"
+                              />
+                            )}
+                          />
+                        </HStack>
+                      </Box>
+                    )}
 
                     <StandardField
                       label={
@@ -1970,6 +2079,7 @@ const ChemicalTab = forwardRef(
                       <StandardSelect {...field}>
                         <option value="">Select conditions...</option>
                         <option value="calm_dry">☀️ Calm & Dry - Ideal conditions</option>
+                        <option value="overcast_humid">🌥️ Overcast & Humid - Good for herbicides</option>
                         <option value="light_wind">🌬️ Light Wind - Suitable conditions</option>
                         <option value="humid">💨 Humid - Acceptable conditions</option>
                         <option value="windy">🌪️ Windy - Challenging conditions</option>
@@ -2372,6 +2482,67 @@ const ChemicalTab = forwardRef(
                 </VStack>
               </SectionBox>
             )}
+
+            {/* Phase 2: Universal Field Details - variety, block_id, growth_stage */}
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaSeedling}
+                iconColor="teal.500"
+                title={intl.formatMessage({ id: 'fieldDetails.title' })}
+                badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
+                badgeColorScheme="teal"
+                description={intl.formatMessage({ id: 'fieldDetails.description' })}
+              />
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.variety' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}
+                >
+                  <Controller
+                    name="variety"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.varietyPlaceholder' })} />
+                    )}
+                  />
+                </StandardField>
+
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
+                >
+                  <Controller
+                    name="block_id"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })} />
+                    )}
+                  />
+                </StandardField>
+
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.growthStageHelp' })}
+                >
+                  <Controller
+                    name="growth_stage"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardSelect {...field} placeholder="Select growth stage...">
+                        <option value="dormant">{intl.formatMessage({ id: 'fieldDetails.growthStage.dormant' })}</option>
+                        <option value="budbreak">{intl.formatMessage({ id: 'fieldDetails.growthStage.budbreak' })}</option>
+                        <option value="bloom">{intl.formatMessage({ id: 'fieldDetails.growthStage.bloom' })}</option>
+                        <option value="fruit_set">{intl.formatMessage({ id: 'fieldDetails.growthStage.fruit_set' })}</option>
+                        <option value="vegetative">{intl.formatMessage({ id: 'fieldDetails.growthStage.vegetative' })}</option>
+                        <option value="maturation">{intl.formatMessage({ id: 'fieldDetails.growthStage.maturation' })}</option>
+                        <option value="harvest_ready">{intl.formatMessage({ id: 'fieldDetails.growthStage.harvest_ready' })}</option>
+                        <option value="post_harvest">{intl.formatMessage({ id: 'fieldDetails.growthStage.post_harvest' })}</option>
+                      </StandardSelect>
+                    )}
+                  />
+                </StandardField>
+              </SimpleGrid>
+            </SectionBox>
 
             {/* Section 5: Farmer's Field Notes */}
             <SectionBox variant="default">

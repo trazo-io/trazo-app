@@ -82,6 +82,7 @@ const FUEL_TYPES = [
 // Sprint 2: Production type display names for auto-generated event names
 // Removes farmer burden of manually typing event names (~20 sec saved per event)
 // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
+// Phase 2: Added PO (Pollination), PH (Post-Harvest Processing), CM (Canopy Management)
 const PRODUCTION_TYPE_NAMES = {
   PL: 'Planting',
   HA: 'Harvesting',
@@ -90,7 +91,10 @@ const PRODUCTION_TYPE_NAMES = {
   TR: 'Transplanting',
   CU: 'Cultivation',
   TH: 'Thinning',
-  EM: 'Equipment Maintenance' // ✅ FIXED: Was EQ, now EM (Production subtype)
+  EM: 'Equipment Maintenance', // ✅ FIXED: Was EQ, now EM (Production subtype)
+  PO: 'Pollination',
+  PH: 'Post-Harvest Processing',
+  CM: 'Canopy Management'
 };
 
 // ENHANCED SCHEMA - Carbon calculation focused with Phase 1.3 validation
@@ -165,6 +169,15 @@ const formSchemaMainInfo = object({
   water_source: string().optional(), // Water source for irrigation
   // ENHANCED: USDA NASS 2023 irrigation water estimation fields
   irrigation_method: string().optional(), // drip, sprinkler, flood, etc.
+  // Phase 3: Irrigation pump fields for accurate electricity emission calculation
+  pump_depth_ft: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Pump depth cannot be negative'),
+  electricity_source: string().optional(), // grid, solar, wind, diesel_generator, mixed
   irrigation_depth: string()
     .optional()
     .refine((val) => {
@@ -193,6 +206,65 @@ const formSchemaMainInfo = object({
       return !isNaN(num) && num > 0;
     }, 'Total water volume must be greater than 0'),
   water_volume_unit: string().optional(), // gallons, liters, acre_feet, cubic_meters
+  // Sprint 5: Aggregate Harvest Support - log multiple harvests as one summary
+  yield_total: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num > 0;
+    }, 'Total yield must be greater than 0'),
+  yield_total_unit: string().optional(), // lbs, kg, tons, boxes
+  // Phase 2: Universal CommonEvent fields (variety, block_id, growth_stage)
+  variety: string().optional(), // Crop variety/cultivar (e.g., Nonpareil, Hass)
+  block_id: string().optional(), // Block or section identifier (e.g., Block A, North Orchard)
+  growth_stage: string().optional(), // Phenological stage at time of event
+  // Phase 2: Harvest-specific brix level
+  brix_level: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0 && num <= 100;
+    }, 'Brix level must be between 0 and 100'),
+  // Phase 2: Pollination (PO) specific extra_data fields
+  pollinator_type: string().optional(),
+  hive_count: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseInt(val, 10);
+      return !isNaN(num) && num >= 0;
+    }, 'Hive count cannot be negative'),
+  placement_date: string().optional(),
+  removal_date: string().optional(),
+  // Phase 2: Post-Harvest Processing (PH) specific extra_data fields
+  processing_type: string().optional(),
+  processing_duration_hours: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Processing duration cannot be negative'),
+  temperature_control: string().optional(),
+  // Phase 2: Canopy Management (CM) specific extra_data fields
+  canopy_operation: string().optional(),
+  pass_number: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseInt(val, 10);
+      return !isNaN(num) && num >= 1;
+    }, 'Pass number must be at least 1'),
+  // Phase 2: Pruning Summary Mode (mirrors IR and HA summary pattern)
+  pruning_passes: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseInt(val, 10);
+      return !isNaN(num) && num >= 1;
+    }, 'Number of pruning passes must be at least 1'),
   // Phase 2.3: Custom fields for additional farmer-created information
   custom_fields: array(
     object({
@@ -222,7 +294,7 @@ const ProductionTab = forwardRef(
         // Sprint 2: Auto-generate name from type - fallback to initial name if provided
         name: initialValues.name || PRODUCTION_TYPE_NAMES[initialValues.type || 'PL'] || '',
         area_covered: initialValues.area_covered?.toString() || '',
-        area_unit: initialValues.area_unit || 'ha',
+        area_unit: initialValues.area_unit || 'acres',
         yield_quantity: initialValues.yield_quantity?.toString() || '',
         yield_unit: initialValues.yield_unit || 'kg',
         fuel_consumed: initialValues.fuel_consumed?.toString() || '',
@@ -248,6 +320,9 @@ const ProductionTab = forwardRef(
         water_source: initialValues.water_source || '',
         // ENHANCED: USDA NASS 2023 irrigation water estimation fields
         irrigation_method: initialValues.irrigation_method || '',
+        // Phase 3: Irrigation pump fields
+        pump_depth_ft: initialValues.pump_depth_ft?.toString() || '',
+        electricity_source: initialValues.electricity_source || '',
         irrigation_depth: initialValues.irrigation_depth?.toString() || '',
         irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches',
         // Sprint 4: Aggregate Irrigation Support
@@ -261,6 +336,29 @@ const ProductionTab = forwardRef(
         event_count: initialValues.event_count?.toString() || '',
         water_volume_total: initialValues.water_volume_total?.toString() || '',
         water_volume_unit: initialValues.water_volume_unit || 'gallons',
+        // Sprint 5: Aggregate Harvest Support
+        yield_total: initialValues.yield_total?.toString() || '',
+        yield_total_unit: initialValues.yield_total_unit || 'lbs',
+        // Phase 2: Universal CommonEvent fields
+        variety: initialValues.variety || '',
+        block_id: initialValues.block_id || '',
+        growth_stage: initialValues.growth_stage || '',
+        // Phase 2: Harvest brix level
+        brix_level: initialValues.brix_level?.toString() || '',
+        // Phase 2: Pollination (PO) fields
+        pollinator_type: initialValues.pollinator_type || '',
+        hive_count: initialValues.hive_count?.toString() || '',
+        placement_date: initialValues.placement_date || '',
+        removal_date: initialValues.removal_date || '',
+        // Phase 2: Post-Harvest Processing (PH) fields
+        processing_type: initialValues.processing_type || '',
+        processing_duration_hours: initialValues.processing_duration_hours?.toString() || '',
+        temperature_control: initialValues.temperature_control || 'false',
+        // Phase 2: Canopy Management (CM) fields
+        canopy_operation: initialValues.canopy_operation || initialValues.extra_data?.canopy_operation || '',
+        pass_number: (initialValues.pass_number ?? initialValues.extra_data?.pass_number)?.toString() || '',
+        // Phase 2: Pruning Summary Mode
+        pruning_passes: initialValues.pruning_passes?.toString() || '',
         // Phase 2.3: Custom fields initialization
         custom_fields: initialValues.custom_fields || []
       }
@@ -302,7 +400,7 @@ const ProductionTab = forwardRef(
           // Sprint 2: Auto-generate name from type - fallback to initial name if provided
           name: initialValues.name || PRODUCTION_TYPE_NAMES[initialValues.type || 'PL'] || '',
           area_covered: initialValues.area_covered?.toString() || '',
-          area_unit: initialValues.area_unit || 'ha',
+          area_unit: initialValues.area_unit || 'acres',
           yield_quantity: initialValues.yield_quantity?.toString() || '',
           yield_unit: initialValues.yield_unit || 'kg',
           fuel_consumed: initialValues.fuel_consumed?.toString() || '',
@@ -323,6 +421,9 @@ const ProductionTab = forwardRef(
           water_source: initialValues.water_source || '',
           // ENHANCED: USDA NASS 2023 irrigation water estimation fields
           irrigation_method: initialValues.irrigation_method || '',
+          // Phase 3: Irrigation pump fields
+          pump_depth_ft: initialValues.pump_depth_ft?.toString() || '',
+          electricity_source: initialValues.electricity_source || '',
           irrigation_depth: initialValues.irrigation_depth?.toString() || '',
           irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches',
           // Sprint 4: Aggregate Irrigation Support
@@ -336,11 +437,33 @@ const ProductionTab = forwardRef(
           event_count: initialValues.event_count?.toString() || '',
           water_volume_total: initialValues.water_volume_total?.toString() || '',
           water_volume_unit: initialValues.water_volume_unit || 'gallons',
+          // Sprint 5: Aggregate Harvest Support
+          yield_total: initialValues.yield_total?.toString() || '',
+          yield_total_unit: initialValues.yield_total_unit || 'lbs',
           // Phase 2: Target market fields
           harvest_quality_grade: initialValues.harvest_quality_grade || '',
           grain_moisture: initialValues.grain_moisture?.toString() || '',
           harvest_method: initialValues.harvest_method || '',
           brix_levels: initialValues.brix_levels || '',
+          // Phase 2: Universal CommonEvent fields
+          variety: initialValues.variety || '',
+          block_id: initialValues.block_id || '',
+          growth_stage: initialValues.growth_stage || '',
+          brix_level: initialValues.brix_level?.toString() || '',
+          // Phase 2: Pollination (PO) fields
+          pollinator_type: initialValues.pollinator_type || '',
+          hive_count: initialValues.hive_count?.toString() || '',
+          placement_date: initialValues.placement_date || '',
+          removal_date: initialValues.removal_date || '',
+          // Phase 2: Post-Harvest Processing (PH) fields
+          processing_type: initialValues.processing_type || '',
+          processing_duration_hours: initialValues.processing_duration_hours?.toString() || '',
+          temperature_control: initialValues.temperature_control || 'false',
+          // Phase 2: Canopy Management (CM) fields
+          canopy_operation: initialValues.canopy_operation || initialValues.extra_data?.canopy_operation || '',
+          pass_number: (initialValues.pass_number ?? initialValues.extra_data?.pass_number)?.toString() || '',
+          // Phase 2: Pruning Summary Mode
+          pruning_passes: initialValues.pruning_passes?.toString() || '',
           // Phase 2.3: Custom fields reset
           custom_fields: initialValues.custom_fields || []
         };
@@ -436,12 +559,24 @@ const ProductionTab = forwardRef(
       'water_volume_unit',
       // Irrigation pump factor selection
       'water_source',
+      // Phase 3: Irrigation pump fields
+      'pump_depth_ft',
+      'electricity_source',
       // Harvest-specific fields for preview card updates
       'harvest_method',
       'brix_levels',
       'grain_moisture',
       'quality_grade',
-      'production_efficiency'
+      'production_efficiency',
+      // Phase 2: Universal CommonEvent fields
+      'variety',
+      'block_id',
+      'growth_stage',
+      'brix_level',
+      // Phase 2: Subtype-specific fields
+      'pollinator_type',
+      'processing_type',
+      'canopy_operation'
     ]);
     const previousValuesRef = useRef({});
     const isInitialMountRef = useRef(true);
@@ -480,6 +615,9 @@ const ProductionTab = forwardRef(
             'water_volume_unit',
             // Irrigation pump factor selection (USDA NRCS)
             'water_source',
+            // Phase 3: Irrigation pump fields
+            'pump_depth_ft',
+            'electricity_source',
             // Harvest-specific fields for preview card updates
             'harvest_method',
             'brix_levels',
@@ -564,6 +702,12 @@ const ProductionTab = forwardRef(
         // Phase 2: Additional harvest fields
         harvest_method: data.harvest_method || undefined,
         brix_levels: data.brix_levels || undefined,
+        // Phase 2: Universal CommonEvent top-level fields
+        variety: data.variety || undefined,
+        block_id: data.block_id || undefined,
+        growth_stage: data.growth_stage || undefined,
+        // Phase 2: Brix level for HA events (top-level ProductionEvent field)
+        brix_level: data.brix_level ? parseFloat(data.brix_level) : undefined,
         // Sprint 2 Epic 2.1: Include equipment-specific data when type is EM
         // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
         ...(data.type === 'EM' && {
@@ -577,6 +721,9 @@ const ProductionTab = forwardRef(
         irrigation_method: data.irrigation_method || undefined,
         irrigation_depth: data.irrigation_depth ? parseFloat(data.irrigation_depth) : undefined,
         irrigation_depth_unit: data.irrigation_depth_unit || undefined,
+        // Phase 3: Pump fields for IR events — top-level model fields
+        pump_depth_ft: data.type === 'IR' && data.pump_depth_ft ? parseFloat(data.pump_depth_ft) : undefined,
+        electricity_source: data.type === 'IR' && data.electricity_source ? data.electricity_source : undefined,
         // Summary mode fields stored in extra_data (not model fields)
         extra_data: {
           is_summary: isSummaryEvent,
@@ -584,10 +731,42 @@ const ProductionTab = forwardRef(
             date_start: data.date_start || null,
             date_end: data.date_end || null,
             event_count: data.event_count ? parseInt(data.event_count, 10) : null,
-            water_volume_total: data.water_volume_total
-              ? parseFloat(data.water_volume_total)
-              : null,
-            water_volume_unit: data.water_volume_unit || 'gallons'
+            // Irrigation summary fields
+            ...(data.type === 'IR' && {
+              water_volume_total: data.water_volume_total
+                ? parseFloat(data.water_volume_total)
+                : null,
+              water_volume_unit: data.water_volume_unit || 'gallons'
+            }),
+            // Sprint 5: Harvest summary fields
+            ...(data.type === 'HA' && {
+              yield_total: data.yield_total ? parseFloat(data.yield_total) : undefined,
+              yield_total_unit: data.yield_total_unit || 'lbs'
+            }),
+            // Phase 2: Pruning summary fields
+            ...(data.type === 'PR' && {
+              pruning_passes: data.pruning_passes ? parseInt(data.pruning_passes, 10) : null
+            })
+          }),
+          // Phase 2: Pollination (PO) extra_data fields
+          ...(data.type === 'PO' && {
+            pollinator_type: data.pollinator_type || undefined,
+            hive_count: data.hive_count ? parseInt(data.hive_count, 10) : undefined,
+            placement_date: data.placement_date || undefined,
+            removal_date: data.removal_date || undefined
+          }),
+          // Phase 2: Post-Harvest Processing (PH) extra_data fields
+          ...(data.type === 'PH' && {
+            processing_type: data.processing_type || undefined,
+            processing_duration_hours: data.processing_duration_hours
+              ? parseFloat(data.processing_duration_hours)
+              : undefined,
+            temperature_control: data.temperature_control === 'true'
+          }),
+          // Phase 2: Canopy Management (CM) extra_data fields
+          ...(data.type === 'CM' && {
+            canopy_operation: data.canopy_operation || undefined,
+            pass_number: data.pass_number ? parseInt(data.pass_number, 10) : undefined
           })
         }
       };
@@ -651,6 +830,10 @@ const ProductionTab = forwardRef(
                         <option value="EM">
                           🔧 Equipment Maintenance - Equipment usage & maintenance
                         </option>
+                        {/* Phase 2: New production subtypes */}
+                        <option value="PO">🐝 Pollination - Pollinator placement & management</option>
+                        <option value="PH">📦 Post-Harvest Processing - Washing, cooling, packing</option>
+                        <option value="CM">🌿 Canopy Management - Pruning, hedging, leaf pulling, thinning</option>
                       </StandardSelect>
                     )}
                   />
@@ -958,15 +1141,28 @@ const ProductionTab = forwardRef(
 
                     <Box flex={1}>
                       <StandardField
-                        label="Brix Levels (Sugar Content)"
-                        error={errors.brix_levels?.message}
-                        helpText="Sugar content measurement for premium fruit quality"
+                        label={intl.formatMessage({ id: 'production.brixLevel' })}
+                        error={errors.brix_level?.message}
+                        helpText={intl.formatMessage({ id: 'production.brixLevelHelp' })}
                       >
                         <Controller
-                          name="brix_levels"
+                          name="brix_level"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardInput {...field} placeholder="e.g., 12.8-14.5 or 13.2" />
+                            <NumberInput
+                              min={0}
+                              max={45}
+                              precision={1}
+                              step={0.1}
+                              value={field.value || ''}
+                              onChange={(valueString) => field.onChange(valueString)}
+                            >
+                              <NumberInputField placeholder="e.g., 13.5" />
+                              <NumberInputStepper>
+                                <NumberIncrementStepper />
+                                <NumberDecrementStepper />
+                              </NumberInputStepper>
+                            </NumberInput>
                           )}
                         />
                       </StandardField>
@@ -976,7 +1172,624 @@ const ProductionTab = forwardRef(
               </SectionBox>
             )}
 
-            {/* Equipment & Fuel Usage */}
+            {/* Sprint 5: Aggregate Harvest Summary Toggle & Fields */}
+            {productionType === 'HA' && (
+              <SectionBox variant="highlighted">
+                <SectionHeader
+                  icon={FaBalanceScale}
+                  iconColor="blue.500"
+                  title="Harvest Summary Mode"
+                  badge="Aggregate Logging"
+                  badgeColorScheme="blue"
+                  description="Log multiple harvest picks as one summary record to reduce logging burden while maintaining full transparency."
+                />
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  {/* Sprint 5: Aggregate Harvest Toggle */}
+                  <Box gridColumn={{ md: 'span 2' }} mb={2}>
+                    <HStack
+                      p={3}
+                      bg={isSummaryMode ? 'blue.50' : 'gray.50'}
+                      borderRadius="md"
+                      borderWidth="1px"
+                      borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
+                      justify="space-between"
+                    >
+                      <VStack align="start" spacing={0}>
+                        <HStack>
+                          <Text fontWeight="semibold" fontSize="sm">
+                            📊 Harvest Summary Mode
+                          </Text>
+                          {isSummaryMode && (
+                            <Badge colorScheme="blue" size="sm">
+                              Active
+                            </Badge>
+                          )}
+                        </HStack>
+                        <Text fontSize="xs" color="gray.600">
+                          {isSummaryMode
+                            ? 'Log multiple harvests as one summary (e.g., "24 picks over 3 months")'
+                            : 'Enable to log multiple harvest events at once'}
+                        </Text>
+                      </VStack>
+                      <Controller
+                        name="is_summary"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <Switch
+                            colorScheme="blue"
+                            size="lg"
+                            isChecked={field.value === 'true'}
+                            onChange={(e) =>
+                              field.onChange(e.target.checked ? 'true' : 'false')
+                            }
+                          />
+                        )}
+                      />
+                    </HStack>
+                  </Box>
+
+                  {/* Sprint 5: Aggregate Harvest Fields (shown when summary mode is active) */}
+                  {isSummaryMode && (
+                    <>
+                      <StandardField label="Period Start Date" isRequired>
+                        <Controller
+                          name="date_start"
+                          control={methods.control}
+                          render={({ field }) => <Input {...field} type="date" size="md" />}
+                        />
+                      </StandardField>
+
+                      <StandardField label="Period End Date" isRequired>
+                        <Controller
+                          name="date_end"
+                          control={methods.control}
+                          render={({ field }) => <Input {...field} type="date" size="md" />}
+                        />
+                      </StandardField>
+
+                      <StandardField label="Number of Harvests" isRequired>
+                        <Controller
+                          name="event_count"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput {...field} type="number" min="1" placeholder="e.g., 24" />
+                          )}
+                        />
+                      </StandardField>
+
+                      <StandardField label="Total Yield" isRequired>
+                        <HStack spacing={2}>
+                          <Controller
+                            name="yield_total"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardInput
+                                {...field}
+                                flex={2}
+                                type="number"
+                                step="0.01"
+                                placeholder="e.g., 5000"
+                              />
+                            )}
+                          />
+                          <Controller
+                            name="yield_total_unit"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardSelect {...field} flex={1}>
+                                <option value="lbs">Pounds</option>
+                                <option value="kg">Kilograms</option>
+                                <option value="tons">Tonnes</option>
+                                <option value="boxes">Boxes</option>
+                              </StandardSelect>
+                            )}
+                          />
+                        </HStack>
+                      </StandardField>
+                    </>
+                  )}
+                </SimpleGrid>
+              </SectionBox>
+            )}
+
+            {/* Phase 2: Universal Field Details - variety, block_id, growth_stage */}
+            {/* Hidden for PO, PH, CM, EM — these subtypes handle fields in their own sections or don't need them */}
+            {!['PO', 'PH', 'CM', 'EM'].includes(productionType) && (
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaSeedling}
+                iconColor="teal.500"
+                title={intl.formatMessage({ id: 'fieldDetails.title' })}
+                badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
+                badgeColorScheme="teal"
+                description={intl.formatMessage({ id: 'fieldDetails.description' })}
+              />
+              <SimpleGrid columns={{ base: 1, md: ['PL', 'TR', 'HA'].includes(productionType) ? 2 : 3 }} spacing={4}>
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.variety' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}
+                >
+                  <Controller
+                    name="variety"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.varietyPlaceholder' })} />
+                    )}
+                  />
+                </StandardField>
+
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
+                >
+                  <Controller
+                    name="block_id"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })} />
+                    )}
+                  />
+                </StandardField>
+
+                {/* Growth Stage — hidden for PL, TR (meaningless at planting) and HA (always harvest_ready) */}
+                {!['PL', 'TR', 'HA'].includes(productionType) && (
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.growthStageHelp' })}
+                >
+                  <Controller
+                    name="growth_stage"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardSelect {...field} placeholder="Select growth stage...">
+                        <option value="dormant">{intl.formatMessage({ id: 'fieldDetails.growthStage.dormant' })}</option>
+                        <option value="budbreak">{intl.formatMessage({ id: 'fieldDetails.growthStage.budbreak' })}</option>
+                        <option value="bloom">{intl.formatMessage({ id: 'fieldDetails.growthStage.bloom' })}</option>
+                        <option value="fruit_set">{intl.formatMessage({ id: 'fieldDetails.growthStage.fruit_set' })}</option>
+                        <option value="vegetative">{intl.formatMessage({ id: 'fieldDetails.growthStage.vegetative' })}</option>
+                        <option value="maturation">{intl.formatMessage({ id: 'fieldDetails.growthStage.maturation' })}</option>
+                        <option value="harvest_ready">{intl.formatMessage({ id: 'fieldDetails.growthStage.harvest_ready' })}</option>
+                        <option value="post_harvest">{intl.formatMessage({ id: 'fieldDetails.growthStage.post_harvest' })}</option>
+                      </StandardSelect>
+                    )}
+                  />
+                </StandardField>
+                )}
+              </SimpleGrid>
+            </SectionBox>
+            )}
+
+            {/* Phase 2: Pollination (PO) specific fields */}
+            {productionType === 'PO' && (
+              <SectionBox variant="highlighted">
+                <SectionHeader
+                  icon={FaSeedling}
+                  iconColor="yellow.500"
+                  title={intl.formatMessage({ id: 'production.pollination.title' })}
+                  badge={intl.formatMessage({ id: 'production.pollination.badge' })}
+                  badgeColorScheme="yellow"
+                  description="Document pollinator placement and management for full production transparency."
+                />
+                <VStack spacing={4} align="stretch">
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.pollination.varietyLabel' })}
+                      helpText={intl.formatMessage({ id: 'production.pollination.varietyHelp' })}
+                    >
+                      <Controller
+                        name="variety"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.varietyPlaceholder' })} />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
+                      helpText={intl.formatMessage({ id: 'production.pollination.blockIdHelp' })}
+                    >
+                      <Controller
+                        name="block_id"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })} />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.pollination.pollinatorType' })}
+                      helpText={intl.formatMessage({ id: 'production.pollination.pollinatorTypeHelp' })}
+                    >
+                      <Controller
+                        name="pollinator_type"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field} placeholder="Select pollinator type...">
+                            <option value="honeybee">🐝 {intl.formatMessage({ id: 'production.pollination.honeybee' })}</option>
+                            <option value="mason_bee">🐝 {intl.formatMessage({ id: 'production.pollination.mason_bee' })}</option>
+                            <option value="bumblebee">🐝 {intl.formatMessage({ id: 'production.pollination.bumblebee' })}</option>
+                            <option value="native_pollinators">🌸 {intl.formatMessage({ id: 'production.pollination.native_pollinators' })}</option>
+                            <option value="wind">💨 {intl.formatMessage({ id: 'production.pollination.wind' })}</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.pollination.hiveCount' })}
+                      error={errors.hive_count?.message}
+                      helpText={intl.formatMessage({ id: 'production.pollination.hiveCountHelp' })}
+                    >
+                      <Controller
+                        name="hive_count"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <NumberInput
+                            min={0}
+                            precision={0}
+                            step={1}
+                            value={field.value || ''}
+                            onChange={(valueString) => field.onChange(valueString)}
+                          >
+                            <NumberInputField placeholder="e.g., 4" />
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.pollination.placementDate' })}
+                      helpText={intl.formatMessage({ id: 'production.pollination.placementDateHelp' })}
+                    >
+                      <Controller
+                        name="placement_date"
+                        control={methods.control}
+                        render={({ field }) => <Input {...field} type="date" size="md" />}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.pollination.removalDate' })}
+                      helpText={intl.formatMessage({ id: 'production.pollination.removalDateHelp' })}
+                    >
+                      <Controller
+                        name="removal_date"
+                        control={methods.control}
+                        render={({ field }) => <Input {...field} type="date" size="md" />}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                </VStack>
+              </SectionBox>
+            )}
+
+            {/* Phase 2: Post-Harvest Processing (PH) specific fields */}
+            {productionType === 'PH' && (
+              <SectionBox variant="highlighted">
+                <SectionHeader
+                  icon={FaTools}
+                  iconColor="purple.500"
+                  title={intl.formatMessage({ id: 'production.postHarvest.title' })}
+                  badge={intl.formatMessage({ id: 'production.postHarvest.badge' })}
+                  badgeColorScheme="purple"
+                  description="Document post-harvest handling and processing operations for full traceability."
+                />
+                <VStack spacing={4} align="stretch">
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.postHarvest.varietyLabel' })}
+                      helpText={intl.formatMessage({ id: 'production.postHarvest.varietyHelp' })}
+                    >
+                      <Controller
+                        name="variety"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.varietyPlaceholder' })} />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.postHarvest.processingType' })}
+                      helpText={intl.formatMessage({ id: 'production.postHarvest.processingTypeHelp' })}
+                    >
+                      <Controller
+                        name="processing_type"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field} placeholder="Select processing type...">
+                            <option value="washing">🚿 {intl.formatMessage({ id: 'production.postHarvest.washing' })}</option>
+                            <option value="cooling">❄️ {intl.formatMessage({ id: 'production.postHarvest.cooling' })}</option>
+                            <option value="drying">☀️ {intl.formatMessage({ id: 'production.postHarvest.drying' })}</option>
+                            <option value="sorting">🔍 {intl.formatMessage({ id: 'production.postHarvest.sorting' })}</option>
+                            <option value="grading">📊 {intl.formatMessage({ id: 'production.postHarvest.grading' })}</option>
+                            <option value="packing">📦 {intl.formatMessage({ id: 'production.postHarvest.packing' })}</option>
+                            <option value="hulling">⚙️ {intl.formatMessage({ id: 'production.postHarvest.hulling' })}</option>
+                            <option value="shelling">⚙️ {intl.formatMessage({ id: 'production.postHarvest.shelling' })}</option>
+                            <option value="pressing">🗜️ {intl.formatMessage({ id: 'production.postHarvest.pressing' })}</option>
+                            <option value="milling">⚙️ {intl.formatMessage({ id: 'production.postHarvest.milling' })}</option>
+                            <option value="smoking">🔥 {intl.formatMessage({ id: 'production.postHarvest.smoking' })}</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.postHarvest.durationHours' })}
+                      error={errors.processing_duration_hours?.message}
+                      helpText={intl.formatMessage({ id: 'production.postHarvest.durationHoursHelp' })}
+                    >
+                      <Controller
+                        name="processing_duration_hours"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <NumberInput
+                            min={0}
+                            precision={1}
+                            step={0.5}
+                            value={field.value || ''}
+                            onChange={(valueString) => field.onChange(valueString)}
+                          >
+                            <NumberInputField placeholder="e.g., 4.5" />
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                        )}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+
+                  <Box
+                    p={3}
+                    bg={watch('temperature_control') === 'true' ? 'blue.50' : 'gray.50'}
+                    borderRadius="md"
+                    borderWidth="1px"
+                    borderColor={watch('temperature_control') === 'true' ? 'blue.200' : 'gray.200'}
+                  >
+                    <HStack justify="space-between">
+                      <VStack align="start" spacing={0}>
+                        <Text fontWeight="semibold" fontSize="sm">
+                          ❄️ {intl.formatMessage({ id: 'production.postHarvest.temperatureControl' })}
+                        </Text>
+                        <Text fontSize="xs" color="gray.600">
+                          {intl.formatMessage({ id: 'production.postHarvest.temperatureControlHelp' })}
+                        </Text>
+                      </VStack>
+                      <Controller
+                        name="temperature_control"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <Switch
+                            colorScheme="blue"
+                            size="lg"
+                            isChecked={field.value === 'true'}
+                            onChange={(e) =>
+                              field.onChange(e.target.checked ? 'true' : 'false')
+                            }
+                          />
+                        )}
+                      />
+                    </HStack>
+                  </Box>
+                </VStack>
+              </SectionBox>
+            )}
+
+            {/* Phase 2: Canopy Management (CM) specific fields */}
+            {productionType === 'CM' && (
+              <SectionBox variant="highlighted">
+                <SectionHeader
+                  icon={FaSeedling}
+                  iconColor="green.600"
+                  title={intl.formatMessage({ id: 'production.canopy.title' })}
+                  badge={intl.formatMessage({ id: 'production.canopy.badge' })}
+                  badgeColorScheme="green"
+                  description="Document canopy management operations for transparency and carbon-accurate equipment tracking."
+                />
+                <VStack spacing={4} align="stretch">
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label={intl.formatMessage({ id: 'fieldDetails.variety' })}
+                      helpText={intl.formatMessage({ id: 'production.canopy.varietyHelp' })}
+                    >
+                      <Controller
+                        name="variety"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput {...field} placeholder="e.g., Mourvèdre, Cabernet" />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
+                      helpText={intl.formatMessage({ id: 'production.canopy.blockIdHelp' })}
+                    >
+                      <Controller
+                        name="block_id"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })} />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}
+                      helpText={intl.formatMessage({ id: 'production.canopy.growthStageHelp' })}
+                    >
+                      <Controller
+                        name="growth_stage"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field} placeholder="Select growth stage...">
+                            <option value="dormant">{intl.formatMessage({ id: 'fieldDetails.growthStage.dormant' })}</option>
+                            <option value="budbreak">{intl.formatMessage({ id: 'fieldDetails.growthStage.budbreak' })}</option>
+                            <option value="bloom">{intl.formatMessage({ id: 'fieldDetails.growthStage.bloom' })}</option>
+                            <option value="fruit_set">{intl.formatMessage({ id: 'fieldDetails.growthStage.fruit_set' })}</option>
+                            <option value="vegetative">{intl.formatMessage({ id: 'fieldDetails.growthStage.vegetative' })}</option>
+                            <option value="maturation">{intl.formatMessage({ id: 'fieldDetails.growthStage.maturation' })}</option>
+                            <option value="harvest_ready">{intl.formatMessage({ id: 'fieldDetails.growthStage.harvest_ready' })}</option>
+                            <option value="post_harvest">{intl.formatMessage({ id: 'fieldDetails.growthStage.post_harvest' })}</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.canopy.operation' })}
+                      helpText={intl.formatMessage({ id: 'production.canopy.operationHelp' })}
+                    >
+                      <Controller
+                        name="canopy_operation"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field} placeholder="Select canopy operation...">
+                            <option value="pruning">✂️ {intl.formatMessage({ id: 'production.canopy.pruning' })}</option>
+                            <option value="leaf_pulling">🍃 {intl.formatMessage({ id: 'production.canopy.leaf_pulling' })}</option>
+                            <option value="hedging">🌳 {intl.formatMessage({ id: 'production.canopy.hedging' })}</option>
+                            <option value="shoot_positioning">🌱 {intl.formatMessage({ id: 'production.canopy.shoot_positioning' })}</option>
+                            <option value="thinning">🪚 {intl.formatMessage({ id: 'production.canopy.thinning' })}</option>
+                            <option value="tucking">🤲 {intl.formatMessage({ id: 'production.canopy.tucking' })}</option>
+                            <option value="suckering">🌿 {intl.formatMessage({ id: 'production.canopy.suckering' })}</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.canopy.passNumber' })}
+                      error={errors.pass_number?.message}
+                      helpText={intl.formatMessage({ id: 'production.canopy.passNumberHelp' })}
+                    >
+                      <Controller
+                        name="pass_number"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <NumberInput
+                            min={1}
+                            precision={0}
+                            step={1}
+                            value={field.value || ''}
+                            onChange={(valueString) => field.onChange(valueString)}
+                          >
+                            <NumberInputField placeholder="e.g., 1" />
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                        )}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                </VStack>
+              </SectionBox>
+            )}
+
+            {/* Phase 2: Pruning Summary Mode (mirrors IR and HA summary pattern) */}
+            {productionType === 'PR' && (
+              <SectionBox variant="highlighted">
+                <SectionHeader
+                  icon={FaSeedling}
+                  iconColor="orange.500"
+                  title={intl.formatMessage({ id: 'production.pruning.summaryTitle' })}
+                  badge={intl.formatMessage({ id: 'production.pruning.summaryBadge' })}
+                  badgeColorScheme="orange"
+                  description={intl.formatMessage({ id: 'production.pruning.summaryDescription' })}
+                />
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <Box gridColumn={{ md: 'span 2' }} mb={2}>
+                    <HStack
+                      p={3}
+                      bg={isSummaryMode ? 'orange.50' : 'gray.50'}
+                      borderRadius="md"
+                      borderWidth="1px"
+                      borderColor={isSummaryMode ? 'orange.200' : 'gray.200'}
+                      justify="space-between"
+                    >
+                      <VStack align="start" spacing={0}>
+                        <HStack>
+                          <Text fontWeight="semibold" fontSize="sm">
+                            📊 {intl.formatMessage({ id: 'production.pruning.summaryToggleLabel' })}
+                          </Text>
+                          {isSummaryMode && (
+                            <Badge colorScheme="orange" size="sm">
+                              Active
+                            </Badge>
+                          )}
+                        </HStack>
+                        <Text fontSize="xs" color="gray.600">
+                          {isSummaryMode
+                            ? intl.formatMessage({ id: 'production.pruning.summaryToggleActive' })
+                            : intl.formatMessage({ id: 'production.pruning.summaryToggleInactive' })}
+                        </Text>
+                      </VStack>
+                      <Controller
+                        name="is_summary"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <Switch
+                            colorScheme="orange"
+                            size="lg"
+                            isChecked={field.value === 'true'}
+                            onChange={(e) =>
+                              field.onChange(e.target.checked ? 'true' : 'false')
+                            }
+                          />
+                        )}
+                      />
+                    </HStack>
+                  </Box>
+
+                  {isSummaryMode && (
+                    <>
+                      <StandardField label="Period Start Date" isRequired>
+                        <Controller
+                          name="date_start"
+                          control={methods.control}
+                          render={({ field }) => <Input {...field} type="date" size="md" />}
+                        />
+                      </StandardField>
+
+                      <StandardField label="Period End Date" isRequired>
+                        <Controller
+                          name="date_end"
+                          control={methods.control}
+                          render={({ field }) => <Input {...field} type="date" size="md" />}
+                        />
+                      </StandardField>
+
+                      <StandardField label={intl.formatMessage({ id: 'production.pruning.passes' })} isRequired>
+                        <Controller
+                          name="pruning_passes"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              type="number"
+                              min="1"
+                              placeholder="e.g., 5"
+                            />
+                          )}
+                        />
+                      </StandardField>
+                    </>
+                  )}
+                </SimpleGrid>
+              </SectionBox>
+            )}
+
+            {/* Equipment & Fuel Usage - Hidden for PO (Pollination is zero-emission biological service) */}
+            {productionType !== 'PO' && (
             <SectionBox variant="highlighted">
               <SectionHeader
                 icon={FaSeedling}
@@ -991,7 +1804,8 @@ const ProductionTab = forwardRef(
                 {/* Fuel Type - Only for fuel-consuming operations */}
                 {/* CRITICAL FIX (2025-01-21): Removed EQ (standalone Equipment type 4), kept EM (Production subtype) */}
                 {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Added IR for electric irrigation pumps, PR/TH for powered pruning/thinning */}
-                {['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM'].includes(productionType) && (
+                {/* Phase 2: Added PH (Post-Harvest Processing) for processing equipment fuel */}
+                {['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM', 'PH', 'CM'].includes(productionType) && (
                   <StandardField
                     label="Fuel Type"
                     required
@@ -1018,7 +1832,8 @@ const ProductionTab = forwardRef(
                 {/* CRITICAL FIX (2025-01-21): Removed EQ (standalone Equipment type 4), kept EM (Production subtype) */}
                 {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Added IR for electric irrigation pumps, PR/TH for powered pruning/thinning */}
                 {/* IRRIGATION PUMP FIX (2026-02-19): Hide Energy Amount for electric IR — energy auto-calculated from water volume × pump factor */}
-                {['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM'].includes(productionType) && (
+                {/* Phase 2: Added PH (Post-Harvest Processing) and CM (Canopy Management) */}
+                {['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM', 'PH', 'CM'].includes(productionType) && (
                   <>
                     {/* For electric irrigation, energy is auto-calculated from water volume + water source */}
                     {productionType === 'IR' && watch('fuel_type') !== 'diesel' ? (
@@ -1161,6 +1976,7 @@ const ProductionTab = forwardRef(
                 </StandardField>
               </VStack>
             </SectionBox>
+            )}
 
             {/* Transportation - For logistics emissions */}
             {productionType === 'HA' && (
@@ -1482,6 +2298,50 @@ const ProductionTab = forwardRef(
                             )}
                           />
                         </HStack>
+                      </StandardField>
+
+                      {/* Phase 3: Well pump depth — affects electricity emission calculation */}
+                      <StandardField
+                        label={intl.formatMessage({ id: 'app.pumpDepthFt', defaultMessage: 'Well Pump Depth (ft)' })}
+                        helpText={intl.formatMessage({ id: 'app.pumpDepthFtHelp', defaultMessage: 'Deeper wells use more energy — affects carbon calculation accuracy' })}
+                        error={errors.pump_depth_ft?.message}
+                      >
+                        <Controller
+                          name="pump_depth_ft"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              type="number"
+                              step="1"
+                              min="0"
+                              placeholder={intl.formatMessage({ id: 'app.pumpDepthFtPlaceholder', defaultMessage: 'e.g., 200' })}
+                            />
+                          )}
+                        />
+                      </StandardField>
+
+                      {/* Phase 3: Electricity source — determines pump emission factor */}
+                      <StandardField
+                        label={intl.formatMessage({ id: 'app.electricitySource', defaultMessage: 'Pump Power Source' })}
+                        helpText={intl.formatMessage({ id: 'app.electricitySourceHelp', defaultMessage: 'Solar/wind powered pumps have near-zero emissions' })}
+                      >
+                        <Controller
+                          name="electricity_source"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({ id: 'app.electricitySourcePlaceholder', defaultMessage: 'Select power source...' })}
+                            >
+                              <option value="grid">{intl.formatMessage({ id: 'app.electricitySource.grid', defaultMessage: 'Grid Electricity' })}</option>
+                              <option value="solar">{intl.formatMessage({ id: 'app.electricitySource.solar', defaultMessage: 'Solar' })}</option>
+                              <option value="wind">{intl.formatMessage({ id: 'app.electricitySource.wind', defaultMessage: 'Wind' })}</option>
+                              <option value="diesel_generator">{intl.formatMessage({ id: 'app.electricitySource.dieselGenerator', defaultMessage: 'Diesel Generator' })}</option>
+                              <option value="mixed">{intl.formatMessage({ id: 'app.electricitySource.mixed', defaultMessage: 'Mixed Sources' })}</option>
+                            </StandardSelect>
+                          )}
+                        />
                       </StandardField>
                     </>
                   )}

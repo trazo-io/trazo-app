@@ -70,7 +70,17 @@ const formSchemaSoilManagement = object({
   amendment_amount: string().optional(),
   amendment_unit: string().optional(),
   amendment_type: string().optional(),
+  animal_type: string().optional(),
+  animal_count: string().optional(),
+  grazing_duration_days: string().optional(),
+  grazing_purpose: string().optional(),
+  amendment_amount_numeric: string().optional(),
+  amendment_amount_unit: string().optional(),
   observation: string().optional(),
+  // Phase 2: Universal CommonEvent fields (variety, block_id, growth_stage)
+  variety: string().optional(),
+  block_id: string().optional(),
+  growth_stage: string().optional(),
   custom_fields: array(
     object({
       id: string().optional(),
@@ -219,7 +229,17 @@ const SoilManagementTab = forwardRef(
         amendment_amount: initialValues.amendment_amount || '',
         amendment_unit: initialValues.amendment_unit || 'kg',
         amendment_type: initialValues.amendment_type || '',
+        animal_type: initialValues.animal_type || '',
+        animal_count: initialValues.animal_count || '',
+        grazing_duration_days: initialValues.grazing_duration_days || '',
+        grazing_purpose: initialValues.grazing_purpose || '',
+        amendment_amount_numeric: initialValues.amendment_amount_numeric || '',
+        amendment_amount_unit: initialValues.amendment_amount_unit || 'kg',
         observation: initialValues.observation || '',
+        // Phase 2: Universal CommonEvent fields
+        variety: initialValues.variety || '',
+        block_id: initialValues.block_id || '',
+        growth_stage: initialValues.growth_stage || '',
         custom_fields: initialValues.custom_fields || []
       }
     });
@@ -570,6 +590,7 @@ const SoilManagementTab = forwardRef(
                     <option value="OM">Organic Matter Addition</option>
                     <option value="TI">Tillage</option>
                     <option value="CO">Composting Operation</option>
+                    <option value="GR">Grazing Management</option>
                   </StandardSelect>
                 </StandardField>
 
@@ -997,7 +1018,107 @@ const SoilManagementTab = forwardRef(
               </SectionBox>
             )}
 
+            {/* Grazing Management Fields - Only for Grazing Management Operations */}
+            {watch('type') === 'GR' && (
+              <SectionBox variant="highlighted" borderColor="green.200">
+                <SectionHeader
+                  icon={FaSeedling}
+                  iconColor="green.600"
+                  title="Grazing Details"
+                  badge="Soil Health Practice"
+                  badgeColorScheme="green"
+                  description="Document grazing activities for cover crop management, weed control, and soil health."
+                />
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <StandardField label="Animal Type" helpText="Type of animal used for grazing">
+                    <StandardSelect placeholder="Select animal type..." {...register('animal_type')}>
+                      <option value="sheep">Sheep</option>
+                      <option value="goats">Goats</option>
+                      <option value="cattle">Cattle</option>
+                      <option value="poultry">Poultry</option>
+                      <option value="other">Other</option>
+                    </StandardSelect>
+                  </StandardField>
+                  <StandardField label="Number of Animals" helpText="How many animals were used">
+                    <StandardInput type="number" placeholder="e.g., 50" {...register('animal_count')} />
+                  </StandardField>
+                  <StandardField label="Grazing Duration (Days)" helpText="How many days animals grazed">
+                    <StandardInput type="number" placeholder="e.g., 14" {...register('grazing_duration_days')} />
+                  </StandardField>
+                  <StandardField label="Grazing Purpose" helpText="Primary purpose of the grazing activity">
+                    <StandardSelect placeholder="Select purpose..." {...register('grazing_purpose')}>
+                      <option value="weed_control">Weed Control</option>
+                      <option value="cover_crop">Cover Crop Termination</option>
+                      <option value="soil_health">Soil Health</option>
+                      <option value="vegetation_management">Vegetation Management</option>
+                    </StandardSelect>
+                  </StandardField>
+                </SimpleGrid>
+              </SectionBox>
+            )}
+
             {/* Sprint 3 Epic 3.1: Removed "Environmental Conditions & Equipment" section - merged into "Fuel & Equipment Operations" above */}
+
+            {/* Phase 2: Universal Field Details - variety, block_id, growth_stage */}
+            <SectionBox variant="default">
+              <SectionHeader
+                icon={FaSeedling}
+                iconColor="teal.500"
+                title={intl.formatMessage({ id: 'fieldDetails.title' })}
+                badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
+                badgeColorScheme="teal"
+                description={intl.formatMessage({ id: 'fieldDetails.description' })}
+              />
+              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.variety' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}
+                >
+                  <Controller
+                    name="variety"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.varietyPlaceholder' })} />
+                    )}
+                  />
+                </StandardField>
+
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
+                >
+                  <Controller
+                    name="block_id"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })} />
+                    )}
+                  />
+                </StandardField>
+
+                <StandardField
+                  label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}
+                  helpText={intl.formatMessage({ id: 'fieldDetails.growthStageHelp' })}
+                >
+                  <Controller
+                    name="growth_stage"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardSelect {...field} placeholder="Select growth stage...">
+                        <option value="dormant">{intl.formatMessage({ id: 'fieldDetails.growthStage.dormant' })}</option>
+                        <option value="budbreak">{intl.formatMessage({ id: 'fieldDetails.growthStage.budbreak' })}</option>
+                        <option value="bloom">{intl.formatMessage({ id: 'fieldDetails.growthStage.bloom' })}</option>
+                        <option value="fruit_set">{intl.formatMessage({ id: 'fieldDetails.growthStage.fruit_set' })}</option>
+                        <option value="vegetative">{intl.formatMessage({ id: 'fieldDetails.growthStage.vegetative' })}</option>
+                        <option value="maturation">{intl.formatMessage({ id: 'fieldDetails.growthStage.maturation' })}</option>
+                        <option value="harvest_ready">{intl.formatMessage({ id: 'fieldDetails.growthStage.harvest_ready' })}</option>
+                        <option value="post_harvest">{intl.formatMessage({ id: 'fieldDetails.growthStage.post_harvest' })}</option>
+                      </StandardSelect>
+                    )}
+                  />
+                </StandardField>
+              </SimpleGrid>
+            </SectionBox>
 
             <SectionBox variant="default">
               <SectionHeader

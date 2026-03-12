@@ -85,7 +85,7 @@ import { useIntl } from 'react-intl';
 // Sprint 1 Epic 1.4: Added performed_by for USDA GAP traceability compliance
 const formSchemaBasic = object({
   date: string().min(1, 'Date is required'),
-  performed_by: string().optional() // Required for non-weather events, validated in onSubmitBasic
+  performed_by: string().optional() // Optional — helps with traceability but not required
 });
 
 const formSchemaMainInfo = object({
@@ -692,6 +692,27 @@ function NewEvent({ isEdit = false, eventId = null }) {
           existingEvent.irrigation_depth_unit ||
           existingEvent.extra_data?.irrigation_depth_unit ||
           'inches',
+        // IRRIGATION: pump_depth_ft and electricity_source are model fields
+        // but well_depth_ft may exist in extra_data from older events
+        pump_depth_ft:
+          existingEvent.pump_depth_ft || existingEvent.extra_data?.well_depth_ft || '',
+        electricity_source:
+          existingEvent.electricity_source || existingEvent.extra_data?.electricity_source || '',
+
+        // POLLINATION (PO): Extract pollination-specific fields from extra_data for editing
+        // These are stored in extra_data JSONField, not as model columns
+        ...(existingEvent.extra_data?.pollinator_type && {
+          pollinator_type: existingEvent.extra_data.pollinator_type
+        }),
+        ...(existingEvent.extra_data?.hive_count != null && {
+          hive_count: existingEvent.extra_data.hive_count
+        }),
+        ...(existingEvent.extra_data?.placement_date && {
+          placement_date: existingEvent.extra_data.placement_date
+        }),
+        ...(existingEvent.extra_data?.removal_date && {
+          removal_date: existingEvent.extra_data.removal_date
+        }),
 
         // GENERAL EVENT FIELD MAPPING: Backend model uses different field names
         // duration → duration_hours, people_involved → participants
@@ -1602,7 +1623,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           </Text>
                         </>
                       )}
-                      {activeEventType === 1 && (
+                      {activeEventType === 1 && eventFormData?.type === 'PO' && (
+                        <>
+                          <Text fontSize="xs" color="gray.600">
+                            • Pollination is a zero-emission biological service — no fuel or equipment needed
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            • Document hive count and placement dates for full transparency
+                          </Text>
+                          <Text fontSize="xs" color="gray.600">
+                            • Pollination events build your transparency score by showing natural processes
+                          </Text>
+                        </>
+                      )}
+                      {activeEventType === 1 && eventFormData?.type !== 'PO' && (
                         <>
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
@@ -1867,8 +1901,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               {/* Sprint 1 Epic 1.4: USDA GAP Traceability - Who performed this activity */}
                               <StandardField
                                 label="Performed By"
-                                helpText="Name of person who performed this agricultural activity (USDA GAP traceability)"
-                                required={activeEventType !== 0}
+                                helpText="Name of person who performed this activity (optional, helps with traceability)"
+                                required={false}
                                 error={basicMethods.formState.errors.performed_by?.message}
                               >
                                 <StandardInput

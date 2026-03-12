@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import {
   Box,
@@ -116,12 +116,17 @@ interface ConsumerEventData {
   // Chemical event fields
   application_timing?: string;
   area_treated?: number;
+  area_numeric?: number; // Phase 3: primary numeric area field
   area_unit?: string;
   concentration?: string;
   npk_ratio?: string;
   active_ingredient?: string;
   application_method?: string;
   target_pest_disease_need?: string;
+  volume_applied?: number;
+  volume_numeric?: number; // Phase 3: primary numeric volume field
+  volume_unit?: string;
+  is_fertigation?: boolean | string; // Phase 3: fertigation toggle
 
   // Production event fields
   area_covered?: string | number;
@@ -130,6 +135,7 @@ interface ConsumerEventData {
   fuel_type?: string; // Electric, Diesel, Gasoline, etc. - needed for dynamic label
   fuel_unit?: string; // kWh, L, gal - needed for display
   equipment_hours?: string;
+  electricity_source?: string; // Phase 3: pump power source for IR events
 
   // Legacy compatibility fields
   volume?: string;
@@ -154,6 +160,9 @@ interface ConsumerEventData {
   irrigation_method?: string;
   irrigation_depth?: string | number;
   irrigation_depth_unit?: string;
+  // Phase 3: Irrigation pump fields
+  pump_depth_ft?: number;
+  water_source?: string;
 
   // Sprint 4 & 5: Aggregate/Summary Event Support
   // Enables displaying multiple events as a single summary (e.g., "12 irrigations in May-June")
@@ -163,6 +172,8 @@ interface ConsumerEventData {
   event_count?: number;
   water_volume_total?: number;
   water_volume_unit?: string;
+  yield_total?: number | string;
+  yield_total_unit?: string;
 
   // Sprint 5: Chemical Aggregate Event Fields (Fertilizer, Fungicide, Pesticide)
   n_total_kg?: number;
@@ -218,7 +229,33 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const intl = useIntl();
   const [internalExpanded, setInternalExpanded] = useState(false);
   const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
-  const toggleExpand = onToggleExpand || (() => setInternalExpanded((prev) => !prev));
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleToggleExpand = useCallback(() => {
+    if (onToggleExpand) {
+      // Controlled mode — if collapsing, scroll to card
+      if (isExpanded) {
+        onToggleExpand();
+        requestAnimationFrame(() => {
+          cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      } else {
+        onToggleExpand();
+      }
+    } else {
+      // Internal mode
+      if (internalExpanded) {
+        setInternalExpanded(false);
+        requestAnimationFrame(() => {
+          cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      } else {
+        setInternalExpanded(true);
+      }
+    }
+  }, [onToggleExpand, isExpanded, internalExpanded]);
+
+  const toggleExpand = handleToggleExpand;
   const isMobile = useBreakpointValue({ base: true, md: false });
   // Get consumer-friendly description with real event data
   const eventInfo = getConsumerEventDescription(event.description, event);
@@ -407,7 +444,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   };
 
   return (
-    <Box position="relative">
+    <Box ref={cardRef} position="relative">
       {/* Timeline connector - DESKTOP ONLY, hidden when inside a group */}
       {!isLast && !isGrouped && (
         <Box
@@ -647,6 +684,29 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   ))}
                 </HStack>
               )}
+              {/* Phase 3: Electricity source trust badge for IR events — solar/wind shown as green trust indicator */}
+              {(() => {
+                const elecSrc = event.electricity_source ?? (event as any).extra_data?.electricity_source;
+                if (!elecSrc) return null;
+                const isSustainable = elecSrc === 'solar' || elecSrc === 'wind';
+                const elecLabels: Record<string, string> = { solar: 'Solar-Powered Pump', wind: 'Wind-Powered Pump', grid: 'Grid-Powered Pump', diesel_generator: 'Generator-Powered Pump', mixed: 'Mixed Power Sources' };
+                return (
+                  <HStack spacing={2}>
+                    <Badge
+                      variant="subtle"
+                      colorScheme={isSustainable ? 'green' : 'gray'}
+                      fontSize="xs"
+                      px={2}
+                      py={1}
+                    >
+                      <HStack spacing={1}>
+                        <Icon as={isSustainable ? FaWind : FaCheckCircle} boxSize={3} />
+                        <Text>{elecLabels[elecSrc] || elecSrc}</Text>
+                      </HStack>
+                    </Badge>
+                  </HStack>
+                );
+              })()}
 
               {/* Removed redundant photo verification badge - photos are already mentioned in description and shown in gallery */}
 
@@ -818,6 +878,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         ? 'orange.50'
                         : event.type === 'SC'
                         ? 'green.50'
+                        : event.type === 'HA'
+                        ? 'yellow.50'
                         : 'gray.50',
                       'gray.700'
                     )}
@@ -832,6 +894,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         ? 'orange.200'
                         : event.type === 'SC'
                         ? 'green.200'
+                        : event.type === 'HA'
+                        ? 'yellow.200'
                         : 'gray.200',
                       'gray.600'
                     )}
@@ -848,6 +912,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             ? 'orange.500'
                             : event.type === 'SC'
                             ? 'green.500'
+                            : event.type === 'HA'
+                            ? 'yellow.600'
                             : 'gray.500'
                         }
                         boxSize={4}
@@ -864,6 +930,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             ? 'orange.600'
                             : event.type === 'SC'
                             ? 'green.600'
+                            : event.type === 'HA'
+                            ? 'yellow.700'
                             : 'gray.600'
                         }
                       >
@@ -876,6 +944,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           ? 'Applications'
                           : event.type === 'SC'
                           ? 'Scouting Trips'
+                          : event.type === 'HA'
+                          ? 'Harvests'
                           : 'Events'}
                         )
                       </Text>
@@ -937,19 +1007,48 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         </>
                       )}
 
+                      {/* Harvest aggregate totals */}
+                      {event.type === 'HA' && (
+                        <>
+                          {(event.yield_total || event.extra_data?.yield_total) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                Total Yield
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {Number(event.yield_total || event.extra_data?.yield_total).toLocaleString()}{' '}
+                                {event.yield_total_unit || event.extra_data?.yield_total_unit || 'lbs'}
+                              </Text>
+                            </Box>
+                          )}
+                        </>
+                      )}
+
                       {/* Common chemical aggregate fields */}
                       {(event.type === 'FE' || event.type === 'FU' || event.type === 'PE') && (
                         <>
                           {(event.volume_total || event.extra_data?.volume_total) && (
                             <Box>
                               <Text fontSize="xs" color="gray.500">
-                                Total Volume Applied
+                                {['kg', 'lbs', 'oz'].includes(event.volume_total_unit || event.extra_data?.volume_total_unit || '') ? 'Total Amount Applied' : 'Total Volume Applied'}
                               </Text>
                               <Text fontSize="sm" fontWeight="medium">
                                 {event.volume_total || event.extra_data?.volume_total}{' '}
                                 {event.volume_total_unit ||
                                   event.extra_data?.volume_total_unit ||
-                                  'L'}
+                                  'gal'}
+                              </Text>
+                            </Box>
+                          )}
+                          {/* Phase 3: Show volume_numeric for individual (non-aggregate) chemical events */}
+                          {!event.is_summary && (event.volume_numeric ?? event.volume_applied) && (
+                            <Box>
+                              <Text fontSize="xs" color="gray.500">
+                                {['kg', 'lbs', 'oz'].includes(event.volume_unit) ? 'Amount Applied' : 'Volume Applied'}
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium">
+                                {event.volume_numeric ?? event.volume_applied}{' '}
+                                {event.volume_unit || 'gal'}
                               </Text>
                             </Box>
                           )}

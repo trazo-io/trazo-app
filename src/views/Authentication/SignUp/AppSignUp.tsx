@@ -472,7 +472,7 @@ const AppSignUp: React.FC = () => {
                 {[
                   'Record practices in under 2 minutes',
                   'QR codes auto-generate after harvest',
-                  '19 US crops pre-configured and ready'
+                  '22 US crops pre-configured and ready'
                 ].map((feature, index) => (
                   <HStack key={index} spacing={3}>
                     <Box w={2} h={2} bg="white" borderRadius="50%" />

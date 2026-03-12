@@ -266,6 +266,10 @@ function ProfileProduction() {
         return normalizeBackendEventData(numericEventType, event);
       });
 
+      // Distribute production-level carbon total across events (CarbonEntry is source of truth)
+      const totalCO2e = completeData?.totalEmissions || 0;
+      const averageCO2ePerEvent = normalizedEvents.length > 0 ? totalCO2e / normalizedEvents.length : 0;
+
       const timelineEvents = normalizedEvents.map((event: any, index: number) => {
         const standardizedEvent = event as StandardizedEvent & {
           carbon_data?: any;
@@ -278,15 +282,10 @@ function ProfileProduction() {
           albums:
             (event as any).albums || (event as any).album ? [(event as any).album] : undefined,
           carbon_data: {
-            co2e:
-              (event as any).extra_data?.carbon_calculation?.co2e ??
-              (event as any).carbon_data?.co2e ??
-              (event as any).co2e ??
-              0,
+            co2e: averageCO2ePerEvent,
             usda_factors_used: completeData?.isUsdaVerified || false,
             efficiency_score: completeData?.carbonScore || 0,
-            total_emissions:
-              (event as any).extra_data?.carbon_calculation?.total_emissions ?? 0,
+            total_emissions: totalCO2e,
             total_offsets: completeData?.totalOffsets || 0,
             net_footprint: transparencyApiData?.carbon_impact?.net_impact || 0,
             verification_confidence: ((event as any).verification_confidence ? 'high' : 'low') as

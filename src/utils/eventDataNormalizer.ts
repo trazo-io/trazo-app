@@ -723,6 +723,13 @@ function normalizeProductionEventData(
     if (rawData.irrigation_depth_unit) {
       (productionData as any).irrigation_depth_unit = rawData.irrigation_depth_unit;
     }
+    // Phase 3: Irrigation pump fields for accurate electricity emission calculation
+    if (rawData.pump_depth_ft !== undefined && rawData.pump_depth_ft !== null && rawData.pump_depth_ft !== '') {
+      (productionData as any).pump_depth_ft = parseFloat(rawData.pump_depth_ft);
+    }
+    if (rawData.electricity_source) {
+      (productionData as any).electricity_source = rawData.electricity_source;
+    }
 
     // Phase 2: Harvest quality and grain moisture for target markets
     if (rawData.harvest_quality_grade) {
@@ -739,11 +746,40 @@ function normalizeProductionEventData(
     if (rawData.brix_levels) extraFormFields.brix_levels = rawData.brix_levels;
     if (rawData.native_species_planted) extraFormFields.native_species_planted = rawData.native_species_planted;
     if (rawData.habitat_area_hectares) extraFormFields.habitat_area_hectares = rawData.habitat_area_hectares;
+    // PO (Pollination) extra_data fields
+    if (rawData.pollinator_type) extraFormFields.pollinator_type = rawData.pollinator_type;
+    if (rawData.hive_count !== undefined && rawData.hive_count !== null) extraFormFields.hive_count = rawData.hive_count;
+    if (rawData.placement_date) extraFormFields.placement_date = rawData.placement_date;
+    if (rawData.removal_date) extraFormFields.removal_date = rawData.removal_date;
+    // PH (Post-Harvest Processing) extra_data fields
+    if (rawData.processing_type) extraFormFields.processing_type = rawData.processing_type;
+    if (rawData.processing_duration_hours !== undefined && rawData.processing_duration_hours !== null) extraFormFields.processing_duration_hours = rawData.processing_duration_hours;
+    if (rawData.temperature_control) extraFormFields.temperature_control = rawData.temperature_control;
+    // CM (Canopy Management) extra_data fields
+    if (rawData.canopy_operation) extraFormFields.canopy_operation = rawData.canopy_operation;
+    if (rawData.pass_number !== undefined && rawData.pass_number !== null) extraFormFields.pass_number = rawData.pass_number;
+    // PR (Pruning) extra_data fields
+    if (rawData.pruning_passes !== undefined && rawData.pruning_passes !== null) extraFormFields.pruning_passes = rawData.pruning_passes;
     if (Object.keys(extraFormFields).length > 0) {
       (productionData as any).extra_data = {
         ...(rawData.extra_data || {}),
         ...extraFormFields
       };
+    }
+
+    // Universal top-level fields: variety, block_id, growth_stage (form path)
+    if (rawData.variety && String(rawData.variety).trim()) {
+      (productionData as any).variety = rawData.variety;
+    }
+    if (rawData.block_id && String(rawData.block_id).trim()) {
+      (productionData as any).block_id = rawData.block_id;
+    }
+    if (rawData.growth_stage && String(rawData.growth_stage).trim()) {
+      (productionData as any).growth_stage = rawData.growth_stage;
+    }
+    // brix_level as top-level model field (form path)
+    if (rawData.brix_level !== undefined && rawData.brix_level !== null && rawData.brix_level !== '') {
+      (productionData as any).brix_level = rawData.brix_level;
     }
 
     // Sprint 4: Aggregate Event Support - for logging multiple similar events as one summary
@@ -775,6 +811,16 @@ function normalizeProductionEventData(
           (productionData as any).water_volume_total = `${waterVolume} ${waterUnit}`;
           (productionData as any).water_volume_total_raw = waterVolume;
           (productionData as any).water_volume_unit = waterUnit;
+        }
+      }
+
+      // Aggregate harvest: total yield
+      if (rawData.yield_total) {
+        const yieldTotal = parseFloat(rawData.yield_total);
+        if (!isNaN(yieldTotal) && yieldTotal > 0) {
+          const yieldUnit = rawData.yield_total_unit || 'lbs';
+          (productionData as any).yield_total = yieldTotal;
+          (productionData as any).yield_total_unit = yieldUnit;
         }
       }
     } else {
@@ -813,6 +859,15 @@ function normalizeProductionEventData(
     if (rawData.irrigation_depth_unit) {
       (productionData as any).irrigation_depth_unit = rawData.irrigation_depth_unit;
     }
+    // Phase 3: Irrigation pump fields (backend)
+    const pumpDepthBackend = rawData.pump_depth_ft ?? rawData.extra_data?.pump_depth_ft;
+    if (pumpDepthBackend !== undefined && pumpDepthBackend !== null && pumpDepthBackend !== '') {
+      (productionData as any).pump_depth_ft = parseFloat(pumpDepthBackend);
+    }
+    const electricitySourceBackend = rawData.electricity_source ?? rawData.extra_data?.electricity_source;
+    if (electricitySourceBackend) {
+      (productionData as any).electricity_source = electricitySourceBackend;
+    }
 
     // Phase 2: Harvest quality and grain moisture for target markets (backend)
     if (rawData.harvest_quality_grade) {
@@ -824,6 +879,48 @@ function normalizeProductionEventData(
 
     // Phase 2: harvest_method and brix_levels come from extra_data on backend
     // (already handled by createBaseEvent copying extra_data from rawData)
+
+    // Universal top-level fields: variety, block_id, growth_stage (backend path)
+    if (rawData.variety && String(rawData.variety).trim()) {
+      (productionData as any).variety = rawData.variety;
+    }
+    if (rawData.block_id && String(rawData.block_id).trim()) {
+      (productionData as any).block_id = rawData.block_id;
+    }
+    if (rawData.growth_stage && String(rawData.growth_stage).trim()) {
+      (productionData as any).growth_stage = rawData.growth_stage;
+    }
+    // brix_level as top-level model field (backend path)
+    if (rawData.brix_level !== undefined && rawData.brix_level !== null && rawData.brix_level !== '') {
+      (productionData as any).brix_level = rawData.brix_level;
+    }
+
+    // PO/PH/CM extra_data fields also surface at top level from backend for easier access
+    const extraData = rawData.extra_data || {};
+    // PO fields
+    const pollinatorType = rawData.pollinator_type || extraData.pollinator_type;
+    if (pollinatorType) (productionData as any).pollinator_type = pollinatorType;
+    const hiveCount = rawData.hive_count !== undefined ? rawData.hive_count : extraData.hive_count;
+    if (hiveCount !== undefined && hiveCount !== null) (productionData as any).hive_count = hiveCount;
+    const placementDate = rawData.placement_date || extraData.placement_date;
+    if (placementDate) (productionData as any).placement_date = placementDate;
+    const removalDate = rawData.removal_date || extraData.removal_date;
+    if (removalDate) (productionData as any).removal_date = removalDate;
+    // PH fields
+    const processingType = rawData.processing_type || extraData.processing_type;
+    if (processingType) (productionData as any).processing_type = processingType;
+    const processingDuration = rawData.processing_duration_hours !== undefined ? rawData.processing_duration_hours : extraData.processing_duration_hours;
+    if (processingDuration !== undefined && processingDuration !== null) (productionData as any).processing_duration_hours = processingDuration;
+    const temperatureControl = rawData.temperature_control || extraData.temperature_control;
+    if (temperatureControl) (productionData as any).temperature_control = temperatureControl;
+    // CM fields
+    const canopyOperation = rawData.canopy_operation || extraData.canopy_operation;
+    if (canopyOperation) (productionData as any).canopy_operation = canopyOperation;
+    const passNumber = rawData.pass_number !== undefined ? rawData.pass_number : extraData.pass_number;
+    if (passNumber !== undefined && passNumber !== null) (productionData as any).pass_number = passNumber;
+    // PR (Pruning) summary fields
+    const pruningPasses = rawData.pruning_passes !== undefined ? rawData.pruning_passes : extraData.pruning_passes;
+    if (pruningPasses !== undefined && pruningPasses !== null) (productionData as any).pruning_passes = pruningPasses;
 
     // Sprint 4: Aggregate Event Support - for backend data
     // Check both top-level and extra_data for is_summary (string or boolean)
@@ -864,6 +961,17 @@ function normalizeProductionEventData(
           (productionData as any).water_volume_total = parsed;
           (productionData as any).water_volume_unit =
             rawData.water_volume_unit || rawData.extra_data?.water_volume_unit || 'gallons';
+        }
+      }
+
+      // Yield total (harvest summaries)
+      const yieldTotal = rawData.yield_total || rawData.extra_data?.yield_total;
+      if (yieldTotal) {
+        const parsed = typeof yieldTotal === 'string' ? parseFloat(yieldTotal) : yieldTotal;
+        if (!isNaN(parsed) && parsed > 0) {
+          (productionData as any).yield_total = parsed;
+          (productionData as any).yield_total_unit =
+            rawData.yield_total_unit || rawData.extra_data?.yield_total_unit || 'lbs';
         }
       }
     } else {
@@ -922,9 +1030,12 @@ function normalizeChemicalEventData(
     'application_method',
     'target_pest_disease',
     'area_treated',
+    'area_numeric', // Phase 3: Primary numeric area field
     'area_unit',
     'volume_applied',
+    'volume_numeric', // Phase 3: Primary numeric volume field
     'volume_unit',
+    'is_fertigation', // Phase 3: Fertigation toggle for FE events
     'concentration',
     'npk_ratio',
     // Ghost field cleanup: Removed nitrogen_percentage, phosphorus_percentage, potassium_percentage
@@ -950,7 +1061,11 @@ function normalizeChemicalEventData(
     // These fields enable display of fuel consumption in Event Preview and ProductDetail cards
     'application_fuel_type',
     'application_fuel_consumed',
-    'application_fuel_unit'
+    'application_fuel_unit',
+    // Universal context fields present across event types
+    'variety',
+    'block_id',
+    'growth_stage'
   ];
 
   mapFields(rawData, chemicalData, chemicalFields, fieldMapping);
@@ -983,6 +1098,21 @@ function normalizeChemicalEventData(
   // The backend transparency API returns combined string fields like "20 ha" and "10 L"
   // but the frontend expects separate numeric and unit fields
   if (dataSource === 'backend') {
+    // Phase 3: Parse volume_numeric / area_numeric from backend
+    if (rawData.volume_numeric !== undefined && rawData.volume_numeric !== null) {
+      chemicalData.volume_numeric = parseFloat(rawData.volume_numeric);
+    }
+    if (rawData.area_numeric !== undefined && rawData.area_numeric !== null) {
+      chemicalData.area_numeric = parseFloat(rawData.area_numeric);
+    }
+    // Phase 3: is_fertigation from backend (boolean or extra_data)
+    if (!chemicalData.is_fertigation) {
+      const fertigVal = rawData.is_fertigation ?? rawData.extra_data?.is_fertigation;
+      if (fertigVal !== undefined) {
+        (chemicalData as any).is_fertigation = fertigVal === true || fertigVal === 'true';
+      }
+    }
+
     // Parse area field (e.g., "20 ha" → area_treated: 20, area_unit: "ha")
     if (rawData.area && typeof rawData.area === 'string') {
       // Require unit to start with a letter to avoid splitting pure numbers like "25" → "2" + "5"
@@ -1493,7 +1623,11 @@ function normalizeSoilManagementEventData(
     // ENHANCED: Tillage depth fields for soil CO2 flux calculation (TI events)
     'tillage_depth',
     'tillage_depth_unit',
-    'depth'
+    'depth',
+    // Universal context fields present across event types
+    'variety',
+    'block_id',
+    'growth_stage'
   ];
 
   mapFields(rawData, soilData, soilFields, fieldMapping);
@@ -1570,7 +1704,11 @@ function normalizePestManagementEventData(
     'fuel_consumed',
     'fuel_unit',
     'equipment_hours',
-    'production_efficiency'
+    'production_efficiency',
+    // Universal context fields present across event types
+    'variety',
+    'block_id',
+    'growth_stage'
   ];
 
   mapFields(rawData, pestData, pestFields, fieldMapping);
