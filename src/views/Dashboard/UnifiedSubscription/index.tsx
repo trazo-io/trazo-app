@@ -224,7 +224,8 @@ function UnifiedSubscriptionDashboard() {
       ? dashboardData.subscription[0]
       : activeCompany?.subscription;
   const plan = subscription?.plan;
-  const features = plan?.features || {};
+  // Use effective_limits (base plan + add-ons) when available, fall back to base features
+  const features = subscription?.effective_limits || plan?.features || {};
   const isTrial = subscription?.status === 'trialing';
   const addons = dashboardData?.addons || [];
   const paymentMethods = dashboardData?.paymentMethods || [];
@@ -1158,6 +1159,10 @@ function UnifiedSubscriptionDashboard() {
                                                   {est.isAtLimit ? (
                                                     <Badge colorScheme="orange" fontSize="xs">
                                                       {intl.formatMessage({ id: 'app.atLimit' })}
+                                                    </Badge>
+                                                  ) : est.isUnlimited ? (
+                                                    <Badge colorScheme="green" fontSize="xs">
+                                                      {intl.formatMessage({ id: 'app.unlimited' })}
                                                     </Badge>
                                                   ) : (
                                                     <Badge colorScheme="green" fontSize="xs">
