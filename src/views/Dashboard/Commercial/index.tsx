@@ -766,7 +766,7 @@ export default function CommercialView() {
                       isDisabled={filters.product == null || filters.parcel == null}
                     >
                       {filters.production
-                        ? filters.production.period
+                        ? filters.production.name
                         : intl.formatMessage({ id: 'app.allProductions' })}
                     </MenuButton>
                     <MenuList minW="180px">
@@ -788,7 +788,7 @@ export default function CommercialView() {
                             color="gray.600"
                             py={2}
                           >
-                            {history.period}
+                            {history.name}
                           </MenuItem>
                         ))}
                     </MenuList>
