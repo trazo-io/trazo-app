@@ -99,6 +99,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
 
   const [activeInterval, setActiveInterval] = useState('monthly');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutPlanId, setCheckoutPlanId] = useState(null);
   const [isUpgradeFlow, setIsUpgradeFlow] = useState(false);
   const [upgradeResourceType, setUpgradeResourceType] = useState(null);
 
@@ -424,6 +425,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       }
     } finally {
       setCheckoutLoading(false);
+      setCheckoutPlanId(null);
     }
   };
 
@@ -476,6 +478,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     }
 
     setCheckoutLoading(true);
+    setCheckoutPlanId(planId);
 
     try {
       console.log('Creating checkout session with:', {
@@ -551,6 +554,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
       });
     } finally {
       setCheckoutLoading(false);
+      setCheckoutPlanId(null);
     }
   };
 
@@ -1162,7 +1166,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                               variant={isCurrent ? 'solid' : isRecommended ? 'primary' : 'outline'}
                               size="md"
                               onClick={() => !isCurrent && handleSubscribe(plan.id)}
-                              isLoading={checkoutLoading && !isCurrent}
+                              isLoading={checkoutLoading && checkoutPlanId === plan.id}
                               loadingText={t('app.processingPayment')}
                               leftIcon={<Icon as={isCurrent ? FaCheckCircle : FaCreditCard} />}
                               w="full"

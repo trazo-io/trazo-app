@@ -1,15 +1,22 @@
 export interface Company {
   id: string;
   name: string;
+  tradename?: string;
   address: string;
   postcode: string;
   city: string;
+  state?: string;
   country: string;
   phone: string;
   email: string;
   website: string;
   logo: string;
   invitation_code?: string;
+  // Backend uses contact_email/contact_phone/fiscal_id
+  contact_email?: string;
+  contact_phone?: string;
+  fiscal_id?: string;
+  zip_code?: string;
   employees: Employee[];
   establishments: Establishment[];
   parcels?: Parcel[];

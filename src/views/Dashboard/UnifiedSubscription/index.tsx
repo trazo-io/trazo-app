@@ -53,7 +53,10 @@ import {
   Tooltip,
   List,
   ListItem,
-  ListIcon
+  ListIcon,
+  Input,
+  FormControl,
+  FormLabel
 } from '@chakra-ui/react';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -89,7 +92,7 @@ import { useIntl } from 'react-intl';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { RootState } from 'store';
 import { Company } from 'types/company';
-import { useGetCompanyQuery } from 'store/api/companyApi';
+import { useGetCompanyQuery, useUpdateCompanyMutation } from 'store/api/companyApi';
 import {
   useGetBillingDashboardQuery,
   useGetBlockchainSubscriptionStatusQuery,
@@ -103,7 +106,7 @@ import {
 } from 'store/api/billingApi';
 import { setCompany } from 'store/features/companySlice';
 import { MastercardIcon, VisaIcon, PayPalIcon } from 'components/Icons/Icons';
-import { FaWallet, FaRocket, FaEnvelope, FaGift } from 'react-icons/fa';
+import { FaWallet, FaRocket, FaEnvelope, FaGift, FaEdit } from 'react-icons/fa';
 import config from 'config/environment';
 
 // Helper functions
@@ -181,8 +184,14 @@ function UnifiedSubscriptionDashboard() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isEarlyAccessOpen, onOpen: onEarlyAccessOpen, onClose: onEarlyAccessClose } = useDisclosure();
   const { isOpen: isCancelOpen, onOpen: onCancelOpen, onClose: onCancelClose } = useDisclosure();
+  const { isOpen: isBillingEditOpen, onOpen: onBillingEditOpen, onClose: onBillingEditClose } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const [earlyAccessPlanName, setEarlyAccessPlanName] = useState<string | null>(null);
+  const [billingForm, setBillingForm] = useState({
+    contact_email: '',
+    contact_phone: '',
+    fiscal_id: ''
+  });
 
   // API Queries
   const { refetch: refetchCompany, isLoading: isRefreshing } = useGetCompanyQuery(
@@ -217,6 +226,7 @@ function UnifiedSubscriptionDashboard() {
     useCreateCheckoutSessionMutation();
   const [subscribeBlockchain, { isLoading: isSubscribingBlockchain }] =
     useSubscribeBlockchainMutation();
+  const [updateCompany, { isLoading: isUpdatingBilling }] = useUpdateCompanyMutation();
 
   // Extract data
   const subscription =
@@ -505,7 +515,7 @@ function UnifiedSubscriptionDashboard() {
       return;
     }
     setSelectedAddon(addon);
-    setAddonQuantity(1);
+    setAddonQuantity(addon.slug === 'blockchain-verification' ? 1 : 1);
     onOpen();
   };
 
@@ -516,7 +526,7 @@ function UnifiedSubscriptionDashboard() {
         subscriptionId: subscription.id,
         addonId: selectedAddon.id,
         quantity: addonQuantity,
-        return_url: window.location.origin + `/admin/dashboard/subscription?from_addon=true`
+        return_url: `/admin/dashboard/subscription`
       }).unwrap();
 
       onClose();
@@ -568,8 +578,8 @@ function UnifiedSubscriptionDashboard() {
     createCheckoutSession({
       company_id: activeCompany.id,
       mode: 'setup',
-      success_url: window.location.href + '?refresh=true',
-      cancel_url: window.location.href
+      success_url: `${window.location.origin}/admin/dashboard/subscription?refresh=true`,
+      cancel_url: `${window.location.origin}/admin/dashboard/subscription`
     })
       .unwrap()
       .then((response) => {
@@ -616,6 +626,46 @@ function UnifiedSubscriptionDashboard() {
     },
     [setDefaultPaymentMethod, toast, intl, refetchDashboard]
   );
+
+  const handleOpenBillingEdit = useCallback(() => {
+    setBillingForm({
+      contact_email: (activeCompany as any)?.contact_email || '',
+      contact_phone: (activeCompany as any)?.contact_phone || '',
+      fiscal_id: (activeCompany as any)?.fiscal_id || ''
+    });
+    onBillingEditOpen();
+  }, [activeCompany, onBillingEditOpen]);
+
+  const handleSaveBillingInfo = useCallback(async () => {
+    if (!activeCompany?.id) return;
+    try {
+      await updateCompany({
+        companyId: activeCompany.id,
+        companyData: {
+          contact_email: billingForm.contact_email,
+          contact_phone: billingForm.contact_phone,
+          fiscal_id: billingForm.fiscal_id
+        }
+      }).unwrap();
+      toast({
+        title: intl.formatMessage({ id: 'app.success' }),
+        description: intl.formatMessage({ id: 'subscription.billingInfoUpdated' }),
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+      onBillingEditClose();
+      refetchCompany();
+    } catch {
+      toast({
+        title: intl.formatMessage({ id: 'app.error' }),
+        description: intl.formatMessage({ id: 'subscription.billingInfoUpdateError' }),
+        status: 'error',
+        duration: 5000,
+        isClosable: true
+      });
+    }
+  }, [activeCompany, billingForm, updateCompany, toast, intl, onBillingEditClose, refetchCompany]);
 
   const handleSubscribeBlockchain = useCallback(async () => {
     if (!config.PAYMENTS_ENABLED) {
@@ -1549,6 +1599,25 @@ function UnifiedSubscriptionDashboard() {
                                       </Text>
                                       <Text fontSize="sm" color="gray.600">
                                         {intl.formatMessage({ id: 'subscription.cardExpiry' }, { last4: method.last_4, expMonth: method.exp_month, expYear: method.exp_year })}
+                                        {(() => {
+                                          const now = new Date();
+                                          const expDate = new Date(method.exp_year, method.exp_month);
+                                          const threeMonths = new Date(now.getFullYear(), now.getMonth() + 3);
+                                          if (expDate <= now) {
+                                            return (
+                                              <Badge ml={2} colorScheme="red" fontSize="xs">
+                                                {intl.formatMessage({ id: 'subscription.cardExpired' })}
+                                              </Badge>
+                                            );
+                                          } else if (expDate <= threeMonths) {
+                                            return (
+                                              <Badge ml={2} colorScheme="orange" fontSize="xs">
+                                                {intl.formatMessage({ id: 'subscription.cardExpiringSoon' })}
+                                              </Badge>
+                                            );
+                                          }
+                                          return null;
+                                        })()}
                                       </Text>
                                     </Box>
                                   </Flex>
@@ -1589,9 +1658,20 @@ function UnifiedSubscriptionDashboard() {
 
                     {/* Billing Information */}
                     <Box>
-                      <Text fontSize="lg" fontWeight="bold" mb={4}>
-                        {intl.formatMessage({ id: 'app.billingInformation' })}
-                      </Text>
+                      <Flex justify="space-between" align="center" mb={4}>
+                        <Text fontSize="lg" fontWeight="bold">
+                          {intl.formatMessage({ id: 'app.billingInformation' })}
+                        </Text>
+                        <Button
+                          size="sm"
+                          leftIcon={<FaEdit />}
+                          variant="ghost"
+                          colorScheme="blue"
+                          onClick={handleOpenBillingEdit}
+                        >
+                          {intl.formatMessage({ id: 'subscription.editBillingInfo' })}
+                        </Button>
+                      </Flex>
                       <Card>
                         <CardBody>
                           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -1605,19 +1685,19 @@ function UnifiedSubscriptionDashboard() {
                               <Text color="gray.500" fontSize="sm">
                                 {intl.formatMessage({ id: 'subscription.email' })}
                               </Text>
-                              <Text fontWeight="medium">{activeCompany?.email}</Text>
+                              <Text fontWeight="medium">{(activeCompany as any)?.contact_email || '-'}</Text>
                             </Box>
                             <Box>
                               <Text color="gray.500" fontSize="sm">
                                 {intl.formatMessage({ id: 'subscription.phone' })}
                               </Text>
-                              <Text fontWeight="medium">{activeCompany?.phone || '-'}</Text>
+                              <Text fontWeight="medium">{(activeCompany as any)?.contact_phone || '-'}</Text>
                             </Box>
                             <Box>
                               <Text color="gray.500" fontSize="sm">
                                 {intl.formatMessage({ id: 'subscription.taxId' })}
                               </Text>
-                              <Text fontWeight="medium">{activeCompany?.tax_id || '-'}</Text>
+                              <Text fontWeight="medium">{(activeCompany as any)?.fiscal_id || '-'}</Text>
                             </Box>
                           </SimpleGrid>
                         </CardBody>
@@ -1644,28 +1724,35 @@ function UnifiedSubscriptionDashboard() {
                                     {intl.formatMessage({ id: 'subscription.invoiceLabel' }, { number: invoice.number || invoice.id })}
                                   </Text>
                                   <Text fontSize="sm" color="gray.600">
-                                    {formatDate(invoice.created || invoice.invoice_date)} ·{' '}
-                                    {formatPrice((invoice.amount_paid || invoice.amount) / 100)}
+                                    {formatDate(invoice.created_at || invoice.invoice_date)} ·{' '}
+                                    {formatPrice(invoice.amount)}
                                   </Text>
                                 </Box>
                                 <HStack>
                                   <Badge
-                                    colorScheme={invoice.status === 'paid' ? 'green' : 'gray'}
+                                    colorScheme={
+                                      invoice.status === 'paid' ? 'green' :
+                                      invoice.status === 'open' ? 'yellow' :
+                                      invoice.status === 'uncollectible' || invoice.status === 'void' ? 'red' :
+                                      'gray'
+                                    }
                                     fontSize="xs"
                                   >
                                     {invoice.status}
                                   </Badge>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    colorScheme="blue"
-                                    rightIcon={<FaExternalLinkAlt />}
-                                    as="a"
-                                    href={invoice.invoice_pdf}
-                                    target="_blank"
-                                  >
-                                    {intl.formatMessage({ id: 'subscription.download' })}
-                                  </Button>
+                                  {invoice.invoice_pdf && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      colorScheme="blue"
+                                      rightIcon={<FaExternalLinkAlt />}
+                                      as="a"
+                                      href={invoice.invoice_pdf}
+                                      target="_blank"
+                                    >
+                                      {intl.formatMessage({ id: 'subscription.download' })}
+                                    </Button>
+                                  )}
                                 </HStack>
                               </Flex>
                             </CardBody>
@@ -1689,6 +1776,59 @@ function UnifiedSubscriptionDashboard() {
           </CardBody>
         </Card>
       </VStack>
+
+      {/* Billing Info Edit Modal */}
+      <Modal isOpen={isBillingEditOpen} onClose={onBillingEditClose} isCentered size="md">
+        <ModalOverlay />
+        <ModalContent borderRadius="xl" mx={4}>
+          <ModalHeader>
+            {intl.formatMessage({ id: 'subscription.editBillingInfo' })}
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4}>
+              <FormControl>
+                <FormLabel fontSize="sm">{intl.formatMessage({ id: 'subscription.email' })}</FormLabel>
+                <Input
+                  type="email"
+                  value={billingForm.contact_email}
+                  onChange={(e) => setBillingForm({ ...billingForm, contact_email: e.target.value })}
+                  placeholder="billing@example.com"
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel fontSize="sm">{intl.formatMessage({ id: 'subscription.phone' })}</FormLabel>
+                <Input
+                  type="tel"
+                  value={billingForm.contact_phone}
+                  onChange={(e) => setBillingForm({ ...billingForm, contact_phone: e.target.value })}
+                  placeholder="+1 (555) 000-0000"
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel fontSize="sm">{intl.formatMessage({ id: 'subscription.taxId' })}</FormLabel>
+                <Input
+                  value={billingForm.fiscal_id}
+                  onChange={(e) => setBillingForm({ ...billingForm, fiscal_id: e.target.value })}
+                  placeholder="EIN / Tax ID"
+                />
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={onBillingEditClose}>
+              {intl.formatMessage({ id: 'app.cancel' })}
+            </Button>
+            <Button
+              colorScheme="green"
+              onClick={handleSaveBillingInfo}
+              isLoading={isUpdatingBilling}
+            >
+              {intl.formatMessage({ id: 'app.save' })}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Early Access Modal */}
       <Modal isOpen={isEarlyAccessOpen} onClose={onEarlyAccessClose} isCentered size="md">
@@ -1764,7 +1904,28 @@ function UnifiedSubscriptionDashboard() {
                     {selectedAddon.name}
                   </Text>
                   <Text color="gray.600">{selectedAddon.description}</Text>
+                  {selectedAddon.slug === 'extra-storage' && (
+                    <Text color="green.600" fontSize="sm" mt={1} fontWeight="medium">
+                      {intl.formatMessage({ id: 'subscription.addonStorageUnit' })}
+                    </Text>
+                  )}
+                  {selectedAddon.slug === 'extra-establishment' && (
+                    <Text color="green.600" fontSize="sm" mt={1} fontWeight="medium">
+                      {intl.formatMessage({ id: 'subscription.addonEstablishmentUnit' })}
+                    </Text>
+                  )}
+                  {selectedAddon.slug === 'extra-parcel' && (
+                    <Text color="green.600" fontSize="sm" mt={1} fontWeight="medium">
+                      {intl.formatMessage({ id: 'subscription.addonParcelUnit' })}
+                    </Text>
+                  )}
+                  {selectedAddon.slug === 'extra-production' && (
+                    <Text color="green.600" fontSize="sm" mt={1} fontWeight="medium">
+                      {intl.formatMessage({ id: 'subscription.addonProductionUnit' })}
+                    </Text>
+                  )}
                 </Box>
+                {selectedAddon.slug !== 'blockchain-verification' && (
                 <Box>
                   <Text mb={2}>{intl.formatMessage({ id: 'app.quantity' })}</Text>
                   <NumberInput
@@ -1780,6 +1941,7 @@ function UnifiedSubscriptionDashboard() {
                     </NumberInputStepper>
                   </NumberInput>
                 </Box>
+                )}
                 <Box>
                   <Text color="gray.600" fontSize="sm">
                     {intl.formatMessage({ id: 'app.unitPrice' })}:{' '}

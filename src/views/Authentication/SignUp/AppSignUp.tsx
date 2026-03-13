@@ -36,6 +36,8 @@ import {
 import { motion } from 'framer-motion';
 import { useDispatch } from 'react-redux';
 import AuthFooter from 'components/Footer/AuthFooter';
+import { passwordValidator } from '../../../utils/passwordValidation';
+import { PasswordStrengthIndicator } from '../../../components/Forms/PasswordStrengthIndicator';
 import { useSignUpMutation, useResendVerificationEmailMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
 import {
@@ -93,19 +95,21 @@ const AppSignUp: React.FC = () => {
   const password = watch('password');
   const password2 = watch('password2');
   const companyCode = watch('company_code');
+  const firstName = watch('first_name');
+  const lastName = watch('last_name');
+  const email = watch('email');
 
-  // Password strength calculation
-  const getPasswordStrength = (password: string) => {
-    if (!password) return 0;
-    let strength = 0;
-    if (password.length >= 8) strength += 25;
-    if (/[A-Z]/.test(password)) strength += 25;
-    if (/[a-z]/.test(password)) strength += 25;
-    if (/\d/.test(password)) strength += 25;
-    return strength;
-  };
+  // Password strength validation (mirrors backend validators)
+  const passwordValidation = React.useMemo(() => {
+    if (!password) return null;
+    return passwordValidator.validate(password, {
+      email: email || undefined,
+      firstName: firstName || undefined,
+      lastName: lastName || undefined
+    });
+  }, [password, email, firstName, lastName]);
 
-  const passwordStrength = getPasswordStrength(password || '');
+  const passwordStrength = passwordValidation?.score ?? 0;
 
   // 🚀 2025 UX Enhancement: Verification panel functions
   const handleBackToSignup = () => {
@@ -151,6 +155,18 @@ const AppSignUp: React.FC = () => {
   const onSubmit = async (data: SignUpFormData) => {
     try {
       setError(null);
+
+      // Validate password strength before submitting
+      if (!passwordValidation || !passwordValidation.isValid) {
+        toast({
+          title: 'Weak password',
+          description: passwordValidation?.errors[0] || 'Please choose a stronger password',
+          status: 'error',
+          duration: 4000,
+          isClosable: true
+        });
+        return;
+      }
 
       const signUpData = {
         first_name: data.first_name,
@@ -1049,35 +1065,15 @@ const AppSignUp: React.FC = () => {
                           </InputRightElement>
                         </InputGroup>
 
-                        {/* Password Strength Indicator */}
-                        {password && (
-                          <Box w="full" mt={2}>
-                            <Progress
-                              value={passwordStrength}
-                              size="sm"
-                              borderRadius="full"
-                              colorScheme={
-                                passwordStrength < 50
-                                  ? 'red'
-                                  : passwordStrength < 75
-                                  ? 'yellow'
-                                  : 'green'
-                              }
-                            />
-                            <Text
-                              fontSize="xs"
-                              color={useColorModeValue('gray.500', 'gray.400')}
-                              mt={1}
-                            >
-                              Password strength:{' '}
-                              {passwordStrength < 50
-                                ? 'Weak'
-                                : passwordStrength < 75
-                                ? 'Medium'
-                                : 'Strong'}
-                            </Text>
-                          </Box>
-                        )}
+                        <PasswordStrengthIndicator
+                          password={password || ''}
+                          userInfo={{
+                            email: email || undefined,
+                            firstName: firstName || undefined,
+                            lastName: lastName || undefined
+                          }}
+                          validation={passwordValidation}
+                        />
 
                         {errors.password && (
                           <Text fontSize="sm" color="red.500" mt={1}>
@@ -1175,7 +1171,7 @@ const AppSignUp: React.FC = () => {
                           </Text>
                         )}
 
-                        {errors.password2 && (
+                        {errors.password2 && !password2 && (
                           <Text fontSize="sm" color="red.500" mt={1}>
                             {errors.password2.message}
                           </Text>

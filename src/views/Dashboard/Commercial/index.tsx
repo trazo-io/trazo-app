@@ -520,7 +520,6 @@ export default function CommercialView() {
     {
       companyId: currentCompany?.id,
       establishmentId: currentEstablishmentId,
-      periodId: filters.period?.id,
       parcelId: filters.parcel?.id,
       productId: filters.product?.id
     },
@@ -528,7 +527,6 @@ export default function CommercialView() {
       skip:
         !currentCompany ||
         !currentEstablishmentId ||
-        !filters?.period ||
         !filters?.parcel ||
         !filters?.product ||
         currentCompany?.id === undefined

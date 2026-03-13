@@ -27,7 +27,7 @@ export interface PasswordRequirements {
  * Default password requirements following OWASP 2025 guidelines
  */
 export const DEFAULT_REQUIREMENTS: PasswordRequirements = {
-  minLength: 12,
+  minLength: 8, // Matches backend EnhancedMinimumLengthValidator. Increase to 12 (OWASP) when backend is updated.
   requireUppercase: true,
   requireLowercase: true,
   requireNumbers: true,
@@ -94,9 +94,7 @@ export class PasswordValidator {
     const entropy = this.calculateEntropy(password);
     if (entropy < this.requirements.minEntropy) {
       errors.push(
-        `Password complexity is too low (${entropy.toFixed(
-          1
-        )} bits). Use more character types or increase length.`
+        'Password is too simple. Try making it longer or adding different character types.'
       );
     } else {
       score += 20;

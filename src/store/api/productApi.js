@@ -1,7 +1,7 @@
 import {
   ESTABLISHMENT_CHART_SCANS_VS_SALES_INFO_URL,
-  ESTABLISHMENT_HISTORIES_URL,
   ESTABLISHMENT_PRODUCTS_URL,
+  PARCEL_HISTORY_URL,
   PARCEL_URL,
   PRODUCT_URL
 } from '../../config';
@@ -242,15 +242,18 @@ export const productApi = baseApi.injectEndpoints({
       })
     }),
     getEstablishmentHistories: build.query({
-      query: ({ companyId, establishmentId, parcelId, productId, periodId }) => ({
-        url:
-          ESTABLISHMENT_HISTORIES_URL(companyId, establishmentId) +
-          (parcelId ? `?parcel=${parcelId}` : '') +
-          (productId ? `&product=${productId}` : '') +
-          (periodId ? `&period=${periodId}` : ''),
-        method: 'GET',
-        credentials: 'include'
-      })
+      query: ({ companyId, establishmentId, parcelId, productId }) => {
+        const params = new URLSearchParams();
+        if (productId) params.append('product', productId);
+        const queryString = params.toString();
+        return {
+          url:
+            PARCEL_HISTORY_URL(companyId, establishmentId, parcelId) +
+            (queryString ? `?${queryString}` : ''),
+          method: 'GET',
+          credentials: 'include'
+        };
+      }
     }),
     getEstablishmentScansVsSalesChartInfo: build.query({
       query: ({ companyId, establishmentId, parcelId, productId, periodId, productionId }) => ({

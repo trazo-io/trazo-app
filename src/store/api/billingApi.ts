@@ -4,7 +4,9 @@ import {
   PAYMENT_METHODS_URL,
   INVOICES_URL,
   ADDONS_URL,
-  SUBSCRIPTION_DASHBOARD_URL
+  SUBSCRIPTION_DASHBOARD_URL,
+  CREATE_CHECKOUT_SESSION_URL,
+  COMPLETE_CHECKOUT_URL
 } from '../../config/backend';
 
 // Interface definitions
@@ -68,10 +70,9 @@ export interface Invoice {
   id: number;
   number?: string;
   amount: number;
-  amount_paid?: number;
   status: string;
   invoice_date?: string;
-  created?: string;
+  created_at?: string;
   due_date: string | null;
   invoice_pdf: string | null;
 }
@@ -247,7 +248,8 @@ export const billingApi = baseApi.injectEndpoints({
     setDefaultPaymentMethod: builder.mutation({
       query: (id) => ({
         url: `${PAYMENT_METHODS_URL}${id}/set_default/`,
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
       }),
       invalidatesTags: [
         { type: 'PaymentMethod', id: 'LIST' },
@@ -257,7 +259,8 @@ export const billingApi = baseApi.injectEndpoints({
     removePaymentMethod: builder.mutation({
       query: (id) => ({
         url: `${PAYMENT_METHODS_URL}${id}/`,
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       }),
       invalidatesTags: [
         { type: 'PaymentMethod', id: 'LIST' },
@@ -288,7 +291,7 @@ export const billingApi = baseApi.injectEndpoints({
       }
     >({
       query: (data) => ({
-        url: `checkout/create_session/`,
+        url: CREATE_CHECKOUT_SESSION_URL,
         method: 'POST',
         // Use snake_case if provided directly, otherwise convert from camelCase
         body: {
@@ -308,7 +311,7 @@ export const billingApi = baseApi.injectEndpoints({
     }),
     createCustomerPortalSession: builder.mutation({
       query: (data) => ({
-        url: `checkout/create_customer_portal_session/`,
+        url: `subscriptions/checkout/create_customer_portal_session/`,
         method: 'POST',
         body: {
           company_id: data.companyId,
