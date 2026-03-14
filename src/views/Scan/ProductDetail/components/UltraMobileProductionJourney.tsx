@@ -698,7 +698,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   };
 
   return (
-    <Box ref={sectionRef}>
+    <Box ref={sectionRef} overflow="hidden" w="100%">
     <Card
       bg={bgColor}
       shadow="sm"
@@ -707,10 +707,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       border="1px solid"
       borderColor={useColorModeValue('gray.100', 'gray.700')}
     >
-      <CardBody p={{ base: 4, md: 6 }}>
+      <CardBody p={{ base: 4, md: 6 }} minW={0}>
         {/* Next-Level Mobile Header */}
-        <VStack spacing={5} mb={6}>
-          <VStack spacing={3} w="full">
+        <VStack spacing={5} mb={6} minW={0}>
+          <VStack spacing={3} w="full" minW={0}>
             <HStack w="full" justify="space-between" align="start">
               <CardHeader pb={6}>
                 <HStack spacing={3}>
@@ -992,9 +992,9 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         </VStack>
       </CardBody>
 
-      <CardBody pt={0} px={{ base: 0, md: 6 }} pb={{ base: 2, md: 6 }}>
+      <CardBody pt={0} px={{ base: 0, md: 6 }} pb={{ base: 2, md: 6 }} minW={0}>
         {/* Consumer-Friendly Event Cards - with grouping for repeated events */}
-        <VStack spacing={{ base: 2, md: 4 }} align="stretch">
+        <VStack spacing={{ base: 2, md: 4 }} align="stretch" minW={0}>
           {groupedDisplayEvents.map((item, groupIndex) => {
             if (item.kind === 'group') {
               const config = getEventConfig(item.events[0]);
