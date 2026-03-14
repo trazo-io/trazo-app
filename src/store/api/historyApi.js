@@ -158,7 +158,7 @@ export const historyApi = baseApi.injectEndpoints({
     updateProduction: build.mutation({
       query: ({ historyId, ...production }) => ({
         url: PRODUCTION_URL(historyId),
-        method: 'PUT',
+        method: 'PATCH',
         credentials: 'include',
         body: production
       }),

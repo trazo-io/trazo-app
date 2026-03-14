@@ -591,7 +591,7 @@ function PublicEstablishmentProfile() {
                     )}
                     {establishmentData?.total_acreage && (
                       <HStack>
-                        <Icon as={FaTractor} color="brown.500" />
+                        <Icon as={FaTractor} color="orange.700" />
                         <Text fontWeight="medium">Total Acreage:</Text>
                         <Text>{establishmentData.total_acreage} acres</Text>
                       </HStack>

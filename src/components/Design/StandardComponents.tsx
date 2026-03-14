@@ -858,19 +858,30 @@ export const SectionHeader = ({
   description
 }: SectionHeaderProps) => (
   <Box mb={4}>
-    <HStack justify="space-between" align="center" mb={description ? 2 : 0}>
+    <Flex
+      direction={{ base: badge ? 'column' : 'row', smd: 'row' }}
+      justify={{ base: 'flex-start', smd: 'space-between' }}
+      align={{ base: 'flex-start', smd: 'center' }}
+      gap={2}
+      mb={description ? 2 : 0}
+    >
+      {badge && (
+        <Badge colorScheme={badgeColorScheme} fontSize="xs" flexShrink={0} display={{ base: 'inline-flex', smd: 'none' }}>
+          {badge}
+        </Badge>
+      )}
       <HStack spacing={2}>
-        <Icon as={icon} color={iconColor} boxSize={5} />
+        <Icon as={icon} color={iconColor} boxSize={5} flexShrink={0} />
         <Text fontSize="md" fontWeight="bold" color="gray.700">
           {title}
         </Text>
       </HStack>
       {badge && (
-        <Badge colorScheme={badgeColorScheme} fontSize="xs">
+        <Badge colorScheme={badgeColorScheme} fontSize="xs" flexShrink={0} display={{ base: 'none', smd: 'inline-flex' }}>
           {badge}
         </Badge>
       )}
-    </HStack>
+    </Flex>
     {description && (
       <Text fontSize="sm" color="gray.600">
         {description}

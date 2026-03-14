@@ -61,7 +61,7 @@ const ScansList = ({ title, labels, scansData }) => {
                     <Th
                       key={index}
                       color="gray.600"
-                      fontSize={{ base: '2xs', md: 'xs' }}
+                      fontSize="xs"
                       fontWeight="semibold"
                       textTransform="uppercase"
                       letterSpacing={{ base: 'normal', md: 'wider' }}

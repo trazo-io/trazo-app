@@ -126,7 +126,7 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text', on
     <HStack spacing={2} align="flex-start">
       <Icon as={icon} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
       <Box>
-        <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" textTransform="uppercase" fontWeight="semibold">
+        <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
           {label}
         </Text>
         {renderValue()}
@@ -539,14 +539,14 @@ function ProfileProduction() {
                     px={2}
                     py={0.5}
                     borderRadius="full"
-                    fontSize={{ base: '2xs', md: 'xs' }}
+                    fontSize="xs"
                   >
                     {historyData?.finish_date ? 'Finished' : 'Active'}
                   </Badge>
                 </WrapItem>
                 {historyData?.is_outdoor !== undefined && (
                   <WrapItem>
-                    <Badge colorScheme="green" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize={{ base: '2xs', md: 'xs' }}>
+                    <Badge colorScheme="green" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
                       <HStack spacing={1}>
                         <Icon as={FaSeedling} boxSize={2.5} />
                         <Text>{historyData.is_outdoor ? intl.formatMessage({ id: 'production.outdoor' }) : intl.formatMessage({ id: 'production.indoor' })}</Text>
@@ -556,7 +556,7 @@ function ProfileProduction() {
                 )}
                 {historyData?.qr_code && (
                   <WrapItem>
-                    <Badge colorScheme="blue" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize={{ base: '2xs', md: 'xs' }}>
+                    <Badge colorScheme="blue" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
                       <HStack spacing={1}>
                         <Icon as={FaQrcode} boxSize={2.5} />
                         <Text>QR Available</Text>
@@ -566,7 +566,7 @@ function ProfileProduction() {
                 )}
                 {historyData?.published && (
                   <WrapItem>
-                    <Badge colorScheme="purple" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize={{ base: '2xs', md: 'xs' }}>
+                    <Badge colorScheme="purple" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
                       Published
                     </Badge>
                   </WrapItem>
@@ -722,7 +722,7 @@ function ProfileProduction() {
                 border="1px solid"
                 borderColor="blue.100"
               >
-                <Text fontSize={{ base: '2xs', md: 'xs' }} color="blue.700" textAlign="center">
+                <Text fontSize="xs" color="blue.700" textAlign="center">
                   Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download
                   the high-resolution PNG for print quality.
                 </Text>
@@ -839,7 +839,7 @@ function ProfileProduction() {
           <VStack spacing={{ base: 3, md: 6 }} align="stretch">
             <Box>
               <Text
-                fontSize={{ base: '2xs', md: 'xs' }}
+                fontSize="xs"
                 color="gray.500"
                 textTransform="uppercase"
                 fontWeight="semibold"
@@ -867,7 +867,7 @@ function ProfileProduction() {
             {historyData?.operator && (
               <Box p={{ base: 3, md: 4 }} bg="gray.50" borderRadius="lg">
                 <Text
-                  fontSize={{ base: '2xs', md: 'xs' }}
+                  fontSize="xs"
                   color="gray.500"
                   textTransform="uppercase"
                   fontWeight="semibold"
@@ -894,7 +894,7 @@ function ProfileProduction() {
 
             <Box>
               <Text
-                fontSize={{ base: '2xs', md: 'xs' }}
+                fontSize="xs"
                 color="gray.500"
                 textTransform="uppercase"
                 fontWeight="semibold"
@@ -953,7 +953,7 @@ function ProfileProduction() {
             <VStack align="start" spacing={{ base: 2, md: 4 }}>
               <Box w="full">
                 <Text
-                  fontSize={{ base: '2xs', md: 'xs' }}
+                  fontSize="xs"
                   color="gray.500"
                   textTransform="uppercase"
                   fontWeight="semibold"
@@ -975,7 +975,7 @@ function ProfileProduction() {
               {historyData?.start_date && historyData?.finish_date && (
                 <Box w="full">
                   <Text
-                    fontSize={{ base: '2xs', md: 'xs' }}
+                    fontSize="xs"
                     color="gray.500"
                     textTransform="uppercase"
                     fontWeight="semibold"
@@ -997,7 +997,7 @@ function ProfileProduction() {
             <VStack align="start" spacing={{ base: 2, md: 4 }}>
               <Box w="full">
                 <Text
-                  fontSize={{ base: '2xs', md: 'xs' }}
+                  fontSize="xs"
                   color="gray.500"
                   textTransform="uppercase"
                   fontWeight="semibold"
@@ -1012,7 +1012,7 @@ function ProfileProduction() {
               {timelineEvents.length > 0 && (
                 <Box w="full">
                   <Text
-                    fontSize={{ base: '2xs', md: 'xs' }}
+                    fontSize="xs"
                     color="gray.500"
                     textTransform="uppercase"
                     fontWeight="semibold"

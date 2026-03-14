@@ -863,9 +863,17 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       const actualId = templateId.replace(/^(db-|suggested-)/, '');
 
       // Call backend to increment usage counter
+      const csrfToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
       await fetch(`/api/carbon/event-templates/${actualId}/use_template/`, {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'X-CSRFToken': csrfToken || '',
+          'Content-Type': 'application/json'
+        }
       });
     } catch (error) {
       console.log('Template usage tracking failed:', error);
@@ -1288,7 +1296,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                 <Badge
                   colorScheme="green"
                   variant="subtle"
-                  fontSize="2xs"
+                  fontSize="xs"
                   px={1.5}
                   py={0.5}
                   borderRadius="md"

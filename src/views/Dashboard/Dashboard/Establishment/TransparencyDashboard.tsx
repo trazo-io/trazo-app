@@ -649,15 +649,12 @@ function TransparencyDashboard() {
             <VStack spacing={{ base: 6, md: 8 }} align="stretch">
               {/* Transparency Quick Stats - Matching Environmental Impact pattern */}
               <Box>
-                <Heading size="md" color={titleColor} mb={4} fontSize={{ base: 'lg', md: 'xl' }}>
-                  {intl.formatMessage({ id: 'transparency.overview' })}
-                </Heading>
                 <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2, md: 4 }}>
                   <Card bg="green.50" border="1px solid" borderColor="green.100" borderRadius="xl">
                     <CardBody p={{ base: 3, md: 4 }} textAlign="center">
                       <VStack spacing={{ base: 1, md: 2 }}>
                         <Icon as={FaLeaf} color="green.500" boxSize={{ base: 5, md: 6 }} />
-                        <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="green.700">
+                        <Text fontSize={{ base: 'md', md: 'xl' }} fontWeight="bold" color="green.700">
                           {Math.round(actualTransparencyScore * 100)}%
                         </Text>
                         <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.600" whiteSpace="nowrap">
@@ -671,7 +668,7 @@ function TransparencyDashboard() {
                     <CardBody p={{ base: 3, md: 4 }} textAlign="center">
                       <VStack spacing={{ base: 1, md: 2 }}>
                         <Icon as={FaCloudUploadAlt} color="blue.500" boxSize={{ base: 5, md: 6 }} />
-                        <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="blue.700">
+                        <Text fontSize={{ base: 'md', md: 'xl' }} fontWeight="bold" color="blue.700">
                           {totalEvents}
                         </Text>
                         <Text fontSize={{ base: 'xs', md: 'sm' }} color="blue.600" whiteSpace="nowrap">
@@ -690,7 +687,7 @@ function TransparencyDashboard() {
                     <CardBody p={{ base: 3, md: 4 }} textAlign="center">
                       <VStack spacing={{ base: 1, md: 2 }}>
                         <Icon as={FaPhotoVideo} color="purple.500" boxSize={{ base: 5, md: 6 }} />
-                        <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="purple.700">
+                        <Text fontSize={{ base: 'md', md: 'xl' }} fontWeight="bold" color="purple.700">
                           {totalPhotos}
                         </Text>
                         <Text fontSize={{ base: 'xs', md: 'sm' }} color="purple.600" whiteSpace="nowrap">
@@ -714,14 +711,14 @@ function TransparencyDashboard() {
                             <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="bold" color="green.600">
                               {activeProductions}
                             </Text>
-                            <Text fontSize={{ base: '2xs', md: 'xs' }} color="green.500" whiteSpace="nowrap">{intl.formatMessage({ id: 'transparency.statusActive' })}</Text>
+                            <Text fontSize="xs" color="green.500" whiteSpace="nowrap">{intl.formatMessage({ id: 'transparency.statusActive' })}</Text>
                           </VStack>
                           <Text color="gray.300">|</Text>
                           <VStack spacing={0}>
                             <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="bold" color="orange.600">
                               {completedProductions}
                             </Text>
-                            <Text fontSize={{ base: '2xs', md: 'xs' }} color="orange.500" whiteSpace="nowrap">{intl.formatMessage({ id: 'transparency.statusCompleted' })}</Text>
+                            <Text fontSize="xs" color="orange.500" whiteSpace="nowrap">{intl.formatMessage({ id: 'transparency.statusCompleted' })}</Text>
                           </VStack>
                         </HStack>
                         <Text fontSize={{ base: 'xs', md: 'sm' }} color="orange.600" whiteSpace="nowrap">
@@ -1114,7 +1111,7 @@ function TransparencyDashboard() {
                                   {CATEGORY_CONSUMER_NAMES[key] || key}
                                 </Text>
                                 <Badge
-                                  fontSize="2xs"
+                                  fontSize="xs"
                                   colorScheme="gray"
                                   variant="outline"
                                   borderRadius="full"
@@ -1183,7 +1180,7 @@ function TransparencyDashboard() {
                   <VStack align="start" spacing={2} mb={4}>
                     <HStack spacing={2} align="center">
                       <Icon as={FaExclamationTriangle} color="orange.500" boxSize={{ base: 4, md: 5 }} />
-                      <Heading size="md" color="orange.600" fontSize={{ base: 'md', md: 'xl' }}>
+                      <Heading size="md" color="orange.600" fontSize={{ base: 'lg', md: 'xl' }}>
                         {intl.formatMessage({ id: 'transparency.improvementActions' })}
                       </Heading>
                     </HStack>
@@ -1295,7 +1292,7 @@ function TransparencyDashboard() {
                                 })()}
                               </Text>
                               <Button
-                                size="xs"
+                                size="sm"
                                 colorScheme="orange"
                                 variant="solid"
                                 leftIcon={<FaEdit />}

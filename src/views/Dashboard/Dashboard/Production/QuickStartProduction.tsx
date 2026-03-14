@@ -23,10 +23,7 @@ import {
   StatLabel,
   StatNumber,
   StatHelpText,
-  FormControl,
-  FormLabel,
   Input,
-  Textarea,
   Select,
   NumberInput,
   NumberInputField,
@@ -67,7 +64,16 @@ import { useStartProductionMutation, useGetCropTypesDropdownQuery } from 'store/
 import { useGetHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { setParcel } from 'store/features/productSlice';
-import { StandardPage, StandardCard, StandardButton, StandardPageLoading } from 'components/Design';
+import {
+  StandardPage,
+  StandardCard,
+  StandardButton,
+  StandardPageLoading,
+  StandardField,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
@@ -288,9 +294,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
       console.log('QuickStartProduction - Matched crop type:', matchingCropType);
 
-      // Get production method from extra_data if available
-      const extraData = productionData.extra_data || {};
-      const productionMethod = extraData.production_method || 'conventional';
+      const productionMethod = productionData.production_method || 'conventional';
 
       // Format dates properly
       const formatDate = (dateStr: string | undefined) => {
@@ -304,13 +308,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
       const cropTypeIdValue = matchingCropType?.id.toString() || '';
 
-      // Handle expected harvest - backend may use end_date, finish_date, or expected_harvest
-      const expectedHarvestDate =
-        productionData.expected_harvest ||
-        productionData.end_date ||
-        productionData.finish_date ||
-        extraData?.end_date ||
-        '';
+      const expectedHarvestDate = productionData.expected_harvest || '';
 
       reset({
         name: productionData.name || `Production ${new Date().getFullYear()}`,
@@ -807,235 +805,260 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
           {/* Production Details Form */}
           <StandardCard title="Production Details" subtitle="Configure your production cycle">
-            <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
-              {/* Crop Type Selection - First field */}
-              <GridItem colSpan={{ base: 1, md: 2 }}>
-                <FormControl isRequired={!isEdit} isInvalid={!!errors.crop_type_id}>
-                  <FormLabel>
-                    Crop Type
-                    {isEdit && (
-                      <Badge ml={2} colorScheme="gray" variant="subtle">
-                        Read-only
-                      </Badge>
-                    )}
-                  </FormLabel>
-                  {/* Debug Info - only in create mode */}
-                  {!isEdit && isLoadingCropTypes && (
-                    <Text fontSize="sm" color="blue.500" mb={2}>
-                      Loading crop types...
-                    </Text>
-                  )}
-                  {!isEdit && cropTypesError && (
-                    <Text fontSize="sm" color="red.500" mb={2}>
-                      Error loading crop types: {JSON.stringify(cropTypesError)}
-                    </Text>
-                  )}
-                  {!isEdit &&
-                    !isLoadingCropTypes &&
-                    !cropTypesError &&
-                    (!cropTypesData || cropTypesData.length === 0) && (
-                      <Text fontSize="sm" color="orange.500" mb={2}>
-                        No crop types available. Expected 6 crop types from database.
+            <VStack spacing={6} align="stretch">
+              <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
+                {/* Crop Type Selection - First field */}
+                <GridItem colSpan={{ base: 1, md: 2 }}>
+                  <StandardField
+                    label={
+                      <>
+                        Crop Type
+                        {isEdit && (
+                          <Badge ml={2} colorScheme="gray" variant="subtle">
+                            Read-Only
+                          </Badge>
+                        )}
+                      </>
+                    }
+                    required={!isEdit}
+                    error={errors.crop_type_id?.message}
+                    helpText={
+                      isEdit
+                        ? 'Crop type cannot be changed after production is created. To change crop type, create a new production.'
+                        : undefined
+                    }
+                  >
+                    {/* Debug Info - only in create mode */}
+                    {!isEdit && isLoadingCropTypes && (
+                      <Text fontSize="sm" color="blue.500" mb={2}>
+                        Loading crop types...
                       </Text>
                     )}
-                  <Controller
-                    name="crop_type_id"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        {...field}
-                        size="lg"
-                        placeholder="Select your crop type..."
-                        isDisabled={isEdit}
-                        bg={isEdit ? 'gray.100' : 'white'}
-                        cursor={isEdit ? 'not-allowed' : 'pointer'}
-                        onChange={(e) => {
-                          if (!isEdit) {
-                            field.onChange(e);
-                            setSelectedCropTypeId(e.target.value);
-                          }
-                        }}
-                      >
-                        {cropTypesData?.map((cropType) => (
-                          <option key={cropType.id} value={cropType.id.toString()}>
-                            {cropType.name} - {cropType.category.replace('_', ' ')}
-                          </option>
-                        ))}
-                      </Select>
+                    {!isEdit && cropTypesError && (
+                      <Text fontSize="sm" color="red.500" mb={2}>
+                        Error loading crop types: {JSON.stringify(cropTypesError)}
+                      </Text>
                     )}
-                  />
-                  {isEdit && (
-                    <Text fontSize="sm" color="gray.500" mt={1}>
-                      Crop type cannot be changed after production is created. To change crop type,
-                      create a new production.
-                    </Text>
-                  )}
-                  {errors.crop_type_id && (
-                    <Text color="red.500" fontSize="sm" mt={1}>
-                      {errors.crop_type_id.message}
-                    </Text>
-                  )}
-                  {selectedCropTypeId && cropTypesData && (
-                    <Box mt={2} p={3} bg="green.50" borderRadius="md">
-                      {(() => {
-                        const selectedCropType = cropTypesData.find(
-                          (ct) => ct.id.toString() === selectedCropTypeId
-                        );
-                        return selectedCropType ? (
-                          <VStack align="start" spacing={1}>
-                            <Text fontSize="sm" fontWeight="medium" color="green.700">
-                              {selectedCropType.description}
-                            </Text>
-                            <HStack spacing={4} fontSize="xs" color="green.600">
-                              <Text>
-                                <Text as="span" fontWeight="medium">
-                                  Emissions:
-                                </Text>{' '}
-                                {selectedCropType.emissions_per_hectare} kg CO2e/ha
-                              </Text>
-                              {/* Carbon Credit Potential removed - transparency-first approach */}
-                            </HStack>
-                          </VStack>
-                        ) : null;
-                      })()}
-                    </Box>
-                  )}
-                </FormControl>
-              </GridItem>
-
-              <GridItem>
-                <FormControl isRequired isInvalid={!!errors.name}>
-                  <FormLabel>Production Name</FormLabel>
-                  <Controller
-                    name="name"
-                    control={control}
-                    render={({ field }) => (
-                      <Input {...field} placeholder="e.g., Spring 2024 Orange Harvest" size="lg" />
-                    )}
-                  />
-                </FormControl>
-              </GridItem>
-
-              <GridItem>
-                <FormControl isRequired isInvalid={!!errors.start_date}>
-                  <FormLabel>Start Date</FormLabel>
-                  <Controller
-                    name="start_date"
-                    control={control}
-                    render={({ field }) => <Input {...field} type="date" size="lg" />}
-                  />
-                </FormControl>
-              </GridItem>
-
-              <GridItem>
-                <FormControl>
-                  <FormLabel>Expected Harvest Date</FormLabel>
-                  <Controller
-                    name="expected_harvest"
-                    control={control}
-                    render={({ field }) => <Input {...field} type="date" size="lg" />}
-                  />
-                </FormControl>
-              </GridItem>
-
-              <GridItem>
-                <FormControl isRequired>
-                  <FormLabel>Production Type</FormLabel>
-                  <Controller
-                    name="type"
-                    control={control}
-                    render={({ field }) => (
-                      <Select {...field} size="lg">
-                        <option value="OR">Orchard (Perennial Crops)</option>
-                        <option value="GA">Garden (Annual Crops)</option>
-                      </Select>
-                    )}
-                  />
-                </FormControl>
-              </GridItem>
-
-              <GridItem>
-                <FormControl>
-                  <FormLabel>Production Method</FormLabel>
-                  <Controller
-                    name="production_method"
-                    control={control}
-                    render={({ field }) => (
-                      <Select {...field} size="lg">
-                        <option value="conventional">Conventional</option>
-                        <option value="organic">Organic</option>
-                        <option value="regenerative">Regenerative</option>
-                        <option value="sustainable">Sustainable</option>
-                      </Select>
-                    )}
-                  />
-                </FormControl>
-              </GridItem>
-
-              <GridItem>
-                <FormControl>
-                  <FormLabel>
-                    Parcel Area (hectares)
-                    {currentParcel?.area && (
-                      <Badge ml={2} colorScheme="green" variant="subtle">
-                        Auto-loaded
-                      </Badge>
-                    )}
-                  </FormLabel>
-                  {currentParcel?.area ? (
-                    // Read-only display when parcel data is available
-                    <Input
-                      value={`${areaInput} hectares`}
-                      isReadOnly
-                      bg="gray.50"
-                      size="lg"
-                      cursor="not-allowed"
+                    {!isEdit &&
+                      !isLoadingCropTypes &&
+                      !cropTypesError &&
+                      (!cropTypesData || cropTypesData.length === 0) && (
+                        <Text fontSize="sm" color="orange.500" mb={2}>
+                          No crop types available. Expected 6 crop types from database.
+                        </Text>
+                      )}
+                    <Controller
+                      name="crop_type_id"
+                      control={control}
+                      render={({ field }) => (
+                        <StandardSelect
+                          {...field}
+                          placeholder="Select your crop type..."
+                          isDisabled={isEdit}
+                          bg={isEdit ? 'gray.100' : 'white'}
+                          cursor={isEdit ? 'not-allowed' : 'pointer'}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                            if (!isEdit) {
+                              field.onChange(e);
+                              setSelectedCropTypeId(e.target.value);
+                            }
+                          }}
+                        >
+                          {cropTypesData?.map((cropType) => (
+                            <option key={cropType.id} value={cropType.id.toString()}>
+                              {cropType.name} - {cropType.category.replace('_', ' ')}
+                            </option>
+                          ))}
+                        </StandardSelect>
+                      )}
                     />
-                  ) : (
-                    // Editable input only when no parcel data available
-                    <NumberInput
-                      value={areaInput}
-                      onChange={(valueString) => setAreaInput(Number(valueString) || 10)}
-                      min={0.1}
-                      max={10000}
-                      step={0.1}
-                      size="lg"
-                    >
-                      <NumberInputField placeholder="Enter parcel area in hectares" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  )}
-                  <Text fontSize="sm" color="gray.500" mt={1}>
-                    {currentParcel?.area
-                      ? `Area from parcel data (read-only). To change, edit the parcel settings.`
-                      : 'Used for carbon footprint calculations. Default: 10 hectares'}
-                  </Text>
-                </FormControl>
-              </GridItem>
-
-              {/* NOTE: Irrigation Method removed - already captured at establishment level */}
-
-              <GridItem colSpan={{ base: 1, md: 2 }}>
-                <FormControl>
-                  <FormLabel>Description</FormLabel>
-                  <Controller
-                    name="description"
-                    control={control}
-                    render={({ field }) => (
-                      <Textarea
-                        {...field}
-                        placeholder="Describe this production cycle, goals, and special considerations..."
-                        rows={3}
-                        size="lg"
-                      />
+                    {selectedCropTypeId && cropTypesData && (
+                      <Box mt={2} p={3} bg="green.50" borderRadius="md">
+                        {(() => {
+                          const selectedCropType = cropTypesData.find(
+                            (ct) => ct.id.toString() === selectedCropTypeId
+                          );
+                          return selectedCropType ? (
+                            <VStack align="start" spacing={1}>
+                              <Text fontSize="sm" fontWeight="medium" color="green.700">
+                                {selectedCropType.description}
+                              </Text>
+                              <HStack spacing={4} fontSize="xs" color="green.600">
+                                <Text>
+                                  <Text as="span" fontWeight="medium">
+                                    Emissions:
+                                  </Text>{' '}
+                                  {selectedCropType.emissions_per_hectare} kg CO2e/ha
+                                </Text>
+                              </HStack>
+                            </VStack>
+                          ) : null;
+                        })()}
+                      </Box>
                     )}
-                  />
-                </FormControl>
-              </GridItem>
-            </Grid>
+                  </StandardField>
+                </GridItem>
+
+                <GridItem>
+                  <StandardField
+                    label="Production Name"
+                    required
+                    error={errors.name?.message}
+                  >
+                    <Controller
+                      name="name"
+                      control={control}
+                      render={({ field }) => (
+                        <StandardInput {...field} placeholder="e.g., Spring 2024 Orange Harvest" />
+                      )}
+                    />
+                  </StandardField>
+                </GridItem>
+
+                <GridItem>
+                  <StandardField
+                    label="Start Date"
+                    required
+                    error={errors.start_date?.message}
+                  >
+                    <Controller
+                      name="start_date"
+                      control={control}
+                      render={({ field }) => <StandardInput {...field} type="date" />}
+                    />
+                  </StandardField>
+                </GridItem>
+
+                <GridItem>
+                  <StandardField label="Expected Harvest Date">
+                    <Controller
+                      name="expected_harvest"
+                      control={control}
+                      render={({ field }) => <StandardInput {...field} type="date" />}
+                    />
+                  </StandardField>
+                </GridItem>
+
+                <GridItem>
+                  <StandardField label="Production Type" required>
+                    <Controller
+                      name="type"
+                      control={control}
+                      render={({ field }) => (
+                        <StandardSelect {...field}>
+                          <option value="OR">Orchard (Perennial Crops)</option>
+                          <option value="GA">Garden (Annual Crops)</option>
+                        </StandardSelect>
+                      )}
+                    />
+                  </StandardField>
+                </GridItem>
+
+                <GridItem>
+                  <StandardField label="Production Method">
+                    <Controller
+                      name="production_method"
+                      control={control}
+                      render={({ field }) => (
+                        <StandardSelect {...field}>
+                          <option value="conventional">Conventional</option>
+                          <option value="organic">Organic</option>
+                          <option value="regenerative">Regenerative</option>
+                          <option value="sustainable">Sustainable</option>
+                        </StandardSelect>
+                      )}
+                    />
+                  </StandardField>
+                </GridItem>
+
+                <GridItem>
+                  <StandardField
+                    label={
+                      <>
+                        Parcel Area (hectares)
+                        {currentParcel?.area && (
+                          <Badge ml={2} colorScheme="green" variant="subtle">
+                            Auto-Loaded
+                          </Badge>
+                        )}
+                      </>
+                    }
+                    helpText={
+                      currentParcel?.area
+                        ? 'Area from parcel data (read-only). To change, edit the parcel settings.'
+                        : 'Used for carbon footprint calculations. Default: 10 hectares'
+                    }
+                  >
+                    {currentParcel?.area ? (
+                      <StandardInput
+                        value={`${areaInput} hectares`}
+                        isReadOnly
+                        bg="gray.50"
+                        cursor="not-allowed"
+                      />
+                    ) : (
+                      <NumberInput
+                        value={areaInput}
+                        onChange={(valueString) => setAreaInput(Number(valueString) || 10)}
+                        min={0.1}
+                        max={10000}
+                        step={0.1}
+                        size="lg"
+                      >
+                        <NumberInputField
+                          borderRadius="lg"
+                          placeholder="Enter parcel area in hectares"
+                        />
+                        <NumberInputStepper>
+                          <NumberIncrementStepper />
+                          <NumberDecrementStepper />
+                        </NumberInputStepper>
+                      </NumberInput>
+                    )}
+                  </StandardField>
+                </GridItem>
+
+                {/* NOTE: Irrigation Method removed - already captured at establishment level */}
+
+                <GridItem colSpan={{ base: 1, md: 2 }}>
+                  <StandardField label="Description">
+                    <Controller
+                      name="description"
+                      control={control}
+                      render={({ field }) => (
+                        <StandardTextarea
+                          {...field}
+                          placeholder="Describe this production cycle, goals, and special considerations..."
+                          rows={3}
+                        />
+                      )}
+                    />
+                  </StandardField>
+                </GridItem>
+              </Grid>
+
+              {/* Action Buttons - inside card, matching project pattern */}
+              <HStack spacing={3} justify="flex-end" pt={4}>
+                <StandardButton
+                  variant="outline"
+                  onClick={() =>
+                    navigate(
+                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
+                    )
+                  }
+                >
+                  Cancel
+                </StandardButton>
+                <StandardButton
+                  type="submit"
+                  isLoading={isCreating || isUpdating}
+                  loadingText={isEdit ? 'Updating Production...' : 'Creating Production...'}
+                  leftIcon={isEdit ? <FaCheckCircle /> : <FaRocket />}
+                >
+                  {isEdit ? 'Update Production' : 'Start Production'}
+                </StandardButton>
+              </HStack>
+            </VStack>
           </StandardCard>
 
           {/* Pre-configured Events - Only show in create mode */}
@@ -1088,7 +1111,6 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         </VStack>
                       </HStack>
                       <VStack align="end" spacing={0}>
-                        {/* ✅ NEW: USDA-based carbon display */}
                         {event.excludeFromCarbonCalculation ? (
                           <Text fontSize="sm" fontWeight="bold" color="gray.500">
                             No Carbon Calc
@@ -1118,7 +1140,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     {event.efficiency_tips && (
                       <Box mt={2} p={2} bg="blue.50" borderRadius="sm">
                         <Text fontSize="xs" fontWeight="medium" color="blue.600" mb={1}>
-                          💡 Efficiency Tips:
+                          Efficiency Tips:
                         </Text>
                         <Text fontSize="xs" color="gray.600">
                           <Icon as={FaCheckCircle} color="green.400" mr={1} />
@@ -1129,28 +1151,30 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   </Box>
                 ))}
               </VStack>
+
+              {/* Action Buttons - inside last card for create mode */}
+              <HStack spacing={3} justify="flex-end" pt={4}>
+                <StandardButton
+                  variant="outline"
+                  onClick={() =>
+                    navigate(
+                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
+                    )
+                  }
+                >
+                  Cancel
+                </StandardButton>
+                <StandardButton
+                  type="submit"
+                  isLoading={isCreating || isUpdating}
+                  loadingText="Creating Production..."
+                  leftIcon={<FaRocket />}
+                >
+                  Start Production
+                </StandardButton>
+              </HStack>
             </StandardCard>
           )}
-
-          {/* Action Buttons */}
-          <HStack spacing={4} justify="flex-end">
-            <StandardButton
-              variant="outline"
-              onClick={() =>
-                navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
-              }
-            >
-              Cancel
-            </StandardButton>
-            <StandardButton
-              type="submit"
-              isLoading={isCreating || isUpdating}
-              loadingText={isEdit ? 'Updating Production...' : 'Creating Production...'}
-              leftIcon={isEdit ? <FaCheckCircle /> : <FaRocket />}
-            >
-              {isEdit ? 'Update Production' : 'Start Production'}
-            </StandardButton>
-          </HStack>
         </VStack>
       </form>
 

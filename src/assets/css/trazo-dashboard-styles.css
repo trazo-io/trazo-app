@@ -14,13 +14,14 @@
 @import './trazo-colors.css';
 
 /* CRITICAL: Essential Card styling for production builds */
+/* 2025 sizing: 14px mobile, 22px desktop. border-radius: 12px mobile, 15px desktop */
 .trazo-card,
 [data-component='Card'],
 [data-component='card'] {
   background-color: white !important;
-  border-radius: 15px !important;
+  border-radius: 12px !important;
   box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
-  padding: 22px !important;
+  padding: 14px !important;
   display: flex !important;
   flex-direction: column !important;
   position: relative !important;
@@ -30,14 +31,31 @@
   border: 1px solid #e2e8f0 !important;
 }
 
+@media screen and (min-width: 768px) {
+  .trazo-card,
+  [data-component='Card'],
+  [data-component='card'] {
+    padding: 22px !important;
+    border-radius: 15px !important;
+  }
+}
+
 /* Production event cards and establishment cards */
 .production-event-card,
 .establishment-card {
   background-color: white !important;
-  border-radius: 15px !important;
+  border-radius: 12px !important;
   box-shadow: 0px 3.5px 5.5px rgba(0, 0, 0, 0.02) !important;
-  padding: 22px !important;
+  padding: 14px !important;
   border: 1px solid #e2e8f0 !important;
+}
+
+@media screen and (min-width: 768px) {
+  .production-event-card,
+  .establishment-card {
+    padding: 22px !important;
+    border-radius: 15px !important;
+  }
 }
 
 /* Establishment card selected state */

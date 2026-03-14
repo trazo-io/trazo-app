@@ -423,7 +423,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
                 borderRadius="full"
                 minW="18px"
                 h="18px"
-                fontSize="10px"
+                fontSize="11px"
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
@@ -452,7 +452,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
                 {hasUnread && (
                   <Badge
                     colorScheme="green"
-                    fontSize="10px"
+                    fontSize="11px"
                     borderRadius="full"
                     px="6px"
                     variant="subtle"

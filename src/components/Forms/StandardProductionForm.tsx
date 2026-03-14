@@ -231,7 +231,7 @@ const cropCategories = [
     id: 'nuts',
     title: 'Nuts & Seeds',
     icon: FaCoffee,
-    color: 'brown',
+    color: 'orange',
     keywords: ['almond', 'walnut', 'pecan', 'hazelnut', 'sunflower', 'pumpkin']
   }
 ];

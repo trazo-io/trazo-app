@@ -44,7 +44,9 @@ import {
   FaRulerCombined,
   FaCalendarDay,
   FaCalendarAlt,
-  FaLayerGroup
+  FaLayerGroup,
+  FaCloudRain,
+  FaClipboardList
 } from 'react-icons/fa';
 import { MdEco, MdSecurity, MdOpenInNew } from 'react-icons/md';
 import {
@@ -394,6 +396,23 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
   const verificationLevel = getVerificationLevel();
 
+  // Unified event type icon/color (matches EnhancedTimelineRow, NewEvent, UltraMobileProductionJourney)
+  const getEventTypeIcon = (eventType?: number) => {
+    switch (eventType) {
+      case 0: return { icon: FaCloudRain, color: 'blue.500' };
+      case 1: return { icon: FaSeedling, color: 'green.500' };
+      case 2: return { icon: FaFlask, color: 'orange.500' };
+      case 3: return { icon: FaClipboardList, color: 'gray.500' };
+      case 4: return { icon: FaTractor, color: 'blue.700' };
+      case 5: return { icon: FaLayerGroup, color: 'yellow.700' };
+      case 6: return { icon: FaBug, color: 'red.500' };
+      case 7: return { icon: FaCertificate, color: 'teal.500' };
+      default: return { icon: FaSeedling, color: 'green.500' };
+    }
+  };
+
+  const eventTypeConfig = getEventTypeIcon(event.event_type);
+
   // Helper function to get icon for field categories
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -479,10 +498,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             }
           >
             <Icon
-              as={verificationLevel === 'ultimate' ? MdSecurity : FaSeedling}
+              as={verificationLevel === 'ultimate' ? MdSecurity : eventTypeConfig.icon}
               boxSize={{ base: 4, md: 5 }}
               color={
-                isFirst ? 'white' : verificationLevel === 'ultimate' ? 'green.500' : accentColor
+                isFirst ? 'white' : verificationLevel === 'ultimate' ? 'green.500' : eventTypeConfig.color
               }
             />
 

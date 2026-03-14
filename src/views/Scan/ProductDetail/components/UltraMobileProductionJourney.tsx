@@ -49,7 +49,10 @@ import {
   FaEye,
   FaBalanceScale,
   FaBug,
-  FaClipboard
+  FaClipboard,
+  FaCloudRain,
+  FaClipboardList,
+  FaLayerGroup
 } from 'react-icons/fa';
 import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
 import { TransparencyIndicator } from 'components/Design';
@@ -243,15 +246,15 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       switch (eventTypeField) {
         case 0: // Weather
           return {
-            icon: FaWater,
-            color: 'cyan.500',
-            bgColor: 'cyan.50',
+            icon: FaCloudRain,
+            color: 'blue.500',
+            bgColor: 'blue.50',
             category: 'Weather',
-            categoryColor: 'cyan'
+            categoryColor: 'blue'
           };
         case 1: // Production
           return {
-            icon: MdAgriculture,
+            icon: FaSeedling,
             color: 'green.500',
             bgColor: 'green.50',
             category: 'Production',
@@ -267,43 +270,43 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
           };
         case 3: // General
           return {
-            icon: FaClipboard,
+            icon: FaClipboardList,
             color: 'gray.500',
             bgColor: 'gray.50',
-            category: 'General',
+            category: 'Other Farm Activity',
             categoryColor: 'gray'
           };
         case 4: // Equipment
           return {
             icon: FaTractor,
-            color: 'blue.500',
+            color: 'blue.700',
             bgColor: 'blue.50',
             category: 'Equipment',
             categoryColor: 'blue'
           };
         case 5: // Soil Management
           return {
-            icon: FaSeedling,
-            color: 'teal.500',
-            bgColor: 'teal.50',
+            icon: FaLayerGroup,
+            color: 'yellow.700',
+            bgColor: 'yellow.50',
             category: 'Soil Management',
-            categoryColor: 'teal'
+            categoryColor: 'yellow'
           };
         case 6: // Pest Management
           return {
             icon: FaBug,
-            color: 'purple.500',
-            bgColor: 'purple.50',
+            color: 'red.500',
+            bgColor: 'red.50',
             category: 'Pest Management',
-            categoryColor: 'purple'
+            categoryColor: 'red'
           };
         case 7: // Business
           return {
             icon: FaCertificate,
-            color: 'yellow.600',
-            bgColor: 'yellow.50',
+            color: 'teal.500',
+            bgColor: 'teal.50',
             category: 'Business',
-            categoryColor: 'yellow'
+            categoryColor: 'teal'
           };
       }
     }
@@ -318,11 +321,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       type.includes('weather')
     ) {
       return {
-        icon: FaWater,
-        color: 'cyan.500',
-        bgColor: 'cyan.50',
+        icon: FaCloudRain,
+        color: 'blue.500',
+        bgColor: 'blue.50',
         category: 'Weather',
-        categoryColor: 'cyan'
+        categoryColor: 'blue'
       };
     }
 
@@ -351,20 +354,20 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     if (
       (event as any)?.event_type === 1 || // Direct event_type check
       type === 'production' || // String type check
-      ['pl', 'ha', 'ir', 'pr', 'tr', 'cu', 'th', 'em'].includes(type) || // ✅ FIXED: Added 'tr', 'cu', 'th', 'em' (Equipment Maintenance)
+      ['pl', 'ha', 'ir', 'pr', 'tr', 'cu', 'th', 'em'].includes(type) ||
       type.includes('production') ||
       description.includes('harvest') ||
       description.includes('planting') ||
       description.includes('bee') ||
       description.includes('irrigation') ||
       description.includes('pruning') ||
-      description.includes('transplant') || // ✅ FIXED: Added keyword detection
-      description.includes('cultivation') || // ✅ FIXED: Added keyword detection
-      description.includes('thinning') || // ✅ FIXED: Added keyword detection
-      description.includes('equipment maintenance') // ✅ FIXED: Added keyword detection for EM
+      description.includes('transplant') ||
+      description.includes('cultivation') ||
+      description.includes('thinning') ||
+      description.includes('equipment maintenance')
     ) {
       return {
-        icon: MdAgriculture,
+        icon: FaSeedling,
         color: 'green.500',
         bgColor: 'green.50',
         category: 'Production',
@@ -387,7 +390,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaTractor,
-        color: 'blue.500',
+        color: 'blue.700',
         bgColor: 'blue.50',
         category: 'Equipment',
         categoryColor: 'blue'
@@ -410,10 +413,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaSeedling,
-        color: 'teal.500',
-        bgColor: 'teal.50',
+        color: 'yellow.700',
+        bgColor: 'yellow.50',
         category: 'Soil Management',
-        categoryColor: 'teal'
+        categoryColor: 'yellow'
       };
     }
 
@@ -452,10 +455,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaCertificate,
-        color: 'purple.500',
-        bgColor: 'purple.50',
+        color: 'teal.500',
+        bgColor: 'teal.50',
         category: 'Business',
-        categoryColor: 'purple'
+        categoryColor: 'teal'
       };
     }
 
@@ -759,7 +762,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="blue.600">
                   {filteredEvents.length}
                 </Text>
-                <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
+                <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                   Events
                 </Text>
               </VStack>
@@ -786,7 +789,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   })()}
                 </Text>
                 <CO2eTooltip>
-                  <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
+                  <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                     CO₂e
                   </Text>
                 </CO2eTooltip>
@@ -818,7 +821,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   %
                 </Text>
                 <BlockchainTooltip>
-                  <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
+                  <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                     {intl.formatMessage({ id: 'transparency.withPhotos' })}
                   </Text>
                 </BlockchainTooltip>
@@ -839,7 +842,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   {transparencyScore || 0}
                 </Text>
                 <CarbonScoreTooltip>
-                  <Text fontSize="2xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
+                  <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                     Score
                   </Text>
                 </CarbonScoreTooltip>
@@ -909,21 +912,25 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       case 'all':
                         return { icon: MdTimeline, color: 'green.500' };
                       case 'weather':
-                        return { icon: FaWater, color: 'cyan.500' };
+                        return { icon: FaCloudRain, color: 'blue.500' };
                       case 'chemical':
                         return { icon: FaFlask, color: 'orange.500' };
                       case 'production':
-                        return { icon: MdAgriculture, color: 'green.500' };
+                        return { icon: FaSeedling, color: 'green.500' };
                       case 'equipment':
-                        return { icon: FaTractor, color: 'blue.500' };
+                        return { icon: FaTractor, color: 'blue.700' };
                       case 'soil management':
-                        return { icon: FaSeedling, color: 'teal.500' };
+                        return { icon: FaLayerGroup, color: 'yellow.700' };
                       case 'pest management':
                         return { icon: FaBug, color: 'red.500' };
                       case 'business':
-                        return { icon: FaCertificate, color: 'yellow.600' };
+                        return { icon: FaCertificate, color: 'teal.500' };
+                      case 'other farm activity':
+                      case 'other farm activities':
+                      case 'general':
+                        return { icon: FaClipboardList, color: 'gray.500' };
                       default:
-                        return { icon: MdEco, color: 'gray.500' };
+                        return { icon: FaClipboardList, color: 'gray.500' };
                     }
                   };
 
@@ -1041,7 +1048,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                             </Text>
                             <Badge
                               colorScheme={config.categoryColor}
-                              fontSize="2xs"
+                              fontSize="xs"
                               borderRadius="full"
                             >
                               {item.dateRange}
@@ -1075,7 +1082,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         {blockchainCount > 0 && (
                           <Badge
                             colorScheme="green"
-                            fontSize="2xs"
+                            fontSize="xs"
                             borderRadius="full"
                             px={2}
                             py={0.5}
@@ -1094,7 +1101,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           <Badge
                             colorScheme="orange"
                             variant="subtle"
-                            fontSize="2xs"
+                            fontSize="xs"
                             borderRadius="full"
                             px={2}
                             py={0.5}
@@ -1106,7 +1113,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           <Badge
                             colorScheme="blue"
                             variant="subtle"
-                            fontSize="2xs"
+                            fontSize="xs"
                             borderRadius="full"
                             px={2}
                             py={0.5}
@@ -1118,7 +1125,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           <Badge
                             colorScheme="green"
                             variant="subtle"
-                            fontSize="2xs"
+                            fontSize="xs"
                             borderRadius="full"
                             px={2}
                             py={0.5}

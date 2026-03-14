@@ -53,7 +53,11 @@ import {
   FaWrench,
   FaCheckCircle,
   FaLayerGroup,
-  FaLock
+  FaLock,
+  FaCloudRain,
+  FaClipboardList,
+  FaTractor,
+  FaBug
 } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import { useDeleteEventMutation } from 'store/api/historyApi';
@@ -250,59 +254,59 @@ const getEventConfig = (type: string, description: string, eventType?: number) =
     switch (eventType) {
       case 0: // Weather Event
         return {
-          icon: FaSun,
-          color: 'purple.500',
+          icon: FaCloudRain,
+          color: 'blue.500',
           category: 'Weather Event',
-          bgGradient: 'linear(to-r, purple.400, indigo.400)'
+          bgGradient: 'linear(to-r, blue.400, blue.500)'
         };
       case 1: // Production Activity
         return {
           icon: FaSeedling,
           color: 'green.500',
           category: 'Production',
-          bgGradient: 'linear(to-r, green.400, emerald.400)'
+          bgGradient: 'linear(to-r, green.400, green.500)'
         };
       case 2: // Chemical Application
         return {
           icon: FaFlask,
           color: 'orange.500',
           category: 'Chemical Application',
-          bgGradient: 'linear(to-r, orange.400, yellow.400)'
+          bgGradient: 'linear(to-r, orange.400, orange.500)'
         };
       case 3: // General Activity
         return {
-          icon: FaLeaf,
-          color: 'green.500',
-          category: 'Farm Activity',
-          bgGradient: 'linear(to-r, green.400, emerald.400)'
+          icon: FaClipboardList,
+          color: 'gray.500',
+          category: 'Other Farm Activity',
+          bgGradient: 'linear(to-r, gray.400, gray.500)'
         };
       case 4: // Equipment Operation
         return {
-          icon: FaWrench,
-          color: 'blue.500',
+          icon: FaTractor,
+          color: 'blue.700',
           category: 'Equipment Operation',
-          bgGradient: 'linear(to-r, blue.400, cyan.400)'
+          bgGradient: 'linear(to-r, blue.600, blue.700)'
         };
       case 5: // Soil Management
         return {
-          icon: FaLeaf,
-          color: 'amber.600',
+          icon: FaLayerGroup,
+          color: 'yellow.700',
           category: 'Soil Management',
-          bgGradient: 'linear(to-r, amber.500, yellow.500)'
+          bgGradient: 'linear(to-r, yellow.600, yellow.700)'
         };
       case 6: // Pest Management
         return {
-          icon: FaShieldAlt,
+          icon: FaBug,
           color: 'red.500',
           category: 'Pest Management',
-          bgGradient: 'linear(to-r, red.400, orange.400)'
+          bgGradient: 'linear(to-r, red.400, red.500)'
         };
       case 7: // Business Activity
         return {
-          icon: FaCheckCircle,
-          color: 'blue.600',
+          icon: FaCertificate,
+          color: 'teal.500',
           category: 'Business Activity',
-          bgGradient: 'linear(to-r, blue.500, purple.500)'
+          bgGradient: 'linear(to-r, teal.400, teal.500)'
         };
     }
   }
@@ -1120,38 +1124,39 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           <ModalFooter
             borderTop="1px"
             borderColor={borderColor}
-            p={6}
+            p={{ base: 3, md: 6 }}
             flexShrink={0}
             bg={useColorModeValue('white', 'gray.800')}
             borderBottomRadius="xl"
           >
-            <Flex w="full" justify="space-between" align="center">
+            <Flex w="full" justify="space-between" align="center" gap={2}>
               <Button
                 variant="ghost"
                 onClick={onClose}
-                size="lg"
+                size={{ base: 'md', md: 'lg' }}
                 color="gray.600"
                 _hover={{ bg: 'gray.100' }}
                 borderRadius="lg"
+                flexShrink={0}
               >
                 Close
               </Button>
 
               {isProductionFinished ? (
-                <HStack spacing={2} bg="gray.50" px={4} py={2} borderRadius="lg">
+                <HStack spacing={2} bg="gray.50" px={{ base: 2, md: 4 }} py={2} borderRadius="lg">
                   <Icon as={FaLock} boxSize={4} color="gray.500" />
-                  <Text fontSize="sm" color="gray.600" fontWeight="medium">
-                    Event locked — production completed
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
+                    Event locked
                   </Text>
                 </HStack>
               ) : canWrite ? (
-                <HStack spacing={3}>
+                <HStack spacing={{ base: 2, md: 3 }}>
                   <Button
                     leftIcon={<FaTrash />}
                     colorScheme="red"
                     variant="outline"
                     onClick={onDeleteOpen}
-                    size="lg"
+                    size={{ base: 'md', md: 'lg' }}
                     borderRadius="lg"
                     fontWeight="semibold"
                     isLoading={isDeleting}
@@ -1171,7 +1176,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     colorScheme="blue"
                     variant="solid"
                     onClick={handleEdit}
-                    size="lg"
+                    size={{ base: 'md', md: 'lg' }}
                     borderRadius="lg"
                     fontWeight="semibold"
                     _hover={{

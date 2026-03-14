@@ -92,8 +92,8 @@ export default function SettingsView() {
 
     if (!inviteEmail || !emailRegex.test(inviteEmail)) {
       toast({
-        title: 'Email inválido',
-        description: 'Por favor ingresa un email válido',
+        title: intl.formatMessage({ id: 'app.invalidEmail' }),
+        description: intl.formatMessage({ id: 'app.enterValidEmail' }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -103,8 +103,8 @@ export default function SettingsView() {
 
     if (!selectedRole) {
       toast({
-        title: 'Rol requerido',
-        description: 'Por favor selecciona un rol',
+        title: intl.formatMessage({ id: 'app.roleRequired' }),
+        description: intl.formatMessage({ id: 'app.selectRoleError' }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -126,8 +126,8 @@ export default function SettingsView() {
       }).unwrap();
 
       toast({
-        title: 'Invitación enviada',
-        description: `Invitación enviada exitosamente a ${inviteEmail}`,
+        title: intl.formatMessage({ id: 'app.invitationSent' }),
+        description: intl.formatMessage({ id: 'app.invitationSentTo' }, { email: inviteEmail }),
         status: 'success',
         duration: 4000,
         isClosable: true
@@ -139,8 +139,8 @@ export default function SettingsView() {
     } catch (error) {
       console.error('Error sending invitation:', error);
       toast({
-        title: 'Error al enviar invitación',
-        description: error?.data?.error || 'Ocurrió un error al enviar la invitación',
+        title: intl.formatMessage({ id: 'app.errorSendingInvitation' }),
+        description: error?.data?.error || intl.formatMessage({ id: 'app.errorSendingInvitationDescription' }),
         status: 'error',
         duration: 4000,
         isClosable: true
@@ -161,8 +161,8 @@ export default function SettingsView() {
       await navigator.clipboard.writeText(currentCompany.invitation_code);
       setCodeCopied(true);
       toast({
-        title: 'Código copiado',
-        description: 'El código de la compañía ha sido copiado al portapapeles',
+        title: intl.formatMessage({ id: 'app.codeCopied' }),
+        description: intl.formatMessage({ id: 'app.codeCopiedDescription' }),
         status: 'success',
         duration: 2000,
         isClosable: true
@@ -172,8 +172,8 @@ export default function SettingsView() {
       setTimeout(() => setCodeCopied(false), 2000);
     } catch (error) {
       toast({
-        title: 'Error al copiar',
-        description: 'No se pudo copiar el código al portapapeles',
+        title: intl.formatMessage({ id: 'app.errorCopying' }),
+        description: intl.formatMessage({ id: 'app.couldNotCopyCode' }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -186,9 +186,9 @@ export default function SettingsView() {
   }, []);
 
   const roleNameMap: Record<string, string> = {
-    'Company Admin': 'Administrador',
-    'Farm Manager': 'Gerente de Finca',
-    'Viewer': 'Visor'
+    'Company Admin': intl.formatMessage({ id: 'app.administrator' }),
+    'Farm Manager': intl.formatMessage({ id: 'app.farmManager' }),
+    'Viewer': intl.formatMessage({ id: 'app.viewerRole' })
   };
 
   const roleOptions: RoleOption[] =
@@ -210,27 +210,39 @@ export default function SettingsView() {
       <Box w="100%" maxW="1200px" mx="auto" className="main-content-area">
         {/* Tab Navigation */}
         <Tabs variant="soft-rounded" colorScheme="green" mb={8}>
-          <TabList bg="gray.100" p={1} borderRadius="xl" mb={8} flexWrap="wrap" gap={2}>
+          <TabList bg="gray.100" p={1} borderRadius="xl" mb={8} flexWrap="wrap" gap={1}>
             <Tab
-              _selected={{ bg: 'white', color: 'green.600', shadow: 'sm' }}
+              _selected={{ bg: 'white', color: 'green.600', shadow: 'sm', borderColor: 'green.200' }}
               borderRadius="lg"
               fontWeight="semibold"
-              px={6}
+              px={{ base: 4, md: 6 }}
+              py={{ base: 2.5, md: 3 }}
+              color="gray.600"
+              border="1px solid"
+              borderColor="transparent"
+              _hover={{ bg: 'gray.200' }}
+              transition="all 0.2s"
             >
               <HStack spacing={2}>
-                <Icon as={FaUsers} boxSize={4} />
-                <Text>Equipo</Text>
+                <Icon as={FaUsers} boxSize={{ base: 3.5, md: 4 }} />
+                <Text fontSize={{ base: 'sm', md: 'md' }}>{intl.formatMessage({ id: 'app.team' })}</Text>
               </HStack>
             </Tab>
             <Tab
-              _selected={{ bg: 'white', color: 'green.600', shadow: 'sm' }}
+              _selected={{ bg: 'white', color: 'green.600', shadow: 'sm', borderColor: 'green.200' }}
               borderRadius="lg"
               fontWeight="semibold"
-              px={6}
+              px={{ base: 4, md: 6 }}
+              py={{ base: 2.5, md: 3 }}
+              color="gray.600"
+              border="1px solid"
+              borderColor="transparent"
+              _hover={{ bg: 'gray.200' }}
+              transition="all 0.2s"
             >
               <HStack spacing={2}>
-                <Icon as={FaBuilding} boxSize={4} />
-                <Text>Información de Compañía</Text>
+                <Icon as={FaBuilding} boxSize={{ base: 3.5, md: 4 }} />
+                <Text fontSize={{ base: 'sm', md: 'md' }}>{intl.formatMessage({ id: 'app.companyInformation' })}</Text>
               </HStack>
             </Tab>
           </TabList>
@@ -246,7 +258,7 @@ export default function SettingsView() {
                       intl.formatMessage({ id: 'app.membersInThisCompany' }) ||
                       'Miembros de la Compañía'
                     }
-                    subtitle="Gestiona los miembros actuales y sus permisos"
+                    subtitle={intl.formatMessage({ id: 'app.manageMembersSubtitle' })}
                     variant="elevated"
                     shadow="lg"
                   >
@@ -291,23 +303,23 @@ export default function SettingsView() {
                             fontSize="sm"
                             fontWeight="medium"
                           >
-                            {filteredMembers.length} miembro
-                            {filteredMembers.length !== 1 ? 's' : ''}
+                            {filteredMembers.length} {filteredMembers.length !== 1 ? intl.formatMessage({ id: 'app.members' }) : intl.formatMessage({ id: 'app.member' })}
                           </Badge>
                         </Flex>
 
-                        {/* Members Table */}
+                        {/* Members Table - Responsive with horizontal scroll on mobile */}
                         <Box
                           overflowX="auto"
+                          overflowY="auto"
                           w="100%"
-                          borderRadius="2xl"
+                          borderRadius={{ base: 'lg', md: '2xl' }}
                           border="1px solid"
                           borderColor="gray.100"
                           bg="white"
                           boxShadow="sm"
                         >
-                          <Table variant="simple" size="lg">
-                            <Thead bg="gray.50" borderBottom="2px solid" borderColor="gray.100">
+                          <Table variant="simple" size={{ base: 'sm', md: 'lg' }}>
+                            <Thead bg="gray.50" borderBottom="2px solid" borderColor="gray.100" position="sticky" top={0} zIndex={1}>
                               <Tr>
                                 <Th
                                   color="gray.700"
@@ -315,8 +327,9 @@ export default function SettingsView() {
                                   fontSize="xs"
                                   textTransform="uppercase"
                                   letterSpacing="wider"
-                                  py={5}
-                                  px={6}
+                                  py={{ base: 3, md: 5 }}
+                                  px={{ base: 3, md: 6 }}
+                                  whiteSpace="nowrap"
                                 >
                                   {intl.formatMessage({ id: 'app.name' }) || 'NOMBRE'}
                                 </Th>
@@ -326,8 +339,9 @@ export default function SettingsView() {
                                   fontSize="xs"
                                   textTransform="uppercase"
                                   letterSpacing="wider"
-                                  py={5}
-                                  px={6}
+                                  py={{ base: 3, md: 5 }}
+                                  px={{ base: 3, md: 6 }}
+                                  whiteSpace="nowrap"
                                 >
                                   {intl.formatMessage({ id: 'app.currentWorkingEstablishments' }) ||
                                     'ESTABLECIMIENTOS EN LOS QUE TRABAJA'}
@@ -338,8 +352,9 @@ export default function SettingsView() {
                                   fontSize="xs"
                                   textTransform="uppercase"
                                   letterSpacing="wider"
-                                  py={5}
-                                  px={6}
+                                  py={{ base: 3, md: 5 }}
+                                  px={{ base: 3, md: 6 }}
+                                  whiteSpace="nowrap"
                                 >
                                   {intl.formatMessage({ id: 'app.role' }) || 'ROL'}
                                 </Th>
@@ -349,8 +364,9 @@ export default function SettingsView() {
                                   fontSize="xs"
                                   textTransform="uppercase"
                                   letterSpacing="wider"
-                                  py={5}
-                                  px={6}
+                                  py={{ base: 3, md: 5 }}
+                                  px={{ base: 3, md: 6 }}
+                                  whiteSpace="nowrap"
                                 >
                                   {intl.formatMessage({ id: 'app.actions' }) || 'ACCIONES'}
                                 </Th>
@@ -386,8 +402,8 @@ export default function SettingsView() {
                                       </Box>
                                       <Text color="gray.600" fontSize="lg" fontWeight="semibold">
                                         {searchTerm
-                                          ? 'No se encontraron miembros'
-                                          : 'No hay miembros aún'}
+                                          ? intl.formatMessage({ id: 'app.noMembersFound' })
+                                          : intl.formatMessage({ id: 'app.noMembersYet' })}
                                       </Text>
                                       <Text
                                         color="gray.500"
@@ -396,8 +412,8 @@ export default function SettingsView() {
                                         textAlign="center"
                                       >
                                         {searchTerm
-                                          ? 'Intenta con otros términos de búsqueda'
-                                          : 'Invita a tu primer miembro del equipo usando el formulario abajo'}
+                                          ? intl.formatMessage({ id: 'app.tryOtherSearch' })
+                                          : intl.formatMessage({ id: 'app.inviteFirstMember' })}
                                       </Text>
                                     </VStack>
                                   </Td>
@@ -425,7 +441,7 @@ export default function SettingsView() {
                       <VStack spacing={10} align="stretch">
                         <VStack spacing={6} w="100%">
                           <VStack spacing={6} w="100%">
-                            <StandardField label="Correo electrónico del nuevo miembro" required>
+                            <StandardField label={intl.formatMessage({ id: 'app.newMemberEmail' })} required>
                               <StandardInput
                                 placeholder="ejemplo@empresa.com"
                                 value={inviteEmail}
@@ -437,9 +453,9 @@ export default function SettingsView() {
                               />
                             </StandardField>
 
-                            <StandardField label="Rol y permisos" required>
+                            <StandardField label={intl.formatMessage({ id: 'app.roleAndPermissions' })} required>
                               <StandardSelect
-                                placeholder="Selecciona un rol..."
+                                placeholder={intl.formatMessage({ id: 'app.selectARole' })}
                                 value={selectedRole || ''}
                                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                                   setSelectedRole(e.target.value || null);
@@ -468,7 +484,7 @@ export default function SettingsView() {
                               onClick={handleInviteSubmit}
                               size="lg"
                               isLoading={isSendingInvitation}
-                              loadingText="Enviando..."
+                              loadingText={intl.formatMessage({ id: 'app.sending' })}
                             >
                               {intl.formatMessage({ id: 'app.sendInvite' }) || 'Enviar invitación'}
                             </StandardButton>
@@ -482,8 +498,8 @@ export default function SettingsView() {
                 {/* Company Code Section - Secondary Tool */}
                 <Box w="100%">
                   <StandardCard
-                    title="Código de Invitación"
-                    subtitle="Comparte este código para que nuevos miembros se unan durante el registro"
+                    title={intl.formatMessage({ id: 'app.invitationCode' })}
+                    subtitle={intl.formatMessage({ id: 'app.shareCodeSubtitle' })}
                     variant="elevated"
                     shadow="lg"
                   >
@@ -522,7 +538,7 @@ export default function SettingsView() {
                           {/* Company Details */}
                           <VStack align={{ base: 'center', md: 'start' }} spacing={2} flex={1}>
                             <Text fontSize="md" fontWeight="semibold" color="gray.700">
-                              {currentCompany?.name || 'Tu Compañía'}
+                              {currentCompany?.name || intl.formatMessage({ id: 'app.yourCompany' })}
                             </Text>
                             <Text
                               fontSize="xs"
@@ -530,8 +546,7 @@ export default function SettingsView() {
                               textAlign={{ base: 'center', md: 'left' }}
                               lineHeight="1.4"
                             >
-                              Los nuevos miembros pueden unirse usando este código durante el
-                              registro
+                              {intl.formatMessage({ id: 'app.membersCanJoinWithCode' })}
                             </Text>
                           </VStack>
 
@@ -555,13 +570,13 @@ export default function SettingsView() {
 
                             {/* Copy Button */}
                             <Tooltip
-                              label={codeCopied ? 'Copiado!' : 'Copiar código'}
+                              label={codeCopied ? intl.formatMessage({ id: 'app.copied' }) : intl.formatMessage({ id: 'app.copyCode' })}
                               placement="top"
                               closeOnClick={false}
                               fontSize="xs"
                             >
                               <IconButton
-                                aria-label="Copiar código de compañía"
+                                aria-label={intl.formatMessage({ id: 'app.copyCompanyCode' })}
                                 icon={codeCopied ? <CheckIcon /> : <CopyIcon />}
                                 colorScheme={codeCopied ? 'green' : 'green'}
                                 variant={codeCopied ? 'solid' : 'outline'}
@@ -596,17 +611,17 @@ export default function SettingsView() {
                             />
                             <VStack align="start" spacing={1}>
                               <Text fontSize="xs" fontWeight="medium" color="blue.800">
-                                Cómo usar el código de invitación:
+                                {intl.formatMessage({ id: 'app.howToUseInvitationCode' })}
                               </Text>
                               <VStack align="start" spacing={0.5} pl={1}>
-                                <Text fontSize="2xs" color="blue.600" lineHeight="1.3">
-                                  • Comparte este código con nuevos miembros del equipo
+                                <Text fontSize="xs" color="blue.600" lineHeight="1.3">
+                                  • {intl.formatMessage({ id: 'app.shareCodeWithMembers' })}
                                 </Text>
-                                <Text fontSize="2xs" color="blue.600" lineHeight="1.3">
-                                  • Durante el registro, deben elegir "Unirse a compañía existente"
+                                <Text fontSize="xs" color="blue.600" lineHeight="1.3">
+                                  • {intl.formatMessage({ id: 'app.chooseJoinExistingCompany' })}
                                 </Text>
-                                <Text fontSize="2xs" color="blue.600" lineHeight="1.3">
-                                  • Ingresar el código para unirse automáticamente como Visor
+                                <Text fontSize="xs" color="blue.600" lineHeight="1.3">
+                                  • {intl.formatMessage({ id: 'app.enterCodeToJoinAsViewer' })}
                                 </Text>
                               </VStack>
                             </VStack>

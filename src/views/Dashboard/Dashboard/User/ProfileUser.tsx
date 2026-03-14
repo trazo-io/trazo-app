@@ -118,6 +118,8 @@ function ProfileUser() {
     <StandardPage
       title={intl.formatMessage({ id: 'app.userProfile' })}
       description={intl.formatMessage({ id: 'app.modifyFormToEditProfile' })}
+      showBackButton
+      onBack={() => navigate(-1)}
     >
       <StandardCard title={intl.formatMessage({ id: 'app.mainInfo' })} variant="elevated">
         <FormProvider {...basicMethods}>

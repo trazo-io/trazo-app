@@ -260,9 +260,9 @@ const AllScansView = () => {
                 : 0}
               %
             </StatNumber>
-            <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
+            <StatHelpText fontSize="xs" color="gray.500" mb={0}>
               {intl.formatMessage({ id: 'commercial.humanScansCount' }, { human: scansData.filter((scan) => { if (scan.bot_score !== undefined) { return scan.bot_score < 0.5; } return true; }).length, total: scansData.length })}
-              <Badge ml={1.5} colorScheme="green" fontSize={{ base: '2xs', md: 'xs' }}>
+              <Badge ml={1.5} colorScheme="green" fontSize="xs">
                 {intl.formatMessage({ id: 'commercial.ratingExcellent' })}
               </Badge>
             </StatHelpText>
@@ -298,7 +298,7 @@ const AllScansView = () => {
                 : 0}
               %
             </StatNumber>
-            <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
+            <StatHelpText fontSize="xs" color="gray.500" mb={0}>
               {intl.formatMessage({ id: 'commercial.engagedCustomers' }, { count: scansData.filter((scan) => { const hasComment = scan.comment && scan.comment.trim().length > 0; if (scan.engagement_score !== undefined) { return scan.engagement_score > 0.6; } return hasComment; }).length })}
             </StatHelpText>
           </Stat>
@@ -316,7 +316,7 @@ const AllScansView = () => {
                 : 0}
               %
             </StatNumber>
-            <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
+            <StatHelpText fontSize="xs" color="gray.500" mb={0}>
               {intl.formatMessage({ id: 'commercial.uniqueVisits' }, { count: scansData.filter((scan) => !scan.is_duplicate).length })}
             </StatHelpText>
           </Stat>
@@ -336,7 +336,7 @@ const AllScansView = () => {
                 : 0}
               %
             </StatNumber>
-            <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
+            <StatHelpText fontSize="xs" color="gray.500" mb={0}>
               {intl.formatMessage({ id: 'commercial.consentedScans' }, { count: scansData.filter((scan) => scan.consent_given !== false).length })}
             </StatHelpText>
           </Stat>
@@ -367,14 +367,14 @@ const AllScansView = () => {
               <Icon as={isEducationOpen ? FiChevronUp : FiChevronDown} color="blue.500" boxSize={4} />
             </Flex>
             <Collapse in={isEducationOpen} animateOpacity>
-              <VStack align="start" spacing={1.5} px={{ base: 3, md: 4 }} pb={{ base: 3, md: 4 }} fontSize={{ base: '2xs', md: 'xs' }} color="blue.600">
+              <VStack align="start" spacing={1.5} px={{ base: 3, md: 4 }} pb={{ base: 3, md: 4 }} fontSize="xs" color="blue.600">
                 <Text>
                   {intl.formatMessage({ id: 'commercial.educationHumanScans' })}
                 </Text>
                 <Text>
                   {intl.formatMessage({ id: 'commercial.educationDetectionSystem' })}
                 </Text>
-                <VStack align="start" spacing={0.5} pl={{ base: 3, md: 4 }} fontSize={{ base: '2xs', md: 'xs' }}>
+                <VStack align="start" spacing={0.5} pl={{ base: 3, md: 4 }} fontSize="xs">
                   <Text>
                     • {intl.formatMessage({ id: 'commercial.educationAutomatic' })}
                   </Text>
@@ -410,25 +410,25 @@ const AllScansView = () => {
             <Table variant="simple" size="sm">
               <Thead bg="gray.50" position="sticky" top={0} zIndex={1}>
                 <Tr>
-                  <Th color="gray.600" fontWeight="semibold" fontSize={{ base: '2xs', md: 'xs' }} py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
+                  <Th color="gray.600" fontWeight="semibold" fontSize="xs" py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
                     {intl.formatMessage({ id: 'commercial.dateColumn' })}
                   </Th>
-                  <Th color="gray.600" fontWeight="semibold" fontSize={{ base: '2xs', md: 'xs' }} py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
+                  <Th color="gray.600" fontWeight="semibold" fontSize="xs" py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
                     {intl.formatMessage({ id: 'commercial.productColumn' })}
                   </Th>
-                  <Th color="gray.600" fontWeight="semibold" fontSize={{ base: '2xs', md: 'xs' }} py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
+                  <Th color="gray.600" fontWeight="semibold" fontSize="xs" py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
                     {intl.formatMessage({ id: 'commercial.customerType' })}
                   </Th>
-                  <Th color="gray.600" fontWeight="semibold" fontSize={{ base: '2xs', md: 'xs' }} py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
+                  <Th color="gray.600" fontWeight="semibold" fontSize="xs" py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
                     {intl.formatMessage({ id: 'commercial.engagement' })}
                   </Th>
-                  <Th color="gray.600" fontWeight="semibold" fontSize={{ base: '2xs', md: 'xs' }} py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
+                  <Th color="gray.600" fontWeight="semibold" fontSize="xs" py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
                     {intl.formatMessage({ id: 'commercial.quality' })}
                   </Th>
-                  <Th color="gray.600" fontWeight="semibold" fontSize={{ base: '2xs', md: 'xs' }} py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
+                  <Th color="gray.600" fontWeight="semibold" fontSize="xs" py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
                     {intl.formatMessage({ id: 'commercial.locationColumn' })}
                   </Th>
-                  <Th color="gray.600" fontWeight="semibold" fontSize={{ base: '2xs', md: 'xs' }} py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
+                  <Th color="gray.600" fontWeight="semibold" fontSize="xs" py={{ base: 2, md: 3 }} px={{ base: 2, md: 4 }} whiteSpace="nowrap">
                     {intl.formatMessage({ id: 'commercial.commentColumn' })}
                   </Th>
                 </Tr>
@@ -475,27 +475,27 @@ const AllScansView = () => {
                     const getCustomerTypeBadge = () => {
                       if (scan.consent_given === false) {
                         return (
-                          <Badge colorScheme="gray" fontSize={{ base: '2xs', md: 'xs' }}>
+                          <Badge colorScheme="gray" fontSize="xs">
                             {intl.formatMessage({ id: 'commercial.privacy' })}
                           </Badge>
                         );
                       }
                       if (isHumanLike && isHighEngagement) {
                         return (
-                          <Badge colorScheme="green" fontSize={{ base: '2xs', md: 'xs' }}>
+                          <Badge colorScheme="green" fontSize="xs">
                             {intl.formatMessage({ id: 'commercial.explorer' })}
                           </Badge>
                         );
                       }
                       if (isHumanLike && !isHighEngagement) {
                         return (
-                          <Badge colorScheme="blue" fontSize={{ base: '2xs', md: 'xs' }}>
+                          <Badge colorScheme="blue" fontSize="xs">
                             {intl.formatMessage({ id: 'commercial.viewer' })}
                           </Badge>
                         );
                       }
                       return (
-                        <Badge colorScheme="orange" fontSize={{ base: '2xs', md: 'xs' }}>
+                        <Badge colorScheme="orange" fontSize="xs">
                           {intl.formatMessage({ id: 'commercial.bot' })}
                         </Badge>
                       );
@@ -540,7 +540,7 @@ const AllScansView = () => {
                             <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="medium" whiteSpace="nowrap">
                               {formatDate(scan.date)}
                             </Text>
-                            <Text fontSize="2xs" color="gray.500" whiteSpace="nowrap">
+                            <Text fontSize="xs" color="gray.500" whiteSpace="nowrap">
                               {formatTime(scan.date)}
                             </Text>
                           </Td>
@@ -555,7 +555,7 @@ const AllScansView = () => {
                               {getCustomerTypeBadge()}
                               {scan.is_duplicate && (
                                 <Tooltip label={intl.formatMessage({ id: 'commercial.duplicateSession' })} placement="top">
-                                  <Badge colorScheme="gray" fontSize="2xs" variant="outline">
+                                  <Badge colorScheme="gray" fontSize="xs" variant="outline">
                                     {intl.formatMessage({ id: 'commercial.dup' })}
                                   </Badge>
                                 </Tooltip>
@@ -565,7 +565,7 @@ const AllScansView = () => {
 
                           <Td px={{ base: 2, md: 4 }}>
                             <HStack spacing={1}>
-                              <Badge colorScheme={engagementLevel.color} fontSize={{ base: '2xs', md: 'xs' }} variant="subtle">
+                              <Badge colorScheme={engagementLevel.color} fontSize="xs" variant="subtle">
                                 {engagementLevel.label}
                               </Badge>
                               {scan.consent_given !== false && isHighEngagement && (
@@ -592,7 +592,7 @@ const AllScansView = () => {
                               >
                                 <Badge
                                   colorScheme={isHumanLike ? 'green' : 'orange'}
-                                  fontSize={{ base: '2xs', md: 'xs' }}
+                                  fontSize="xs"
                                   variant={isHumanLike ? 'solid' : 'outline'}
                                 >
                                   <HStack spacing={1}>

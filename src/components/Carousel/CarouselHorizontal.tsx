@@ -201,7 +201,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
       <CardHeader p={{ base: '0px 0px 16px 0px', md: '0px 0px 20px 0px' }}>
         <Flex justify={'space-between'} width={'100%'} align="center">
           <Flex direction="column">
-            <Text fontSize={{ base: '2xl', md: 'xl' }} color={textColor} fontWeight="700" mb={1}>
+            <Text fontSize={{ base: 'lg', md: 'xl' }} color={textColor} fontWeight="700" mb={1}>
               {title}
             </Text>
             <Text fontSize={{ base: 'sm', md: 'sm' }} color="gray.500" fontWeight="400">
@@ -231,7 +231,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
             >
               <Flex direction="column" align="center" justify="center" gap={0.5}>
                 <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
-                <Text fontSize={{ base: '2xs', md: 'xs' }} fontWeight="medium" color="green.600">
+                <Text fontSize="xs" fontWeight="medium" color="green.600">
                   {intl.formatMessage({ id: 'app.new' }) || 'New'}
                 </Text>
               </Flex>
@@ -263,9 +263,9 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                   <Box
                     key={parcel.id}
                     flexShrink={0}
-                    w={{ base: '290px', sm: '300px', md: '310px' }}
-                    minW={{ base: '290px', sm: '300px', md: '310px' }}
-                    maxW={{ base: '290px', sm: '300px', md: '310px' }}
+                    w={{ base: '260px', smd: '280px', md: '310px' }}
+                    minW={{ base: '260px', smd: '280px', md: '310px' }}
+                    maxW={{ base: '260px', smd: '280px', md: '310px' }}
                   >
                     <CarouselCard
                       id={parcel.id}

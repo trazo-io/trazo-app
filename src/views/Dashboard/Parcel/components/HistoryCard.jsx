@@ -315,7 +315,7 @@ const HistoryCard = ({ amount }) => {
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="green.500">
                   {productionStats.completed}
                 </Text>
-                <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
+                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
                   {intl.formatMessage({ id: 'parcel.completed' })}
                 </Text>
               </VStack>
@@ -324,7 +324,7 @@ const HistoryCard = ({ amount }) => {
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="blue.500">
                   {productionStats.ongoing}
                 </Text>
-                <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
+                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
                   {intl.formatMessage({ id: 'parcel.ongoing' })}
                 </Text>
               </VStack>
@@ -333,7 +333,7 @@ const HistoryCard = ({ amount }) => {
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="green.500">
                   {productionStats.avgScore !== null ? productionStats.avgScore : '--'}
                 </Text>
-                <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
+                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
                   {isMobile ? intl.formatMessage({ id: 'parcel.scoreLabel' }) : intl.formatMessage({ id: 'parcel.avgScore' })}
                 </Text>
               </VStack>
@@ -342,7 +342,7 @@ const HistoryCard = ({ amount }) => {
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="purple.500">
                   {productionStats.totalDocumentedEvents}
                 </Text>
-                <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
+                <Text fontSize="xs" color="gray.500" fontWeight="medium" textAlign="center" whiteSpace="nowrap">
                   {isMobile ? intl.formatMessage({ id: 'parcel.eventsLabel' }) : intl.formatMessage({ id: 'parcel.eventsDocumented' })}
                 </Text>
               </VStack>
@@ -917,7 +917,7 @@ const HistoryCard = ({ amount }) => {
                                         </Box>
                                         <VStack align="start" spacing={0}>
                                           <Text
-                                            fontSize="2xs"
+                                            fontSize="xs"
                                             color="gray.500"
                                             fontWeight="600"
                                             textTransform="uppercase"
@@ -926,7 +926,7 @@ const HistoryCard = ({ amount }) => {
                                           >
                                             {intl.formatMessage({ id: 'parcel.transparencyScoreLabel' })}
                                           </Text>
-                                          <Text fontSize="2xs" color="gray.600">
+                                          <Text fontSize="xs" color="gray.600">
                                             {intl.formatMessage({ id: 'parcel.agriculturalPractices' })}
                                           </Text>
                                         </VStack>

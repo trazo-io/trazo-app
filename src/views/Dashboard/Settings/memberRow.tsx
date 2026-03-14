@@ -24,16 +24,16 @@ interface MemberRowProps {
   role: string;
 }
 
-const roleNameMap: Record<string, string> = {
-  'Company Admin': 'Administrador',
-  'Farm Manager': 'Gerente de Finca',
-  'Viewer': 'Visor'
-};
-
 const MemberRow = (props: MemberRowProps) => {
   const intl = useIntl();
   const { name, establishments, role } = props;
   const textColor = useColorModeValue('gray.700', 'white');
+
+  const roleNameMap: Record<string, string> = {
+    'Company Admin': intl.formatMessage({ id: 'app.administrator' }),
+    'Farm Manager': intl.formatMessage({ id: 'app.farmManager' }),
+    'Viewer': intl.formatMessage({ id: 'app.viewerRole' })
+  };
   const displayRole = roleNameMap[role] || role;
 
   const { isOpen: isOpen1, onOpen: onOpen1, onClose: onClose1 } = useDisclosure();
@@ -45,21 +45,21 @@ const MemberRow = (props: MemberRowProps) => {
       borderBottom="1px solid"
       borderColor="gray.100"
     >
-      <Td py={5} px={6}>
-        <Text color={textColor} fontSize="md" fontWeight="semibold">
+      <Td py={{ base: 3, md: 5 }} px={{ base: 3, md: 6 }}>
+        <Text color={textColor} fontSize={{ base: 'xs', md: 'md' }} fontWeight="semibold" whiteSpace="nowrap">
           {name}
         </Text>
       </Td>
-      <Td py={5} px={6}>
-        <HStack spacing={2} flexWrap="wrap">
+      <Td py={{ base: 3, md: 5 }} px={{ base: 3, md: 6 }}>
+        <HStack spacing={2} flexWrap="nowrap">
           {establishments?.length > 0 ? (
             establishments.map((establishment, index) => (
               <Badge
                 key={index}
-                px={3}
+                px={{ base: 2, md: 3 }}
                 justifyContent="center"
                 alignItems="center"
-                py={1.5}
+                py={1}
                 borderRadius="full"
                 bg="green.50"
                 color="green.700"
@@ -68,14 +68,15 @@ const MemberRow = (props: MemberRowProps) => {
                 border="1px solid"
                 w="fit-content"
                 borderColor="green.200"
+                whiteSpace="nowrap"
               >
                 {establishment}
               </Badge>
             ))
           ) : (
             <Badge
-              px={3}
-              py={1.5}
+              px={{ base: 2, md: 3 }}
+              py={1}
               w="fit-content"
               borderRadius="full"
               bg="gray.50"
@@ -84,17 +85,18 @@ const MemberRow = (props: MemberRowProps) => {
               fontWeight="medium"
               border="1px solid"
               borderColor="gray.200"
+              whiteSpace="nowrap"
             >
-              Sin establecimientos
+              {intl.formatMessage({ id: 'app.noEstablishmentsAssigned' })}
             </Badge>
           )}
         </HStack>
       </Td>
-      <Td py={5} px={6}>
+      <Td py={{ base: 3, md: 5 }} px={{ base: 3, md: 6 }}>
         <Badge
           w="fit-content"
-          px={4}
-          py={1.5}
+          px={{ base: 2, md: 4 }}
+          py={1}
           borderRadius="full"
           bg="blue.50"
           color="blue.700"
@@ -103,11 +105,12 @@ const MemberRow = (props: MemberRowProps) => {
           border="1px solid"
           borderColor="blue.200"
           textTransform="capitalize"
+          whiteSpace="nowrap"
         >
           {displayRole}
         </Badge>
       </Td>
-      <Td py={5} px={6}>
+      <Td py={{ base: 3, md: 5 }} px={{ base: 3, md: 6 }}>
         <Menu isOpen={isOpen1} onClose={onClose1}>
           <MenuButton
             onClick={onOpen1}
@@ -136,6 +139,7 @@ const MemberRow = (props: MemberRowProps) => {
             py={2}
           >
             <MenuItem
+              py={3}
               onClick={() => {}}
               _hover={{ bg: 'green.50' }}
               borderRadius="lg"
@@ -148,7 +152,7 @@ const MemberRow = (props: MemberRowProps) => {
                 </Text>
               </Flex>
             </MenuItem>
-            <MenuItem onClick={() => {}} _hover={{ bg: 'red.50' }} borderRadius="lg" mx={2}>
+            <MenuItem py={3} onClick={() => {}} _hover={{ bg: 'red.50' }} borderRadius="lg" mx={2}>
               <Flex color="red.500" cursor="pointer" align="center">
                 <Text fontSize="sm" fontWeight="medium">
                   {intl.formatMessage({ id: 'app.delete' })}

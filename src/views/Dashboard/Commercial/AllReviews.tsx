@@ -246,7 +246,7 @@ const AllReviewsView = () => {
                     <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="bold" color="blue.600">
                       {reviewsData.filter((r) => r.verified_purchase).length}
                     </Text>
-                    <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.600">
+                    <Text fontSize="xs" color="gray.600">
                       {intl.formatMessage({ id: 'commercial.verified' })}
                     </Text>
                   </Box>
@@ -257,7 +257,7 @@ const AllReviewsView = () => {
                           reviewsData.length
                       ) || 0}
                     </Text>
-                    <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.600">
+                    <Text fontSize="xs" color="gray.600">
                       {intl.formatMessage({ id: 'commercial.averageHelpful' })}
                     </Text>
                   </Box>
@@ -346,19 +346,19 @@ const AllReviewsView = () => {
                               {review.user || intl.formatMessage({ id: 'commercial.anonymousUser' })}
                             </Text>
                             {review.verified_purchase && (
-                              <Badge colorScheme="green" fontSize="2xs">
+                              <Badge colorScheme="green" fontSize="xs">
                                 {intl.formatMessage({ id: 'commercial.verifiedPurchase' })}
                               </Badge>
                             )}
                           </HStack>
-                          <Text fontSize={{ base: '2xs', md: 'sm' }} color="gray.500" noOfLines={1}>
+                          <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" noOfLines={1}>
                             {review.date} • {review.location || intl.formatMessage({ id: 'commercial.unknownLocation' })}
                           </Text>
                         </VStack>
                       </HStack>
                       <VStack align={{ base: 'flex-start', sm: 'flex-end' }} spacing={0} flexShrink={0}>
                         <HStack spacing={0.5}>{renderStars(review.rating)}</HStack>
-                        <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500">
+                        <Text fontSize="xs" color="gray.500">
                           {intl.formatMessage({ id: 'commercial.helpfulCount' }, { count: review.helpful_count || 0 })}
                         </Text>
                       </VStack>
@@ -419,7 +419,7 @@ const AllReviewsView = () => {
                         </HStack>
                       )}
 
-                      <HStack spacing={{ base: 2, md: 4 }} fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" flexWrap="wrap">
+                      <HStack spacing={{ base: 2, md: 4 }} fontSize="xs" color="gray.500" flexWrap="wrap">
                         <Text>{intl.formatMessage({ id: 'commercial.productLabel' }, { name: review.product || 'N/A' })}</Text>
                         <Text>•</Text>
                         <Text>{intl.formatMessage({ id: 'commercial.parcelLabel' }, { name: review.parcel || 'N/A' })}</Text>

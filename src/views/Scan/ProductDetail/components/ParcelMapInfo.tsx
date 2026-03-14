@@ -204,7 +204,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                     SOIL TYPE
                   </Text>
                   <HStack spacing={2}>
-                    <Icon as={MdTerrain} color="brown.500" />
+                    <Icon as={MdTerrain} color="orange.700" />
                     <Text fontSize="md" color={textColor}>
                       {formatDisplayValue(parcelData.soilType)}
                     </Text>

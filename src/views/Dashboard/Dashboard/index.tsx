@@ -483,7 +483,7 @@ export default function DashboardView() {
                       WebkitOverflowScrolling: 'touch'
                     }}
                   >
-                    <HStack spacing={3} pb={2} px={1} w="max-content">
+                    <HStack spacing={3} py={2} px={1} w="max-content">
                       {establishments ? (
                         <>
                           {establishments.map((prop) => (
@@ -518,15 +518,15 @@ export default function DashboardView() {
                                     flexShrink={0}
                                   >
                                     <HomeIcon
-                                      h={{ base: '28px', md: '24px' }}
-                                      w={{ base: '28px', md: '24px' }}
+                                      h={{ base: '22px', md: '24px' }}
+                                      w={{ base: '22px', md: '24px' }}
                                       color={prop.id === establishment?.id ? 'green.500' : 'white'}
                                     />
                                   </Box>
                                   <Box flex="1" overflow="hidden">
                                     <Text
                                       fontWeight="bold"
-                                      fontSize={{ base: 'lg', md: 'md' }}
+                                      fontSize={{ base: 'md', md: 'md' }}
                                       color={prop.id === establishment?.id ? 'white' : textColor}
                                       noOfLines={2}
                                       lineHeight="1.3"
@@ -535,7 +535,7 @@ export default function DashboardView() {
                                       {prop.name}
                                     </Text>
                                     <Text
-                                      fontSize={{ base: 'md', md: 'sm' }}
+                                      fontSize={{ base: 'sm', md: 'sm' }}
                                       color={
                                         prop.id === establishment?.id ? 'green.100' : 'gray.500'
                                       }
@@ -572,7 +572,7 @@ export default function DashboardView() {
                             >
                               <Flex direction="column" align="center" justify="center" gap={0.5}>
                                 <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
-                                <Text fontSize={{ base: '2xs', md: 'xs' }} fontWeight="medium" color="green.600">
+                                <Text fontSize="xs" fontWeight="medium" color="green.600">
                                   {intl.formatMessage({ id: 'app.new' })}
                                 </Text>
                               </Flex>
@@ -687,7 +687,7 @@ export default function DashboardView() {
                         >
                           <Flex direction="column" align="center" justify="center" gap={0.5}>
                             <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
-                            <Text fontSize={{ base: '2xs', md: 'xs' }} fontWeight="medium" color="green.600">
+                            <Text fontSize="xs" fontWeight="medium" color="green.600">
                               {intl.formatMessage({ id: 'app.new' }) || 'New'}
                             </Text>
                           </Flex>

@@ -193,12 +193,12 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
             {humanPercentage}%
           </StatNumber>
-          <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
+          <StatHelpText fontSize="xs" color="gray.500" mb={0}>
             {intl.formatMessage({ id: 'commercial.humanScansCount' }, { human: metrics.humanScans, total: metrics.totalScans })}
             <Badge
               ml={1.5}
               colorScheme={humanPercentage > 80 ? 'green' : humanPercentage > 60 ? 'yellow' : 'red'}
-              fontSize={{ base: '2xs', md: 'xs' }}
+              fontSize="xs"
             >
               {humanPercentage > 80
                 ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
@@ -220,14 +220,14 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
             {engagementPercentage}%
           </StatNumber>
-          <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
+          <StatHelpText fontSize="xs" color="gray.500" mb={0}>
             {intl.formatMessage({ id: 'commercial.deeplyEngaged' }, { count: metrics.highEngagement })}
             <Badge
               ml={1.5}
               colorScheme={
                 engagementPercentage > 70 ? 'green' : engagementPercentage > 50 ? 'yellow' : 'red'
               }
-              fontSize={{ base: '2xs', md: 'xs' }}
+              fontSize="xs"
             >
               {engagementPercentage > 70
                 ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
@@ -249,14 +249,14 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
             {uniquePercentage}%
           </StatNumber>
-          <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
+          <StatHelpText fontSize="xs" color="gray.500" mb={0}>
             {intl.formatMessage({ id: 'commercial.uniqueVisitors' }, { count: metrics.uniqueSessions })}
             <Badge
               ml={1.5}
               colorScheme={
                 uniquePercentage > 90 ? 'green' : uniquePercentage > 75 ? 'yellow' : 'red'
               }
-              fontSize={{ base: '2xs', md: 'xs' }}
+              fontSize="xs"
             >
               {uniquePercentage > 90
                 ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
@@ -278,9 +278,9 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
             {consentPercentage}%
           </StatNumber>
-          <StatHelpText fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" mb={0}>
+          <StatHelpText fontSize="xs" color="gray.500" mb={0}>
             {intl.formatMessage({ id: 'commercial.consentedScans' }, { count: metrics.consentedScans })}
-            <Badge ml={1.5} colorScheme="green" fontSize={{ base: '2xs', md: 'xs' }}>
+            <Badge ml={1.5} colorScheme="green" fontSize="xs">
               {intl.formatMessage({ id: 'commercial.gdprCompliant' })}
             </Badge>
           </StatHelpText>
@@ -297,7 +297,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
                 <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
                   {intl.formatMessage({ id: 'commercial.qualityScore' }, { score: Math.round((humanPercentage + engagementPercentage + uniquePercentage) / 3) })}
                 </Text>
-                <Text fontSize={{ base: '2xs', md: 'xs' }} color="green.600">
+                <Text fontSize="xs" color="green.600">
                   {intl.formatMessage({ id: 'commercial.qualityScoreDescription' })}
                 </Text>
               </VStack>
@@ -309,7 +309,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
                 <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
                   {intl.formatMessage({ id: 'commercial.recommendation' })}
                 </Text>
-                <Text fontSize={{ base: '2xs', md: 'xs' }} color="green.600">
+                <Text fontSize="xs" color="green.600">
                   {humanPercentage > 85
                     ? intl.formatMessage({ id: 'commercial.recommendationExcellent' })
                     : humanPercentage > 70
@@ -337,14 +337,14 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
               <Icon as={isEducationOpen ? FiChevronUp : FiChevronDown} color="blue.500" boxSize={4} />
             </Flex>
             <Collapse in={isEducationOpen} animateOpacity>
-              <VStack align="start" spacing={1.5} px={{ base: 3, md: 4 }} pb={{ base: 3, md: 4 }} fontSize={{ base: '2xs', md: 'xs' }} color="blue.600">
+              <VStack align="start" spacing={1.5} px={{ base: 3, md: 4 }} pb={{ base: 3, md: 4 }} fontSize="xs" color="blue.600">
                 <Text>
                   {intl.formatMessage({ id: 'commercial.educationHumanScans' })}
                 </Text>
                 <Text>
                   {intl.formatMessage({ id: 'commercial.educationDetectionSystem' })}
                 </Text>
-                <VStack align="start" spacing={0.5} pl={{ base: 3, md: 4 }} fontSize={{ base: '2xs', md: 'xs' }}>
+                <VStack align="start" spacing={0.5} pl={{ base: 3, md: 4 }} fontSize="xs">
                   <Text>
                     • {intl.formatMessage({ id: 'commercial.educationAutomatic' })}
                   </Text>
@@ -521,7 +521,8 @@ export default function CommercialView() {
       companyId: currentCompany?.id,
       establishmentId: currentEstablishmentId,
       parcelId: filters.parcel?.id,
-      productId: filters.product?.id
+      productId: filters.product?.id,
+      completed: true
     },
     {
       skip:
@@ -555,7 +556,7 @@ export default function CommercialView() {
   const onProductionFilterChange = (production) => {
     setFilters({
       ...filters,
-      production: production ? { id: production.id, period: production.period } : null
+      production: production ? { id: production.id, name: production.name } : null
     });
   };
 

@@ -42,7 +42,8 @@ import {
   FaTint,
   FaEyeSlash,
   FaMinus,
-  FaCamera
+  FaCamera,
+  FaCloudRain
 } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
@@ -130,8 +131,8 @@ const getEventConfig = (type: string, description: string) => {
 
   if (desc.includes('weather') || desc.includes('climate') || desc.includes('temperature')) {
     return {
-      icon: FaSun,
-      color: 'purple.500',
+      icon: FaCloudRain,
+      color: 'blue.500',
       category: 'Weather Event'
     };
   }

@@ -231,6 +231,7 @@ const TrackList = ({ amount }) => {
                 </MenuButton>
                 <MenuList>
                   <MenuItem
+                    py={3}
                     onClick={() =>
                       navigate(
                         `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${currentHistory?.id}/change`
@@ -243,6 +244,7 @@ const TrackList = ({ amount }) => {
                     </Flex>
                   </MenuItem>
                   <MenuItem
+                    py={3}
                     onClick={() => {
                       onClose1();
                       onDeleteOpen();

@@ -224,7 +224,7 @@ const companyApi = baseApi.injectEndpoints({
     updateEstablishmentCarbonFootprint: build.mutation<any, { id: number; data: any }>({
       query: ({ id, data }) => ({
         url: `/carbon/entries/${id}/`,
-        method: 'PUT',
+        method: 'PATCH',
         body: data,
         credentials: 'include'
       })
@@ -254,7 +254,7 @@ const companyApi = baseApi.injectEndpoints({
     updateCarbonCertification: build.mutation<any, { id: number; data: any }>({
       query: ({ id, data }) => ({
         url: `/certifications/${id}/`,
-        method: 'PUT',
+        method: 'PATCH',
         body: data,
         credentials: 'include'
       })

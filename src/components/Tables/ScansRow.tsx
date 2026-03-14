@@ -157,7 +157,7 @@ const ScansRow = (props: ScansRowProps) => {
           {getCustomerTypeBadge()}
           {is_duplicate && (
             <Tooltip label={intl.formatMessage({ id: 'commercial.duplicateSession' })} placement="top">
-              <Badge colorScheme="gray" fontSize="2xs" variant="outline">
+              <Badge colorScheme="gray" fontSize="xs" variant="outline">
                 {intl.formatMessage({ id: 'commercial.dup' })}
               </Badge>
             </Tooltip>
@@ -168,7 +168,7 @@ const ScansRow = (props: ScansRowProps) => {
       {/* Engagement Level - NEW */}
       <Td px={{ base: 2, md: 5 }}>
         <HStack spacing={1}>
-          <Badge colorScheme={engagementLevel.color} fontSize={{ base: '2xs', md: 'xs' }} variant="subtle">
+          <Badge colorScheme={engagementLevel.color} fontSize="xs" variant="subtle">
             {engagementLevel.label}
           </Badge>
           {consent_given && isHighEngagement && (
@@ -194,7 +194,7 @@ const ScansRow = (props: ScansRowProps) => {
           >
             <Badge
               colorScheme={isHumanLike ? 'green' : 'orange'}
-              fontSize={{ base: '2xs', md: 'xs' }}
+              fontSize="xs"
               variant={isHumanLike ? 'solid' : 'outline'}
             >
               <HStack spacing={1}>

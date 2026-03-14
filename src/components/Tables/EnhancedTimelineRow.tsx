@@ -69,7 +69,9 @@ import {
   FaStar,
   FaCircle,
   FaLayerGroup,
-  FaBolt
+  FaBolt,
+  FaBug,
+  FaClipboardList
 } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
 import { getVerificationBadgeConfig, VerificationLevel } from '../../utils/verificationTierHelpers';
@@ -136,11 +138,11 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
   switch (eventType) {
     case 0: // Weather Event
       return {
-        icon: FaSun,
-        color: 'purple.500',
+        icon: FaCloudRain,
+        color: 'blue.500',
         category: 'Weather Event',
-        bgGradient: 'linear(to-r, purple.50, purple.100)',
-        borderColor: 'purple.200'
+        bgGradient: 'linear(to-r, blue.50, blue.100)',
+        borderColor: 'blue.200'
       };
     case 1: // Production Event
       return {
@@ -160,7 +162,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
       };
     case 3: // Other Farm Activities (Sprint 2: renamed from General Event)
       return {
-        icon: FaLeaf,
+        icon: FaClipboardList,
         color: 'gray.500',
         category: 'Other Farm Activity',
         bgGradient: 'linear(to-r, gray.50, gray.100)',
@@ -169,22 +171,22 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 4: // Equipment Event
       return {
         icon: FaTractor,
-        color: 'blue.500',
+        color: 'blue.700',
         category: 'Equipment Operation',
         bgGradient: 'linear(to-r, blue.50, blue.100)',
         borderColor: 'blue.200'
       };
     case 5: // Soil Management
       return {
-        icon: FaMapMarkerAlt,
-        color: 'brown.500',
+        icon: FaLayerGroup,
+        color: 'yellow.700',
         category: 'Soil Management',
         bgGradient: 'linear(to-r, yellow.50, yellow.100)',
         borderColor: 'yellow.300'
       };
     case 6: // Pest Management
       return {
-        icon: FaLeaf,
+        icon: FaBug,
         color: 'red.500',
         category: 'Pest Management',
         bgGradient: 'linear(to-r, red.50, red.100)',
@@ -192,11 +194,11 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
       };
     case 7: // Business Event
       return {
-        icon: FaDollarSign,
-        color: 'cyan.500',
+        icon: FaCertificate,
+        color: 'teal.500',
         category: 'Business Activity',
-        bgGradient: 'linear(to-r, cyan.50, cyan.100)',
-        borderColor: 'cyan.200'
+        bgGradient: 'linear(to-r, teal.50, teal.100)',
+        borderColor: 'teal.200'
       };
     default:
       return {
@@ -845,7 +847,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                           <Badge
                             colorScheme="blue"
                             variant="subtle"
-                            fontSize="2xs"
+                            fontSize="xs"
                             px={1.5}
                             py={0.5}
                             fontWeight="600"

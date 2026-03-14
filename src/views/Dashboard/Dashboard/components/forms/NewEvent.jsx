@@ -27,7 +27,12 @@ import {
   FaBug,
   FaEye,
   FaCalendarAlt,
-  FaTasks
+  FaTasks,
+  FaCloudRain,
+  FaFlask,
+  FaClipboardList,
+  FaCertificate,
+  FaLayerGroup
 } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -104,7 +109,7 @@ const eventTypeConfig = [
     id: 0,
     name: 'weather',
     label: 'Weather',
-    icon: BsFillCloudLightningRainFill,
+    icon: FaCloudRain,
     color: 'blue',
     description: 'Weather events affecting your crops'
   },
@@ -112,7 +117,7 @@ const eventTypeConfig = [
     id: 1,
     name: 'production',
     label: 'Production',
-    icon: RocketIcon,
+    icon: FaSeedling,
     color: 'green',
     description: 'Agricultural production activities' // Now includes Equipment Maintenance
   },
@@ -120,16 +125,16 @@ const eventTypeConfig = [
     id: 2,
     name: 'chemical',
     label: 'Chemical',
-    icon: SlChemistry,
-    color: 'purple',
+    icon: FaFlask,
+    color: 'orange',
     description: 'Chemical applications and treatments'
   },
   {
     id: 3,
     name: 'general', // Backend name stays 'general' for compatibility
     label: 'Other Farm Activities', // Sprint 2: Renamed from 'General'
-    icon: FaEdit,
-    color: 'green',
+    icon: FaClipboardList,
+    color: 'gray',
     description: 'Farm activities not covered by other categories'
   },
   // Sprint 2 Epic 2.1: Equipment (id: 4) REMOVED - merged into Production as "Equipment Maintenance (EQ)" subtype
@@ -138,8 +143,8 @@ const eventTypeConfig = [
     id: 5,
     name: 'soil_management',
     label: 'Soil Management',
-    icon: FaSeedling,
-    color: 'green',
+    icon: FaLayerGroup,
+    color: 'yellow',
     description: 'Soil testing and amendments'
   },
   {
@@ -154,7 +159,7 @@ const eventTypeConfig = [
     id: 7,
     name: 'business',
     label: 'Business',
-    icon: FaBusinessTime,
+    icon: FaCertificate,
     color: 'teal',
     description: 'Sales, certifications, and compliance'
   }
@@ -1495,7 +1500,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       {/* 2025 UX: Enhanced loading state with progress indication */}
       {isEdit && isLoadingEvent && (
         <StandardCard>
-          <CardBody py={8} px={6}>
+          <CardBody py={8} px={{ base: 0, md: 6 }}>
             <Flex justify="center" align="center">
               <CircularProgress isIndeterminate color="green.500" />
             </Flex>
@@ -1506,7 +1511,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       {/* Error state when editing */}
       {isEdit && eventError && (
         <Card boxShadow="xl" bg={bgColor} borderRadius="2xl">
-          <CardBody py={8} px={6}>
+          <CardBody py={8} px={{ base: 0, md: 6 }}>
             <VStack spacing={4} align="center">
               <Text fontSize="lg" fontWeight="semibold" color="red.500">
                 {intl.formatMessage({ id: 'app.errorLoadingEvent' }) || 'Error loading event data'}
@@ -1755,7 +1760,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         'Basic Event Information'}
                     </Text>
                   </CardHeader>
-                  <CardBody pt={4} pb={6} px={{ base: 3, md: 6 }}>
+                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
                     <FormProvider {...basicMethods}>
                       <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)}>
                         <VStack spacing={{ base: 5, md: 6 }} align="stretch">
@@ -1944,7 +1949,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       {intl.formatMessage({ id: 'app.eventDetails' }) || 'Event Details'}
                     </Text>
                   </CardHeader>
-                  <CardBody pt={4} pb={6} px={{ base: 3, md: 6 }}>
+                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
                     {activeEventType === 0 && (
                       <WeatherTab
                         ref={weatherTabRef}
@@ -2107,7 +2112,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         'Media & Documentation'}
                     </Text>
                   </CardHeader>
-                  <CardBody pt={4} pb={6} px={{ base: 3, md: 6 }}>
+                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
                     <VStack spacing={{ base: 5, md: 6 }} align="stretch">
                       {/* Photo Recommendations - Event-Type & Subtype-Specific Guidance */}
                       <PhotoRecommendationsBox

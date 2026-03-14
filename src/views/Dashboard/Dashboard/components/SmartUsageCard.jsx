@@ -265,7 +265,7 @@ const SmartUsageCard = ({
                 >
                   <Badge
                     colorScheme="green"
-                    fontSize="2xs"
+                    fontSize="xs"
                     px={2}
                     py={1}
                     borderRadius="full"
@@ -277,7 +277,7 @@ const SmartUsageCard = ({
                 </Tooltip>
               )}
             </HStack>
-            <Text fontSize="2xs" color={subtitleColor} lineHeight="1.3">
+            <Text fontSize="xs" color={subtitleColor} lineHeight="1.3">
               {smartInsight.insight}
             </Text>
           </Box>
@@ -294,7 +294,7 @@ const SmartUsageCard = ({
               <StatNumber fontSize="md" color={textColor} fontWeight="bold">
                 {marketReach}
               </StatNumber>
-              <StatHelpText fontSize="2xs" color={successColor} m={0}>
+              <StatHelpText fontSize="xs" color={successColor} m={0}>
                 {qrScanGrowth > 0 && (
                   <HStack spacing={1} justify="center">
                     <Icon as={MdTrendingUp} w={2.5} h={2.5} />
@@ -314,7 +314,7 @@ const SmartUsageCard = ({
               <StatNumber fontSize="sm" color={textColor} fontWeight="bold">
                 {trustScore}%
               </StatNumber>
-              <StatHelpText fontSize="2xs" m={0}>
+              <StatHelpText fontSize="xs" m={0}>
                 <HStack spacing={1} justify="center">
                   <Icon as={BsShield} color={accentColor} w={2.5} h={2.5} />
                   <Text color={subtitleColor}>
@@ -334,7 +334,7 @@ const SmartUsageCard = ({
               <StatNumber fontSize="sm" color={textColor} fontWeight="bold">
                 {documentedEvents}
               </StatNumber>
-              <StatHelpText fontSize="2xs" m={0}>
+              <StatHelpText fontSize="xs" m={0}>
                 <HStack spacing={1} justify="center">
                   <Icon as={FaLeaf} color={accentColor} w={2.5} h={2.5} />
                   <Text color={subtitleColor}>
@@ -388,7 +388,7 @@ const SmartUsageCard = ({
             bg={smartInsight.actionColor}
             color="white"
             size="md"
-            fontSize={{ base: 'xs', md: 'sm' }}
+            fontSize="sm"
             fontWeight="600"
             borderRadius="xl"
             leftIcon={<Icon as={smartInsight.actionIcon} />}

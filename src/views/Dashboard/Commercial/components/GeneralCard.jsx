@@ -57,7 +57,7 @@ const GeneralCard = ({ review }) => {
               <Text color={textColor} fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" noOfLines={1}>
                 {review.user}
               </Text>
-              <Text color="gray.500" fontSize={{ base: '2xs', md: 'xs' }} whiteSpace="nowrap">
+              <Text color="gray.500" fontSize="xs" whiteSpace="nowrap">
                 {review.date}
               </Text>
             </VStack>
@@ -73,7 +73,7 @@ const GeneralCard = ({ review }) => {
           <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" lineHeight="1.5">
             {review.written_review}
           </Text>
-          <Text color="gray.500" fontSize={{ base: '2xs', md: 'xs' }} fontWeight="medium">
+          <Text color="gray.500" fontSize="xs" fontWeight="medium">
             {intl.formatMessage({ id: 'commercial.production' }, { name: review.production })}
           </Text>
         </VStack>

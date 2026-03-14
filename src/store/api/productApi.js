@@ -242,9 +242,10 @@ export const productApi = baseApi.injectEndpoints({
       })
     }),
     getEstablishmentHistories: build.query({
-      query: ({ companyId, establishmentId, parcelId, productId }) => {
+      query: ({ companyId, establishmentId, parcelId, productId, completed }) => {
         const params = new URLSearchParams();
         if (productId) params.append('product', productId);
+        if (completed) params.append('completed', 'true');
         const queryString = params.toString();
         return {
           url:

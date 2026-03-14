@@ -93,7 +93,7 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
     <HStack spacing={2} align="flex-start">
       <Icon as={icon} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
       <Box>
-        <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" textTransform="uppercase" fontWeight="semibold">
+        <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold" letterSpacing="0.05em">
           {label}
         </Text>
         {renderValue()}
@@ -431,7 +431,7 @@ function ProfileEstablishment() {
           <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 6 }}>
             <VStack spacing={0.5} align="center" p={{ base: 3, md: 4 }} bg="green.50" borderRadius="lg">
               <Icon as={FaTractor} color="green.500" boxSize={{ base: 5, md: 6 }} />
-              <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
+              <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color="gray.800">
                 {establishmentData.total_acreage || 0}
               </Text>
               <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
@@ -440,7 +440,7 @@ function ProfileEstablishment() {
             </VStack>
             <VStack spacing={0.5} align="center" p={{ base: 3, md: 4 }} bg="purple.50" borderRadius="lg">
               <Icon as={FaCalendar} color="purple.500" boxSize={{ base: 5, md: 6 }} />
-              <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
+              <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color="gray.800">
                 {establishmentData.year_established || '--'}
               </Text>
               <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
@@ -449,7 +449,7 @@ function ProfileEstablishment() {
             </VStack>
             <VStack spacing={0.5} align="center" p={{ base: 3, md: 4 }} bg="orange.50" borderRadius="lg">
               <Icon as={FaSeedling} color="orange.500" boxSize={{ base: 5, md: 6 }} />
-              <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
+              <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color="gray.800">
                 {getCropsGrown().length}
               </Text>
               <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">

@@ -186,7 +186,7 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
     <HStack spacing={2} align="flex-start">
       <Icon as={icon} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
       <Box>
-        <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" textTransform="uppercase" fontWeight="semibold">
+        <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
           {label}
         </Text>
         {renderValue()}
@@ -222,7 +222,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon, value, label, subLabel, color
       {label}
     </Text>
     {subLabel && (
-      <Text fontSize={{ base: '2xs', md: 'xs' }} color="gray.500" textAlign="center">
+      <Text fontSize="xs" color="gray.500" textAlign="center">
         {subLabel}
       </Text>
     )}
@@ -722,7 +722,7 @@ function ProfileParcel(): React.ReactElement {
                 <Icon as={FaCertificate} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
                 <Box>
                   <Text
-                    fontSize={{ base: '2xs', md: 'xs' }}
+                    fontSize="xs"
                     color="gray.500"
                     textTransform="uppercase"
                     fontWeight="semibold"

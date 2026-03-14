@@ -74,11 +74,11 @@ const CarouselCard = ({
   return (
     <Card
       p={0}
-      w={{ base: '290px', sm: '300px', md: '310px' }}
-      minW={{ base: '290px', sm: '300px', md: '310px' }}
-      maxW={{ base: '290px', sm: '300px', md: '310px' }}
-      minH={{ base: '380px', md: '360px' }}
-      h={{ base: '380px', md: '360px' }}
+      w={{ base: '260px', smd: '280px', md: '310px' }}
+      minW={{ base: '260px', smd: '280px', md: '310px' }}
+      maxW={{ base: '260px', smd: '280px', md: '310px' }}
+      minH={{ base: '320px', md: '360px' }}
+      h={{ base: '320px', md: '360px' }}
       className="trazo-card"
       cursor="pointer"
       flexShrink={0}
@@ -101,7 +101,7 @@ const CarouselCard = ({
     >
       <Flex direction="column" h="100%">
         {/* Modern 4:3 aspect ratio image section */}
-        <Box w="100%" h="180px" position="relative" overflow="hidden" borderTopRadius="20px">
+        <Box w="100%" h={{ base: '140px', md: '180px' }} position="relative" overflow="hidden" borderTopRadius="20px">
           {!imageLoaded && !shouldShowPlaceholder && (
             <Shimmer
               width="100%"
@@ -146,17 +146,17 @@ const CarouselCard = ({
         </Box>
 
         {/* Modern content section with better hierarchy */}
-        <Flex direction="column" flex="1" p="20px">
+        <Flex direction="column" flex="1" p={{ base: '12px', md: '20px' }}>
           {/* Product/Category name - primary emphasis with proper sizing */}
           <Text
-            fontSize="lg"
+            fontSize={{ base: 'md', md: 'lg' }}
             color={textColor}
             fontWeight="700"
             mb="4px"
             letterSpacing="-0.01em"
             lineHeight="1.3"
             noOfLines={2}
-            minH="48px"
+            minH={{ base: '40px', md: '48px' }}
           >
             {category}
           </Text>
@@ -188,7 +188,7 @@ const CarouselCard = ({
               }}
             >
               <Text
-                fontSize="sm"
+                fontSize="xs"
                 color="green.600"
                 fontWeight="bold"
                 cursor="pointer"
@@ -199,14 +199,14 @@ const CarouselCard = ({
               </Text>
               <Icon
                 as={BsArrowRight}
-                w="20px"
-                h="20px"
-                fontSize="2xl"
+                w="14px"
+                h="14px"
+                fontSize="md"
                 color="green.600"
                 transition="all .5s ease"
                 mx=".3rem"
                 cursor="pointer"
-                pt="4px"
+                pt="2px"
                 _hover={{ transform: 'translateX(20%)' }}
               />
             </Button>

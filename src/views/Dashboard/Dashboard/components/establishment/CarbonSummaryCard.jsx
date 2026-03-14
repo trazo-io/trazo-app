@@ -261,7 +261,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
       </CardHeader>
       <CardBody px={0}>
         {/* PRIMARY: Transparency Metrics - Mobile Optimized */}
-        <SimpleGrid columns={{ base: 1, md: 5 }} spacing={{ base: 4, md: 3 }}>
+        <SimpleGrid columns={{ base: 1, md: 3, lg: 5 }} spacing={{ base: 3, md: 3 }}>
           <Box
             textAlign="center"
             p={{ base: 4, md: 2 }}
@@ -274,10 +274,10 @@ const TransparencySummaryCard = ({ establishmentId }) => {
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 {intl.formatMessage({ id: 'dashboard.transparencyScore' })}
               </StatLabel>
-              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="green.500" fontWeight="bold">
+              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="green.500" fontWeight="bold">
                 {getTransparencyScore()}%
               </StatNumber>
-              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
+              <StatHelpText fontSize="xs" mt={1}>
 {intl.formatMessage({ id: 'dashboard.completeDocumentation' })}
               </StatHelpText>
             </Stat>
@@ -294,10 +294,10 @@ const TransparencySummaryCard = ({ establishmentId }) => {
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 {intl.formatMessage({ id: 'dashboard.documentedEvents' })}
               </StatLabel>
-              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="blue.500" fontWeight="bold">
+              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="blue.500" fontWeight="bold">
                 {getEventCount()}
               </StatNumber>
-              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
+              <StatHelpText fontSize="xs" mt={1}>
 {intl.formatMessage({ id: 'dashboard.registeredActivities' })}
               </StatHelpText>
             </Stat>
@@ -314,10 +314,10 @@ const TransparencySummaryCard = ({ establishmentId }) => {
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 {intl.formatMessage({ id: 'dashboard.documentedPhotos' })}
               </StatLabel>
-              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="orange.500" fontWeight="bold">
+              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="orange.500" fontWeight="bold">
                 {getPhotoCount()}
               </StatNumber>
-              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
+              <StatHelpText fontSize="xs" mt={1}>
 {intl.formatMessage({ id: 'dashboard.visualEvidence' })}
               </StatHelpText>
             </Stat>
@@ -334,10 +334,10 @@ const TransparencySummaryCard = ({ establishmentId }) => {
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 {intl.formatMessage({ id: 'dashboard.activeProductions' })}
               </StatLabel>
-              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="teal.500" fontWeight="bold">
+              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="teal.500" fontWeight="bold">
                 {getActiveProductionsCount()}
               </StatNumber>
-              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
+              <StatHelpText fontSize="xs" mt={1}>
 {intl.formatMessage({ id: 'dashboard.transparencyCycles' })}
               </StatHelpText>
             </Stat>
@@ -354,10 +354,10 @@ const TransparencySummaryCard = ({ establishmentId }) => {
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 {intl.formatMessage({ id: 'dashboard.transparency' })}
               </StatLabel>
-              <StatNumber fontSize={{ base: 'lg', md: 'xl' }} color="green.500" fontWeight="bold">
+              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="green.500" fontWeight="bold">
                 {getVerificationStatus()}
               </StatNumber>
-              <StatHelpText fontSize={{ base: 'sm', md: 'xs' }} mt={1}>
+              <StatHelpText fontSize="xs" mt={1}>
                 <Icon as={FaClipboardList} /> {intl.formatMessage({ id: 'dashboard.documentationLevel' })}
               </StatHelpText>
             </Stat>
@@ -370,7 +370,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
         {/* PRIMARY: Transparency Progress Section */}
         <Box mb={{ base: 2, md: 2 }}>
           <Heading
-            size={{ base: 'xs', md: 'sm' }}
+            size="sm"
             mb={{ base: 2, md: 3 }}
             color="green.700"
             fontWeight="600"
@@ -406,10 +406,10 @@ const TransparencySummaryCard = ({ establishmentId }) => {
 
         <Box mb={{ base: 2, md: 2 }}>
           <Heading
-            size={{ base: 'xs', md: 'sm' }}
+            size="sm"
             mb={{ base: 2, md: 3 }}
             color="gray.600"
-            fontWeight="500"
+            fontWeight="600"
           >
             {intl.formatMessage({ id: 'dashboard.environmentalImpactLabel' })}
           </Heading>
