@@ -326,62 +326,6 @@ const EducationModal = ({
           )
         };
 
-      case 'carbon':
-      case 'carbon-scoring':
-        return {
-          title: 'Carbon Impact Explained',
-          content: (
-            <VStack align="start" spacing={6}>
-              <Text fontSize="lg" color="gray.700">
-                Understanding the <strong>carbon impact</strong> of your food choices helps you make
-                more sustainable decisions for our planet.
-              </Text>
-
-              <Box>
-                <Heading size="sm" mb={3} color="green.600">
-                  What Affects Carbon Footprint
-                </Heading>
-                <VStack align="start" spacing={3}>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="green.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">Farming Practices</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Soil management, fertilizer use, and equipment efficiency
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="blue.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">Transportation</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Distance from farm to your table and shipping methods
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="purple.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">Processing & Packaging</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Energy used in processing and packaging materials
-                      </Text>
-                    </Box>
-                  </HStack>
-                </VStack>
-              </Box>
-
-              <Box bg="green.50" p={4} borderRadius="md" border="1px solid" borderColor="green.200">
-                <Text fontSize="sm" fontWeight="medium">
-                  🌱 <strong>Your Impact:</strong> Choosing lower carbon foods helps reduce
-                  greenhouse gas emissions and supports sustainable farming practices.
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
-
       case 'transparency_impact':
         return {
           title: 'Transparency Impact',

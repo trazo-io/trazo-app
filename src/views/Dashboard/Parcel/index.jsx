@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Card from 'components/Card/Card';
 import CardWithImage from 'components/Card/CardWithImage';
 import CardWithMap from 'components/Map/CardWithMap';
+import Shimmer from 'components/Shimmer/Shimmer';
 import HistoryCard from './components/HistoryCard';
 import TrackList from './components/TrackList';
 // assets
@@ -108,7 +109,9 @@ export default function ParcelView() {
             }
           />
         ) : (
-          <Card minH="290px" bg={cardColor} />
+          <Card minH="290px" bg={cardColor}>
+            <Shimmer height="290px" borderRadius="15px" />
+          </Card>
         )}
 
         <CardWithMap

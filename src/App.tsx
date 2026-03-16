@@ -78,8 +78,6 @@ import SignInConsumer from 'views/Authentication/SignIn/SignInConsumer';
 import SignUpConsumer from 'views/Authentication/SignUp/SignUpConsumer';
 import AdminConsumerLayout from 'layouts/AdminConsumer';
 
-import ScannedProductsView from 'views/Dashboard/ScannedProducts';
-import ReviewsListView from 'views/Dashboard/ReviewsList';
 import ImpactDashboard from 'views/Dashboard/ImpactDashboard';
 import ConsumerEducationDashboard from 'views/Dashboard/EducationDashboard';
 
@@ -428,8 +426,6 @@ const App = () => {
                   <Route path="journey" element={<CarbonJourney />} />
                   <Route path="journey/scans" element={<AllScansJourney />} />
                   <Route path="journey/reviews" element={<AllReviewsJourney />} />
-                  <Route path="scans" element={<ScannedProductsView />} />
-                  <Route path="reviews" element={<ReviewsListView />} />
                   <Route path="profile" element={<ConsumerProfile />} />
                   <Route path="settings" element={<ConsumerChangePassword />} />
                   <Route

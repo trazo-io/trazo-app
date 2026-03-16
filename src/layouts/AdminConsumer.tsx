@@ -10,7 +10,7 @@ import PanelContainer from 'components/Layout/PanelContainer';
 import PanelContent from 'components/Layout/PanelContent';
 import Sidebar from 'components/Sidebar/Sidebar';
 import { SidebarContext } from 'contexts/SidebarContext';
-import { MdExplore, MdTimeline, MdPerson, MdSettings } from 'react-icons/md';
+import { MdExplore, MdTimeline, MdPerson, MdSettings, MdSchool } from 'react-icons/md';
 
 export const consumerRoutes = [
   {
@@ -26,6 +26,13 @@ export const consumerRoutes = [
     icon: <MdTimeline color="inherit" />,
     layout: '/admin',
     regex: /^\/admin\/dashboard\/journey$/
+  },
+  {
+    name: 'Learn',
+    path: '/dashboard/education',
+    icon: <MdSchool color="inherit" />,
+    layout: '/admin',
+    regex: /^\/admin\/dashboard\/education$/
   },
   {
     name: 'Profile',

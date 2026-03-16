@@ -51,6 +51,7 @@ import BarChart from 'components/Charts/BarChart';
 import Card from 'components/Card/Card';
 import SmartUsageCard from './components/SmartUsageCard';
 import CardWithImage from 'components/Card/CardWithImage';
+import Shimmer from 'components/Shimmer/Shimmer';
 import CarouselHorizontal from 'components/Carousel/CarouselHorizontal';
 import { FaPlus, FaLeaf, FaWifi } from 'react-icons/fa';
 import LineChart from 'components/Charts/LineChart';
@@ -745,7 +746,9 @@ export default function DashboardView() {
             }
           />
         ) : (
-          <Card minH="290px" bg={cardBg} />
+          <Card minH="290px" bg={cardBg}>
+            <Shimmer height="290px" borderRadius="15px" />
+          </Card>
         )}
 
         {establishment ? (
@@ -766,7 +769,9 @@ export default function DashboardView() {
             }
           />
         ) : (
-          <Card minH="290px" bg={cardBg} />
+          <Card minH="290px" bg={cardBg}>
+            <Shimmer height="290px" borderRadius="15px" />
+          </Card>
         )}
       </Grid>
 

@@ -13,7 +13,7 @@ const ConsumerChangePassword: React.FC = () => {
       title="Account Security"
       description="Keep your Trazo account secure"
       showBackButton
-      onBack={() => navigate('/consumidor/settings')}
+      onBack={() => navigate('/admin/dashboard/settings')}
     >
       <Box maxW="xl" mx="auto" py={8}>
         {/* Consumer-focused Security Header */}

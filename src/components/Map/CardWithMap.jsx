@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 // Custom components
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody.tsx';
+import Shimmer from 'components/Shimmer/Shimmer';
 import { useIntl } from 'react-intl';
 
 // Utility function to calculate polygon center
@@ -126,36 +127,42 @@ const CardWithMap = ({ polygon, zoom, center }) => {
   }, [zoom, center, polygon]);
 
   if (loadError) return intl.formatMessage({ id: 'parcel.errorLoadingMaps' });
-  if (!isLoaded) return intl.formatMessage({ id: 'parcel.loadingMaps' });
+
+  // Show shimmer until both the Google Maps script and polygon data are ready
+  if (!isLoaded || (!polygon || polygon.length === 0)) {
+    return (
+      <Card maxHeight="290.5px" p="0px">
+        <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
+          <Shimmer height="100%" borderRadius="10px" />
+        </CardBody>
+      </Card>
+    );
+  }
 
   return (
     <Card maxHeight="290.5px" p="0px">
       <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
-        {isLoaded && (
-          <GoogleMap
-            mapContainerStyle={{
-              width: '100%',
-              height: '100%',
-              borderRadius: '10px'
+        <GoogleMap
+          mapContainerStyle={{
+            width: '100%',
+            height: '100%',
+            borderRadius: '10px'
+          }}
+          zoom={mapZoom}
+          center={mapCenter}
+          mapTypeId="satellite"
+        >
+          <Polygon
+            path={polygon}
+            options={{
+              fillColor: '#ff0000',
+              fillOpacity: 0.35,
+              strokeColor: '#ff0000',
+              strokeOpacity: 1,
+              strokeWeight: 2
             }}
-            zoom={mapZoom}
-            center={mapCenter}
-            mapTypeId="satellite"
-          >
-            {polygon && polygon.length > 0 && (
-              <Polygon
-                path={polygon}
-                options={{
-                  fillColor: '#ff0000',
-                  fillOpacity: 0.35,
-                  strokeColor: '#ff0000',
-                  strokeOpacity: 1,
-                  strokeWeight: 2
-                }}
-              />
-            )}
-          </GoogleMap>
-        )}
+          />
+        </GoogleMap>
       </CardBody>
     </Card>
   );

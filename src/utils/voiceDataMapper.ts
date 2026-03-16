@@ -231,8 +231,8 @@ const VOICE_TYPE_MAP: Record<string, VoiceTemplateMapping> = {
   },
   soil_management: {
     templateId: 'cultivation',
-    backendEventType: 1,
-    backendSubtype: 'CU',
+    backendEventType: 5,
+    backendSubtype: 'ST',
     displayName: 'Soil Management'
   },
   general: {

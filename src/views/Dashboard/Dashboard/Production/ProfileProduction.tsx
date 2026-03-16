@@ -878,11 +878,11 @@ function ProfileProduction() {
                 <HStack spacing={2}>
                   <Avatar
                     size="sm"
-                    name={historyData.operator.name || historyData.operator.email}
+                    name={historyData.operator.full_name || historyData.operator.email}
                   />
                   <VStack spacing={0} align="start" minW={0}>
                     <Text fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }} noOfLines={1}>
-                      {historyData.operator.name || 'Unnamed Operator'}
+                      {historyData.operator.full_name || 'Unnamed Operator'}
                     </Text>
                     <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" noOfLines={1}>
                       {historyData.operator.email}
@@ -892,23 +892,6 @@ function ProfileProduction() {
               </Box>
             )}
 
-            <Box>
-              <Text
-                fontSize="xs"
-                color="gray.500"
-                textTransform="uppercase"
-                fontWeight="semibold"
-                mb={1}
-              >
-                Quality Rating
-              </Text>
-              <Progress
-                value={(safeReputation / 5) * 100}
-                colorScheme="green"
-                size={{ base: 'sm', md: 'md' }}
-                borderRadius="full"
-              />
-            </Box>
           </VStack>
         </StandardCard>
 
