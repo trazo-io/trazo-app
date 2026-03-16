@@ -85,7 +85,7 @@ export default function ParcelView() {
         gap={{ base: '16px', md: '24px' }}
         w="100%"
         maxW="100%">
-        {establishment ? (
+        {establishment && !isFetching ? (
           <CardWithImage
             title={`${establishment?.city || establishment?.zone || ''}, ${establishment?.state}`}
             name={data?.name}
@@ -115,9 +115,9 @@ export default function ParcelView() {
         )}
 
         <CardWithMap
-          polygon={data?.polygon}
-          center={data?.map_metadata?.center}
-          zoom={data?.map_metadata?.zoom}
+          polygon={isFetching ? null : data?.polygon}
+          center={isFetching ? null : data?.map_metadata?.center}
+          zoom={isFetching ? null : data?.map_metadata?.zoom}
         />
       </Grid>
       <Grid
