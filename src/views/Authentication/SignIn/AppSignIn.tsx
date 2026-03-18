@@ -31,7 +31,9 @@ import {
 import { motion } from 'framer-motion';
 import { StandardInput } from '../../../components/Design/StandardComponents';
 import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
+import { useClaimScansMutation } from '../../../store/api/historyApi';
 import { login as loginAction } from '../../../store/features/authSlice';
+import { getPendingScanTokens, clearPendingScans } from '../../../utils/pendingScanStorage';
 import {
   handleGoogleSignIn,
   handleFacebookSignIn,
@@ -56,6 +58,7 @@ const AppSignIn: React.FC = () => {
   const toast = useToast();
   const [login, { isLoading }] = useLoginMutation();
   const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
+  const [claimScans] = useClaimScansMutation();
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -72,6 +75,15 @@ const AppSignIn: React.FC = () => {
       const response = await login(data).unwrap();
 
       dispatch(loginAction(response));
+
+      // Claim any anonymous scans made before signing in
+      const pendingTokens = getPendingScanTokens();
+      if (pendingTokens.length > 0) {
+        claimScans({ claim_tokens: pendingTokens })
+          .unwrap()
+          .then(() => clearPendingScans())
+          .catch(() => clearPendingScans());
+      }
 
       toast({
         title: 'Welcome back!',
@@ -109,6 +121,15 @@ const AppSignIn: React.FC = () => {
       }
 
       dispatch(loginAction(response));
+
+      // Claim any anonymous scans made before signing in
+      const pendingTokens = getPendingScanTokens();
+      if (pendingTokens.length > 0) {
+        claimScans({ claim_tokens: pendingTokens })
+          .unwrap()
+          .then(() => clearPendingScans())
+          .catch(() => clearPendingScans());
+      }
 
       // If invitation was accepted, redirect to the specified URL
       if (response.invitation_accepted && response.redirect_to) {

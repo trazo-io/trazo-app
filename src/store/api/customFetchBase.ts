@@ -73,7 +73,7 @@ function handleAuthRedirect(currentPath: string): void {
     ? createSafeRedirectUrl('/auth/signin', fullCurrentPath)
     : '/auth/signin';
 
-  window.location.href = redirectUrl;
+  window.location.replace(redirectUrl);
 }
 
 function handleRateLimit(errorData: ApiErrorData): void {

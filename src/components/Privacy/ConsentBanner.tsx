@@ -69,6 +69,18 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
       const delay = isQRPage ? 100 : 2000; // Almost immediate for QR pages
       setTimeout(() => setIsVisible(true), delay);
     }
+
+    // Listen for consent reset (e.g. "Privacy Settings" footer link)
+    const handleReset = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.consent === null) {
+        setConsentGiven(null);
+        setIsVisible(true);
+      }
+    };
+
+    window.addEventListener('trazo-consent-changed', handleReset);
+    return () => window.removeEventListener('trazo-consent-changed', handleReset);
   }, []);
 
   const handleConsent = (consent: boolean) => {
@@ -78,12 +90,13 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
     // Store consent in localStorage and cookie
     localStorage.setItem(CONSENT_STORAGE_KEY, consent.toString());
 
-    // Set cookie with 1 year expiration and proper domain handling
+    // Set cookie with 1 year expiration, Secure flag on HTTPS, proper domain
     const expiryDate = new Date();
     expiryDate.setFullYear(expiryDate.getFullYear() + 1);
 
     const hostname = window.location.hostname;
-    let cookieString = `trazo-analytics-consent=${consent}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
+    const isSecure = window.location.protocol === 'https:';
+    let cookieString = `trazo-analytics-consent=${consent}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax${isSecure ? '; Secure' : ''}`;
 
     if (hostname.includes('localhost')) {
       cookieString += `; domain=localhost`;
@@ -108,9 +121,9 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
   };
 
   const handleDismiss = () => {
-    setIsVisible(false);
-    // Set temporary session storage to prevent banner from showing again in this session
-    sessionStorage.setItem('trazo-consent-dismissed', 'true');
+    // GDPR: Dismissal must have the same effect as declining (EDPB dark pattern guidelines).
+    // Closing the banner without choosing = rejection of non-essential tracking.
+    handleConsent(false);
   };
 
   // Additional check: only show on consumer/QR pages
@@ -130,13 +143,8 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
     return isConsumerPage && !isProducerAuth;
   };
 
-  // Don't show if consent already given, dismissed, or not a consumer page
-  if (
-    consentGiven !== null ||
-    !isVisible ||
-    sessionStorage.getItem('trazo-consent-dismissed') ||
-    !shouldRenderBanner()
-  ) {
+  // Don't show if consent already decided or not a consumer page
+  if (consentGiven !== null || !isVisible || !shouldRenderBanner()) {
     return null;
   }
 
@@ -165,53 +173,58 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
             <HStack spacing={2}>
               <Icon as={FaShieldAlt} color="green.500" boxSize={5} />
               <Text fontSize="lg" fontWeight="600" color={textColor}>
-                Privacy & Analytics
+                Privacy & Data Settings
               </Text>
             </HStack>
-            <CloseButton size="sm" onClick={handleDismiss} aria-label="Dismiss consent banner" />
+            <CloseButton size="sm" onClick={handleDismiss} aria-label="Decline analytics" />
           </HStack>
 
-          {/* Content */}
+          {/* Content — GDPR Art. 13 disclosures */}
           <VStack spacing={3} align="stretch">
             <Text fontSize="sm" color={textColor} lineHeight="1.5">
-              Help us improve agricultural transparency by allowing anonymous analytics. We use
-              privacy-safe methods to understand how consumers interact with farm transparency
-              information.
+              Scanning this QR code can record an anonymous visit for the farmer's analytics
+              dashboard. We collect: approximate location (country/region), time spent on page, and a
+              one-way hashed device identifier. No name, email, or raw IP address is stored.
+            </Text>
+
+            <Text fontSize="sm" color={textColor} lineHeight="1.5">
+              If you create an account, your previous scan activity will be linked to your profile
+              and appear in your scan history.
             </Text>
 
             <HStack spacing={2} fontSize="xs" color="gray.500">
               <Icon as={FaChartLine} />
-              <Text>No personal data stored • IP addresses hashed • GDPR compliant</Text>
+              <Text>Data retained 12 months (accepted) or 7 days (declined)</Text>
             </HStack>
 
             <Text fontSize="xs" color="gray.500">
-              Learn more about our{' '}
-              <Link color="green.500" href="https://trazo.io/privacy-policy" isExternal textDecoration="underline">
-                privacy policy
-              </Link>{' '}
-              and{' '}
-              <Link color="green.500" href="/data-handling" isExternal textDecoration="underline">
-                data handling practices
+              Data controller: Trazo (privacy@trazo.io).{' '}
+              <Link
+                color="green.500"
+                href="https://trazo.io/privacy-policy"
+                isExternal
+                textDecoration="underline"
+              >
+                Privacy policy
               </Link>
-              .
             </Text>
           </VStack>
 
-          {/* Actions */}
+          {/* Actions — identical styling (GDPR button parity, Austrian Court 2025) */}
           <HStack spacing={3} justify="flex-end">
             <Button
               size="sm"
-              variant="ghost"
+              variant="outline"
+              colorScheme="gray"
               onClick={() => handleConsent(false)}
-              _hover={{ bg: 'gray.100' }}
             >
-              Essential Only
+              Decline Analytics
             </Button>
             <Button
               size="sm"
-              colorScheme="green"
+              variant="outline"
+              colorScheme="gray"
               onClick={() => handleConsent(true)}
-              _hover={{ transform: 'translateY(-1px)', boxShadow: 'md' }}
             >
               Accept Analytics
             </Button>
@@ -252,6 +265,23 @@ export const getConsentStatus = (): 'granted' | 'denied' | 'unknown' => {
   } else {
     return 'unknown';
   }
+};
+
+/**
+ * Reset consent — allows users to change their preference (GDPR Art. 7(3)).
+ * Call this from a "Privacy Settings" link to re-show the consent banner.
+ */
+export const resetConsent = (): void => {
+  localStorage.removeItem(CONSENT_STORAGE_KEY);
+  // Clear cookie by setting past expiry
+  document.cookie =
+    'trazo-analytics-consent=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax';
+  if (window.location.hostname.includes('localhost')) {
+    document.cookie =
+      'trazo-analytics-consent=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; domain=localhost';
+  }
+  // Dispatch event so listening components can react
+  window.dispatchEvent(new CustomEvent('trazo-consent-changed', { detail: { consent: null } }));
 };
 
 export default ConsentBanner;

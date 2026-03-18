@@ -6,7 +6,6 @@ import {
   AccordionItem,
   AccordionPanel,
   Box,
-  Button,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
@@ -16,7 +15,6 @@ import {
   HStack,
   Icon,
   Image,
-  Link,
   List,
   ListItem,
   Stack,
@@ -268,30 +266,14 @@ function Sidebar(props: SidebarProps) {
               aria-label={`${prop.name} navigation section`}
             >
               {activeRoute(prop.regex) ? (
-                <Button
-                  boxSize="initial"
-                  justifyContent="flex-start"
+                <Flex
                   alignItems="center"
                   bg="transparent"
                   transition={variantChange}
-                  mx={{
-                    xl: 'auto'
-                  }}
                   px="0px"
                   borderRadius="15px"
-                  w="100%"
-                  _hover="none"
-                  _active={{
-                    bg: 'inherit',
-                    transform: 'none',
-                    borderColor: 'transparent',
-                    border: 'none'
-                  }}
-                  _focus={{
-                    transform: 'none',
-                    borderColor: 'transparent',
-                    border: 'none'
-                  }}
+                  flex="1"
+                  minW="0"
                 >
                   {prop.icon ? (
                     <Flex>
@@ -366,64 +348,57 @@ function Sidebar(props: SidebarProps) {
                       )}
                     </HStack>
                   )}
-                </Button>
+                </Flex>
               ) : (
-                <Button
-                  boxSize="initial"
-                  justifyContent="flex-start"
+                <Flex
                   alignItems="center"
                   bg="transparent"
-                  mx={{
-                    xl: 'auto'
-                  }}
                   px="0px"
                   borderRadius="15px"
-                  w="100%"
-                  _hover="none"
-                  _active={{
-                    bg: 'inherit',
-                    transform: 'none',
-                    borderColor: 'transparent'
-                  }}
-                  _focus={{
-                    borderColor: 'transparent',
-                    boxShadow: 'none'
-                  }}
+                  flex="1"
+                  minW="0"
                 >
                   {prop.icon ? (
-                    <NavLink to={prop.isCompanySettings ? prop.layout + prop.path : null}>
-                      <Flex>
-                        <IconBox
-                          bg={inactiveBg}
-                          color={inactiveColorIcon}
-                          h="30px"
-                          w="30px"
-                          me="12px"
-                          transition={variantChange}
-                          boxShadow={sidebarActiveShadow}
-                          _hover={{ boxShadow: 'none' }}
-                        >
-                          {prop.icon}
-                        </IconBox>
-                        <Text
-                          color={inactiveColor}
-                          my="auto"
-                          fontSize="sm"
-                          display={sidebarWidth === 275 ? 'block' : 'none'}
-                          noOfLines={1}
-                          maxW="180px"
-                          title={
-                            Object.keys(intl?.messages).includes(`app.${prop.id}`)
+                    (() => {
+                      const iconContent = (
+                        <Flex>
+                          <IconBox
+                            bg={inactiveBg}
+                            color={inactiveColorIcon}
+                            h="30px"
+                            w="30px"
+                            me="12px"
+                            transition={variantChange}
+                            boxShadow={sidebarActiveShadow}
+                            _hover={{ boxShadow: 'none' }}
+                          >
+                            {prop.icon}
+                          </IconBox>
+                          <Text
+                            color={inactiveColor}
+                            my="auto"
+                            fontSize="sm"
+                            display={sidebarWidth === 275 ? 'block' : 'none'}
+                            noOfLines={1}
+                            maxW="180px"
+                            title={
+                              Object.keys(intl?.messages).includes(`app.${prop.id}`)
+                                ? intl.formatMessage({ id: `app.${prop.id}` })
+                                : prop.name
+                            }
+                          >
+                            {Object.keys(intl?.messages).includes(`app.${prop.id}`)
                               ? intl.formatMessage({ id: `app.${prop.id}` })
-                              : prop.name
-                          }
-                        >
-                          {Object.keys(intl?.messages).includes(`app.${prop.id}`)
-                            ? intl.formatMessage({ id: `app.${prop.id}` })
-                            : prop.name}
-                        </Text>
-                      </Flex>
-                    </NavLink>
+                              : prop.name}
+                          </Text>
+                        </Flex>
+                      );
+                      return prop.isCompanySettings ? (
+                        <NavLink to={prop.layout + prop.path}>{iconContent}</NavLink>
+                      ) : (
+                        iconContent
+                      );
+                    })()
                   ) : (
                     <HStack
                       spacing={sidebarWidth === 275 ? '26px' : '0px'}
@@ -469,10 +444,11 @@ function Sidebar(props: SidebarProps) {
                       )}
                     </HStack>
                   )}
-                </Button>
+                </Flex>
               )}
               <AccordionIcon
                 color="gray.400"
+                flexShrink={0}
                 display={
                   prop.icon
                     ? sidebarWidth === 275 && !prop.isCompanySettings
@@ -634,19 +610,20 @@ function Sidebar(props: SidebarProps) {
   }
   let brand = (
     <Box pt={'25px'} mb="12px">
-      <Link
-        href={`${import.meta.env.VITE_APP_BASE_URL}`}
-        target="_blank"
-        display="flex"
-        lineHeight="100%"
-        mb="10px"
-        fontWeight="bold"
-        justifyContent="center"
-        alignItems="center"
-        fontSize="11px"
+      <NavLink
+        to="/admin/dashboard"
+        style={{
+          display: 'flex',
+          lineHeight: '100%',
+          marginBottom: '10px',
+          fontWeight: 'bold',
+          justifyContent: 'center',
+          alignItems: 'center',
+          fontSize: '11px'
+        }}
       >
-        <Image src={logo} alt="trazo logo" height="40px" paddingRight="10px" href="" />
-      </Link>
+        <Image src={logo} alt="trazo logo" height="40px" paddingRight="10px" />
+      </NavLink>
       <HSeparator />
     </Box>
   );
@@ -673,13 +650,11 @@ function Sidebar(props: SidebarProps) {
   );
 
   let sidebarContent = (
-    <Box justifyContent={'space-between'}>
-      <Flex direction={'column'}>
-        <Box mb="20px">{brand}</Box>
-        <Stack direction="column" mb="40px" as="nav" aria-label="Main navigation">
-          <Box>{links}</Box>
-        </Stack>
-      </Flex>
+    <Box>
+      <Box mb="20px">{brand}</Box>
+      <Stack direction="column" mb="40px" as="nav" aria-label="Main navigation">
+        <Box>{links}</Box>
+      </Stack>
       <SidebarHelp sidebarWidth={sidebarWidth} />
     </Box>
   );
@@ -769,7 +744,9 @@ function Sidebar(props: SidebarProps) {
                 renderThumbVertical={useColorModeValue(renderThumbLight, renderThumbDark)}
                 renderView={renderView}
               >
-                {sidebarContent}
+                <Box pe="15px">
+                  {sidebarContent}
+                </Box>
               </Scrollbars>
             ) : (
               <Box id="sidebarScrollRemove" overflowY="scroll" height="100vh">

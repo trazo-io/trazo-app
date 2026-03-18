@@ -118,62 +118,25 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       return;
     }
 
-    // Double-check consent with detailed logging
-    const directConsentCheck = hasAnalyticsConsent();
-    console.log('🔒 Consent validation before submit:', {
-      hasConsentState: hasConsent,
-      directConsentCheck: directConsentCheck,
-      localStorage: localStorage.getItem('trazo-analytics-consent'),
-      cookies: document.cookie.split(';').find((c) => c.includes('trazo-analytics-consent')),
-      willProceed: hasConsent && directConsentCheck
-    });
-
-    // Check for analytics consent before submitting
-    if (!hasConsent || !directConsentCheck) {
-      console.log('🚫 Consent check failed - blocking API call');
-      return;
-    }
-
-    console.log('✅ Consent validated - proceeding with API call');
-
     setIsSubmitting(true);
     try {
-      // Calculate time on page and engagement metrics
-      const timeOnPage = (Date.now() - startTime) / 1000; // seconds
+      const analyticsConsented = hasAnalyticsConsent();
 
-      // Enhanced feedback data with privacy and analytics
-      const feedbackData = {
+      // Feedback is user-initiated (GDPR Art. 6(1)(b)) — always allowed.
+      // Analytics data (time, interactions, screen) is only included when consented.
+      const feedbackData: Record<string, unknown> = {
         production_id: productionId,
         comment: quickMessage,
-
-        // Enhanced analytics data (2025 privacy standards)
-        time_on_page: timeOnPage,
-        interactions: interactionCount,
-        screen: `${window.screen.width}x${window.screen.height}`, // For responsive analytics
-
-        // EXPLICIT CONSENT FLAG - Add this as fallback for cookie domain issues
-        explicit_consent: hasConsent && directConsentCheck,
         consent_timestamp: new Date().toISOString()
-
-        // Get geolocation if user allows (optional)
-        // Note: This would need user permission and should be implemented carefully
-        // city: '', // Can be populated by backend via IP geolocation if consented
-        // country: '', // Can be populated by backend via IP geolocation if consented
       };
 
-      console.log('📊 Enhanced scan data about to send:', {
-        timeOnPage: timeOnPage.toFixed(1) + 's',
-        interactions: interactionCount,
-        hasConsent: hasConsent,
-        commentLength: quickMessage.length,
-        feedbackData: feedbackData,
-        apiEndpoint: 'public_scans',
-        timestamp: new Date().toISOString()
-      });
+      if (analyticsConsented) {
+        feedbackData.time_on_page = (Date.now() - startTime) / 1000;
+        feedbackData.interactions = interactionCount;
+        feedbackData.screen = `${window.screen.width}x${window.screen.height}`;
+      }
 
-      console.log('🚀 Making API call to createScan...');
       const result = await createScan(feedbackData).unwrap();
-      console.log('✅ API call successful:', result);
 
       // Show confirmation state with submitted message
       setSubmittedMessage(quickMessage.trim());
@@ -331,33 +294,21 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
 
         {/* Action Buttons */}
         <VStack spacing={3} mt={4}>
-          {!hasConsent && (
-            <Text fontSize="sm" color="orange.500" textAlign="center" fontWeight="500">
-              {intl.formatMessage({ id: 'quickFeedback.consentWarning' })}
-            </Text>
-          )}
           <Button
-            colorScheme={hasConsent ? 'green' : 'gray'}
+            colorScheme="green"
             size="lg"
             onClick={handleQuickFeedback}
             isLoading={isSubmitting}
             loadingText={intl.formatMessage({ id: 'quickFeedback.submitting' })}
             w="full"
             borderRadius="xl"
-            isDisabled={!hasConsent}
-            _hover={
-              hasConsent
-                ? {
-                    transform: 'translateY(-1px)',
-                    boxShadow: 'lg'
-                  }
-                : {}
-            }
-            opacity={hasConsent ? 1 : 0.6}
+            isDisabled={!quickMessage.trim()}
+            _hover={{
+              transform: 'translateY(-1px)',
+              boxShadow: 'lg'
+            }}
           >
-            {hasConsent
-              ? intl.formatMessage({ id: 'quickFeedback.submitButton' })
-              : intl.formatMessage({ id: 'quickFeedback.consentRequired' })}
+            {intl.formatMessage({ id: 'quickFeedback.submitButton' })}
           </Button>
 
           <Divider />

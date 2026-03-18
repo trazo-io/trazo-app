@@ -246,6 +246,15 @@ export const historyApi = baseApi.injectEndpoints({
         }
       }),
       invalidatesTags: (result) => (result ? ['History'] : [])
+    }),
+    claimScans: build.mutation({
+      query: ({ claim_tokens }) => ({
+        url: 'public_scans/claim/',
+        method: 'POST',
+        credentials: 'include',
+        body: { claim_tokens }
+      }),
+      invalidatesTags: (result) => (result?.claimed > 0 ? ['History'] : [])
     })
   }),
   overrideExisting: false
@@ -270,5 +279,6 @@ export const {
   useGetUserReviewsQuery,
   useGetProductionsByEstablishmentQuery,
   useGetEstablishmentScansPaginatedQuery,
-  useCreateScanMutation
+  useCreateScanMutation,
+  useClaimScansMutation
 } = historyApi;

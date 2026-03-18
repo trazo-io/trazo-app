@@ -6,6 +6,12 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerCloseButton,
   Box,
   VStack,
   HStack,
@@ -110,12 +116,19 @@ interface EstablishmentModalProps {
   };
 }
 
-// Helper function to format snake_case values to Title Case
+// Known acronyms that should stay uppercase
+const ACRONYMS = new Set(['ipm', 'npk', 'gmo', 'usda', 'epa']);
+
+// Helper function to format values to Title Case (handles both snake_case and space-separated)
 const formatLabel = (value: string | undefined): string => {
   if (!value) return '';
   return value
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .split(/[_\s]+/)
+    .map((word) =>
+      ACRONYMS.has(word.toLowerCase())
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
     .join(' ');
 };
 
@@ -129,7 +142,10 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const accentColor = useColorModeValue('green.500', 'green.400');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
-  const modalSize = useBreakpointValue({ base: 'full', md: 'xl', lg: '3xl' });
+  const iconBg = useColorModeValue('green.50', 'green.900');
+  const messageBg = useColorModeValue('blue.50', 'blue.900');
+  const parcelItemBg = useColorModeValue('white', 'gray.800');
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const getEstablishmentTypeIcon = (type: string) => {
     switch (type?.toLowerCase()) {
@@ -157,502 +173,517 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
     }
   };
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} size={modalSize} scrollBehavior="inside">
-      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
-      <ModalContent
-        bg={bgColor}
-        borderRadius="xl"
-        maxH={{ base: 'calc(100vh - 100px)', md: '90vh' }}
-        mb={{ base: '80px', md: 'auto' }}
-      >
-        <ModalHeader p={6} pb={4} borderBottom="1px" borderColor={borderColor}>
-          <HStack spacing={4}>
-            <Box p={3} borderRadius="lg" bg={useColorModeValue('green.50', 'green.900')}>
-              <Icon
-                as={getEstablishmentTypeIcon(establishmentData.establishment_type || '')}
-                boxSize={6}
-                color={accentColor}
-              />
-            </Box>
-            <VStack align="start" spacing={1}>
-              <Heading size="lg" color={textColor}>
-                {establishmentData.name}
-              </Heading>
-              <HStack spacing={2}>
-                {establishmentData.establishment_type && (
-                  <Badge
-                    colorScheme={getFarmingMethodColor(establishmentData.establishment_type)}
-                    variant="subtle"
-                    fontSize="xs"
-                    px={2}
-                    py={1}
-                    borderRadius="full"
-                  >
-                    {formatLabel(establishmentData.establishment_type)}
-                  </Badge>
-                )}
-                {establishmentData.farming_method && (
-                  <Badge
-                    colorScheme={getFarmingMethodColor(establishmentData.farming_method)}
-                    variant="outline"
-                    fontSize="xs"
-                    px={2}
-                    py={1}
-                    borderRadius="full"
-                  >
-                    {formatLabel(establishmentData.farming_method)}
-                  </Badge>
-                )}
-                {establishmentData.is_active && (
-                  <Badge
-                    colorScheme="green"
-                    variant="solid"
-                    fontSize="xs"
-                    px={2}
-                    py={1}
-                    borderRadius="full"
-                  >
-                    Active
-                  </Badge>
-                )}
-              </HStack>
-            </VStack>
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton />
+  const headerContent = (
+    <HStack spacing={4}>
+      <Box p={3} borderRadius="lg" bg={iconBg}>
+        <Icon
+          as={getEstablishmentTypeIcon(establishmentData.establishment_type || '')}
+          boxSize={6}
+          color={accentColor}
+        />
+      </Box>
+      <VStack align="start" spacing={1}>
+        <Heading size={{ base: 'md', md: 'lg' }} color={textColor}>
+          {establishmentData.name}
+        </Heading>
+        <HStack spacing={2} flexWrap="wrap">
+          {establishmentData.establishment_type && (
+            <Badge
+              colorScheme={getFarmingMethodColor(establishmentData.establishment_type)}
+              variant="subtle"
+              fontSize="xs"
+              px={2}
+              py={1}
+              borderRadius="full"
+              textTransform="none"
+            >
+              {formatLabel(establishmentData.establishment_type)}
+            </Badge>
+          )}
+          {establishmentData.farming_method && (
+            <Badge
+              colorScheme={getFarmingMethodColor(establishmentData.farming_method)}
+              variant="outline"
+              fontSize="xs"
+              px={2}
+              py={1}
+              borderRadius="full"
+              textTransform="none"
+            >
+              {formatLabel(establishmentData.farming_method)}
+            </Badge>
+          )}
+          {/* is_active badge removed: consumer API filters by is_active=True,
+             so if the consumer can see this page, it's always active — the badge adds no info */}
+        </HStack>
+      </VStack>
+    </HStack>
+  );
 
-        <ModalBody p={6} pb={{ base: 24, md: 6 }} overflowY="auto">
-          <VStack spacing={6} align="stretch" mb="100px">
-            {/* Hero Image and Description */}
-            {(establishmentData.images?.length ||
-              establishmentData.description ||
-              establishmentData.about) && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <VStack spacing={4} align="stretch">
-                    {establishmentData.images && establishmentData.images.length > 0 && (
-                      <Box borderRadius="lg" overflow="hidden" maxH="200px">
-                        <Image
-                          src={establishmentData.images[0]}
-                          alt={establishmentData.name}
-                          w="full"
-                          h="200px"
-                          objectFit="cover"
-                        />
-                      </Box>
-                    )}
-                    {establishmentData.description && (
-                      <Text color={textColor} lineHeight="tall">
-                        {establishmentData.description}
-                      </Text>
-                    )}
-                    {establishmentData.about &&
-                      establishmentData.about !== establishmentData.description && (
-                        <Box>
-                          <Heading size="sm" color={textColor} mb={2}>
-                            About
-                          </Heading>
-                          <Text color={textColor} lineHeight="tall" fontSize="sm">
-                            {establishmentData.about}
-                          </Text>
-                        </Box>
-                      )}
-                  </VStack>
-                </CardBody>
-              </Card>
-            )}
-
-            {/* Key Statistics */}
-            <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-              <CardBody p={6}>
-                <Heading size="md" color={textColor} mb={4}>
-                  Farm Overview
-                </Heading>
-                {/* Updated: Removed employee_count (not consumer-relevant) */}
-                <StatGroup>
-                  {establishmentData.total_acreage && (
-                    <Stat>
-                      <StatLabel color="gray.500">Total Area</StatLabel>
-                      <StatNumber color={accentColor}>
-                        {establishmentData.total_acreage} acres
-                      </StatNumber>
-                    </Stat>
-                  )}
-                  {establishmentData.parcels && (
-                    <Stat>
-                      <StatLabel color="gray.500">Parcels</StatLabel>
-                      <StatNumber color={accentColor}>
-                        {establishmentData.parcels.length}
-                      </StatNumber>
-                    </Stat>
-                  )}
-                  {establishmentData.year_established && (
-                    <Stat>
-                      <StatLabel color="gray.500">Established</StatLabel>
-                      <StatNumber color={accentColor}>
-                        {establishmentData.year_established}
-                      </StatNumber>
-                    </Stat>
-                  )}
-                </StatGroup>
-              </CardBody>
-            </Card>
-
-            {/* Location Information */}
-            <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-              <CardBody p={6}>
-                <Heading size="md" color={textColor} mb={4}>
-                  Location & Contact
-                </Heading>
-                <VStack spacing={4} align="stretch">
-                  {establishmentData.address && (
-                    <HStack spacing={3}>
-                      <Icon as={FaMapMarkerAlt} color={accentColor} />
-                      <Text color={textColor}>
-                        {establishmentData.address}
-                        {establishmentData.city && `, ${establishmentData.city}`}
-                        {establishmentData.state && `, ${establishmentData.state}`}
-                        {establishmentData.country && `, ${establishmentData.country}`}
-                        {establishmentData.zip_code && ` ${establishmentData.zip_code}`}
-                      </Text>
-                    </HStack>
-                  )}
-                  {establishmentData.zone && (
-                    <HStack spacing={3}>
-                      <Icon as={FaGlobe} color={accentColor} />
-                      <Text color={textColor}>Zone: {establishmentData.zone}</Text>
-                    </HStack>
-                  )}
-                  {establishmentData.latitude && establishmentData.longitude && (
-                    <HStack spacing={3}>
-                      <Icon as={FaMapMarkerAlt} color={accentColor} />
-                      <Text color="gray.500" fontSize="sm">
-                        {establishmentData.latitude.toFixed(4)},{' '}
-                        {establishmentData.longitude.toFixed(4)}
-                      </Text>
-                    </HStack>
-                  )}
-
-                  <Divider />
-
-                  {establishmentData.contact_person && (
-                    <HStack spacing={3}>
-                      <Icon as={FaUsers} color={accentColor} />
-                      <Text color={textColor}>Contact: {establishmentData.contact_person}</Text>
-                    </HStack>
-                  )}
-                  {(establishmentData.phone || establishmentData.contact_phone) && (
-                    <HStack spacing={3}>
-                      <Icon as={FaPhone} color={accentColor} />
-                      <Link
-                        href={`tel:${establishmentData.phone || establishmentData.contact_phone}`}
-                        color={textColor}
-                      >
-                        {establishmentData.phone || establishmentData.contact_phone}
-                      </Link>
-                    </HStack>
-                  )}
-                  {(establishmentData.email || establishmentData.contact_email) && (
-                    <HStack spacing={3}>
-                      <Icon as={FaEnvelope} color={accentColor} />
-                      <Link
-                        href={`mailto:${
-                          establishmentData.email || establishmentData.contact_email
-                        }`}
-                        color={textColor}
-                      >
-                        {establishmentData.email || establishmentData.contact_email}
-                      </Link>
-                    </HStack>
-                  )}
-                </VStack>
-              </CardBody>
-            </Card>
-
-            {/* Crops and Practices */}
-            {(establishmentData.crops_grown?.length ||
-              establishmentData.sustainability_practices?.length) && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    Agricultural Practices
-                  </Heading>
-                  <VStack spacing={4} align="stretch">
-                    {establishmentData.crops_grown && (
-                      <Box>
-                        <HStack mb={3}>
-                          <Icon as={FaSeedling} color={accentColor} />
-                          <Text fontWeight="semibold" color={textColor}>
-                            Crops Grown
-                          </Text>
-                        </HStack>
-                        <Wrap spacing={2}>
-                          {(() => {
-                            // Handle both string and array formats
-                            let crops: string[] = [];
-
-                            if (Array.isArray(establishmentData.crops_grown)) {
-                              crops = establishmentData.crops_grown;
-                            } else if (typeof establishmentData.crops_grown === 'string') {
-                              try {
-                                // Try to parse as JSON first (for "[\"Oranges\"]" format)
-                                crops = JSON.parse(establishmentData.crops_grown);
-                              } catch {
-                                // If not JSON, split by comma
-                                crops = establishmentData.crops_grown
-                                  .split(',')
-                                  .map((crop) => crop.trim())
-                                  .filter((crop) => crop);
-                              }
-                            }
-
-                            return crops.map((crop: string, index: number) => (
-                              <WrapItem key={index}>
-                                <Tag
-                                  colorScheme="green"
-                                  variant="subtle"
-                                  borderRadius="full"
-                                  size="md"
-                                >
-                                  <TagLeftIcon as={FaSeedling} />
-                                  <TagLabel>{crop}</TagLabel>
-                                </Tag>
-                              </WrapItem>
-                            ));
-                          })()}
-                        </Wrap>
-                      </Box>
-                    )}
-
-                    {establishmentData.sustainability_practices && (
-                      <Box>
-                        <HStack mb={3}>
-                          <Icon as={FaLeaf} color={accentColor} />
-                          <Text fontWeight="semibold" color={textColor}>
-                            Sustainability Practices
-                          </Text>
-                        </HStack>
-                        <Wrap spacing={2}>
-                          {(() => {
-                            // Handle both string and array formats
-                            let practices: string[] = [];
-
-                            if (Array.isArray(establishmentData.sustainability_practices)) {
-                              practices = establishmentData.sustainability_practices;
-                            } else if (
-                              typeof establishmentData.sustainability_practices === 'string'
-                            ) {
-                              try {
-                                // Try to parse as JSON first (for "[\"Cover cropping\"]" format)
-                                practices = JSON.parse(establishmentData.sustainability_practices);
-                              } catch {
-                                // If not JSON, split by comma
-                                practices = establishmentData.sustainability_practices
-                                  .split(',')
-                                  .map((practice) => practice.trim())
-                                  .filter((practice) => practice);
-                              }
-                            }
-
-                            return practices.map((practice: string, index: number) => (
-                              <WrapItem key={index}>
-                                <Tag
-                                  colorScheme="green"
-                                  variant="subtle"
-                                  borderRadius="full"
-                                  size="md"
-                                >
-                                  <TagLeftIcon as={FaLeaf} />
-                                  <TagLabel>{practice}</TagLabel>
-                                </Tag>
-                              </WrapItem>
-                            ));
-                          })()}
-                        </Wrap>
-                      </Box>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
-            )}
-
-            {/* Activities and Highlights */}
-            {(establishmentData.main_activities || establishmentData.location_highlights) && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    Farm Details
-                  </Heading>
-                  <VStack spacing={4} align="stretch">
-                    {establishmentData.main_activities && (
-                      <Box>
-                        <HStack mb={2}>
-                          <Icon as={FaTractor} color={accentColor} />
-                          <Text fontWeight="semibold" color={textColor}>
-                            Main Activities
-                          </Text>
-                        </HStack>
-                        <Text color={textColor} fontSize="sm" lineHeight="tall">
-                          {establishmentData.main_activities}
-                        </Text>
-                      </Box>
-                    )}
-
-                    {establishmentData.location_highlights && (
-                      <Box>
-                        <HStack mb={2}>
-                          <Icon as={FaMapMarkerAlt} color={accentColor} />
-                          <Text fontWeight="semibold" color={textColor}>
-                            Location Highlights
-                          </Text>
-                        </HStack>
-                        <Text color={textColor} fontSize="sm" lineHeight="tall">
-                          {establishmentData.location_highlights}
-                        </Text>
-                      </Box>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
-            )}
-
-            {/* Consumer Message */}
-            {establishmentData.custom_message && (
-              <Card
-                bg={useColorModeValue('blue.50', 'blue.900')}
-                borderRadius="lg"
-                border="1px"
-                borderColor="blue.200"
-              >
-                <CardBody p={6}>
-                  <HStack mb={3}>
-                    <Icon as={FaCheckCircle} color="blue.500" />
-                    <Heading size="md" color="blue.700">
-                      Message to Consumers
+  const bodyContent = (
+    <VStack spacing={6} align="stretch" pb={{ base: 6, md: 0 }}>
+      {/* Hero Image and Description */}
+      {(establishmentData.images?.length ||
+        establishmentData.description ||
+        establishmentData.about) && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <VStack spacing={4} align="stretch">
+              {establishmentData.images && establishmentData.images.length > 0 && (
+                <Box borderRadius="lg" overflow="hidden" maxH="200px">
+                  <Image
+                    src={establishmentData.images[0]}
+                    alt={establishmentData.name}
+                    w="full"
+                    h="200px"
+                    objectFit="cover"
+                  />
+                </Box>
+              )}
+              {establishmentData.description && (
+                <Text color={textColor} lineHeight="tall">
+                  {establishmentData.description}
+                </Text>
+              )}
+              {establishmentData.about &&
+                establishmentData.about !== establishmentData.description && (
+                  <Box>
+                    <Heading size="sm" color={textColor} mb={2}>
+                      About
                     </Heading>
-                  </HStack>
-                  <Text color="blue.600" lineHeight="tall" fontStyle="italic">
-                    "{establishmentData.custom_message}"
-                  </Text>
-                </CardBody>
-              </Card>
+                    <Text color={textColor} lineHeight="tall" fontSize="sm">
+                      {establishmentData.about}
+                    </Text>
+                  </Box>
+                )}
+            </VStack>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Key Statistics */}
+      <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+        <CardBody p={6}>
+          <Heading size="md" color={textColor} mb={4}>
+            Farm Overview
+          </Heading>
+          <StatGroup>
+            {establishmentData.total_acreage && (
+              <Stat>
+                <StatLabel color="gray.500">Total Area</StatLabel>
+                <StatNumber color={accentColor}>
+                  {establishmentData.total_acreage} acres
+                </StatNumber>
+              </Stat>
+            )}
+            {establishmentData.parcels && (
+              <Stat>
+                <StatLabel color="gray.500">Parcels</StatLabel>
+                <StatNumber color={accentColor}>
+                  {establishmentData.parcels.length}
+                </StatNumber>
+              </Stat>
+            )}
+            {establishmentData.year_established && (
+              <Stat>
+                <StatLabel color="gray.500">Established</StatLabel>
+                <StatNumber color={accentColor}>
+                  {establishmentData.year_established}
+                </StatNumber>
+              </Stat>
+            )}
+          </StatGroup>
+        </CardBody>
+      </Card>
+
+      {/* Location Information */}
+      <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+        <CardBody p={6}>
+          <Heading size="md" color={textColor} mb={4}>
+            Location & Contact
+          </Heading>
+          <VStack spacing={4} align="stretch">
+            {establishmentData.address && (
+              <HStack spacing={3}>
+                <Icon as={FaMapMarkerAlt} color={accentColor} flexShrink={0} />
+                <Text color={textColor}>
+                  {establishmentData.address}
+                  {establishmentData.city && `, ${establishmentData.city}`}
+                  {establishmentData.state && `, ${establishmentData.state}`}
+                  {establishmentData.country && `, ${establishmentData.country}`}
+                  {establishmentData.zip_code && ` ${establishmentData.zip_code}`}
+                </Text>
+              </HStack>
+            )}
+            {establishmentData.zone && (
+              <HStack spacing={3}>
+                <Icon as={FaGlobe} color={accentColor} flexShrink={0} />
+                <Text color={textColor}>Zone: {establishmentData.zone}</Text>
+              </HStack>
+            )}
+            {establishmentData.latitude && establishmentData.longitude && (
+              <HStack spacing={3}>
+                <Icon as={FaMapMarkerAlt} color={accentColor} flexShrink={0} />
+                <Text color="gray.500" fontSize="sm">
+                  {establishmentData.latitude.toFixed(4)},{' '}
+                  {establishmentData.longitude.toFixed(4)}
+                </Text>
+              </HStack>
             )}
 
-            {/* Operational Details - Updated: removed climate_zone, soil_types → soil_health_practices */}
-            {(establishmentData.water_sources?.length ||
-              establishmentData.soil_health_practices?.length ||
-              establishmentData.irrigation_methods?.length) && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    <HStack>
-                      <Icon as={FaTractor} color={accentColor} />
-                      <Text>Operational Details</Text>
-                    </HStack>
-                  </Heading>
-                  <VStack spacing={4} align="stretch">
-                    {establishmentData.water_sources?.length > 0 && (
-                      <Box>
-                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
-                          Water Sources
-                        </Text>
-                        <Wrap spacing={2}>
-                          {establishmentData.water_sources.map((source, index) => (
-                            <Badge key={index} colorScheme="green" p={2} borderRadius="md">
-                              {source}
-                            </Badge>
-                          ))}
-                        </Wrap>
-                      </Box>
-                    )}
+            <Divider />
 
-                    {establishmentData.soil_health_practices?.length > 0 && (
-                      <Box>
-                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
-                          Soil Health Practices
-                        </Text>
-                        <Wrap spacing={2}>
-                          {establishmentData.soil_health_practices.map((practice, index) => (
-                            <Badge key={index} colorScheme="orange" p={2} borderRadius="md">
-                              {practice}
-                            </Badge>
-                          ))}
-                        </Wrap>
-                      </Box>
-                    )}
-
-                    {establishmentData.irrigation_methods?.length > 0 && (
-                      <Box>
-                        <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
-                          Irrigation Methods
-                        </Text>
-                        <Wrap spacing={2}>
-                          {establishmentData.irrigation_methods.map((method, index) => (
-                            <Badge key={index} colorScheme="blue" p={2} borderRadius="md">
-                              {method}
-                            </Badge>
-                          ))}
-                        </Wrap>
-                      </Box>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
+            {establishmentData.contact_person && (
+              <HStack spacing={3}>
+                <Icon as={FaUsers} color={accentColor} flexShrink={0} />
+                <Text color={textColor}>Contact: {establishmentData.contact_person}</Text>
+              </HStack>
             )}
-
-            {/* Certifications */}
-            {establishmentData.certifications && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    <HStack>
-                      <Icon as={FaCertificate} color={accentColor} />
-                      <Text>Certifications & Standards</Text>
-                    </HStack>
-                  </Heading>
-                  <Text color={textColor} lineHeight="tall">
-                    {establishmentData.certifications}
-                  </Text>
-                </CardBody>
-              </Card>
+            {(establishmentData.phone || establishmentData.contact_phone) && (
+              <HStack spacing={3}>
+                <Icon as={FaPhone} color={accentColor} flexShrink={0} />
+                <Link
+                  href={`tel:${establishmentData.phone || establishmentData.contact_phone}`}
+                  color={textColor}
+                >
+                  {establishmentData.phone || establishmentData.contact_phone}
+                </Link>
+              </HStack>
             )}
-
-            {/* Parcels Overview */}
-            {establishmentData.parcels && establishmentData.parcels.length > 0 && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    <HStack>
-                      <Icon as={FaRuler} color={accentColor} />
-                      <Text>Parcels ({establishmentData.parcels.length})</Text>
-                    </HStack>
-                  </Heading>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                    {establishmentData.parcels.map((parcel) => (
-                      <Box
-                        key={parcel.id}
-                        p={3}
-                        border="1px"
-                        borderColor={borderColor}
-                        borderRadius="md"
-                        bg={useColorModeValue('white', 'gray.800')}
-                      >
-                        <HStack justify="space-between">
-                          <Text fontWeight="medium" color={textColor}>
-                            {parcel.name}
-                          </Text>
-                          <Badge colorScheme="green" variant="subtle">
-                            {parcel.area} ha
-                          </Badge>
-                        </HStack>
-                      </Box>
-                    ))}
-                  </SimpleGrid>
-                </CardBody>
-              </Card>
+            {(establishmentData.email || establishmentData.contact_email) && (
+              <HStack spacing={3}>
+                <Icon as={FaEnvelope} color={accentColor} flexShrink={0} />
+                <Link
+                  href={`mailto:${
+                    establishmentData.email || establishmentData.contact_email
+                  }`}
+                  color={textColor}
+                >
+                  {establishmentData.email || establishmentData.contact_email}
+                </Link>
+              </HStack>
             )}
           </VStack>
+        </CardBody>
+      </Card>
+
+      {/* Crops and Practices */}
+      {(establishmentData.crops_grown?.length ||
+        establishmentData.sustainability_practices?.length) && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Heading size="md" color={textColor} mb={4}>
+              Agricultural Practices
+            </Heading>
+            <VStack spacing={4} align="stretch">
+              {establishmentData.crops_grown && (
+                <Box>
+                  <HStack mb={3}>
+                    <Icon as={FaSeedling} color={accentColor} />
+                    <Text fontWeight="semibold" color={textColor}>
+                      Crops Grown
+                    </Text>
+                  </HStack>
+                  <Wrap spacing={2}>
+                    {(() => {
+                      let crops: string[] = [];
+
+                      if (Array.isArray(establishmentData.crops_grown)) {
+                        crops = establishmentData.crops_grown;
+                      } else if (typeof establishmentData.crops_grown === 'string') {
+                        try {
+                          crops = JSON.parse(establishmentData.crops_grown);
+                        } catch {
+                          crops = establishmentData.crops_grown
+                            .split(',')
+                            .map((crop) => crop.trim())
+                            .filter((crop) => crop);
+                        }
+                      }
+
+                      return crops.map((crop: string, index: number) => (
+                        <WrapItem key={index}>
+                          <Tag
+                            colorScheme="green"
+                            variant="subtle"
+                            borderRadius="full"
+                            size="md"
+                          >
+                            <TagLeftIcon as={FaSeedling} />
+                            <TagLabel>{crop}</TagLabel>
+                          </Tag>
+                        </WrapItem>
+                      ));
+                    })()}
+                  </Wrap>
+                </Box>
+              )}
+
+              {establishmentData.sustainability_practices && (
+                <Box>
+                  <HStack mb={3}>
+                    <Icon as={FaLeaf} color={accentColor} />
+                    <Text fontWeight="semibold" color={textColor}>
+                      Sustainability Practices
+                    </Text>
+                  </HStack>
+                  <Wrap spacing={2}>
+                    {(() => {
+                      let practices: string[] = [];
+
+                      if (Array.isArray(establishmentData.sustainability_practices)) {
+                        practices = establishmentData.sustainability_practices;
+                      } else if (
+                        typeof establishmentData.sustainability_practices === 'string'
+                      ) {
+                        try {
+                          practices = JSON.parse(establishmentData.sustainability_practices);
+                        } catch {
+                          practices = establishmentData.sustainability_practices
+                            .split(',')
+                            .map((practice) => practice.trim())
+                            .filter((practice) => practice);
+                        }
+                      }
+
+                      return practices.map((practice: string, index: number) => (
+                        <WrapItem key={index}>
+                          <Tag
+                            colorScheme="green"
+                            variant="subtle"
+                            borderRadius="full"
+                            size="md"
+                          >
+                            <TagLeftIcon as={FaLeaf} />
+                            <TagLabel>{practice}</TagLabel>
+                          </Tag>
+                        </WrapItem>
+                      ));
+                    })()}
+                  </Wrap>
+                </Box>
+              )}
+            </VStack>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Activities and Highlights */}
+      {(establishmentData.main_activities || establishmentData.location_highlights) && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Heading size="md" color={textColor} mb={4}>
+              Farm Details
+            </Heading>
+            <VStack spacing={4} align="stretch">
+              {establishmentData.main_activities && (
+                <Box>
+                  <HStack mb={2}>
+                    <Icon as={FaTractor} color={accentColor} />
+                    <Text fontWeight="semibold" color={textColor}>
+                      Main Activities
+                    </Text>
+                  </HStack>
+                  <Text color={textColor} fontSize="sm" lineHeight="tall">
+                    {establishmentData.main_activities}
+                  </Text>
+                </Box>
+              )}
+
+              {establishmentData.location_highlights && (
+                <Box>
+                  <HStack mb={2}>
+                    <Icon as={FaMapMarkerAlt} color={accentColor} />
+                    <Text fontWeight="semibold" color={textColor}>
+                      Location Highlights
+                    </Text>
+                  </HStack>
+                  <Text color={textColor} fontSize="sm" lineHeight="tall">
+                    {establishmentData.location_highlights}
+                  </Text>
+                </Box>
+              )}
+            </VStack>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Consumer Message */}
+      {establishmentData.custom_message && (
+        <Card
+          bg={messageBg}
+          borderRadius="lg"
+          border="1px"
+          borderColor="blue.200"
+        >
+          <CardBody p={6}>
+            <HStack mb={3}>
+              <Icon as={FaCheckCircle} color="blue.500" />
+              <Heading size="md" color="blue.700">
+                Message to Consumers
+              </Heading>
+            </HStack>
+            <Text color="blue.600" lineHeight="tall" fontStyle="italic">
+              "{establishmentData.custom_message}"
+            </Text>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Operational Details */}
+      {(establishmentData.water_sources?.length ||
+        establishmentData.soil_health_practices?.length ||
+        establishmentData.irrigation_methods?.length) && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Heading size="md" color={textColor} mb={4}>
+              <HStack>
+                <Icon as={FaTractor} color={accentColor} />
+                <Text>Operational Details</Text>
+              </HStack>
+            </Heading>
+            <VStack spacing={4} align="stretch">
+              {establishmentData.water_sources?.length > 0 && (
+                <Box>
+                  <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
+                    Water Sources
+                  </Text>
+                  <Wrap spacing={2}>
+                    {establishmentData.water_sources.map((source, index) => (
+                      <Badge key={index} colorScheme="green" p={2} borderRadius="md">
+                        {source}
+                      </Badge>
+                    ))}
+                  </Wrap>
+                </Box>
+              )}
+
+              {establishmentData.soil_health_practices?.length > 0 && (
+                <Box>
+                  <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
+                    Soil Health Practices
+                  </Text>
+                  <Wrap spacing={2}>
+                    {establishmentData.soil_health_practices.map((practice, index) => (
+                      <Badge key={index} colorScheme="orange" p={2} borderRadius="md">
+                        {practice}
+                      </Badge>
+                    ))}
+                  </Wrap>
+                </Box>
+              )}
+
+              {establishmentData.irrigation_methods?.length > 0 && (
+                <Box>
+                  <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
+                    Irrigation Methods
+                  </Text>
+                  <Wrap spacing={2}>
+                    {establishmentData.irrigation_methods.map((method, index) => (
+                      <Badge key={index} colorScheme="blue" p={2} borderRadius="md">
+                        {method}
+                      </Badge>
+                    ))}
+                  </Wrap>
+                </Box>
+              )}
+            </VStack>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Certifications */}
+      {establishmentData.certifications && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Heading size="md" color={textColor} mb={4}>
+              <HStack>
+                <Icon as={FaCertificate} color={accentColor} />
+                <Text>Certifications & Standards</Text>
+              </HStack>
+            </Heading>
+            <Text color={textColor} lineHeight="tall">
+              {establishmentData.certifications}
+            </Text>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Parcels Overview */}
+      {establishmentData.parcels && establishmentData.parcels.length > 0 && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Heading size="md" color={textColor} mb={4}>
+              <HStack>
+                <Icon as={FaRuler} color={accentColor} />
+                <Text>Parcels ({establishmentData.parcels.length})</Text>
+              </HStack>
+            </Heading>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+              {establishmentData.parcels.map((parcel) => (
+                <Box
+                  key={parcel.id}
+                  p={3}
+                  border="1px"
+                  borderColor={borderColor}
+                  borderRadius="md"
+                  bg={parcelItemBg}
+                >
+                  <HStack justify="space-between">
+                    <Text fontWeight="medium" color={textColor}>
+                      {parcel.name}
+                    </Text>
+                    <Badge colorScheme="green" variant="subtle">
+                      {parcel.area} ha
+                    </Badge>
+                  </HStack>
+                </Box>
+              ))}
+            </SimpleGrid>
+          </CardBody>
+        </Card>
+      )}
+    </VStack>
+  );
+
+  // Mobile: Bottom sheet (Drawer)
+  if (isMobile) {
+    return (
+      <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
+        <DrawerOverlay bg="blackAlpha.400" />
+        <DrawerContent
+          bg={bgColor}
+          borderTopRadius="2xl"
+          maxH="92vh"
+          containerProps={{ style: { zIndex: 10000 } }}
+        >
+          {/* Drag handle indicator */}
+          <Box pt={3} pb={1} display="flex" justifyContent="center">
+            <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
+          </Box>
+          <DrawerCloseButton top={4} />
+          <DrawerHeader px={5} pt={2} pb={4} borderBottomWidth="1px" borderColor={borderColor}>
+            {headerContent}
+          </DrawerHeader>
+          <DrawerBody px={5} py={4} overflowY="auto">
+            {bodyContent}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  // Desktop: Centered modal
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="3xl" scrollBehavior="inside">
+      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+      <ModalContent bg={bgColor} borderRadius="xl" maxH="90vh" mx={4}>
+        <ModalHeader p={6} pb={4} borderBottom="1px" borderColor={borderColor}>
+          {headerContent}
+        </ModalHeader>
+        <ModalCloseButton />
+        <ModalBody p={6} overflowY="auto">
+          {bodyContent}
         </ModalBody>
       </ModalContent>
     </Modal>

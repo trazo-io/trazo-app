@@ -69,19 +69,16 @@ const authApi = baseApi.injectEndpoints({
         body: {},
         credentials: 'include'
       }),
-      invalidatesTags: (result) => (result ? ['User', 'Company', 'Parcel', 'History'] : []),
-      onQueryStarted: async (arg, { dispatch, queryFulfilled }) => {
+      onQueryStarted: async (arg, { queryFulfilled }) => {
         try {
           await queryFulfilled;
-          // Backend clears httpOnly cookies in the response.
-          // Clean up any legacy client-side storage.
-          TokenManager.clearTokens();
-          dispatch(baseApi.util.resetApiState());
         } catch (error) {
-          // Even if server logout fails, clean up local state
-          TokenManager.clearTokens();
-          console.error('Logout error:', error);
+          console.error('Logout server error:', error);
         }
+        // Clean up any legacy client-side storage.
+        // RTK Query cache reset and Redux state cleanup are handled
+        // by the calling component (navbar) BEFORE navigation.
+        TokenManager.clearTokens();
       }
     }),
     verifyEmail: build.mutation({
@@ -187,10 +184,14 @@ const authApi = baseApi.injectEndpoints({
           const result = await queryFulfilled;
           dispatch(setUser(result.data));
           if (result.data['companies'].length > 0) {
-            const { data } = await dispatch(
-              baseApi.endpoints.getCompany.initiate(result.data['companies'][0].id)
-            );
-            dispatch(setCompany(data));
+            try {
+              const { data } = await dispatch(
+                baseApi.endpoints.getCompany.initiate(result.data['companies'][0].id)
+              );
+              dispatch(setCompany(data));
+            } catch (companyError) {
+              console.warn('Company data fetch failed during session restore:', companyError);
+            }
           }
         } catch (error) {
           console.error(error);

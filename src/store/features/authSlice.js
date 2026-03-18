@@ -32,6 +32,15 @@ const authSlice = createSlice({
       localStorage.removeItem('subscription_company_id');
       localStorage.removeItem('prevent_pricing_page');
       localStorage.removeItem('skip_pricing_render');
+
+      // Clear auth redirect actions to prevent cross-user redirect bleed
+      localStorage.removeItem('trazo_pending_auth_action');
+
+      // Clear session-scoped flags that could bleed between user sessions
+      sessionStorage.removeItem('pendingInvitation');
+      sessionStorage.removeItem('just_authenticated');
+      sessionStorage.removeItem('creating_establishment');
+      sessionStorage.removeItem('just_created_establishment_id');
     },
     setData: (state, { payload }) => {
       const newData = state.data ? { ...state.data, ...payload.data } : payload.data;

@@ -1,5 +1,6 @@
 import { Flex, Link, Text } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
+import { resetConsent } from '../Privacy/ConsentBanner';
 
 const LANDING_URL = 'https://trazo.io';
 
@@ -60,6 +61,15 @@ export default function Footer() {
           _hover={{ color: 'green.500' }}
         >
           {intl.formatMessage({ id: 'app.contactUs' })}
+        </Link>
+        <Link
+          as="button"
+          color="gray.400"
+          fontSize="sm"
+          _hover={{ color: 'green.500' }}
+          onClick={() => resetConsent()}
+        >
+          Privacy Settings
         </Link>
       </Flex>
     </Flex>

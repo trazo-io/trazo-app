@@ -36,6 +36,7 @@ import { ROLE_DISPLAY_COMPANY_ADMIN } from 'config';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { useLogoutMutation } from 'store/api/authApi';
+import baseApi from 'store/api/baseApi';
 import { useNavigate } from 'react-router-dom';
 
 type HeaderLinksProps = {
@@ -68,7 +69,7 @@ export default function HeaderLinks(props: HeaderLinksProps) {
   let navbarIcon = useColorModeValue('gray.500', 'gray.200');
   let searchIcon = useColorModeValue('gray.700', 'gray.200');
 
-  const [logout, { isLoading, isSuccess, error, isError }] = useLogoutMutation();
+  const [logout, { isLoading }] = useLogoutMutation();
 
   const currentUser = useSelector((state) => state.userState.user);
 
@@ -77,8 +78,6 @@ export default function HeaderLinks(props: HeaderLinksProps) {
   useEffect(() => {
     // Use regex to match /admin/dashboard/establishments/NUMBER pattern
     const establishmentPattern = /^\/admin\/dashboard\/establishment\/\d+$/;
-    console.log(location.pathname);
-    console.log(establishmentPattern.test(location.pathname));
 
     setIsHome(establishmentPattern.test(location.pathname));
   }, [location.pathname]);
@@ -119,20 +118,21 @@ export default function HeaderLinks(props: HeaderLinksProps) {
     setSubDomain(getSubdomainType());
   }, []);
 
-  const handleLogout = () => {
-    logout();
-  };
-
-  useEffect(() => {
-    if (isSuccess) {
-      dispatch(logoutAction());
-      dispatch(clearCurrentCompany());
-      dispatch(clearUser());
-      setTimeout(() => {
-        navigate('/auth/signin', { replace: true });
-      }, 1);
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+    } catch (err) {
+      // Even if server logout fails, clean up local state
+      console.error('Logout request failed:', err);
     }
-  }, [dispatch, isSuccess, navigate]);
+    // Always clean up Redux state and redirect, regardless of server response
+    dispatch(logoutAction());
+    dispatch(clearCurrentCompany());
+    dispatch(clearUser());
+    // Flush RTK Query cache BEFORE navigation to prevent stale data from previous user
+    dispatch(baseApi.util.resetApiState());
+    navigate('/auth/signin', { replace: true });
+  };
 
   if (secondary) {
     navbarIcon = 'white';

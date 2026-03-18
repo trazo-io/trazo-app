@@ -24,7 +24,14 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerCloseButton,
   useDisclosure,
+  useBreakpointValue,
   Progress,
   Spinner,
   Skeleton,
@@ -76,6 +83,7 @@ import { TransparencyCelebration } from '../../../components/Notifications/Trans
 import { useTransparencyCelebration } from '../../../hooks/useTransparencyCelebration';
 import { useGetTransparencyDetailsQuery, useVerifyBlockchainIntegrityQuery } from '../../../store/api/transparencyQrApi';
 import { useCreateScanMutation } from '../../../store/api/historyApi';
+import { addPendingScanToken } from '../../../utils/pendingScanStorage';
 import { hasAnalyticsConsent } from '../../../components/Privacy/ConsentBanner';
 import { HarvestInfoCard } from './components/HarvestInfoCard';
 
@@ -170,6 +178,10 @@ const EducationModal = ({
   onClose: () => void;
   topic: string | null;
 }) => {
+  const isMobile = useBreakpointValue({ base: true, md: false });
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+
   const getModalContent = () => {
     switch (topic) {
       case 'carbon_footprint':
@@ -427,10 +439,35 @@ const EducationModal = ({
 
   const modalContent = getModalContent();
 
+  if (isMobile) {
+    return (
+      <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
+        <DrawerOverlay bg="blackAlpha.400" />
+        <DrawerContent
+          bg={bgColor}
+          borderTopRadius="2xl"
+          maxH="92vh"
+          containerProps={{ style: { zIndex: 10000 } }}
+        >
+          <Box pt={3} pb={1} display="flex" justifyContent="center">
+            <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
+          </Box>
+          <DrawerCloseButton top={4} />
+          <DrawerHeader px={5} pt={2} pb={4} borderBottomWidth="1px" borderColor={borderColor}>
+            {modalContent.title}
+          </DrawerHeader>
+          <DrawerBody px={5} py={4} overflowY="auto">
+            {modalContent.content}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
-      <ModalOverlay />
-      <ModalContent>
+    <Modal isOpen={isOpen} onClose={onClose} size="lg" scrollBehavior="inside">
+      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+      <ModalContent bg={bgColor} borderRadius="xl" maxH="90vh" mx={4}>
         <ModalHeader>{modalContent.title}</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>{modalContent.content}</ModalBody>
@@ -584,9 +621,16 @@ function ProductDetail() {
         consent_timestamp: new Date().toISOString(),
         time_on_page: (Date.now() - pageLoadTime) / 1000,
         screen: `${window.screen.width}x${window.screen.height}`
-      }).catch(() => {
-        // Best-effort — don't block the page if scan tracking fails
-      });
+      })
+        .unwrap()
+        .then((result) => {
+          if (result?.claim_token && !isAuthenticated) {
+            addPendingScanToken(result.claim_token);
+          }
+        })
+        .catch(() => {
+          // Best-effort — don't block the page if scan tracking fails
+        });
     };
 
     // If consent was already granted (returning visitor), record immediately
@@ -605,7 +649,7 @@ function ProductDetail() {
 
     window.addEventListener('trazo-consent-changed', handleConsentChanged);
     return () => window.removeEventListener('trazo-consent-changed', handleConsentChanged);
-  }, [productionId, pageViewRecorded, createScan, pageLoadTime]);
+  }, [productionId, pageViewRecorded, createScan, pageLoadTime, isAuthenticated]);
 
   // Helper function to get proper transparency score from backend TransparencyCalculator
   const getTransparencyScore = (): number => {

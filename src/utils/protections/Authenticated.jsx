@@ -8,21 +8,15 @@ import { getAuthRedirectAction } from '../authRedirect';
 import { validateRedirectUrl, createSafeRedirectUrl } from '../urlValidator';
 import { getSubdomainType } from '../subdomain';
 
+const isDev = import.meta.env.DEV;
+
 const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const isLoading = useSelector((state) => state.auth.isLoading);
-  console.log('Authenticated');
   const currentCompany = useSelector((state) => state.company.currentCompany);
-  console.log('currentCompany', currentCompany);
   const [subdomain, setSubDomain] = useState('');
   const { pathname } = useLocation();
   const navigate = useNavigate();
-
-  // Debug wrapper for navigate calls
-  const debugNavigate = (path, options) => {
-    console.log('🔒 Authenticated.jsx: navigate() called with path:', path, 'options:', options);
-    return navigate(path, options);
-  };
 
   const currentUser = useSelector((state) => state.userState.user);
 
@@ -34,14 +28,6 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   }, []);
 
   useEffect(() => {
-    console.log(
-      '🔒 Authenticated.jsx: useEffect triggered - isAuthenticated:',
-      isAuthenticated,
-      'currentUser:',
-      currentUser,
-      'subdomain:',
-      subdomain
-    );
     if (isAuthenticated && currentUser && subdomain) {
       // Skip ALL redirect logic if RedirectGuard might be handling it
       // This is a critical fix to prevent interference with auth redirects
@@ -49,9 +35,6 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       const hasJustAuthenticated = sessionStorage.getItem('just_authenticated') === 'true';
 
       if (pendingAction || hasJustAuthenticated) {
-        console.log(
-          '🔒 Authenticated.jsx: Skipping redirect logic - pending action or just authenticated'
-        );
         // Clear the flag after a delay
         if (hasJustAuthenticated) {
           setTimeout(() => {
@@ -67,7 +50,6 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
         subdomain === 'consumer' &&
         window.location.pathname.includes('/admin/dashboard/production/')
       ) {
-        console.log('🔒 Authenticated.jsx: Already on review page, skipping redirect logic');
         return;
       }
 
@@ -76,26 +58,12 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       const isConsumerUser = currentUser.user_type === CONSUMER || subdomain === 'consumer';
       const params = new URLSearchParams(window.location.search);
 
-      console.log('🔒 Authenticated.jsx: Debug user type check:', {
-        'currentUser.user_type': currentUser.user_type,
-        'CONSUMER constant': CONSUMER,
-        subdomain: subdomain,
-        'isConsumerUser (after subdomain logic)': isConsumerUser
-      });
-
       // SECURITY: Validate next parameter to prevent open redirect attacks
       const defaultPath = isConsumerUser ? '/admin/dashboard/impact' : '/admin/dashboard/scans';
       const nextParam = params.get('next');
       const intendedPath = validateRedirectUrl(nextParam) || defaultPath;
-      console.log(
-        '🔒 Authenticated.jsx: intendedPath calculated (validated):',
-        intendedPath,
-        'defaultPath was:',
-        defaultPath
-      );
 
       if (isConsumerUser && subdomain === 'producer') {
-        console.log('🔒 Authenticated.jsx: Redirecting consumer from producer subdomain');
         // SECURITY: Build safe redirect URL with domain validation
         const baseUrl = `${window.location.protocol}//consumer.${
           import.meta.env.VITE_APP_BASE_DOMAIN
@@ -104,13 +72,11 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
 
         // Final validation before redirect
         if (validateRedirectUrl(safeRedirectUrl)) {
-          window.location.href = safeRedirectUrl;
+          window.location.replace(safeRedirectUrl);
         } else {
           // Fallback to default consumer dashboard if validation fails
-          window.location.href = baseUrl + '/consumer/dashboard';
+          window.location.replace(baseUrl + '/consumer/dashboard');
         }
-      } else {
-        console.log('🔒 Authenticated.jsx: No subdomain redirect needed');
       }
     }
   }, [isAuthenticated, currentUser, subdomain]);
@@ -136,18 +102,8 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
             sessionStorage.getItem('creating_establishment') === 'true';
           const justCreatedId = sessionStorage.getItem('just_created_establishment_id');
 
-          console.log('🔒 Authenticated.jsx: Establishment not found in cache:', {
-            establishmentId: id,
-            isFromEstablishmentCreation: isFromEstablishmentCreation,
-            justCreatedId: justCreatedId,
-            availableEstablishments: currentCompany.establishments.map((e) => e.id)
-          });
-
           // If we just created this establishment, wait for cache to update instead of redirecting
           if (isFromEstablishmentCreation && justCreatedId == id) {
-            console.log(
-              '🔒 Authenticated.jsx: Waiting for newly created establishment to appear in cache, not redirecting'
-            );
             // Clear the flag after a delay to prevent infinite waiting
             setTimeout(() => {
               sessionStorage.removeItem('creating_establishment');
@@ -158,13 +114,9 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
 
           if (currentCompany.establishments?.length > 0) {
             const establishment = currentCompany.establishments[0].id;
-            console.log(
-              '🔒 Authenticated.jsx: Redirecting to first available establishment:',
-              establishment
-            );
-            debugNavigate(`/admin/dashboard/establishment/${establishment}`);
+            navigate(`/admin/dashboard/establishment/${establishment}`);
           } else {
-            debugNavigate(`/admin/dashboard/`);
+            navigate(`/admin/dashboard/`);
           }
         }
       }
@@ -176,7 +128,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
         currentCompany?.establishments?.length > 0
       ) {
         const firstEstablishment = currentCompany.establishments[0].id;
-        debugNavigate(`/admin/dashboard/establishment/${firstEstablishment}`);
+        navigate(`/admin/dashboard/establishment/${firstEstablishment}`);
       }
     }
   }, [currentCompany, establishmentId, navigate, currentUser, subdomain, pathname]);
@@ -187,7 +139,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       subdomain === 'producer'
     ) {
       if (currentUser?.companies.length === 0) {
-        debugNavigate(`/admin/dashboard/select-company`);
+        navigate(`/admin/dashboard/select-company`);
       } else if (
         currentUser?.companies.length === 1 &&
         currentCompany?.establishments &&
@@ -197,10 +149,10 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
           currentCompany.subscription ||
           (currentCompany.subscription_plan && currentCompany.subscription_plan.id)
         ) {
-          debugNavigate(`/admin/dashboard/establishment/add`);
+          navigate(`/admin/dashboard/establishment/add`);
         } else {
           if (!currentCompany.has_subscription) {
-            debugNavigate(`/admin/dashboard/pricing`);
+            navigate(`/admin/dashboard/pricing`);
           }
         }
       }

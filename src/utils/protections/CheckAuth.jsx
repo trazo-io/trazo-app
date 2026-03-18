@@ -2,13 +2,15 @@ import { login, logout } from 'store/features/authSlice';
 
 import FullScreenLoader from 'components/Loader/FullScreenLoader';
 import { Outlet, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useEffect, useRef } from 'react';
 import { useUserDataQuery } from 'store/api/authApi';
 
 const CheckAuth = () => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const hasInitialized = useRef(false);
 
   // Skip authentication check on auth pages and public routes to prevent redirect loops
   const isAuthPage = location?.pathname?.startsWith('/auth/') || false;
@@ -31,17 +33,23 @@ const CheckAuth = () => {
     }
   }, [dispatch, data, isSuccess, isError, skipAuth]);
 
-  // On auth pages and public routes, we skip the query, so we need to ensure loading is false
-  // so that the appropriate components can render properly
+  // Set auth loading to false on auth pages so components can render,
+  // but only once on initial mount and only if not already authenticated.
+  // This prevents wiping Redux state during the login->redirect transition
+  // (which was causing the login/logout/re-login loop).
   useEffect(() => {
-    if (skipAuth) {
-      // For public routes, don't automatically logout - just skip auth
-      if (isAuthPage) {
-        // Only logout on auth pages to reset state
-        dispatch(logout());
-      }
+    if (skipAuth && !isAuthenticated && !hasInitialized.current) {
+      hasInitialized.current = true;
+      dispatch(logout());
     }
-  }, [skipAuth, isAuthPage, dispatch]);
+  }, [skipAuth, isAuthenticated, dispatch]);
+
+  // Reset initialization flag when navigating away from auth pages
+  useEffect(() => {
+    if (!isAuthPage) {
+      hasInitialized.current = false;
+    }
+  }, [isAuthPage]);
 
   return isLoading && !skipAuth ? <FullScreenLoader /> : <Outlet />;
 };

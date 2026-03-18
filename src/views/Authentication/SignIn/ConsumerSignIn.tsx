@@ -31,7 +31,9 @@ import {
 import { motion } from 'framer-motion';
 import AuthFooter from 'components/Footer/AuthFooter';
 import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
+import { useClaimScansMutation } from '../../../store/api/historyApi';
 import { login as loginAction } from '../../../store/features/authSlice';
+import { getPendingScanTokens, clearPendingScans } from '../../../utils/pendingScanStorage';
 import {
   handleGoogleSignIn,
   handleFacebookSignIn,
@@ -55,6 +57,7 @@ const ConsumerSignIn: React.FC = () => {
   const toast = useToast();
   const [login, { isLoading }] = useLoginMutation();
   const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
+  const [claimScans] = useClaimScansMutation();
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -63,7 +66,9 @@ const ConsumerSignIn: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors }
-  } = useForm<SignInFormData>();
+  } = useForm<SignInFormData>({
+    defaultValues: { remember_me: true }
+  });
 
   const onSubmit = async (data: SignInFormData) => {
     console.log('🔍 ConsumerSignIn onSubmit called');
@@ -74,6 +79,15 @@ const ConsumerSignIn: React.FC = () => {
 
       // Dispatch login action
       dispatch(loginAction(response));
+
+      // Claim any anonymous scans made before signing in
+      const pendingTokens = getPendingScanTokens();
+      if (pendingTokens.length > 0) {
+        claimScans({ claim_tokens: pendingTokens })
+          .unwrap()
+          .then(() => clearPendingScans())
+          .catch(() => clearPendingScans());
+      }
 
       // Set a flag to prevent Authenticated component from interfering
       sessionStorage.setItem('just_authenticated', 'true');
@@ -102,6 +116,15 @@ const ConsumerSignIn: React.FC = () => {
 
       // Dispatch login action
       dispatch(loginAction(response));
+
+      // Claim any anonymous scans made before signing in
+      const pendingTokens = getPendingScanTokens();
+      if (pendingTokens.length > 0) {
+        claimScans({ claim_tokens: pendingTokens })
+          .unwrap()
+          .then(() => clearPendingScans())
+          .catch(() => clearPendingScans());
+      }
 
       // Set a flag to prevent Authenticated component from interfering
       sessionStorage.setItem('just_authenticated', 'true');
@@ -514,30 +537,8 @@ const ConsumerSignIn: React.FC = () => {
                     )}
                   </Box>
 
-                  {/* Remember me + Forgot password */}
-                  <HStack justify="space-between" w="full">
-                    <HStack spacing={2}>
-                      <Box
-                        as="input"
-                        type="checkbox"
-                        id="remember_me"
-                        w="16px"
-                        h="16px"
-                        accentColor="var(--chakra-colors-blue-500)"
-                        cursor="pointer"
-                        {...register('remember_me')}
-                      />
-                      <Text
-                        as="label"
-                        htmlFor="remember_me"
-                        fontSize="sm"
-                        color={useColorModeValue('gray.600', 'gray.400')}
-                        cursor="pointer"
-                        userSelect="none"
-                      >
-                        Remember me
-                      </Text>
-                    </HStack>
+                  {/* Forgot password */}
+                  <HStack justify="flex-end" w="full">
                     <Link to="/auth/forgot-password">
                       <Text
                         fontSize="sm"

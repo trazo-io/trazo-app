@@ -185,12 +185,19 @@ interface CompanyEstablishmentInfoProps {
   };
 }
 
-// Helper function to format snake_case values to Title Case
+// Known acronyms that should stay uppercase
+const ACRONYMS = new Set(['ipm', 'npk', 'gmo', 'usda', 'epa']);
+
+// Helper function to format values to Title Case (handles both snake_case and space-separated)
 const formatLabel = (value: string | undefined): string => {
   if (!value) return '';
   return value
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .split(/[_\s]+/)
+    .map((word) =>
+      ACRONYMS.has(word.toLowerCase())
+        ? word.toUpperCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
     .join(' ');
 };
 

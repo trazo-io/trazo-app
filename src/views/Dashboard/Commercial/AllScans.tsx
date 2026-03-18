@@ -230,7 +230,7 @@ const AllScansView = () => {
         subtitle={intl.formatMessage({ id: 'commercial.comprehensiveInsights' })}
         variant="elevated"
       >
-        <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 3, md: 6 }}>
+        <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 6 }}>
           {/* Human vs Bot Scans */}
           <Stat>
             <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
@@ -321,25 +321,6 @@ const AllScansView = () => {
             </StatHelpText>
           </Stat>
 
-          {/* GDPR Compliance */}
-          <Stat>
-            <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-              {intl.formatMessage({ id: 'commercial.gdprCompliance' })}
-            </StatLabel>
-            <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
-              {scansData.length > 0
-                ? Math.round(
-                    (scansData.filter((scan) => scan.consent_given !== false).length /
-                      scansData.length) *
-                      100
-                  )
-                : 0}
-              %
-            </StatNumber>
-            <StatHelpText fontSize="xs" color="gray.500" mb={0}>
-              {intl.formatMessage({ id: 'commercial.consentedScans' }, { count: scansData.filter((scan) => scan.consent_given !== false).length })}
-            </StatHelpText>
-          </Stat>
         </SimpleGrid>
 
         {/* Educational Section for Farmers - Collapsible */}

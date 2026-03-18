@@ -258,7 +258,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                 WebkitOverflowScrolling: 'touch'
               }}
             >
-              <Flex gap={{ base: 4, md: 6 }} pb={2} pr="16px" pl={2} w="max-content">
+              <Flex gap={{ base: 4, md: 6 }} pt={2} pb={2} pr="16px" pl={2} w="max-content">
                 {data.map((parcel) => (
                   <Box
                     key={parcel.id}

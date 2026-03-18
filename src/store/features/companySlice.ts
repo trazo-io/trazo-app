@@ -26,6 +26,8 @@ export const companySlice = createSlice({
     },
     clearCurrentCompany: (state) => {
       state.currentCompany = null;
+      state.currentEstablishment = null;
+      state.isLoading = false;
     },
     setCompanyEstablishment: (state: CompanyState, action: PayloadAction<Establishment>) => {
       if (state.currentCompany && 'establishments' in state.currentCompany) {

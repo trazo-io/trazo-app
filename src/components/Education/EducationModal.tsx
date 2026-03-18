@@ -7,6 +7,13 @@ import {
   ModalBody,
   ModalCloseButton,
   ModalFooter,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerFooter,
+  DrawerCloseButton,
   Box,
   VStack,
   HStack,
@@ -113,7 +120,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const accentColor = useColorModeValue('green.500', 'green.400');
-  const modalSize = useBreakpointValue({ base: 'full', md: 'xl', lg: '2xl' });
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const {
     data: content,
@@ -321,46 +328,80 @@ const EducationModal: React.FC<EducationModalProps> = ({
     );
   };
 
+  // Loading skeleton content
   if (loading) {
+    const loadingSkeleton = (
+      <VStack spacing={4}>
+        <Skeleton height="60px" width="100%" />
+        <Skeleton height="100px" width="100%" />
+        <Skeleton height="80px" width="100%" />
+      </VStack>
+    );
+
+    if (isMobile) {
+      return (
+        <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
+          <DrawerOverlay bg="blackAlpha.400" />
+          <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="92vh" containerProps={{ style: { zIndex: 10000 } }}>
+            <Box pt={3} pb={1} display="flex" justifyContent="center">
+              <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
+            </Box>
+            <DrawerCloseButton top={4} />
+            <DrawerHeader><Skeleton height="24px" width="200px" /></DrawerHeader>
+            <DrawerBody>{loadingSkeleton}</DrawerBody>
+          </DrawerContent>
+        </Drawer>
+      );
+    }
     return (
-      <Modal isOpen={isOpen} onClose={onClose} size={modalSize}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>
-            <Skeleton height="24px" width="200px" />
-          </ModalHeader>
+      <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+        <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+        <ModalContent bg={bgColor} borderRadius="xl" mx={4}>
+          <ModalHeader><Skeleton height="24px" width="200px" /></ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
-            <VStack spacing={4}>
-              <Skeleton height="60px" width="100%" />
-              <Skeleton height="100px" width="100%" />
-              <Skeleton height="80px" width="100%" />
-            </VStack>
-          </ModalBody>
+          <ModalBody>{loadingSkeleton}</ModalBody>
         </ModalContent>
       </Modal>
     );
   }
 
+  // Error state
   if (error) {
+    const errorContent = (
+      <Alert status="error" borderRadius="md">
+        <AlertIcon />
+        <VStack align="start" spacing={2}>
+          <Text fontWeight="medium">Unable to Load Educational Content</Text>
+          <Text fontSize="sm">Unable to load educational content. Please try again.</Text>
+          <Button size="sm" onClick={() => fetchEducationContent()}>
+            Try Again
+          </Button>
+        </VStack>
+      </Alert>
+    );
+
+    if (isMobile) {
+      return (
+        <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
+          <DrawerOverlay bg="blackAlpha.400" />
+          <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="92vh" containerProps={{ style: { zIndex: 10000 } }}>
+            <Box pt={3} pb={1} display="flex" justifyContent="center">
+              <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
+            </Box>
+            <DrawerCloseButton top={4} />
+            <DrawerHeader>Educational Content</DrawerHeader>
+            <DrawerBody>{errorContent}</DrawerBody>
+          </DrawerContent>
+        </Drawer>
+      );
+    }
     return (
-      <Modal isOpen={isOpen} onClose={onClose} size={modalSize}>
-        <ModalOverlay />
-        <ModalContent>
+      <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+        <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+        <ModalContent bg={bgColor} borderRadius="xl" mx={4}>
           <ModalHeader>Educational Content</ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
-            <Alert status="error" borderRadius="md">
-              <AlertIcon />
-              <VStack align="start" spacing={2}>
-                <Text fontWeight="medium">Unable to Load Educational Content</Text>
-                <Text fontSize="sm">Unable to load educational content. Please try again.</Text>
-                <Button size="sm" onClick={() => fetchEducationContent()}>
-                  Try Again
-                </Button>
-              </VStack>
-            </Alert>
-          </ModalBody>
+          <ModalBody>{errorContent}</ModalBody>
         </ModalContent>
       </Modal>
     );
@@ -370,83 +411,124 @@ const EducationModal: React.FC<EducationModalProps> = ({
 
   const TopicIcon = getTopicIcon(topic);
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} size={modalSize} scrollBehavior="inside">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>
-          <HStack>
-            <Icon as={TopicIcon} color={accentColor} />
-            <VStack align="start" spacing={1}>
-              <Text>{content.title}</Text>
-              {content.subtitle && (
-                <Text fontSize="sm" color="gray.500" fontWeight="normal">
-                  {content.subtitle}
-                </Text>
-              )}
+  const headerContent = (
+    <HStack>
+      <Icon as={TopicIcon} color={accentColor} />
+      <VStack align="start" spacing={1}>
+        <Text>{content.title}</Text>
+        {content.subtitle && (
+          <Text fontSize="sm" color="gray.500" fontWeight="normal">
+            {content.subtitle}
+          </Text>
+        )}
+      </VStack>
+    </HStack>
+  );
+
+  const bodyContent = (
+    <VStack spacing={6} align="stretch" pb={{ base: 6, md: 0 }}>
+      {/* Overview */}
+      <Box>
+        <Text color={textColor} lineHeight="tall" mb={4}>
+          {content.overview}
+        </Text>
+        <ConfidenceIndicator />
+      </Box>
+
+      <QuickFacts />
+
+      {/* Main Content Tabs */}
+      <Tabs index={activeTab} onChange={setActiveTab} colorScheme="green">
+        <TabList>
+          <Tab>Content</Tab>
+          {content.related_topics && content.related_topics.length > 0 && <Tab>Related</Tab>}
+          {content.external_resources && content.external_resources.length > 0 && (
+            <Tab>Resources</Tab>
+          )}
+        </TabList>
+
+        <TabPanels>
+          <TabPanel px={0}>
+            <VStack spacing={4} align="stretch">
+              {content.sections.map((section, index) => (
+                <SectionContent key={index} section={section} />
+              ))}
             </VStack>
-          </HStack>
+          </TabPanel>
+
+          {content.related_topics && content.related_topics.length > 0 && (
+            <TabPanel px={0}>
+              <RelatedTopics />
+            </TabPanel>
+          )}
+
+          {content.external_resources && content.external_resources.length > 0 && (
+            <TabPanel px={0}>
+              <ExternalResources />
+            </TabPanel>
+          )}
+        </TabPanels>
+      </Tabs>
+    </VStack>
+  );
+
+  const footerContent = (
+    <HStack justify="space-between" w="full">
+      {content.last_updated && (
+        <Text fontSize="xs" color="gray.500">
+          Updated: {new Date(content.last_updated).toLocaleDateString()}
+        </Text>
+      )}
+      <Button colorScheme="green" onClick={onClose}>
+        Got It
+      </Button>
+    </HStack>
+  );
+
+  // Mobile: Bottom sheet (Drawer)
+  if (isMobile) {
+    return (
+      <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
+        <DrawerOverlay bg="blackAlpha.400" />
+        <DrawerContent
+          bg={bgColor}
+          borderTopRadius="2xl"
+          maxH="92vh"
+          containerProps={{ style: { zIndex: 10000 } }}
+        >
+          {/* Drag handle indicator */}
+          <Box pt={3} pb={1} display="flex" justifyContent="center">
+            <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
+          </Box>
+          <DrawerCloseButton top={4} />
+          <DrawerHeader px={5} pt={2} pb={4} borderBottomWidth="1px" borderColor={borderColor}>
+            {headerContent}
+          </DrawerHeader>
+          <DrawerBody px={5} py={4} overflowY="auto">
+            {bodyContent}
+          </DrawerBody>
+          <DrawerFooter borderTopWidth="1px" borderColor={borderColor}>
+            {footerContent}
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  // Desktop: Centered modal
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
+      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+      <ModalContent bg={bgColor} borderRadius="xl" maxH="90vh" mx={4}>
+        <ModalHeader borderBottomWidth="1px" borderColor={borderColor}>
+          {headerContent}
         </ModalHeader>
         <ModalCloseButton />
-
-        <ModalBody pb={6}>
-          <VStack spacing={6} align="stretch">
-            {/* Overview */}
-            <Box>
-              <Text color={textColor} lineHeight="tall" mb={4}>
-                {content.overview}
-              </Text>
-              <ConfidenceIndicator />
-            </Box>
-
-            <QuickFacts />
-
-            {/* Main Content Tabs */}
-            <Tabs index={activeTab} onChange={setActiveTab} colorScheme="green">
-              <TabList>
-                <Tab>Content</Tab>
-                {content.related_topics && content.related_topics.length > 0 && <Tab>Related</Tab>}
-                {content.external_resources && content.external_resources.length > 0 && (
-                  <Tab>Resources</Tab>
-                )}
-              </TabList>
-
-              <TabPanels>
-                <TabPanel px={0}>
-                  <VStack spacing={4} align="stretch">
-                    {content.sections.map((section, index) => (
-                      <SectionContent key={index} section={section} />
-                    ))}
-                  </VStack>
-                </TabPanel>
-
-                {content.related_topics && content.related_topics.length > 0 && (
-                  <TabPanel px={0}>
-                    <RelatedTopics />
-                  </TabPanel>
-                )}
-
-                {content.external_resources && content.external_resources.length > 0 && (
-                  <TabPanel px={0}>
-                    <ExternalResources />
-                  </TabPanel>
-                )}
-              </TabPanels>
-            </Tabs>
-          </VStack>
+        <ModalBody py={6} overflowY="auto">
+          {bodyContent}
         </ModalBody>
-
-        <ModalFooter>
-          <HStack justify="space-between" w="full">
-            {content.last_updated && (
-              <Text fontSize="xs" color="gray.500">
-                Updated: {new Date(content.last_updated).toLocaleDateString()}
-              </Text>
-            )}
-            <Button colorScheme="green" onClick={onClose}>
-              Got It
-            </Button>
-          </HStack>
+        <ModalFooter borderTopWidth="1px" borderColor={borderColor}>
+          {footerContent}
         </ModalFooter>
       </ModalContent>
     </Modal>

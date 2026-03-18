@@ -6,6 +6,12 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  DrawerCloseButton,
   Box,
   VStack,
   HStack,
@@ -140,7 +146,9 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const accentColor = useColorModeValue('green.500', 'green.400');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
-  const modalSize = useBreakpointValue({ base: 'full', md: 'xl', lg: '4xl' });
+  const iconBg = useColorModeValue('green.50', 'green.900');
+  const currentProdBg = useColorModeValue('blue.50', 'blue.900');
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   const getCertificationColor = (certified: boolean) => {
     return certified ? 'green' : 'gray';
@@ -159,325 +167,359 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
     }
   };
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} size={modalSize} scrollBehavior="inside">
-      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
-      <ModalContent bg={bgColor} borderRadius="xl" maxH="90vh">
-        <ModalHeader p={6} pb={4} borderBottom="1px" borderColor={borderColor}>
-          <HStack spacing={4}>
-            <Box p={3} borderRadius="lg" bg={useColorModeValue('green.50', 'green.900')}>
-              <Icon as={FaRuler} boxSize={6} color={accentColor} />
+  const headerContent = (
+    <HStack spacing={4}>
+      <Box p={3} borderRadius="lg" bg={iconBg}>
+        <Icon as={FaRuler} boxSize={6} color={accentColor} />
+      </Box>
+      <VStack align="start" spacing={1}>
+        <Heading size={{ base: 'md', md: 'lg' }} color={textColor}>
+          {parcelData.name}
+        </Heading>
+        <HStack spacing={2} flexWrap="wrap">
+          <Badge
+            colorScheme="blue"
+            variant="subtle"
+            fontSize="xs"
+            px={2}
+            py={1}
+            borderRadius="full"
+          >
+            {parcelData.area} hectares
+          </Badge>
+          {parcelData.certified && (
+            <Badge
+              colorScheme={getCertificationColor(parcelData.certified)}
+              variant="solid"
+              fontSize="xs"
+              px={2}
+              py={1}
+              borderRadius="full"
+            >
+              <Icon as={FaCheckCircle} mr={1} boxSize={2} />
+              Certified
+            </Badge>
+          )}
+        </HStack>
+      </VStack>
+    </HStack>
+  );
+
+  const bodyContent = (
+    <VStack spacing={6} align="stretch" pb={{ base: 6, md: 0 }}>
+      {/* Description */}
+      {parcelData.description && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Text color={textColor} lineHeight="tall">
+              {parcelData.description}
+            </Text>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Key Statistics */}
+      <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+        <CardBody p={6}>
+          <Heading size="md" color={textColor} mb={4}>
+            Parcel Overview
+          </Heading>
+          <StatGroup>
+            <Stat>
+              <StatLabel color="gray.500">Area</StatLabel>
+              <StatNumber color={accentColor}>{parcelData.area} ha</StatNumber>
+            </Stat>
+            {parcelData.productions_completed !== undefined && (
+              <Stat>
+                <StatLabel color="gray.500">Completed Productions</StatLabel>
+                <StatNumber color={accentColor}>
+                  {parcelData.productions_completed}
+                </StatNumber>
+              </Stat>
+            )}
+            {parcelData.total_productions !== undefined && (
+              <Stat>
+                <StatLabel color="gray.500">Total Productions</StatLabel>
+                <StatNumber color={accentColor}>{parcelData.total_productions}</StatNumber>
+              </Stat>
+            )}
+            {parcelData.establishment && (
+              <Stat>
+                <StatLabel color="gray.500">Establishment</StatLabel>
+                <StatNumber color={accentColor} fontSize="md">
+                  {parcelData.establishment.name}
+                </StatNumber>
+              </Stat>
+            )}
+          </StatGroup>
+        </CardBody>
+      </Card>
+
+      {/* Interactive Map */}
+      {(parcelData.polygon || parcelData.map_metadata) && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Heading size="md" color={textColor} mb={4}>
+              <HStack>
+                <Icon as={FaMapMarkerAlt} color={accentColor} />
+                <Text>Location & Boundaries</Text>
+              </HStack>
+            </Heading>
+            <Box borderRadius="lg" overflow="hidden" minH={{ base: '250px', md: '400px' }}>
+              <CardWithMap
+                parcel={{
+                  polygon: parcelData.polygon,
+                  map_metadata: parcelData.map_metadata,
+                  name: parcelData.name,
+                  area: parcelData.area
+                }}
+              />
             </Box>
-            <VStack align="start" spacing={1}>
-              <Heading size="lg" color={textColor}>
-                {parcelData.name}
-              </Heading>
-              <HStack spacing={2}>
-                <Badge
-                  colorScheme="blue"
-                  variant="subtle"
-                  fontSize="xs"
-                  px={2}
-                  py={1}
-                  borderRadius="full"
-                >
-                  {parcelData.area} hectares
-                </Badge>
-                {parcelData.certified && (
-                  <Badge
-                    colorScheme={getCertificationColor(parcelData.certified)}
-                    variant="solid"
-                    fontSize="xs"
-                    px={2}
-                    py={1}
-                    borderRadius="full"
-                  >
-                    <Icon as={FaCheckCircle} mr={1} boxSize={2} />
-                    Certified
-                  </Badge>
+            {parcelData.map_metadata?.center && (
+              <HStack mt={3} spacing={4} fontSize="sm" color="gray.500" flexWrap="wrap">
+                <HStack>
+                  <Icon as={FaCompass} />
+                  <Text>
+                    Center: {parcelData.map_metadata.center[0].toFixed(4)},{' '}
+                    {parcelData.map_metadata.center[1].toFixed(4)}
+                  </Text>
+                </HStack>
+                {parcelData.map_metadata.zoom && (
+                  <HStack>
+                    <Icon as={FaExpand} />
+                    <Text>Zoom: {parcelData.map_metadata.zoom}</Text>
+                  </HStack>
                 )}
-                {/* unique_code removed from public display - internal tracking code should not be public */}
+              </HStack>
+            )}
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Current Production */}
+      {parcelData.current_history && (
+        <Card
+          bg={currentProdBg}
+          borderRadius="lg"
+          border="1px"
+          borderColor="blue.200"
+        >
+          <CardBody p={6}>
+            <HStack mb={3}>
+              <Icon as={FaSeedling} color="blue.500" />
+              <Heading size="md" color="blue.700">
+                Current Production
+              </Heading>
+            </HStack>
+            <VStack spacing={3} align="stretch">
+              <HStack justify="space-between">
+                <Text color="blue.600" fontWeight="medium">
+                  {parcelData.current_history.name}
+                </Text>
+                <Badge colorScheme="blue" variant="subtle">
+                  Active
+                </Badge>
+              </HStack>
+              {parcelData.current_history.crop_type && (
+                <HStack>
+                  <Icon as={FaSeedling} color="blue.500" />
+                  <Text color="blue.600" fontSize="sm">
+                    Crop: {parcelData.current_history.crop_type}
+                  </Text>
+                </HStack>
+              )}
+              <HStack>
+                <Icon as={FaCalendarAlt} color="blue.500" />
+                <Text color="blue.600" fontSize="sm">
+                  Started:{' '}
+                  {new Date(parcelData.current_history.start_date).toLocaleDateString()}
+                </Text>
               </HStack>
             </VStack>
-          </HStack>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Soil and Environmental Data */}
+      {parcelData.soil_type && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Heading size="md" color={textColor} mb={4}>
+              <HStack>
+                <Icon as={getSoilTypeIcon(parcelData.soil_type)} color={accentColor} />
+                <Text>Soil & Environment</Text>
+              </HStack>
+            </Heading>
+            <VStack spacing={4} align="stretch">
+              <HStack spacing={3}>
+                <Icon as={FaLayerGroup} color={accentColor} flexShrink={0} />
+                <Text color={textColor}>
+                  <Text as="span" fontWeight="medium">
+                    Soil Type:
+                  </Text>{' '}
+                  {formatDisplayValue(parcelData.soil_type)}
+                </Text>
+              </HStack>
+              {parcelData.establishment?.location && (
+                <HStack spacing={3}>
+                  <Icon as={FaMapMarkerAlt} color={accentColor} flexShrink={0} />
+                  <Text color={textColor}>
+                    <Text as="span" fontWeight="medium">
+                      Location:
+                    </Text>{' '}
+                    {parcelData.establishment.location}
+                  </Text>
+                </HStack>
+              )}
+            </VStack>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Certification Information */}
+      {(parcelData.certified || parcelData.certification_type) && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Heading size="md" color={textColor} mb={4}>
+              <HStack>
+                <Icon as={FaCertificate} color={accentColor} />
+                <Text>Certification Status</Text>
+              </HStack>
+            </Heading>
+            <VStack spacing={4} align="stretch">
+              <HStack spacing={3}>
+                <Icon
+                  as={parcelData.certified ? FaCheckCircle : FaEye}
+                  color={parcelData.certified ? 'green.500' : 'gray.400'}
+                />
+                <Text color={textColor}>
+                  <Text as="span" fontWeight="medium">
+                    Status:
+                  </Text>{' '}
+                  {parcelData.certified ? 'Certified' : 'Not Certified'}
+                </Text>
+              </HStack>
+              {parcelData.certification_type && (
+                <HStack spacing={3}>
+                  <Icon as={FaAward} color={accentColor} />
+                  <Text color={textColor}>
+                    <Text as="span" fontWeight="medium">
+                      Type:
+                    </Text>{' '}
+                    {formatCertificationType(parcelData.certification_type)}
+                  </Text>
+                </HStack>
+              )}
+            </VStack>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Contact Information - Removed for privacy protection */}
+      {/* Personal contact information (contact_person, contact_phone, contact_email)
+          has been removed from public display to protect farmer privacy.
+          This information should only be available to authenticated users with proper permissions. */}
+
+      {/* Production History Summary */}
+      {parcelData.productions_completed !== undefined &&
+        parcelData.productions_completed > 0 && (
+          <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+            <CardBody p={6}>
+              <Heading size="md" color={textColor} mb={4}>
+                <HStack>
+                  <Icon as={FaTree} color={accentColor} />
+                  <Text>Production History</Text>
+                </HStack>
+              </Heading>
+              <VStack spacing={3} align="stretch">
+                <HStack justify="space-between">
+                  <Text color="gray.500">Completed Productions This Year:</Text>
+                  <Badge colorScheme="green" variant="subtle" px={3} py={1}>
+                    {parcelData.productions_completed}
+                  </Badge>
+                </HStack>
+                {parcelData.total_productions !== undefined && (
+                  <HStack justify="space-between">
+                    <Text color="gray.500">Total Productions:</Text>
+                    <Badge colorScheme="blue" variant="subtle" px={3} py={1}>
+                      {parcelData.total_productions}
+                    </Badge>
+                  </HStack>
+                )}
+                <Progress
+                  value={
+                    (parcelData.productions_completed / (parcelData.total_productions || 1)) *
+                    100
+                  }
+                  colorScheme="green"
+                  size="sm"
+                  borderRadius="full"
+                />
+                <Text color="gray.500" fontSize="sm" textAlign="center">
+                  Production Activity Level
+                </Text>
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
+
+      {/* Images Gallery */}
+      <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+        <CardBody p={6}>
+          <StandardImageGallery
+            images={parcelData.images || []}
+            title="Parcel Gallery"
+            variant="parcel"
+            enablePreview={true}
+            showImageCount={true}
+            height="200px"
+            showEmptyState={true}
+            maxDisplayImages={4}
+            aspectRatio="4/3"
+          />
+        </CardBody>
+      </Card>
+    </VStack>
+  );
+
+  // Mobile: Bottom sheet (Drawer)
+  if (isMobile) {
+    return (
+      <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
+        <DrawerOverlay bg="blackAlpha.400" />
+        <DrawerContent
+          bg={bgColor}
+          borderTopRadius="2xl"
+          maxH="92vh"
+          containerProps={{ style: { zIndex: 10000 } }}
+        >
+          {/* Drag handle indicator */}
+          <Box pt={3} pb={1} display="flex" justifyContent="center">
+            <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
+          </Box>
+          <DrawerCloseButton top={4} />
+          <DrawerHeader px={5} pt={2} pb={4} borderBottomWidth="1px" borderColor={borderColor}>
+            {headerContent}
+          </DrawerHeader>
+          <DrawerBody px={5} py={4} overflowY="auto">
+            {bodyContent}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  // Desktop: Centered modal
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="4xl" scrollBehavior="inside">
+      <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
+      <ModalContent bg={bgColor} borderRadius="xl" maxH="90vh" mx={4}>
+        <ModalHeader p={6} pb={4} borderBottom="1px" borderColor={borderColor}>
+          {headerContent}
         </ModalHeader>
         <ModalCloseButton />
-
         <ModalBody p={6} overflowY="auto">
-          <VStack spacing={6} align="stretch">
-            {/* Description */}
-            {parcelData.description && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Text color={textColor} lineHeight="tall">
-                    {parcelData.description}
-                  </Text>
-                </CardBody>
-              </Card>
-            )}
-
-            {/* Key Statistics */}
-            <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-              <CardBody p={6}>
-                <Heading size="md" color={textColor} mb={4}>
-                  Parcel Overview
-                </Heading>
-                <StatGroup>
-                  <Stat>
-                    <StatLabel color="gray.500">Area</StatLabel>
-                    <StatNumber color={accentColor}>{parcelData.area} ha</StatNumber>
-                  </Stat>
-                  {parcelData.productions_completed !== undefined && (
-                    <Stat>
-                      <StatLabel color="gray.500">Completed Productions</StatLabel>
-                      <StatNumber color={accentColor}>
-                        {parcelData.productions_completed}
-                      </StatNumber>
-                    </Stat>
-                  )}
-                  {parcelData.total_productions !== undefined && (
-                    <Stat>
-                      <StatLabel color="gray.500">Total Productions</StatLabel>
-                      <StatNumber color={accentColor}>{parcelData.total_productions}</StatNumber>
-                    </Stat>
-                  )}
-                  {parcelData.establishment && (
-                    <Stat>
-                      <StatLabel color="gray.500">Establishment</StatLabel>
-                      <StatNumber color={accentColor} fontSize="md">
-                        {parcelData.establishment.name}
-                      </StatNumber>
-                    </Stat>
-                  )}
-                </StatGroup>
-              </CardBody>
-            </Card>
-
-            {/* Interactive Map */}
-            {(parcelData.polygon || parcelData.map_metadata) && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    <HStack>
-                      <Icon as={FaMapMarkerAlt} color={accentColor} />
-                      <Text>Location & Boundaries</Text>
-                    </HStack>
-                  </Heading>
-                  <Box borderRadius="lg" overflow="hidden" minH="400px">
-                    <CardWithMap
-                      parcel={{
-                        polygon: parcelData.polygon,
-                        map_metadata: parcelData.map_metadata,
-                        name: parcelData.name,
-                        area: parcelData.area
-                      }}
-                    />
-                  </Box>
-                  {parcelData.map_metadata?.center && (
-                    <HStack mt={3} spacing={4} fontSize="sm" color="gray.500">
-                      <HStack>
-                        <Icon as={FaCompass} />
-                        <Text>
-                          Center: {parcelData.map_metadata.center[0].toFixed(4)},{' '}
-                          {parcelData.map_metadata.center[1].toFixed(4)}
-                        </Text>
-                      </HStack>
-                      {parcelData.map_metadata.zoom && (
-                        <HStack>
-                          <Icon as={FaExpand} />
-                          <Text>Zoom: {parcelData.map_metadata.zoom}</Text>
-                        </HStack>
-                      )}
-                    </HStack>
-                  )}
-                </CardBody>
-              </Card>
-            )}
-
-            {/* Current Production */}
-            {parcelData.current_history && (
-              <Card
-                bg={useColorModeValue('blue.50', 'blue.900')}
-                borderRadius="lg"
-                border="1px"
-                borderColor="blue.200"
-              >
-                <CardBody p={6}>
-                  <HStack mb={3}>
-                    <Icon as={FaSeedling} color="blue.500" />
-                    <Heading size="md" color="blue.700">
-                      Current Production
-                    </Heading>
-                  </HStack>
-                  <VStack spacing={3} align="stretch">
-                    <HStack justify="space-between">
-                      <Text color="blue.600" fontWeight="medium">
-                        {parcelData.current_history.name}
-                      </Text>
-                      <Badge colorScheme="blue" variant="subtle">
-                        Active
-                      </Badge>
-                    </HStack>
-                    {parcelData.current_history.crop_type && (
-                      <HStack>
-                        <Icon as={FaSeedling} color="blue.500" />
-                        <Text color="blue.600" fontSize="sm">
-                          Crop: {parcelData.current_history.crop_type}
-                        </Text>
-                      </HStack>
-                    )}
-                    <HStack>
-                      <Icon as={FaCalendarAlt} color="blue.500" />
-                      <Text color="blue.600" fontSize="sm">
-                        Started:{' '}
-                        {new Date(parcelData.current_history.start_date).toLocaleDateString()}
-                      </Text>
-                    </HStack>
-                  </VStack>
-                </CardBody>
-              </Card>
-            )}
-
-            {/* Soil and Environmental Data */}
-            {parcelData.soil_type && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    <HStack>
-                      <Icon as={getSoilTypeIcon(parcelData.soil_type)} color={accentColor} />
-                      <Text>Soil & Environment</Text>
-                    </HStack>
-                  </Heading>
-                  <VStack spacing={4} align="stretch">
-                    <HStack spacing={3}>
-                      <Icon as={FaLayerGroup} color={accentColor} />
-                      <Text color={textColor}>
-                        <Text as="span" fontWeight="medium">
-                          Soil Type:
-                        </Text>{' '}
-                        {formatDisplayValue(parcelData.soil_type)}
-                      </Text>
-                    </HStack>
-                    {parcelData.establishment?.location && (
-                      <HStack spacing={3}>
-                        <Icon as={FaMapMarkerAlt} color={accentColor} />
-                        <Text color={textColor}>
-                          <Text as="span" fontWeight="medium">
-                            Location:
-                          </Text>{' '}
-                          {parcelData.establishment.location}
-                        </Text>
-                      </HStack>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
-            )}
-
-            {/* Certification Information */}
-            {(parcelData.certified || parcelData.certification_type) && (
-              <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                <CardBody p={6}>
-                  <Heading size="md" color={textColor} mb={4}>
-                    <HStack>
-                      <Icon as={FaCertificate} color={accentColor} />
-                      <Text>Certification Status</Text>
-                    </HStack>
-                  </Heading>
-                  <VStack spacing={4} align="stretch">
-                    <HStack spacing={3}>
-                      <Icon
-                        as={parcelData.certified ? FaCheckCircle : FaEye}
-                        color={parcelData.certified ? 'green.500' : 'gray.400'}
-                      />
-                      <Text color={textColor}>
-                        <Text as="span" fontWeight="medium">
-                          Status:
-                        </Text>{' '}
-                        {parcelData.certified ? 'Certified' : 'Not Certified'}
-                      </Text>
-                    </HStack>
-                    {parcelData.certification_type && (
-                      <HStack spacing={3}>
-                        <Icon as={FaAward} color={accentColor} />
-                        <Text color={textColor}>
-                          <Text as="span" fontWeight="medium">
-                            Type:
-                          </Text>{' '}
-                          {formatCertificationType(parcelData.certification_type)}
-                        </Text>
-                      </HStack>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
-            )}
-
-            {/* Contact Information - Removed for privacy protection */}
-            {/* Personal contact information (contact_person, contact_phone, contact_email) 
-                has been removed from public display to protect farmer privacy.
-                This information should only be available to authenticated users with proper permissions. */}
-
-            {/* Production History Summary */}
-            {parcelData.productions_completed !== undefined &&
-              parcelData.productions_completed > 0 && (
-                <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                  <CardBody p={6}>
-                    <Heading size="md" color={textColor} mb={4}>
-                      <HStack>
-                        <Icon as={FaTree} color={accentColor} />
-                        <Text>Production History</Text>
-                      </HStack>
-                    </Heading>
-                    <VStack spacing={3} align="stretch">
-                      <HStack justify="space-between">
-                        <Text color="gray.500">Completed Productions This Year:</Text>
-                        <Badge colorScheme="green" variant="subtle" px={3} py={1}>
-                          {parcelData.productions_completed}
-                        </Badge>
-                      </HStack>
-                      {parcelData.total_productions !== undefined && (
-                        <HStack justify="space-between">
-                          <Text color="gray.500">Total Productions:</Text>
-                          <Badge colorScheme="blue" variant="subtle" px={3} py={1}>
-                            {parcelData.total_productions}
-                          </Badge>
-                        </HStack>
-                      )}
-                      <Progress
-                        value={
-                          (parcelData.productions_completed / (parcelData.total_productions || 1)) *
-                          100
-                        }
-                        colorScheme="green"
-                        size="sm"
-                        borderRadius="full"
-                      />
-                      <Text color="gray.500" fontSize="sm" textAlign="center">
-                        Production Activity Level
-                      </Text>
-                    </VStack>
-                  </CardBody>
-                </Card>
-              )}
-
-            {/* Images Gallery */}
-            <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-              <CardBody p={6}>
-                <StandardImageGallery
-                  images={parcelData.images || []}
-                  title="Parcel Gallery"
-                  variant="parcel"
-                  enablePreview={true}
-                  showImageCount={true}
-                  height="200px"
-                  showEmptyState={true}
-                  maxDisplayImages={4}
-                  aspectRatio="4/3"
-                />
-              </CardBody>
-            </Card>
-          </VStack>
+          {bodyContent}
         </ModalBody>
       </ModalContent>
     </Modal>

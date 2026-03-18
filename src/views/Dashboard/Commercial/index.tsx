@@ -156,9 +156,6 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
     metrics.totalScans > 0 ? Math.round((metrics.highEngagement / metrics.totalScans) * 100) : 0;
   const uniquePercentage =
     metrics.totalScans > 0 ? Math.round((metrics.uniqueSessions / metrics.totalScans) * 100) : 0;
-  const consentPercentage =
-    metrics.totalScans > 0 ? Math.round((metrics.consentedScans / metrics.totalScans) * 100) : 0;
-
   if (isLoading) {
     return (
       <StandardCard title={intl.formatMessage({ id: 'commercial.customerQualityAnalytics' })} variant="elevated">
@@ -175,7 +172,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
       subtitle={intl.formatMessage({ id: 'commercial.customerQualitySubtitle' })}
       variant="elevated"
     >
-      <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 3, md: 6 }}>
+      <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 6 }}>
         {/* Human vs Bot Scans */}
         <Stat>
           <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
@@ -267,24 +264,6 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           </StatHelpText>
         </Stat>
 
-        {/* GDPR Compliance */}
-        <Stat>
-          <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-            <HStack spacing={1.5}>
-              <Icon as={FaShieldAlt} color="green.500" boxSize={{ base: 3, md: 4 }} />
-              <Text>{intl.formatMessage({ id: 'commercial.privacyCompliant' })}</Text>
-            </HStack>
-          </StatLabel>
-          <StatNumber fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color={textColor}>
-            {consentPercentage}%
-          </StatNumber>
-          <StatHelpText fontSize="xs" color="gray.500" mb={0}>
-            {intl.formatMessage({ id: 'commercial.consentedScans' }, { count: metrics.consentedScans })}
-            <Badge ml={1.5} colorScheme="green" fontSize="xs">
-              {intl.formatMessage({ id: 'commercial.gdprCompliant' })}
-            </Badge>
-          </StatHelpText>
-        </Stat>
       </SimpleGrid>
 
       {/* Quality Insights & Education */}

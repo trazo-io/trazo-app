@@ -38,6 +38,7 @@ import { logout as logoutAction } from 'store/features/authSlice';
 import routes from 'routes.tsx';
 import { useIntl } from 'react-intl';
 import { useLogoutMutation } from 'store/api/authApi';
+import baseApi from 'store/api/baseApi';
 import { useNavigate } from 'react-router-dom';
 
 type AuthNavbarProps = {
@@ -71,7 +72,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     onClose: onCloseApplication
   } = useDisclosure();
 
-  const [logout, { isLoading, isSuccess, error, isError }] = useLogoutMutation();
+  const [logout, { isLoading }] = useLogoutMutation();
 
   useEffect(() => {
     // Use centralized subdomain detection utility
@@ -79,20 +80,20 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     setIsConsumer(isConsumerSubdomain());
   }, []);
 
-  const handleLogout = () => {
-    logout();
-  };
-
-  useEffect(() => {
-    if (isSuccess) {
-      dispatch(logoutAction());
-      dispatch(clearCurrentCompany());
-      dispatch(clearUser());
-      setTimeout(() => {
-        navigate('/auth/signin', { replace: true });
-      }, 1);
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+    } catch (err) {
+      console.error('Logout request failed:', err);
     }
-  }, [dispatch, isSuccess, navigate]);
+    // Always clean up Redux state and redirect, regardless of server response
+    dispatch(logoutAction());
+    dispatch(clearCurrentCompany());
+    dispatch(clearUser());
+    // Flush RTK Query cache BEFORE navigation to prevent stale data from previous user
+    dispatch(baseApi.util.resetApiState());
+    navigate('/auth/signin', { replace: true });
+  };
 
   const {
     isOpen: isOpenEcommerce,

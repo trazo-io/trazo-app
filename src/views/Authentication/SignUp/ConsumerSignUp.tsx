@@ -36,7 +36,9 @@ import AuthFooter from 'components/Footer/AuthFooter';
 import { passwordValidator } from '../../../utils/passwordValidation';
 import { PasswordStrengthIndicator } from '../../../components/Forms/PasswordStrengthIndicator';
 import { useSignUpMutation, useSocialAuthMutation } from '../../../store/api/authApi';
+import { useClaimScansMutation } from '../../../store/api/historyApi';
 import { login as loginAction } from '../../../store/features/authSlice';
+import { getPendingScanTokens, clearPendingScans } from '../../../utils/pendingScanStorage';
 import {
   handleGoogleSignIn,
   handleFacebookSignIn,
@@ -64,6 +66,7 @@ const ConsumerSignUp: React.FC = () => {
   const toast = useToast();
   const [signUp, { isLoading }] = useSignUpMutation();
   const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
+  const [claimScans] = useClaimScansMutation();
   const [error, setError] = useState<string | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -143,6 +146,15 @@ const ConsumerSignUp: React.FC = () => {
 
       // Dispatch login action
       dispatch(loginAction(response));
+
+      // Claim any anonymous scans made before signing up
+      const pendingTokens = getPendingScanTokens();
+      if (pendingTokens.length > 0) {
+        claimScans({ claim_tokens: pendingTokens })
+          .unwrap()
+          .then(() => clearPendingScans())
+          .catch(() => clearPendingScans());
+      }
 
       // Set a flag to prevent Authenticated component from interfering
       sessionStorage.setItem('just_authenticated', 'true');
