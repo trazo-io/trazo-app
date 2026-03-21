@@ -284,7 +284,7 @@ function ProfileParcel(): React.ReactElement {
     return (
       <StandardPage
         showBackButton
-        onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
+        onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
       >
         <StandardPageLoading />
       </StandardPage>
@@ -336,7 +336,7 @@ function ProfileParcel(): React.ReactElement {
   return (
     <StandardPage
       showBackButton
-      onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
+      onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
     >
       <VStack spacing={{ base: 4, md: 8 }} w="100%">
         {/* Identity Section */}

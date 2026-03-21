@@ -321,7 +321,7 @@ const ConsumerSignIn: React.FC = () => {
             </VStack>
 
             <VStack spacing={3} pt={4}>
-              {['See the full farming journey', 'Verified practices you can trust', 'Real farm stories and photos'].map(
+              {['See the full farming journey', 'Documented practices you can trust', 'Real farm stories and photos'].map(
                 (feature, index) => (
                   <HStack key={index} spacing={3}>
                     <Box w={2} h={2} bg="white" borderRadius="50%" />

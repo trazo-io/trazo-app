@@ -483,7 +483,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                             py={1}
                             fontSize="xs"
                           >
-                            {cert}
+                            {typeof cert === 'object' && cert !== null ? cert.display_name || cert.name || 'Certification' : cert}
                           </Badge>
                         ));
                       })()}
@@ -661,12 +661,14 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
             total_establishments: companyData.total_establishments,
             total_parcels: companyData.total_parcels,
             certifications: Array.isArray(companyData.certifications)
-              ? companyData.certifications
+              ? companyData.certifications.map((cert: any) =>
+                  typeof cert === 'object' && cert !== null ? cert.display_name || cert.name || 'Certification' : cert
+                )
               : typeof companyData.certifications === 'string'
               ? companyData.certifications
                   .split(',')
-                  .map((cert) => cert.trim())
-                  .filter((cert) => cert)
+                  .map((cert: string) => cert.trim())
+                  .filter((cert: string) => cert)
               : undefined,
             subscription_plan: companyData.subscription_plan
           }}
@@ -700,7 +702,13 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
             certifications:
               typeof establishmentData.certifications === 'string'
                 ? establishmentData.certifications
-                : establishmentData.certifications?.join(', '),
+                : Array.isArray(establishmentData.certifications)
+                ? establishmentData.certifications
+                    .map((cert: any) =>
+                      typeof cert === 'object' && cert !== null ? cert.display_name || cert.name || 'Certification' : cert
+                    )
+                    .join(', ')
+                : undefined,
             about: establishmentData.about,
             main_activities: establishmentData.main_activities,
             location_highlights: establishmentData.location_highlights,

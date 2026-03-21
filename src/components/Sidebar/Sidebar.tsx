@@ -109,7 +109,7 @@ function Sidebar(props: SidebarProps) {
           layout: '/admin',
           isDashboard: true,
           regex: new RegExp(
-            `^\\/admin\\/dashboard\\/establishment\\/${e.id}(\\/parcel\\/[0-9]+)?$`
+            `^\\/admin\\/dashboard\\/establishment\\/${e.id}(\\/.*)?$`
           ),
           items: e?.parcels?.map((p: ParcelType) => {
             return {
@@ -119,7 +119,7 @@ function Sidebar(props: SidebarProps) {
               layout: '/admin',
               isDashboard: true,
               regex: new RegExp(
-                `^\\/admin\\/dashboard\\/establishment\\/${e.id}\\/parcel\\/${p.id}$`
+                `^\\/admin\\/dashboard\\/establishment\\/${e.id}\\/parcel\\/${p.id}(\\/.*)?$`
               )
             };
           })

@@ -337,22 +337,24 @@ const StandardImageGallery = ({
       {/* Full-screen preview modal */}
       {enablePreview && (
         <Modal isOpen={isOpen} onClose={onClose} size="full" isCentered>
-          <ModalOverlay bg={overlayBg} />
+          <ModalOverlay bg="black" zIndex={10000} />
           <ModalContent
             bg="transparent"
             boxShadow="none"
             m={0}
             h="100vh"
             w="100vw"
+            maxW="100vw"
             display="flex"
             alignItems="center"
             justifyContent="center"
             position="relative"
             overflow="hidden"
+            containerProps={{ style: { zIndex: 10001 } }}
           >
             <ModalCloseButton
               position="absolute"
-              top={4}
+              top={{ base: "calc(env(safe-area-inset-top, 0px) + 48px)", md: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
               right={4}
               zIndex={20}
               bg="blackAlpha.700"
@@ -371,6 +373,8 @@ const StandardImageGallery = ({
               alignItems="center"
               justifyContent="center"
               position="relative"
+              onClick={onClose}
+              cursor="pointer"
             >
               {/* Main image container */}
               <Box
@@ -392,6 +396,8 @@ const StandardImageGallery = ({
                   boxShadow="2xl"
                   lazy={false}
                   presignedUrl={presignedUrls[processedImages[currentImageIndex]?.url]}
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  cursor="default"
                 />
 
                 {/* Desktop Navigation arrows */}
@@ -408,7 +414,7 @@ const StandardImageGallery = ({
                       color="white"
                       size="lg"
                       borderRadius="full"
-                      onClick={goToPrevious}
+                      onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
                       _hover={{ bg: 'blackAlpha.900', transform: 'translateY(-50%) scale(1.1)' }}
                       _focus={{ boxShadow: 'none' }}
                       transition="all 0.2s"
@@ -427,7 +433,7 @@ const StandardImageGallery = ({
                       color="white"
                       size="lg"
                       borderRadius="full"
-                      onClick={goToNext}
+                      onClick={(e) => { e.stopPropagation(); goToNext(); }}
                       _hover={{ bg: 'blackAlpha.900', transform: 'translateY(-50%) scale(1.1)' }}
                       _focus={{ boxShadow: 'none' }}
                       transition="all 0.2s"
@@ -442,7 +448,7 @@ const StandardImageGallery = ({
               {processedImages.length > 1 && (
                 <Box
                   position="absolute"
-                  bottom={6}
+                  bottom="calc(env(safe-area-inset-bottom, 0px) + 24px)"
                   left="50%"
                   transform="translateX(-50%)"
                   bg="blackAlpha.700"
@@ -468,7 +474,7 @@ const StandardImageGallery = ({
                     top={0}
                     bottom={0}
                     width="25%"
-                    onClick={goToPrevious}
+                    onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
                     cursor="pointer"
                     zIndex={10}
                     display="flex"
@@ -492,7 +498,7 @@ const StandardImageGallery = ({
                     top={0}
                     bottom={0}
                     width="25%"
-                    onClick={goToNext}
+                    onClick={(e) => { e.stopPropagation(); goToNext(); }}
                     cursor="pointer"
                     zIndex={10}
                     display="flex"

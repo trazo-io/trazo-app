@@ -712,6 +712,7 @@ export const StandardButton = ({
       width={width}
       borderRadius="lg"
       fontWeight="semibold"
+      minH="44px"
       _focus={{ boxShadow: '0 0 0 3px rgba(46, 125, 50, 0.15)' }}
       _hover={{
         boxShadow: 'lg',

@@ -463,7 +463,7 @@ const AcceptInvitation: React.FC = () => {
             <VStack spacing={3} pt={4}>
               {[
                 'Enterprise-grade carbon tracking',
-                'Blockchain-verified transparency',
+                'Transparency-first documentation',
                 'Science-based emission data'
               ].map((feature, index) => (
                 <HStack key={index} spacing={3}>

@@ -738,7 +738,7 @@ const CarbonDashboard = () => {
                   {finalTransparencyScore !== null ? finalTransparencyScore : '0'}/100
                 </Text>
                 <Text fontSize="md" color="gray.600" mb={3}>
-                  Verified Practices
+                  Documented Practices
                 </Text>
 
                 {/* Blockchain Verification Indicator */}

@@ -1127,7 +1127,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
                       leftIcon={<FaCheckCircle />}
                     >
-                      {isEdit ? 'Update Production' : 'Start Blockchain-Verified Production'}
+                      {isEdit ? 'Update Production' : 'Start Production'}
                     </StandardButton>
                   </HStack>
                 </HStack>
@@ -1354,7 +1354,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
                       leftIcon={<FaCheckCircle />}
                     >
-                      {isEdit ? 'Update Production' : 'Start Blockchain-Verified Production'}
+                      {isEdit ? 'Update Production' : 'Start Production'}
                     </StandardButton>
                   </HStack>
                 </HStack>

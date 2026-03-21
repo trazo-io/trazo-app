@@ -113,6 +113,12 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
     usda_compliance_percentage
   } = verificationData;
 
+  // Do not render any blockchain badge for mock or demo data —
+  // consumers cannot distinguish real from simulated records.
+  if (mock_data || fallback_data) {
+    return null;
+  }
+
   // Get network icon
   const getNetworkIcon = () => {
     if (network?.includes('ethereum')) return FaEthereum;

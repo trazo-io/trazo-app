@@ -38,6 +38,7 @@ import { useIntl } from 'react-intl';
 import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 'components/Design/StandardComponents';
 import { useGetEstablishmentQuery } from 'store/api/companyApi';
 import { StandardImageGallery } from 'components/ImageGallery';
+import CertificationManager from 'components/Certifications/CertificationManager';
 
 // Type definitions
 interface RootState {
@@ -579,29 +580,13 @@ function ProfileEstablishment() {
           </StandardCard>
         )}
 
-        {/* Certifications */}
-        {getCertifications().length > 0 && (
-          <StandardCard title={intl.formatMessage({ id: 'establishment.certifications' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-            <HStack spacing={2} flexWrap="wrap">
-              {getCertifications().map((cert: string, index: number) => (
-                <Badge
-                  key={index}
-                  colorScheme="blue"
-                  variant="subtle"
-                  px={{ base: 2, md: 3 }}
-                  py={0.5}
-                  borderRadius="full"
-                  fontSize={{ base: 'xs', md: 'sm' }}
-                >
-                  <HStack spacing={1}>
-                    <Icon as={FaCertificate} boxSize={3} />
-                    <Text>{cert}</Text>
-                  </HStack>
-                </Badge>
-              ))}
-            </HStack>
-          </StandardCard>
-        )}
+        {/* Verified Certifications — Structured data with USDA verification */}
+        <StandardCard title={intl.formatMessage({ id: 'certification.manage.title' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+          <CertificationManager
+            companyId={currentCompany?.id}
+            establishmentId={establishmentId}
+          />
+        </StandardCard>
 
         {/* Sustainability Practices */}
         {getSustainabilityPractices().length > 0 && (

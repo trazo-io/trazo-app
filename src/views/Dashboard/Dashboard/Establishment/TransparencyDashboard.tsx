@@ -15,7 +15,6 @@ import {
   useColorModeValue,
   Heading,
   useToast,
-  useBreakpointValue,
   CircularProgress,
   Alert,
   AlertIcon,
@@ -25,7 +24,6 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
-  Tooltip,
   Switch
 } from '@chakra-ui/react';
 import {
@@ -33,7 +31,6 @@ import {
   FaChartLine,
   FaShieldAlt,
   FaChevronLeft,
-  FaExclamationTriangle,
   FaPhotoVideo,
   FaDatabase,
   FaCloudUploadAlt,
@@ -55,6 +52,9 @@ import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import transparencyQrApi from 'store/api/transparencyQrApi';
 import { useGetProductionsByEstablishmentQuery } from 'store/api/companyApi';
 import { useUpdateProductionMutation } from 'store/api/historyApi.js';
+import TransparencyCategoryBreakdown from 'components/ProfileSections/TransparencyCategoryBreakdown';
+import TransparencyImprovementRoadmap from 'components/ProfileSections/TransparencyImprovementRoadmap';
+import PhotoVerificationGap from 'components/ProfileSections/PhotoVerificationGap';
 
 function TransparencyDashboard() {
   const navigate = useNavigate();
@@ -96,10 +96,6 @@ function TransparencyDashboard() {
       refetchOnMountOrArgChange: true
     }
   );
-
-  // Basic responsive utilities - exact same as ProfileEstablishment
-  const touchTargetSize = useBreakpointValue({ base: '48px', sm: '44px', md: '40px' });
-  const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Get productions data for this establishment
   const {
@@ -166,7 +162,6 @@ function TransparencyDashboard() {
   const bgColor = useColorModeValue('white', 'gray.800');
   const cardPadding = { base: 4, sm: 5, md: 6, lg: 8 };
   const mobileCardRadius = { base: 'none', md: '2xl' };
-  const headingSize = { base: 'md', sm: 'lg', md: 'xl' };
 
   // Loading state - exact same as ProfileEstablishment pattern
   if (isLoading) {
@@ -499,38 +494,6 @@ function TransparencyDashboard() {
     .flatMap((priority) => priorityGroups[priority] || [])
     .slice(0, 6); // Show top 6 opportunities
 
-  // Generate specific edit URLs for transparency improvement actions
-  const generateEditUrl = (opportunity: any) => {
-    // PRIORITY 1: Use backend-provided action_url if available (for production-specific opportunities)
-    if (opportunity.action_url) {
-      return opportunity.action_url;
-    }
-
-    // FALLBACK: Route farmers to specific actionable pages based on opportunity type
-    if (opportunity.type === 'photo_validation') {
-      // Direct farmers to production list where they can add photos to existing events
-      return `/admin/dashboard/establishment/${establishmentId}/production`;
-    }
-    if (opportunity.type === 'usda_verification') {
-      // Direct farmers to production list where they can add USDA verification to chemical events
-      return `/admin/dashboard/establishment/${establishmentId}/production`;
-    }
-    if (opportunity.type === 'blockchain_verification') {
-      // Direct farmers to subscription page for blockchain features
-      return `/admin/dashboard/subscription`;
-    }
-    if (opportunity.type === 'production_documentation') {
-      // Direct farmers to add new production
-      return `/admin/dashboard/establishment/${establishmentId}/production/add`;
-    }
-    if (opportunity.type === 'event_verification') {
-      // Direct farmers to production list where they can verify events
-      return `/admin/dashboard/establishment/${establishmentId}/production`;
-    }
-    // Default fallback to production list
-    return `/admin/dashboard/establishment/${establishmentId}/production`;
-  };
-
   return (
     <Flex
       direction="column"
@@ -815,6 +778,49 @@ function TransparencyDashboard() {
                 );
               })()}
 
+              {/* Transparency Category Breakdown - Per-category progress with photo status */}
+              {transparencyMetrics?.transparency_breakdown &&
+                Object.keys(transparencyMetrics.transparency_breakdown).length > 0 && (
+                <Box>
+                  <Heading size="md" color={titleColor} mb={1} fontSize={{ base: 'lg', md: 'xl' }}>
+                    {intl.formatMessage({ id: 'transparency.categoryBreakdownTitle' })}
+                  </Heading>
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" mb={4}>
+                    {intl.formatMessage({ id: 'transparency.categoryBreakdownDescription' })}
+                  </Text>
+                  <TransparencyCategoryBreakdown
+                    categoryBreakdown={transparencyMetrics.transparency_breakdown}
+                  />
+                </Box>
+              )}
+
+              {/* Photo Verification Gap - Which categories need photo documentation */}
+              {transparencyMetrics?.transparency_breakdown &&
+                Object.keys(transparencyMetrics.transparency_breakdown).length > 0 && (
+                <Box>
+                  <Heading size="md" color={titleColor} mb={1} fontSize={{ base: 'lg', md: 'xl' }}>
+                    {intl.formatMessage({ id: 'transparency.photoDocumentationTitle' })}
+                  </Heading>
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" mb={4}>
+                    {intl.formatMessage({ id: 'transparency.photoDocumentationDescription' })}
+                  </Text>
+                  <PhotoVerificationGap
+                    categoryBreakdown={transparencyMetrics.transparency_breakdown}
+                  />
+                </Box>
+              )}
+
+              {/* Improvement Roadmap - Actionable next steps sorted by priority */}
+              {sortedOpportunities.length > 0 && (
+                <Box>
+                  <TransparencyImprovementRoadmap
+                    opportunities={sortedOpportunities}
+                    currentScore={Math.round(actualTransparencyScore * 100)}
+                    onAddEvent={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
+                  />
+                </Box>
+              )}
+
               {/* Critical Photo Alert - When 0 Photos Across Critical Categories */}
               {totalPhotos === 0 && totalEvents > 0 && (
                 <Alert
@@ -1068,247 +1074,6 @@ function TransparencyDashboard() {
                 )}
               </Box>
 
-              {/* Documentation Coverage - Establishment Average */}
-              {transparencyMetrics?.transparency_breakdown &&
-                Object.keys(transparencyMetrics.transparency_breakdown).length > 0 && (
-                <Box>
-                  <Heading size="md" color={titleColor} mb={1} fontSize={{ base: 'lg', md: 'xl' }}>
-                    {intl.formatMessage({ id: 'transparency.documentationCoverage' })}
-                  </Heading>
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" mb={4}>
-                    {intl.formatMessage({ id: 'transparency.documentationCoverageHelp' })}
-                  </Text>
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                    {Object.entries(transparencyMetrics.transparency_breakdown as Record<string, any>)
-                      .sort(([a]: [string, any], [b]: [string, any]) =>
-                        (CATEGORY_WEIGHTS[b] || 0) - (CATEGORY_WEIGHTS[a] || 0)
-                      )
-                      .map(([key, cat]: [string, any]) => {
-                        const weight = CATEGORY_WEIGHTS[key] || 5;
-                        const needsPhotos = cat.requires_photos && cat.photo_verification_rate < 80 && cat.actual_count > 0;
-                        const isEmpty = cat.actual_count === 0;
-
-                        return (
-                          <Box
-                            key={key}
-                            p={3}
-                            bg="gray.50"
-                            borderRadius="lg"
-                            border="1px solid"
-                            borderColor={
-                              cat.completeness_percentage >= 80
-                                ? 'green.200'
-                                : cat.completeness_percentage >= 50
-                                ? 'yellow.200'
-                                : cat.actual_count > 0
-                                ? 'orange.200'
-                                : 'gray.200'
-                            }
-                          >
-                            <HStack justify="space-between" mb={2}>
-                              <HStack spacing={2}>
-                                <Text fontSize="sm" fontWeight="semibold" color="gray.700">
-                                  {CATEGORY_CONSUMER_NAMES[key] || key}
-                                </Text>
-                                <Badge
-                                  fontSize="xs"
-                                  colorScheme="gray"
-                                  variant="outline"
-                                  borderRadius="full"
-                                >
-                                  {intl.formatMessage({ id: 'transparency.weightLabel' }, { weight })}
-                                </Badge>
-                              </HStack>
-                              <Badge
-                                colorScheme={
-                                  cat.completeness_percentage >= 80
-                                    ? 'green'
-                                    : cat.completeness_percentage >= 50
-                                    ? 'yellow'
-                                    : cat.actual_count > 0
-                                    ? 'orange'
-                                    : 'gray'
-                                }
-                                fontSize="xs"
-                              >
-                                {intl.formatMessage({ id: 'transparency.eventCount' }, { count: cat.actual_count })}
-                              </Badge>
-                            </HStack>
-                            <Progress
-                              value={cat.completeness_percentage || 0}
-                              colorScheme={
-                                cat.completeness_percentage >= 80
-                                  ? 'green'
-                                  : cat.completeness_percentage >= 50
-                                  ? 'yellow'
-                                  : cat.actual_count > 0
-                                  ? 'orange'
-                                  : 'gray'
-                              }
-                              borderRadius="full"
-                              size="sm"
-                              mb={1}
-                            />
-                            <Text fontSize="xs" color="gray.500">
-                              {cat.completeness_percentage >= 90
-                                ? intl.formatMessage({ id: 'transparency.fullyDocumented' })
-                                : isEmpty
-                                ? intl.formatMessage({ id: 'transparency.logEventsForScoreEstablishment' }, { weight })
-                                : needsPhotos
-                                ? intl.formatMessage({ id: 'transparency.addPhotosForContribution' }, { weight })
-                                : (() => {
-                                    const levelMap: Record<string, string> = {
-                                      'Fully documented': 'transparency.levelFullyDocumented',
-                                      'Well documented': 'transparency.levelWellDocumented',
-                                      'Partially documented': 'transparency.levelPartiallyDocumented',
-                                      'Limited documentation': 'transparency.levelLimitedDocumentation'
-                                    };
-                                    const levelKey = levelMap[cat.transparency_level];
-                                    return levelKey ? intl.formatMessage({ id: levelKey }) : intl.formatMessage({ id: 'transparency.documented' });
-                                  })()}
-                            </Text>
-                          </Box>
-                        );
-                      })}
-                  </SimpleGrid>
-                </Box>
-              )}
-
-              {/* Event Validation Opportunities - Specific Edit Links */}
-              {sortedOpportunities.length > 0 && (
-                <Box>
-                  <VStack align="start" spacing={2} mb={4}>
-                    <HStack spacing={2} align="center">
-                      <Icon as={FaExclamationTriangle} color="orange.500" boxSize={{ base: 4, md: 5 }} />
-                      <Heading size="md" color="orange.600" fontSize={{ base: 'lg', md: 'xl' }}>
-                        {intl.formatMessage({ id: 'transparency.improvementActions' })}
-                      </Heading>
-                    </HStack>
-                    {(() => {
-                      const currentScore = Math.round(actualTransparencyScore * 100);
-                      const totalImprovement = sortedOpportunities.reduce((sum: number, opp: any) => {
-                        const match = (opp.potential_improvement || '').match(/\+?(\d+)/);
-                        return sum + (match ? parseInt(match[1], 10) : 0);
-                      }, 0);
-                      const projectedScore = Math.min(currentScore + totalImprovement, 100);
-
-                      if (totalImprovement > 0) {
-                        return (
-                          <Badge colorScheme="green" fontSize="xs" px={3} py={1} borderRadius="full">
-                            {intl.formatMessage({ id: 'transparency.scoreProjection' }, { current: currentScore, projected: projectedScore })}
-                          </Badge>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </VStack>
-                  <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
-                    {sortedOpportunities.map((opportunity, index) => (
-                      <Card
-                        key={`${opportunity.priority}-${index}`}
-                        bg="orange.50"
-                        borderLeft="4px solid"
-                        borderLeftColor="orange.400"
-                        borderRadius="lg"
-                        transition="all 0.2s"
-                        _hover={{ bg: 'orange.75', borderLeftColor: 'orange.500' }}
-                      >
-                        <CardBody p={4}>
-                          <VStack align="stretch" spacing={3}>
-                            <HStack justify="space-between">
-                              <Badge
-                                colorScheme={
-                                  (opportunity.priority || 'medium') === 'high'
-                                    ? 'red'
-                                    : (opportunity.priority || 'medium') === 'medium'
-                                    ? 'orange'
-                                    : 'yellow'
-                                }
-                                variant="solid"
-                              >
-                                {(opportunity.priority || 'medium') === 'high'
-                                  ? intl.formatMessage({ id: 'transparency.priorityUrgent' })
-                                  : (opportunity.priority || 'medium') === 'medium'
-                                  ? intl.formatMessage({ id: 'transparency.priorityImportant' })
-                                  : intl.formatMessage({ id: 'transparency.prioritySuggested' })}
-                              </Badge>
-                              <Text fontSize="xs" color="gray.500" textTransform="uppercase">
-                                {opportunity.type === 'photo_validation'
-                                  ? intl.formatMessage({ id: 'transparency.typeAddPhotos' })
-                                  : opportunity.type === 'usda_verification'
-                                  ? intl.formatMessage({ id: 'transparency.typeVerifyProducts' })
-                                  : opportunity.type === 'blockchain_verification'
-                                  ? intl.formatMessage({ id: 'transparency.typeUltimateTrust' })
-                                  : intl.formatMessage({ id: 'transparency.typeImproveTransparency' })}
-                              </Text>
-                            </HStack>
-
-                            <Text fontWeight="bold" fontSize="sm" color={textColor}>
-                              {(() => {
-                                if (opportunity.type === 'production_specific' && opportunity.production_id) {
-                                  // Extract crop type from backend title "Production #ID - CropType"
-                                  const cropMatch = (opportunity.title || '').match(/- (.+)$/);
-                                  const cropType = cropMatch ? cropMatch[1] : '';
-                                  return intl.formatMessage({ id: 'transparency.opportunityProductionTitle' }, { id: opportunity.production_id, cropType });
-                                }
-                                if (opportunity.type === 'create_production') return intl.formatMessage({ id: 'transparency.opportunityStartFirst' });
-                                if (opportunity.type === 'create_new_production') return intl.formatMessage({ id: 'transparency.opportunityNewSeason' });
-                                if (opportunity.type === 'continuous_improvement') return intl.formatMessage({ id: 'transparency.opportunityExcellent' });
-                                if (opportunity.type === 'photo_validation') return intl.formatMessage({ id: 'transparency.defaultTitlePhotos' });
-                                if (opportunity.type === 'usda_verification') return intl.formatMessage({ id: 'transparency.defaultTitleVerify' });
-                                return intl.formatMessage({ id: 'transparency.defaultTitleImprove' });
-                              })()}
-                            </Text>
-
-                            <Text fontSize="xs" color="gray.600" lineHeight="1.4">
-                              {(() => {
-                                if (opportunity.type === 'create_production') return intl.formatMessage({ id: 'transparency.opportunityStartFirstDesc' });
-                                if (opportunity.type === 'create_new_production') return intl.formatMessage({ id: 'transparency.opportunityNewSeasonDesc' });
-                                if (opportunity.type === 'continuous_improvement') return intl.formatMessage({ id: 'transparency.opportunityExcellentDesc' });
-                                if (!opportunity.description) {
-                                  if (opportunity.type === 'photo_validation') return intl.formatMessage({ id: 'transparency.defaultDescPhotos' });
-                                  if (opportunity.type === 'usda_verification') return intl.formatMessage({ id: 'transparency.defaultDescVerify' });
-                                  return intl.formatMessage({ id: 'transparency.defaultDescImprove' });
-                                }
-                                // For production_specific, translate "Missing:" prefix
-                                const desc = opportunity.description || '';
-                                if (desc.startsWith('Missing: ')) {
-                                  return intl.formatMessage({ id: 'transparency.opportunityMissingPrefix' }, { details: desc.replace('Missing: ', '') });
-                                }
-                                return desc;
-                              })()}
-                            </Text>
-
-                            <HStack justify="space-between" mt={2}>
-                              <Text fontSize="xs" color="green.600" fontWeight="medium">
-                                💡 {(() => {
-                                  const imp = opportunity.potential_improvement || '';
-                                  // Translate "+N% transparency" pattern
-                                  const match = imp.match(/\+(\d+)%\s*transparency/);
-                                  if (match) {
-                                    return `+${match[1]}% ${intl.formatMessage({ id: 'transparency.opportunityImprovementSuffix' })}`;
-                                  }
-                                  return imp || intl.formatMessage({ id: 'transparency.defaultImprovement' });
-                                })()}
-                              </Text>
-                              <Button
-                                size="sm"
-                                colorScheme="orange"
-                                variant="solid"
-                                leftIcon={<FaEdit />}
-                                onClick={() => navigate(generateEditUrl(opportunity))}
-                              >
-                                {intl.formatMessage({ id: 'transparency.edit' })}
-                              </Button>
-                            </HStack>
-                          </VStack>
-                        </CardBody>
-                      </Card>
-                    ))}
-                  </SimpleGrid>
-                </Box>
-              )}
-
               {/* Environmental Impact Details - Collapsed by default */}
               {carbonSummary && (
                 <Accordion allowToggle>
@@ -1362,6 +1127,9 @@ function TransparencyDashboard() {
                           </CardBody>
                         </Card>
                       </SimpleGrid>
+                      <Text fontSize="xs" color="gray.500" mt={3} textAlign="center" lineHeight="1.5">
+                        {intl.formatMessage({ id: 'transparency.carbonMethodologyNote' })}
+                      </Text>
                     </AccordionPanel>
                   </AccordionItem>
                 </Accordion>

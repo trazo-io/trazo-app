@@ -54,7 +54,8 @@ export const baseApi = createApi({
     'DashboardComprehensive',
     'CarbonScopeBreakdown',
     'CarbonAnalytics',
-    'VoiceConfig'
+    'VoiceConfig',
+    'Certification'
   ]
 });
 

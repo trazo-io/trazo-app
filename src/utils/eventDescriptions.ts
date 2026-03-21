@@ -2725,7 +2725,7 @@ export function getConsumerEventDescription(
     } else if (businessType === 'carbon_credits') {
       consumerImpact = `Contributing to carbon offset programs and climate action${certificateRef}`;
     } else if (businessType === 'verification') {
-      consumerImpact = `Verified practices providing trust and transparency${certificateRef}`;
+      consumerImpact = `Documented practices providing trust and transparency${certificateRef}`;
     } else if (businessType === 'transparency') {
       consumerImpact = `Enhanced visibility into how your food is grown${certificateRef}`;
     }

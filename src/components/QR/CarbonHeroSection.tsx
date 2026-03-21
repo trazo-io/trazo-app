@@ -512,6 +512,16 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               </Circle>
             </MotionBox>
 
+            {/* Transparency score disclaimer */}
+            <Text
+              fontSize="xs"
+              color="gray.500"
+              mt={1}
+              textAlign="center"
+            >
+              Based on farmer-reported documentation. Not independently audited.
+            </Text>
+
             {/* Consumer-friendly message */}
             <MotionVStack
               spacing={3}

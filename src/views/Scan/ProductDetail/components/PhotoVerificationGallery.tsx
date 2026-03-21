@@ -243,7 +243,7 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
               <Text fontSize="xs" color="gray.600" textAlign="center">
                 Total Photo
                 <br />
-                Verified Practices
+                Documented Practices
               </Text>
             </VStack>
           </HStack>
@@ -266,7 +266,7 @@ export const PhotoVerificationGallery: React.FC<PhotoVerificationProps> = ({
       <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />
         <ModalContent>
-          <ModalCloseButton />
+          <ModalCloseButton top="max(env(safe-area-inset-top, 8px), 8px)" />
           <ModalBody p={0}>
             {selectedImage && (
               <Image

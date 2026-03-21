@@ -100,6 +100,9 @@ import {
 } from './components';
 import InstantTrustDisplay from './components/InstantTrustDisplay';
 
+// Certification badge
+import CertificationBadge from '../../../components/Certifications/CertificationBadge';
+
 // Other components
 import { ModernTrazoLoader } from './components/ModernTrazoLoader';
 import { ModernErrorState } from './components/ModernErrorState';
@@ -1119,6 +1122,13 @@ function ProductDetail() {
                   </Box>
                 </Box>
               </Box>
+
+              {/* Certification Badges - Verified via external databases */}
+              {(completeData as any)?.standard_view?.certifications?.length > 0 && (
+                <CertificationBadge
+                  certifications={(completeData as any).standard_view.certifications}
+                />
+              )}
 
               {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
               <Suspense fallback={<CarbonExplainerLoader />}>

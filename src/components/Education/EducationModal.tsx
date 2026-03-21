@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSwipeToDismiss } from 'hooks/useSwipeToDismiss';
 import {
   Modal,
   ModalOverlay,
@@ -115,6 +116,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
   triggerSource
 }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const swipeHandlers = useSwipeToDismiss({ onClose });
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -343,7 +345,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
         <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
           <DrawerOverlay bg="blackAlpha.400" />
           <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="92vh" containerProps={{ style: { zIndex: 10000 } }}>
-            <Box pt={3} pb={1} display="flex" justifyContent="center">
+            <Box pt={3} pb={1} display="flex" justifyContent="center" cursor="grab" {...swipeHandlers}>
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>
             <DrawerCloseButton top={4} />
@@ -385,7 +387,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
         <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
           <DrawerOverlay bg="blackAlpha.400" />
           <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="92vh" containerProps={{ style: { zIndex: 10000 } }}>
-            <Box pt={3} pb={1} display="flex" justifyContent="center">
+            <Box pt={3} pb={1} display="flex" justifyContent="center" cursor="grab" {...swipeHandlers}>
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>
             <DrawerCloseButton top={4} />
@@ -496,8 +498,13 @@ const EducationModal: React.FC<EducationModalProps> = ({
           maxH="92vh"
           containerProps={{ style: { zIndex: 10000 } }}
         >
-          {/* Drag handle indicator */}
-          <Box pt={3} pb={1} display="flex" justifyContent="center">
+          {/* Drag handle - swipe down to dismiss */}
+          <Box
+            pt={3} pb={1}
+            display="flex" justifyContent="center"
+            cursor="grab"
+            {...swipeHandlers}
+          >
             <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
           </Box>
           <DrawerCloseButton top={4} />

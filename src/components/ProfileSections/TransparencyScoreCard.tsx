@@ -179,7 +179,7 @@ const TransparencyScoreCard: React.FC<TransparencyScoreCardProps> = ({
           <Text fontSize="sm" color="gray.700" lineHeight="1.6">
             {type === 'parcel'
               ? 'Higher documentation scores build consumer trust and demonstrate your commitment to transparency. Complete all fields in your parcel profile to improve this score.'
-              : 'Higher transparency shows consumers exactly how their food was grown. Each documented event and verified practice increases consumer confidence in your farming practices.'}
+              : 'Higher transparency shows consumers exactly how their food was grown. Each documented event and documented practice increases consumer confidence in your farming practices.'}
           </Text>
         </Box>
 

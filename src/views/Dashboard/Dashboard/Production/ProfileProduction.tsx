@@ -36,6 +36,7 @@ import {
 } from 'react-icons/fa';
 import { BsStar, BsStarFill } from 'react-icons/bs';
 import { MdTimeline, MdLocationOn } from 'react-icons/md';
+import { FiDownload } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useUserRole } from 'hooks/useUserRole';
@@ -57,6 +58,7 @@ import {
 
 // Week 2 Voice & Mobile Components
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
+import AuditExportModal from 'components/AuditExport/AuditExportModal';
 
 // Type definitions
 interface RootState {
@@ -174,6 +176,12 @@ function ProfileProduction() {
     isOpen: isQuickAddOpen,
     onOpen: onQuickAddOpen,
     onClose: onQuickAddClose
+  } = useDisclosure();
+
+  const {
+    isOpen: isExportOpen,
+    onOpen: onExportOpen,
+    onClose: onExportClose
   } = useDisclosure();
 
   const establishments = useSelector(
@@ -503,6 +511,16 @@ function ProfileProduction() {
                   </StandardButton>
                 </WrapItem>
               )}
+              <WrapItem>
+                <StandardButton
+                  variant="outline"
+                  size="xs"
+                  leftIcon={<Icon as={FiDownload} />}
+                  onClick={onExportOpen}
+                >
+                  {intl.formatMessage({ id: 'app.exportForAudit' })}
+                </StandardButton>
+              </WrapItem>
             </Wrap>
           }
         >
@@ -1031,6 +1049,14 @@ function ProfileProduction() {
           console.log('New event added:', eventData);
           window.location.reload();
         }}
+      />
+
+      {/* Audit Export Modal */}
+      <AuditExportModal
+        isOpen={isExportOpen}
+        onClose={onExportClose}
+        productionId={historyData?.public_id || productionId || ''}
+        productionName={historyData?.product?.name || historyData?.name || ''}
       />
     </StandardPage>
   );

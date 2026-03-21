@@ -1694,22 +1694,22 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
                             {intl.formatMessage({ id: 'app.documentObservations' }) ||
-                              'Document observations for USDA compliance verification'}
+                              'Document observations to build consumer trust'}
                           </Text>
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
                             {intl.formatMessage({ id: 'app.maintainDetailedRecords' }) ||
-                              'Detailed records support carbon credit verification'}
+                              'Detailed records increase your transparency score'}
                           </Text>
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
                             {intl.formatMessage({ id: 'app.considerSustainablePractices' }) ||
-                              'Sustainable practices often qualify for incentives'}
+                              'Complete documentation helps buyers trust your practices'}
                           </Text>
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
                             {intl.formatMessage({ id: 'app.includePhotosForVerification' }) ||
-                              'Include photos for stronger verification evidence'}
+                              'Include photos for stronger documentation evidence'}
                           </Text>
                         </>
                       )}
@@ -1721,17 +1721,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
                             {intl.formatMessage({ id: 'app.followBestPractices' }) ||
-                              'Follow USDA best practices for maximum efficiency'}
+                              'Follow best practices for complete documentation'}
                           </Text>
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
                             {intl.formatMessage({ id: 'app.timingOptimization' }) ||
-                              'Optimal timing reduces environmental impact'}
+                              'Optimal timing improves both efficiency and transparency'}
                           </Text>
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
                             {intl.formatMessage({ id: 'app.precisionAgriculture' }) ||
-                              'Precision techniques improve cost and carbon efficiency'}
+                              'Precision techniques improve cost efficiency and documentation quality'}
                           </Text>
                           <Text fontSize="xs" color="gray.600">
                             •{' '}

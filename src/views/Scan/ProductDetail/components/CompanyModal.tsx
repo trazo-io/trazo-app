@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSwipeToDismiss } from 'hooks/useSwipeToDismiss';
 import {
   Modal,
   ModalOverlay,
@@ -90,6 +91,7 @@ interface CompanyModalProps {
 }
 
 export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, companyData }) => {
+  const swipeHandlers = useSwipeToDismiss({ onClose });
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
@@ -306,7 +308,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
                   borderRadius="md"
                   fontSize="sm"
                 >
-                  {cert}
+                  {typeof cert === 'object' && cert !== null ? (cert as any).display_name || (cert as any).name || 'Certification' : cert}
                 </Badge>
               ))}
             </SimpleGrid>
@@ -408,8 +410,13 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
           maxH="92vh"
           containerProps={{ style: { zIndex: 10000 } }}
         >
-          {/* Drag handle indicator */}
-          <Box pt={3} pb={1} display="flex" justifyContent="center">
+          {/* Drag handle - swipe down to dismiss */}
+          <Box
+            pt={3} pb={1}
+            display="flex" justifyContent="center"
+            cursor="grab"
+            {...swipeHandlers}
+          >
             <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
           </Box>
           <DrawerCloseButton top={4} />

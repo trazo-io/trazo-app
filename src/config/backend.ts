@@ -78,6 +78,22 @@ export const PUBLIC_HISTORY_URL = (historyId: string) =>
 export const COMMENT_HISTORY_URL = (scanId: string) => `${ROOT_URL}public_scans/${scanId}/comment/`;
 export const UPLOAD_URLS_URL = `${ROOT_URL}upload-urls/`;
 
+// Certification URLs
+export const CERTIFICATION_URL = (
+  companyId: string,
+  establishmentId: string,
+  certificationId?: string
+) =>
+  certificationId
+    ? `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/certifications/${certificationId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/certifications/`;
+export const CERTIFICATION_VERIFY_URL = (
+  companyId: string,
+  establishmentId: string,
+  certificationId: string
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/certifications/${certificationId}/verify/`;
+
 // User URLs
 export const USER_URL = (userId: string) =>
   userId ? `${ROOT_URL}users/${userId}/` : `${ROOT_URL}users/`;

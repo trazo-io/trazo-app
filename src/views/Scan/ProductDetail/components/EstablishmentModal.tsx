@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSwipeToDismiss } from 'hooks/useSwipeToDismiss';
 import {
   Modal,
   ModalOverlay,
@@ -137,6 +138,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
   onClose,
   establishmentData
 }) => {
+  const swipeHandlers = useSwipeToDismiss({ onClose });
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
@@ -603,7 +605,11 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
               </HStack>
             </Heading>
             <Text color={textColor} lineHeight="tall">
-              {establishmentData.certifications}
+              {typeof establishmentData.certifications === 'object' && establishmentData.certifications !== null
+                ? Array.isArray(establishmentData.certifications)
+                  ? (establishmentData.certifications as any[]).map((c: any) => typeof c === 'object' ? c.display_name || c.name : c).join(', ')
+                  : (establishmentData.certifications as any).display_name || String(establishmentData.certifications)
+                : establishmentData.certifications}
             </Text>
           </CardBody>
         </Card>
@@ -657,8 +663,13 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
           maxH="92vh"
           containerProps={{ style: { zIndex: 10000 } }}
         >
-          {/* Drag handle indicator */}
-          <Box pt={3} pb={1} display="flex" justifyContent="center">
+          {/* Drag handle - swipe down to dismiss */}
+          <Box
+            pt={3} pb={1}
+            display="flex" justifyContent="center"
+            cursor="grab"
+            {...swipeHandlers}
+          >
             <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
           </Box>
           <DrawerCloseButton top={4} />
