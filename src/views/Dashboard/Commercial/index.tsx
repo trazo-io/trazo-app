@@ -20,7 +20,7 @@ import {
   useDisclosure,
   Collapse
 } from '@chakra-ui/react';
-import { NavLink, useLocation, useMatch, useParams } from 'react-router-dom';
+import { NavLink, useLocation, useMatch, useParams, useSearchParams } from 'react-router-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   useGetEstablishmentHistoriesQuery,
@@ -353,6 +353,13 @@ export default function CommercialView() {
   const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white');
   const { establishmentId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Capture URL filter params (supports both initial mount and in-page navigation)
+  const initialParcelId = useRef(searchParams.get('parcelId'));
+  const initialProductId = useRef(searchParams.get('productId'));
+  const initialProductionId = useRef(searchParams.get('productionId'));
+
   // Removed chartRef and reputationChartRef - Recharts handles updates through props
   const [filters, setFilters] = useState({
     parcel: null,
@@ -473,16 +480,18 @@ export default function CommercialView() {
           // Wait for next tick before updating filters
           await new Promise((resolve) => setTimeout(resolve, 0));
 
-          // Finally update filters
-          setFilters((prev) => ({
-            parcel: null,
-            product: null,
-            production: null,
-            period: {
-              id: 'week',
-              name: intl.formatMessage({ id: 'app.thisWeek' })
-            }
-          }));
+          // Reset filters only if no URL params are pending (notification redirect)
+          if (!initialParcelId.current && !initialProductId.current && !initialProductionId.current) {
+            setFilters((prev) => ({
+              parcel: null,
+              product: null,
+              production: null,
+              period: {
+                id: 'week',
+                name: intl.formatMessage({ id: 'app.thisWeek' })
+              }
+            }));
+          }
         }
       }
     };
@@ -494,6 +503,71 @@ export default function CommercialView() {
     { companyId: currentCompany?.id, establishmentId: currentEstablishmentId },
     { skip: !currentEstablishmentId || !currentCompany || currentCompany?.id === undefined }
   );
+
+  // Keep a ref to dataProducts so the searchParams effect can access it
+  const dataProductsRef = useRef(dataProducts);
+  dataProductsRef.current = dataProducts;
+
+  // Shared function to apply URL filter params to the filter state
+  const applyUrlFilters = React.useCallback(() => {
+    if (!initialParcelId.current && !initialProductId.current) return;
+    const est = establishment;
+    const products = dataProductsRef.current;
+    if (!est || !products || products.length === 0) return;
+
+    const matchedParcel = initialParcelId.current
+      ? est.parcels?.find((p: any) => p.id.toString() === initialParcelId.current)
+      : null;
+    const matchedProduct = initialProductId.current
+      ? products.find((p: any) => p.id.toString() === initialProductId.current)
+      : null;
+
+    if (matchedParcel || matchedProduct) {
+      setFilters((prev) => ({
+        ...prev,
+        parcel: matchedParcel ? { id: matchedParcel.id, name: matchedParcel.name } : null,
+        product: matchedProduct ? { id: matchedProduct.id, name: matchedProduct.name } : null,
+        production: null
+      }));
+    }
+
+    if (matchedParcel) {
+      getEstablishmentProducts({
+        companyId: currentCompany?.id,
+        establishmentId: currentEstablishmentId,
+        parcelId: matchedParcel.id
+      });
+    }
+
+    // Clear refs so this doesn't re-apply
+    initialParcelId.current = null;
+    initialProductId.current = null;
+  }, [establishment, currentCompany?.id, currentEstablishmentId, getEstablishmentProducts]);
+
+  // Auto-apply filters from URL search params (e.g. from notification click)
+  // Step 1: Set parcel + product filters when establishment & products data are ready
+  useEffect(() => {
+    applyUrlFilters();
+  }, [establishment, dataProducts, applyUrlFilters]);
+
+  // Detect new search params when navigating to the same route (e.g. clicking another notification)
+  useEffect(() => {
+    const parcelId = searchParams.get('parcelId');
+    const productId = searchParams.get('productId');
+    const productionId = searchParams.get('productionId');
+    if (parcelId || productId || productionId) {
+      initialParcelId.current = parcelId;
+      initialProductId.current = productId;
+      initialProductionId.current = productionId;
+      // Clean URL params
+      searchParams.delete('parcelId');
+      searchParams.delete('productId');
+      searchParams.delete('productionId');
+      setSearchParams(searchParams, { replace: true });
+      // Re-apply filters since data is already loaded
+      applyUrlFilters();
+    }
+  }, [searchParams, applyUrlFilters, setSearchParams]);
 
   const { data: dataHistories } = useGetEstablishmentHistoriesQuery(
     {
@@ -512,6 +586,22 @@ export default function CommercialView() {
         currentCompany?.id === undefined
     }
   );
+
+  // Step 2: Auto-set production filter when dataHistories loads (after parcel + product are set)
+  useEffect(() => {
+    if (initialProductionId.current && dataHistories && dataHistories.length > 0) {
+      const matchedProduction = dataHistories.find(
+        (h: any) => h.id.toString() === initialProductionId.current
+      );
+      if (matchedProduction) {
+        setFilters((prev) => ({
+          ...prev,
+          production: { id: matchedProduction.id, name: matchedProduction.name || `Production ${matchedProduction.id}` }
+        }));
+      }
+      initialProductionId.current = null;
+    }
+  }, [dataHistories]);
 
   const onParcelFilterChange = (parcel) => {
     setFilters({

@@ -22,6 +22,7 @@ import { FaStar, FaLeaf, FaBell } from 'react-icons/fa';
 import { MdSmartphone, MdWarning } from 'react-icons/md';
 import { useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
+import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 
 import {
@@ -170,6 +171,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
   const dispatch = useDispatch();
   const toast = useToast();
   const intl = useIntl();
+  const navigate = useNavigate();
 
   // Color mode values
   const menuBg = useColorModeValue('white', 'gray.800');
@@ -190,6 +192,38 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
 
   const [isOpen, setIsOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  const getCommercialDashboardPath = (notification: Notification): string | null => {
+    const establishmentId = notification.extra_data?.establishment_id;
+    if (establishmentId) {
+      const params = new URLSearchParams();
+      if (notification.extra_data?.parcel_id) params.set('parcelId', String(notification.extra_data.parcel_id));
+      if (notification.extra_data?.product_id) params.set('productId', String(notification.extra_data.product_id));
+      if (notification.extra_data?.production_id) params.set('productionId', String(notification.extra_data.production_id));
+      const query = params.toString() ? `?${params.toString()}` : '';
+      return `/admin/dashboard/establishment/${establishmentId}/commercial${query}`;
+    }
+    return null;
+  };
+
+  const handleNotificationNavigate = async (notification: Notification) => {
+    if (!notification.read) {
+      handleMarkAsRead(notification.id);
+    }
+    const path = getCommercialDashboardPath(notification);
+    if (path) {
+      setIsOpen(false);
+      navigate(path);
+    }
+  };
+
+  const handleGroupNavigate = async (group: NotificationGroup) => {
+    const path = getCommercialDashboardPath(group.latestNotification);
+    if (path) {
+      setIsOpen(false);
+      navigate(path);
+    }
+  };
 
   // Refetch notifications when dropdown opens
   useEffect(() => {
@@ -320,7 +354,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
       bg={!notification.read ? unreadBg : 'transparent'}
       _hover={{ bg: hoverBg }}
       cursor="pointer"
-      onClick={() => !notification.read && handleMarkAsRead(notification.id)}
+      onClick={() => handleNotificationNavigate(notification)}
       transition="background 0.15s"
     >
       <HStack spacing="12px" align="start" w="100%">
@@ -499,23 +533,36 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
             mt="2px"
             mb="4px"
           >
-            {hasUnread && (
-              <Button
-                size="xs"
-                variant="ghost"
-                colorScheme="green"
-                fontSize="xs"
-                alignSelf="flex-start"
-                ml="12px"
-                mb="4px"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMarkGroupAsRead(group);
-                }}
-              >
-                {intl.formatMessage({ id: 'notifications.markGroupRead' })}
-              </Button>
-            )}
+            <HStack spacing="8px" ml="12px" mb="4px">
+              {hasUnread && (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="green"
+                  fontSize="xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMarkGroupAsRead(group);
+                  }}
+                >
+                  {intl.formatMessage({ id: 'notifications.markGroupRead' })}
+                </Button>
+              )}
+              {getCommercialDashboardPath(group.latestNotification) && (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="green"
+                  fontSize="xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleGroupNavigate(group);
+                  }}
+                >
+                  {intl.formatMessage({ id: 'notifications.viewDashboard', defaultMessage: 'View Dashboard' })}
+                </Button>
+              )}
+            </HStack>
             {group.notifications.slice(0, 3).map((n) => renderSingleNotification(n, true))}
             {group.count > 3 && (
               <Text fontSize="xs" color={mutedTextColor} pl="12px" py="6px">
@@ -529,7 +576,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
   };
 
   return (
-    <Menu onOpen={() => setIsOpen(true)} onClose={() => setIsOpen(false)}>
+    <Menu isOpen={isOpen} onOpen={() => setIsOpen(true)} onClose={() => setIsOpen(false)}>
       <MenuButton as={Box} position="relative" cursor="pointer">
         <BellIcon color={navbarIcon} w="18px" h="18px" />
         {unreadCount > 0 && (

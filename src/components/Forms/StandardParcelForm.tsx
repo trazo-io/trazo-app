@@ -74,12 +74,10 @@ const SUPPORTED_PARCEL_FIELDS = {
     'name', // CharField(30)
     'description', // TextField
     'area', // FloatField
-    'certified', // BooleanField
     'polygon', // JSONField
     'map_metadata', // JSONField
     'soil_type', // CharField(50)
     'unique_code', // CharField(50)
-    'certification_type', // CharField(50)
     'contact_person', // CharField(60)
     'contact_phone', // CharField(30)
     'contact_email', // EmailField
@@ -240,10 +238,6 @@ const parcelSchema = object({
   soil_type: string().optional(),
   unique_code: string().optional(),
 
-  // Step 6: Certification (Optional)
-  certified: boolean().default(false),
-  certification_type: string().optional(),
-
   // ✅ Advanced Agricultural Fields - NOW SUPPORTED via agricultural_details JSONField
   // Soil Health Management
   soil_ph: number().min(0).max(14).optional(),
@@ -351,7 +345,7 @@ const STEP_VALIDATION_CONFIG = [
     stepNumber: 5,
     name: 'Details & Media',
     requiredFields: [],
-    optionalFields: ['soil_type', 'unique_code', 'certified', 'certification_type'],
+    optionalFields: ['soil_type', 'unique_code'],
     canSkip: true
   }
 ] as const;
@@ -372,10 +366,6 @@ interface ParcelFormData {
   // Agricultural details (optional)
   soil_type?: string;
   unique_code?: string;
-
-  // Certification (optional)
-  certified: boolean;
-  certification_type?: string;
 
   // Media (optional)
   images?: string[];
@@ -475,10 +465,6 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
       // Agricultural details (optional)
       soil_type: '',
       unique_code: '',
-
-      // Certification (optional)
-      certified: false,
-      certification_type: '',
 
       // Media (optional)
       images: [],
@@ -676,7 +662,6 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
       const formData = {
-        certified: false,
         area: 0,
         name: '',
         description: '',
@@ -684,7 +669,6 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
         address: '',
         soil_type: '',
         unique_code: '',
-        certification_type: '',
         contact_person: '',
         contact_email: '',
         images: [],
@@ -1280,21 +1264,6 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     />
                   </StandardField>
 
-                  <StandardField
-                    label="Certification Type"
-                    error={errors.certification_type?.message}
-                    helpText="Type of agricultural certification"
-                  >
-                    <Input
-                      {...methods.register('certification_type')}
-                      placeholder="e.g., USDA Organic, Fair Trade"
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                    />
-                  </StandardField>
                 </SimpleGrid>
 
                 <StandardField
@@ -1981,51 +1950,6 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   />
                 </StandardField>
 
-                {/* Certification */}
-                <StandardField
-                  label="Certification"
-                  helpText="Mark this parcel as certified if it meets certification standards"
-                >
-                  <VStack align="stretch" spacing={4}>
-                    <HStack>
-                      <Switch {...methods.register('certified')} colorScheme="green" size="md" />
-                      <Text fontSize="sm" color="gray.600">
-                        {watch('certified') ? 'Certified Parcel' : 'Not Certified'}
-                      </Text>
-                    </HStack>
-
-                    {watch('certified') && (
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label="Contact Number"
-                          helpText="For certification inquiries"
-                        >
-                          <Input
-                            {...methods.register('contact_phone')}
-                            placeholder="(555) 123-4567"
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                            size="lg"
-                          />
-                        </StandardField>
-
-                        <StandardField label="Certification Address" helpText="Physical address">
-                          <Input
-                            {...methods.register('address')}
-                            placeholder="123 Farm Road, City, State"
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                            size="lg"
-                          />
-                        </StandardField>
-                      </SimpleGrid>
-                    )}
-                  </VStack>
-                </StandardField>
 
                 {/* Navigation */}
                 <HStack spacing={3} justify="space-between" pt={4}>

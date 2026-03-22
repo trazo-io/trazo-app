@@ -38,7 +38,6 @@ import { TrazoImageUpload } from '../Upload';
 import {
   FaMapMarkedAlt,
   FaBuilding,
-  FaCertificate,
   FaCheckCircle,
   FaChevronRight,
   FaChevronLeft,
@@ -65,9 +64,7 @@ const transparencyParcelSchema = object({
   consumer_story: string().optional(),
 
   // Step 4: Visual Documentation (Optional)
-  images: array(string()).max(5).optional(),
-  certified: boolean().default(false),
-  certification_type: string().optional()
+  images: array(string()).max(5).optional()
 });
 
 // Utility functions for polygon calculations (same as original)
@@ -140,8 +137,6 @@ interface TransparencyParcelFormData {
 
   // Visual documentation
   images?: string[];
-  certified: boolean;
-  certification_type?: string;
 
   // System fields (inherited from original for backend compatibility)
   polygon?: Array<{ lat: number; lng: number }>;
@@ -854,81 +849,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   />
                 </StandardField>
 
-                <Divider />
-
-                {/* 🏅 Certification Section - Adds 10 points to transparency score */}
-                <Box>
-                  <HStack spacing={2} mb={3}>
-                    <Icon as={FaCertificate} color="green.500" />
-                    <Text fontWeight="semibold" fontSize="md" color="gray.700">
-                      Certification (Optional)
-                    </Text>
-                    <Badge colorScheme="green" fontSize="xs">
-                      +10 points
-                    </Badge>
-                  </HStack>
-                  <Text fontSize="sm" color="gray.500" mb={4}>
-                    If your parcel holds an agricultural certification, add it here to boost
-                    consumer trust and your transparency score.
-                  </Text>
-
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    <StandardField
-                      label="Is this parcel certified?"
-                      helpText="Toggle on if this parcel has an active certification"
-                    >
-                      <Controller
-                        name="certified"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <HStack spacing={3}>
-                            <Switch
-                              id="certified"
-                              isChecked={field.value}
-                              onChange={field.onChange}
-                              colorScheme="green"
-                              size="lg"
-                            />
-                            <Text fontSize="sm" color={field.value ? 'green.600' : 'gray.500'}>
-                              {field.value ? 'Yes, certified' : 'Not certified'}
-                            </Text>
-                          </HStack>
-                        )}
-                      />
-                    </StandardField>
-
-                    <StandardField
-                      label="Certification Type"
-                      helpText="Select the certification standard"
-                    >
-                      <Select
-                        {...methods.register('certification_type')}
-                        placeholder="Select certification type"
-                        borderRadius="lg"
-                        size="lg"
-                        isDisabled={!methods.watch('certified')}
-                      >
-                        <option value="organic">USDA Organic</option>
-                        <option value="eu_organic">EU Organic</option>
-                        <option value="regenerative">Regenerative Organic Certified (ROC)</option>
-                        <option value="cng">Certified Naturally Grown</option>
-                        <option value="global_gap">GlobalG.A.P.</option>
-                        <option value="fair_trade">Fair Trade Certified</option>
-                        <option value="rainforest_alliance">Rainforest Alliance</option>
-                        <option value="carbon_neutral">Carbon Neutral Certified</option>
-                        <option value="biodynamic">Demeter Biodynamic</option>
-                        <option value="non_gmo">Non-GMO Project Verified</option>
-                      </Select>
-                    </StandardField>
-                  </SimpleGrid>
-                </Box>
-
-                <Divider />
-
                 <StandardAlert
                   status="info"
                   title="Visual Trust Building"
-                  description="Images and certifications help consumers see the real practices behind their food, building confidence in their purchasing decisions."
+                  description="Images help consumers see the real practices behind their food, building confidence in their purchasing decisions."
                 />
 
                 <HStack spacing={3} justify="space-between" pt={4}>

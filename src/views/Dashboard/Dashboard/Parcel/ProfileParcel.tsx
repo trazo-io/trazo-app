@@ -18,7 +18,6 @@ import {
   FaEdit,
   FaShare,
   FaSeedling,
-  FaCertificate,
   FaPhone,
   FaEnvelope,
   FaUser,
@@ -84,8 +83,6 @@ interface ParcelData {
   area?: number;
   primary_crop?: string;
   crop_type?: string;
-  certified?: boolean;
-  certification_type?: string;
   images?: Array<{ url: string; caption?: string }>;
   unique_code?: string;
   carbon_calculation_enabled?: boolean;
@@ -124,23 +121,6 @@ const formatDisplayValue = (value: string | undefined | null): string => {
     .join(' ');
 };
 
-const CERTIFICATION_DISPLAY_NAMES: Record<string, string> = {
-  organic: 'USDA Organic',
-  eu_organic: 'EU Organic',
-  regenerative: 'Regenerative Organic (ROC)',
-  cng: 'Certified Naturally Grown',
-  global_gap: 'GlobalG.A.P.',
-  fair_trade: 'Fair Trade Certified',
-  rainforest_alliance: 'Rainforest Alliance',
-  carbon_neutral: 'Carbon Neutral',
-  biodynamic: 'Demeter Biodynamic',
-  non_gmo: 'Non-GMO Project Verified'
-};
-
-const formatCertificationType = (value: string | undefined | null): string => {
-  if (!value) return '';
-  return CERTIFICATION_DISPLAY_NAMES[value] || formatDisplayValue(value);
-};
 
 // InfoRow component - matches CompanyInfoTab pattern
 interface InfoRowProps {
@@ -401,16 +381,6 @@ function ProfileParcel(): React.ReactElement {
                     {intl.formatMessage({ id: 'app.active' })}
                   </Badge>
                 </WrapItem>
-                {parcelData?.certified && (
-                  <WrapItem>
-                    <Badge colorScheme="blue" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
-                      <HStack spacing={1}>
-                        <Icon as={FaCertificate} boxSize={3} />
-                        <Text>{intl.formatMessage({ id: 'app.certified' })}</Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
                 {parcelData?.carbon_calculation_enabled && (
                   <WrapItem>
                     <Badge colorScheme="purple" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
@@ -483,16 +453,6 @@ function ProfileParcel(): React.ReactElement {
                     {intl.formatMessage({ id: 'app.active' })}
                   </Badge>
                 </WrapItem>
-                {parcelData?.certified && (
-                  <WrapItem>
-                    <Badge colorScheme="blue" variant="subtle" px={2} py={1} borderRadius="full">
-                      <HStack spacing={1}>
-                        <Icon as={FaCertificate} boxSize={3} />
-                        <Text>{intl.formatMessage({ id: 'app.certified' })}</Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
                 {parcelData?.carbon_calculation_enabled && (
                   <WrapItem>
                     <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full">
@@ -568,18 +528,6 @@ function ProfileParcel(): React.ReactElement {
               value={formatDisplayValue(parcelData?.primary_crop || parcelData?.crop_type) || '--'}
               label={intl.formatMessage({ id: 'parcel.primaryCrop' })}
               colorScheme="blue"
-            />
-            <StatCard
-              icon={FaCertificate}
-              value={
-                parcelData?.certified && parcelData?.certification_type
-                  ? formatCertificationType(parcelData.certification_type)
-                  : parcelData?.certified
-                  ? intl.formatMessage({ id: 'parcel.yes' })
-                  : intl.formatMessage({ id: 'parcel.no' })
-              }
-              label={intl.formatMessage({ id: 'parcel.certification' })}
-              colorScheme="orange"
             />
           </SimpleGrid>
           <HStack justify="flex-end" mt={{ base: 2, md: 3 }}>
@@ -710,43 +658,6 @@ function ProfileParcel(): React.ReactElement {
                 value={parcelData?.contact_phone}
                 type="phone"
               />
-            </SimpleGrid>
-          </StandardCard>
-        )}
-
-        {/* Certification Section */}
-        {(parcelData?.certified || parcelData?.certification_type) && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.certification' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-              <HStack spacing={2} align="flex-start">
-                <Icon as={FaCertificate} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
-                <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                    fontWeight="semibold"
-                  >
-                    {intl.formatMessage({ id: 'parcel.certificationStatus' })}
-                  </Text>
-                  <Badge
-                    colorScheme={parcelData?.certified ? 'green' : 'gray'}
-                    variant="subtle"
-                    px={2}
-                    py={1}
-                    borderRadius="full"
-                  >
-                    {parcelData?.certified ? intl.formatMessage({ id: 'app.certified' }) : intl.formatMessage({ id: 'parcel.notCertified' })}
-                  </Badge>
-                </Box>
-              </HStack>
-              {parcelData?.certification_type && (
-                <InfoRow
-                  icon={FaCheckCircle}
-                  label={intl.formatMessage({ id: 'parcel.certificationType' })}
-                  value={formatCertificationType(parcelData.certification_type)}
-                />
-              )}
             </SimpleGrid>
           </StandardCard>
         )}

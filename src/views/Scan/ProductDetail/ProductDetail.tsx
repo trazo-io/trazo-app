@@ -1742,8 +1742,6 @@ function ProductDetail() {
                 map_metadata: (completeData as any)?.parcel?.map_metadata,
                 // Additional fields for modal
                 description: (completeData as any)?.parcel?.description,
-                certification_type: (completeData as any)?.parcel?.certification_type,
-                certified: (completeData as any)?.parcel?.certified,
                 unique_code: (completeData as any)?.parcel?.unique_code,
                 contact_person:
                   (completeData as any)?.parcel?.contact_person ||

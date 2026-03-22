@@ -41,7 +41,6 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('name', parcelData.name);
         formData.append('description', parcelData.description);
         formData.append('area', parcelData.area || '0'); // Ensure area is a string number
-        formData.append('certified', parcelData.certified || false);
         formData.append('polygon', JSON.stringify(parcelData.polygon || []));
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
         formData.append('establishment', establishmentId);
@@ -52,9 +51,6 @@ export const productApi = baseApi.injectEndpoints({
         }
         if (parcelData.unique_code) {
           formData.append('unique_code', parcelData.unique_code);
-        }
-        if (parcelData.certification_type) {
-          formData.append('certification_type', parcelData.certification_type);
         }
 
         // ✅ FIXED: Contact fields - Send ALL contact fields (even if empty)

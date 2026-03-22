@@ -2967,6 +2967,7 @@
   "notifications.title": "Notificaciones",
   "notifications.markAllRead": "Marcar todo leído",
   "notifications.markGroupRead": "Marcar grupo como leído",
+  "notifications.viewDashboard": "Ver Panel Comercial",
   "notifications.emptyTitle": "Sin notificaciones",
   "notifications.emptyDescription": "Verás actualizaciones aquí cuando los consumidores vean tus productos o dejen reseñas",
   "notifications.totalCount": "{count, plural, one {1 notificación} other {{count} notificaciones en total}}",

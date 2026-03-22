@@ -51,14 +51,11 @@ import {
   FaEnvelope,
   FaUsers,
   FaCalendarAlt,
-  FaCertificate,
   FaLeaf,
   FaSeedling,
   FaTractor,
-  FaAward,
   FaGlobe,
   FaExternalLinkAlt,
-  FaCheckCircle,
   FaTree,
   FaWater,
   FaRecycle,
@@ -85,24 +82,6 @@ const formatDisplayValue = (value: string | undefined | null): string => {
     .join(' ');
 };
 
-// 🏅 Certification type mapping for proper display names
-const CERTIFICATION_DISPLAY_NAMES: Record<string, string> = {
-  organic: 'USDA Organic',
-  eu_organic: 'EU Organic',
-  regenerative: 'Regenerative Organic (ROC)',
-  cng: 'Certified Naturally Grown',
-  global_gap: 'GlobalG.A.P.',
-  fair_trade: 'Fair Trade Certified',
-  rainforest_alliance: 'Rainforest Alliance',
-  carbon_neutral: 'Carbon Neutral',
-  biodynamic: 'Demeter Biodynamic',
-  non_gmo: 'Non-GMO Project Verified'
-};
-
-const formatCertificationType = (value: string | undefined | null): string => {
-  if (!value) return '--';
-  return CERTIFICATION_DISPLAY_NAMES[value] || formatDisplayValue(value);
-};
 
 interface ParcelModalProps {
   isOpen: boolean;
@@ -112,7 +91,6 @@ interface ParcelModalProps {
     name: string;
     description?: string;
     area: number;
-    certified?: boolean;
     polygon?: any;
     map_metadata?: {
       center?: [number, number];
@@ -120,7 +98,6 @@ interface ParcelModalProps {
     };
     soil_type?: string;
     unique_code?: string;
-    certification_type?: string;
     contact_person?: string;
     contact_phone?: string;
     contact_email?: string;
@@ -151,10 +128,6 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
   const iconBg = useColorModeValue('green.50', 'green.900');
   const currentProdBg = useColorModeValue('blue.50', 'blue.900');
   const isMobile = useBreakpointValue({ base: true, md: false });
-
-  const getCertificationColor = (certified: boolean) => {
-    return certified ? 'green' : 'gray';
-  };
 
   const getSoilTypeIcon = (soilType: string) => {
     switch (soilType?.toLowerCase()) {
@@ -189,19 +162,6 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
           >
             {parcelData.area} hectares
           </Badge>
-          {parcelData.certified && (
-            <Badge
-              colorScheme={getCertificationColor(parcelData.certified)}
-              variant="solid"
-              fontSize="xs"
-              px={2}
-              py={1}
-              borderRadius="full"
-            >
-              <Icon as={FaCheckCircle} mr={1} boxSize={2} />
-              Certified
-            </Badge>
-          )}
         </HStack>
       </VStack>
     </HStack>
@@ -370,45 +330,6 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                       Location:
                     </Text>{' '}
                     {parcelData.establishment.location}
-                  </Text>
-                </HStack>
-              )}
-            </VStack>
-          </CardBody>
-        </Card>
-      )}
-
-      {/* Certification Information */}
-      {(parcelData.certified || parcelData.certification_type) && (
-        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-          <CardBody p={6}>
-            <Heading size="md" color={textColor} mb={4}>
-              <HStack>
-                <Icon as={FaCertificate} color={accentColor} />
-                <Text>Certification Status</Text>
-              </HStack>
-            </Heading>
-            <VStack spacing={4} align="stretch">
-              <HStack spacing={3}>
-                <Icon
-                  as={parcelData.certified ? FaCheckCircle : FaEye}
-                  color={parcelData.certified ? 'green.500' : 'gray.400'}
-                />
-                <Text color={textColor}>
-                  <Text as="span" fontWeight="medium">
-                    Status:
-                  </Text>{' '}
-                  {parcelData.certified ? 'Certified' : 'Not Certified'}
-                </Text>
-              </HStack>
-              {parcelData.certification_type && (
-                <HStack spacing={3}>
-                  <Icon as={FaAward} color={accentColor} />
-                  <Text color={textColor}>
-                    <Text as="span" fontWeight="medium">
-                      Type:
-                    </Text>{' '}
-                    {formatCertificationType(parcelData.certification_type)}
                   </Text>
                 </HStack>
               )}

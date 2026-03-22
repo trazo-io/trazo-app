@@ -78,9 +78,7 @@ interface ParcelMapInfoProps {
     };
     // Additional fields for modal
     description?: string;
-    certified?: boolean;
     unique_code?: string;
-    certification_type?: string;
     contact_person?: string;
     contact_phone?: string;
     contact_email?: string;
@@ -404,8 +402,6 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                 }
               : undefined,
             soil_type: parcelData.soilType,
-            certification_type: parcelData.certification_type,
-            certified: parcelData.certified,
             unique_code: parcelData.unique_code,
             contact_person: parcelData.contact_person,
             contact_phone: parcelData.contact_phone,

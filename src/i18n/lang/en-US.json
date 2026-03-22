@@ -3098,6 +3098,7 @@
   "notifications.title": "Notifications",
   "notifications.markAllRead": "Mark all read",
   "notifications.markGroupRead": "Mark group as read",
+  "notifications.viewDashboard": "View Dashboard",
   "notifications.emptyTitle": "No notifications yet",
   "notifications.emptyDescription": "You'll see updates here when consumers view your products or leave reviews",
   "notifications.totalCount": "{count, plural, one {1 notification} other {{count} total notifications}}",
