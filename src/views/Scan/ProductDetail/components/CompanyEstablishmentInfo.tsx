@@ -452,45 +452,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
                 )}
               </Stack>
 
-              {establishmentData.certifications && (
-                <>
-                  <Divider />
-                  <VStack align="start" spacing={3}>
-                    <HStack spacing={2}>
-                      <Icon as={FaCertificate} color="gold" boxSize={4} />
-                      <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                        Certifications
-                      </Text>
-                    </HStack>
-                    <HStack spacing={2} flexWrap="wrap">
-                      {(() => {
-                        // Handle both string and array formats
-                        const certs = Array.isArray(establishmentData.certifications)
-                          ? establishmentData.certifications
-                          : typeof establishmentData.certifications === 'string'
-                          ? establishmentData.certifications
-                              .split(',')
-                              .map((cert) => cert.trim())
-                              .filter((cert) => cert)
-                          : [];
-
-                        return certs.map((cert, index) => (
-                          <Badge
-                            key={index}
-                            colorScheme="blue"
-                            borderRadius="full"
-                            px={3}
-                            py={1}
-                            fontSize="xs"
-                          >
-                            {typeof cert === 'object' && cert !== null ? cert.display_name || cert.name || 'Certification' : cert}
-                          </Badge>
-                        ));
-                      })()}
-                    </HStack>
-                  </VStack>
-                </>
-              )}
+              {/* Certifications displayed in Transparency Achievement section via CertificationBadge */}
 
               {/* Operational Details Summary - Updated: removed climate_zone, soil_types → soil_health_practices */}
               {((establishmentData.water_sources && establishmentData.water_sources.length > 0) ||

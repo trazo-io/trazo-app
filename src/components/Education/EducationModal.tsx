@@ -344,7 +344,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
       return (
         <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
           <DrawerOverlay bg="blackAlpha.400" />
-          <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="92vh" containerProps={{ style: { zIndex: 10000 } }}>
+          <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="82vh" containerProps={{ style: { zIndex: 10000 } }}>
             <Box pt={3} pb={1} display="flex" justifyContent="center" cursor="grab" {...swipeHandlers}>
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>
@@ -386,7 +386,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
       return (
         <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
           <DrawerOverlay bg="blackAlpha.400" />
-          <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="92vh" containerProps={{ style: { zIndex: 10000 } }}>
+          <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="82vh" containerProps={{ style: { zIndex: 10000 } }}>
             <Box pt={3} pb={1} display="flex" justifyContent="center" cursor="grab" {...swipeHandlers}>
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>
@@ -495,7 +495,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
         <DrawerContent
           bg={bgColor}
           borderTopRadius="2xl"
-          maxH="92vh"
+          maxH="82vh"
           containerProps={{ style: { zIndex: 10000 } }}
         >
           {/* Drag handle - swipe down to dismiss */}

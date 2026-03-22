@@ -252,46 +252,8 @@ export const ProductDetailsSection: React.FC<ProductDetailsSectionProps> = ({
               )}
             </SimpleGrid>
 
-            {/* Certifications */}
-            {(productData?.organicCertified || productData?.nonGMO || productData?.fairTrade) && (
-              <>
-                <Divider />
-                <VStack align="start" spacing={3}>
-                  <HStack spacing={2}>
-                    <Icon as={FaCertificate} color="gold" boxSize={5} />
-                    <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                      Certifications
-                    </Text>
-                  </HStack>
-                  <HStack spacing={3} flexWrap="wrap">
-                    {productData.organicCertified && (
-                      <Badge colorScheme="green" borderRadius="full" px={3} py={1}>
-                        <HStack spacing={1}>
-                          <Icon as={FaLeaf} boxSize={3} />
-                          <Text>Organic</Text>
-                        </HStack>
-                      </Badge>
-                    )}
-                    {productData.nonGMO && (
-                      <Badge colorScheme="blue" borderRadius="full" px={3} py={1}>
-                        <HStack spacing={1}>
-                          <Icon as={FaSeedling} boxSize={3} />
-                          <Text>Non-GMO</Text>
-                        </HStack>
-                      </Badge>
-                    )}
-                    {productData.fairTrade && (
-                      <Badge colorScheme="purple" borderRadius="full" px={3} py={1}>
-                        <HStack spacing={1}>
-                          <Icon as={MdGrade} boxSize={3} />
-                          <Text>Fair Trade</Text>
-                        </HStack>
-                      </Badge>
-                    )}
-                  </HStack>
-                </VStack>
-              </>
-            )}
+            {/* Certifications removed — now displayed in Transparency Achievement section
+                via CertificationBadge component using structured verification data */}
           </VStack>
         </CardBody>
       </Card>

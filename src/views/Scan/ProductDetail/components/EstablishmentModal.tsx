@@ -660,7 +660,7 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
         <DrawerContent
           bg={bgColor}
           borderTopRadius="2xl"
-          maxH="92vh"
+          maxH="82vh"
           containerProps={{ style: { zIndex: 10000 } }}
         >
           {/* Drag handle - swipe down to dismiss */}

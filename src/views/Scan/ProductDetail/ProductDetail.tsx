@@ -449,7 +449,7 @@ const EducationModal = ({
         <DrawerContent
           bg={bgColor}
           borderTopRadius="2xl"
-          maxH="92vh"
+          maxH="82vh"
           containerProps={{ style: { zIndex: 10000 } }}
         >
           <Box pt={3} pb={1} display="flex" justifyContent="center">
@@ -715,7 +715,7 @@ function ProductDetail() {
         (event as any).blockchain_transaction.trim() !== ''
     );
 
-    // Calculate percentage of verified events out of total events
+    // Calculate percentage of documented events out of total events
     const verificationPercentage = (verifiedEvents.length / timeline.length) * 100;
 
     // Convert to 20-point scale (max score is 20)
@@ -1020,7 +1020,7 @@ function ProductDetail() {
                               🏆 Complete Transparency Champion
                             </Badge>
                             <Text color="gray.700" fontSize="sm" textAlign="center">
-                              Outstanding documentation with {timelineCount} verified events
+                              Outstanding documentation with {timelineCount} documented events
                             </Text>
                           </VStack>
                         );
@@ -1037,7 +1037,7 @@ function ProductDetail() {
                               ⭐ Transparency Leader
                             </Badge>
                             <Text color="gray.700" fontSize="sm" textAlign="center">
-                              Excellent documentation with {timelineCount} verified events
+                              Excellent documentation with {timelineCount} documented events
                             </Text>
                           </VStack>
                         );
@@ -1054,7 +1054,7 @@ function ProductDetail() {
                               📋 Good Documentation
                             </Badge>
                             <Text color="gray.700" fontSize="sm" textAlign="center">
-                              Solid tracking with {timelineCount} verified events
+                              Solid tracking with {timelineCount} documented events
                             </Text>
                           </VStack>
                         );
@@ -1120,15 +1120,17 @@ function ProductDetail() {
                       their full story.
                     </Text>
                   </Box>
+
+                  {/* Certification Badges — inside Transparency Achievement section */}
+                  {(completeData as any)?.standard_view?.certifications?.length > 0 && (
+                    <Box mt={4}>
+                      <CertificationBadge
+                        certifications={(completeData as any).standard_view.certifications}
+                      />
+                    </Box>
+                  )}
                 </Box>
               </Box>
-
-              {/* Certification Badges - Verified via external databases */}
-              {(completeData as any)?.standard_view?.certifications?.length > 0 && (
-                <CertificationBadge
-                  certifications={(completeData as any).standard_view.certifications}
-                />
-              )}
 
               {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
               <Suspense fallback={<CarbonExplainerLoader />}>

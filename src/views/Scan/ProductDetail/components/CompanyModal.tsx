@@ -407,7 +407,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
         <DrawerContent
           bg={bgColor}
           borderTopRadius="2xl"
-          maxH="92vh"
+          maxH="82vh"
           containerProps={{ style: { zIndex: 10000 } }}
         >
           {/* Drag handle - swipe down to dismiss */}
