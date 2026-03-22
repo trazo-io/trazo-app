@@ -3551,5 +3551,87 @@
   "app.exportInfoGlobalgap": "Emphasizes chemical applications with PHI and REI intervals, IPM decision logs, water management records, and worker safety documentation.",
   "app.exportInfoRoc": "Includes soil health measurements, cover crop and crop rotation records, carbon calculations, and pest management approach documentation.",
   "app.exportInfoFsma204": "Traceability records including lot codes, harvest locations and dates, quantities harvested, and operator identification per FSMA Rule 204.",
-  "app.exportInfoScs": "IPM decision rationale, energy and waste management records, soil conservation practices, and direct operational carbon data."
+  "app.exportInfoScs": "IPM decision rationale, energy and waste management records, soil conservation practices, and direct operational carbon data.",
+
+  "tooltip.co2e.definition": "Carbon Dioxide Equivalent",
+  "tooltip.co2e.explanation": "A standard unit that combines all greenhouse gases (CO\u2082, methane, nitrous oxide) into a single measurement. Like converting different currencies into dollars for easy comparison.",
+  "tooltip.co2e.example": "1 ton CO\u2082e = driving 2,400 miles in an average car",
+
+  "tooltip.carbonFootprint.definition": "Carbon Footprint",
+  "tooltip.carbonFootprint.explanation": "The total amount of greenhouse gases produced by direct farming operations \u2014 fuel, fertilizer, equipment, and irrigation. Think of it as the environmental \u201creceipt\u201d for growing your food.",
+  "tooltip.carbonFootprint.example": "Covers farmer-controlled emissions: fuel combustion, fertilizer application, and equipment operation",
+
+  "tooltip.usdaFactorsUsed.definition": "EPA/USDA Emission Factors",
+  "tooltip.usdaFactorsUsed.explanation": "Carbon calculations for this event use official emission factors published by the EPA and USDA. This ensures consistent methodology across all farms \u2014 not a verification of farming practices themselves.",
+  "tooltip.usdaFactorsUsed.example": "Government-published data ensures consistent, reliable carbon calculations",
+
+  "tooltip.blockchainRecorded.definition": "Blockchain Recorded",
+  "tooltip.blockchainRecorded.explanation": "When a production is finished, a digital fingerprint of all documented events is permanently recorded on the Polygon blockchain. This proves data has not been altered after submission \u2014 it does not verify farming practice accuracy.",
+  "tooltip.blockchainRecorded.example": "Your production record is cryptographically sealed and immutable on Polygonscan",
+
+  "tooltip.carbonScore.definition": "Carbon Score (0-100)",
+  "tooltip.carbonScore.explanation": "A simple rating that shows how climate-friendly this product is. Higher scores mean better environmental performance and more sustainable farming practices.",
+  "tooltip.carbonScore.example": "Score 85+ = Exceptional sustainability practices",
+
+  "tooltip.photoDocumentation.definition": "Photo Documentation",
+  "tooltip.photoDocumentation.explanation": "The percentage of farming events that include photo evidence. Photos provide visual proof of farming practices \u2014 consumers can see exactly how their food was grown.",
+  "tooltip.photoDocumentation.example": "86% means 19 out of 22 events have photo evidence attached",
+
+  "tooltip.precisionAgriculture.definition": "Precision Agriculture",
+  "tooltip.precisionAgriculture.explanation": "Farming technology that uses GPS, sensors, and data to apply exactly the right amount of inputs (water, fertilizer) in exactly the right places, reducing waste.",
+  "tooltip.precisionAgriculture.example": "Like having a smart phone for farming - everything is measured and optimized",
+
+  "tooltip.conservationTillage.definition": "Conservation Tillage",
+  "tooltip.conservationTillage.explanation": "Farming methods that disturb soil as little as possible, keeping plant residue on the surface to protect soil and store carbon.",
+  "tooltip.conservationTillage.example": "No-till farming can store 1.2 tons of CO\u2082 per hectare annually",
+
+  "tooltip.emissionFactors.definition": "EPA Emission Factors",
+  "tooltip.emissionFactors.explanation": "Published research data that shows how much greenhouse gas different farming activities produce. These are the scientific \u201crecipes\u201d used to calculate carbon footprints accurately.",
+  "tooltip.emissionFactors.example": "EPA provides exact CO\u2082 amounts for tractors, fertilizers, and other farm inputs",
+
+  "tooltip.sustainabilityImpact.definition": "Sustainability Impact",
+  "tooltip.sustainabilityImpact.explanation": "How this farming practice affects the environment - including soil health, water quality, biodiversity, and climate.",
+  "tooltip.sustainabilityImpact.example": "High impact = actively helping the environment, not just avoiding harm",
+
+  "tooltip.quickAdd.definition": "Quick Add Event",
+  "tooltip.quickAdd.explanation": "The fastest way to log farming activities in under 60 seconds. Choose from 7 event types, smart defaults pre-fill common values, and voice capture lets you document hands-free.",
+  "tooltip.quickAdd.example": "Log 5-7 events weekly to achieve 85%+ transparency score",
+
+  "tooltip.fertilizationEvent.definition": "Fertilization Event",
+  "tooltip.fertilizationEvent.explanation": "Document NPK applications, organic amendments, and soil nutrients. Includes concentration validation to ensure accurate carbon calculations and consumer transparency.",
+  "tooltip.fertilizationEvent.example": "NPK 10-10-10 applied at 100 kg/hectare = detailed transparency record",
+
+  "tooltip.irrigationEvent.definition": "Irrigation Event",
+  "tooltip.irrigationEvent.explanation": "Record water management practices including volume, method (drip, sprinkler, flood), and duration. Shows consumers your water stewardship and resource efficiency.",
+  "tooltip.irrigationEvent.example": "Drip irrigation uses 25-50% less water than flood methods",
+
+  "tooltip.pestControlEvent.definition": "Pest Control Event",
+  "tooltip.pestControlEvent.explanation": "Document pest management including IPM practices, pesticide applications, and beneficial insect releases. Consumers value transparency about crop protection methods.",
+  "tooltip.pestControlEvent.example": "IPM practices can reduce pesticide use by 40%",
+
+  "tooltip.herbicideEvent.definition": "Herbicide Event",
+  "tooltip.herbicideEvent.explanation": "Record weed management activities including pre-emergent and post-emergent applications. Document organic alternatives and cover crop termination.",
+  "tooltip.herbicideEvent.example": "Organic herbicides have lower environmental impact scores",
+
+  "tooltip.fungicideEvent.definition": "Fungicide Event",
+  "tooltip.fungicideEvent.explanation": "Document disease prevention and treatment including copper, sulfur, and synthetic fungicides. Shows consumers your plant health management practices.",
+  "tooltip.fungicideEvent.example": "Preventive applications typically use less product than curative",
+
+  "tooltip.pruningEvent.definition": "Pruning Event",
+  "tooltip.pruningEvent.explanation": "Record plant maintenance including seasonal pruning, thinning, and training. Includes fuel consumption for powered equipment to track environmental impact.",
+  "tooltip.pruningEvent.example": "Proper pruning improves yield quality and reduces disease",
+
+  "tooltip.harvestEvent.definition": "Harvest Event",
+  "tooltip.harvestEvent.explanation": "Document crop collection including yield quantity, equipment used, and transportation. Consumers see your quality selection and handling practices.",
+  "tooltip.harvestEvent.example": "Recording yield data enables transparency benchmarking",
+
+  "tooltip.plantingEvent.definition": "Planting Event",
+  "tooltip.plantingEvent.explanation": "Record crop establishment including seed variety, planting density, and soil preparation. Shows consumers the start of your growing journey.",
+  "tooltip.plantingEvent.example": "Certified seed varieties can improve transparency scores",
+
+  "tooltip.transparencyScore.definition": "Transparency Score",
+  "tooltip.transparencyScore.explanation": "Your 0-100% score based on documented farming events. More events logged = higher score = more consumer trust. Unlike carbon scores, transparency rewards complete documentation.",
+  "tooltip.transparencyScore.example": "85%+ transparency signals strong documentation and builds consumer trust",
+
+  "tooltip.examplePrefix": "Example: {example}"
 }

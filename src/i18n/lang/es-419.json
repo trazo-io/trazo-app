@@ -3417,5 +3417,87 @@
   "app.exportInfoGlobalgap": "Enfatiza aplicaciones químicas con intervalos PHI y REI, registros de decisiones MIP, registros de manejo del agua y documentación de seguridad laboral.",
   "app.exportInfoRoc": "Incluye mediciones de salud del suelo, registros de cultivos de cobertura y rotación de cultivos, cálculos de carbono y documentación del enfoque de manejo de plagas.",
   "app.exportInfoFsma204": "Registros de trazabilidad que incluyen códigos de lote, ubicaciones y fechas de cosecha, cantidades cosechadas e identificación del operador según la Regla FSMA 204.",
-  "app.exportInfoScs": "Justificación de decisiones MIP, registros de gestión de energía y residuos, prácticas de conservación del suelo y datos de carbono operacional directo."
+  "app.exportInfoScs": "Justificación de decisiones MIP, registros de gestión de energía y residuos, prácticas de conservación del suelo y datos de carbono operacional directo.",
+
+  "tooltip.co2e.definition": "Equivalente de Dióxido de Carbono",
+  "tooltip.co2e.explanation": "Una unidad estándar que combina todos los gases de efecto invernadero (CO\u2082, metano, óxido nitroso) en una sola medida. Como convertir diferentes monedas a dólares para facilitar la comparación.",
+  "tooltip.co2e.example": "1 tonelada de CO\u2082e = conducir 3,800 km en un auto promedio",
+
+  "tooltip.carbonFootprint.definition": "Huella de Carbono",
+  "tooltip.carbonFootprint.explanation": "La cantidad total de gases de efecto invernadero producidos por las operaciones agrícolas directas: combustible, fertilizantes, equipos y riego. Es como el \u201crecibo\u201d ambiental del cultivo de tus alimentos.",
+  "tooltip.carbonFootprint.example": "Cubre emisiones controladas por el agricultor: combustión de combustible, aplicación de fertilizantes y operación de equipos",
+
+  "tooltip.usdaFactorsUsed.definition": "Factores de Emisión EPA/USDA",
+  "tooltip.usdaFactorsUsed.explanation": "Los cálculos de carbono para este evento utilizan factores de emisión oficiales publicados por la EPA y el USDA. Esto asegura una metodología consistente en todas las fincas, no es una verificación de las prácticas agrícolas.",
+  "tooltip.usdaFactorsUsed.example": "Datos publicados por el gobierno aseguran cálculos de carbono consistentes y confiables",
+
+  "tooltip.blockchainRecorded.definition": "Registrado en Blockchain",
+  "tooltip.blockchainRecorded.explanation": "Cuando una producción finaliza, una huella digital de todos los eventos documentados se registra permanentemente en la blockchain de Polygon. Esto prueba que los datos no han sido alterados después del envío, pero no verifica la precisión de las prácticas agrícolas.",
+  "tooltip.blockchainRecorded.example": "Tu registro de producción está criptográficamente sellado e inmutable en Polygonscan",
+
+  "tooltip.carbonScore.definition": "Puntuación de Carbono (0-100)",
+  "tooltip.carbonScore.explanation": "Una calificación simple que muestra qué tan amigable con el clima es este producto. Puntuaciones más altas significan mejor desempeño ambiental y prácticas agrícolas más sostenibles.",
+  "tooltip.carbonScore.example": "Puntuación 85+ = Prácticas de sostenibilidad excepcionales",
+
+  "tooltip.photoDocumentation.definition": "Documentación Fotográfica",
+  "tooltip.photoDocumentation.explanation": "El porcentaje de eventos agrícolas que incluyen evidencia fotográfica. Las fotos proporcionan prueba visual de las prácticas agrícolas: los consumidores pueden ver exactamente cómo se cultivó su alimento.",
+  "tooltip.photoDocumentation.example": "86% significa que 19 de 22 eventos tienen evidencia fotográfica adjunta",
+
+  "tooltip.precisionAgriculture.definition": "Agricultura de Precisión",
+  "tooltip.precisionAgriculture.explanation": "Tecnología agrícola que usa GPS, sensores y datos para aplicar exactamente la cantidad correcta de insumos (agua, fertilizante) en los lugares exactos, reduciendo el desperdicio.",
+  "tooltip.precisionAgriculture.example": "Como tener un teléfono inteligente para la agricultura: todo se mide y optimiza",
+
+  "tooltip.conservationTillage.definition": "Labranza de Conservación",
+  "tooltip.conservationTillage.explanation": "Métodos agrícolas que alteran el suelo lo menos posible, manteniendo residuos vegetales en la superficie para proteger el suelo y almacenar carbono.",
+  "tooltip.conservationTillage.example": "La labranza cero puede almacenar 1.2 toneladas de CO\u2082 por hectárea anualmente",
+
+  "tooltip.emissionFactors.definition": "Factores de Emisión EPA",
+  "tooltip.emissionFactors.explanation": "Datos de investigación publicados que muestran cuánto gas de efecto invernadero producen las diferentes actividades agrícolas. Son las \u201crecetas\u201d científicas utilizadas para calcular las huellas de carbono con precisión.",
+  "tooltip.emissionFactors.example": "La EPA proporciona cantidades exactas de CO\u2082 para tractores, fertilizantes y otros insumos agrícolas",
+
+  "tooltip.sustainabilityImpact.definition": "Impacto en Sostenibilidad",
+  "tooltip.sustainabilityImpact.explanation": "Cómo esta práctica agrícola afecta al medio ambiente, incluyendo la salud del suelo, calidad del agua, biodiversidad y clima.",
+  "tooltip.sustainabilityImpact.example": "Alto impacto = ayudando activamente al medio ambiente, no solo evitando el daño",
+
+  "tooltip.quickAdd.definition": "Agregar Evento Rápido",
+  "tooltip.quickAdd.explanation": "La forma más rápida de registrar actividades agrícolas en menos de 60 segundos. Elige entre 7 tipos de eventos, los valores predeterminados inteligentes pre-llenan valores comunes y la captura por voz te permite documentar manos libres.",
+  "tooltip.quickAdd.example": "Registra 5-7 eventos semanales para lograr una puntuación de transparencia de 85%+",
+
+  "tooltip.fertilizationEvent.definition": "Evento de Fertilización",
+  "tooltip.fertilizationEvent.explanation": "Documenta aplicaciones de NPK, enmiendas orgánicas y nutrientes del suelo. Incluye validación de concentración para asegurar cálculos de carbono precisos y transparencia para el consumidor.",
+  "tooltip.fertilizationEvent.example": "NPK 10-10-10 aplicado a 100 kg/hectárea = registro detallado de transparencia",
+
+  "tooltip.irrigationEvent.definition": "Evento de Riego",
+  "tooltip.irrigationEvent.explanation": "Registra las prácticas de gestión del agua incluyendo volumen, método (goteo, aspersión, inundación) y duración. Muestra a los consumidores tu gestión responsable del agua y eficiencia de recursos.",
+  "tooltip.irrigationEvent.example": "El riego por goteo usa 25-50% menos agua que los métodos por inundación",
+
+  "tooltip.pestControlEvent.definition": "Evento de Control de Plagas",
+  "tooltip.pestControlEvent.explanation": "Documenta el manejo de plagas incluyendo prácticas MIP, aplicaciones de pesticidas y liberación de insectos benéficos. Los consumidores valoran la transparencia sobre los métodos de protección de cultivos.",
+  "tooltip.pestControlEvent.example": "Las prácticas MIP pueden reducir el uso de pesticidas en un 40%",
+
+  "tooltip.herbicideEvent.definition": "Evento de Herbicida",
+  "tooltip.herbicideEvent.explanation": "Registra actividades de manejo de malezas incluyendo aplicaciones pre-emergentes y post-emergentes. Documenta alternativas orgánicas y terminación de cultivos de cobertura.",
+  "tooltip.herbicideEvent.example": "Los herbicidas orgánicos tienen menor impacto ambiental",
+
+  "tooltip.fungicideEvent.definition": "Evento de Fungicida",
+  "tooltip.fungicideEvent.explanation": "Documenta la prevención y tratamiento de enfermedades incluyendo fungicidas de cobre, azufre y sintéticos. Muestra a los consumidores tus prácticas de manejo de salud vegetal.",
+  "tooltip.fungicideEvent.example": "Las aplicaciones preventivas típicamente usan menos producto que las curativas",
+
+  "tooltip.pruningEvent.definition": "Evento de Poda",
+  "tooltip.pruningEvent.explanation": "Registra el mantenimiento de plantas incluyendo poda estacional, raleo y entrenamiento. Incluye consumo de combustible para equipos motorizados para rastrear el impacto ambiental.",
+  "tooltip.pruningEvent.example": "La poda adecuada mejora la calidad del rendimiento y reduce las enfermedades",
+
+  "tooltip.harvestEvent.definition": "Evento de Cosecha",
+  "tooltip.harvestEvent.explanation": "Documenta la recolección del cultivo incluyendo cantidad de rendimiento, equipo utilizado y transporte. Los consumidores ven tu selección de calidad y prácticas de manejo.",
+  "tooltip.harvestEvent.example": "Registrar datos de rendimiento permite comparaciones de transparencia",
+
+  "tooltip.plantingEvent.definition": "Evento de Siembra",
+  "tooltip.plantingEvent.explanation": "Registra el establecimiento del cultivo incluyendo variedad de semilla, densidad de siembra y preparación del suelo. Muestra a los consumidores el inicio de tu proceso de cultivo.",
+  "tooltip.plantingEvent.example": "Las variedades de semilla certificadas pueden mejorar las puntuaciones de transparencia",
+
+  "tooltip.transparencyScore.definition": "Puntuación de Transparencia",
+  "tooltip.transparencyScore.explanation": "Tu puntuación de 0-100% basada en eventos agrícolas documentados. Más eventos registrados = mayor puntuación = más confianza del consumidor. A diferencia de las puntuaciones de carbono, la transparencia recompensa la documentación completa.",
+  "tooltip.transparencyScore.example": "85%+ de transparencia señala documentación sólida y construye confianza del consumidor",
+
+  "tooltip.examplePrefix": "Ejemplo: {example}"
 }

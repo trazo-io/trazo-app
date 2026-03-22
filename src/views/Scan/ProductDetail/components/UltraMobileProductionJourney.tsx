@@ -69,8 +69,8 @@ import {
 import {
   EducationalTooltip,
   CO2eTooltip,
-  BlockchainTooltip,
-  CarbonScoreTooltip
+  PhotoDocumentationTooltip,
+  TransparencyScoreTooltip
 } from 'components/Education/EducationalTooltip';
 
 interface AlbumImage {
@@ -820,11 +820,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   })()}
                   %
                 </Text>
-                <BlockchainTooltip>
+                <PhotoDocumentationTooltip>
                   <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                     {intl.formatMessage({ id: 'transparency.withPhotos' })}
                   </Text>
-                </BlockchainTooltip>
+                </PhotoDocumentationTooltip>
               </VStack>
 
               <VStack
@@ -841,11 +841,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="orange.600">
                   {transparencyScore || 0}
                 </Text>
-                <CarbonScoreTooltip>
+                <TransparencyScoreTooltip>
                   <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
                     Score
                   </Text>
-                </CarbonScoreTooltip>
+                </TransparencyScoreTooltip>
               </VStack>
             </SimpleGrid>
 

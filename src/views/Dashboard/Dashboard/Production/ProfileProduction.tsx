@@ -359,7 +359,8 @@ function ProfileProduction() {
   // Download QR code
   const downloadQRCode = async () => {
     try {
-      if (!historyData?.id) {
+      const downloadId = historyData?.public_id || productionId;
+      if (!downloadId) {
         toast({
           title: 'Error',
           description: 'Production ID not found.',
@@ -371,7 +372,7 @@ function ProfileProduction() {
       }
 
       const response = await fetch(
-        `${config.API_BASE_URL}/histories/${historyData.id}/download_qr_code/`,
+        `${config.API_BASE_URL}/histories/${downloadId}/download_qr_code/`,
         {
           credentials: 'include',
           headers: {
