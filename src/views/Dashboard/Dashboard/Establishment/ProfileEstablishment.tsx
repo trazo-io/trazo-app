@@ -124,7 +124,8 @@ function ProfileEstablishment() {
   const {
     data: establishmentData,
     error,
-    isLoading
+    isLoading,
+    isUninitialized
   } = useGetEstablishmentQuery(
     {
       companyId: currentCompany?.id,
@@ -269,7 +270,7 @@ function ProfileEstablishment() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isUninitialized) {
     return (
       <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
         <StandardPageLoading />

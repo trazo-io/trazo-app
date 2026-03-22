@@ -191,7 +191,8 @@ function ProfileProduction() {
   const {
     data: historyData,
     isLoading,
-    isError
+    isError,
+    isUninitialized
   } = useGetPublicHistoryQuery(productionId || '', {
     skip: !productionId
   });
@@ -429,7 +430,7 @@ function ProfileProduction() {
   // Helper for reputation
   const safeReputation = historyData?.reputation || 0;
 
-  if (isLoading) {
+  if (isLoading || isUninitialized) {
     return (
       <StandardPage
         showBackButton
