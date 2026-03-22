@@ -606,7 +606,9 @@ export default function CommercialView() {
   const onParcelFilterChange = (parcel) => {
     setFilters({
       ...filters,
-      parcel: parcel ? { id: parcel.id, name: parcel.name } : null
+      parcel: parcel ? { id: parcel.id, name: parcel.name } : null,
+      product: null,
+      production: null
     });
     getEstablishmentProducts({
       companyId: currentCompany?.id,
@@ -618,7 +620,8 @@ export default function CommercialView() {
   const onProductFilterChange = (product) => {
     setFilters({
       ...filters,
-      product: product ? { id: product.id, name: product.name } : null
+      product: product ? { id: product.id, name: product.name } : null,
+      production: null
     });
   };
 
