@@ -28,6 +28,8 @@ type CardWithImageProps = {
   state?: string;
   city?: string;
   zone?: string;
+  // When true, stretches to fill parent container height (e.g. CSS Grid row)
+  fillHeight?: boolean;
 };
 
 const CardWithImage = ({
@@ -44,6 +46,7 @@ const CardWithImage = ({
   state,
   city,
   zone,
+  fillHeight = false,
   ...rest
 }: CardWithImageProps) => {
   const navigate = useNavigate();
@@ -55,7 +58,8 @@ const CardWithImage = ({
   return (
     <Card
       minH={{ base: '220px', sm: '240px', md: '270px', lg: '290px' }}
-      h="100%"
+      height={fillHeight ? '100%' : { base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }}
+      maxHeight={fillHeight ? 'none' : { base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }}
       p="0"
       overflow="hidden"
       className="trazo-card"

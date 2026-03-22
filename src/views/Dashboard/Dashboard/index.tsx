@@ -727,6 +727,7 @@ export default function DashboardView() {
             borderLeft="4px solid"
             borderColor="green.500"
             boxShadow={shadowHover}
+            fillHeight
             _hover={{
               boxShadow: shadowHover
             }}

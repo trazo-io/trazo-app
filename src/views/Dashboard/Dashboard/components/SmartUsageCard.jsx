@@ -216,7 +216,6 @@ const SmartUsageCard = ({
   return (
     <Card
       minH="290px"
-      h="100%"
       p={{ base: 4, md: 6 }}
       bg={cardBg}
       borderRadius="15px"
